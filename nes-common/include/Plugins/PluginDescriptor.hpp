@@ -40,20 +40,20 @@ enum class InsertResult : uint8_t
 /// plugin system can register entries into it without knowing their types (see provideRegistry).
 struct RegistryProvision
 {
-    NESTypeClass correspondingTypeClass;
+    NamedNESParametrizedTypeClass correspondingParametrizedTypeClass;
     /// identity of the singleton, for idempotent re-provision checks
-    const void* instanceAddress = nullptr;
-    std::function<InsertResult(const std::string& key, const std::any& entry)> insertEntry;
+    std::function<InsertResult(const NamedNESFunctor&)> insertEntry;
 };
 
 /// An entry a plugin contributes to a registry. Pure data: the plugin system performs the actual
 /// registration (and owns the duplicate/missing-registry/type policies, see PluginLoader).
 struct EntryProvision
 {
-    QualifiedIdentifier registryClassName;
-    Identifier key;
-    /// must hold exactly the registry's EntryType (the generated glue coerces to it)
-    std::any entry;
+    NamedNESFunctor correspondingFunctor;
+    QualifiedIdentifier registryName;
+    //Identifier key;
+    ///// must hold exactly the registry's EntryType (the generated glue coerces to it)
+    //std::any entry;
     /// optional entries are skipped when the host does not know the registry; required entries
     /// fail the load instead
     bool optional = false;
@@ -78,19 +78,19 @@ using PluginDescribeFn = void (*)(PluginDescriptor&);
 /// which is what allows the plugin system to stay type-erased.
 template <typename Registry>
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-RegistryProvision provideRegistry(std::string registryClassName)
+RegistryProvision provideRegistry()
 {
     return RegistryProvision{
-        .registryClassName = std::move(registryClassName),
-        .instanceAddress = std::addressof(Registry::instance()),
-        .insertEntry = [](const std::string& key, const std::any& entry)
+        .correspondingParametrizedTypeClass = Registry::getParametrizedTypeClass(),
+        .insertEntry = [](const NamedNESFunctor& entry)
         {
-            const auto* typedEntry = std::any_cast<typename Registry::EntryType>(&entry);
+            const auto* typedEntry = std::any_cast<typename Registry::EntryType>(&entry.getUnderlyingFunctor()->structure.getUnderlying());
             if (typedEntry == nullptr)
             {
                 return InsertResult::EntryTypeMismatch;
             }
-            return Registry::instance().addEntry(key, *typedEntry) ? InsertResult::Success : InsertResult::DuplicateKey;
+            return Registry::instance().addEntry(entry.getFullyQualifiedName(), *typedEntry) ? InsertResult::Success
+                                                                                             : InsertResult::DuplicateKey;
         }};
 }
 

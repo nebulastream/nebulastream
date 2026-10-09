@@ -15,7 +15,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #pragma once
 #include "Identifiers/QualifiedIdentifier.hpp"
 #include "Util/Any.hpp"
-
 #include "NESType.hpp"
 
 namespace NES
@@ -23,26 +22,150 @@ namespace NES
 
 class NESValue;
 class NamedNESValue;
+class NamedNESType;
+
+/// Example: LogicalOperator as the NESTypeClassStructure, a LogicalOperator with a set output schema is a NESTypeClass,
+/// a ProjectionLogicalOperator is a NESTypeConstructor, a ProjectionLogicalOperator with an output schema is a NESType,
+/// and instance of it is a NESValue
+
+
+/// Blackbox argument to a type constructor
+/// Type is a bit of an placeholder, might get removed or expanded in the future
+class NESTypeParameters
+{
+    ExplicitAny parameters;
+    std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeParametersEquals;
+};
+
+class NESType;
+struct RegistryProvision;
+
+/// A type constructor.
+/// Example: A scalar array type, that takes another scalar type and a number as parameters.
+/// Similar to c++ type templates, but we don't have separate arguments but just one blackbox argument that the type constructor needs to be able to understand.
+class NESFunctor
+{
+    ExplicitAny structure;
+    std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeStructureEquals;
+    std::function<NESType(const ExplicitAny&, const NESTypeParameters&)> typeConstructor;
+    template <typename T>
+    friend RegistryProvision provideRegistry();
+};
+
+/// A fully instantiated type (compares to a fully instantiated template in c++)
+/// For example, an array<varchar, 5> is a type
 class NESType
 {
-    QualifiedIdentifier name;
-    std::function<NESValue(const Schema<NamedNESValue, Ordered>&)> factory;
-};
-
-class NESValue
-{
-    std::shared_ptr<NESType> type;
-    ExplicitAny internalRepresentation;
-};
-
-class NESTypeClass
-{
-    QualifiedIdentifier name;
-    std::function<bool(NESType)> predicate;
+    ExplicitAny typeDescriptor;
+    std::function<NESValue(const std::vector<NamedNESValue>&)> constructor;
+    std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeEquals;
+    std::function<bool(const ExplicitAny&, const ExplicitAny&)> valueEquals;
 
 public:
-    NESTypeClass(QualifiedIdentifier name, std::function<bool(NESType)> predicate) : name(std::move(name)), predicate(std::move(predicate)) { }
+    NESType(
+        ExplicitAny typeDescriptor,
+        std::function<NESValue(const std::vector<NamedNESValue>&)> constructor,
+        std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeEquals,
+        std::function<bool(const ExplicitAny&, const ExplicitAny&)> valueEquals);
 
-    bool validate(const NESType& type) const;
+    explicit NESType(NamedNESType newType);
+
+    [[nodiscard]] NESValue construct(const std::vector<NESValue>&) const;
+    bool operator==(const NESType&) const;
 };
+
+/// A type with a name, which is considered NOT equals to a type with the same structure but different name
+class NamedNESFunctor
+{
+    QualifiedIdentifier name;
+    NESFunctor underlyingType;
+
+public:
+    explicit NamedNESFunctor(QualifiedIdentifier name, NESFunctor underlyingType)
+        : name(std::move(name)), underlyingType(std::move(underlyingType))
+    {
+    }
+
+    [[nodiscard]] const QualifiedIdentifier& getFullyQualifiedName() const;
+    [[nodiscard]] const std::shared_ptr<NESFunctor>& getUnderlyingFunctor() const;
+
+    bool operator==(const NamedNESType&) const;
+};
+
+/// An actual instance of some type. For example, an instance of an logical operator, logical function, etc.
+class NESValue
+{
+    NESType type;
+    ExplicitAny internalRepresentation;
+
+public:
+    explicit NESValue(NESType type, ExplicitAny internalRepresentation);
+    [[nodiscard]] const ExplicitAny& getInternalRepresentation() const;
+    [[nodiscard]] const NESType& getType() const;
+    bool operator==(const NESValue&) const;
+};
+
+class NESTypeClassParameters
+{
+    ExplicitAny parameters;
+    std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeClassParamsEquals;
+};
+
+class NESTypeClass;
+
+/// A parametrized constructor for a type class, which is a predicate over types
+/// Corresponds to a templated concept in c++
+/// In NES, the registries all imply one NESTypeClassStructure.
+/// If a NESTypeClassStructure doesn't take any arguments, it corresponds 1:1 with a NESTypeClass
+class NESParametrizedTypeClass
+{
+    //std::shared_ptr<const ExplicitAny> structure;
+    //std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeClassStructureEquals;
+    std::function<NESTypeClass(const NESTypeClassParameters&)> typeClassConstructor;
+
+public:
+    NESParametrizedTypeClass(
+        std::shared_ptr<const ExplicitAny> structure, std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeConstructor);
+};
+
+class NamedNESParametrizedTypeClass
+{
+    QualifiedIdentifier name;
+    NESParametrizedTypeClass underlying;
+public:
+    NamedNESParametrizedTypeClass(QualifiedIdentifier name, NESParametrizedTypeClass newType);
+
+    [[nodiscard]] const QualifiedIdentifier& getFullyQualifiedName() const;
+
+    bool operator==(const NamedNESParametrizedTypeClass&) const;
+};
+
+/// A predicate over types
+class NESTypeClass
+{
+    ExplicitAny typeClassDescriptor;
+    std::function<bool(const ExplicitAny&, const NESType&)> predicate;
+    std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeClassEquals;
+
+    NESTypeClass(
+        ExplicitAny typeClassDescriptor,
+        std::function<bool(const ExplicitAny&, const NESType&)> predicate,
+        std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeClassEquals)
+        : typeClassDescriptor(std::move(typeClassDescriptor)), predicate(std::move(predicate)), typeClassEquals(std::move(typeClassEquals))
+    {
+    }
+public:
+    template <typename Descriptor>
+    NESTypeClass(Descriptor typeClassDescriptor,
+        std::function<bool(const Descriptor&, const NESType&)> predicate,
+        std::function<bool(const Descriptor&, const Descriptor&)> typeClassEquals)
+            : typeClassDescriptor(ExplicitAny{std::move(typeClassDescriptor)}), predicate([predicate = std::move(predicate)](const ExplicitAny& descriptor, const NESType& type)
+            {return predicate(descriptor.getAs<Descriptor>, type); }), typeClassEquals([](const ExplicitAny& self, const ExplicitAny& other) {
+                return
+            }) {}
+
+    [[nodiscard]] bool validate(const NESType& type) const;
+    bool operator==(const NESTypeClass&) const;
+};
+
 }

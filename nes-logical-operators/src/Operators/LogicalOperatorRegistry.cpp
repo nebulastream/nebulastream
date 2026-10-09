@@ -23,4 +23,12 @@ LogicalOperatorRegistry& LogicalOperatorRegistry::instance()
     return inst;
 }
 
+NamedNESParametrizedTypeClass LogicalOperatorRegistry::getParametrizedTypeClass()
+{
+    return NamedNESParametrizedTypeClass{QualifiedIdentifier::parse("LogicalOperator"), NESParametrizedTypeClass{[](const NESTypeClassParameters&)
+    {
+        return NESTypeClass{ExplicitAny}
+    }}}
+}
+
 }
