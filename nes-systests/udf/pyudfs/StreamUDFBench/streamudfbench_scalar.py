@@ -673,6 +673,60 @@ def filterstopwords(words:str)->str:
         return None
 
 # U25.	Stem: Stems the input text using Porter2 stemming algorithm.
+# Constants of stem's porter2, at module level because porter2's nested helpers call each other and Codon rejects a
+# nested function calling a sibling that captures a local of the enclosing function. The original, nested version lives
+# in streamudfbench_original_stem.py.
+r_exp = re.compile(r"[^aeiouy]*[aeiouy]+[^aeiouy](\w*)")
+ewss_exp1 = re.compile(r"^[aeiouy][^aeiouy]$")
+ewss_exp2 = re.compile(r".*[^aeiouy][aeiouy][^aeiouywxY]$")
+ccy_exp = re.compile(r"([aeiouy])y")
+s1a_exp = re.compile(r"[aeiouy].")
+s1b_exp = re.compile(r"[aeiouy]")
+
+doubles = ('bb', 'dd', 'ff', 'gg', 'mm', 'nn', 'pp', 'rr', 'tt')
+
+s1b_suffixes = ('ed', 'edly', 'ing', 'ingly')
+
+# Typed, because Codon types a bare [] as a list of None.
+_no_prev: list[str] = []
+s2_triples = (('ization', 'ize', _no_prev),
+            ('ational', 'ate', _no_prev),
+            ('fulness', 'ful', _no_prev),
+            ('ousness', 'ous', _no_prev),
+            ('iveness', 'ive', _no_prev),
+            ('tional', 'tion', _no_prev),
+            ('biliti', 'ble', _no_prev),
+            ('lessli', 'less', _no_prev),
+            ('entli', 'ent', _no_prev),
+            ('ation', 'ate', _no_prev),
+            ('alism', 'al', _no_prev),
+            ('aliti', 'al', _no_prev),
+            ('ousli', 'ous', _no_prev),
+            ('iviti', 'ive', _no_prev),
+            ('fulli', 'ful', _no_prev),
+            ('enci', 'ence', _no_prev),
+            ('anci', 'ance', _no_prev),
+            ('abli', 'able', _no_prev),
+            ('izer', 'ize', _no_prev),
+            ('ator', 'ate', _no_prev),
+            ('alli', 'al', _no_prev),
+            ('bli', 'ble', _no_prev),
+            ('ogi', 'og', ['l']),
+            ('li', '', ['c', 'd', 'e', 'g', 'h', 'k', 'm', 'n', 'r', 't']))
+
+s3_triples = (('ational', 'ate', False),
+            ('tional', 'tion', False),
+            ('alize', 'al', False),
+            ('icate', 'ic', False),
+            ('iciti', 'ic', False),
+            ('ative', '', True),
+            ('ical', 'ic', False),
+            ('ness', '', False),
+            ('ful', '', False))
+
+s4_delete_list = ('al', 'ance', 'ence', 'er', 'ic', 'able', 'ible', 'ant', 'ement',
+                'ment', 'ent', 'ism', 'ate', 'iti', 'ous', 'ive', 'ize')
+
 
 def stem(input:str)->str:
     input = _str(input)
@@ -712,12 +766,6 @@ def stem(input:str)->str:
         """
 
         
-        r_exp = re.compile(r"[^aeiouy]*[aeiouy]+[^aeiouy](\w*)")
-        ewss_exp1 = re.compile(r"^[aeiouy][^aeiouy]$")
-        ewss_exp2 = re.compile(r".*[^aeiouy][aeiouy][^aeiouywxY]$")
-        ccy_exp = re.compile(r"([aeiouy])y")
-        s1a_exp = re.compile(r"[aeiouy].")
-        s1b_exp = re.compile(r"[aeiouy]")
 
         def get_r1(word):
             # exceptional forms
@@ -788,7 +836,6 @@ def stem(input:str)->str:
                 return word
             return word
 
-        doubles = ('bb', 'dd', 'ff', 'gg', 'mm', 'nn', 'pp', 'rr', 'tt')
         def ends_with_double(word):
             for double in doubles:
                 if word.endswith(double):
@@ -802,7 +849,6 @@ def stem(input:str)->str:
             if is_short_word(word):
                 return word + 'e'
             return word
-        s1b_suffixes = ('ed', 'edly', 'ing', 'ingly')
 
         def step_1b(word, r1):
             if word.endswith('eedly'):
@@ -839,31 +885,7 @@ def stem(input:str)->str:
                             if word[:-len(end)].endswith(p):
                                 return word[:-len(end)] + repl
                     return word
-                return None
-        s2_triples = (('ization', 'ize', []),
-                    ('ational', 'ate', []),
-                    ('fulness', 'ful', []),
-                    ('ousness', 'ous', []),
-                    ('iveness', 'ive', []),
-                    ('tional', 'tion', []),
-                    ('biliti', 'ble', []),
-                    ('lessli', 'less', []),
-                    ('entli', 'ent', []),
-                    ('ation', 'ate', []),
-                    ('alism', 'al', []),
-                    ('aliti', 'al', []),
-                    ('ousli', 'ous', []),
-                    ('iviti', 'ive', []),
-                    ('fulli', 'ful', []),
-                    ('enci', 'ence', []),
-                    ('anci', 'ance', []),
-                    ('abli', 'able', []),
-                    ('izer', 'ize', []),
-                    ('ator', 'ate', []),
-                    ('alli', 'al', []),
-                    ('bli', 'ble', []),
-                    ('ogi', 'og', ['l']),
-                    ('li', '', ['c', 'd', 'e', 'g', 'h', 'k', 'm', 'n', 'r', 't']))
+                return ''  # Codon: None would conflict with the str returned above; callers only test truthiness.
 
         def step_2(word, r1):
             for trip in s2_triples:
@@ -881,16 +903,7 @@ def stem(input:str)->str:
                         if len(word) - len(end) >= r2:
                             return word[:-len(end)] + repl
                 return word
-            return None
-        s3_triples = (('ational', 'ate', False),
-                    ('tional', 'tion', False),
-                    ('alize', 'al', False),
-                    ('icate', 'ic', False),
-                    ('iciti', 'ic', False),
-                    ('ative', '', True),
-                    ('ical', 'ic', False),
-                    ('ness', '', False),
-                    ('ful', '', False))
+            return ''  # Codon: None would conflict with the str returned above; callers only test truthiness.
         def step_3(word, r1, r2):
             for trip in s3_triples:
                 attempt = step_3_helper(word, r1, r2, trip[0], trip[1], trip[2])
@@ -898,8 +911,6 @@ def stem(input:str)->str:
                     return attempt
             return word
 
-        s4_delete_list = ('al', 'ance', 'ence', 'er', 'ic', 'able', 'ible', 'ant', 'ement',
-                        'ment', 'ent', 'ism', 'ate', 'iti', 'ous', 'ive', 'ize')
 
         def step_4(word, r2):
             for end in s4_delete_list:
