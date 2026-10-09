@@ -1,0 +1,109 @@
+# name: udf/StreamUDFBench/StreamUDFBenchJsonCodon.test
+# description: StreamUDFBench scalar UDFs that use json, executed by Codon (BRIDGE 'codon') from the unmodified
+# pyudfs/StreamUDFBench/streamudfbench_scalar.py. Codon serves `import json` with nes-codon-json-plugin and the bench's
+# bytes/bytearray checks with nes-codon-compat-plugin. Expected results are CPython's for the same inputs.
+# Codon decides type(x) and isinstance(x, T) at compile time, so the bench's jaccard and jsonparse check types through
+# _is_list/_is_dict/_hashable, which ask the parsed json.Value at runtime. The unadapted versions
+# (streamudfbench_original_typechecks.py) are pinned too: jaccard fails to compile, and jsonparse fails at runtime (see
+# its query below). The adapted jsonparse also drops its '-> str' annotation: Codon enforces it, so 'return None' would
+# raise instead of yielding NULL.
+# groups: [PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE bench_lists(jval VARSIZED);
+CREATE PHYSICAL SOURCE FOR bench_lists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH INLINE
+["Bob Smith Jr", "Al B Carol", "Zed"]
+["b a", "d c a"]
+
+CREATE LOGICAL SOURCE bench_texts(input VARSIZED);
+CREATE PHYSICAL SOURCE FOR bench_texts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH INLINE
+the quick  brown fox
+
+CREATE LOGICAL SOURCE bench_pairs(arg1 VARSIZED, arg2 VARSIZED);
+CREATE PHYSICAL SOURCE FOR bench_pairs TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH INLINE
+["a", "b", ["c", "d"]]	["b", ["c", "d"], "e"]
+["x"]	["y"]
+
+CREATE LOGICAL SOURCE bench_parse(json_content VARSIZED, key1 VARSIZED);
+CREATE PHYSICAL SOURCE FOR bench_parse TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH INLINE
+[{"k": "v1"}, {"k": "v2"}]	k
+{"k": "v3", "other": 1}	k
+{"other": 1}	k
+"scalar"	k
+
+CREATE FUNCTION clean_codon (jval VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.clean';
+CREATE FUNCTION jsoncount_codon (jval VARSIZED) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.jsoncount';
+CREATE FUNCTION jsort_codon (jval VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.jsort';
+CREATE FUNCTION jsortvalues_codon (jval VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.jsortvalues';
+CREATE FUNCTION removeshortterms_codon (jval VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.removeshortterms';
+CREATE FUNCTION jaccard_codon (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.jaccard';
+CREATE FUNCTION jsonparse_codon (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.jsonparse';
+CREATE FUNCTION original_jaccard_codon (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_original_typechecks.jaccard';
+CREATE FUNCTION original_jsonparse_codon (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_original_typechecks.jsonparse';
+CREATE FUNCTION jpack_codon (input VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.jpack';
+
+SELECT clean_codon(jval) AS result FROM bench_lists
+INTO File('CSV' as "SINK".OUTPUT_FORMAT, TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS);
+----
+"[""bob smith"", ""carol"", ""zed""]"
+"["""", """"]"
+
+SELECT jsoncount_codon(jval) AS result FROM bench_lists
+INTO File('CSV' as "SINK".OUTPUT_FORMAT, TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS);
+----
+3
+2
+
+SELECT jsort_codon(jval) AS result FROM bench_lists
+INTO File('CSV' as "SINK".OUTPUT_FORMAT, TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS);
+----
+"[""Al B Carol"", ""Bob Smith Jr"", ""Zed""]"
+"[""b a"", ""d c a""]"
+
+SELECT jsortvalues_codon(jval) AS result FROM bench_lists
+INTO File('CSV' as "SINK".OUTPUT_FORMAT, TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS);
+----
+"[""Bob Jr Smith"", ""Al B Carol"", ""Zed""]"
+"[""a b"", ""a c d""]"
+
+SELECT removeshortterms_codon(jval) AS result FROM bench_lists
+INTO File('CSV' as "SINK".OUTPUT_FORMAT, TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS);
+----
+"[""Bob Smith"", ""Carol"", ""Zed""]"
+"["""", """"]"
+
+SELECT jpack_codon(input) AS result FROM bench_texts
+INTO File('CSV' as "SINK".OUTPUT_FORMAT, TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS);
+----
+"[""the"", ""quick"", ""brown"", ""fox""]"
+
+# Adapted type checks: the same results as CPython
+SELECT jaccard_codon(arg1, arg2) AS result FROM bench_pairs
+INTO file();
+----
+0.5
+0.0
+
+SELECT jsonparse_codon(json_content, key1) AS result FROM bench_parse
+INTO file();
+----
+v1
+v3
+NULL
+NULL
+
+# Original jaccard: type(x) == list cannot be decided for a parsed json.Value, so compilation fails
+SELECT original_jaccard_codon(arg1, arg2) AS result FROM bench_pairs
+INTO file();
+----
+ERROR 2032 "unsupported operand type(s) for ==: 'type[Value]' and 'type[List"
+
+# Original jsonparse: isinstance(data, list) and isinstance(data, dict) compile to False, so every row reaches
+# 'return None', which Codon's enforced '-> str' annotation turns into a runtime error (CPython: v1, v3, NULL, NULL)
+SELECT original_jsonparse_codon(json_content, key1) AS result FROM bench_parse
+INTO file();
+----
+ERROR 9999 "optional unpack failed: expected str, got None"

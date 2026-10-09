@@ -1,0 +1,99 @@
+# name: udf/CodonJson.test
+# description: the simdjson-backed json plugin module, called from Codon UDFs (CREATE FUNCTION ... BRIDGE 'codon'). The UDFs
+# in pyudfs/codon_json_udfs.py are written against Python's json API; the expected results are what CPython returns for
+# the same functions on the same documents.
+# Data: nes-systests/testdata/python_udf/json_roundtrip.csv (no commas, so the sink can print it),
+# nes-systests/testdata/python_udf/json_documents.csv (commas inside values, used only for integer counts),
+# nes-systests/testdata/python_udf/json_value_docs.csv (one document with every key the Value checks read)
+# groups: [PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE json_roundtrip_docs(id INT64 NOT NULL, doc VARSIZED);
+CREATE PHYSICAL SOURCE FOR json_roundtrip_docs TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE python_udf/json_roundtrip.csv
+
+CREATE LOGICAL SOURCE json_documents(id INT64 NOT NULL, doc VARSIZED);
+CREATE PHYSICAL SOURCE FOR json_documents TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE python_udf/json_documents.csv
+
+CREATE LOGICAL SOURCE json_value_docs(id INT64 NOT NULL, doc VARSIZED);
+CREATE PHYSICAL SOURCE FOR json_value_docs TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE python_udf/json_value_docs.csv
+
+CREATE FUNCTION roundtrip_codon (doc VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.roundtrip';
+CREATE FUNCTION count_codon (doc VARSIZED) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.count';
+CREATE FUNCTION nested_len_codon (doc VARSIZED) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.nested_len';
+CREATE FUNCTION lowered_names_codon (doc VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.lowered_names';
+CREATE FUNCTION sorted_tokens_codon (doc VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.sorted_tokens';
+CREATE FUNCTION dict_get_codon (doc VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.dict_get';
+CREATE FUNCTION comparisons_codon (doc VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.comparisons';
+CREATE FUNCTION distinct_count_codon (doc VARSIZED) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.distinct_count';
+CREATE FUNCTION sorted_dump_codon (doc VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.sorted_dump';
+CREATE FUNCTION conversions_codon (doc VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'codon_json_udfs.conversions';
+
+# Escaped key "k\u0041" decodes to "kA"; the key "a\\b" keeps its escaped backslash on output; non-ASCII text is written
+# as \uXXXX (ensure_ascii). dumps writes CPython's default format (", " and ": " separators).
+SELECT roundtrip_codon(doc) AS result FROM json_roundtrip_docs
+INTO file();
+----
+{"name": "ada"}
+{"kA": 1}
+{"a\\b": 2.5}
+[true]
+[null]
+{"s": "x y"}
+{"caf\u00e9": "\u00e9t\u00e9"}
+{"k": [1.5]}
+
+SELECT count_codon(doc) AS result FROM json_documents
+INTO file();
+----
+3
+2
+3
+
+# Indexing by key and position, then len
+SELECT nested_len_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+3
+
+# str methods on parsed strings feeding Codon's sorted and str.join
+SELECT lowered_names_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+alice b|bob smith|carol
+
+SELECT sorted_tokens_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+Bob Smith
+
+# dict.get: None for a missing key and for a JSON null
+SELECT dict_get_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+True|True|False|True|hi
+
+# Python equality (True == 1 == 1.0) and the in operator on keys
+SELECT comparisons_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+True|True|True|True|True|False
+
+# Parsed values are hashable
+SELECT distinct_count_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+2
+
+# sorted over parsed values, then json.dumps of the resulting list
+SELECT sorted_dump_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+["a"]
+
+# str/int/float/bool of parsed values and the Python repr of a nested value
+SELECT conversions_codon(doc) AS result FROM json_value_docs
+INTO file();
+----
+2.5|2|2.5|False|{'x': True}
