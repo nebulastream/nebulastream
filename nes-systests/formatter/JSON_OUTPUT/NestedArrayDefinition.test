@@ -59,6 +59,66 @@ SELECT * FROM pairLists INTO File(SCHEMA(id UINT64 NOT NULL, pairs INT32 ARRAY[]
 {"ID":2,"PAIRS":[[7,8]]}
 {"ID":3,"PAIRS":[[9,10],[11,12],[13,14],[15,16],[17,18]]}
 
+# Fixed-sized Arrays of strings should be allowed
+CREATE LOGICAL SOURCE stringArray(field1 VARSIZED ARRAY[3] NOT NULL);
+CREATE PHYSICAL SOURCE FOR stringArray TYPE File SET ('JSON' as INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"FIELD1": ["Hello", "World", "UwU"]}
+{"FIELD1": ["Foo", "Bar", "OwO"]}
+
+SELECT * FROM stringArray INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"FIELD1":["Hello","World","UwU"]}
+{"FIELD1":["Foo","Bar","OwO"]}
+
+# Variable-sized Arrays / Vectors of strings should be prohibited for now (they are nesting variable-sized types)
+SELECT * FROM stringArray INTO FILE(SCHEMA(field1 VARSIZED VECTOR NOT NULL) as "SINK"."SCHEMA", 'JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2046
+
+SELECT * FROM stringArray INTO FILE(SCHEMA(field1 VARSIZED ARRAY[] NOT NULL) as "SINK"."SCHEMA", 'JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2046
+
+# Fixed-sized Arrays of flat structs should be allowed
+CREATE LOGICAL SOURCE pointArray(field1 Point ARRAY[2] NOT NULL);
+CREATE PHYSICAL SOURCE FOR pointArray TYPE File SET ('JSON' as INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"FIELD1": [{"x": 1.0, "y": 2.0}, {"x": 4.0, "y": 8.0}]}
+{"FIELD1": [{"x": 5.0, "y": 5.0}, {"x": 9.0, "y": 6.0}]}
+
+# Variable-sized Arrays / Vectors of flat structs should be allowed
+CREATE LOGICAL SOURCE pointVector(field1 Point VECTOR NOT NULL);
+CREATE PHYSICAL SOURCE FOR pointVector TYPE File SET ('JSON' as INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"FIELD1": [{"x": 1.0, "y": 2.0}, {"x": 4.0, "y": 8.0}]}
+{"FIELD1": [{"x": 5.0, "y": 5.0}, {"x": 9.0, "y": 6.0}, {"x": 10.0, "y": 10.1}]}
+
+SELECT * FROM pointArray INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"FIELD1":[{"x":1.0,"y":2.0},{"x":4.0,"y":8.0}]}
+{"FIELD1":[{"x":5.0,"y":5.0},{"x":9.0,"y":6.0}]}
+
+SELECT * FROM pointVector INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"FIELD1":[{"x":1.0,"y":2.0},{"x":4.0,"y":8.0}]}
+{"FIELD1":[{"x":5.0,"y":5.0},{"x":9.0,"y":6.0},{"x":10.0,"y":10.1}]}
+
+# Fixed-sized Arrays of structs with variable-sized nesting-depth = 1 should be allowed
+CREATE LOGICAL SOURCE polygonArray(field1 Polygon ARRAY[2] NOT NULL);
+CREATE PHYSICAL SOURCE FOR polygonArray TYPE File SET ('JSON' as INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"FIELD1": [{"vertices":[{"x": 1.0, "y": 2.0},{"x": 3.0, "y": 6.0},{"x": 12.0, "y": 42.0}]}, {"vertices":[{"x": 4.0, "y": 8.0},{"x": 100.0, "y": 200.0},{"x": 70.0, "y": 80.0},{"x": 24.0, "y": 25.0}]}]}
+
+SELECT * FROM polygonArray INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"FIELD1":[{"vertices":[{"x":1.0,"y":2.0},{"x":3.0,"y":6.0},{"x":12.0,"y":42.0}]},{"vertices":[{"x":4.0,"y":8.0},{"x":100.0,"y":200.0},{"x":70.0,"y":80.0},{"x":24.0,"y":25.0}]}]}
+
+# Variable-sized Arrays / Vectors of structs with variable-sized nesting-depth = 1 should be prohibited
+SELECT * FROM polygonArray INTO FILE(SCHEMA(field1 Polygon VECTOR NOT NULL) as "SINK"."SCHEMA", 'JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2046
+
 # Nesting two vectors is not allowed: INT32 ARRAY[][]
 SELECT * FROM matrices INTO File(SCHEMA(id UINT64 NOT NULL, matrix INT32 ARRAY[][] NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
 ----
