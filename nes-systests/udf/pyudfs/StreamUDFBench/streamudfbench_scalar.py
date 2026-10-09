@@ -15,6 +15,30 @@ from collections import Counter
 def _str(x):
     return x.decode('utf-8') if isinstance(x, (bytes, bytearray)) else x
 
+
+# Type checks on parsed json values. Codon decides isinstance(x, T) and type(x) at compile time, and its json module
+# returns a single json.Value type, so these ask the value itself when it can tell (hasattr is also decided at compile
+# time) and fall back to isinstance otherwise. Under CPython and PyPy they are plain isinstance checks.
+# The unadapted versions of jaccard and jsonparse live in streamudfbench_original_typechecks.py.
+
+def _is_list(x):
+    if hasattr(x, "is_list"):
+        return x.is_list()
+    return isinstance(x, list)
+
+
+def _is_dict(x):
+    if hasattr(x, "is_dict"):
+        return x.is_dict()
+    return isinstance(x, dict)
+
+
+def _hashable(x):
+    """Python lists are unhashable, so they become tuples; a Codon json.Value list is hashable as is."""
+    if hasattr(x, "is_list"):
+        return x
+    return tuple(x) if isinstance(x, list) else x
+
 # U1. Add_noise : adds gaussian noise to a value and returns a float 
 def addnoise(val:int)->float:
 
@@ -234,8 +258,8 @@ def jaccard(arg1:str,arg2:str)->float:
         try:
             r=json.loads(arg1)
             s=json.loads(arg2)
-            rset=set([tuple(x) if type(x)==list else x for x in r])
-            sset=set([tuple(x) if type(x)==list else x for x in s])
+            rset=set([_hashable(x) for x in r])
+            sset=set([_hashable(x) for x in s])
             return float(len( rset & sset ))/(len( rset | sset ))
         except:
             return None
@@ -269,17 +293,21 @@ def jsoncount(jval: str) -> int:
 
 # U18.	Jsonparse: Parses a json dict per time and returns a string with the value
 
-def jsonparse(json_content: str,key1: str)->str:
+# No return annotation: Codon enforces '-> str', so 'return None' would raise there instead of yielding NULL; without
+# it Codon infers Optional[str]. CPython ignores annotations either way.
+def jsonparse(json_content: str,key1: str):
     json_content = _str(json_content)
     key1 = _str(key1)
 
     try:
         data = json.loads(json_content)
-        if isinstance(data, list):
+        if _is_list(data):
             for item in data:
-                return item.get(key1)
-        elif isinstance(data, dict):
-            return data.get(key1)
+                value = item.get(key1)
+                return None if value is None else str(value)
+        elif _is_dict(data):
+            value = data.get(key1)
+            return None if value is None else str(value)
         else:
             return None
     except:
