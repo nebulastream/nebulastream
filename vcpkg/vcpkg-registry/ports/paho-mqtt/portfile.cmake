@@ -20,6 +20,7 @@ vcpkg_from_github(
     fix-unresolvedsymbol-arm.patch
     fix-ODR-libuuid-linux.patch
     0001-Fix-missing-unsigned-char-traits.patch
+    0002-Fix-double-free-on-QoS-publish-SOCKET_ERROR.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" PAHO_BUILD_STATIC)
