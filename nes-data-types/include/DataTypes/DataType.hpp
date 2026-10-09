@@ -148,6 +148,13 @@ struct DataType final
     /// Returns whether this data type can be stored entirely inlined, without pointers to a child-buffer for varsized contents.
     /// This is true for our base types as well as STRUCT and FIXESIZED types with only flat members.
     [[nodiscard]] bool isFlat() const;
+    /// For a datatype, get the maximum amount of nested variable-sized types.
+    /// For example: INT32 -> 0, VARSIZED -> 1, INT32 ARRAY[3] -> 0, INT32 ARRAY[][] -> 2, INT32 ARRAY[][2][] -> 2, STRUCT{INT32, INT32 ARRAY[][], INT32 ARRAY} -> 2, STRUCT{STRUCT{BOOLEAN, VARSIZED}, INT32} -> 1.
+    /// Currently, any type with a varsized nesting depth > 1 is not supported.
+    [[nodiscard]] uint32_t getVarsizedNestingDepth() const;
+
+    /// A registered struct plugin or an array type is "valid", if its maximum varsized nesting depth is < 2;
+    [[nodiscard]] bool isValid() const { return getVarsizedNestingDepth() < 2; }
 
     Type type;
     bool nullable;
