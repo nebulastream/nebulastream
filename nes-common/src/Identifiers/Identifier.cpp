@@ -42,7 +42,13 @@ std::string canonicalizeIdentifier(std::string_view identifierValue, bool quoted
     {
         identifierValue.remove_prefix(1);
         identifierValue.remove_suffix(1);
-        return std::string(identifierValue);
+        std::string result(identifierValue);
+        size_t pos = 0;
+        while ((pos = result.find("\"\"", pos)) != std::string::npos) {
+            result.replace(pos, 2, "\"");
+            pos += 1;
+        }
+        return result;
     }
     return toUpperCase(identifierValue);
 }
