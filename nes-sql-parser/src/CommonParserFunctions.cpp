@@ -361,7 +361,14 @@ Schema<UnqualifiedUnboundField, Ordered> bindSchema(AntlrSQLParser::SchemaDefini
 
 DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const DataType::NULLABLE isNullable)
 {
-    std::string dataTypeText = typeDefAST->getText();
+    /// Resolve the leading type-name token in isolation. When the rule also matches
+    /// the optional `ARRAY '[' count ']'` suffix, calling `getText()` on the whole
+    /// rule would concatenate everything into an unparseable string.
+    /// The name is a DATA_TYPE token for built-ins (`UINT16`) and an IDENTIFIER token
+    /// for plugin-registered named types (`Image`); exactly one of the two is present.
+    auto* const typeNameToken = typeDefAST->DATA_TYPE() != nullptr ? typeDefAST->DATA_TYPE() : typeDefAST->IDENTIFIER();
+    INVARIANT(typeNameToken != nullptr, "typeDefinition must carry either a DATA_TYPE or an IDENTIFIER token");
+    std::string dataTypeText = typeNameToken->getText();
 
     bool translated = false;
     bool isUnsigned = false;
@@ -387,6 +394,114 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
             return found->second;
         }();
     }
+
+    /// `T ARRAY[N]` syntax → FIXEDSIZED. The element type comes from the leading
+    /// DATA_TYPE token (must be primitive); the count is the bracketed integer.
+    /// Nested arrays may be created by repating brackets with counts after the initial bracket (ARRAY [N][M]...)
+    /// A nested array may at most contain one variablesized subcontainer (vector). (ARRAY [3][] is allowed, ARRAY[][] is prohibited)
+    if (typeDefAST->ARRAY() != nullptr)
+    {
+        /// The type of the values within this possibly nested array structure.
+        /// For now we constrain it to be a fixedsized basic type (STRUCT and VARSIZED prohibited).
+        const auto elementType = DataTypeProvider::tryProvideDataType(dataTypeText, DataType::NULLABLE::NOT_NULLABLE);
+        if (not elementType.has_value())
+        {
+            throw UnknownDataType("Could not find data type {}.", dataTypeText);
+        }
+        if (elementType->type == DataType::Type::UNDEFINED)
+        {
+            throw UnknownDataType("ARRAYS and VECTORS are not allowed to carry UNDEFINED elements.");
+        }
+        if (elementType->type == DataType::Type::VECTOR || elementType->type == DataType::Type::FIXEDSIZED)
+        {
+            /// I think this is not possible to reach, but just to be sure we throw an error here.
+            throw UnknownDataType(
+                "Do not define an array of arrays using ARRAY ARRAY. Instead, append square brackets like: INT32 ARRAY[2][3]");
+        }
+
+        /// Function to parse the counts token of fixedsized arrays.
+        const auto parseCount = [](antlr4::Token* token) -> uint32_t
+        {
+            const auto countText = token->getText();
+            uint32_t count = 0;
+            try
+            {
+                count = static_cast<uint32_t>(std::stoul(countText));
+            }
+            catch (const std::exception&)
+            {
+                throw UnknownDataType("Could not parse FIXEDSIZED array count '{}' as a positive integer", countText);
+            }
+            if (count == 0)
+            {
+                throw UnknownDataType("FIXEDSIZED array count must be greater than zero");
+            }
+            return count;
+        };
+
+        /// Hold the datatype of the element that was just parsed. It starts as the innermost element type and will hold the array type containing all nested types found in the iterations over the brackets
+        DataType current = *elementType;
+
+        /// Keeps track of the nesting depth of variable-sized elements. Initially, this will be set to the variable-sized nesting depth of the element type.
+        /// For each vector, encapsulating the element type, we increment this number.
+        /// Currently, any type with a nesting depth of 2 or more is prohibited by the system.
+        uint32_t varsizedNestingDepth = current.getVarsizedNestingDepth();
+
+        const auto dimensions = typeDefAST->arrayDimension();
+
+        /// Iterate over the array definition from right to left, meaning from innermost to outermost element and create the data type incrementally
+        for (size_t i = dimensions.size(); i-- > 0;)
+        {
+            /// Nullability for the outermost structure depends on the isNullable. The inner containers cannot be null.
+            const DataType::NULLABLE isNull = i == 0 ? isNullable : DataType::NULLABLE::NOT_NULLABLE;
+            if (dimensions[i]->count == nullptr)
+            {
+                /// No count means vector type. We need to increment the varsized nesting depth by 1
+                ++varsizedNestingDepth;
+                current = DataType{DataType::Type::VECTOR, isNull, current};
+            }
+            else
+            {
+                /// Fixedsized array with count.
+                current = DataType{DataType::Type::FIXEDSIZED, isNull, current, parseCount(dimensions[i]->count)};
+            }
+        }
+        /// Return error if we nested 2 or more variable-sized types.
+        if (varsizedNestingDepth > 1)
+        {
+            throw NestedVariableSizedType("Nesting two or more variable-sized types (varsized, vector) is currently not supported");
+        }
+        return current;
+    }
+
+    /// T VECTOR is sugar for T ARRAY[]
+    if (typeDefAST->VECTOR() != nullptr)
+    {
+        const auto elementType = DataTypeProvider::tryProvideDataType(dataTypeText, DataType::NULLABLE::NOT_NULLABLE);
+        if (not elementType.has_value())
+        {
+            throw UnknownDataType("Could not find data type {}.", dataTypeText);
+        }
+        if (elementType->type == DataType::Type::UNDEFINED)
+        {
+            throw UnknownDataType("ARRAYS and VECTORS are not allowed to carry UNDEFINED elements.");
+        }
+        if (elementType->type == DataType::Type::VECTOR || elementType->type == DataType::Type::FIXEDSIZED)
+        {
+            /// I think this is not possible to reach, but just to be sure we throw an error here.
+            throw UnknownDataType(
+                "Do not define a vector of arrays using ARRAY VECTOR. Instead, append square brackets like: INT32 ARRAY[][3]");
+        }
+        if (not elementType->isFlat())
+        {
+            throw NestedVariableSizedType(
+                "{} is not a supported element type for `VECTOR`; only flat types that can be stored inline are allowed (primitive types, "
+                "structs with fixed-sized fields, fixed-sized arrays with fixed-sized elements",
+                dataTypeText);
+        }
+        return DataType{DataType::Type::VECTOR, isNullable, *elementType};
+    }
+
     const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);
     if (not dataType.has_value())
     {

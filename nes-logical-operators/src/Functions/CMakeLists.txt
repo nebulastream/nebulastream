@@ -30,6 +30,8 @@ add_source_files(nes-logical-operators
         CastFromUnixTimestampLogicalFunction.cpp
         VarSizedToNumericLogicalFunction.cpp
         ExtractFromTimestampLogicalFunction.cpp
+        ConstructArrayLogicalFunction.cpp
+        ConstructStructLogicalFunction.cpp
 )
 
 
@@ -47,6 +49,8 @@ add_unreflection_entry(LogicalFunction VarSizedToNumeric)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+add_unreflection_entry(LogicalFunction ConstructArray)
+add_unreflection_entry(LogicalFunction ConstructStruct)
 
 add_registry_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
 add_registry_entry(LogicalFunction CastToType)
@@ -63,3 +67,5 @@ add_registry_entry(LogicalFunction OctetLength KEY OCTET_LENGTH)
 add_registry_entry(LogicalFunction ToBase64 KEY TO_BASE64)
 add_registry_entry(LogicalFunction UnboundFieldAccess)
 add_registry_entry(LogicalFunction VarSizedToNumeric)
+add_registry_entry(LogicalFunction ConstructArray)
+add_registry_entry(LogicalFunction ConstructStruct)

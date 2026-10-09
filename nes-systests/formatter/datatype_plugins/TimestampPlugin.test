@@ -1,0 +1,58 @@
+# name: TimestampPlugin.test
+# description: Tests the datatypes included in the "Time" plugin
+# groups: [Formatter]
+
+CREATE LOGICAL SOURCE timeSource(date Date NOT NULL, time Time NOT NULL, timestamp Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource TYPE FILE;
+ATTACH INLINE
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
+
+CREATE LOGICAL SOURCE timeSource2(date Date NOT NULL, time Time NOT NULL, timestamp Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource2 TYPE FILE;
+ATTACH INLINE
+-20044-08-28,03:52:42,+20085-07-11 12:32:07.278912
+
+CREATE LOGICAL SOURCE timeSource3(DATE Date NOT NULL, TIME Time NOT NULL, TIMESTAMP Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource3 TYPE FILE SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"DATE":"2004-08-28","TIME":"03:52:42","TIMESTAMP":"2008-07-11T12:32:07,278912"}
+
+CREATE LOGICAL SOURCE timeSource4(date Date NOT NULL, time Time NOT NULL, timestamp Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource4 TYPE FILE SET('timestamp:UnixEpochTimestamp' as "INPUT_FORMATTER".VALUE_DESERIALIZERS);
+ATTACH INLINE
+2004-08-28,03:52:42,1215779527278912
+
+# Test CSV format deserialization of the timestamps
+SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
+
+# Display timestamp as unix epoch timestamp
+SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT, 'timestamp:UnixEpochTimestamp' as "OUTPUT_FORMATTER".VALUE_SERIALIZERS);
+----
+2004-08-28,03:52:42,1215779527278912
+
+# Receive timestamp as unix epoch timestamp
+SELECT * from timeSource4 INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
+
+# Test CSV format deserialization of the timestamps with years out of 4 digit range
+SELECT * FROM timeSource2 INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+-20044-08-28,03:52:42,+20085-07-11 12:32:07.278912
+
+# Test CSV format deserialization of the timestamps with comma instead of point for second fractions and a T delimiting date and time for timestamps
+SELECT * FROM timeSource3 INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
+
+CREATE LOGICAL SOURCE timeSourceJSON(DATE Date NOT NULL, TIME Time NOT NULL, TIMESTAMP Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSourceJSON TYPE FILE SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"DATE": "2004-08-28", "TIME": "03:52:42", "TIMESTAMP": "2008-07-11 12:32:07.278912"}
+
+# Test CSV format deserialization of the timestamps
+SELECT * FROM timeSourceJSON INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"DATE":"2004-08-28","TIME":"03:52:42","TIMESTAMP":"2008-07-11 12:32:07.278912"}

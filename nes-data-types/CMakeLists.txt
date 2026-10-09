@@ -22,7 +22,8 @@ set_target_properties(nes-data-types PROPERTIES LINKER_LANGUAGE CXX)
 # Runtime registry: entries are keyed by the DataType::Type enumerator and construct the type
 # directly — no per-plugin classes exist.
 create_runtime_registry(DataType nes-data-types
-        ENTRY_TEMPLATE "[](DataTypeRegistryArguments arguments) { return DataType{DataType::Type::\${KEY}, arguments.nullable}; }")
+        ENTRY_TEMPLATE "&provide\${KEY}DataType"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}DataType.hpp")
 
 add_subdirectory(src)
 get_source(nes-data-types NES_COMPILER_SOURCE_FILES)

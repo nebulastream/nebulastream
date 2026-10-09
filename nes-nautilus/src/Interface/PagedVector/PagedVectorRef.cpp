@@ -206,10 +206,11 @@ void DefaultPagedVectorTupleLayout::writeRecord(
     const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized)
 {
     /// Varsized data is appended to the paged vector's page via the allocate callback, then copied in.
-    const VarSizedStoreFn storeVarSized = [&allocateVarSized](const nautilus::val<int8_t*>& slot, const VarVal& value)
+    const VarSizedStoreFn storeVarSized
+        = [&allocateVarSized](
+              const nautilus::val<int8_t*>& slot, const nautilus::val<int8_t*> varsizedContent, const nautilus::val<uint64_t>& varSizedSize)
     {
-        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(slot, varSizedValue.getSize());
+        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(slot, varSizedSize);
         invoke(
             +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
             {
@@ -217,8 +218,8 @@ void DefaultPagedVectorTupleLayout::writeRecord(
                 std::memcpy(varSizedMemAddress, varSizedDataPtr, varSizedDataLength);
             },
             varSizedMemAddress,
-            varSizedValue.getContent(),
-            varSizedValue.getSize());
+            varsizedContent,
+            varSizedSize);
     };
     uint64_t fieldOffset = 0;
     const auto access = FieldAccess::createFieldAccesses(

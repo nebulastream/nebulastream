@@ -28,6 +28,39 @@ add_plugin("Rules/RedundantUnionRemovalRule")
 add_plugin("Functions/Conditional")
 add_plugin("OutputFormatters/JSONOutputFormatter/Serializers")
 add_plugin("InputFormatters/JSONInputFormatter/Deserializers")
+add_plugin("DataTypes/Image")
+add_plugin("DataTypes/Reading")
+add_plugin("DataTypes/GeoSpatial")
+add_plugin("DataTypes/Matrices")
+add_plugin("DataTypes/Time")
+add_plugin("DataTypes/NestedVarsized")
+
+# MEOS is a dependency
+add_plugin("MEOS")
+message(STATUS "Enable MEOS Plugin")
+
+# Detect the platform
+if (APPLE)
+  message(STATUS "Building on macOS")
+  # Set the include and library directories for Homebrew (macOS)
+  set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
+  set(MEOS_PLUGIN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" CACHE PATH "Path to MEOS plugin include directory")
+  include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR})
+  include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR})
+  link_directories(${MEOS_LIBRARY_DIR} )
+
+else()
+  message(STATUS "Building on Linux")
+
+  # Default behavior for Linux
+  find_package(meos REQUIRED)
+  if(meos_FOUND)
+    message(STATUS "MEOS found: include=${meos_INCLUDE_DIR}, library=${meos}")
+    include_directories(SYSTEM ${meos_INCLUDE_DIR})
+  else()
+    message(FATAL_ERROR "MEOS library not found")
+  endif()
+endif()
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

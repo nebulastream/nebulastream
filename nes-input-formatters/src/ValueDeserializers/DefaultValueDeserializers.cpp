@@ -128,7 +128,9 @@ VarVal DefaultBOOLValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<bool>> deserializedResult;
     nautilus::invoke(
@@ -141,11 +143,26 @@ VarVal DefaultBOOLValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultBOOLValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultBOOLValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<bool>> deserializedResult;
     nautilus::invoke(
@@ -159,11 +176,25 @@ VarVal NullableDefaultBOOLValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultBOOLValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultCHARValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<char> nautilusValue{char{0}};
     nautilus::val<DefaultValueDeserializer::DeserializedResult<char>> deserializedResult;
@@ -190,11 +221,26 @@ VarVal DefaultCHARValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultCHARValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultCHARValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<char> nautilusValue{char{0}};
     nautilus::val<bool> isNull{false};
@@ -224,11 +270,25 @@ VarVal NullableDefaultCHARValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultCHARValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultF32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<float>> deserializedResult;
     nautilus::invoke(
@@ -241,11 +301,26 @@ VarVal DefaultF32ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultF32ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultF32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<float>> deserializedResult;
     nautilus::invoke(
@@ -259,11 +334,25 @@ VarVal NullableDefaultF32ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultF32ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultF64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<double>> deserializedResult;
     nautilus::invoke(
@@ -276,11 +365,26 @@ VarVal DefaultF64ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultF64ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultF64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<double>> deserializedResult;
     nautilus::invoke(
@@ -294,11 +398,25 @@ VarVal NullableDefaultF64ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultF64ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int8_t>> deserializedResult;
     nautilus::invoke(
@@ -311,11 +429,26 @@ VarVal DefaultINT8ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultINT8ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int8_t>> deserializedResult;
     nautilus::invoke(
@@ -329,11 +462,25 @@ VarVal NullableDefaultINT8ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultINT8ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int16_t>> deserializedResult;
     nautilus::invoke(
@@ -346,11 +493,26 @@ VarVal DefaultINT16ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultINT16ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int16_t>> deserializedResult;
     nautilus::invoke(
@@ -364,11 +526,25 @@ VarVal NullableDefaultINT16ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultINT16ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int32_t>> deserializedResult;
     nautilus::invoke(
@@ -381,11 +557,26 @@ VarVal DefaultINT32ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultINT32ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int32_t>> deserializedResult;
     nautilus::invoke(
@@ -399,11 +590,25 @@ VarVal NullableDefaultINT32ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultINT32ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int64_t>> deserializedResult;
     nautilus::invoke(
@@ -416,11 +621,26 @@ VarVal DefaultINT64ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultINT64ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<int64_t>> deserializedResult;
     nautilus::invoke(
@@ -434,11 +654,25 @@ VarVal NullableDefaultINT64ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultINT64ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultUINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint8_t>> deserializedResult;
     nautilus::invoke(
@@ -451,11 +685,26 @@ VarVal DefaultUINT8ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultUINT8ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultUINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint8_t>> deserializedResult;
     nautilus::invoke(
@@ -469,11 +718,25 @@ VarVal NullableDefaultUINT8ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultUINT8ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultUINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint16_t>> deserializedResult;
     nautilus::invoke(
@@ -486,11 +749,26 @@ VarVal DefaultUINT16ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultUINT16ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultUINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint16_t>> deserializedResult;
     nautilus::invoke(
@@ -504,11 +782,25 @@ VarVal NullableDefaultUINT16ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultUINT16ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultUINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint32_t>> deserializedResult;
     nautilus::invoke(
@@ -521,11 +813,26 @@ VarVal DefaultUINT32ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultUINT32ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultUINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint32_t>> deserializedResult;
     nautilus::invoke(
@@ -539,11 +846,25 @@ VarVal NullableDefaultUINT32ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultUINT32ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultUINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint64_t>> deserializedResult;
     nautilus::invoke(
@@ -556,11 +877,26 @@ VarVal DefaultUINT64ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, false, false};
 }
 
+void DefaultUINT64ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultUINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<DefaultValueDeserializer::DeserializedResult<uint64_t>> deserializedResult;
     nautilus::invoke(
@@ -574,11 +910,25 @@ VarVal NullableDefaultUINT64ValueDeserializer::deserializeToVarVal(
     return VarVal{nautilusValue, true, isNull};
 }
 
+void NullableDefaultUINT64ValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
+}
+
 VarVal DefaultVARSIZEDValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>&,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<const int8_t*> trueFieldAddress = fieldAddress;
     nautilus::val<uint64_t> trueFieldSize = fieldSize;
@@ -600,11 +950,26 @@ VarVal DefaultVARSIZEDValueDeserializer::deserializeToVarVal(
     return VarVal{varsized, false, false};
 }
 
+void DefaultVARSIZEDValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    const VarVal deserializedVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    deserializedVal.writeToMemory(bufferAddress);
+}
+
 VarVal NullableDefaultVARSIZEDValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const ArenaRef&) const
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     nautilus::val<const int8_t*> trueFieldAddress = fieldAddress;
     nautilus::val<uint64_t> trueFieldSize = fieldSize;
@@ -640,6 +1005,18 @@ VarVal NullableDefaultVARSIZEDValueDeserializer::deserializeToVarVal(
     }
     const VariableSizedData varsized{static_cast<nautilus::val<int8_t*>>(trueFieldAddress), trueFieldSize};
     return VarVal{varsized, true, isNull};
+}
+
+void NullableDefaultVARSIZEDValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>&,
+    const nautilus::val<uint64_t>&,
+    const std::vector<std::string>&,
+    const ArenaRef&,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&,
+    const nautilus::val<int8_t*>&) const
+{
+    PRECONDITION(false, "Extensible DataTypes POC does not include nullable struct and array elements");
 }
 
 ValueDeserializerRegistryReturnType DefaultBOOLValueDeserializer::provideDeserializer(ValueDeserializerRegistryArguments)

@@ -21,6 +21,9 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <utility>
+#include <vector>
+#include <Util/Box.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
 
@@ -45,6 +48,9 @@ struct DataType final
         CHAR,
         UNDEFINED,
         VARSIZED,
+        FIXEDSIZED,
+        STRUCT,
+        VECTOR
     };
 
     enum class NULLABLE : uint8_t
@@ -54,6 +60,15 @@ struct DataType final
     };
 
     DataType(Type type, NULLABLE nullable);
+    /// Todo: remove in a proper frontend datatype refactoring
+    /// Constructor for vectors -> no fixed size but an element type
+    DataType(Type type, NULLABLE nullable, DataType elementType);
+    /// /// FIXEDSIZED-only constructor: also carries element type and count. The element type can be any DataType, enabling nesting.
+    DataType(Type type, NULLABLE nullable, DataType elementType, uint32_t count);
+    /// STRUCT-only constructor: nominal name + ordered named field layout.
+    /// Hacky PoC for extensible composite types — plugins register a creator that
+    /// builds one of these for their named struct (e.g. "Image").
+    DataType(Type type, NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields);
     DataType();
 
     template <class T>
@@ -130,9 +145,27 @@ struct DataType final
     [[nodiscard]] bool isSignedInteger() const;
     [[nodiscard]] bool isFloat() const;
     [[nodiscard]] bool isNumeric() const;
+    /// Returns whether this data type can be stored entirely inlined, without pointers to a child-buffer for varsized contents.
+    /// This is true for our base types as well as STRUCT and FIXESIZED types with only flat members.
+    [[nodiscard]] bool isFlat() const;
+    /// For a datatype, get the maximum amount of nested variable-sized types.
+    /// For example: INT32 -> 0, VARSIZED -> 1, INT32 ARRAY[3] -> 0, INT32 ARRAY[][] -> 2, INT32 ARRAY[][2][] -> 2, STRUCT{INT32, INT32 ARRAY[][], INT32 ARRAY} -> 2, STRUCT{STRUCT{BOOLEAN, VARSIZED}, INT32} -> 1.
+    /// Currently, any type with a varsized nesting depth > 1 is not supported.
+    [[nodiscard]] uint32_t getVarsizedNestingDepth() const;
+
+    /// A registered struct plugin or an array type is "valid", if its maximum varsized nesting depth is < 2;
+    [[nodiscard]] bool isValid() const { return getVarsizedNestingDepth() < 2; }
 
     Type type;
     bool nullable;
+    /// Only set when `type == FIXEDSIZED`; empty otherwise. Boxed, as a DataType cannot directly contain another DataType.
+    /// Box compares deeply, so the defaulted comparison operators keep value semantics.
+    Box<DataType> elementType;
+    uint32_t count = 0;
+    /// Only meaningful when `type == STRUCT`. Identity is nominal: two STRUCTs
+    /// are equal if name and fields match.
+    std::string structName;
+    std::vector<std::pair<std::string, DataType>> fields;
 };
 
 template <>
@@ -149,12 +182,41 @@ struct Unreflector<DataType>
 
 }
 
+namespace NES::detail
+{
+/// Flat, reflectable mirror of DataType. All variant-specific members are always
+/// present; which ones are meaningful is decided by `type` on the way back
+/// (mirrors the DataType constructors). Reflecting an aggregate serializes to a
+/// named object, so the wire form is self-documenting and order-independent.
+struct ReflectedDataType
+{
+    DataType::Type type;
+    bool nullable;
+    std::optional<DataType> elementType;
+    uint32_t count;
+    std::string structName;
+    std::vector<std::pair<std::string, DataType>> fields;
+};
+}
+
 template <>
 struct std::hash<NES::DataType>
 {
     size_t operator()(const NES::DataType& dataType) const noexcept
     {
-        return (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
+        size_t h = (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
+        if (dataType.elementType.hasValue())
+        {
+            h ^= std::hash<NES::DataType>{}(*dataType.elementType) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        h ^= static_cast<size_t>(dataType.count) << 24;
+        h ^= std::hash<std::string>{}(dataType.structName) << 1;
+        for (const auto& [name, field] : dataType.fields)
+        {
+            h ^= std::hash<std::string>{}(name) + 0x9e3779b9 + (h << 6) + (h >> 2);
+            h ^= std::hash<NES::DataType>{}(field) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        return h;
     }
 };
 

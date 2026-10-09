@@ -19,3 +19,6 @@ target_include_directories(json_value_serializer_plugin PUBLIC ${CMAKE_CURRENT_S
 link_plugin_library(nes-output-formatters json_value_serializer_plugin)
 add_registry_entry(ValueSerializer JSONCHAR HEADER JSONValueSerializers.hpp)
 add_registry_entry(ValueSerializer JSONVARSIZED HEADER JSONValueSerializers.hpp)
+add_registry_entry(ValueSerializer JSONSTRUCT HEADER JSONValueSerializers.hpp)
+add_registry_entry(ValueSerializer JSONFIXEDSIZED HEADER JSONValueSerializers.hpp)
+add_registry_entry(ValueSerializer JSONVECTOR HEADER JSONValueSerializers.hpp)

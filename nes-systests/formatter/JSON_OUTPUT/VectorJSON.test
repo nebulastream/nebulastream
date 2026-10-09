@@ -1,0 +1,52 @@
+# name: VectorJSON.test
+# description: Round-trips a vector column from JSON input through the JSON parser, the VECTOR indirect-storage path, and the JSON output formatter.
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE polygons(timestamp UINT64 NOT NULL, lon UINT64 VECTOR NOT NULL, lat UINT64 VECTOR NOT NULL);
+CREATE PHYSICAL SOURCE FOR polygons TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"TIMESTAMP": 1714060800000, "LON": [1, 2, 4, 3, 2], "LAT": [50, 60, 80, 60, 30]}
+{"TIMESTAMP": 1714060800040, "LON": [1, 2, 3], "LAT": [30, 40, 90]}
+
+SELECT * FROM polygons INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"TIMESTAMP":1714060800000,"LON":[1,2,4,3,2],"LAT":[50,60,80,60,30]}
+{"TIMESTAMP":1714060800040,"LON":[1,2,3],"LAT":[30,40,90]}
+
+# Tests for fixedsized / structs with varsized fields
+CREATE LOGICAL SOURCE temporalPolygons(timedPolygon TemporalPolygon NOT NULL);
+CREATE PHYSICAL SOURCE FOR temporalPolygons TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"TIMEDPOLYGON": {"ts": 100, "polygon": {"vertices": [{"x": 1, "y": 50}, {"x": 2, "y": 60}, {"x": 4, "y": 80}, {"x": 3, "y": 60}, {"x": 2, "y": 30}, {"x": 1, "y": 50}]}}}
+{"TIMEDPOLYGON": {"ts": 110, "polygon": {"vertices": [{"x": 1, "y": 30}, {"x": 2, "y": 40}, {"x": 3, "y": 90}, {"x": 1, "y": 30}]}}}
+
+SELECT * FROM temporalPolygons INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"TIMEDPOLYGON":{"ts":100,"polygon":{"vertices":[{"x":1.0,"y":50.0},{"x":2.0,"y":60.0},{"x":4.0,"y":80.0},{"x":3.0,"y":60.0},{"x":2.0,"y":30.0}, {"x":1.0, "y":50.0}]}}}
+{"TIMEDPOLYGON":{"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0}, {"x":1.0, "y":30.0}]}}}
+
+# Test nested fixedsized
+CREATE LOGICAL SOURCE MatrixSource(matrixStruct Matrix NOT NULL);
+CREATE PHYSICAL SOURCE FOR MatrixSource TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"MATRIXSTRUCT": {"matrix": [[1.0, 2.0, 3.0],[4.0,5.0,6.0],[7.0,8.0,9.0]]}}
+{"MATRIXSTRUCT": {"matrix": [[10.0, 20.0, 30.0],[40.0,50.0,60.0],[70.0,80.0,90.0]]}}
+
+SELECT * FROM MatrixSource INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"MATRIXSTRUCT":{"matrix":[[1.0,2.0,3.0],[4.0,5.0,6.0],[7.0,8.0,9.0]]}}
+{"MATRIXSTRUCT":{"matrix":[[10.0,20.0,30.0],[40.0,50.0,60.0],[70.0,80.0,90.0]]}}
+
+# Test ability to create VECTOR via ARRAY[]
+CREATE LOGICAL SOURCE altVec(vec INT32 ARRAY[] NOT NULL);
+CREATE PHYSICAL SOURCE FOR altVec TYPE File SET('JSON' as INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"VEC":[1,2,3,4,5]}
+{"VEC":[2,0,7]}
+{"VEC":[1,1,0,1,0,1,1]}
+
+SELECT * FROM altVec INTO FILE(SCHEMA(vec INT32 VECTOR NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
+----
+{"VEC":[1,2,3,4,5]}
+{"VEC":[2,0,7]}
+{"VEC":[1,1,0,1,0,1,1]}

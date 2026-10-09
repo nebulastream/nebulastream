@@ -148,6 +148,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
 {
     Record record;
     const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    const auto& jsonIndexer = dynamic_cast<const SIMDJSONInputFormatIndexer&>(indexer);
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
         const auto fieldName = bufferRef.getAllFieldNames().at(i);
@@ -158,7 +159,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         }
 
         auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        const DataType& fieldDataType = jsonIndexer.getFieldDataTypeAt(i);
 
         nautilus::val<RawJsonAccessResult> fieldAccessResult;
         /// Retrieve the address and size of the raw field value
@@ -183,9 +184,14 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         /// These are the temporary defaults for our JSON format. Later, these arguments will be set by the user in the source definition.
         const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = true, .hasTrailingSpaces = true};
         const std::unique_ptr<ValueDeserializer> valueDeserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal parsedVal
-            = valueDeserializer->deserializeToVarVal(static_cast<nautilus::val<int8_t*>>(address), size, indexer.getNullValues(), arena);
+            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType), deserializerConfig);
+        const VarVal parsedVal = valueDeserializer->deserializeToVarVal(
+            static_cast<nautilus::val<int8_t*>>(address),
+            size,
+            indexer.getNullValues(),
+            arena,
+            indexer.getDeserializerTypes(),
+            fieldDataType);
         record.write(fieldName, parsedVal);
     }
     /// Increment iterator and return record

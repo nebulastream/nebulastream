@@ -71,6 +71,7 @@ EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
 EXCEPTION(UnknownValueSerializerType, 2044, "unknown value serializer type")
 EXCEPTION(UnknownValueDeserializerType, 2045, "unknown value deserializer type")
+EXCEPTION(NestedVariableSizedType, 2046, "Forbidden nesting of two or more variable-sized data types (varsized, vector)")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
@@ -88,6 +89,7 @@ EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipel
 EXCEPTION(InferenceRuntimeFailure, 3006, "inference runtime failure")
 EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
 EXCEPTION(WindowingError, 3014, "windowing error")
+EXCEPTION(OutOfRangeAccess, 3015, "out of range access")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

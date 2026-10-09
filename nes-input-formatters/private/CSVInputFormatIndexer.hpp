@@ -95,13 +95,18 @@ public:
         const char fieldDelimiter,
         const bool allowCommasInStrings,
         const std::vector<Record::RecordFieldIdentifier>& fieldNames,
-        const std::string& deserializerOverrides)
+        const std::string& deserializerOverrides,
+        std::vector<DataType> fieldDataTypes)
         : tupleDelimiter(tupleDelimiter)
         , fieldDelimiter(fieldDelimiter)
         , allowCommasInStrings(allowCommasInStrings)
         , numberOfFields(fieldNames.size())
         , nullValues({""})
+        , fieldDataTypes(std::move(fieldDataTypes))
     {
+        /// We intentionally do not define defaults for STRUCT, VECTOR and FIXEDSIZED here, as CSV does not support these variants by default.
+        /// Should the user try to receive CSV-formatted data with such types, they will encounter an error, unless a specific deserializer
+        /// was defined for these fields or the STRUCT-plugin field defines its own default deserializer.
         deserializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
         deserializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
         deserializerTypes[DataType::Type::UINT32] = "DefaultUINT32";
@@ -129,7 +134,8 @@ public:
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS),
             tupleBufferRef.getAllFieldNames(),
-            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
+            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS),
+            tupleBufferRef.getAllDataTypes());
     }
 
     ~CSVInputFormatIndexer() override = default;
@@ -142,6 +148,8 @@ public:
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 
+    [[nodiscard]] const DataType& getFieldDataTypeAt(uint64_t fieldIndex) const { return fieldDataTypes[fieldIndex]; }
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
@@ -152,7 +160,7 @@ private:
     char fieldDelimiter;
     bool allowCommasInStrings{};
     size_t numberOfFields;
-    std::vector<std::string> nullValues;
+    std::vector<std::string> nullValues{};
+    std::vector<DataType> fieldDataTypes;
 };
-
 }

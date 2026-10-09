@@ -22,10 +22,12 @@
 #include <function.hpp>
 #include <static.hpp>
 
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
+#include <CSVInputFormatIndexer.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatter.hpp>
 #include <RawBufferIndex.hpp>
@@ -77,10 +79,14 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
     Record record;
     const auto indexBufferPtr = nautilus::invoke(getIndexValuesProxy, rawBufferIndex);
     const auto numberOfFields = bufferRef.getAllDataTypes().size();
+
+    const auto& csvIndexer = dynamic_cast<const CSVInputFormatIndexer&>(indexer);
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
         const auto fieldName = bufferRef.getAllFieldNames().at(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        /// Must be a reference into the indexer, which outlives compilation, and not a copy. Every struct deserializer which needs access to the field names within a nautilus invoke bakes
+        /// pointers to the sub-field names of this DataType into the traced code as constants.
+        const DataType& fieldDataType = csvIndexer.getFieldDataTypeAt(i);
         if (not includesField(projections, fieldName))
         {
             continue;
@@ -100,8 +106,9 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         /// These are the temporary defaults for our CSV format. Later, these arguments will be set by the user in the source definition.
         const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = false, .hasTrailingSpaces = false};
         const std::unique_ptr<ValueDeserializer> deserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal deserializedVal = deserializer->deserializeToVarVal(fieldAddress, fieldSize, indexer.getNullValues(), arena);
+            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType), deserializerConfig);
+        const VarVal deserializedVal = deserializer->deserializeToVarVal(
+            fieldAddress, fieldSize, indexer.getNullValues(), arena, indexer.getDeserializerTypes(), fieldDataType);
         record.write(fieldName, deserializedVal);
     }
     return record;
@@ -109,6 +116,11 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
 
 void FieldOffsetRawBufferIndex::startSetup(const size_t numberOfFieldsInSchema)
 {
+    PRECONDITION(
+        sizeOfFieldDelimiter <= std::numeric_limits<FieldIndex>::max(),
+        "Size of field delimiter must be smaller than: {}",
+        std::numeric_limits<FieldIndex>::max());
+    this->sizeOfFieldDelimiter = static_cast<FieldIndex>(sizeOfFieldDelimiter);
     this->numberOfFieldsInSchema = numberOfFieldsInSchema;
     this->numberOfOffsetsPerTuple = this->numberOfFieldsInSchema + 1;
     this->totalNumberOfTuples = 0;

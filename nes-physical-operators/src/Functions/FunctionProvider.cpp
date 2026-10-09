@@ -13,6 +13,8 @@
 */
 #include <Functions/FunctionProvider.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -31,6 +33,8 @@
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
@@ -61,7 +65,33 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     }
 
     /// 3. Calling the registry to create an executable function.
-    if (const auto factory = PhysicalFunctionRegistry::instance().find(std::string(logicalFunction.getType())))
+
+    /// 3a. Per-struct operator dispatch. When at least one operand is a STRUCT, prefer a
+    /// keyed plugin variant `<FuncType>_<typeKey(L)>_<typeKey(R)>` so plugins can register
+    /// struct-specific semantics (e.g. `Greater_Reading_Reading`) without core knowing about
+    /// any particular struct. Falls through to the generic registry if no override exists.
+    const auto baseName = std::string(logicalFunction.getType());
+    if (inputTypes.size() == 2 && std::ranges::any_of(inputTypes, [](const auto& t) { return t.type == DataType::Type::STRUCT; }))
+    {
+        const auto typeKey = [](const DataType& dt) -> std::string
+        { return dt.type == DataType::Type::STRUCT ? dt.structName : std::string(magic_enum::enum_name(dt.type)); };
+        const auto specializedName = fmt::format("{}_{}_{}", baseName, typeKey(inputTypes[0]), typeKey(inputTypes[1]));
+        if (const auto factory = PhysicalFunctionRegistry::instance().find(specializedName))
+        {
+            return (*factory)(PhysicalFunctionRegistryArguments{
+                .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
+        }
+        /// Ordering comparisons accept STRUCT operands during type inference only because a plugin is expected to define
+        /// their semantics. The generic numeric implementations cannot handle STRUCTs, so fail here instead of at runtime.
+        constexpr std::array<std::string_view, 4> structOnlyViaPlugin{"Greater", "GreaterEquals", "Less", "LessEquals"};
+        if (std::ranges::contains(structOnlyViaPlugin, baseName))
+        {
+            throw UnknownFunctionType(
+                "Can not lower function: {}. No physical function registered as {}", logicalFunction, specializedName);
+        }
+    }
+
+    if (const auto factory = PhysicalFunctionRegistry::instance().find(baseName))
     {
         return (*factory)(PhysicalFunctionRegistryArguments{
             .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
@@ -114,6 +144,15 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
             return ConstantCharValueFunction(parseConstantValue<char>(stringValue));
         case DataType::Type::VARSIZED: {
             return ConstantValueVariableSizePhysicalFunction(std::bit_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
+        };
+        case DataType::Type::FIXEDSIZED: {
+            throw UnknownPhysicalType("FIXEDSIZED arrays cannot appear as constant values");
+        };
+        case DataType::Type::VECTOR: {
+            throw UnknownPhysicalType("VECTOR types cannot appear as constant values (PoC).");
+        };
+        case DataType::Type::STRUCT: {
+            throw UnknownPhysicalType("STRUCT types cannot appear as constant values (PoC).");
         };
         case DataType::Type::UNDEFINED: {
             throw UnknownPhysicalType("the UNKNOWN type is not supported");

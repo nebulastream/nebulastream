@@ -39,6 +39,71 @@ namespace NES
 
 namespace
 {
+/// Parses the TYPE column of a header field, as emitted by `SchemaFormatter::formatTypeForHeader`.
+/// Container types nest recursively (e.g. `FIXEDSIZED<FIXEDSIZED<INT32;2>;3>`, `VECTOR<FIXEDSIZED<INT32;2>>`).
+/// Only the outermost type carries the field's nullability; element types are never nullable.
+std::expected<DataType, std::string> parseType(const std::string_view typeStr, const DataType::NULLABLE nullable)
+{
+    /// `FIXEDSIZED<ELEMENT;COUNT>`. Decode the element type and count and reconstruct the parameterized DataType
+    /// directly (the registry only handles scalar types).
+    if (typeStr.starts_with("FIXEDSIZED<") && typeStr.ends_with('>'))
+    {
+        const auto inner
+            = typeStr.substr(std::string_view("FIXEDSIZED<").size(), typeStr.size() - std::string_view("FIXEDSIZED<").size() - 1);
+        /// Inner separator is `;` (not `,`) to avoid colliding with the outer comma-separated field split.
+        /// The count is always the last component, so the last `;` separates it from a possibly nested element type.
+        const auto sepPos = inner.rfind(';');
+        if (sepPos == std::string_view::npos)
+        {
+            return std::unexpected(fmt::format("Malformed FIXEDSIZED header column: {}", typeStr));
+        }
+        const auto elementType = parseType(trimWhiteSpaces(inner.substr(0, sepPos)), DataType::NULLABLE::NOT_NULLABLE);
+        if (not elementType.has_value())
+        {
+            return std::unexpected(fmt::format("Unknown FIXEDSIZED element type in {}: {}", typeStr, elementType.error()));
+        }
+        const auto countStr = trimWhiteSpaces(inner.substr(sepPos + 1));
+        uint32_t count = 0;
+        try
+        {
+            count = static_cast<uint32_t>(std::stoul(std::string(countStr)));
+        }
+        catch (const std::exception&)
+        {
+            return std::unexpected(fmt::format("Could not parse FIXEDSIZED count: {}", countStr));
+        }
+        return DataType{DataType::Type::FIXEDSIZED, nullable, *elementType, count};
+    }
+    if (typeStr.starts_with("VECTOR<") && typeStr.ends_with('>'))
+    {
+        const auto inner = typeStr.substr(std::string_view("VECTOR<").size(), typeStr.size() - std::string_view("VECTOR<").size() - 1);
+        const auto elementType = parseType(trimWhiteSpaces(inner), DataType::NULLABLE::NOT_NULLABLE);
+        if (not elementType.has_value())
+        {
+            return std::unexpected(fmt::format("Unknown VECTOR element type in {}: {}", typeStr, elementType.error()));
+        }
+        return DataType{DataType::Type::VECTOR, nullable, *elementType};
+    }
+    if (auto type = magic_enum::enum_cast<DataType::Type>(typeStr); type.has_value() && type.value() != DataType::Type::STRUCT)
+    {
+        /// STRUCT explicitly excluded — its enum name carries no layout, so
+        /// `provideDataType(STRUCT)` would fail. Named struct types reach
+        /// the fallback below via their registered name.
+        return DataTypeProvider::provideDataType(type.value(), nullable);
+    }
+    if (toLowerCase(typeStr) == "varsized")
+    {
+        return DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, nullable);
+    }
+    if (auto plugin = DataTypeProvider::tryProvideDataType(std::string{typeStr}, nullable); plugin.has_value())
+    {
+        /// Plugin-registered named type (e.g. ThermalFrame). Matches the
+        /// header form emitted by `SchemaFormatter::formatTypeForHeader`.
+        return *plugin;
+    }
+    return std::unexpected(fmt::format("unknown type '{}'", typeStr));
+}
+
 /// A header field is written as name:TYPE:NULLABILITY.
 std::expected<UnqualifiedUnboundField, std::string> parseField(const std::string_view field)
 {
@@ -58,15 +123,13 @@ std::expected<UnqualifiedUnboundField, std::string> parseField(const std::string
         return std::unexpected(fmt::format("field '{}' has an unknown nullability '{}'", field, parts.at(2)));
     }
 
-    const auto type = magic_enum::enum_cast<DataType::Type>(parts.at(1));
-    if (not type and toLowerCase(parts.at(1)) != "varsized")
+    const auto dataType = parseType(parts.at(1), *nullable);
+    if (not dataType.has_value())
     {
-        return std::unexpected(fmt::format("field '{}' has an unknown type '{}'", field, parts.at(1)));
+        return std::unexpected(fmt::format("field '{}' has an unparsable type: {}", field, dataType.error()));
     }
-
     /// Case sensitive field names will arrive quoted here and therefore remain case sensitive. Case insensitive field names will be canonicalized into upper-case for comparison, so they are not quoted here.
-    return UnqualifiedUnboundField{
-        Identifier::parse(std::string(parts.at(0))), DataTypeProvider::provideDataType(type.value_or(DataType::Type::VARSIZED), *nullable)};
+    return UnqualifiedUnboundField{Identifier::parse(std::string(parts.at(0))), *dataType};
 }
 
 /// One header line: comma separated fields. The first field that does not parse is the reason the header is rejected.

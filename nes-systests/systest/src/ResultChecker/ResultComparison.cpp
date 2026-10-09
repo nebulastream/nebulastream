@@ -282,6 +282,14 @@ bool compareStringAsTypeWithError(const DataType::Type type, const ExpectedResul
             return compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
         case DataType::Type::FLOAT64:
             return compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
+        case DataType::Type::STRUCT:
+            return left.getRawValue() == right.getRawValue();
+        case DataType::Type::FIXEDSIZED:
+        case DataType::Type::VECTOR:
+            /// FIXEDSIZED and VECTOR renders as a JSON array literal `[v0,v1,...]` from the JSON
+            /// output formatter; the systest compares against the same string in the
+            /// expected-result block of the .test file.
+            return left.getRawValue() == right.getRawValue();
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting UNDEFINED in result check comparison");
     }

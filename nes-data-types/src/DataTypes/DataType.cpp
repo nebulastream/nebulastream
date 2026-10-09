@@ -13,11 +13,14 @@
 */
 #include <DataTypes/DataType.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -127,6 +130,36 @@ DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nulla
 {
 }
 
+DataType::DataType(const Type type, const NULLABLE nullable, const DataType elementType)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType)
+{
+    if (type != Type::VECTOR)
+    {
+        throw DifferentFieldTypeExpected(
+            "The elementType/count DataType constructor is for vectors only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
+DataType::DataType(const Type type, const NULLABLE nullable, DataType elementType, const uint32_t count)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(std::move(elementType)), count(count)
+{
+    if (type != Type::FIXEDSIZED)
+    {
+        throw DifferentFieldTypeExpected(
+            "The elementType/count DataType constructor is fixed-sized only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
+DataType::DataType(const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), structName(std::move(structName)), fields(std::move(fields))
+{
+    if (type != Type::STRUCT)
+    {
+        throw DifferentFieldTypeExpected(
+            "The structName/fields DataType constructor is STRUCT only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
 DataType::DataType() : type(Type::UNDEFINED), nullable(true)
 {
 }
@@ -149,9 +182,26 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+        case Type::VECTOR:
+            /// Returning '16' for VARSIZED / VECTOR, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
             /// and 8 bytes for the size of the VARSIZED
             return 16;
+        case Type::FIXEDSIZED: {
+            /// Fixedsized arrays inline the bytes of their elements, as we already know their size during query-compilation.
+            /// For this PoC, we assume that singular elements cannot be NULL.
+            const auto elementSize = elementType->getSizeInBytesWithoutNull();
+            return elementSize * count;
+        }
+        case Type::STRUCT: {
+            /// Inline layout: same rules as `StructData` in nes-nautilus.
+            /// Per-field nullability is intentionally ignored for the PoC.
+            uint32_t total = 0;
+            for (const auto& field : fields | std::views::values)
+            {
+                total += field.getSizeInBytesWithoutNull();
+            }
+            return total;
+        }
         case Type::INT64:
         case Type::UINT64:
         case Type::FLOAT64:
@@ -195,6 +245,81 @@ bool DataType::isNumeric() const
     return isInteger() or isFloat();
 }
 
+bool DataType::isFlat() const
+{
+    switch (type)
+    {
+        case Type::VARSIZED:
+        case Type::VECTOR:
+            return false;
+        case Type::STRUCT: {
+            for (const auto& field : fields | std::views::values)
+            {
+                if (!field.isFlat())
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        case Type::FIXEDSIZED: {
+            return elementType->isFlat();
+        }
+        case Type::BOOLEAN:
+        case Type::CHAR:
+        case Type::FLOAT32:
+        case Type::FLOAT64:
+        case Type::INT8:
+        case Type::INT16:
+        case Type::INT32:
+        case Type::INT64:
+        case Type::UINT8:
+        case Type::UINT16:
+        case Type::UINT32:
+        case Type::UINT64:
+        case Type::UNDEFINED:
+            return true;
+    }
+}
+
+uint32_t DataType::getVarsizedNestingDepth() const
+{
+    switch (this->type)
+    {
+        case Type::BOOLEAN:
+        case Type::CHAR:
+        case Type::FLOAT32:
+        case Type::FLOAT64:
+        case Type::INT8:
+        case Type::INT16:
+        case Type::INT32:
+        case Type::INT64:
+        case Type::UINT8:
+        case Type::UINT16:
+        case Type::UINT32:
+        case Type::UINT64:
+        case Type::UNDEFINED:
+            return 0;
+        case Type::VARSIZED:
+            return 1;
+        case Type::STRUCT: {
+            /// Return maximum varsized nesting depth of the fields
+            uint32_t maxFound = 0;
+            for (const auto& field : fields | std::views::values)
+            {
+                maxFound = std::max(maxFound, field.getVarsizedNestingDepth());
+            }
+            return maxFound;
+        }
+        case Type::FIXEDSIZED:
+            /// Get maximum varsized nesting depth of element type
+            return elementType->getVarsizedNestingDepth();
+        case Type::VECTOR:
+            /// Vectors are variable-sized arrays, return maximum varsized nesting depth of element + 1
+            return elementType->getVarsizedNestingDepth() + 1;
+    }
+}
+
 DataType::NULLABLE DataType::joinNullable(const DataType& otherDataType) const
 {
     const auto isNullableResult
@@ -213,6 +338,31 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     {
         return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullableResult)}
                                                       : std::nullopt;
+    }
+    if (this->type == Type::VECTOR)
+    {
+        if (otherDataType.type == Type::VECTOR && otherDataType.elementType == this->elementType)
+        {
+            return DataType{Type::VECTOR, isNullableResult, *this->elementType};
+        }
+        return std::nullopt;
+    }
+    if (this->type == Type::FIXEDSIZED)
+    {
+        if (otherDataType.type == Type::FIXEDSIZED && otherDataType.elementType == this->elementType && otherDataType.count == this->count)
+        {
+            return DataType{Type::FIXEDSIZED, isNullableResult, *this->elementType, this->count};
+        }
+        return std::nullopt;
+    }
+    if (this->type == Type::STRUCT)
+    {
+        /// Nominal typing: only joinable to a STRUCT with the same name and field layout.
+        if (otherDataType.type == Type::STRUCT && otherDataType.structName == this->structName && otherDataType.fields == this->fields)
+        {
+            return DataType{Type::STRUCT, isNullableResult, this->structName, this->fields};
+        }
+        return std::nullopt;
     }
 
     if (this->isNumeric())
@@ -259,17 +409,65 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
 
 Reflected Reflector<DataType>::operator()(const DataType& field, const ReflectionContext& context) const
 {
-    return context.reflect(std::make_pair(field.type, field.nullable));
+    const detail::ReflectedDataType reflected{
+        .type = field.type,
+        .nullable = field.nullable,
+        .elementType = field.elementType.hasValue() ? std::optional{*field.elementType} : std::nullopt,
+        .count = field.count,
+        .structName = field.structName,
+        .fields = field.fields};
+    return context.reflect(reflected);
 }
 
 DataType Unreflector<DataType>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    const auto [type, nullable] = context.unreflect<std::pair<DataType::Type, bool>>(rfl);
-    return DataTypeProvider::provideDataType(type, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    const auto reflected = context.unreflect<detail::ReflectedDataType>(rfl);
+    const auto nullableEnum = reflected.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    if (reflected.type == DataType::Type::FIXEDSIZED)
+    {
+        if (not reflected.elementType.has_value())
+        {
+            throw CannotDeserialize("FIXEDSIZED DataType requires an element type");
+        }
+        return DataType{reflected.type, nullableEnum, *reflected.elementType, reflected.count};
+    }
+    if (reflected.type == DataType::Type::STRUCT)
+    {
+        return DataType{reflected.type, nullableEnum, reflected.structName, reflected.fields};
+    }
+    if (reflected.type == DataType::Type::VECTOR || reflected.type == DataType::Type::FIXEDSIZED)
+    {
+        return DataType{reflected.type, nullableEnum, *reflected.elementType};
+    }
+    return DataTypeProvider::provideDataType(reflected.type, nullableEnum);
 }
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)
 {
+    if (dataType.type == DataType::Type::FIXEDSIZED)
+    {
+        return os << fmt::format(
+                   "DataType(type: FIXEDSIZED<{}, {}> nullable: {})", *dataType.elementType, dataType.count, dataType.nullable);
+    }
+    if (dataType.type == DataType::Type::VECTOR)
+    {
+        return os << fmt::format("DataType(type: VECTOR<{}> nullable: {})", *dataType.elementType, dataType.nullable);
+    }
+    if (dataType.type == DataType::Type::STRUCT)
+    {
+        std::string fieldList;
+        bool first = true;
+        for (const auto& [name, field] : dataType.fields)
+        {
+            if (!first)
+            {
+                fieldList += ", ";
+            }
+            first = false;
+            fieldList += fmt::format("{}: {}", name, field);
+        }
+        return os << fmt::format("DataType(type: STRUCT<{}, {{{}}}> nullable: {})", dataType.structName, fieldList, dataType.nullable);
+    }
     return os << fmt::format("DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), dataType.nullable);
 }
 

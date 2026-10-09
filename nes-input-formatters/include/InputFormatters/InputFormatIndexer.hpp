@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <magic_enum/magic_enum.hpp>
@@ -27,6 +28,7 @@
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <RawBufferIndex.hpp>
+#include <ValueDeserializerUtil.hpp>
 
 namespace NES
 {
@@ -50,19 +52,29 @@ public:
 
     /// Get the deserializer type for a specific field. The datatype of the field determines the default, which the user may
     /// override for this particular field.
-    [[nodiscard]] const std::string&
-    getDeserializerType(const Record::RecordFieldIdentifier& fieldName, const DataType::Type& dataType) const
+    /// Before the format-specific STRUCT default is used for datatype plugins, we check if the plugin has registered a default deserializer under Default<DataType Key>.
+    [[nodiscard]] std::string getDeserializerType(const Record::RecordFieldIdentifier& fieldName, const DataType& dataType) const
     {
         if (const auto it = fieldDeserializerTypes.find(fieldName); it != fieldDeserializerTypes.end())
         {
             return it->second;
         }
-        if (const auto it = deserializerTypes.find(dataType); it != deserializerTypes.end())
+        if (dataType.type == DataType::Type::STRUCT)
+        {
+            /// Use the default deserializer for this type, if it exists.
+            if (auto pluginDefault = getPluginTypeDefaultDeserializer(dataType.structName))
+            {
+                return std::move(*pluginDefault);
+            }
+        }
+        if (const auto it = deserializerTypes.find(dataType.type); it != deserializerTypes.end())
         {
             return it->second;
         }
-        throw UnknownValueDeserializerType("No ValueDeserializer configured for DataType {}", magic_enum::enum_name(dataType));
+        throw UnknownValueDeserializerType("No ValueDeserializer configured for DataType {}", magic_enum::enum_name(dataType.type));
     }
+
+    [[nodiscard]] const std::unordered_map<DataType::Type, std::string>& getDeserializerTypes() const { return deserializerTypes; }
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer);
 

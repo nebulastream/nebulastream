@@ -87,7 +87,18 @@ modelOutputField: identifier typeDefinition;
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 
-typeDefinition: DATA_TYPE;
+/// A bare type name alone is a scalar column type: either a built-in (`UINT16`,
+/// matched as `DATA_TYPE`) or a plugin-registered named type (`Image`, matched as
+/// `IDENTIFIER`). `bindDataType` (CommonParserFunctions.cpp) resolves both by name.
+/// `typeName ARRAY '[' count ']'` is a fixed-size array column type (e.g.
+/// `UINT16 ARRAY[16]`); the element type is the leading type name and the
+/// count must be a positive integer literal. Resolved to `DataType::Type::FIXEDSIZED`.
+/// `typeName ARRAY '[' ']'` (no count) will be dispatched as VECTOR as well.
+/// It is possible to define nested arrays via INT32 ARRAY [3][2]...
+/// Furthermore, nesting of vectors and arrays together like INT32 ARRAY [][3] (resulting in a VECTOR of size 3 int32 arrays) or INT32 ARRAY[3][] (resulting in a size 3 arrays of int32 vectors).
+/// The constraint for this is, that the nesting of varsized types is prohibited, so a vector may only contain fixedsized arrays, meaning INT ARRAY[][] or INT ARRAY [][3][2] is not ppossible.
+typeDefinition: (DATA_TYPE | IDENTIFIER) (ARRAY arrayDimension+ | VECTOR)?;
+arrayDimension: '[' count=INTEGER_VALUE? ']';
 nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
@@ -214,8 +225,11 @@ namedExpression
 
 identifier: strictIdentifier;
 
+/// `DATA_TYPE` is accepted alongside `IDENTIFIER` so a column may be named after a
+/// built-in type (e.g. a field literally called `INT`). Both alternatives are plain
+/// tokens, so `#unquotedIdentifier` consumers keep reading the text via `getText()`.
 strictIdentifier
-    : IDENTIFIER #unquotedIdentifier
+    : (IDENTIFIER | DATA_TYPE) #unquotedIdentifier
     | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
@@ -347,7 +361,7 @@ timeUnit: MS
         ;
 
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY;
 
 sinkClause: INTO sink (',' sink)*;
 
@@ -456,6 +470,7 @@ booleanValue
 ALL: 'ALL' | 'all';
 AND: 'AND' | 'and';
 ANY: 'ANY';
+ARRAY: 'ARRAY' | 'array';
 AS: 'AS' | 'as';
 ASC: 'ASC' | 'asc';
 AT: 'AT';
@@ -523,6 +538,7 @@ UNKNOWN: 'UNKNOWN';
 USE: 'USE';
 USING: 'USING';
 VALUES: 'VALUES';
+VECTOR: 'VECTOR' | 'vector';
 WHEN: 'WHEN';
 WHERE: 'WHERE' | 'where';
 WINDOW: 'WINDOW' | 'window';
@@ -627,21 +643,24 @@ SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
 
 
-DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
+/// All the type-name sub-rules are fragments so they don't produce their own
+/// token types. DATA_TYPE itself is the only token rule for column types and
+/// is defined AFTER the keyword rules below so its `IDENTIFIER` alternative
+/// doesn't pre-empt keywords (CREATE/SOURCE/etc) — those need to win the
+/// lexer's first-defined tiebreak.
+fragment INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
+fragment INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
+fragment INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
+fragment TINY_INT_TYPE: 'TINYINT';
+fragment SMALL_INT_TYPE: 'SMALLINT';
+fragment NORMAL_INT_TYPE: 'INT' | 'INTEGER';
+fragment BIG_INT_TYPE: 'BIGINT';
+fragment FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
+fragment CHAR_TYPE: 'CHAR';
+fragment VARSIZED_TYPE: 'VARSIZED';
+fragment BOOLEAN_TYPE: 'BOOLEAN';
 
-INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
-INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
-INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
-TINY_INT_TYPE: 'TINYINT';
-SMALL_INT_TYPE: 'SMALLINT';
-NORMAL_INT_TYPE: 'INT' | 'INTEGER';
-BIG_INT_TYPE: 'BIGINT';
-FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
-CHAR_TYPE: 'CHAR';
-VARSIZED_TYPE: 'VARSIZED';
-BOOLEAN_TYPE: 'BOOLEAN';
-
-UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
+fragment UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 
 
 
@@ -657,6 +676,16 @@ VERSION : 'VERSION' | 'version';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
+
+/// Covers only the built-in primitive type names. Plugin-registered named types
+/// (e.g. `ThermalFrame`, `Image`) are identifier-shaped and deliberately NOT
+/// matched here: the lexer cannot tell a struct name from a column name, so that
+/// decision belongs to the parser. `typeDefinition` accepts `DATA_TYPE | IDENTIFIER`
+/// and the binder resolves the name via `DataTypeProvider::tryProvideDataType`.
+/// Adding `IDENTIFIER` here would make every identifier in the language lex as
+/// DATA_TYPE and silently kill every rule that matches on `IDENTIFIER`.
+/// Lives below the keyword rules so keywords win the lexer's first-defined tiebreak.
+DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
 
 SIMPLE_COMMENT
     : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)

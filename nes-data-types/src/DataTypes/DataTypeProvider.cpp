@@ -33,7 +33,15 @@ std::optional<DataType> tryProvideDataType(const std::string& type, const DataTy
 {
     if (const auto dataTypeFactory = DataTypeRegistry::instance().find(type))
     {
-        return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
+        DataType providedType = (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
+        if (providedType.isValid())
+        {
+            return providedType;
+        }
+        throw NestedVariableSizedType(
+            "DataType {} is nesting {} variable-sized types, which we currently do not support.",
+            type,
+            providedType.getVarsizedNestingDepth());
     }
     return std::nullopt;
 }
@@ -47,7 +55,15 @@ DataType provideDataType(const std::string& type, const DataType::NULLABLE isNul
 {
     if (const auto dataTypeFactory = DataTypeRegistry::instance().find(type))
     {
-        return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
+        DataType providedType = (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
+        if (providedType.isValid())
+        {
+            return providedType;
+        }
+        throw NestedVariableSizedType(
+            "DataType {} is nesting {} variable-sized types, which we currently do not support.",
+            type,
+            providedType.getVarsizedNestingDepth());
     }
     throw UnknownPluginType("Unknown data type: {}", type);
 }
