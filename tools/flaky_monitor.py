@@ -48,15 +48,17 @@ def timed_out(job):
 def report(run, out):
     log(f"run {run['id']} {run['conclusion']}: {run['html_url']}")
     jobs = [j for page in gh(f"{API}/runs/{run['id']}/jobs?per_page=100") for j in page["jobs"]]
-    failed = [j for j in jobs if j["conclusion"] == "failure" or timed_out(j)]
+    # the aggregate "Done" job only echoes the others (and fails on a manual cancel)
+    failed = [j for j in jobs if (j["conclusion"] == "failure" or timed_out(j)) and not j["name"].endswith("/ Done")]
     if not failed:
         return
     d = os.path.join(out, str(run["id"]))
     os.makedirs(d, exist_ok=True)
     for j in failed:
         print(f"    {'TIMED OUT' if timed_out(j) else 'FAILED'} {j['name']}", flush=True)
+        text = sh("gh", "api", "--allow-escape-sequences", f"{API}/jobs/{j['id']}/logs")  # fetch before creating the file
         with open(os.path.join(d, re.sub(r"[^\w.-]+", "_", j["name"]) + ".log"), "w") as f:
-            f.write(sh("gh", "api", f"{API}/jobs/{j['id']}/logs"))
+            f.write(re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text))
     # test logs uploaded by the failed jobs (may be missing or expired)
     subprocess.run(["gh", "run", "download", str(run["id"]), "-D", os.path.join(d, "artifacts"), "-p", "logs-*"])
     print(f"    logs in {d}", flush=True)
