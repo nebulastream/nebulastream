@@ -68,6 +68,10 @@ jobs:
     sanitizer: address
     runner: self-hosted-{arch}
     tests: [unit, systest, docker]
+    overrides:
+      flaky:
+        name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest)"
+        tests: [unit, systest]
 
   - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest)"
     arch: x64
@@ -84,6 +88,11 @@ jobs:
     sanitizer: undefined
     runner: self-hosted-{arch}
     tests: [unit, systest, docker]
+    overrides:
+      flaky:
+        name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest)"
+        tests: [unit, systest]
+
 
   # === Debug builds (no sanitizer, split across jobs for parallelism) ===
 
@@ -102,6 +111,10 @@ jobs:
     sanitizer: none
     runner: github-{arch}
     tests: [systest, docker]
+    overrides:
+      flaky:
+        name: "{arch} {stdlib} {build_type} (systest)"
+        tests: [systest]
 
   - name: "{arch} {stdlib} {build_type} (docker)"
     arch: arm64
@@ -137,7 +150,36 @@ jobs:
       nightly:
         build_type: [RelWithDebInfo, Release]
       flaky:
+        name: "{arch} {stdlib} {build_type} (unit+systest)"
         build_type: [RelWithDebInfo, Release, Benchmark]
+        tests: [unit, systest]
+
+
+  # === Flaky only: the docker tests (ctest -j 1, slow) run in dedicated jobs, split from the entries above ===
+
+  - name: "{arch} {stdlib} {build_type} {sanitizer} (docker)"
+    profiles: [flaky]
+    arch: x64
+    stdlib: libcxx
+    build_type: RelWithDebInfo
+    sanitizer: [address, undefined]
+    runner: self-hosted-{arch}
+    tests: [docker]
+
+  # arm64 libcxx Debug (docker) already exists above
+  - name: "{arch} {stdlib} {build_type} (docker)"
+    profiles: [flaky]
+    arch: [x64, arm64]
+    stdlib: [libcxx, libstdcxx]
+    build_type: [Debug, RelWithDebInfo, Release, Benchmark]
+    sanitizer: none
+    runner: github-{arch}
+    tests: [docker]
+    exclude:
+      - arch: arm64
+        stdlib: libstdcxx
+      - arch: arm64
+        build_type: Debug
 
   # === Special flag builds ===
 
