@@ -57,8 +57,6 @@ jobs:
         name: Build systest
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
-          docker_username: ${{ secrets.DOCKER_USER_NAME }}
-          docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-none.env
             sccache --start-server
@@ -72,8 +70,6 @@ jobs:
         name: Run SLT corpus
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
-          docker_username: ${{ secrets.DOCKER_USER_NAME }}
-          docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-none.env
             corpus_root="nightly-systest-corpus/${{ inputs.corpus_path }}"
