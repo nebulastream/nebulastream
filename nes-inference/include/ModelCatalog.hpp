@@ -20,79 +20,11 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/UnboundField.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Util/Reflection.hpp>
 #include <Model.hpp>
 
 namespace NES
 {
-
-class ModelCatalog;
-
-/// Catalog-side field schema for a model — ordered list of name + DataType pairs.
-/// Ordered because the runtime indexes inputs/outputs positionally by tensor slot.
-using ModelFieldList = Schema<UnqualifiedUnboundField, Ordered>;
-
-/// User-declared input and output field schemas of a model. Not a property of
-/// the MLIR/bytecode — it's catalog-side metadata, declared alongside the model
-/// in `CREATE MODEL` and passed through to the logical operator for schema
-/// inference.
-struct
-    ModelSchema /// NOLINT(bugprone-exception-escape) defaulted special members on a struct holding Schema (vector) trip the check; no real escape
-{
-    ModelFieldList inputs;
-    ModelFieldList outputs;
-
-    bool operator==(const ModelSchema&) const = default;
-};
-
-/// A catalog entry: the user-given name and source path together with the
-/// imported model and the validated schema.
-///
-/// Constructible only through `ModelCatalog::registerModel` (which validates)
-/// or through reflection (which trusts the coordinator-side checks). Callers
-/// must route through those paths — there is no public constructor.
-class RegisteredModel
-{
-    std::string name;
-    std::filesystem::path path;
-    ImportedModel imported;
-    ModelSchema schema;
-
-    RegisteredModel(std::string name, std::filesystem::path path, ImportedModel importedModel, ModelSchema modelSchema)
-        : name(std::move(name)), path(std::move(path)), imported(std::move(importedModel)), schema(std::move(modelSchema))
-    {
-    }
-
-    friend class NES::ModelCatalog;
-    friend struct Reflector<RegisteredModel>;
-    friend struct Unreflector<RegisteredModel>;
-
-public:
-    [[nodiscard]] const std::string& getName() const { return name; }
-
-    [[nodiscard]] const std::filesystem::path& getPath() const { return path; }
-
-    [[nodiscard]] const ImportedModel& getImported() const { return imported; }
-
-    [[nodiscard]] const ModelSchema& getSchema() const { return schema; }
-
-    bool operator==(const RegisteredModel&) const = default;
-};
-
-template <>
-struct Reflector<RegisteredModel>
-{
-    Reflected operator()(const RegisteredModel& model, const ReflectionContext& context) const;
-};
-
-template <>
-struct Unreflector<RegisteredModel>
-{
-    RegisteredModel operator()(const Reflected& rfl, const ReflectionContext& context) const;
-};
 
 /// Manages model registration and stores imported model bodies keyed by name.
 /// Compilation to executable bytecode is deferred until worker-side lowering.
