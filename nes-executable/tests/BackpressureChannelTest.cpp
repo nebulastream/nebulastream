@@ -17,6 +17,8 @@
 #include <atomic>
 #include <barrier>
 #include <chrono>
+#include <future>
+#include <latch>
 #include <memory>
 #include <random>
 #include <stop_token>
@@ -73,116 +75,100 @@ TEST_F(BackpressureChannelTest, BasicFunctionality)
 /// Test that backpressureListener proceeds immediately when no pressure is applied
 TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWhenNoPressure)
 {
-    std::barrier syncBarrier{2};
-    std::atomic backpressureListenerCounter{0};
-
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
 
-    /// Start backpressureListener without applying pressure
+    /// Join without requesting stop so every wait must complete with the channel open.
     std::jthread backpressureListenerThread(
         [&](const std::stop_token& stopToken)
         {
-            syncBarrier.arrive_and_wait();
-            while (!stopToken.stop_requested())
+            for (size_t i = 0; i < 100; ++i)
             {
                 backpressureListener.wait(stopToken);
-                backpressureListenerCounter.fetch_add(1, std::memory_order::relaxed);
             }
         });
-
-    syncBarrier.arrive_and_wait();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    backpressureListenerThread = {};
-
-    /// This is a guess, however 100 sounds very doable on any real hardware
-    EXPECT_GT(backpressureListenerCounter.load(), 100);
+    backpressureListenerThread.join();
 }
 
 /// Test that backpressureListener is blocked when pressure is applied
 TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWithPressure)
 {
     std::barrier syncBarrier{2};
-    std::atomic backpressureListenerCounter{0};
+    std::latch readyToWait{1};
+    std::promise<void> completed;
+    auto completion = completed.get_future();
 
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
 
-    /// Start backpressureListener without applying pressure
     std::jthread backpressureListenerThread(
         [&](const std::stop_token& stopToken)
         {
-            syncBarrier.arrive_and_wait();
-            while (!stopToken.stop_requested())
+            for (size_t i = 0; i < 100; ++i)
             {
                 backpressureListener.wait(stopToken);
-                backpressureListenerCounter.fetch_add(1, std::memory_order::relaxed);
             }
+            syncBarrier.arrive_and_wait();
+            syncBarrier.arrive_and_wait();
+
+            readyToWait.count_down();
+            backpressureListener.wait(stopToken);
+            completed.set_value();
         });
 
+    /// Wait for open-channel ingestion to finish before applying pressure.
     syncBarrier.arrive_and_wait();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    /// This is a guess, however 100 sounds very doable on any real hardware
-    EXPECT_GT(backpressureListenerCounter.load(), 100);
     EXPECT_TRUE(backpressureController.applyPressure());
+    syncBarrier.arrive_and_wait();
+    readyToWait.wait();
 
-    /// Expect that the backpressureListener does not increase any further after pressure has been applied
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    const auto current = backpressureListenerCounter.load();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    EXPECT_EQ(current, backpressureListenerCounter.load());
+    /// Observe that ingestion does not complete while pressure is applied.
+    EXPECT_EQ(completion.wait_for(std::chrono::milliseconds(100)), std::future_status::timeout);
+    EXPECT_TRUE(backpressureController.releasePressure());
+    backpressureListenerThread.join();
+    completion.get();
 }
 
 /// Test that backpressureListener waits when pressure is applied
 TEST_F(BackpressureChannelTest, IngestionWaitsWhenPressureApplied)
 {
     constexpr size_t numberOfSources = 5;
-    /// Read on main thread only happens after the backpressureListenerThreads have been stopped.
-    std::vector<std::chrono::milliseconds> durations(numberOfSources);
-
-    std::barrier syncBeforeWait{numberOfSources + 1};
-    std::barrier syncAfterWait{numberOfSources + 1};
+    std::latch readyToWait{numberOfSources};
+    std::vector<std::promise<void>> completed(numberOfSources);
+    std::vector<std::future<void>> completions;
+    for (auto& promise : completed)
+    {
+        completions.emplace_back(promise.get_future());
+    }
 
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
-
-    /// Apply pressure before starting backpressureListener
-    backpressureController.applyPressure();
+    EXPECT_TRUE(backpressureController.applyPressure());
 
     std::vector<std::jthread> backpressureListenerThreads;
     backpressureListenerThreads.reserve(numberOfSources);
     for (size_t i = 0; i < numberOfSources; ++i)
     {
-        /// Start a thread that will try to ingest
         backpressureListenerThreads.emplace_back(
             [&, i](const std::stop_token& stopToken)
             {
-                syncBeforeWait.arrive_and_wait();
-                auto start = std::chrono::steady_clock::now();
-
-                /// This should block until pressure is released
+                readyToWait.count_down();
                 backpressureListener.wait(stopToken);
-
-                auto end = std::chrono::steady_clock::now();
-
-                syncAfterWait.arrive_and_wait();
-
-                /// Report time spend waiting
-                durations[i] = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                completed[i].set_value();
             });
     }
-    syncBeforeWait.arrive_and_wait();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    /// Release pressure
-    EXPECT_TRUE(backpressureController.releasePressure());
-    syncAfterWait.arrive_and_wait();
-
-    /// Stop thread to ensure that there is no data race on duration
-    backpressureListenerThreads.clear();
-
-    /// Expect time to have passed while waiting for backpressure release. This is a guess, we cannot predict an actual duration
-    for (auto duration : durations)
+    readyToWait.wait();
+    for (auto& completion : completions)
     {
-        EXPECT_GT(duration, std::chrono::milliseconds(50));
+        EXPECT_EQ(completion.wait_for(std::chrono::milliseconds(100)), std::future_status::timeout);
+    }
+
+    EXPECT_TRUE(backpressureController.releasePressure());
+    /// Join explicitly: requesting stop would also unblock ingestion and mask a release failure.
+    for (auto& thread : backpressureListenerThreads)
+    {
+        thread.join();
+    }
+    for (auto& completion : completions)
+    {
+        completion.get();
     }
 }
 
@@ -219,11 +205,12 @@ TEST_F(BackpressureChannelTest, MultithreadedStressTest)
                 {
                     syncBarrier.arrive_and_wait();
 
-                    while (!stopToken.stop_requested())
+                    /// Ensure activity even if this thread is first scheduled after the test duration.
+                    do
                     {
                         channels[channelId].second.wait(stopToken);
                         successfulWaits.fetch_add(1);
-                    }
+                    } while (!stopToken.stop_requested());
                 });
         }
     }
@@ -241,7 +228,8 @@ TEST_F(BackpressureChannelTest, MultithreadedStressTest)
                 std::mt19937 rng(channelId);
                 std::uniform_int_distribution<> dist(0, 1);
 
-                while (!stopToken.stop_requested())
+                /// Perform at least one operation before honoring a stop request.
+                do
                 {
                     if (dist(rng) == 0)
                     {
@@ -254,7 +242,7 @@ TEST_F(BackpressureChannelTest, MultithreadedStressTest)
 
                     totalOperations.fetch_add(1);
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
+                } while (!stopToken.stop_requested());
             });
     }
 
@@ -310,21 +298,20 @@ TEST_F(BackpressureChannelTest, StopTokenFunctionality)
     /// Apply pressure
     EXPECT_TRUE(backpressureController.applyPressure());
 
-    std::atomic ingestionStarted{false};
+    std::latch ingestionStarted{1};
     std::atomic ingestionStopped{false};
 
     /// Start ingestion thread
     std::jthread ingestionThread(
         [&](const std::stop_token& stopToken)
         {
-            ingestionStarted = true;
+            ingestionStarted.count_down();
             ingestion.wait(stopToken);
             ingestionStopped = true;
         });
 
     /// Wait for ingestion to start
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    EXPECT_TRUE(ingestionStarted);
+    ingestionStarted.wait();
     EXPECT_FALSE(ingestionStopped);
 
     /// Stop thread, should trigger stop token
