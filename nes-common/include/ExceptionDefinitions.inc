@@ -69,6 +69,7 @@ EXCEPTION(UnknownModelName, 2040, "unknown model name")
 EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
 EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
+EXCEPTION(UnknownLookbackConnection, 2044, "unknown lookback connection")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
@@ -86,6 +87,7 @@ EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipel
 EXCEPTION(InferenceRuntimeFailure, 3006, "inference runtime failure")
 EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
 EXCEPTION(WindowingError, 3014, "windowing error")
+EXCEPTION(LookbackFailure, 3015, "lookback query failure")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

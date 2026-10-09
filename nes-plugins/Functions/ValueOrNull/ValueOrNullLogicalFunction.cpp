@@ -21,8 +21,8 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <Schema/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>

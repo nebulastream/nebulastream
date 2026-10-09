@@ -21,14 +21,12 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <mutex>
 #include <ostream>
 #include <ranges>
 #include <span>
-#include <sstream>
 #include <stop_token>
 #include <string>
 #include <system_error>
@@ -42,10 +40,10 @@
 #include <sqltypes.h>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <Schema/Schema.hpp>
+#include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Interface/VariableSizedAccess.hpp>
+#include <Schema/Schema.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Time/Timestamp.hpp>
@@ -55,6 +53,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include <ODBCConnection.hpp>
 #include <ODBCTypeMappings.hpp>
 
 /// The ODBC C API speaks in `SQLCHAR*` (an unsigned-char alias) and binds parameters / fetches
@@ -68,65 +67,13 @@
 namespace NES
 {
 
-struct ConnectionInformation
-{
-    std::string server;
-    std::string port;
-    std::string database;
-    std::string username;
-    std::string password;
-    std::string driver;
-    bool trustServerCertificate{};
-};
-
-namespace
-{
-/// The two supported ODBC drivers need different connection-string dialects, so branch on the
-/// driver name (Microsoft's driver is "ODBC Driver NN for SQL Server").
-///
-/// SQL Server (msodbcsql): `SERVER=<host>,<port>` — the driver has no standalone `PORT=` keyword,
-/// so the port must be appended to SERVER with a comma. Driver 18 also defaults to
-/// Encrypt=Mandatory, so a SQL Server with a self-signed certificate refuses the connection unless
-/// `TrustServerCertificate=yes` is set.
-///
-/// psqlodbc/libpq: `SERVER=<host>;PORT=<port>` — NOT `SERVER=<host>,<port>`. libpq reads a comma in
-/// SERVER as a multi-host list and ignores the PORT, so `SERVER=127.0.0.1,1` becomes hosts
-/// ["127.0.0.1", "1"] at the default port 5432 — and "1" parses as 0.0.0.1, whose connect hangs
-/// where the network drops the SYN (e.g. CI) because there is no login timeout. The semicolon form
-/// binds the real host:port and fails fast on a refused/closed port. `TrustServerCertificate` is a
-/// SQL-Server-only keyword, so it is not emitted here.
-std::string buildConnectionString(const ConnectionInformation& info)
-{
-    if (info.driver.find("SQL Server") != std::string::npos)
-    {
-        return fmt::format(
-            "DRIVER={{{}}};SERVER={},{};DATABASE={};UID={};PWD={};TrustServerCertificate={}",
-            info.driver,
-            info.server,
-            info.port,
-            info.database,
-            info.username,
-            info.password,
-            info.trustServerCertificate ? "yes" : "no");
-    }
-    return fmt::format(
-        "DRIVER={{{}}};SERVER={};PORT={};DATABASE={};UID={};PWD={};CharSet=UTF-8",
-        info.driver,
-        info.server,
-        info.port,
-        info.database,
-        info.username,
-        info.password);
-}
-}
+using ODBC::Connection;
+using ODBC::ConnectionInformation;
+using ODBC::StmtHandle;
 
 namespace
 {
 
-/// SQLSTATE is a fixed 5-character code; the buffer holds 5 chars + NUL terminator.
-constexpr SQLSMALLINT SQL_STATE_BUFFER_SIZE = 6;
-/// Buffer size for the connection string the driver echoes back from SQLDriverConnect.
-constexpr SQLSMALLINT OUT_CONNECTION_STRING_SIZE = 1024;
 /// Column-name buffer size used by SQLDescribeCol.
 constexpr SQLSMALLINT COLUMN_NAME_BUFFER_SIZE = 256;
 /// ColumnSize=26, DecimalDigits=6 → microsecond-precision timestamp
@@ -139,6 +86,10 @@ constexpr SQLSMALLINT TIMESTAMP_DECIMAL_DIGITS = 6;
 /// old (watermark, now] window lost every row whose timestamp landed at/after NES's poll instant.
 constexpr std::size_t WINDOW_PARAMETER_COUNT = 1;
 
+/// The source has always used the driver's default login timeout; the shared Connection takes it
+/// as an explicit argument so a caller cannot forget that a timeout exists to be set.
+constexpr SQLUINTEGER NO_LOGIN_TIMEOUT = 0;
+
 /// Chronological comparison of two SQL_TIMESTAMP_STRUCTs (field-lexicographic == time order).
 inline bool isAfter(const SQL_TIMESTAMP_STRUCT& a, const SQL_TIMESTAMP_STRUCT& b)
 {
@@ -146,144 +97,7 @@ inline bool isAfter(const SQL_TIMESTAMP_STRUCT& a, const SQL_TIMESTAMP_STRUCT& b
         > std::tie(b.year, b.month, b.day, b.hour, b.minute, b.second, b.fraction);
 }
 
-std::string showError(SQLSMALLINT handleType, SQLHANDLE handle, const std::string& context)
-{
-    std::array<SQLCHAR, SQL_STATE_BUFFER_SIZE> sqlState{};
-    std::array<SQLCHAR, SQL_MAX_MESSAGE_LENGTH> message{};
-    SQLINTEGER nativeError = 0;
-    SQLSMALLINT messageLen = 0;
-    SQLSMALLINT recNum = 1;
-
-    std::stringstream errorMessage;
-    errorMessage << "Error in " << context << ":\n";
-    while (SQLGetDiagRec(
-               handleType,
-               handle,
-               recNum,
-               sqlState.data(),
-               &nativeError,
-               message.data(),
-               static_cast<SQLSMALLINT>(message.size()),
-               &messageLen)
-           == SQL_SUCCESS)
-    {
-        errorMessage << "  [" << sqlState.data() << "] (" << nativeError << ") " << message.data() << "\n";
-        recNum++;
-    }
-
-    return errorMessage.str();
 }
-
-}
-
-/// A constexpr template can't replicate this: `throw CannotOpenSource(...)` needs the caller's
-/// source location for the exception's stack trace; the macro form preserves __FILE__:__LINE__.
-/// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define CHECK(rc, handleType, handle, context) \
-    do \
-    { \
-        const SQLRETURN check_rc = (rc); \
-        if (check_rc != SQL_SUCCESS && check_rc != SQL_SUCCESS_WITH_INFO) \
-        { \
-            if (check_rc == SQL_ERROR) \
-            { \
-                throw CannotOpenSource("{}: {}", (context), showError((handleType), (handle), (context))); \
-            } \
-            NES_WARNING("{}:{}", (context), showError((handleType), (handle), (context))); \
-        } \
-    } while (0)
-
-struct SqlStmtDeleter
-{
-    void operator()(SQLHSTMT handle) const noexcept
-    {
-        if (handle != SQL_NULL_HSTMT)
-        {
-            NES_INFO("Freeing STMT");
-            SQLFreeHandle(SQL_HANDLE_STMT, handle);
-        }
-    }
-};
-
-using StmtHandle = std::unique_ptr<void, SqlStmtDeleter>;
-
-struct SqlConnectionDeleter
-{
-    void operator()(SQLHDBC handle) const noexcept
-    {
-        if (handle != SQL_NULL_HDBC)
-        {
-            NES_INFO("Delete Connection");
-            SQLDisconnect(handle);
-            SQLFreeHandle(SQL_HANDLE_DBC, handle);
-        }
-    }
-};
-
-using ConnectionHandle = std::unique_ptr<void, SqlConnectionDeleter>;
-
-struct SqlEnvironmentDeleter
-{
-    void operator()(SQLHENV handle) const noexcept
-    {
-        if (handle != SQL_NULL_HENV)
-        {
-            NES_INFO("Delete Environment");
-            SQLFreeHandle(SQL_HANDLE_ENV, handle);
-        }
-    }
-};
-
-using EnvironmentHandle = std::unique_ptr<void, SqlEnvironmentDeleter>;
-
-struct Connection
-{
-    EnvironmentHandle env;
-    ConnectionHandle connection;
-
-    explicit Connection(const ConnectionInformation& connectionInformation)
-    {
-        /// vcpkg's statically-linked unixODBC does not default its ODBCSYSINI to the system /etc,
-        /// so drivers registered there (e.g. msodbcsql18's "ODBC Driver 18 for SQL Server" in
-        /// /etc/odbcinst.ini) are invisible and SQLDriverConnect fails with "Can't open lib ... :
-        /// file not found". Point it at /etc so the driver manager resolves the DRIVER={..} name.
-        /// Matches ODBCLabValSource's ODBCConnection.
-        setenv("ODBCSYSINI", "/etc", 1);
-        setenv("ODBCINI", "/etc/odbc.ini", 1);
-
-        auto connectionString = buildConnectionString(connectionInformation);
-
-        NES_DEBUG("Connecting to database: {}", connectionString);
-        {
-            SQLHANDLE tmp = SQL_NULL_HENV;
-            const auto rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &tmp);
-            CHECK(rc, SQL_HANDLE_ENV, tmp, "SQLAllocHandle ENV");
-            this->env = EnvironmentHandle{tmp};
-        }
-
-        SQLSetEnvAttr(env.get(), SQL_ATTR_ODBC_VERSION, reinterpret_cast<SQLPOINTER>(SQL_OV_ODBC3), 0);
-
-        {
-            SQLHANDLE tmp = SQL_NULL_HDBC;
-            const auto rc = SQLAllocHandle(SQL_HANDLE_DBC, env.get(), &tmp);
-            CHECK(rc, SQL_HANDLE_DBC, tmp, "SQLAllocHandle DBC");
-            this->connection = ConnectionHandle{tmp};
-        }
-
-        std::array<SQLCHAR, OUT_CONNECTION_STRING_SIZE> outConnStr{};
-        SQLSMALLINT outConnStrLen = 0;
-        const auto rc = SQLDriverConnect(
-            connection.get(),
-            nullptr,
-            reinterpret_cast<SQLCHAR*>(connectionString.data()),
-            SQL_NTS,
-            outConnStr.data(),
-            static_cast<SQLSMALLINT>(outConnStr.size()),
-            &outConnStrLen,
-            SQL_DRIVER_NOPROMPT);
-        CHECK(rc, SQL_HANDLE_DBC, connection.get(), "SQLDriverConnect");
-    }
-};
 
 namespace
 {
@@ -354,7 +168,7 @@ struct PreparedStatement
     {
         SQLSMALLINT numCols = 0;
         const auto ret = SQLNumResultCols(hStmt, &numCols); /// how many columns the SELECT produces
-        CHECK(ret, SQL_HANDLE_STMT, hStmt, "SQLNumResultCols");
+        NES_ODBC_CHECK(ret, SQL_HANDLE_STMT, hStmt, "SQLNumResultCols");
         std::vector<SQLType> sqlTypes;
         sqlTypes.reserve(numCols);
 
@@ -377,7 +191,7 @@ struct PreparedStatement
                 &colSize, /// for VARCHAR: max chars; for numerics: precision
                 &decimals,
                 &nullable); /// SQL_NULLABLE / SQL_NO_NULLS / SQL_NULLABLE_UNKNOWN
-            CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLDescribeCol");
+            NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLDescribeCol");
             sqlTypes.emplace_back(SQLType{.sqlType = sqlType, .isNullable = (nullable == SQL_NULLABLE)});
         }
         return sqlTypes;
@@ -387,7 +201,7 @@ struct PreparedStatement
     {
         SQLSMALLINT numCols = 0;
         const auto ret = SQLNumParams(hStmt, &numCols); /// how many ? statements are in the query
-        CHECK(ret, SQL_HANDLE_STMT, hStmt, "SQLNumResultCols");
+        NES_ODBC_CHECK(ret, SQL_HANDLE_STMT, hStmt, "SQLNumResultCols");
         std::vector<SQLType> sqlTypes;
         sqlTypes.reserve(numCols);
 
@@ -400,7 +214,7 @@ struct PreparedStatement
 
             const auto rc = SQLDescribeParam(hStmt, i, &dataType, &paramSize, &decimalDigits, &nullable);
 
-            CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLDescribeParam");
+            NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLDescribeParam");
             sqlTypes.emplace_back(SQLType{.sqlType = dataType, .isNullable = (nullable == SQL_NULLABLE)});
         }
         return sqlTypes;
@@ -432,9 +246,9 @@ struct PreparedStatement
     {
         SQLHSTMT hStmt = SQL_NULL_HSTMT;
         auto rc = SQLAllocHandle(SQL_HANDLE_STMT, connection.connection.get(), &hStmt);
-        CHECK(rc, SQL_HANDLE_DBC, connection.connection.get(), "SQLAllocHandle STMT");
+        NES_ODBC_CHECK(rc, SQL_HANDLE_DBC, connection.connection.get(), "SQLAllocHandle STMT");
         rc = SQLPrepare(hStmt, reinterpret_cast<SQLCHAR*>(query.data()), SQL_NTS);
-        CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLPrepare");
+        NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLPrepare");
         auto statement = StmtHandle{hStmt};
 
         auto sqlTypes = getSqlResultTypes(hStmt);
@@ -528,7 +342,7 @@ struct PreparedStatement
                             fixupTupleMemory.data(),
                             static_cast<SQLLEN>(fixup.fixupSize),
                             nullValueIndicator);
-                        CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
+                        NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
                         /// The (single) TIMESTAMP column is the watermark column: record where the
                         /// driver writes its raw SQL_TIMESTAMP_STRUCT so the poller can read the row's
                         /// timestamp back and advance the `> ?` lower bound (advanceWatermarkFromLastRow).
@@ -548,13 +362,13 @@ struct PreparedStatement
                             outputTupleMemory.data(),
                             columnMapping.nesType.getSizeInBytesWithoutNull(),
                             nullValueIndicator);
-                        CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
+                        NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
                     },
                     [&](const VarSized& varSized)
                     {
                         applyVarSized.emplace_back(
                             columnMapping.columnIndex, varSized.cType, nesNullByte, outputTupleMemory.first(sizeof(VariableSizedAccess)));
-                        CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
+                        NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
                     },
                 },
                 columnMapping.translation);
@@ -589,7 +403,7 @@ struct PreparedStatement
             timestampLower.get(),
             sizeof(SQL_TIMESTAMP_STRUCT),
             nullptr);
-        CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindParameter");
+        NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindParameter");
 
         auto preparedStatement = PreparedStatement{
             .statement = std::move(statement),
@@ -613,7 +427,7 @@ struct PreparedStatement
             getTimestamp(*timestampLower),
             toNESTimestamp(getTimestamp(*timestampLower)));
         const SQLRETURN rc = SQLExecute(statement.get());
-        CHECK(rc, SQL_HANDLE_STMT, statement.get(), "SQLExecute");
+        NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, statement.get(), "SQLExecute");
     }
 
     bool fetch(TupleBuffer& parent, AbstractBufferProvider& provider)
@@ -625,7 +439,7 @@ struct PreparedStatement
             SQLFreeStmt(statement.get(), SQL_CLOSE);
             return false;
         }
-        CHECK(rc, SQL_HANDLE_STMT, statement.get(), "SQLFetch");
+        NES_ODBC_CHECK(rc, SQL_HANDLE_STMT, statement.get(), "SQLFetch");
 
         NES_DEBUG("ODBCSource fetch: got a row");
         for (const auto& [index, cType, nullable, destination] : varsizedAccesses)
@@ -641,7 +455,7 @@ struct PreparedStatement
             SQLLEN totalLen = 0;
             SQLRETURN getDataRc
                 = SQLGetData(statement.get(), index.index, cType.type, probe.data(), static_cast<SQLLEN>(probe.size()), &totalLen);
-            CHECK(getDataRc, SQL_HANDLE_STMT, statement.get(), "SQLGetData");
+            NES_ODBC_CHECK(getDataRc, SQL_HANDLE_STMT, statement.get(), "SQLGetData");
 
 
             if (totalLen == SQL_NULL_DATA)
@@ -691,7 +505,7 @@ struct PreparedStatement
                 &bytesRead);
 
 
-            CHECK(getDataRc, SQL_HANDLE_STMT, statement.get(), "SQLGetData");
+            NES_ODBC_CHECK(getDataRc, SQL_HANDLE_STMT, statement.get(), "SQLGetData");
             auto childBufferIndex = parent.storeChildBuffer(resultBuffer);
 
             NES_DEBUG("SQLGetData returned {} bytes.", bytesRead);
@@ -797,7 +611,7 @@ void ODBCSource::open(std::shared_ptr<AbstractBufferProvider> bufferProviderPtr)
     /// stays deferred to fillTupleBuffer (FetchFromDatabaseState), so a
     /// round_trip seed committed after READY is still visible to the first
     /// poll's (watermark, now] window.
-    Connection connection(sourceContext->connectionInformation);
+    Connection connection(sourceContext->connectionInformation, NO_LOGIN_TIMEOUT);
     auto statement = PreparedStatement::bind(connection, schema, query, timezoneOffset);
     sourceContext->state = FetchFromDatabaseState{.connection = std::move(connection), .statement = std::move(statement)};
     NES_DEBUG("ODBCSource connected successfully.");
@@ -829,7 +643,7 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
                 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): the variant's content is replaced via the returned state value; the visitor binds the source rvalue but does not move from the empty ConnectingToDatabaseState.
                 [this](ConnectingToDatabaseState&&) -> SourceState
                 {
-                    Connection connection(sourceContext->connectionInformation);
+                    Connection connection(sourceContext->connectionInformation, NO_LOGIN_TIMEOUT);
                     auto statement = PreparedStatement::bind(connection, schema, query, timezoneOffset);
                     return FetchFromDatabaseState{.connection = std::move(connection), .statement = std::move(statement)};
                 },

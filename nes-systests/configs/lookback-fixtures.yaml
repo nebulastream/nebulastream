@@ -1,0 +1,30 @@
+# Lookback connections used by the systests. Every entry is a fixture — canned rows, no database —
+# so the LOOKBACK function can be exercised end to end in CI with nothing to provision.
+#
+# The systest ctest registrations point NES_LOOKBACK_CONFIG at this file; see
+# nes-systests/systest/CMakeLists.txt.
+connections:
+  # Two prior values, the shape a real "what came before this alert" query returns.
+  lookback_fixture:
+    rows:
+      - ["HB", "6.2"]
+      - ["HB", "6.8"]
+
+  # The "nothing found" case: the lookback must render as the empty string, not as NULL.
+  lookback_empty:
+    rows: []
+
+  # Renders two columns, so any template with a single placeholder fails. strict makes that failure
+  # propagate instead of degrading to an empty string, which is what lets a systest prove the
+  # function was never evaluated: if it had been, the query would have failed.
+  lookback_strict_tripwire:
+    strict: true
+    rows:
+      - ["one", "two"]
+
+  # Caps small enough to observe in expected output.
+  lookback_capped:
+    max_rows: 1
+    rows:
+      - ["first"]
+      - ["second"]

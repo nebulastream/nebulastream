@@ -19,14 +19,13 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 #include <LogicalFunctionRegistry.hpp>
 
 namespace NES

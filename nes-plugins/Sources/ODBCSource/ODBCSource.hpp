@@ -26,11 +26,11 @@
 #include <unordered_map>
 
 #include <Configurations/Descriptor.hpp>
-#include <Schema/Schema.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 

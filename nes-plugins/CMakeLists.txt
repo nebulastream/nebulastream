@@ -12,6 +12,10 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
+# Support libraries shared by several plugins. Not plugins themselves (they register nothing), so
+# they are added directly and must be configured before the plugins that link them.
+add_subdirectory("Common/ODBCConnection")
+
 # NOTE: Since these plugins are part of the main NebulaStream repo,
 #       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
 
@@ -29,6 +33,7 @@ add_plugin("Sinks/HTTPSink")
 add_plugin("Functions/IsNaN")
 add_plugin("Functions/ValueOrNull")
 add_plugin("Functions/Fmt")
+add_plugin("Functions/Lookback")
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

@@ -1,0 +1,67 @@
+# name: medical/Lookback.test
+# description: Threshold-triggered database enrichment via LOOKBACK, against fixture connections
+#              (nes-systests/configs/lookback-fixtures.yaml) so no database is needed in CI.
+# groups: [Selection]
+
+CREATE LOGICAL SOURCE lab(FallNr INT64 NOT NULL, Bez VARSIZED NOT NULL, Wert FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lab TYPE File;
+ATTACH INLINE
+1001,PH,7.5
+1002,PH,7.1
+1003,PH,7.6
+
+CREATE SINK textSink(T VARSIZED NOT NULL) TYPE File;
+CREATE SINK alertSink(ALERT_TEXT VARSIZED NOT NULL) TYPE File;
+
+# The shape the cooperation actually deploys: a threshold alert whose message carries context
+# pulled from the hospital database at the moment the threshold is breached. Only the 7.1 row
+# clears the filter, so only that row triggers a lookback.
+SELECT FMT(VARSIZED('PH {} bei Fall {}. Vorwerte: {}'), Wert, FallNr,
+           LOOKBACK(VARSIZED('lookback_fixture'),
+                    VARSIZED('SELECT bez, wert FROM prior WHERE fall = ?'),
+                    VARSIZED('{}={},'),
+                    FallNr)) AS ALERT_TEXT
+FROM lab WHERE Bez = 'PH' AND Wert < FLOAT64(7.2) INTO alertSink;
+----
+PH 7.1 bei Fall 1002. Vorwerte: HB=6.2,HB=6.8,
+
+# A lookback that finds nothing renders as the empty string, not as NULL and not as a placeholder.
+SELECT FMT(VARSIZED('[{}]'),
+           LOOKBACK(VARSIZED('lookback_empty'), VARSIZED('SELECT x FROM prior WHERE fall = ?'), VARSIZED('{}'), FallNr)) AS T
+FROM lab WHERE Wert < FLOAT64(7.2) INTO textSink;
+----
+[]
+
+# max_rows caps what reaches the alert: the fixture has two rows, the connection allows one.
+SELECT LOOKBACK(VARSIZED('lookback_capped'), VARSIZED('SELECT x FROM prior'), VARSIZED('{};')) AS T
+FROM lab WHERE Wert < FLOAT64(7.2) INTO textSink;
+----
+first;
+
+# The contract this whole design rests on: the function is evaluated only for tuples that breach
+# the threshold. lookback_strict_tripwire returns two columns against a one-placeholder template
+# and has strict set, so evaluating it fails the query. The filter matches nothing here, so the
+# query must succeed with no output. If the projection were ever evaluated ahead of the selection,
+# this test would fail rather than silently pass.
+SELECT LOOKBACK(VARSIZED('lookback_strict_tripwire'), VARSIZED('SELECT a, b FROM prior'), VARSIZED('{}')) AS T
+FROM lab WHERE Wert < FLOAT64(0.0) INTO textSink;
+----
+
+# A parameter count that does not match the SQL's '?' markers is rejected at query submission.
+SELECT LOOKBACK(VARSIZED('lookback_fixture'), VARSIZED('SELECT x FROM prior WHERE fall = ?'), VARSIZED('{}')) AS T
+FROM lab INTO textSink;
+----
+ERROR 2003
+
+# So is a row template with a named placeholder: substitution is positional, and quietly ignoring
+# the name would put the wrong column into a clinical alert.
+SELECT LOOKBACK(VARSIZED('lookback_fixture'), VARSIZED('SELECT x FROM prior'), VARSIZED('{Wert}')) AS T
+FROM lab INTO textSink;
+----
+ERROR 2010
+
+# A connection that is not configured fails the query rather than degrading to an empty lookback.
+SELECT LOOKBACK(VARSIZED('no_such_connection'), VARSIZED('SELECT x FROM prior'), VARSIZED('{}')) AS T
+FROM lab WHERE Wert < FLOAT64(7.2) INTO textSink;
+----
+ERROR 2044

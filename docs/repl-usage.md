@@ -273,6 +273,92 @@ CREATE SINK alerts(id INT32 NOT NULL, reading FLOAT64) TYPE HTTP SET(
   already exist are never returned, and a restart does not backfill.
 - Set `TIMEZONE_OFFSET_HOURS` if the source column stores local wall-clock rather than UTC.
 
+## LOOKBACK: enriching an alert from a database when it fires
+
+`LOOKBACK` runs a pre-defined query against a named database connection and renders the
+result rows into one `VARSIZED` string. It exists for the alert queries: the message a
+clinician receives needs context the stream does not carry — prior values for the case,
+the last blood-gas panel — and that context has to be fetched **only when a threshold is
+breached**, because the clinical database cannot be polled per tuple.
+
+```sql
+SELECT FMT(VARSIZED('PH {} bei Fall {}. Vorwerte: {}'),
+           Wert, mlife_FallNr,
+           LOOKBACK(VARSIZED('mlife'),
+                    VARSIZED('SELECT TOP 3 Bez, Wert FROM dbo.LabVal WHERE FallNr = ? ORDER BY Zeitpunkt DESC'),
+                    VARSIZED('{}={}; '),
+                    mlife_FallNr)) AS ALERT_TEXT
+FROM medical_data_source
+WHERE Bez = 'PH' AND CASTTOTYPE(Wert AS FLOAT64) < 7.2
+INTO alertSink;
+```
+
+Arguments: connection name, the SQL, the row template, then one expression per `?` in the
+SQL. The first three must be constant literals — they are resolved once when the query is
+compiled, not per tuple.
+
+- **The trigger semantics are structural, not a feature of the function.** A function in
+  the `SELECT` list is evaluated by a projection that sits above the selection, and
+  `PredicatePushdownRule` pushes the `WHERE` further down still. So the database is touched
+  once per tuple that clears the filter, and not at all otherwise. Put a `LOOKBACK` in a
+  query with no meaningful filter and it runs per tuple — there is nothing in the function
+  to stop it.
+- **Parameters are bound, never interpolated.** `?` markers inside string literals are not
+  counted, so `WHERE note LIKE 'why?%' AND id = ?` has one parameter.
+- **A constant the lookback filters on has to be a bound parameter, not an embedded
+  literal.** The SQL argument is itself a NES string literal, and NES has no way to carry a
+  quote through one: `''` ends the NES literal (a parse error), and `\'` survives with its
+  backslash intact, so the database receives `\'` and rejects it. Write `AND Bez = ?` and
+  pass the value — a stream field or a `VARSIZED(...)` constant — as a further argument.
+  That is the better form regardless: it is bound rather than interpolated, and it lets one
+  prepared statement serve every value.
+- **Placeholders are positional.** `{}` takes result columns in order; the count must match
+  the query's column count. A named placeholder such as `{Wert}` is rejected rather than
+  silently treated as positional.
+- **No rows renders as the empty string**, not NULL. `LOOKBACK` is `NOT NULL`.
+- **A database failure does not lose the alert.** By default the alert is emitted with an
+  empty lookback string and a warning is logged. Set `strict: true` on the connection to
+  make the failure fail the query instead.
+- Each worker thread opens its own connection lazily and prepares the statement once. The
+  round trip is synchronous: a stalled database delays that pipeline for up to
+  `query_timeout_ms`.
+
+### Connections
+
+Credentials stay out of query text. Connections are named in a YAML file pointed at by
+`NES_LOOKBACK_CONFIG`, read the first time a connection is resolved:
+
+```yaml
+connections:
+  mlife:
+    db_host: 10.0.0.5
+    db_port: "1433"
+    database: mlife
+    username: nes_reader
+    password: ${MLIFE_PASSWORD}   # ${VAR} is expanded from the environment
+    driver: ODBC Driver 18 for SQL Server
+    trust_server_certificate: true
+    query_timeout_ms: 2000        # default 2000; login and query timeout
+    max_rows: 10                  # default 10; rows rendered into the string
+    max_result_bytes: 8192        # default 8192; truncated at a UTF-8 boundary
+    strict: false                 # default false
+  # A fixture: canned rows, no database. This is how the systests run in CI.
+  fixture:
+    rows:
+      - ["HB", "6.2"]
+```
+
+An unset `${VAR}` is an error, not an empty expansion — a missing password fails loudly
+instead of attempting an anonymous connect. An unknown key is rejected too, so a typo in
+`password` cannot silently become an anonymous connect either.
+
+**The node you submit the query to needs the config file, not just the node that runs it.**
+The connection name is resolved during type inference, at submission. That is deliberate:
+lowering happens per placed sub-plan, and in a distributed plan the projection carrying the
+`LOOKBACK` can land on a different worker than the selection. A lowering failure there
+leaves the upstream worker's network sink retrying a channel whose receiver never came up,
+and the query hangs instead of failing.
+
 ## Gotchas that cost time
 
 - **Rebuild the front-end binaries.** A stale `nes-repl` / `nes-repl-embedded` rejects

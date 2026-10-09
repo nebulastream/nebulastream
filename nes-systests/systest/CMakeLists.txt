@@ -229,6 +229,15 @@ endif (NOT CODE_COVERAGE)
 ExternalData_Add_Target(test-data)
 add_dependencies(nes-systest-lib test-data)
 
+# The LOOKBACK systests resolve their connections through NES_LOOKBACK_CONFIG. Applied to every
+# test registered in this directory rather than to each registration, so a new systest variant does
+# not silently lose the fixtures. APPEND, so an ENVIRONMENT set elsewhere survives.
+get_property(nes_systest_test_names DIRECTORY PROPERTY TESTS)
+if (nes_systest_test_names)
+    set_property(TEST ${nes_systest_test_names} APPEND PROPERTY
+            ENVIRONMENT "NES_LOOKBACK_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/../configs/lookback-fixtures.yaml")
+endif ()
+
 add_tests_if_enabled(tests)
 
 # Per-worker memory budgets for the distributed suite live in the topology YAMLs themselves (the large-scale

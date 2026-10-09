@@ -21,8 +21,9 @@ target_include_directories(odbc_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOU
 # "ODBC Driver 18 for SQL Server") is a system component registered in
 # /etc/odbcinst.ini. CMake's builtin FindODBC module provides the ODBC::ODBC
 # imported target.
-find_package(ODBC REQUIRED)
-target_link_libraries(odbc_source_plugin_library PRIVATE ODBC::ODBC)
+# odbc_connection carries the connection-string dialects, diagnostics, and RAII handles shared
+# with the LOOKBACK function; it re-exports ODBC::ODBC.
+target_link_libraries(odbc_source_plugin_library PRIVATE odbc_connection)
 
 link_plugin_library(nes-sources odbc_source_plugin_library)
 add_registry_entry(Source ODBC)
