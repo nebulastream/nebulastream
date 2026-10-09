@@ -45,6 +45,7 @@ let
         patches = [
           ./patches/libuuid-static.patch
           ./patches/libcxx-unsigned-char.patch
+          ./patches/qos-publish-socket-error-double-free.patch
         ];
 
         nativeBuildInputs = [ cmake ninja pkg-config ];
