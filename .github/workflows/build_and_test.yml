@@ -21,7 +21,12 @@ on:
         type: number
         required: false
         default: 360
-        description: "timeout of each build-and-test job (GitHub's default)"
+        description: "hard timeout of each build-and-test job (GitHub's default); cancelled jobs skip the log upload"
+      test_budget_minutes:
+        type: number
+        required: false
+        default: 350
+        description: "ctest is killed this long after the job started, so the job fails and uploads its logs; keep below timeout_minutes"
       config_ref:
         type: string
         required: false
@@ -62,7 +67,7 @@ jobs:
 
       # ctest gets killed by `timeout` before the job timeout would cancel the job: a cancelled job skips the log upload
       - name: Set test deadline
-        run: echo "TEST_DEADLINE=$(( $(date +%s) + (${{ inputs.timeout_minutes }} - 5) * 60 ))" >> "$GITHUB_ENV"
+        run: echo "TEST_DEADLINE=$(( $(date +%s) + ${{ inputs.test_budget_minutes }} * 60 ))" >> "$GITHUB_ENV"
 
       - uses: ./.github/steps/setup-sccache
         with:

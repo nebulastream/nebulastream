@@ -14,7 +14,7 @@ import argparse, calendar, json, os, re, subprocess, time
 
 API = "repos/{owner}/{repo}/actions"
 WF = "nightly.yml"
-JOB_TIMEOUT_MIN = 60  # keep in sync with timeout_minutes in nightly.yml; GitHub reports timed-out jobs as "cancelled"
+JOB_TIMEOUT_MIN = 120  # keep in sync with timeout_minutes in nightly.yml (the hard cap, not the 60 min test budget); GitHub reports timed-out jobs as "cancelled"
 
 
 def sh(*cmd, cwd=None):

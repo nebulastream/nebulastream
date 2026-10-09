@@ -51,7 +51,8 @@ jobs:
       config_ref: ${{ github.sha }}  # the flaky matrix profile only exists on this branch
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       matrix_profile: flaky
-      timeout_minutes: 60  # a job running longer counts as a failure (large tests: 40 min)
+      test_budget_minutes: 60   # a job whose tests run into this fails (counted from job start); large tests: 40 min
+      timeout_minutes: 120      # hard cap, only reached by a hung build/step
 
   # Large scale tests + distributed e2e (systest remote test); ~15-25 min each.
   large-tests:
