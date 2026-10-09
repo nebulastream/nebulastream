@@ -160,7 +160,7 @@ public:
         std::function<bool(const Descriptor&, const NESType&)> predicate,
         std::function<bool(const Descriptor&, const Descriptor&)> typeClassEquals)
             : typeClassDescriptor(ExplicitAny{std::move(typeClassDescriptor)}), predicate([predicate = std::move(predicate)](const ExplicitAny& descriptor, const NESType& type)
-            {return predicate(descriptor.getAs<Descriptor>, type); }), typeClassEquals([](const ExplicitAny& self, const ExplicitAny& other) {
+            {return predicate(descriptor.getAs<Descriptor>, type); }), typeClassEquals([typeClassEquals = std::move(typeCla)](const ExplicitAny& self, const ExplicitAny& other) {
                 return
             }) {}
 
