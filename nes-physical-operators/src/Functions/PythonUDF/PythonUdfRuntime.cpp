@@ -589,6 +589,12 @@ std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols()
         /// Pure libc functions that Codon's stdlib calls directly: str.lower/upper, str search, float hashing.
         {"tolower", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::tolower))},
         {"toupper", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::toupper))},
+        {"isalnum", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::isalnum))},
+        {"isalpha", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::isalpha))},
+        {"isdigit", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::isdigit))},
+        {"islower", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::islower))},
+        {"isspace", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::isspace))},
+        {"isupper", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::isupper))},
         {"memchr", reinterpret_cast<void*>(static_cast<const void* (*)(const void*, int, size_t)>(&std::memchr))},
         {"frexp", reinterpret_cast<void*>(static_cast<double (*)(double, int*)>(&std::frexp))},
     };

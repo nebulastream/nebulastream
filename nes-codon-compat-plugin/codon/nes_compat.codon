@@ -24,3 +24,8 @@ class bytes:
 
 class bytearray:
     pass
+
+
+# ponytail: a mutable set, immutability is not enforced; a real frozenset class when a UDF needs to hash one.
+def frozenset(iterable = List[int]()):
+    return set(iterable)

@@ -1,0 +1,60 @@
+# name: udf/StreamUDFBench/StreamUDFBenchReCodon.test
+# description: StreamUDFBench scalar UDFs that use re, executed by Codon (BRIDGE 'codon') from the unmodified
+# pyudfs/StreamUDFBench/streamudfbench_scalar.py. Codon's stdlib re module calls RE2-backed natives that
+# nes-codon-re-plugin provides; patterns RE2 rejects, like extractprojectid's lookbehind, fall back to PCRE2.
+# Expected results are CPython's for the same inputs.
+# Codon cannot compile a nested function that calls a sibling capturing a local of the enclosing function, so the bench's
+# stem keeps porter2's constants at module level, and its step helpers return '' instead of None (Codon types a
+# function's return from its first return statement). The unadapted version (streamudfbench_original_stem.py) is pinned as a
+# compile error.
+# groups: [PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE bench_texts(input VARSIZED);
+CREATE PHYSICAL SOURCE FOR bench_texts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH INLINE
+the quick brown fox 3.14 jumps.
+abc 12 x.y
+
+CREATE LOGICAL SOURCE bench_words(input VARSIZED);
+CREATE PHYSICAL SOURCE FOR bench_words TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH INLINE
+running
+generously
+caresses
+hopefulness relational ties
+
+CREATE LOGICAL SOURCE bench_projects(input VARSIZED);
+CREATE PHYSICAL SOURCE FOR bench_projects TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH INLINE
+project 123456 grant
+id 1234567 and 654321
+
+CREATE FUNCTION keywords_codon (input VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.keywords';
+CREATE FUNCTION stem_codon (input VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.stem';
+CREATE FUNCTION original_stem_codon (input VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_original_stem.stem';
+CREATE FUNCTION extractprojectid_codon (input VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.extractprojectid';
+
+SELECT keywords_codon(input) AS result FROM bench_texts
+INTO File('CSV' as "SINK".OUTPUT_FORMAT);
+----
+the quick brown fox 3.14 jumps
+abc 12 x y
+
+SELECT stem_codon(input) AS result FROM bench_words
+INTO File('CSV' as "SINK".OUTPUT_FORMAT);
+----
+run
+generous
+caress
+hope relat tie
+
+SELECT original_stem_codon(input) AS result FROM bench_words
+INTO File('CSV' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2032 "name 'ccy_exp' cannot be captured"
+
+SELECT extractprojectid_codon(input) AS result FROM bench_projects
+INTO File('CSV' as "SINK".OUTPUT_FORMAT, TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS);
+----
+"123456"
+"654321"

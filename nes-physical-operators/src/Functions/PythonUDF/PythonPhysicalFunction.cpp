@@ -588,6 +588,7 @@ CompiledPythonUdf compilePythonUdf(
         loadCodonPlugin(NES_CODON_BLAS_PLUGIN_PATH);
         loadCodonPlugin(NES_CODON_OPENCV_PLUGIN_PATH);
         loadCodonPlugin(NES_CODON_JSON_PLUGIN_PATH);
+        loadCodonPlugin(NES_CODON_RE_PLUGIN_PATH);
         loadCodonPlugin(NES_CODON_COMPAT_PLUGIN_PATH);
         const auto source = createPythonUdfSource(symbol, parameterNames, body, argumentTypes, returnType);
         const auto sourcePath
