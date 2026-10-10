@@ -62,11 +62,10 @@ public:
         Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
+    SequenceNumber nextSequenceNumber() override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
-    void incrementNumberOfInputPipelines() override;
     uint64_t getWindowSize() const override;
     std::span<std::byte>
     allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
@@ -89,10 +88,6 @@ private:
     /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
     /// and increases for each window info.
     std::atomic<SequenceNumber::Underlying> sequenceNumber;
-
-    /// If a window build operator appears in multiple pipelines, it may get terminated multiple times
-    /// We need to track how many input pipelines have not terminated yet, to only release pending slices after the last termination
-    std::atomic<uint64_t> numberOfActiveInputPipelines;
 };
 
 }

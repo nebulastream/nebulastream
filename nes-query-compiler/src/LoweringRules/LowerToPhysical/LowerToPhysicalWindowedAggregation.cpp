@@ -43,6 +43,7 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <LoweringRules/LowerToPhysical/SourcesOfInputOrigins.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -132,7 +133,6 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const auto childTraitSet = aggregation->getChild().getTraitSet();
 
     auto outputOriginIds = traitSet.get<OutputOriginIdsTrait>();
-    auto inputOriginIds = childTraitSet.get<OutputOriginIdsTrait>();
     PRECONDITION(std::ranges::size(*outputOriginIds) == 1, "Expected one output origin id");
     auto outputOriginId = (*outputOriginIds)[0];
 
@@ -217,7 +217,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore));
+        getSourcesOfInputOrigins({aggregation->getChild()}), outputOriginId, std::move(sliceAndWindowStore));
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

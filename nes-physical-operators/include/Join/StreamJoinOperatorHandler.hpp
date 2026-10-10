@@ -44,7 +44,7 @@ class StreamJoinOperatorHandler : public WindowBasedOperatorHandler
 {
 public:
     StreamJoinOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
+        SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);

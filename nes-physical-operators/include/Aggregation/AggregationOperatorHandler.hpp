@@ -50,7 +50,7 @@ class AggregationOperatorHandler final : public WindowBasedOperatorHandler
 {
 public:
     AggregationOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
+        SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 

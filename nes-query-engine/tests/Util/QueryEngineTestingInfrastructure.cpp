@@ -205,7 +205,9 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     std::unordered_map<identifier_t, std::shared_ptr<TestPipelineController>> pipelineCtrls;
     std::unordered_map<identifier_t, std::shared_ptr<ExecutablePipeline>> cache{};
 
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListeners] = createBackpressureChannels(
+        objects | isSource | std::views::transform([](const auto& source) { return std::get<SourceDescriptor>(source.second).sourceId; })
+        | std::ranges::to<std::vector>());
     std::function<std::shared_ptr<ExecutablePipeline>(identifier_t)> getOrCreatePipeline = [&](identifier_t identifier)
     {
         if (auto it = cache.find(identifier); it != cache.end())
@@ -250,7 +252,10 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     {
         std::vector<std::weak_ptr<ExecutablePipeline>> successors;
         std::ranges::transform(forwardRelations.at(source.first), std::back_inserter(successors), getOrCreatePipeline);
-        auto [s, ctrl] = getTestSource(backpressureListener, std::get<SourceDescriptor>(source.second).sourceId, bm);
+        auto [s, ctrl] = getTestSource(
+            std::move(backpressureListeners.at(std::get<SourceDescriptor>(source.second).sourceId)),
+            std::get<SourceDescriptor>(source.second).sourceId,
+            bm);
         sourceIds.emplace(source.first, s->getSourceId());
         sources.emplace_back(std::move(s), std::move(successors));
         sourceCtrls[source.first] = ctrl;

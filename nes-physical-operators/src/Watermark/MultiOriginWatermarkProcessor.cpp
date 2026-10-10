@@ -17,6 +17,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
@@ -70,6 +71,17 @@ std::string MultiOriginWatermarkProcessor::getCurrentStatus()
         ss << " id=" << origins[originIndex] << " watermark=" << watermarkProcessors[originIndex]->getCurrentValue();
     }
     return ss.str();
+}
+
+std::vector<std::pair<OriginId, Timestamp>> MultiOriginWatermarkProcessor::getCurrentWatermarkPerOrigin() const
+{
+    std::vector<std::pair<OriginId, Timestamp>> watermarks;
+    watermarks.reserve(origins.size());
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
+    {
+        watermarks.emplace_back(origins[originIndex], Timestamp(watermarkProcessors[originIndex]->getCurrentValue()));
+    }
+    return watermarks;
 }
 
 Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const

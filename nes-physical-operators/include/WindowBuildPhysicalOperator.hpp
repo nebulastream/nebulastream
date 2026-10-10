@@ -61,9 +61,6 @@ public:
     /// Passes emits slices that are ready to the second phase (probe) for further processing
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-    /// Emits/Flushes all slices and windows, as the query will be terminated
-    void terminate(ExecutionContext& executionCtx) const override;
-
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

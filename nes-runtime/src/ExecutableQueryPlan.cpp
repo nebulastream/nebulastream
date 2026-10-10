@@ -20,6 +20,7 @@
 #include <iterator>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -63,17 +64,28 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 }
 
 std::unique_ptr<ExecutableQueryPlan>
-ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider)
+ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, const uint64_t maxWatermarkGap)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
     std::unordered_map<OperatorId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
 
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListeners] = createBackpressureChannels(
+        compiledQueryPlan.sources | std::views::transform([](const auto& source) { return source.originId; })
+        | std::ranges::to<std::vector>());
 
     if (compiledQueryPlan.sinks.size() != 1)
     {
         throw NotImplemented("Currently our execution model expects exactly one sink per query plan");
+    }
+
+    if (maxWatermarkGap > 0)
+    {
+        for (const auto& pipeline : compiledQueryPlan.pipelines)
+        {
+            pipeline->watermarkBackpressure
+                = WatermarkBackpressure{.controller = backpressureController, .maxWatermarkGap = maxWatermarkGap};
+        }
     }
 
     auto& [pipelineId, descriptor, predecessors] = compiledQueryPlan.sinks.front();
@@ -94,7 +106,8 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[operatorId], std::back_inserter(successors));
-        instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor), std::move(successors));
+        instantiatedSources.emplace_back(
+            sourceProvider.lower(originId, std::move(backpressureListeners.at(originId)), descriptor), std::move(successors));
     }
 
 
