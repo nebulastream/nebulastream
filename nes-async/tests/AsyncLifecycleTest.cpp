@@ -339,4 +339,29 @@ TEST_F(AsyncLifecycleTest, AFailingCallReleasesTheSourceWhileOtherCallsFinish)
     source->close();
 }
 
+/// A source holds its channel from the moment it is built, not from when it is opened. Opening
+/// happens on the source thread, some time after its plan was started; building happens while the
+/// plan is started, and the splitter starts the consumer's plan before its producer's. Only that
+/// ordering keeps a producer that finishes early from taking the channel down with it.
+TEST_F(AsyncLifecycleTest, ASourceHoldsItsChannelFromConstruction)
+{
+    EXPECT_EQ(HandoffChannelRegistry::find(channelId), nullptr);
+    const auto source = makeSource(std::chrono::milliseconds{0});
+    EXPECT_NE(HandoffChannelRegistry::find(channelId), nullptr) << "the channel must exist before open() runs";
+}
+
+/// A deployment can be cancelled after a source was built but before it was opened. Its producer
+/// must still learn that nobody will read, or it retries a full channel forever.
+TEST_F(AsyncLifecycleTest, ASourceDestroyedUnopenedTellsTheProducer)
+{
+    std::shared_ptr<HandoffChannel> channel;
+    {
+        const auto source = makeSource(std::chrono::milliseconds{0});
+        channel = HandoffChannelRegistry::find(channelId);
+        ASSERT_NE(channel, nullptr);
+        EXPECT_FALSE(channel->isConsumerClosed());
+    }
+    EXPECT_TRUE(channel->isConsumerClosed());
+}
+
 }

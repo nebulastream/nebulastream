@@ -287,4 +287,31 @@ TEST_F(HandoffChannelTest, RegistryForgetsChannelsNobodyHolds)
     EXPECT_EQ(HandoffChannelRegistry::find(channelId), nullptr);
 }
 
+/// A channel held by its consumer outlives a producer that finished first.
+///
+/// This is the contract the asynchronous framework relies on, and it is the registry's half of it.
+/// The registry holds channels only weakly, so a channel nobody holds is gone, buffers and end of
+/// stream included. What keeps one alive across a producer that pushes everything, closes and is
+/// torn down before anyone reads, is that its consumer already holds it: `AsyncSource` takes the
+/// channel at construction, and `AsyncOperatorSplitter` starts the consumer's plan before the
+/// producer's. Before that ordering existed a fast producer could win, and the consumer then
+/// created a fresh channel and waited on it forever.
+TEST_F(HandoffChannelTest, AChannelHeldByItsConsumerOutlivesItsProducer)
+{
+    const auto bufferManager = makeBufferManager();
+    const std::string channelId = "registry-consumer-first";
+
+    const auto consumerSide = HandoffChannelRegistry::getOrCreate(channelId, 4);
+    {
+        const auto producerSide = HandoffChannelRegistry::getOrCreate(channelId, 4);
+        ASSERT_TRUE(producerSide->tryPush(taggedBuffer(*bufferManager, 7)));
+        producerSide->close();
+        /// The producer's sink goes away with its plan here.
+    }
+
+    EXPECT_TRUE(consumerSide->isClosed());
+    EXPECT_EQ(consumerSide->size(), 1U);
+    HandoffChannelRegistry::drop(channelId);
+}
+
 }

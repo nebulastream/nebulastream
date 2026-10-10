@@ -59,20 +59,34 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
     , preserveOrder(sourceDescriptor.getFromConfig(ConfigParametersAsyncSource::PRESERVE_ORDER))
     , inputLayout(decodeSchema(sourceDescriptor.getFromConfig(ConfigParametersAsyncSource::INPUT_SCHEMA)))
     , outputLayout(*sourceDescriptor.getLogicalSource().getSchema())
+    /// Taken here, at construction, and not in open(). Construction happens synchronously while
+    /// the consumer's plan is started, and AsyncOperatorSplitter starts that plan before its
+    /// producer's. So the channel exists, held by its reader, before anything can be written
+    /// into it. Taking it in open() -- on the source thread, some time later -- let a producer
+    /// with little input push everything, close the channel and be torn down first; the channel
+    /// went with it, since the registry only holds it weakly, and the consumer then created a
+    /// fresh one and waited on it forever. The interpreter's timing made that likely enough to
+    /// hang most of SemanticMapAsync.test.
+    , channel(HandoffChannelRegistry::getOrCreate(channelId, channelCapacity))
 {
 }
 
 AsyncSource::~AsyncSource()
 {
-    /// close() is the orderly path; this only catches the case where it never ran.
+    /// close() is the orderly path; this only catches the case where it never ran -- a deployment
+    /// cancelled after this source was constructed but before it was opened. The producer must
+    /// still learn that nobody will read, or it retries a full channel forever.
+    if (channel != nullptr)
+    {
+        channel->closeConsumer();
+    }
     workerStop.request_stop();
 }
 
 void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     bufferProvider = std::move(provider);
-    /// Either half may start first, so whoever gets here first creates the channel.
-    channel = HandoffChannelRegistry::getOrCreate(channelId, channelCapacity);
+    INVARIANT(channel != nullptr, "The handoff channel {} is taken at construction and released only by close()", channelId);
 
     const auto factory = AsyncExecutorRegistry::instance().find(executorType);
     if (!factory.has_value())

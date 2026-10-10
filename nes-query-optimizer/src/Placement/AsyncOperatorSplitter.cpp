@@ -186,13 +186,25 @@ DistributedLogicalPlan AsyncOperatorSplitter::split(const DistributedLogicalPlan
                 .sourceCatalog = copyPtr(sourceCatalog), .sinkCatalog = copyPtr(sinkCatalog), .host = host, .producerPlans = {}};
             auto newRoot = splitRecursive(context, roots.front());
 
-            /// Producer halves first — they only matter for readability, since the plans are
-            /// deployed independently and the channel tolerates either side starting first.
-            for (auto& producerPlan : context.producerPlans)
+            /// Consumers before their producers, and the order matters. The plans are started one
+            /// after the other, and an asynchronous source takes its channel when it is
+            /// constructed, which happens while its plan is started. A consumer started first
+            /// therefore holds the channel before its producer can write a single buffer.
+            ///
+            /// The other way round, a producer with little input could run to completion, close
+            /// the channel and be torn down before its consumer existed. The registry holds
+            /// channels only weakly -- so buffers go back to the pool once nobody needs them -- and
+            /// the channel went with the producer; the consumer then created a fresh one and waited
+            /// for an end of stream that never came.
+            ///
+            /// The root plan consumes the outermost cut. `producerPlans` is filled children first,
+            /// so the innermost cut comes first in it; reversed, every plan follows the one that
+            /// reads its output.
+            newPlans[host].emplace_back(localPlan.getQueryId(), std::vector<LogicalOperator>{std::move(newRoot)});
+            for (auto& producerPlan : context.producerPlans | std::views::reverse)
             {
                 newPlans[host].emplace_back(std::move(producerPlan));
             }
-            newPlans[host].emplace_back(localPlan.getQueryId(), std::vector<LogicalOperator>{std::move(newRoot)});
         }
     }
 
