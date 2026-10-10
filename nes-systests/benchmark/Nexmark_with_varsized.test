@@ -3,6 +3,10 @@
 # We have used https://github.com/risingwavelabs/nexmark-rs to generate the source csv files
 # groups: [milestone, benchmark, large, Aggregation, Join]
 
+# Watermark backpressure bounds the join state by the gap instead of the input size, so the joins stay within memory
+# under any worker configuration the CI passes on the command line.
+GlobalConfiguration worker.max_watermark_gap_in_ms: [10000]
+
 # Source definition. We have removed some columns that are not needed in our queries
 CREATE LOGICAL SOURCE bid(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR bid TYPE File;
