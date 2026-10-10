@@ -156,7 +156,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
                 /// Sent a buffer, check the backpressure handler to send another one
-                currentBuffer = backpressureHandler.onSuccess(backpressureController);
+                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
                 break;
             }
             case SendResult::Full: {
