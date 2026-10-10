@@ -184,7 +184,15 @@ private:
     size_t queuedWorkHighWatermark = 1;
     size_t maxPendingBuffers = 1;
     bool intakeDone = false;
+    /// "Nothing will ever be completed any more", for whatever reason: the input ended and the
+    /// last batch finished, a failure was recorded, or queued work was abandoned on a stop.
+    ///
+    /// Monotone on purpose. It releases the source thread's wait, so taking it back strands that
+    /// thread: the workers that would set it again have already left their loop. Only ever assign
+    /// `inputExhausted || ...`, never a bare condition.
     bool inputExhausted = false;
+    /// The first reason the operator failed, rethrown on the source thread. Part of every wait
+    /// predicate, so a failure releases the waiters whatever the bookkeeping above says.
     std::exception_ptr failure;
     std::optional<Processed> partiallyEmitted;
 

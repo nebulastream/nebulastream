@@ -16,8 +16,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <stop_token>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -138,9 +140,18 @@ public:
         return sink;
     }
 
-    /// A consumer running the DelayExecutor: one record per call, one call at a time.
-    std::unique_ptr<Source> makeSource(const std::chrono::milliseconds delay) const
+    /// A consumer running the DelayExecutor: one record per call. `failOn`, when given, is the
+    /// input text whose batch throws.
+    std::unique_ptr<Source>
+    makeSource(const std::chrono::milliseconds delay, const size_t maxConcurrency = 1, const std::string& failOn = {}) const
     {
+        std::unordered_map<std::string, std::string> executorConfig{
+            {"input_field", "reviewText"}, {"output_field", "sentiment"}, {"delay_ms", std::to_string(delay.count())}};
+        if (!failOn.empty())
+        {
+            executorConfig.emplace("fail_on", failOn);
+        }
+
         const SourceCatalog sourceCatalog;
         const auto descriptor = sourceCatalog.getAnonymousSource(
             Identifier::parse("Async"),
@@ -149,11 +160,10 @@ public:
             {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "NATIVE"}},
             {{Identifier::parse("channel"), channelId},
              {Identifier::parse("executor_type"), "Delay"},
-             {Identifier::parse("executor_config"),
-              encodeConfig({{"input_field", "reviewText"}, {"output_field", "sentiment"}, {"delay_ms", std::to_string(delay.count())}})},
+             {Identifier::parse("executor_config"), encodeConfig(executorConfig)},
              {Identifier::parse("input_schema"), encodeSchema(inputSchema())},
              {Identifier::parse("batch_size"), "1"},
-             {Identifier::parse("max_concurrency"), "1"}});
+             {Identifier::parse("max_concurrency"), std::to_string(maxConcurrency)}});
         EXPECT_TRUE(descriptor.has_value());
         return SourceRegistry::instance().find("Async").value()(SourceRegistryArguments{.sourceDescriptor = descriptor.value()});
     }
@@ -279,6 +289,54 @@ TEST_F(AsyncLifecycleTest, SourceCloseDoesNotWorkOffQueuedBatches)
     /// The call in flight cannot be interrupted, but the queued ones must not be made: working
     /// them off would take Records * Delay, i.e. two seconds here.
     EXPECT_LT(elapsed, Delay * 3) << "close() took " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms";
+}
+
+/// A failing call must reach the source thread even while other calls are still finishing.
+///
+/// What this covers, and what it does not. A query whose operator failed under concurrency used to
+/// stall outright, in roughly two runs of five: `recordFailure` says "nothing will complete any
+/// more" by setting `inputExhausted`, which is what releases the source thread's wait, and a worker
+/// that finished its own batch afterwards then *assigned* that flag from the queue state -- `false`,
+/// with the failed buffer still pending. Every other worker had already left its loop on the stop
+/// that `recordFailure` requests, so nobody set it again and the source waited for a buffer that no
+/// longer had a worker. The query neither failed nor finished.
+///
+/// The window is narrow: the clearing has to land between the source thread being woken and its
+/// re-acquiring the mutex to re-check the predicate. This test does not force that window -- it
+/// passes against the unfixed source as well, which was checked. Reproducing it needs a real query:
+/// nes-systests/semantic/SemanticMapAsync.test:9, which hung in two of five runs before the fix and
+/// in none of thirty after it.
+///
+/// So what this test is for is the path itself: one call of sixteen fails over four workers while
+/// the others finish, and the source has to come out with that failure rather than with end of
+/// stream, a short result, or a wait. The stall is prevented by construction instead -- the flag is
+/// only ever set, and `failure` is part of every wait predicate.
+TEST_F(AsyncLifecycleTest, AFailingCallReleasesTheSourceWhileOtherCallsFinish)
+{
+    constexpr auto Delay = std::chrono::milliseconds{100};
+    constexpr size_t Records = 16;
+    constexpr size_t Workers = 4;
+
+    const auto source = makeSource(Delay, Workers, "review 0");
+    source->open(bufferManager);
+    const auto channel = HandoffChannelRegistry::find(channelId);
+    ASSERT_NE(channel, nullptr);
+
+    ASSERT_TRUE(channel->tryPush(inputBuffer(Records)));
+    /// The producer is done, so nothing but the failure can end this source.
+    channel->close();
+
+    auto output = bufferManager->getBufferBlocking();
+    const std::stop_source stop;
+    const auto start = std::chrono::steady_clock::now();
+    EXPECT_ANY_THROW(std::ignore = source->fillTupleBuffer(output, stop.get_token()));
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+
+    /// Generous: the point is that it returns at all. Working off all sixteen batches would take
+    /// Records / Workers * Delay even if it did not hang.
+    EXPECT_LT(elapsed, Delay * 20) << "fillTupleBuffer took " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+                                   << " ms";
+    source->close();
 }
 
 }

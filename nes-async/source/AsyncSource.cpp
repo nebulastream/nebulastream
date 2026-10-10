@@ -197,7 +197,10 @@ void AsyncSource::intakeLoop(const std::stop_token& stopToken)
         {
             const std::lock_guard lock(mutex);
             intakeDone = true;
-            inputExhausted = work.empty() && pending.empty();
+            /// Only ever set, never cleared. The flag means "nothing will complete any more", and a
+            /// failure recorded while this thread was reading has already set it; assigning here
+            /// would take it back and leave fillTupleBuffer waiting for a result nobody will produce.
+            inputExhausted = inputExhausted || (work.empty() && pending.empty());
         }
         /// Both, because idle workers wait on one and fillTupleBuffer on the other.
         workArrived.notify_all();
@@ -211,13 +214,24 @@ void AsyncSource::intakeLoop(const std::stop_token& stopToken)
 
 std::optional<AsyncSource::BatchWork> AsyncSource::takeNextBatch(std::unique_lock<std::mutex>& lock, const std::stop_token& stopToken)
 {
-    workArrived.wait(lock, stopToken, [this] { return not work.empty() || intakeDone; });
+    workArrived.wait(lock, stopToken, [this] { return not work.empty() || intakeDone || failure; });
     /// The wait returns as soon as its predicate holds, stop or not, so a stop with batches still
     /// queued has to be checked separately. Taking them would mean one more model call each — up
     /// to the request timeout apiece — whose results nobody will emit, while close() waits.
-    if (work.empty() || stopToken.stop_requested())
+    /// A stop or a failure abandons whatever is still queued or in flight; an empty queue merely
+    /// means this worker has nothing left to do, while others may still be finishing theirs.
+    const bool abandoning = stopToken.stop_requested() || failure;
+    if (work.empty() || abandoning)
     {
-        /// Either the input ended or a stop was requested; this worker is done either way.
+        if (abandoning && (not work.empty() || not pending.empty()))
+        {
+            /// Nobody is going to finish those buffers now, so say so. Without this the source
+            /// thread waits for a buffer whose last worker has already left.
+            inputExhausted = true;
+            completedArrived.notify_all();
+        }
+        /// Otherwise the last worker to drain `pending` sets the flag, which is the ordinary end
+        /// of the stream — declaring it here would cut off the buffers still being worked on.
         return std::nullopt;
     }
     const auto item = work.front();
@@ -282,7 +296,7 @@ void AsyncSource::processingLoop(const std::stop_token& stopToken)
                         .results = std::move(entryIterator->second.results),
                         .emittedRecords = 0});
                 pending.erase(entryIterator);
-                inputExhausted = intakeDone && work.empty() && pending.empty();
+                inputExhausted = inputExhausted || (intakeDone && work.empty() && pending.empty());
                 lock.unlock();
                 /// Wakes fillTupleBuffer, and the intake thread, for which a slot just freed up.
                 completedArrived.notify_all();
@@ -305,7 +319,7 @@ std::optional<AsyncSource::Processed> AsyncSource::takeNextCompleted(const std::
 
     if (preserveOrder)
     {
-        completedArrived.wait(lock, stopToken, [this] { return completed.contains(nextToEmit) || inputExhausted; });
+        completedArrived.wait(lock, stopToken, [this] { return completed.contains(nextToEmit) || inputExhausted || failure; });
         if (const auto it = completed.find(nextToEmit); it != completed.end())
         {
             auto processed = std::move(it->second);
@@ -316,7 +330,7 @@ std::optional<AsyncSource::Processed> AsyncSource::takeNextCompleted(const std::
         return std::nullopt;
     }
 
-    completedArrived.wait(lock, stopToken, [this] { return not completed.empty() || inputExhausted; });
+    completedArrived.wait(lock, stopToken, [this] { return not completed.empty() || inputExhausted || failure; });
     if (not completed.empty())
     {
         auto it = completed.begin();

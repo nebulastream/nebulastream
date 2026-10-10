@@ -18,6 +18,7 @@
 #include <cctype>
 #include <chrono>
 #include <cstddef>
+#include <optional>
 #include <span>
 #include <string>
 #include <thread>
@@ -71,6 +72,10 @@ DelayExecutor::DelayExecutor(AsyncOperatorContext operatorContext)
         }
         delay = std::chrono::milliseconds{parsed.value()};
     }
+    if (const auto it = context.config.find("fail_on"); it != context.config.end() && !it->second.empty())
+    {
+        failOn = it->second;
+    }
 }
 
 std::vector<AsyncRecordResult> DelayExecutor::process(const std::span<const AsyncRecordView> batch)
@@ -79,6 +84,17 @@ std::vector<AsyncRecordResult> DelayExecutor::process(const std::span<const Asyn
     if (delay.count() > 0)
     {
         std::this_thread::sleep_for(delay);
+    }
+
+    if (failOn.has_value())
+    {
+        for (const auto& record : batch)
+        {
+            if (record.readAsText(inputFieldIndex) == *failOn)
+            {
+                throw UnknownOperation("DelayExecutor was configured to fail on '{}'", *failOn);
+            }
+        }
     }
 
     std::vector<AsyncRecordResult> results;
