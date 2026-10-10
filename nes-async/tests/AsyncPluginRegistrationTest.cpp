@@ -22,12 +22,12 @@
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <gtest/gtest.h>
+#include <ErrorHandling.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <gtest/gtest.h>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -66,8 +66,7 @@ TEST_F(AsyncPluginRegistrationTest, HandoffSinkValidatesItsConfiguration)
     EXPECT_EQ(std::get<std::string>(validated.at("OUTPUT_FORMAT")), "NATIVE");
 
     /// Even an explicit CSV is overridden rather than honoured.
-    const auto overridden
-        = (*validator)(SinkValidationRegistryArguments{{{"CHANNEL", "abc"}, {"OUTPUT_FORMAT", "CSV"}}});
+    const auto overridden = (*validator)(SinkValidationRegistryArguments{{{"CHANNEL", "abc"}, {"OUTPUT_FORMAT", "CSV"}}});
     EXPECT_EQ(std::get<std::string>(overridden.at("OUTPUT_FORMAT")), "NATIVE");
 
     /// CHANNEL has no default, so leaving it out must be rejected rather than silently
@@ -86,15 +85,14 @@ TEST_F(AsyncPluginRegistrationTest, AsyncSourceValidatesItsConfiguration)
         UnqualifiedUnboundField{Identifier::parse("reviewText"), DataType::Type::VARSIZED}};
 
     EXPECT_NO_THROW(
-        std::ignore = (*validator)(
-            SourceValidationRegistryArguments{
-                {{"CHANNEL", "abc"},
-                 {"EXECUTOR_TYPE", "Delay"},
-                 {"EXECUTOR_CONFIG", encodeConfig({{"delay_ms", "10"}})},
-                 {"INPUT_SCHEMA", encodeSchema(inputSchema)},
-                 {"BATCH_SIZE", "10"},
-                 {"MAX_CONCURRENCY", "4"},
-                 {"PRESERVE_ORDER", "true"}}}));
+        std::ignore = (*validator)(SourceValidationRegistryArguments{
+            {{"CHANNEL", "abc"},
+             {"EXECUTOR_TYPE", "Delay"},
+             {"EXECUTOR_CONFIG", encodeConfig({{"delay_ms", "10"}})},
+             {"INPUT_SCHEMA", encodeSchema(inputSchema)},
+             {"BATCH_SIZE", "10"},
+             {"MAX_CONCURRENCY", "4"},
+             {"PRESERVE_ORDER", "true"}}}));
 
     /// EXECUTOR_TYPE and INPUT_SCHEMA are both mandatory.
     EXPECT_THROW(std::ignore = (*validator)(SourceValidationRegistryArguments{{{"CHANNEL", "abc"}}}), Exception);

@@ -66,11 +66,8 @@ AsyncRecordLayout::AsyncRecordLayout(const Schema<UnqualifiedUnboundField, Order
                 "Asynchronous operators do not support nullable fields yet, but field '{}' is nullable", field.getFullyQualifiedName());
         }
 
-        fields.emplace_back(
-            Field{
-                .name = static_cast<const Identifier&>(field.getFullyQualifiedName()).asCanonicalString(),
-                .type = type,
-                .offset = offset});
+        fields.emplace_back(Field{
+            .name = static_cast<const Identifier&>(field.getFullyQualifiedName()).asCanonicalString(), .type = type, .offset = offset});
         offset += type.getSizeInBytesWithNull();
     }
 
@@ -216,10 +213,9 @@ void AsyncRecordWriter::writeText(const size_t fieldIndex, const std::string_vie
     const std::span content{reinterpret_cast<const std::byte*>(value.data()), value.size()};
     const auto access = TupleBufferRef::writeVarSized(*buffer, *bufferProvider, content);
 
-    const std::span accessBytes{
-        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) the slot holds the access verbatim
-        reinterpret_cast<const std::byte*>(&access),
-        sizeof(VariableSizedAccess)};
+    const std::span accessBytes{/// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) the slot holds the access verbatim
+                                reinterpret_cast<const std::byte*>(&access),
+                                sizeof(VariableSizedAccess)};
     writeRaw(fieldIndex, accessBytes);
 }
 

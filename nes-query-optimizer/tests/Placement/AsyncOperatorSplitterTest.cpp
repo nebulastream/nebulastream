@@ -39,10 +39,10 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
-#include <QueryId.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <DistributedLogicalPlan.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -134,8 +134,7 @@ public:
         asyncTraits.insert(FieldOrderingTrait{outputSchema()});
         asyncTraits.insert(OutputOriginIdsTrait{{operatorOrigin}});
         asyncTraits.insert(trait);
-        const LogicalOperator asyncOperator
-            = IngestionTimeWatermarkAssignerLogicalOperator::create(source)->withTraitSet(asyncTraits);
+        const LogicalOperator asyncOperator = IngestionTimeWatermarkAssignerLogicalOperator::create(source)->withTraitSet(asyncTraits);
 
         const auto sink = makeSink(asyncOperator, inputSchema());
         const LogicalPlan plan{INVALID_QUERY_ID, {sink}};
@@ -144,8 +143,7 @@ public:
 
     [[nodiscard]] AsyncOperatorSplitter splitter() const
     {
-        return AsyncOperatorSplitter{
-            SharedPtr<const SourceCatalog>{sourceCatalog}, SharedPtr<const SinkCatalog>{sinkCatalog}};
+        return AsyncOperatorSplitter{SharedPtr<const SourceCatalog>{sourceCatalog}, SharedPtr<const SinkCatalog>{sinkCatalog}};
     }
 
     /// The single leaf of a plan.

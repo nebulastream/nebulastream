@@ -79,10 +79,9 @@ std::string encodeSchema(const Schema<UnqualifiedUnboundField, Ordered>& schema)
     encoded.fields.reserve(schema.size());
     for (const auto& field : schema)
     {
-        encoded.fields.emplace_back(
-            EncodedField{
-                .name = static_cast<const Identifier&>(field.getFullyQualifiedName()).asCanonicalString(),
-                .type = std::string{magic_enum::enum_name(field.getDataType().type)}});
+        encoded.fields.emplace_back(EncodedField{
+            .name = static_cast<const Identifier&>(field.getFullyQualifiedName()).asCanonicalString(),
+            .type = std::string{magic_enum::enum_name(field.getDataType().type)}});
     }
     return rfl::json::write(encoded);
 }
@@ -111,7 +110,8 @@ Schema<UnqualifiedUnboundField, Ordered> decodeSchema(const std::string_view enc
     if (!schema.has_value())
     {
         throw CannotDeserialize(
-            "Handoff schema has colliding field names: {}", Schema<UnqualifiedUnboundField, Ordered>::createCollisionString(schema.error()));
+            "Handoff schema has colliding field names: {}",
+            Schema<UnqualifiedUnboundField, Ordered>::createCollisionString(schema.error()));
     }
     return std::move(schema).value();
 }

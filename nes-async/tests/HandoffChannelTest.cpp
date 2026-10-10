@@ -42,7 +42,11 @@ constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOL
 std::shared_ptr<BufferManager> makeBufferManager()
 {
     return BufferManager::create(
-        TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, POOLED_BUFFER_SIZE, std::make_shared<NesDefaultMemoryAllocator>());
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
 }
 
 /// A buffer tagged with `marker` in its first byte, so the test can tell buffers apart.

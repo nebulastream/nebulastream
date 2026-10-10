@@ -65,7 +65,8 @@ TraitSet withoutAsyncExecution(const TraitSet& traits)
 }
 
 /// Replaces one marked operator by a sink/source pair and records the producer half.
-LogicalOperator cut(SplitContext& context, const LogicalOperator& asyncOperator, const LogicalOperator& child, const AsyncExecutionTrait& trait)
+LogicalOperator
+cut(SplitContext& context, const LogicalOperator& asyncOperator, const LogicalOperator& child, const AsyncExecutionTrait& trait)
 {
     /// What crosses the channel is the child's output; what the source produces is the operator's.
     const auto inputSchema = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
@@ -75,8 +76,7 @@ LogicalOperator cut(SplitContext& context, const LogicalOperator& asyncOperator,
     const auto channelId = UUIDToString(generateUUID());
 
     const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("channel"), channelId},
-        {Identifier::parse("channel_capacity"), std::to_string(trait.channelCapacity)}};
+        {Identifier::parse("channel"), channelId}, {Identifier::parse("channel_capacity"), std::to_string(trait.channelCapacity)}};
 
     const std::unordered_map<Identifier, std::string> sourceConfig{
         {Identifier::parse("channel"), channelId},
@@ -143,7 +143,8 @@ LogicalOperator splitRecursive(SplitContext& context, const LogicalOperator& op)
         /// root of its local plan the consumer half would come out rooted in a source.
         if (op.tryGetAs<SourceDescriptorLogicalOperator>() || op.tryGetAs<SinkLogicalOperator>())
         {
-            NES_DEBUG("Dropping the asynchronous execution marker from a generated boundary operator for '{}'", trait.value()->executorType);
+            NES_DEBUG(
+                "Dropping the asynchronous execution marker from a generated boundary operator for '{}'", trait.value()->executorType);
             return op.withChildren(std::move(newChildren)).withTraitSet(withoutAsyncExecution(op.getTraitSet()));
         }
 
