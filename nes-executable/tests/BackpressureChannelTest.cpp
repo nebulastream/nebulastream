@@ -23,6 +23,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -36,6 +37,22 @@ class BackpressureChannelTest : public ::testing::Test
 protected:
     void SetUp() override { Logger::setupLogging("BackpressureChannelTest.log", NES::LogLevel::LOG_DEBUG); }
 };
+
+/// Returns whether `wait` is still blocked after a grace period. The waiting thread is unblocked via its stop token.
+static bool isBlocked(const BackpressureListener& listener)
+{
+    std::atomic passed{false};
+    {
+        const std::jthread waiter(
+            [&](const std::stop_token& stopToken)
+            {
+                listener.wait(stopToken);
+                passed = !stopToken.stop_requested();
+            });
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    return !passed;
+}
 
 /// Test basic construction and destruction of Backpressure Controller and BackpressureListener
 TEST_F(BackpressureChannelTest, BasicConstruction)
@@ -331,6 +348,55 @@ TEST_F(BackpressureChannelTest, StopTokenFunctionality)
     ingestionThread = {};
     EXPECT_TRUE(ingestionStopped);
     EXPECT_TRUE(backpressureController.releasePressure());
+}
+
+TEST_F(BackpressureChannelTest, ChannelIsBlockedWhileAnyHolderAppliesPressure)
+{
+    auto [first, listener] = createBackpressureChannel();
+    auto second = first;
+
+    EXPECT_TRUE(first.applyPressure());
+    EXPECT_TRUE(second.applyPressure());
+    EXPECT_TRUE(first.releasePressure());
+    EXPECT_TRUE(isBlocked(listener));
+
+    EXPECT_TRUE(second.releasePressure());
+    EXPECT_FALSE(isBlocked(listener));
+}
+
+TEST_F(BackpressureChannelTest, CopyStartsWithoutPressure)
+{
+    auto [first, listener] = createBackpressureChannel();
+    EXPECT_TRUE(first.applyPressure());
+
+    auto second = first;
+    EXPECT_FALSE(second.releasePressure());
+    EXPECT_TRUE(isBlocked(listener));
+}
+
+TEST_F(BackpressureChannelTest, DestroyingHolderReleasesItsPressure)
+{
+    auto [first, listener] = createBackpressureChannel();
+    {
+        auto second = first;
+        EXPECT_TRUE(second.applyPressure());
+        EXPECT_TRUE(isBlocked(listener));
+    }
+    EXPECT_FALSE(isBlocked(listener));
+}
+
+TEST_F(BackpressureChannelTest, PressureOnOriginOnlyBlocksItsListener)
+{
+    auto [controller, listeners] = createBackpressureChannels({OriginId(1), OriginId(2)});
+    EXPECT_TRUE(controller.controls(OriginId(1)));
+    EXPECT_FALSE(controller.controls(OriginId(3)));
+
+    EXPECT_TRUE(controller.applyPressure(OriginId(1)));
+    EXPECT_TRUE(isBlocked(listeners.at(OriginId(1))));
+    EXPECT_FALSE(isBlocked(listeners.at(OriginId(2))));
+
+    EXPECT_TRUE(controller.releasePressure());
+    EXPECT_FALSE(isBlocked(listeners.at(OriginId(1))));
 }
 
 }

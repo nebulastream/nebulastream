@@ -16,54 +16,81 @@
 
 #include <memory>
 #include <stop_token>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
 
 struct Channel;
 class BackpressureListener;
 class BackpressureController;
 
-/// This is the entrypoint to a backpressure channel. It creates a pair of connected Backpressure Controller and BackpressureListener.
-/// A Backpressure Controller controls the Backpressure, and a BackpressureListener only allows further progress if there is no backpressure.
-/// In NebulaStream a Backpressure Controller is owned by exactly one sink, which controls all the BackpressureListener of all sources within the same query plan.
-/// Currently, the Backpressure channel enforces the invariant that sinks always outlive sources. Thus, if a Backpressure Controller is destroyed, all
-/// connected BackpressureListeners that are still alive and in use will report an assertion failure.
+/// This is the entrypoint to backpressure. It creates one channel per origin, a single Backpressure Controller controlling all of them,
+/// and one BackpressureListener per origin. A Backpressure Controller controls the Backpressure, and a BackpressureListener only allows
+/// further progress if there is no backpressure on its channel.
+/// In NebulaStream every source of a query plan owns the listener of its origin. Copies of the Backpressure Controller can be handed to any
+/// component that needs to throttle sources, e.g., the sink.
+/// Currently, the Backpressure channel enforces the invariant that controllers always outlive sources. Thus, if the last copy of a
+/// Backpressure Controller is destroyed, all connected BackpressureListeners that are still alive and in use will report an assertion failure.
+std::pair<BackpressureController, std::unordered_map<NES::OriginId, BackpressureListener>>
+createBackpressureChannels(const std::vector<NES::OriginId>& origins);
+
+/// Convenience for a single channel, keyed by INITIAL<OriginId>.
 std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
 
-/// A Backpressure Controller is the exclusive controller of a backpressure channel. It allows the user to apply and release backpressure, which blocks
-/// or unblocks all connected Ingestions.
+/// A Backpressure Controller allows the user to apply and release backpressure, which blocks or unblocks either all connected listeners or
+/// only the listener of a specific origin.
+/// Every copy of a Backpressure Controller is an independent holder of backpressure: a channel is blocked as long as at least one holder
+/// applies pressure to it. A copy starts without holding any pressure, and destroying a holder releases all pressure it still holds.
+/// A single holder must not be used concurrently.
 class BackpressureController
 {
-    explicit BackpressureController(std::shared_ptr<Channel> channel);
+    struct Channels;
+    explicit BackpressureController(std::shared_ptr<Channels> channels);
 
-    std::shared_ptr<Channel> channel;
-    friend std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
+    std::shared_ptr<Channels> channels;
+    std::unordered_set<NES::OriginId> held;
+    friend std::pair<BackpressureController, std::unordered_map<NES::OriginId, BackpressureListener>>
+    createBackpressureChannels(const std::vector<NES::OriginId>& origins);
 
 public:
+    BackpressureController(const BackpressureController& other);
+    BackpressureController& operator=(const BackpressureController& other);
+    BackpressureController(BackpressureController&& other) noexcept;
+    BackpressureController& operator=(BackpressureController&& other) noexcept;
     ~BackpressureController();
 
-    /// Currently, a Backpressure Controller represents unique ownership over the backpressure channel, thus copying is not enabled.
-    BackpressureController(const BackpressureController& other) = delete;
-    BackpressureController& operator=(const BackpressureController& other) = delete;
-
-    /// Default moves leaves channel in an empty state which prevents unintended destruction of the underlying channel
-    BackpressureController(BackpressureController&& other) noexcept = default;
-    BackpressureController& operator=(BackpressureController&& other) noexcept = default;
-
+    /// Return true if this holder changed its pressure on at least one channel.
     bool applyPressure();
     bool releasePressure();
+
+    /// Return true if this holder changed its pressure on the origin's channel.
+    bool applyPressure(NES::OriginId origin);
+    bool releasePressure(NES::OriginId origin);
+
+    [[nodiscard]] bool controls(NES::OriginId origin) const;
 };
 
 /// Listener of the backpressure channel is the Ingestion type that is used by sources.
-/// Before initiating a read of a new buffer, the source can if backpressure has been requested by a sink with a call to `wait`.
-/// This will cause the thread to block on the call if backpressure has been applied, until pressure is released by a sink, in which case
+/// Before initiating a read of a new buffer, the source can if backpressure has been requested with a call to `wait`.
+/// This will cause the thread to block on the call if backpressure has been applied, until pressure is released, in which case
 /// the thread will be notified via the condition_variable in the channel.
+/// A listener belongs to exactly one source, thus copying is not enabled.
 class BackpressureListener
 {
     explicit BackpressureListener(std::shared_ptr<Channel> channel) : channel(std::move(channel)) { }
 
-    friend std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
+    friend std::pair<BackpressureController, std::unordered_map<NES::OriginId, BackpressureListener>>
+    createBackpressureChannels(const std::vector<NES::OriginId>& origins);
     std::shared_ptr<Channel> channel;
 
 public:
+    BackpressureListener(const BackpressureListener& other) = delete;
+    BackpressureListener& operator=(const BackpressureListener& other) = delete;
+    BackpressureListener(BackpressureListener&& other) noexcept = default;
+    BackpressureListener& operator=(BackpressureListener&& other) noexcept = default;
+    ~BackpressureListener() = default;
+
     void wait(const std::stop_token& stopToken) const;
 };
