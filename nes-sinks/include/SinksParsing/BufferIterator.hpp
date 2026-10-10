@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <utility>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -41,4 +42,12 @@ private:
     TupleBuffer tupleBuffer;
     size_t bufferIndex = 0;
 };
+
+/// Number of content bytes in the buffer and all of its children.
+[[nodiscard]] size_t getTotalContentLength(const TupleBuffer& buffer);
+
+/// Copies the content of the buffer and all of its children, in iteration order, into destination.
+/// Stops once destination is full.
+/// @return number of bytes written; equals getTotalContentLength(buffer) iff destination was large enough.
+size_t copyInto(const TupleBuffer& buffer, std::span<std::byte> destination);
 }
