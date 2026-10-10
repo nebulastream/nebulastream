@@ -150,7 +150,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
                                       .value();
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, backpressureListener, sourceDescriptor)};
+    return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, std::move(backpressureListener), sourceDescriptor)};
 }
 
 InputFormatterDescriptor
