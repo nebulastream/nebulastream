@@ -14,192 +14,43 @@
 
 #include <HttpSemanticBackend.hpp>
 
-#include <chrono>
-#include <cstddef>
 #include <expected>
-#include <mutex>
+#include <memory>
 #include <optional>
 #include <string>
-#include <thread>
 #include <utility>
 
-#include <curl/curl.h>
-#include <curl/easy.h>
 #include <fmt/format.h>
-#include <nlohmann/json.hpp>
 
+#include <Http/HttpBackend.hpp>
+#include <ChatCompletionProtocol.hpp>
 #include <ErrorHandling.hpp>
 #include <SemanticBackend.hpp>
-#include <SemanticLatencyStats.hpp>
 
 namespace NES
 {
 
-namespace
-{
-
-/// curl_easy_init initializes libcurl implicitly, but that implicit path is not thread-safe, and
-/// worker threads may construct their backends concurrently. One explicit global init, never
-/// cleaned up: backends can live until process exit.
-void ensureCurlGlobalInit()
-{
-    static std::once_flag once;
-    std::call_once(
-        once,
-        []
-        {
-            if (const auto code = curl_global_init(CURL_GLOBAL_DEFAULT); code != CURLE_OK)
-            {
-                throw CannotLoadModel("curl_global_init failed: {}", curl_easy_strerror(code));
-            }
-        });
-}
-
-size_t appendToString(char* data, const size_t size, const size_t nmemb, void* userData)
-{
-    static_cast<std::string*>(userData)->append(data, size * nmemb);
-    return size * nmemb;
-}
-
-/// Frees the header list on every exit path, including exceptions from the retry loop.
-struct HeaderList
-{
-    curl_slist* list = nullptr;
-
-    HeaderList() = default;
-    HeaderList(const HeaderList&) = delete;
-    HeaderList& operator=(const HeaderList&) = delete;
-    HeaderList(HeaderList&&) = delete;
-    HeaderList& operator=(HeaderList&&) = delete;
-
-    ~HeaderList() { curl_slist_free_all(list); }
-
-    void append(const std::string& header) { list = curl_slist_append(list, header.c_str()); }
-};
-
-/// `choices[0].message.content` of an OpenAI chat-completion envelope. Every level is checked: a 2xx
-/// body that is valid JSON of the wrong shape must not escape as a nlohmann type error.
-std::optional<std::string> extractMessageContent(const std::string& body)
-{
-    const auto envelope = nlohmann::json::parse(body, nullptr, false);
-    if (envelope.is_discarded() || !envelope.is_object())
-    {
-        return std::nullopt;
-    }
-    const auto choices = envelope.find("choices");
-    if (choices == envelope.end() || !choices->is_array() || choices->empty() || !(*choices)[0].is_object())
-    {
-        return std::nullopt;
-    }
-    const auto message = (*choices)[0].find("message");
-    if (message == (*choices)[0].end() || !message->is_object())
-    {
-        return std::nullopt;
-    }
-    const auto content = message->find("content");
-    if (content == message->end() || !content->is_string())
-    {
-        return std::nullopt;
-    }
-    return content->get<std::string>();
-}
-
-}
-
 HttpSemanticBackend::HttpSemanticBackend(std::string endpoint, std::optional<std::string> apiKey)
-    : url(fmt::format("{}/chat/completions", endpoint)), apiKey(std::move(apiKey)), curlHandle(nullptr)
+    : HttpSemanticBackend(std::move(endpoint), std::move(apiKey), defaultHttpBackendFactory()())
 {
-    ensureCurlGlobalInit();
-    curlHandle = curl_easy_init();
-    if (curlHandle == nullptr)
-    {
-        throw CannotLoadModel("curl_easy_init failed for semantic model endpoint {}", endpoint);
-    }
 }
 
-HttpSemanticBackend::~HttpSemanticBackend()
+HttpSemanticBackend::HttpSemanticBackend(std::string endpoint, std::optional<std::string> apiKey, std::unique_ptr<HttpBackend> transport)
+    : endpoint(std::move(endpoint))
+    , url(fmt::format("{}/chat/completions", this->endpoint))
+    , apiKey(std::move(apiKey))
+    , transport(std::move(transport))
 {
-    curl_easy_cleanup(static_cast<CURL*>(curlHandle));
+    PRECONDITION(this->transport != nullptr, "A semantic backend needs a transport");
 }
+
+HttpSemanticBackend::~HttpSemanticBackend() = default;
 
 std::expected<std::string, BackendError> HttpSemanticBackend::complete(const CompletionRequest& request)
 {
-    auto* curl = static_cast<CURL*>(curlHandle);
-
-    const auto body
-        = nlohmann::
-              json{{"model", request.modelName}, {"messages", nlohmann::json::array({{{"role", "user"}, {"content", request.prompt}}})}}
-                  .dump();
-
-    HeaderList headers;
-    headers.append("Content-Type: application/json");
-    /// Suppresses the "Expect: 100-continue" handshake libcurl adds for larger bodies; prompts cross
-    /// that threshold easily and minimal OpenAI-compatible servers need not implement it.
-    headers.append("Expect:");
-    if (apiKey.has_value())
-    {
-        headers.append(fmt::format("Authorization: Bearer {}", *apiKey));
-    }
-
-    curl_easy_reset(curl);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.list);
-    curl_easy_setopt(curl, CURLOPT_POST, 1L);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(body.size()));
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, appendToString);
-    /// Mandatory off the main thread: without it libcurl uses SIGALRM for DNS timeouts.
-    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, static_cast<long>(request.timeout.count()));
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, static_cast<long>(request.connectTimeout.count()));
-
-    CURLcode result = CURLE_OK;
-    long status = 0;
-    std::string responseBody;
-    /// Timed across the retries, because that is the wait the operator actually experiences, and
-    /// it is the figure a throughput number has to be read against.
-    const auto startedAt = std::chrono::steady_clock::now();
-    for (size_t attempt = 0;; ++attempt)
-    {
-        responseBody.clear();
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
-        result = curl_easy_perform(curl);
-        status = 0;
-        if (result == CURLE_OK)
-        {
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-        }
-
-        /// Retry only transport failures, 429 and 5xx. Any other 4xx is the request's fault and
-        /// would fail identically, only slower.
-        const bool retryable = result != CURLE_OK || status == 429 || (status >= 500 && status < 600);
-        if (!retryable || attempt >= request.maxRetries)
-        {
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100) * (1U << attempt));
-    }
-
-    const auto elapsed = std::chrono::steady_clock::now() - startedAt;
-    const bool failed = result != CURLE_OK || status < 200 || status >= 300;
-    SemanticLatencyStats::instance().record(elapsed, failed);
-
-    if (result != CURLE_OK)
-    {
-        return std::unexpected{BackendError{
-            .kind = BackendError::Kind::UNREACHABLE, .message = fmt::format("request to {} failed: {}", url, curl_easy_strerror(result))}};
-    }
-    if (status < 200 || status >= 300)
-    {
-        return std::unexpected{
-            BackendError{.kind = BackendError::Kind::HTTP_STATUS, .message = fmt::format("request to {} returned HTTP {}", url, status)}};
-    }
-    if (auto content = extractMessageContent(responseBody))
-    {
-        return std::move(content).value();
-    }
-    return std::unexpected{BackendError{
-        .kind = BackendError::Kind::MALFORMED_RESPONSE, .message = fmt::format("response from {} is not a chat-completion envelope", url)}};
+    /// The protocol is in ChatCompletionProtocol, shared with the asynchronous executor, so the two
+    /// transports cannot drift apart in what they send or in how they read an answer.
+    return chatCompletionOutcome(url, transport->send(chatCompletionRequest(endpoint, apiKey, request)));
 }
 
 }

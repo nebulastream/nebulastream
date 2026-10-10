@@ -12,20 +12,14 @@
     limitations under the License.
 */
 
-#include <SemanticLatencyStats.hpp>
+#include <Http/HttpLatencyStats.hpp>
 
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <cstdio>
-#include <cstdlib>
 #include <mutex>
 #include <optional>
-#include <string_view>
 #include <vector>
-
-#include <Util/Logger/Logger.hpp>
-#include <fmt/format.h>
 
 namespace NES
 {
@@ -44,13 +38,13 @@ double quantile(const std::vector<double>& sorted, const double fraction)
 }
 }
 
-SemanticLatencyStats& SemanticLatencyStats::instance()
+HttpLatencyStats& HttpLatencyStats::instance()
 {
-    static SemanticLatencyStats stats;
+    static HttpLatencyStats stats;
     return stats;
 }
 
-void SemanticLatencyStats::record(const std::chrono::nanoseconds duration, const bool failed)
+void HttpLatencyStats::record(const std::chrono::nanoseconds duration, const bool failed)
 {
     const auto milliseconds = std::chrono::duration<double, std::milli>(duration).count();
     const auto now = std::chrono::steady_clock::now();
@@ -71,7 +65,7 @@ void SemanticLatencyStats::record(const std::chrono::nanoseconds duration, const
     lastCall = now;
 }
 
-std::optional<SemanticLatencyStats::Summary> SemanticLatencyStats::summarize() const
+std::optional<HttpLatencyStats::Summary> HttpLatencyStats::summarize() const
 {
     const std::lock_guard lock(mutex);
     if (calls == 0)
@@ -95,43 +89,8 @@ std::optional<SemanticLatencyStats::Summary> SemanticLatencyStats::summarize() c
         .callsPerSecond = windowSeconds > 0 ? static_cast<double>(calls) / windowSeconds : 0};
 }
 
-void SemanticLatencyStats::logAndReset(const std::string_view context)
+void HttpLatencyStats::reset()
 {
-    if (const auto summary = summarize())
-    {
-        /// A release build compiles with NES_LOGLEVEL_WARN, which removes NES_INFO entirely -- and
-        /// a release build is exactly where a benchmark runs. This is a measurement, not a
-        /// diagnostic, so it must not depend on how the logger was compiled. Opt in with
-        /// NES_SEMANTIC_LATENCY_REPORT=1 and it goes to stderr as well, which keeps an ordinary
-        /// deployment quiet.
-        if (std::getenv("NES_SEMANTIC_LATENCY_REPORT") != nullptr)
-        {
-            fmt::print(
-                stderr,
-                "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, max {:.0f} ms, "
-                "{:.1f} calls/s\n",
-                context,
-                summary->calls,
-                summary->failures,
-                summary->meanMs,
-                summary->p50Ms,
-                summary->p95Ms,
-                summary->maxMs,
-                summary->callsPerSecond);
-        }
-        NES_INFO(
-            "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, max {:.0f} ms, "
-            "{:.1f} calls/s",
-            context,
-            summary->calls,
-            summary->failures,
-            summary->meanMs,
-            summary->p50Ms,
-            summary->p95Ms,
-            summary->maxMs,
-            summary->callsPerSecond);
-    }
-
     const std::lock_guard lock(mutex);
     samplesMs.clear();
     calls = 0;

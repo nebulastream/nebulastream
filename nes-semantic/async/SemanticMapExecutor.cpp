@@ -35,7 +35,7 @@
 #include <SemanticAsyncWiring.hpp>
 #include <SemanticBackend.hpp>
 #include <SemanticBackendFactory.hpp>
-#include <SemanticLatencyStats.hpp>
+#include <SemanticLatencyReport.hpp>
 #include <SemanticMapCodec.hpp>
 #include <SemanticModelCatalog.hpp>
 
@@ -163,7 +163,7 @@ SemanticMapExecutor::~SemanticMapExecutor()
 {
     /// The consumer source destroys the executor when the query stops, which makes this one
     /// summary line per query rather than per process.
-    SemanticLatencyStats::instance().logAndReset("asynchronous");
+    reportAndResetSemanticLatency("asynchronous");
 }
 
 std::vector<AsyncRecordResult> SemanticMapExecutor::process(const std::span<const AsyncRecordView> batch)

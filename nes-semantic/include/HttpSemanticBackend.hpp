@@ -15,6 +15,7 @@
 #pragma once
 
 #include <expected>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -23,17 +24,30 @@
 namespace NES
 {
 
-/// OpenAI-compatible chat-completions client over libcurl. POSTs `{endpoint}/chat/completions`
-/// with a single user message and returns `choices[0].message.content`.
+/// Forward declared on purpose: nes-http stays a private dependency of nes-semantic, so this
+/// header -- which four other modules reach through nes-semantic's public interface -- does not put
+/// the transport on their include path. A test that wants to inject one includes Http/HttpBackend.hpp
+/// and links nes-http itself.
+class HttpBackend;
+
+/// OpenAI-compatible chat-completions client. POSTs `{endpoint}/chat/completions` with a single
+/// user message and returns `choices[0].message.content`.
 ///
-/// Timeouts and retries are set explicitly on every request: the Python reference inherits them
-/// from the OpenAI SDK, whereas libcurl's defaults are "wait forever" and "never retry".
+/// What is left here is the protocol and only the protocol: the URL suffix, bearer authentication,
+/// the request envelope and the response envelope. Sockets, timeouts, retries and latency belong to
+/// the `HttpBackend` underneath, which knows nothing about models or prompts.
 class HttpSemanticBackend final : public SemanticBackend
 {
 public:
     /// `apiKey` is the resolved secret, never an environment variable name. It exists only in this
     /// instance; the catalog entry and the serialized plan carry the variable's name at most.
     HttpSemanticBackend(std::string endpoint, std::optional<std::string> apiKey);
+
+    /// Takes the transport, so a test can assert on the request that was built and answer it
+    /// without opening a socket.
+    HttpSemanticBackend(std::string endpoint, std::optional<std::string> apiKey, std::unique_ptr<HttpBackend> transport);
+
+    /// Out of line because `transport` points at an incomplete type here.
     ~HttpSemanticBackend() override;
 
     HttpSemanticBackend(const HttpSemanticBackend&) = delete;
@@ -44,10 +58,11 @@ public:
     [[nodiscard]] std::expected<std::string, BackendError> complete(const CompletionRequest& request) override;
 
 private:
+    std::string endpoint;
+    /// `{endpoint}/chat/completions`, kept for the messages.
     std::string url;
     std::optional<std::string> apiKey;
-    /// Opaque `CURL*`, so this header does not pull libcurl into every consumer.
-    void* curlHandle;
+    std::unique_ptr<HttpBackend> transport;
 };
 
 }

@@ -18,23 +18,25 @@
 #include <cstddef>
 #include <mutex>
 #include <optional>
-#include <string_view>
 #include <vector>
 
 namespace NES
 {
 
-/// Latency of the model round trips, which is the number a throughput figure has to be read
-/// against: throughput derived from wall time alone cannot tell waiting apart from service time.
+/// Latency of the HTTP round trips, which is the number a throughput figure has to be read against:
+/// throughput derived from wall time alone cannot tell waiting apart from service time.
 ///
-/// Recorded in `HttpSemanticBackend`, the one place both execution modes pass through, so the
-/// synchronous operator and the asynchronous executor are measured identically. Process-wide,
-/// because the synchronous operator keeps one backend per worker thread and the asynchronous one
-/// per calling thread, and a per-instance number would say nothing.
-class SemanticLatencyStats
+/// Recorded in `CurlHttpBackend`, the one place every caller passes through, so a blocking operator
+/// and an asynchronous one are measured identically. Process-wide, because callers keep one backend
+/// per thread and a per-instance number would say nothing.
+///
+/// This class measures and summarizes; it does not report. How a summary is phrased, when it is
+/// written and under which switch belongs to whoever made the calls -- see `reportAndResetSemanticLatency`
+/// in nes-semantic, which reports these numbers under the wording its benchmarks grep for.
+class HttpLatencyStats
 {
 public:
-    static SemanticLatencyStats& instance();
+    static HttpLatencyStats& instance();
 
     /// One finished round trip, retries included: what the caller actually waited for.
     void record(std::chrono::nanoseconds duration, bool failed);
@@ -54,12 +56,11 @@ public:
 
     [[nodiscard]] std::optional<Summary> summarize() const;
 
-    /// Writes the summary at info level and starts over, so the log carries one line per query
-    /// rather than one per process. Called when an operator finishes.
-    void logAndReset(std::string_view context);
+    /// Starts over, so a report can cover one query rather than one process.
+    void reset();
 
 private:
-    SemanticLatencyStats() = default;
+    HttpLatencyStats() = default;
 
     /// Samples are kept to compute quantiles, which a running mean cannot give. Capped, because a
     /// long run would otherwise grow without bound; beyond the cap the count, the mean and the

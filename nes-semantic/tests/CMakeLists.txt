@@ -20,6 +20,8 @@ add_nes_test_semantic(SemanticModelCatalogTest SemanticModelCatalogTest.cpp)
 add_nes_test_semantic(SemanticMapCodecTest SemanticMapCodecTest.cpp)
 add_nes_test_semantic(SemanticBackendFactoryTest SemanticBackendFactoryTest.cpp)
 add_nes_test_semantic(HttpSemanticBackendTest HttpSemanticBackendTest.cpp)
+# nes-semantic links nes-http privately, so a test that drives the transport directly needs it too.
+target_link_libraries(HttpSemanticBackendTest nes-http)
 add_nes_test_semantic(SemanticMapExecutorTest SemanticMapExecutorTest.cpp)
 # nes-async carries the executor plugin as an interface link, so this one target pulls in
 # both the registry and the implementation.
