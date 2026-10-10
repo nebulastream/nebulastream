@@ -15,12 +15,15 @@
 use crate::channel::Channel;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use std::io;
 use std::net::SocketAddr;
+use std::pin::Pin;
 use std::str::FromStr;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::net::lookup_host;
-use tokio_serde::Framed;
 use tokio_serde::formats::Cbor;
+use tokio_serde::{Deserializer, Framed, Serializer};
+use tokio_util::bytes::{Buf, BufMut, Bytes, BytesMut};
 use tokio_util::codec::LengthDelimitedCodec;
 use tokio_util::codec::{FramedRead, FramedWrite};
 use url::{Host, Url};
@@ -140,6 +143,136 @@ impl Debug for TupleBuffer {
     }
 }
 
+/// Binary codec for the data channel direction sender -> receiver.
+///
+/// Frame layout (the length prefix is added by the `LengthDelimitedCodec`):
+///
+/// ```text
+/// Close: u8 tag = 0
+/// Data:  u8 tag = 1, u64 sequence_number, u64 origin_id, u64 watermark, u64 chunk_number, u64 number_of_tuples,
+///        u8 last_chunk, u32 data_len, u32 child_count, data bytes, child_count * (u32 child_len, child bytes)
+/// ```
+#[derive(Debug, Default)]
+pub struct RawDataRequestCodec;
+
+const TAG_CLOSE: u8 = 0;
+const TAG_DATA: u8 = 1;
+/// tag + 5 * u64 + last_chunk + data_len + child_count
+const DATA_HEADER_LEN: usize = 1 + 5 * 8 + 1 + 4 + 4;
+
+fn invalid_data(message: &str) -> io::Error {
+    io::Error::new(io::ErrorKind::InvalidData, message.to_string())
+}
+
+fn length_as_u32(len: usize) -> io::Result<u32> {
+    u32::try_from(len).map_err(|_| invalid_data("buffer is larger than 4GiB"))
+}
+
+impl Serializer<DataChannelRequest> for RawDataRequestCodec {
+    type Error = io::Error;
+
+    fn serialize(
+        self: Pin<&mut Self>,
+        item: &DataChannelRequest,
+    ) -> std::result::Result<Bytes, Self::Error> {
+        match item {
+            DataChannelRequest::Close => Ok(Bytes::from_static(&[TAG_CLOSE])),
+            DataChannelRequest::Data(buffer) => {
+                let payload_len = buffer.data.len()
+                    + buffer
+                        .child_buffers
+                        .iter()
+                        .map(|child| 4 + child.len())
+                        .sum::<usize>();
+                let mut out = BytesMut::with_capacity(DATA_HEADER_LEN + payload_len);
+                out.put_u8(TAG_DATA);
+                out.put_u64_le(buffer.sequence_number);
+                out.put_u64_le(buffer.origin_id);
+                out.put_u64_le(buffer.watermark);
+                out.put_u64_le(buffer.chunk_number);
+                out.put_u64_le(buffer.number_of_tuples);
+                out.put_u8(buffer.last_chunk as u8);
+                out.put_u32_le(length_as_u32(buffer.data.len())?);
+                out.put_u32_le(length_as_u32(buffer.child_buffers.len())?);
+                out.put_slice(&buffer.data);
+                for child in &buffer.child_buffers {
+                    out.put_u32_le(length_as_u32(child.len())?);
+                    out.put_slice(child);
+                }
+                Ok(out.freeze())
+            }
+        }
+    }
+}
+
+impl Deserializer<DataChannelRequest> for RawDataRequestCodec {
+    type Error = io::Error;
+
+    fn deserialize(
+        self: Pin<&mut Self>,
+        src: &BytesMut,
+    ) -> std::result::Result<DataChannelRequest, Self::Error> {
+        let mut src: &[u8] = src;
+        if src.is_empty() {
+            return Err(invalid_data("empty data channel frame"));
+        }
+        match src.get_u8() {
+            TAG_CLOSE => Ok(DataChannelRequest::Close),
+            TAG_DATA => {
+                if src.len() < DATA_HEADER_LEN - 1 {
+                    return Err(invalid_data("truncated data channel header"));
+                }
+                let sequence_number = src.get_u64_le();
+                let origin_id = src.get_u64_le();
+                let watermark = src.get_u64_le();
+                let chunk_number = src.get_u64_le();
+                let number_of_tuples = src.get_u64_le();
+                let last_chunk = src.get_u8() != 0;
+                let data_len = src.get_u32_le() as usize;
+                let child_count = src.get_u32_le() as usize;
+
+                if src.len() < data_len {
+                    return Err(invalid_data("truncated data channel payload"));
+                }
+                let data = src[..data_len].to_vec();
+                src.advance(data_len);
+
+                // Every child needs at least its 4 byte length, which bounds the allocation by the frame size.
+                if child_count > src.len() / 4 {
+                    return Err(invalid_data("child buffer count exceeds frame size"));
+                }
+                let mut child_buffers = Vec::with_capacity(child_count);
+                for _ in 0..child_count {
+                    if src.len() < 4 {
+                        return Err(invalid_data("truncated child buffer header"));
+                    }
+                    let child_len = src.get_u32_le() as usize;
+                    if src.len() < child_len {
+                        return Err(invalid_data("truncated child buffer payload"));
+                    }
+                    child_buffers.push(src[..child_len].to_vec());
+                    src.advance(child_len);
+                }
+                if !src.is_empty() {
+                    return Err(invalid_data("trailing bytes after data channel frame"));
+                }
+
+                Ok(DataChannelRequest::Data(TupleBuffer {
+                    sequence_number,
+                    origin_id,
+                    watermark,
+                    chunk_number,
+                    number_of_tuples,
+                    last_chunk,
+                    data,
+                    child_buffers,
+                }))
+            }
+            _ => Err(invalid_data("unknown data channel frame tag")),
+        }
+    }
+}
+
 pub type DataChannelSenderReader<R> = Framed<
     FramedRead<R, LengthDelimitedCodec>,
     DataChannelResponse,
@@ -150,13 +283,13 @@ pub type DataChannelSenderWriter<W> = Framed<
     FramedWrite<W, LengthDelimitedCodec>,
     DataChannelRequest,
     DataChannelRequest,
-    Cbor<DataChannelRequest, DataChannelRequest>,
+    RawDataRequestCodec,
 >;
 pub type DataChannelReceiverReader<R> = Framed<
     FramedRead<R, LengthDelimitedCodec>,
     DataChannelRequest,
     DataChannelRequest,
-    Cbor<DataChannelRequest, DataChannelRequest>,
+    RawDataRequestCodec,
 >;
 pub type DataChannelReceiverWriter<W> = Framed<
     FramedWrite<W, LengthDelimitedCodec>,
@@ -234,10 +367,7 @@ pub fn data_channel_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + U
     );
 
     let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
-    let write = tokio_serde::Framed::new(
-        write,
-        Cbor::<DataChannelRequest, DataChannelRequest>::default(),
-    );
+    let write = tokio_serde::Framed::new(write, RawDataRequestCodec);
 
     (read, write)
 }
@@ -246,10 +376,7 @@ pub fn data_channel_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send +
     stream: Channel<R, W>,
 ) -> (DataChannelReceiverReader<R>, DataChannelReceiverWriter<W>) {
     let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
-    let read = tokio_serde::Framed::new(
-        read,
-        Cbor::<DataChannelRequest, DataChannelRequest>::default(),
-    );
+    let read = tokio_serde::Framed::new(read, RawDataRequestCodec);
 
     let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
@@ -347,4 +474,88 @@ fn test() {
     assert!(ConnectionIdentifier::from_str("localhost:8080").is_ok());
     assert!(ConnectionIdentifier::from_str("127.0.0.1:8080").is_ok());
     assert!(ConnectionIdentifier::from_str("google.dot.com:8080").is_ok());
+}
+
+#[cfg(test)]
+mod raw_codec_tests {
+    use super::*;
+
+    fn sample(data: Vec<u8>, children: Vec<Vec<u8>>) -> TupleBuffer {
+        TupleBuffer {
+            sequence_number: 7,
+            origin_id: u64::MAX,
+            watermark: 42,
+            chunk_number: 3,
+            number_of_tuples: 100,
+            last_chunk: true,
+            data,
+            child_buffers: children,
+        }
+    }
+
+    fn roundtrip(item: &DataChannelRequest) -> io::Result<DataChannelRequest> {
+        let mut codec = RawDataRequestCodec;
+        let bytes = Pin::new(&mut codec).serialize(item)?;
+        Pin::new(&mut codec).deserialize(&BytesMut::from(&bytes[..]))
+    }
+
+    #[test]
+    fn data_roundtrip_with_children() {
+        let data: Vec<u8> = (0..4096u32).map(|i| (i * 31) as u8).collect();
+        let buffer = sample(data, vec![vec![1, 2, 3], vec![], vec![9; 5000]]);
+        let DataChannelRequest::Data(decoded) =
+            roundtrip(&DataChannelRequest::Data(buffer.clone())).unwrap()
+        else {
+            panic!("expected data");
+        };
+        assert_eq!(decoded, buffer);
+    }
+
+    #[test]
+    fn empty_data_roundtrip() {
+        let buffer = sample(vec![], vec![]);
+        let DataChannelRequest::Data(decoded) =
+            roundtrip(&DataChannelRequest::Data(buffer.clone())).unwrap()
+        else {
+            panic!("expected data");
+        };
+        assert_eq!(decoded, buffer);
+    }
+
+    #[test]
+    fn close_roundtrip() {
+        assert!(matches!(
+            roundtrip(&DataChannelRequest::Close).unwrap(),
+            DataChannelRequest::Close
+        ));
+    }
+
+    #[test]
+    fn malformed_frames_are_rejected_without_panicking() {
+        let mut codec = RawDataRequestCodec;
+        let valid = Pin::new(&mut codec)
+            .serialize(&DataChannelRequest::Data(sample(
+                vec![1, 2, 3, 4],
+                vec![vec![5, 6]],
+            )))
+            .unwrap();
+        // every strict prefix of a valid frame is invalid
+        for len in 0..valid.len() {
+            let result = Pin::new(&mut codec).deserialize(&BytesMut::from(&valid[..len]));
+            assert!(result.is_err(), "prefix of length {len} must be rejected");
+        }
+        // trailing garbage and unknown tags are invalid
+        let mut trailing = BytesMut::from(&valid[..]);
+        trailing.put_u8(0);
+        assert!(Pin::new(&mut codec).deserialize(&trailing).is_err());
+        assert!(
+            Pin::new(&mut codec)
+                .deserialize(&BytesMut::from(&[9u8][..]))
+                .is_err()
+        );
+        // a huge child count in a tiny frame must not allocate
+        let mut huge = BytesMut::from(&valid[..DATA_HEADER_LEN - 4]);
+        huge.put_u32_le(u32::MAX);
+        assert!(Pin::new(&mut codec).deserialize(&huge).is_err());
+    }
 }
