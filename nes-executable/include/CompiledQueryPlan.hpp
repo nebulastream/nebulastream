@@ -15,12 +15,14 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <QueryId.hpp>
 
 namespace NES
@@ -34,6 +36,7 @@ struct ExecutablePipeline
     PipelineId id;
     std::unique_ptr<ExecutablePipelineStage> stage;
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;
+    std::optional<WatermarkBackpressure> watermarkBackpressure;
 };
 
 struct CompiledQueryPlan

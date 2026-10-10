@@ -16,15 +16,26 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <BackpressureChannel.hpp>
 
 namespace NES
 {
+
+/// Allows operators that merge watermarks of multiple origins to throttle the sources of origins whose watermark is ahead of the slowest
+/// origin by more than `maxWatermarkGap`, bounding the state they have to keep until windows can be triggered.
+struct WatermarkBackpressure
+{
+    BackpressureController controller;
+    uint64_t maxWatermarkGap;
+};
+
 class PipelineExecutionContext
 {
 public:
@@ -56,6 +67,9 @@ public:
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<AbstractBufferProvider> getBufferManager() const = 0;
     [[nodiscard]] virtual PipelineId getPipelineId() const = 0;
+
+    /// Only available while the pipeline is started, and only if watermark backpressure is enabled.
+    [[nodiscard]] virtual std::optional<WatermarkBackpressure> getWatermarkBackpressure() const { return std::nullopt; }
 
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;

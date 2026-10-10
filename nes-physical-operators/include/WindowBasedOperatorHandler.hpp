@@ -19,6 +19,9 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -51,6 +54,9 @@ struct BufferMetaData
     OriginId originId;
 };
 
+/// Maps every input origin of a window-based operator to the origins of the sources of this worker whose data drives it.
+using SourcesOfInputOrigins = std::unordered_map<OriginId, std::vector<OriginId>>;
+
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
 /// It assumes that they have a build and a probe phase.
 /// The build phase is the phase where the operator adds tuples to window(s) / the state.
@@ -59,7 +65,7 @@ class WindowBasedOperatorHandler : public OperatorHandler
 {
 public:
     WindowBasedOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
+        SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
@@ -90,13 +96,20 @@ protected:
         PipelineExecutionContext* pipelineCtx)
         = 0;
 
+    /// Backpressures the sources of input origins whose watermark is too far ahead of the slowest input origin, and releases them once the
+    /// slowest origin has caught up. Must be called while holding the triggerMutex.
+    void applyWatermarkBackpressure();
+
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads = 0;
     const OriginId outputOriginId;
-    const std::vector<OriginId> inputOrigins;
+    const SourcesOfInputOrigins sourcesOfInputOrigins;
     std::mutex triggerMutex;
     Timestamp lastForwardedWatermark{Timestamp::INITIAL_VALUE};
+    std::optional<WatermarkBackpressure> watermarkBackpressure;
+    std::unordered_set<OriginId> throttledInputOrigins;
+    std::unordered_set<OriginId> throttledSources;
 };
 }

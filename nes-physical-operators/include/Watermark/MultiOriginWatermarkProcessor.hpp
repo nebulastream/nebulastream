@@ -15,6 +15,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
@@ -36,6 +37,9 @@ public:
 
     /// @brief Returns the current watermark across all origins
     [[nodiscard]] Timestamp getCurrentWatermark() const;
+
+    /// @brief Returns the current watermark of every origin
+    [[nodiscard]] std::vector<std::pair<OriginId, Timestamp>> getCurrentWatermarkPerOrigin() const;
 
     std::string getCurrentStatus();
 
