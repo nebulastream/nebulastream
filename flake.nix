@@ -265,6 +265,7 @@
                 pahoMqttPkg.cpp
                 pkgs.rdkafka
                 pkgs.curl
+                pkgs.c-ares
                 pkgs.cyrus_sasl
               ];
           in {
