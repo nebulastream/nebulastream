@@ -29,12 +29,21 @@ struct SemanticMapExecutorState;
 }
 
 /// SEM_MAP on the asynchronous framework: one batch of records becomes one prompt, one
-/// request and one response, on a thread of the consumer source rather than on a worker.
+/// request and one response — handed to an event loop rather than waited for on a thread.
+///
+/// That is the whole reason it implements this interface and not the blocking one. A model
+/// call takes about a second, and the configured concurrency is 256; with a thread per call
+/// in flight that would be 256 threads whose only job is to wait. Here they all sit on one
+/// event loop, and the framework runs no threads for this operator at all.
 ///
 /// It is an adapter and nothing more. The prompt layout and the response decoding stay in
-/// `SemanticMapCodec` and the transport in `SemanticBackend`, exactly as the synchronous
-/// `SemanticMapPhysicalOperator` uses them, so both execution modes produce the same
-/// results and remain comparable in a measurement.
+/// `SemanticMapCodec`, and the protocol in `ChatCompletionProtocol` — the same two pieces
+/// the synchronous `SemanticMapPhysicalOperator` uses through `HttpSemanticBackend`, so both
+/// execution modes produce the same results and remain comparable in a measurement.
+///
+/// A model answered by the mock backend makes no HTTP call at all; its configured delay is
+/// waited out on the loop's timer, because sleeping on a loop thread would stall every other
+/// call in flight.
 ///
 /// Failure handling follows the synchronous operator rather than the framework's lenient
 /// default: an unusable answer writes the step's default value, while a failed transport
@@ -45,13 +54,13 @@ struct SemanticMapExecutorState;
 /// `SemanticAsyncWiring.hpp`. The state is held behind a pointer so this header stays free
 /// of the semantic module's own headers — the registry's generated glue translation unit
 /// includes it and does not inherit those include paths.
-class SemanticMapExecutor final : public AsyncOperatorExecutor
+class SemanticMapExecutor final : public EventLoopAsyncExecutor
 {
 public:
     explicit SemanticMapExecutor(AsyncOperatorContext context);
     ~SemanticMapExecutor() override;
 
-    std::vector<AsyncRecordResult> process(std::span<const AsyncRecordView> batch) override;
+    void submit(std::span<const AsyncRecordView> batch, AsyncBatchCompletion done) override;
 
 private:
     std::unique_ptr<detail::SemanticMapExecutorState> state;

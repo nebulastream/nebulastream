@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <optional>
 #include <span>
+#include <string>
 #include <vector>
 
 #include <Async/AsyncOperatorExecutor.hpp>
@@ -38,7 +39,7 @@ namespace NES
 ///
 /// Config keys: `delay_ms` (default 0), `fail_on` (default none), `input_field`, `output_field`
 /// (both required).
-class DelayExecutor final : public AsyncOperatorExecutor
+class DelayExecutor final : public BlockingAsyncExecutor
 {
 public:
     explicit DelayExecutor(AsyncOperatorContext context);

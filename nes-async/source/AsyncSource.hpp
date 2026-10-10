@@ -129,10 +129,31 @@ private:
 
     using SequenceKey = std::pair<uint64_t, uint64_t>;
 
+    /// One batch handed to an event-loop executor and not yet answered.
+    ///
+    /// The records the executor reads live in the input buffer, so its handle is held here for the
+    /// duration of the call, and so are the views: the executor keeps the span until it completes
+    /// and nothing else owns them. Held through a shared_ptr, because the views point at `input`
+    /// and therefore need a stable address.
+    struct SubmittedBatch
+    {
+        uint64_t ticket = 0;
+        TupleBuffer input;
+        std::vector<AsyncRecordView> views;
+        AsyncRecordResult* resultSlots = nullptr;
+    };
+
     /// Takes buffers from the channel in order and turns each into batch work. One thread, so the
     /// ticket order is the order buffers arrived in, which is what `preserveOrder` restores.
     void intakeLoop(const std::stop_token& stopToken);
+    /// The blocking mode's worker: one thread per call in flight.
     void processingLoop(const std::stop_token& stopToken);
+
+    /// The event-loop mode's counterpart to a worker thread. Hands queued batches to the executor
+    /// until `maxConcurrency` are in flight, and is called again from every completion — which is
+    /// what keeps the loop fed without a thread per call.
+    void pump();
+    void onBatchFinished(const std::shared_ptr<SubmittedBatch>& submitted, AsyncBatchOutcome outcome);
 
     /// Keeps the first failure and wakes everyone. Our threads are not the engine's, so an
     /// exception must never leave one of them: `NES::Thread` has no handler, and terminate would
@@ -159,6 +180,11 @@ private:
     std::shared_ptr<HandoffChannel> channel;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::unique_ptr<AsyncOperatorExecutor> executor;
+    /// Exactly one of these points at `executor`, decided when the source opens. Which one it is
+    /// decides whether this source runs `maxConcurrency` threads or none at all.
+    BlockingAsyncExecutor* blockingExecutor = nullptr;
+    EventLoopAsyncExecutor* submittingExecutor = nullptr;
+    /// Empty in the event-loop mode.
     std::vector<Thread> workers;
     /// Separate from the workers so that waiting for a buffer never occupies one of them.
     std::optional<Thread> intake;
@@ -183,6 +209,8 @@ private:
     /// here. Both are set from `maxConcurrency` when the source opens.
     size_t queuedWorkHighWatermark = 1;
     size_t maxPendingBuffers = 1;
+    /// Event-loop mode only: batches handed to the executor and not yet answered.
+    size_t callsInFlight = 0;
     bool intakeDone = false;
     /// "Nothing will ever be completed any more", for whatever reason: the input ended and the
     /// last batch finished, a failure was recorded, or queued work was abandoned on a stop.

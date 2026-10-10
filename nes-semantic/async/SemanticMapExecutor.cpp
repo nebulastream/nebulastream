@@ -17,24 +17,28 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
+#include <exception>
+#include <expected>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <span>
 #include <string>
 #include <string_view>
-#include <thread>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <Async/AsyncOperatorExecutor.hpp>
 #include <Async/AsyncRecordLayout.hpp>
+#include <Http/HttpBackend.hpp>
+#include <Http/HttpEventLoop.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ChatCompletionProtocol.hpp>
 #include <ErrorHandling.hpp>
+#include <MockSemanticBackend.hpp>
 #include <SemanticAsyncWiring.hpp>
 #include <SemanticBackend.hpp>
-#include <SemanticBackendFactory.hpp>
 #include <SemanticLatencyReport.hpp>
 #include <SemanticMapCodec.hpp>
 #include <SemanticModelCatalog.hpp>
@@ -86,12 +90,17 @@ namespace detail
 
 struct SemanticMapExecutorState
 {
-    /// Spelled out because the mutex below makes this struct immovable, so it has to be
-    /// constructed in place rather than assigned from an aggregate initializer.
-    explicit SemanticMapExecutorState(SemanticModelConfig modelConfig) : config(std::move(modelConfig)), codec(config) { }
+    /// Spelled out because the members below have to be constructed in a particular order, and
+    /// because the codec takes a reference to the configuration next to it.
+    SemanticMapExecutorState(SemanticModelConfig modelConfig, const size_t loopThreads)
+        : config(std::move(modelConfig)), codec(config), url(fmt::format("{}/chat/completions", config.endpoint)), loop(loopThreads)
+    {
+    }
 
     SemanticModelConfig config;
     SemanticMapCodec codec;
+    /// Only for the messages; the request itself is built from the endpoint.
+    std::string url;
     std::optional<std::string> apiKey;
     /// Positions of the declared INPUT fields in the incoming records, in declared order.
     std::vector<size_t> inputFieldIndices;
@@ -100,24 +109,13 @@ struct SemanticMapExecutorState
     /// Field names as the prompt spells them, kept next to the indices so building a row
     /// payload is a lookup and not a string operation.
     std::vector<std::string> inputFieldNames;
+    /// Set when the model is answered by the mock backend, in which case nothing leaves the
+    /// process. Read-only after construction, so one instance serves every call.
+    std::unique_ptr<MockSemanticBackend> mock;
 
-    /// An HTTP backend owns a curl handle and is not thread-safe, while `process` may run on
-    /// as many threads as `maxConcurrency` allows. One backend per calling thread, created on
-    /// first use: the framework owns the threads, so their number is not known here.
-    std::mutex backendsMutex;
-    std::unordered_map<std::thread::id, std::unique_ptr<SemanticBackend>> backends;
-
-    SemanticBackend& backendForThisThread()
-    {
-        const auto thisThread = std::this_thread::get_id();
-        const std::lock_guard lock{backendsMutex};
-        auto& backend = backends[thisThread];
-        if (backend == nullptr)
-        {
-            backend = SemanticBackendFactory::create(config, apiKey);
-        }
-        return *backend;
-    }
+    /// Declared last so it is destroyed first: stopping the loop answers everything in flight, and
+    /// those completions read the members above.
+    HttpEventLoop loop;
 };
 
 }
@@ -138,8 +136,29 @@ SemanticMapExecutor::SemanticMapExecutor(AsyncOperatorContext context)
             "SEM_MAP declares {} OUTPUT fields but {} steps", payload.outputFields.size(), payload.config.steps.size());
     }
 
-    state = std::make_unique<detail::SemanticMapExecutorState>(payload.config);
+    /// One loop thread is enough: a call waits about a second, so even at the configured 256 the
+    /// answers arrive a few hundred times a second, and decoding one is a few microseconds of JSON.
+    constexpr size_t LoopThreads = 1;
+    state = std::make_unique<detail::SemanticMapExecutorState>(payload.config, LoopThreads);
     state->apiKey = resolveApiKey(payload.config);
+
+    if (payload.config.backend == "mock")
+    {
+        /// The same construction SemanticBackendFactory performs for the blocking path: the
+        /// behaviour is the endpoint string, and the output columns come from the declared steps.
+        std::vector<std::string> outputColumns;
+        outputColumns.reserve(payload.config.steps.size());
+        for (const auto& step : payload.config.steps)
+        {
+            outputColumns.push_back(step.outputColumn);
+        }
+        state->mock = std::make_unique<MockSemanticBackend>(payload.config.endpoint, std::move(outputColumns));
+        NES_DEBUG("Asynchronous SEM_MAP is answered by the mock backend ('{}'); nothing leaves the process", payload.config.endpoint);
+    }
+    else if (payload.config.backend != "http")
+    {
+        throw InvalidSemanticModel("Unknown semantic model backend '{}' (expected http or mock)", payload.config.backend);
+    }
 
     for (const auto& name : payload.inputFields)
     {
@@ -166,18 +185,59 @@ SemanticMapExecutor::~SemanticMapExecutor()
     reportAndResetSemanticLatency("asynchronous");
 }
 
-std::vector<AsyncRecordResult> SemanticMapExecutor::process(const std::span<const AsyncRecordView> batch)
+namespace
 {
+
+/// Turns one model answer into the batch's results, or the failure into something the framework can
+/// rethrow on the source thread.
+void finishBatch(
+    detail::SemanticMapExecutorState& state,
+    const std::expected<std::string, BackendError>& response,
+    const std::vector<RowPayload>& rows,
+    const std::span<const AsyncRecordView> batch,
+    AsyncBatchCompletion done)
+{
+    if (!response.has_value())
+    {
+        /// Unlike an unusable answer, which the codec turns into the step's default value, a failed
+        /// transport is not something the next record would survive either. Thrown on the source
+        /// thread by the framework, with the same error code the synchronous operator produces.
+        done(std::unexpected{
+            std::make_exception_ptr(InferenceRuntimeFailure("Semantic model '{}': {}", state.config.modelName, response.error().message))});
+        return;
+    }
+
+    /// Never fails and always returns one entry per row, each holding one answer per step.
+    const auto answers = state.codec.parse(response.value(), rows);
     std::vector<AsyncRecordResult> results(batch.size());
+    for (size_t record = 0; record < batch.size(); ++record)
+    {
+        auto& fields = results[record].fields;
+        fields.reserve(state.outputFieldIndices.size());
+        for (size_t step = 0; step < state.outputFieldIndices.size(); ++step)
+        {
+            fields.emplace_back(AsyncFieldValue{.fieldIndex = state.outputFieldIndices[step], .value = answers[record][step]});
+        }
+    }
+    done(std::move(results));
+}
+
+}
+
+void SemanticMapExecutor::submit(const std::span<const AsyncRecordView> batch, AsyncBatchCompletion done)
+{
     if (batch.empty())
     {
-        return results;
+        done(std::vector<AsyncRecordResult>{});
+        return;
     }
 
     /// Row ids are what ties an answer back to its record; they only have to be unique within
-    /// one prompt, and "rowN" is the form the sysprompt's own example shows.
-    std::vector<RowPayload> rows;
-    rows.reserve(batch.size());
+    /// one prompt, and "rowN" is the form the sysprompt's own example shows. Held through a
+    /// shared_ptr because the codec needs them again when the answer arrives, which is on another
+    /// thread and at another time.
+    auto rows = std::make_shared<std::vector<RowPayload>>();
+    rows->reserve(batch.size());
     for (size_t record = 0; record < batch.size(); ++record)
     {
         RowPayload row{.rowId = "row" + std::to_string(record + 1), .fields = {}};
@@ -186,34 +246,31 @@ std::vector<AsyncRecordResult> SemanticMapExecutor::process(const std::span<cons
         {
             row.fields.emplace_back(state->inputFieldNames[field], batch[record].readAsText(state->inputFieldIndices[field]));
         }
-        rows.push_back(std::move(row));
+        rows->push_back(std::move(row));
     }
 
-    const auto response = state->backendForThisThread().complete(CompletionRequest{
-        .prompt = state->codec.buildPrompt(rows),
+    const CompletionRequest request{
+        .prompt = state->codec.buildPrompt(*rows),
         .modelName = state->config.modelName,
         .timeout = state->config.requestTimeout,
-        .connectTimeout = ConnectTimeout,
-        .maxRetries = state->config.maxRetries});
-    if (!response.has_value())
+        .connectTimeout = CompletionRequest{}.connectTimeout,
+        .maxRetries = state->config.maxRetries};
+
+    if (state->mock != nullptr)
     {
-        /// Unlike an unusable answer, which the codec turns into the step's default value, a
-        /// failed transport is not something the next record would survive either.
-        throw InferenceRuntimeFailure("Semantic model '{}': {}", state->config.modelName, response.error().message);
+        /// Waited out on the loop's timer rather than slept through: this thread is driving every
+        /// other call in flight.
+        state->loop.after(
+            state->mock->configuredDelay(),
+            [this, rows, batch, request, done = std::move(done)]() mutable
+            { finishBatch(*state, state->mock->answer(request), *rows, batch, std::move(done)); });
+        return;
     }
 
-    /// Never fails and always returns one entry per row, each holding one answer per step.
-    const auto answers = state->codec.parse(response.value(), rows);
-    for (size_t record = 0; record < batch.size(); ++record)
-    {
-        auto& fields = results[record].fields;
-        fields.reserve(state->outputFieldIndices.size());
-        for (size_t step = 0; step < state->outputFieldIndices.size(); ++step)
-        {
-            fields.emplace_back(AsyncFieldValue{.fieldIndex = state->outputFieldIndices[step], .value = answers[record][step]});
-        }
-    }
-    return results;
+    state->loop.send(
+        chatCompletionRequest(state->config.endpoint, state->apiKey, request),
+        [this, rows, batch, done = std::move(done)](std::expected<HttpResponse, HttpError> exchange) mutable
+        { finishBatch(*state, chatCompletionOutcome(state->url, exchange), *rows, batch, std::move(done)); });
 }
 
 }

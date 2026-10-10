@@ -13,3 +13,7 @@
 add_nes_test(curl-http-backend-test CurlHttpBackendTest.cpp)
 target_link_libraries(curl-http-backend-test nes-http)
 
+# Drives the event loop against the dummy server, which is where "many in flight on one thread"
+# can actually be observed rather than asserted.
+add_nes_test(http-event-loop-test HttpEventLoopTest.cpp)
+target_link_libraries(http-event-loop-test nes-http nes-http-testing)

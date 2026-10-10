@@ -26,6 +26,7 @@ find_package(CURL REQUIRED)
 # and a HTTP client does not, off this module's include path.
 add_library(nes-http
         src/CurlHttpBackend.cpp
+        src/HttpEventLoop.cpp
         src/HttpLatencyStats.cpp)
 target_include_directories(nes-http
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -35,4 +36,7 @@ target_include_directories(nes-http
 # dependency, exactly as it did from nes-semantic.
 target_link_libraries(nes-http PRIVATE nes-common CURL::libcurl)
 
+# The dummy server and its standalone binary. Only useful with tests, and the end-to-end proof for
+# the asynchronous framework is what it exists for.
+add_tests_if_enabled(testing)
 add_tests_if_enabled(tests)

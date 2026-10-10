@@ -12,11 +12,19 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
+#include <expected>
+#include <future>
 #include <memory>
+#include <mutex>
+#include <ranges>
+#include <span>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -25,7 +33,6 @@
 
 #include <Async/AsyncOperatorExecutor.hpp>
 #include <Async/AsyncRecordLayout.hpp>
-#include <AsyncExecutorRegistry.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -36,6 +43,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <AsyncExecutorRegistry.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SemanticAsyncWiring.hpp>
@@ -55,7 +63,11 @@ constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOL
 std::shared_ptr<BufferManager> makeBufferManager()
 {
     return BufferManager::create(
-        TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, POOLED_BUFFER_SIZE, std::make_shared<NesDefaultMemoryAllocator>());
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
 }
 
 UnqualifiedUnboundField field(const std::string& name, const DataType::Type type)
@@ -106,14 +118,34 @@ public:
                  SemanticMapAsyncPayload{.config = config, .inputFields = {"DESCRIPTION"}, .outputFields = {"SENTIMENT"}})}};
     }
 
+    /// Submits the batch and waits for the answer.
+    ///
+    /// SEM_MAP hands its call to an event loop and is told when it finished, so a test has to wait
+    /// where it used to simply return. What is being checked is unchanged: one answer per record,
+    /// in input order, and the same treatment of a bad answer and of a dead endpoint.
+    static AsyncBatchOutcome submitAndWait(
+        const std::unique_ptr<AsyncOperatorExecutor>& executor,
+        const std::span<const AsyncRecordView> batch,
+        const std::chrono::milliseconds deadline = std::chrono::seconds(10))
+    {
+        auto* const submitting = dynamic_cast<EventLoopAsyncExecutor*>(executor.get());
+        EXPECT_NE(submitting, nullptr) << "SemanticMapExecutor must implement EventLoopAsyncExecutor";
+
+        /// Shared, because the completion runs on a loop thread and may outlive this call if the
+        /// deadline passes.
+        auto answered = std::make_shared<std::promise<AsyncBatchOutcome>>();
+        auto future = answered->get_future();
+        submitting->submit(batch, [answered](AsyncBatchOutcome outcome) { answered->set_value(std::move(outcome)); });
+        EXPECT_EQ(future.wait_for(deadline), std::future_status::ready) << "the executor never answered";
+        return future.get();
+    }
+
     std::unique_ptr<AsyncOperatorExecutor> makeExecutor(const SemanticModelConfig& config) const
     {
         const auto factory = AsyncExecutorRegistry::instance().find("SemanticMap");
         INVARIANT(factory.has_value(), "SemanticMap executor is not registered");
-        return (*factory)(
-            AsyncExecutorRegistryArguments{
-                AsyncOperatorContext{
-                    .inputLayout = &input, .outputLayout = &output, .config = encoded(config), .batchSize = config.batchSize}});
+        return (*factory)(AsyncExecutorRegistryArguments{AsyncOperatorContext{
+            .inputLayout = &input, .outputLayout = &output, .config = encoded(config), .batchSize = config.batchSize}});
     }
 
     static std::vector<AsyncRecordView>
@@ -188,9 +220,8 @@ TEST_F(SemanticMapExecutorTest, ConfigurationWithoutAModelIsRejected)
     const auto factory = AsyncExecutorRegistry::instance().find("SemanticMap");
     ASSERT_TRUE(factory.has_value());
     EXPECT_THROW(
-        (*factory)(
-            AsyncExecutorRegistryArguments{
-                AsyncOperatorContext{.inputLayout = &input, .outputLayout = &output, .config = {}, .batchSize = 1}}),
+        (*factory)(AsyncExecutorRegistryArguments{
+            AsyncOperatorContext{.inputLayout = &input, .outputLayout = &output, .config = {}, .batchSize = 1}}),
         Exception);
 }
 
@@ -204,10 +235,8 @@ TEST_F(SemanticMapExecutorTest, AnInputFieldMissingFromTheSchemaIsRejected)
          encodeSemanticMapPayload(
              SemanticMapAsyncPayload{.config = config, .inputFields = {"NO_SUCH_FIELD"}, .outputFields = {"SENTIMENT"}})}};
     EXPECT_THROW(
-        (*factory)(
-            AsyncExecutorRegistryArguments{
-                AsyncOperatorContext{
-                    .inputLayout = &input, .outputLayout = &output, .config = std::move(wrongField), .batchSize = 1}}),
+        (*factory)(AsyncExecutorRegistryArguments{
+            AsyncOperatorContext{.inputLayout = &input, .outputLayout = &output, .config = std::move(wrongField), .batchSize = 1}}),
         Exception);
 }
 
@@ -220,7 +249,9 @@ TEST_F(SemanticMapExecutorTest, OneAnswerPerRecordInInputOrder)
     const std::vector<std::string> texts{"great documentary", "terrible", "wildly entertaining"};
     const auto records = makeRecords(input, buffer, *bufferManager, texts);
 
-    const auto results = executor->process(records);
+    const auto outcome = submitAndWait(executor, records);
+    ASSERT_TRUE(outcome.has_value());
+    const auto& results = outcome.value();
 
     ASSERT_EQ(results.size(), texts.size());
     const auto sentiment = output.indexOf("SENTIMENT");
@@ -238,8 +269,10 @@ TEST_F(SemanticMapExecutorTest, OneAnswerPerRecordInInputOrder)
 TEST_F(SemanticMapExecutorTest, AnEmptyBatchAsksNothing)
 {
     const auto executor = makeExecutor(configWith("fail"));
-    /// 'fail' would throw if a request were made at all.
-    EXPECT_TRUE(executor->process({}).empty());
+    /// 'fail' would answer with an error if a request were made at all.
+    const auto outcome = submitAndWait(executor, {});
+    ASSERT_TRUE(outcome.has_value());
+    EXPECT_TRUE(outcome->empty());
 }
 
 TEST_F(SemanticMapExecutorTest, AnUnusableAnswerBecomesTheDefault)
@@ -249,7 +282,9 @@ TEST_F(SemanticMapExecutorTest, AnUnusableAnswerBecomesTheDefault)
     const auto executor = makeExecutor(configWith("unparseable", {"POSITIVE", "NEGATIVE"}, "n/a"));
 
     const auto records = makeRecords(input, buffer, *bufferManager, {"great documentary", "terrible"});
-    const auto results = executor->process(records);
+    const auto outcome = submitAndWait(executor, records);
+    ASSERT_TRUE(outcome.has_value());
+    const auto& results = outcome.value();
 
     ASSERT_EQ(results.size(), 2U);
     EXPECT_EQ(results[0].fields.front().value, "n/a");
@@ -264,39 +299,69 @@ TEST_F(SemanticMapExecutorTest, AFailedTransportFailsTheQuery)
 
     const auto records = makeRecords(input, buffer, *bufferManager, {"great documentary"});
     /// Unlike an unusable answer, an unreachable endpoint is the deployment's problem, and the
-    /// synchronous operator fails the query over it too. The two modes must agree here.
-    EXPECT_THROW(executor->process(records), Exception);
+    /// synchronous operator fails the query over it too. The two modes must agree here. The failure
+    /// travels in the outcome because a completion cannot throw at the framework; the framework
+    /// rethrows it on the source thread.
+    const auto outcome = submitAndWait(executor, records);
+    ASSERT_FALSE(outcome.has_value());
+    ASSERT_EXCEPTION_ERRORCODE(std::rethrow_exception(outcome.error()), ErrorCode::InferenceRuntimeFailure);
 }
 
-TEST_F(SemanticMapExecutorTest, EveryCallingThreadGetsItsOwnBackend)
+/// Several calls outstanding at once, all answered and none mixed up.
+///
+/// The predecessor of this test checked that every calling thread got its own backend, because a
+/// curl handle is not thread-safe and the framework called `process` on as many threads as the
+/// concurrency allowed. There are no such threads any more: the calls all sit on one event loop,
+/// so what is left to check is that overlapping them keeps each answer with its own request.
+TEST_F(SemanticMapExecutorTest, SeveralCallsInFlightAtOnce)
 {
     const auto bufferManager = makeBufferManager();
     auto buffer = bufferManager->getBufferBlocking();
     const auto executor = makeExecutor(configWith("echo"));
+    auto* const submitting = dynamic_cast<EventLoopAsyncExecutor*>(executor.get());
+    ASSERT_NE(submitting, nullptr);
 
-    const std::vector<std::string> texts{"one", "two", "three", "four"};
+    /// One batch per record, so each call carries a different text and a mix-up would show.
+    const std::vector<std::string> texts{"one", "two", "three", "four", "five", "six", "seven", "eight"};
     const auto records = makeRecords(input, buffer, *bufferManager, texts);
 
-    /// A backend owns a curl handle and is not thread-safe, while the framework calls process on
-    /// as many threads as maxConcurrency allows.
-    constexpr size_t Threads = 4;
-    std::vector<std::thread> callers;
-    std::vector<std::vector<AsyncRecordResult>> perThread(Threads);
-    callers.reserve(Threads);
-    for (size_t thread = 0; thread < Threads; ++thread)
+    std::mutex mutex;
+    std::vector<std::pair<std::string, AsyncBatchOutcome>> answers;
+    for (size_t record = 0; record < texts.size(); ++record)
     {
-        callers.emplace_back([&, thread] { perThread[thread] = executor->process(records); });
-    }
-    for (auto& caller : callers)
-    {
-        caller.join();
+        const auto batch = std::span{records}.subspan(record, 1);
+        submitting->submit(
+            batch,
+            [&mutex, &answers, text = texts[record]](AsyncBatchOutcome outcome)
+            {
+                const std::lock_guard lock{mutex};
+                answers.emplace_back(text, std::move(outcome));
+            });
     }
 
-    for (const auto& results : perThread)
+    /// The lock is taken only to read the count. Holding it across the sleep would starve the loop
+    /// thread, which needs it to record an answer.
+    const auto answered = [&mutex, &answers]
     {
-        ASSERT_EQ(results.size(), texts.size());
-        EXPECT_EQ(results[0].fields.front().value, "ONE");
-        EXPECT_EQ(results[3].fields.front().value, "FOUR");
+        const std::lock_guard lock{mutex};
+        return answers.size();
+    };
+    const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    while (answered() < texts.size() && std::chrono::steady_clock::now() < until)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+
+    const std::lock_guard lock{mutex};
+    ASSERT_EQ(answers.size(), texts.size());
+    for (const auto& [text, outcome] : answers)
+    {
+        ASSERT_TRUE(outcome.has_value());
+        ASSERT_EQ(outcome->size(), 1U);
+        auto expected = text;
+        std::ranges::transform(
+            expected, expected.begin(), [](const unsigned char character) { return static_cast<char>(std::toupper(character)); });
+        EXPECT_EQ(outcome->front().fields.front().value, expected);
     }
 }
 

@@ -63,6 +63,16 @@ public:
 
     [[nodiscard]] std::expected<std::string, BackendError> complete(const CompletionRequest& request) override;
 
+    /// The answer without the wait, and the wait on its own.
+    ///
+    /// `complete` is the two together, which is what a blocking caller wants. A caller on an event
+    /// loop must not sleep on it — that thread is driving every other call in flight — so it waits
+    /// on a timer and then asks for the answer. The split is what lets the mock behaviours, and
+    /// with them five system tests, work on both paths.
+    [[nodiscard]] std::expected<std::string, BackendError> answer(const CompletionRequest& request) const;
+
+    [[nodiscard]] std::chrono::milliseconds configuredDelay() const { return delay; }
+
 private:
     Mode mode;
     std::string label;

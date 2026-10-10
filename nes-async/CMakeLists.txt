@@ -16,13 +16,23 @@ add_library(nes-async
         src/HandoffChannel.cpp
         src/AsyncRecordLayout.cpp
         src/AsyncExecutorRegistry.cpp
+        src/AsyncOperatorOptions.cpp
+        src/HttpOperatorExecutor.cpp
         src/DelayExecutor.cpp
         src/AsyncWiring.cpp)
 target_include_directories(nes-async PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 find_package(reflectcpp REQUIRED)
-target_link_libraries(nes-async PUBLIC nes-memory nes-data-types nes-schema nes-nautilus PRIVATE nes-common reflectcpp::reflectcpp)
+# nes-http is public because Async/HttpOperatorExecutor.hpp, the base for any operator whose work is
+# an HTTP request, has HttpRequest and HttpResponse in its signatures. The dependency only goes this
+# way: the transport knows nothing about this framework, which is why it is a module of its own and
+# can also serve the synchronous semantic operator.
+#
+# No TARGET check here, unlike in nes-semantic: the components are globbed alphabetically, so
+# nes-http is configured after this directory and the name is resolved at generate time. The check
+# over there catches a missing module for both of us.
+target_link_libraries(nes-async PUBLIC nes-memory nes-data-types nes-schema nes-nautilus nes-http PRIVATE nes-common reflectcpp::reflectcpp)
 
 # Operators register their executor implementation with add_registry_entry(AsyncExecutor <Name>).
 create_runtime_registry(AsyncExecutor nes-async

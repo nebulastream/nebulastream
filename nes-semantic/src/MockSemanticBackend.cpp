@@ -174,7 +174,11 @@ std::expected<std::string, BackendError> MockSemanticBackend::complete(const Com
     {
         std::this_thread::sleep_for(delay);
     }
+    return answer(request);
+}
 
+std::expected<std::string, BackendError> MockSemanticBackend::answer(const CompletionRequest& request) const
+{
     switch (mode)
     {
         case Mode::FAIL:

@@ -82,6 +82,14 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     executor = (*factory)(AsyncExecutorRegistryArguments{AsyncOperatorContext{
         .inputLayout = &inputLayout, .outputLayout = &outputLayout, .config = executorConfig, .batchSize = batchSize}});
 
+    blockingExecutor = dynamic_cast<BlockingAsyncExecutor*>(executor.get());
+    submittingExecutor = dynamic_cast<EventLoopAsyncExecutor*>(executor.get());
+    if (blockingExecutor == nullptr && submittingExecutor == nullptr)
+    {
+        throw InvalidConfigParameter(
+            "Asynchronous executor '{}' implements neither BlockingAsyncExecutor nor EventLoopAsyncExecutor", executorType);
+    }
+
     /// Read-ahead is bounded by queued work, not by buffers: two batches per concurrent call keeps
     /// every worker fed without pulling the channel into memory. One large buffer usually yields
     /// enough batches on its own, so this normally parks one or two buffers. The buffer count is
@@ -90,15 +98,29 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     queuedWorkHighWatermark = 2 * maxConcurrency;
     maxPendingBuffers = 2 * maxConcurrency;
 
-    workers.reserve(maxConcurrency);
-    for (size_t worker = 0; worker < maxConcurrency; ++worker)
+    /// Only the blocking mode needs threads, one per call it may have in flight. An event-loop
+    /// executor gets none: `pump` hands it up to `maxConcurrency` batches and the completions ask
+    /// for the next one, so the calls in flight are bounded by that number and not by a thread
+    /// count. At the 256 the cluster benchmark configures, that is the difference between 257
+    /// threads and two.
+    if (blockingExecutor != nullptr)
     {
-        workers.emplace_back(
-            fmt::format("AsyncOp-{}-{}", executorType, worker), [this](const std::stop_token& stopToken) { processingLoop(stopToken); });
+        workers.reserve(maxConcurrency);
+        for (size_t worker = 0; worker < maxConcurrency; ++worker)
+        {
+            workers.emplace_back(
+                fmt::format("AsyncOp-{}-{}", executorType, worker),
+                [this](const std::stop_token& stopToken) { processingLoop(stopToken); });
+        }
     }
     intake.emplace(fmt::format("AsyncIn-{}", executorType), [this](const std::stop_token& stopToken) { intakeLoop(stopToken); });
 
-    NES_DEBUG("Async source for '{}' started {} worker(s) and one intake thread on channel {}", executorType, maxConcurrency, channelId);
+    NES_DEBUG(
+        "Async source for '{}' opened on channel {} with up to {} calls in flight, {}",
+        executorType,
+        channelId,
+        maxConcurrency,
+        blockingExecutor != nullptr ? "one thread each" : "all on one event loop");
 }
 
 void AsyncSource::recordFailure(std::exception_ptr reason)
@@ -192,6 +214,10 @@ void AsyncSource::intakeLoop(const std::stop_token& stopToken)
             }
             workArrived.notify_all();
             completedArrived.notify_all();
+            if (submittingExecutor != nullptr)
+            {
+                pump();
+            }
         }
 
         {
@@ -205,11 +231,106 @@ void AsyncSource::intakeLoop(const std::stop_token& stopToken)
         /// Both, because idle workers wait on one and fillTupleBuffer on the other.
         workArrived.notify_all();
         completedArrived.notify_all();
+        if (submittingExecutor != nullptr)
+        {
+            /// Whatever is still queued when the input ends has to go out, or nothing completes it.
+            pump();
+        }
     }
     catch (...)
     {
         recordFailure(std::current_exception());
     }
+}
+
+void AsyncSource::pump()
+{
+    std::vector<std::shared_ptr<SubmittedBatch>> toSubmit;
+    {
+        const std::lock_guard lock(mutex);
+        while (callsInFlight < maxConcurrency && not work.empty() && not failure && not workerStop.stop_requested())
+        {
+            const auto item = work.front();
+            work.pop_front();
+
+            auto& entry = pending.at(item.ticket);
+            auto submitted = std::make_shared<SubmittedBatch>();
+            submitted->ticket = item.ticket;
+            /// The buffer handle keeps the records alive for the duration of the call, and the
+            /// result slots are this batch's own disjoint range of the ticket's results.
+            submitted->input = entry.input;
+            submitted->resultSlots = entry.results.data() + item.begin;
+            submitted->views.reserve(item.end - item.begin);
+            for (uint64_t index = item.begin; index < item.end; ++index)
+            {
+                submitted->views.emplace_back(inputLayout, submitted->input, index);
+            }
+
+            callsInFlight += 1;
+            toSubmit.push_back(std::move(submitted));
+        }
+    }
+
+    /// Submitted without the lock: an executor is allowed to answer inline — when its loop has
+    /// already been stopped, say — and the completion takes this very mutex.
+    for (auto& submitted : toSubmit)
+    {
+        const auto batch = std::span<const AsyncRecordView>{submitted->views};
+        submittingExecutor->submit(batch, [this, submitted](AsyncBatchOutcome outcome) { onBatchFinished(submitted, std::move(outcome)); });
+    }
+}
+
+void AsyncSource::onBatchFinished(const std::shared_ptr<SubmittedBatch>& submitted, AsyncBatchOutcome outcome)
+{
+    /// Runs on a thread of the executor's event loop, never on one of ours, so nothing may escape
+    /// from here: the loop has no handler either.
+    if (not outcome.has_value())
+    {
+        {
+            const std::lock_guard lock(mutex);
+            callsInFlight -= 1;
+        }
+        recordFailure(outcome.error());
+        return;
+    }
+
+    if (outcome->size() != submitted->views.size())
+    {
+        {
+            const std::lock_guard lock(mutex);
+            callsInFlight -= 1;
+        }
+        recordFailure(std::make_exception_ptr(UnsupportedQuery(
+            "Executor '{}' returned {} results for {} records; results must align with the input",
+            executorType,
+            outcome->size(),
+            submitted->views.size())));
+        return;
+    }
+
+    {
+        const std::lock_guard lock(mutex);
+        callsInFlight -= 1;
+        std::ranges::move(outcome.value(), submitted->resultSlots);
+
+        const auto entryIterator = pending.find(submitted->ticket);
+        INVARIANT(entryIterator != pending.end(), "A batch completed for a buffer that is no longer pending");
+        entryIterator->second.outstandingBatches -= 1;
+        if (entryIterator->second.outstandingBatches == 0)
+        {
+            completed.emplace(
+                submitted->ticket,
+                Processed{
+                    .input = std::move(entryIterator->second.input),
+                    .results = std::move(entryIterator->second.results),
+                    .emittedRecords = 0});
+            pending.erase(entryIterator);
+            inputExhausted = inputExhausted || (intakeDone && work.empty() && pending.empty());
+        }
+    }
+    /// Wakes fillTupleBuffer, and the intake thread, for which a slot may just have freed up.
+    completedArrived.notify_all();
+    pump();
 }
 
 std::optional<AsyncSource::BatchWork> AsyncSource::takeNextBatch(std::unique_lock<std::mutex>& lock, const std::stop_token& stopToken)
@@ -272,7 +393,7 @@ void AsyncSource::processingLoop(const std::stop_token& stopToken)
             /// This is where the slow external call happens — on this thread, never on a worker
             /// thread of the engine. One batch is one call, so `maxConcurrency` bounds calls in
             /// flight rather than input buffers.
-            auto batchResults = executor->process(batch);
+            auto batchResults = blockingExecutor->process(batch);
             if (batchResults.size() != batch.size())
             {
                 throw UnsupportedQuery(

@@ -19,6 +19,11 @@ target_link_libraries(async-record-layout-test nes-async nes-memory)
 add_nes_test(async-executor-test AsyncExecutorTest.cpp)
 target_link_libraries(async-executor-test nes-async nes-memory)
 
+# Drives the HTTP base against a real server on the loopback interface, so the transport, the
+# per-thread backends and the retry policy are exercised rather than mocked.
+add_nes_test(http-operator-executor-test HttpOperatorExecutorTest.cpp)
+target_link_libraries(http-operator-executor-test nes-async nes-memory nes-http-testing)
+
 # Links the sink and source libraries so that their plugin registrations are pulled in.
 add_nes_test(async-plugin-registration-test AsyncPluginRegistrationTest.cpp)
 target_link_libraries(async-plugin-registration-test nes-async nes-sinks nes-sources)
