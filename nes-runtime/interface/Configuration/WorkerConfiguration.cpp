@@ -104,6 +104,14 @@ const ConfigField<uint64_t> DEFAULT_MAX_INFLIGHT_BUFFERS{
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{64}};
 
+const ConfigField<uint64_t> MAX_WATERMARK_GAP_IN_MS{
+    Identifier::parse("max_watermark_gap_in_ms"),
+    "Maximum event-time gap between the watermarks of an operator's input origins before the leading sources are backpressured. 0 "
+    "disables watermark backpressure.",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
+    uint64_t{0}};
+
 const ConfigField<DumpMode::Options> DUMP_COMPILATION_RESULT{
     Identifier::parse("dump_compilation_result"),
     fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode::Options>()),
@@ -140,6 +148,7 @@ Schema<QualifiedErasedConfigField, Ordered> WorkerConfiguration::getConfigSchema
         UNPOOLED_MEMORY_FRACTION,
         BUFFER_ALIGNMENT_IN_BYTES,
         DEFAULT_MAX_INFLIGHT_BUFFERS,
+        MAX_WATERMARK_GAP_IN_MS,
         DUMP_COMPILATION_RESULT,
         DUMP_GRAPH);
 }
@@ -154,6 +163,7 @@ WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& co
         config.get(UNPOOLED_MEMORY_FRACTION),
         config.get(BUFFER_ALIGNMENT_IN_BYTES),
         config.get(DEFAULT_MAX_INFLIGHT_BUFFERS),
+        config.get(MAX_WATERMARK_GAP_IN_MS),
         config.get(DUMP_COMPILATION_RESULT),
         config.get(DUMP_GRAPH)};
 }

@@ -40,6 +40,7 @@ struct WorkerConfiguration
         float unpooledMemoryFraction,
         uint64_t bufferAlignmentInBytes,
         uint64_t defaultMaxInflightBuffers,
+        uint64_t maxWatermarkGapInMs,
         DumpMode::Options dumpQueryCompilationIR,
         bool dumpGraph)
         : queryEngine(queryEngine)
@@ -49,6 +50,7 @@ struct WorkerConfiguration
         , unpooledMemoryFraction(unpooledMemoryFraction)
         , bufferAlignmentInBytes(bufferAlignmentInBytes)
         , defaultMaxInflightBuffers(defaultMaxInflightBuffers)
+        , maxWatermarkGapInMs(maxWatermarkGapInMs)
         , dumpQueryCompilationIR(dumpQueryCompilationIR)
         , dumpGraph(dumpGraph)
     {
@@ -73,6 +75,10 @@ struct WorkerConfiguration
 
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
     uint64_t defaultMaxInflightBuffers;
+
+    /// Operators merging the watermarks of multiple origins backpressure the sources of origins that are ahead of the slowest origin by
+    /// more than this gap. This bounds the state that is kept until windows can be triggered.
+    uint64_t maxWatermarkGapInMs;
 
     DumpMode::Options dumpQueryCompilationIR;
 
