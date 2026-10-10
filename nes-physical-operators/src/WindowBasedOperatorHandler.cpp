@@ -18,6 +18,9 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <mutex>
+#include <ranges>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -34,20 +37,30 @@ namespace NES
 {
 
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
-    const std::vector<OriginId>& inputOrigins,
+    SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
-    , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
+    , watermarkProcessorBuild(
+          std::make_unique<MultiOriginWatermarkProcessor>(sourcesOfInputOrigins | std::views::keys | std::ranges::to<std::vector>()))
     , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId}))
     , outputOriginId(outputOriginId)
-    , inputOrigins(inputOrigins)
+    , sourcesOfInputOrigins(std::move(sourcesOfInputOrigins))
 {
 }
 
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+
+    auto backpressure = pipelineExecutionContext.getWatermarkBackpressure();
+    const auto allSources = sourcesOfInputOrigins | std::views::values | std::views::join;
+    if (backpressure && sourcesOfInputOrigins.size() > 1
+        && std::ranges::all_of(allSources, [&](const auto source) { return backpressure->controller.controls(source); }))
+    {
+        const std::scoped_lock lock(watermarkBackpressureMutex);
+        watermarkBackpressure = std::move(backpressure);
+    }
 }
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
@@ -111,6 +124,9 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
 
+    /// The gap between the origins also changes when the global watermark does not advance.
+    applyWatermarkBackpressure();
+
     auto highestWatermark = highestTriggeredWatermark.load();
     while (newGlobalWatermark.getRawValue() > highestWatermark
            and not highestTriggeredWatermark.compare_exchange_weak(highestWatermark, newGlobalWatermark.getRawValue()))
@@ -140,6 +156,63 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
         pipelineCtx->emitBuffer(watermarkBuffer);
     }
+}
+
+void WindowBasedOperatorHandler::applyWatermarkBackpressure()
+{
+    const std::scoped_lock lock(watermarkBackpressureMutex);
+    if (!watermarkBackpressure)
+    {
+        return;
+    }
+    auto& [controller, maxWatermarkGap] = *watermarkBackpressure;
+    const auto watermarks = watermarkProcessorBuild->getCurrentWatermarkPerOrigin();
+    const auto [slowestOrigin, slowest]
+        = std::ranges::min(watermarks, {}, [](const auto& originAndWatermark) { return originAndWatermark.second; });
+
+    /// Releasing at half the gap avoids toggling on every buffer.
+    for (const auto& [origin, watermark] : watermarks)
+    {
+        const auto gap = watermark.getRawValue() - slowest.getRawValue();
+        if (watermark.getRawValue() == Timestamp::INFINITE_VALUE || gap <= maxWatermarkGap / 2)
+        {
+            throttledInputOrigins.erase(origin);
+        }
+        else if (gap > maxWatermarkGap)
+        {
+            throttledInputOrigins.insert(origin);
+        }
+    }
+
+    /// Sources that drive the slowest origin are never throttled, which guarantees progress even if a source drives several origins.
+    const auto& sourcesOfSlowest = sourcesOfInputOrigins.at(slowestOrigin);
+    std::unordered_set<OriginId> sourcesToThrottle;
+    for (const auto origin : throttledInputOrigins)
+    {
+        for (const auto source : sourcesOfInputOrigins.at(origin))
+        {
+            if (!std::ranges::contains(sourcesOfSlowest, source))
+            {
+                sourcesToThrottle.insert(source);
+            }
+        }
+    }
+
+    for (const auto source : throttledSources)
+    {
+        if (!sourcesToThrottle.contains(source) && controller.releasePressure(source))
+        {
+            NES_DEBUG("Released watermark backpressure on source {}: slowest origin {} at {}", source, slowestOrigin, slowest);
+        }
+    }
+    for (const auto source : sourcesToThrottle)
+    {
+        if (controller.applyPressure(source))
+        {
+            NES_DEBUG("Applied watermark backpressure on source {}: slowest origin {} at {}", source, slowestOrigin, slowest);
+        }
+    }
+    throttledSources = std::move(sourcesToThrottle);
 }
 
 }

@@ -21,6 +21,7 @@ CREATE SINK q1CheckSum(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, 
 CREATE SINK q2CheckSum(auctionId INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
 CREATE SINK q5Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32 NOT NULL, num UINT64 NOT NULL, max_tmp UINT64 NOT NULL)  TYPE Checksum;
 CREATE SINK q8CheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, name VARSIZED NOT NULL)  TYPE Checksum;
+CREATE SINK unionAggregationCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, num UINT64 NOT NULL)  TYPE Checksum;
 CREATE SINK q8VariantCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL, timestamp_auction UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL)  TYPE Checksum;
 
 
@@ -85,3 +86,24 @@ INNER JOIN
 ON auctionId = id WINDOW TUMBLING (timestamp_bid, timestamp_auction, size 10 sec) INTO q8VariantCheckSum;
 ----
 182197843 1176854299950
+
+
+# Union of five reads of the bids and the auctions into a window aggregation. All streams span the same event time, but every bid
+# source is much larger than the auction source, so the sources run apart in event time and their tuples wait for the slowest one
+# before any window can be triggered.
+SELECT start, end, id, COUNT(id) AS num
+    FROM (SELECT timestamp_bid AS ts, auctionId AS id FROM bid
+          UNION
+          SELECT timestamp_bid AS ts, auctionId AS id FROM bid
+          UNION
+          SELECT timestamp_bid AS ts, auctionId AS id FROM bid
+          UNION
+          SELECT timestamp_bid AS ts, auctionId AS id FROM bid
+          UNION
+          SELECT timestamp_bid AS ts, auctionId AS id FROM bid
+          UNION
+          SELECT timestamp_auction AS ts, id FROM auction)
+GROUP BY id
+WINDOW TUMBLING (ts, size 10 sec) INTO unionAggregationCheckSum;
+----
+12178726 23752560843
