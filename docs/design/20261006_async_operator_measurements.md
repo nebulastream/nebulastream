@@ -130,22 +130,24 @@ mock backend:
 
 The blocking path does scale — but in worker threads, not in configuration, and not perfectly:
 eight threads buy 6.7×, not 8×. Matching the asynchronous time for the same input (5.26 s, see
-section 5) would take on the order of thirty worker threads, and matching the cluster run would
+section 5a) would take on the order of thirty worker threads, and matching the cluster run would
 take hundreds — every one of them parked in an HTTP call. Section 3 is what that costs: the engine
 stops serving anything else.
 
 So the choice is not "threads or concurrency". It is whether the waiting happens on threads the
-engine needs for other work.
+engine needs for other work. And since section 5c it does not happen on threads at all: the
+asynchronous path keeps its calls in flight on an event loop, so the comparison above is between
+hundreds of blocked worker threads and one loop thread.
 
 ---
 
-## 5. How the framework got there: concurrency per call, not per buffer
+## 5. How the framework got there
 
 Measured with the mock backend's delay suffix (`'echo@200'`, 200 ms per request) rather than a model
 server, so what is measured is the framework and nothing else. Every query asserts record count and
 checksum, so a configuration that loses or duplicates a record fails instead of looking fast.
 
-### 5a. The decisive case: one input buffer
+### 5a. Concurrency per call, not per buffer: one input buffer
 
 30 rows arrive in a single buffer, so concurrency can only come from within it.
 
@@ -179,6 +181,53 @@ for 5b and for section 4; `number_of_worker_threads=1` for the asynchronous quer
 use the pool, and 1 / 4 / 8 for section 4; Debug build; `Checksum` sink over `id`. Test:
 [`SemanticMapAsyncThroughput.test`](../../nes-systests/semantic/SemanticMapAsyncThroughput.test),
 driven by `scripts/measure_async_semantic_map.sh throughput`.
+
+---
+
+### 5c. From a thread per call to an event loop
+
+Everything above was measured with one thread per call in flight. At the cluster run's
+`MAX_CONCURRENCY 256` that is 256 threads plus an intake thread, and all 256 are doing the same
+thing: waiting in `curl_easy_perform`. A review comment named it directly — "high concurrency means
+many mostly idle threads" — and that is now gone.
+
+The same libcurl runs on a Boost.Asio event loop. curl's multi interface hands its sockets and its
+timeouts to the loop, so requests in flight and threads are unrelated quantities.
+
+| | threads for one operator | requests in flight |
+|---|---|---|
+| thread per call | `MAX_CONCURRENCY` + 1 intake | `MAX_CONCURRENCY` |
+| event loop | 1 loop + 1 intake | `MAX_CONCURRENCY` |
+
+Two measurements, both against the dummy HTTP server on the loopback interface, so again the
+framework and nothing else:
+
+| what | result |
+|---|---|
+| 64 requests to a route that waits 200 ms each, on **one** loop thread | **0.23 s** |
+| the same, serially | 12.8 s |
+| threads in the whole engine process for a query at `MAX_CONCURRENCY 64` | **15**, peak |
+| `AsyncOp-*` threads in that run | **0** |
+
+The thread names seen during that query were `HttpLoop-0`, `DataSrc-2`, `WorkerThread-0`,
+`net-sender`, `net-receiver`, `task-delayer` and `main` — one loop thread where there would have
+been sixty-four. (The intake thread does not appear because it finishes in microseconds once the
+single input buffer is read, well below the 100 ms sampling interval.)
+
+What this does *not* change is the per-call latency or the throughput of a model-bound query: the
+endpoint's service time dominates, and the numbers in section 2 stand as measured. What it changes
+is the cost of reaching that throughput, and it removes the objection that the framework trades
+thread-pool starvation for a thread explosion of its own.
+
+Libcurl rather than Boost.Beast, and Asio rather than a second runtime: libcurl already does TLS,
+redirects, connection reuse and the timeout handling the blocking client was measured with, Asio was
+already a dependency of this repository, and Beast is not — adding it changes the dependency hash
+and with it the prebuilt development image. Connection reuse survives the move, because the multi
+handle owns the connection cache that every request added to it shares.
+
+The blocking path is still there, as `BlockingAsyncExecutor`, for work that has no asynchronous form.
+Which of the two interfaces an operator implements is a type rather than a flag, because that is
+what decides whether the framework spends a thread per call on it.
 
 ---
 
@@ -312,8 +361,10 @@ And the limits of the whole set:
 
 - Time-to-first-result. `'FALSE' AS LLM.PRESERVE_ORDER` now exists and is covered by a system test,
   but the latency it is meant to buy has not been measured — only that the records all arrive.
-- Several asynchronous queries at once. Ten queries at `MAX_CONCURRENCY 16` would be 160 threads,
-  which nothing currently bounds.
+- Several asynchronous queries at once. This used to read "ten queries at `MAX_CONCURRENCY 16`
+  would be 160 threads, which nothing currently bounds"; with the event loop of section 5c it is ten
+  loop threads instead. What is still unmeasured is whether ten such queries interfere through the
+  endpoint or the buffer pool.
 - Chunking, when output records do not fit one buffer. The code mirrors
   `EmitOperatorHandler::setChunkNumber`, but the answers in these tests are short enough that the
   path never runs.
@@ -421,7 +472,7 @@ Everything needed to repeat a number or to judge whether it transfers.
 | | |
 |---|---|
 | Branch | `feat/async-operator` |
-| Commit | `0cbfb49f09` |
+| Commit | `0cbfb49f09` for sections 2 to 7; section 5c measured on `c43e138173` |
 | Input generator | `scripts/generate_async_benchmark_data.py`, fixed seed `20261006` |
 
 ### Build
