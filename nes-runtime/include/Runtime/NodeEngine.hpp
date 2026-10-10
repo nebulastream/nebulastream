@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -44,7 +45,8 @@ public:
         std::shared_ptr<SystemEventListener> systemEventListener,
         std::shared_ptr<QueryLog> queryLog,
         std::unique_ptr<QueryEngine> queryEngine,
-        std::unique_ptr<SourceProvider> sourceProvider);
+        std::unique_ptr<SourceProvider> sourceProvider,
+        uint64_t maxWatermarkGap);
 
     void startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
@@ -64,5 +66,6 @@ private:
     std::shared_ptr<SystemEventListener> systemEventListener;
     std::unique_ptr<QueryEngine> queryEngine;
     std::unique_ptr<SourceProvider> sourceProvider;
+    uint64_t maxWatermarkGap;
 };
 }

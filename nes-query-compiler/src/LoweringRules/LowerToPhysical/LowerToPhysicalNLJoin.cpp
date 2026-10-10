@@ -48,6 +48,7 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <LoweringRules/LowerToPhysical/SourcesOfInputOrigins.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -109,16 +110,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = join->getWindowType();
 
-    const auto inputOriginIds
-        = join.getChildren()
-        | std::views::transform(
-              [](const auto& child)
-              {
-                  auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
-                  PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
-                  return *childOutputOriginIds.value();
-              })
-        | std::views::join | std::ranges::to<std::vector<OriginId>>();
+    auto sourcesOfInputOrigins = getSourcesOfInputOrigins(join.getChildren());
 
     auto combinedFieldMappingVec = join->getChildren()
         | std::views::transform([](const auto& child)
@@ -189,8 +181,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         std::unreachable();
     };
 
-    auto handler
-        = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};

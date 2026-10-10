@@ -16,6 +16,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -26,6 +27,7 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <RunningSource.hpp>
 
 namespace NES
@@ -87,6 +89,7 @@ struct RunningQueryPlanNode
     std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<ExecutablePipelineStage> stage;
+    std::optional<WatermarkBackpressure> watermarkBackpressure;
 
     std::function<void(Exception)> unregisterWithError;
     CallbackRef planRef;
