@@ -426,7 +426,8 @@ std::optional<TCPChannel::Socket> TCPChannel::connectUntil(const std::chrono::mi
         catch (const Exception& exception)
         {
             connectionErrors["resolve"].emplace_back(exception.what());
-            if (!waitUntil(std::min(deadline, std::chrono::steady_clock::now() + std::chrono::milliseconds{IO_POLL_INTERVAL_MS}), stopToken))
+            if (!waitUntil(
+                    std::min(deadline, std::chrono::steady_clock::now() + std::chrono::milliseconds{IO_POLL_INTERVAL_MS}), stopToken))
             {
                 return std::nullopt;
             }
