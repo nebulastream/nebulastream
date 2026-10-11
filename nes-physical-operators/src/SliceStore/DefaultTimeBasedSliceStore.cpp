@@ -101,15 +101,15 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     return {newSlice};
 }
 
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
+TriggerableWindows DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
     /// Every watermark advance must be checked; a skipped check could leave a window untriggered.
     const auto windowsWriteLocked = windows.wlock();
 
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if all sides have been filled and the window end is smaller than the new global watermark
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
+    TriggerableWindows triggerableWindows;
+    auto& windowsToSlices = triggerableWindows.windowsToSlices;
     for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
     {
         if (windowInfo.windowEnd >= globalWatermark)
@@ -131,7 +131,21 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
     }
-    return windowsToSlices;
+
+    /// Every window that has not been triggered ends at or after the global watermark, and window starts are multiples of the slide.
+    /// All future results therefore have timestamps at or above the first slide boundary that is not below globalWatermark - windowSize.
+    auto outputWatermark = globalWatermark - sliceAssigner.getWindowSize();
+    if (outputWatermark.getRawValue() != Timestamp::INFINITE_VALUE)
+    {
+        const auto slide = sliceAssigner.getWindowSlide();
+        outputWatermark = Timestamp(((outputWatermark.getRawValue() + slide - 1) / slide) * slide);
+    }
+    if (outputWatermark > lastForwardedWatermark)
+    {
+        lastForwardedWatermark = outputWatermark;
+        triggerableWindows.outputWatermark = {outputWatermark, SequenceNumber(sequenceNumber++)};
+    }
+    return triggerableWindows;
 }
 
 std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd)
@@ -141,11 +155,6 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
         return slicesReadLocked->find(sliceEnd)->second;
     }
     return {};
-}
-
-SequenceNumber DefaultTimeBasedSliceStore::nextSequenceNumber()
-{
-    return SequenceNumber(sequenceNumber++);
 }
 
 void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)

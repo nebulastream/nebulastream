@@ -18,7 +18,6 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -74,12 +73,9 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
 
     /// A buffer in a build operator may still write to every slice at or above its lower bound.
     auto garbageCollectionWatermark = newGlobalWaterMarkProbe;
+    if (const auto lowerBounds = buildLowerBounds.rlock(); not lowerBounds->empty())
     {
-        const std::scoped_lock lock(buildLowerBoundsMutex);
-        if (not buildLowerBounds.empty())
-        {
-            garbageCollectionWatermark = std::min(garbageCollectionWatermark, Timestamp(*buildLowerBounds.begin()));
-        }
+        garbageCollectionWatermark = std::min(garbageCollectionWatermark, Timestamp(*lowerBounds->begin()));
     }
     sliceAndWindowStore->garbageCollectSlicesAndWindows(garbageCollectionWatermark);
 }
@@ -88,23 +84,22 @@ Timestamp WindowBasedOperatorHandler::startBuildBuffer(const OriginId originId) 
 {
     /// The watermark must be read while holding the lock, so that a concurrent garbage collection either sees this lower bound
     /// or runs with a watermark that is not larger than it.
-    const std::scoped_lock lock(buildLowerBoundsMutex);
+    const auto lowerBounds = buildLowerBounds.wlock();
     const auto lowerBound = watermarkProcessorBuild->getCurrentWatermark(originId);
-    buildLowerBounds.insert(lowerBound.getRawValue());
+    lowerBounds->insert(lowerBound.getRawValue());
     return lowerBound;
 }
 
 void WindowBasedOperatorHandler::finishBuildBuffer(const Timestamp lowerBound) const
 {
-    const std::scoped_lock lock(buildLowerBoundsMutex);
-    const auto it = buildLowerBounds.find(lowerBound.getRawValue());
-    INVARIANT(it != buildLowerBounds.end(), "No build buffer was started with the lower bound {}", lowerBound);
-    buildLowerBounds.erase(it);
+    const auto lowerBounds = buildLowerBounds.wlock();
+    const auto it = lowerBounds->find(lowerBound.getRawValue());
+    INVARIANT(it != lowerBounds->end(), "No build buffer was started with the lower bound {}", lowerBound);
+    lowerBounds->erase(it);
 }
 
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
-    const std::scoped_lock lock(triggerMutex);
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
@@ -116,27 +111,34 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
 
-    /// Getting all slices that can be triggered and triggering them
-    const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
+    auto highestWatermark = highestTriggeredWatermark.load();
+    while (newGlobalWatermark.getRawValue() > highestWatermark
+           and not highestTriggeredWatermark.compare_exchange_weak(highestWatermark, newGlobalWatermark.getRawValue()))
+    {
+    }
+    if (newGlobalWatermark.getRawValue() <= highestWatermark)
+    {
+        return;
+    }
+
+    /// The store assigns all sequence numbers, so the buffers can be emitted in any order and without holding a lock.
+    const auto [slicesAndWindowInfo, outputWatermarkAndSequenceNumber]
+        = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 
-    /// Window results use the window start as their timestamp. An input watermark can therefore only
-    /// advance the output watermark past starts whose entire window has already closed.
-    const auto windowSize = sliceAndWindowStore->getWindowSize();
-    const auto outputWatermark = newGlobalWatermark.saturatingSubtract(windowSize);
-    if (outputWatermark > lastForwardedWatermark)
+    if (outputWatermarkAndSequenceNumber)
     {
+        const auto [outputWatermark, outputSequenceNumber] = *outputWatermarkAndSequenceNumber;
         auto watermarkBuffer = pipelineCtx->allocateTupleBuffer();
         watermarkBuffer.setNumberOfTuples(0);
         watermarkBuffer.setOriginId(outputOriginId);
-        watermarkBuffer.setSequenceNumber(sliceAndWindowStore->nextSequenceNumber());
+        watermarkBuffer.setSequenceNumber(outputSequenceNumber);
         watermarkBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
         watermarkBuffer.setLastChunk(true);
         watermarkBuffer.setWatermark(outputWatermark);
         watermarkBuffer.setCreationTimestampInMS(Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
         pipelineCtx->emitBuffer(watermarkBuffer);
-        lastForwardedWatermark = outputWatermark;
     }
 }
 

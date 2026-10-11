@@ -60,9 +60,7 @@ public:
     ~DefaultTimeBasedSliceStore() override;
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-    getTriggerableWindowSlices(Timestamp globalWatermark) override;
-    SequenceNumber nextSequenceNumber() override;
+    TriggerableWindows getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
@@ -88,6 +86,10 @@ private:
     /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
     /// and increases for each window info.
     std::atomic<SequenceNumber::Underlying> sequenceNumber;
+
+    /// Guarded by the lock of windows, so that the sequence number of a forwarded watermark is assigned in lockstep with the
+    /// sequence numbers of the windows it covers.
+    Timestamp lastForwardedWatermark{Timestamp::INITIAL_VALUE};
 };
 
 }
