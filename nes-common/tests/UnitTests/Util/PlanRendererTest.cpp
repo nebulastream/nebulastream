@@ -19,6 +19,8 @@
 #include <vector>
 
 #include <Identifiers/NESStrongType.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <gtest/gtest.h>
 
@@ -51,6 +53,9 @@ struct MockPlan
 
 class PlanRendererTest : public ::testing::Test
 {
+public:
+    /// The renderer logs when it skips an edge, so a logger must be set up regardless of which tests ran before in this binary.
+    static void SetUpTestSuite() { Logger::setupLogging("PlanRendererTest.log", LogLevel::LOG_DEBUG); }
 };
 
 /// Linear chain: SINK -> FILTER -> MAP -> SOURCE
