@@ -18,12 +18,18 @@
 namespace NES
 {
 
-TEST(TimestampTest, SaturatingSubtract)
+TEST(TimestampTest, ArithmeticSaturates)
 {
-    EXPECT_EQ(Timestamp{25}.saturatingSubtract(10), Timestamp{15});
-    EXPECT_EQ(Timestamp{10}.saturatingSubtract(10), Timestamp{0});
-    EXPECT_EQ(Timestamp{5}.saturatingSubtract(10), Timestamp{0});
-    EXPECT_EQ(Timestamp{Timestamp::INFINITE_VALUE}.saturatingSubtract(10), Timestamp{Timestamp::INFINITE_VALUE});
+    EXPECT_EQ(Timestamp{25} - 10, Timestamp{15});
+    EXPECT_EQ(Timestamp{10} - 10, Timestamp{0});
+    EXPECT_EQ(Timestamp{5} - 10, Timestamp{0});
+    EXPECT_EQ(Timestamp{5} - Timestamp{10}, Timestamp{0});
+    EXPECT_EQ(Timestamp{Timestamp::INFINITE_VALUE} - 10, Timestamp{Timestamp::INFINITE_VALUE});
+
+    EXPECT_EQ(Timestamp{25} + 10, Timestamp{35});
+    EXPECT_EQ(Timestamp{Timestamp::INFINITE_VALUE - 1} + 10, Timestamp{Timestamp::INFINITE_VALUE});
+    EXPECT_EQ(Timestamp{Timestamp::INFINITE_VALUE} + 10, Timestamp{Timestamp::INFINITE_VALUE});
+    EXPECT_EQ(Timestamp{Timestamp::INVALID_VALUE} + 10, Timestamp{Timestamp::INVALID_VALUE});
 }
 
 }
