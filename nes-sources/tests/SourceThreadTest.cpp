@@ -19,7 +19,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <limits>
 #include <memory>
 #include <mutex>
 #include <ostream>
@@ -219,7 +218,7 @@ void verify_final_watermark(RecordingEmitFunction& recorder, bool followedByEoS)
     const auto* data = std::get_if<SourceReturnType::Data>(&event);
     ASSERT_NE(data, nullptr);
     EXPECT_EQ(data->buffer.getNumberOfTuples(), 0);
-    EXPECT_EQ(data->buffer.getWatermark().getRawValue(), std::numeric_limits<Timestamp::Underlying>::max());
+    EXPECT_EQ(data->buffer.getWatermark().getRawValue(), Timestamp::INFINITE_VALUE);
 }
 
 TEST_F(SourceThreadTest, CompletesAlreadyInfiniteMetadataSource)
