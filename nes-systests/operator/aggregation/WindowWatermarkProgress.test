@@ -1,6 +1,6 @@
 # name: aggregation/WindowWatermarkProgress.test
 # description: A later filtered event advances the watermark without producing another first-stage window result.
-# groups: [Aggregation, WindowOperators]
+# groups: [Aggregation, WindowOperators, TCP]
 
 CREATE LOGICAL SOURCE stream(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE TCP;
