@@ -164,21 +164,17 @@ docker_nes_repl() {
 @test "launch query and terminate query on exit behavior" {
   setup_distributed tests/topologies/1-node.yaml
 
-  start_time=$(date +%s)
   ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
-  end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
-
-  # The query is configured to produce data for 10000ms. We expect nes-repl to terminate within 5 seconds as it is configured to terminate all pending queries on exit
-  duration=$((end_time - start_time))
-  [ "$duration" -le 5 ]
 
   # Verify that the implicit STOP QUERY statement was executed and its result matches the query that was created
   # lines[2] is the SELECT query result with query_id
   QUERY_ID=$(echo ${lines[3]} | jq -r '.[0].query_id')
   # The last line should contain the result of the implicit STOP QUERY command with the same query_id
   assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[-1]}"
+
+  wait_until grep -q "Stop QueryId(.*distributed=${QUERY_ID})" worker-node/singleNodeWorker.log
 }
 
 @test "default on-exit behavior should keep queries alive" {
