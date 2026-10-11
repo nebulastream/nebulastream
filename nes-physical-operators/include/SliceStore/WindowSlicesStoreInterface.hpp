@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <SliceStore/Slice.hpp>
@@ -57,6 +58,14 @@ struct WindowInfoAndSequenceNumber
     bool operator<(const WindowInfoAndSequenceNumber& other) const { return windowInfo < other.windowInfo; }
 };
 
+struct TriggerableWindows
+{
+    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
+    /// The watermark to forward downstream, if it advanced. Its sequence number is higher than the sequence number of every
+    /// window with a start below it, and sequence numbers of forwarded watermarks increase with the watermark.
+    std::optional<std::pair<Timestamp, SequenceNumber>> outputWatermark;
+};
+
 /// This is the interface for storing windows and slices in a window-based operator
 /// It provides an interface to operate on slices and windows for a time-based window operator, e.g., join or aggregation
 class WindowSlicesStoreInterface
@@ -71,10 +80,7 @@ public:
     /// Retrieves all slices that can be triggered by the given global watermark
     /// This method returns all slices for each window that can be triggered. It returns the slices for all windows that have been filled and have a window end smaller than the global watermark
     /// Additionally, it returns a sequence number per window that is incremented for each window and thus, it can be used to set it in the emitted tuple buffer for the probe operator.
-    virtual std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getTriggerableWindowSlices(Timestamp globalWatermark)
-        = 0;
-
-    virtual SequenceNumber nextSequenceNumber() = 0;
+    virtual TriggerableWindows getTriggerableWindowSlices(Timestamp globalWatermark) = 0;
 
     /// Retrieves the slice by its end timestamp. If no slice exists for the given slice end, the optional return value is nullopt
     virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) = 0;

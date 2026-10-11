@@ -14,11 +14,11 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -29,6 +29,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -101,10 +102,9 @@ protected:
     uint64_t numberOfWorkerThreads = 0;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
-    std::mutex triggerMutex;
+    /// A window can only become triggerable when the global watermark advances past this value.
+    std::atomic<Timestamp::Underlying> highestTriggeredWatermark{Timestamp::INITIAL_VALUE};
     /// Lower bounds of all buffers that are currently processed by a build operator.
-    mutable std::mutex buildLowerBoundsMutex;
-    mutable std::multiset<Timestamp::Underlying> buildLowerBounds;
-    Timestamp lastForwardedWatermark{Timestamp::INITIAL_VALUE};
+    mutable folly::Synchronized<std::multiset<Timestamp::Underlying>> buildLowerBounds;
 };
 }
