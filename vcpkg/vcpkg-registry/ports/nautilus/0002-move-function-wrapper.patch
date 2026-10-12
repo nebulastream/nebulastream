@@ -1,0 +1,13 @@
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+index 1652dd8..226d69d 100644
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -57,7 +57,7 @@ std::function<void()> createFunctionWrapper(std::index_sequence<Indices...>,
+ 
+ template <typename R, typename... FunctionArguments>
+ std::function<void()> createFunctionWrapper(std::function<R(FunctionArguments...)> func) {
+-	return createFunctionWrapper(std::make_index_sequence<sizeof...(FunctionArguments)> {}, func);
++	return createFunctionWrapper(std::make_index_sequence<sizeof...(FunctionArguments)> {}, std::move(func));
+ }
+ 
+ // Optimized overload for raw function pointers - avoids std::function wrapper overhead
