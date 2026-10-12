@@ -94,7 +94,7 @@ ffibuilder.embedding_init_code("""
         if is_null:
             return None
         if type_code == _VARSIZED:
-            return bytes(ffi.buffer(value_ptr, length))
+            return bytes(ffi.buffer(value_ptr, length)).decode("utf-8")
         return ffi.cast(_CTYPE[type_code] + " *", value_ptr)[0]
 
     def _write_result(value, return_type, result_scalar, result_string, result_string_len, result_null):
@@ -166,11 +166,11 @@ ffibuilder.embedding_init_code("""
             return 0  # UDF_ERROR
 
         func, arg_types, return_type = entry
-        args = [
-            _to_py_arg(arg_values[i], arg_lens[i], arg_nulls[i], arg_types[i])
-            for i in range(len(arg_types))
-        ]
         try:
+            args = [
+                _to_py_arg(arg_values[i], arg_lens[i], arg_nulls[i], arg_types[i])
+                for i in range(len(arg_types))
+            ]
             result = func(*args)
             _write_result(result, return_type, result_scalar, result_string, result_string_len, result_null)
         except Exception as exc:  # noqa: BLE001 -- reported to the caller, not re-raised

@@ -18,7 +18,7 @@ SELECT a, b, add_py(a, b) AS c FROM nums INTO FILE();
 10,20,30
 100,200,300
 
-# --- Python UDF: currency conversion (currency.to_euro), VARSIZED argument arrives as Python bytes ---
+# --- Python UDF: currency conversion (currency.to_euro), VARSIZED argument arrives as Python str ---
 CREATE LOGICAL SOURCE bids(amount FLOAT64 NOT NULL, ccy VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR bids TYPE File;
 ATTACH INLINE

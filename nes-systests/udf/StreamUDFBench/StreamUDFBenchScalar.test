@@ -1,6 +1,6 @@
 # name: udf/StreamUDFBench/StreamUDFBenchScalar.test
 # description: StreamUDFBench queries that use only scalar Python UDFs (Q1, Q20, Q8), on the tiny dataset.
-# UDFs: nes-systests/udf/pyudfs/StreamUDFBench/streamudfbench_scalar.py, data: nes-systests/testdata/large/streamudfbench/tiny (ExternalData, see StreamUDFBench engines/nebulastream/scripts/export_nes_testdata.sh).
+# UDFs: nes-systests/udf/pyudfs/StreamUDFBench/scalar/<name>.py (UDFBench files, unchanged) via udfbench_scalar.py, data: nes-systests/testdata/large/streamudfbench/tiny (ExternalData, see StreamUDFBench engines/nebulastream/scripts/export_nes_testdata.sh).
 # Data files are tab-separated and unquoted, with an event-time column ts (epoch ms) last and rows sorted by ts.
 # Expected results were computed independently in Python with the same UDF code.
 # groups: [StreamUDFBench, PythonUdf, large]
@@ -19,12 +19,12 @@ CREATE LOGICAL SOURCE artifact_authorlists(artifactid VARSIZED, authorlist VARSI
 CREATE PHYSICAL SOURCE FOR artifact_authorlists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
 ATTACH FILE large/streamudfbench/tiny/artifact_authorlists_4M.csv
 
-CREATE FUNCTION extractyear (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.extractyear';
-CREATE FUNCTION extractmonth (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.extractmonth';
-CREATE FUNCTION extractday (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.extractday';
-CREATE FUNCTION cleandate (pubdate VARSIZED) RETURNS VARSIZED BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.cleandate';
-CREATE FUNCTION jsoncount (jval VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.jsoncount';
-
+CREATE FUNCTION extractyear (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractyear';
+CREATE FUNCTION extractmonth (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractmonth';
+CREATE FUNCTION extractday (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractday';
+CREATE FUNCTION cleandate (pubdate VARSIZED) RETURNS VARSIZED BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.udfbench_scalar.cleandate';
+CREATE FUNCTION jsoncount (jval VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsoncount';
+updat
 # Q1: extract year, month and day from the artifact date with three scalar UDFs (per row, no window)
 SELECT id, extractyear(date) AS year, extractmonth(date) AS month, extractday(date) AS "DAY"
 FROM artifacts

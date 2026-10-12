@@ -252,7 +252,7 @@ void cleanup_udf(int handle);
 ```
 
 Explicit `arg_nulls`/`result_null` replace the PoC's NaN sentinel (A5).
-`arg_lens` + `result_string_len` make VARSIZED binary-safe (mapped to Python `bytes`).
+`arg_lens` + `result_string_len` make VARSIZED length-delimited; the interpreter bridges decode it as UTF-8 and pass a Python `str`.
 
 ## Registration (G1, A6)
 
@@ -373,7 +373,7 @@ Both sit behind the same `UdfBackend`/ABI seam and are selected per-UDF via `BRI
 - **Descriptor.** `UdfDescriptor` carries an `UdfExecution` (`InProcess` or `Codon`). A Codon UDF has no `.so`: `path` stays empty, `FROM` is rejected, and `ENTRYPOINT` must be `module.function` with at least one argument. `UdfBackend::create` refuses Codon descriptors.
 - **Lowering.** `FunctionProvider` turns a Codon `UDFCall` into a `PythonPhysicalFunction` whose generated body imports the entry point and calls it. Modules are found on `python_udf_import_paths` plus `NES_UDF_PATH`, the search path the CPython and PyPy bridges use, so one directory of UDF modules serves every backend.
 - **NULL semantics.** Strict, as for the bridges: the generated body returns NULL before calling the function if any nullable argument is NULL, and unwraps the others, so the module function only sees plain values. The result is nullable.
-- **Language subset.** The module is compiled by Codon, not run by an interpreter. It must stay within Codon's statically typed Python, and a `VARSIZED` value is a `str` (the interpreter bridges pass `bytes`). `nes-systests/udf/pyudfs/portable_udfs.py` is written to be valid under CPython, PyPy and Codon, which is what lets `PythonUdfBridgeComparison.test` compare all backends on one source.
+- **Language subset.** The module is compiled by Codon, not run by an interpreter. It must stay within Codon's statically typed Python, and a `VARSIZED` value is a `str`, as in the interpreter bridges. `nes-systests/udf/pyudfs/portable_udfs.py` is written to be valid under CPython, PyPy and Codon, which is what lets `PythonUdfBridgeComparison.test` compare all backends on one source.
 
 # Appendix — implementation outline
 

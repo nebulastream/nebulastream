@@ -198,7 +198,8 @@ PyObject* toPyArg(const void* value, long long length, int isNull, int typeCode)
         case UDF_FLOAT64:
             return PyFloat_FromDouble(*reinterpret_cast<const double*>(value));
         case UDF_VARSIZED:
-            return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(value), static_cast<Py_ssize_t>(length));
+            /* VARSIZED is UTF-8 text: the UDF receives str; invalid UTF-8 raises UnicodeDecodeError. */
+            return PyUnicode_DecodeUTF8(reinterpret_cast<const char*>(value), static_cast<Py_ssize_t>(length), "strict");
         default:
             return nullptr;
     }
@@ -456,8 +457,9 @@ extern "C" int execute_udf_row(
             Py_DECREF(args);
             if (errormessage != nullptr)
             {
-                *errormessage = dupString("unsupported argument type code");
+                *errormessage = (PyErr_Occurred() != nullptr) ? fetchPythonError() : dupString("unsupported argument type code");
             }
+            PyErr_Clear();
             PyGILState_Release(gil);
             return UDF_ERROR;
         }
