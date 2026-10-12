@@ -1,0 +1,455 @@
+# SIGMOD demo topology: video, patient monitor, laboratory values and audio, published to the topics the SIGMOD UI
+# (nebulastream-ui-SIGMOD-Demo, "Live" scenario) subscribes to.
+#
+# Run it with `docker compose up` (worker, MQTT broker, UI and the replayed patient-monitor
+# and lab-value generators in containers, then the queries below). It needs the camera pair and a microphone. Run by hand, it needs a worker that
+# was started in the repository root with NES_UDF_PATH=$PWD/python_udfs. The paths of models and files are
+# relative to the repository root, the working directory of nes-cli and of the worker.
+#
+# Data flow (arrows are PIPEs):
+#   video ──> video_frames ──> thermal_face (YuNet) ──> UI video (test/thermal-rgb-image)
+#                                  │
+#   pm_hr, pm_sysbp ──> vitals ────┴──> shock alert (alertType 5)
+#   microphone ──> audio_pipe ──> UI waveform, audio_window_pipe ──> audio_label_detection_pipe ──> UI labels, speech alert (9)
+#   MQTT source/live/*  ──>  pass-through queries  ──>  MQTT sink/live/*
+#
+# Timestamps: video and audio sources deliver nanoseconds, the replayed monitor values microseconds. Everything that
+# is joined or published is converted to microseconds (the UI divides by 1000 to get milliseconds).
+query:
+  # ==========================================================================
+  # Video: RGB (YUYV) and thermal (MONO16) frames of one camera pair
+  # ==========================================================================
+  - name: video_stream
+    # language=SQL
+    query: |
+      SELECT TIMESTAMP / UINT64(1000) AS TIMESTAMP, WIDTH, HEIGHT, PIXEL_FORMAT, IMAGE
+      FROM video
+      INTO PIPE(video_frames, "localhost:8080");
+
+  # Face detection on the latest RGB frame for every thermal frame (ASOF join), with the YuNet model: the frame is
+  # resized to the 320x320 input tensor by a Python UDF, and a second UDF decodes the model output into the face
+  # rectangle (x, y, width, height as four uint16 packed into a UINT64, in RGB frame pixels; 0 = no face).
+  # With a face the output image is the thermal frame (INFERNO colour map, face outlined) and max_temp is the hottest
+  # pixel inside the rectangle in degrees Celsius. Without a face it is the RGB frame, and max_temp is 0, which the UI
+  # shows as "No face was detected".
+  # PixelFormat values come from aravis: 17825799 = MONO16 (thermal), 34603058 = YUV_422_YUYV (RGB).
+  - name: thermal_face
+    # language=SQL
+    query: |
+      SELECT thermal_timestamp AS timestamp,
+             CASE
+                 WHEN face > UINT64(0) THEN
+                     to_base64(thermal_to_jpg_with_rectangle(thermal_image, thermal_width, thermal_height, CASTTOTYPE(face AS UINT64)))
+                 ELSE
+                     to_base64(yuyv_to_jpg(rgb_image, rgb_width, rgb_height))
+      END AS image,
+             CASE
+                 WHEN face > UINT64(0) THEN
+                     thermal_roi_max_celsius(thermal_image, thermal_width, thermal_height, CASTTOTYPE(face AS UINT64))
+                 ELSE FLOAT32(0)
+      END AS max_temp
+      FROM (SELECT thermal_timestamp, thermal_image, thermal_width, thermal_height, rgb_image, rgb_width, rgb_height,
+                   yunet_face_rectangle(packedFaces, rgb_width, rgb_height) AS face
+            FROM MODEL_INFERENCE(
+                yunet, (
+                SELECT thermal_timestamp, thermal_image, thermal_width, thermal_height, rgb_image, rgb_width, rgb_height,
+                       CASTTOTYPE(yunet_preprocess(rgb_image, rgb_width, rgb_height) AS VARSIZED) AS tensor
+                FROM (SELECT timestamp AS thermal_timestamp, image AS thermal_image, width AS thermal_width, height AS thermal_height
+                      FROM PIPE(video_frames)
+                      WHERE PIXEL_FORMAT = 17825799)
+                         ASOF JOIN (SELECT timestamp AS rgb_timestamp, image AS rgb_image, width AS rgb_width, height AS rgb_height
+                                    FROM PIPE(video_frames)
+                                    WHERE PIXEL_FORMAT = 34603058)
+                         TIME(thermal_timestamp, rgb_timestamp)
+                )
+                ))
+      INTO PIPE(thermal_face, "localhost:8080");
+
+  - name: thermal_face_mqtt
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", image AS "image", max_temp AS "max_temp"
+      FROM PIPE(thermal_face)
+      INTO MQTT('test/thermal-rgb-image' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+
+  # ==========================================================================
+  # Hemodynamic shock alert: a face above 34 C while heart rate / systolic blood pressure is above 1.
+  # vitals pairs every heart-rate value with the latest blood-pressure value; the alert joins every warm-face frame
+  # with the latest vitals and is reduced to at most one alert per second.
+  # ==========================================================================
+  - name: vitals
+    # language=SQL
+    query: |
+      SELECT hr_timestamp AS timestamp, hr_value, bp_value
+      FROM (SELECT timestamp AS hr_timestamp, value AS hr_value FROM pm_hr)
+          ASOF JOIN (SELECT timestamp AS bp_timestamp, value AS bp_value FROM pm_sysbp)
+          TIME(hr_timestamp, bp_timestamp)
+      INTO PIPE(vitals, "localhost:8080");
+  - name: shock_alert
+    # language=SQL
+    query: |
+      SELECT UINT32(5) AS "alertType", start AS "timestamp"
+      FROM (SELECT start, COUNT(*) AS hits
+            FROM (SELECT temp_timestamp, hr_value, bp_value
+                  FROM (SELECT timestamp AS temp_timestamp
+                        FROM PIPE(thermal_face)
+                        WHERE max_temp > FLOAT32(34))
+                           ASOF JOIN (SELECT timestamp AS vitals_timestamp, hr_value, bp_value FROM PIPE(vitals))
+                      TIME(temp_timestamp, vitals_timestamp))
+            WHERE hr_value / bp_value > 1
+                WINDOW TUMBLING(temp_timestamp, SIZE 1000000 MS))
+          INTO MQTT('sink/live/alert' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+
+  # ==========================================================================
+  # Audio: raw waveform for the UI, and keyword spotting for the speech alert
+  # ==========================================================================
+  - name: audio_pipe
+    # language=SQL
+    query: |
+      SELECT timestamp / 1000 AS timestamp, sample
+      FROM microphone
+      INTO PIPE(audio_pipe, "localhost:8080");
+  # The UI plots int16-range samples, the microphone delivers normalised floats.
+  - name: audio_waveform
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", sample * FLOAT64(32768) AS "value"
+      FROM PIPE(audio_pipe)
+      INTO MQTT('sink/live/audio' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: audio_window_pipe
+    # language=SQL
+    query: |
+      SELECT timestamp, audio
+      FROM (SELECT start AS timestamp, COUNT(*) AS number_of_samples, ARRAY_AGG(CASTTOTYPE(sample AS FLOAT32)) AS audio
+          FROM PIPE(audio_pipe)
+          WINDOW SLIDING(timestamp, SIZE 1000000 MS, ADVANCE BY 250000 MS))
+      WHERE number_of_samples = 16000
+      INTO PIPE(audio_window_pipe, "localhost:8080");
+  - name: audio_label_detection_pipe
+    # language=SQL
+    query: |
+      SELECT timestamp, argmax_f32(probabilities) AS class_index, max_f32(probabilities) AS confidence, noise_level
+      FROM MODEL_INFERENCE(
+          kws, (
+          SELECT timestamp, CASTTOTYPE(audio_to_mfcc(audio) AS VARSIZED) AS features, max_abs_f32(audio) AS noise_level
+          FROM PIPE(audio_window_pipe)
+          )
+          )
+      INTO PIPE(audio_label_detection_pipe, "localhost:8080");
+  # Every detection window of the keyword model (every 250 ms) for the UI: the recognized class and the audio level,
+  # which the audio panel shows over the last five seconds (also useful to see why speech_alert does not fire).
+  # The class index is the output position of the keyword model (models/kws_labels.csv); the UI names the classes.
+  - name: audio_labels_mqtt
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", class_index AS "class_index", confidence AS "confidence", noise_level AS "noise_level"
+      FROM PIPE(audio_label_detection_pipe)
+      INTO MQTT('sink/live/audio_labels' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                0 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  # Speech alert: class 9 of the keyword model ("go", see models/kws_labels.csv) heard clearly, at most once every two seconds.
+  # The UI shows alertType 9 as "That was the word ...".
+  - name: speech_alert
+    # language=SQL
+    query: |
+      SELECT UINT32(9) AS "alertType", start AS "timestamp", class_index AS "class_index", confidence AS "probability"
+      FROM (
+               SELECT start, class_index, MAX(confidence) AS confidence
+               FROM PIPE(audio_label_detection_pipe)
+               WHERE noise_level >= 0.02 AND confidence >= 0.9 AND class_index = UINT64(9)
+               GROUP BY class_index
+                   WINDOW TUMBLING(timestamp, SIZE 2000000 MS)
+           )
+          INTO MQTT('sink/live/alert' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+
+  # ==========================================================================
+  # Source-to-sink pass-throughs: replayed sensor data on source/live/* is republished on the sink/live/* topics
+  # the UI subscribes to.
+  # ==========================================================================
+  - name: lab_values_s2s
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", biosignal AS "biosignal", value AS "value"
+      FROM lab_values
+      INTO MQTT('sink/live/lab_values' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                0 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: pm_ecg_s2s
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", value AS "value"
+      FROM pm_ecg
+      INTO MQTT('sink/live/patient_monitor_ecg' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: pm_abp_s2s
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", value AS "value"
+      FROM pm_abp
+      INTO MQTT('sink/live/patient_monitor_abp' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: pm_ppg_s2s
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", value AS "value"
+      FROM pm_ppg
+      INTO MQTT('sink/live/patient_monitor_ppg' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: pm_hr_s2s
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", value AS "value"
+      FROM pm_hr
+      INTO MQTT('sink/live/patient_monitor_ecg_values' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: pm_sysbp_s2s
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", value AS "value"
+      FROM pm_sysbp
+      INTO MQTT('sink/live/patient_monitor_abp_values' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: pm_spo2_s2s
+    # language=SQL
+    query: |
+      SELECT timestamp AS "timestamp", value AS "value"
+      FROM pm_spo2
+      INTO MQTT('sink/live/patient_monitor_ppg_values' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                1 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+
+# Scalar UDFs, compiled by Codon (python_udfs/demo_udfs.py). A UDF result is always nullable.
+functions:
+  - name: yuyv_to_jpg
+    bridge: codon
+    entrypoint: demo_udfs.yuyv_to_jpg
+    args:
+      - { name: image, type: VARSIZED }
+      - { name: width, type: UINT64 }
+      - { name: height, type: UINT64 }
+    returns: VARSIZED
+  - name: thermal_to_jpg_with_rectangle
+    bridge: codon
+    entrypoint: demo_udfs.thermal_to_jpg_with_rectangle
+    args:
+      - { name: image, type: VARSIZED }
+      - { name: width, type: UINT64 }
+      - { name: height, type: UINT64 }
+      - { name: face, type: UINT64 }
+    returns: VARSIZED
+  - name: yunet_preprocess
+    bridge: codon
+    entrypoint: demo_udfs.yunet_preprocess
+    args:
+      - { name: image, type: VARSIZED }
+      - { name: width, type: UINT64 }
+      - { name: height, type: UINT64 }
+    returns: VARSIZED
+  - name: yunet_face_rectangle
+    bridge: codon
+    entrypoint: demo_udfs.yunet_face_rectangle
+    args:
+      - { name: packed_faces, type: VARSIZED }
+      - { name: width, type: UINT64 }
+      - { name: height, type: UINT64 }
+    returns: UINT64
+  - name: thermal_roi_max_celsius
+    bridge: codon
+    entrypoint: demo_udfs.thermal_roi_max_celsius
+    args:
+      - { name: image, type: VARSIZED }
+      - { name: width, type: UINT64 }
+      - { name: height, type: UINT64 }
+      - { name: face, type: UINT64 }
+    returns: FLOAT32
+  - name: audio_to_mfcc
+    bridge: codon
+    entrypoint: demo_udfs.audio_to_mfcc
+    args:
+      - { name: audio, type: VARSIZED }
+    returns: VARSIZED
+  - name: max_abs_f32
+    bridge: codon
+    entrypoint: demo_udfs.max_abs_f32
+    args:
+      - { name: audio, type: VARSIZED }
+    returns: FLOAT32
+  - name: argmax_f32
+    bridge: codon
+    entrypoint: demo_udfs.argmax_f32
+    args:
+      - { name: values, type: VARSIZED }
+    returns: UINT64
+  - name: max_f32
+    bridge: codon
+    entrypoint: demo_udfs.max_f32
+    args:
+      - { name: values, type: VARSIZED }
+    returns: FLOAT32
+
+models:
+  - name: yunet
+    path: models/face_detection_yunet_2026may_320_packed.onnx
+    input:
+      - name: tensor
+        type: VARSIZED
+    output:
+      - name: packedFaces
+        type: VARSIZED
+  - name: kws
+    path: models/kws.onnx
+    input:
+      - name: features
+        type: VARSIZED
+    output:
+      - name: probabilities
+        type: VARSIZED
+
+logical:
+  - name: video
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: WIDTH, type: UINT64, nullable: false }
+      - { name: HEIGHT, type: UINT64, nullable: false }
+      - { name: PIXEL_FORMAT, type: UINT64, nullable: false }
+      - { name: IMAGE, type: VARSIZED, nullable: false }
+  - name: microphone
+    schema:
+      - { name: SAMPLE, type: FLOAT64, nullable: false }
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+  - name: kws_labels
+    schema:
+      - { name: LABEL_INDEX, type: UINT64, nullable: false }
+      - { name: LABEL, type: VARSIZED, nullable: false }
+  - name: lab_values
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: BIOSIGNAL, type: VARSIZED, nullable: false }
+      - { name: VALUE, type: FLOAT64, nullable: false }
+  - name: pm_ecg
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: VALUE, type: FLOAT64, nullable: false }
+  - name: pm_abp
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: VALUE, type: FLOAT64, nullable: false }
+  - name: pm_ppg
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: VALUE, type: FLOAT64, nullable: false }
+  - name: pm_hr
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: VALUE, type: FLOAT64, nullable: false }
+  - name: pm_sysbp
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: VALUE, type: FLOAT64, nullable: false }
+  - name: pm_spo2
+    schema:
+      - { name: TIMESTAMP, type: UINT64, nullable: false }
+      - { name: VALUE, type: FLOAT64, nullable: false }
+
+physical:
+  - logical: video
+    host: localhost:8080
+    type: Video
+    parser_config:
+      type: NATIVE
+    source_config:
+      SOURCE_SELECTOR: 2
+  - logical: microphone
+    host: localhost:8080
+    type: Audio
+    parser_config:
+      type: NATIVE
+    source_config:
+      SAMPLE_RATE: 16000
+  - logical: kws_labels
+    host: localhost:8080
+    type: File
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    source_config:
+      file_path: models/kws_labels.csv
+  # Replayed sensor data (generators): one "timestamp,value" CSV line per MQTT message.
+  # The source topics follow the original demo: the generator "spo2_ards" feeds abp_values (systolic pressure),
+  # "hr_hpss" feeds ecg_values (heart rate) and "sbp_hpss" feeds ppg_values (SpO2).
+  - logical: lab_values
+    host: localhost:8080
+    type: MQTT
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config: { server_uri: 'localhost:1883', topic: source/live/lab_values, qos: 0, flush_interval_ms: 100 }
+  - logical: pm_ecg
+    host: localhost:8080
+    type: MQTT
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config: { server_uri: 'localhost:1883', topic: source/live/patient_monitor_ecg, qos: 1, flush_interval_ms: 50 }
+  - logical: pm_abp
+    host: localhost:8080
+    type: MQTT
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config: { server_uri: 'localhost:1883', topic: source/live/patient_monitor_abp, qos: 1, flush_interval_ms: 50 }
+  - logical: pm_ppg
+    host: localhost:8080
+    type: MQTT
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config: { server_uri: 'localhost:1883', topic: source/live/patient_monitor_ppg, qos: 1, flush_interval_ms: 50 }
+  - logical: pm_hr
+    host: localhost:8080
+    type: MQTT
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config: { server_uri: 'localhost:1883', topic: source/live/patient_monitor_ecg_values, qos: 1, flush_interval_ms: 100 }
+  - logical: pm_sysbp
+    host: localhost:8080
+    type: MQTT
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config: { server_uri: 'localhost:1883', topic: source/live/patient_monitor_abp_values, qos: 1, flush_interval_ms: 100 }
+  - logical: pm_spo2
+    host: localhost:8080
+    type: MQTT
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config: { server_uri: 'localhost:1883', topic: source/live/patient_monitor_ppg_values, qos: 1, flush_interval_ms: 100 }
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
