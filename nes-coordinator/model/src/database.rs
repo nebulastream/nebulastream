@@ -1,0 +1,191 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+//! Opens and configures the SQLite-backed catalog store,
+//! and exposes the connection and transaction types that the rest of the crate runs statements against.
+
+use anyhow::{Context, Result};
+use migration::Migrator;
+pub use sea_orm::DatabaseTransaction;
+use sea_orm::{
+    ConnectionTrait, DatabaseConnection, DbBackend, DbErr, ExecResult, QueryResult,
+    SqlxSqliteConnector, Statement, TransactionTrait,
+};
+use sea_orm_migration::MigratorTrait;
+use sqlx::ConnectOptions;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
+use std::str::FromStr;
+use std::time::Duration;
+
+// SQLite serializes writers, so a big pool adds little.
+// Keep one connection open, cap the file pool at 8.
+const SQLITE_MIN_CONNECTIONS: u32 = 1;
+const SQLITE_MAX_CONNECTIONS: u32 = 8;
+// Wait up to 5s for a write lock instead of failing on SQLITE_BUSY.
+const SQLITE_BUSY_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// Where the SQLite catalog is stored.
+pub enum StateBackend {
+    /// In-process and non-persistent: all state is lost when the process exits.
+    /// For tests and short-lived coordinators only.
+    Memory,
+    /// A database file, created if missing.
+    Sqlite { path: String },
+}
+
+impl StateBackend {
+    pub fn sqlite(path: &str) -> Self {
+        Self::Sqlite {
+            path: path.to_string(),
+        }
+    }
+}
+
+/// Pooled handle to the catalog.
+/// Implements the connection trait so requests can run against it directly,
+/// and exposes `begin` for explicit transactions.
+#[derive(Clone)]
+pub struct Database {
+    conn: DatabaseConnection,
+}
+
+#[async_trait::async_trait]
+impl ConnectionTrait for Database {
+    fn get_database_backend(&self) -> DbBackend {
+        self.conn.get_database_backend()
+    }
+
+    async fn execute(&self, stmt: Statement) -> Result<ExecResult, DbErr> {
+        self.conn.execute(stmt).await
+    }
+
+    async fn execute_unprepared(&self, sql: &str) -> Result<ExecResult, DbErr> {
+        self.conn.execute_unprepared(sql).await
+    }
+
+    async fn query_one(&self, stmt: Statement) -> Result<Option<QueryResult>, DbErr> {
+        self.conn.query_one(stmt).await
+    }
+
+    async fn query_all(&self, stmt: Statement) -> Result<Vec<QueryResult>, DbErr> {
+        self.conn.query_all(stmt).await
+    }
+
+    fn support_returning(&self) -> bool {
+        self.conn.support_returning()
+    }
+
+    fn is_mock_connection(&self) -> bool {
+        self.conn.is_mock_connection()
+    }
+}
+
+impl Database {
+    pub fn connection(&self) -> &DatabaseConnection {
+        &self.conn
+    }
+}
+
+impl Database {
+    pub async fn with(backend: StateBackend) -> Result<Self> {
+        match backend {
+            StateBackend::Memory => {
+                let opts = SqliteConnectOptions::from_str("sqlite::memory:")?
+                    .foreign_keys(true)
+                    .pragma("recursive_triggers", "ON")
+                    .journal_mode(SqliteJournalMode::Wal)
+                    .synchronous(SqliteSynchronous::Normal)
+                    .busy_timeout(SQLITE_BUSY_TIMEOUT);
+
+                // In-memory SQLite is per-connection:
+                // a second connection would see an empty, separate database.
+                // Hard-cap the pool at one.
+                // Do not close idle or old connections either:
+                // if the pool ever replaced that one connection,
+                // the replacement would open a fresh, empty database and the catalog would be lost.
+                let pool = SqlitePoolOptions::new()
+                    .min_connections(SQLITE_MIN_CONNECTIONS)
+                    .max_connections(SQLITE_MIN_CONNECTIONS)
+                    .idle_timeout(None)
+                    .max_lifetime(None)
+                    .test_before_acquire(false)
+                    .connect_with(opts)
+                    .await?;
+
+                let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool);
+                Ok(Self { conn })
+            }
+            StateBackend::Sqlite { path } => {
+                // Build options programmatically (not via `from_str`)
+                // so URI fragments in `path` cannot override the pragmas below without any error.
+                let opts = SqliteConnectOptions::new()
+                    .filename(&path)
+                    .create_if_missing(true)
+                    .foreign_keys(true)
+                    .pragma("recursive_triggers", "ON")
+                    .journal_mode(SqliteJournalMode::Wal)
+                    .synchronous(SqliteSynchronous::Normal)
+                    .disable_statement_logging()
+                    .busy_timeout(SQLITE_BUSY_TIMEOUT);
+
+                let pool = SqlitePoolOptions::new()
+                    .min_connections(SQLITE_MIN_CONNECTIONS)
+                    .max_connections(SQLITE_MAX_CONNECTIONS)
+                    .test_before_acquire(false)
+                    .connect_with(opts)
+                    .await?;
+
+                let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool);
+                Ok(Self { conn })
+            }
+        }
+    }
+
+    /// Connects to the catalog and brings its schema up to date.
+    pub async fn open(backend: StateBackend) -> Result<Self> {
+        let this = Self::with(backend)
+            .await
+            .context("failed to create database state")?;
+        this.migrate()
+            .await
+            .context("failed to run database migrations")?;
+        Ok(this)
+    }
+
+    /// An in-memory catalog with the schema applied.
+    /// Panics on failure; for tests only.
+    pub async fn for_test() -> Self {
+        Self::open(StateBackend::Memory)
+            .await
+            .expect("failed to open the test database")
+    }
+
+    pub async fn migrate(&self) -> Result<()> {
+        Ok(Migrator::up(&self.conn, None).await?)
+    }
+
+    /// Begin an immediate transaction.
+    /// A deferred `BEGIN` acquires the write lock only on the first write,
+    /// which fails with `SQLITE_BUSY_SNAPSHOT` (517)
+    /// when a concurrent reader holds a stale WAL snapshot.
+    /// `BEGIN IMMEDIATE` acquires the lock upfront, so `busy_timeout` handles contention instead.
+    pub async fn begin(&self) -> Result<DatabaseTransaction, DbErr> {
+        // The ORM only issues a deferred `BEGIN`,
+        // so close that empty transaction with `END` (an alias for COMMIT)
+        // and re-open it as `BEGIN IMMEDIATE`.
+        let txn = self.conn.begin().await?;
+        txn.execute_unprepared("END; BEGIN IMMEDIATE").await?;
+        Ok(txn)
+    }
+}
