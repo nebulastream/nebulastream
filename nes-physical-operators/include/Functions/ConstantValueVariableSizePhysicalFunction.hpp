@@ -36,6 +36,12 @@ public:
 
 private:
     std::vector<int8_t> data;
+    /// Host-time property of the literal bytes: no `"` (0x22), no `\` (0x5C), no control byte (< 0x20). Computed
+    /// once in the constructor. When true the literal is a valid JSON string body verbatim, so execute() can
+    /// assert CLEAN|JSON_ESCAPED on the lazy value it returns and the JSON output side forwards it via the
+    /// inlined span writer (folds, tcb-sensitive) instead of the opaque escaping writer. When false the value
+    /// asserts NONE and keeps the (correct) escaping path.
+    bool literalIsClean;
 };
 
 static_assert(PhysicalFunctionConcept<ConstantValueVariableSizePhysicalFunction>);

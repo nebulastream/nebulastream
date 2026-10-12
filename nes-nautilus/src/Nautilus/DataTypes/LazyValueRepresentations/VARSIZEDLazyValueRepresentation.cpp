@@ -129,22 +129,20 @@ nautilus::val<bool> VARSIZEDLazyValueRepresentation::eqImpl(const VariableSizedD
 
 nautilus::val<bool> VARSIZEDLazyValueRepresentation::eqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const
 {
-    nautilus::val<bool> result{false};
     if (rhs->getType().type == DataType::Type::BOOLEAN)
     {
-        result = rhs->isBooleanTrue() == isValid();
+        return rhs->isBooleanTrue() == isValid();
     }
-    else if (size != rhs->getSize())
+    /// Early-return shape, mirroring eqImpl(const VariableSizedData&): a result-accumulator variable here
+    /// traces into a merge block + a second data-dependent branch on the merged bool per row, which costs
+    /// ~30% on a cheap string-equality filter (bidstr qex). The early return keeps the short-circuit inline.
+    if (size != rhs->getSize())
     {
-        result = nautilus::val<bool>(false);
+        return nautilus::val<bool>(false);
     }
-    else
-    {
-        /// rhs->getContent() is contiguous for a passthrough / literal; a concat rope on the rhs is the one
-        /// unsupported shape (rope == rope), which is not exercised. bytesEqualTo walks our side if we are a rope.
-        result = bytesEqualTo(rhs->getContent());
-    }
-    return result;
+    /// rhs->getContent() is contiguous for a passthrough / literal; a concat rope on the rhs is the one
+    /// unsupported shape (rope == rope), which is not exercised. bytesEqualTo walks our side if we are a rope.
+    return bytesEqualTo(rhs->getContent());
 }
 
 nautilus::val<bool> VARSIZEDLazyValueRepresentation::neqImpl(const nautilus::val<bool>& rhs) const
