@@ -55,7 +55,6 @@ public:
         = DescriptorConfig::createConfigParameterContainerMap(TYPE, VALUE_DESERIALIZERS);
 
 private:
-    friend class SourceCatalog;
     friend struct Unreflector<InputFormatterDescriptor>;
     friend struct Reflector<InputFormatterDescriptor>;
 
