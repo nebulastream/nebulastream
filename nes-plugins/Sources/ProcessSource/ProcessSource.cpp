@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
+#include <spawn.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
@@ -116,39 +117,36 @@ void ProcessSource::startProcess()
         throw CannotOpenSource("Could not create ProcessSource output pipe: {}", std::strerror(errno));
     }
 
-    const pid_t pid = fork();
-    if (pid == -1)
+    /// posix_spawn does not copy the worker's address space, unlike fork. The child gets its own process group so that
+    /// close() can terminate the complete Bash pipeline rather than only the shell process. Both pipe ends are O_CLOEXEC,
+    /// so the child keeps only the stdout copy made by adddup2.
+    std::array argv{
+        const_cast<char*>("bash"), /// NOLINT(cppcoreguidelines-pro-type-const-cast) - posix_spawn does not modify argv
+        const_cast<char*>("-c"), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        const_cast<char*>(BASH_COMMAND_WRAPPER), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        const_cast<char*>("nes-process-source"), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        const_cast<char*>(workerPid.c_str()), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        const_cast<char*>(sourceIdString.c_str()), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        const_cast<char*>(invocation.c_str()), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        const_cast<char*>(timestamp.c_str()), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        const_cast<char*>(command.c_str()), /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+        static_cast<char*>(nullptr)};
+    posix_spawn_file_actions_t fileActions{};
+    posix_spawn_file_actions_init(&fileActions);
+    posix_spawn_file_actions_adddup2(&fileActions, pipeFds[1], STDOUT_FILENO);
+    posix_spawnattr_t attributes{};
+    posix_spawnattr_init(&attributes);
+    posix_spawnattr_setflags(&attributes, POSIX_SPAWN_SETPGROUP);
+    posix_spawnattr_setpgroup(&attributes, 0);
+    pid_t pid = -1;
+    const auto spawnResult = posix_spawn(&pid, "/bin/bash", &fileActions, &attributes, argv.data(), environ);
+    posix_spawn_file_actions_destroy(&fileActions);
+    posix_spawnattr_destroy(&attributes);
+    if (spawnResult != 0)
     {
-        const auto savedErrno = errno;
         ::close(pipeFds[0]);
         ::close(pipeFds[1]);
-        throw CannotOpenSource("Could not fork ProcessSource command: {}", std::strerror(savedErrno));
-    }
-
-    if (pid == 0)
-    {
-        /// Everything between fork and exec must be async-signal-safe. A separate process group lets
-        /// close() terminate the complete Bash pipeline rather than only the shell process.
-        setpgid(0, 0);
-        ::close(pipeFds[0]);
-        if (dup2(pipeFds[1], STDOUT_FILENO) == -1)
-        {
-            _exit(126);
-        }
-        ::close(pipeFds[1]);
-        execl( /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX execl is async-signal-safe after fork
-            "/bin/bash",
-            "bash",
-            "-c",
-            BASH_COMMAND_WRAPPER,
-            "nes-process-source",
-            workerPid.c_str(),
-            sourceIdString.c_str(),
-            invocation.c_str(),
-            timestamp.c_str(),
-            command.c_str(),
-            static_cast<char*>(nullptr));
-        _exit(127);
+        throw CannotOpenSource("Could not spawn ProcessSource command: {}", std::strerror(spawnResult));
     }
 
     ::close(pipeFds[1]);
@@ -163,8 +161,6 @@ void ProcessSource::startProcess()
         throw CannotOpenSource("Could not configure ProcessSource output pipe: {}", std::strerror(savedErrno));
     }
 
-    /// The child also calls setpgid before exec. Calling it here closes the race with an immediate stop request.
-    setpgid(pid, pid);
     childPid = pid;
     processGroupId = pid;
     standardOutputFd = pipeFds[0];
