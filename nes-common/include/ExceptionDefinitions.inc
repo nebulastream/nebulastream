@@ -84,6 +84,7 @@ EXCEPTION(CannotAllocateBuffer, 3003, "cannot allocate buffer")
 EXCEPTION(SkippingDelayedTaskDuringShutdown, 3004, "skipping delayed task during shutdown")
 EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipeline buffer size")
 EXCEPTION(InferenceRuntimeFailure, 3006, "inference runtime failure")
+EXCEPTION(HttpRequestFailed, 3007, "http request failed")
 EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
 EXCEPTION(WindowingError, 3014, "windowing error")
 
@@ -93,6 +94,7 @@ EXCEPTION(RunningRoutineFailure, 4001, "error in running routine of SourceThread
 EXCEPTION(CannotOpenSource, 4002, "failed to open a source")
 EXCEPTION(FormattingError, 4003, "error during formatting")
 EXCEPTION(CannotOpenSink, 4004, "failed to open a sink")
+EXCEPTION(CannotCreateHttpClient, 4005, "cannot create http client")
 
 /// 5XXX API errors
 EXCEPTION(QueryNotFound, 5000, "query is not registered")
