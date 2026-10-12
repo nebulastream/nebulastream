@@ -177,14 +177,15 @@ protected:
 TEST_P(InvokeExceptionTest, PotentiallyThrowingInvokeRecordsCleanupMetadata)
 {
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Compiler, GetParam(), true);
-    auto function = engine.registerFunction(std::function<void(nautilus::val<int32_t*>)>(
-        [](nautilus::val<int32_t*> output)
-        {
-            nautilus::val<ExceptionResult> result;
-            nautilus::invoke(throwWhileWriting, &result, nautilus::val<int32_t>{42});
-            const nautilus::val<int32_t> value = result.get(&ExceptionResult::value);
-            *output = value;
-        }));
+    auto function = engine.registerFunction(
+        std::function<void(nautilus::val<int32_t*>)>(
+            [](nautilus::val<int32_t*> output)
+            {
+                nautilus::val<ExceptionResult> result;
+                nautilus::invoke(throwWhileWriting, &result, nautilus::val<int32_t>{42});
+                const nautilus::val<int32_t> value = result.get(&ExceptionResult::value);
+                *output = value;
+            }));
 
     const auto trace = readTrace(function);
     EXPECT_NE(trace.find("CALL_WITH_EXCEPTION_HANDLING"), std::string::npos) << trace;
@@ -194,14 +195,15 @@ TEST_P(InvokeExceptionTest, PotentiallyThrowingInvokeRecordsCleanupMetadata)
 TEST_P(InvokeExceptionTest, ThrowingInvokeUnwindsLiveValStruct)
 {
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Compiler, GetParam(), false);
-    auto function = engine.registerFunction(std::function<void(nautilus::val<int32_t*>)>(
-        [](nautilus::val<int32_t*> output)
-        {
-            nautilus::val<ExceptionResult> result;
-            nautilus::invoke(throwWhileWriting, &result, nautilus::val<int32_t>{42});
-            const nautilus::val<int32_t> value = result.get(&ExceptionResult::value);
-            *output = value;
-        }));
+    auto function = engine.registerFunction(
+        std::function<void(nautilus::val<int32_t*>)>(
+            [](nautilus::val<int32_t*> output)
+            {
+                nautilus::val<ExceptionResult> result;
+                nautilus::invoke(throwWhileWriting, &result, nautilus::val<int32_t>{42});
+                const nautilus::val<int32_t> value = result.get(&ExceptionResult::value);
+                *output = value;
+            }));
 
     destructorCalls = 0;
     destructorValues.fill(0);
@@ -214,18 +216,19 @@ TEST_P(InvokeExceptionTest, ThrowingInvokeUnwindsLiveValStruct)
 TEST_P(InvokeExceptionTest, MoveAssignmentDoesNotLeaveStaleCleanup)
 {
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Compiler, GetParam(), false);
-    auto function = engine.registerFunction(std::function<void()>(
-        []
-        {
+    auto function = engine.registerFunction(
+        std::function<void()>(
+            []
             {
-                nautilus::val<ExceptionResult> destination;
-                nautilus::invoke(writeResult, &destination, nautilus::val<int32_t>{1});
-                nautilus::val<ExceptionResult> source;
-                nautilus::invoke(writeResult, &source, nautilus::val<int32_t>{2});
-                destination = std::move(source);
-            }
-            nautilus::invoke(throwWithoutCleanup);
-        }));
+                {
+                    nautilus::val<ExceptionResult> destination;
+                    nautilus::invoke(writeResult, &destination, nautilus::val<int32_t>{1});
+                    nautilus::val<ExceptionResult> source;
+                    nautilus::invoke(writeResult, &source, nautilus::val<int32_t>{2});
+                    destination = std::move(source);
+                }
+                nautilus::invoke(throwWithoutCleanup);
+            }));
 
     destructorCalls = 0;
     destructorValues.fill(0);
@@ -239,15 +242,16 @@ TEST_P(InvokeExceptionTest, MoveAssignmentDoesNotLeaveStaleCleanup)
 TEST_P(InvokeExceptionTest, ExceptionalCleanupsRunInReverseConstructionOrder)
 {
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Compiler, GetParam(), false);
-    auto function = engine.registerFunction(std::function<void()>(
-        []
-        {
-            nautilus::val<ExceptionResult> first;
-            nautilus::invoke(writeResult, &first, nautilus::val<int32_t>{1});
-            nautilus::val<ExceptionResult> second;
-            nautilus::invoke(writeResult, &second, nautilus::val<int32_t>{2});
-            nautilus::invoke(throwWhileWriting, &second, nautilus::val<int32_t>{42});
-        }));
+    auto function = engine.registerFunction(
+        std::function<void()>(
+            []
+            {
+                nautilus::val<ExceptionResult> first;
+                nautilus::invoke(writeResult, &first, nautilus::val<int32_t>{1});
+                nautilus::val<ExceptionResult> second;
+                nautilus::invoke(writeResult, &second, nautilus::val<int32_t>{2});
+                nautilus::invoke(throwWhileWriting, &second, nautilus::val<int32_t>{42});
+            }));
 
     destructorCalls = 0;
     destructorValues.fill(0);
@@ -260,13 +264,14 @@ TEST_P(InvokeExceptionTest, ExceptionalCleanupsRunInReverseConstructionOrder)
 TEST_P(InvokeExceptionTest, ExceptionFromNestedNautilusFunctionUnwindsBothFrames)
 {
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Compiler, GetParam(), true);
-    auto function = engine.registerFunction(std::function<void()>(
-        []
-        {
-            nautilus::val<ExceptionResult> outer;
-            nautilus::invoke(writeResult, &outer, nautilus::val<int32_t>{1});
-            nestedThrowingFunction();
-        }));
+    auto function = engine.registerFunction(
+        std::function<void()>(
+            []
+            {
+                nautilus::val<ExceptionResult> outer;
+                nautilus::invoke(writeResult, &outer, nautilus::val<int32_t>{1});
+                nestedThrowingFunction();
+            }));
 
     destructorCalls = 0;
     destructorValues.fill(0);
@@ -291,12 +296,13 @@ TEST_P(InvokeExceptionTest, ThreeNestedFunctionsCoverEveryThrowingPermutation)
 TEST_P(InvokeExceptionTest, ThrowingInvokeWithoutLiveCleanupRethrows)
 {
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Compiler, GetParam(), false);
-    auto function = engine.registerFunction(std::function<void(nautilus::val<int32_t*>)>(
-        [](nautilus::val<int32_t*> output)
-        {
-            nautilus::invoke(throwWithoutCleanup);
-            *output = 42;
-        }));
+    auto function = engine.registerFunction(
+        std::function<void(nautilus::val<int32_t*>)>(
+            [](nautilus::val<int32_t*> output)
+            {
+                nautilus::invoke(throwWithoutCleanup);
+                *output = 42;
+            }));
 
     int32_t output = -1;
     EXPECT_THROW(function(std::addressof(output)), std::runtime_error);
@@ -306,14 +312,15 @@ TEST_P(InvokeExceptionTest, ThrowingInvokeWithoutLiveCleanupRethrows)
 TEST_P(InvokeExceptionTest, NoexceptInvokeKeepsDirectCallPath)
 {
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Compiler, GetParam(), true);
-    auto function = engine.registerFunction(std::function<void(nautilus::val<int32_t*>)>(
-        [](nautilus::val<int32_t*> output)
-        {
-            nautilus::val<ExceptionResult> result;
-            nautilus::invoke(writeResult, &result, nautilus::val<int32_t>{42});
-            const nautilus::val<int32_t> value = result.get(&ExceptionResult::value);
-            *output = value;
-        }));
+    auto function = engine.registerFunction(
+        std::function<void(nautilus::val<int32_t*>)>(
+            [](nautilus::val<int32_t*> output)
+            {
+                nautilus::val<ExceptionResult> result;
+                nautilus::invoke(writeResult, &result, nautilus::val<int32_t>{42});
+                const nautilus::val<int32_t> value = result.get(&ExceptionResult::value);
+                *output = value;
+            }));
 
     destructorCalls = 0;
     destructorValues.fill(0);

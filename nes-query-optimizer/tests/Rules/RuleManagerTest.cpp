@@ -50,26 +50,11 @@ concept TestRuleConcept = RuleConcept<T, std::nullptr_t>;
     { \
     public: \
         static constexpr std::string_view NAME = #Name; \
-        [[nodiscard]] std::set<std::type_index> needs() const \
-        { \
-            return Needs; \
-        } \
-        [[nodiscard]] std::set<std::type_index> neededBy() const \
-        { \
-            return NeededBy; \
-        } \
-        [[nodiscard]] std::set<std::type_index> wants() const \
-        { \
-            return Wants; \
-        } \
-        [[nodiscard]] std::set<std::type_index> wantedBy() const \
-        { \
-            return WantedBy; \
-        } \
-        [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const \
-        { \
-            return nullptr; \
-        } \
+        [[nodiscard]] std::set<std::type_index> needs() const { return Needs; } \
+        [[nodiscard]] std::set<std::type_index> neededBy() const { return NeededBy; } \
+        [[nodiscard]] std::set<std::type_index> wants() const { return Wants; } \
+        [[nodiscard]] std::set<std::type_index> wantedBy() const { return WantedBy; } \
+        [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; } \
     }; \
     static_assert(TestRuleConcept<Name>)
 /// NOLINTEND(bugprone-macro-parentheses)

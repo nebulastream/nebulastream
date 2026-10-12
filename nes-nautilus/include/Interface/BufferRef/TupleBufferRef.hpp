@@ -66,8 +66,7 @@ public:
     virtual Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
-        nautilus::val<uint64_t>& recordIndex) const
-        = 0;
+        nautilus::val<uint64_t>& recordIndex) const = 0;
 
     /// Returned by writeRecord
     /// Will give information on whether the write operation was successful (record index was inbounds)
@@ -86,8 +85,7 @@ public:
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
-        = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
 
     [[nodiscard]] uint64_t getCapacity() const;
     [[nodiscard]] uint64_t getBufferSize() const;

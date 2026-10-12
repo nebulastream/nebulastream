@@ -61,10 +61,11 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
             errorGRPC->set_message(exception.what());
             errorGRPC->set_stacktrace(exception.trace().to_string());
             errorGRPC->set_code(exception.code());
-            errorGRPC->set_location(fmt::format(
-                "{}:{}",
-                exception.where().transform([](const auto& where) { return where.filename; }).value_or("unknown"),
-                exception.where().transform([](const auto& where) { return where.line.value_or(-1); }).value_or(-1)));
+            errorGRPC->set_location(
+                fmt::format(
+                    "{}:{}",
+                    exception.where().transform([](const auto& where) { return where.filename; }).value_or("unknown"),
+                    exception.where().transform([](const auto& where) { return where.line.value_or(-1); }).value_or(-1)));
         }
     }
     response->set_after_unix_timestamp_in_milli_seconds(

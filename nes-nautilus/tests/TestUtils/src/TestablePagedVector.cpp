@@ -56,35 +56,38 @@ TestablePagedVector::TestablePagedVector(
     pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
     PagedVector::init(pagedVector, pageBufferSize, getSizeInBytes(layout->getSchema()));
 
-    pushbackFn.emplace(engine->registerFunction(std::function(
-        [layout, dataTypes = dataTypes, projections = projections](
-            nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
-        {
-            const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
-            PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
-            pvRef.pushBack(record, bm);
-        })));
-
-    readAtFn.emplace(engine->registerFunction(std::function(
-        [layout, dataTypes = dataTypes, projections = projections](
-            nautilus::val<TupleBuffer*> pagedVector, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
-        {
-            const PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
-            auto record = pvRef.at(index);
-            storeRecordToAnyVec(out, record, projections, dataTypes);
-        })));
-
-    readAll.emplace(engine->registerFunction(std::function(
-        [layout, dataTypes = dataTypes, projections = projections](
-            nautilus::val<TupleBuffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
-        {
-            const PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
-            for (const auto& record : pvRef)
+    pushbackFn.emplace(engine->registerFunction(
+        std::function(
+            [layout, dataTypes = dataTypes, projections = projections](
+                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
             {
-                auto out = anyVecPushBack(outVector, nautilus::val<size_t>{std::ranges::size(layout->getSchema())});
+                const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
+                PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
+                pvRef.pushBack(record, bm);
+            })));
+
+    readAtFn.emplace(engine->registerFunction(
+        std::function(
+            [layout, dataTypes = dataTypes, projections = projections](
+                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
+            {
+                const PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
+                auto record = pvRef.at(index);
                 storeRecordToAnyVec(out, record, projections, dataTypes);
-            }
-        })));
+            })));
+
+    readAll.emplace(engine->registerFunction(
+        std::function(
+            [layout, dataTypes = dataTypes, projections = projections](
+                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
+            {
+                const PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
+                for (const auto& record : pvRef)
+                {
+                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>{std::ranges::size(layout->getSchema())});
+                    storeRecordToAnyVec(out, record, projections, dataTypes);
+                }
+            })));
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access, performance-unnecessary-value-param)

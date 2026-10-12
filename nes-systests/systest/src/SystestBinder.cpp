@@ -130,12 +130,13 @@ struct SystestBinder::Impl
         {
             try
             {
-                bound.testCases.push_back(std::visit(
-                    Overloaded{
-                        [&](const RewrittenQuery& query) { return bindQuery(query, partitionKey); },
-                        [&](const RewrittenDifferential& block) { return bindDifferential(block, partitionKey); },
-                        [&](const RewrittenExplain& explain) { return bindExplain(explain); }},
-                    action));
+                bound.testCases.push_back(
+                    std::visit(
+                        Overloaded{
+                            [&](const RewrittenQuery& query) { return bindQuery(query, partitionKey); },
+                            [&](const RewrittenDifferential& block) { return bindDifferential(block, partitionKey); },
+                            [&](const RewrittenExplain& explain) { return bindExplain(explain); }},
+                        action));
             }
             catch (const Exception& exception)
             {

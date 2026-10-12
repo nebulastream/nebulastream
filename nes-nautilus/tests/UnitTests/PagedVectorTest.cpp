@@ -325,7 +325,7 @@ rc::Gen<size_t> genOversizedVarSizedLen(uint64_t bufferSize)
     return rc::gen::exec(
         [bufferSize]() -> size_t
         {
-            const auto useGross = bufferSize < GROSS_OVERSIZED_ABS_CAP and * rc::gen::arbitrary<bool>();
+            const auto useGross = bufferSize < GROSS_OVERSIZED_ABS_CAP and *rc::gen::arbitrary<bool>();
             if (useGross)
             {
                 const auto grossUpper = std::min(bufferSize * GROSS_OVERSIZED_MAX_MULTIPLIER, GROSS_OVERSIZED_ABS_CAP);
@@ -693,7 +693,7 @@ void insertOversizedVarSizedProperty(TestUtils::EngineMode mode)
     for (uint64_t i = 0; i < numberOfItems; ++i)
     {
         auto record = *genAnyVec(fieldTypes, bufferSize, noOversizedBudget);
-        const bool forceNull = fieldTypes[varSizedFieldIdx].nullable and * rc::gen::arbitrary<bool>();
+        const bool forceNull = fieldTypes[varSizedFieldIdx].nullable and *rc::gen::arbitrary<bool>();
         if (forceNull)
         {
             record[varSizedFieldIdx] = std::optional<std::string>{};

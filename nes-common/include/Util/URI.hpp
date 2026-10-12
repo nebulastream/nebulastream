@@ -73,7 +73,7 @@ private:
 template <>
 struct YAML::convert<NES::URI>
 {
-    static ::YAML::Node encode(NES::URI const& rhs)
+    static ::YAML::Node encode(const NES::URI& rhs)
     {
         ::YAML::Node node;
         node = rhs.toString();
