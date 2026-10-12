@@ -176,8 +176,9 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, capacity, downstream] : workers)
     {
-        statements.emplace_back(NES::CreateWorkerStatement{
-            .host = host, .dataAddress = dataAddress.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
+        statements.emplace_back(
+            NES::CreateWorkerStatement{
+                .host = host, .dataAddress = dataAddress.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -192,12 +193,13 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
 
     for (const auto& [logical, host] : physical)
     {
-        statements.emplace_back(NES::CreatePhysicalSourceStatement{
-            .attachedTo = NES::LogicalSourceName(NES::Identifier::parse(logical)),
-            .sourceType = NES::Identifier::parse("File"),
-            .host = NES::Host(host),
-            .sourceConfig = {{NES::Identifier::parse("file_path"), "does_not_exist"}},
-            .parserConfig = {{NES::Identifier::parse("type"), "CSV"}}});
+        statements.emplace_back(
+            NES::CreatePhysicalSourceStatement{
+                .attachedTo = NES::LogicalSourceName(NES::Identifier::parse(logical)),
+                .sourceType = NES::Identifier::parse("File"),
+                .host = NES::Host(host),
+                .sourceConfig = {{NES::Identifier::parse("file_path"), "does_not_exist"}},
+                .parserConfig = {{NES::Identifier::parse("type"), "CSV"}}});
     }
     for (const auto& [name, schemaFields, host] : sinks)
     {
@@ -207,13 +209,14 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
                           { return NES::UnqualifiedUnboundField{NES::Identifier::parse(fieldName), NES::DataType::Type::UINT64}; })
             | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 
-        statements.emplace_back(NES::CreateSinkStatement{
-            .name = NES::Identifier::parse(name),
-            .sinkType = NES::Identifier::parse("VOID"),
-            .schema = std::move(schema),
-            .host = NES::Host(host),
-            .sinkConfig = {},
-            .formatConfig = {}});
+        statements.emplace_back(
+            NES::CreateSinkStatement{
+                .name = NES::Identifier::parse(name),
+                .sinkType = NES::Identifier::parse("VOID"),
+                .schema = std::move(schema),
+                .host = NES::Host(host),
+                .sinkConfig = {},
+                .formatConfig = {}});
     }
     statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
     return statements;

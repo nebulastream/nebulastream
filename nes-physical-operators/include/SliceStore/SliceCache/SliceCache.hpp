@@ -70,8 +70,7 @@ public:
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const SliceCacheReplaceEntry& replaceEntry,
-        nautilus::val<AbstractBufferProvider*> bufferProvider)
-        = 0;
+        nautilus::val<AbstractBufferProvider*> bufferProvider) = 0;
     /// Memory layout: [Thread0 entries][Thread1 entries]...[ThreadN entries]
     [[nodiscard]] virtual uint64_t getCacheMemorySize() const;
 

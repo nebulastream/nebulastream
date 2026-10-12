@@ -63,8 +63,7 @@ protected:
         ProbeTaskType probeTaskType,
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
-        PipelineExecutionContext* pipelineCtx)
-        = 0;
+        PipelineExecutionContext* pipelineCtx) = 0;
 
     JoinTriggerStrategy triggerStrategy;
 };

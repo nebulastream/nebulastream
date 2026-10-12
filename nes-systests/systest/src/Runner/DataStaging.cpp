@@ -75,7 +75,7 @@ StagedSetup stage(const RunnableTestFile& runnable)
     {
         std::visit(
             Overloaded{
-                [](const PlainStatement&) {},
+                [](const PlainStatement&) { },
                 [](const StatementWithInlineData& withInline) { writeInlineData(withInline.data); },
                 [&](StatementWithServedData& withServed)
                 {

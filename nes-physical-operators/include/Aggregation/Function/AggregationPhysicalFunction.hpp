@@ -52,8 +52,7 @@ public:
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& bufferProvider,
-        const Record& record)
-        = 0;
+        const Record& record) = 0;
 
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
     virtual void combine(
@@ -61,23 +60,20 @@ public:
         BorrowedNautilusBuffer parentBuffer1,
         nautilus::val<AggregationState*> aggregationState2,
         BorrowedNautilusBuffer parentBuffer2,
-        PipelineMemoryProvider& pipelineMemoryProvider)
-        = 0;
+        PipelineMemoryProvider& pipelineMemoryProvider) = 0;
 
     /// Returns the aggregation state as a nautilus record. The record will contain the aggregation state in the field specified by resultFieldIdentifier
     /// It will NOT contain any other metadata fields, e.g., window start and end fields
     virtual Record lower(
         nautilus::val<AggregationState*> aggregationState,
         BorrowedNautilusBuffer parentBuffer,
-        PipelineMemoryProvider& pipelineMemoryProvider)
-        = 0;
+        PipelineMemoryProvider& pipelineMemoryProvider) = 0;
 
     /// Resets the aggregation state to its initial state. For a sum, this would be 0, for a min aggregation, this would be the maximum possible value, etc.
     virtual void reset(
         nautilus::val<AggregationState*> aggregationState,
         BorrowedNautilusBuffer parentBuffer,
-        PipelineMemoryProvider& pipelineMemoryProvider)
-        = 0;
+        PipelineMemoryProvider& pipelineMemoryProvider) = 0;
 
     /// Destroys the aggregation state. This is used to free up memory when the aggregation state is no longer needed.
     virtual void cleanup(nautilus::val<AggregationState*> aggregationState) = 0;

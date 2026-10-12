@@ -33,7 +33,6 @@ public:
     /// @brief This method calculates the number of tuples to be generated in the provided interval
     /// This method should be called in the fillTupleBuffer of the GeneratorSource before emitting the tuple buffer
     virtual uint64_t calcNumberOfTuplesForInterval(
-        const std::chrono::time_point<std::chrono::system_clock>& start, const std::chrono::time_point<std::chrono::system_clock>& end)
-        = 0;
+        const std::chrono::time_point<std::chrono::system_clock>& start, const std::chrono::time_point<std::chrono::system_clock>& end) = 0;
 };
 }

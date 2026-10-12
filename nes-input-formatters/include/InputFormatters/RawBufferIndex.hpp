@@ -63,8 +63,7 @@ public:
         const InputFormatIndexer& indexer,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
         const TupleBufferRef& bufferRef,
-        const ArenaRef& arena) const
-        = 0;
+        const ArenaRef& arena) const = 0;
 
     [[nodiscard]] virtual TupleDelimiterOffsets getTupleDelimiterOffsets() const = 0;
     [[nodiscard]] virtual size_t getNumberOfTuples() const = 0;

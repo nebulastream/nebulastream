@@ -153,10 +153,11 @@ std::optional<DistributedQueryId> TestRunner::submitNext(QuerySubmitter& submitt
     const auto started = plan.and_then([&](const BoundPlan& bound) { return submitter.startQuery(bound.plan); });
     if (not started.has_value())
     {
-        run.outcomes.push_back(StatementOutcome{
-            .reached = std::unexpected{started.error()},
-            .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
-            .explained = explained});
+        run.outcomes.push_back(
+            StatementOutcome{
+                .reached = std::unexpected{started.error()},
+                .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
+                .explained = explained});
         run.timings.emplace_back();
         run.remaining = run.remaining.subspan(1);
         return std::nullopt;
@@ -225,10 +226,11 @@ void TestRunner::submitGroup(
             const auto& [plan, explained] = run.remaining.front();
             const auto executionTime = extractExecutionTime(snapshot);
             const auto stopped = snapshot.getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
-            run.outcomes.push_back(StatementOutcome{
-                .reached = std::move(snapshot),
-                .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
-                .explained = std::nullopt});
+            run.outcomes.push_back(
+                StatementOutcome{
+                    .reached = std::move(snapshot),
+                    .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
+                    .explained = std::nullopt});
             run.timings.push_back(StatementTiming{.execution = executionTime});
             run.remaining = run.remaining.subspan(1);
 

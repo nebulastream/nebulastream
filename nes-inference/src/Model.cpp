@@ -124,12 +124,13 @@ detail::RefCountedByteBuffer base64ToBytes(std::string_view data)
 
 Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedImportedModel{
-        .modelGraph = std::make_optional(bytesToBase64(model.getBackendModel().modelGraphView())),
-        .modelWeights = std::make_optional(bytesToBase64(model.getBackendModel().modelWeightsView())),
-        .functionName = std::make_optional(model.getFunctionName()),
-        .inputShape = std::make_optional(model.getInputShape()),
-        .outputShape = std::make_optional(model.getOutputShape())});
+    return context.reflect(
+        detail::ReflectedImportedModel{
+            .modelGraph = std::make_optional(bytesToBase64(model.getBackendModel().modelGraphView())),
+            .modelWeights = std::make_optional(bytesToBase64(model.getBackendModel().modelWeightsView())),
+            .functionName = std::make_optional(model.getFunctionName()),
+            .inputShape = std::make_optional(model.getInputShape()),
+            .outputShape = std::make_optional(model.getOutputShape())});
 }
 
 ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -146,12 +147,13 @@ ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl, const
 
 Reflected Reflector<RegisteredModel>::operator()(const RegisteredModel& model, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedRegisteredModel{
-        .name = std::make_optional(model.getName()),
-        .path = std::make_optional(model.getPath().string()),
-        .imported = std::make_optional(Reflector<ImportedModel>{}(model.getImported(), context)),
-        .inputs = std::make_optional(model.getSchema().inputs),
-        .outputs = std::make_optional(model.getSchema().outputs)});
+    return context.reflect(
+        detail::ReflectedRegisteredModel{
+            .name = std::make_optional(model.getName()),
+            .path = std::make_optional(model.getPath().string()),
+            .imported = std::make_optional(Reflector<ImportedModel>{}(model.getImported(), context)),
+            .inputs = std::make_optional(model.getSchema().inputs),
+            .outputs = std::make_optional(model.getSchema().outputs)});
 }
 
 RegisteredModel Unreflector<RegisteredModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const

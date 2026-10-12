@@ -167,11 +167,12 @@ public:
             {
                 auto accepted = SpecificConfiguration::parameterMap | std::views::keys | std::ranges::to<std::vector>();
                 std::ranges::sort(accepted);
-                throw InvalidConfigParameter(fmt::format(
-                    "Unknown configuration parameter: {}. Accepted parameters for {} are: {}.",
-                    key,
-                    implementationName,
-                    fmt::join(accepted, ", ")));
+                throw InvalidConfigParameter(
+                    fmt::format(
+                        "Unknown configuration parameter: {}. Accepted parameters for {} are: {}.",
+                        key,
+                        implementationName,
+                        fmt::join(accepted, ", ")));
             }
         }
         /// Next, try to validate all config parameters.

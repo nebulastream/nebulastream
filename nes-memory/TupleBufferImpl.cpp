@@ -48,7 +48,7 @@ MemorySegment::MemorySegment(
     const uint32_t size,
     std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
     uint8_t* controlBlock) /// NOLINT (readability-non-const-parameter)
-    : ptr(ptr), size(size), controlBlock(new(controlBlock) BufferControlBlock(this, std::move(recycleFunction)))
+    : ptr(ptr), size(size), controlBlock(new (controlBlock) BufferControlBlock(this, std::move(recycleFunction)))
 {
     INVARIANT(this->ptr, "invalid pointer");
     INVARIANT(this->size, "invalid size={}", this->size);
