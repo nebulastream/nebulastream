@@ -1,14 +1,14 @@
 {
   fetchFromGitHub,
-  llvmPackages_19,
+  llvmPackages,
   lib,
   cmake,
   nix-update-script,
 }:
 
 let
-  clangStdenv = llvmPackages_19.stdenv;
-  libcxxStdenv = llvmPackages_19.libcxxStdenv;
+  clangStdenv = llvmPackages.stdenv;
+  libcxxStdenv = llvmPackages.libcxxStdenv;
 
   build =
     {
