@@ -35,6 +35,7 @@ add_source_files(nes-physical-operators
         ExtractFromTimestampPhysicalFunction.cpp
         ConstructStructPhysicalFunction.cpp
         ConstructArrayPhysicalFunction.cpp
+        ConstructVectorPhysicalFunction.cpp
 )
 
 add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
@@ -51,3 +52,4 @@ add_registry_entry(PhysicalFunction OctetLength KEY OCTET_LENGTH)
 add_registry_entry(PhysicalFunction ToBase64 KEY TO_BASE64)
 add_registry_entry(PhysicalFunction ConstructStruct)
 add_registry_entry(PhysicalFunction ConstructArray)
+add_registry_entry(PhysicalFunction ConstructVector)

@@ -54,6 +54,7 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/ConstructArrayLogicalFunction.hpp>
 #include <Functions/ConstructStructLogicalFunction.hpp>
+#include <Functions/ConstructVectorLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
@@ -1371,6 +1372,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             helpers.top().hasUnnamedAggregation = false;
             /// Check if the function is a constructor for a datatype:
             ///   ARRAY -> Construct Array Constant via ConstructArrayLogicalFunction
+            ///   VECTOR -> Construct Vector Constant via ConstructVectorLogicalFunction
             ///   STRUCT target           -> ConstructStruct over N field expressions in functionBuilder
             ///   non-STRUCT, literal arg -> ConstantValueLogicalFunction (literal in constantBuilder)
             ///   non-STRUCT, expr arg    -> CastToTypeLogicalFunction (expression in functionBuilder)
@@ -1381,6 +1383,14 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
                 helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
                 helpers.top().functionBuilder.emplace_back(ConstructArrayLogicalFunction(std::move(args)));
+            }
+            else if (toUpperCase(funcName) == "VECTOR")
+            {
+                const auto numArgs = context->argument.size();
+                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
+                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                helpers.top().functionBuilder.emplace_back(ConstructVectorLogicalFunction(std::move(args)));
             }
             else if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {

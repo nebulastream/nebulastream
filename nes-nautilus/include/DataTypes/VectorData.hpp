@@ -41,7 +41,7 @@ public:
     ~VectorData() = default;
 
     [[nodiscard]] VarVal at(const nautilus::val<uint64_t>& index) const;
-    void writeAt(const nautilus::val<uint64_t>& index, const VarVal& value);
+    void writeAt(const nautilus::val<uint64_t>& index, const VarVal& value) const;
 
     /// This has to be figured out after trace time, thus differs from its sibling in FixedSizedData
     [[nodiscard]] nautilus::val<uint64_t> getNumElements() const;
