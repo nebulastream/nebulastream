@@ -27,12 +27,23 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <immintrin.h>
+#if defined(__x86_64__) || defined(_M_X64)
+    #include <immintrin.h>
+#endif
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES
 {
+/// Spin-wait hint: x86 `pause`; aarch64 `yield`; no-op elsewhere.
+inline void spinPause()
+{
+#if defined(__x86_64__) || defined(_M_X64)
+    _mm_pause();
+#elif defined(__aarch64__)
+    __asm__ __volatile__("yield" ::: "memory");
+#endif
+}
 
 /// CCX-aware sibling of TaskQueue (see TaskQueue.hpp; enabled via the ccx_aware_task_queues
 /// worker option): the bounded admission queue is SHARDED per CCX (one queue per L3 domain)
@@ -152,7 +163,7 @@ class ShardedTaskQueue
             {
                 statRescanRounds.fetch_add(1, std::memory_order_relaxed);
             }
-            _mm_pause();
+            spinPause();
         }
         if (statsEnabled && allowSteal) [[unlikely]]
         {
@@ -341,7 +352,7 @@ public:
             {
                 return task;
             }
-            _mm_pause();
+            spinPause();
         }
     }
 };

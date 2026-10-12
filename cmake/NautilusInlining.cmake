@@ -37,9 +37,12 @@ function(is_inlining_supported result_var verbose)
         return()
     endif ()
 
-    # Disable inlining for ARM
+    # Disable inlining for ARM -- unless NES_INLINE_ON_ARM is set. The blanket gate dates from the tagging system
+    # (2026-04-02) and predates any aarch64 benchmarking; the InliningPass plugin builds fine for aarch64 (it is in
+    # the Pi dev image). 2026-10-05: lifted for the Raspberry Pi campaign so the Pi's optimised arm gets the same
+    # context layer (proxy inlining, constant-byte folding, output fast path, lazy overloads) as the x86 build.
     string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSTEM_PROCESSOR)
-    if (SYSTEM_PROCESSOR MATCHES "arm" OR SYSTEM_PROCESSOR MATCHES "aarch64")
+    if (NOT NES_INLINE_ON_ARM AND (SYSTEM_PROCESSOR MATCHES "arm" OR SYSTEM_PROCESSOR MATCHES "aarch64"))
         if (${verbose})
             message(WARNING "Nautilus function inlining is not supported on ARM and will not be applied. You can safely ignore this warning.")
         endif ()
@@ -54,6 +57,7 @@ find_package(nautilus REQUIRED CONFIG)
 find_package(fmt REQUIRED CONFIG)
 find_package(spdlog REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
+option(NES_INLINE_ON_ARM "Apply the Nautilus inlining pass on ARM/aarch64 builds too (2026-10-05, Pi campaign)" ON)
 is_inlining_supported(NAUTILUS_INLINE_SUPPORTED TRUE)
 
 # ---------------------------------------------------------------------------

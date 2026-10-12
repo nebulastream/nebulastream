@@ -20,6 +20,7 @@ vcpkg_from_github(
 		0002-add-constant-byte-globals.patch
 		0003-nonvolatile-mem-intrinsics.patch
 		0004-preserve-libc-memcmp-name.patch
+		0005-strip-eh-from-spliced-bitcode-on-aarch64.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

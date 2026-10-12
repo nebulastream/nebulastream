@@ -1,0 +1,85 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMInliningUtils.cpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMInliningUtils.cpp
+index 2cec2803..a171780e 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMInliningUtils.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMInliningUtils.cpp
+@@ -11,6 +11,10 @@
+ #include <llvm/IRReader/IRReader.h>
+ #include <llvm/Support/FileCollector.h>
+ #include <llvm/Transforms/Utils/Cloning.h>
++#include <llvm/ADT/SmallVector.h>
++#include <llvm/IR/Instructions.h>
++#include <llvm/Transforms/Utils/BasicBlockUtils.h>
++#include <llvm/Transforms/Utils/Local.h>
+ 
+ namespace nautilus::compiler::mlir {
+ 
+@@ -37,6 +41,58 @@ std::string ptrToHex(const void* ptr) {
+ }
+ 
+ // look up invoked function in the bitcode registry and retrieve if available
++#if defined(__aarch64__) || defined(_M_ARM64)
++// AArch64 ELF references the C++ EH personality indirectly through a hidden `DW.ref.<personality>` pointer
++// (DW_EH_PE_indirect|pcrel|sdata8) in both the static and the PIC relocation model, whereas x86-64 ELF uses
++// DW_EH_PE_absptr under the JIT's default static model. Because this splice renames every external declaration
++// to its runtime address, the personality becomes @"0x<addr>" and the CIE then needs a symbol named
++// `DW.ref.0x<addr>`, which the JIT symbol registry (bare `0x<addr>` names only) can never define:
++//   JIT session error: Symbols not found: [ DW.ref.0x7FFF448ABE74 ]
++// Spliced NAUTILUS_INLINE helpers only ever carry cleanup landing pads (std::string growth), and exceptions cannot
++// unwind through JIT frames at this version anyway, so strip EH from the spliced module: invoke -> call, drop the
++// orphaned pads, remove the personality, mark nounwind. x86 artifacts are untouched (host-arch guard).
++static void stripExceptionHandling(llvm::Module& module) {
++	for (auto& func : module) {
++		if (func.isDeclaration()) {
++			continue;
++		}
++		llvm::SmallVector<llvm::InvokeInst*, 8> invokes;
++		for (auto& bb : func) {
++			if (auto* inv = llvm::dyn_cast<llvm::InvokeInst>(bb.getTerminator())) {
++				invokes.push_back(inv);
++			}
++		}
++		for (auto* inv : invokes) {
++			llvm::changeToCall(inv);
++		}
++		llvm::EliminateUnreachableBlocks(func);
++		bool hasPad = false;
++		for (auto& bb : func) {
++			if (bb.isEHPad()) {
++				hasPad = true;
++				break;
++			}
++		}
++		if (func.hasPersonalityFn() && !hasPad) {
++			func.setPersonalityFn(nullptr);
++		}
++		if (!hasPad) {
++			func.addFnAttr(llvm::Attribute::NoUnwind);
++		}
++	}
++	// the personality declaration is now unused: erase it so the rename loop below never sees it
++	llvm::SmallVector<llvm::Function*, 8> dead;
++	for (auto& f : module) {
++		if (f.isDeclaration() && !f.isIntrinsic() && f.use_empty()) {
++			dead.push_back(&f);
++		}
++	}
++	for (auto* f : dead) {
++		f->eraseFromParent();
++	}
++}
++#endif
++
+ std::optional<std::unique_ptr<llvm::Module>> loadBitcodeIfAvailable(void* fnPtr, llvm::LLVMContext& ctx) {
+ 	// look up the function pointer in the bitcode registry
+ 	auto bitcodeStr = InlineFunctionRegistry::instance().getBitcode(fnPtr);
+@@ -52,6 +108,10 @@ std::optional<std::unique_ptr<llvm::Module>> loadBitcodeIfAvailable(void* fnPtr,
+ 		return std::nullopt; // if deserialization fails, fall back to regular invocation
+ 	}
+ 
++#if defined(__aarch64__) || defined(_M_ARM64)
++	stripExceptionHandling(**moduleOrErr);
++#endif
++
+ 	// rewrite names of function dependencies to runtime addresses for linkage + recursive inlining
+ 	for (auto& func : *moduleOrErr.get()) {
+ 		if (func.isDeclaration() && !func.isIntrinsic()) {
