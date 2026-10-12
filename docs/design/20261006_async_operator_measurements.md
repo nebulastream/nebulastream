@@ -489,6 +489,11 @@ Everything needed to repeat a number or to judge whether it transfers.
 The log level is why the cluster run needed `NES_SEMANTIC_LATENCY_REPORT=1`: a release build has no
 `NES_INFO` in it.
 
+`cmake-build-release` has since been reconfigured with `-DNES_LOG_LEVEL=INFO`, because
+`worker-offline-test` greps the worker log for `NES_INFO` lines and fails on a `WARN` build; CI
+builds with `DEBUG`. `NES_DEBUG` stays compiled out at `INFO`, so the hot paths are unchanged, but
+to repeat section 2 exactly, configure with `-DNES_LOG_LEVEL=WARN` again.
+
 ### Host running the engine
 
 Intel Core i7-8650U, 4 cores / 8 threads, 1.90 GHz, 15 GiB RAM, x86_64, Linux. A laptop — the engine
