@@ -116,13 +116,13 @@ It defines the request entry point, the SQL planner interface, and the rules for
 The `controller` crate reconciles the catalog with the workers.
 It manages the task hierarchy for workers and query fragments and supports remote and embedded worker transports.
 
-### [Model](model/)
+### [Model](model/README.md)
 
 The `model` crate defines the coordinator catalog and the Rust interfaces used to read and modify it.
 It contains catalog entities for workers, sources, sinks, models, queries, and query fragments.
 It also defines the desired and observed states used to manage workers and query fragments.
 
-### [Migration](migration/)
+### [Migration](migration/README.md)
 
 The `migration` crate defines and applies the catalog schema.
 Its migrations create the tables, indexes, and triggers that enforce catalog invariants and derive state across related rows.
