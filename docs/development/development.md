@@ -213,7 +213,7 @@ for its query compilation, which will take a while to build locally. You can fol
 of the [base.dockerfile](https://github.com/nebulastream/nebulastream/blob/main/docker/dependency/Base.dockerfile) to
 replicate on Ubuntu or Debian systems.
 
-The compiler toolchain is based on `llvm-19` and libc++-19, and we use the mold linker for its better performance.
+The compiler toolchain is based on `llvm-22` and libc++-22, and we use the mold linker for its better performance.
 Follow the [llvm documentation](https://apt.llvm.org/) to install a recent toolchain via your package manager.
 
 ### Local VCPKG with DCMAKE_TOOLCHAIN_FILE

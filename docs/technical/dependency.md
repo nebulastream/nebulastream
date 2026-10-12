@@ -130,8 +130,8 @@ Based on the current vcpkg version (22.1.8). The LLVM patch simply disables all 
 `vcpkg.json` because llvm is included via
 nautilus. The remaining patches only fix install directories and disable the libomp aliases so that the port installs
 into the vcpkg layout. This port is only used when MLIR is built via vcpkg; the docker images and the nix flake use the
-prebuilt MLIR binaries from [clang-binaries](https://github.com/nebulastream/clang-binaries) (release `vmlir-22-clang19`,
-MLIR 22 built with our clang 19 toolchain, so that it only needs libc++ 19 runtime symbols).
+prebuilt MLIR binaries from [clang-binaries](https://github.com/nebulastream/clang-binaries) (release `vmlir-22-clang22-v2`,
+MLIR 22 built with our clang 22 toolchain).
 
 ### Paho MQTT
 
