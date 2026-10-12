@@ -94,7 +94,7 @@ public:
     /// test file put there would be gone before it could be read.
     [[nodiscard]] std::filesystem::path materializeTestFile(const std::filesystem::path& inputDirectory) const
     {
-        const auto templatePath = std::filesystem::path{SYSTEST_DATA_DIR} / "AsyncHttpCall.dummy.in";
+        const auto templatePath = std::filesystem::path{SYSTEST_DATA_DIR} / "AsyncHttpCall.dummy";
         const auto contents = readFile(templatePath);
         EXPECT_FALSE(contents.empty()) << "could not read " << templatePath;
 
