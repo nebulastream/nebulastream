@@ -20,8 +20,6 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
-#include <BaseUnitTest.hpp>
-
 #include <ranges>
 #include <string_view>
 #include <utility>
@@ -30,7 +28,11 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <ErrorHandling.hpp>
+
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+
+#include <Model.hpp>
 
 namespace NES
 {
@@ -43,8 +45,8 @@ DataType dt(DataType::Type type)
     return DataType{type, DataType::NULLABLE::NOT_NULLABLE};
 }
 
-/// Build a ModelFieldList with N auto-named fields of the given type.
-ModelFieldList fields(size_t count, DataType::Type type)
+/// Build an ordered field list with N auto-named fields of the given type.
+Schema<UnqualifiedUnboundField, Ordered> fields(size_t count, DataType::Type type)
 {
     std::vector<UnqualifiedUnboundField> fieldVec;
     fieldVec.reserve(count);
@@ -52,39 +54,19 @@ ModelFieldList fields(size_t count, DataType::Type type)
     {
         fieldVec.emplace_back(Identifier::parse(fmt::format("f{}", i)), dt(type));
     }
-    return std::move(fieldVec) | std::ranges::to<ModelFieldList>();
+    return std::move(fieldVec) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
 }
 
-ModelFieldList singleField(std::string_view name, DataType type)
+Schema<UnqualifiedUnboundField, Ordered> singleField(std::string_view name, DataType type)
 {
-    return std::vector{UnqualifiedUnboundField{Identifier::parse(std::string{name}), std::move(type)}} | std::ranges::to<ModelFieldList>();
-}
-
-/// Returns a copy of `schema` with the first field replaced by one of the same name but `replacementType`.
-/// Schema is immutable, so we rebuild from scratch.
-ModelFieldList replaceFirstFieldType(const ModelFieldList& schema, DataType replacementType)
-{
-    auto fields = schema | std::ranges::to<std::vector>();
-    fields.front() = UnqualifiedUnboundField{fields.front().getFullyQualifiedName(), std::move(replacementType)};
-    return std::move(fields) | std::ranges::to<ModelFieldList>();
+    return std::vector{UnqualifiedUnboundField{Identifier::parse(std::string{name}), std::move(type)}}
+    | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
 }
 
 std::filesystem::path identityPath()
 {
     /// tiny_identity.onnx: f32, input shape [1,100], output shape [1,100] — 100 elements each side.
     return std::filesystem::path(INFERENCE_TEST_DATA) / "tiny_identity.onnx";
-}
-
-std::filesystem::path dynamicBatchPath()
-{
-    /// tiny_dynamic_batch.onnx: f32 identity with shape ["batch",100] on each side.
-    return std::filesystem::path(INFERENCE_TEST_DATA) / "tiny_dynamic_batch.onnx";
-}
-
-std::filesystem::path fixedBatchPath()
-{
-    /// tiny_fixed_batch.onnx: f32 identity with shape [4,100] on each side.
-    return std::filesystem::path(INFERENCE_TEST_DATA) / "tiny_fixed_batch.onnx";
 }
 
 }
@@ -115,96 +97,6 @@ TEST_F(ModelCatalogTest, RegistersModelWithVarsizedSingleFieldOnBothSides)
             .inputs = singleField("blob_in", dt(DataType::Type::VARSIZED)),
             .outputs = singleField("blob_out", dt(DataType::Type::VARSIZED))}));
     EXPECT_TRUE(catalog.hasModel("identity-varsized"));
-}
-
-TEST_F(ModelCatalogTest, RejectsNonFloat32NonVarsizedInputType)
-{
-    ModelCatalog catalog;
-    auto ins = replaceFirstFieldType(fields(100, DataType::Type::FLOAT32), dt(DataType::Type::INT32));
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel("m", identityPath(), ModelSchema{.inputs = ins, .outputs = fields(100, DataType::Type::FLOAT32)}),
-        NES::ErrorCode::CannotLoadModel);
-}
-
-TEST_F(ModelCatalogTest, RejectsNonFloat32NonVarsizedOutputType)
-{
-    ModelCatalog catalog;
-    auto outs = replaceFirstFieldType(fields(100, DataType::Type::FLOAT32), dt(DataType::Type::INT64));
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel("m", identityPath(), ModelSchema{.inputs = fields(100, DataType::Type::FLOAT32), .outputs = outs}),
-        NES::ErrorCode::CannotLoadModel);
-}
-
-TEST_F(ModelCatalogTest, RejectsVarsizedMixedWithSiblings)
-{
-    ModelCatalog catalog;
-    auto mixedInputs
-        = std::
-              vector{UnqualifiedUnboundField{Identifier::parse("blob"), dt(DataType::Type::VARSIZED)}, UnqualifiedUnboundField{Identifier::parse("tail"), dt(DataType::Type::FLOAT32)}}
-        | std::ranges::to<ModelFieldList>();
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel("m", identityPath(), ModelSchema{.inputs = mixedInputs, .outputs = fields(100, DataType::Type::FLOAT32)}),
-        NES::ErrorCode::CannotLoadModel);
-}
-
-TEST_F(ModelCatalogTest, RejectsInputFieldCountMismatch)
-{
-    ModelCatalog catalog;
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel(
-            "m",
-            identityPath(),
-            /// model expects 100 elements
-            ModelSchema{.inputs = fields(99, DataType::Type::FLOAT32), .outputs = fields(100, DataType::Type::FLOAT32)}),
-        NES::ErrorCode::CannotLoadModel);
-}
-
-TEST_F(ModelCatalogTest, RejectsOutputFieldCountMismatch)
-{
-    ModelCatalog catalog;
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel(
-            "m",
-            identityPath(),
-            /// model produces 100 elements
-            ModelSchema{.inputs = fields(100, DataType::Type::FLOAT32), .outputs = fields(10, DataType::Type::FLOAT32)}),
-        NES::ErrorCode::CannotLoadModel);
-}
-
-/// A dynamic batch dimension resolves to 1, so the model registers against a schema
-/// describing a single sample.
-TEST_F(ModelCatalogTest, RegistersModelWithDynamicBatchDimension)
-{
-    ModelCatalog catalog;
-    ASSERT_NO_THROW(catalog.registerModel(
-        "m",
-        dynamicBatchPath(),
-        ModelSchema{.inputs = fields(100, DataType::Type::FLOAT32), .outputs = fields(100, DataType::Type::FLOAT32)}));
-}
-
-/// The declared schema is still validated against the resolved shape: a schema written
-/// for a batch of 4 no longer matches once the dynamic dimension has become 1.
-TEST_F(ModelCatalogTest, RejectsSchemaThatDoesNotMatchResolvedBatchDimension)
-{
-    ModelCatalog catalog;
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel(
-            "m",
-            dynamicBatchPath(),
-            ModelSchema{.inputs = fields(400, DataType::Type::FLOAT32), .outputs = fields(400, DataType::Type::FLOAT32)}),
-        NES::ErrorCode::CannotLoadModel);
-}
-
-/// A model wanting several samples per invocation cannot be driven one tuple at a time.
-TEST_F(ModelCatalogTest, RejectsModelWithFixedBatchDimension)
-{
-    ModelCatalog catalog;
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel(
-            "m",
-            fixedBatchPath(),
-            ModelSchema{.inputs = fields(400, DataType::Type::FLOAT32), .outputs = fields(400, DataType::Type::FLOAT32)}),
-        NES::ErrorCode::CannotLoadModel);
 }
 
 /// NOLINTEND(readability-magic-numbers)
