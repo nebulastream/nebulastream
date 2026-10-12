@@ -26,6 +26,14 @@ add_plugin("OutputFormatters/JSONOutputFormatter")
 add_plugin("Rules/RedundantUnionRemovalRule")
 add_plugin("Functions/Conditional")
 
+# The demonstration that the asynchronous operator framework is not about language models: three
+# plugins -- an SQL function, the rule that marks it for asynchronous execution, and the executor --
+# put an operator that waits on an HTTP service onto the framework without touching a single core
+# module. Its end-to-end test is the only one the framework has that needs no model server.
+add_plugin("Functions/HttpCall")
+add_plugin("Rules/HttpCallAsyncRule")
+add_plugin("Async/HttpCall")
+
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
   add_plugin("Sinks/ChecksumSink")

@@ -41,3 +41,9 @@ add_nes_test_systest(testfile-builder-test
 
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")
+
+# Runs a query that calls a real HTTP server on the asynchronous framework. Lives here because this
+# is where add_nes_test_systest and SYSTEST_DATA_DIR are, and it needs the dummy server.
+add_nes_test_systest(async-http-e2e-test
+        "AsyncHttpE2ETest.cpp")
+target_link_libraries(async-http-e2e-test nes-http-testing)

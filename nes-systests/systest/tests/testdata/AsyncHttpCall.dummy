@@ -1,0 +1,85 @@
+# name: AsyncHttpCall.dummy
+# description: HTTP_CALL on the asynchronous operator framework, against a real HTTP server on the
+#              loopback interface. The query is split into a producer half ending in a handoff sink
+#              and a consumer half whose source makes the call on its own thread, so deployment,
+#              handoff, concurrency, ordering, metadata pass-through and termination are all
+#              exercised -- without a language model or any other external service.
+#
+#              Not a .test file: the port is only known at run time. AsyncHttpE2ETest substitutes
+#              __PORT__ and runs the result, so ctest never discovers a copy with a stale port.
+#              To run it by hand, start cmake-build-release/nes-http/testing/dummy-http-server,
+#              replace __PORT__ with the port it prints, and point systest at the file.
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, text VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,alpha
+2,beta
+3,gamma
+4,delta
+
+CREATE LOGICAL SOURCE readings(id UINT64 NOT NULL, label VARSIZED NOT NULL, value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readings TYPE File;
+ATTACH INLINE
+1,aa,10
+2,bb,20
+3,cc,30
+4,dd,40
+5,ee,50
+6,ff,60
+7,gg,70
+8,hh,80
+
+CREATE SINK bodies(id UINT64 NOT NULL, body VARSIZED NOT NULL) TYPE File;
+CREATE SINK labelled(id UINT64 NOT NULL, label VARSIZED NOT NULL, value UINT64 NOT NULL, body VARSIZED NOT NULL) TYPE File;
+
+# The plain case: one record per request, the response body becomes a new field.
+SELECT id, HTTP_CALL(text, VARSIZED('http://127.0.0.1:__PORT__/upper')) AS body FROM reviews INTO bodies;
+----
+1,ALPHA
+2,BETA
+3,GAMMA
+4,DELTA
+
+# Eight calls in flight against a route that waits 50 ms each. The answers come back out of order
+# and have to be put back into input order before they are emitted; the fields that are only passed
+# through have to arrive next to the right answer.
+SELECT id, label, value, HTTP_CALL(label, VARSIZED('http://127.0.0.1:__PORT__/slow?ms=50'), 8) AS body FROM readings INTO labelled;
+----
+1,aa,10,aa
+2,bb,20,bb
+3,cc,30,cc
+4,dd,40,dd
+5,ee,50,ee
+6,ff,60,ff
+7,gg,70,gg
+8,hh,80,hh
+
+# A field that is not VARSIZED is rendered as text on the way into the request body, the same way
+# the framework renders a field for any other executor.
+SELECT id, HTTP_CALL(value, VARSIZED('http://127.0.0.1:__PORT__/echo')) AS body FROM readings INTO bodies;
+----
+1,10
+2,20
+3,30
+4,40
+5,50
+6,60
+7,70
+8,80
+
+# The proof that this really runs on the framework: the optimizer turns the one query into two
+# local plans on the same worker -- a producer half ending in a handoff sink, and a consumer half
+# whose source is the operator.
+EXPLAIN (DISTRIBUTED) FORMAT TEXT SELECT id, HTTP_CALL(text, VARSIZED('http://127.0.0.1:__PORT__/upper')) AS body FROM reviews INTO bodies;
+----
+<REGEX>-- 2 plan\(s\) on localhost:8080 --</REGEX>
+<REGEX>
+SINK\(HANDOFF\)
+  SOURCE\(REVIEWS\)
+</REGEX>
+<REGEX>
+SINK\(BODIES\)
+  SOURCE\(ASYNC\)
+</REGEX>
+<!REGEX>HTTP_CALL</!REGEX>
