@@ -242,7 +242,8 @@ struct PreparedStatement
         const Connection& connection,
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
         std::string query,
-        std::chrono::hours timezoneOffset)
+        std::chrono::hours timezoneOffset,
+        size_t startAfterMs)
     {
         SQLHSTMT hStmt = SQL_NULL_HSTMT;
         auto rc = SQLAllocHandle(SQL_HANDLE_STMT, connection.connection.get(), &hStmt);
@@ -385,9 +386,12 @@ struct PreparedStatement
             WINDOW_PARAMETER_COUNT,
             parameterTypes.size());
         /// Single lower bound: start the watermark at "now" so the poller streams rows inserted from
-        /// this point on (set to epoch 0 instead to backfill all history). It advances to the max row
+        /// this point on — or at START_AFTER_MS, to catch up from there. It advances to the max row
         /// timestamp read (advanceWatermarkFromLastRow); there is no upper bound.
-        auto timestampLower = std::make_unique<SQL_TIMESTAMP_STRUCT>(convertToTimestamp(std::chrono::system_clock::now() + timezoneOffset));
+        const auto start = startAfterMs == 0
+            ? std::chrono::system_clock::now()
+            : std::chrono::system_clock::time_point{std::chrono::milliseconds{startAfterMs}};
+        auto timestampLower = std::make_unique<SQL_TIMESTAMP_STRUCT>(convertToTimestamp(start + timezoneOffset));
 
         /// ColumnSize/DecimalDigits give microsecond precision (YYYY-MM-DD HH:MM:SS.ffffff); the
         /// earlier (16, 0) meant minute precision and truncated the bound parameter against
@@ -578,6 +582,7 @@ ODBCSource::ODBCSource(const SourceDescriptor& sourceDescriptor)
     , query(sourceDescriptor.getFromConfig(ConfigParametersODBC::QUERY))
     , schema(*sourceDescriptor.getLogicalSource().getSchema())
     , timezoneOffset(std::chrono::hours(sourceDescriptor.getFromConfig(ConfigParametersODBC::TIMEZONE_OFFSET_HOURS)))
+    , startAfterMs(sourceDescriptor.getFromConfig(ConfigParametersODBC::START_AFTER_MS))
     , sourceContext(std::make_unique<Context>(
           ConnectionInformation{
               .server = sourceDescriptor.getFromConfig(ConfigParametersODBC::DB_HOST),
@@ -612,7 +617,7 @@ void ODBCSource::open(std::shared_ptr<AbstractBufferProvider> bufferProviderPtr)
     /// round_trip seed committed after READY is still visible to the first
     /// poll's (watermark, now] window.
     Connection connection(sourceContext->connectionInformation, NO_LOGIN_TIMEOUT);
-    auto statement = PreparedStatement::bind(connection, schema, query, timezoneOffset);
+    auto statement = PreparedStatement::bind(connection, schema, query, timezoneOffset, startAfterMs);
     sourceContext->state = FetchFromDatabaseState{.connection = std::move(connection), .statement = std::move(statement)};
     NES_DEBUG("ODBCSource connected successfully.");
 }
@@ -644,7 +649,7 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
                 [this](ConnectingToDatabaseState&&) -> SourceState
                 {
                     Connection connection(sourceContext->connectionInformation, NO_LOGIN_TIMEOUT);
-                    auto statement = PreparedStatement::bind(connection, schema, query, timezoneOffset);
+                    auto statement = PreparedStatement::bind(connection, schema, query, timezoneOffset, startAfterMs);
                     return FetchFromDatabaseState{.connection = std::move(connection), .statement = std::move(statement)};
                 },
                 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): moved-from at the matching return sites (`FetchFromBufferState{.connection = std::move(state.connection), …}`).

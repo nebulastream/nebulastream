@@ -70,6 +70,7 @@ private:
     std::string query;
     Schema<UnqualifiedUnboundField, Ordered> schema;
     std::chrono::hours timezoneOffset;
+    size_t startAfterMs;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 
     std::unique_ptr<Context> sourceContext;
@@ -152,6 +153,16 @@ struct ConfigParametersODBC
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIMEZONE_OFFSET_HOURS, config); }};
 
+    /// Where the first poll starts: the lower bound is this instant (milliseconds since the epoch,
+    /// UTC), shifted by TIMEZONE_OFFSET_HOURS like "now" is, instead of "now". For a query deployed
+    /// to catch up on what it missed — after its worker restarted, or while its sink's receiver was
+    /// down — or to evaluate a new query over the past. 0, the default, is "now".
+    static inline const DescriptorConfig::ConfigParameter<size_t> START_AFTER_MS{
+        "START_AFTER_MS",
+        0,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
+        { return DescriptorConfig::tryGet(START_AFTER_MS, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
@@ -164,7 +175,8 @@ struct ConfigParametersODBC
             PASSWORD,
             DATABASE,
             TRUST_SERVER_CERTIFICATE,
-            TIMEZONE_OFFSET_HOURS);
+            TIMEZONE_OFFSET_HOURS,
+            START_AFTER_MS);
 };
 
 /// NOLINTEND(cert-err58-cpp)
