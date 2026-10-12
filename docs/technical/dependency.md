@@ -145,7 +145,8 @@ non-standard specialization; the standard only mandates it for `char`, `wchar_t`
 Nautilus is not in the vcpkg registry, we provide our own port pinned to a commit of
 [nebulastream/nautilus](https://github.com/nebulastream/nautilus). The port builds the MLIR, AsmJit and threaded-bytecode
 (TBC, including its copy-and-patch JIT) backends and all plugins except the GPU plugin; the bytecode (bc) and C++ backends
-are disabled. It carries no patches: fixes we need go into nautilus itself. The nix flake builds the same nautilus commit
+are disabled. It carries two patches until they are upstream: one includes `fmt/format.h` where newer fmt versions
+require it, the other moves a by-value `std::function` argument that clang-tidy 22 otherwise reports in our code. The nix flake builds the same nautilus commit
 (`.nix/nautilus`), keep both in sync when bumping.
 
 ### libuuid
