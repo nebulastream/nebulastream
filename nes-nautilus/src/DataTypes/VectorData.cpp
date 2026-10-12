@@ -70,7 +70,7 @@ VarVal VectorData::at(const nautilus::val<uint64_t>& index) const
     return VarVal::readNonNullableVarValFromMemory(elementPtr, elementType);
 }
 
-void VectorData::writeAt(const nautilus::val<uint64_t>& index, const VarVal& value)
+void VectorData::writeAt(const nautilus::val<uint64_t>& index, const VarVal& value) const
 {
 #ifndef NDEBUG
     if (index >= nautilus::val<uint64_t>(numElements))
