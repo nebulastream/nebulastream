@@ -40,5 +40,6 @@ endif()
 
 add_plugin("Pipe")
 
+add_plugin("Sources/AudioSource")
 
 add_plugin("Sources/ProcessSource")
