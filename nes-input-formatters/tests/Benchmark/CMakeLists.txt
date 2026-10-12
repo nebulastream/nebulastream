@@ -17,3 +17,9 @@
 # main() so it never runs as part of the test suite.
 add_executable(formatter-scaling-benchmark EXCLUDE_FROM_ALL FormatterScalingBenchmark.cpp)
 target_link_libraries(formatter-scaling-benchmark PRIVATE nes-input-formatters-test-utils nes-input-formatters-uncompiled)
+
+# Standalone formatter LATENCY-vs-#streams benchmark (closed loop, N streams, arms dpp/gshared/gprivate/chunker).
+# Same isolation as above: not a gtest, not registered with CTest, built on demand:
+#   cmake --build {build} --target formatter-latency-benchmark
+add_executable(formatter-latency-benchmark EXCLUDE_FROM_ALL FormatterLatencyBenchmark.cpp)
+target_link_libraries(formatter-latency-benchmark PRIVATE nes-input-formatters-test-utils nes-input-formatters-uncompiled)

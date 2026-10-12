@@ -51,6 +51,12 @@
 ///                   NB: projection + fnattr together = engine "SELECT <field>"; either alone parses all.
 ///  10 shredderMode  which sequence_shredder_mode(s) to sweep: LOCK_FREE | LOCKING | both (default both).
 ///                   Pass LOCK_FREE to skip the LOCKING A/B when only lock-free throughput is wanted.
+///  11 uint64Parser  override the per-field UINT64 parser (- = DefaultUINT64).
+///  12 formatterType SIMDCSV (default, CSV parse+serialize) | SystemNative (packed binary, no serde upper bound).
+///  13 varsized      "1" = single VARSIZED string field (big-string spanning stress, processes the string);
+///                   "2" = 2-field (id UINT64, s VARSIZED) row `<id>,<filler>` PROJECTED to id -- matches the
+///                   e2e `SELECT id FROM (id,s)` shredder-isolated query (string still spans buffers so the
+///                   shredder coordinates, but only the cheap 8-byte id is emitted -> no output copy).
 /// Each run sweeps the selected sequence_shredder_mode(s) and prints, per thread count: throughput
 /// (GB/s of input), speedup vs the first thread count, and the repeat rate.
 /// (DIAG_* lines on stderr come from the TMP per-phase timers in the formatter src; grep them out.)
@@ -671,19 +677,63 @@ int main(int argc, char** argv)
     const char* const allowCommasEnv = std::getenv("NES_INDEX_ALLOW_COMMAS");
     const std::string allowCommas = (allowCommasEnv != nullptr) ? allowCommasEnv : "";
 
-    /// Track the raw buffer size so memory stays ~= input size as we shrink buffers to stress the
-    /// shredder (output of the parse is <= input bytes, so it fits a same-size buffer).
-    const size_t sizeOfFormattedBuffers = sizeOfRawBuffers;
-    std::vector<TestDataTypes> fieldTypes(numCols, TestDataTypes::UINT64);
+    /// formatterType: which InputFormatter to drive -- "SIMDCSV" (default, the CSV parse+serialize path,
+    /// = "bypass") or "SystemNative" (packed-binary read, NO per-field parse: the value is loaded straight
+    /// from its fixed schema offset and emitted -- the "no-serde" upper bound). SystemNative still resolves
+    /// records that straddle raw-buffer boundaries via the SAME SequenceShredder, so this arm measures the
+    /// framing+shredder ceiling with zero (de)serialization. The input file (arg 1) must be the packed
+    /// little-endian binary twin of the CSV (csv_to_binary.py --schema uint64,...). numCols must match.
+    const std::string formatterType = (argc > 12 && std::string(argv[12]) != "-") ? argv[12] : "SIMDCSV";
+    const bool isNative = (formatterType == "SystemNative");
+
+    /// varsized: when "1", the schema is a SINGLE VARSIZED (string) field instead of numCols UINT64.
+    /// The input CSV holds one large string per row (no internal field delimiters) -> the index only
+    /// finds the tuple delimiter (cheap), and rows LARGER than the buffer span multiple buffers -> this
+    /// stresses the SequenceShredder's spanning coordination via LARGE TUPLES rather than tiny buffers.
+    /// When "2", the schema is a 2-field (id UINT64, s VARSIZED) row (CSV `<id>,<filler>`) PROJECTED to
+    /// `id` -- matches the e2e `SELECT id FROM (id,s)` shredder-isolated query exactly (the string spans
+    /// buffers so the shredder still coordinates, but only the cheap 8-byte id is emitted -> no output copy).
+    const std::string varsizedArg = (argc > 13 && std::string(argv[13]) != "-") ? argv[13] : "";
+    const bool varsizedIdStr = (varsizedArg == "2");
+    const bool varsized = (varsizedArg == "1" || varsizedIdStr);
+
+    /// Output buffers must hold the largest reassembled tuple. For varsized=1 (materialises the big string)
+    /// the raw buffer may be far smaller than a row, so size the output buffer to a fixed large value
+    /// (256 KiB > any row). varsized=2 (SELECT id) emits only the 8-byte id -> a normal small output buffer
+    /// suffices, which also keeps the formatted pool large enough for the leanprod bounded-producer drain.
+    const bool wideOutput = varsized && not varsizedIdStr;
+    const size_t sizeOfFormattedBuffers = wideOutput ? (256UL * 1024UL) : sizeOfRawBuffers;
+    std::vector<TestDataTypes> fieldTypes;
     std::vector<std::string> fieldNames;
-    fieldNames.reserve(numCols);
-    for (size_t i = 0; i < numCols; ++i)
+    if (varsizedIdStr)
     {
-        fieldNames.push_back("f" + std::to_string(i));
+        /// 2-field (id UINT64, s VARSIZED): the CSV row is `<id>,<filler>` -- field delimiter splits id
+        /// from the spanning string (filler has no commas), tuple delimiter ends the row.
+        fieldTypes = {TestDataTypes::UINT64, TestDataTypes::VARSIZED};
+        fieldNames = {"id", "s"};
+    }
+    else if (varsized)
+    {
+        fieldTypes = {TestDataTypes::VARSIZED};
+        fieldNames = {"f0"};
+    }
+    else
+    {
+        fieldTypes = std::vector<TestDataTypes>(numCols, TestDataTypes::UINT64);
+        fieldNames.reserve(fieldTypes.size());
+        for (size_t i = 0; i < fieldTypes.size(); ++i)
+        {
+            fieldNames.push_back("f" + std::to_string(i));
+        }
     }
     const auto schema = InputFormatterTestUtil::createSchema(fieldTypes, fieldNames);
     std::optional<Schema> projection;
-    if (not projectField.empty())
+    if (varsizedIdStr)
+    {
+        /// project the cheap 8-byte id (skip the spanning string copy) -- matches e2e SELECT id.
+        projection = InputFormatterTestUtil::createSchema({TestDataTypes::UINT64}, {"id"});
+    }
+    else if (not varsized && not projectField.empty())
     {
         projection = InputFormatterTestUtil::createSchema({TestDataTypes::UINT64}, {projectField});
     }
@@ -717,15 +767,22 @@ int main(int argc, char** argv)
 
     /// Formatted-buffer pool sized by task count (the emit operator flushes ~one output buffer per
     /// task) with generous headroom for per-thread fragmentation + spanning-tuple buffers.
-    const auto numFormattedBuffers = static_cast<uint32_t>(rawBuffers.size() * 2 + 2048);
+    /// Cap the pool for varsized: 256 KiB buffers x (2*rawBuffers+2048) would OOM. Buffers recycle, so a
+    /// bounded pool suffices (4096 x 256 KiB = 1 GiB). Numeric path keeps the generous count (small buffers).
+    const auto numFormattedBuffers = wideOutput ? std::min<uint32_t>(static_cast<uint32_t>(rawBuffers.size() * 2 + 2048), 4096U)
+                                                : static_cast<uint32_t>(rawBuffers.size() * 2 + 2048);
 
     for (const auto& mode : modes)
     {
         std::printf(
-            "\n=== sequence_shredder_mode = %s (SIMDCSV, %zu-col index, parse=%s) ===\n",
+            "\n=== sequence_shredder_mode = %s (%s, %zu-col index, parse=%s) ===\n",
             mode.c_str(),
+            formatterType.c_str(),
             numCols,
-            projectField.empty() ? "all" : (fnattrPath.empty() ? "all (proj, NO fnattr)" : "1 (projected+fnattr)"));
+            isNative                   ? "none (native, no serde)"
+                : varsizedIdStr        ? "id (2-field id,s projected to id -- shredder-isolated, no string copy)"
+                : projectField.empty() ? "all"
+                                       : (fnattrPath.empty() ? "all (proj, NO fnattr)" : "1 (projected+fnattr)"));
         std::printf("  threads |   GB/s | speedup\n");
 
         /// Recycled formatted-buffer pool for the lean drains: created ONCE per thread-count cell below
@@ -739,21 +796,31 @@ int main(int argc, char** argv)
         const auto runOnce = [&](const size_t workerThreads) -> double
         {
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(workerThreads);
-            std::unordered_map<std::string, std::string> idxParams{
-                {"type", "SIMDCSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}, {"sequence_shredder_mode", mode}};
-            if (not allowCommas.empty())
+            std::unordered_map<std::string, std::string> idxParams;
+            if (isNative)
             {
-                idxParams["allow_commas_in_strings"] = allowCommas;
+                /// SystemNative: packed-binary, no delimiters, no per-field parse. string_length is a
+                /// required descriptor param even for an all-fixed schema (no varsized fields) -> pass empty.
+                idxParams = {{"type", "SystemNative"}, {"sequence_shredder_mode", mode}, {"string_length", ""}};
             }
-            const auto conf = InputFormatterValidationProvider::provide("SIMDCSV", idxParams);
+            else
+            {
+                idxParams = {{"type", "SIMDCSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}, {"sequence_shredder_mode", mode}};
+                if (not allowCommas.empty())
+                {
+                    idxParams["allow_commas_in_strings"] = allowCommas;
+                }
+            }
+            const auto conf = InputFormatterValidationProvider::provide(formatterType, idxParams);
             if (not conf.has_value())
             {
-                throw std::runtime_error("Invalid SIMDCSV indexer config");
+                throw std::runtime_error("Invalid " + formatterType + " indexer config");
             }
-            /// SIMDCSV `provide()` validates only the indexer params; the per-field parser is a separate
+            /// `provide()` validates only the indexer params; the per-field parser is a separate
             /// InputFormatterDescriptor param, so inject the override into the validated config directly.
+            /// (No effect for SystemNative -- it never parses.)
             auto formatterConfig = conf.value();
-            if (not uint64Parser.empty())
+            if (not uint64Parser.empty() && not isNative)
             {
                 formatterConfig[InputFormatterDescriptor::UINT64_PARSER.name] = uint64Parser;
             }
