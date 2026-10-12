@@ -46,7 +46,11 @@ constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOL
 std::shared_ptr<BufferManager> makeBufferManager()
 {
     return BufferManager::create(
-        TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, POOLED_BUFFER_SIZE, std::make_shared<NesDefaultMemoryAllocator>());
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
 }
 
 UnqualifiedUnboundField field(const std::string& name, const DataType::Type type)
@@ -57,14 +61,17 @@ UnqualifiedUnboundField field(const std::string& name, const DataType::Type type
 /// reviewId UINT64, reviewText VARSIZED — the shape of the movie review stream.
 Schema<UnqualifiedUnboundField, Ordered> reviewSchema()
 {
-    return Schema<UnqualifiedUnboundField, Ordered>{field("reviewId", DataType::Type::UINT64), field("reviewText", DataType::Type::VARSIZED)};
+    return Schema<UnqualifiedUnboundField, Ordered>{
+        field("reviewId", DataType::Type::UINT64), field("reviewText", DataType::Type::VARSIZED)};
 }
 
 /// The same plus the column an operator appends.
 Schema<UnqualifiedUnboundField, Ordered> reviewSchemaWithSentiment()
 {
     return Schema<UnqualifiedUnboundField, Ordered>{
-        field("reviewId", DataType::Type::UINT64), field("reviewText", DataType::Type::VARSIZED), field("sentiment", DataType::Type::VARSIZED)};
+        field("reviewId", DataType::Type::UINT64),
+        field("reviewText", DataType::Type::VARSIZED),
+        field("sentiment", DataType::Type::VARSIZED)};
 }
 
 std::span<const std::byte> bytesOf(const uint64_t& value)
@@ -105,8 +112,8 @@ TEST_F(AsyncRecordLayoutTest, FindsFieldsByCanonicalName)
 
 TEST_F(AsyncRecordLayoutTest, RejectsNullableFields)
 {
-    const Schema<UnqualifiedUnboundField, Ordered> schema{UnqualifiedUnboundField{
-        Identifier::parse("maybe"), DataType{DataType::Type::FLOAT32, DataType::NULLABLE::IS_NULLABLE}}};
+    const Schema<UnqualifiedUnboundField, Ordered> schema{
+        UnqualifiedUnboundField{Identifier::parse("maybe"), DataType{DataType::Type::FLOAT32, DataType::NULLABLE::IS_NULLABLE}}};
 
     EXPECT_THROW(AsyncRecordLayout{schema}, Exception);
 }
@@ -133,7 +140,9 @@ TEST_F(AsyncRecordLayoutTest, RendersEveryFixedSizeTypeAsText)
 {
     const auto bufferManager = makeBufferManager();
     const AsyncRecordLayout layout{Schema<UnqualifiedUnboundField, Ordered>{
-        field("i", DataType::Type::INT32), field("u", DataType::Type::UINT8), field("f", DataType::Type::FLOAT64),
+        field("i", DataType::Type::INT32),
+        field("u", DataType::Type::UINT8),
+        field("f", DataType::Type::FLOAT64),
         field("b", DataType::Type::BOOLEAN)}};
     auto buffer = bufferManager->getBufferBlocking();
 

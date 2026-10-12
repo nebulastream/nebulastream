@@ -77,22 +77,20 @@ std::string_view AsyncExecutionTrait::getName() const
 
 Reflected Reflector<AsyncExecutionTrait>::operator()(const AsyncExecutionTrait& trait, const ReflectionContext& context) const
 {
-    return context.reflect(
-        detail::ReflectedAsyncExecutionTrait{
-            .executorType = trait.executorType,
-            .config = trait.config,
-            .batchSize = trait.batchSize,
-            .maxConcurrency = trait.maxConcurrency,
-            .channelCapacity = trait.channelCapacity,
-            .preserveOrder = trait.preserveOrder});
+    return context.reflect(detail::ReflectedAsyncExecutionTrait{
+        .executorType = trait.executorType,
+        .config = trait.config,
+        .batchSize = trait.batchSize,
+        .maxConcurrency = trait.maxConcurrency,
+        .channelCapacity = trait.channelCapacity,
+        .preserveOrder = trait.preserveOrder});
 }
 
 AsyncExecutionTrait Unreflector<AsyncExecutionTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [executorType, config, batchSize, maxConcurrency, channelCapacity, preserveOrder]
         = context.unreflect<detail::ReflectedAsyncExecutionTrait>(reflected);
-    return AsyncExecutionTrait{
-        std::move(executorType), std::move(config), batchSize, maxConcurrency, channelCapacity, preserveOrder};
+    return AsyncExecutionTrait{std::move(executorType), std::move(config), batchSize, maxConcurrency, channelCapacity, preserveOrder};
 }
 
 }

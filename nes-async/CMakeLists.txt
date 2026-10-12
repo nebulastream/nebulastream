@@ -16,13 +16,30 @@ add_library(nes-async
         src/HandoffChannel.cpp
         src/AsyncRecordLayout.cpp
         src/AsyncExecutorRegistry.cpp
+        src/AsyncOperatorOptions.cpp
+        src/HttpOperatorExecutor.cpp
         src/DelayExecutor.cpp
         src/AsyncWiring.cpp)
 target_include_directories(nes-async PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 find_package(reflectcpp REQUIRED)
-target_link_libraries(nes-async PUBLIC nes-memory nes-data-types nes-schema nes-nautilus PRIVATE nes-common reflectcpp::reflectcpp)
+# nes-http is public because Async/HttpOperatorExecutor.hpp, the base for any operator whose work is
+# an HTTP request, has HttpRequest and HttpResponse in its signatures. The dependency only goes this
+# way: the transport knows nothing about this framework, which is why it is a module of its own and
+# can serve a synchronous operator just as well.
+#
+# The components are globbed alphabetically, so nes-http is configured after this directory and the
+# name is only resolved at generate time. A name that is not a target is no configure error, though:
+# CMake would quietly turn it into -lnes-http and fail at link time. So check once everything has
+# been configured.
+function(nes_async_require_target target)
+    if (NOT TARGET ${target})
+        message(FATAL_ERROR "nes-async needs the ${target} module, which was not configured.")
+    endif ()
+endfunction()
+cmake_language(EVAL CODE "cmake_language(DEFER DIRECTORY \"${CMAKE_SOURCE_DIR}\" CALL nes_async_require_target nes-http)")
+target_link_libraries(nes-async PUBLIC nes-memory nes-data-types nes-schema nes-nautilus nes-http PRIVATE nes-common reflectcpp::reflectcpp)
 
 # Operators register their executor implementation with add_registry_entry(AsyncExecutor <Name>).
 create_runtime_registry(AsyncExecutor nes-async

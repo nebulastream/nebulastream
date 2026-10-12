@@ -23,7 +23,6 @@
 
 #include <Async/AsyncOperatorExecutor.hpp>
 #include <Async/AsyncRecordLayout.hpp>
-#include <AsyncExecutorRegistry.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -33,6 +32,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <gtest/gtest.h>
+#include <AsyncExecutorRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -49,7 +49,11 @@ constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOL
 std::shared_ptr<BufferManager> makeBufferManager()
 {
     return BufferManager::create(
-        TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, POOLED_BUFFER_SIZE, std::make_shared<NesDefaultMemoryAllocator>());
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
 }
 
 UnqualifiedUnboundField field(const std::string& name, const DataType::Type type)
@@ -66,6 +70,18 @@ Schema<UnqualifiedUnboundField, Ordered> outputSchema()
 {
     return Schema<UnqualifiedUnboundField, Ordered>{
         field("reviewText", DataType::Type::VARSIZED), field("sentiment", DataType::Type::VARSIZED)};
+}
+}
+
+namespace
+{
+/// `Delay` implements the blocking interface; the registry hands back the common base, which has
+/// no work method of its own — which of the two an executor implements is the point of the split.
+BlockingAsyncExecutor* blockingOf(const std::unique_ptr<AsyncOperatorExecutor>& executor)
+{
+    auto* const blocking = dynamic_cast<BlockingAsyncExecutor*>(executor.get());
+    EXPECT_NE(blocking, nullptr) << "DelayExecutor must implement BlockingAsyncExecutor";
+    return blocking;
 }
 }
 
@@ -124,7 +140,7 @@ TEST_F(AsyncExecutorTest, ReturnsOneResultPerRecordInOrder)
     const std::vector<std::string> texts{"great documentary", "terrible", "wildly entertaining"};
     const auto records = makeRecords(input, buffer, *bufferManager, texts);
 
-    const auto results = executor->process(records);
+    const auto results = blockingOf(executor)->process(records);
 
     ASSERT_EQ(results.size(), texts.size());
     for (size_t index = 0; index < texts.size(); ++index)
@@ -148,7 +164,7 @@ TEST_F(AsyncExecutorTest, WaitsOncePerBatchNotPerRecord)
     const auto records = makeRecords(input, buffer, *bufferManager, {"a", "b", "c", "d"});
 
     const auto start = std::chrono::steady_clock::now();
-    const auto results = executor->process(records);
+    const auto results = blockingOf(executor)->process(records);
     const auto elapsed = std::chrono::steady_clock::now() - start;
 
     EXPECT_EQ(results.size(), 4U);
@@ -167,7 +183,7 @@ TEST_F(AsyncExecutorTest, ResultsCanBeWrittenIntoAnOutputRecord)
     const auto executor = (*factory)(AsyncExecutorRegistryArguments{contextWith(delayConfig("0"))});
 
     const auto records = makeRecords(input, inputBuffer, *bufferManager, {"great documentary", "terrible"});
-    const auto results = executor->process(records);
+    const auto results = blockingOf(executor)->process(records);
     ASSERT_EQ(results.size(), 2U);
 
     /// This is what the consumer source will do: carry the input fields over, then apply
@@ -215,8 +231,7 @@ TEST_F(AsyncExecutorTest, RejectsIncompleteConfiguration)
     ASSERT_TRUE(factory.has_value());
 
     /// Missing output_field.
-    EXPECT_THROW(
-        (*factory)(AsyncExecutorRegistryArguments{contextWith({{"input_field", "reviewText"}})}), Exception);
+    EXPECT_THROW((*factory)(AsyncExecutorRegistryArguments{contextWith({{"input_field", "reviewText"}})}), Exception);
     /// Field that the schema does not have.
     EXPECT_THROW(
         (*factory)(AsyncExecutorRegistryArguments{contextWith({{"input_field", "nope"}, {"output_field", "sentiment"}})}), Exception);

@@ -39,10 +39,10 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
-#include <QueryId.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <DistributedLogicalPlan.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -134,8 +134,7 @@ public:
         asyncTraits.insert(FieldOrderingTrait{outputSchema()});
         asyncTraits.insert(OutputOriginIdsTrait{{operatorOrigin}});
         asyncTraits.insert(trait);
-        const LogicalOperator asyncOperator
-            = IngestionTimeWatermarkAssignerLogicalOperator::create(source)->withTraitSet(asyncTraits);
+        const LogicalOperator asyncOperator = IngestionTimeWatermarkAssignerLogicalOperator::create(source)->withTraitSet(asyncTraits);
 
         const auto sink = makeSink(asyncOperator, inputSchema());
         const LogicalPlan plan{INVALID_QUERY_ID, {sink}};
@@ -144,8 +143,7 @@ public:
 
     [[nodiscard]] AsyncOperatorSplitter splitter() const
     {
-        return AsyncOperatorSplitter{
-            SharedPtr<const SourceCatalog>{sourceCatalog}, SharedPtr<const SinkCatalog>{sinkCatalog}};
+        return AsyncOperatorSplitter{SharedPtr<const SourceCatalog>{sourceCatalog}, SharedPtr<const SinkCatalog>{sinkCatalog}};
     }
 
     /// The single leaf of a plan.
@@ -182,15 +180,20 @@ TEST_F(AsyncOperatorSplitterTest, SplitsIntoProducerAndConsumerOnTheSameHost)
     const auto& plans = result[host];
     ASSERT_EQ(plans.size(), 2U);
 
+    /// The consumer comes first, and that is a requirement rather than a convention: the plans
+    /// are started in this order, and the consumer's source takes the channel when it is built.
+    /// Started the other way round, a producer with little input can finish and take the channel
+    /// down with it before anybody reads it. See the test below for a chain.
+    ///
     /// The producer half ends in the handoff sink.
-    const auto producerRoot = plans.at(0).getRootOperators().front();
+    const auto producerRoot = plans.at(1).getRootOperators().front();
     const auto producerSink = producerRoot.tryGetAs<SinkLogicalOperator>();
     ASSERT_TRUE(producerSink.has_value());
     /// Type names are canonical identifiers, hence upper case.
     EXPECT_EQ(producerSink.value()->getSinkDescriptor()->getSinkType(), "HANDOFF");
 
     /// The consumer half begins with the async source and still ends in the real sink.
-    const auto consumerRoot = plans.at(1).getRootOperators().front();
+    const auto consumerRoot = plans.at(0).getRootOperators().front();
     const auto consumerSink = consumerRoot.tryGetAs<SinkLogicalOperator>();
     ASSERT_TRUE(consumerSink.has_value());
     EXPECT_EQ(consumerSink.value()->getSinkDescriptor()->getSinkType(), "FILE");
@@ -216,9 +219,9 @@ TEST_F(AsyncOperatorSplitterTest, BothHalvesShareOneChannelId)
     const auto& plans = result[host];
     ASSERT_EQ(plans.size(), 2U);
 
-    const auto sinkDescriptor = plans.at(0).getRootOperators().front().getAs<SinkLogicalOperator>()->getSinkDescriptor().value();
+    const auto sinkDescriptor = plans.at(1).getRootOperators().front().getAs<SinkLogicalOperator>()->getSinkDescriptor().value();
     const auto sourceDescriptor
-        = leafOf(plans.at(1).getRootOperators().front()).getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor();
+        = leafOf(plans.at(0).getRootOperators().front()).getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor();
 
     const auto sinkChannel = sinkDescriptor.tryGetFromConfig<std::string>("CHANNEL");
     const auto sourceChannel = sourceDescriptor.tryGetFromConfig<std::string>("CHANNEL");
@@ -234,7 +237,7 @@ TEST_F(AsyncOperatorSplitterTest, SourceDescriptorCarriesTheOperatorConfiguratio
     const auto trait = sentimentTrait();
     const auto result = splitter().split(makePlanWithAsyncOperator(trait));
     const auto sourceDescriptor
-        = leafOf(result[host].at(1).getRootOperators().front()).getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor();
+        = leafOf(result[host].at(0).getRootOperators().front()).getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor();
 
     EXPECT_EQ(sourceDescriptor.tryGetFromConfig<std::string>("EXECUTOR_TYPE").value(), trait.executorType);
     EXPECT_EQ(sourceDescriptor.tryGetFromConfig<size_t>("BATCH_SIZE").value(), trait.batchSize);
@@ -258,7 +261,7 @@ TEST_F(AsyncOperatorSplitterTest, ConsumerSourceKeepsTheOperatorsOriginId)
     /// origin or stall it forever, so the source inherits the operator's origin ids.
     constexpr OriginId operatorOrigin{7};
     const auto result = splitter().split(makePlanWithAsyncOperator(sentimentTrait(), operatorOrigin));
-    const auto consumerLeaf = leafOf(result[host].at(1).getRootOperators().front());
+    const auto consumerLeaf = leafOf(result[host].at(0).getRootOperators().front());
 
     const auto originIds = consumerLeaf.getTraitSet().tryGet<OutputOriginIdsTrait>();
     ASSERT_TRUE(originIds.has_value());
@@ -289,7 +292,34 @@ TEST_F(AsyncOperatorSplitterTest, TwoMarkedOperatorsProduceThreePlans)
     const auto result = splitter().split(DistributedLogicalPlan{{{host, {plan}}}, plan});
 
     /// Each marked operator adds one plan, and the rule applies to the producer halves too.
-    EXPECT_EQ(result[host].size(), 3U);
+    const auto& plans = result[host];
+    ASSERT_EQ(plans.size(), 3U);
+
+    /// Every channel's reader is started before its writer. The middle plan both reads one channel
+    /// and writes the next, so this only holds if the plans run from the outermost cut inwards.
+    std::unordered_map<std::string, size_t> readBy;
+    std::unordered_map<std::string, size_t> writtenBy;
+    for (size_t index = 0; index < plans.size(); ++index)
+    {
+        const auto root = plans.at(index).getRootOperators().front();
+        if (const auto source = leafOf(root).tryGetAs<SourceDescriptorLogicalOperator>();
+            source.has_value() && source.value()->getSourceDescriptor().getSourceType() == "ASYNC")
+        {
+            readBy[source.value()->getSourceDescriptor().tryGetFromConfig<std::string>("CHANNEL").value()] = index;
+        }
+        if (const auto sink = root.tryGetAs<SinkLogicalOperator>();
+            sink.has_value() && sink.value()->getSinkDescriptor()->getSinkType() == "HANDOFF")
+        {
+            writtenBy[sink.value()->getSinkDescriptor().value().tryGetFromConfig<std::string>("CHANNEL").value()] = index;
+        }
+    }
+    ASSERT_EQ(readBy.size(), 2U);
+    ASSERT_EQ(writtenBy.size(), 2U);
+    for (const auto& [channel, reader] : readBy)
+    {
+        ASSERT_TRUE(writtenBy.contains(channel)) << "channel " << channel << " has a reader but no writer";
+        EXPECT_LT(reader, writtenBy.at(channel)) << "channel " << channel << " would be written before its reader exists";
+    }
 }
 
 }

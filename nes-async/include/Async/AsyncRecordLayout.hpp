@@ -41,14 +41,16 @@ namespace NES
 /// Row layout is a prefix sum of `getSizeInBytesWithNull()` over the ordered schema —
 /// the same arithmetic `LowerSchemaProvider` performs for the Nautilus side.
 ///
-/// Nullable fields are rejected. They would need the engine's null encoding, and no
-/// current user declares them: `CREATE SEMANTIC MODEL` binds its fields as NOT NULL.
+/// Nullable fields are rejected: they would need the engine's null encoding. A query therefore
+/// declares the fields an asynchronous operator reads and writes as NOT NULL, as the HTTP_CALL
+/// end-to-end test does.
 class AsyncRecordLayout
 {
 public:
     explicit AsyncRecordLayout(const Schema<UnqualifiedUnboundField, Ordered>& schema);
 
     [[nodiscard]] size_t tupleSize() const { return tupleSizeInBytes; }
+
     [[nodiscard]] size_t fieldCount() const { return fields.size(); }
 
     /// How many records of this layout fit into a buffer of `bufferSize` bytes.

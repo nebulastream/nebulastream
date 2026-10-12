@@ -17,7 +17,8 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
-#include <utility>
+#include <deque>
+#include <exception>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -26,6 +27,7 @@
 #include <stop_token>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <Async/AsyncOperatorExecutor.hpp>
@@ -87,14 +89,33 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    /// One processed input buffer: the buffer itself, kept alive because the results still
-    /// reference its variable-sized contents, and one result per record.
+    /// One processed input buffer: the buffer itself, kept alive because emitting still reads its
+    /// variable-sized contents, and one result per record.
     struct Processed
     {
         TupleBuffer input;
         std::vector<AsyncRecordResult> results;
         /// Records already written out; non-zero once a buffer had to be split into chunks.
         uint64_t emittedRecords = 0;
+    };
+
+    /// An input buffer whose batches are still being worked on. `results` is sized to the record
+    /// count up front, so each batch writes its own disjoint range without further locking.
+    struct Pending
+    {
+        TupleBuffer input;
+        std::vector<AsyncRecordResult> results;
+        size_t outstandingBatches = 0;
+    };
+
+    /// One call to the executor: the records [begin, end) of the buffer under `ticket`. This, and
+    /// not the input buffer, is the unit of work — `maxConcurrency` therefore means calls in
+    /// flight, which is what it says.
+    struct BatchWork
+    {
+        uint64_t ticket;
+        uint64_t begin;
+        uint64_t end;
     };
 
     /// Per (sequence number, origin id): how chunk numbers are handed out while one incoming
@@ -108,7 +129,40 @@ private:
 
     using SequenceKey = std::pair<uint64_t, uint64_t>;
 
+    /// One batch handed to an event-loop executor and not yet answered.
+    ///
+    /// The records the executor reads live in the input buffer, so its handle is held here for the
+    /// duration of the call, and so are the views: the executor keeps the span until it completes
+    /// and nothing else owns them. Held through a shared_ptr, because the views point at `input`
+    /// and therefore need a stable address.
+    struct SubmittedBatch
+    {
+        uint64_t ticket = 0;
+        TupleBuffer input;
+        std::vector<AsyncRecordView> views;
+        AsyncRecordResult* resultSlots = nullptr;
+    };
+
+    /// Takes buffers from the channel in order and turns each into batch work. One thread, so the
+    /// ticket order is the order buffers arrived in, which is what `preserveOrder` restores.
+    void intakeLoop(const std::stop_token& stopToken);
+    /// The blocking mode's worker: one thread per call in flight.
     void processingLoop(const std::stop_token& stopToken);
+
+    /// The event-loop mode's counterpart to a worker thread. Hands queued batches to the executor
+    /// until `maxConcurrency` are in flight, and is called again from every completion — which is
+    /// what keeps the loop fed without a thread per call.
+    void pump();
+    void onBatchFinished(const std::shared_ptr<SubmittedBatch>& submitted, AsyncBatchOutcome outcome);
+
+    /// Keeps the first failure and wakes everyone. Our threads are not the engine's, so an
+    /// exception must never leave one of them: `NES::Thread` has no handler, and terminate would
+    /// take the whole worker down. It is carried to the source thread instead.
+    void recordFailure(std::exception_ptr reason);
+    /// Rethrows a worker's failure on the source thread, where SourceThread catches it and fails
+    /// the query — the same outcome the synchronous operator produces for the same cause.
+    void rethrowIfFailed();
+    std::optional<BatchWork> takeNextBatch(std::unique_lock<std::mutex>& lock, const std::stop_token& stopToken);
     std::optional<Processed> takeNextCompleted(const std::stop_token& stopToken);
     void assignChunkNumber(bool isEndOfIncomingChunk, const TupleBuffer& input, TupleBuffer& output);
 
@@ -126,22 +180,48 @@ private:
     std::shared_ptr<HandoffChannel> channel;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::unique_ptr<AsyncOperatorExecutor> executor;
+    /// Exactly one of these points at `executor`, decided when the source opens. Which one it is
+    /// decides whether this source runs `maxConcurrency` threads or none at all.
+    BlockingAsyncExecutor* blockingExecutor = nullptr;
+    EventLoopAsyncExecutor* submittingExecutor = nullptr;
+    /// Empty in the event-loop mode.
     std::vector<Thread> workers;
+    /// Separate from the workers so that waiting for a buffer never occupies one of them.
+    std::optional<Thread> intake;
     std::stop_source workerStop;
 
-    /// Held while a worker takes a buffer from the channel, so that the ticket a worker gets
-    /// matches the order in which buffers were actually received.
-    std::mutex popMutex;
-
-    /// Ordering bookkeeping. Input buffers are numbered as they are taken from the channel,
-    /// so that results can be handed on in input order when the operator asks for it.
     std::mutex mutex;
+    /// Raised when a batch becomes available, and when intake ends so idle workers can leave.
+    std::condition_variable_any workArrived;
+    /// Raised when a buffer is fully processed, when intake ends, and when a slot in `pending`
+    /// frees up — the last one is what lets the intake thread continue.
     std::condition_variable_any completedArrived;
+
+    /// Input buffers are numbered as they are taken from the channel, so that results can be
+    /// handed on in input order when the operator asks for it.
     uint64_t nextTicket = 0;
     uint64_t nextToEmit = 0;
+    std::deque<BatchWork> work;
+    std::map<uint64_t, Pending> pending;
     std::map<uint64_t, Processed> completed;
-    size_t activeWorkers = 0;
+    /// How far intake may read ahead: primarily in queued batches, which is what keeps the workers
+    /// fed, and secondarily in buffers, which is what bounds the share of the buffer pool parked
+    /// here. Both are set from `maxConcurrency` when the source opens.
+    size_t queuedWorkHighWatermark = 1;
+    size_t maxPendingBuffers = 1;
+    /// Event-loop mode only: batches handed to the executor and not yet answered.
+    size_t callsInFlight = 0;
+    bool intakeDone = false;
+    /// "Nothing will ever be completed any more", for whatever reason: the input ended and the
+    /// last batch finished, a failure was recorded, or queued work was abandoned on a stop.
+    ///
+    /// Monotone on purpose. It releases the source thread's wait, so taking it back strands that
+    /// thread: the workers that would set it again have already left their loop. Only ever assign
+    /// `inputExhausted || ...`, never a bare condition.
     bool inputExhausted = false;
+    /// The first reason the operator failed, rethrown on the source thread. Part of every wait
+    /// predicate, so a failure releases the waiters whatever the bookkeeping above says.
+    std::exception_ptr failure;
     std::optional<Processed> partiallyEmitted;
 
     /// Only touched from fillTupleBuffer, i.e. from the source thread alone.
@@ -199,8 +279,15 @@ struct ConfigParametersAsyncSource
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, CHANNEL, CHANNEL_CAPACITY, EXECUTOR_TYPE, EXECUTOR_CONFIG, INPUT_SCHEMA, BATCH_SIZE,
-            MAX_CONCURRENCY, PRESERVE_ORDER);
+            SourceDescriptor::parameterMap,
+            CHANNEL,
+            CHANNEL_CAPACITY,
+            EXECUTOR_TYPE,
+            EXECUTOR_CONFIG,
+            INPUT_SCHEMA,
+            BATCH_SIZE,
+            MAX_CONCURRENCY,
+            PRESERVE_ORDER);
 };
 
 }

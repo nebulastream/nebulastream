@@ -16,7 +16,9 @@
 
 #include <chrono>
 #include <cstddef>
+#include <optional>
 #include <span>
+#include <string>
 #include <vector>
 
 #include <Async/AsyncOperatorExecutor.hpp>
@@ -31,8 +33,13 @@ namespace NES
 /// delay makes it behave like the thing it stands for — it is what proves that a blocking
 /// executor no longer stalls the engine's worker threads.
 ///
-/// Config keys: `delay_ms` (default 0), `input_field`, `output_field` (both required).
-class DelayExecutor final : public AsyncOperatorExecutor
+/// `fail_on` makes it throw for the batch whose input field has that exact text, after the delay.
+/// The framework's failure path is otherwise only reachable through a real operator, and the part
+/// that matters -- one call failing while others are still in flight -- cannot be provoked at all.
+///
+/// Config keys: `delay_ms` (default 0), `fail_on` (default none), `input_field`, `output_field`
+/// (both required).
+class DelayExecutor final : public BlockingAsyncExecutor
 {
 public:
     explicit DelayExecutor(AsyncOperatorContext context);
@@ -42,6 +49,7 @@ public:
 private:
     AsyncOperatorContext context;
     std::chrono::milliseconds delay;
+    std::optional<std::string> failOn;
     size_t inputFieldIndex;
     size_t outputFieldIndex;
 };
