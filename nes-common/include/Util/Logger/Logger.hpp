@@ -129,12 +129,14 @@ struct LogCaller<LogLevel::LOG_WARNING>
     } while (0)
 
 
-/// @brief this is the new logging macro that is the entry point for logging calls
+/// @brief this is the new logging macro that is the entry point for logging calls.
+/// getLogLevel(LEVEL) is constexpr and LEVEL is an enum constant, so evaluate it inline rather than
+/// binding a macro-local: a local here (e.g. `logLevel`) would shadow a caller argument of the same
+/// name inside __VA_ARGS__ and silently log the wrong value.
 #define NES_LOG(LEVEL, ...) \
     do \
     { \
-        auto constexpr __level = getLogLevel(LEVEL); \
-        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) \
+        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= getLogLevel(LEVEL)) \
         { \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__); \
         } \
