@@ -1,0 +1,42 @@
+diff --git a/src/plugins/intel_cpu/src/emitters/plugin/aarch64/jit_emitter.hpp b/src/plugins/intel_cpu/src/emitters/plugin/aarch64/jit_emitter.hpp
+index 8bdc4da..5a64802 100644
+--- a/src/plugins/intel_cpu/src/emitters/plugin/aarch64/jit_emitter.hpp
++++ b/src/plugins/intel_cpu/src/emitters/plugin/aarch64/jit_emitter.hpp
+@@ -171,7 +171,8 @@ private:
+     size_t table_off(const std::string& key, const size_t key_off_val_shift = 0) const {
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+-        const auto it = entry_map_.find(key);  // search an entry for a key
++        // multimap::find may return any of the entries sharing a key, the table offset is the one of the first.
++        const auto it = entry_map_.count(key) != 0 ? entry_map_.lower_bound(key) : entry_map_.end();
+         assert(it != entry_map_.end());
+         const auto& te = (*it).second;
+         const auto scale = te.bcast ? get_vec_length() : sizeof(table_entry_val_t);
+diff --git a/src/plugins/intel_cpu/src/emitters/plugin/riscv64/jit_emitter.hpp b/src/plugins/intel_cpu/src/emitters/plugin/riscv64/jit_emitter.hpp
+index 9412609..0354d6c 100644
+--- a/src/plugins/intel_cpu/src/emitters/plugin/riscv64/jit_emitter.hpp
++++ b/src/plugins/intel_cpu/src/emitters/plugin/riscv64/jit_emitter.hpp
+@@ -206,7 +206,8 @@ private:
+     const size_t vlen = Xbyak_riscv::CPU().getVlen() / 8;
+ 
+     size_t table_off(const std::string& key, size_t key_off_val_shift = 0) const {
+-        const auto it = entry_map_.find(key);  // search an entry for a key
++        // multimap::find may return any of the entries sharing a key, the table offset is the one of the first.
++        const auto it = entry_map_.count(key) != 0 ? entry_map_.lower_bound(key) : entry_map_.end();
+         OV_CPU_JIT_EMITTER_ASSERT(it != entry_map_.end(), "Value has not been found in the table");
+         const auto& te = (*it).second;
+         const auto scale = sizeof(table_entry_val_t);
+diff --git a/src/plugins/intel_cpu/src/emitters/plugin/x64/jit_emitter.hpp b/src/plugins/intel_cpu/src/emitters/plugin/x64/jit_emitter.hpp
+index 3ac728c..e1aefd3 100644
+--- a/src/plugins/intel_cpu/src/emitters/plugin/x64/jit_emitter.hpp
++++ b/src/plugins/intel_cpu/src/emitters/plugin/x64/jit_emitter.hpp
+@@ -187,7 +187,8 @@ private:
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+         // TODO: enforce through data structure
+-        const auto it = entry_map_.find(key);  // search an entry for a key
++        // multimap::find may return any of the entries sharing a key, the table offset is the one of the first.
++        const auto it = entry_map_.count(key) != 0 ? entry_map_.lower_bound(key) : entry_map_.end();
+         OV_CPU_JIT_EMITTER_ASSERT(it != entry_map_.end(), "Value has not been found in the table");
+         const auto& te = (*it).second;
+         const auto scale = te.bcast ? get_vec_length() : sizeof(table_entry_val_t);
