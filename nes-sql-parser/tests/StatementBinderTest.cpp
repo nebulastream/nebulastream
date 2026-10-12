@@ -15,6 +15,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -664,7 +665,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
             {
                 if constexpr (requires { sourceStatementHandler->apply(statement); })
                 {
-                    sourceStatementHandler->apply(statement);
+                    std::ignore = sourceStatementHandler->apply(statement);
                     return;
                 }
                 INVARIANT(false, "Invalid statement type");
