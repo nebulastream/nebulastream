@@ -11,6 +11,7 @@
 # limitations under the License.
 
 
-# The catalog crates link no C++ sources, so their tests run through cargo directly.
+# These crates link no C++ sources, so their tests run through cargo directly.
 add_rust_cargo_test(model)
 add_rust_cargo_test(migration)
+add_rust_cargo_test(controller)
