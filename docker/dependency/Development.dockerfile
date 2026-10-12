@@ -149,9 +149,14 @@ FROM development-base
 ENV NES_CARGO_VENDOR_CONFIG=${CARGO_HOME}/config.toml
 
 # Install OpenVINO converter tools for ML inference model import.
+# The converter has to match the OpenVINO runtime version NebulaStream links against, and that release has no wheels
+# for the distribution's Python, so it runs on its own interpreter.
 ARG OPENVINO_VERSION=2025.3.0
-RUN python3 -m venv /opt/openvino && \
-    /opt/openvino/bin/pip install --no-cache-dir openvino==${OPENVINO_VERSION} && \
+ARG OPENVINO_PYTHON_VERSION=3.13
+COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /usr/local/bin/uv
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv-python
+RUN uv venv --python ${OPENVINO_PYTHON_VERSION} /opt/openvino && \
+    uv pip install --no-cache --python /opt/openvino/bin/python openvino==${OPENVINO_VERSION} && \
     ln -s /opt/openvino/bin/ovc /usr/local/bin/ovc && \
     ovc --version
 

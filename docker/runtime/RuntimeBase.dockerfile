@@ -22,10 +22,15 @@ RUN wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health
     && chmod +x /bin/grpc_health_probe
 
 # Install the OpenVINO converter for ML inference model import at runtime.
+# The converter has to match the OpenVINO runtime version NebulaStream links against, and that release has no wheels
+# for the distribution's Python, so it runs on its own interpreter.
 ARG OPENVINO_VERSION=2025.3.0
+ARG OPENVINO_PYTHON_VERSION=3.13
+COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /usr/local/bin/uv
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv-python
 RUN apt-get update && apt-get install -y python3 python3-venv && \
-    python3 -m venv /opt/openvino && \
-    /opt/openvino/bin/pip install --no-cache-dir openvino==${OPENVINO_VERSION} && \
+    uv venv --python ${OPENVINO_PYTHON_VERSION} /opt/openvino && \
+    uv pip install --no-cache --python /opt/openvino/bin/python openvino==${OPENVINO_VERSION} && \
     ln -s /opt/openvino/bin/ovc /usr/local/bin/ovc && \
     ovc --version && \
     apt clean && rm -rf /var/lib/apt/lists/*
