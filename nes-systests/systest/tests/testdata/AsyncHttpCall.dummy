@@ -69,17 +69,18 @@ SELECT id, HTTP_CALL(value, VARSIZED('http://127.0.0.1:__PORT__/echo')) AS body 
 8,80
 
 # The proof that this really runs on the framework: the optimizer turns the one query into two
-# local plans on the same worker -- a producer half ending in a handoff sink, and a consumer half
-# whose source is the operator.
+# local plans on the worker that runs the operator -- a producer half ending in a handoff sink, and
+# a consumer half whose source is the operator. Written to hold on any topology: on a single worker
+# the consumer half ends in the query's sink, on two it ends in a network sink towards the other.
 EXPLAIN (DISTRIBUTED) FORMAT TEXT SELECT id, HTTP_CALL(text, VARSIZED('http://127.0.0.1:__PORT__/upper')) AS body FROM reviews INTO bodies;
 ----
-<REGEX>-- 2 plan\(s\) on localhost:8080 --</REGEX>
+<REGEX>-- 2 plan\(s\) on [a-z-]+:8080 --</REGEX>
 <REGEX>
 SINK\(HANDOFF\)
   SOURCE\(REVIEWS\)
 </REGEX>
 <REGEX>
-SINK\(BODIES\)
+SINK\([A-Z]+\)
   SOURCE\(ASYNC\)
 </REGEX>
 <!REGEX>HTTP_CALL</!REGEX>
