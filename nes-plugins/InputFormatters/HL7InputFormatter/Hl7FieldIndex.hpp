@@ -86,7 +86,8 @@ class Hl7FieldIndex final : public FieldIndexFunction<Hl7FieldIndex>
         const IndexerMetaData& metaData,
         nautilus::val<Hl7FieldIndex*> fieldIndexPtr,
         const std::unordered_map<DataType::Type, std::string>& parserTypes,
-        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads,
+        const bool eagerParse) const
     {
         /// static loop over the (fixed) schema fields; skips non-projected fields and only traces the invoke
         /// functions for the fields we actually need (projection push-down, like FieldOffsets).
@@ -128,7 +129,8 @@ class Hl7FieldIndex final : public FieldIndexFunction<Hl7FieldIndex>
                 metaData.getQuotationType(),
                 parserTypes.at(fieldDataType.type),
                 lazyOverloads.at(fieldDataType.type),
-                varSizedCharacteristicsOf(metaData));
+                varSizedCharacteristicsOf(metaData),
+                eagerParse);
         }
         return record;
     }

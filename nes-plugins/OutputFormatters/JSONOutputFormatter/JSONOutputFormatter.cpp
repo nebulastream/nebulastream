@@ -538,7 +538,8 @@ void writeValue(
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     nautilus::val<uint64_t>& written,
     nautilus::val<uint64_t>& currentRemainingSize,
-    const std::string& parserType)
+    const std::string& parserType,
+    const bool disablePassthrough)
 {
     switch (fieldType.type)
     {
@@ -697,7 +698,7 @@ void writeValue(
         case DataType::Type::UINT64:
         case DataType::Type::FLOAT32:
         case DataType::Type::FLOAT64: {
-            if (value.isLazyValue())
+            if (value.isLazyValue() && not disablePassthrough)
             {
                 /// The source text of a numeric field is already a valid JSON number: copy it raw.
                 const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
@@ -714,8 +715,15 @@ void writeValue(
             }
             else
             {
-                const nautilus::val<uint64_t> amountWritten
-                    = formatAndWriteVal(value, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider, parserType);
+                /// Computed value, or disablePassthrough: parse the lazy source text into its concrete value and
+                /// re-serialise it through the output codec. For a lazy field this emits the PARSE here, at the
+                /// output -- which (for a filter query) sits inside the taken selection branch, so only surviving
+                /// rows pay it. That is the point of the hoisting study: eager pays the parse for every row up
+                /// front, lazy pays it only when the conditional matches.
+                const VarVal toSerialize
+                    = value.isLazyValue() ? value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>()->parseValue() : value;
+                const nautilus::val<uint64_t> amountWritten = formatAndWriteVal(
+                    toSerialize, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider, parserType);
                 written += amountWritten;
                 currentRemainingSize -= amountWritten;
             }
@@ -772,7 +780,15 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     else
     {
         writeValue(
-            fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize, parserTypes.at(fieldType.type));
+            fieldType,
+            value,
+            fieldPointer,
+            recordBuffer,
+            bufferProvider,
+            written,
+            currentRemainingSize,
+            parserTypes.at(fieldType.type),
+            disablePassthrough);
     }
 
     /// The record suffix after the last field; interior fields need no trailing delimiter (the next
@@ -795,6 +811,13 @@ std::optional<nautilus::val<uint64_t>> JSONOutputFormatter::tryWriteRecordAllPas
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     const std::size_t numberOfFields = fieldNames.size();
+
+    /// Hoisting study: with passthrough disabled we must never raw-forward, so decline this whole-record fast
+    /// path and let every field take the per-field parse + serialize route in writeFormattedValue().
+    if (disablePassthrough)
+    {
+        return std::nullopt;
+    }
 
     /// Host-time decline: JSON only passes a lazy value through verbatim when it is NUMERIC (the source
     /// text is already a valid JSON number). Lazy bools become true/false literals and lazy char/varsized

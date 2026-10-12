@@ -64,7 +64,9 @@ class NativeFIF final : public FieldIndexFunction<NativeFIF>
         const IndexerMetaData& metaData,
         const nautilus::val<NativeFIF*> fif,
         const std::unordered_map<DataType::Type, std::string>&,
-        const std::unordered_map<DataType::Type, bool>&) const
+        const std::unordered_map<DataType::Type, bool>&,
+        /// Native is a packed-binary read with no text parse -- nothing to hoist, so EAGER_PARSE is inert here.
+        const bool) const
     {
         nautilus::val<FieldIndex> offset = *getMemberWithOffset<FieldIndex>(fif, offsetof(NativeFIF, offsetOfFirstTuple));
         return metaData.readRecord(projections, recordBufferPtr, recordIndex, offset);

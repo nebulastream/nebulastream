@@ -85,7 +85,8 @@ class FieldBand final : public FieldIndexFunction<FieldBand>
         const IndexerMetaData& metaData,
         nautilus::val<FieldBand*> fieldBandPtr,
         const std::unordered_map<DataType::Type, std::string>& parserTypes,
-        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads,
+        const bool eagerParse) const
     {
         Record record;
         const auto bandPtr = invoke(getBandDataProxy, fieldBandPtr);
@@ -116,7 +117,8 @@ class FieldBand final : public FieldIndexFunction<FieldBand>
                 metaData.getQuotationType(),
                 parserTypes.at(fieldDataType.type),
                 lazyOverloads.at(fieldDataType.type),
-                varSizedCharacteristicsOf(metaData));
+                varSizedCharacteristicsOf(metaData),
+                eagerParse);
         }
         return record;
     }

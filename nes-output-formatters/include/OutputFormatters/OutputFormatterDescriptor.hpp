@@ -78,6 +78,18 @@ public:
         "DefaultCHAR",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHAR_PARSER, config); }};
 
+    /// Hoisting-study lever (paired with the input-side EAGER_PARSE): when true, the formatter NEVER raw-forwards
+    /// a lazy value's source text -- it parses every field and re-serialises it through the configured output
+    /// codec. This disables the passthrough fast paths (the per-field numeric raw-copy and the whole-record
+    /// tryWriteRecordAllPassthrough). It exists so a filter query (e.g. q_route SELECT * WHERE channel==...) can
+    /// be measured for PARSE hoisting rather than for passthrough elimination: with passthrough off, the lazy arm
+    /// still parses -- but only for rows that pass the filter (the parse is emitted inside the taken branch),
+    /// whereas the eager arm parses every row up front. Default false (keep the passthrough fast paths).
+    static inline const DescriptorConfig::ConfigParameter<bool> DISABLE_PASSTHROUGH{
+        "disable_passthrough",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DISABLE_PASSTHROUGH, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             INT8_PARSER,
@@ -91,7 +103,8 @@ public:
             F32_PARSER,
             F64_PARSER,
             BOOL_PARSER,
-            CHAR_PARSER);
+            CHAR_PARSER,
+            DISABLE_PASSTHROUGH);
 
 private:
     /// Add LowerSchemaProvider as friend, so that it can construct the descriptor

@@ -1,0 +1,55 @@
+# name: formatter/HoistingQRoute.test
+# description: Hoisting micro-study A/B. Same q_route (SELECT * WHERE channel == "Google") over two
+#   compiled SequentialCSV sources that differ ONLY in the EAGER_PARSE input-formatter config. The lazy
+#   arm (default) defers each numeric parse to its use site (the SELECT * output serialization, which sits
+#   inside the taken filter branch) -- so non-matching rows never parse ts/auctionId/bidder/price. The
+#   eager arm parses those fixed-size leaves at scan time, upstream of the filter, so every row pays them.
+#   Both must produce byte-identical output; the difference is purely WHERE the parse invokes land in the
+#   generated LLVM IR (dump_compilation_result=FILE). channel="Google" matches 5 of the 10 rows.
+# groups: [Formatter]
+
+CREATE LOGICAL SOURCE bidLazy(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidLazy TYPE BlockingFile SET("SequentialCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1000,1001,21,1.5,Google,https://example.com/a
+2000,1002,22,4.25,Apple,https://example.com/b
+3000,1003,23,2.75,Bing,https://example.com/c
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+7000,1007,27,6.75,Yahoo,https://example.com/g
+8000,1001,28,3.375,Google,https://example.com/h
+9000,1009,29,8.125,Apple,https://example.com/i
+10000,984,30,9.5,Bing,https://example.com/j
+
+CREATE LOGICAL SOURCE bidEager(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidEager TYPE BlockingFile SET("SequentialCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`, "true" AS INPUT_FORMATTER.`EAGER_PARSE`);
+ATTACH INLINE
+1000,1001,21,1.5,Google,https://example.com/a
+2000,1002,22,4.25,Apple,https://example.com/b
+3000,1003,23,2.75,Bing,https://example.com/c
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+7000,1007,27,6.75,Yahoo,https://example.com/g
+8000,1001,28,3.375,Google,https://example.com/h
+9000,1009,29,8.125,Apple,https://example.com/i
+10000,984,30,9.5,Bing,https://example.com/j
+
+# q_route, LAZY arm (default eager_parse=false).
+SELECT * FROM bidLazy WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+# q_route, EAGER arm (eager_parse=true). Byte-identical expected output.
+SELECT * FROM bidEager WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h

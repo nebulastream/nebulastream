@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <span>
 #include <string>
@@ -67,6 +68,32 @@ VarVal parseFixedSizeIntoVarVal(
     throw UnknownInputParserType("Unknown Input Parser: {}", parserType);
 }
 
+namespace
+{
+/// ABLATION KNOB (env NES_EAGER_COPY_VARSIZED, effective only with INPUT_FORMATTER.eager_parse = true): the uncompiled
+/// baseline rung materialises every VARSIZED field by copying its bytes into a child buffer, whereas a compiled
+/// eager "parse" of a VARSIZED field is a (pointer, size) view that LLVM drops when the field is unused. For a
+/// work-equal "compiled parse-all" rung this proxy copies the field bytes into a thread-local ring arena. It is an
+/// opaque side-effecting call, so the JIT must keep it. Benchmark-only; unset = unchanged engine behaviour.
+void eagerCopyVarsizedProxy(const int8_t* src, const uint64_t size) noexcept
+{
+    constexpr size_t arenaBytes = size_t{1} << 20;
+    thread_local std::vector<int8_t> arena(arenaBytes);
+    thread_local size_t offset = 0;
+    if (src == nullptr || size == 0)
+    {
+        return;
+    }
+    const size_t bytes = std::min<size_t>(size, arenaBytes);
+    if (offset + bytes > arenaBytes)
+    {
+        offset = 0;
+    }
+    std::memcpy(arena.data() + offset, src, bytes);
+    offset += bytes;
+}
+}
+
 void parseRawValueIntoRecord(
     const DataType dataType,
     Record& record,
@@ -77,7 +104,8 @@ void parseRawValueIntoRecord(
     const QuotationType quotationType,
     const std::string& parserType,
     const bool& lazyOverload,
-    const Characteristic varSizedCharacteristics)
+    const Characteristic varSizedCharacteristics,
+    const bool eagerParse)
 {
     /// Raw values will be transformed into a lazy representation of pointer, size and underlying datatype instead of being parsed immediatly.
     /// Should a field be needed in its parsed form for the execution of a logical function, it will be parsed in the overridden function in LazyValueRepresentation
@@ -97,6 +125,25 @@ void parseRawValueIntoRecord(
             fieldSize,
             nautilus::val<const std::vector<std::string>*>{&nullValues});
     }
+    /// EAGER_PARSE (hoisting-study arm): the lazy representation is built exactly as below, but we materialise it
+    /// IMMEDIATELY (parseValue()) and write the concrete value into the record, so the parse/view is emitted at
+    /// scan time -- upstream of any downstream selection branch -- and the record carries NO lazy values (the
+    /// "resolve * first, then filter" shape). Materialising every leaf (not just the numerics) keeps the record
+    /// homogeneous: a mixed lazy/materialised record breaks the output passthrough fast path (varsized fields
+    /// serialise as NULL in the fused pipeline). Eager varsized loses its passthrough Characteristics (it takes
+    /// the escaping path), which is the point -- eager is the un-optimised baseline. The default (false) keeps
+    /// the lazy path, which defers each parse to its use site inside the taken filter branch.
+    const auto writeFieldValue = [&](const std::shared_ptr<LazyValueRepresentation>& lazyVal)
+    {
+        if (eagerParse)
+        {
+            record.write(fieldName, lazyVal->parseValue());
+        }
+        else
+        {
+            record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+        }
+    };
     if (dataType.type == DataType::Type::CHAR && quotationType == QuotationType::DOUBLE_QUOTE)
     {
         /// Char does not have overloads for lazy parses currently
@@ -107,11 +154,13 @@ void parseRawValueIntoRecord(
             dataType,
             isNull,
             parserType);
-        record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+        writeFieldValue(lazyVal);
         return;
     }
     if (dataType.type == DataType::Type::VARSIZED)
     {
+        /// Ablation knob, see eagerCopyVarsizedProxy. Read once; host-side (trace-time) code, not spliced into the JIT.
+        static const bool eagerCopyVarsized = std::getenv("NES_EAGER_COPY_VARSIZED") != nullptr;
         /// Varsized Lazy Values are basically VariableSized Data objects. Therefore, there is no harm in always using the overloaded logical functions for this type
         switch (quotationType)
         {
@@ -126,7 +175,11 @@ void parseRawValueIntoRecord(
                 /// when opted down (a source with real `"`/`\`, cf. formatter/SpecialCharactersJSON), which keeps
                 /// the safe escaping path. Native raw text passes NONE.
                 lazyVal->setCharacteristics(varSizedCharacteristics);
-                record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+                writeFieldValue(lazyVal);
+                if (eagerParse && eagerCopyVarsized)
+                {
+                    nautilus::invoke(eagerCopyVarsizedProxy, ptr, size);
+                }
                 return;
             }
             case QuotationType::DOUBLE_QUOTE: {
@@ -139,7 +192,11 @@ void parseRawValueIntoRecord(
                 /// valid JSON string body, so it forwards VERBATIM into a JSON string field with NO per-row
                 /// escape scan (the json->json string passthrough win).
                 lazyVal->setCharacteristics(varSizedCharacteristics);
-                record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+                writeFieldValue(lazyVal);
+                if (eagerParse && eagerCopyVarsized)
+                {
+                    nautilus::invoke(eagerCopyVarsizedProxy, ptr, size);
+                }
                 return;
             }
         }
@@ -149,7 +206,7 @@ void parseRawValueIntoRecord(
     const std::string lazyValName = lazyOverload ? std::string(magic_enum::enum_name(dataType.type)) : "";
     const auto lazyVal
         = LazyValueProvider::provideLazyValueRepresentation(lazyValName, fieldAddress, fieldSize, dataType, isNull, parserType);
-    record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+    writeFieldValue(lazyVal);
 }
 
 VarVal parseLazyIntoVarVal(
@@ -165,9 +222,22 @@ VarVal parseLazyIntoVarVal(
     /// Materialisation is reached ONLY for USED fields, so a used missing field errors here with FieldNotFound
     /// (ERROR 2004) -- unused missing fields are eliminated and never reach this point. CSV/native formatters
     /// always pass a valid span, so this is an inert, well-predicted branch for them.
-    if (fieldAddress == nullptr)
+    /// MICROBENCH KNOB (NES_ASSUME_VALID_SPANS): CSV/native formatters always pass a valid span, so this
+    /// sentinel is a dead branch for them -- but LLVM cannot prove the loaded lazy pointer non-null, so the
+    /// `icmp eq ptr, null` guard survives at EVERY parseValue() use site and fragments GVN's parse-dedup on
+    /// repeated-field predicates (q2_original's k-way OR): the diamond strands the last term's parse in the
+    /// post-merge block, so fnattr collapses k parses only to 2, not 1. Skipping the guard at TRACE time
+    /// (host-level `if`, so the nautilus branch is never emitted) removes the diamond and lets GVN fold the
+    /// whole OR chain to ONE parse + a k-wide SIMD compare. MUST NOT be set for JSON input -- the JSON
+    /// numeric extractor relies on this {nullptr,0} sentinel to raise FieldNotFound (ERROR 2004) for a used
+    /// missing field. Opt-in only; unset = unchanged engine behaviour.
+    static const bool assumeValidSpans = std::getenv("NES_ASSUME_VALID_SPANS") != nullptr;
+    if (!assumeValidSpans)
     {
-        nautilus::invoke(+[]() { throw FieldNotFound("A projected field is missing from the input (null span at materialisation)."); });
+        if (fieldAddress == nullptr)
+        {
+            nautilus::invoke(+[]() { throw FieldNotFound("A projected field is missing from the input (null span at materialisation)."); });
+        }
     }
     constexpr InputParserRegistryArguments args{};
     if (const auto parser = InputParserRegistry::instance().create(parserType, args))

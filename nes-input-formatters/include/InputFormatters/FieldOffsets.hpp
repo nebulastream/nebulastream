@@ -83,7 +83,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const IndexerMetaData& metaData,
         nautilus::val<FieldOffsets*> fieldOffsetsPtr,
         const std::unordered_map<DataType::Type, std::string>& parserTypes,
-        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads,
+        const bool eagerParse) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
     {
         /// static loop over number of fields (which don't change)
@@ -118,7 +119,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 metaData.getQuotationType(),
                 parserTypes.at(fieldDataType.type),
                 lazyOverloads.at(fieldDataType.type),
-                varSizedCharacteristicsOf(metaData));
+                varSizedCharacteristicsOf(metaData),
+                eagerParse);
         }
         return record;
     }
@@ -131,7 +133,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const IndexerMetaData& metaData,
         const nautilus::val<FieldOffsets*> fieldOffsetsPtr,
         const std::unordered_map<DataType::Type, std::string>& parserTypes,
-        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads,
+        const bool eagerParse) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
     {
         /// static loop over number of fields (which don't change)
@@ -166,7 +169,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 metaData.getQuotationType(),
                 parserTypes.at(fieldDataType.type),
                 lazyOverloads.at(fieldDataType.type),
-                varSizedCharacteristicsOf(metaData));
+                varSizedCharacteristicsOf(metaData),
+                eagerParse);
         }
         return record;
     }

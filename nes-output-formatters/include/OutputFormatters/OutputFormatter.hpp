@@ -65,6 +65,8 @@ public:
         /// the type actually has a parser
         parserTypes[DataType::Type::VARSIZED] = "";
         parserTypes[DataType::Type::UNDEFINED] = "";
+
+        disablePassthrough = descriptor.getFromConfig(OutputFormatterDescriptor::DISABLE_PASSTHROUGH);
     }
 
     virtual ~OutputFormatter() noexcept = default;
@@ -139,6 +141,9 @@ protected:
     std::vector<Record::RecordFieldIdentifier> fieldNames;
     /// Stores the configured parser for each datatype.
     std::unordered_map<DataType::Type, std::string> parserTypes;
+    /// Hoisting-study lever: when true, never raw-forward a lazy value; parse + re-serialise every field through
+    /// the configured output codec (disables the passthrough fast paths). See OutputFormatterDescriptor::DISABLE_PASSTHROUGH.
+    bool disablePassthrough{false};
 };
 
 }

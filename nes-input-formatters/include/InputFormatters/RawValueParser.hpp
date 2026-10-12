@@ -44,6 +44,11 @@ enum class QuotationType : uint8_t
     DOUBLE_QUOTE
 };
 
+/// `eagerParse` (default false) is the hoisting-study lever: when true, fixed-size numeric/bool/char leaves are
+/// materialised NOW, at scan time, before any downstream selection branch -- the parse invoke is emitted upstream
+/// of the filter, so every row pays it regardless of selectivity ("resolve * first, then filter"). The default
+/// (false) keeps the lazy path, which defers the parse to the use site (inside the taken filter branch). See the
+/// EAGER_PARSE descriptor config. VARSIZED/quoted-CHAR are zero-cost views either way and stay lazy.
 void parseRawValueIntoRecord(
     DataType dataType,
     Record& record,
@@ -54,7 +59,8 @@ void parseRawValueIntoRecord(
     QuotationType quotationType,
     const std::string& parserType,
     const bool& lazyOverload,
-    Characteristic varSizedCharacteristics);
+    Characteristic varSizedCharacteristics,
+    bool eagerParse = false);
 
 /// Host-time: the byte-property characteristics an input formatter asserts for its VARSIZED/CHAR passthrough
 /// values (see Characteristic). A formatter's metadata may state it explicitly by exposing

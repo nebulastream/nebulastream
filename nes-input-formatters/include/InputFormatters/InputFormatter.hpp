@@ -160,6 +160,8 @@ public:
         lazyValueOverloads[DataType::Type::UINT64] = config.getFromConfig(InputFormatterDescriptor::LAZY_UINT_OVERLOADS);
         lazyValueOverloads[DataType::Type::VARSIZED] = false;
         lazyValueOverloads[DataType::Type::UNDEFINED] = false;
+
+        eagerParse = config.getFromConfig(InputFormatterDescriptor::EAGER_PARSE);
     }
 
     ~InputFormatter() = default;
@@ -286,6 +288,9 @@ private:
     std::unordered_map<DataType::Type, std::string> parserTypes;
     /// Signalizes, if we allow logical function overloads on lazy value representations
     std::unordered_map<DataType::Type, bool> lazyValueOverloads;
+    /// Hoisting-study lever (EAGER_PARSE): parse fixed-size leaves eagerly at scan time instead of lazily. See
+    /// InputFormatterDescriptor::EAGER_PARSE and parseRawValueIntoRecord.
+    bool eagerParse{false};
 
     struct IndexPhaseResult
     {
@@ -625,7 +630,14 @@ private:
             while (typename FormatterType::FieldIndexFunctionType{}.hasNext(spanningRecordIdx, leadingFIF))
             {
                 auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                    projections, spanningRecordPtr, spanningRecordIdx, indexerMetaData, leadingFIF, parserTypes, lazyValueOverloads);
+                    projections,
+                    spanningRecordPtr,
+                    spanningRecordIdx,
+                    indexerMetaData,
+                    leadingFIF,
+                    parserTypes,
+                    lazyValueOverloads,
+                    eagerParse);
                 executeChild(executionCtx, record);
                 spanningRecordIdx += 1;
             }
@@ -651,7 +663,8 @@ private:
                 indexerMetaData,
                 rawFieldAccessFunction,
                 parserTypes,
-                lazyValueOverloads);
+                lazyValueOverloads,
+                eagerParse);
             executeChild(executionCtx, record);
             bufferRecordIdx += 1;
         }
@@ -683,7 +696,14 @@ private:
             while (typename FormatterType::FieldIndexFunctionType{}.hasNext(spanningRecordIdx, trailingFIF))
             {
                 auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                    projections, spanningRecordPtr, spanningRecordIdx, indexerMetaData, trailingFIF, parserTypes, lazyValueOverloads);
+                    projections,
+                    spanningRecordPtr,
+                    spanningRecordIdx,
+                    indexerMetaData,
+                    trailingFIF,
+                    parserTypes,
+                    lazyValueOverloads,
+                    eagerParse);
                 executeChild(executionCtx, record);
                 spanningRecordIdx += 1;
             }

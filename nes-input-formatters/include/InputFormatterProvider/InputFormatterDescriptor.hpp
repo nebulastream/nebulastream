@@ -154,6 +154,16 @@ public:
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LAZY_FLOAT_OVERLOADS, config); }};
 
+    /// Hoisting-study lever: when true, fixed-size numeric/bool/char leaves are parsed EAGERLY at scan time
+    /// instead of via the default lazy representation. That emits the parse upstream of any selection branch, so
+    /// every row pays it regardless of filter selectivity -- the "resolve * first, then filter" shape used to
+    /// contrast against the lazy path (which defers each parse to its use site, inside the taken filter branch).
+    /// Honored on the CSV family, SchemaJSON, and HL7; the SIMDJSON on-demand path is not wired (stays lazy).
+    static inline const DescriptorConfig::ConfigParameter<bool> EAGER_PARSE{
+        "eager_parse",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(EAGER_PARSE, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             TYPE,
@@ -173,7 +183,8 @@ public:
             CHAR_PARSER,
             LAZY_INT_OVERLOADS,
             LAZY_UINT_OVERLOADS,
-            LAZY_FLOAT_OVERLOADS);
+            LAZY_FLOAT_OVERLOADS,
+            EAGER_PARSE);
 
 private:
     friend class SourceCatalog;

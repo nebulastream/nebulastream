@@ -258,7 +258,10 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const IndexerMetaData& metaData,
         nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
         const std::unordered_map<DataType::Type, std::string>& parserTypes,
-        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads,
+        /// EAGER_PARSE is not wired for the SIMDJSON on-demand path (its numeric parse goes through
+        /// writeValueToRecord in the .cpp); this formatter always uses the lazy representation.
+        [[maybe_unused]] const bool eagerParse) const
     {
         Record record;
         for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)
