@@ -1,0 +1,35 @@
+# name: formatter/MixedCastSmoke.test
+# description: Smoke for the TOFLOAT64/TOINT64 conversion function plugins (serde-micro mixed-type
+#   panels). i2f: int64 CSV in -> TOFLOAT64 -> float64 out. f2i: float64 CSV in -> TOINT64 -> int64
+#   out (VarVal::castToType semantics, i.e. C++ static_cast truncation toward zero).
+# groups: [Formatter]
+
+CREATE LOGICAL SOURCE ints(c0 INT64 NOT NULL, c1 INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR ints TYPE BlockingFile SET("SequentialCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1,2
+-5,1000000000
+42,-7
+0,999999
+
+CREATE LOGICAL SOURCE floats(c0 FLOAT64 NOT NULL, c1 FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR floats TYPE BlockingFile SET("SequentialCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1.9,2.25
+-2.7,99999.999999
+3.0,-0.5
+12345.678901,7.0
+
+SELECT TOFLOAT64(c0) AS c0, TOFLOAT64(c1) AS c1 FROM ints INTO File();
+----
+1,2
+-5,1000000000
+42,-7
+0,999999
+
+SELECT TOINT64(c0) AS c0, TOINT64(c1) AS c1 FROM floats INTO File();
+----
+1,2
+-2,99999
+3,0
+12345,7

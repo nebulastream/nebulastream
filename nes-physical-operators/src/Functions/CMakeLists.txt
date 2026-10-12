@@ -21,6 +21,8 @@ add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction
 add_plugin(Cast PhysicalFunction nes-physical-operators CastFieldPhysicalFunction.cpp)
 add_plugin(CastToUnixTs PhysicalFunction nes-physical-operators CastToUnixTimestampPhysicalFunction.cpp)
 add_plugin(CastFromUnixTs PhysicalFunction nes-physical-operators CastFromUnixTimestampPhysicalFunction.cpp)
+add_plugin(ToFloat64 PhysicalFunction nes-physical-operators ToFloat64PhysicalFunction.cpp)
+add_plugin(ToInt64 PhysicalFunction nes-physical-operators ToInt64PhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)

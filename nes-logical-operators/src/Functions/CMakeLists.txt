@@ -24,3 +24,5 @@ add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cp
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
 add_plugin(CastToUnixTs LogicalFunction nes-logical-operators CastToUnixTimestampLogicalFunction.cpp)
 add_plugin(CastFromUnixTs LogicalFunction nes-logical-operators CastFromUnixTimestampLogicalFunction.cpp)
+add_plugin(ToFloat64 LogicalFunction nes-logical-operators ToFloat64LogicalFunction.cpp)
+add_plugin(ToInt64 LogicalFunction nes-logical-operators ToInt64LogicalFunction.cpp)
