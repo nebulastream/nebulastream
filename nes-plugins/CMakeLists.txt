@@ -36,7 +36,7 @@ if (NES_ENABLES_TESTS)
   add_plugin("Sinks/ChecksumSink")
 endif()
 
-
+add_plugin("Sources/VideoSource")
 
 add_plugin("Pipe")
 

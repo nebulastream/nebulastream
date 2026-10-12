@@ -1,0 +1,88 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <ostream>
+#include <stop_token>
+#include <string_view>
+#include <unordered_map>
+
+#include <arv.h>
+#include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
+
+namespace NES
+{
+
+struct ConfigParametersVideo
+{
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOURCE_SELECTOR{
+        "SOURCE_SELECTOR",
+        0,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
+        {
+            const auto selector = DescriptorConfig::tryGet(SOURCE_SELECTOR, config);
+            return selector && *selector <= 3 ? selector : std::nullopt;
+        }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, SOURCE_SELECTOR);
+};
+
+class VideoSource final : public Source
+{
+public:
+    static constexpr std::string_view NAME = "VIDEO";
+
+    explicit VideoSource(const SourceDescriptor& sourceDescriptor);
+    ~VideoSource() override;
+
+    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    void close() override;
+
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
+
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& stream) const override;
+
+private:
+    struct GObjectDeleter
+    {
+        template <typename T>
+        void operator()(T* object) const
+        {
+            if (object)
+            {
+                g_object_unref(object);
+            }
+        }
+    };
+
+    uint32_t sourceSelector;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::unique_ptr<ArvCamera, GObjectDeleter> camera;
+    std::unique_ptr<ArvStream, GObjectDeleter> stream;
+};
+
+}
