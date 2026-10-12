@@ -15,8 +15,10 @@
 
 #include <QueryCompiler.hpp>
 
+#include <chrono>
 #include <memory>
 #include <Configuration/WorkerConfiguration.hpp>
+#include <Phases/EmitCoalescingPhase.hpp>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Phases/PipeliningPhase.hpp>
@@ -33,6 +35,7 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
+    EmitCoalescingPhase::apply(*pipelinedQueryPlan, std::chrono::microseconds(defaultQueryExecution.emitCoalescingDelay.getValue()));
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }
 }

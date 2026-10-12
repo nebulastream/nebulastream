@@ -119,6 +119,8 @@ pub enum DataChannelResponse {
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TupleBuffer {
     pub sequence_number: u64,
+    /// Number of sequence numbers before `sequence_number` that this buffer also covers.
+    pub sequence_range_offset: u32,
     pub origin_id: u64,
     pub watermark: u64,
     pub chunk_number: u64,
@@ -136,7 +138,7 @@ impl TupleBuffer {
 
 impl Debug for TupleBuffer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("TupleBuffer{{ sequence_number: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, bufferSize: {}, children: {:?}}}", self.sequence_number, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.data.len(), self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
+        f.write_fmt(format_args!("TupleBuffer{{ sequence_number: {}, sequence_range_offset: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, bufferSize: {}, children: {:?}}}", self.sequence_number, self.sequence_range_offset, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.data.len(), self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
     }
 }
 

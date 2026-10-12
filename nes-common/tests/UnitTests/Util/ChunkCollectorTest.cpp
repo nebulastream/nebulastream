@@ -50,25 +50,25 @@ TEST(ChunkCollectorTest, SingleInsert)
 {
     ChunkCollector sequence;
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, true}, Timestamp(32)),
+        sequence.collect({INITIAL<SequenceNumber>, 0, INITIAL<ChunkNumber>, true}, Timestamp(32)),
         SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(32)));
 }
 
 TEST(ChunkCollectorTest, MultipleChunks)
 {
     ChunkCollector sequence;
-    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(2)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, 0, INITIAL<ChunkNumber>, false}, Timestamp(2)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(12)),
+        sequence.collect({INITIAL<SequenceNumber>, 0, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(12)),
         SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(12)));
 }
 
 TEST(ChunkCollectorTest, MultipleChunksOutOfOrder)
 {
     ChunkCollector sequence;
-    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(42)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, 0, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(42)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(2)),
+        sequence.collect({INITIAL<SequenceNumber>, 0, INITIAL<ChunkNumber>, false}, Timestamp(2)),
         SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(42)));
 }
 
@@ -77,24 +77,68 @@ TEST(CheckChunkCollector, MultipleTimesLastChunkSet)
     SKIP_IF_TSAN();
 
     ChunkCollector sequence;
-    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(2)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, 0, INITIAL<ChunkNumber>, false}, Timestamp(2)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(12)),
+        sequence.collect({INITIAL<SequenceNumber>, 0, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(12)),
         SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(12)));
-    EXPECT_DEATH_DEBUG(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Timestamp(12)), "");
+    EXPECT_DEATH_DEBUG(sequence.collect({INITIAL<SequenceNumber>, 0, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Timestamp(12)), "");
 }
 
 TEST(ChunkCollectorTest, DifferentSequenceNumbers)
 {
     ChunkCollector sequence;
-    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(32)), std::nullopt);
-    EXPECT_EQ(sequence.collect({SequenceNumber(101), INITIAL<ChunkNumber>, false}, Timestamp(32)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, 0, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(32)), std::nullopt);
+    EXPECT_EQ(sequence.collect({SequenceNumber(101), 0, INITIAL<ChunkNumber>, false}, Timestamp(32)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(32)),
+        sequence.collect({INITIAL<SequenceNumber>, 0, INITIAL<ChunkNumber>, false}, Timestamp(32)),
         SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(32)));
     ASSERT_THAT(
-        sequence.collect({SequenceNumber(101), ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(32)),
+        sequence.collect({SequenceNumber(101), 0, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(32)),
         SeqWithWatermark(SequenceNumber(101), Timestamp(32)));
+}
+
+TEST(ChunkCollectorTest, ReleaseFreesOnlyCompletedNodes)
+{
+    /// Nodes cover the sequence numbers [1, 4], [5, 8], [9, 12].
+    ChunkCollector<4> sequence;
+    const auto complete = [&](const SequenceNumber::Underlying seq)
+    {
+        EXPECT_THAT(
+            sequence.collect({SequenceNumber(seq), 0, INITIAL<ChunkNumber>, true}, Timestamp(1)),
+            SeqWithWatermark(SequenceNumber(seq), Timestamp(1)));
+    };
+    EXPECT_EQ(sequence.collect({SequenceNumber(10), 0, INITIAL<ChunkNumber>, false}, Timestamp(1)), std::nullopt);
+    for (const auto seq : {1, 2, 3, 4, 5, 6, 7})
+    {
+        complete(seq);
+    }
+    EXPECT_EQ(sequence.getNumberOfNodes(), 3);
+
+    /// Frees [1, 4] but not [5, 8], as 8 is incomplete.
+    sequence.releaseUpTo(SequenceNumber(7));
+    EXPECT_EQ(sequence.getNumberOfNodes(), 2);
+
+    sequence.releaseUpTo(SequenceNumber(3));
+    EXPECT_EQ(sequence.getNumberOfNodes(), 2);
+
+    ASSERT_THAT(
+        sequence.collect({SequenceNumber(10), 0, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(2)),
+        SeqWithWatermark(SequenceNumber(10), Timestamp(2)));
+    for (const auto seq : {8, 9, 11, 12})
+    {
+        complete(seq);
+    }
+    sequence.releaseUpTo(SequenceNumber(12));
+    EXPECT_EQ(sequence.getNumberOfNodes(), 0);
+}
+
+TEST(ChunkCollectorTest, ChunksWithDifferentRangesAreRejected)
+{
+    SKIP_IF_TSAN();
+
+    ChunkCollector sequence;
+    EXPECT_EQ(sequence.collect({SequenceNumber(9), 6, INITIAL<ChunkNumber>, false}, Timestamp(1)), std::nullopt);
+    EXPECT_DEATH_DEBUG(sequence.collect({SequenceNumber(9), 0, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(1)), "");
 }
 
 class ConcurrentChunkCollectorTest
@@ -119,7 +163,7 @@ TEST_P(ConcurrentChunkCollectorTest, RandomInserts)
         auto watermark = watermarks(rd);
         for (size_t j = ChunkNumber::INITIAL; j < chunks; ++j)
         {
-            inserts.push_back({{SequenceNumber(i), ChunkNumber(j), false}, watermark});
+            inserts.push_back({{SequenceNumber(i), 0, ChunkNumber(j), false}, watermark});
             maxWatermarkForCurrentSequence = std::max(watermark, maxWatermarkForCurrentSequence);
         }
         maxWaterMark[i] = maxWatermarkForCurrentSequence;
@@ -132,7 +176,7 @@ TEST_P(ConcurrentChunkCollectorTest, RandomInserts)
     for (size_t i = ChunkNumber::INITIAL; i < moreInserts + ChunkNumber::INITIAL; ++i)
     {
         auto watermark = watermarks(rd);
-        inserts.push_back({{SequenceNumber(maxSequenceNumber + SequenceNumber::INITIAL), ChunkNumber(i), false}, watermark});
+        inserts.push_back({{SequenceNumber(maxSequenceNumber + SequenceNumber::INITIAL), 0, ChunkNumber(i), false}, watermark});
         maxWatermarkForLastSequence = std::max(maxWatermarkForLastSequence, watermark);
         std::cout << watermark << '\n';
     }

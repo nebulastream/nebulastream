@@ -1411,4 +1411,246 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     }
     test.stop();
 }
+
+/// A callback runs after its delay, and what it emits reaches the successors of its pipeline.
+TEST_F(QueryEngineTest, PipelineCallbackEmitsToSuccessorsAfterDelay)
+{
+    constexpr auto callbackDelay = std::chrono::milliseconds(20);
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto pipelineCtrl = test.pipelineControls[pipeline];
+    auto sourceCtrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+    pipelineCtrl->emitThroughCallback = true;
+    pipelineCtrl->callbackDelay = callbackDelay;
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryStop(1),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::PipelineStop(2),
+        ExpectStats::TaskExecutionStart(3),
+        ExpectStats::TaskExecutionComplete(3),
+        ExpectStats::TaskEmit(1));
+
+    test.start();
+    {
+        auto queryId = query->queryId;
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(sourceCtrl->waitUntilOpened());
+        sourceCtrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
+        sourceCtrl->injectEoS();
+        EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+
+    EXPECT_EQ(pipelineCtrl->executedCallbacks, 1);
+    EXPECT_GE(pipelineCtrl->callbackLatency.load(), callbackDelay);
+    auto buffers = sinkCtrl->takeBuffers();
+    ASSERT_EQ(buffers.size(), 1);
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+}
+
+/// A pipeline stops although its callbacks keep scheduling themselves again, and none of them runs after the stop.
+TEST_F(QueryEngineTest, PipelineCallbackNeverRunsAfterPipelineStop)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto pipelineCtrl = test.pipelineControls[pipeline];
+    auto sourceCtrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+    pipelineCtrl->rearmCallback = true;
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+    test.stats.expect(ExpectStats::QueryStart(1), ExpectStats::QueryStop(1), ExpectStats::PipelineStart(2), ExpectStats::PipelineStop(2));
+
+    test.start();
+    {
+        auto queryId = query->queryId;
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(sourceCtrl->waitUntilOpened());
+        sourceCtrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(pipelineCtrl->waitUntilCallbackEntered());
+        sourceCtrl->injectEoS();
+        EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+
+    EXPECT_TRUE(pipelineCtrl->wasStopped());
+    EXPECT_EQ(pipelineCtrl->callbacksAfterStop, 0);
+    EXPECT_TRUE(sinkCtrl->takeBuffers().empty());
+}
+
+/// Engine shutdown neither waits for nor runs a callback that is due in an hour.
+TEST_F(QueryEngineTest, EngineShutdownDoesNotRunPendingPipelineCallback)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto queryId = query->queryId;
+    auto pipelineCtrl = test.pipelineControls[pipeline];
+    auto sourceCtrl = test.sourceControls[source];
+    pipelineCtrl->emitThroughCallback = true;
+    pipelineCtrl->callbackDelay = std::chrono::hours(1);
+
+    /// Engine shutdown does not stop queries gracefully.
+    test.expectQueryStatusEvents(queryId, {QueryStatus::Started, QueryStatus::Running});
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryFail(0),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::TaskExecutionStart(1),
+        ExpectStats::TaskExecutionComplete(1),
+        ExpectStats::TaskEmit(0));
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(sourceCtrl->waitUntilOpened());
+        ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+        sourceCtrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(pipelineCtrl->waitForCallbackScheduled());
+    }
+    test.stop();
+
+    EXPECT_EQ(pipelineCtrl->executedCallbacks, 0);
+    ASSERT_TRUE(sourceCtrl->waitUntilDestroyed());
+}
+
+/// A callback that throws fails its query like a task that throws.
+TEST_F(QueryEngineTest, PipelineCallbackFailureFailsQuery)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto queryId = query->queryId;
+    auto pipelineCtrl = test.pipelineControls[pipeline];
+    auto sourceCtrl = test.sourceControls[source];
+    pipelineCtrl->emitThroughCallback = true;
+    pipelineCtrl->throwInCallback = true;
+
+    test.expectQueryStatusEvents(queryId, {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryFail(1),
+        ExpectStats::TaskExecutionStart(2),
+        ExpectStats::TaskExecutionComplete(1),
+        ExpectStats::TaskEmit(0));
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+        sourceCtrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(sourceCtrl->waitUntilDestroyed());
+    }
+    test.stop();
+
+    EXPECT_EQ(pipelineCtrl->executedCallbacks, 1);
+    EXPECT_TRUE(test.sinkControls[sink]->takeBuffers().empty());
+}
+
+/// A callback that throws after the pending stop of its pipeline dropped its reference still fails the query.
+TEST_F(QueryEngineTest, PipelineCallbackHoldingTheLastReferenceFailsQuery)
+{
+    /// One worker runs the blocked callback. The other runs the pending stops in queue order, so the plain pipeline stops only after the
+    /// callback pipeline's pending stop dropped its reference.
+    TestingHarness test(2, NUMBER_OF_BUFFERS_PER_SOURCE);
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto callbackPipeline = builder.addPipeline({source});
+    auto plainPipeline = builder.addPipeline({source});
+    builder.addSink({callbackPipeline});
+    builder.addSink({plainPipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto queryId = query->queryId;
+    auto callbackCtrl = test.pipelineControls[callbackPipeline];
+    auto plainCtrl = test.pipelineControls[plainPipeline];
+    auto sourceCtrl = test.sourceControls[source];
+    callbackCtrl->emitThroughCallback = true;
+    callbackCtrl->blockCallback = true;
+    callbackCtrl->throwInCallback = true;
+
+    test.expectQueryStatusEvents(queryId, {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
+    test.stats.expect(ExpectStats::QueryStart(1), ExpectStats::QueryFail(1));
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+        sourceCtrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(callbackCtrl->waitUntilCallbackEntered());
+        sourceCtrl->injectEoS();
+        ASSERT_TRUE(plainCtrl->waitForStop());
+        callbackCtrl->releaseCallback.set_value();
+        ASSERT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+}
+
+/// A callback can schedule another callback from its own context; both run and emit to the successors.
+TEST_F(QueryEngineTest, PipelineCallbackSchedulesFollowUpCallback)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto pipelineCtrl = test.pipelineControls[pipeline];
+    auto sourceCtrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+    pipelineCtrl->emitThroughCallback = true;
+    pipelineCtrl->followUpCallback = true;
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryStop(1),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::PipelineStop(2),
+        ExpectStats::TaskExecutionStart(5),
+        ExpectStats::TaskExecutionComplete(5),
+        ExpectStats::TaskEmit(2));
+
+    test.start();
+    {
+        auto queryId = query->queryId;
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(sourceCtrl->waitUntilOpened());
+        sourceCtrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(2));
+        sourceCtrl->injectEoS();
+        EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+
+    EXPECT_EQ(pipelineCtrl->scheduledCallbacks, 2);
+    EXPECT_EQ(pipelineCtrl->executedCallbacks, 2);
+    auto buffers = sinkCtrl->takeBuffers();
+    ASSERT_EQ(buffers.size(), 2);
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+    EXPECT_TRUE(verifyIdentifier(buffers[1], 1));
+}
+
 }

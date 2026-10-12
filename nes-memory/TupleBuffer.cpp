@@ -135,17 +135,38 @@ Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 
 void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) noexcept
 {
-    controlBlock->setSequenceNumber(sequenceNumber);
+    controlBlock->setSequenceRange(sequenceNumber, 0);
+}
+
+void TupleBuffer::setSequenceRange(const SequenceNumber last, const uint32_t offset) noexcept
+{
+    PRECONDITION(
+        offset == 0 || last.getRawValue() >= SequenceNumber::INITIAL + offset,
+        "Sequence range [{} - {}, {}] starts below the first sequence number",
+        last,
+        offset,
+        last);
+    controlBlock->setSequenceRange(last, offset);
 }
 
 std::string TupleBuffer::getSequenceDataAsString() const noexcept
 {
-    return fmt::format("SeqNumber: {}, ChunkNumber: {}, LastChunk: {}", getSequenceNumber(), getChunkNumber(), isLastChunk());
+    return fmt::format(
+        "SeqNumber: {}, SequenceRangeOffset: {}, ChunkNumber: {}, LastChunk: {}",
+        getSequenceNumber(),
+        getSequenceRangeOffset(),
+        getChunkNumber(),
+        isLastChunk());
 }
 
 SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
+}
+
+uint32_t TupleBuffer::getSequenceRangeOffset() const noexcept
+{
+    return controlBlock->getSequenceRangeOffset();
 }
 
 void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept

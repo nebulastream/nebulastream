@@ -13,6 +13,7 @@
 */
 #include <WindowBuildPhysicalOperator.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -39,6 +40,7 @@ void checkWindowsTriggerProxy(
     PipelineExecutionContext* pipelineCtx,
     const Timestamp watermarkTs,
     const SequenceNumber sequenceNumber,
+    const uint32_t sequenceRangeOffset,
     const ChunkNumber chunkNumber,
     const bool lastChunk,
     const OriginId originId)
@@ -47,7 +49,7 @@ void checkWindowsTriggerProxy(
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
+    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, sequenceRangeOffset, chunkNumber, lastChunk), originId);
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
@@ -78,6 +80,7 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.pipelineContext,
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber,
+        executionCtx.sequenceRangeOffset,
         executionCtx.chunkNumber,
         executionCtx.lastChunk,
         executionCtx.originId);

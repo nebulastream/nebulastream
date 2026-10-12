@@ -1,0 +1,80 @@
+# name: operator/emit/EmitCoalescing.test
+# description: Test emit coalescing on chunked outputs, outputs that leave at once, window and join triggers, several origins and
+#              variable sized payloads.
+# groups: [Emit, Aggregation, Join, Union]
+
+GlobalConfiguration worker.default_query_execution.emit_coalescing_delay_us: [0, 1000]
+
+CREATE LOGICAL SOURCE bid(timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE small/nexmark/bid_modified_100K.csv
+
+CREATE LOGICAL SOURCE auction(timestamp UINT64, id INT32, initialbid INT32, reserve INT32, expires INT64, seller INT32, category INT32);
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE small/nexmark/auction_modified_100K.csv
+
+# Two physical sources, so two origins share one edge.
+CREATE LOGICAL SOURCE bidTwice(timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64);
+CREATE PHYSICAL SOURCE FOR bidTwice TYPE File;
+ATTACH FILE small/nexmark/bid_modified_100K.csv
+CREATE PHYSICAL SOURCE FOR bidTwice TYPE File;
+ATTACH FILE small/nexmark/bid_modified_100K.csv
+
+CREATE LOGICAL SOURCE person(id INT32, name VARSIZED, email_address VARSIZED, credit_card VARSIZED, city VARSIZED, state VARSIZED, timestamp UINT64 NOT NULL, extra VARSIZED);
+CREATE PHYSICAL SOURCE FOR person TYPE File;
+ATTACH FILE small/nexmark/person_100K.csv
+
+CREATE SINK bidChecksum(timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64) TYPE Checksum;
+CREATE SINK wideChecksum(timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64, p2 FLOAT64, p3 FLOAT64, p4 FLOAT64) TYPE Checksum;
+CREATE SINK narrowChecksum(auctionId INT32, price FLOAT64) TYPE Checksum;
+CREATE SINK winChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32, num UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK joinChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, bid_timestamp UINT64, auctionId INT32, auction_timestamp UINT64, id INT32) TYPE Checksum;
+CREATE SINK personChecksum(id INT32, name VARSIZED, city VARSIZED) TYPE Checksum;
+
+# Query 1: widening projection, whose outputs span several chunks.
+SELECT timestamp, auctionId, bidder, datetime, price, price AS p2, price AS p3, price AS p4 FROM bid INTO wideChecksum;
+----
+4445 8499632
+
+# Query 2: narrowing projection, whose outputs fill more than half a buffer.
+SELECT auctionId, price FROM bid INTO narrowChecksum;
+----
+4445 1920380
+
+# Query 3: windowed aggregation.
+SELECT start, end, auctionId, COUNT(auctionId) AS num
+FROM bid
+GROUP BY auctionId
+WINDOW TUMBLING(timestamp, SIZE 10 SEC)
+INTO winChecksum;
+----
+848 696962
+
+# Query 4: join.
+SELECT start, end, bid_timestamp, auctionId, auction_timestamp, id
+FROM (SELECT timestamp AS bid_timestamp, auctionId FROM bid)
+INNER JOIN (SELECT timestamp AS auction_timestamp, id FROM auction)
+ON auctionId = id WINDOW TUMBLING (bid_timestamp, auction_timestamp, SIZE 10 SEC)
+INTO joinChecksum;
+----
+2160 3100711
+
+# Query 5: sparse filter over two origins.
+SELECT * FROM bidTwice WHERE auctionId % 100 = 0 INTO bidChecksum;
+----
+84 84276
+
+# Query 6: variable sized payloads.
+SELECT id, name, city FROM person INTO personChecksum;
+----
+470 1118127
+
+# Query 7: sparsely filtered variable sized payloads.
+SELECT id, name, city FROM person WHERE id % 100 = 0 INTO personChecksum;
+----
+5 11271
+
+# Query 8: union of two sparse filters.
+SELECT * FROM bid WHERE auctionId % 100 = 0 UNION SELECT * FROM bid WHERE auctionId % 100 = 1 INTO bidChecksum;
+----
+102 102068

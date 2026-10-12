@@ -17,10 +17,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <span>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <Interface/BufferRef/BufferMerge.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/RecordLayoutUtil.hpp>
@@ -89,6 +92,9 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
 
+    /// Describes this layout for `appendTuples`, or nullopt if its buffers cannot be concatenated.
+    [[nodiscard]] virtual std::optional<BufferLayout> getBufferLayout() const { return std::nullopt; }
+
     [[nodiscard]] uint64_t getCapacity() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     [[nodiscard]] uint64_t getTupleSize() const;
@@ -104,6 +110,12 @@ protected:
     /// payloads are appended to the record buffer's child buffers via the buffer provider.
     static VarSizedStoreFn
     getRecordBufferStore(const RecordBuffer& recordBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
+
+    /// Bytes in front of the value of a field of `type`, which hold the null flag of a nullable field.
+    [[nodiscard]] static uint64_t getNullFlagSize(const DataType& type)
+    {
+        return type.getSizeInBytesWithNull() - type.getSizeInBytesWithoutNull();
+    }
 
     [[nodiscard]] static bool
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);

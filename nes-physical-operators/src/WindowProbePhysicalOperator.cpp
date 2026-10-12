@@ -45,7 +45,8 @@ void garbageCollectSlicesProxy(
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
+    /// Trigger buffers cover one sequence number.
+    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, 0, chunkNumber, lastChunk), originId);
 
     opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
 }

@@ -118,6 +118,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         /// Set buffer header
         const SerializedTupleBufferHeader metadata{
             .sequence_number = currentBuffer->getSequenceNumber().getRawValue(),
+            .sequence_range_offset = currentBuffer->getSequenceRangeOffset(),
             .origin_id = currentBuffer->getOriginId().getRawValue(),
             .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
             .number_of_tuples = currentBuffer->getNumberOfTuples(),

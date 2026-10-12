@@ -55,7 +55,7 @@ struct SequenceState
     size_t seenChunks = 0;
 };
 
-class EmitOperatorHandler final : public OperatorHandler
+class EmitOperatorHandler : public OperatorHandler
 {
 public:
     void setChunkNumber(bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer);

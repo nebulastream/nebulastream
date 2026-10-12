@@ -32,11 +32,13 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
+#include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -55,7 +57,10 @@
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Arena.hpp>
 #include <BaseUnitTest.hpp>
+#include <CoalescingEmitOperatorHandler.hpp>
+#include <CoalescingEmitPhysicalOperator.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -71,6 +76,7 @@ constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 100000;
 constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+constexpr size_t MAX_HELD_RUNS = 64;
 }
 
 class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
@@ -103,15 +109,25 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             operatorHandlers = &opHandlers;
         }
 
-        MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
-            : buffers(buffers), bufferManager(std::move(bufferManager))
+        MockedPipelineContext(
+            folly::Synchronized<std::vector<TupleBuffer>>& buffers,
+            folly::Synchronized<std::vector<std::function<void(PipelineExecutionContext&)>>>& callbacks,
+            std::shared_ptr<BufferManager> bufferManager)
+            : buffers(buffers), callbacks(callbacks), bufferManager(std::move(bufferManager))
         {
         }
 
         void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
-        ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
+        void scheduleCallback(std::chrono::microseconds, std::function<void(PipelineExecutionContext&)> callback) override
+        {
+            callbacks.wlock()->emplace_back(std::move(callback));
+        }
+
+        ///NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
+        folly::Synchronized<std::vector<std::function<void(PipelineExecutionContext&)>>>& callbacks;
+        ///NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     };
@@ -138,15 +154,47 @@ public:
         return emit;
     }
 
+    CoalescingEmitPhysicalOperator createCoalescingUUT(const std::chrono::microseconds maxDelay)
+    {
+        const auto emit = createUUT();
+        auto layout = emit.getBufferLayout();
+        INVARIANT(layout.has_value(), "A row layout can be concatenated");
+        handlers.insert_or_assign(
+            emit.getOperatorHandlerId(), std::make_shared<CoalescingEmitOperatorHandler>(std::move(*layout), maxDelay, MAX_HELD_RUNS));
+        return CoalescingEmitPhysicalOperator(emit);
+    }
+
+    void withContext(const std::function<void(ExecutionContext&)>& test)
+    {
+        MockedPipelineContext pec{buffers, callbacks, bm};
+        pec.setOperatorHandlers(handlers);
+        Arena arena(bm);
+        ExecutionContext executionContext{&pec, &arena};
+        test(executionContext);
+    }
+
+    /// Runs the callbacks scheduled so far, ignoring their delays.
+    void runCallbacks()
+    {
+        std::vector<std::function<void(PipelineExecutionContext&)>> due;
+        callbacks.wlock()->swap(due);
+        MockedPipelineContext pec{buffers, callbacks, bm};
+        for (auto& callback : due)
+        {
+            callback(pec);
+        }
+    }
+
     void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, TupleBuffer buffer)
     {
-        MockedPipelineContext pec{buffers, bm};
+        MockedPipelineContext pec{buffers, callbacks, bm};
         pec.setOperatorHandlers(handlers);
         Arena arena(bm);
 
         ExecutionContext executionContext{&pec, &arena};
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
+        executionContext.sequenceRangeOffset = buffer.getSequenceRangeOffset();
         executionContext.originId = buffer.getOriginId();
 
         RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(std::addressof(buffer))};
@@ -184,9 +232,14 @@ public:
     void checkForDups(std::source_location location = std::source_location::current())
     {
         const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "checkForDups");
-        auto uniqueSequences = (*buffers.rlock())
-            | std::views::transform([](const auto& buffer)
-                                    { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
+        auto uniqueSequences
+            = (*buffers.rlock())
+            | std::views::transform(
+                  [](const auto& buffer)
+                  {
+                      return SequenceData(
+                          buffer.getSequenceNumber(), buffer.getSequenceRangeOffset(), buffer.getChunkNumber(), buffer.isLastChunk());
+                  })
             | std::ranges::to<std::set>();
 
         EXPECT_EQ(buffers.rlock()->size(), uniqueSequences.size()) << "Received duplicate sequences";
@@ -240,9 +293,53 @@ public:
 
     ///NOLINTEND(fuchsia-default-arguments-declarations)
 
-    void reset() { buffers.wlock()->clear(); }
+    void reset()
+    {
+        buffers.wlock()->clear();
+        callbacks.wlock()->clear();
+    }
+
+    void runTask(const EmitPhysicalOperator& emit, TupleBuffer buffer, const uint32_t numberOfRecords)
+    {
+        run(
+            [&](auto& executionContext, auto& recordBuffer)
+            {
+                emit.open(executionContext, recordBuffer);
+                for (uint32_t value = 0; value < numberOfRecords; ++value)
+                {
+                    Record record{std::unordered_map<Record::RecordFieldIdentifier, VarVal>{
+                        {Identifier::parse("A_FIELD"), VarVal{nautilus::val<uint32_t>{value}}}}};
+                    emit.execute(executionContext, record);
+                }
+                emit.close(executionContext, recordBuffer);
+            },
+            std::move(buffer));
+    }
+
+    /// Runs an input covering 5 sequence numbers whose 300 records spill over several output buffers, and checks that every output
+    /// keeps its range.
+    void expectSpilledOutputKeepsRange(const EmitPhysicalOperator& emit)
+    {
+        constexpr uint32_t numberOfRecords = 300;
+        auto buffer = createBuffer(SequenceNumber::INITIAL + 9, ChunkNumber::INITIAL, true);
+        buffer.setSequenceRange(SequenceNumber(SequenceNumber::INITIAL + 9), 4);
+        runTask(emit, buffer, numberOfRecords);
+
+        ASSERT_GT(buffers.rlock()->size(), 1);
+        checkForDups();
+        checkLastChunks();
+        uint64_t numberOfTuples = 0;
+        for (const auto& output : *buffers.rlock())
+        {
+            EXPECT_EQ(output.getSequenceNumber(), SequenceNumber(SequenceNumber::INITIAL + 9));
+            EXPECT_EQ(output.getSequenceRangeOffset(), 4);
+            numberOfTuples += output.getNumberOfTuples();
+        }
+        EXPECT_EQ(numberOfTuples, numberOfRecords);
+    }
 
     folly::Synchronized<std::vector<TupleBuffer>> buffers;
+    folly::Synchronized<std::vector<std::function<void(PipelineExecutionContext&)>>> callbacks;
     std::shared_ptr<BufferManager> bm = BufferManager::create(
         TOTAL_MEMORY_IN_BYTES,
         UNPOOLED_MEMORY_FRACTION,
@@ -302,12 +399,16 @@ TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)
         checkForDups();
         checkLastChunks();
 
-        hasMorePermutations = std::ranges::next_permutation(
-                                  inputBuffers,
-                                  std::less{},
-                                  [](const TupleBuffer& buffer)
-                                  { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
-                                  .found;
+        hasMorePermutations
+            = std::ranges::next_permutation(
+                  inputBuffers,
+                  std::less{},
+                  [](const TupleBuffer& buffer)
+                  {
+                      return SequenceData(
+                          buffer.getSequenceNumber(), buffer.getSequenceRangeOffset(), buffer.getChunkNumber(), buffer.isLastChunk());
+                  })
+                  .found;
     }
 }
 
@@ -346,12 +447,16 @@ TEST_F(EmitPhysicalOperatorTest, SequenceChunkNumberTest)
         checkNumberOfBuffers(8);
         checkForDups();
         checkLastChunks();
-        hasMorePermutations = std::ranges::next_permutation(
-                                  inputBuffers,
-                                  std::less{},
-                                  [](const TupleBuffer& buffer)
-                                  { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
-                                  .found;
+        hasMorePermutations
+            = std::ranges::next_permutation(
+                  inputBuffers,
+                  std::less{},
+                  [](const TupleBuffer& buffer)
+                  {
+                      return SequenceData(
+                          buffer.getSequenceNumber(), buffer.getSequenceRangeOffset(), buffer.getChunkNumber(), buffer.isLastChunk());
+                  })
+                  .found;
     };
 }
 
@@ -405,4 +510,62 @@ TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
         checkLastChunks();
     }
 }
+
+TEST_F(EmitPhysicalOperatorTest, SpilledOutputIsChunkedAndKeepsRange)
+{
+    expectSpilledOutputKeepsRange(createUUT());
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitMergesCompleteOutputsUntilTerminate)
+{
+    const auto emit = createCoalescingUUT(std::chrono::hours(1));
+    for (SequenceNumber::Underlying sequence = SequenceNumber::INITIAL; sequence < SequenceNumber::INITIAL + 3; ++sequence)
+    {
+        runTask(emit, createBuffer(sequence, ChunkNumber::INITIAL, true), 3);
+    }
+    checkNumberOfBuffers(0);
+
+    withContext([&](ExecutionContext& executionContext) { emit.terminate(executionContext); });
+    checkNumberOfBuffers(1);
+    checkBufferAt(0, SequenceNumber::INITIAL + 2, ChunkNumber::INITIAL, true, INITIAL<OriginId>, 9);
+    EXPECT_EQ(buffers.rlock()->at(0).getSequenceRangeOffset(), 2);
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitPassesChunkedInputsThrough)
+{
+    const auto emit = createCoalescingUUT(std::chrono::hours(1));
+    runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, false), 1);
+    runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 1, true), 1);
+    checkNumberOfBuffers(2);
+    checkForDups();
+    checkLastChunks();
+
+    withContext([&](ExecutionContext& executionContext) { emit.terminate(executionContext); });
+    checkNumberOfBuffers(2);
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitPassesSpilledOutputThrough)
+{
+    expectSpilledOutputKeepsRange(createCoalescingUUT(std::chrono::hours(1)));
+    EXPECT_TRUE(callbacks.rlock()->empty());
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitFlushesHeldOutputsFromItsTimer)
+{
+    const auto emit = createCoalescingUUT(std::chrono::microseconds(1));
+    runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true), 3);
+    checkNumberOfBuffers(0);
+    ASSERT_EQ(callbacks.rlock()->size(), 1);
+
+    /// The callback arms itself again until the deadline has passed.
+    while (buffers.rlock()->empty())
+    {
+        ASSERT_EQ(callbacks.rlock()->size(), 1);
+        runCallbacks();
+    }
+    checkNumberOfBuffers(1);
+    checkBufferAt(0, SequenceNumber::INITIAL, ChunkNumber::INITIAL, true, INITIAL<OriginId>, 3);
+    EXPECT_TRUE(callbacks.rlock()->empty());
+}
+
 }

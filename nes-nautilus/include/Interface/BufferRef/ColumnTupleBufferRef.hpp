@@ -16,8 +16,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Interface/BufferRef/BufferMerge.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -56,6 +58,8 @@ public:
     ColumnTupleBufferRef(const ColumnTupleBufferRef&) = default;
     ColumnTupleBufferRef(ColumnTupleBufferRef&&) = default;
     ~ColumnTupleBufferRef() override = default;
+
+    [[nodiscard]] std::optional<BufferLayout> getBufferLayout() const override;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;

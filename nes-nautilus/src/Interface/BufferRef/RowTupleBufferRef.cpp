@@ -16,11 +16,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Interface/BufferRef/BufferMerge.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -74,6 +76,20 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
         successful = true;
     }
     return {.successful = successful, .writtenRecords = writtenRecords};
+}
+
+std::optional<BufferLayout> RowTupleBufferRef::getBufferLayout() const
+{
+    BufferLayout layout{
+        .segments = {{.offset = 0, .stride = getTupleSize()}}, .references = {}, .capacity = getCapacity(), .bufferSize = getBufferSize()};
+    for (const auto& field : fields)
+    {
+        if (field.type.isType(DataType::Type::VARSIZED))
+        {
+            layout.references.push_back({.offset = field.fieldOffset + getNullFlagSize(field.type), .stride = getTupleSize()});
+        }
+    }
+    return layout;
 }
 
 std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames() const

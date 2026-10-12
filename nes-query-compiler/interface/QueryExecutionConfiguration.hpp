@@ -68,6 +68,11 @@ public:
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
+    UIntOption emitCoalescingDelay
+        = {"emit_coalescing_delay_us",
+           "0",
+           "Microseconds an emit may hold an output to merge it with those of neighboring inputs. 0 disables coalescing.",
+           {std::make_shared<NumberValidation>()}};
 
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
 
@@ -82,6 +87,7 @@ private:
             &numberOfPartitions,
             &numberOfRecordsPerKey,
             &operatorBufferSize,
+            &emitCoalescingDelay,
             &sliceCacheConfiguration,
             &bloomFilterConfiguration};
     }

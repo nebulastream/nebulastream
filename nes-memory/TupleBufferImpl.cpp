@@ -14,9 +14,11 @@
 
 #include <TupleBufferImpl.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <new>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -97,6 +99,8 @@ MemorySegment::~MemorySegment()
 BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
     : owner(owner), recycleCallback(std::move(recycleCallback))
 {
+    /// The reference counter and the metadata up to `originId` fit into one cache line.
+    static_assert(offsetof(BufferControlBlock, originId) + sizeof(originId) <= std::hardware_constructive_interference_size);
 }
 
 MemorySegment* BufferControlBlock::getOwner() const
@@ -259,9 +263,15 @@ SequenceNumber BufferControlBlock::getSequenceNumber() const noexcept
     return sequenceNumber;
 }
 
-void BufferControlBlock::setSequenceNumber(const SequenceNumber sequenceNumber)
+uint32_t BufferControlBlock::getSequenceRangeOffset() const noexcept
 {
-    this->sequenceNumber = sequenceNumber;
+    return sequenceRangeOffset;
+}
+
+void BufferControlBlock::setSequenceRange(const SequenceNumber last, const uint32_t offset)
+{
+    this->sequenceNumber = last;
+    this->sequenceRangeOffset = offset;
 }
 
 ChunkNumber BufferControlBlock::getChunkNumber() const noexcept

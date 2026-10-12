@@ -19,3 +19,4 @@ endfunction()
 
 add_nes_compiler_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
 add_nes_compiler_test(PipeliningPhaseFanOutTest UnitTests/PipeliningPhaseFanOutTest.cpp)
+add_nes_compiler_test(EmitCoalescingPhaseTest UnitTests/EmitCoalescingPhaseTest.cpp)

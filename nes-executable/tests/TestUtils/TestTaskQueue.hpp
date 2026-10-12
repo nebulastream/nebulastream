@@ -110,6 +110,11 @@ public:
 
     void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override;
 
+    void scheduleCallback(std::chrono::microseconds, std::function<void(PipelineExecutionContext&)>) override
+    {
+        INVARIANT(false, "The TestTaskQueue does not support scheduling callbacks");
+    }
+
     WorkerThreadId workerThreadId;
     PipelineId pipelineId;
 
