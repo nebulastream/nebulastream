@@ -310,7 +310,13 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
                    return std::nullopt;
                })
         | std::views::filter([](const auto& idAndStatus) { return idAndStatus.has_value(); })
-        | std::views::filter([](auto idAndStatus) { return idAndStatus->second.getGlobalQueryStatus() == DistributedQueryStatus::Running; })
+        /// A partially stopped query still has local queries running, e.g. the consumer of a finished producer.
+        | std::views::filter(
+               [](auto idAndStatus)
+               {
+                   const auto globalStatus = idAndStatus->second.getGlobalQueryStatus();
+                   return globalStatus == DistributedQueryStatus::Running || globalStatus == DistributedQueryStatus::PartiallyStopped;
+               })
         | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
 }
 
