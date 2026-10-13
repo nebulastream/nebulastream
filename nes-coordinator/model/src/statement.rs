@@ -20,7 +20,7 @@ use crate::ml_model;
 use crate::ml_model::{CreateMlModel, DropMlModel, GetMlModel};
 use crate::query;
 use crate::query::query_fragment;
-use crate::query::{CreateQuery, DropQuery, GetQuery};
+use crate::query::{CreateQuery, DropQuery, GetQuery, QueryWithFragments};
 use crate::sink;
 use crate::sink::{CreateSink, DropSink, GetSink};
 use crate::source::logical;
@@ -69,7 +69,7 @@ pub enum StatementResult {
     CreatedLogicalSource(logical::Model),
     CreatedPhysicalSource(physical::Model),
     CreatedSink(sink::Model),
-    CreatedQuery(query::Model, Vec<query_fragment::Model>),
+    CreatedQuery(QueryWithFragments),
     CreatedWorker(worker::Model),
     DroppedLogicalSources(Vec<logical::Model>),
     DroppedPhysicalSources(Vec<physical::Model>),
@@ -80,7 +80,7 @@ pub enum StatementResult {
     PhysicalSources(Vec<physical::Model>),
     Sinks(Vec<sink::Model>),
     ExplainedQuery(String),
-    Queries(Vec<(query::Model, Vec<query_fragment::Model>)>),
+    Queries(Vec<QueryWithFragments>),
     Workers(Vec<worker::Model>),
     WorkerStatus(worker::Model, Vec<query_fragment::Model>),
     WorkerVersions(Vec<WorkerVersion>),
@@ -107,8 +107,7 @@ impl Statement {
                 Ok(StatementResult::DroppedWorker(req.execute(conn).await?))
             }
             Statement::CreateQuery(req) => {
-                let (query, fragments) = req.execute(conn).await?;
-                Ok(StatementResult::CreatedQuery(query, fragments))
+                Ok(StatementResult::CreatedQuery(req.execute(conn).await?))
             }
             Statement::ExplainQuery { explanation } => {
                 Ok(StatementResult::ExplainedQuery(explanation))
