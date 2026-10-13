@@ -47,6 +47,21 @@ SELECT LOOKBACK(VARSIZED('lookback_strict_tripwire'), VARSIZED('SELECT a, b FROM
 FROM lab WHERE Wert < FLOAT64(0.0) INTO textSink;
 ----
 
+# A gated alert, as deployed: the reading reaches the sink only if the lookback found rows. A failed
+# lookback with a marker gets through, carrying the marker; one that found nothing does not.
+SELECT FMT(VARSIZED('{}|{}'), FallNr, L) AS T FROM (
+    SELECT FallNr, LOOKBACK(VARSIZED('lookback_marked_failure'), VARSIZED('SELECT a, b FROM prior'), VARSIZED('{}')) AS L
+    FROM lab WHERE Wert < FLOAT64(7.2))
+WHERE CHAR_LENGTH(L) > 0 INTO textSink;
+----
+1002|LOOKBACK_FAILED
+
+SELECT FMT(VARSIZED('{}|{}'), FallNr, L) AS T FROM (
+    SELECT FallNr, LOOKBACK(VARSIZED('lookback_marked_empty'), VARSIZED('SELECT a FROM prior'), VARSIZED('{}')) AS L
+    FROM lab WHERE Wert < FLOAT64(7.2))
+WHERE CHAR_LENGTH(L) > 0 INTO textSink;
+----
+
 # A parameter count that does not match the SQL's '?' markers is rejected at query submission.
 SELECT LOOKBACK(VARSIZED('lookback_fixture'), VARSIZED('SELECT x FROM prior WHERE fall = ?'), VARSIZED('{}')) AS T
 FROM lab INTO textSink;

@@ -53,7 +53,7 @@ constexpr auto CONFIG_ENVIRONMENT_VARIABLE = "NES_LOOKBACK_CONFIG";
 
 /// The keys a connection entry may carry. Anything else is a typo — reported rather than ignored,
 /// because a silently dropped `password` key would surface as a confusing connect failure.
-constexpr std::array<std::string_view, 12> KNOWN_KEYS{
+constexpr std::array<std::string_view, 13> KNOWN_KEYS{
     "db_host",
     "db_port",
     "database",
@@ -65,6 +65,7 @@ constexpr std::array<std::string_view, 12> KNOWN_KEYS{
     "max_rows",
     "max_result_bytes",
     "strict",
+    "on_failure",
     "rows"};
 
 std::string requiredString(const YAML::Node& node, const std::string& key, const std::string& connectionName)
@@ -161,6 +162,21 @@ std::unordered_map<std::string, LookbackConnection> LookbackConnectionRegistry::
         connection.limits.maxRows = optionalScalar<uint32_t>(node, "max_rows", connection.limits.maxRows);
         connection.limits.maxResultBytes = optionalScalar<uint32_t>(node, "max_result_bytes", connection.limits.maxResultBytes);
         connection.limits.strict = optionalScalar<bool>(node, "strict", connection.limits.strict);
+        if (node["on_failure"])
+        {
+            connection.onFailure = node["on_failure"].as<std::string>();
+            /// An empty marker is indistinguishable from "found nothing", which is the one thing it
+            /// exists to avoid.
+            if (connection.onFailure->empty())
+            {
+                throw CannotLoadConfig("Lookback connection '{}' sets an empty 'on_failure'; leave it out instead", name);
+            }
+            if (connection.limits.strict)
+            {
+                throw CannotLoadConfig(
+                    "Lookback connection '{}' sets both 'strict' and 'on_failure'; a failure either fails the query or is marked", name);
+            }
+        }
 
         if (node["rows"])
         {

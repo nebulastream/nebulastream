@@ -112,8 +112,7 @@ uint32_t LookbackContext::run()
         {
             throw;
         }
-        NES_WARNING("Lookback '{}' failed; the alert is emitted without lookback context: {}", connection.name, exception.what());
-        return 0;
+        return failed(state, "failed", exception);
     }
 
     try
@@ -150,10 +149,24 @@ uint32_t LookbackContext::run()
         {
             throw;
         }
-        NES_WARNING("Lookback '{}' could not be rendered; the alert is emitted without it: {}", connection.name, exception.what());
-        state.rendered.clear();
+        return failed(state, "could not be rendered", exception);
     }
 
+    return static_cast<uint32_t>(state.rendered.size());
+}
+
+uint32_t LookbackContext::failed(ThreadState& state, const std::string_view what, const Exception& exception) const
+{
+    if (connection.onFailure)
+    {
+        NES_ERROR("Lookback '{}' {}; it renders as its failure marker: {}", connection.name, what, exception.what());
+        state.rendered = *connection.onFailure;
+    }
+    else
+    {
+        NES_WARNING("Lookback '{}' {}; the alert is emitted without lookback context: {}", connection.name, what, exception.what());
+        state.rendered.clear();
+    }
     return static_cast<uint32_t>(state.rendered.size());
 }
 

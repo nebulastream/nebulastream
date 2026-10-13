@@ -28,3 +28,16 @@ connections:
     rows:
       - ["first"]
       - ["second"]
+
+  # A failure with a marker: two columns against a one-placeholder template fail to render, and
+  # on_failure turns that into a marker instead of the empty string — so a gate on "found rows"
+  # lets the reading through, and whoever receives it can say the check could not be made.
+  lookback_marked_failure:
+    on_failure: "LOOKBACK_FAILED"
+    rows:
+      - ["one", "two"]
+
+  # The same marker on a connection that finds nothing: nothing found stays the empty string.
+  lookback_marked_empty:
+    on_failure: "LOOKBACK_FAILED"
+    rows: []

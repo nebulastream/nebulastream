@@ -18,9 +18,11 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <ErrorHandling.hpp>
 #include <LookbackConnections.hpp>
 #include <LookbackProvider.hpp>
 #include <LookbackTemplate.hpp>
@@ -55,8 +57,9 @@ public:
     /// Runs the query and renders the rows. Returns the byte length of the rendering, which the
     /// caller uses to size the arena allocation before calling copyOut.
     ///
-    /// On a database failure with `strict` unset this logs and returns 0 — an alert that fires is
-    /// clinically more important than the context attached to it.
+    /// On a failure with `strict` unset this logs and renders the connection's `on_failure` marker,
+    /// or nothing when it has none — an alert that fires is clinically more important than the
+    /// context attached to it.
     uint32_t run();
 
     /// Copies the rendering produced by the last run() on this thread into `destination`.
@@ -75,6 +78,9 @@ private:
     /// Stable reference: the states are heap-allocated, so the map may rehash while a caller holds
     /// one.
     ThreadState& threadState() const;
+
+    /// What a failure renders as when `strict` is unset: the marker, or nothing.
+    uint32_t failed(ThreadState& state, std::string_view what, const Exception& exception) const;
 
     LookbackConnection connection;
     std::string sql;

@@ -54,6 +54,14 @@ struct LookbackConnection
 {
     std::string name;
     LookbackLimits limits;
+    /// Unset (the default): a failure renders as the empty string, exactly like a lookback that
+    /// found nothing. Set: a failure renders as this text instead, and is logged as an error.
+    /// "Found nothing" and "could not ask" mean different things to a clinician — a query that gates
+    /// an alert on the lookback finding rows would otherwise suppress the alert on a database
+    /// timeout without a trace. With a marker the failure travels on in the tuple, and whoever
+    /// receives it can tell the two apart and say so. Not combinable with `strict`, which fails the
+    /// query instead.
+    std::optional<std::string> onFailure;
     /// A real database.
     std::optional<ODBC::ConnectionInformation> odbc;
     /// A test fixture: these rows are returned for every call, no database involved. This is what

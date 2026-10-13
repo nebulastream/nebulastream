@@ -195,6 +195,33 @@ TEST_F(LookbackFunctionTest, rejectsConnectionThatIsBothFixtureAndDatabase)
         ErrorCode::CannotLoadConfig);
 }
 
+TEST_F(LookbackFunctionTest, parsesFailureMarker)
+{
+    const auto parsed = Lookback::LookbackConnectionRegistry::parse(R"(
+connections:
+  marked:
+    on_failure: "LOOKBACK_FAILED"
+    rows: []
+  unmarked:
+    rows: []
+)");
+    ASSERT_TRUE(parsed.at("marked").onFailure.has_value());
+    EXPECT_EQ(*parsed.at("marked").onFailure, "LOOKBACK_FAILED");
+    EXPECT_FALSE(parsed.at("unmarked").onFailure.has_value());
+}
+
+/// An empty marker is "found nothing" again, and strict fails the query instead of marking: both
+/// are contradictions, rejected rather than resolved one way or the other.
+TEST_F(LookbackFunctionTest, rejectsEmptyOrStrictFailureMarker)
+{
+    ASSERT_EXCEPTION_ERRORCODE(
+        Lookback::LookbackConnectionRegistry::parse("connections:\n  a:\n    on_failure: \"\"\n    rows: []\n"),
+        ErrorCode::CannotLoadConfig);
+    ASSERT_EXCEPTION_ERRORCODE(
+        Lookback::LookbackConnectionRegistry::parse("connections:\n  a:\n    on_failure: x\n    strict: true\n    rows: []\n"),
+        ErrorCode::CannotLoadConfig);
+}
+
 TEST_F(LookbackFunctionTest, expandsEnvironmentReferences)
 {
     /// POSIX-only, so no std:: header declares them; the mt-unsafe warning is about a concurrent
@@ -278,6 +305,21 @@ TEST_F(LookbackFunctionTest, templateMismatchDoesNotLoseTheAlert)
 {
     Lookback::LookbackContext context{fixtureConnection({{"one", "two"}}), "SELECT a, b FROM v", Lookback::RowTemplate::parse("{}")};
     EXPECT_EQ(runAndRender(context, {}), "");
+}
+
+/// With a marker, a failure is told apart from "found nothing": it renders as the marker, and a
+/// lookback that found nothing on the same connection still renders as the empty string.
+TEST_F(LookbackFunctionTest, failureRendersAsTheMarker)
+{
+    auto connection = fixtureConnection({{"one", "two"}});
+    connection.onFailure = "LOOKBACK_FAILED";
+    Lookback::LookbackContext context{std::move(connection), "SELECT a, b FROM v", Lookback::RowTemplate::parse("{}")};
+    EXPECT_EQ(runAndRender(context, {}), "LOOKBACK_FAILED");
+
+    auto empty = fixtureConnection({});
+    empty.onFailure = "LOOKBACK_FAILED";
+    Lookback::LookbackContext nothingFound{std::move(empty), "SELECT a FROM v", Lookback::RowTemplate::parse("{}")};
+    EXPECT_EQ(runAndRender(nothingFound, {}), "");
 }
 
 TEST_F(LookbackFunctionTest, strictConnectionPropagatesTheFailure)
