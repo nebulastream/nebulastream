@@ -1,0 +1,12 @@
+# pytest cache
+runner/.pytest_cache/
+__pycache__/
+
+# LLVM coverage raw profiles and merged data
+*.profraw
+*.profdata
+runner/profraw/
+
+# Core dumps — the sanitizer canary deliberately aborts, which can dump core
+core
+core.*

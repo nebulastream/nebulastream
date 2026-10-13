@@ -70,11 +70,16 @@ INGORED_ENDINGS = {
     "properties",
     "svg",
     "test",
+    "template",
+    "conf",
+    "tsan-supp",
+    "lsan-supp",
     "xml",
     "yaml",
     "zip",
     "bin",
     "sql",
+    "nesql",
     "nix",
     "lock",
     "nes",
@@ -90,6 +95,7 @@ INGORED_ENDINGS = {
     "gitattributes",
     "html",
     "scss",
+    "python-version",
 }
 
 VENDORED_FILES = {

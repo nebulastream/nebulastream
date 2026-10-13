@@ -104,9 +104,8 @@ physical:
     source_config:
       socket_host: localhost
       socket_port: 50501
-      socket_buffer_size: 65536
       flush_interval_ms: 100
-      connect_timeout_seconds: 60
+      connect_timeout_ms: 60000
   - logical: lrb
     host: localhost:8080
     type: File
@@ -138,9 +137,8 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
   'localhost:8080' AS "SOURCE"."HOST",
   'localhost' as "SOURCE".SOCKET_HOST,
   50501 as "SOURCE".SOCKET_PORT,
-  65536 as "SOURCE".SOCKET_BUFFER_SIZE,
   100 as "SOURCE".FLUSH_INTERVAL_MS,
-  60 as "SOURCE".CONNECT_TIMEOUT_SECONDS,
+  60000 as "SOURCE".CONNECT_TIMEOUT_MS,
   'CSV' as INPUT_FORMATTER."TYPE",
   '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
   ',' as INPUT_FORMATTER.FIELD_DELIMITER
@@ -227,9 +225,8 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
   'localhost:8080' AS "SOURCE"."HOST",
   'localhost' as "SOURCE".SOCKET_HOST,
   50501 as "SOURCE".SOCKET_PORT,
-  65536 as "SOURCE".SOCKET_BUFFER_SIZE,
   100 as "SOURCE".FLUSH_INTERVAL_MS,
-  60 as "SOURCE".CONNECT_TIMEOUT_SECONDS,
+  60000 as "SOURCE".CONNECT_TIMEOUT_MS,
   'CSV' as INPUT_FORMATTER."TYPE",
   '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
   ',' as INPUT_FORMATTER.FIELD_DELIMITER

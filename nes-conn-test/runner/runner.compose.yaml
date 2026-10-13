@@ -1,0 +1,114 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# runner.compose.yaml — the single, framework-owned `runner` service.
+#
+# This is the one copy of what used to be a ~45-line `runner:` stanza
+# duplicated verbatim into every plugin's conn-test/compose.yaml (docker-
+# setup-v3 §5.1). It names no plugin, no broker, and no port — it is pure
+# framework plumbing: the dev-image container that hosts pytest +
+# conntest-harness.
+#
+# The `conntest` CLI merges this file ON TOP of a plugin's compose.yaml
+# (`docker compose -f <plugin>/conn-test/compose.yaml -f runner.compose.yaml
+# -p <project> ...`) and sequences them:
+#
+#   1. `up -d --wait <data-services>`   — bring up the plugin's data
+#      service(s) (broker / db / …) and block on their healthchecks.
+#   2. `run --rm --no-deps runner …`    — create a one-off runner container
+#      ON THE SAME PROJECT NETWORK as the data services. Because compose
+#      *creates* the runner on the project network, the harness reaches
+#      `<service>:<port>` (e.g. `broker:1883`) via the embedded docker DNS
+#      with NO `docker network connect $HOSTNAME` self-attach (the v2
+#      mistake that broke CI). This is the v1 invariant, kept.
+#   3. `down -v`                        — tear the whole project down.
+#
+# There is deliberately NO `depends_on` here: the orchestrator already
+# gated step 1 on the data-service healthcheck before step 2 starts the
+# runner, so the generic runner needs no knowledge of what it is waiting
+# for. That decoupling is exactly what lets this file stay plugin-agnostic.
+#
+# Required env vars (set by the `conntest` CLI; see
+# `conntest_runner/cli.py`):
+#
+#   CONNTEST_DEV_IMAGE       dev image for the runner. MUST match the image
+#                            the harness was built against so its
+#                            libstdc++ / libc++ links resolve.
+#   CONNTEST_HOST_UID/GID    so files the runner writes under the bind
+#                            mount (junit xml, report.json, observed.bin,
+#                            the uv venv) are owned by the host user.
+#   HOST_NEBULASTREAM_ROOT   host-daemon-visible path of the repo (the
+#                            bind-mount *source*).
+#   CONNTEST_CONTAINER_REPO  bind-mount *target* inside the runner — must
+#                            equal the repo path the build was configured
+#                            against (`CMAKE_HOME_DIRECTORY` in the build's
+#                            CMakeCache.txt) so the harness's compiled
+#                            absolute paths to plugin .so files / debug
+#                            info / profraws resolve. On CI this equals
+#                            HOST_NEBULASTREAM_ROOT; locally it is
+#                            typically `/tmp/nebulastream`.
+
+services:
+  runner:
+    image: ${CONNTEST_DEV_IMAGE}
+    # Match the host user so files the runner writes under the bind mount
+    # end up owned by the right uid on the host (not root).
+    user: "${CONNTEST_HOST_UID}:${CONNTEST_HOST_GID}"
+    volumes:
+      - ${HOST_NEBULASTREAM_ROOT}:${CONNTEST_CONTAINER_REPO}
+    working_dir: ${CONNTEST_CONTAINER_REPO}/nes-conn-test/runner
+    environment:
+      # uv writes its venv + cache under $HOME; point at /tmp inside the
+      # runner container (world-writable, container-local) so we do not
+      # litter the host repo and do not fight the dev image's /home layout.
+      # uv places the workspace .venv next to the workspace-root pyproject.toml
+      # regardless of $HOME — that root is the repo root (/pyproject.toml), so
+      # the venv ends up at <repo>/.venv under the bind mount (gitignored).
+      HOME: /tmp
+      # Forwarded so a `conntest run --build` reconfigure inside this runner
+      # configures the shared build dir IDENTICALLY to CLion. The root
+      # CMakeLists adds `-fdebug-prefix-map=<container>=<host>` to every
+      # compile command iff HOST_NEBULASTREAM_ROOT is set at configure time.
+      # If the runner reconfigures without it, that flag flips on every
+      # object's command line, so ninja rebuilds everything — and CLion then
+      # flips it back and rebuilds again (a build-dir ping-pong). Passing it
+      # through (same value CLion's Docker toolchain uses) keeps the two
+      # builds in sync. NB: CLion's toolchain must also set
+      # HOST_NEBULASTREAM_ROOT (Settings -> Build -> Docker -> Container
+      # Settings) — it is the documented requirement for gutter-breakpoint
+      # debug-info mapping too.
+      HOST_NEBULASTREAM_ROOT: ${HOST_NEBULASTREAM_ROOT:-}
+      # Forwarded so the inner pytest sees the same sanitizer-aware READY
+      # budget the CI step set (60s under sanitizers; 10s default locally).
+      CONNTEST_READY_TIMEOUT_S: ${CONNTEST_READY_TIMEOUT_S:-10}
+      # Sanitizer-option passthrough. The values are assembled host-side by
+      # `conntest`: CI exports the lane toggles (detect_leaks for address,
+      # print_stacktrace for undefined) and `_apply_plugin_suppressions` adds
+      # the merged `suppressions=` path (a build-dir file that resolves in the
+      # runner via the bind mount). The runner's bash body then appends the
+      # in-image `external_symbolizer_path` (the symbolizer lives in the dev
+      # image, not on the host VM). Stock broker/db images never receive
+      # these. Defaults are empty so a non-sanitizer lane is a clean no-op.
+      ASAN_OPTIONS: ${ASAN_OPTIONS:-}
+      LSAN_OPTIONS: ${LSAN_OPTIONS:-}
+      TSAN_OPTIONS: ${TSAN_OPTIONS:-}
+      UBSAN_OPTIONS: ${UBSAN_OPTIONS:-}
+      # Coverage: when the coverage flow drives us, the harness must write
+      # profraws to a host-visible path so the merge step can glob them.
+      # The bind-mount makes the same absolute path resolve inside the
+      # runner as on the host. Empty default → harness uses its built-in
+      # default (no-op for non-coverage builds).
+      LLVM_PROFILE_FILE: ${LLVM_PROFILE_FILE:-}
+    # The orchestrator runs the actual command via `docker compose run`;
+    # this entrypoint just keeps a plain `up` of the service alive (used by
+    # the debug flow, which `up`s the runner and `exec`s pytest into it).
+    entrypoint: ["sleep", "infinity"]

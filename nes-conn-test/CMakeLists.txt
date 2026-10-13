@@ -1,0 +1,214 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Connectivity tests (conn tests)
+# The whole body is gated on NES_ENABLES_TESTS so a production
+# configuration (NES_ENABLES_TESTS=OFF) gets nothing from this dir.
+if (NES_ENABLES_TESTS)
+    # conntest-harness — the connectivity-test stepper, executing one command per
+    # line over the runner's unix-domain control socket so the runner can sequence
+    # bind/open/fill/close (or bind/start/write/stop) deterministically and
+    # SIGKILL+respawn it for reconnect. The source path drives the engine's real
+    # SourceThread (a SourceHandle constructed as SourceProvider::lower would, with
+    # the connector wrapped in an InterceptorSource for a synchronous open signal) and a
+    # custom emit into a bounded MPMC admission queue; the sink path lowers via
+    # SinkProvider::lower and drives the Sink directly (sinks have no engine thread).
+    add_executable(conntest-harness
+            driver/Binder.cpp
+            driver/ConntestStarter.cpp
+            driver/ControlChannel.cpp
+            driver/Formatter.cpp
+            driver/Report.cpp
+            driver/SessionCommand.cpp
+            driver/SinkSession.cpp
+            driver/SourceSession.cpp
+    )
+
+    # Driver-internal headers (ControlChannel.hpp) are included with angle
+    # brackets per the repo's format rule (see
+    # `.claude/skills/nes-format/SKILL.md` — quote-include rewrite). Expose
+    # the driver/ directory so the search finds them.
+    target_include_directories(conntest-harness PRIVATE driver)
+
+    # argparse backs the *Starter command-line parser (driver/ConntestStarter.cpp).
+    # IMPORTED targets from find_package are directory-scoped, so call it here
+    # rather than relying on transitive propagation.
+    find_package(argparse CONFIG REQUIRED)
+
+    # M2.1 source-mode link deps (conn-tests-m2.1-logistics.md §3.7).
+    #
+    # Deviations from the contract's literal target names, after grepping
+    # add_library() in this checkout:
+    #   - The contract lists `nes-catalogs`; no such target exists. The
+    #     SourceCatalog implementation lives in nes-sources
+    #     (nes-sources/src/SourceCatalog.cpp), so linking nes-sources
+    #     already provides it.
+    #   - The contract lists `nes-logger`; no such target exists. The
+    #     NesLogger / spdlog facade lives in nes-common
+    #     (nes-common/src/Util/Logger/), so the logger-quarantine TU is
+    #     served by linking nes-common.
+    #   - The contract lists `magic_enum::magic_enum` explicitly; we drop
+    #     the explicit reference and rely on transitive PUBLIC propagation
+    #     from nes-common (which calls find_package(magic_enum) and
+    #     PUBLIC-links it at nes-common/CMakeLists.txt:64,73). IMPORTED
+    #     targets defined by find_package are scoped to the directory the
+    #     call was made in; a sibling subdirectory like nes-conn-test
+    #     cannot reference `magic_enum::magic_enum` by name unless it
+    #     either calls find_package itself or — as we do here — pulls
+    #     it in via PUBLIC propagation from a target that did.
+    target_link_libraries(conntest-harness PRIVATE
+            nes-sql-parser            # GF-35 parser + binder (ManagedAntlrParser, StatementBinder)
+            nes-sources               # GF-31 Source; also owns SourceCatalog
+            nes-sinks                 # M2.2 Sink; SinkProvider::lower, SinkCatalog, BackpressureHandler
+            nes-memory                # GF-31 / INV-3 BufferManager
+            nes-common                # GF-46 Logger + GF-39 magic_enum (transitively)
+            argparse::argparse        # *Starter command-line parser
+            # driver/Formatter.cpp — the JSONL <-> native codec assembled from the
+            # engine's own JSON input/output formatters in an interpreted Scan->Emit
+            # pipeline. This is the point at which the harness stops being Nautilus-free
+            # (a conscious trade): the non-test subset of what conntest-formatter-test
+            # links. nes-input-formatter-provider pulls in nes-input-formatters and the
+            # JSON formatter plugins transitively (registry PUBLIC-link), and
+            # nes-nautilus (LowerSchemaProvider + nes-output-formatters).
+            nes-input-formatter-provider  # provideInputFormatter + InputFormatterDescriptor
+            nes-physical-operators        # Scan/Emit physical operators + EmitOperatorHandler
+            nes-runtime                   # Pipeline + CompiledExecutablePipelineStage
+    )
+
+    # Every connector plugin reaches the binary through nes-sources / nes-sinks: plugins attach to
+    # their component via link_plugin_library (INTERFACE) and their registry glue is whole-archive
+    # linked (cmake/RuntimeRegistrationUtil.cmake). ConntestStarter calls loadBuiltinPlugins()
+    # before binding, so a new connector needs zero edits here.
+
+    # Root CMakeLists.txt sets a global CMAKE_CXX_STANDARD (23), which a
+    # plain add_executable inherits. Pin it per-target as well to make the
+    # requirement explicit and robust against any toolchain-file override.
+    set_target_properties(conntest-harness PROPERTIES
+            CXX_STANDARD 23
+            CXX_STANDARD_REQUIRED ON
+    )
+
+    # The runner expects the binary at exactly
+    # <build-dir>/nes-conn-test/conntest-harness. The root CMakeLists.txt
+    # sets no global CMAKE_RUNTIME_OUTPUT_DIRECTORY, so the CMake default
+    # already places it in <build>/nes-conn-test/. Pin it explicitly anyway
+    # so the contract holds regardless of any future global override.
+    set_target_properties(conntest-harness PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    # The repo-wide -fdebug-prefix-map=container=host is applied in the
+    # root CMakeLists.txt (gated on HOST_NEBULASTREAM_ROOT), so every TU
+    # — driver/, nes-sources, plugins, etc. has host paths in
+    # its debug info and CLion's gutter breakpoints match without any
+    # <mappings> element in the Remote Debug config.
+    #
+    # The conn-test debug + smoke flows run pytest INSIDE the per-plugin
+    # compose `runner` service (the unix-domain control socket stays
+    # container-internal), driven by the `conntest` CLI
+    # (`nes-conn-test/runner/conntest`). The CLion run configs live under
+    # .idea/, which is gitignored at the repo root — generate them at
+    # configure time instead of checking in XMLs (CLion 2026.1 also does
+    # not expand $PROJECT_DIR$ inside CLion_Remote's symbolFile attribute,
+    # so `conntest install-clion` bakes the absolute host path in).
+    # NES_HOST_REPO_ROOT is HOST_NEBULASTREAM_ROOT, resolved once in the root
+    # CMakeLists.txt (which also warns when it is unset or mismatched). When set,
+    # generate the run configs; otherwise skip quietly — the root already warned
+    # and the prefix-map was not applied.
+    if (NES_HOST_REPO_ROOT)
+        # install-clion reads HOST_NEBULASTREAM_ROOT; pass the resolved value
+        # through explicitly so the generated symbolFile/launcher paths match.
+        # Idempotent; exits fast when already up to date.
+        set(_CONNTEST_CLI
+                "${CMAKE_SOURCE_DIR}/nes-conn-test/runner/conntest")
+        if (EXISTS "${_CONNTEST_CLI}")
+            execute_process(
+                    COMMAND ${CMAKE_COMMAND} -E env
+                            "HOST_NEBULASTREAM_ROOT=${NES_HOST_REPO_ROOT}"
+                            python3 "${_CONNTEST_CLI}" install-clion --quiet
+                    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                    OUTPUT_VARIABLE _CLION_SETUP_OUT
+                    ERROR_VARIABLE _CLION_SETUP_ERR
+                    RESULT_VARIABLE _CLION_SETUP_RC
+            )
+            if (NOT _CLION_SETUP_RC EQUAL 0)
+                message(WARNING
+                        "conntest: install-clion failed (rc=${_CLION_SETUP_RC}). "
+                        "Run it manually after build:\n"
+                        "  ./nes-conn-test/runner/conntest install-clion\n"
+                        "stderr: ${_CLION_SETUP_ERR}")
+            endif ()
+        endif ()
+    endif ()
+
+    # Coverage opt-in. Instruments conntest-harness so the lcov uploaded
+    # by code_coverage.yml includes the harness driver and (transitively)
+    # the connector code it exercises via the pytest battery.
+    if (CODE_COVERAGE)
+        target_compile_options(conntest-harness PRIVATE
+                -fprofile-instr-generate -fcoverage-mapping
+        )
+        target_link_options(conntest-harness PRIVATE
+                -fprofile-instr-generate -fcoverage-mapping
+        )
+
+        # Hook the pytest runner into ccov-all-export so the conntest
+        # binaries show up in the lcov uploaded by code_coverage.yml.
+        # The coverage lane runs the full conformance battery against
+        # the instrumented build — no marker filter; the only difference
+        # from the sanitizer lanes is the build flavor.
+        if (TARGET ccov-all-processing)
+            add_custom_target(ccov-run-conntest-pytest
+                    COMMAND python3
+                            ${CMAKE_CURRENT_SOURCE_DIR}/runner/conntest coverage
+                            --build-dir ${CMAKE_BINARY_DIR}
+                            --ccov-dir ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}
+                            --harness $<TARGET_FILE:conntest-harness>
+                    DEPENDS ccov-preprocessing
+                            conntest-harness
+                    JOB_POOL ccov_serial_pool
+                    VERBATIM
+            )
+            add_dependencies(ccov-all-processing ccov-run-conntest-pytest)
+        endif ()
+    endif ()
+
+    # conntest-formatter-test — gtest round-trip for the JSONL <-> native
+    # Formatter (driver/Formatter.cpp). Registered with CTest via add_nes_test
+    # (cmake/NebulaStreamTest.cmake); the conn-test conformance battery itself is
+    # pytest, so this is the component's only CTest unit test.
+    add_nes_test(conntest-formatter-test driver/Formatter.cpp driver/FormatterTest.cpp)
+    target_include_directories(conntest-formatter-test PRIVATE driver)
+
+    # nes-input-formatters-test-utils provides the test-only helpers FormatterTest
+    # uses (InputFormatterTestUtil for building native tuples + comparison, and
+    # BaseUnitTest), and transitively nes-input-formatters and nes-nautilus
+    # (LowerSchemaProvider + nes-output-formatters). The Formatter itself now runs on
+    # the production FormatterPEC (driver/FormatterPEC.hpp), not the executable-tests
+    # double, so it no longer depends on nes-executable-test-utils. The remaining
+    # entries are the engine pieces the Formatter assembles its pipeline from.
+    #
+    # No whole-archive force-link of the JSON formatter plugins is needed (unlike
+    # the Source/Sink blocks above): generate_plugin_registrar() PUBLIC-links each
+    # formatter plugin into its registry component AND emits a registerAll() that
+    # *references* every plugin's Register* function (cmake/PluginRegistrationUtil.cmake).
+    # That reference is resolved through normal archive linkage once the registry is
+    # touched — which the Formatter does via provideInputFormatter /
+    # lowerSchemaWithOutputFormat — so the JSON plugins are pulled in transitively.
+    # This is the same mechanism the nes-input-formatters unit tests rely on.
+    target_link_libraries(conntest-formatter-test
+            nes-input-formatters-test-utils
+            nes-input-formatter-provider   # provideInputFormatter + InputFormatterDescriptor
+            nes-physical-operators         # Scan/Emit physical operators + EmitOperatorHandler
+            nes-runtime                    # Pipeline + CompiledExecutablePipelineStage
+    )
+endif ()

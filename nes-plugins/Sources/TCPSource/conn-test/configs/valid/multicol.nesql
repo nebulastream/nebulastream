@@ -1,0 +1,14 @@
+-- A valid multi-column TCP source config — same byte-pipe path as basic.nesql,
+-- but a mixed-type, multi-column schema (INT32 / VARSIZED / FLOAT64). It proves
+-- the JSONL wire form and the typed read-back compare are schema-driven, not
+-- hardwired to the single-UINT8 case. Only SOCKET_HOST/SOCKET_PORT are
+-- rewritten by the loader; the keys below are authored literally and identical
+-- to basic.nesql.
+CREATE LOGICAL SOURCE multi_input (id INT32 NOT NULL, label VARSIZED NOT NULL, ratio FLOAT64 NOT NULL);
+
+CREATE PHYSICAL SOURCE FOR multi_input TYPE TCP SET (
+    'localhost' AS "SOURCE".SOCKET_HOST,
+    '9000'      AS "SOURCE".SOCKET_PORT,
+    '100'       AS "SOURCE".FLUSH_INTERVAL_MS,
+    'JSON'      AS INPUT_FORMATTER."TYPE"
+);

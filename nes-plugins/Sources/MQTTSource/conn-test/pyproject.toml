@@ -1,0 +1,35 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Per-plugin conn-test dependency declaration (uv workspace member).
+#
+# The MQTTSource loader (`loader.py`) seeds an MQTT broker via the paho-mqtt
+# client. Declaring it here — not in the shared runner pyproject — is the
+# plugin-encapsulation contract: adding/removing this connector touches only
+# its own directory. `package = false` because the loader is loaded by the
+# runner's importlib discovery as a loose module, never built as a package;
+# this member contributes its dependency only. The repo-root workspace
+# assembles the union via `uv sync --all-packages` (see /pyproject.toml).
+#
+# `>=2,<3` pins paho-mqtt 2.x: the loader uses the VERSION2 callback API
+# (`CallbackAPIVersion`, introduced in 2.0), and 3.x drops the v1 fallback
+# entirely. 2.x ships the `wait_for_publish(timeout=...)` API the loader relies
+# on for durability.
+
+[project]
+name = "conntest-plugin-mqttsource"
+version = "0"
+requires-python = ">=3.12"
+dependencies = ["paho-mqtt>=2,<3"]
+
+[tool.uv]
+package = false
