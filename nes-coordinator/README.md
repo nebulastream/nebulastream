@@ -87,7 +87,7 @@ It then returns immediately or waits for the catalog to satisfy the requested co
 The controller starts the reconciliation process by reading the desired state from the catalog and managing the corresponding worker tasks.  
 Each worker task manages the query fragments assigned to its worker.  
 The fragment tasks drive the fragment lifecycle and persist observed state changes in the catalog.  
-These changes allow the request handler to resolve waiting requests.
+These changes allow the request handler to resolve waiting requests.  
 The catalog derives the overall query state from the observed states of its fragments.
 
 ## Reconciliation
@@ -106,15 +106,11 @@ The controller communicates with remote workers through gRPC and with embedded w
 
 ## Components
 
-### [Coordinator](coordinator/)
+### [Migration](migration/README.md)
 
-The `coordinator` crate runs the request handler and controller together.
-It defines the request entry point, the SQL planner interface, and the rules for immediate and waiting responses.
+The `migration` crate defines and applies the catalog schema.
+Its migrations create the tables, indexes, and triggers that enforce catalog invariants and derive state across related rows.
 
-### [Controller](controller/)
-
-The `controller` crate reconciles the catalog with the workers.
-It manages the task hierarchy for workers and query fragments and supports remote and embedded worker transports.
 
 ### [Model](model/README.md)
 
@@ -122,17 +118,8 @@ The `model` crate defines the coordinator catalog and the Rust interfaces used t
 It contains catalog entities for workers, sources, sinks, models, queries, and query fragments.
 It also defines the desired and observed states used to manage workers and query fragments.
 
-### [Migration](migration/README.md)
 
-The `migration` crate defines and applies the catalog schema.
-Its migrations create the tables, indexes, and triggers that enforce catalog invariants and derive state across related rows.
+### [Controller](controller/README.md)
 
-### [Bridge](bridge/)
-
-The `bridge` crate connects the Rust coordinator with the C++ frontends, SQL planner, and embedded worker implementation.
-It translates requests, results, plans, worker calls, and errors across the language boundary.
-
-### [SQL Planner](sql-planner/)
-
-The `sql-planner` component parses SQL and converts it into a coordinator statement.
-For queries, it also produces the distributed fragments assigned to workers.
+The `controller` crate reconciles the catalog with the workers.
+It manages the task hierarchy for workers and query fragments and supports remote and embedded worker transports.
