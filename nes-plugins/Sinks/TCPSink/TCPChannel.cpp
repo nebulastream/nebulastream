@@ -397,9 +397,9 @@ std::optional<std::vector<TCPChannel::ResolvedAddress>> TCPChannel::resolveAddre
     return std::move(state.addresses);
 }
 
-/// Resolves the server addresses, sharing one deadline between DNS and connection attempts.
-/// Resolution failures can be transient, so they are retried after a 10 ms wait until the deadline.
-/// Each pass divides the remaining connection budget evenly among the resolved addresses.
+/// Resolves the server addresses and attempts to connect in passes that share one deadline.
+/// Each pass resolves the host again and divides the remaining budget evenly among the resolved addresses.
+/// Resolution failures can be transient, so a failed resolution falls back to the previously resolved addresses.
 /// Retries unsuccessful passes after a 10 ms wait, capped by the deadline.
 /// Returns the connected socket, or std::nullopt if cancellation is observed.
 /// Throws CannotOpenSink if the deadline expires before a connection is established.
@@ -408,53 +408,52 @@ std::optional<TCPChannel::Socket> TCPChannel::connectUntil(const std::chrono::mi
     std::unordered_map<std::string, std::vector<std::string>> connectionErrors;
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     std::optional<std::vector<ResolvedAddress>> addresses;
-    while (!addresses)
+    while (std::chrono::steady_clock::now() < deadline)
     {
-        const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
-        if (remaining <= std::chrono::milliseconds::zero())
+        /// Addresses are resolved on every pass, because the host may resolve to a different address while the peer recovers.
+        /// A failed resolution keeps the previously resolved addresses.
+        const auto resolutionBudget = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
+        if (resolutionBudget <= std::chrono::milliseconds::zero())
         {
             break;
         }
         try
         {
-            addresses = resolveAddresses(host, port, remaining, stopToken);
-            if (!addresses)
+            auto resolved = resolveAddresses(host, port, resolutionBudget, stopToken);
+            if (!resolved)
             {
                 return std::nullopt;
             }
+            addresses = std::move(resolved);
         }
         catch (const Exception& exception)
         {
             connectionErrors["resolve"].emplace_back(exception.what());
-            if (!waitUntil(
-                    std::min(deadline, std::chrono::steady_clock::now() + std::chrono::milliseconds{IO_POLL_INTERVAL_MS}), stopToken))
-            {
-                return std::nullopt;
-            }
         }
-    }
-    while (addresses && std::chrono::steady_clock::now() < deadline)
-    {
-        const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
-        const auto addressBudget
-            = std::max(remaining / static_cast<std::chrono::milliseconds::rep>(addresses->size()), std::chrono::milliseconds(1));
-        for (const auto& address : *addresses)
+
+        if (addresses)
         {
-            const auto timeLeft = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
-            if (timeLeft <= std::chrono::milliseconds::zero())
+            const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
+            const auto addressBudget
+                = std::max(remaining / static_cast<std::chrono::milliseconds::rep>(addresses->size()), std::chrono::milliseconds(1));
+            for (const auto& address : *addresses)
             {
-                break;
+                const auto timeLeft = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
+                if (timeLeft <= std::chrono::milliseconds::zero())
+                {
+                    break;
+                }
+                auto result = tryConnect(address, std::min(addressBudget, timeLeft), stopToken);
+                if (auto* connected = std::get_if<Ok>(&result))
+                {
+                    return std::move(connected->socket);
+                }
+                if (std::holds_alternative<Stopped>(result))
+                {
+                    return std::nullopt;
+                }
+                connectionErrors[address.toString()].push_back(std::move(std::get<Error>(result).message));
             }
-            auto result = tryConnect(address, std::min(addressBudget, timeLeft), stopToken);
-            if (auto* connected = std::get_if<Ok>(&result))
-            {
-                return std::move(connected->socket);
-            }
-            if (std::holds_alternative<Stopped>(result))
-            {
-                return std::nullopt;
-            }
-            connectionErrors[address.toString()].push_back(std::move(std::get<Error>(result).message));
         }
 
         if (!waitUntil(std::min(deadline, std::chrono::steady_clock::now() + std::chrono::milliseconds{IO_POLL_INTERVAL_MS}), stopToken))
