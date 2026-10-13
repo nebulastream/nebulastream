@@ -45,6 +45,7 @@
     "boost-process",
     "boost-scope",
     "boost-system",
+    "boost-beast",
     "boost-url",
     "c-ares",
     "cpptrace",

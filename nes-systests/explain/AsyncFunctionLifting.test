@@ -1,0 +1,162 @@
+# name: explain/AsyncFunctionLifting.test
+# description: Async functions are lifted out of projections into ASYNC_PROJECTION stages, one per nesting depth.
+# groups: [explain, async]
+
+CREATE LOGICAL SOURCE textStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR textStream TYPE File;
+ATTACH INLINE
+1,Hello
+
+CREATE SINK callSink(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File;
+CREATE SINK filterSink(id UINT64 NOT NULL, data VARSIZED NOT NULL) TYPE File;
+
+# Field and constant arguments are read directly; the pre-projection only reserves the result slot.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream INTO callSink;
+----
+== Optimized Global Plan ==
+SINK(CALLSINK)
+  PROJECTION(fields: [ID, __ASYNC_CALL_0 as RESPONSE])
+    ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(DATA, http://localhost/echo) as __ASYNC_CALL_0])
+      PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
+        SOURCE(TEXTSTREAM)
+==END==
+
+# A computed argument is materialized by a sync pre-projection; sync work on the result runs afterwards.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, CONCAT(HTTP_CALL(CONCAT(data, '!'), 'http://localhost/echo'), '?') AS response FROM textStream INTO callSink;
+----
+== Optimized Global Plan ==
+SINK(CALLSINK)
+  PROJECTION(fields: [ID, CONCAT(__ASYNC_CALL_1, ?) as RESPONSE])
+    ASYNC_PROJECTION(fields: [DATA, ID, __ASYNC_ARG_0, HTTP_CALL(__ASYNC_ARG_0, http://localhost/echo) as __ASYNC_CALL_1])
+      PROJECTION(fields: [DATA, ID, CONCAT(DATA, !) as __ASYNC_ARG_0,  as __ASYNC_CALL_1])
+        SOURCE(TEXTSTREAM)
+==END==
+
+# Nested calls: one async stage per nesting depth, sync glue in between.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http://localhost/b') AS response FROM textStream INTO callSink;
+----
+== Optimized Global Plan ==
+SINK(CALLSINK)
+  PROJECTION(fields: [ID, __ASYNC_CALL_2 as RESPONSE])
+    ASYNC_PROJECTION(fields: [DATA, ID, __ASYNC_ARG_1, __ASYNC_CALL_0, HTTP_CALL(__ASYNC_ARG_1, http://localhost/b) as __ASYNC_CALL_2])
+      PROJECTION(fields: [DATA, ID, __ASYNC_CALL_0, CONCAT(__ASYNC_CALL_0, DATA) as __ASYNC_ARG_1,  as __ASYNC_CALL_2])
+        ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(DATA, http://localhost/a) as __ASYNC_CALL_0])
+          PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
+            SOURCE(TEXTSTREAM)
+==END==
+
+# Equal calls are evaluated once.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, CONCAT(HTTP_CALL(data, 'http://localhost/echo'), HTTP_CALL(data, 'http://localhost/echo')) AS response FROM textStream INTO callSink;
+----
+== Optimized Global Plan ==
+SINK(CALLSINK)
+  PROJECTION(fields: [ID, CONCAT(__ASYNC_CALL_0, __ASYNC_CALL_0) as RESPONSE])
+    ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(DATA, http://localhost/echo) as __ASYNC_CALL_0])
+      PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
+        SOURCE(TEXTSTREAM)
+==END==
+
+# Each async stage becomes a Handoff sink / Async source pair on its worker; the producer half is a plan of its own.
+EXPLAIN (DISTRIBUTED) FORMAT TEXT
+SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream INTO callSink;
+----
+== Decomposed Plans ==
+-- 1 plan(s) on sink-node:8080 --
+0:
+SINK(CALLSINK)
+  PROJECTION(fields: [ID, __ASYNC_CALL_0 as RESPONSE])
+    SOURCE(NETWORK)
+-- 2 plan(s) on source-node:8080 --
+0:
+SINK(HANDOFF)
+  PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
+    SOURCE(TEXTSTREAM)
+1:
+SINK(NETWORK)
+  SOURCE(ASYNC)
+==END==
+
+# Nested calls: placement puts the second stage on another worker, so the pre-projection's output crosses the network first.
+EXPLAIN (DISTRIBUTED) FORMAT TEXT
+SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http://localhost/b') AS response FROM textStream INTO callSink;
+----
+== Decomposed Plans ==
+-- 2 plan(s) on sink-node:8080 --
+0:
+SINK(HANDOFF)
+  PROJECTION(fields: [DATA, ID, __ASYNC_CALL_0, CONCAT(__ASYNC_CALL_0, DATA) as __ASYNC_ARG_1,  as __ASYNC_CALL_2])
+    SOURCE(NETWORK)
+1:
+SINK(CALLSINK)
+  PROJECTION(fields: [ID, __ASYNC_CALL_2 as RESPONSE])
+    SOURCE(ASYNC)
+-- 2 plan(s) on source-node:8080 --
+0:
+SINK(HANDOFF)
+  PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
+    SOURCE(TEXTSTREAM)
+1:
+SINK(NETWORK)
+  SOURCE(ASYNC)
+==END==
+
+# An async predicate is evaluated into a field, filtered on, and projected away again.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, data FROM textStream WHERE HTTP_CALL(data, 'http://localhost/echo') = 'echo:Hello' INTO filterSink;
+----
+== Optimized Global Plan ==
+SINK(FILTERSINK)
+  PROJECTION(fields: [DATA, ID])
+    SELECTION(__ASYNC_PRED_0)
+      PROJECTION(fields: [DATA, ID, __ASYNC_CALL_1 = echo:Hello as __ASYNC_PRED_0, __ASYNC_CALL_1])
+        ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(DATA, http://localhost/echo) as __ASYNC_CALL_1])
+          PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_1])
+            SOURCE(TEXTSTREAM)
+==END==
+
+# An async predicate is evaluated into a field, filtered on, and projected away again.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, data FROM textStream WHERE HTTP_CALL(HTTP_CALL(data, 'http://localhost/echo'), 'http://localhost/echo') = 'echo:Hello' INTO filterSink;
+----
+== Optimized Global Plan ==
+SINK(FILTERSINK)
+  PROJECTION(fields: [DATA, ID])
+    SELECTION(__ASYNC_PRED_0)
+      PROJECTION(fields: [DATA, ID, __ASYNC_CALL_1 = echo:Hello as __ASYNC_PRED_0, __ASYNC_CALL_1])
+        ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(HTTP_CALL(DATA, http://localhost/echo), http://localhost/echo) as __ASYNC_CALL_1])
+          PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_1])
+            SOURCE(TEXTSTREAM)
+==END==
+
+# An async predicate is evaluated into a field, filtered on, and projected away again.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, HTTP_CALL(HTTP_CALL(data, 'http://localhost/echo'), 'http://localhost/echo') as output
+FROM textStream
+WHERE HTTP_CALL(HTTP_CALL(data, 'http://localhost/echo'), 'http://localhost/echo') = 'echo:Hello'
+INTO File();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [ID, __ASYNC_CALL_1 as OUTPUT])
+    SELECTION(__ASYNC_PRED_0)
+      PROJECTION(fields: [DATA, ID, __ASYNC_CALL_1 = echo:Hello as __ASYNC_PRED_0, __ASYNC_CALL_1])
+        ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(HTTP_CALL(DATA, http://localhost/echo), http://localhost/echo) as __ASYNC_CALL_1])
+          PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_1])
+            SOURCE(TEXTSTREAM)
+==END==
+
+# Directly nested calls run in one async stage; the inner result only feeds the outer call and needs no slot.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, HTTP_CALL(HTTP_CALL(data, 'http://localhost/a'), 'http://localhost/b') AS response FROM textStream INTO callSink;
+----
+== Optimized Global Plan ==
+SINK(CALLSINK)
+  PROJECTION(fields: [ID, __ASYNC_CALL_0 as RESPONSE])
+    ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(HTTP_CALL(DATA, http://localhost/a), http://localhost/b) as __ASYNC_CALL_0])
+      PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
+        SOURCE(TEXTSTREAM)
+==END==
