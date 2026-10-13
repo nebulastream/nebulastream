@@ -14,6 +14,11 @@
 
 set -eo pipefail
 
+# Git refuses a checkout owned by another uid ("dubious ownership"), which is the case for the bind-mounted repo in the dev container.
+# Trust this checkout for the git calls of this script only, without changing the user's git config.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="${REPO_ROOT}"
+
 cd "$(git rev-parse --show-toplevel)"
 
 # We have to set the pager to cat, because otherwise the output is paged and the script hangs for git grep commands.
