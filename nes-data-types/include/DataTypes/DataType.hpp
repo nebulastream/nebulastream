@@ -21,8 +21,10 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
+#include "Types/NESType.hpp"
 
 namespace NES
 {
@@ -133,6 +135,8 @@ struct DataType final
 
     Type type;
     bool nullable;
+
+    static NESFunctor functorOf(DataType::Type type);
 };
 
 template <>

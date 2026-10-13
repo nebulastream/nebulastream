@@ -16,8 +16,11 @@
 
 #include <functional>
 #include <string>
+
 #include <DataTypes/DataType.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include "Identifiers/QualifiedIdentifier.hpp"
+#include "Types/NESType.hpp"
 
 namespace NES
 {
@@ -29,14 +32,19 @@ struct DataTypeRegistryArguments
     DataType::NULLABLE nullable{DataType::NULLABLE::IS_NULLABLE};
 };
 
+struct DataTypeNESTypeClassTag
+{
+};
+
 using DataTypeFn = std::function<DataTypeRegistryReturnType(DataTypeRegistryArguments)>;
 
 /// Entries are keyed by the DataType::Type enumerator name; the entry expression constructs the
 /// DataType directly from the enumerator matching the key.
-class DataTypeRegistry : public RuntimeRegistry<DataTypeRegistry, std::string, DataTypeFn, /*CaseSensitive*/ false>
+class DataTypeRegistry : public RuntimeRegistry<DataTypeRegistry, QualifiedIdentifier, DataTypeFn, /*CaseSensitive*/ false>
 {
 public:
     static DataTypeRegistry& instance();
+    static NamedNESParametrizedTypeClass getParametrizedTypeClass();
 };
 
 }

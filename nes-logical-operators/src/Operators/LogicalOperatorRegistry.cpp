@@ -25,10 +25,16 @@ LogicalOperatorRegistry& LogicalOperatorRegistry::instance()
 
 NamedNESParametrizedTypeClass LogicalOperatorRegistry::getParametrizedTypeClass()
 {
-    return NamedNESParametrizedTypeClass{QualifiedIdentifier::parse("LogicalOperator"), NESParametrizedTypeClass{[](const NESTypeClassParameters&)
-    {
-        return NESTypeClass{ExplicitAny}
-    }}}
+    static const NESTypeClass LogicalOperatorClass{
+        LogicalOperatorTypeClassTag{},
+        [](const LogicalOperatorTypeClassTag&, const NESType& type)
+        {
+            return std::any_cast<const LogicalOperatorNESTypeDescriptor*>(&type.getDescriptor().getUnderlying()) != nullptr;
+        },
+        [](const LogicalOperatorTypeClassTag&, const LogicalOperatorTypeClassTag&) { return true; }};
+    return NamedNESParametrizedTypeClass{
+        QualifiedIdentifier::parse("LogicalOperator"),
+        NESParametrizedTypeClass{[&](const NESTypeClassParameters&) { return LogicalOperatorClass; }}};
 }
 
 }

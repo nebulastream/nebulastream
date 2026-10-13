@@ -36,7 +36,14 @@ struct LogicalOperatorRegistryArguments
 };
 
 using LogicalOperatorFn = std::function<LogicalOperatorRegistryReturnType(LogicalOperatorRegistryArguments)>;
+struct LogicalOperatorNESTypeDescriptor
+{
+    QualifiedIdentifier logicalOperatorName;
+};
 
+struct LogicalOperatorTypeClassTag
+{
+};
 /// Name-based construction surface for logical operators. Currently has no entries: operators
 /// gain one by implementing a static create member and adding an
 /// add_registry_entry(LogicalOperator <name>) line.

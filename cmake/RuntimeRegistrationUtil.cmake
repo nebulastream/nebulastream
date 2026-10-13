@@ -137,7 +137,7 @@ namespace
 {
 void describeRegistry(PluginDescriptor& descriptor)
 {
-    descriptor.registries.push_back(provideRegistry<${ARG_REGISTRY_CLASS}>(\"${ARG_REGISTRY_CLASS}\"));
+    descriptor.registries.push_back(provideRegistry<${ARG_REGISTRY_CLASS}>());
 }
 /// Static registration is the purpose of this initializer; it only stores a function pointer.
 /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
