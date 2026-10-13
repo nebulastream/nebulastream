@@ -17,7 +17,6 @@
 #include <cstddef>
 #include <functional>
 #include <type_traits>
-#include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <fmt/base.h>
 
@@ -34,7 +33,6 @@ concept same_as_ignoring_cvref = std::same_as<std::remove_cvref_t<T>, std::remov
 template <typename T, size_t IdListExtent>
 concept FieldConcept = requires(T field) {
     { field.getFullyQualifiedName() } -> detail::same_as_ignoring_cvref<QualifiedIdentifierBase<IdListExtent>>;
-    { field.getDataType() } -> std::convertible_to<DataType>;
     { std::hash<T>{}(field) };
 } && std::equality_comparable<T> && std::copy_constructible<T> && fmt::formattable<T>;
 

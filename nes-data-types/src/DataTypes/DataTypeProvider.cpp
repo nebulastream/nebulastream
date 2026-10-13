@@ -31,7 +31,12 @@ std::optional<DataType> tryProvideDataType(const std::string& type)
 
 std::optional<DataType> tryProvideDataType(const std::string& type, const DataType::NULLABLE isNullable)
 {
-    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(type))
+    auto typeNameExp = QualifiedIdentifier::tryParse(type);
+    if (!typeNameExp.has_value())
+    {
+        throw std::move(typeNameExp).error();
+    }
+    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(typeNameExp.value()))
     {
         return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
     }
@@ -45,7 +50,12 @@ DataType provideDataType(const std::string& type)
 
 DataType provideDataType(const std::string& type, const DataType::NULLABLE isNullable)
 {
-    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(type))
+    auto typeNameExp = QualifiedIdentifier::tryParse(type);
+    if (!typeNameExp.has_value())
+    {
+        throw std::move(typeNameExp).error();
+    }
+    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(typeNameExp.value()))
     {
         return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
     }

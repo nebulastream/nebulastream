@@ -88,20 +88,18 @@ add_subdirectory(rust/spdlog-bindings)
 
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/schema/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 
 # Generate BuildInfo.hpp after nes-common is fully configured so its target properties can be evaluated.
 generate_build_info(nes-common "${NES_BUILD_INFO_DIR}")
 
-# The Schema headers live in their own include directory behind a dedicated target on purpose:
-# Schema is meant for the logical/frontend layers, not for components that operate on
-# TupleBufferRefs or MemoryLayouts (e.g. nes-memory, nes-query-engine). Requiring an explicit
-# nes-schema dependency keeps those components from picking up Schema by accident via nes-common.
+# TODO: Schema is temporarily exposed through nes-common. It is meant for the logical/frontend layers only,
+# not for components operating on TupleBufferRefs or MemoryLayouts (e.g. nes-memory, nes-query-engine).
+# nes-schema is kept as a thin target so existing dependents keep linking it; once the split is restored,
+# move schema/include back from nes-common to nes-schema.
 add_library(nes-schema INTERFACE)
 target_link_libraries(nes-schema INTERFACE nes-common)
-target_include_directories(nes-schema INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/schema/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
 
 add_tests_if_enabled(tests)

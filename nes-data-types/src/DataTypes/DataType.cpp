@@ -273,4 +273,15 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     return os << fmt::format("DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), dataType.nullable);
 }
 
+NESFunctor DataType::functorOf(DataType::Type type)
+{
+    return NESFunctor
+    {
+        type, [](const DataType::Type& self, const DataType::Type& other){ return self == other;}, [](const DataType::Type baseType, const NESTypeParameters& parameters)
+    {
+        if (pa)
+    }
+    }
+}
+
 }

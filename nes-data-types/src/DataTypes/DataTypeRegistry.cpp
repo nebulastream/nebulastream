@@ -23,4 +23,17 @@ DataTypeRegistry& DataTypeRegistry::instance()
     return inst;
 }
 
+NamedNESParametrizedTypeClass DataTypeRegistry::getParametrizedTypeClass()
+{
+    static const NESTypeClass DatatypeClass{
+        DataTypeNESTypeClassTag{},
+        [](const DataTypeNESTypeClassTag&, const NESType& type)
+        {
+            return std::any_cast<const DataType*>(&type.getDescriptor().getUnderlying()) != nullptr;
+        },
+        [](const DataTypeNESTypeClassTag&, const DataTypeNESTypeClassTag&) { return true; }};
+    return NamedNESParametrizedTypeClass{
+        QualifiedIdentifier::parse("ScalarDatatype"), NESParametrizedTypeClass{[&](const NESTypeClassParameters&) { return DatatypeClass; }}};
+}
+
 }

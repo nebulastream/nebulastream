@@ -137,7 +137,7 @@ namespace
 {
 void describeRegistry(PluginDescriptor& descriptor)
 {
-    descriptor.registries.push_back(provideRegistry<${ARG_REGISTRY_CLASS}>(\"${ARG_REGISTRY_CLASS}\"));
+    descriptor.registries.push_back(provideRegistry<${ARG_REGISTRY_CLASS}>());
 }
 const auto collected${name}Registry = [] {
     BuiltinPlugins::instance().addDescriber(&describeRegistry);
