@@ -116,22 +116,18 @@ The function takes the raw string parameters supplied by the user and is expecte
  
 Let's look at an actual example:
 ```c++
-static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
+static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_PORT{
     "SOCKET_PORT",
     std::nullopt,
-    [](const std::unordered_map<std::string, std::string>& config)
+    [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
     {
-        const auto portNumber = DescriptorConfig::tryGet(PORT, config);
-        if (portNumber.has_value())
+        const auto port = DescriptorConfig::tryGet(SOCKET_PORT, config);
+        if (port && (*port < 1 || *port > std::numeric_limits<uint16_t>::max()))
         {
-            constexpr uint32_t PORT_NUMBER_MAX = 65535;
-            if (portNumber.value() <= PORT_NUMBER_MAX)
-            {
-                return portNumber;
-            }
-            NES_ERROR("Specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
+            NES_ERROR("TCPSource: SOCKET_PORT is: {}, but must be in [1, {}].", *port, std::numeric_limits<uint16_t>::max());
+            return std::nullopt;
         }
-        return portNumber;
+        return port;
     }};
 ```
 Here, we first use the `tryGet` function of the `DescriptorConfig` that returns an optional.

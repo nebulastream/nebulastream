@@ -14,10 +14,9 @@
 
 #pragma once
 
-#include <array>
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -25,151 +24,32 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <netdb.h>
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sys/socket.h> /// For socket functions
-#include <sys/types.h>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 namespace NES
 {
 
-/// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
-struct ConfigParametersTCP
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "SOCKET_HOST",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
-        "SOCKET_PORT",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        {
-            /// Mandatory (no default value)
-            const auto portNumber = DescriptorConfig::tryGet(PORT, config);
-            if (portNumber.has_value())
-            {
-                constexpr uint32_t PORT_NUMBER_MAX = 65535;
-                if (portNumber.value() <= PORT_NUMBER_MAX)
-                {
-                    return portNumber;
-                }
-                NES_ERROR("TCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
-            }
-            return portNumber;
-        }};
-    static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
-        "SOCKET_DOMAIN",
-        AF_INET,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
-        {
-            /// User specified value, set if input is valid, throw if not.
-            const auto& socketDomainString = config.at(DOMAIN);
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
-            {
-                return (AF_INET);
-            }
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
-            {
-                return AF_INET6;
-            }
-            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
-            return std::nullopt;
-        }};
-    static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
-        "SOCKET_TYPE",
-        SOCK_STREAM,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
-        {
-            auto socketTypeString = config.at(TYPE);
-            for (auto& character : socketTypeString)
-            {
-                character = toupper(character);
-            }
-            if (socketTypeString == "SOCK_STREAM")
-            {
-                return SOCK_STREAM;
-            }
-            if (socketTypeString == "SOCK_DGRAM")
-            {
-                return SOCK_DGRAM;
-            }
-            if (socketTypeString == "SOCK_SEQPACKET")
-            {
-                return SOCK_SEQPACKET;
-            }
-            if (socketTypeString == "SOCK_RAW")
-            {
-                return SOCK_RAW;
-            }
-            if (socketTypeString == "SOCK_RDM")
-            {
-                return SOCK_RDM;
-            }
-            NES_ERROR(
-                "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
-                "SOCK_RDM",
-                socketTypeString)
-            return std::nullopt;
-        }};
-    static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
-        "TUPLE_DELIMITER",
-        '\n',
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
-    static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
-        "FLUSH_INTERVAL_MS",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "SOCKET_BUFFER_SIZE",
-        1024,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "BYTES_SED_FOR_SOCKET_BUFFER_SIZE_TRANSFER",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-        "CONNECT_TIMEOUT_SECONDS",
-        10,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap,
-            HOST,
-            PORT,
-            DOMAIN,
-            TYPE,
-            SEPARATOR,
-            FLUSH_INTERVAL_MS,
-            SOCKET_BUFFER_SIZE,
-            SOCKET_BUFFER_TRANSFER_SIZE,
-            CONNECT_TIMEOUT);
-};
-
+/// A source that connects (client-only) to a remote TCP server and fills TupleBuffers with the raw bytes it reads off the socket.
+/// The source does no framing or parsing: the configured input formatter owns the wire format (e.g. newline-delimited JSON),
+/// the same byte-pipe role as MQTTSource.
+///
+/// End-of-stream is the peer closing its write side (TCP's native EoS):
+/// the remaining buffered bytes are delivered and the next fill returns EoS.
+/// A connection that merely goes silent is bridged indefinitely.
+/// Unlike MQTT there is no idle budget, because TCP has a real end-of-stream signal; the engine's stop token ends the wait.
+/// Any other socket failure (reset, link loss) fails the query: there is no broker to buffer for us,
+/// so reconnecting would silently lose whatever was in flight.
 class TCPSource : public Source
 {
-    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
-    /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
-    constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
-    /// We implicitly add one microsecond to avoid operation from never timing out
-    /// (https://linux.die.net/man/7/socket)
-    constexpr static suseconds_t IMPLICIT_TIMEOUT_USEC = 1;
-    constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
-
 public:
-    static const std::string& name()
-    {
-        static const std::string Instance = "TCP";
-        return Instance;
-    }
+    static constexpr std::string_view NAME = "TCP";
 
     explicit TCPSource(const SourceDescriptor& sourceDescriptor);
     ~TCPSource() override = default;
@@ -179,11 +59,16 @@ public:
     TCPSource(TCPSource&&) = delete;
     TCPSource& operator=(TCPSource&&) = delete;
 
+    /// Connect to the remote server.
+    /// When this returns, the TCP connection is established, and a peer that accepted it can start sending immediately.
+    /// A failed resolution, or a connect that fails or does not finish within `CONNECT_TIMEOUT_MS`, throws CannotOpenSource.
+    /// The host name is resolved before the timeout starts, so a slow DNS lookup delays open by the system resolver's own timeout.
+    void open(std::shared_ptr<AbstractBufferProvider>) override;
+
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
-    /// Open TCP connection.
-    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
-    /// Close TCP connection.
+    /// Close the socket. Errors are ignored: the peer may already be gone, and
+    /// tearing down a dead connection is not a query failure.
     void close() override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -191,26 +76,63 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    std::string host;
+    uint32_t port;
+    std::chrono::milliseconds connectTimeout;
+    std::chrono::milliseconds flushInterval;
 
-    int connection = -1;
-    int sockfd = -1;
-
-    /// buffer for thread-safe strerror_r
-    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
-
-    std::string socketHost;
-    std::string socketPort;
-    int socketType;
-    int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
-    float flushIntervalInMs;
-    uint64_t generatedTuples{0};
-    uint64_t generatedBuffers{0};
-    u_int32_t connectionTimeout;
+    boost::asio::io_context ioContext;
+    boost::asio::ip::tcp::socket socket{ioContext};
+    /// The peer closed its write side; everything it sent has been delivered.
+    bool peerClosed = false;
 };
+
+/// Defines the names, (optional) default values, (optional) validation & config functions for all TCP source config parameters.
+/// NOLINTBEGIN(cert-err58-cpp, bugprone-throwing-static-initialization): every source plugin declares its parameters this way.
+/// Their initializers can in theory throw `std::bad_alloc` at static-init time, a state the runtime cannot recover from anyway.
+struct ConfigParametersTCPSource
+{
+    /// NOTE: the connection-target keys are `SOCKET_HOST` / `SOCKET_PORT`, not `HOST` / `PORT`: the SQL binder reserves a bare
+    /// `HOST` config key for worker placement and strips it before the source ever sees it.
+    static inline const DescriptorConfig::ConfigParameter<std::string> SOCKET_HOST{
+        "SOCKET_HOST",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_HOST, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_PORT{
+        "SOCKET_PORT",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
+        {
+            const auto port = DescriptorConfig::tryGet(SOCKET_PORT, config);
+            if (port && (*port < 1 || *port > std::numeric_limits<uint16_t>::max()))
+            {
+                NES_ERROR("TCPSource: SOCKET_PORT is: {}, but must be in [1, {}].", *port, std::numeric_limits<uint16_t>::max());
+                return std::nullopt;
+            }
+            return port;
+        }};
+
+    /// How long open waits for the TCP connection to be established. DNS resolution of `SOCKET_HOST` is not included.
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT_MS{
+        "CONNECT_TIMEOUT_MS",
+        5000,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT_MS, config); }};
+
+    /// Upper bound on how long a partially filled buffer is held back before it is handed downstream (a latency knob).
+    /// 0 means "flush as soon as any bytes arrived".
+    /// An empty buffer is not subject to this interval: the source waits for data, peer close, or stop indefinitely,
+    /// because TCP signals end-of-stream explicitly and silence is not an error.
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> FLUSH_INTERVAL_MS{
+        "FLUSH_INTERVAL_MS",
+        100,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(
+            SourceDescriptor::parameterMap, SOCKET_HOST, SOCKET_PORT, CONNECT_TIMEOUT_MS, FLUSH_INTERVAL_MS);
+};
+
+/// NOLINTEND(cert-err58-cpp, bugprone-throwing-static-initialization)
 
 }
