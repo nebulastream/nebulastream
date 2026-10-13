@@ -44,6 +44,7 @@
     "boost-graph",
     "boost-process",
     "boost-system",
+    "boost-beast",
     "boost-url",
     "cpptrace",
     "date",
