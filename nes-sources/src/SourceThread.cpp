@@ -56,6 +56,17 @@ SourceThread::SourceThread(
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
+/// Returns nullopt iff stop was requested.
+static std::optional<TupleBuffer> getBufferUnlessStopped(AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken)
+{
+    std::optional<TupleBuffer> buffer;
+    while (!buffer && !stopToken.stop_requested())
+    {
+        buffer = bufferProvider.getBufferWithTimeout(std::chrono::milliseconds(25));
+    }
+    return buffer;
+}
+
 namespace
 {
 void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBuffer& buffer)
@@ -80,17 +91,6 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 }
 
 using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
-
-/// Returns nullopt iff stop was requested.
-std::optional<TupleBuffer> getBufferUnlessStopped(AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken)
-{
-    std::optional<TupleBuffer> buffer;
-    while (!buffer && !stopToken.stop_requested())
-    {
-        buffer = bufferProvider.getBufferWithTimeout(std::chrono::milliseconds(25));
-    }
-    return buffer;
-}
 
 SourceImplementationTermination dataSourceThreadRoutine(
     const std::stop_token& stopToken,
