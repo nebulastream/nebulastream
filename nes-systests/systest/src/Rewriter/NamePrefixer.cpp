@@ -268,6 +268,10 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefixParts(input->multipartIdentifier());
     }
+    for (auto* input : findAll<AntlrSQLParser::AlignStreamNameContext>(parse.tree()))
+    {
+        prefixParts(input->multipartIdentifier());
+    }
     for (auto* sink : findAll<AntlrSQLParser::SinkContext>(parse.tree()))
     {
         prefix(sink->identifier());
