@@ -34,6 +34,13 @@ CREATE LOGICAL SOURCE sncb_stream(ts UINT64 NOT NULL, deviceid UINT64 NOT NULL, 
 CREATE PHYSICAL SOURCE FOR sncb_stream TYPE FILE;
 ATTACH FILE small/input_sncb.csv
 
+# Check if TEMPORAL_SEQUENCE aggregation of temporal points works
+SELECT start, end, TEMPORAL_SEQUENCE(TemporalPoint(lon1, lat1, ts)) AS seq1, TEMPORAL_SEQUENCE(TemporalPoint(lon2, lat2, ts)) AS seq2 FROM temporal WINDOW TUMBLING(ts, size 120 ms) INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"START":1609459200,"END":1609459320,"SEQ1":{"sequence":[{"lon":-73.9857,"lat":40.7484,"ts":1609459200},{"lon":-73.9855,"lat":40.7485,"ts":1609459260}]},"SEQ2":{"sequence":[{"lon":-73.9857,"lat":40.7484,"ts":1609459200},{"lon":-80.9855,"lat":40.7485,"ts":1609459260}]}}
+{"START":1609459320,"END":1609459440,"SEQ1":{"sequence":[{"lon":-73.9865,"lat":40.7475,"ts":1609459320},{"lon":-73.9855,"lat":40.7485,"ts":1609459380}]},"SEQ2":{"sequence":[{"lon":-90.9865,"lat":40.7475,"ts":1609459320},{"lon":-100.9855,"lat":40.7485,"ts":1609459380}]}}
+{"START":1609459440,"END":1609459560,"SEQ1":{"sequence":[{"lon":-73.9857,"lat":40.7485,"ts":1609459440},{"lon":-73.9855,"lat":40.7485,"ts":1609459500}]},"SEQ2":{"sequence":[{"lon":-110.9857,"lat":40.7485,"ts":1609459440},{"lon":-120.9855,"lat":40.7485,"ts":1609459500}]}}
+
 # Check if TemporalPoint plugin works
 SELECT TemporalPoint(lon1, lat1, ts) AS mp FROM temporal WHERE ts == UINT64(1609459200) INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
 ----
