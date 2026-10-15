@@ -35,6 +35,7 @@
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <folly/Synchronized.h>
+#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
@@ -87,6 +88,12 @@ public:
         cleanup->terminationSignal = signal + SIGNAL_EXIT_CODE_OFFSET;
         if (cleanup->server != nullptr)
         {
+            /// Report NOT_SERVING before draining so health probes stop routing to this worker during shutdown.
+            /// HealthCheckServiceInterface::Shutdown marks all services not serving and pins that state.
+            if (auto* healthService = cleanup->server->GetHealthCheckService())
+            {
+                healthService->Shutdown();
+            }
             cleanup->server->Shutdown();
         }
     }
