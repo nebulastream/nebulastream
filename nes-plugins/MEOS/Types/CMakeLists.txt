@@ -16,6 +16,7 @@ target_link_libraries(meos_data_types PRIVATE nes-data-types)
 target_include_directories(meos_data_types PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(Functions)
+add_subdirectory(Aggregations)
 
 link_plugin_library(nes-data-types meos_data_types)
 add_registry_entry(DataType TemporalPoint)
