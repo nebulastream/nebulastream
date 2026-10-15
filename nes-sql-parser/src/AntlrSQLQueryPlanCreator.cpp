@@ -81,7 +81,9 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <CommonParserFunctions.hpp>
+#include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <ParserUtil.hpp>
 
@@ -1369,109 +1371,142 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             isAggregation = true;
             break;
         default:
-            helpers.top().hasUnnamedAggregation = false;
-            /// Check if the function is a constructor for a datatype:
-            ///   ARRAY -> Construct Array Constant via ConstructArrayLogicalFunction
-            ///   VECTOR -> Construct Vector Constant via ConstructVectorLogicalFunction
-            ///   STRUCT target           -> ConstructStruct over N field expressions in functionBuilder
-            ///   non-STRUCT, literal arg -> ConstantValueLogicalFunction (literal in constantBuilder)
-            ///   non-STRUCT, expr arg    -> CastToTypeLogicalFunction (expression in functionBuilder)
-            if (toUpperCase(funcName) == "ARRAY")
+            /// Check if the is a  aggregation function registered under the key funcName.
+            const auto numArgs = context->argument.size();
+            if (const auto aggFactory = AggregationLogicalFunctionRegistry::instance().find(funcName))
             {
-                const auto numArgs = context->argument.size();
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
-                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                helpers.top().functionBuilder.emplace_back(ConstructArrayLogicalFunction(std::move(args)));
-            }
-            else if (toUpperCase(funcName) == "VECTOR")
-            {
-                const auto numArgs = context->argument.size();
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
-                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                helpers.top().functionBuilder.emplace_back(ConstructVectorLogicalFunction(std::move(args)));
-            }
-            else if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
-            {
-                if (dataType->type != DataType::Type::STRUCT)
+                if (numArgs != 1)
                 {
-                    if (const auto numArgs = context->argument.size(); numArgs != 1)
+                    throw InvalidQuerySyntax(
+                        "Aggregation functions currently require exactly one argument. Got {} for aggregation function {}.",
+                        numArgs,
+                        funcName);
+                }
+
+                /// Aggregation functions only accept field accesses as input. An expression argument is desugared into a pre-aggregation projection, just like for the built-in aggregations.
+                ensureFieldAccessArgument();
+                const std::vector<AggregationFieldAccess> aggInput{
+                    helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()};
+
+                const AggregationLogicalFunctionRegistryArguments aggArgs{aggInput, false};
+                const WindowAggregationLogicalFunction aggFunc = (*aggFactory)(aggArgs);
+                helpers.top().windowAggs.emplace_back(aggFunc, std::nullopt);
+                isAggregation = true;
+            }
+            else
+            {
+                helpers.top().hasUnnamedAggregation = false;
+                /// Check if the function is a constructor for a datatype:
+                ///   ARRAY -> Construct Array Constant via ConstructArrayLogicalFunction
+                ///   VECTOR -> Construct Vector Constant via ConstructVectorLogicalFunction
+                ///   STRUCT target           -> ConstructStruct over N field expressions in functionBuilder
+                ///   non-STRUCT, literal arg -> ConstantValueLogicalFunction (literal in constantBuilder)
+                ///   non-STRUCT, expr arg    -> CastToTypeLogicalFunction (expression in functionBuilder)
+                if (toUpperCase(funcName) == "ARRAY")
+                {
+                    auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                    std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
+                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                    helpers.top().functionBuilder.emplace_back(ConstructArrayLogicalFunction(std::move(args)));
+                }
+                else if (toUpperCase(funcName) == "VECTOR")
+                {
+                    auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                    std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
+                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                    helpers.top().functionBuilder.emplace_back(ConstructVectorLogicalFunction(std::move(args)));
+                }
+                else if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
+                {
+                    if (dataType->type != DataType::Type::STRUCT)
                     {
-                        throw InvalidQuerySyntax(
-                            "Type constructor {} expects exactly 1 argument, got {} at {}", funcName, numArgs, context->getText());
+                        if (numArgs != 1)
+                        {
+                            throw InvalidQuerySyntax(
+                                "Type constructor {} expects exactly 1 argument, got {} at {}", funcName, numArgs, context->getText());
+                        }
+                    }
+                    if (dataType->type == DataType::Type::STRUCT)
+                    {
+                        if (numArgs != dataType->fields.size())
+                        {
+                            throw InvalidQuerySyntax(
+                                "Struct constructor '{}' expects {} arguments, got {} at {}",
+                                funcName,
+                                dataType->fields.size(),
+                                numArgs,
+                                context->getText());
+                        }
+                        if (numArgs > helpers.top().functionBuilder.size())
+                        {
+                            throw InvalidQuerySyntax(
+                                "Struct constructor '{}' expects {} arguments but only {} are available (raw literals must be wrapped, "
+                                "e.g. "
+                                "FLOAT64(1.5))",
+                                funcName,
+                                numArgs,
+                                helpers.top().functionBuilder.size());
+                        }
+                        auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                        std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
+                        helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                        helpers.top().functionBuilder.emplace_back(ConstructStructLogicalFunction(*dataType, std::move(args)));
+                    }
+                    else if (!helpers.top().constantBuilder.empty())
+                    {
+                        auto value = std::move(helpers.top().constantBuilder.back());
+                        helpers.top().constantBuilder.pop_back();
+                        helpers.top().functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
+                    }
+                    else if (!helpers.top().functionBuilder.empty())
+                    {
+                        auto inner = std::move(helpers.top().functionBuilder.back());
+                        helpers.top().functionBuilder.pop_back();
+                        helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction(*dataType, std::move(inner)));
+                    }
+                    else
+                    {
+                        throw InvalidQuerySyntax("Type constructor '{}' requires an argument at {}", funcName, context->getText());
                     }
                 }
-                if (dataType->type == DataType::Type::STRUCT)
+                else
                 {
-                    const auto numArgs = context->argument.size();
-                    if (numArgs != dataType->fields.size())
-                    {
-                        throw InvalidQuerySyntax(
-                            "Struct constructor '{}' expects {} arguments, got {} at {}",
-                            funcName,
-                            dataType->fields.size(),
-                            numArgs,
-                            context->getText());
-                    }
                     if (numArgs > helpers.top().functionBuilder.size())
                     {
                         throw InvalidQuerySyntax(
-                            "Struct constructor '{}' expects {} arguments but only {} are available (raw literals must be wrapped, e.g. "
-                            "FLOAT64(1.5))",
+                            "Function '{}' expects {} arguments but only {} are available",
                             funcName,
                             numArgs,
                             helpers.top().functionBuilder.size());
                     }
                     auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                    std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.emplace_back(ConstructStructLogicalFunction(*dataType, std::move(args)));
-                }
-                else if (!helpers.top().constantBuilder.empty())
-                {
-                    auto value = std::move(helpers.top().constantBuilder.back());
-                    helpers.top().constantBuilder.pop_back();
-                    helpers.top().functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
-                }
-                else if (!helpers.top().functionBuilder.empty())
-                {
-                    auto inner = std::move(helpers.top().functionBuilder.back());
-                    helpers.top().functionBuilder.pop_back();
-                    helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction(*dataType, std::move(inner)));
-                }
-                else
-                {
-                    throw InvalidQuerySyntax("Type constructor '{}' requires an argument at {}", funcName, context->getText());
-                }
-            }
-            else
-            {
-                const auto numArgs = context->argument.size();
-                if (numArgs > helpers.top().functionBuilder.size())
-                {
-                    throw InvalidQuerySyntax(
-                        "Function '{}' expects {} arguments but only {} are available",
-                        funcName,
-                        numArgs,
-                        helpers.top().functionBuilder.size());
-                }
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
-                if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
-                {
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.push_back(*logicalFunction);
-                }
-                else
-                {
-                    auto registeredNamesAggregation
-                        = AggregationLogicalFunctionRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
-                    std::ranges::sort(registeredNamesAggregation);
-                    throw InvalidQuerySyntax(
-                        "Unknown function: {}. Supported aggregation functions are {}.",
-                        funcName,
-                        fmt::join(registeredNamesAggregation, ", "));
+                    std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
+                    if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
+                    {
+                        helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                        helpers.top().functionBuilder.push_back(*logicalFunction);
+                    }
+                    else
+                    {
+                        auto registeredAggregations
+                            = AggregationLogicalFunctionRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
+                        auto registeredFunctions
+                            = LogicalFunctionRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
+                        auto registeredDataTypes = DataTypeRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
+
+                        std::ranges::sort(registeredAggregations);
+                        std::ranges::sort(registeredFunctions);
+                        std::ranges::sort(registeredDataTypes);
+                        throw InvalidQuerySyntax(
+                            "{} is not a Function, Aggregation Function, or Data Type.\n"
+                            "Supported Functions: {}.\n"
+                            "Supported Aggregation Functions: {}.\n"
+                            "Supported Data Types: {}.",
+                            funcName,
+                            fmt::join(registeredFunctions, ", "),
+                            fmt::join(registeredAggregations, ", "),
+                            fmt::join(registeredDataTypes, ", "));
+                    }
                 }
             }
     }
