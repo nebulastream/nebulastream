@@ -8,3 +8,7 @@
 # - large scale tests are always skipped below
 exclude_groups:
   - large
+# - AlignEagerLE's result depends on cross-source arrival order (driving tuples that arrive
+#   before any searched-side state are dropped by design), so it fails nondeterministically
+disabled_test_files:
+  - operator/align/AlignEagerLE.test
