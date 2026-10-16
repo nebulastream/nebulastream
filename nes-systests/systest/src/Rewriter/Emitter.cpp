@@ -126,10 +126,17 @@ void Emitter::emitCreate(ClassifiedCreate create, const bool submitsDeclaredSink
                 }
             },
             [&](const ModelDeclaration& declaration) { runnable.setupStatements.emplace_back(modelStatement(*create.parse, declaration)); },
-            [&](const FunctionDeclaration&)
+            [&](const FunctionDeclaration& declaration)
             {
-                /// Submitted as written; the binder resolves a relative library path against the test data directory.
+                /// The worker resolves a relative library path from its own working directory, not the test data directory.
                 antlr4::TokenStreamRewriter rewriter{&create.parse->tokenStream()};
+                if (auto* path = declaration.definition->functionPath; path != nullptr)
+                {
+                    if (const std::filesystem::path declared{unquote(path->getText())}; declared.is_relative())
+                    {
+                        rewriter.replace(path, path, Sql::stringLiteral((context.testDataDir / declared).string()));
+                    }
+                }
                 runnable.setupStatements.emplace_back(PlainStatement{.sql = rewriter.getText()});
             },
             [&](const SinkDeclaration& declaration)

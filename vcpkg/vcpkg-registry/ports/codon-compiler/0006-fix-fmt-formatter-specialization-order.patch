@@ -1,0 +1,28 @@
+diff --git a/codon/cir/util/format.cpp b/codon/cir/util/format.cpp
+--- a/codon/cir/util/format.cpp
++++ b/codon/cir/util/format.cpp
+@@ -36,6 +36,17 @@
+   friend std::ostream &operator<<(std::ostream &os, const NodeFormatter &n);
+ };
+ 
++} // namespace util
++} // namespace ir
++} // namespace codon
++
++template <>
++struct fmt::formatter<codon::ir::util::NodeFormatter> : fmt::ostream_formatter {};
++
++namespace codon {
++namespace ir {
++namespace util {
++
+ namespace {
+ std::string escapeString(const std::string &str) {
+   std::stringstream escaped;
+@@ -476,6 +487,3 @@
+ } // namespace util
+ } // namespace ir
+ } // namespace codon
+-
+-template <>
+-struct fmt::formatter<codon::ir::util::NodeFormatter> : ostream_formatter {};

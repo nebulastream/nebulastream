@@ -14,11 +14,13 @@
 
 #include <SystestBinder.hpp>
 
+#include <cstdlib>
 #include <expected>
 #include <memory>
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -117,6 +119,11 @@ struct SystestBinder::Impl
         {
             workerCatalog->addWorker(host, data, capacity, downstream, workerConfig);
         }
+        /// Make the Python UDF modules (nes-systests/udf/pyudfs) importable by the Python bridge and Codon.
+        if (std::string_view{SYSTEST_PY_UDF_PATH}.size() > 0)
+        {
+            setenv("NES_UDF_PATH", SYSTEST_PY_UDF_PATH, /*overwrite=*/1); /// NOLINT(concurrency-mt-unsafe)
+        }
     }
 
     /// Id includes the partition key: partitions repeat query numbers, and the coordinator rejects duplicate ids.
@@ -160,19 +167,9 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
-                [&](const CreateFunctionStatement& statement) { createFunction(statement); },
+                [&](const CreateFunctionStatement& statement) { throwOnError(udfHandler(statement)); },
                 [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
             binding);
-    }
-
-    /// Resolves a relative `.so` path against the test data directory before the handler registers the function.
-    void createFunction(CreateFunctionStatement statement)
-    {
-        if (const std::filesystem::path path{statement.path}; !path.empty() && path.is_relative())
-        {
-            statement.path = (testDataDir / path).string();
-        }
-        throwOnError(udfHandler(statement));
     }
 
     [[nodiscard]] Statement bindStatement(const std::string& sql) const
