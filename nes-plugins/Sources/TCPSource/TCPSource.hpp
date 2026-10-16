@@ -43,11 +43,13 @@ namespace NES
 struct ConfigParametersTCP
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "SOCKET_HOST",
+        // "SOCKET_HOST",
+        "socket_host",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
-        "SOCKET_PORT",
+        // "SOCKET_PORT",
+        "socket_port",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -65,7 +67,8 @@ struct ConfigParametersTCP
             return portNumber;
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
-        "SOCKET_DOMAIN",
+        // "SOCKET_DOMAIN",
+        "socket_domain",
         AF_INET,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
@@ -83,7 +86,8 @@ struct ConfigParametersTCP
             return std::nullopt;
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
-        "SOCKET_TYPE",
+        // "SOCKET_TYPE",
+        "socket_type",
         SOCK_STREAM,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
@@ -136,7 +140,8 @@ struct ConfigParametersTCP
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-        "CONNECT_TIMEOUT_SECONDS",
+        // "CONNECT_TIMEOUT_SECONDS",
+        "connect_timeout_seconds",
         10,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
 
