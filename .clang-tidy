@@ -52,6 +52,7 @@ Checks: [
   "-llvm-header-guard", # header guards are not needed as we use pragma once
   "-llvm-include-order", # conflicts with the order of includes forced by our formatter
   "-llvm-namespace-comment", # we do not require namespace comments
+  "-llvm-prefer-static-over-anonymous-namespace", # we use anonymous namespaces for internal linkage
   "-misc-non-private-member-variables-in-classes", # it is not possible to disable this for structs
   "-misc-no-recursion", # we allow recursion
   "-modernize-use-trailing-return-type", # purely cosmetic
