@@ -21,6 +21,7 @@
 #include <exception>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <ranges>
 #include <span>
@@ -90,16 +91,6 @@ private:
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work;
     /// Declared last: joined before the context it runs is destroyed.
     std::jthread thread;
-};
-
-/// The calls of one buffer, shared with the completion handlers and with a stop request that may
-/// arrive while they run.
-struct PendingCalls
-{
-    size_t remaining = 0;
-    std::exception_ptr failure;
-    std::promise<void> done;
-    std::vector<boost::asio::cancellation_signal> cancel;
 };
 
 constexpr std::chrono::milliseconds RETRY_BACKOFF{100};
@@ -193,6 +184,19 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
         calls.push_back(std::move(call));
     }
 
+    for (size_t index = 0; index < calls.size(); ++index)
+    {
+        if (calls[index].outputOffset)
+        {
+            outputCalls.push_back(index);
+        }
+    }
+    cancelSignals = std::vector<boost::asio::cancellation_signal>(maxConcurrency);
+    for (size_t slot = maxConcurrency; slot > 0; --slot)
+    {
+        freeSlots.push_back(slot - 1);
+    }
+
     for (const auto& [name, inputOffset] : inputOffsets)
     {
         if (std::ranges::none_of(descriptions.value(), [&](const AsyncCall& call) { return call.output == name; }))
@@ -207,11 +211,26 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     bufferProvider = std::move(provider);
     channel = HandoffChannel::get(channelId, channelCapacity);
+    channel->setListener(
+        [this]
+        {
+            {
+                const std::scoped_lock lock(window.mutex);
+                window.channelChanged = true;
+            }
+            window.changed.notify_all();
+        });
 }
 
 void AsyncSource::close()
 {
-    channel.reset();
+    /// Also after a failure or a stop request, which already drained: rows of this source must not outlive it.
+    cancelAndDrain();
+    if (channel)
+    {
+        channel->setListener({});
+        channel.reset();
+    }
     HandoffChannel::release(channelId);
 }
 
@@ -265,143 +284,242 @@ boost::asio::awaitable<std::string> AsyncSource::callWithRetries(AsyncFunction& 
     }
 }
 
-boost::asio::awaitable<void>
-AsyncSource::processRows(const size_t worker, const TupleBuffer& input, TupleBuffer& output, const size_t rows, size_t& nextRow)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const std::shared_ptr<InFlightBuffer> buffer, const size_t row)
 {
     using CallOperation
         = decltype(boost::asio::co_spawn(strand, std::declval<boost::asio::awaitable<std::string>>(), boost::asio::deferred));
-    while (nextRow < rows)
+    /// Level by level: the calls of one level run in parallel and only read results of lower levels.
+    std::vector<std::string> results(calls.size());
+    for (size_t level = 0; level < levels; ++level)
     {
-        const auto row = nextRow++;
-        /// Level by level: the calls of one level run in parallel and only read results of lower levels.
-        std::vector<std::string> results(calls.size());
-        for (size_t level = 0; level < levels; ++level)
-        {
-            std::vector<size_t> started;
-            std::vector<CallOperation> operations;
-            for (size_t index = 0; index < calls.size(); ++index)
-            {
-                if (calls[index].level == level)
-                {
-                    started.push_back(index);
-                    operations.push_back(boost::asio::co_spawn(
-                        strand,
-                        callWithRetries(*calls[index].instances[worker], readArguments(calls[index], input, row, results)),
-                        boost::asio::deferred));
-                }
-            }
-            auto [order, failures, values] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
-                                                 .async_wait(boost::asio::experimental::wait_for_all(), boost::asio::use_awaitable);
-            for (size_t position = 0; position < started.size(); ++position)
-            {
-                if (failures[position])
-                {
-                    std::rethrow_exception(failures[position]);
-                }
-                results[started[position]] = std::move(values[position]);
-            }
-        }
+        std::vector<size_t> started;
+        std::vector<CallOperation> operations;
         for (size_t index = 0; index < calls.size(); ++index)
         {
-            if (const auto outputOffset = calls[index].outputOffset)
+            if (calls[index].level == level)
             {
-                const auto access = TupleBufferRef::writeVarSized(output, *bufferProvider, std::as_bytes(std::span{results[index]}));
-                std::memcpy(output.getAvailableMemoryArea().subspan((row * outputRowSize) + *outputOffset).data(), &access, sizeof(access));
+                started.push_back(index);
+                operations.push_back(boost::asio::co_spawn(
+                    strand,
+                    callWithRetries(*calls[index].instances[slot], readArguments(calls[index], buffer->input, row, results)),
+                    boost::asio::deferred));
             }
         }
+        auto [order, failures, values] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
+                                             .async_wait(boost::asio::experimental::wait_for_all(), boost::asio::use_awaitable);
+        for (size_t position = 0; position < started.size(); ++position)
+        {
+            if (failures[position])
+            {
+                std::rethrow_exception(failures[position]);
+            }
+            results[started[position]] = std::move(values[position]);
+        }
+    }
+    auto& outputs = buffer->results[row];
+    outputs.reserve(outputCalls.size());
+    for (const auto index : outputCalls)
+    {
+        outputs.push_back(std::move(results[index]));
     }
 }
 
-Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+void AsyncSource::startRows()
 {
-    auto input = channel->pop(stopToken);
-    if (!input)
+    bool started = false;
+    while (!stopping && !freeSlots.empty())
     {
-        return FillTupleBufferResult::eos();
+        std::shared_ptr<InFlightBuffer> buffer;
+        size_t row = 0;
+        {
+            const std::scoped_lock lock(window.mutex);
+            const auto next = std::ranges::find_if(window.buffers, [](const auto& candidate) { return candidate->nextRow < candidate->rows; });
+            if (window.failure || next == window.buffers.end())
+            {
+                break;
+            }
+            buffer = *next;
+            row = buffer->nextRow++;
+            --window.unstartedRows;
+            ++window.runningRows;
+        }
+        started = true;
+        const auto slot = freeSlots.back();
+        freeSlots.pop_back();
+        boost::asio::co_spawn(
+            strand,
+            processRow(slot, buffer, row),
+            boost::asio::bind_cancellation_slot(
+                cancelSignals[slot].slot(), [this, buffer, slot](const std::exception_ptr& error) { finishRow(buffer, slot, error); }));
     }
+    if (started)
+    {
+        /// Fewer rows wait to start, which may let the source thread take the next buffer.
+        window.changed.notify_all();
+    }
+}
 
-    tupleBuffer.setSequenceNumber(input->getSequenceNumber());
-    tupleBuffer.setChunkNumber(input->getChunkNumber());
-    tupleBuffer.setLastChunk(input->isLastChunk());
-    tupleBuffer.setOriginId(input->getOriginId());
-    tupleBuffer.setWatermark(input->getWatermark());
-    tupleBuffer.setCreationTimestampInMS(input->getCreationTimestampInMS());
+void AsyncSource::finishRow(const std::shared_ptr<InFlightBuffer>& buffer, const size_t slot, const std::exception_ptr& error)
+{
+    freeSlots.push_back(slot);
+    {
+        const std::scoped_lock lock(window.mutex);
+        --window.runningRows;
+        /// A row cancelled because the query stops did not fail.
+        if (error && !stopping && !window.failure)
+        {
+            window.failure = error;
+        }
+        if (--buffer->unfinishedRows == 0)
+        {
+            buffer->done = true;
+        }
+    }
+    window.changed.notify_all();
+    startRows();
+}
+
+void AsyncSource::admit(TupleBuffer input)
+{
+    const auto rows = input.getNumberOfTuples();
+    auto buffer = std::make_shared<InFlightBuffer>(InFlightBuffer{
+        .input = std::move(input),
+        .rows = rows,
+        .nextRow = 0,
+        .unfinishedRows = rows,
+        .results = std::vector<std::vector<std::string>>(rows),
+        .done = rows == 0});
+    {
+        const std::scoped_lock lock(window.mutex);
+        window.buffers.push_back(std::move(buffer));
+        window.unstartedRows += rows;
+    }
+    boost::asio::post(strand, [this] { startRows(); });
+}
+
+void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output) const
+{
+    auto input = buffer.input;
+    output.setSequenceNumber(input.getSequenceNumber());
+    output.setChunkNumber(input.getChunkNumber());
+    output.setLastChunk(input.isLastChunk());
+    output.setOriginId(input.getOriginId());
+    output.setWatermark(input.getWatermark());
+    output.setCreationTimestampInMS(input.getCreationTimestampInMS());
     /// Stored in the same order, so the child indices in the copied VARSIZED fields stay valid.
-    for (uint32_t child = 0; child < input->getNumberOfChildBuffers(); ++child)
+    for (uint32_t child = 0; child < input.getNumberOfChildBuffers(); ++child)
     {
-        auto childBuffer = input->loadChildBuffer(ChildBufferIndex{child});
-        [[maybe_unused]] const auto index = tupleBuffer.storeChildBuffer(childBuffer);
+        auto childBuffer = input.loadChildBuffer(ChildBufferIndex{child});
+        [[maybe_unused]] const auto index = output.storeChildBuffer(childBuffer);
     }
 
-    const auto rows = input->getNumberOfTuples();
-    PRECONDITION(rows * outputRowSize <= tupleBuffer.getBufferSize(), "handed-off buffer holds more rows than the output buffer");
-    const auto in = input->getAvailableMemoryArea();
-    const auto out = tupleBuffer.getAvailableMemoryArea();
-    for (size_t row = 0; row < rows; ++row)
+    PRECONDITION(buffer.rows * outputRowSize <= output.getBufferSize(), "handed-off buffer holds more rows than the output buffer");
+    const auto in = input.getAvailableMemoryArea();
+    const auto out = output.getAvailableMemoryArea();
+    for (size_t row = 0; row < buffer.rows; ++row)
     {
         for (const auto& [inputOffset, outputOffset, size] : copiedFields)
         {
             std::memcpy(out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
         }
+        for (size_t position = 0; position < outputCalls.size(); ++position)
+        {
+            const auto access
+                = TupleBufferRef::writeVarSized(output, *bufferProvider, std::as_bytes(std::span{buffer.results[row][position]}));
+            const auto outputOffset = calls[outputCalls[position]].outputOffset.value();
+            std::memcpy(out.subspan((row * outputRowSize) + outputOffset).data(), &access, sizeof(access));
+        }
     }
+}
 
-    /// ponytail: the next buffer waits until every call of this one finished; overlap buffers if that idles the service
-    const auto workers = std::min<size_t>(maxConcurrency, rows);
-    if (workers == 0)
-    {
-        return FillTupleBufferResult::withBytes(0);
-    }
-    auto pending = std::make_shared<PendingCalls>();
-    pending->remaining = workers;
-    pending->cancel = std::vector<boost::asio::cancellation_signal>(workers);
-    auto finished = pending->done.get_future();
-    size_t nextRow = 0;
-    for (size_t worker = 0; worker < workers; ++worker)
-    {
-        boost::asio::co_spawn(
-            strand,
-            processRows(worker, *input, tupleBuffer, rows, nextRow),
-            boost::asio::bind_cancellation_slot(
-                pending->cancel[worker].slot(),
-                [pending](const std::exception_ptr& error)
-                {
-                    if (error && !pending->failure)
-                    {
-                        pending->failure = error;
-                    }
-                    if (--pending->remaining == 0)
-                    {
-                        pending->done.set_value();
-                    }
-                }));
-    }
-    {
-        /// The signals belong to the strand; the stop request only asks it to emit them.
-        const std::stop_callback cancelCalls(
-            stopToken,
-            [this, pending]
+void AsyncSource::cancelAndDrain()
+{
+    boost::asio::post(
+        strand,
+        [this]
+        {
+            stopping = true;
+            for (auto& signal : cancelSignals)
             {
-                boost::asio::post(
-                    strand,
-                    [pending]
-                    {
-                        for (auto& signal : pending->cancel)
-                        {
-                            signal.emit(boost::asio::cancellation_type::terminal);
-                        }
-                    });
-            });
-        finished.wait();
-    }
-    if (stopToken.stop_requested())
+                signal.emit(boost::asio::cancellation_type::terminal);
+            }
+        });
     {
-        return FillTupleBufferResult::eos();
+        std::unique_lock lock(window.mutex);
+        window.changed.wait(lock, [this] { return window.runningRows == 0; });
+        window.buffers.clear();
+        window.unstartedRows = 0;
     }
-    if (pending->failure)
+    /// The strand runs handlers in the order they were posted: once this one ran, no handler of this source is left.
+    std::promise<void> drained;
+    boost::asio::post(strand, [&drained] { drained.set_value(); });
+    drained.get_future().wait();
+}
+
+Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+{
+    std::unique_lock lock(window.mutex);
+    while (true)
     {
-        std::rethrow_exception(pending->failure);
+        if (window.failure)
+        {
+            const auto failure = window.failure;
+            lock.unlock();
+            cancelAndDrain();
+            std::rethrow_exception(failure);
+        }
+        if (!window.buffers.empty() && window.buffers.front()->done)
+        {
+            const auto buffer = std::move(window.buffers.front());
+            window.buffers.pop_front();
+            lock.unlock();
+            writeOutput(*buffer, tupleBuffer);
+            return FillTupleBufferResult::withBytes(buffer->rows);
+        }
+        if (inputExhausted && window.buffers.empty())
+        {
+            return FillTupleBufferResult::eos();
+        }
+
+        /// The next buffer is taken once the rows waiting to start would no longer keep every slot busy, so the calls
+        /// run across buffer boundaries while the channel, not this source, holds what the calls cannot keep up with.
+        const bool wantsInput = !inputExhausted && window.buffers.size() < maxConcurrency && window.unstartedRows < maxConcurrency;
+        if (wantsInput)
+        {
+            const bool idle = window.buffers.empty();
+            window.channelChanged = false;
+            lock.unlock();
+            /// With nothing in flight, the next buffer is all there is to wait for.
+            auto input = idle ? channel->pop(stopToken) : channel->tryPop();
+            if (stopToken.stop_requested())
+            {
+                cancelAndDrain();
+                return FillTupleBufferResult::eos();
+            }
+            if (input)
+            {
+                admit(std::move(*input));
+            }
+            else
+            {
+                inputExhausted = channel->exhausted();
+            }
+            lock.lock();
+            if (input || inputExhausted)
+            {
+                continue;
+            }
+        }
+        const auto progressed = [&]
+        { return window.failure || (!window.buffers.empty() && window.buffers.front()->done) || (wantsInput && window.channelChanged); };
+        if (!window.changed.wait(lock, stopToken, progressed))
+        {
+            lock.unlock();
+            cancelAndDrain();
+            return FillTupleBufferResult::eos();
+        }
     }
-    return FillTupleBufferResult::withBytes(rows);
 }
 
 std::ostream& AsyncSource::toString(std::ostream& str) const

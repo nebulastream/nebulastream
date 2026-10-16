@@ -249,3 +249,14 @@ sink_rows() { tail -n +2 "$1" | sort; }
   # Three rows of one second each, one after the other.
   [ $((SECONDS - start)) -ge 3 ]
 }
+
+@test "ASYNC_DELAY: rows of different buffers wait concurrently" {
+  local start=$SECONDS
+  run_async_sql overlap.sql
+  [ "$status" -eq 0 ]
+
+  [ "$(sink_rows delayed.csv | wc -l)" -eq 20 ]
+  [ "$(sink_rows delayed.csv | cut -d, -f2 | sort -u)" = "waited" ]
+  # One row per buffer: waiting buffer after buffer would take 40 seconds, with 16 rows in flight it takes about four.
+  [ $((SECONDS - start)) -lt 15 ]
+}
