@@ -14,6 +14,7 @@
 
 #include <HandoffChannel.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <mutex>
@@ -28,9 +29,6 @@ namespace NES
 
 namespace
 {
-/// ponytail: fixed capacity; make it a descriptor option if the backlog needs tuning
-constexpr size_t CHANNEL_CAPACITY = 64;
-
 struct Registry
 {
     std::mutex mutex;
@@ -44,18 +42,19 @@ Registry& registry()
 }
 }
 
-HandoffChannel::HandoffChannel(const size_t capacity) : capacity(capacity)
+/// A channel that holds nothing would reject every buffer and hold the producer back for good.
+HandoffChannel::HandoffChannel(const size_t capacity) : capacity(std::max<size_t>(1, capacity))
 {
 }
 
-std::shared_ptr<HandoffChannel> HandoffChannel::get(const std::string& id)
+std::shared_ptr<HandoffChannel> HandoffChannel::get(const std::string& id, const size_t capacity)
 {
     auto& [mutex, channels] = registry();
     const std::scoped_lock lock(mutex);
     auto& channel = channels[id];
     if (channel == nullptr)
     {
-        channel = std::make_shared<HandoffChannel>(CHANNEL_CAPACITY);
+        channel = std::make_shared<HandoffChannel>(capacity);
     }
     return channel;
 }

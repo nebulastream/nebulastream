@@ -53,6 +53,7 @@
 #include <InputFormatterDescriptor.hpp>
 #include <NetworkTopology.hpp>
 #include <QueryId.hpp>
+#include <QueryOptimizerAsyncConfiguration.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -70,6 +71,8 @@ struct DecompositionContext
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
+    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
+    const QueryOptimizerAsyncConfiguration& asyncConfig;
     SharedPtr<const SourceCatalog> sourceCatalog;
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
@@ -288,14 +291,36 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
         }
     }
 
+    /// Both halves create the channel, whichever starts first, so both need its capacity.
+    std::unordered_map<Identifier, std::string> sinkConfig{{Identifier::parse("channel"), channel}, {Identifier::parse("output_format"), "NATIVE"}};
+    std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("channel"), channel}};
+    if (context.asyncConfig.channelCapacity.isExplicitlySet())
+    {
+        const auto capacity = std::to_string(context.asyncConfig.channelCapacity.getValue());
+        sinkConfig.emplace(Identifier::parse("channel_capacity"), capacity);
+        sourceConfig.emplace(Identifier::parse("channel_capacity"), capacity);
+    }
+    if (context.asyncConfig.maxConcurrency.isExplicitlySet())
+    {
+        sourceConfig.emplace(Identifier::parse("max_concurrency"), std::to_string(context.asyncConfig.maxConcurrency.getValue()));
+    }
+    if (context.asyncConfig.maxRetries.isExplicitlySet())
+    {
+        sourceConfig.emplace(Identifier::parse("max_retries"), std::to_string(context.asyncConfig.maxRetries.getValue()));
+    }
+
     const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-    const auto handoffSinkDescriptor = context.sinkCatalog->getAnonymousSink(
-        inputFields,
-        Identifier::parse("Handoff"),
-        Host(node.getRawValue()),
-        {{Identifier::parse("channel"), channel}, {Identifier::parse("output_format"), "NATIVE"}},
-        {});
+    const auto handoffSinkDescriptor
+        = context.sinkCatalog->getAnonymousSink(inputFields, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
     INVARIANT(handoffSinkDescriptor.has_value(), "Invalid sink descriptor config for handoff sink");
+    sourceConfig.emplace(Identifier::parse("calls"), rfl::json::write(calls.get()));
+    sourceConfig.emplace(
+        Identifier::parse("input_fields"),
+        fmt::format(
+            "{}",
+            fmt::join(
+                inputFields | std::views::transform([](const auto& field) { return fmt::format("{}", field.getFullyQualifiedName()); }),
+                ",")));
     context.addPlanToNode(
         SinkLogicalOperator::create(child, handoffSinkDescriptor.value())->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
 
@@ -304,14 +329,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
         asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(),
         Host(node.getRawValue()),
         {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "NATIVE"}},
-        {{Identifier::parse("channel"), channel},
-         {Identifier::parse("calls"), rfl::json::write(calls.get())},
-         {Identifier::parse("input_fields"),
-          fmt::format(
-              "{}",
-              fmt::join(
-                  inputFields | std::views::transform([](const auto& field) { return fmt::format("{}", field.getFullyQualifiedName()); }),
-                  ","))}});
+        sourceConfig);
     INVARIANT(asyncSourceDescriptor.has_value(), "Failed to add physical source for async operator");
     const auto sourceTraits = asyncOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(AsyncExecutionTrait); })
@@ -344,7 +362,10 @@ QueryDecomposer::QueryDecomposer(
 {
 }
 
-DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
+DistributedLogicalPlan QueryDecomposer::decompose(
+    const LogicalPlan& placedPlan,
+    const QueryOptimizerNetworkConfiguration& configuration,
+    const QueryOptimizerAsyncConfiguration& asyncConfiguration)
 {
     PRECONDITION(placedPlan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
     PRECONDITION(
@@ -355,6 +376,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
     DecompositionContext context{
         .plansByNode = {},
         .config = configuration,
+        .asyncConfig = asyncConfiguration,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};

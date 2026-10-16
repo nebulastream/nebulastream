@@ -42,11 +42,15 @@ public:
         CONSUMER_GONE,
     };
 
+    /// Buffers a channel holds unless the plan decomposer sets `async.channel_capacity`.
+    static constexpr size_t DEFAULT_CAPACITY = 64;
+
     explicit HandoffChannel(size_t capacity);
 
-    /// Both halves look the channel up by id, in whichever order they start. It stays registered until
-    /// `release` so that buffers the sink handed off before the source opened are not lost.
-    static std::shared_ptr<HandoffChannel> get(const std::string& id);
+    /// Both halves look the channel up by id, in whichever order they start; the first one creates it with its
+    /// capacity. It stays registered until `release` so that buffers the sink handed off before the source opened
+    /// are not lost.
+    static std::shared_ptr<HandoffChannel> get(const std::string& id, size_t capacity);
     /// Called by the source, which is the last to use the channel. A sink that still holds the channel is told that
     /// nobody takes its buffers any more, and the buffers that were waiting are dropped.
     static void release(const std::string& id);

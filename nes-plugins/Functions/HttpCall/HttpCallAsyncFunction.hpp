@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <vector>
@@ -26,7 +27,7 @@
 namespace NES
 {
 
-/// Executes `HTTP_CALL(body, url)`: POSTs `body` to `url` and returns the response body.
+/// Executes `HTTP_CALL(body, url[, timeout_ms])`: POSTs `body` to `url` and returns the response body.
 /// Keeps its connection open between calls; a dropped keep-alive connection is reopened once.
 ///
 /// ponytail: http:// only; add a beast::ssl_stream (openssl is in the image) when a service needs https
@@ -39,7 +40,12 @@ public:
 
 private:
     boost::asio::awaitable<std::string>
-    exchange(const std::string& host, const std::string& port, const std::string& target, const std::string& body);
+    exchange(
+        const std::string& host,
+        const std::string& port,
+        const std::string& target,
+        const std::string& body,
+        std::chrono::milliseconds timeout);
 
     std::optional<boost::beast::tcp_stream> stream;
     boost::beast::flat_buffer buffer;
