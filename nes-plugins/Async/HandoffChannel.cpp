@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -92,6 +93,10 @@ HandoffChannel::PushResult HandoffChannel::tryPush(const TupleBuffer& buffer)
             return PushResult::FULL;
         }
         buffers.push_back(buffer);
+        if (listener)
+        {
+            listener();
+        }
     }
     changed.notify_one();
     return PushResult::PUSHED;
@@ -109,13 +114,41 @@ std::optional<TupleBuffer> HandoffChannel::pop(const std::stop_token& stopToken)
     return buffer;
 }
 
+std::optional<TupleBuffer> HandoffChannel::tryPop()
+{
+    const std::scoped_lock lock(mutex);
+    if (buffers.empty())
+    {
+        return std::nullopt;
+    }
+    auto buffer = std::move(buffers.front());
+    buffers.pop_front();
+    return buffer;
+}
+
+bool HandoffChannel::exhausted()
+{
+    const std::scoped_lock lock(mutex);
+    return closed && buffers.empty();
+}
+
 void HandoffChannel::close()
 {
     {
         const std::scoped_lock lock(mutex);
         closed = true;
+        if (listener)
+        {
+            listener();
+        }
     }
     changed.notify_all();
+}
+
+void HandoffChannel::setListener(std::function<void()> onChange)
+{
+    const std::scoped_lock lock(mutex);
+    listener = std::move(onChange);
 }
 
 }
