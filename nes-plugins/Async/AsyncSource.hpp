@@ -47,8 +47,10 @@ namespace NES
 /// same channel handed off, evaluates the async calls and fills in their result slots.
 ///
 /// The calls run on one event loop shared by all Async sources; the source thread only waits for them.
-/// They run across buffer boundaries: up to `MAX_CONCURRENCY` rows are in flight at once, whichever handed-off
-/// buffers they belong to, and the buffers are emitted in the order they were handed off.
+/// They run across buffer boundaries: up to `MAX_CONCURRENCY` batches of rows are in flight at once, whichever
+/// handed-off buffers they belong to, and the buffers are emitted in the order they were handed off. A batch holds as
+/// many consecutive rows of one buffer as every function of the stage accepts in one call (`maxBatchSize`), so it is a
+/// single row unless all of them batch.
 ///
 /// The lifting rule reserves a slot per call in the handed-off rows, so input and output rows have
 /// the same fields and one input buffer becomes exactly one output buffer. Everything that is not a
@@ -81,23 +83,34 @@ private:
         size_t size;
     };
 
-    /// The input offset of a VARSIZED field, the index of an earlier call, or else a constant.
+    /// The input offset of a VARSIZED field, a value of an earlier call, or else a constant.
     struct BoundArgument
     {
         std::optional<size_t> inputOffset;
         std::optional<size_t> call;
+        size_t output = 0;
         std::string constant;
     };
 
     struct BoundCall
     {
+        std::string function;
+        std::string configuration;
         std::vector<BoundArgument> arguments;
-        /// Unset for a call whose result only feeds other calls.
-        std::optional<size_t> outputOffset;
+        /// Values each row's result has to hold: one more than the highest that an output or a later call reads.
+        size_t requiredValues = 1;
         /// 0 for calls that read no other call; otherwise one more than the highest level they read.
         size_t level = 0;
-        /// One per worker coroutine, so an instance serves one call at a time.
+        /// One per slot, so an instance serves one call at a time.
         std::vector<std::unique_ptr<AsyncFunction>> instances;
+    };
+
+    /// A field of the output that holds one value of a call.
+    struct OutputValue
+    {
+        size_t call;
+        size_t index;
+        size_t outputOffset;
     };
 
     /// A handed-off buffer whose rows are called.
@@ -105,11 +118,11 @@ private:
     {
         TupleBuffer input;
         size_t rows;
-        /// Strand only.
+        /// Guarded by `Window::mutex`.
         size_t nextRow = 0;
         size_t unfinishedRows;
-        /// Per row, the results of the calls that write an output field, in the order of `outputCalls`. Each row is
-        /// written by its own coroutine on the strand and read on the source thread once `done` is set.
+        /// Per row, the values that go into output fields, in the order of `outputValues`. Each batch writes its own
+        /// rows on the strand; the source thread reads them once `done` is set.
         std::vector<std::vector<std::string>> results;
         /// Guarded by `Window::mutex`.
         bool done = false;
@@ -123,18 +136,21 @@ private:
         /// In the order they were handed off, which is the order they are emitted in.
         std::deque<std::shared_ptr<InFlightBuffer>> buffers;
         size_t unstartedRows = 0;
-        size_t runningRows = 0;
+        size_t runningBatches = 0;
         std::exception_ptr failure;
         /// Set by the channel when a buffer arrives or it closes; reset by the source thread before it looks.
         bool channelChanged = false;
     };
 
+    /// `results` holds the values of this row's earlier calls, one result per call.
     std::vector<std::string>
-    readArguments(const BoundCall& call, const TupleBuffer& input, size_t row, const std::vector<std::string>& results) const;
-    /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops.
-    boost::asio::awaitable<std::string> callWithRetries(AsyncFunction& function, std::vector<std::string> arguments) const;
-    /// Runs the calls of one row with the function instances of `slot`.
-    boost::asio::awaitable<void> processRow(size_t slot, std::shared_ptr<InFlightBuffer> buffer, size_t row);
+    readArguments(const BoundCall& call, const TupleBuffer& input, size_t row, const std::vector<AsyncCallResult>& results) const;
+    /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops, and checks that the
+    /// function answered every row with the values the stage reads.
+    boost::asio::awaitable<std::vector<AsyncCallResult>>
+    callWithRetries(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows) const;
+    /// Runs the calls of the rows [begin, end) of a buffer with the function instances of `slot`.
+    boost::asio::awaitable<void> processBatch(size_t slot, std::shared_ptr<InFlightBuffer> buffer, size_t begin, size_t end);
 
     /// Source thread.
     void admit(TupleBuffer input);
@@ -142,21 +158,23 @@ private:
     /// Cancels every row in flight and returns once none is running and no handler of this source is left on the strand.
     void cancelAndDrain();
 
-    /// Strand only: starts rows while a slot is free.
-    void startRows();
-    void finishRow(const std::shared_ptr<InFlightBuffer>& buffer, size_t slot, const std::exception_ptr& error);
+    /// Strand only: starts batches while a slot is free.
+    void startBatches();
+    void finishBatch(const std::shared_ptr<InFlightBuffer>& buffer, size_t slot, size_t rows, const std::exception_ptr& error);
 
     std::string channelId;
     size_t channelCapacity;
+    /// The configured bound, lowered to what the stage's functions allow.
     size_t maxConcurrency;
     size_t maxRetries;
+    /// Rows per call: the smallest `maxBatchSize` of the stage's functions.
+    size_t batchSize = 1;
     size_t inputRowSize = 0;
     size_t outputRowSize = 0;
     std::vector<CopiedField> copiedFields;
     /// Ordered so that every call comes after the calls it reads.
     std::vector<BoundCall> calls;
-    /// The calls that write an output field, in the order their results are kept per row.
-    std::vector<size_t> outputCalls;
+    std::vector<OutputValue> outputValues;
     size_t levels = 0;
 
     std::shared_ptr<HandoffChannel> channel;
@@ -167,7 +185,7 @@ private:
     /// Source thread only: the channel is closed and drained.
     bool inputExhausted = false;
     Window window;
-    /// Strand only. A row in flight holds one slot: its function instances and its cancellation signal.
+    /// Strand only. A batch in flight holds one slot: its function instances and its cancellation signal.
     std::vector<size_t> freeSlots;
     std::vector<boost::asio::cancellation_signal> cancelSignals;
     bool stopping = false;
@@ -189,8 +207,9 @@ struct ConfigParametersAsync
             return value;
         }};
 
-    /// JSON list of `AsyncCall`: the field each call writes, the async function's type, and per argument
-    /// either the handed-off field it reads ({"field": ...}) or a constant ({"constant": ...}).
+    /// JSON list of `AsyncCall`: the fields each call's values go to, the async function's type and configuration, and
+    /// per argument the handed-off field it reads ({"field": ...}), a constant ({"constant": ...}) or a value of an
+    /// earlier call ({"call": ..., "output": ...}).
     static inline const DescriptorConfig::ConfigParameter<std::string> CALLS{
         "CALLS",
         std::nullopt,
@@ -203,7 +222,7 @@ struct ConfigParametersAsync
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FIELDS, config); }};
 
-    /// Rows whose calls are in flight at the same time.
+    /// Calls in flight at the same time, each for one batch of rows. A function of the stage may lower it.
     static inline const DescriptorConfig::ConfigParameter<size_t> MAX_CONCURRENCY{
         "MAX_CONCURRENCY",
         size_t{16},

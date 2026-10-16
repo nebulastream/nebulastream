@@ -33,9 +33,12 @@ public:
     QueryOptimizerAsyncConfiguration() = default;
     QueryOptimizerAsyncConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
-    /// Rows of one async stage whose calls are in flight at the same time.
+    /// Calls of one async stage in flight at the same time, each for one batch of rows. A function of the stage may lower it.
     UIntOption maxConcurrency
-        = {"max_concurrency", "16", "Rows of one async stage whose calls are in flight at the same time", {std::make_shared<NumberValidation>()}};
+        = {"max_concurrency",
+           "16",
+           "Calls of one async stage in flight at the same time, each for one batch of rows",
+           {std::make_shared<NumberValidation>()}};
 
     /// Buffers that wait between the producer half of an async stage and its calls before the producer is held back.
     UIntOption channelCapacity

@@ -14,6 +14,12 @@
 
 #pragma once
 
+#include <cstddef>
+#include <string>
+
+/// Comes first: DynamicBase.hpp uses PRECONDITION without including where it is defined.
+#include <ErrorHandling.hpp>
+
 #include <Util/DynamicBase.hpp>
 
 namespace NES
@@ -25,6 +31,12 @@ namespace NES
 /// Its arguments are only ever plain fields or constants by the time it is executed.
 struct AsyncLogicalFunction : Castable<AsyncLogicalFunction>
 {
+    /// Handed to the asynchronous implementation when it is created, for what is fixed per query rather than per row,
+    /// e.g. a model from a catalog. It has to follow from what `explain` shows: calls that explain alike are evaluated once.
+    [[nodiscard]] virtual std::string getAsyncConfiguration() const { return {}; }
+
+    /// Values one call produces. The call evaluates to the first; `ASYNC_OUTPUT(call, i)` reads the i-th.
+    [[nodiscard]] virtual size_t getNumberOfAsyncOutputs() const { return 1; }
 };
 
 }

@@ -249,3 +249,29 @@ sink_rows() { tail -n +2 "$1" | sort; }
   # One row per buffer: waiting buffer after buffer would take 40 seconds, with 16 rows in flight it takes about four.
   [ $((SECONDS - start)) -lt 15 ]
 }
+
+@test "ASYNC_DELAY batch: one call covers a batch of rows, and ASYNC_OUTPUT reads a second value of the same call" {
+  local start=$SECONDS
+  run_async_sql batching.sql --optimizer async.max_concurrency=1
+  [ "$status" -eq 0 ]
+
+  # Both fields come from one call per batch, and the batch held all three rows of the buffer.
+  [ "$(sink_rows batched.csv)" = "$(printf '1,Hello,3\n2,NebulaStream,3\n3,äöü,3')" ]
+  # One call at a time: three rows of one second each take three seconds unless one wait covers them all.
+  [ $((SECONDS - start)) -lt 3 ]
+}
+
+@test "ASYNC_DELAY batch: without a batch size every row is a call of its own" {
+  local start=$SECONDS
+  run_async_sql unbatched.sql --optimizer async.max_concurrency=1
+  [ "$status" -eq 0 ]
+
+  [ "$(sink_rows unbatched.csv)" = "$(printf '1,1\n2,1\n3,1')" ]
+  [ $((SECONDS - start)) -ge 3 ]
+}
+
+@test "ASYNC_OUTPUT: reading a value the call does not produce is rejected" {
+  run_async_sql output_out_of_range.sql
+  { echo "$output"; cat nes-repl.log; } | grep -q "ASYNC_OUTPUT reads value 1 of HTTP_CALL"
+  [ "$(sink_rows responses.csv 2>/dev/null | wc -l)" -eq 0 ]
+}

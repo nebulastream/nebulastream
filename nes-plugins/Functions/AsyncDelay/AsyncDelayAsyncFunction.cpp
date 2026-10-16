@@ -14,6 +14,7 @@
 
 #include <AsyncDelayAsyncFunction.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -30,22 +31,45 @@
 namespace NES
 {
 
-AsyncFunctionRegistryReturnType AsyncDelayAsyncFunction::create(AsyncFunctionRegistryArguments)
+AsyncFunctionRegistryReturnType AsyncDelayAsyncFunction::create(AsyncFunctionRegistryArguments arguments)
 {
-    return std::make_unique<AsyncDelayAsyncFunction>();
+    if (arguments.configuration.empty())
+    {
+        return std::make_unique<AsyncDelayAsyncFunction>(1);
+    }
+    const auto batchSize = from_chars<uint64_t>(arguments.configuration);
+    if (!batchSize || *batchSize == 0)
+    {
+        throw CannotOpenSource("ASYNC_DELAY expects a positive batch size, got {}", arguments.configuration);
+    }
+    return std::make_unique<AsyncDelayAsyncFunction>(*batchSize);
 }
 
-boost::asio::awaitable<std::string> AsyncDelayAsyncFunction::call(std::vector<std::string> arguments)
+boost::asio::awaitable<std::vector<AsyncCallResult>> AsyncDelayAsyncFunction::callBatch(std::vector<std::vector<std::string>> rows)
 {
-    PRECONDITION(arguments.size() == 2, "ASYNC_DELAY takes (value, millis)");
-    const auto millis = from_chars<uint64_t>(arguments[1]);
-    if (!millis)
+    /// The delay is a constant, so every row of the batch asks for the same wait.
+    uint64_t millis = 0;
+    for (const auto& arguments : rows)
     {
-        throw CannotReadFromSource("ASYNC_DELAY expects a non-negative delay in milliseconds, got {}", arguments[1]);
+        PRECONDITION(arguments.size() >= 2, "ASYNC_DELAY takes (value, millis[, batch_size])");
+        const auto rowMillis = from_chars<uint64_t>(arguments[1]);
+        if (!rowMillis)
+        {
+            throw CannotReadFromSource("ASYNC_DELAY expects a non-negative delay in milliseconds, got {}", arguments[1]);
+        }
+        millis = std::max(millis, *rowMillis);
     }
-    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, std::chrono::milliseconds{*millis}};
+    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, std::chrono::milliseconds{millis}};
     co_await timer.async_wait(boost::asio::use_awaitable);
-    co_return std::move(arguments[0]);
+
+    const auto covered = std::to_string(rows.size());
+    std::vector<AsyncCallResult> results;
+    results.reserve(rows.size());
+    for (auto& arguments : rows)
+    {
+        results.push_back({std::move(arguments[0]), covered});
+    }
+    co_return results;
 }
 
 }

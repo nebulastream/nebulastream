@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <Sources/AsyncFunction.hpp>
@@ -23,13 +24,21 @@
 namespace NES
 {
 
-/// Executes `ASYNC_DELAY(value, millis)` on a timer, so a waiting call occupies no thread.
+/// Executes `ASYNC_DELAY(value, millis[, batch_size])` on a timer, so a waiting call occupies no thread. One wait covers
+/// a whole batch; each row gets its value and the number of rows the wait covered.
 class AsyncDelayAsyncFunction final : public AsyncFunction
 {
 public:
-    static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments);
+    explicit AsyncDelayAsyncFunction(size_t batchSize) : batchSize(batchSize) { }
 
-    boost::asio::awaitable<std::string> call(std::vector<std::string> arguments) override;
+    /// The configuration is the batch size, empty for one row per call.
+    static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
+
+    boost::asio::awaitable<std::vector<AsyncCallResult>> callBatch(std::vector<std::vector<std::string>> rows) override;
+    [[nodiscard]] size_t maxBatchSize() const override { return batchSize; }
+
+private:
+    size_t batchSize;
 };
 
 }

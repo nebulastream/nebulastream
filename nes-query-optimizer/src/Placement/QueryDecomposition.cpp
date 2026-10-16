@@ -27,6 +27,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/AsyncLogicalFunction.hpp>
+#include <Functions/AsyncOutputLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -228,7 +229,12 @@ LogicalOperator assignOperator(DecompositionContext& context, const LogicalOpera
 class AsyncCallList
 {
 public:
-    void addResult(const Identifier& output, const LogicalFunction& call) { calls[describe(call)].output = output.asCanonicalString(); }
+    /// `ASYNC_OUTPUT(call, i)` writes the i-th value of its call, any other call its first.
+    void addResult(const Identifier& output, const LogicalFunction& function)
+    {
+        const auto [call, index] = resolve(function);
+        calls[call].outputs.push_back({.index = index, .field = output.asCanonicalString()});
+    }
 
     [[nodiscard]] const std::vector<AsyncCall>& get() const { return calls; }
 
@@ -236,23 +242,36 @@ private:
     std::vector<LogicalFunction> described;
     std::vector<AsyncCall> calls;
 
+    /// The listed call a function reads and which of its values.
+    std::pair<size_t, size_t> resolve(const LogicalFunction& function)
+    {
+        if (const auto output = function.tryGetAs<AsyncOutputLogicalFunction>())
+        {
+            return {describe(output.value()->getCall()), output.value()->getIndex()};
+        }
+        return {describe(function), 0};
+    }
+
     size_t describe(const LogicalFunction& call)
     {
         if (const auto known = std::ranges::find(described, call); known != described.end())
         {
             return static_cast<size_t>(std::distance(described.begin(), known));
         }
-        AsyncCall description{.output = std::nullopt, .function = std::string{call.getType()}, .arguments = {}};
+        const auto async = call.tryGetAs<AsyncLogicalFunction>();
+        INVARIANT(async.has_value(), "async stage computes {}, which is not an async call", call);
+        AsyncCall description{
+            .outputs = {}, .function = std::string{call.getType()}, .configuration = async.value()->get().getAsyncConfiguration(), .arguments = {}};
         for (const auto& argument : call.getChildren())
         {
             if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
             {
                 description.arguments.push_back(
-                    {.field = field.value()->getField().getLastName().asCanonicalString(), .constant = std::nullopt, .call = std::nullopt});
+                    {.field = field.value()->getField().getLastName().asCanonicalString(), .constant = std::nullopt, .call = std::nullopt, .output = 0});
             }
             else if (const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>())
             {
-                description.arguments.push_back({.field = std::nullopt, .constant = constant.value()->getConstantValue(), .call = std::nullopt});
+                description.arguments.push_back({.field = std::nullopt, .constant = constant.value()->getConstantValue(), .call = std::nullopt, .output = 0});
             }
             else
             {
@@ -261,7 +280,8 @@ private:
                     "async call {} has an argument that is neither a field, a constant nor an async call: {}",
                     call,
                     argument);
-                description.arguments.push_back({.field = std::nullopt, .constant = std::nullopt, .call = describe(argument)});
+                const auto [earlierCall, index] = resolve(argument);
+                description.arguments.push_back({.field = std::nullopt, .constant = std::nullopt, .call = earlierCall, .output = index});
             }
         }
         described.push_back(call);

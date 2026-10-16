@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -31,14 +33,17 @@
 namespace NES
 {
 
-/// `ASYNC_DELAY(value, millis)`: evaluates to `value` after waiting `millis` milliseconds without blocking a thread.
-/// A stand-in for a slow external service. Asynchronous only; there is no Nautilus implementation.
+/// `ASYNC_DELAY(value, millis[, batch_size])`: evaluates to `value` after waiting `millis` milliseconds without blocking
+/// a thread. A stand-in for a slow external service. Asynchronous only; there is no Nautilus implementation.
+///
+/// It also stands in for a service that answers several rows with one request: with `batch_size`, one wait covers up to
+/// that many rows. Its second value, read with `ASYNC_OUTPUT(..., 1)`, is the number of rows the wait covered.
 class AsyncDelayLogicalFunction final : public AsyncLogicalFunction
 {
 public:
     static constexpr std::string_view NAME = "AsyncDelay";
 
-    AsyncDelayLogicalFunction(LogicalFunction value, LogicalFunction millis);
+    AsyncDelayLogicalFunction(LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> batchSize);
 
     [[nodiscard]] bool operator==(const AsyncDelayLogicalFunction& rhs) const;
 
@@ -51,12 +56,18 @@ public:
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
+    /// The batch size, which the implementation needs before the first row arrives.
+    [[nodiscard]] std::string getAsyncConfiguration() const override;
+    /// The value, and the number of rows the wait covered.
+    [[nodiscard]] size_t getNumberOfAsyncOutputs() const override { return 2; }
+
     static LogicalFunctionRegistryReturnType createASYNC_DELAY(LogicalFunctionRegistryArguments arguments);
 
 private:
     DataType dataType;
     LogicalFunction value;
     LogicalFunction millis;
+    std::optional<LogicalFunction> batchSize;
 };
 
 namespace detail
@@ -65,6 +76,7 @@ struct ReflectedAsyncDelayLogicalFunction
 {
     LogicalFunction value;
     LogicalFunction millis;
+    std::optional<LogicalFunction> batchSize;
 };
 }
 
