@@ -30,6 +30,7 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
@@ -78,23 +79,16 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     nautilus::invoke(
         +[](AbstractBufferProvider* bufferProvider,
             TupleBuffer* finalHashMapBuffer IF_PRECONDITION(, const uint64_t entrySize),
-            const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize),
-            const uint64_t bloomBytes)
+            const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize))
         {
-            const auto neededFinalBufferSize = ChainedHashMap::calculateBufferSize(numberOfBuckets, bloomBytes);
-            std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
-            if (not finalHashMapTupleBuffer.has_value())
-            {
-                throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
-            }
+            const auto neededFinalBufferSize = ChainedHashMap::calculateBufferSize(numberOfBuckets);
             /// initialize the final hash map tuple buffer
-            *finalHashMapBuffer = finalHashMapTupleBuffer.value();
-            ChainedHashMap::init(*finalHashMapBuffer IF_PRECONDITION(, entrySize), numberOfBuckets IF_PRECONDITION(, pageSize), bloomBytes);
+            *finalHashMapBuffer = getPooledBufferIfFits(neededFinalBufferSize, *bufferProvider);
+            ChainedHashMap::init(*finalHashMapBuffer IF_PRECONDITION(, entrySize), numberOfBuckets IF_PRECONDITION(, pageSize));
         },
         executionCtx.pipelineMemoryProvider.bufferProvider,
         finalHashMapNautilusBuffer.asArg() IF_PRECONDITION(, nautilus::val<uint64_t>{hashMapConfig.entrySize}),
-        nautilus::val<uint64_t>{hashMapConfig.numberOfBuckets} IF_PRECONDITION(, nautilus::val<uint64_t>{hashMapConfig.pageSize}),
-        nautilus::val<uint64_t>{hashMapConfig.bloomFilterMemAreaSize()});
+        nautilus::val<uint64_t>{hashMapConfig.numberOfBuckets} IF_PRECONDITION(, nautilus::val<uint64_t>{hashMapConfig.pageSize}));
 
     /// Borrow the pinned final hash map buffer for the ChainedHashMapRef/entry views below (implicit Owned->Borrowed conversion).
     const BorrowedNautilusBuffer finalHashMapBufferRef = finalHashMapNautilusBuffer;

@@ -25,7 +25,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
@@ -329,12 +328,6 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
-    /// Before dereferencing the cache-cold chain, consult the in-map BloomFilter. Without a filter we go
-    /// straight to the chain walk, which costs nothing extra: the chains array is nullptr-filled by init().
-    if (bloomFilter and not bloomFilter->mightContain(hash))
-    {
-        return nullptr;
-    }
     /// Masking happens out here rather than inside the proxy: the mask is a query-compile-time constant, so
     /// it folds into an immediate instead of costing a load from the map's header on every probe.
     const auto entryPos = hash & nautilus::val<uint64_t>{ChainedHashMap::calculateMask(config.numberOfBuckets)};
@@ -379,11 +372,6 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
         nautilus::val<uint64_t>{config.pageSize},
         nautilus::val<uint64_t>{ChainedHashMap::calculateMask(config.numberOfBuckets)});
 
-    if (bloomFilter)
-    {
-        bloomFilter->add(hash);
-    }
-
     return static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
 }
 
@@ -417,36 +405,13 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
     return result;
 }
 
-/// Copied, not moved: the bloom-filter setup below still reads `buffer` after the base is initialised.
 ChainedHashMapRef::ChainedHashMapRef(BorrowedNautilusBuffer buffer, ChainedHashMapConfig config)
     : HashMapRef(buffer), config(std::move(config))
 {
     PRECONDITION(this->config.hashFunction != nullptr, "A ChainedHashMapConfig must carry the map's hash function");
-
-    /// The bit area lives inline in the map's buffer and is zeroed by init(), so its address is stable and
-    /// valid from here on. Resolving it once keeps the traced lookup path free of a per-call invoke. Its
-    /// offset follows from the chain count, which is a query-compile-time constant like the rest of the
-    /// sizing — so a view built from a different config than the map would silently address the wrong words.
-    if (this->config.bloomFilterParams)
-    {
-        bloomFilter.emplace(
-            invoke(
-                +[](TupleBuffer* buffer, const uint64_t numberOfChains, const uint64_t bloomBytes)
-                {
-                    auto chm = ChainedHashMap::load(*buffer);
-                    return chm.getBloomFilterMemArea(numberOfChains, bloomBytes);
-                },
-                buffer.asArg(),
-                nautilus::val<uint64_t>{ChainedHashMap::calculateNumberOfChains(this->config.numberOfBuckets)},
-                nautilus::val<uint64_t>{this->config.bloomFilterMemAreaSize()}),
-            *this->config.bloomFilterParams);
-    }
 }
 
-/// Copies the already-bound bloomFilter rather than delegating to the ctor above, which would re-run its
-/// invokes and emit redundant traced calls per copy.
-ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
-    : HashMapRef(other.buffer), config(other.config), bloomFilter(other.bloomFilter)
+ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other) : HashMapRef(other.buffer), config(other.config)
 {
 }
 
@@ -454,7 +419,6 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
 {
     buffer = other.buffer;
     config = other.config;
-    bloomFilter = other.bloomFilter;
     return *this;
 }
 

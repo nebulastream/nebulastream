@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-nautilus
-        BloomFilterRef.cpp
         HashFunction.cpp
         MurMur3HashFunction.cpp
         )

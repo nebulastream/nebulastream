@@ -25,7 +25,6 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundSchema.hpp>
-#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -73,9 +72,8 @@ TestableChainedHashMap::TestableChainedHashMap(
     EngineMode mode,
     uint64_t numberOfBuckets,
     size_t numKeyFields,
-    uint64_t numEntriesPerPage,
-    const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams)
-    : dataTypes(fieldTypes), bufferManager(bufferManager), bloomFilterParams(bloomFilterParams)
+    uint64_t numEntriesPerPage)
+    : dataTypes(fieldTypes), bufferManager(bufferManager)
 {
     PRECONDITION(
         numKeyFields <= fieldTypes.size(),
@@ -111,23 +109,20 @@ TestableChainedHashMap::TestableChainedHashMap(
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
         .pageSize = entrySize * numEntriesPerPage,
-        .bloomFilterParams = bloomFilterParams,
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,
         .hashFunction = hashFunction};
-    /// The throwaway probe map only ever holds the single key being looked up, so it needs no BloomFilter, and
-    /// it stores no value bytes: findEntry() reads only the key region and the hash off the entry it is given.
+    /// The throwaway probe map only ever holds the single key being looked up, and it stores no value bytes:
+    /// findEntry() reads only the key region and the hash off the entry it is given.
     probeConfig = ChainedHashMapConfig{
         .entrySize = probeEntrySize,
         .numberOfBuckets = 1,
         .pageSize = probeEntrySize,
-        .bloomFilterParams = std::nullopt,
         .fieldKeys = fieldKeys,
         .fieldValues = {},
         .hashFunction = hashFunction};
 
-    const auto hashMapBufferSize
-        = ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets, hashMapConfig.bloomFilterMemAreaSize());
+    const auto hashMapBufferSize = ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets);
     auto chainedHashMapBufferOpt = bufferManager.getUnpooledBuffer(hashMapBufferSize);
     if (not chainedHashMapBufferOpt.has_value())
     {
@@ -252,7 +247,7 @@ std::optional<AnyVec> TestableChainedHashMap::at(const AnyVec& key)
 {
     /// probeConfig is the member the lookup trace was built with, not a fresh one: the map carries no sizing,
     /// so the config init() sees here has to be the exact one the compiled probe assumes.
-    const auto probeBufferSize = ChainedHashMap::calculateBufferSize(probeConfig.numberOfBuckets, probeConfig.bloomFilterMemAreaSize());
+    const auto probeBufferSize = ChainedHashMap::calculateBufferSize(probeConfig.numberOfBuckets);
     auto probeBufferOpt = bufferManager.getUnpooledBuffer(probeBufferSize);
     if (not probeBufferOpt.has_value())
     {

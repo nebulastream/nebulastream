@@ -26,6 +26,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
@@ -81,18 +82,11 @@ HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider
     {
         /// initialize the chained hash map buffer
         /// allocate buffers for the hash maps
-        if (auto childBuffer = bufferProvider.getUnpooledBuffer(
-                ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets, hashMapConfig.bloomFilterMemAreaSize())))
-        {
-            /// initialize chained hash map i
-            ChainedHashMap::init(childBuffer.value(), hashMapConfig);
-            hashMapBuffers[pos] = childBuffer.value();
-            hashMapBuffersState[pos] = HashMapBufferState::INITIALIZED;
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
-        }
+        auto childBuffer = getPooledBufferIfFits(ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets), bufferProvider);
+        /// initialize chained hash map i
+        ChainedHashMap::init(childBuffer, hashMapConfig);
+        hashMapBuffers[pos] = childBuffer;
+        hashMapBuffersState[pos] = HashMapBufferState::INITIALIZED;
     }
     return &hashMapBuffers[pos];
 }

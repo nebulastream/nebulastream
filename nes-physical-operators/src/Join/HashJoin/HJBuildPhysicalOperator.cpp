@@ -34,6 +34,7 @@
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
@@ -91,9 +92,6 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                     entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
-                /// One paged vector exists per distinct key per hash map, so its pages follow the state page-size knob. Sizing them by the
-                /// operator buffer size instead multiplies the join state by bufferSize/pageSize, which exhausts the unpooled budget once
-                /// garbage collection falls behind the build.
                 const nautilus::val<uint64_t> pageSize = hashMapConfig.pageSize;
                 nautilus::invoke(
                     +[](TupleBuffer* hashMapBuf,
@@ -102,14 +100,10 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                         const uint64_t tupleSize,
                         const uint64_t pageSize) -> void
                     {
-                        if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-                        {
-                            PagedVector::init(pagedVectorBuffer.value(), pageSize, tupleSize);
-                            auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer.value());
-                            *valueMemArea = childIndex.getRawValue();
-                            return;
-                        }
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
+                        auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(), *bufferProvider);
+                        PagedVector::init(pagedVectorBuffer, pageSize, tupleSize);
+                        auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer);
+                        *valueMemArea = childIndex.getRawValue();
                     },
                     hashMapBuffer.asArg(),
                     static_cast<nautilus::val<uint32_t*>>(state),

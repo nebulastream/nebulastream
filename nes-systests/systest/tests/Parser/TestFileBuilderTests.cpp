@@ -93,11 +93,11 @@ TEST_F(TestFileParserTest, CarriesAGlobalConfigurationToEveryQueryBelowIt)
 }
 
 /// A configuration line may list values rather than one, and each is a setting the query runs under.
-/// JoinNull relies on this: it asserts the join returns the same rows with the bloom filter on and off.
+/// Every alternative has to return the same rows.
 TEST_F(TestFileParserTest, RunsAQueryOncePerListedAlternative)
 {
     const auto [path, statements] = readSlt(
-        "GlobalConfiguration worker.default_query_execution.bloom_filter.enable_bloom_filter: [true, false]\n"
+        "GlobalConfiguration worker.default_query_execution.slice_cache.enable_slice_cache: [true, false]\n"
         "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
         "----\n"
         "1\n");
@@ -108,7 +108,7 @@ TEST_F(TestFileParserTest, RunsAQueryOncePerListedAlternative)
     ASSERT_NE(first, nullptr);
     ASSERT_NE(second, nullptr);
 
-    static constexpr auto Key = "worker.default_query_execution.bloom_filter.enable_bloom_filter";
+    static constexpr auto Key = "worker.default_query_execution.slice_cache.enable_slice_cache";
     EXPECT_EQ(first->overrides.at(Key), "true");
     EXPECT_EQ(second->overrides.at(Key), "false");
     /// The alternatives are the same query asserting the same answer, so everything but the overrides agrees.

@@ -83,8 +83,7 @@ public:
     /// entrySize and pageSize are only ever read by preconditions, so they are compiled away with them.
     static void init(
         TupleBuffer& tupleBuffer IF_PRECONDITION(, uint64_t entrySize),
-        uint64_t numberOfBuckets IF_PRECONDITION(, uint64_t pageSize),
-        uint64_t bloomBytes);
+        uint64_t numberOfBuckets IF_PRECONDITION(, uint64_t pageSize));
     static void init(TupleBuffer& tupleBuffer, const ChainedHashMapConfig& config);
 
     /// Power of two >= numberOfBuckets / ChainedHashMapConfig::assumedLoadFactor: the real size of the chains
@@ -94,9 +93,8 @@ public:
     /// Mask applied to a hash to pick a chain. Always calculateNumberOfChains() - 1, since that is a power of 2.
     [[nodiscard]] static uint64_t calculateMask(uint64_t numberOfBuckets);
 
-    /// Bytes the TupleBuffer backing a map with this sizing must provide: header, chains array and the
-    /// BloomFilter bit area.
-    [[nodiscard]] static uint64_t calculateBufferSize(uint64_t numberOfBuckets, uint64_t bloomBytes);
+    /// Bytes the TupleBuffer backing a map with this sizing must provide: header and chains array.
+    [[nodiscard]] static uint64_t calculateBufferSize(uint64_t numberOfBuckets);
 
 
     /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
@@ -130,12 +128,6 @@ public:
     /// query-compile-time constant and folds into an immediate in the traced probe path.
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos);
 
-    /// Pointer to the in-map BloomFilter bit area, consulted by ChainedHashMapRef::findChain to short-circuit
-    /// chain traversal. The area lives inline in this buffer right behind the chains array and is zeroed by
-    /// init(), so it is valid from construction on. Raw pointer rather than the span below, because the sole
-    /// caller is a traced invoke proxy. Requires a non-zero bloomBytes: a disabled filter has no area.
-    [[nodiscard]] uint64_t* getBloomFilterMemArea(uint64_t numberOfChains, uint64_t bloomBytes);
-
     /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
     /// view and without using its access methods
     [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
@@ -158,10 +150,9 @@ private:
     /// Header structure stored at the beginning of the buffer. It holds only state that genuinely changes
     /// while the query runs — all sizing lives in the ChainedHashMapConfig the caller passes in.
     ///
-    /// The chains array starts immediately after this header, followed by the BloomFilter bit area. Both are
-    /// sized from the config, so nothing about them is stored here. Conceptually:
+    /// The chains array starts immediately after this header. It is sized from the config, so nothing about it is
+    /// stored here. Conceptually:
     /// ChainedHashMapEntry* chains[numberOfChains + 1];
-    /// uint64_t bloomBits[bloomFilterMemAreaSize / sizeof(uint64_t)];
     struct Header
     {
         uint64_t status = VALID_CHM;
@@ -186,18 +177,6 @@ private:
 
         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
         return reinterpret_cast<ChainedHashMapEntry**>(data + sizeof(Header));
-    }
-
-    /// The in-map BloomFilter bit area, sitting inline right behind the chains array. Empty when the filter is
-    /// disabled, where data() is one past the end of the buffer — hence a span, which a caller cannot walk off.
-    /// allocationByteCount() rounds to whole words, so the area is always word-aligned in size.
-    [[nodiscard]] std::span<uint64_t> bloomBits(const uint64_t numberOfChains, const uint64_t bloomBytes)
-    {
-        auto* data = buffer.getAvailableMemoryArea<uint8_t>().data();
-
-        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        auto* bits = reinterpret_cast<uint64_t*>(data + sizeof(Header) + ((numberOfChains + 1) * sizeof(ChainedHashMapEntry*)));
-        return {bits, bloomBytes / sizeof(uint64_t)};
     }
 
     /// the main tuple buffer for this chained hash map

@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <optional>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>

@@ -29,6 +29,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
@@ -66,23 +67,21 @@ uint64_t ChainedHashMap::calculateMask(const uint64_t numberOfBuckets)
     return calculateNumberOfChains(numberOfBuckets) - 1;
 }
 
-uint64_t ChainedHashMap::calculateBufferSize(const uint64_t numberOfBuckets, const uint64_t bloomBytes)
+uint64_t ChainedHashMap::calculateBufferSize(const uint64_t numberOfBuckets)
 {
-    return sizeof(Header) + ((calculateNumberOfChains(numberOfBuckets) + 1) * sizeof(ChainedHashMapEntry*)) + bloomBytes;
+    return sizeof(Header) + ((calculateNumberOfChains(numberOfBuckets) + 1) * sizeof(ChainedHashMapEntry*));
 }
 
 void ChainedHashMap::init(TupleBuffer& tupleBuffer, const ChainedHashMapConfig& config)
 {
     init(
         tupleBuffer IF_PRECONDITION(, config.entrySize),
-        config.numberOfBuckets IF_PRECONDITION(, config.pageSize),
-        config.bloomFilterMemAreaSize());
+        config.numberOfBuckets IF_PRECONDITION(, config.pageSize));
 }
 
 void ChainedHashMap::init(
     TupleBuffer& tupleBuffer IF_PRECONDITION(, const uint64_t entrySize),
-    const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize),
-    const uint64_t bloomBytes)
+    const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize))
 {
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     const uint64_t numberOfChains = calculateNumberOfChains(numberOfBuckets);
@@ -100,14 +99,12 @@ void ChainedHashMap::init(
         "Number of chains has to be a power of 2. Number of chains is set to small for number of chains {}",
         numberOfChains);
     PRECONDITION(
-        tupleBuffer.getBufferSize() >= calculateBufferSize(numberOfBuckets, bloomBytes),
-        "Buffer of size {} is not big enough to hold the header ({} bytes) plus {} chain pointers ({} bytes each) plus {} bytes of "
-        "BloomFilter bits",
+        tupleBuffer.getBufferSize() >= calculateBufferSize(numberOfBuckets),
+        "Buffer of size {} is not big enough to hold the header ({} bytes) plus {} chain pointers ({} bytes each)",
         tupleBuffer.getBufferSize(),
         sizeof(Header),
         numberOfChains + 1,
-        sizeof(ChainedHashMapEntry*),
-        bloomBytes);
+        sizeof(ChainedHashMapEntry*));
 
     /// Create object
     ChainedHashMap chm{tupleBuffer};
@@ -120,10 +117,6 @@ void ChainedHashMap::init(
     std::fill_n(chainsArray, numberOfChains, nullptr);
     chainsArray[numberOfChains]
         = reinterpret_cast<ChainedHashMapEntry*>(&chainsArray[numberOfChains]); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-
-    /// Zero the inline BloomFilter bit area so no spurious bits are seen before the first add().
-    /// A disabled filter yields an empty span, making this a no-op rather than a write past the buffer.
-    std::ranges::fill(chm.bloomBits(numberOfChains, bloomBytes), uint64_t{0});
 }
 
 ChainedHashMap ChainedHashMap::load(const TupleBuffer& tupleBuffer)
@@ -168,15 +161,7 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     else
     {
         /// Create new storage buffer and add the page
-        auto newVarSizedBuffer = bufferProvider->getUnpooledBuffer(VARSIZED_STORAGE_SPACE_BUFFER_SIZE);
-        if (!newVarSizedBuffer)
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for storage space of ChainedHashMap of size {}",
-                std::to_string(VARSIZED_STORAGE_SPACE_BUFFER_SIZE));
-        }
-
-        auto varSizedBuffer = std::move(newVarSizedBuffer.value());
+        auto varSizedBuffer = getPooledBufferIfFits(VARSIZED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
         std::ignore = varSizedBuffer.storeChildBuffer(newPage);
         header().varSizedSpaceIndex = buffer.storeChildBuffer(varSizedBuffer);
     }
@@ -212,23 +197,7 @@ std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProv
 void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const uint64_t pageSize)
 {
     /// create and initialize new page
-    TupleBuffer newPage;
-    if (bufferProvider->getBufferSize() == pageSize)
-    {
-        newPage = bufferProvider->getBufferBlocking();
-    }
-    else
-    {
-        if (auto newPageUnpooled = bufferProvider->getUnpooledBuffer(pageSize))
-        {
-            newPage = newPageUnpooled.value();
-        }
-        else
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for unpooled storage space page of ChainedHashMap of size {}", std::to_string(pageSize));
-        }
-    }
+    auto newPage = getPooledBufferIfFits(pageSize, *bufferProvider);
 
     /// get or create storage buffer
     auto storageBufferIdx = getStorageBufferIdx();
@@ -242,14 +211,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const ui
     else
     {
         /// create new storage buffer (of minimal size)
-        auto newStorageBuffer = bufferProvider->getUnpooledBuffer(FIXED_STORAGE_SPACE_BUFFER_SIZE);
-        if (not newStorageBuffer)
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for storage space of ChainedHashMap of size {}",
-                std::to_string(FIXED_STORAGE_SPACE_BUFFER_SIZE));
-        }
-        auto storageBuffer = std::move(newStorageBuffer.value());
+        auto storageBuffer = getPooledBufferIfFits(FIXED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
         std::ignore = storageBuffer.storeChildBuffer(
             newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
         header().storageSpaceIndex = buffer.storeChildBuffer(storageBuffer);
@@ -319,12 +281,6 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(
 [[nodiscard]] ChildBufferIndex ChainedHashMap::getVarSizedBufferIdx() const
 {
     return header().varSizedSpaceIndex;
-}
-
-uint64_t* ChainedHashMap::getBloomFilterMemArea(const uint64_t numberOfChains, const uint64_t bloomBytes)
-{
-    PRECONDITION(bloomBytes > 0, "A map without an in-map BloomFilter has no bit area to hand out");
-    return bloomBits(numberOfChains, bloomBytes).data();
 }
 
 TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const

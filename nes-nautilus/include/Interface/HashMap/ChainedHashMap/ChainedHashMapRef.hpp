@@ -19,7 +19,6 @@
 #include <optional>
 #include <vector>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -158,7 +157,5 @@ private:
     /// Plain host data, not nautilus::val: every option is fixed at query-compilation time, so each use of it
     /// below is a trace-time constant folded into the generated code.
     ChainedHashMapConfig config;
-    /// Bound to the map's inline bit area at construction.
-    std::optional<Nautilus::Interface::BloomFilterRef> bloomFilter;
 };
 }

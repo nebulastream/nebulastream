@@ -18,14 +18,13 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/FieldOffsets.hpp>
 
 namespace NES
 {
 
-/// Everything about a ChainedHashMap that the query compiler decides: its sizing, its optional BloomFilter,
+/// Everything about a ChainedHashMap that the query compiler decides: its sizing,
 /// the key/value layout of an entry, and the hash function. This is the *only* hash map options type — it is
 /// fixed at query-compilation time, travels to the physical operators as a plain C++ value, and is read
 /// during tracing only. Nothing may re-derive any of it elsewhere.
@@ -44,8 +43,6 @@ struct ChainedHashMapConfig
     uint64_t entrySize = 0;
     uint64_t numberOfBuckets = 0;
     uint64_t pageSize = 0;
-    /// Empty when this map runs without an in-map BloomFilter.
-    std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams;
     std::vector<FieldOffsets> fieldKeys;
     std::vector<FieldOffsets> fieldValues;
     std::shared_ptr<const HashFunction> hashFunction;
@@ -54,9 +51,6 @@ struct ChainedHashMapConfig
     /// those live on ChainedHashMap itself: calculateNumberOfChains() and calculateBufferSize(). Only the
     /// derivations that need nothing but this struct stay here.
     [[nodiscard]] uint64_t entriesPerPage() const { return pageSize / entrySize; }
-
-    /// Bytes reserved inline for the BloomFilter bit area. 0 when the filter is disabled.
-    [[nodiscard]] uint64_t bloomFilterMemAreaSize() const { return bloomFilterParams ? bloomFilterParams->allocationByteCount() : 0; }
 };
 
 }
