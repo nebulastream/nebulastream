@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -58,8 +59,16 @@ public:
     [[nodiscard]] PushResult tryPush(const TupleBuffer& buffer);
     /// Blocks until a buffer arrives. Nullopt once the channel is closed and drained, or on a stop request.
     std::optional<TupleBuffer> pop(const std::stop_token& stopToken);
+    /// Nullopt if no buffer is waiting.
+    std::optional<TupleBuffer> tryPop();
+    /// Closed and drained: no buffer will arrive any more.
+    [[nodiscard]] bool exhausted();
     /// No further buffers will be pushed.
     void close();
+
+    /// Called after every push and on close, under the channel's lock, so it must neither block nor call back into the
+    /// channel. Replaces the previous listener; an empty function removes it, after which it is never called again.
+    void setListener(std::function<void()> onChange);
 
 private:
     std::mutex mutex;
@@ -68,6 +77,7 @@ private:
     size_t capacity;
     bool closed = false;
     bool consumerGone = false;
+    std::function<void()> listener;
 };
 
 }

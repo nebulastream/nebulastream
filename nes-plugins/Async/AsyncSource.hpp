@@ -14,8 +14,12 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <cstddef>
+#include <deque>
+#include <exception>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <ostream>
 #include <stop_token>
@@ -31,6 +35,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/UUID.hpp>
 #include <boost/asio/awaitable.hpp>
+#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <HandoffChannel.hpp>
@@ -42,6 +47,8 @@ namespace NES
 /// same channel handed off, evaluates the async calls and fills in their result slots.
 ///
 /// The calls run on one event loop shared by all Async sources; the source thread only waits for them.
+/// They run across buffer boundaries: up to `MAX_CONCURRENCY` rows are in flight at once, whichever handed-off
+/// buffers they belong to, and the buffers are emitted in the order they were handed off.
 ///
 /// The lifting rule reserves a slot per call in the handed-off rows, so input and output rows have
 /// the same fields and one input buffer becomes exactly one output buffer. Everything that is not a
@@ -93,11 +100,51 @@ private:
         std::vector<std::unique_ptr<AsyncFunction>> instances;
     };
 
+    /// A handed-off buffer whose rows are called.
+    struct InFlightBuffer
+    {
+        TupleBuffer input;
+        size_t rows;
+        /// Strand only.
+        size_t nextRow = 0;
+        size_t unfinishedRows;
+        /// Per row, the results of the calls that write an output field, in the order of `outputCalls`. Each row is
+        /// written by its own coroutine on the strand and read on the source thread once `done` is set.
+        std::vector<std::vector<std::string>> results;
+        /// Guarded by `Window::mutex`.
+        bool done = false;
+    };
+
+    /// What the source thread and the strand share; everything here is guarded by `mutex`.
+    struct Window
+    {
+        std::mutex mutex;
+        std::condition_variable_any changed;
+        /// In the order they were handed off, which is the order they are emitted in.
+        std::deque<std::shared_ptr<InFlightBuffer>> buffers;
+        size_t unstartedRows = 0;
+        size_t runningRows = 0;
+        std::exception_ptr failure;
+        /// Set by the channel when a buffer arrives or it closes; reset by the source thread before it looks.
+        bool channelChanged = false;
+    };
+
     std::vector<std::string>
     readArguments(const BoundCall& call, const TupleBuffer& input, size_t row, const std::vector<std::string>& results) const;
     /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops.
     boost::asio::awaitable<std::string> callWithRetries(AsyncFunction& function, std::vector<std::string> arguments) const;
-    boost::asio::awaitable<void> processRows(size_t worker, const TupleBuffer& input, TupleBuffer& output, size_t rows, size_t& nextRow);
+    /// Runs the calls of one row with the function instances of `slot`.
+    boost::asio::awaitable<void> processRow(size_t slot, std::shared_ptr<InFlightBuffer> buffer, size_t row);
+
+    /// Source thread.
+    void admit(TupleBuffer input);
+    void writeOutput(const InFlightBuffer& buffer, TupleBuffer& output) const;
+    /// Cancels every row in flight and returns once none is running and no handler of this source is left on the strand.
+    void cancelAndDrain();
+
+    /// Strand only: starts rows while a slot is free.
+    void startRows();
+    void finishRow(const std::shared_ptr<InFlightBuffer>& buffer, size_t slot, const std::exception_ptr& error);
 
     std::string channelId;
     size_t channelCapacity;
@@ -108,12 +155,22 @@ private:
     std::vector<CopiedField> copiedFields;
     /// Ordered so that every call comes after the calls it reads.
     std::vector<BoundCall> calls;
+    /// The calls that write an output field, in the order their results are kept per row.
+    std::vector<size_t> outputCalls;
     size_t levels = 0;
 
     std::shared_ptr<HandoffChannel> channel;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     /// All coroutines of this source run here, so its state is never touched by two loop threads at once.
     boost::asio::strand<boost::asio::io_context::executor_type> strand;
+
+    /// Source thread only: the channel is closed and drained.
+    bool inputExhausted = false;
+    Window window;
+    /// Strand only. A row in flight holds one slot: its function instances and its cancellation signal.
+    std::vector<size_t> freeSlots;
+    std::vector<boost::asio::cancellation_signal> cancelSignals;
+    bool stopping = false;
 };
 
 /// NOLINTBEGIN(cert-err58-cpp)
