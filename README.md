@@ -84,18 +84,24 @@ Configure, build, and test by mounting the repository into the container:
 docker run \
   --workdir $(pwd) \
   -v $(pwd):$(pwd) \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --group-add "$(stat -c '%g' /var/run/docker.sock)" \
   nebulastream/nes-development:local \
   cmake -B cmake-build-debug
 
 docker run \
   --workdir $(pwd) \
   -v $(pwd):$(pwd) \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --group-add "$(stat -c '%g' /var/run/docker.sock)" \
   nebulastream/nes-development:local \
   cmake --build cmake-build-debug -j
 
 docker run \
   --workdir $(pwd) \
   -v $(pwd):$(pwd) \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --group-add "$(stat -c '%g' /var/run/docker.sock)" \
   nebulastream/nes-development:local \
   ctest --test-dir cmake-build-debug -j
 ```
