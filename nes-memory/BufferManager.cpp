@@ -22,12 +22,20 @@
 #include <cstdio>
 #include <cstring>
 #include <deque>
+#include <cstdlib>
+#include <execinfo.h>
+#include <fstream>
+#include <iostream>
+#include <ranges>
+#include <vector>
 #include <limits>
 #include <memory>
 #include <memory_resource>
 #include <mutex>
 #include <optional>
 #include <span>
+#include <string_view>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -42,6 +50,23 @@
 
 namespace NES
 {
+
+namespace
+{
+/// Reads a "Key:   <value> kB" line of /proc/self/status.
+size_t readProcStatusKiB(const std::string_view key)
+{
+    std::ifstream status("/proc/self/status");
+    for (std::string line; std::getline(status, line);)
+    {
+        if (line.starts_with(key))
+        {
+            return std::stoull(line.substr(key.size()));
+        }
+    }
+    return 0;
+}
+}
 
 BufferManager::BufferManager(
     Private,
@@ -59,6 +84,7 @@ BufferManager::BufferManager(
 {
     PRECONDITION(numOfBuffers > 0, "BufferManager requires at least one pooled buffer, but the configured budget yields {}", numOfBuffers);
     initialize();
+    baselineRssKiB = readProcStatusKiB("VmRSS:");
 }
 
 std::shared_ptr<BufferManager> BufferManager::create(
@@ -129,6 +155,36 @@ void BufferManager::destroy()
         NES_DEBUG("Shutting down Buffer Manager completed");
         memoryResource->deallocate(basePointer, allocatedAreaSize, alignment);
         allocatedAreaSize = 0;
+
+        const auto peakPooledBytes = peakPooledBuffersInUse.load() * bufferSize;
+        const auto peakUnpooledBytes = unpooledChunksManager->getPeakAllocatedUnpooledBytes();
+        const auto peakRssKiB = readProcStatusKiB("VmHWM:");
+        std::cerr << fmt::format(
+            "[BufferManager] peak memory: pooled {} MiB ({} of {} buffers), unpooled {} MiB, process rss above pool pre-allocation {} MiB "
+            "(rss after pre-allocation {} MiB, peak rss {} MiB)\n",
+            peakPooledBytes >> 20,
+            peakPooledBuffersInUse.load(),
+            numOfBuffers,
+            peakUnpooledBytes >> 20,
+            (peakRssKiB > baselineRssKiB ? peakRssKiB - baselineRssKiB : 0) >> 10,
+            baselineRssKiB >> 10,
+            peakRssKiB >> 10);
+
+        if (!unpooledCallSites.empty())
+        {
+            std::vector<std::pair<std::vector<void*>, UnpooledCallSite>> sites(unpooledCallSites.begin(), unpooledCallSites.end());
+            std::ranges::sort(sites, [](const auto& a, const auto& b) { return a.second.bytes > b.second.bytes; });
+            for (const auto& [frames, site] : std::views::take(sites, 12))
+            {
+                std::cerr << fmt::format("[UnpooledCallSite] {} allocations, {} MiB total\n", site.count, site.bytes >> 20);
+                char** symbols = backtrace_symbols(frames.data(), static_cast<int>(frames.size()));
+                for (size_t i = 0; i < frames.size(); ++i)
+                {
+                    std::cerr << "    " << symbols[i] << "\n";
+                }
+                free(symbols); /// NOLINT
+            }
+        }
 
         /// Destroying the unpooled chunks
         unpooledChunksManager.reset();
@@ -241,9 +297,19 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
         ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
+        updatePeakPooledBuffersInUse();
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
+}
+
+void BufferManager::updatePeakPooledBuffersInUse()
+{
+    const auto inUse = pooledBuffersInUse.fetch_add(1, std::memory_order_relaxed) + 1;
+    auto peak = peakPooledBuffersInUse.load(std::memory_order_relaxed);
+    while (inUse > peak && !peakPooledBuffersInUse.compare_exchange_weak(peak, inUse, std::memory_order_relaxed))
+    {
+    }
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
@@ -258,6 +324,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
         ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
+        updatePeakPooledBuffersInUse();
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
@@ -265,11 +332,22 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
+    static const bool traceUnpooled = std::getenv("NES_TRACE_UNPOOLED") != nullptr;
+    if (traceUnpooled)
+    {
+        std::array<void*, 12> frames{};
+        const auto depth = backtrace(frames.data(), frames.size());
+        const std::scoped_lock lock(unpooledCallSitesMutex);
+        auto& callSite = unpooledCallSites[std::vector<void*>(frames.begin() + 1, frames.begin() + depth)];
+        callSite.count += 1;
+        callSite.bytes += bufferSize;
+    }
     return unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
 {
+    pooledBuffersInUse.fetch_sub(1, std::memory_order_relaxed);
     INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
     INVARIANT(
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");

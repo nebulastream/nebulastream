@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
+#include <map>
 #include <memory_resource>
 #include <mutex>
 #include <optional>
@@ -167,6 +168,22 @@ private:
 
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};
+
+    /// Highest number of simultaneously handed out pooled buffers, to tune the pooled/unpooled memory split.
+    std::atomic<size_t> pooledBuffersInUse{0};
+    std::atomic<size_t> peakPooledBuffersInUse{0};
+    void updatePeakPooledBuffersInUse();
+    /// Resident set size of the process right after the pool was pre-allocated, to report the memory used on top of it.
+    size_t baselineRssKiB = 0;
+
+    /// Temporary diagnostics: with NES_TRACE_UNPOOLED set, counts unpooled allocations per call stack.
+    struct UnpooledCallSite
+    {
+        size_t count = 0;
+        size_t bytes = 0;
+    };
+    std::mutex unpooledCallSitesMutex;
+    std::map<std::vector<void*>, UnpooledCallSite> unpooledCallSites;
 };
 
 

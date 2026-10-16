@@ -54,6 +54,8 @@ class UnpooledChunksManager
     /// Total bytes currently allocated across all unpooled chunks. Held via shared_ptr so the per-segment recycle
     /// callback can decrement it even if this manager has been destroyed in the meantime.
     std::shared_ptr<std::atomic<size_t>> currentlyAllocatedUnpooledBytes = std::make_shared<std::atomic<size_t>>(0);
+    /// Highest value of currentlyAllocatedUnpooledBytes, to tune the unpooled memory budget.
+    std::atomic<size_t> peakAllocatedUnpooledBytes{0};
 
     /// Helper struct that stores necessary information for accessing unpooled chunks
     /// Instead of allocating the exact needed space, we allocate a chunk of a space calculated by a rolling average of the last n sizes.
@@ -100,6 +102,7 @@ class UnpooledChunksManager
 public:
     explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t unpooledMemoryBudgetInBytes);
     size_t getNumberOfUnpooledBuffers() const;
+    [[nodiscard]] size_t getPeakAllocatedUnpooledBytes() const { return peakAllocatedUnpooledBytes.load(std::memory_order_relaxed); }
 
     /// Returns std::nullopt if the unpooled memory budget would be exceeded or the underlying allocation fails.
     std::optional<TupleBuffer>

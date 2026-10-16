@@ -138,6 +138,12 @@ std::pair<uint8_t*, uint8_t*> UnpooledChunksManager::allocateSpace(
         return {};
     }
 
+    const auto bytesInUseAfter = bytesInUseBefore + budgetedAllocationSize;
+    auto peak = peakAllocatedUnpooledBytes.load(std::memory_order_relaxed);
+    while (bytesInUseAfter > peak && !peakAllocatedUnpooledBytes.compare_exchange_weak(peak, bytesInUseAfter, std::memory_order_relaxed))
+    {
+    }
+
     auto* const newlyAllocatedMemory = static_cast<uint8_t*>(memoryResource->allocate(newAllocationSize, alignment));
     if (newlyAllocatedMemory == nullptr)
     {
