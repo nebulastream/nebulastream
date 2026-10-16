@@ -68,7 +68,7 @@ private:
         ~Block() = default;
         const size_t blockIndex;
         std::array<Container, BlockSize> log = {};
-        std::shared_ptr<Block> next = std::shared_ptr<Block>();
+        std::atomic<std::shared_ptr<Block>> next;
     };
 
 public:
@@ -78,7 +78,7 @@ public:
 
     NonBlockingMonotonicSeqQueue& operator=(const NonBlockingMonotonicSeqQueue& other)
     {
-        head = other.head;
+        head = other.head.load();
         currentSeq = other.currentSeq.load();
         return *this;
     }
@@ -106,7 +106,7 @@ public:
     /// @return T value
     auto getCurrentValue() const
     {
-        auto currentBlock = std::atomic_load(&head);
+        auto currentBlock = head.load();
         /// get the current sequence number and access the associated block
         auto currentSequenceNumber = currentSeq.load();
         auto targetBlockIndex = currentSequenceNumber / BlockSize;
@@ -133,16 +133,16 @@ private:
         /// Calculate the target block index, which contains the sequence number
         auto targetBlockIndex = seq / BlockSize;
         /// Lookup the current block
-        auto currentBlock = std::atomic_load(&head);
+        auto currentBlock = head.load();
         /// if the blockIndex is smaller the target block index we travers the next block
         while (currentBlock->blockIndex < targetBlockIndex)
         {
             /// append new block if the next block is a nullptr
-            auto nextBlock = std::atomic_load(&currentBlock->next);
+            auto nextBlock = currentBlock->next.load();
             if (nextBlock == nullptr)
             {
                 auto newBlock = std::make_shared<Block>(currentBlock->blockIndex + 1);
-                std::atomic_compare_exchange_weak(&currentBlock->next, &nextBlock, newBlock);
+                currentBlock->next.compare_exchange_weak(nextBlock, newBlock);
                 /// we don't care if this or another thread succeeds, as we just start over again in the loop
                 /// and use what ever is now stored in currentBlock.next
             }
@@ -182,7 +182,7 @@ private:
         auto checkForUpdate = true;
         while (checkForUpdate)
         {
-            auto currentBlock = std::atomic_load(&head);
+            auto currentBlock = head.load();
             /// we are looking for the next sequence number
             auto currentSequenceNumber = currentSeq.load();
             /// find the correct block, that contains the current sequence number.
@@ -195,7 +195,7 @@ private:
             if (nextSeqNumber % BlockSize == 0)
             {
                 /// the next sequence number is the first element in the next block.
-                auto nextBlock = std::atomic_load(&currentBlock->next);
+                auto nextBlock = currentBlock->next.load();
                 if (nextBlock != nullptr)
                 {
                     /// this will always be the first element
@@ -205,7 +205,7 @@ private:
                         /// Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber))
                         {
-                            std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
+                            head.compare_exchange_weak(currentBlock, nextBlock);
                         }
                         continue;
                     }
@@ -236,7 +236,7 @@ private:
         while (currentBlock->blockIndex < targetBlockIndex)
         {
             /// append new block if the next block is a nullptr
-            auto nextBlock = std::atomic_load(&currentBlock->next);
+            auto nextBlock = currentBlock->next.load();
             PRECONDITION(nextBlock, "Number of blocks in queue is smaller than targetBlockIndex: {}", targetBlockIndex);
             /// move to the next block
             currentBlock = nextBlock;
@@ -245,7 +245,7 @@ private:
     }
 
     /// Stores a reference to the current block
-    std::shared_ptr<Block> head;
+    std::atomic<std::shared_ptr<Block>> head;
     /// Stores the current sequence number
     std::atomic<SequenceNumber::Underlying> currentSeq;
     ChunkCollector<BlockSize> chunks;
