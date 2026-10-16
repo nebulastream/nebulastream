@@ -32,7 +32,11 @@ enum class PollResult : uint8_t
     Stopped,
 };
 
-/// Polls caller-owned descriptors until one becomes ready, the optional deadline is reached, or stop is requested.
+/// poll(2) over caller-owned descriptors that also returns as soon as stopToken is requested.
+/// Use it where a thread blocks on descriptors and must stay cancellable, e.g. waiting for a non-blocking socket to become
+/// writable or for a connect to complete. It takes several descriptors because some libraries need more than one polled at
+/// once, e.g. a DNS resolver with sockets per nameserver.
+/// Returns once a descriptor becomes ready, the optional deadline is reached, or stop is requested.
 /// The descriptor revents are updated when PollResult::Ready is returned.
 PollResult pollWithStop(
     std::span<pollfd> descriptors, std::optional<std::chrono::steady_clock::time_point> deadline, const std::stop_token& stopToken);

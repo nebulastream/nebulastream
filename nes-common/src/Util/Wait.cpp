@@ -49,7 +49,7 @@ PollResult pollWithStop(
     const auto wakeFd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
     if (wakeFd < 0)
     {
-        throw UnknownException("Failed to create wait descriptor: {}", getErrorMessageFromERRNO());
+        throw IOError("Failed to create wait descriptor: {}", getErrorMessageFromERRNO());
     }
     SCOPE_EXIT
     {
@@ -70,49 +70,41 @@ PollResult pollWithStop(
     std::vector<pollfd> polledDescriptors(descriptors.begin(), descriptors.end());
     polledDescriptors.push_back({.fd = wakeFd, .events = POLLIN, .revents = 0});
 
-    while (true)
+    auto pollResult = 0;
+    do
     {
         auto timeout = -1;
         if (deadline)
         {
-            const auto remaining = *deadline - std::chrono::steady_clock::now();
-            if (remaining <= std::chrono::steady_clock::duration::zero())
-            {
-                return PollResult::TimedOut;
-            }
-            const auto remainingMilliseconds = std::chrono::ceil<std::chrono::milliseconds>(remaining);
-            timeout = static_cast<int>(std::min(remainingMilliseconds, std::chrono::milliseconds{std::numeric_limits<int>::max()}).count());
+            const auto remaining = std::chrono::ceil<std::chrono::milliseconds>(*deadline - std::chrono::steady_clock::now());
+            timeout = static_cast<int>(
+                std::clamp(remaining, std::chrono::milliseconds::zero(), std::chrono::milliseconds{std::numeric_limits<int>::max()})
+                    .count());
         }
+        pollResult = poll(polledDescriptors.data(), polledDescriptors.size(), timeout);
+    } while ((pollResult < 0 && errno == EINTR) || (pollResult == 0 && deadline && std::chrono::steady_clock::now() < *deadline));
 
-        const auto pollResult = poll(polledDescriptors.data(), polledDescriptors.size(), timeout);
-        if (pollResult < 0 && errno == EINTR)
-        {
-            continue;
-        }
-
-        if (stopToken.stop_requested() || (static_cast<uint32_t>(polledDescriptors.back().revents) & static_cast<uint32_t>(POLLIN)) != 0)
-        {
-            return PollResult::Stopped;
-        }
-        if (pollResult < 0)
-        {
-            throw UnknownException("Failed while polling descriptors: {}", getErrorMessageFromERRNO());
-        }
-        if (pollResult == 0)
-        {
-            if (deadline && std::chrono::steady_clock::now() < *deadline)
-            {
-                continue;
-            }
-            return PollResult::TimedOut;
-        }
-
-        for (size_t index = 0; index < descriptors.size(); ++index)
-        {
-            descriptors[index].revents = polledDescriptors[index].revents;
-        }
-        return PollResult::Ready;
+    /// The wake descriptor is the last entry; poll reports POLLIN on it once the stop callback has written to it.
+    /// revents is a bit mask, so POLLIN is tested with a bitwise and rather than equality, as other bits may be set too.
+    const auto wokenByStop = (static_cast<uint32_t>(polledDescriptors.back().revents) & static_cast<uint32_t>(POLLIN)) != 0;
+    if (stopToken.stop_requested() || wokenByStop)
+    {
+        return PollResult::Stopped;
     }
+    if (pollResult < 0)
+    {
+        throw IOError("Failed while polling descriptors: {}", getErrorMessageFromERRNO());
+    }
+    if (pollResult == 0)
+    {
+        return PollResult::TimedOut;
+    }
+
+    for (size_t index = 0; index < descriptors.size(); ++index)
+    {
+        descriptors[index].revents = polledDescriptors[index].revents;
+    }
+    return PollResult::Ready;
 }
 
 bool waitUntil(const std::chrono::steady_clock::time_point deadline, const std::stop_token& stopToken)
