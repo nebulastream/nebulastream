@@ -123,3 +123,7 @@ It also defines the desired and observed states used to manage workers and query
 
 The `controller` crate reconciles the catalog with the workers.
 It manages the task hierarchy for workers and query fragments and supports remote and embedded worker transports.
+
+### [Request Handler](coordinator/src/request_handler/README.md)
+
+The `request_handler` processes coordinator requests and applies query wait conditions before returning results.
