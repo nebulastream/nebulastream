@@ -89,6 +89,7 @@ struct ConfigParametersHandoff
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CHANNEL, CHANNEL_CAPACITY);
 };
+
 /// NOLINTEND(cert-err58-cpp)
 
 }

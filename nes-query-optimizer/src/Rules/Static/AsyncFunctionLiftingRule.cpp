@@ -20,14 +20,14 @@
 #include <set>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <typeindex>
 #include <typeinfo>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <Functions/AsyncLogicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Functions/AsyncLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -175,7 +175,8 @@ std::vector<Field> sortedFields(const LogicalOperator& op)
 std::vector<UnboundProjection> forwardAll(const LogicalOperator& op)
 {
     return sortedFields(op)
-        | std::views::transform([](const Field& field) { return UnboundProjection{field.getLastName(), FieldAccessLogicalFunction{field}}; })
+        | std::views::transform([](const Field& field)
+                                { return UnboundProjection{field.getLastName(), FieldAccessLogicalFunction{field}}; })
         | std::ranges::to<std::vector>();
 }
 
@@ -274,7 +275,8 @@ private:
         {
             if (isAsync(function))
             {
-                if (const auto result = std::ranges::find(filter.resultFields, callKey(function), &std::pair<std::string, Identifier>::first);
+                if (const auto result
+                    = std::ranges::find(filter.resultFields, callKey(function), &std::pair<std::string, Identifier>::first);
                     result != filter.resultFields.end())
                 {
                     return accessOutput(filter.filtered, result->second);
@@ -349,7 +351,8 @@ private:
             const auto call = std::ranges::find(callNames, field.getLastName(), &Named::value_type::second);
             asyncProjections.emplace_back(
                 field.getLastName(),
-                call == callNames.end() ? LogicalFunction{FieldAccessLogicalFunction{field}} : substitute(call->first, argumentSubstitution));
+                call == callNames.end() ? LogicalFunction{FieldAccessLogicalFunction{field}}
+                                        : substitute(call->first, argumentSubstitution));
         }
         const auto asyncStage = ProjectionLogicalOperator::create(pre, asyncProjections, ProjectionLogicalOperator::Asterisk{false});
         auto traitSet = asyncStage->getTraitSet();
@@ -391,8 +394,9 @@ private:
 LogicalPlan AsyncFunctionLiftingRule::apply(LogicalPlan queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
 {
     Lifter lifter;
-    PlanVisitor<> visitor{[&lifter](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
-                          { return lifter.liftAll(op.withChildren(children)); }};
+    PlanVisitor<> visitor{
+        [&lifter](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
+        { return lifter.liftAll(op.withChildren(children)); }};
     return visitor.apply(std::move(queryPlan));
 }
 

@@ -35,6 +35,7 @@ public:
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
 
     boost::asio::awaitable<std::vector<AsyncCallResult>> callBatch(std::vector<std::vector<std::string>> rows) override;
+
     [[nodiscard]] size_t maxBatchSize() const override { return batchSize; }
 
 private:

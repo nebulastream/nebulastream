@@ -58,6 +58,7 @@ public:
 
     /// The batch size, which the implementation needs before the first row arrives.
     [[nodiscard]] std::string getAsyncConfiguration() const override;
+
     /// The value, and the number of rows the wait covered.
     [[nodiscard]] size_t getNumberOfAsyncOutputs() const override { return 2; }
 

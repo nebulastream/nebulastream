@@ -37,7 +37,8 @@
 namespace NES
 {
 
-AsyncDelayLogicalFunction::AsyncDelayLogicalFunction(LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> batchSize)
+AsyncDelayLogicalFunction::AsyncDelayLogicalFunction(
+    LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> batchSize)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
     , value(std::move(value))
     , millis(std::move(millis))
@@ -121,14 +122,19 @@ std::string AsyncDelayLogicalFunction::getAsyncConfiguration() const
     return {};
 }
 
-Reflected Reflector<AsyncDelayLogicalFunction>::operator()(const AsyncDelayLogicalFunction& function, const ReflectionContext& context) const
+Reflected
+Reflector<AsyncDelayLogicalFunction>::operator()(const AsyncDelayLogicalFunction& function, const ReflectionContext& context) const
 {
     const auto children = function.getChildren();
-    return context.reflect(detail::ReflectedAsyncDelayLogicalFunction{
-        .value = children.at(0), .millis = children.at(1), .batchSize = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt});
+    return context.reflect(
+        detail::ReflectedAsyncDelayLogicalFunction{
+            .value = children.at(0),
+            .millis = children.at(1),
+            .batchSize = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt});
 }
 
-AsyncDelayLogicalFunction Unreflector<AsyncDelayLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+AsyncDelayLogicalFunction
+Unreflector<AsyncDelayLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [value, millis, batchSize] = context.unreflect<detail::ReflectedAsyncDelayLogicalFunction>(reflected);
     return AsyncDelayLogicalFunction{std::move(value), std::move(millis), std::move(batchSize)};
@@ -139,7 +145,8 @@ LogicalFunctionRegistryReturnType AsyncDelayLogicalFunction::createASYNC_DELAY(L
     /// The argument count comes straight from the user's query, so a bad count is reported rather than asserted.
     if (arguments.children.size() != 2 and arguments.children.size() != 3)
     {
-        throw InvalidQuerySyntax("ASYNC_DELAY expects 2 or 3 arguments (value, millis[, batch_size]), but got {}", arguments.children.size());
+        throw InvalidQuerySyntax(
+            "ASYNC_DELAY expects 2 or 3 arguments (value, millis[, batch_size]), but got {}", arguments.children.size());
     }
     return AsyncDelayLogicalFunction{
         arguments.children.at(0),

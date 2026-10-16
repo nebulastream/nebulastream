@@ -39,19 +39,19 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/deferred.hpp>
 #include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/asio/this_coro.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio/deferred.hpp>
-#include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <fmt/format.h>
-#include <Util/Logger/Logger.hpp>
 #include <rfl/json/read.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -171,7 +171,8 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
             }
             else
             {
-                call.arguments.push_back({.inputOffset = std::nullopt, .call = std::nullopt, .output = 0, .constant = constant.value_or("")});
+                call.arguments.push_back(
+                    {.inputOffset = std::nullopt, .call = std::nullopt, .output = 0, .constant = constant.value_or("")});
             }
         }
         const auto factory = AsyncFunctionRegistry::instance().find(function);
@@ -280,7 +281,8 @@ AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vec
         {
             results = co_await function.callBatch(rows);
         }
-        catch (...)
+        /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
+        catch (...) /// NOLINT(no-raw-catch-all)
         {
             failure = std::current_exception();
         }
@@ -305,7 +307,8 @@ AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vec
             std::rethrow_exception(failure);
         }
         const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
-        NES_WARNING("Async call of {} failed, attempt {} of {} follows in {} ms", call.function, attempt + 2, maxRetries + 1, backoff.count());
+        NES_WARNING(
+            "Async call of {} failed, attempt {} of {} follows in {} ms", call.function, attempt + 2, maxRetries + 1, backoff.count());
         boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
         co_await timer.async_wait(boost::asio::use_awaitable);
     }
@@ -373,7 +376,8 @@ void AsyncSource::startBatches()
         size_t end = 0;
         {
             const std::scoped_lock lock(window.mutex);
-            const auto next = std::ranges::find_if(window.buffers, [](const auto& candidate) { return candidate->nextRow < candidate->rows; });
+            const auto next
+                = std::ranges::find_if(window.buffers, [](const auto& candidate) { return candidate->nextRow < candidate->rows; });
             if (window.failure || next == window.buffers.end())
             {
                 break;
@@ -402,7 +406,8 @@ void AsyncSource::startBatches()
     }
 }
 
-void AsyncSource::finishBatch(const std::shared_ptr<InFlightBuffer>& buffer, const size_t slot, const size_t rows, const std::exception_ptr& error)
+void AsyncSource::finishBatch(
+    const std::shared_ptr<InFlightBuffer>& buffer, const size_t slot, const size_t rows, const std::exception_ptr& error)
 {
     freeSlots.push_back(slot);
     {
@@ -464,7 +469,8 @@ void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output)
     {
         for (const auto& [inputOffset, outputOffset, size] : copiedFields)
         {
-            std::memcpy(out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
+            std::memcpy(
+                out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
         }
         for (size_t position = 0; position < outputValues.size(); ++position)
         {
@@ -526,8 +532,8 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
 
         /// The next buffer is taken once the rows waiting to start would no longer keep every slot busy, so the calls
         /// run across buffer boundaries while the channel, not this source, holds what the calls cannot keep up with.
-        const bool wantsInput = !inputExhausted && window.buffers.size() < maxConcurrency
-            && window.unstartedRows < maxConcurrency * batchSize;
+        const bool wantsInput
+            = !inputExhausted && window.buffers.size() < maxConcurrency && window.unstartedRows < maxConcurrency * batchSize;
         if (wantsInput)
         {
             const bool idle = window.buffers.empty();

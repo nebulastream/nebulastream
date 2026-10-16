@@ -24,11 +24,11 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Functions/AsyncLogicalFunction.hpp>
 #include <Functions/AsyncOutputLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -49,6 +49,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <rfl/json/write.hpp>
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
@@ -58,9 +61,6 @@
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <rfl/json/write.hpp>
 
 namespace NES
 {
@@ -261,17 +261,24 @@ private:
         const auto async = call.tryGetAs<AsyncLogicalFunction>();
         INVARIANT(async.has_value(), "async stage computes {}, which is not an async call", call);
         AsyncCall description{
-            .outputs = {}, .function = std::string{call.getType()}, .configuration = async.value()->get().getAsyncConfiguration(), .arguments = {}};
+            .outputs = {},
+            .function = std::string{call.getType()},
+            .configuration = async.value()->get().getAsyncConfiguration(),
+            .arguments = {}};
         for (const auto& argument : call.getChildren())
         {
             if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
             {
                 description.arguments.push_back(
-                    {.field = field.value()->getField().getLastName().asCanonicalString(), .constant = std::nullopt, .call = std::nullopt, .output = 0});
+                    {.field = field.value()->getField().getLastName().asCanonicalString(),
+                     .constant = std::nullopt,
+                     .call = std::nullopt,
+                     .output = 0});
             }
             else if (const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>())
             {
-                description.arguments.push_back({.field = std::nullopt, .constant = constant.value()->getConstantValue(), .call = std::nullopt, .output = 0});
+                description.arguments.push_back(
+                    {.field = std::nullopt, .constant = constant.value()->getConstantValue(), .call = std::nullopt, .output = 0});
             }
             else
             {
@@ -312,7 +319,8 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     }
 
     /// Both halves create the channel, whichever starts first, so both need its capacity.
-    std::unordered_map<Identifier, std::string> sinkConfig{{Identifier::parse("channel"), channel}, {Identifier::parse("output_format"), "NATIVE"}};
+    std::unordered_map<Identifier, std::string> sinkConfig{
+        {Identifier::parse("channel"), channel}, {Identifier::parse("output_format"), "NATIVE"}};
     std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("channel"), channel}};
     if (context.asyncConfig.channelCapacity.isExplicitlySet())
     {

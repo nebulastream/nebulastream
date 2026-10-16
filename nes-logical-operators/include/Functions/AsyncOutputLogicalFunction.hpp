@@ -56,6 +56,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     [[nodiscard]] const LogicalFunction& getCall() const { return call; }
+
     [[nodiscard]] size_t getIndex() const { return index; }
 
     static LogicalFunctionRegistryReturnType createASYNC_OUTPUT(LogicalFunctionRegistryArguments arguments);

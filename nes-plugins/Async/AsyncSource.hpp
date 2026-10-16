@@ -244,6 +244,7 @@ struct ConfigParametersAsync
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap, CHANNEL, CALLS, INPUT_FIELDS, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
 };
+
 /// NOLINTEND(cert-err58-cpp)
 
 }

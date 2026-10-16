@@ -48,8 +48,8 @@ public:
            {std::make_shared<NumberValidation>()}};
 
     /// Further attempts of a failed async call, the n-th after 100 ms * 2^n.
-    UIntOption maxRetries
-        = {"max_retries", "0", "Further attempts of a failed async call, the n-th after 100 ms * 2^n", {std::make_shared<NumberValidation>()}};
+    UIntOption maxRetries = {
+        "max_retries", "0", "Further attempts of a failed async call, the n-th after 100 ms * 2^n", {std::make_shared<NumberValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override { return {&maxConcurrency, &channelCapacity, &maxRetries}; }

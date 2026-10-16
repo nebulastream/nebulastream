@@ -96,7 +96,8 @@ std::string AsyncOutputLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("ASYNC_OUTPUT({}, {})", call.explain(verbosity), index);
 }
 
-Reflected Reflector<AsyncOutputLogicalFunction>::operator()(const AsyncOutputLogicalFunction& function, const ReflectionContext& context) const
+Reflected
+Reflector<AsyncOutputLogicalFunction>::operator()(const AsyncOutputLogicalFunction& function, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedAsyncOutputLogicalFunction{.call = function.getCall(), .index = function.getIndex()});
 }
