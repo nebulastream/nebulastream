@@ -223,7 +223,7 @@ quotedIdentifier
     ;
 
 BACKQUOTED_IDENTIFIER
-    : '"' ( ~'"' )* '"'
+    : '"' ( ~'"' | '""' )* '"'
     ;
 
 identifierChain: strictIdentifier ('.' strictIdentifier)*;
