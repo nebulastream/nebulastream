@@ -22,6 +22,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <vector>
 
 
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -39,7 +40,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
-#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 
 
 namespace NES
@@ -47,14 +48,35 @@ namespace NES
 namespace
 {
 
-LogicalOperator calculateExpression(const LogicalOperator& op)
+struct OperatorContext
+{
+    std::optional<LogicalFunction> foldedPredicate; // std::optional in case we dont need to fold anything? or maybe throw a check for that earlier?
+};
+
+using Visitor = PlanVisitor<OperatorContext>;
+//[[nodiscard]] PlanVisitor<>::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/);
+
+
+LogicalFunction calculateExpression(/*const LogicalOperator& op*/const LogicalFunction& function)
 {
     // check if we have an arithmetic expression in the WHERE-clause
-    for (const auto& child : op.getChildren())
+    for (const auto& child : function->getChildren())
     {
         if (const auto& add = child.tryGetAs<AddLogicalFunction>())
         {
-            // todo: do something and return result
+            const auto& children = add.value()->getChildren();
+            const auto& left = children.at(0);
+            const auto& right = children.at(1);
+            if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+            {
+                const auto& leftConstant = children.at(0).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+                const auto& rightConstant = children.at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+                const auto& leftDataType = children.at(0).tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
+                const auto& rightDataType = children.at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
+                //todo: Can I assume the ConstantValueLogicalFunction only accepts INT and UINT?
+                //todo: do i have to check for every U(INT) type when calculating? Is there a rule that both sides need to be the same size? i.e. UINT16, UINT16
+
+            }
         }
         else
         {
@@ -62,20 +84,40 @@ LogicalOperator calculateExpression(const LogicalOperator& op)
             calculateExpression(child); // todo: fix, this wont actually propagate anything
         }
     }
-    return op;
+    //return op;
+
+} // return something
+
+Visitor::UpResult rebuildPlan(LogicalOperator op, std::vector<LogicalOperator> children, OperatorContext context) // context: the predicate from the selection
+{
+    auto tmp = op;
+    auto tmp2 = children;
+
+    // todo: if we found a predicate to fold, rebuild the plan
+    if (context.foldedPredicate) // check if there is a value aka a folded expression
+    {
+
+    }
+
+    return op.withChildren(std::move(children));
 }
 
-PlanVisitor<>::UpResult constantFolding(const LogicalOperator& op, const std::vector<LogicalOperator>& children) // todo: should this be a downResult?
+    Visitor::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/) // todo: should this be a downResult?
 {
-    auto tmp = children; //todo: rm
-    //Visitor::DownResult downResult;
+    //auto tmp = downContexts;
+    Visitor::DownResult downResult;
 
-    if (const auto selection = op.tryGetAs<SelectionLogicalOperator>())
+
+    if (auto selection = op.tryGetAs<SelectionLogicalOperator>())
     {
-        const auto& newSelect = calculateExpression(*selection);
+        auto predicate = selection.value()->getPredicate();
+
+        //const auto& newSelect = calculateExpression(*selection);
+        auto newPredicate = calculateExpression(predicate);
+        downResult.operatorContext.foldedPredicate = std::move(newPredicate); // store the calcualted predicate in the operator context so we dont lose it (?)
     }
-//todo: return operator or the new logicalFunction
-    return op.withChildren(children);
+/// return operator or the new logicalFunction?
+    return downResult; //op.withChildren(children);
 }
 
 }
@@ -83,7 +125,7 @@ PlanVisitor<>::UpResult constantFolding(const LogicalOperator& op, const std::ve
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan ConstantFoldingRule::apply(const LogicalPlan& queryPlan) const
 {
-    PlanVisitor<> visitor{constantFolding/*, rebuildPlan*/}; // todo: rebuild plan function
+    Visitor visitor{constantFolding, rebuildPlan};
     return visitor.apply(queryPlan);
 }
 
