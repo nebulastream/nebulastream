@@ -19,6 +19,12 @@ source "$NES_BATS_LIB"
 
 NES_REPL="$NES_REPL_EMBEDDED"
 
+# Worker options for every REPL in this file, e.g. the execution mode of the interpreter variant of this suite.
+WORKER_ARGS=()
+if [ -n "${NES_ASYNC_WORKER_ARGS:-}" ]; then
+  read -r -a WORKER_ARGS <<<"-- $NES_ASYNC_WORKER_ARGS"
+fi
+
 setup_file()    { nes_offline_setup_file; }
 teardown_file() { nes_offline_teardown_file; }
 
@@ -33,10 +39,11 @@ setup() {
 teardown() { kill "$HTTP_SERVER_PID" 2>/dev/null || true; }
 
 # Runs tests/sql/$1 with HTTP_SERVER replaced by the server's url, until its queries terminated.
-# Further arguments are passed on to the REPL.
+# Further arguments are passed on to the REPL. A query that never terminates fails the test after two minutes
+# instead of blocking the suite.
 run_async_sql() {
   sed "s|HTTP_SERVER|$HTTP_SERVER|g" "tests/sql/$1" > "$1"
-  run $NES_REPL -f JSON --on-exit WAIT_FOR_QUERY_TERMINATION "${@:2}" <"$1"
+  run timeout -k 5 120 $NES_REPL -f JSON --on-exit WAIT_FOR_QUERY_TERMINATION "${@:2}" "${WORKER_ARGS[@]}" <"$1"
 }
 
 # The rows of a CSV sink without its header, sorted, since a query does not fix the output order.
@@ -90,7 +97,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   run bash -c "{ cat tests/sql/long_delay.sql; sleep 2;
                  echo \"SHOW QUERIES WHERE id = '$query';\";
                  echo \"DROP QUERY WHERE id = '$query';\"; sleep 2;
-                 echo \"SHOW QUERIES WHERE id = '$query';\"; } | timeout -k 5 60 $NES_REPL -f JSON"
+                 echo \"SHOW QUERIES WHERE id = '$query';\"; } | timeout -k 5 60 $NES_REPL -f JSON ${WORKER_ARGS[*]}"
   [ "$status" -eq 0 ]
 
   # Before the drop the producer half has finished and the consumer half is waiting in the call.
@@ -157,4 +164,40 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(sink_rows reused.csv)" = "1,/both:/both:Hello" ]
   # Two calls per row for the predicate; the matching row's SELECT reuses them instead of calling twice more.
   [ "$(grep -c '^/both$' http_paths.log)" -eq 6 ]
+}
+
+@test "HTTP_CALL: a service failing while the producer is held back fails the query and stops every part of it" {
+  local start=$SECONDS
+  run_async_sql failing_service.sql
+  [ "$status" -eq 0 ]
+
+  grep -q "Query Failed: .*HTTP_CALL to 127.0.0.1:[0-9]*/slow?delay_ms=50&fail_after=300 got status 500" nes-repl.log
+  # The calls stop with the failure: at most the ones already in flight reach the service after it.
+  [ "$(wc -l < http_paths.log)" -lt 400 ]
+  # The source would emit for ten seconds; the query ends with the failure, not when the source is done.
+  [ $((SECONDS - start)) -lt 10 ]
+}
+
+@test "HTTP_CALL: dropping a query while the producer is held back stops every part of it" {
+  local query="5a1c0de0-0000-4000-8000-000000000002"
+  sed "s|HTTP_SERVER|$HTTP_SERVER|g" tests/sql/backpressure_drop.sql > backpressure_drop.sql
+  local start=$SECONDS
+  run bash -c "{ cat backpressure_drop.sql; sleep 3;
+                 echo \"DROP QUERY WHERE id = '$query';\"; sleep 2;
+                 echo \"SHOW QUERIES WHERE id = '$query';\"; } | timeout -k 5 60 $NES_REPL -f JSON --debug ${WORKER_ARGS[*]}"
+  [ "$status" -eq 0 ]
+
+  # The producer was held back when the drop arrived.
+  grep -q "Backpressure acquired" nes-repl.log
+  echo "${lines[-1]}" | jq -e 'all(.[]; .query_status == "Stopped")'
+  [ $((SECONDS - start)) -lt 30 ]
+}
+
+@test "HTTP_CALL: a failing query leaves another query on the shared event loop alone" {
+  run_async_sql isolation.sql
+  [ "$status" -eq 0 ]
+
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:1/echo failed" nes-repl.log
+  [ "$(sink_rows failed.csv | wc -l)" -eq 0 ]
+  [ "$(sink_rows healthy.csv)" = "$(printf '1,/slow?delay_ms=1000:Hello\n2,/slow?delay_ms=1000:NebulaStream\n3,/slow?delay_ms=1000:äöü')" ]
 }

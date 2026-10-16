@@ -32,8 +32,14 @@ link_plugin_library(nes-sinks handoff_sink_plugin_library)
 add_registry_entry(Sink Handoff)
 add_registry_entry(SinkValidation Handoff)
 
-# End-to-end tests in the embedded REPL against tests/http_path_server.py.
+# End-to-end tests in the embedded REPL against tests/http_path_server.py, once per execution mode: the slower
+# interpreter widens the windows in which the two halves of an async stage can race each other.
 add_e2e_test(
     NAME async-repl-test
     BATS_FILE tests/async.bats
+)
+add_e2e_test(
+    NAME async-repl-test-interpreter
+    BATS_FILE tests/async.bats
+    EXTRA_ENV NES_ASYNC_WORKER_ARGS=--worker.default_query_execution.execution_mode=INTERPRETER
 )
