@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -58,6 +59,7 @@ private:
     void dropRemaining(const TupleBuffer& buffer);
 
     std::string channelId;
+    size_t channelCapacity;
     std::shared_ptr<HandoffChannel> channel;
     /// Set once the Async source has stopped. Several worker threads may run `execute` at once.
     std::atomic<bool> consumerGone = false;
@@ -81,8 +83,14 @@ struct ConfigParametersHandoff
             return value;
         }};
 
+    /// Only used if the sink starts before the Async source, which then finds the channel this sink created.
+    static inline const DescriptorConfig::ConfigParameter<size_t> CHANNEL_CAPACITY{
+        "CHANNEL_CAPACITY",
+        HandoffChannel::DEFAULT_CAPACITY,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL_CAPACITY, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CHANNEL);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CHANNEL, CHANNEL_CAPACITY);
 };
 /// NOLINTEND(cert-err58-cpp)
 

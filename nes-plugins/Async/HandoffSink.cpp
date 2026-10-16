@@ -29,13 +29,15 @@
 namespace NES
 {
 HandoffSink::HandoffSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController)), channelId(sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL))
+    : Sink(std::move(backpressureController))
+    , channelId(sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL))
+    , channelCapacity(sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL_CAPACITY))
 {
 }
 
 void HandoffSink::start(PipelineExecutionContext&)
 {
-    channel = HandoffChannel::get(channelId);
+    channel = HandoffChannel::get(channelId, channelCapacity);
 }
 
 void HandoffSink::stop(PipelineExecutionContext&)

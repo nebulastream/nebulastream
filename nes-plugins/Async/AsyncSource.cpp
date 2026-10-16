@@ -15,6 +15,7 @@
 #include <AsyncSource.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstring>
 #include <exception>
@@ -42,11 +43,14 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/this_coro.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/deferred.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <fmt/format.h>
+#include <Util/Logger/Logger.hpp>
 #include <rfl/json/read.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -98,6 +102,10 @@ struct PendingCalls
     std::vector<boost::asio::cancellation_signal> cancel;
 };
 
+constexpr std::chrono::milliseconds RETRY_BACKOFF{100};
+/// Caps the backoff at 100 ms * 2^10, about 100 s.
+constexpr size_t MAX_BACKOFF_DOUBLINGS = 10;
+
 /// ponytail: arguments and results are non-nullable VARSIZED only, which is what HTTP_CALL needs
 void requireVarSized(const DataType& type, std::string_view what)
 {
@@ -110,7 +118,9 @@ void requireVarSized(const DataType& type, std::string_view what)
 
 AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
     : channelId(sourceDescriptor.getFromConfig(ConfigParametersAsync::CHANNEL))
+    , channelCapacity(sourceDescriptor.getFromConfig(ConfigParametersAsync::CHANNEL_CAPACITY))
     , maxConcurrency(std::max<size_t>(1, sourceDescriptor.getFromConfig(ConfigParametersAsync::MAX_CONCURRENCY)))
+    , maxRetries(sourceDescriptor.getFromConfig(ConfigParametersAsync::MAX_RETRIES))
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
     const auto descriptions = rfl::json::read<std::vector<AsyncCall>>(sourceDescriptor.getFromConfig(ConfigParametersAsync::CALLS));
@@ -196,7 +206,7 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
 void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     bufferProvider = std::move(provider);
-    channel = HandoffChannel::get(channelId);
+    channel = HandoffChannel::get(channelId, channelCapacity);
 }
 
 void AsyncSource::close()
@@ -230,6 +240,31 @@ std::vector<std::string> AsyncSource::readArguments(
     return arguments;
 }
 
+boost::asio::awaitable<std::string> AsyncSource::callWithRetries(AsyncFunction& function, std::vector<std::string> arguments) const
+{
+    for (size_t attempt = 0;; ++attempt)
+    {
+        std::exception_ptr failure;
+        try
+        {
+            co_return co_await function.call(arguments);
+        }
+        catch (...)
+        {
+            failure = std::current_exception();
+        }
+        if (attempt >= maxRetries
+            || (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+        {
+            std::rethrow_exception(failure);
+        }
+        const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
+        NES_WARNING("Async call failed, attempt {} of {} follows in {} ms", attempt + 2, maxRetries + 1, backoff.count());
+        boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
+        co_await timer.async_wait(boost::asio::use_awaitable);
+    }
+}
+
 boost::asio::awaitable<void>
 AsyncSource::processRows(const size_t worker, const TupleBuffer& input, TupleBuffer& output, const size_t rows, size_t& nextRow)
 {
@@ -250,7 +285,9 @@ AsyncSource::processRows(const size_t worker, const TupleBuffer& input, TupleBuf
                 {
                     started.push_back(index);
                     operations.push_back(boost::asio::co_spawn(
-                        strand, calls[index].instances[worker]->call(readArguments(calls[index], input, row, results)), boost::asio::deferred));
+                        strand,
+                        callWithRetries(*calls[index].instances[worker], readArguments(calls[index], input, row, results)),
+                        boost::asio::deferred));
                 }
             }
             auto [order, failures, values] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
