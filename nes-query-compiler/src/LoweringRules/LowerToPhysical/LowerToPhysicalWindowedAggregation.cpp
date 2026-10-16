@@ -73,6 +73,7 @@
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include <WatermarkBackpressureHandler.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -170,7 +171,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
-    const auto pageSize = conf.pageSize.getValue();
+    /// State pages have the size of a pooled buffer, so they never need an unpooled allocation.
+    const auto pageSize = conf.operatorBufferSize.getValue();
 
     const auto fieldKeyNames
         = boundGroupingKeys | std::views::transform([](const auto& field) { return QualifiedIdentifier{field->getField().getLastName()}; });
@@ -188,12 +190,10 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     const auto windowMetaData = WindowMetaData{aggregation->getWindowStartField(), aggregation->getWindowEndField()};
 
-    /// Aggregation does not benefit of using the ChainedHashMap's optional filter, so bloomFilter stays empty.
     const ChainedHashMapConfig hashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
         .pageSize = pageSize,
-        .bloomFilterParams = std::nullopt,
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,
         .hashFunction = std::make_shared<MurMur3HashFunction>()};
@@ -217,8 +217,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
-    auto handler = std::make_shared<AggregationOperatorHandler>(
-        getSourcesOfInputOrigins({aggregation->getChild()}), outputOriginId, std::move(sliceAndWindowStore));
+    auto handler = makeWindowOperatorHandler<AggregationOperatorHandler>(
+        conf.maxWatermarkGapInMs.getValue(), getSourcesOfInputOrigins({aggregation->getChild()}), outputOriginId, std::move(sliceAndWindowStore));
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

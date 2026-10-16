@@ -25,13 +25,12 @@
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
-#include <BloomFilterConfiguration.hpp>
 #include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
 
-static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 1024;
+static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 128;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
 static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
@@ -69,9 +68,17 @@ public:
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
 
+    /// Operators merging the watermarks of multiple origins backpressure the sources of origins that are ahead of the slowest origin by
+    /// more than this gap. This bounds the state that is kept until windows can be triggered.
+    UIntOption maxWatermarkGapInMs
+        = {"max_watermark_gap_in_ms",
+           "0",
+           "Maximum event-time gap between the watermarks of an operator's input origins before the leading sources are backpressured. 0 "
+           "disables watermark backpressure.",
+           {std::make_shared<NumberValidation>()}};
+
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
 
-    BloomFilterConfiguration bloomFilterConfiguration = {"bloom_filter", "Configuration for the hash maps' in-map BloomFilter"};
 
 private:
     std::vector<BaseOption*> getOptions() override
@@ -82,8 +89,8 @@ private:
             &numberOfPartitions,
             &numberOfRecordsPerKey,
             &operatorBufferSize,
-            &sliceCacheConfiguration,
-            &bloomFilterConfiguration};
+            &maxWatermarkGapInMs,
+            &sliceCacheConfiguration};
     }
 };
 

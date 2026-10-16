@@ -70,6 +70,7 @@
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
+#include <WatermarkBackpressureHandler.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -181,8 +182,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         std::unreachable();
     };
 
-    auto handler = std::make_shared<NLJOperatorHandler>(
-        std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = makeWindowOperatorHandler<NLJOperatorHandler>(
+        conf.maxWatermarkGapInMs.getValue(), std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};

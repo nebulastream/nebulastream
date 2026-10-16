@@ -13,7 +13,6 @@
 */
 
 #pragma once
-#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <utility>
@@ -33,9 +32,7 @@ namespace NES
 struct ExecutableQueryPlan
 {
     using SourceWithSuccessor = std::pair<std::unique_ptr<SourceHandle>, std::vector<std::weak_ptr<ExecutablePipeline>>>;
-    /// A `maxWatermarkGap` of 0 disables watermark backpressure.
-    static std::unique_ptr<ExecutableQueryPlan>
-    instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, uint64_t maxWatermarkGap);
+    static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
 
     ExecutableQueryPlan(
         QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);

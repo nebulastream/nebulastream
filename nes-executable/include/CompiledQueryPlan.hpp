@@ -36,7 +36,7 @@ struct ExecutablePipeline
     PipelineId id;
     std::unique_ptr<ExecutablePipelineStage> stage;
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;
-    std::optional<WatermarkBackpressure> watermarkBackpressure;
+    std::optional<BackpressureController> backpressureController;
 };
 
 struct CompiledQueryPlan

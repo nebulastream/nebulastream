@@ -103,9 +103,11 @@ protected:
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) = 0;
 
-    /// Backpressures the sources of input origins whose watermark is too far ahead of the slowest input origin, and releases them once the
-    /// slowest origin has caught up.
-    void applyWatermarkBackpressure();
+    /// The two steps of checkAndTriggerWindows, for handlers that need to act in between, e.g., WithWatermarkBackpressure.
+    /// Updates the build watermark processor and returns the new global watermark.
+    Timestamp updateBuildWatermark(const BufferMetaData& bufferMetaData);
+    /// Triggers all windows that the global watermark allows to trigger.
+    void triggerWindows(Timestamp newGlobalWatermark, PipelineExecutionContext* pipelineCtx);
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
@@ -117,10 +119,5 @@ protected:
     std::atomic<Timestamp::Underlying> highestTriggeredWatermark{Timestamp::INITIAL_VALUE};
     /// Lower bounds of all buffers that are currently processed by a build operator.
     mutable folly::Synchronized<std::multiset<Timestamp::Underlying>> buildLowerBounds;
-    /// Guards the watermark backpressure and the throttled origins and sources.
-    std::mutex watermarkBackpressureMutex;
-    std::optional<WatermarkBackpressure> watermarkBackpressure;
-    std::unordered_set<OriginId> throttledInputOrigins;
-    std::unordered_set<OriginId> throttledSources;
 };
 }

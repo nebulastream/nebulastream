@@ -59,7 +59,7 @@ struct EmittedNLJWindowTrigger
     SliceEnd* rightSliceEnds;
 };
 
-class NLJOperatorHandler final : public StreamJoinOperatorHandler
+class NLJOperatorHandler : public StreamJoinOperatorHandler
 {
 public:
     NLJOperatorHandler(

@@ -42,7 +42,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -86,6 +85,7 @@
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include <WatermarkBackpressureHandler.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -99,22 +99,6 @@ struct FieldNamesExtension
     Field oldField;
     QualifiedUnboundField newField;
 };
-
-/// Sizing of the join's in-map BloomFilter, or nullopt when it is switched off.
-///
-/// Sized from expectedEntries rather than from the numberOfBuckets these options carry, because the bucket
-/// count bounds nothing: the hash maps never rehash, they only lengthen their chains, so a map routinely
-/// holds far more keys than it has buckets. Sizing the filter for the bucket count would saturate every bit
-/// and make mightContain() always true, i.e. pay the hash positions and skip nothing.
-std::optional<Nautilus::Interface::BloomFilterParams> createBloomFilterParams(const QueryExecutionConfiguration& conf)
-{
-    if (not conf.bloomFilterConfiguration.enableBloomFilter.getValue())
-    {
-        return std::nullopt;
-    }
-    return Nautilus::Interface::BloomFilterParams{
-        conf.bloomFilterConfiguration.expectedEntries.getValue(), conf.bloomFilterConfiguration.falsePositiveRate.getValue()};
-}
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
 getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalOperator& rightChild, const LogicalFunction& joinFunction)
@@ -263,7 +247,8 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
         fieldKeyNames.emplace_back(fieldExtension.newField.getFullyQualifiedName());
     }
 
-    const auto pageSize = conf.pageSize.getValue();
+    /// State pages have the size of a pooled buffer, so they never need an unpooled allocation.
+    const auto pageSize = conf.operatorBufferSize.getValue();
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
 
@@ -274,7 +259,6 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
             .entrySize = entrySize,
             .numberOfBuckets = numberOfBuckets,
             .pageSize = pageSize,
-            .bloomFilterParams = createBloomFilterParams(conf),
             .fieldKeys = fieldKeys,
             .fieldValues = fieldValues,
             .hashFunction = std::make_shared<MurMur3HashFunction>()},
@@ -388,8 +372,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         std::unreachable();
     };
 
-    auto handler = std::make_shared<HJOperatorHandler>(
-        std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = makeWindowOperatorHandler<HJOperatorHandler>(
+        conf.maxWatermarkGapInMs.getValue(), std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{

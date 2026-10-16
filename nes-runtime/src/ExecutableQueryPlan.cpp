@@ -64,7 +64,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 }
 
 std::unique_ptr<ExecutableQueryPlan>
-ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, const uint64_t maxWatermarkGap)
+ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
@@ -79,13 +79,9 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
         throw NotImplemented("Currently our execution model expects exactly one sink per query plan");
     }
 
-    if (maxWatermarkGap > 0)
+    for (const auto& pipeline : compiledQueryPlan.pipelines)
     {
-        for (const auto& pipeline : compiledQueryPlan.pipelines)
-        {
-            pipeline->watermarkBackpressure
-                = WatermarkBackpressure{.controller = backpressureController, .maxWatermarkGap = maxWatermarkGap};
-        }
+        pipeline->backpressureController = backpressureController;
     }
 
     auto& [pipelineId, descriptor, predecessors] = compiledQueryPlan.sinks.front();

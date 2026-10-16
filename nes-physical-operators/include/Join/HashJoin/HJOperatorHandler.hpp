@@ -52,7 +52,7 @@ struct EmittedHJWindowTrigger
     ProbeTaskType probeTaskType;
 };
 
-class HJOperatorHandler final : public StreamJoinOperatorHandler
+class HJOperatorHandler : public StreamJoinOperatorHandler
 {
 public:
     HJOperatorHandler(

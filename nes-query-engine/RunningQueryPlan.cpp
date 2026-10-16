@@ -156,7 +156,7 @@ std::
             unregisterWithError,
             terminationCallbackRef,
             pipelineSetupCallbackRef);
-        node->watermarkBackpressure = std::move(pipeline->watermarkBackpressure);
+        node->backpressureController = std::move(pipeline->backpressureController);
         pipelines.emplace_back(node);
         cache[pipeline] = std::move(node);
         return cache[pipeline];

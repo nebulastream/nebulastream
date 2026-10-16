@@ -89,7 +89,7 @@ struct RunningQueryPlanNode
     std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<ExecutablePipelineStage> stage;
-    std::optional<WatermarkBackpressure> watermarkBackpressure;
+    std::optional<BackpressureController> backpressureController;
 
     std::function<void(Exception)> unregisterWithError;
     CallbackRef planRef;
