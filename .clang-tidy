@@ -57,6 +57,7 @@ Checks: [
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-readability-named-parameter", # does not work with our error of unused variable
   "-cert-err60-cpp", # conflicts with using cpptrace::lazy_exception
+  "-portability-template-virtual-member-function", # we only build with clang
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
