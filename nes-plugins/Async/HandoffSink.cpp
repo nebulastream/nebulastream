@@ -22,6 +22,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -49,20 +50,36 @@ void HandoffSink::stop(PipelineExecutionContext&)
 
 void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
+    if (consumerGone)
+    {
+        return;
+    }
     auto currentBuffer = std::optional(inputTupleBuffer);
     while (currentBuffer)
     {
-        if (!channel->tryPush(*currentBuffer))
+        switch (channel->tryPush(*currentBuffer))
         {
-            /// The Async source only takes the next buffer once the calls of its current one finished, so a full
-            /// channel means the calls fall behind: hold the producer's sources back until it drains.
-            if (const auto retry = backpressureHandler.onFull(*currentBuffer, backpressureController))
-            {
-                pipelineExecutionContext.repeatTask(*retry, RETRY_INTERVAL);
-            }
-            return;
+            case HandoffChannel::PushResult::PUSHED:
+                currentBuffer = backpressureHandler.onSuccess(backpressureController);
+                break;
+            case HandoffChannel::PushResult::FULL:
+                /// The Async source only takes the next buffer once the calls of its current one finished, so a full
+                /// channel means the calls fall behind: hold the producer's sources back until it drains.
+                if (const auto retry = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                {
+                    pipelineExecutionContext.repeatTask(*retry, RETRY_INTERVAL);
+                }
+                return;
+            case HandoffChannel::PushResult::CONSUMER_GONE:
+                /// The query is stopping or has failed, and nothing will take a buffer again. Retrying would keep this
+                /// half of the query running forever, so the rest is dropped and the producer's sources are released.
+                consumerGone = true;
+                NES_DEBUG("Async source of channel {} has stopped; dropping the buffers still to be handed off", channelId);
+                while (backpressureHandler.onSuccess(backpressureController))
+                {
+                }
+                return;
         }
-        currentBuffer = backpressureHandler.onSuccess(backpressureController);
     }
 }
 

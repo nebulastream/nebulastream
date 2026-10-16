@@ -16,6 +16,7 @@
 
 #include <condition_variable>
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -32,16 +33,25 @@ namespace NES
 class HandoffChannel
 {
 public:
+    enum class PushResult : uint8_t
+    {
+        PUSHED,
+        /// The caller retries later.
+        FULL,
+        /// The source has stopped and will never take a buffer again.
+        CONSUMER_GONE,
+    };
+
     explicit HandoffChannel(size_t capacity);
 
     /// Both halves look the channel up by id, in whichever order they start. It stays registered until
     /// `release` so that buffers the sink handed off before the source opened are not lost.
     static std::shared_ptr<HandoffChannel> get(const std::string& id);
-    /// Called by the source, which is the last to use the channel.
+    /// Called by the source, which is the last to use the channel. A sink that still holds the channel is told that
+    /// nobody takes its buffers any more, and the buffers that were waiting are dropped.
     static void release(const std::string& id);
 
-    /// False if the channel is full; the caller retries later.
-    [[nodiscard]] bool tryPush(const TupleBuffer& buffer);
+    [[nodiscard]] PushResult tryPush(const TupleBuffer& buffer);
     /// Blocks until a buffer arrives. Nullopt once the channel is closed and drained, or on a stop request.
     std::optional<TupleBuffer> pop(const std::stop_token& stopToken);
     /// No further buffers will be pushed.
@@ -53,6 +63,7 @@ private:
     std::deque<TupleBuffer> buffers;
     size_t capacity;
     bool closed = false;
+    bool consumerGone = false;
 };
 
 }

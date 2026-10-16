@@ -62,23 +62,40 @@ std::shared_ptr<HandoffChannel> HandoffChannel::get(const std::string& id)
 
 void HandoffChannel::release(const std::string& id)
 {
-    auto& [mutex, channels] = registry();
-    const std::scoped_lock lock(mutex);
-    channels.erase(id);
+    std::shared_ptr<HandoffChannel> channel;
+    {
+        auto& [mutex, channels] = registry();
+        const std::scoped_lock lock(mutex);
+        if (const auto entry = channels.find(id); entry != channels.end())
+        {
+            channel = std::move(entry->second);
+            channels.erase(entry);
+        }
+    }
+    if (channel)
+    {
+        const std::scoped_lock lock(channel->mutex);
+        channel->consumerGone = true;
+        channel->buffers.clear();
+    }
 }
 
-bool HandoffChannel::tryPush(const TupleBuffer& buffer)
+HandoffChannel::PushResult HandoffChannel::tryPush(const TupleBuffer& buffer)
 {
     {
         const std::scoped_lock lock(mutex);
+        if (consumerGone)
+        {
+            return PushResult::CONSUMER_GONE;
+        }
         if (buffers.size() >= capacity)
         {
-            return false;
+            return PushResult::FULL;
         }
         buffers.push_back(buffer);
     }
     changed.notify_one();
-    return true;
+    return PushResult::PUSHED;
 }
 
 std::optional<TupleBuffer> HandoffChannel::pop(const std::stop_token& stopToken)
