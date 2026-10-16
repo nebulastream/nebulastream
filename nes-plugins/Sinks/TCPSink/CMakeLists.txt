@@ -10,15 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(TCP Sink nes-sinks-registry tcp_sink_plugin TCPSink.cpp)
-add_plugin_as_library(TCP SinkValidation nes-sinks-registry tcp_sink_validation_plugin TCPSink.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-target_include_directories(tcp_sink_plugin
-        PUBLIC include
-        PRIVATE .
-)
-target_include_directories(tcp_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
-)
+# One implementation library serving all registries this plugin participates in.
+add_library(tcp_sink_plugin_library STATIC TCPSink.cpp)
+target_link_libraries(tcp_sink_plugin_library PRIVATE nes-sinks)
+target_include_directories(tcp_sink_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+
+link_plugin_library(nes-sinks tcp_sink_plugin_library)
+add_registry_entry(Sink TCP)
+add_registry_entry(SinkValidation TCP)
+
