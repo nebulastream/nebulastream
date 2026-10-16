@@ -60,12 +60,19 @@ const ConfigField<StreamJoinStrategy> JOIN_STRATEGY{
 
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("optimizer"), JOIN_STRATEGY, QueryOptimizerNetworkConfiguration::getConfigSchema());
+    return createConfigSchema(
+        Identifier::parse("optimizer"),
+        JOIN_STRATEGY,
+        QueryOptimizerNetworkConfiguration::getConfigSchema(),
+        QueryOptimizerAsyncConfiguration::getConfigSchema());
 }
 
 QueryOptimizerConfiguration QueryOptimizerConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(JOIN_STRATEGY), QueryOptimizerNetworkConfiguration::fromConfig(config)};
+    return {
+        config.get(JOIN_STRATEGY),
+        QueryOptimizerNetworkConfiguration::fromConfig(config),
+        QueryOptimizerAsyncConfiguration::fromConfig(config)};
 }
 
 }

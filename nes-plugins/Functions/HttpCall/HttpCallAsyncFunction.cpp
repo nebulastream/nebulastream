@@ -15,6 +15,7 @@
 #include <HttpCallAsyncFunction.hpp>
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -24,6 +25,7 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/system/system_error.hpp>
+#include <Util/Strings.hpp>
 #include <boost/url/parse.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -35,8 +37,8 @@ namespace
 {
 namespace http = boost::beast::http;
 
-/// ponytail: fixed per-operation timeout; make it an argument of HTTP_CALL when a service needs longer
-constexpr auto OPERATION_TIMEOUT = std::chrono::seconds(30);
+/// Bounds the connect and, separately, the exchange, unless the call passes its own timeout.
+constexpr std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::seconds(30);
 }
 
 AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegistryArguments)
@@ -46,8 +48,18 @@ AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegis
 
 boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std::string> arguments)
 {
-    PRECONDITION(arguments.size() == 2, "HTTP_CALL takes (body, url)");
+    PRECONDITION(arguments.size() == 2 || arguments.size() == 3, "HTTP_CALL takes (body, url[, timeout_ms])");
     const auto& url = arguments[1];
+    auto timeout = DEFAULT_TIMEOUT;
+    if (arguments.size() == 3)
+    {
+        const auto millis = from_chars<uint64_t>(arguments[2]);
+        if (!millis || *millis == 0)
+        {
+            throw CannotReadFromSource("HTTP_CALL expects a positive timeout in milliseconds, got {}", arguments[2]);
+        }
+        timeout = std::chrono::milliseconds{*millis};
+    }
     const auto parsed = boost::urls::parse_uri(url);
     if (!parsed || parsed->scheme() != "http")
     {
@@ -61,7 +73,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     const bool reused = stream.has_value() && connectedTo == host + ":" + port;
     try
     {
-        co_return co_await exchange(host, port, target, arguments[0]);
+        co_return co_await exchange(host, port, target, arguments[0], timeout);
     }
     catch (const boost::system::system_error& error)
     {
@@ -73,7 +85,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     }
     try
     {
-        co_return co_await exchange(host, port, target, arguments[0]);
+        co_return co_await exchange(host, port, target, arguments[0], timeout);
     }
     catch (const boost::system::system_error& error)
     {
@@ -83,7 +95,8 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
 }
 
 boost::asio::awaitable<std::string>
-HttpCallAsyncFunction::exchange(const std::string& host, const std::string& port, const std::string& target, const std::string& body)
+HttpCallAsyncFunction::exchange(
+    const std::string& host, const std::string& port, const std::string& target, const std::string& body, const std::chrono::milliseconds timeout)
 {
     using boost::asio::use_awaitable;
     if (!stream || connectedTo != host + ":" + port)
@@ -93,7 +106,7 @@ HttpCallAsyncFunction::exchange(const std::string& host, const std::string& port
         const auto endpoints = co_await resolver.async_resolve(host, port, use_awaitable);
         stream.emplace(executor);
         buffer.clear();
-        stream->expires_after(OPERATION_TIMEOUT);
+        stream->expires_after(timeout);
         co_await stream->async_connect(endpoints, use_awaitable);
         connectedTo = host + ":" + port;
     }
@@ -103,7 +116,7 @@ HttpCallAsyncFunction::exchange(const std::string& host, const std::string& port
     request.set(http::field::content_type, "text/plain");
     request.keep_alive(true);
     request.prepare_payload();
-    stream->expires_after(OPERATION_TIMEOUT);
+    stream->expires_after(timeout);
     co_await http::async_write(*stream, request, use_awaitable);
 
     http::response<http::string_body> response;

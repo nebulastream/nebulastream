@@ -95,10 +95,14 @@ private:
 
     std::vector<std::string>
     readArguments(const BoundCall& call, const TupleBuffer& input, size_t row, const std::vector<std::string>& results) const;
+    /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops.
+    boost::asio::awaitable<std::string> callWithRetries(AsyncFunction& function, std::vector<std::string> arguments) const;
     boost::asio::awaitable<void> processRows(size_t worker, const TupleBuffer& input, TupleBuffer& output, size_t rows, size_t& nextRow);
 
     std::string channelId;
+    size_t channelCapacity;
     size_t maxConcurrency;
+    size_t maxRetries;
     size_t inputRowSize = 0;
     size_t outputRowSize = 0;
     std::vector<CopiedField> copiedFields;
@@ -148,8 +152,21 @@ struct ConfigParametersAsync
         size_t{16},
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_CONCURRENCY, config); }};
 
+    /// Only used if the source opens before the Handoff sink, which then finds the channel this source created.
+    static inline const DescriptorConfig::ConfigParameter<size_t> CHANNEL_CAPACITY{
+        "CHANNEL_CAPACITY",
+        HandoffChannel::DEFAULT_CAPACITY,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL_CAPACITY, config); }};
+
+    /// Further attempts of a failed call, the n-th after 100 ms * 2^n.
+    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_RETRIES{
+        "MAX_RETRIES",
+        size_t{0},
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RETRIES, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, CALLS, INPUT_FIELDS, MAX_CONCURRENCY);
+        = DescriptorConfig::createConfigParameterContainerMap(
+            SourceDescriptor::parameterMap, CHANNEL, CALLS, INPUT_FIELDS, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
 };
 /// NOLINTEND(cert-err58-cpp)
 

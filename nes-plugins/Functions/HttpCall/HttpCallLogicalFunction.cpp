@@ -14,6 +14,7 @@
 
 #include <Functions/HttpCallLogicalFunction.hpp>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -21,6 +22,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -35,14 +37,17 @@
 namespace NES
 {
 
-HttpCallLogicalFunction::HttpCallLogicalFunction(LogicalFunction body, LogicalFunction url)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), body(std::move(body)), url(std::move(url))
+HttpCallLogicalFunction::HttpCallLogicalFunction(LogicalFunction body, LogicalFunction url, std::optional<LogicalFunction> timeoutMillis)
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
+    , body(std::move(body))
+    , url(std::move(url))
+    , timeoutMillis(std::move(timeoutMillis))
 {
 }
 
 bool HttpCallLogicalFunction::operator==(const HttpCallLogicalFunction& rhs) const
 {
-    return body == rhs.body and url == rhs.url;
+    return body == rhs.body and url == rhs.url and timeoutMillis == rhs.timeoutMillis;
 }
 
 DataType HttpCallLogicalFunction::getDataType() const
@@ -55,11 +60,20 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
     auto copy = *this;
     copy.body = body.withInferredDataType(schema);
     copy.url = url.withInferredDataType(schema);
-    for (const auto& argument : copy.getChildren())
+    for (const auto& argument : {copy.body, copy.url})
     {
         if (not argument.getDataType().isType(DataType::Type::VARSIZED))
         {
             throw DifferentFieldTypeExpected("HTTP_CALL expects VARSIZED arguments, but got {}", argument);
+        }
+    }
+    if (timeoutMillis)
+    {
+        copy.timeoutMillis = timeoutMillis->withInferredDataType(schema);
+        /// The Async source reads only VARSIZED fields, so the timeout has to be a constant.
+        if (not copy.timeoutMillis->tryGetAs<ConstantValueLogicalFunction>().has_value() or not copy.timeoutMillis->getDataType().isInteger())
+        {
+            throw DifferentFieldTypeExpected("HTTP_CALL expects an integer constant timeout in milliseconds, but got {}", *copy.timeoutMillis);
         }
     }
     return copy;
@@ -67,6 +81,10 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
 
 std::vector<LogicalFunction> HttpCallLogicalFunction::getChildren() const
 {
+    if (timeoutMillis)
+    {
+        return {body, url, *timeoutMillis};
+    }
     return {body, url};
 }
 
@@ -75,6 +93,7 @@ HttpCallLogicalFunction HttpCallLogicalFunction::withChildren(const std::vector<
     auto copy = *this;
     copy.body = children.at(0);
     copy.url = children.at(1);
+    copy.timeoutMillis = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt;
     return copy;
 }
 
@@ -85,29 +104,37 @@ std::string_view HttpCallLogicalFunction::getType() const /// NOLINT(readability
 
 std::string HttpCallLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
+    if (timeoutMillis)
+    {
+        return fmt::format("HTTP_CALL({}, {}, {})", body.explain(verbosity), url.explain(verbosity), timeoutMillis->explain(verbosity));
+    }
     return fmt::format("HTTP_CALL({}, {})", body.explain(verbosity), url.explain(verbosity));
 }
 
 Reflected Reflector<HttpCallLogicalFunction>::operator()(const HttpCallLogicalFunction& function, const ReflectionContext& context) const
 {
     const auto children = function.getChildren();
-    return context.reflect(detail::ReflectedHttpCallLogicalFunction{.body = children.at(0), .url = children.at(1)});
+    return context.reflect(detail::ReflectedHttpCallLogicalFunction{
+        .body = children.at(0), .url = children.at(1), .timeoutMillis = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt});
 }
 
 HttpCallLogicalFunction Unreflector<HttpCallLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [body, url] = context.unreflect<detail::ReflectedHttpCallLogicalFunction>(reflected);
-    return HttpCallLogicalFunction{std::move(body), std::move(url)};
+    auto [body, url, timeoutMillis] = context.unreflect<detail::ReflectedHttpCallLogicalFunction>(reflected);
+    return HttpCallLogicalFunction{std::move(body), std::move(url), std::move(timeoutMillis)};
 }
 
 LogicalFunctionRegistryReturnType HttpCallLogicalFunction::createHTTP_CALL(LogicalFunctionRegistryArguments arguments)
 {
     /// The argument count comes straight from the user's query, so a bad count is reported rather than asserted.
-    if (arguments.children.size() != 2)
+    if (arguments.children.size() != 2 and arguments.children.size() != 3)
     {
-        throw InvalidQuerySyntax("HTTP_CALL expects 2 arguments (body, url), but got {}", arguments.children.size());
+        throw InvalidQuerySyntax("HTTP_CALL expects 2 or 3 arguments (body, url[, timeout_ms]), but got {}", arguments.children.size());
     }
-    return HttpCallLogicalFunction{arguments.children.at(0), arguments.children.at(1)};
+    return HttpCallLogicalFunction{
+        arguments.children.at(0),
+        arguments.children.at(1),
+        arguments.children.size() > 2 ? std::optional{arguments.children.at(2)} : std::nullopt};
 }
 
 }

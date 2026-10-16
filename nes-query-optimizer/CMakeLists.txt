@@ -13,7 +13,7 @@
 include_directories(tests/include)
 
 # Add interface library
-add_library(nes-query-optimizer-interface interface/QueryOptimizerConfiguration.cpp)
+add_library(nes-query-optimizer-interface interface/QueryOptimizerConfiguration.cpp interface/QueryOptimizerAsyncConfiguration.cpp)
 target_include_directories(nes-query-optimizer-interface PUBLIC interface)
 target_link_libraries(nes-query-optimizer-interface PUBLIC nes-configurations nes-network-interface)
 

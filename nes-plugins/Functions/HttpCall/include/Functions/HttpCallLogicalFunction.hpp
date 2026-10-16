@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -31,14 +32,15 @@
 namespace NES
 {
 
-/// `HTTP_CALL(body, url)`: POSTs `body` to `url` and evaluates to the response body.
+/// `HTTP_CALL(body, url[, timeout_ms])`: POSTs `body` to `url` and evaluates to the response body. The optional
+/// integer constant bounds the connect and, separately, the exchange; it defaults to 30 seconds.
 /// Asynchronous only; there is no Nautilus implementation.
 class HttpCallLogicalFunction final : public AsyncLogicalFunction
 {
 public:
     static constexpr std::string_view NAME = "HttpCall";
 
-    HttpCallLogicalFunction(LogicalFunction body, LogicalFunction url);
+    HttpCallLogicalFunction(LogicalFunction body, LogicalFunction url, std::optional<LogicalFunction> timeoutMillis);
 
     [[nodiscard]] bool operator==(const HttpCallLogicalFunction& rhs) const;
 
@@ -57,6 +59,7 @@ private:
     DataType dataType;
     LogicalFunction body;
     LogicalFunction url;
+    std::optional<LogicalFunction> timeoutMillis;
 };
 
 namespace detail
@@ -65,6 +68,7 @@ struct ReflectedHttpCallLogicalFunction
 {
     LogicalFunction body;
     LogicalFunction url;
+    std::optional<LogicalFunction> timeoutMillis;
 };
 }
 
