@@ -13,6 +13,7 @@
 
 """HTTP server for the async e2e tests: answers every POST with "<path>:<body>" and logs each path.
 A `delay_ms` query parameter delays the answer, which makes the service slower than the queries calling it.
+`fail_first` and `fail_after` turn answers into 500s, for the failure and retry tests.
 
 Binds an ephemeral port on 127.0.0.1 and prints it as the first line on stdout. Built on asyncio
 rather than http.server: one thread per connection tops out below the rate the stress test needs.
@@ -23,6 +24,8 @@ import asyncio
 import sys
 from urllib.parse import parse_qs, urlsplit
 
+# Requests answered so far, per path including its query.
+requests = {}
 
 async def serve(reader, writer):
     try:
@@ -36,11 +39,17 @@ async def serve(reader, writer):
                 if name.strip().lower() == "content-length":
                     length = int(value)
             body = (await reader.readexactly(length)).decode()
-            delay_ms = parse_qs(urlsplit(path).query).get("delay_ms", ["0"])[0]
-            await asyncio.sleep(int(delay_ms) / 1000)
+            query = parse_qs(urlsplit(path).query)
+            await asyncio.sleep(int(query.get("delay_ms", ["0"])[0]) / 1000)
+            requests[path] = requests.get(path, 0) + 1
+            # fail_first=K answers the first K requests to a path with 500, fail_after=N every request after the first N.
+            failing = requests[path] <= int(query.get("fail_first", ["0"])[0]) or requests[path] > int(
+                query.get("fail_after", [str(sys.maxsize)])[0]
+            )
+            status = b"500 Internal Server Error" if failing else b"200 OK"
             response = f"{path}:{body}".encode()
             writer.write(
-                b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: "
+                b"HTTP/1.1 " + status + b"\r\nContent-Type: text/plain\r\nContent-Length: "
                 + str(len(response)).encode()
                 + b"\r\n\r\n"
                 + response

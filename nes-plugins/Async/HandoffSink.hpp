@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <optional>
@@ -53,8 +54,13 @@ protected:
     std::ostream& toString(std::ostream& os) const override { return os << "HandoffSink(" << channelId << ")"; }
 
 private:
+    /// Once the Async source has stopped: drops what is still to be handed off and releases the producer's sources.
+    void dropRemaining(const TupleBuffer& buffer);
+
     std::string channelId;
     std::shared_ptr<HandoffChannel> channel;
+    /// Set once the Async source has stopped. Several worker threads may run `execute` at once.
+    std::atomic<bool> consumerGone = false;
     /// Applies pressure as soon as the channel rejects a buffer: the channel itself is the buffer that absorbs bursts.
     BackpressureHandler backpressureHandler;
 };
