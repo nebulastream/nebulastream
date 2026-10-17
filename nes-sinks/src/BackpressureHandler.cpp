@@ -16,13 +16,16 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <folly/ScopeGuard.h>
 #include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -94,9 +97,77 @@ std::optional<TupleBuffer> BackpressureHandler::onSuccess(BackpressureController
     return {};
 }
 
-bool BackpressureHandler::empty() const
+std::optional<TupleBuffer>
+BackpressureHandler::send(const TupleBuffer& buffer, BackpressureController& backpressureController, const TrySend& trySend)
 {
-    return stateLock.rlock()->buffered.empty();
+    if (closed)
+    {
+        NES_WARNING("Sink is closed, dropping buffer: {}-{}", buffer.getSequenceNumber(), buffer.getChunkNumber());
+        return {};
+    }
+
+    SCOPE_FAIL
+    {
+        closed = true;
+    };
+    auto currentBuffer = std::optional(buffer);
+    while (currentBuffer)
+    {
+        if (not trySend(*currentBuffer))
+        {
+            return onFull(*currentBuffer, backpressureController);
+        }
+        currentBuffer = onSuccess(backpressureController);
+    }
+    return {};
+}
+
+bool BackpressureHandler::stop(BackpressureController& backpressureController, const TrySend& trySend, const std::function<bool()>& flushed)
+{
+    if (not closed)
+    {
+        try
+        {
+            const auto state = stateLock.wlock();
+            auto sent = true;
+            while (sent and not state->buffered.empty())
+            {
+                sent = trySend(state->buffered.front());
+                if (sent)
+                {
+                    state->buffered.pop_front();
+                }
+            }
+            if (not(sent and flushed()))
+            {
+                return false;
+            }
+        }
+        catch (const Exception& exception)
+        {
+            NES_WARNING("Sink failed while stopping: {}", exception.what());
+        }
+    }
+    close(backpressureController);
+    return true;
+}
+
+void BackpressureHandler::close(BackpressureController& backpressureController)
+{
+    closed = true;
+    const auto state = stateLock.wlock();
+    if (not state->buffered.empty())
+    {
+        NES_WARNING("Sink drops {} undelivered buffers", state->buffered.size());
+        state->buffered.clear();
+    }
+    state->pendingSequenceNumber = INVALID<SequenceNumber>;
+    state->pendingChunkNumber = INVALID<ChunkNumber>;
+    if (state->hasBackpressure)
+    {
+        backpressureController.releasePressure();
+        state->hasBackpressure = false;
+    }
 }
 
 }
