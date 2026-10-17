@@ -125,6 +125,7 @@ void PagedVector::copyPagesFrom(AbstractBufferProvider& bufferProvider, const Pa
         std::ignore = buffer.storeChildBuffer(destPage);
         header().numPages++;
     }
+    header().numRecords += other.header().numRecords;
     updateCumulativeSumAllPages();
 }
 
@@ -141,6 +142,7 @@ void PagedVector::movePagesFrom(PagedVector& other)
         std::ignore = buffer.storeChildBuffer(otherPageBuffer);
         header().numPages++;
     }
+    header().numRecords += other.header().numRecords;
     updateCumulativeSumAllPages();
     other.header().status = INVALID_PV;
 }
@@ -216,24 +218,12 @@ size_t PagedVector::getPageIndex(const uint64_t recordIndex) const
 uint64_t PagedVector::getTotalNumberOfRecords() const
 {
     PRECONDITION(getStatus() == VALID_PV, "Paged Vector must be valid for accessing total number of records.");
-    const auto numPages = getNumberOfPages();
-    uint64_t penultimateCumulativeSum = 0;
-    if (numPages > 1)
-    {
-        const ChildBufferIndex penultimateIndex{static_cast<uint32_t>(numPages - 2)};
-        auto penultimateBuffer = buffer.loadChildBuffer(penultimateIndex);
-        const Page penultimatePage = Page::load(penultimateBuffer);
-        penultimateCumulativeSum = penultimatePage.getCumulativeSum();
-    }
-    uint64_t lastNumberOfTuples = 0;
-    if (numPages > 0)
-    {
-        const ChildBufferIndex lastIndex{static_cast<uint32_t>(numPages - 1)};
-        auto lastBuffer = buffer.loadChildBuffer(lastIndex);
-        const Page lastPage = Page::load(lastBuffer);
-        lastNumberOfTuples = lastPage.getNumberOfTuples();
-    }
-    return penultimateCumulativeSum + lastNumberOfTuples;
+    return header().numRecords;
+}
+
+void PagedVector::incrementNumberOfRecords()
+{
+    header().numRecords++;
 }
 
 uint64_t PagedVector::getStatus() const

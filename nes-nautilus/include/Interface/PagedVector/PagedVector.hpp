@@ -87,6 +87,8 @@ public:
 
     [[nodiscard]] uint64_t getStatus() const;
     [[nodiscard]] uint64_t getTotalNumberOfRecords() const;
+    /// @brief Counts one record that was written to the last page. Writers have to call this for every record they add.
+    void incrementNumberOfRecords();
     [[nodiscard]] uint64_t getNumberOfPages() const;
     /// @brief Returns the size of the buffer for each one of the paged vector's pages.
     [[nodiscard]] uint64_t getPageBufferSize() const;
@@ -103,6 +105,8 @@ private:
     {
         uint64_t status;
         uint64_t numPages;
+        /// Number of records over all pages, which saves loading pages to count them.
+        uint64_t numRecords = 0;
         uint64_t pageBufferSize;
         uint64_t pageCapacity;
         uint64_t tupleSize;

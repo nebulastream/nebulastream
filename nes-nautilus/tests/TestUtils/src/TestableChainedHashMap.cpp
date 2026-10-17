@@ -15,6 +15,7 @@
 #include <TestableChainedHashMap.hpp>
 
 #include <cstddef>
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <iterator>
@@ -108,7 +109,8 @@ TestableChainedHashMap::TestableChainedHashMap(
     hashMapConfig = ChainedHashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
-        .pageSize = entrySize * numEntriesPerPage,
+        /// State pages are pooled buffers, so a page is never smaller than the buffer size, as in the query compiler.
+        .pageSize = std::max<uint64_t>(entrySize * numEntriesPerPage, bufferManager.getBufferSize()),
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,
         .hashFunction = hashFunction};

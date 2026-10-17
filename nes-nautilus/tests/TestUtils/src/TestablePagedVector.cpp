@@ -145,7 +145,8 @@ bool TestablePagedVector::pagesMatchInitPageSize() const
     const auto pageBufferSize = loaded.getPageBufferSize();
     for (uint64_t pageIdx = 0; pageIdx < loaded.getNumberOfPages(); ++pageIdx)
     {
-        if (pagedVector.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx)}).getBufferSize() != pageBufferSize)
+        /// A page can be a larger pooled buffer than requested, but never a smaller one.
+        if (pagedVector.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx)}).getBufferSize() < pageBufferSize)
         {
             return false;
         }

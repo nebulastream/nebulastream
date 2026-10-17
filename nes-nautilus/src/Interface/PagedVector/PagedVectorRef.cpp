@@ -211,7 +211,7 @@ void DefaultPagedVectorTupleLayout::writeRecord(
         const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
         const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(slot, varSizedValue.getSize());
         invoke(
-            +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
+                        +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
             {
                 INVARIANT(varSizedMemAddress != nullptr, "Memory address MUST NOT be null at this point");
                 std::memcpy(varSizedMemAddress, varSizedDataPtr, varSizedDataLength);
@@ -241,7 +241,7 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
     /// get the page of the paged vector to write to. Append new page if necessary
     OwnedNautilusBuffer lastPageBuffer;
     invoke(
-        +[](TupleBuffer* pagedVectorBuffer, AbstractBufferProvider* bufferProvider, TupleBuffer* currentPage)
+                +[](TupleBuffer* pagedVectorBuffer, AbstractBufferProvider* bufferProvider, TupleBuffer* currentPage)
         {
             PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for push_back.");
@@ -256,7 +256,7 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
 
     /// get the address in the page bufer to write the record to
     auto recordAddress = nautilus::invoke(
-        +[](TupleBuffer* pagedVectorBuffer, TupleBuffer* lastPageBuffer) -> int8_t*
+                +[](TupleBuffer* pagedVectorBuffer, TupleBuffer* lastPageBuffer) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             const auto totalTuplesNum = pagedVector.getTotalNumberOfRecords();
@@ -275,7 +275,12 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
     tupleLayout->writeRecord(record, recordAddress, makeVarSizedAllocFunction(lastPageBuffer, bufferProvider));
     /// increase the entry count in the page
     nautilus::invoke(
-        +[](TupleBuffer* lastPageBuffer) { lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1); },
+                +[](TupleBuffer* pagedVectorBuffer, TupleBuffer* lastPageBuffer)
+        {
+            lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1);
+            PagedVector::load(*pagedVectorBuffer).incrementNumberOfRecords();
+        },
+        pagedVectorBuffer.asArg(),
         lastPageBuffer.asArg());
 }
 
@@ -286,7 +291,7 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
     auto entryBufferPos = invoke(loadPageForEntryProxy, pagedVectorBuffer.asArg(), entryPos, pageBuffer.asArg());
 
     auto recordAddress = invoke(
-        +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, const uint64_t entryBufferPos) -> int8_t*
+                +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, const uint64_t entryBufferPos) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
@@ -336,7 +341,7 @@ Record PagedVectorRefIter::operator*() const
     }
     /// get the record's address in the page bufer
     auto recordAddress = invoke(
-        +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, uint64_t entryBufferPos) -> int8_t*
+                +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, uint64_t entryBufferPos) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
