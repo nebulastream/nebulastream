@@ -43,6 +43,8 @@ public:
     explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
 
     nautilus::val<uint64_t> outputIndex = 0;
+    /// Number of buffers this task has emitted so far, which numbers the chunks of an input that is a single chunk.
+    nautilus::val<uint64_t> emittedBuffers = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
 };
@@ -95,6 +97,7 @@ void setChunkNumber(
     const nautilus::val<bool>& closesChunk,
     const nautilus::val<ChunkNumber>& currentChunkNumber,
     const nautilus::val<bool>& isCurrentBufferTheLastChunk,
+    const nautilus::val<uint64_t>& emittedBuffers,
     const nautilus::val<TupleBuffer*>& newBuffer)
 {
     nautilus::invoke(
@@ -102,6 +105,7 @@ void setChunkNumber(
             bool closesChunk,
             ChunkNumber currentChunkNumber,
             bool isCurrentBufferTheLastChunk,
+            uint64_t emittedBuffers,
             TupleBuffer* newBuffer)
         {
             PRECONDITION(handler != nullptr, "Expects a valid handler");
@@ -109,12 +113,13 @@ void setChunkNumber(
             PRECONDITION(currentChunkNumber != INVALID<ChunkNumber>, "Expects a valid chunkNumber");
 
             dynamic_cast<EmitOperatorHandler&>(*handler).setChunkNumber(
-                closesChunk, currentChunkNumber, isCurrentBufferTheLastChunk, *newBuffer);
+                closesChunk, currentChunkNumber, isCurrentBufferTheLastChunk, emittedBuffers, *newBuffer);
         },
         context.getGlobalOperatorHandler(operatorHandlerId),
         closesChunk,
         currentChunkNumber,
         isCurrentBufferTheLastChunk,
+        emittedBuffers,
         newBuffer);
 }
 }
@@ -131,7 +136,10 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
 
-    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
+    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
+    setChunkNumber(
+        ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, emitState->emittedBuffers, recordBuffer.getReference());
+    emitState->emittedBuffers = emitState->emittedBuffers + 1;
 
     ctx.emitBuffer(recordBuffer);
 }

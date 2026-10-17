@@ -27,8 +27,15 @@ namespace NES
 {
 
 void EmitOperatorHandler::setChunkNumber(
-    bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer)
+    bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, uint64_t emittedBuffers, TupleBuffer& buffer)
 {
+    if (incomingChunkNumber == ChunkNumber(ChunkNumber::INITIAL) && isIncomingBufferTheLastChunk)
+    {
+        buffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL + emittedBuffers));
+        buffer.setLastChunk(isEndOfIncomingChunk);
+        return;
+    }
+
     /// The SequenceState tracks how many chunks have been seen per Sequence/OriginId pair.
     /// This allows to reason about completeness of a SequenceNumber and assign unique ChunkNumbers to every produced buffer aswell
     /// as assigning exactly one LastChunk flag once we have seen all chunks.

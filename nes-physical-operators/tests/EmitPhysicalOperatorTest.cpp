@@ -242,13 +242,14 @@ public:
 
     void reset() { buffers.wlock()->clear(); }
 
-    folly::Synchronized<std::vector<TupleBuffer>> buffers;
+    /// The buffers have to be destroyed before the manager.
     std::shared_ptr<BufferManager> bm = BufferManager::create(
         TOTAL_MEMORY_IN_BYTES,
         UNPOOLED_MEMORY_FRACTION,
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
+    folly::Synchronized<std::vector<TupleBuffer>> buffers;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlers;
 
     std::random_device rd;

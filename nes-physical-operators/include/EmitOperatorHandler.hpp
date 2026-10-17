@@ -58,7 +58,10 @@ struct SequenceState
 class EmitOperatorHandler final : public OperatorHandler
 {
 public:
-    void setChunkNumber(bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer);
+    /// @param emittedBuffers number of buffers the calling task has emitted before this one. An input that is a single chunk is processed by
+    /// one task, so its output chunks are numbered by this count and need no shared state. Chunked inputs are tracked per sequence.
+    void setChunkNumber(
+        bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, uint64_t emittedBuffers, TupleBuffer& buffer);
 
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
