@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <cstddef>
@@ -33,6 +34,8 @@
 
 namespace NES
 {
+
+class ThreadLocalBufferManager;
 
 /// Strong type for create()'s alignment argument to reduce potential swapped as both are u32 and also
 /// readability-suspicious-call-argument on every call site
@@ -67,6 +70,7 @@ class BufferManager final : public std::enable_shared_from_this<BufferManager>, 
 {
     friend class TupleBuffer;
     friend class NES::detail::MemorySegment;
+    friend class ThreadLocalBufferManager;
 
     /// Hide the BufferManager constructor and only allow creation via BufferManager::create().
     /// Following: https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
@@ -82,7 +86,8 @@ public:
         uint32_t numOfBuffers,
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
         size_t unpooledMemoryLimitInBytes,
-        uint32_t alignment);
+        uint32_t alignment,
+        bool threadLocalCaches);
 
     /// Creates a new global buffer manager from a total memory budget. The pooled buffer count and the unpooled
     /// memory limit are derived: unpooledLimit = totalMemoryInBytes * unpooledMemoryFraction, the remaining
@@ -92,12 +97,18 @@ public:
     /// @param alignment byte alignment of every buffer; must be a power of two <= page size (a cache line is 64 bytes)
     /// @param bufferSize the size of each pooled buffer in bytes
     /// @param memoryResource resource for allocating and deallocating memory
+    /// @param threadLocalCaches if true, the pooled buffers are kept in magazines of 64 buffers, which threads can cache with a
+    /// ThreadLocalBufferManager so that they only touch the shared state once per magazine. Buffers cached by a thread are invisible to
+    /// the others, so this is meant for large pools. Without it, the manager is a plain queue of buffers.
     static std::shared_ptr<BufferManager> create(
         size_t totalMemoryInBytes,
         double unpooledMemoryFraction,
         BufferAlignment alignment,
         uint32_t bufferSize,
-        const std::shared_ptr<std::pmr::memory_resource>& memoryResource);
+        const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
+        bool threadLocalCaches = false);
+
+    [[nodiscard]] bool usesThreadLocalCaches() const { return magazineSize != 0; }
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -153,8 +164,38 @@ public:
     void recycleUnpooledBuffer(NES::detail::MemorySegment* segment, const AllocationThreadInfo&) override;
 
 private:
+    /// A magazine is a batch of idle pooled buffers that moves between the depots and a cache as a whole.
+    static constexpr uint32_t MAX_MAGAZINE_SIZE = 64;
+    static constexpr size_t MAX_MAGAZINE_CACHES = 1024;
+    struct Magazine
+    {
+        uint32_t count = 0;
+        std::array<NES::detail::MemorySegment*, MAX_MAGAZINE_SIZE> items{};
+    };
+    /// A cache holds a loaded and a previous magazine, which gives it hysteresis between taking and returning buffers. It is only
+    /// used by one thread at a time: the calling thread of a ThreadLocalBufferManager, or the callers of the manager itself under
+    /// directCacheMutex.
+    struct MagazineCache
+    {
+        Magazine* loaded = nullptr;
+        Magazine* previous = nullptr;
+    };
+    static uint32_t magazineSizeFor(size_t numberOfBuffers);
+    static size_t numberOfMagazinesFor(uint32_t magazineSize, size_t numberOfBuffers);
+
+    /// Takes a buffer through the cache, returns nullptr if there is none (immediately if block is false, after the deadline otherwise).
+    NES::detail::MemorySegment* takeFromCache(MagazineCache& cache, bool block, std::chrono::steady_clock::time_point deadline);
+    void putIntoCache(MagazineCache& cache, NES::detail::MemorySegment* segment);
+    /// Hands the magazines of a cache back to the depots.
+    void releaseCache(MagazineCache& cache);
+    /// Takes and returns buffers through the queue or the direct cache, for callers without a ThreadLocalBufferManager.
+    NES::detail::MemorySegment* takeSegment(bool block, std::chrono::steady_clock::time_point deadline);
+    void putSegment(NES::detail::MemorySegment* segment);
+    TupleBuffer makeBuffer(NES::detail::MemorySegment* segment);
+
     std::vector<NES::detail::MemorySegment> allBuffers;
 
+    /// The idle buffers of a manager without thread local caches.
     folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
 
     std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
@@ -169,21 +210,34 @@ private:
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};
 
-    /// Highest number of simultaneously handed out pooled buffers, to tune the pooled/unpooled memory split.
+    /// 0 if the manager has no thread local caches.
+    uint32_t magazineSize;
+    std::unique_ptr<Magazine[]> magazineStorage;
+    /// The idle buffers of a manager with thread local caches are all in magazines: in these depots or in a cache.
+    folly::MPMCQueue<Magazine*> fullMagazines;
+    folly::MPMCQueue<Magazine*> emptyMagazines;
+    std::atomic<size_t> numberOfCaches{0};
+    std::mutex directCacheMutex;
+    MagazineCache directCache;
+
+    /// Diagnostics, enabled with NES_BUFFER_STATS: the highest number of simultaneously handed out pooled buffers, to tune the
+    /// pooled/unpooled memory split, and the process memory on top of the pre-allocated pool.
+    static bool statsEnabled();
     std::atomic<size_t> pooledBuffersInUse{0};
     std::atomic<size_t> peakPooledBuffersInUse{0};
     void updatePeakPooledBuffersInUse();
-    /// Resident set size of the process right after the pool was pre-allocated, to report the memory used on top of it.
+    /// Resident set size of the process right after the pool was pre-allocated.
     size_t baselineRssKiB = 0;
 
-    /// Temporary diagnostics: with NES_TRACE_UNPOOLED set, counts unpooled allocations per call stack.
-    struct UnpooledCallSite
+    /// Diagnostics: with NES_TRACE_UNPOOLED / NES_TRACE_POOLED set, counts the (sampled) allocations per call stack.
+    struct CallSite
     {
         size_t count = 0;
         size_t bytes = 0;
     };
-    std::mutex unpooledCallSitesMutex;
-    std::map<std::vector<void*>, UnpooledCallSite> unpooledCallSites;
+    std::mutex callSitesMutex;
+    std::map<std::vector<void*>, CallSite> unpooledCallSites;
+    std::map<std::vector<void*>, CallSite> pooledCallSites;
 };
 
 

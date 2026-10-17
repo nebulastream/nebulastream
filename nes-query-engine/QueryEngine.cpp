@@ -34,6 +34,8 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/ThreadLocalBufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -437,7 +439,10 @@ public:
     {
         static thread_local WorkerThreadId id;
 
-        [[nodiscard]] WorkerThread(ThreadPool& pool, bool terminating) : pool(pool), terminating(terminating) { }
+        [[nodiscard]] WorkerThread(ThreadPool& pool, bool terminating, std::shared_ptr<AbstractBufferProvider> bufferProvider)
+            : pool(pool), terminating(terminating), bufferProvider(std::move(bufferProvider))
+        {
+        }
 
         /// Handler for different Pipeline Tasks
         /// Boolean return value indicates if the onSuccess should be called
@@ -453,6 +458,8 @@ public:
     private:
         ThreadPool& pool; ///NOLINT The ThreadPool will always outlive the worker and not move.
         bool terminating{};
+        /// The buffer provider of this thread, which is the thread's cache of the pool's buffers if the pool has thread local caches.
+        std::shared_ptr<AbstractBufferProvider> bufferProvider;
     };
 
 private:
@@ -501,7 +508,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
-            pool.bufferProvider,
+            bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
                 ENGINE_LOG_DEBUG(
@@ -567,7 +574,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
-            pool.bufferProvider,
+            bufferProvider,
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
                 /// Catch Emits, that are currently not supported during pipeline stage initialization.
@@ -647,7 +654,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         pool.numberOfThreads(),
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
-        pool.bufferProvider,
+        bufferProvider,
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {
             if (terminating)
@@ -773,7 +780,16 @@ void ThreadPool::addThread(const Host& host)
         [this, id = numberOfThreads_++](const std::stop_token& stopToken)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
-            const WorkerThread worker{*this, false};
+            /// The provider is bound to this thread and returns its cached buffers to the pool when the thread ends.
+            std::optional<ThreadLocalBufferManager> threadLocalBuffers;
+            if (auto manager = std::dynamic_pointer_cast<BufferManager>(bufferProvider); manager && manager->usesThreadLocalCaches())
+            {
+                threadLocalBuffers.emplace(std::move(manager));
+            }
+            const auto workerBufferProvider = threadLocalBuffers
+                ? std::shared_ptr<AbstractBufferProvider>(std::shared_ptr<void>(), std::addressof(*threadLocalBuffers))
+                : bufferProvider;
+            const WorkerThread worker{*this, false, workerBufferProvider};
             while (!stopToken.stop_requested())
             {
                 if (auto task = taskQueue.getNextTaskBlocking(stopToken))
@@ -788,7 +804,7 @@ void ThreadPool::addThread(const Host& host)
 
             ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
             /// Worker in termination mode will not emit further work and eventually clear the task queue and terminate.
-            const WorkerThread terminatingWorker{*this, true};
+            const WorkerThread terminatingWorker{*this, true, workerBufferProvider};
             while (auto task = taskQueue.getNextTaskNonBlocking())
             {
                 handleTask(terminatingWorker, std::move(*task));

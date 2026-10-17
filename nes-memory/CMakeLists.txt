@@ -18,6 +18,7 @@ add_library(nes-memory
         TaggedPointer.cpp
         UnpooledChunksManager.cpp
         MemoryUtils.cpp
+        ThreadLocalBufferManager.cpp
 )
 
 target_include_directories(nes-memory
@@ -29,4 +30,5 @@ target_include_directories(nes-memory
 )
 find_package(folly REQUIRED)
 target_link_libraries(nes-memory PUBLIC nes-common PRIVATE folly::folly)
+
 add_tests_if_enabled(tests)

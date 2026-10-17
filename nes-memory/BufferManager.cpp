@@ -41,6 +41,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/MemoryUtils.hpp>
+#include <Runtime/ThreadLocalBufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
@@ -68,19 +69,44 @@ size_t readProcStatusKiB(const std::string_view key)
 }
 }
 
+uint32_t BufferManager::magazineSizeFor(const size_t numberOfBuffers)
+{
+    return static_cast<uint32_t>(std::clamp<size_t>(numberOfBuffers / 1024, 1, MAX_MAGAZINE_SIZE));
+}
+
+size_t BufferManager::numberOfMagazinesFor(const uint32_t magazineSize, const size_t numberOfBuffers)
+{
+    if (magazineSize == 0)
+    {
+        return 1;
+    }
+    /// Magazines for all buffers, plus two empty magazines for every cache.
+    return ((numberOfBuffers + magazineSize - 1) / magazineSize) + (2 * (MAX_MAGAZINE_CACHES + 1)) + 2;
+}
+
+bool BufferManager::statsEnabled()
+{
+    static const bool enabled = std::getenv("NES_BUFFER_STATS") != nullptr;
+    return enabled;
+}
+
 BufferManager::BufferManager(
     Private,
     const uint32_t bufferSize,
     const uint32_t numOfBuffers,
     std::shared_ptr<std::pmr::memory_resource> memoryResource,
     const size_t unpooledMemoryLimitInBytes,
-    const uint32_t alignment)
-    : availableBuffers(numOfBuffers)
+    const uint32_t alignment,
+    const bool threadLocalCaches)
+    : availableBuffers(threadLocalCaches ? 1 : numOfBuffers)
     , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes))
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , alignment(alignment)
     , memoryResource(std::move(memoryResource))
+    , magazineSize(threadLocalCaches ? magazineSizeFor(numOfBuffers) : 0)
+    , fullMagazines(numberOfMagazinesFor(magazineSize, numOfBuffers))
+    , emptyMagazines(numberOfMagazinesFor(magazineSize, numOfBuffers))
 {
     PRECONDITION(numOfBuffers > 0, "BufferManager requires at least one pooled buffer, but the configured budget yields {}", numOfBuffers);
     initialize();
@@ -92,7 +118,8 @@ std::shared_ptr<BufferManager> BufferManager::create(
     const double unpooledMemoryFraction,
     const BufferAlignment alignment,
     const uint32_t bufferSize,
-    const std::shared_ptr<std::pmr::memory_resource>& memoryResource)
+    const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
+    const bool threadLocalCaches)
 {
     PRECONDITION(
         unpooledMemoryFraction >= 0.0 and unpooledMemoryFraction <= 1.0,
@@ -108,7 +135,7 @@ std::shared_ptr<BufferManager> BufferManager::create(
         pooledMemoryInBytes / bufferSize);
     const auto numOfBuffers = static_cast<uint32_t>(pooledMemoryInBytes / bufferSize);
     return std::make_shared<BufferManager>(
-        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue());
+        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue(), threadLocalCaches);
 }
 
 BufferManager::~BufferManager()
@@ -152,31 +179,36 @@ void BufferManager::destroy()
         allBuffers.clear();
 
         availableBuffers = decltype(availableBuffers)();
+        fullMagazines = decltype(fullMagazines)();
+        emptyMagazines = decltype(emptyMagazines)();
         NES_DEBUG("Shutting down Buffer Manager completed");
         memoryResource->deallocate(basePointer, allocatedAreaSize, alignment);
         allocatedAreaSize = 0;
 
-        const auto peakPooledBytes = peakPooledBuffersInUse.load() * bufferSize;
-        const auto peakUnpooledBytes = unpooledChunksManager->getPeakAllocatedUnpooledBytes();
-        const auto peakRssKiB = readProcStatusKiB("VmHWM:");
-        std::cerr << fmt::format(
-            "[BufferManager] peak memory: pooled {} MiB ({} of {} buffers), unpooled {} MiB, process rss above pool pre-allocation {} MiB "
-            "(rss after pre-allocation {} MiB, peak rss {} MiB)\n",
-            peakPooledBytes >> 20,
-            peakPooledBuffersInUse.load(),
-            numOfBuffers,
-            peakUnpooledBytes >> 20,
-            (peakRssKiB > baselineRssKiB ? peakRssKiB - baselineRssKiB : 0) >> 10,
-            baselineRssKiB >> 10,
-            peakRssKiB >> 10);
-
-        if (!unpooledCallSites.empty())
+        if (statsEnabled())
         {
-            std::vector<std::pair<std::vector<void*>, UnpooledCallSite>> sites(unpooledCallSites.begin(), unpooledCallSites.end());
-            std::ranges::sort(sites, [](const auto& a, const auto& b) { return a.second.bytes > b.second.bytes; });
+            const auto peakPooledBytes = peakPooledBuffersInUse.load() * bufferSize;
+            const auto peakUnpooledBytes = unpooledChunksManager->getPeakAllocatedUnpooledBytes();
+            const auto peakRssKiB = readProcStatusKiB("VmHWM:");
+            std::cerr << fmt::format(
+                "[BufferManager] peak memory: pooled {} MiB ({} of {} buffers), unpooled {} MiB, process rss above pool pre-allocation "
+                "{} MiB (rss after pre-allocation {} MiB, peak rss {} MiB)\n",
+                peakPooledBytes >> 20,
+                peakPooledBuffersInUse.load(),
+                numOfBuffers,
+                peakUnpooledBytes >> 20,
+                (peakRssKiB > baselineRssKiB ? peakRssKiB - baselineRssKiB : 0) >> 10,
+                baselineRssKiB >> 10,
+                peakRssKiB >> 10);
+        }
+        for (const auto* callSites : {&pooledCallSites, &unpooledCallSites})
+        {
+            std::vector<std::pair<std::vector<void*>, CallSite>> sites(callSites->begin(), callSites->end());
+            std::ranges::sort(sites, [](const auto& a, const auto& b) { return a.second.count > b.second.count; });
             for (const auto& [frames, site] : std::views::take(sites, 12))
             {
-                std::cerr << fmt::format("[UnpooledCallSite] {} allocations, {} MiB total\n", site.count, site.bytes >> 20);
+                std::cerr << fmt::format(
+                    "[{}CallSite] {} allocations, {} MiB total\n", callSites == &pooledCallSites ? "Pooled" : "Unpooled", site.count, site.bytes >> 20);
                 char** symbols = backtrace_symbols(frames.data(), static_cast<int>(frames.size()));
                 for (size_t i = 0; i < frames.size(); ++i)
                 {
@@ -263,7 +295,36 @@ void BufferManager::initialize()
             [](detail::MemorySegment* segment, BufferRecycler* recycler) { recycler->recyclePooledBuffer(segment); },
             controlBlock.data());
 
-        availableBuffers.write(&allBuffers.back());
+        if (magazineSize == 0)
+        {
+            availableBuffers.write(&allBuffers.back());
+        }
+    }
+
+    if (magazineSize > 0)
+    {
+        /// All buffers start in full magazines, and the remaining magazines start empty.
+        const auto numberOfMagazines = numberOfMagazinesFor(magazineSize, numOfBuffers);
+        magazineStorage = std::make_unique<Magazine[]>(numberOfMagazines);
+        size_t nextMagazine = 0;
+        for (size_t i = 0; i < allBuffers.size(); ++i)
+        {
+            auto* magazine = &magazineStorage[nextMagazine];
+            magazine->items[magazine->count++] = &allBuffers[i];
+            if (magazine->count == magazineSize)
+            {
+                ++nextMagazine;
+                fullMagazines.write(magazine);
+            }
+        }
+        if (magazineStorage[nextMagazine].count > 0)
+        {
+            fullMagazines.write(&magazineStorage[nextMagazine++]);
+        }
+        for (; nextMagazine < numberOfMagazines; ++nextMagazine)
+        {
+            emptyMagazines.write(&magazineStorage[nextMagazine]);
+        }
     }
 
     /// All buffers start idle, so poison the whole arena in one shot: redzones, control blocks and data
@@ -273,6 +334,147 @@ void BufferManager::initialize()
     /// placement-new of each control block (and the debug marker fill above) writes to unpoisoned memory.
     ASAN_POISON_MEMORY_REGION(basePointer, allocatedAreaSize);
     NES_DEBUG("BufferManager configuration bufferSize={} numOfBuffers={}", this->bufferSize, this->numOfBuffers);
+}
+
+NES::detail::MemorySegment* BufferManager::takeFromCache(
+    MagazineCache& cache, const bool block, const std::chrono::steady_clock::time_point deadline)
+{
+    if ((cache.loaded == nullptr || cache.loaded->count == 0) && cache.previous != nullptr && cache.previous->count > 0)
+    {
+        std::swap(cache.loaded, cache.previous);
+    }
+    if (cache.loaded == nullptr || cache.loaded->count == 0)
+    {
+        /// Both magazines are empty: exchange the loaded one for a full magazine from the depot.
+        Magazine* full = nullptr;
+        if (block ? fullMagazines.tryReadUntil(deadline, full) : fullMagazines.read(full))
+        {
+            if (cache.loaded != nullptr)
+            {
+                USED_IN_DEBUG const auto couldReturnEmpty = emptyMagazines.writeIfNotFull(cache.loaded);
+                INVARIANT(couldReturnEmpty, "should always succeed");
+            }
+            cache.loaded = full;
+        }
+    }
+    if (cache.loaded != nullptr && cache.loaded->count > 0)
+    {
+        return cache.loaded->items[--cache.loaded->count];
+    }
+    return nullptr;
+}
+
+void BufferManager::putIntoCache(MagazineCache& cache, NES::detail::MemorySegment* segment)
+{
+    if (cache.loaded == nullptr)
+    {
+        USED_IN_DEBUG const auto couldGetEmpty = emptyMagazines.read(cache.loaded);
+        INVARIANT(couldGetEmpty, "there are empty magazines for every cache");
+    }
+    if (cache.loaded->count == magazineSize)
+    {
+        if (cache.previous != nullptr && cache.previous->count < magazineSize)
+        {
+            std::swap(cache.loaded, cache.previous);
+        }
+        else
+        {
+            /// Both magazines are full: hand the previous one to the depot and continue with an empty magazine.
+            Magazine* empty = nullptr;
+            USED_IN_DEBUG const auto couldGetEmpty = emptyMagazines.read(empty);
+            INVARIANT(couldGetEmpty, "there are empty magazines for every cache");
+            if (cache.previous != nullptr)
+            {
+                USED_IN_DEBUG const auto couldShipFull = fullMagazines.writeIfNotFull(cache.previous);
+                INVARIANT(couldShipFull, "should always succeed");
+            }
+            cache.previous = cache.loaded;
+            cache.loaded = empty;
+        }
+    }
+    cache.loaded->items[cache.loaded->count++] = segment;
+}
+
+void BufferManager::releaseCache(MagazineCache& cache)
+{
+    if (isDestroyed)
+    {
+        return;
+    }
+    for (auto* magazine : {std::exchange(cache.loaded, nullptr), std::exchange(cache.previous, nullptr)})
+    {
+        if (magazine != nullptr)
+        {
+            USED_IN_DEBUG const auto couldReturn
+                = magazine->count > 0 ? fullMagazines.writeIfNotFull(magazine) : emptyMagazines.writeIfNotFull(magazine);
+            INVARIANT(couldReturn, "should always succeed");
+        }
+    }
+}
+
+NES::detail::MemorySegment* BufferManager::takeSegment(const bool block, const std::chrono::steady_clock::time_point deadline)
+{
+    if (magazineSize == 0)
+    {
+        NES::detail::MemorySegment* segment = nullptr;
+        return (block ? availableBuffers.tryReadUntil(deadline, segment) : availableBuffers.read(segment)) ? segment : nullptr;
+    }
+    const std::scoped_lock lock(directCacheMutex);
+    return takeFromCache(directCache, block, deadline);
+}
+
+void BufferManager::putSegment(NES::detail::MemorySegment* segment)
+{
+    if (magazineSize == 0)
+    {
+        USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
+        INVARIANT(couldRecycleBuffer, "should always succeed");
+        return;
+    }
+    const std::scoped_lock lock(directCacheMutex);
+    putIntoCache(directCache, segment);
+}
+
+TupleBuffer BufferManager::makeBuffer(NES::detail::MemorySegment* segment)
+{
+#ifdef NDEBUG
+    /// Release builds rely on the manager outliving its buffers, which saves the atomic reference count updates on the manager's shared state for every buffer.
+    if (segment->controlBlock->prepareBorrowed(this))
+#else
+    /// Debug builds make the buffers keep the manager alive.
+    if (segment->controlBlock->prepare(shared_from_this()))
+#endif
+    {
+        /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
+        ASAN_UNPOISON_MEMORY_REGION(segment->ptr, segment->size);
+        if (statsEnabled())
+        {
+            updatePeakPooledBuffersInUse();
+        }
+        static const bool tracePooled = std::getenv("NES_TRACE_POOLED") != nullptr;
+        if (tracePooled)
+        {
+            thread_local uint64_t sampleCounter = 0;
+            if (++sampleCounter % 1024 == 0)
+            {
+                std::array<void*, 14> frames{};
+                const auto depth = backtrace(frames.data(), frames.size());
+                const std::scoped_lock lock(callSitesMutex);
+                pooledCallSites[std::vector<void*>(frames.begin() + 2, frames.begin() + depth)].count += 1024;
+            }
+        }
+        return TupleBuffer(segment->controlBlock.get(), segment->ptr, segment->size);
+    }
+    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
+}
+
+void BufferManager::updatePeakPooledBuffersInUse()
+{
+    const auto inUse = pooledBuffersInUse.fetch_add(1, std::memory_order_relaxed) + 1;
+    auto peak = peakPooledBuffersInUse.load(std::memory_order_relaxed);
+    while (inUse > peak && !peakPooledBuffersInUse.compare_exchange_weak(peak, inUse, std::memory_order_relaxed))
+    {
+    }
 }
 
 TupleBuffer BufferManager::getBufferBlocking()
@@ -288,58 +490,22 @@ TupleBuffer BufferManager::getBufferBlocking()
 
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 {
-    detail::MemorySegment* memSegment = nullptr;
-    if (!availableBuffers.read(memSegment))
+    auto* const segment = takeSegment(false, {});
+    if (segment == nullptr)
     {
         return std::nullopt;
     }
-    #ifdef NDEBUG
-    /// Release builds rely on the manager outliving its buffers, which saves the atomic reference count updates on the manager's shared state for every buffer.
-    if (memSegment->controlBlock->prepareBorrowed(this))
-#else
-    /// Debug builds make the buffers keep the manager alive.
-    if (memSegment->controlBlock->prepare(shared_from_this()))
-#endif
-    {
-        /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
-        ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
-        updatePeakPooledBuffersInUse();
-        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-    }
-    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
-}
-
-void BufferManager::updatePeakPooledBuffersInUse()
-{
-    const auto inUse = pooledBuffersInUse.fetch_add(1, std::memory_order_relaxed) + 1;
-    auto peak = peakPooledBuffersInUse.load(std::memory_order_relaxed);
-    while (inUse > peak && !peakPooledBuffersInUse.compare_exchange_weak(peak, inUse, std::memory_order_relaxed))
-    {
-    }
+    return makeBuffer(segment);
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
-    detail::MemorySegment* memSegment = nullptr;
-    const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
-    if (!availableBuffers.tryReadUntil(deadline, memSegment))
+    auto* const segment = takeSegment(true, std::chrono::steady_clock::now() + timeoutMs);
+    if (segment == nullptr)
     {
         return std::nullopt;
     }
-    #ifdef NDEBUG
-    /// Release builds rely on the manager outliving its buffers, which saves the atomic reference count updates on the manager's shared state for every buffer.
-    if (memSegment->controlBlock->prepareBorrowed(this))
-#else
-    /// Debug builds make the buffers keep the manager alive.
-    if (memSegment->controlBlock->prepare(shared_from_this()))
-#endif
-    {
-        /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
-        ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
-        updatePeakPooledBuffersInUse();
-        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-    }
-    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
+    return makeBuffer(segment);
 }
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
@@ -349,7 +515,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
     {
         std::array<void*, 12> frames{};
         const auto depth = backtrace(frames.data(), frames.size());
-        const std::scoped_lock lock(unpooledCallSitesMutex);
+        const std::scoped_lock lock(callSitesMutex);
         auto& callSite = unpooledCallSites[std::vector<void*>(frames.begin() + 1, frames.begin() + depth)];
         callSite.count += 1;
         callSite.bytes += bufferSize;
@@ -357,9 +523,12 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
     return unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
 }
 
-void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
+void BufferManager::recyclePooledBuffer(NES::detail::MemorySegment* segment)
 {
-    pooledBuffersInUse.fetch_sub(1, std::memory_order_relaxed);
+    if (statsEnabled())
+    {
+        pooledBuffersInUse.fetch_sub(1, std::memory_order_relaxed);
+    }
     INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
     INVARIANT(
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
@@ -369,8 +538,16 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     /// happens-before that unpoison via the availableBuffers queue, so there is no shadow-memory race.
     ASAN_POISON_MEMORY_REGION(segment->ptr, segment->size);
     ASAN_POISON_MEMORY_REGION(segment->controlBlock.get(), sizeof(detail::BufferControlBlock));
-    USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
-    INVARIANT(couldRecycleBuffer, "should always succeed");
+    if (magazineSize != 0)
+    {
+        /// The thread that returns a buffer caches it, whichever thread took it.
+        if (auto* const provider = ThreadLocalBufferManager::current(); provider != nullptr && provider->manager.get() == this)
+        {
+            putIntoCache(provider->cache, segment);
+            return;
+        }
+    }
+    putSegment(segment);
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const AllocationThreadInfo&)
@@ -396,7 +573,17 @@ size_t BufferManager::getNumOfUnpooledBuffers() const
 size_t BufferManager::getNumberOfAvailableBuffers() const
 {
     /// If there are pending reads the queue may report negative values. This effectivly means its empty.
-    return static_cast<size_t>(std::max(availableBuffers.size(), static_cast<ssize_t>(0)));
+    if (magazineSize == 0)
+    {
+        return static_cast<size_t>(std::max(availableBuffers.size(), static_cast<ssize_t>(0)));
+    }
+    /// Every magazine is somewhere (a depot or a cache), and a magazine only holds buffers that are idle.
+    size_t available = 0;
+    for (size_t i = 0; i < numberOfMagazinesFor(magazineSize, numOfBuffers); ++i)
+    {
+        available += magazineStorage[i].count;
+    }
+    return available;
 }
 
 BufferManagerType BufferManager::getBufferManagerType() const

@@ -21,3 +21,6 @@ target_link_libraries(buffer-manager-destroy-test nes-memory)
 
 add_nes_test(child-buffer-tests ChildBufferTests.cpp)
 target_link_libraries(child-buffer-tests nes-memory)
+
+add_nes_test(thread-local-buffer-manager-test ThreadLocalBufferManagerTest.cpp)
+target_link_libraries(thread-local-buffer-manager-test nes-memory)
