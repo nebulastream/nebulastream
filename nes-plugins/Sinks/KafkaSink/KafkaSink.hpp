@@ -68,10 +68,14 @@ private:
     };
 
     /// Outcome of a single publish attempt:
-    ///   Ok     - librdkafka accepted the message into its outbound queue.
-    ///   Closed - non-recoverable producer error (disconnected, protocol, etc.); caller should fail the query.
-    ///   Full   - outbound queue is at capacity; caller should buffer & retry.
-    SendResult tryProduce(const TupleBuffer& buffer);
+    ///   Ok   - librdkafka accepted the message into its outbound queue.
+    ///   Full - outbound queue is at capacity; caller should buffer & retry.
+    enum class PublishResult : uint8_t
+    {
+        Ok,
+        Full,
+    };
+    PublishResult tryProduce(const TupleBuffer& buffer);
 
     std::string bootstrapServers;
     std::string topic;
