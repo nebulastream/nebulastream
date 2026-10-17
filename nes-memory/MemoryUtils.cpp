@@ -40,6 +40,15 @@ TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
     throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", size);
 }
 
+TupleBuffer getPooledBufferIfFits(const uint64_t size, AbstractBufferProvider& provider)
+{
+    if (size <= provider.getBufferSize())
+    {
+        return provider.getBufferBlocking();
+    }
+    return getBuffer(size, provider);
+}
+
 TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
 {
     /// TODO #1582: you may need different size for the copy buffer, not always the default

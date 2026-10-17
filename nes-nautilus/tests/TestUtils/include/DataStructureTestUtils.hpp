@@ -59,13 +59,14 @@ nautilus::engine::NautilusEngine makeEngine(EngineMode mode);
 nautilus::engine::NautilusEngine makeEngine(EngineMode mode, std::string_view traceMode, bool dumpAfterTracing);
 
 /// Cap upfront pool allocation so a large buffer size doesn't allocate gigabytes.
-constexpr uint64_t MAX_POOL_BYTES = 64ULL * 1024 * 1024;
+constexpr uint64_t MAX_POOL_BYTES = 256ULL * 1024 * 1024;
 
 /// Maximum number of fields generated per random schema.
 constexpr size_t MAX_SCHEMA_FIELDS = 128;
 
 /// Maximum number of buffers pre-allocated for a test's buffer provider, scaled down for large buffer sizes.
-constexpr size_t POOLED_BUFFER_COUNT = 4096;
+/// Data structures take their pages and buffers from this pool, so it has to cover all of the pages of a test run.
+constexpr size_t POOLED_BUFFER_COUNT = 65536;
 
 /// Floor on the pool-buffer count so even a large buffer-size pool entry leaves room for the varsized child path.
 constexpr size_t MIN_POOLED_BUFFER_COUNT = 16;

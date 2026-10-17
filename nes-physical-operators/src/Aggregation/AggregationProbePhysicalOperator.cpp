@@ -30,6 +30,7 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
@@ -77,13 +78,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             const uint64_t bloomBytes)
         {
             const auto neededFinalBufferSize = ChainedHashMap::calculateBufferSize(numberOfBuckets, bloomBytes);
-            std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
-            if (not finalHashMapTupleBuffer.has_value())
-            {
-                throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
-            }
             /// initialize the final hash map tuple buffer
-            *finalHashMapBuffer = finalHashMapTupleBuffer.value();
+            *finalHashMapBuffer = getPooledBufferIfFits(neededFinalBufferSize, *bufferProvider);
             ChainedHashMap::init(*finalHashMapBuffer IF_PRECONDITION(, entrySize), numberOfBuckets IF_PRECONDITION(, pageSize), bloomBytes);
         },
         executionCtx.pipelineMemoryProvider.bufferProvider,
