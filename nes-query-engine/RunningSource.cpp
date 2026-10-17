@@ -74,7 +74,7 @@ SourceReturnType::EmitFunction emitFunction(
                         while (not emitter.emitWork(
                             queryId,
                             successor,
-                            data.buffer,
+                            data.buffer.share(),
                             TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
                             PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {

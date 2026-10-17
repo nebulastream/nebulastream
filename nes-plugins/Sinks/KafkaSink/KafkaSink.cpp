@@ -144,7 +144,7 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
         throw CannotWriteToSink("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
     }
 
-    auto currentBuffer = std::optional{inputTupleBuffer};
+    auto currentBuffer = std::optional{inputTupleBuffer.share()};
     while (currentBuffer)
     {
         switch (tryProduce(*currentBuffer))
@@ -154,7 +154,7 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
                 continue;
             }
             case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (const auto emit = backpressureHandler.onFull(std::move(*currentBuffer), backpressureController))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }

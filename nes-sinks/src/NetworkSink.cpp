@@ -112,7 +112,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         return;
     }
 
-    auto currentBuffer = std::optional(inputBuffer);
+    auto currentBuffer = std::optional(inputBuffer.share());
     while (currentBuffer)
     {
         /// Set buffer header
@@ -147,7 +147,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             case SendResult::Closed: {
                 /// Future buffers are voided.
                 this->closed = true;
-                [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer, backpressureController);
+                [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(std::move(*currentBuffer), backpressureController);
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
@@ -160,7 +160,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 break;
             }
             case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (const auto emit = backpressureHandler.onFull(std::move(*currentBuffer), backpressureController))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }

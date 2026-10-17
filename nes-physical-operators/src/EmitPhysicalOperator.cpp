@@ -40,7 +40,7 @@ namespace NES
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
+    explicit EmitState(RecordBuffer buffer) : resultBuffer(std::move(buffer)), bufferMemoryArea(resultBuffer.getMemArea()) { }
 
     nautilus::val<uint64_t> outputIndex = 0;
     /// Number of buffers this task has emitted so far, which numbers the chunks of an input that is a single chunk.
@@ -52,8 +52,8 @@ public:
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
-    const RecordBuffer resultBuffer{ctx.allocateBuffer()};
-    auto emitState = std::make_unique<EmitState>(resultBuffer);
+    RecordBuffer resultBuffer{ctx.allocateBuffer()};
+    auto emitState = std::make_unique<EmitState>(std::move(resultBuffer));
     ctx.setLocalOperatorState(id, std::move(emitState));
 }
 

@@ -90,7 +90,7 @@ void AggregationOperatorHandler::triggerSlices(
                 }
                 if (const ChainedHashMap hashMap = ChainedHashMap::load(*hashMapBuffer); hashMap.getTotalNumberOfRecords() > 0)
                 {
-                    allHashMapBuffers.emplace_back(*hashMapBuffer);
+                    allHashMapBuffers.emplace_back(hashMapBuffer->share());
                     totalNumberOfTuples += hashMap.getTotalNumberOfRecords();
                 }
             }
@@ -101,9 +101,9 @@ void AggregationOperatorHandler::triggerSlices(
         constexpr auto neededBufferSize = sizeof(EmittedAggregationWindow);
         auto tupleBuffer = getPooledBufferIfFits(neededBufferSize, *pipelineCtx->getBufferManager());
         /// Store each hash map buffer as a child so the probe can load them via loadChildBuffer(i)
-        for (auto hashMapBuffer : allHashMapBuffers)
+        for (const auto& hashMapBuffer : allHashMapBuffers)
         {
-            std::ignore = tupleBuffer.storeChildBuffer(hashMapBuffer);
+            std::ignore = tupleBuffer.storeChildBuffer(hashMapBuffer.share());
         }
 
         /// It might be that the buffer is not zeroed out.
@@ -127,7 +127,7 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// Dispatching the buffer to the probe operator via the task queue.
-        pipelineCtx->emitBuffer(tupleBuffer);
+        pipelineCtx->emitBuffer(std::move(tupleBuffer));
         NES_TRACE(
             "Emitted window {}-{} with watermarkTs {} sequenceNumber {} originId {}",
             windowInfo.windowInfo.windowStart,

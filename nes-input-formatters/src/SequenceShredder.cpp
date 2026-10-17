@@ -92,7 +92,7 @@ SequenceShredder::findLeadingSpanningTupleWithDelimiter(const StagedBuffer& inde
 SequenceShredderResult
 SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
 {
-    if (const auto stSearchResult = spanningTupleBuffer->tryFindSpanningTupleForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
+    if (auto stSearchResult = spanningTupleBuffer->tryFindSpanningTupleForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
         stSearchResult.isInRange) [[likely]]
     {
         return stSearchResult;

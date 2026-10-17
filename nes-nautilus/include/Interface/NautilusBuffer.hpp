@@ -50,6 +50,15 @@ class OwnedNautilusBuffer
     nautilus::val<TupleBuffer> buffer;
 
 public:
+    OwnedNautilusBuffer() = default;
+    /// Moving transfers the TupleBuffer at runtime (a plain pointer move without reference counting) into this buffer's own storage,
+    /// instead of aliasing the traced storage of `other`: that keeps the storage valid when the buffer is moved inside a branch.
+    OwnedNautilusBuffer(OwnedNautilusBuffer&& other) noexcept;
+    OwnedNautilusBuffer& operator=(OwnedNautilusBuffer&& other) noexcept;
+    OwnedNautilusBuffer(const OwnedNautilusBuffer&) = delete;
+    OwnedNautilusBuffer& operator=(const OwnedNautilusBuffer&) = delete;
+    ~OwnedNautilusBuffer() = default;
+
     /// Creates an owned buffer that holds a reference-counted copy of `source`'s underlying TupleBuffer. Works for both owned and
     /// borrowed sources, and is the way to promote a borrowed buffer into one whose lifetime is managed by the nautilus execution.
     static OwnedNautilusBuffer copy(const NautilusBuffer& source);
@@ -150,8 +159,19 @@ public:
     /// `nautilus::invoke`) or from a BorrowedNautilusBuffer obtained via BorrowedNautilusBuffer::from. These conversions are intentionally
     /// implicit so that owned and borrowed buffers can be passed to NautilusBuffer-taking APIs ergonomically, without an explicit wrap.
     /// NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
-    NautilusBuffer(OwnedNautilusBuffer);
+    NautilusBuffer(OwnedNautilusBuffer&&);
     NautilusBuffer(BorrowedNautilusBuffer);
+    /// Borrows from the owned buffer: the owned buffer has to outlive the NautilusBuffer.
+    NautilusBuffer(const OwnedNautilusBuffer&);
     /// NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+
+    /// Copying a NautilusBuffer never copies the buffer: the copy borrows from the original, which therefore has to outlive the copy
+    /// (this also holds for copies of copies). Taking a reference to an owned buffer at runtime has to be explicit, see
+    /// OwnedNautilusBuffer::copy. Moving keeps the ownership.
+    NautilusBuffer(const NautilusBuffer& other);
+    NautilusBuffer& operator=(const NautilusBuffer& other);
+    NautilusBuffer(NautilusBuffer&&) noexcept = default;
+    NautilusBuffer& operator=(NautilusBuffer&&) noexcept = default;
+    ~NautilusBuffer() = default;
 };
 }

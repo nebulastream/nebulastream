@@ -332,7 +332,7 @@ struct TestPipeline final : ExecutablePipelineStage
             }
         }
 
-        pipelineExecutionContext.emitBuffer(inputTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        pipelineExecutionContext.emitBuffer(inputTupleBuffer.share(), PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 
     std::shared_ptr<TestPipelineController> controller;

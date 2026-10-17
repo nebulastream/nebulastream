@@ -32,7 +32,7 @@
 
 namespace NES
 {
-bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
+bool TestPipelineExecutionContext::emitBuffer(TupleBuffer&& resultBuffer, const ContinuationPolicy continuationPolicy)
 {
     if (resultBuffer.getNumberOfTuples() == 0)
     {
@@ -43,7 +43,7 @@ bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, c
         case ContinuationPolicy::NEVER:
             [[fallthrough]];
         case ContinuationPolicy::POSSIBLE: {
-            resultBuffers->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
+            resultBuffers->at(workerThreadId.getRawValue()).emplace_back(std::move(resultBuffer));
             break;
         }
     }

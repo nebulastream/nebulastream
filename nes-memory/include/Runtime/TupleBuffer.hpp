@@ -69,8 +69,11 @@ class MemorySegment;
  * Reminder: this class should be header-only to help inlining
  */
 
+class TupleBufferView;
+
 class TupleBuffer
 {
+    friend class TupleBufferView;
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
     friend class UnpooledChunksManager;
@@ -93,8 +96,11 @@ public:
     [[nodiscard]] TupleBuffer() noexcept = default;
 
 
-    /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
+    /// A TupleBuffer uniquely owns its reference: it can only be moved. Sharing has to be explicit.
+    TupleBuffer(const TupleBuffer& other) = delete;
+
+    /// @brief Explicitly takes an additional reference to the same memory. Every call site is a place where a buffer is really shared.
+    [[nodiscard]] TupleBuffer share() const noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
@@ -105,8 +111,7 @@ public:
         other.size = 0;
     }
 
-    /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    TupleBuffer& operator=(const TupleBuffer& other) noexcept;
+    TupleBuffer& operator=(const TupleBuffer& other) = delete;
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
     TupleBuffer& operator=(TupleBuffer&& other) noexcept;
@@ -178,13 +183,16 @@ public:
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId id) noexcept;
 
-    ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] ChildBufferIndex storeChildBuffer(TupleBuffer& buffer) noexcept;
+    ///@brief attach a child tuple buffer to the parent, which takes over the reference of `buffer`. Use share() to keep a handle.
+    [[nodiscard]] ChildBufferIndex storeChildBuffer(TupleBuffer&& buffer) noexcept;
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
+
+    /// @brief Looks at a child buffer without taking a reference. The view is only valid while this buffer is alive.
+    [[nodiscard]] TupleBufferView viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
 
 private:
     /**
@@ -195,6 +203,30 @@ private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
+};
+
+/// A non-owning TupleBuffer handle (for example of a child buffer), which does not touch the reference count.
+/// It must not outlive the buffer it was taken from.
+class TupleBufferView
+{
+public:
+    TupleBufferView(const TupleBufferView&) = delete;
+    TupleBufferView& operator=(const TupleBufferView&) = delete;
+    TupleBufferView(TupleBufferView&& other) noexcept : buffer(std::move(other.buffer)) { }
+    TupleBufferView& operator=(TupleBufferView&&) = delete;
+    /// The handle never owned a reference: forget it before TupleBuffer's destructor can release one.
+    ~TupleBufferView() { buffer.controlBlock = nullptr; }
+
+    [[nodiscard]] TupleBuffer& get() noexcept { return buffer; }
+    [[nodiscard]] const TupleBuffer& get() const noexcept { return buffer; }
+    TupleBuffer* operator->() noexcept { return &buffer; }
+    const TupleBuffer* operator->() const noexcept { return &buffer; }
+
+private:
+    friend class TupleBuffer;
+    explicit TupleBufferView(TupleBuffer buffer) noexcept : buffer(std::move(buffer)) { }
+
+    TupleBuffer buffer;
 };
 
 }

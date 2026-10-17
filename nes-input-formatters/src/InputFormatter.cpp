@@ -289,7 +289,7 @@ IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     if (hasTupleDelimiter)
     {
         const auto [isInRange, stagedBuffers] = sequenceShredder->findLeadingSpanningTupleWithDelimiter(
-            StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
+            StagedBuffer{RawTupleBuffer{tupleBuffer->share()}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
         if (not isInRange)
         {
             IndexPhaseResultBuilder::setIsRepeat(true);
@@ -304,7 +304,7 @@ IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     else /* has no tuple delimiter */
     {
         const auto [isInRange, stagedBuffers] = sequenceShredder->findSpanningTupleWithoutDelimiter(
-            StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
+            StagedBuffer{RawTupleBuffer{tupleBuffer->share()}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
 
         if (not isInRange)
         {

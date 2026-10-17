@@ -33,12 +33,13 @@ public:
         uint64_t contentLength;
     };
 
-    explicit BufferIterator(TupleBuffer buffer) : tupleBuffer(std::move(buffer)) { }
+    /// A view: the iterated buffer has to outlive the iterator.
+    explicit BufferIterator(const TupleBuffer& buffer) : tupleBuffer(buffer) { }
 
     [[nodiscard]] std::optional<BufferElement> getNextElement();
 
 private:
-    TupleBuffer tupleBuffer;
+    const TupleBuffer& tupleBuffer;
     size_t bufferIndex = 0;
 };
 }

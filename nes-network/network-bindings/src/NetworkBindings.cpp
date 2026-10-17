@@ -15,6 +15,7 @@
 #include <NetworkBindings.hpp>
 
 #include <algorithm>
+#include <utility>
 #include <cstdint>
 #include <string>
 
@@ -80,7 +81,7 @@ void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
     std::ranges::copy(child, childBuffer->getAvailableMemoryArea<uint8_t>().begin());
     childBuffer->setNumberOfTuples(child.size());
     [[maybe_unused]] auto childIndex
-        = buffer.storeChildBuffer(*childBuffer); /// index should already be present in the owning parent buffer
+        = buffer.storeChildBuffer(std::move(*childBuffer)); /// index should already be present in the owning parent buffer
 }
 
 void identifyThread(const rust::str threadName, const rust::str host) /// NOLINT(misc-use-internal-linkage)

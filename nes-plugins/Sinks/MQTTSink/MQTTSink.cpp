@@ -155,7 +155,7 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
         throw CannotWriteToSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
     }
 
-    auto currentBuffer = std::optional(inputTupleBuffer);
+    auto currentBuffer = std::optional(inputTupleBuffer.share());
     while (currentBuffer)
     {
         switch (tryPublish(*currentBuffer))
@@ -165,7 +165,7 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
                 continue;
             }
             case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (const auto emit = backpressureHandler.onFull(std::move(*currentBuffer), backpressureController))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }

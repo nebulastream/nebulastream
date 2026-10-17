@@ -68,7 +68,7 @@ inline uint64_t writeValueToBuffer(
         if (remainingBytes > 0)
         {
             auto newChildBuffer = bufferProvider->getBufferBlocking();
-            (void)tupleBuffer->storeChildBuffer(newChildBuffer);
+            (void)tupleBuffer->storeChildBuffer(std::move(newChildBuffer));
             ++numOfChildBuffers;
         }
     }
@@ -86,7 +86,7 @@ inline uint64_t writeValueToBuffer(
         if (remainingBytes > 0)
         {
             auto newChildBuffer = bufferProvider->getBufferBlocking();
-            (void)tupleBuffer->storeChildBuffer(newChildBuffer);
+            (void)tupleBuffer->storeChildBuffer(std::move(newChildBuffer));
             ++numOfChildBuffers;
         }
     }

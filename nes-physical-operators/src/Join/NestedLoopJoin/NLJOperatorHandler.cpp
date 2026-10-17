@@ -111,7 +111,7 @@ void NLJOperatorHandler::emitSlicesToProbe(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     new (tupleBuffer.getAvailableMemoryArea().data()) EmittedNLJWindowTrigger{windowInfo, leftSliceEnds, rightSliceEnds, probeTaskType};
 
-    pipelineCtx->emitBuffer(tupleBuffer);
+    pipelineCtx->emitBuffer(std::move(tupleBuffer));
 }
 
 }

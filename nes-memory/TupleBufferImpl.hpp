@@ -107,8 +107,11 @@ public:
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
     [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
-    [[nodiscard]] ChildBufferIndex storeChildBuffer(BufferControlBlock* control);
+    /// Takes over the reference the caller holds on `control`.
+    [[nodiscard]] ChildBufferIndex adoptChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
+    /// Like loadChildBuffer, but does not take a reference: the child is only valid while this buffer is.
+    [[nodiscard]] bool peekChildBuffer(ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

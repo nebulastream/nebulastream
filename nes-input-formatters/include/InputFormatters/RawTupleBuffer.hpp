@@ -42,8 +42,11 @@ public:
 
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
-    RawTupleBuffer(const RawTupleBuffer& other) = default;
-    RawTupleBuffer& operator=(const RawTupleBuffer& other) = default;
+    RawTupleBuffer(const RawTupleBuffer& other) = delete;
+    RawTupleBuffer& operator=(const RawTupleBuffer& other) = delete;
+
+    /// Takes an additional reference to the underlying buffer.
+    [[nodiscard]] RawTupleBuffer share() const { return RawTupleBuffer{rawBuffer.share()}; }
 
     [[nodiscard]] size_t getNumberOfBytes() const noexcept { return rawBuffer.getNumberOfTuples(); }
 
@@ -75,6 +78,12 @@ public:
         , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
         , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter)
     {
+    }
+
+    /// Takes an additional reference to the underlying buffer.
+    [[nodiscard]] StagedBuffer share() const
+    {
+        return StagedBuffer{rawBuffer.share(), offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter};
     }
 
     [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }

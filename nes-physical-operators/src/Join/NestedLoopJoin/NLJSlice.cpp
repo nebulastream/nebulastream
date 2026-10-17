@@ -46,7 +46,7 @@ NLJSlice::NLJSlice(
         /// initialize the paged vector tuple buffer
         auto pagedVectorBuffer = getPooledBufferIfFits(pvMainBufferSize, bufferProvider);
         PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeLeft);
-        leftPagedVectorBuffers.emplace_back(pagedVectorBuffer);
+        leftPagedVectorBuffers.emplace_back(std::move(pagedVectorBuffer));
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
@@ -54,7 +54,7 @@ NLJSlice::NLJSlice(
         /// initialize the paged vector tuple buffer
         auto pagedVectorBuffer = getPooledBufferIfFits(pvMainBufferSize, bufferProvider);
         PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeRight);
-        rightPagedVectorBuffers.emplace_back(pagedVectorBuffer);
+        rightPagedVectorBuffers.emplace_back(std::move(pagedVectorBuffer));
     }
 }
 

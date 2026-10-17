@@ -70,6 +70,11 @@ public:
     nautilus::val<Timestamp> getCreatingTs();
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
 
+    /// Copies borrow from the original (see NautilusBuffer), moves keep the ownership.
+    RecordBuffer(const RecordBuffer&) = default;
+    RecordBuffer& operator=(const RecordBuffer&) = default;
+    RecordBuffer(RecordBuffer&&) noexcept = default;
+    RecordBuffer& operator=(RecordBuffer&&) noexcept = default;
     ~RecordBuffer() = default;
 
 private:

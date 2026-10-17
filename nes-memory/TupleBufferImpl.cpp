@@ -339,11 +339,22 @@ NAUTILUS_INLINE void BufferControlBlock::setOriginId(const OriginId originId)
 /// ------------------ VarLen fields support for TupleBuffer --------------------
 /// -----------------------------------------------------------------------------
 
-ChildBufferIndex BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
+ChildBufferIndex BufferControlBlock::adoptChildBuffer(BufferControlBlock* control)
 {
-    control->retain();
     children.emplace_back(control->owner);
     return ChildBufferIndex{static_cast<uint32_t>(children.size() - 1)};
+}
+
+bool BufferControlBlock::peekChildBuffer(const ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
+{
+    PRECONDITION(index.getRawValue() < children.size(), "Index={} is out of range={}", index, children.size());
+
+    auto* const child = children[index.getRawValue()];
+    control = child->controlBlock.get();
+    ptr = child->ptr;
+    size = child->size;
+
+    return true;
 }
 
 bool BufferControlBlock::loadChildBuffer(const ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const

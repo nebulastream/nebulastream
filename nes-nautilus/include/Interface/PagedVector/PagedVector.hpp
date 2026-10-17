@@ -39,7 +39,7 @@ public:
     /// Each page contains the cumulative sum in its header.
     struct Page
     {
-        static void init(TupleBuffer buffer);
+        static void init(TupleBuffer& buffer);
         static Page load(const TupleBuffer& buffer);
         static uint64_t getHeaderSize();
 
@@ -70,7 +70,7 @@ public:
     static constexpr auto VALID_PV = 8254372433832867;
     static constexpr auto INVALID_PV = 0;
 
-    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize);
+    static void init(TupleBuffer& buffer, uint64_t pageBufferSize, uint64_t tupleSize);
     static PagedVector load(const TupleBuffer& buffer);
 
     /// @brief Appends a new page to the pages vector if the last page is full.

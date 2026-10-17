@@ -15,6 +15,7 @@
 #include <Runtime/MemoryUtils.hpp>
 
 #include <algorithm>
+#include <utility>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -35,7 +36,7 @@ TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
     auto bufferOpt = provider.getUnpooledBuffer(size);
     if (bufferOpt.has_value())
     {
-        return bufferOpt.value();
+        return std::move(bufferOpt.value());
     }
     throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", size);
 }
@@ -73,7 +74,7 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
         const ChildBufferIndex varSizedIndex{static_cast<uint32_t>(childIdx)};
         auto childBuffer = buffer.loadChildBuffer(varSizedIndex);
         auto copiedChildBuffer = deepCopyBuffer(childBuffer, provider);
-        auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
+        auto ret = copiedBuffer.storeChildBuffer(std::move(copiedChildBuffer));
         INVARIANT(ret == varSizedIndex, "Child buffer index: {}, does not match index: {}", childIdx, ret);
     }
 

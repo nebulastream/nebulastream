@@ -102,7 +102,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                     {
                         auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(), *bufferProvider);
                         PagedVector::init(pagedVectorBuffer, pageSize, tupleSize);
-                        auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer);
+                        auto childIndex = hashMapBuf->storeChildBuffer(std::move(pagedVectorBuffer));
                         *valueMemArea = childIndex.getRawValue();
                     },
                     hashMapBuffer.asArg(),

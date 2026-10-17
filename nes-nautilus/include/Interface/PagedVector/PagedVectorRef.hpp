@@ -123,6 +123,13 @@ public:
         const nautilus::val<uint64_t>& posOnPage,
         const nautilus::val<uint64_t>& pos);
 
+    /// Copying an iterator takes its own reference to the cached page, as both iterators reload the cache independently.
+    PagedVectorRefIter(const PagedVectorRefIter& other);
+    PagedVectorRefIter& operator=(const PagedVectorRefIter& other);
+    PagedVectorRefIter(PagedVectorRefIter&&) noexcept = default;
+    PagedVectorRefIter& operator=(PagedVectorRefIter&&) noexcept = default;
+    ~PagedVectorRefIter() = default;
+
     Record operator*() const;
     PagedVectorRefIter& operator++();
     PagedVectorRefIter operator++(int);

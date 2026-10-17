@@ -85,7 +85,7 @@ HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider
         auto childBuffer = getPooledBufferIfFits(ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets), bufferProvider);
         /// initialize chained hash map i
         ChainedHashMap::init(childBuffer, hashMapConfig);
-        hashMapBuffers[pos] = childBuffer;
+        hashMapBuffers[pos] = std::move(childBuffer);
         hashMapBuffersState[pos] = HashMapBufferState::INITIALIZED;
     }
     return &hashMapBuffers[pos];

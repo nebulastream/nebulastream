@@ -149,7 +149,7 @@ void WindowBasedOperatorHandler::triggerWindows(const Timestamp newGlobalWaterma
         watermarkBuffer.setWatermark(outputWatermark);
         watermarkBuffer.setCreationTimestampInMS(Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-        pipelineCtx->emitBuffer(watermarkBuffer);
+        pipelineCtx->emitBuffer(std::move(watermarkBuffer));
     }
 }
 

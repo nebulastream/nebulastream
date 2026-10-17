@@ -34,13 +34,14 @@ std::optional<BufferIterator::BufferElement> BufferIterator::getNextElement()
     {
         const uint64_t bytesInBuffer = tupleBuffer.getNumberOfTuples();
         ++bufferIndex;
-        return std::optional<BufferElement>({.buffer = tupleBuffer, .contentLength = bytesInBuffer});
+        return std::optional<BufferElement>({.buffer = tupleBuffer.share(), .contentLength = bytesInBuffer});
     }
 
     /// Iterate through the children
     /// Child buffers store the number of written bytes in them as the number of tuples
-    const TupleBuffer childBuffer = tupleBuffer.loadChildBuffer(ChildBufferIndex(bufferIndex - 1));
+    TupleBuffer childBuffer = tupleBuffer.loadChildBuffer(ChildBufferIndex(bufferIndex - 1));
     ++bufferIndex;
-    return std::optional<BufferElement>({.buffer = childBuffer, .contentLength = childBuffer.getNumberOfTuples()});
+    const auto contentLength = childBuffer.getNumberOfTuples();
+    return std::optional<BufferElement>({.buffer = std::move(childBuffer), .contentLength = contentLength});
 }
 }

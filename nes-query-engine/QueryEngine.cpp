@@ -206,7 +206,7 @@ struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     const std::optional<BackpressureController>* backpressureController = nullptr;
-    std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
+    std::function<bool(TupleBuffer tb, ContinuationPolicy)> handler;
     std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
     size_t numberOfThreads;
@@ -222,7 +222,7 @@ struct DefaultPEC final : PipelineExecutionContext
         WorkerThreadId threadId,
         PipelineId pipelineId,
         std::shared_ptr<AbstractBufferProvider> bm,
-        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
+        std::function<bool(TupleBuffer tb, ContinuationPolicy)> handler,
         std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
         : handler(std::move(handler))
         , repeatHandler(std::move(repeatHandler))
@@ -251,10 +251,10 @@ struct DefaultPEC final : PipelineExecutionContext
         return numberOfThreads;
     }
 
-    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override
+    bool emitBuffer(TupleBuffer&& buffer, ContinuationPolicy policy) override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        return handler(buffer, policy);
+        return handler(std::move(buffer), policy);
     }
 
     void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds duration) override
@@ -509,23 +509,29 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             WorkerThread::id,
             pipeline->id,
             bufferProvider,
-            [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
+            [&](TupleBuffer tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
-                ENGINE_LOG_DEBUG(
-                    "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                const auto numberOfTuples = tupleBuffer.getNumberOfTuples();
+                ENGINE_LOG_DEBUG("Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, numberOfTuples);
+                /// The buffer is only shared if there is more than one successor: the last one takes it over.
+                size_t remainingSuccessors = pipeline->successors.size();
                 return std::ranges::all_of(
                     pipeline->successors,
                     [&](const auto& successor)
                     {
-                        pool.statistic->onEvent(
-                            TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
-                        return pool.emitWork(task.queryId, successor, tupleBuffer, TaskCallback{}, continuationPolicy);
+                        pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, numberOfTuples});
+                        return pool.emitWork(
+                            task.queryId,
+                            successor,
+                            --remainingSuccessors == 0 ? std::move(tupleBuffer) : tupleBuffer.share(),
+                            TaskCallback{},
+                            continuationPolicy);
                     });
             },
             [&](const TupleBuffer& tupleBuffer, std::chrono::milliseconds duration)
             {
                 INVARIANT(!requiresTaskRepetition.has_value(), "Pipeline attempts to repeat the task multiple times");
-                requiresTaskRepetition = std::make_pair(tupleBuffer, duration);
+                requiresTaskRepetition = std::make_pair(tupleBuffer.share(), duration);
             }
 
         );
@@ -655,7 +661,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
         bufferProvider,
-        [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
+        [&](TupleBuffer tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {
             if (terminating)
             {
@@ -663,12 +669,18 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
                 return true;
             }
 
+            size_t remainingSuccessors = stopPipelineTask.pipeline->successors.size();
             for (const auto& successor : stopPipelineTask.pipeline->successors)
             {
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.emitWork(stopPipelineTask.queryId, successor, tupleBuffer, TaskCallback{}, policy);
+                pool.emitWork(
+                    stopPipelineTask.queryId,
+                    successor,
+                    --remainingSuccessors == 0 ? std::move(tupleBuffer) : tupleBuffer.share(),
+                    TaskCallback{},
+                    policy);
             }
             return true;
         },

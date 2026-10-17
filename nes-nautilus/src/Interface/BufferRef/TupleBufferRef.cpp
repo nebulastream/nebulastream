@@ -57,16 +57,16 @@ TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider,
     {
         if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
         {
-            return newBuffer.value();
+            return std::move(newBuffer.value());
         }
     }
-    const auto unpooledBuffer = tupleBufferProvider.getUnpooledBuffer(newBufferSize);
+    auto unpooledBuffer = tupleBufferProvider.getUnpooledBuffer(newBufferSize);
     if (not unpooledBuffer.has_value())
     {
         throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size {}", newBufferSize);
     }
 
-    return unpooledBuffer.value();
+    return std::move(unpooledBuffer.value());
 }
 
 /// @brief Copies the varSizedValue to the specified location and then increments the number of tuples
@@ -96,7 +96,7 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
     {
         auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
         copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
-        const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
+        const auto childBufferIndex = tupleBuffer.storeChildBuffer(std::move(newChildBuffer));
         return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
     }
 
@@ -109,7 +109,7 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
     {
         auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
         copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
-        const ChildBufferIndex childBufferIndex{tupleBuffer.storeChildBuffer(newChildBuffer)};
+        const ChildBufferIndex childBufferIndex{tupleBuffer.storeChildBuffer(std::move(newChildBuffer))};
         return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
     }
 
@@ -123,11 +123,11 @@ std::span<std::byte>
 TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
 {
     /// Loading the childbuffer containing the variable sized data.
-    auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
+    auto childBuffer = tupleBuffer.viewChildBuffer(variableSizedAccess.getIndex());
 
     /// Creating a subspan that starts at the required offset. It still can contain multiple other var sized, as we have solely offset the
     /// lower bound but not the upper bound.
-    const auto varSized = childBuffer.getAvailableMemoryArea().subspan(variableSizedAccess.getOffset().getRawOffset());
+    const auto varSized = childBuffer->getAvailableMemoryArea().subspan(variableSizedAccess.getOffset().getRawOffset());
 
     return varSized.subspan(0, variableSizedAccess.getSize().getRawSize());
 }

@@ -76,8 +76,8 @@ bool SpanningTupleBufferEntry::isCurrentEntryUsedUp(const ABAItNo abaItNumber) c
 
 void SpanningTupleBufferEntry::setBuffersAndOffsets(const StagedBuffer& indexedBuffer)
 {
-    this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-    this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
+    this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer().share();
+    this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer().share();
     this->firstDelimiterOffset = indexedBuffer.getOffsetOfLastTuple();
     this->lastDelimiterOffset = indexedBuffer.getByteOffsetOfLastTuple();
 }
@@ -115,10 +115,10 @@ std::optional<StagedBuffer> SpanningTupleBufferEntry::tryClaimSpanningTuple(cons
             this->atomicState.setUsedTrailingBuffer();
             return {StagedBuffer{}};
         }
-        const auto stagedBuffer
+        auto stagedBuffer
             = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
         this->atomicState.setUsedTrailingBuffer();
-        return {stagedBuffer};
+        return {std::move(stagedBuffer)};
     }
     return std::nullopt;
 }

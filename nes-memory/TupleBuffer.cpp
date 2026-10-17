@@ -30,36 +30,17 @@
 namespace NES
 {
 
-TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+TupleBuffer TupleBuffer::share() const noexcept
 {
+    TupleBuffer other;
+    other.controlBlock = controlBlock;
+    other.ptr = ptr;
+    other.size = size;
     if (controlBlock != nullptr)
     {
         controlBlock->retain();
     }
-}
-
-TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
-{
-    if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
-    {
-        return *this;
-    }
-
-    /// Override the content of this with those of `other`
-    auto* const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
-    ptr = other.ptr;
-    size = other.size;
-
-    /// Update reference counts: If the new and old controlBlocks differ, retain the new one and release the old one.
-    if (oldControlBlock != controlBlock)
-    {
-        retain();
-        if (oldControlBlock)
-        {
-            oldControlBlock->release();
-        }
-    }
-    return *this;
+    return other;
 }
 
 TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) noexcept
@@ -174,14 +155,21 @@ NAUTILUS_INLINE void TupleBuffer::setOriginId(const OriginId id) noexcept
     controlBlock->setOriginId(id);
 }
 
-ChildBufferIndex TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
+ChildBufferIndex TupleBuffer::storeChildBuffer(TupleBuffer&& buffer) noexcept
 {
-    TupleBuffer empty;
-    auto* control = buffer.controlBlock;
+    auto* const control = std::exchange(buffer.controlBlock, nullptr);
+    buffer.ptr = nullptr;
+    buffer.size = 0;
     INVARIANT(controlBlock != control, "Cannot attach buffer to self");
-    const auto index = controlBlock->storeChildBuffer(control);
-    std::swap(empty, buffer);
-    return index;
+    return controlBlock->adoptChildBuffer(control);
+}
+
+TupleBufferView TupleBuffer::viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept
+{
+    TupleBuffer childBuffer;
+    const auto ret = controlBlock->peekChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
+    INVARIANT(ret, "Cannot view tuple buffer with index={}", bufferIndex);
+    return TupleBufferView{std::move(childBuffer)};
 }
 
 TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept

@@ -56,12 +56,12 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
     /// Case 1: larger than a pooled buffer -> dedicated unpooled buffer.
     if (bufferProvider->getBufferSize() < sizeInBytes)
     {
-        const auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes);
+        auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes);
         if (not unpooledBufferOpt.has_value())
         {
             throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size " + std::to_string(sizeInBytes));
         }
-        unpooledBuffers.emplace_back(unpooledBufferOpt.value());
+        unpooledBuffers.emplace_back(std::move(unpooledBufferOpt.value()));
         const auto area = unpooledBuffers.back().getAvailableMemoryArea();
         /// The whole data region was unpoisoned on hand-out; re-poison the unused tail past the request so an
         /// overflow beyond the allocation is trapped under ASan.

@@ -62,8 +62,8 @@ uint64_t loadPageForEntryProxy(const TupleBuffer* pagedVectorBuffer, const uint6
     uint64_t prevCumulativeSum = 0;
     if (pageIdx > 0)
     {
-        const auto prevPageBuffer = pagedVectorBuffer->loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx - 1)});
-        prevCumulativeSum = PagedVector::Page::load(prevPageBuffer).getCumulativeSum();
+        const auto prevPageBuffer = pagedVectorBuffer->viewChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx - 1)});
+        prevCumulativeSum = PagedVector::Page::load(prevPageBuffer.get()).getCumulativeSum();
     }
     return entryPos - prevCumulativeSum;
 }
@@ -82,10 +82,10 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
             {
                 INVARIANT(pageBuffer != nullptr, "Page buffer MUST NOT be null");
                 INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
-                auto varSizedPage = pageBuffer->loadChildBuffer(access->getIndex());
+                auto varSizedPage = pageBuffer->viewChildBuffer(access->getIndex());
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
                 return reinterpret_cast<int8_t*>(varSizedPage /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-                                                     .getAvailableMemoryArea<>()
+                                                     ->getAvailableMemoryArea<>()
                                                      .subspan(access->getOffset().getRawOffset())
                                                      .data());
             },
@@ -124,12 +124,12 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                 if (numChildren > 0)
                 {
                     auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
-                    TupleBuffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
-                    const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
-                    const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
+                    auto lastVarSizedBuffer = pageBuffer->viewChildBuffer(lastVarSizedBufferIndex);
+                    const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer->getBufferSize();
+                    const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer->getNumberOfTuples();
                     if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
                     {
-                        lastVarSizedBuffer.setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
+                        lastVarSizedBuffer->setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
                         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
                         *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
                             lastVarSizedBufferIndex,
@@ -137,7 +137,7 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                             VariableSizedAccess::Size{allocationSize}};
                         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
                         return reinterpret_cast<int8_t*>(lastVarSizedBuffer
-                                                             .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+                                                             ->getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
                                                              .subspan(lastVarSizedBufferNumTuples)
                                                              .data());
                     }
@@ -157,14 +157,14 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                     }
                     newVarSizedBuffer = std::move(unpooledBuffer.value());
                 }
-                auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
-                newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
+                auto childIndex = pageBuffer->storeChildBuffer(std::move(newVarSizedBuffer));
+                auto storedVarSizedBuffer = pageBuffer->viewChildBuffer(childIndex);
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
                 *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
                     = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{0}, VariableSizedAccess::Size{allocationSize}};
-                newVarSizedBuffer.setNumberOfTuples(allocationSize);
+                storedVarSizedBuffer->setNumberOfTuples(allocationSize);
                 /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
-                return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
+                return reinterpret_cast<int8_t*>(storedVarSizedBuffer->getAvailableMemoryArea<>().data());
             },
             lastPageBuffer.asArg(),
             bufferProvider,
@@ -335,6 +335,24 @@ PagedVectorRefIter::PagedVectorRefIter(
     const nautilus::val<uint64_t>& pos)
     : pagedVector(std::move(pagedVector)), pos(pos), posOnPage(posOnPage), curPage(std::move(curPage)), tupleLayout(tupleLayout)
 {
+}
+
+PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRefIter& other)
+    : pagedVector(other.pagedVector)
+    , pos(other.pos)
+    , posOnPage(other.posOnPage)
+    , curPage(OwnedNautilusBuffer::copy(other.curPage))
+    , tupleLayout(other.tupleLayout)
+{
+}
+
+PagedVectorRefIter& PagedVectorRefIter::operator=(const PagedVectorRefIter& other)
+{
+    if (this != &other)
+    {
+        *this = PagedVectorRefIter(other);
+    }
+    return *this;
 }
 
 Record PagedVectorRefIter::operator*() const

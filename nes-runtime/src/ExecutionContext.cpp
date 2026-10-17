@@ -98,7 +98,8 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
      * fusion, this should only happen occasionally.
      */
-    pipelineCtx->emitBuffer(*tb);
+    /// The emitting operator gives its buffer away: the successors share it only if there is more than one.
+    pipelineCtx->emitBuffer(std::move(*tb));
 }
 
 void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const

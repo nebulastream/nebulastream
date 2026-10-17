@@ -147,23 +147,23 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
             throw CannotAllocateBuffer(
                 "Could not allocate memory for unpooled VARSIZED data page of ChainedHashMap of size {}", std::to_string(neededSize));
         }
-        newPage = newPageUnpooled.value();
+        newPage = std::move(newPageUnpooled.value());
     }
 
     auto varSizedBufferIdx = getVarSizedBufferIdx();
     if (varSizedBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         /// Storage buffer already exists - just add the new page
-        auto varSizedBuffer = buffer.loadChildBuffer(varSizedBufferIdx);
-        std::ignore = varSizedBuffer.storeChildBuffer(
-            newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
+        auto varSizedBuffer = buffer.viewChildBuffer(varSizedBufferIdx);
+        std::ignore = varSizedBuffer->storeChildBuffer(
+            std::move(newPage)); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
     }
     else
     {
         /// Create new storage buffer and add the page
         auto varSizedBuffer = getPooledBufferIfFits(VARSIZED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
-        std::ignore = varSizedBuffer.storeChildBuffer(newPage);
-        header().varSizedSpaceIndex = buffer.storeChildBuffer(varSizedBuffer);
+        std::ignore = varSizedBuffer.storeChildBuffer(std::move(newPage));
+        header().varSizedSpaceIndex = buffer.storeChildBuffer(std::move(varSizedBuffer));
     }
 }
 
@@ -204,17 +204,17 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const ui
     if (storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         /// storage buffer already exists
-        auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
-        std::ignore = storageBuffer.storeChildBuffer(
-            newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
+        auto storageBuffer = buffer.viewChildBuffer(storageBufferIdx);
+        std::ignore = storageBuffer->storeChildBuffer(
+            std::move(newPage)); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
     }
     else
     {
         /// create new storage buffer (of minimal size)
         auto storageBuffer = getPooledBufferIfFits(FIXED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
         std::ignore = storageBuffer.storeChildBuffer(
-            newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
-        header().storageSpaceIndex = buffer.storeChildBuffer(storageBuffer);
+            std::move(newPage)); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
+        header().storageSpaceIndex = buffer.storeChildBuffer(std::move(storageBuffer));
     }
 }
 
@@ -287,11 +287,11 @@ TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
     auto storageBufferIdx = getStorageBufferIdx();
     PRECONDITION(storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "Storage space not initialized during getPage()");
-    auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
-    uint64_t numberOfPages = storageBuffer.getNumberOfChildBuffers();
+    auto storageBuffer = buffer.viewChildBuffer(storageBufferIdx);
+    uint64_t numberOfPages = storageBuffer->getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
     const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
-    TupleBuffer page = storageBuffer.loadChildBuffer(pageBufferIdx);
+    TupleBuffer page = storageBuffer->loadChildBuffer(pageBufferIdx);
     return page;
 }
 
@@ -300,11 +300,11 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     auto varSizedSpaceIdx = getVarSizedBufferIdx();
     PRECONDITION(
         varSizedSpaceIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "VarSized space not initialized during getVarSizedPage()");
-    auto varSizedBuffer = buffer.loadChildBuffer(varSizedSpaceIdx);
-    uint64_t numberOfPages = varSizedBuffer.getNumberOfChildBuffers();
+    auto varSizedBuffer = buffer.viewChildBuffer(varSizedSpaceIdx);
+    uint64_t numberOfPages = varSizedBuffer->getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
     const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
-    TupleBuffer page = varSizedBuffer.loadChildBuffer(pageBufferIdx);
+    TupleBuffer page = varSizedBuffer->loadChildBuffer(pageBufferIdx);
     return page;
 }
 
@@ -313,8 +313,8 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     auto storageBufferIdx = getStorageBufferIdx();
     if (storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
-        auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
-        return storageBuffer.getNumberOfChildBuffers();
+        auto storageBuffer = buffer.viewChildBuffer(storageBufferIdx);
+        return storageBuffer->getNumberOfChildBuffers();
     }
     return 0;
 }
@@ -324,8 +324,8 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     auto varSizedBufferIdx = getVarSizedBufferIdx();
     if (varSizedBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
-        auto varSizedBuffer = buffer.loadChildBuffer(varSizedBufferIdx);
-        return varSizedBuffer.getNumberOfChildBuffers();
+        auto varSizedBuffer = buffer.viewChildBuffer(varSizedBufferIdx);
+        return varSizedBuffer->getNumberOfChildBuffers();
     }
     return 0;
 }

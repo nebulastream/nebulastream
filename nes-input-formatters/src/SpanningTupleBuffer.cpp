@@ -91,7 +91,9 @@ SequenceShredderResult SpanningTupleBuffer::tryFindLeadingSpanningTupleForBuffer
         claimSpanningTupleBuffers(firstSpanningTupleStartSN, spanningTupleBuffers);
         return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(std::move(spanningTupleBuffers))};
     }
-    return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers({indexedRawBuffer})};
+    std::vector<StagedBuffer> singleBuffer;
+    singleBuffer.push_back(indexedRawBuffer.share());
+    return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(std::move(singleBuffer))};
 }
 
 SpanningBuffers SpanningTupleBuffer::tryFindTrailingSpanningTupleForBufferWithDelimiter(const SequenceNumber sequenceNumber)
@@ -129,7 +131,9 @@ SequenceShredderResult SpanningTupleBuffer::tryFindSpanningTupleForBufferWithout
         claimSpanningTupleBuffers(searchAndClaimResult.firstSequenceNumber, spanningTupleBuffers);
         return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(std::move(spanningTupleBuffers))};
     }
-    return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers({indexedRawBuffer})};
+    std::vector<StagedBuffer> singleBuffer;
+    singleBuffer.push_back(indexedRawBuffer.share());
+    return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(std::move(singleBuffer))};
 }
 
 bool SpanningTupleBuffer::validate() const

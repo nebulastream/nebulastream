@@ -60,7 +60,7 @@ std::vector<TupleBuffer> getHashMapsFromSlice(const Slice& slice, JoinBuildSideT
         if (const auto* hashMapBuffer = hjSlice->getHashMapBufferRefForSide(WorkerThreadId(i), side);
             hashMapBuffer != nullptr && ChainedHashMap::load(*hashMapBuffer).getTotalNumberOfRecords() > 0)
         {
-            buffers.emplace_back(*hashMapBuffer);
+            buffers.emplace_back(hashMapBuffer->share());
         }
     }
     return buffers;
@@ -74,7 +74,7 @@ std::vector<TupleBuffer> getHashMapsFromSlices(const std::vector<std::shared_ptr
     {
         for (auto& buffer : getHashMapsFromSlice(*slice, side))
         {
-            allBuffers.emplace_back(buffer);
+            allBuffers.emplace_back(std::move(buffer));
         }
     }
     return allBuffers;
@@ -165,16 +165,16 @@ void HJOperatorHandler::emitSlicesToProbe(
         EmittedHJWindowTrigger{windowInfo, leftHashMapBuffers.size(), rightHashMapBuffers.size(), probeTaskType};
 
     /// Store left hash map buffers as children first (indices 0..left-1), then right (indices left..left+right-1)
-    for (auto leftBuffer : leftHashMapBuffers)
+    for (const auto& leftBuffer : leftHashMapBuffers)
     {
-        std::ignore = tupleBuffer.storeChildBuffer(leftBuffer);
+        std::ignore = tupleBuffer.storeChildBuffer(leftBuffer.share());
     }
-    for (auto rightBuffer : rightHashMapBuffers)
+    for (const auto& rightBuffer : rightHashMapBuffers)
     {
-        std::ignore = tupleBuffer.storeChildBuffer(rightBuffer);
+        std::ignore = tupleBuffer.storeChildBuffer(rightBuffer.share());
     }
 
-    pipelineCtx->emitBuffer(tupleBuffer);
+    pipelineCtx->emitBuffer(std::move(tupleBuffer));
 }
 
 }

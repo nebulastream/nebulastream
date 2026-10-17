@@ -271,7 +271,7 @@ void MedianAggregationPhysicalFunction::reset(
             /// initialize paged vector buffer
             auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(), *bufferProvider);
             PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize);
-            auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
+            auto childBufferIndex = parentBuffer->storeChildBuffer(std::move(pagedVectorBuffer));
             return childBufferIndex.getRawValue();
         },
         parentBuffer.asArg(),

@@ -482,7 +482,7 @@ TupleBuffer BufferManager::getBufferBlocking()
     auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
     if (buffer.has_value())
     {
-        return buffer.value();
+        return std::move(buffer.value());
     }
     /// Throw exception if no buffer was returned allocated after timeout.
     throw BufferAllocationFailure("Global buffer pool could not allocate buffer before timeout({})", GET_BUFFER_TIMEOUT);

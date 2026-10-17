@@ -89,7 +89,7 @@ std::optional<TupleBuffer> BackpressureHandler::onSuccess(BackpressureController
     {
         auto nextBuffer = std::move(state->buffered.front());
         state->buffered.pop_front();
-        return {nextBuffer};
+        return {std::move(nextBuffer)};
     }
     return {};
 }
