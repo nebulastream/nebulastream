@@ -14,6 +14,7 @@
 
 #include <TestableChainedHashMap.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -30,8 +31,10 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/EntryRecordsRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -73,9 +76,9 @@ TestableChainedHashMap::TestableChainedHashMap(
     EngineMode mode,
     uint64_t numberOfBuckets,
     size_t numKeyFields,
-    uint64_t numEntriesPerPage,
-    const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams)
-    : dataTypes(fieldTypes), bufferManager(bufferManager), bloomFilterParams(bloomFilterParams)
+    const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams,
+    std::optional<uint64_t> inlineRecords)
+    : dataTypes(fieldTypes), bufferManager(bufferManager), bloomFilterParams(bloomFilterParams), storesRecords(inlineRecords.has_value())
 {
     PRECONDITION(
         numKeyFields <= fieldTypes.size(),
@@ -98,9 +101,24 @@ TestableChainedHashMap::TestableChainedHashMap(
     valueDataTypes
         = std::vector<DataType>(fieldTypes.begin() + numKeyFields, fieldTypes.end()); /// NOLINT(cppcoreguidelines-narrowing-conversions)
 
+    PRECONDITION(
+        fits(fieldTypes, numKeyFields, bufferManager.getBufferSize(), inlineRecords),
+        "The entries do not fit into a buffer of size {}",
+        bufferManager.getBufferSize());
     const uint64_t keySize = getSizeInBytes(createSchemaFromDataTypes(keyDataTypes));
     const uint64_t valueSize = getSizeInBytes(createSchemaFromDataTypes(valueDataTypes));
-    const uint64_t entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
+    /// A map that stores the records of its keys has their records in the value area of an entry instead of value fields.
+    const auto recordLayout = std::make_shared<DefaultPagedVectorTupleLayout>(schema);
+    const uint64_t recordSize = getSizeInBytes(schema);
+    const uint64_t recordsInline
+        = inlineRecords ? EntryRecordsRef::getEffectiveInlineRecords(schema, *inlineRecords, bufferManager.getBufferSize()) : 0;
+    const uint64_t entrySize = inlineRecords
+        ? sizeof(ChainedHashMapEntry) + keySize + EntryRecordsRef::getValueAreaSize(recordsInline, recordSize)
+        : sizeof(ChainedHashMapEntry) + keySize + valueSize;
+    if (inlineRecords)
+    {
+        fieldValues.clear();
+    }
     /// A probe entry never stores value bytes: findEntry() only reads the key region + hash off the
     /// entry it's given, and key-field offsets don't depend on the value fields at all (see
     /// ChainedEntryMemoryProvider::createFieldOffsets), so fieldKeys is reusable as-is for probe entries.
@@ -110,17 +128,16 @@ TestableChainedHashMap::TestableChainedHashMap(
     hashMapConfig = ChainedHashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
-        .pageSize = entrySize * numEntriesPerPage,
         .bloomFilterParams = bloomFilterParams,
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,
-        .hashFunction = hashFunction};
-    /// The throwaway probe map only ever holds the single key being looked up, so it needs no BloomFilter, and
-    /// it stores no value bytes: findEntry() reads only the key region and the hash off the entry it is given.
+        .hashFunction = hashFunction,
+        .inlineRecords = recordsInline};
+    /// The throwaway probe map only ever holds the single key being looked up, and it stores no value bytes:
+    /// findEntry() reads only the key region and the hash off the entry it is given.
     probeConfig = ChainedHashMapConfig{
         .entrySize = probeEntrySize,
         .numberOfBuckets = 1,
-        .pageSize = probeEntrySize,
         .bloomFilterParams = std::nullopt,
         .fieldKeys = fieldKeys,
         .fieldValues = {},
@@ -133,8 +150,14 @@ TestableChainedHashMap::TestableChainedHashMap(
     {
         throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", hashMapBufferSize);
     }
-    chainedHashMapBuffer = chainedHashMapBufferOpt.value();
+    chainedHashMapBuffer = std::move(chainedHashMapBufferOpt.value());
     ChainedHashMap::init(chainedHashMapBuffer, hashMapConfig);
+
+    if (inlineRecords)
+    {
+        registerRecordFunctions(recordLayout, recordsInline);
+        return;
+    }
 
     insertFn.emplace(engine->registerFunction(
         std::function(
@@ -258,7 +281,7 @@ std::optional<AnyVec> TestableChainedHashMap::at(const AnyVec& key)
     {
         throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", probeBufferSize);
     }
-    auto probeBuffer = probeBufferOpt.value();
+    auto probeBuffer = std::move(probeBufferOpt.value());
     ChainedHashMap::init(probeBuffer, probeConfig);
 
     AnyVec out(valueDataTypes.size());
@@ -300,6 +323,187 @@ uint64_t TestableChainedHashMap::size() const
 ChainedHashMap TestableChainedHashMap::raw()
 {
     return ChainedHashMap::load(chainedHashMapBuffer);
+}
+
+bool TestableChainedHashMap::fits(
+    const std::vector<DataType>& fieldTypes,
+    const size_t numKeyFields,
+    const uint64_t bufferSize,
+    const std::optional<uint64_t>& inlineRecords)
+{
+    const auto schema = createSchemaFromDataTypes(fieldTypes);
+    const auto keyTypes
+        = std::vector<DataType>(fieldTypes.begin(), fieldTypes.begin() + numKeyFields); /// NOLINT(cppcoreguidelines-narrowing-conversions)
+    const auto valueTypes
+        = std::vector<DataType>(fieldTypes.begin() + numKeyFields, fieldTypes.end()); /// NOLINT(cppcoreguidelines-narrowing-conversions)
+    const uint64_t keySize = getSizeInBytes(createSchemaFromDataTypes(keyTypes));
+    if (not inlineRecords)
+    {
+        return sizeof(ChainedHashMapEntry) + keySize + getSizeInBytes(createSchemaFromDataTypes(valueTypes)) <= bufferSize;
+    }
+    const auto recordsInline = EntryRecordsRef::getEffectiveInlineRecords(schema, *inlineRecords, bufferSize);
+    const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + EntryRecordsRef::getValueAreaSize(recordsInline, getSizeInBytes(schema));
+    return entrySize <= bufferSize and DefaultPagedVectorTupleLayout{schema}.getMinimumPageSize() <= bufferSize;
+}
+
+void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<PagedVectorTupleLayout>& layout, const uint64_t recordsInline)
+{
+    /// The value area of the entries holds the records, so the entries have no value fields.
+    const decltype(fieldValues) noValues;
+
+    insertFn.emplace(engine->registerFunction(
+        std::function(
+            [layout,
+             recordsInline,
+             dataTypes = dataTypes,
+             projections = projections,
+             fieldKeys = fieldKeys,
+             noValues,
+             hashMapConfig = hashMapConfig](
+                nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
+            {
+                const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
+                const auto entry = chmRef.findOrCreateEntry(
+                    record,
+                    [&](const nautilus::val<AbstractHashMapEntry*>& newEntry)
+                    {
+                        const ChainedHashMapRef::ChainedEntryRef newEntryRef{newEntry, borrowedBuffer, fieldKeys, noValues};
+                        EntryRecordsRef::initialize(borrowedBuffer, newEntryRef.getValueMemArea(), layout, recordsInline, bm);
+                    },
+                    bm);
+                const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, noValues};
+                EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
+                records.pushBack(record, bm);
+            })));
+
+    /// Both lookups find the entry of the key as at() does for the normal map: format the key into a disposable one-entry probe map and
+    /// look it up in the map under test. at() returns the value of the first record, recordsOf() all records.
+    const auto valueNames = std::vector<Record::RecordFieldIdentifier>(
+        projections.begin() + static_cast<std::ptrdiff_t>(keyDataTypes.size()), projections.end());
+    lookupFn.emplace(engine->registerFunction(
+        std::function(
+            [layout,
+             recordsInline,
+             keyDataTypes = keyDataTypes,
+             keyProjections = fieldKeyNames,
+             fieldKeys = fieldKeys,
+             noValues,
+             valueNames,
+             valueTypes = valueDataTypes,
+             hashMapConfig = hashMapConfig,
+             probeConfig = probeConfig](
+                nautilus::val<TupleBuffer*> chainedHashMapBuffer,
+                nautilus::val<TupleBuffer*> probeBuffer,
+                nautilus::val<AbstractBufferProvider*> bm,
+                nautilus::val<AnyVec*> keyIn,
+                nautilus::val<AnyVec*> out) -> nautilus::val<bool>
+            {
+                const Record keyRecord = buildRecordFromAnyVec(keyIn, keyProjections, keyDataTypes);
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                const BorrowedNautilusBuffer borrowedProbeBuffer = BorrowedNautilusBuffer::from(probeBuffer);
+                ChainedHashMapRef probeMapRef{borrowedProbeBuffer, probeConfig};
+                const auto probeEntry = probeMapRef.findOrCreateEntry(keyRecord, [](const nautilus::val<AbstractHashMapEntry*>&) { }, bm);
+                ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
+                const auto foundEntry = chmRef.findEntry(probeEntry);
+                const nautilus::val<bool> found = (foundEntry != nullptr);
+                if (found)
+                {
+                    const ChainedHashMapRef::ChainedEntryRef entryRef{
+                        static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry), borrowedBuffer, fieldKeys, noValues};
+                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
+                    storeRecordToAnyVec(out, *records.begin(), valueNames, valueTypes);
+                }
+                return found;
+            })));
+
+    lookupAllFn.emplace(engine->registerFunction(
+        std::function(
+            [layout,
+             recordsInline,
+             keyDataTypes = keyDataTypes,
+             keyProjections = fieldKeyNames,
+             fieldKeys = fieldKeys,
+             noValues,
+             dataTypes = dataTypes,
+             projections = projections,
+             hashMapConfig = hashMapConfig,
+             probeConfig = probeConfig](
+                nautilus::val<TupleBuffer*> chainedHashMapBuffer,
+                nautilus::val<TupleBuffer*> probeBuffer,
+                nautilus::val<AbstractBufferProvider*> bm,
+                nautilus::val<AnyVec*> keyIn,
+                nautilus::val<std::vector<AnyVec>*> out) -> nautilus::val<bool>
+            {
+                const Record keyRecord = buildRecordFromAnyVec(keyIn, keyProjections, keyDataTypes);
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                const BorrowedNautilusBuffer borrowedProbeBuffer = BorrowedNautilusBuffer::from(probeBuffer);
+                ChainedHashMapRef probeMapRef{borrowedProbeBuffer, probeConfig};
+                const auto probeEntry = probeMapRef.findOrCreateEntry(keyRecord, [](const nautilus::val<AbstractHashMapEntry*>&) { }, bm);
+                ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
+                const auto foundEntry = chmRef.findEntry(probeEntry);
+                const nautilus::val<bool> found = (foundEntry != nullptr);
+                if (found)
+                {
+                    const ChainedHashMapRef::ChainedEntryRef entryRef{
+                        static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry), borrowedBuffer, fieldKeys, noValues};
+                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
+                    const auto end = records.end();
+                    for (auto it = records.begin(); it != end; ++it)
+                    {
+                        auto row = anyVecPushBack(out, nautilus::val<size_t>{dataTypes.size()});
+                        storeRecordToAnyVec(row, *it, projections, dataTypes);
+                    }
+                }
+                return found;
+            })));
+
+    readAllFn.emplace(engine->registerFunction(
+        std::function(
+            [layout,
+             recordsInline,
+             fieldKeys = fieldKeys,
+             noValues,
+             dataTypes = dataTypes,
+             projections = projections,
+             hashMapConfig = hashMapConfig](nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
+            {
+                /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
+                const auto numTuples = nautilus::invoke(
+                    +[](TupleBuffer* buf) { return ChainedHashMap::load(*buf).getTotalNumberOfRecords(); }, chainedHashMapBuffer);
+                if (numTuples == nautilus::val<uint64_t>{0})
+                {
+                    return;
+                }
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                const ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
+                for (const auto entry : chmRef)
+                {
+                    const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, noValues};
+                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
+                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>{dataTypes.size()});
+                    storeRecordToAnyVec(out, *records.begin(), projections, dataTypes);
+                }
+            })));
+}
+
+std::vector<AnyVec> TestableChainedHashMap::recordsOf(const AnyVec& key)
+{
+    PRECONDITION(storesRecords, "recordsOf is only available for a map that stores the records of its keys");
+    const auto probeBufferSize = ChainedHashMap::calculateBufferSize(probeConfig.numberOfBuckets, probeConfig.bloomFilterMemAreaSize());
+    auto probeBufferOpt = bufferManager.getUnpooledBuffer(probeBufferSize);
+    if (not probeBufferOpt.has_value())
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", probeBufferSize);
+    }
+    auto probeBuffer = std::move(probeBufferOpt.value());
+    ChainedHashMap::init(probeBuffer, probeConfig);
+
+    std::vector<AnyVec> out;
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast, bugprone-unchecked-optional-access)
+    (*lookupAllFn)(&chainedHashMapBuffer, &probeBuffer, &bufferManager, const_cast<AnyVec*>(&key), &out);
+    return out;
 }
 
 size_t TestableChainedHashMap::numKeyFields() const

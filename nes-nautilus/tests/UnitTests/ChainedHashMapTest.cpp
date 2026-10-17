@@ -64,12 +64,26 @@ namespace
 /// Schemas whose tuple size doesn't fit must be discarded via RC_PRE.
 constexpr std::array<uint64_t, 4> BUFFER_SIZE_POOL = {128, 512, 4096, 2ULL * 1024 * 1024};
 
+/// The buffer sizes for a map that stores the records of its keys, see genInlineRecords.
+constexpr std::array<uint64_t, 3> RECORDS_BUFFER_SIZE_POOL = {128, 512, 4096};
+
 /// Number of buckets pool drawn from property to test different numbers of buckets for the chained hash map.
 constexpr std::array<uint64_t, 6> NUM_BUCKETS_POOL = {32, 64, 128, 256, 512, 1024};
 
-/// Number of entries per page — multiplied by entrySize to derive pageSize.
-/// Small values (1, 2) force long page chains; large values (64, 512) exercise the bulk path.
-constexpr std::array<uint64_t, 6> ENTRIES_PER_PAGE_POOL = {1, 2, 4, 16, 64, 512};
+/// How many records of a key the entry stores itself: not at all (the map stores one value per key), or this many, up to a size where the
+/// paged vector for more of them is needed for most draws.
+/// A map that stores the records of its keys needs a buffer for the paged vector of each key that has more records than fit into its entry.
+/// The buffer manager of the properties is limited in memory, so it only has enough of them for small buffers.
+std::optional<uint64_t> genInlineRecords(const uint64_t bufferSize)
+{
+    constexpr uint64_t maxInlineRecords = 16;
+    constexpr uint64_t maxBufferSizeForRecords = 4096;
+    if (bufferSize > maxBufferSizeForRecords or *rc::gen::arbitrary<bool>())
+    {
+        return std::nullopt;
+    }
+    return *rc::gen::inRange<uint64_t>(0, maxInlineRecords + 1);
+}
 
 /// A real std::unordered_map<TestUtils::AnyVec, TestUtils::AnyVec> reference, so property tests compare the chained hash map against
 /// the standard library's own hash map semantics rather than a hand-rolled linear-scan association list.
@@ -225,7 +239,6 @@ void putAndLookupKeysProperty(TestUtils::EngineMode mode, bool enableBloomFilter
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
     const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
-    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
     const auto numIterations = *rc::gen::inRange<uint64_t>(1, maxIterations + 1);
     const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams
         = enableBloomFilter ? std::optional{genBloomFilterParams()} : std::nullopt;
@@ -233,22 +246,23 @@ void putAndLookupKeysProperty(TestUtils::EngineMode mode, bool enableBloomFilter
     const uint64_t loggedBloomHashes = bloomFilterParams ? bloomFilterParams->getHashCount() : 0;
 
     NES_INFO(
-        "Property putAndLookupKeys: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
+        "Property putAndLookupKeys: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, "
         "iterations={}, bloomBits={}, bloomHashes={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
         numKeyFields,
         numberOfBuckets,
-        numEntriesPerPage,
         numIterations,
         loggedBloomBits,
         loggedBloomHashes,
         fmt::join(fieldTypes, ", "));
 
+    const auto inlineRecords = genInlineRecords(bufferSize);
+    RC_PRE(TestUtils::TestableChainedHashMap::fits(fieldTypes, numKeyFields, bufferSize, inlineRecords));
     auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
     TestUtils::TestableChainedHashMap chainedHashMap{
-        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage, bloomFilterParams};
+        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, bloomFilterParams, inlineRecords};
     auto reference = makeEmptyReference(chainedHashMap);
 
     const auto itemsPerIteration = numberOfItems / numIterations;
@@ -277,28 +291,28 @@ void putAndGetAllProperty(TestUtils::EngineMode mode, bool enableBloomFilter = f
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
     const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
-    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
     const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams
         = enableBloomFilter ? std::optional{genBloomFilterParams()} : std::nullopt;
     const uint64_t loggedBloomBits = bloomFilterParams ? bloomFilterParams->getBitCount() : 0;
     const uint64_t loggedBloomHashes = bloomFilterParams ? bloomFilterParams->getHashCount() : 0;
 
     NES_INFO(
-        "Property putAndGetAll: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
+        "Property putAndGetAll: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, "
         "bloomBits={}, bloomHashes={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
         numKeyFields,
         numberOfBuckets,
-        numEntriesPerPage,
         loggedBloomBits,
         loggedBloomHashes,
         fmt::join(fieldTypes, ", "));
 
+    const auto inlineRecords = genInlineRecords(bufferSize);
+    RC_PRE(TestUtils::TestableChainedHashMap::fits(fieldTypes, numKeyFields, bufferSize, inlineRecords));
     auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
     TestUtils::TestableChainedHashMap chainedHashMap{
-        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage, bloomFilterParams};
+        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, bloomFilterParams, inlineRecords};
     auto reference = makeEmptyReference(chainedHashMap);
     populateReference(chainedHashMap, fieldTypes, numberOfItems, reference);
 
@@ -321,18 +335,16 @@ void bloomFilterMatchesDisabledProperty(TestUtils::EngineMode mode)
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
     const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
-    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
     const auto bloomFilterParams = genBloomFilterParams();
 
     NES_INFO(
-        "Property bloomFilterMatchesDisabled: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
+        "Property bloomFilterMatchesDisabled: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, "
         "bloomBits={}, bloomHashes={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
         numKeyFields,
         numberOfBuckets,
-        numEntriesPerPage,
         bloomFilterParams.getBitCount(),
         bloomFilterParams.getHashCount(),
         fmt::join(fieldTypes, ", "));
@@ -340,13 +352,16 @@ void bloomFilterMatchesDisabledProperty(TestUtils::EngineMode mode)
     /// Drawn once up front, then replayed into both maps in the same order, so the filter is the only difference.
     const auto records = genRecords(fieldTypes, numKeyFields, numberOfItems);
 
+    const auto inlineRecords = genInlineRecords(bufferSize);
+    RC_PRE(TestUtils::TestableChainedHashMap::fits(fieldTypes, numKeyFields, bufferSize, inlineRecords));
+    RC_PRE(TestUtils::TestableChainedHashMap::fits(fieldTypes, numKeyFields, bufferSize, std::nullopt));
+
     /// One buffer manager per map: the two allocate pages independently and must not compete for the pool.
     auto withFilterBuffers = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
     auto withoutFilterBuffers = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
     TestUtils::TestableChainedHashMap withFilter{
-        fieldTypes, *withFilterBuffers, mode, numberOfBuckets, numKeyFields, numEntriesPerPage, bloomFilterParams};
-    TestUtils::TestableChainedHashMap withoutFilter{
-        fieldTypes, *withoutFilterBuffers, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
+        fieldTypes, *withFilterBuffers, mode, numberOfBuckets, numKeyFields, bloomFilterParams, inlineRecords};
+    TestUtils::TestableChainedHashMap withoutFilter{fieldTypes, *withoutFilterBuffers, mode, numberOfBuckets, numKeyFields};
 
     for (const auto& [key, value] : records)
     {
@@ -375,24 +390,25 @@ void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
-    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
     const auto numIterations = *rc::gen::inRange<uint64_t>(1, maxIterations + 1);
     /// Deterministic, not drawn: every field is a key, so the map under test is exercised purely as a HashSet.
     const auto numKeyFields = fieldTypes.size();
 
     NES_INFO(
-        "Property putAndLookupHashSet: fields={}, N={}, bufferSize={}, numBuckets={}, entriesPerPage={}, iterations={}, "
+        "Property putAndLookupHashSet: fields={}, N={}, bufferSize={}, numBuckets={}, iterations={}, "
         "field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
         numberOfBuckets,
-        numEntriesPerPage,
         numIterations,
         fmt::join(fieldTypes, ", "));
 
+    const auto inlineRecords = genInlineRecords(bufferSize);
+    RC_PRE(TestUtils::TestableChainedHashMap::fits(fieldTypes, numKeyFields, bufferSize, inlineRecords));
     auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestableChainedHashMap chainedHashMap{fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
+    TestUtils::TestableChainedHashMap chainedHashMap{
+        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, std::nullopt, inlineRecords};
     RC_ASSERT(chainedHashMap.getValueDataTypes().empty());
     auto reference = makeEmptyReference(chainedHashMap);
 
@@ -410,6 +426,81 @@ void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
         verifyLookups(chainedHashMap, reference, fieldTypes);
     }
 }
+
+/// All records that are put for a key are kept, in the order of the puts, whether they fit into the entry of the key or are stored in the
+/// paged vector behind it. The first record is what at() returns.
+void putManyRecordsPerKeyProperty(TestUtils::EngineMode mode)
+{
+    constexpr uint64_t maxKeys = 8;
+
+    const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
+    const auto bufferSize = *rc::gen::elementOf(RECORDS_BUFFER_SIZE_POOL);
+    const auto numberOfRecords = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
+    const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
+    const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
+    const auto numberOfKeys = *rc::gen::inRange<uint64_t>(1, maxKeys + 1);
+    const auto inlineRecords = *rc::gen::inRange<uint64_t>(0, 17);
+    const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams
+        = *rc::gen::arbitrary<bool>() ? std::optional{genBloomFilterParams()} : std::nullopt;
+
+    NES_INFO(
+        "Property putManyRecordsPerKey: fields={}, records={}, keys={}, inlineRecords={}, bufferSize={}, numKeyFields={}, numBuckets={}, "
+        "field_types={}",
+        fieldTypes.size(),
+        numberOfRecords,
+        numberOfKeys,
+        inlineRecords,
+        bufferSize,
+        numKeyFields,
+        numberOfBuckets,
+        fmt::join(fieldTypes, ", "));
+
+    RC_PRE(TestUtils::TestableChainedHashMap::fits(fieldTypes, numKeyFields, bufferSize, inlineRecords));
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestableChainedHashMap chainedHashMap{
+        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, bloomFilterParams, inlineRecords};
+
+    /// Only a few keys, so that every key gets many records.
+    std::vector<TestUtils::AnyVec> keys;
+    for (auto& [key, value] : genRecords(fieldTypes, numKeyFields, numberOfKeys))
+    {
+        keys.push_back(std::move(key));
+    }
+    const auto& keyTypes = chainedHashMap.getKeyDataTypes();
+    std::unordered_map<TestUtils::AnyVec, std::vector<TestUtils::AnyVec>, TestUtils::AnyVecHash, TestUtils::AnyVecKeyEqual> reference(
+        0, TestUtils::AnyVecHash{&keyTypes}, TestUtils::AnyVecKeyEqual{&keyTypes});
+    for (uint64_t i = 0; i < numberOfRecords; ++i)
+    {
+        const auto& key = keys[*rc::gen::inRange<size_t>(0, keys.size())];
+        const auto value = genRecords(fieldTypes, numKeyFields, 1).front().second;
+        chainedHashMap.put(key, value);
+        TestUtils::AnyVec record(key);
+        record.insert(record.end(), value.begin(), value.end());
+        reference[key].push_back(std::move(record));
+    }
+
+    RC_ASSERT(chainedHashMap.size() == reference.size());
+    for (const auto& [key, records] : reference)
+    {
+        const auto actual = chainedHashMap.recordsOf(key);
+        RC_ASSERT(actual.size() == records.size());
+        for (size_t i = 0; i < records.size(); ++i)
+        {
+            RC_ASSERT(TestUtils::anyVecsEqual(actual[i], records[i], fieldTypes));
+        }
+        const auto first = chainedHashMap.at(key);
+        RC_ASSERT(first.has_value());
+        const TestUtils::AnyVec expectedValue(
+            records.front().begin() + static_cast<TestUtils::AnyVec::difference_type>(numKeyFields), records.front().end());
+        RC_ASSERT(
+            TestUtils::anyVecsEqual(
+                *first,
+                expectedValue,
+                std::vector<DataType>(fieldTypes.begin() + static_cast<std::ptrdiff_t>(numKeyFields), fieldTypes.end())));
+    }
+}
+
+
 } /// anonymous namespace
 
 /// One RC_GTEST_PROP per (property, backend) combination so that a failure on one backend doesn't mask the other and
@@ -455,13 +546,11 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
     constexpr uint64_t bufferSize = 4096;
     constexpr uint64_t numberOfBuckets = 1;
     constexpr uint64_t entrySize = sizeof(ChainedHashMapEntry);
-    constexpr uint64_t entriesPerPage = 1;
     constexpr uint64_t numberOfPooledBuffers = 16;
 
     const ChainedHashMapConfig hashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
-        .pageSize = entrySize * entriesPerPage,
         .bloomFilterParams = std::nullopt,
         .fieldKeys = {},
         .fieldValues = {},
@@ -533,6 +622,18 @@ RC_GTEST_PROP(ChainedHashMapPropertyTest, bloomFilterMatchesDisabledInterpreter,
 {
     Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
     bloomFilterMatchesDisabledProperty(TestUtils::EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putManyRecordsPerKeyCompiler, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putManyRecordsPerKeyProperty(TestUtils::EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putManyRecordsPerKeyInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putManyRecordsPerKeyProperty(TestUtils::EngineMode::Interpreter);
 }
 
 }

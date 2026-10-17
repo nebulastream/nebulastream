@@ -19,10 +19,6 @@ on:
         type: string
         description: "Buffer size the large scale tests should be run with"
         default: 4096
-      page_size:
-        type: string
-        description: "Page size the large scale tests should be run with"
-        default: 4096
       number_of_partitions:
         type: string
         description: "Number of partitions large scale tests should be run with"
@@ -83,7 +79,6 @@ jobs:
             echo "Running all large tests with: "
             echo " - NUMBER_OF_WORKER_THREADS: ${{ inputs.number_of_worker_threads }}"
             echo " - BUFFER_SIZE: ${{ inputs.buffer_size }}"
-            echo " - PAGE_SIZE: ${{ inputs.page_size }}"
             echo " - NUMBER_OF_PARTITIONS: ${{ inputs.number_of_partitions }}"
 
             build/nes-systests/systest/systest \
@@ -95,7 +90,6 @@ jobs:
                 --worker.default_query_execution.execution_mode=COMPILER \
                 --worker.query_engine.number_of_worker_threads=${{ inputs.number_of_worker_threads }} \
                 --worker.default_query_execution.operator_buffer_size=${{ inputs.buffer_size }} \
-                --worker.default_query_execution.page_size=${{ inputs.page_size }} \
                 --worker.default_query_execution.number_of_partitions=${{ inputs.number_of_partitions }} \
                 --worker.total_memory_in_bytes=${{ inputs.total_memory_in_bytes }} \
                 --worker.unpooled_memory_fraction=0.8935 \

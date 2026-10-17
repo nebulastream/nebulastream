@@ -89,7 +89,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
     auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
-    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), physicalInputSchema, memoryLayoutType);
+    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.operatorBufferSize.getValue(), physicalInputSchema, memoryLayoutType);
 
     for (const auto& descriptor : aggregationDescriptors)
     {
@@ -170,7 +170,6 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
-    const auto pageSize = conf.pageSize.getValue();
 
     const auto fieldKeyNames
         = boundGroupingKeys | std::views::transform([](const auto& field) { return QualifiedIdentifier{field->getField().getLastName()}; });
@@ -192,11 +191,21 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const ChainedHashMapConfig hashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
-        .pageSize = pageSize,
         .bloomFilterParams = std::nullopt,
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,
         .hashFunction = std::make_shared<MurMur3HashFunction>()};
+    /// The state is stored in buffers of the operator buffer size, so the chains of the hash map and one entry have to fit into one.
+    if (const auto minimumBufferSize = std::max(ChainedHashMap::calculateBufferSize(numberOfBuckets, 0), entrySize);
+        conf.operatorBufferSize.getValue() < minimumBufferSize)
+    {
+        throw QueryCompilerError(
+            "The aggregation hash map needs buffers of at least {} bytes, but the operator buffer size is {}. Decrease "
+            "number_of_partitions "
+            "or increase operator_buffer_size.",
+            minimumBufferSize,
+            conf.operatorBufferSize.getValue());
+    }
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);

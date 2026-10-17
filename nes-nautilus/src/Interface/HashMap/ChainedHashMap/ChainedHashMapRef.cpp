@@ -355,7 +355,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
 nautilus::val<ChainedHashMapEntry*>
 ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    /// The proxy cannot be handed the config itself — a non-capturing lambda takes scalars only — so the four
+    /// The proxy cannot be handed the config itself — a non-capturing lambda takes scalars only — so the
     /// numbers insertEntry needs are passed individually. They are all derived from this object's config, and
     /// each becomes a constant in the compiled code. Passing a pointer to the config instead would bake a
     /// host address into the trace, which would dangle if the operator holding it is moved after tracing.
@@ -364,19 +364,15 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
             const HashFunction::HashValue::raw_type hashValue,
             AbstractBufferProvider* bufferProviderVal,
             const uint64_t entrySize,
-            const uint64_t entriesPerPage,
-            const uint64_t pageSize,
             const uint64_t mask)
         {
             auto chm = ChainedHashMap::load(*buffer);
-            return chm.insertEntry(hashValue, bufferProviderVal, entrySize, entriesPerPage, pageSize, mask);
+            return chm.insertEntry(hashValue, bufferProviderVal, entrySize, mask);
         },
         buffer.asArg(),
         hash,
         bufferProvider,
         nautilus::val<uint64_t>{config.entrySize},
-        nautilus::val<uint64_t>{config.entriesPerPage()},
-        nautilus::val<uint64_t>{config.pageSize},
         nautilus::val<uint64_t>{ChainedHashMap::calculateMask(config.numberOfBuckets)});
 
     if (bloomFilter)

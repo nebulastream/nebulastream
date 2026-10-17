@@ -80,11 +80,8 @@ public:
     /// entrySize as sizeof(ChainedHashMapEntry) + keySize + valueSize.
     /// The scalar overload exists for traced code, which cannot receive a ChainedHashMapConfig through a
     /// non-capturing invoke lambda. Both must be handed the numbers of one and the same config.
-    /// entrySize and pageSize are only ever read by preconditions, so they are compiled away with them.
-    static void init(
-        TupleBuffer& tupleBuffer IF_PRECONDITION(, uint64_t entrySize),
-        uint64_t numberOfBuckets IF_PRECONDITION(, uint64_t pageSize),
-        uint64_t bloomBytes);
+    /// entrySize is only ever read by preconditions, so they are compiled away with them.
+    static void init(TupleBuffer& tupleBuffer IF_PRECONDITION(, uint64_t entrySize), uint64_t numberOfBuckets, uint64_t bloomBytes);
     static void init(TupleBuffer& tupleBuffer, const ChainedHashMapConfig& config);
 
     /// Power of two >= numberOfBuckets / ChainedHashMapConfig::assumedLoadFactor: the real size of the chains
@@ -107,13 +104,8 @@ public:
     /// Scalar sizing because the only caller is a traced invoke proxy. The numbers must come from the very
     /// config the map was init()ed with: nothing validates that any more, since the map no longer carries its
     /// sizing, and a mismatched entrySize or mask corrupts the map silently.
-    AbstractHashMapEntry* insertEntry(
-        HashFunction::HashValue::raw_type hash,
-        AbstractBufferProvider* bufferProvider,
-        uint64_t entrySize,
-        uint64_t entriesPerPage,
-        uint64_t pageSize,
-        uint64_t mask);
+    AbstractHashMapEntry*
+    insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider, uint64_t entrySize, uint64_t mask);
 
     [[nodiscard]] uint64_t getTotalNumberOfRecords() const override { return header().numRecords; }
 
@@ -142,11 +134,9 @@ public:
 
     /// HashMapSlice magic numbers
     static constexpr auto VALID_CHM = 82543427462775423;
-    static constexpr auto FIXED_STORAGE_SPACE_BUFFER_SIZE = 4;
-    static constexpr auto VARSIZED_STORAGE_SPACE_BUFFER_SIZE = 4;
 
 protected:
-    void appendPage(AbstractBufferProvider* bufferProvider, uint64_t pageSize);
+    void appendPage(AbstractBufferProvider* bufferProvider);
     void allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, size_t neededSize);
 
 private:

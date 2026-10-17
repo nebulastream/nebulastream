@@ -25,6 +25,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -39,15 +40,25 @@ namespace NES::TestUtils
 class TestableChainedHashMap
 {
 public:
+    /// @param inlineRecords without it, a key has one value (the fields after the key fields), and a second put of a key is ignored.
+    /// With it, the map stores the records of the keys as the hash join does: every put appends a record to its key, in the value area of the
+    /// key's entry, which holds this many records and a paged vector for more of them (the number is limited by the size of the records).
+    /// at() then returns the value of the first record and getAll() one entry per key, so the same properties hold for both.
+    /// The pages of the map are buffers of the size of the bufferManager, so an entry (and for records a record) has to fit into one:
+    /// see fits().
     TestableChainedHashMap(
         const std::vector<DataType>& fieldTypes,
         AbstractBufferProvider& bufferManager,
         EngineMode mode,
         uint64_t numberOfBuckets,
         size_t numKeyFields,
-        uint64_t numEntriesPerPage,
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): matches the pre-existing default here.
-        const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams = std::nullopt);
+        const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams = std::nullopt,
+        std::optional<uint64_t> inlineRecords = std::nullopt);
+
+    /// Whether the entries of a map with these parameters fit into a buffer of size `bufferSize`, which the constructor requires.
+    [[nodiscard]] static bool
+    fits(const std::vector<DataType>& fieldTypes, size_t numKeyFields, uint64_t bufferSize, const std::optional<uint64_t>& inlineRecords);
 
     ~TestableChainedHashMap() = default;
     TestableChainedHashMap(const TestableChainedHashMap&) = delete;
@@ -61,6 +72,10 @@ public:
 
     /// Looks up a key without mutating the map. Returns the value if present, nullopt otherwise.
     std::optional<AnyVec> at(const AnyVec& key);
+
+    /// Only for a map that stores the records of its keys (see the constructor): all records that were put for the key, in insertion order.
+    /// A record is the key fields followed by the value fields.
+    std::vector<AnyVec> recordsOf(const AnyVec& key);
 
     /// Returns every stored (key, value) pair in page-iteration order.
     std::vector<std::pair<AnyVec, AnyVec>> getAll();
@@ -102,6 +117,10 @@ private:
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> insertFn;
     std::optional<nautilus::engine::CompiledFunction<bool(TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, AnyVec*, AnyVec*)>> lookupFn;
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAllFn;
+    std::optional<
+        nautilus::engine::CompiledFunction<bool(TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, AnyVec*, std::vector<AnyVec>*)>>
+        lookupAllFn;
+    bool storesRecords = false;
 
     struct FieldOffsets
     {
@@ -110,6 +129,9 @@ private:
     };
 
     FieldOffsets computeFieldOffsets(const std::vector<DataType>& fieldTypes, size_t numKeyFields);
+
+    /// Registers the compiled functions of a map that stores the records of its keys.
+    void registerRecordFunctions(const std::shared_ptr<PagedVectorTupleLayout>& layout, uint64_t recordsInline);
 };
 
 }
