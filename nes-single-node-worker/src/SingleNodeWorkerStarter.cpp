@@ -15,10 +15,12 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <stop_token>
 #include <string>
+#include <utility>
 #include <vector>
 #include <pthread.h>
 /// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
@@ -36,7 +38,9 @@
 #include <cpptrace/from_current.hpp>
 #include <folly/Synchronized.h>
 #include <grpcpp/security/server_credentials.h>
+#include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
+#include <grpcpp/server_context.h>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
@@ -47,6 +51,20 @@
 
 namespace
 {
+
+/// gRPC owns its handler threads, so they never pass through NES::Thread's constructor. Labels the handler thread before
+/// each request, so that everything it logs carries the worker's host and a thread name.
+class HandlerThreadLabeller final : public grpc::Server::GlobalCallbacks
+{
+    NES::Host workerHost;
+
+public:
+    explicit HandlerThreadLabeller(NES::Host workerHost) : workerHost(std::move(workerHost)) { }
+
+    void PreSynchronousRequest(grpc::ServerContext*) override { NES::Thread::initializeThread(workerHost, "grpc"); }
+
+    void PostSynchronousRequest(grpc::ServerContext*) override { }
+};
 
 class Cleanup
 {
@@ -220,6 +238,8 @@ int main(const int argc, const char* argv[])
         }
         {
             NES::Thread::initializeThread(NES::Host(configuration->dataAddress.getValue()), "main");
+            /// Has to happen before the server is built and at most once per process. gRPC takes ownership of the callbacks.
+            grpc::Server::SetGlobalCallbacks(std::make_unique<HandlerThreadLabeller>(NES::Thread::getThisWorkerNodeId()).release());
             NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
 
             grpc::ServerBuilder builder;
