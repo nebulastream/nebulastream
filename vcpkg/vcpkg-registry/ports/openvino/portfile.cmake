@@ -25,6 +25,7 @@ vcpkg_from_github(
         use-system-xbyak.patch
         guard-docs-and-template-extension.patch
         multimap-first-entry.patch
+        no-sigaltstack.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS

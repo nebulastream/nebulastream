@@ -1,0 +1,13 @@
+diff --git a/src/plugins/intel_cpu/src/sigstack_manager.h b/src/plugins/intel_cpu/src/sigstack_manager.h
+index ad5daff..4940f5e 100644
+--- a/src/plugins/intel_cpu/src/sigstack_manager.h
++++ b/src/plugins/intel_cpu/src/sigstack_manager.h
+@@ -21,8 +21,6 @@ private:
+ };
+ 
+ class CPUSpecialSetup {
+-    SigAltStackSetup ss;
+-
+ public:
+     CPUSpecialSetup() = default;
+ };
