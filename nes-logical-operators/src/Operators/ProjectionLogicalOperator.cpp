@@ -46,7 +46,9 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
+#include <Traits/AsyncExecutionTrait.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -166,7 +168,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
             return builder.str();
         });
     std::stringstream builder;
-    builder << "PROJECTION(";
+    builder << (hasTrait<AsyncExecutionTrait>(traitSet) ? "ASYNC_PROJECTION(" : "PROJECTION(");
     if (verbosity == ExplainVerbosity::Debug)
     {
         builder << "opId: " << id << ", ";

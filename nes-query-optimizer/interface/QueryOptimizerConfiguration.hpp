@@ -20,6 +20,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
+#include <QueryOptimizerAsyncConfiguration.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 
 namespace NES
@@ -46,8 +47,10 @@ public:
 
     QueryOptimizerNetworkConfiguration network = {"network", "Network configuration overrides for query decomposition"};
 
+    QueryOptimizerAsyncConfiguration async = {"async", "Settings of asynchronously executed stages"};
+
 private:
-    std::vector<BaseOption*> getOptions() override { return {&joinStrategy, &network}; }
+    std::vector<BaseOption*> getOptions() override { return {&joinStrategy, &network, &async}; }
 };
 
 }
