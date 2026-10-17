@@ -137,7 +137,8 @@ public:
 
     nautilus::val<ChildBufferIndex> storeChild(NautilusBuffer&& buffer);
 
-    /// Loading a child buffer always yields an owned buffer, as its lifetime must be managed by the nautilus execution.
+    /// Loading a child buffer yields a buffer that does not own a reference (see TupleBuffer::viewChildBuffer): it is only valid while this
+    /// buffer is alive, and moves into a store/emit as a new reference.
     [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
 
     [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;

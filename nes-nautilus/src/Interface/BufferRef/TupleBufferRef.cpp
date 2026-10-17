@@ -127,7 +127,7 @@ TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, cons
 
     /// Creating a subspan that starts at the required offset. It still can contain multiple other var sized, as we have solely offset the
     /// lower bound but not the upper bound.
-    const auto varSized = childBuffer->getAvailableMemoryArea().subspan(variableSizedAccess.getOffset().getRawOffset());
+    const auto varSized = childBuffer.getAvailableMemoryArea().subspan(variableSizedAccess.getOffset().getRawOffset());
 
     return varSized.subspan(0, variableSizedAccess.getSize().getRawSize());
 }

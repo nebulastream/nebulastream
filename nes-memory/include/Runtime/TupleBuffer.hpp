@@ -69,11 +69,8 @@ class MemorySegment;
  * Reminder: this class should be header-only to help inlining
  */
 
-class TupleBufferView;
-
 class TupleBuffer
 {
-    friend class TupleBufferView;
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
     friend class UnpooledChunksManager;
@@ -104,11 +101,13 @@ public:
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept
+        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size), borrowed(other.borrowed)
     {
         other.controlBlock = nullptr;
         other.ptr = nullptr;
         other.size = 0;
+        other.borrowed = false;
     }
 
     TupleBuffer& operator=(const TupleBuffer& other) = delete;
@@ -191,8 +190,9 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
-    /// @brief Looks at a child buffer without taking a reference. The view is only valid while this buffer is alive.
-    [[nodiscard]] TupleBufferView viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
+    /// @brief Looks at a child buffer without taking a reference. The returned handle is borrowed: it does not release the buffer, and
+    /// it is only valid while this buffer is alive. Use share() to get an owning handle.
+    [[nodiscard]] TupleBuffer viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
 
 private:
     /**
@@ -203,30 +203,8 @@ private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
-};
-
-/// A non-owning TupleBuffer handle (for example of a child buffer), which does not touch the reference count.
-/// It must not outlive the buffer it was taken from.
-class TupleBufferView
-{
-public:
-    TupleBufferView(const TupleBufferView&) = delete;
-    TupleBufferView& operator=(const TupleBufferView&) = delete;
-    TupleBufferView(TupleBufferView&& other) noexcept : buffer(std::move(other.buffer)) { }
-    TupleBufferView& operator=(TupleBufferView&&) = delete;
-    /// The handle never owned a reference: forget it before TupleBuffer's destructor can release one.
-    ~TupleBufferView() { buffer.controlBlock = nullptr; }
-
-    [[nodiscard]] TupleBuffer& get() noexcept { return buffer; }
-    [[nodiscard]] const TupleBuffer& get() const noexcept { return buffer; }
-    TupleBuffer* operator->() noexcept { return &buffer; }
-    const TupleBuffer* operator->() const noexcept { return &buffer; }
-
-private:
-    friend class TupleBuffer;
-    explicit TupleBufferView(TupleBuffer buffer) noexcept : buffer(std::move(buffer)) { }
-
-    TupleBuffer buffer;
+    /// A borrowed handle does not own a reference, see viewChildBuffer().
+    bool borrowed = false;
 };
 
 }

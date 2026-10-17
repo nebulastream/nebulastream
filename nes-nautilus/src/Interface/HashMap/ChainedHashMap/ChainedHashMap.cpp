@@ -155,7 +155,7 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     {
         /// Storage buffer already exists - just add the new page
         auto varSizedBuffer = buffer.viewChildBuffer(varSizedBufferIdx);
-        std::ignore = varSizedBuffer->storeChildBuffer(
+        std::ignore = varSizedBuffer.storeChildBuffer(
             std::move(newPage)); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
     }
     else
@@ -205,7 +205,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const ui
     {
         /// storage buffer already exists
         auto storageBuffer = buffer.viewChildBuffer(storageBufferIdx);
-        std::ignore = storageBuffer->storeChildBuffer(
+        std::ignore = storageBuffer.storeChildBuffer(
             std::move(newPage)); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
     }
     else
@@ -288,10 +288,10 @@ TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
     auto storageBufferIdx = getStorageBufferIdx();
     PRECONDITION(storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "Storage space not initialized during getPage()");
     auto storageBuffer = buffer.viewChildBuffer(storageBufferIdx);
-    uint64_t numberOfPages = storageBuffer->getNumberOfChildBuffers();
+    uint64_t numberOfPages = storageBuffer.getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
     const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
-    TupleBuffer page = storageBuffer->loadChildBuffer(pageBufferIdx);
+    TupleBuffer page = storageBuffer.loadChildBuffer(pageBufferIdx);
     return page;
 }
 
@@ -301,10 +301,10 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     PRECONDITION(
         varSizedSpaceIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "VarSized space not initialized during getVarSizedPage()");
     auto varSizedBuffer = buffer.viewChildBuffer(varSizedSpaceIdx);
-    uint64_t numberOfPages = varSizedBuffer->getNumberOfChildBuffers();
+    uint64_t numberOfPages = varSizedBuffer.getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
     const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
-    TupleBuffer page = varSizedBuffer->loadChildBuffer(pageBufferIdx);
+    TupleBuffer page = varSizedBuffer.loadChildBuffer(pageBufferIdx);
     return page;
 }
 
@@ -314,7 +314,7 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     if (storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         auto storageBuffer = buffer.viewChildBuffer(storageBufferIdx);
-        return storageBuffer->getNumberOfChildBuffers();
+        return storageBuffer.getNumberOfChildBuffers();
     }
     return 0;
 }
@@ -325,7 +325,7 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     if (varSizedBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         auto varSizedBuffer = buffer.viewChildBuffer(varSizedBufferIdx);
-        return varSizedBuffer->getNumberOfChildBuffers();
+        return varSizedBuffer.getNumberOfChildBuffers();
     }
     return 0;
 }

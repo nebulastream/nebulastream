@@ -36,6 +36,7 @@ TupleBuffer TupleBuffer::share() const noexcept
     other.controlBlock = controlBlock;
     other.ptr = ptr;
     other.size = size;
+    other.borrowed = false;
     if (controlBlock != nullptr)
     {
         controlBlock->retain();
@@ -76,13 +77,14 @@ NAUTILUS_INLINE TupleBuffer& TupleBuffer::retain() noexcept
 
 NAUTILUS_INLINE void TupleBuffer::release() noexcept
 {
-    if (controlBlock)
+    if (controlBlock and not borrowed)
     {
         controlBlock->release();
     }
     controlBlock = nullptr;
     ptr = nullptr;
     size = 0;
+    borrowed = false;
 }
 
 NAUTILUS_INLINE uint32_t TupleBuffer::getReferenceCounter() const noexcept
@@ -158,18 +160,24 @@ NAUTILUS_INLINE void TupleBuffer::setOriginId(const OriginId id) noexcept
 ChildBufferIndex TupleBuffer::storeChildBuffer(TupleBuffer&& buffer) noexcept
 {
     auto* const control = std::exchange(buffer.controlBlock, nullptr);
+    if (std::exchange(buffer.borrowed, false))
+    {
+        /// The child needs a reference of its own.
+        control->retain();
+    }
     buffer.ptr = nullptr;
     buffer.size = 0;
     INVARIANT(controlBlock != control, "Cannot attach buffer to self");
     return controlBlock->adoptChildBuffer(control);
 }
 
-TupleBufferView TupleBuffer::viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept
+TupleBuffer TupleBuffer::viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
     const auto ret = controlBlock->peekChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
     INVARIANT(ret, "Cannot view tuple buffer with index={}", bufferIndex);
-    return TupleBufferView{std::move(childBuffer)};
+    childBuffer.borrowed = true;
+    return childBuffer;
 }
 
 TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept
@@ -188,6 +196,7 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
     swap(lhs.ptr, rhs.ptr);
     swap(lhs.size, rhs.size);
     swap(lhs.controlBlock, rhs.controlBlock);
+    swap(lhs.borrowed, rhs.borrowed);
 }
 
 std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept

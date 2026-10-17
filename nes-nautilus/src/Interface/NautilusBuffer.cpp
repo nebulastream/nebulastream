@@ -78,7 +78,7 @@ OwnedNautilusBuffer OwnedNautilusBuffer::getChild(const nautilus::val<ChildBuffe
     OwnedNautilusBuffer child;
     nautilus::invoke(
         {.noUnwind = true},
-        +[](const TupleBuffer* self, TupleBuffer* child, ChildBufferIndex index) { *child = self->loadChildBuffer(index); },
+        +[](const TupleBuffer* self, TupleBuffer* child, ChildBufferIndex index) { *child = self->viewChildBuffer(index); },
         asArg(),
         child.asArg(),
         index);
@@ -135,7 +135,7 @@ OwnedNautilusBuffer BorrowedNautilusBuffer::getChild(const nautilus::val<ChildBu
     OwnedNautilusBuffer child;
     nautilus::invoke(
         {.noUnwind = true},
-        +[](TupleBuffer* self, TupleBuffer* child, ChildBufferIndex index) { *child = self->loadChildBuffer(index); },
+        +[](TupleBuffer* self, TupleBuffer* child, ChildBufferIndex index) { *child = self->viewChildBuffer(index); },
         buffer,
         child.asArg(),
         index);
@@ -153,7 +153,7 @@ OwnedNautilusBuffer BorrowedNautilusBuffer::getChildFromIndexAddress(const nauti
     nautilus::invoke(
         {.noUnwind = true},
         +[](const TupleBuffer* self, TupleBuffer* child, const uint32_t* indexPtr)
-        { *child = self->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
+        { *child = self->viewChildBuffer(ChildBufferIndex{*indexPtr}); },
         buffer,
         child.asArg(),
         indexAddress);
