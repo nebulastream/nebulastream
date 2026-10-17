@@ -66,12 +66,11 @@ int8_t* getInlineRecordAddress(int8_t* valueMemArea, const uint64_t position, co
 }
 
 /// Creates a paged vector as a child of the hash map buffer. Its main buffer is a full buffer, which stores the first records.
-uint32_t
-createPagedVector(TupleBuffer* hashMapBuffer, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize, const uint64_t pageSize)
+uint32_t createPagedVector(TupleBuffer* hashMapBuffer, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
 {
     const auto inlineSizeInBytes = bufferProvider->getBufferSize() - PagedVector::getMainBufferSize();
-    auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(inlineSizeInBytes), *bufferProvider);
-    PagedVector::init(pagedVectorBuffer, pageSize, tupleSize, inlineSizeInBytes);
+    auto pagedVectorBuffer = bufferProvider->getBufferBlocking();
+    PagedVector::init(pagedVectorBuffer, *bufferProvider, tupleSize, inlineSizeInBytes);
     return hashMapBuffer->storeChildBuffer(pagedVectorBuffer).getRawValue();
 }
 
@@ -80,12 +79,11 @@ void initializeProxy(
     int8_t* valueMemArea,
     AbstractBufferProvider* bufferProvider,
     const uint64_t inlineRecords,
-    const uint64_t tupleSize,
-    const uint64_t pageSize)
+    const uint64_t tupleSize)
 {
     if (inlineRecords == 0)
     {
-        const auto childIndex = createPagedVector(hashMapBuffer, bufferProvider, tupleSize, pageSize);
+        const auto childIndex = createPagedVector(hashMapBuffer, bufferProvider, tupleSize);
         std::memcpy(valueMemArea, &childIndex, sizeof(childIndex));
         return;
     }
@@ -98,8 +96,7 @@ int8_t* reserveRecordSlotProxy(
     int8_t* valueMemArea,
     AbstractBufferProvider* bufferProvider,
     const uint64_t inlineRecords,
-    const uint64_t tupleSize,
-    const uint64_t pageSize)
+    const uint64_t tupleSize)
 {
     auto header = loadHeader(valueMemArea);
     if (header.numberOfRecords < inlineRecords)
@@ -111,7 +108,7 @@ int8_t* reserveRecordSlotProxy(
     }
     if (header.overflowChildIndex == EntryRecordsRef::NO_OVERFLOW)
     {
-        header.overflowChildIndex = createPagedVector(hashMapBuffer, bufferProvider, tupleSize, pageSize);
+        header.overflowChildIndex = createPagedVector(hashMapBuffer, bufferProvider, tupleSize);
     }
     header.numberOfRecords += 1;
     storeHeader(valueMemArea, header);
@@ -151,7 +148,7 @@ nautilus::val<int8_t*> noVarSizedAllocation(const nautilus::val<int8_t*>& /*fiel
 }
 
 uint64_t EntryRecordsRef::getEffectiveInlineRecords(
-    const Schema<QualifiedUnboundField, Ordered>& schema, const uint64_t requestedInlineRecords, const uint64_t pageSize)
+    const Schema<QualifiedUnboundField, Ordered>& schema, const uint64_t requestedInlineRecords, const uint64_t bufferSize)
 {
     const bool hasVarSizedData
         = std::ranges::any_of(schema, [](const auto& field) { return field.getDataType().isType(DataType::Type::VARSIZED); });
@@ -161,7 +158,7 @@ uint64_t EntryRecordsRef::getEffectiveInlineRecords(
         return 0;
     }
     /// An entry (and thereby the small buffer) should only take a small part of the page of the hash map that stores it.
-    const uint64_t maximumValueAreaSize = pageSize / 8;
+    const uint64_t maximumValueAreaSize = bufferSize / 8;
     if (maximumValueAreaSize <= sizeof(SmallBufferHeader))
     {
         return 0;
@@ -183,7 +180,6 @@ void EntryRecordsRef::initialize(
     const nautilus::val<int8_t*>& valueMemArea,
     const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout,
     const uint64_t inlineRecords,
-    const uint64_t pageSize,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     auto buffer = hashMapBuffer;
@@ -193,21 +189,18 @@ void EntryRecordsRef::initialize(
         valueMemArea,
         bufferProvider,
         nautilus::val<uint64_t>(inlineRecords),
-        nautilus::val<uint64_t>(getSizeInBytes(tupleLayout->getSchema())),
-        nautilus::val<uint64_t>(pageSize));
+        nautilus::val<uint64_t>(getSizeInBytes(tupleLayout->getSchema())));
 }
 
 EntryRecordsRef::EntryRecordsRef(
     const BorrowedNautilusBuffer& hashMapBuffer,
     const nautilus::val<int8_t*>& valueMemArea,
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-    const uint64_t inlineRecords,
-    const uint64_t pageSize)
+    const uint64_t inlineRecords)
     : hashMapBuffer(hashMapBuffer)
     , valueMemArea(valueMemArea)
     , tupleLayout(std::move(tupleLayout))
     , inlineRecords(inlineRecords)
-    , pageSize(pageSize)
     , tupleSize(getSizeInBytes(this->tupleLayout->getSchema()))
 {
     if (inlineRecords == 0)
@@ -230,8 +223,7 @@ void EntryRecordsRef::pushBack(const Record& record, const nautilus::val<Abstrac
         valueMemArea,
         bufferProvider,
         nautilus::val<uint64_t>(inlineRecords),
-        nautilus::val<uint64_t>(tupleSize),
-        nautilus::val<uint64_t>(pageSize));
+        nautilus::val<uint64_t>(tupleSize));
     tupleLayout->writeRecord(record, address, noVarSizedAllocation);
 }
 

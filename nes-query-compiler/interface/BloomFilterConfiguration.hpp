@@ -32,7 +32,7 @@ static constexpr auto DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE = 0.01;
 /// to a single hash over a near-saturated bit array, which no longer filters anything worth the probe.
 static constexpr auto MIN_BLOOM_FILTER_FALSE_POSITIVE_RATE = 0.000001;
 static constexpr auto MAX_BLOOM_FILTER_FALSE_POSITIVE_RATE = 0.5;
-static constexpr auto DEFAULT_BLOOM_FILTER_EXPECTED_ENTRIES = 10'000;
+static constexpr auto DEFAULT_BLOOM_FILTER_EXPECTED_ENTRIES = 1'000;
 
 /// Configuration for the ChainedHashMap's optional in-map BloomFilter
 class BloomFilterConfiguration final : public BaseConfiguration
@@ -57,7 +57,9 @@ public:
            std::to_string(DEFAULT_BLOOM_FILTER_EXPECTED_ENTRIES),
            "Number of keys one hash map is expected to hold, which is what the bit array is sized for. This is not bounded by "
            "number_of_partitions: the hash maps never rehash, they just grow their chains, so the entry count is a property of the "
-           "workload. Too low saturates the filter and it stops skipping anything; too high wastes memory per hash map.",
+           "workload. Too low saturates the filter and it stops skipping anything; too high wastes memory per hash map. The bit array "
+           "lives in "
+           "the buffer of the hash map, so it has to fit into one operator buffer together with the chains.",
            {std::make_shared<NumberValidation>()}};
 
 private:

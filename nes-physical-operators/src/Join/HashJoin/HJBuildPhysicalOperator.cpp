@@ -94,7 +94,6 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                     entryRefReset.getValueMemArea(),
                     tupleLayout,
                     hashMapConfig.inlineRecords,
-                    hashMapConfig.pageSize,
                     ctx.pipelineMemoryProvider.bufferProvider);
             },
             ctx.pipelineMemoryProvider.bufferProvider);
@@ -102,8 +101,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{
             hashMapEntry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
-        EntryRecordsRef records{
-            borrowedHashMapBuffer, entryRef.getValueMemArea(), tupleLayout, hashMapConfig.inlineRecords, hashMapConfig.pageSize};
+        EntryRecordsRef records{borrowedHashMapBuffer, entryRef.getValueMemArea(), tupleLayout, hashMapConfig.inlineRecords};
         records.pushBack(record, ctx.pipelineMemoryProvider.bufferProvider);
     }
 }

@@ -3,8 +3,11 @@
 # groups: [Sources, windowAggregation, large]
 
 # We set the buffer size and the number of threads to ensure a deterministic trigger of the exception
-GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1024]
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1536]
 GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+# The chains and the bloom filter of a hash map have to fit into one buffer.
+GlobalConfiguration worker.default_query_execution.number_of_partitions: [16]
+GlobalConfiguration worker.default_query_execution.bloom_filter.expected_entries: [50]
 
 CREATE LOGICAL SOURCE outOfOrderStreamA(consumerId INT32 NOT NULL, sectorId INT32 NOT NULL, consumedPower FLOAT64 NOT NULL, consumerType VARSIZED NOT NULL, timestampA UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR outOfOrderStreamA TYPE File;

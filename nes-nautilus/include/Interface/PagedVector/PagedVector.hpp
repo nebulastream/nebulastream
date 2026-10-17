@@ -28,7 +28,7 @@ namespace NES
 {
 
 /// This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages.
-/// Entries consume a fixed size, which has to be smaller than the page size. Each page can contain page_size/entry_size entries.
+/// Entries consume a fixed size, which has to be smaller than the buffer size. Each page, a buffer of the default size, can contain buffer_size/entry_size entries.
 /// Additionally to the fixed data types, this PagedVector also supports variable sized data by attaching child buffers to the pages.
 /// To read and write records to the PagedVector, the PagedVectorRef class should ONLY be used.
 class PagedVector
@@ -75,7 +75,8 @@ public:
     /// getMainBufferSize(inlineSizeInBytes) large, otherwise the inline space is what fits. The records of a vector with inline space
     /// cannot be moved or copied to another vector. Child buffers of the inline records (var sized data) are children of the main buffer,
     /// in front of the pages.
-    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize, uint64_t inlineSizeInBytes = 0);
+    /// The pages are buffers of the provider's default size, which is what the provider has to hand out later on.
+    static void init(TupleBuffer buffer, const AbstractBufferProvider& bufferProvider, uint64_t tupleSize, uint64_t inlineSizeInBytes = 0);
     static PagedVector load(const TupleBuffer& buffer);
 
     /// @brief Appends a new page to the pages vector if the last page is full.
@@ -153,7 +154,7 @@ private:
     /// @brief We use a cumulative sum to increase the speed of findIdx for an entry pos
     void updateCumulativeSumLastItem() const;
     void updateCumulativeSumAllPages() const;
-    void addNewPage(AbstractBufferProvider* bufferProvider, uint64_t bufferSize);
+    void addNewPage(AbstractBufferProvider* bufferProvider);
 
     TupleBuffer& buffer;
 };

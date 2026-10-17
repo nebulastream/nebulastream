@@ -88,11 +88,7 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                 const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
                     rightEntry, rightHashMapBuffer, rightHashMapConfig.fieldKeys, rightHashMapConfig.fieldValues};
                 const EntryRecordsRef rightRecords{
-                    rightHashMapBuffer,
-                    rightEntryRef.getValueMemArea(),
-                    rightTupleLayout,
-                    rightHashMapConfig.inlineRecords,
-                    rightHashMapConfig.pageSize};
+                    rightHashMapBuffer, rightEntryRef.getValueMemArea(), rightTupleLayout, rightHashMapConfig.inlineRecords};
                 auto rightItStart = rightRecords.begin();
                 auto rightItEnd = rightRecords.end();
 
@@ -104,11 +100,7 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                         leftHashMapConfig.fieldKeys,
                         leftHashMapConfig.fieldValues};
                     const EntryRecordsRef leftRecords{
-                        leftHashMapBuffer,
-                        leftEntryRef.getValueMemArea(),
-                        leftTupleLayout,
-                        leftHashMapConfig.inlineRecords,
-                        leftHashMapConfig.pageSize};
+                        leftHashMapBuffer, leftEntryRef.getValueMemArea(), leftTupleLayout, leftHashMapConfig.inlineRecords};
                     const auto leftItEnd = leftRecords.end();
 
                     for (auto leftIt = leftRecords.begin(); leftIt != leftItEnd; ++leftIt)

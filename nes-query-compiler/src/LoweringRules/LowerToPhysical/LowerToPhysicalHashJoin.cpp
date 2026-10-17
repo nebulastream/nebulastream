@@ -262,7 +262,7 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
         fieldKeyNames.emplace_back(fieldExtension.newField.getFullyQualifiedName());
     }
 
-    /// State pages have the size of a pooled buffer, so they never need an unpooled allocation.
+    /// State is always stored in pooled buffers of the operator buffer size.
     const auto pageSize = conf.operatorBufferSize.getValue();
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     /// The entry of a key stores its first records, which is the expected number of records per key, and a paged vector for more of them
@@ -276,7 +276,6 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
         ChainedHashMapConfig{
             .entrySize = entrySize,
             .numberOfBuckets = numberOfBuckets,
-            .pageSize = pageSize,
             .bloomFilterParams = createBloomFilterParams(conf),
             .fieldKeys = fieldKeys,
             .fieldValues = fieldValues,
@@ -337,21 +336,34 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [leftHashMapConfig, leftKeyFunctions] = createChainedHashMapConfig(leftJoinFields, newLeftInputSchema, conf);
     auto [rightHashMapConfig, rightKeyFunctions] = createChainedHashMapConfig(rightJoinFields, newRightInputSchema, conf);
 
-    /// The build stores every distinct key's tuples in its own PagedVector sized by the same page-size knob, so the knob must also hold a
-    /// tuple - the same "does one element fit on a page" contract ChainedHashMapConfig enforces for entriesPerPage.
-    const auto requireTupleFitsOnPage = [](const uint64_t pageSize, const auto& tupleLayout, const std::string_view side)
+    /// The build stores every distinct key's tuples in its own PagedVector, whose pages are buffers of the operator buffer size, so a
+    /// tuple and the chains of the hash map have to fit into one such buffer.
+    const auto bufferSize = conf.operatorBufferSize.getValue();
+    const auto requireStateFitsInBuffer
+        = [bufferSize](const ChainedHashMapConfig& hashMapConfig, const auto& tupleLayout, const std::string_view side)
     {
-        if (const auto minimumPageSize = tupleLayout->getMinimumPageSize(); pageSize < minimumPageSize)
+        if (const auto minimumBufferSize = tupleLayout->getMinimumPageSize(); bufferSize < minimumBufferSize)
         {
             throw QueryCompilerError(
-                "The {} join input needs a page size of at least {} bytes, but the configured page size is {}. Increase the page size.",
+                "The {} join input needs an operator buffer size of at least {} bytes, but it is {}. Increase operator_buffer_size.",
                 side,
-                minimumPageSize,
-                pageSize);
+                minimumBufferSize,
+                bufferSize);
+        }
+        if (const auto hashMapSize
+            = ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets, hashMapConfig.bloomFilterMemAreaSize());
+            bufferSize < hashMapSize or bufferSize < hashMapConfig.entrySize)
+        {
+            throw QueryCompilerError(
+                "The {} hash map needs buffers of at least {} bytes, but the operator buffer size is {}. Decrease number_of_partitions "
+                "or increase operator_buffer_size.",
+                side,
+                std::max(hashMapSize, hashMapConfig.entrySize),
+                bufferSize);
         }
     };
-    requireTupleFitsOnPage(leftHashMapConfig.pageSize, leftTupleLayout, "left");
-    requireTupleFitsOnPage(rightHashMapConfig.pageSize, rightTupleLayout, "right");
+    requireStateFitsInBuffer(leftHashMapConfig, leftTupleLayout, "left");
+    requireStateFitsInBuffer(rightHashMapConfig, rightTupleLayout, "right");
 
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();

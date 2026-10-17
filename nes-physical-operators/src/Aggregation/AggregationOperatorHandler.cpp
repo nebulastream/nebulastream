@@ -97,8 +97,8 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// We need a buffer that is large enough to store an EmittedAggregationWindow
-        constexpr auto neededBufferSize = sizeof(EmittedAggregationWindow);
-        auto tupleBuffer = getPooledBufferIfFits(neededBufferSize, *pipelineCtx->getBufferManager());
+        auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+        INVARIANT(sizeof(EmittedAggregationWindow) <= tupleBuffer.getBufferSize(), "The trigger has to fit into a buffer");
         /// Store each hash map buffer as a child so the probe can load them via loadChildBuffer(i)
         for (auto hashMapBuffer : allHashMapBuffers)
         {

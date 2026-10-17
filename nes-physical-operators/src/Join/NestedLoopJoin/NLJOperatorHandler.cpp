@@ -99,7 +99,10 @@ void NLJOperatorHandler::emitSlicesToProbe(
 
     /// Allocate variable-sized trigger buffer
     const auto neededBufferSize = sizeof(EmittedNLJWindowTrigger) + ((leftSliceEnds.size() + rightSliceEnds.size()) * sizeof(SliceEnd));
-    auto tupleBuffer = getPooledBufferIfFits(neededBufferSize, *pipelineCtx->getBufferManager());
+    /// The slice ends of many slices can exceed a default buffer
+    auto tupleBuffer = neededBufferSize <= pipelineCtx->getBufferManager()->getBufferSize()
+        ? pipelineCtx->getBufferManager()->getBufferBlocking()
+        : getBuffer(neededBufferSize, *pipelineCtx->getBufferManager());
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));

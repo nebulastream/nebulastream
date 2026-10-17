@@ -167,17 +167,12 @@ void buildOne(
         {
             const ChainedHashMapRef::ChainedEntryRef entryRefReset{entry, borrowedHashMapBuffer, config.fieldKeys, config.fieldValues};
             EntryRecordsRef::initialize(
-                borrowedHashMapBuffer,
-                entryRefReset.getValueMemArea(),
-                shared.layout,
-                config.inlineRecords,
-                config.pageSize,
-                bufferProvider);
+                borrowedHashMapBuffer, entryRefReset.getValueMemArea(), shared.layout, config.inlineRecords, bufferProvider);
         },
         bufferProvider);
 
     const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, borrowedHashMapBuffer, config.fieldKeys, config.fieldValues};
-    EntryRecordsRef records{borrowedHashMapBuffer, entryRef.getValueMemArea(), shared.layout, config.inlineRecords, config.pageSize};
+    EntryRecordsRef records{borrowedHashMapBuffer, entryRef.getValueMemArea(), shared.layout, config.inlineRecords};
     records.pushBack(record, bufferProvider);
 }
 
@@ -212,7 +207,6 @@ Shared& getShared(const Workload& workload)
     shared.config = ChainedHashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = workload.buckets,
-        .pageSize = BUFFER_SIZE,
         .bloomFilterParams = std::nullopt,
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,
@@ -258,7 +252,7 @@ Shared& getShared(const Workload& workload)
                     const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
                         rightEntry, rightHashMapBuffer, config.fieldKeys, config.fieldValues};
                     const EntryRecordsRef rightRecords{
-                        rightHashMapBuffer, rightEntryRef.getValueMemArea(), sharedPtr->layout, config.inlineRecords, config.pageSize};
+                        rightHashMapBuffer, rightEntryRef.getValueMemArea(), sharedPtr->layout, config.inlineRecords};
                     auto rightItStart = rightRecords.begin();
                     auto rightItEnd = rightRecords.end();
 
@@ -270,7 +264,7 @@ Shared& getShared(const Workload& workload)
                             config.fieldKeys,
                             config.fieldValues};
                         const EntryRecordsRef leftRecords{
-                            leftHashMapBuffer, leftEntryRef.getValueMemArea(), sharedPtr->layout, config.inlineRecords, config.pageSize};
+                            leftHashMapBuffer, leftEntryRef.getValueMemArea(), sharedPtr->layout, config.inlineRecords};
                         const auto leftItEnd = leftRecords.end();
                         for (auto leftIt = leftRecords.begin(); leftIt != leftItEnd; ++leftIt)
                         {
@@ -297,8 +291,7 @@ struct HashMap
     void reset()
     {
         buffer = TupleBuffer{};
-        buffer = getPooledBufferIfFits(
-            ChainedHashMap::calculateBufferSize(shared.config.numberOfBuckets, shared.config.bloomFilterMemAreaSize()), provider);
+        buffer = provider.getBufferBlocking();
         ChainedHashMap::init(buffer, shared.config);
     }
 

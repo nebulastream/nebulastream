@@ -82,8 +82,12 @@ HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider
     {
         /// initialize the chained hash map buffer
         /// allocate buffers for the hash maps
-        auto childBuffer = getPooledBufferIfFits(
-            ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets, hashMapConfig.bloomFilterMemAreaSize()), bufferProvider);
+        auto childBuffer = bufferProvider.getBufferBlocking();
+        INVARIANT(
+            ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets, hashMapConfig.bloomFilterMemAreaSize())
+                <= childBuffer.getBufferSize(),
+            "The chains and the bloom filter of a hash map have to fit into one buffer of size {}",
+            childBuffer.getBufferSize());
         /// initialize chained hash map i
         ChainedHashMap::init(childBuffer, hashMapConfig);
         hashMapBuffers[pos] = childBuffer;

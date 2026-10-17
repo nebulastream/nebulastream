@@ -74,17 +74,16 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     nautilus::invoke(
         +[](AbstractBufferProvider* bufferProvider,
             TupleBuffer* finalHashMapBuffer IF_PRECONDITION(, const uint64_t entrySize),
-            const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize),
+            const uint64_t numberOfBuckets,
             const uint64_t bloomBytes)
         {
-            const auto neededFinalBufferSize = ChainedHashMap::calculateBufferSize(numberOfBuckets, bloomBytes);
             /// initialize the final hash map tuple buffer
-            *finalHashMapBuffer = getPooledBufferIfFits(neededFinalBufferSize, *bufferProvider);
-            ChainedHashMap::init(*finalHashMapBuffer IF_PRECONDITION(, entrySize), numberOfBuckets IF_PRECONDITION(, pageSize), bloomBytes);
+            *finalHashMapBuffer = bufferProvider->getBufferBlocking();
+            ChainedHashMap::init(*finalHashMapBuffer IF_PRECONDITION(, entrySize), numberOfBuckets, bloomBytes);
         },
         executionCtx.pipelineMemoryProvider.bufferProvider,
         finalHashMapNautilusBuffer.asArg() IF_PRECONDITION(, nautilus::val<uint64_t>{hashMapConfig.entrySize}),
-        nautilus::val<uint64_t>{hashMapConfig.numberOfBuckets} IF_PRECONDITION(, nautilus::val<uint64_t>{hashMapConfig.pageSize}),
+        nautilus::val<uint64_t>{hashMapConfig.numberOfBuckets},
         nautilus::val<uint64_t>{hashMapConfig.bloomFilterMemAreaSize()});
 
     /// Borrow the pinned final hash map buffer for the ChainedHashMapRef/entry views below (implicit Owned->Borrowed conversion).

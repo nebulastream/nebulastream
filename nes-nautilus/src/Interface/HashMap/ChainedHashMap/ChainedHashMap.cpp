@@ -74,24 +74,14 @@ uint64_t ChainedHashMap::calculateBufferSize(const uint64_t numberOfBuckets, con
 
 void ChainedHashMap::init(TupleBuffer& tupleBuffer, const ChainedHashMapConfig& config)
 {
-    init(
-        tupleBuffer IF_PRECONDITION(, config.entrySize),
-        config.numberOfBuckets IF_PRECONDITION(, config.pageSize),
-        config.bloomFilterMemAreaSize());
+    init(tupleBuffer IF_PRECONDITION(, config.entrySize), config.numberOfBuckets, config.bloomFilterMemAreaSize());
 }
 
 void ChainedHashMap::init(
-    TupleBuffer& tupleBuffer IF_PRECONDITION(, const uint64_t entrySize),
-    const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize),
-    const uint64_t bloomBytes)
+    TupleBuffer& tupleBuffer IF_PRECONDITION(, const uint64_t entrySize), const uint64_t numberOfBuckets, const uint64_t bloomBytes)
 {
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     const uint64_t numberOfChains = calculateNumberOfChains(numberOfBuckets);
-    PRECONDITION(
-        pageSize / entrySize > 0,
-        "At least one entry has to fit on a page. Pagesize is set to small for pageSize {} and entry size {}",
-        pageSize,
-        entrySize);
     PRECONDITION(
         numberOfChains > 0,
         "Number of chains has to be greater than 0. Number of chains is set to small for number of chains {}",
@@ -169,7 +159,7 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     else
     {
         /// Create new storage buffer and add the page
-        auto varSizedBuffer = getPooledBufferIfFits(VARSIZED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
+        auto varSizedBuffer = bufferProvider->getBufferBlocking();
         std::ignore = varSizedBuffer.storeChildBuffer(newPage);
         header().varSizedSpaceIndex = buffer.storeChildBuffer(varSizedBuffer);
     }
@@ -202,10 +192,10 @@ std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProv
     return lastPage.getAvailableMemoryArea().subspan(allocationOffset);
 }
 
-void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const uint64_t pageSize)
+void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
 {
     /// create and initialize new page
-    auto newPage = getPooledBufferIfFits(pageSize, *bufferProvider);
+    auto newPage = bufferProvider->getBufferBlocking();
 
     /// get or create storage buffer
     auto storageBufferIdx = getStorageBufferIdx();
@@ -219,7 +209,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const ui
     else
     {
         /// create new storage buffer (of minimal size)
-        auto storageBuffer = getPooledBufferIfFits(FIXED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
+        auto storageBuffer = bufferProvider->getBufferBlocking();
         std::ignore = storageBuffer.storeChildBuffer(
             newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
         header().storageSpaceIndex = buffer.storeChildBuffer(storageBuffer);
@@ -227,13 +217,9 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const ui
 }
 
 AbstractHashMapEntry* ChainedHashMap::insertEntry(
-    const HashFunction::HashValue::raw_type hash,
-    AbstractBufferProvider* bufferProvider,
-    const uint64_t entrySize,
-    const uint64_t entriesPerPage,
-    const uint64_t pageSize,
-    const uint64_t mask)
+    const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider, const uint64_t entrySize, const uint64_t mask)
 {
+    const uint64_t entriesPerPage = entrySize > 0 ? bufferProvider->getBufferSize() / entrySize : 0;
     PRECONDITION(
         entrySize > 0 and entriesPerPage > 0,
         "Malformed ChainedHashMap sizing with entry size {} and entries per page {}",
@@ -244,7 +230,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(
     if (getTotalNumberOfRecords() % entriesPerPage == 0)
     {
         /// create new page and append it
-        appendPage(bufferProvider, pageSize);
+        appendPage(bufferProvider);
     }
 
     /// 2. Finding the new entry

@@ -148,8 +148,8 @@ void HJOperatorHandler::emitSlicesToProbe(
     }
 
     /// Hash map buffers are stored as child buffers, not inline in the main buffer.
-    constexpr auto neededBufferSize = sizeof(EmittedHJWindowTrigger);
-    auto tupleBuffer = getPooledBufferIfFits(neededBufferSize, *pipelineCtx->getBufferManager());
+    auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+    INVARIANT(sizeof(EmittedHJWindowTrigger) <= tupleBuffer.getBufferSize(), "The trigger has to fit into a buffer");
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));

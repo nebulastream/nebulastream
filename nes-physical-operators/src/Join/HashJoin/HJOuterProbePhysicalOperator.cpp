@@ -99,11 +99,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
             const ChainedHashMapRef::ChainedEntryRef outerEntryRef{
                 outerEntry, outerHashMapBuffer, outerHashMapConfig.fieldKeys, outerHashMapConfig.fieldValues};
             const EntryRecordsRef outerRecords{
-                outerEntryRef.hashMapBuffer,
-                outerEntryRef.getValueMemArea(),
-                outerTupleLayout,
-                outerHashMapConfig.inlineRecords,
-                outerHashMapConfig.pageSize};
+                outerEntryRef.hashMapBuffer, outerEntryRef.getValueMemArea(), outerTupleLayout, outerHashMapConfig.inlineRecords};
 
             /// Check all inner hash maps for a matching key
             nautilus::val<bool> matched{false};
