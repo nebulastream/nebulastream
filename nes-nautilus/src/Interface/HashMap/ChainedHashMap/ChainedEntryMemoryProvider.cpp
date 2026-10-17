@@ -97,6 +97,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             if (type.isType(DataType::Type::VARSIZED))
             {
                 const auto varSizedDataPtr = nautilus::invoke(
+                    {.noUnwind = true},
                     +[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; },
                     static_cast<nautilus::val<const int8_t**>>(memoryAddress));
                 const auto sizeOfVarSized = readValueFromMemRef<uint32_t>(varSizedDataPtr);
@@ -134,6 +135,7 @@ void storeVarSized(
     const VariableSizedData& variableSizedData)
 {
     nautilus::invoke(
+        {.noUnwind = true},
         +[](const TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
             const int8_t** memoryAddressInEntry,

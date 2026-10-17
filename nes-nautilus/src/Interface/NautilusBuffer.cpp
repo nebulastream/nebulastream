@@ -33,17 +33,18 @@ namespace NES
 {
 nautilus::val<int8_t*> OwnedNautilusBuffer::data()
 {
-    return nautilus::invoke(+[](NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, &buffer);
+    return nautilus::invoke({.noUnwind = true},+[](NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, &buffer);
 }
 
 nautilus::val<const int8_t*> OwnedNautilusBuffer::data() const
 {
-    return nautilus::invoke(+[](const NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, asArg());
+    return nautilus::invoke({.noUnwind = true},+[](const NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, asArg());
 }
 
 nautilus::val<size_t> OwnedNautilusBuffer::getNumberOfRecords() const
 {
     return nautilus::invoke(
+        {.noUnwind = true},
         +[](const NES::TupleBuffer* buffer)
         {
             INVARIANT(buffer->getAvailableMemoryArea<>().data() != nullptr, "Buffer is invalid for NautilusBuffer:getNumberOfRecords()");
@@ -56,6 +57,7 @@ nautilus::val<size_t> OwnedNautilusBuffer::getNumberOfRecords() const
 nautilus::val<ChildBufferIndex> OwnedNautilusBuffer::storeChild(OwnedNautilusBuffer&& child)
 {
     return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        {.noUnwind = true},
         +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child) { return buffer->storeChildBuffer(*child).getRawValue(); },
         &buffer,
         &child.buffer)};
@@ -65,6 +67,7 @@ nautilus::val<ChildBufferIndex> OwnedNautilusBuffer::storeChild(OwnedNautilusBuf
 nautilus::val<ChildBufferIndex> OwnedNautilusBuffer::storeChild(BorrowedNautilusBuffer&& child)
 {
     return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        {.noUnwind = true},
         +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child) { return buffer->storeChildBuffer(*child).getRawValue(); },
         &buffer,
         child.asArg())};
@@ -74,6 +77,7 @@ OwnedNautilusBuffer OwnedNautilusBuffer::getChild(const nautilus::val<ChildBuffe
 {
     OwnedNautilusBuffer child;
     nautilus::invoke(
+        {.noUnwind = true},
         +[](const TupleBuffer* self, TupleBuffer* child, ChildBufferIndex index) { *child = self->loadChildBuffer(index); },
         asArg(),
         child.asArg(),
@@ -83,7 +87,7 @@ OwnedNautilusBuffer OwnedNautilusBuffer::getChild(const nautilus::val<ChildBuffe
 
 nautilus::val<bool> OwnedNautilusBuffer::isValid() const
 {
-    return nautilus::invoke(+[](const NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<>().data() != nullptr; }, asArg());
+    return nautilus::invoke({.noUnwind = true},+[](const NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<>().data() != nullptr; }, asArg());
 }
 
 nautilus::val<const NES::TupleBuffer*> OwnedNautilusBuffer::asArg() const&
@@ -113,23 +117,24 @@ BorrowedNautilusBuffer BorrowedNautilusBuffer::from(const nautilus::val<const Tu
 
 nautilus::val<int8_t*> BorrowedNautilusBuffer::data()
 {
-    return nautilus::invoke(+[](NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, buffer);
+    return nautilus::invoke({.noUnwind = true},+[](NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, buffer);
 }
 
 nautilus::val<const int8_t*> BorrowedNautilusBuffer::data() const
 {
-    return nautilus::invoke(+[](const NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, buffer);
+    return nautilus::invoke({.noUnwind = true},+[](const NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, buffer);
 }
 
 nautilus::val<size_t> BorrowedNautilusBuffer::getNumberOfRecords() const
 {
-    return nautilus::invoke(+[](const NES::TupleBuffer* buffer) { return buffer->getNumberOfTuples(); }, buffer);
+    return nautilus::invoke({.noUnwind = true},+[](const NES::TupleBuffer* buffer) { return buffer->getNumberOfTuples(); }, buffer);
 }
 
 OwnedNautilusBuffer BorrowedNautilusBuffer::getChild(const nautilus::val<ChildBufferIndex>& index) const
 {
     OwnedNautilusBuffer child;
     nautilus::invoke(
+        {.noUnwind = true},
         +[](TupleBuffer* self, TupleBuffer* child, ChildBufferIndex index) { *child = self->loadChildBuffer(index); },
         buffer,
         child.asArg(),
@@ -146,6 +151,7 @@ OwnedNautilusBuffer BorrowedNautilusBuffer::getChildFromIndexAddress(const nauti
 {
     OwnedNautilusBuffer child;
     nautilus::invoke(
+        {.noUnwind = true},
         +[](const TupleBuffer* self, TupleBuffer* child, const uint32_t* indexPtr)
         { *child = self->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
         buffer,
@@ -158,6 +164,7 @@ OwnedNautilusBuffer BorrowedNautilusBuffer::getChildFromIndexAddress(const nauti
 nautilus::val<ChildBufferIndex> BorrowedNautilusBuffer::storeChild(OwnedNautilusBuffer&& child)
 {
     return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        {.noUnwind = true},
         +[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
 }
 
@@ -165,6 +172,7 @@ nautilus::val<ChildBufferIndex> BorrowedNautilusBuffer::storeChild(OwnedNautilus
 nautilus::val<ChildBufferIndex> BorrowedNautilusBuffer::storeChild(BorrowedNautilusBuffer&& child)
 {
     return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        {.noUnwind = true},
         +[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
 }
 
@@ -237,7 +245,7 @@ OwnedNautilusBuffer OwnedNautilusBuffer::copy(const NautilusBuffer& source)
     OwnedNautilusBuffer owned;
     /// Copy-assigning the TupleBuffer takes a reference-counted copy of the source's underlying buffer, so the new owned buffer keeps
     /// it alive on its own. source.asArg() works uniformly for an owned or a borrowed source.
-    nautilus::invoke(+[](TupleBuffer* self, const TupleBuffer* src) { *self = *src; }, owned.asArg(), source.asArg());
+    nautilus::invoke({.noUnwind = true},+[](TupleBuffer* self, const TupleBuffer* src) { *self = *src; }, owned.asArg(), source.asArg());
     return owned;
 }
 }

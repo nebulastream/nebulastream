@@ -162,6 +162,7 @@ TupleBufferRef::getRecordBufferStore(const RecordBuffer& recordBuffer, const nau
         auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(slot);
 
         invoke(
+            {.noUnwind = true},
             +[](TupleBuffer* tupleBuffer,
                 AbstractBufferProvider* bufferProvider,
                 const int8_t* varSizedPtr,

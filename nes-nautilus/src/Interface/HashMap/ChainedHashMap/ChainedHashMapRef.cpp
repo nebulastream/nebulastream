@@ -280,6 +280,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
     const nautilus::val<uint64_t> pageIndex = 0;
     nautilus::val<EntryIterator::PageCounts> args;
     const auto currentEntry = nautilus::invoke(
+        {.noUnwind = true},
         +[](const TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, EntryIterator::PageCounts* args)
         {
             const auto chm = ChainedHashMap::load(*buffer);
@@ -317,6 +318,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
     const auto numberOfTuples = invoke(
+        {.noUnwind = true},
         +[](const TupleBuffer* buffer)
         {
             const auto chm = ChainedHashMap::load(*buffer);
@@ -332,6 +334,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
     /// it folds into an immediate instead of costing a load from the map's header on every probe.
     const auto entryPos = hash & nautilus::val<uint64_t>{ChainedHashMap::calculateMask(config.numberOfBuckets)};
     return nautilus::invoke(
+        {.noUnwind = true},
         +[](const TupleBuffer* buffer, const uint64_t pos) -> ChainedHashMapEntry*
         {
             ChainedHashMap chm = ChainedHashMap::load(*buffer);
@@ -353,6 +356,7 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
     /// each becomes a constant in the compiled code. Passing a pointer to the config instead would bake a
     /// host address into the trace, which would dangle if the operator holding it is moved after tracing.
     const auto newEntry = invoke(
+        {.noUnwind = true},
         +[](TupleBuffer* buffer,
             const HashFunction::HashValue::raw_type hashValue,
             AbstractBufferProvider* bufferProviderVal,
@@ -457,6 +461,7 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
         ++pageIndex;
         nautilus::val<PageCounts> args;
         currentEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(nautilus::invoke(
+            {.noUnwind = true},
             +[](TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, PageCounts* args)
             {
                 const auto chm = ChainedHashMap::load(*buffer);
