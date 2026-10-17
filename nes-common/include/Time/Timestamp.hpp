@@ -27,18 +27,34 @@ public:
     using Underlying = uint64_t;
     static constexpr Underlying INITIAL_VALUE = 0;
     static constexpr Underlying INVALID_VALUE = UINT64_MAX;
+    static constexpr Underlying INFINITE_VALUE = UINT64_MAX - 1;
 
     explicit constexpr Timestamp(const Underlying value) : value(value) { }
 
-    Timestamp operator+(const Underlying offset) const { return Timestamp(value + offset); }
+    /// Arithmetic saturates: infinity and invalid remain unchanged, and a finite timestamp never leaves [INITIAL_VALUE, INFINITE_VALUE].
+    constexpr Timestamp operator+(const Underlying offset) const
+    {
+        if (value >= INFINITE_VALUE)
+        {
+            return *this;
+        }
+        return Timestamp(offset < INFINITE_VALUE - value ? value + offset : INFINITE_VALUE);
+    }
 
-    Timestamp operator+=(const Underlying offset) const { return Timestamp(value + offset); }
+    constexpr Timestamp operator+=(const Underlying offset) const { return *this + offset; }
 
-    Timestamp operator-(const Underlying offset) const { return Timestamp(value - offset); }
+    constexpr Timestamp operator-(const Underlying offset) const
+    {
+        if (value >= INFINITE_VALUE)
+        {
+            return *this;
+        }
+        return Timestamp(value > offset ? value - offset : INITIAL_VALUE);
+    }
 
-    Timestamp operator-(const Timestamp other) const { return Timestamp(value - other.value); }
+    constexpr Timestamp operator-(const Timestamp other) const { return *this - other.value; }
 
-    Timestamp operator-=(const Underlying offset) const { return Timestamp(value - offset); }
+    constexpr Timestamp operator-=(const Underlying offset) const { return *this - offset; }
 
     friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp) { return os << timestamp.value; }
 

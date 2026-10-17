@@ -57,6 +57,11 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     executionCtx.originId = recordBuffer.getOriginId();
     openChild(executionCtx, recordBuffer);
 
+    if (recordBuffer.getNumRecords() == nautilus::val<uint64_t>{0})
+    {
+        return;
+    }
+
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getMemArea());
     const auto numberOfHashMaps

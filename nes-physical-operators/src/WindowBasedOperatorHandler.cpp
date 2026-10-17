@@ -14,6 +14,8 @@
 
 #include <WindowBasedOperatorHandler.hpp>
 
+#include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -21,9 +23,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -66,7 +70,32 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
         bufferMetaData.originId,
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
-    sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
+
+    /// A buffer in a build operator may still write to every slice at or above its lower bound.
+    auto garbageCollectionWatermark = newGlobalWaterMarkProbe;
+    if (const auto lowerBounds = buildLowerBounds.rlock(); not lowerBounds->empty())
+    {
+        garbageCollectionWatermark = std::min(garbageCollectionWatermark, Timestamp(*lowerBounds->begin()));
+    }
+    sliceAndWindowStore->garbageCollectSlicesAndWindows(garbageCollectionWatermark);
+}
+
+Timestamp WindowBasedOperatorHandler::startBuildBuffer(const OriginId originId) const
+{
+    /// The watermark must be read while holding the lock, so that a concurrent garbage collection either sees this lower bound
+    /// or runs with a watermark that is not larger than it.
+    const auto lowerBounds = buildLowerBounds.wlock();
+    const auto lowerBound = watermarkProcessorBuild->getCurrentWatermark(originId);
+    lowerBounds->insert(lowerBound.getRawValue());
+    return lowerBound;
+}
+
+void WindowBasedOperatorHandler::finishBuildBuffer(const Timestamp lowerBound) const
+{
+    const auto lowerBounds = buildLowerBounds.wlock();
+    const auto it = lowerBounds->find(lowerBound.getRawValue());
+    INVARIANT(it != lowerBounds->end(), "No build buffer was started with the lower bound {}", lowerBound);
+    lowerBounds->erase(it);
 }
 
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
@@ -82,16 +111,35 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
 
-    /// Getting all slices that can be triggered and triggering them
-    const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
-    triggerSlices(slicesAndWindowInfo, pipelineCtx);
-}
+    auto highestWatermark = highestTriggeredWatermark.load();
+    while (newGlobalWatermark.getRawValue() > highestWatermark
+           and not highestTriggeredWatermark.compare_exchange_weak(highestWatermark, newGlobalWatermark.getRawValue()))
+    {
+    }
+    if (newGlobalWatermark.getRawValue() <= highestWatermark)
+    {
+        return;
+    }
 
-void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
-{
-    const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
-    NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
+    /// The store assigns all sequence numbers, so the buffers can be emitted in any order and without holding a lock.
+    const auto [slicesAndWindowInfo, outputWatermarkAndSequenceNumber]
+        = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
+
+    if (outputWatermarkAndSequenceNumber)
+    {
+        const auto [outputWatermark, outputSequenceNumber] = *outputWatermarkAndSequenceNumber;
+        auto watermarkBuffer = pipelineCtx->allocateTupleBuffer();
+        watermarkBuffer.setNumberOfTuples(0);
+        watermarkBuffer.setOriginId(outputOriginId);
+        watermarkBuffer.setSequenceNumber(outputSequenceNumber);
+        watermarkBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
+        watermarkBuffer.setLastChunk(true);
+        watermarkBuffer.setWatermark(outputWatermark);
+        watermarkBuffer.setCreationTimestampInMS(Timestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+        pipelineCtx->emitBuffer(watermarkBuffer);
+    }
 }
 
 }
