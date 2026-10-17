@@ -170,7 +170,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions;
-    const auto pageSize = conf.pageSize;
+    /// State pages have the size of a pooled buffer, so they never need an unpooled allocation.
+    const auto pageSize = conf.operatorBufferSize;
 
     const auto fieldKeyNames
         = boundGroupingKeys | std::views::transform([](const auto& field) { return QualifiedIdentifier{field->getField().getLastName()}; });

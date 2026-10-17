@@ -29,6 +29,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
@@ -168,15 +169,7 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     else
     {
         /// Create new storage buffer and add the page
-        auto newVarSizedBuffer = bufferProvider->getUnpooledBuffer(VARSIZED_STORAGE_SPACE_BUFFER_SIZE);
-        if (!newVarSizedBuffer)
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for storage space of ChainedHashMap of size {}",
-                std::to_string(VARSIZED_STORAGE_SPACE_BUFFER_SIZE));
-        }
-
-        auto varSizedBuffer = std::move(newVarSizedBuffer.value());
+        auto varSizedBuffer = getPooledBufferIfFits(VARSIZED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
         std::ignore = varSizedBuffer.storeChildBuffer(newPage);
         header().varSizedSpaceIndex = buffer.storeChildBuffer(varSizedBuffer);
     }
@@ -212,23 +205,7 @@ std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProv
 void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const uint64_t pageSize)
 {
     /// create and initialize new page
-    TupleBuffer newPage;
-    if (bufferProvider->getBufferSize() == pageSize)
-    {
-        newPage = bufferProvider->getBufferBlocking();
-    }
-    else
-    {
-        if (auto newPageUnpooled = bufferProvider->getUnpooledBuffer(pageSize))
-        {
-            newPage = newPageUnpooled.value();
-        }
-        else
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for unpooled storage space page of ChainedHashMap of size {}", std::to_string(pageSize));
-        }
-    }
+    auto newPage = getPooledBufferIfFits(pageSize, *bufferProvider);
 
     /// get or create storage buffer
     auto storageBufferIdx = getStorageBufferIdx();
@@ -242,14 +219,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider, const ui
     else
     {
         /// create new storage buffer (of minimal size)
-        auto newStorageBuffer = bufferProvider->getUnpooledBuffer(FIXED_STORAGE_SPACE_BUFFER_SIZE);
-        if (not newStorageBuffer)
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for storage space of ChainedHashMap of size {}",
-                std::to_string(FIXED_STORAGE_SPACE_BUFFER_SIZE));
-        }
-        auto storageBuffer = std::move(newStorageBuffer.value());
+        auto storageBuffer = getPooledBufferIfFits(FIXED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
         std::ignore = storageBuffer.storeChildBuffer(
             newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
         header().storageSpaceIndex = buffer.storeChildBuffer(storageBuffer);

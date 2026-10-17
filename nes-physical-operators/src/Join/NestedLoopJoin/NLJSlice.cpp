@@ -23,6 +23,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 
@@ -42,30 +43,18 @@ NLJSlice::NLJSlice(
     const uint64_t pvPageBufferSize = bufferProvider.getBufferSize();
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
-        {
-            /// initialize the paged vector tuple buffer
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeLeft);
-            leftPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ left paged vector main buffer");
-        }
+        /// initialize the paged vector tuple buffer
+        auto pagedVectorBuffer = getPooledBufferIfFits(pvMainBufferSize, bufferProvider);
+        PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeLeft);
+        leftPagedVectorBuffers.emplace_back(pagedVectorBuffer);
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
-        {
-            /// initialize the paged vector tuple buffer
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeRight);
-            rightPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ right paged vector main buffer");
-        }
+        /// initialize the paged vector tuple buffer
+        auto pagedVectorBuffer = getPooledBufferIfFits(pvMainBufferSize, bufferProvider);
+        PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeRight);
+        rightPagedVectorBuffers.emplace_back(pagedVectorBuffer);
     }
 }
 
