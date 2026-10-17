@@ -21,6 +21,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/EntryRecordsRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
@@ -49,21 +50,6 @@
 namespace NES
 {
 
-namespace
-{
-/// Loads the PagedVector child buffer referenced by a chained hash map entry's value area (which stores a child-buffer index
-/// into the hash map's own buffer).
-PagedVectorRef
-loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout)
-{
-    /// The entry's value area stores the child-buffer index of its paged vector; getChild loads that child as an owned buffer.
-    auto pagedVectorBuffer
-        = entryRef.hashMapBuffer.getChildFromIndexAddress(static_cast<nautilus::val<uint32_t*>>(entryRef.getValueMemArea()));
-    /// Must move the owned buffer into the PagedVectorRef rather than wrap a BorrowedNautilusBuffer around it: a
-    /// borrowed view only stores a pointer back to `pagedVectorBuffer`, which would dangle once this function returns.
-    return PagedVectorRef{std::move(pagedVectorBuffer), tupleLayout};
-}
-}
 
 HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
@@ -116,7 +102,13 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
         {
             const ChainedHashMapRef::ChainedEntryRef outerEntryRef{
                 outerEntry, outerHashMapBuffer, outerHashMapConfig.fieldKeys, outerHashMapConfig.fieldValues};
-            const PagedVectorRef outerPagedVector = loadEntryPagedVector(outerEntryRef, outerTupleLayout);
+            const EntryRecordsRef outerRecords{
+                outerHashMapBuffer,
+                outerEntryRef.getValueMemArea(),
+                outerTupleLayout,
+                outerHashMapConfig.inlineRecords,
+                outerHashMapConfig.pageSize};
+            const auto outerEnd = outerRecords.end();
 
             if (not residual.has_value())
             {
@@ -132,7 +124,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
                 if (!matched)
                 {
                     /// Emit unmatched outer tuples with NULL-filled inner fields
-                    for (auto outerIt = outerPagedVector.begin(); outerIt != outerPagedVector.end(); ++outerIt)
+                    for (auto outerIt = outerRecords.begin(); outerIt != outerEnd; ++outerIt)
                     {
                         const auto outerRecord = *outerIt;
                         auto nullRecord = createNullFilledJoinedRecord(outerRecord, windowStart, windowEnd, outerFields, nullSideSchema);
@@ -144,7 +136,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
             {
                 /// With a residual, an outer tuple is matched only if an inner tuple with the same key also satisfies the residual,
                 /// so the decision is per tuple instead of per key.
-                for (auto outerIt = outerPagedVector.begin(); outerIt != outerPagedVector.end(); ++outerIt)
+                for (auto outerIt = outerRecords.begin(); outerIt != outerEnd; ++outerIt)
                 {
                     const auto outerRecord = *outerIt;
                     /// Stops at the first partner for which the residual holds. The early exit is part of the loop conditions instead of a
@@ -163,8 +155,14 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
                                 innerHashMapBuffer,
                                 innerHashMapConfig.fieldKeys,
                                 innerHashMapConfig.fieldValues};
-                            const PagedVectorRef innerPagedVector = loadEntryPagedVector(innerEntryRef, innerTupleLayout);
-                            for (auto innerIt = innerPagedVector.begin(); innerIt != innerPagedVector.end() and not matched; ++innerIt)
+                            const EntryRecordsRef innerRecords{
+                                innerHashMapBuffer,
+                                innerEntryRef.getValueMemArea(),
+                                innerTupleLayout,
+                                innerHashMapConfig.inlineRecords,
+                                innerHashMapConfig.pageSize};
+                            const auto innerEnd = innerRecords.end();
+                            for (auto innerIt = innerRecords.begin(); innerIt != innerEnd and not matched; ++innerIt)
                             {
                                 const auto innerRecord = *innerIt;
                                 matched = outerIsLeft ? residualHolds(outerRecord, innerRecord, executionCtx, windowStart, windowEnd)

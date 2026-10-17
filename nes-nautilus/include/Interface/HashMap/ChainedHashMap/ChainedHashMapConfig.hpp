@@ -49,6 +49,9 @@ struct ChainedHashMapConfig
     std::vector<FieldOffsets> fieldKeys;
     std::vector<FieldOffsets> fieldValues;
     std::shared_ptr<const HashFunction> hashFunction;
+    /// Number of records that the value area of an entry stores, in front of a paged vector for the records after them. Only used by the
+    /// hash join, whose entries hold the records of a key. 0 stores all records in a paged vector.
+    uint64_t inlineRecords = 0;
 
     /// Turning numberOfBuckets into a chain count, a mask or a buffer size needs the map's memory layout, so
     /// those live on ChainedHashMap itself: calculateNumberOfChains() and calculateBufferSize(). Only the
