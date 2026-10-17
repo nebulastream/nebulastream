@@ -24,6 +24,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/EntryRecordsRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
@@ -86,58 +87,26 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
             record,
             [&](const nautilus::val<AbstractHashMapEntry*>& entry)
             {
-                /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
+                /// If the entry for the provided keys does not exist, we need to create a new one and prepare where its records are stored
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
                     entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
-                const auto state = entryRefReset.getValueMemArea();
-                const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
-                /// One paged vector exists per distinct key per hash map, so its pages follow the state page-size knob.
-                /// Keeping the bufferSize == pageSize leads to pages coming from the pool.
-                /// When the two values are not equal, the pages resort to the unpooled budget.
-                const nautilus::val<uint64_t> pageSize = hashMapConfig.pageSize;
-                nautilus::invoke(
-                    +[](TupleBuffer* hashMapBuf,
-                        uint32_t* valueMemArea,
-                        AbstractBufferProvider* bufferProvider,
-                        const uint64_t tupleSize,
-                        const uint64_t pageSize,
-                        const bool inlineRecords) -> void
-                    {
-                        TupleBuffer pagedVectorBuffer;
-                        if (inlineRecords)
-                        {
-                            /// A pooled main buffer, whose space behind the header stores the first records of the key.
-                            pagedVectorBuffer = bufferProvider->getBufferBlocking();
-                        }
-                        else if (auto unpooledBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-                        {
-                            pagedVectorBuffer = unpooledBuffer.value();
-                        }
-                        else
-                        {
-                            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
-                        }
-                        PagedVector::init(pagedVectorBuffer, pageSize, tupleSize, inlineRecords);
-                        auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer);
-                        *valueMemArea = childIndex.getRawValue();
-                    },
-                    hashMapBuffer.asArg(),
-                    static_cast<nautilus::val<uint32_t*>>(state),
-                    ctx.pipelineMemoryProvider.bufferProvider,
-                    tupleSize,
-                    pageSize,
-                    nautilus::val<bool>(inlineRecords));
+                EntryRecordsRef::initialize(
+                    borrowedHashMapBuffer,
+                    entryRefReset.getValueMemArea(),
+                    tupleLayout,
+                    hashMapConfig.inlineRecords,
+                    hashMapConfig.pageSize,
+                    inlineRecords,
+                    ctx.pipelineMemoryProvider.bufferProvider);
             },
             ctx.pipelineMemoryProvider.bufferProvider);
 
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{
             hashMapEntry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
-        auto pagedVecBuffer
-            = borrowedHashMapBuffer.getChildFromIndexAddress(static_cast<nautilus::val<uint32_t*>>(entryRef.getValueMemArea()));
-        /// Move the owned buffer into the PagedVectorRef (which takes a NautilusBuffer), so it keeps the paged vector alive.
-        PagedVectorRef pagedVectorRef{std::move(pagedVecBuffer), tupleLayout};
-        pagedVectorRef.pushBack(record, ctx.pipelineMemoryProvider.bufferProvider);
+        EntryRecordsRef records{
+            borrowedHashMapBuffer, entryRef.getValueMemArea(), tupleLayout, hashMapConfig.inlineRecords, hashMapConfig.pageSize};
+        records.pushBack(record, ctx.pipelineMemoryProvider.bufferProvider, inlineRecords);
     }
 }
 

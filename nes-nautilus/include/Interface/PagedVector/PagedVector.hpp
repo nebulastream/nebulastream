@@ -111,6 +111,11 @@ public:
     [[nodiscard]] uint64_t getInlineCapacity() const;
     /// @brief The child index of a page in the main buffer
     [[nodiscard]] ChildBufferIndex getPageChildIndex(uint64_t pageIndex) const;
+    /// @brief The address of the record at the position in the vector, which is stored in the main buffer or in one of the pages.
+    [[nodiscard]] int8_t* locateRecord(uint64_t recordIndex) const;
+    /// @brief Makes room for one more record, counts it and returns its address. Appends a page if the last one is full.
+    /// The caller writes the record to the address. This is the runtime counterpart of PagedVectorRef::pushBack for records without var sized data.
+    [[nodiscard]] int8_t* reserveRecordSlot(AbstractBufferProvider* bufferProvider);
     /// @brief The address of the record at `indexInPage` in `page`, which is either one of the pages or the main buffer.
     [[nodiscard]] int8_t* getRecordAddress(const TupleBuffer& page, uint64_t indexInPage) const;
     [[nodiscard]] bool isEmpty() const;

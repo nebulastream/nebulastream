@@ -288,6 +288,38 @@ int8_t* PagedVector::getRecordAddress(const TupleBuffer& page, const uint64_t in
     return reinterpret_cast<int8_t*>(const_cast<std::byte*>(pageStart)) + headerSize + (header().tupleSize * indexInPage);
 }
 
+int8_t* PagedVector::locateRecord(const uint64_t recordIndex) const
+{
+    PRECONDITION(recordIndex < getTotalNumberOfRecords(), "Paged Vector out of bounds");
+    const auto inlineCapacity = getInlineCapacity();
+    if (recordIndex < inlineCapacity)
+    {
+        return getRecordAddress(buffer, recordIndex);
+    }
+    const auto pageIdx = getPageIndex(recordIndex);
+    const auto page = buffer.loadChildBuffer(getPageChildIndex(pageIdx));
+    uint64_t prevCumulativeSum = 0;
+    if (pageIdx > 0)
+    {
+        const auto prevPage = buffer.loadChildBuffer(getPageChildIndex(pageIdx - 1));
+        prevCumulativeSum = Page::load(prevPage).getCumulativeSum();
+    }
+    return getRecordAddress(page, (recordIndex - inlineCapacity) - prevCumulativeSum);
+}
+
+int8_t* PagedVector::reserveRecordSlot(AbstractBufferProvider* bufferProvider)
+{
+    appendPageIfFull(bufferProvider);
+    const auto total = getTotalNumberOfRecords();
+    const auto inlineCapacity = getInlineCapacity();
+    /// The record goes to the main buffer while it has space, and to the last page after that
+    auto page = total < inlineCapacity ? buffer : buffer.loadChildBuffer(getPageChildIndex(getNumberOfPages() - 1));
+    auto* const address = getRecordAddress(page, total < inlineCapacity ? total : (total - inlineCapacity) % getPageCapacity());
+    page.setNumberOfTuples(page.getNumberOfTuples() + 1);
+    incrementNumberOfRecords();
+    return address;
+}
+
 bool PagedVector::isEmpty() const
 {
     return getTotalNumberOfRecords() == 0;
