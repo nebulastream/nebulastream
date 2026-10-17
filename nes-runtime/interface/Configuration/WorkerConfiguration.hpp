@@ -78,6 +78,15 @@ public:
            "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
+    /// Operators merging the watermarks of multiple origins backpressure the sources of origins that are ahead of the slowest origin by
+    /// more than this gap. This bounds the state that is kept until windows can be triggered.
+    UIntOption maxWatermarkGapInMs
+        = {"max_watermark_gap_in_ms",
+           "0",
+           "Maximum event-time gap between the watermarks of an operator's input origins before the leading sources are backpressured. 0 "
+           "disables watermark backpressure.",
+           {std::make_shared<NumberValidation>()}};
+
     EnumOption<DumpMode::Options> dumpQueryCompilationIR
         = {"dump_compilation_result",
            DumpMode::Options::NONE,
@@ -97,6 +106,7 @@ private:
             &unpooledMemoryFraction,
             &bufferAlignmentInBytes,
             &defaultMaxInflightBuffers,
+            &maxWatermarkGapInMs,
             &dumpQueryCompilationIR,
             &dumpGraph};
     }

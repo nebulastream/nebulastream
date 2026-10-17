@@ -192,23 +192,27 @@ if (ENABLE_LARGE_TESTS)
 
     # Memory budget for the in-process large systests, split into a pooled and an unpooled share.
     # The unpooled pool (hash maps, paged vectors, var-sized data) is bounded so a runaway query fails cleanly instead of
-    # OOM-killing the worker. Sized so the pooled share keeps ~2,000,000 operator buffers (the previous setting) while
-    # leaving 64 GiB for unpooled state; raise it if a future large test legitimately needs more memory.
-    set(LARGE_TEST_TOTAL_MEMORY_BYTES 76911476736 CACHE STRING
-            "Memory budget (bytes) for the in-process large systests: 8 GiB pooled (2,000,000 * 4096) + 64 GiB unpooled")
-    set(LARGE_TEST_UNPOOLED_FRACTION 0.8935) # 68719476736 / 76911476736
+    # OOM-killing the worker. Watermark backpressure keeps the join state bounded by the watermark gap rather than by the
+    # input size, so the budget does not grow with the data sets; raise it if a future large test legitimately needs more.
+    set(LARGE_TEST_TOTAL_MEMORY_BYTES 4294967296 CACHE STRING
+            "Memory budget (bytes) for the in-process large systests: 1 GiB pooled + 3 GiB unpooled")
+    set(LARGE_TEST_UNPOOLED_FRACTION 0.75)
+    # The large systests run on a single worker, so the budget above is the memory of the whole test.
+    set(LARGE_TEST_WORKER_ARGS
+            -c ${CMAKE_CURRENT_SOURCE_DIR}/../configs/topologies/single-node.yaml)
+    set(LARGE_TEST_WATERMARK_GAP_IN_MS 10000)
 
     set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
     ExternalData_Add_Test(test-data
             # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -n 6 ${LARGE_TEST_WORKER_ARGS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true --worker.max_watermark_gap_in_ms=${LARGE_TEST_WATERMARK_GAP_IN_MS})
     set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 
     ExternalData_Add_Test(test-data
             # currently, 16 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_benchmark_${joinStrategy}
-            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -b ${LARGE_TEST_WORKER_ARGS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true --worker.max_watermark_gap_in_ms=${LARGE_TEST_WATERMARK_GAP_IN_MS})
     set_tests_properties(systest_large_benchmark_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 16)
 
     # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
