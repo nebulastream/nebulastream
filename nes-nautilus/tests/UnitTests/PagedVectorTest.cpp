@@ -427,6 +427,12 @@ void verifyRandomAccess(
     }
 }
 
+/// The space for inline records in the main buffer: none or any size up to the buffer size, which holds a few or many records.
+size_t genInlineSize(const size_t bufferSize)
+{
+    return *rc::gen::arbitrary<bool>() ? size_t{0} : *rc::gen::inRange<size_t>(0, bufferSize + 1);
+}
+
 /// Insert N items into a PagedVector, then iterate and compare against reference.
 void insertAndIterateProperty(TestUtils::EngineMode mode)
 {
@@ -448,7 +454,7 @@ void insertAndIterateProperty(TestUtils::EngineMode mode)
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize, genInlineSize(bufferSize)};
 
     std::vector<TestUtils::AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -495,7 +501,7 @@ void insertAndReadByIndexProperty(TestUtils::EngineMode mode)
         *oversizedBudget);
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize, genInlineSize(bufferSize)};
 
     std::vector<TestUtils::AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -683,7 +689,7 @@ void insertOversizedVarSizedProperty(TestUtils::EngineMode mode)
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, bufferSize};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, bufferSize, genInlineSize(bufferSize)};
 
     /// genAnyVec's own draw for the VARSIZED field is immediately overwritten below with a guaranteed-oversized
     /// value, so it's kept on the small path (zero budget) to avoid wasting pooled-buffer draws before that.

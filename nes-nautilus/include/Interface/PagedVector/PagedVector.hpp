@@ -40,7 +40,7 @@ public:
     struct Page
     {
         static void init(TupleBuffer buffer);
-        static Page load(TupleBuffer buffer);
+        static Page load(const TupleBuffer& buffer);
         static uint64_t getHeaderSize();
 
         [[nodiscard]] size_t getCumulativeSum() const;
@@ -49,7 +49,8 @@ public:
         [[nodiscard]] uint64_t getNumberOfTuples() const;
 
     private:
-        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+        /// ponytail: a view, not an owner. The caller's buffer has to outlive the Page; this saves an atomic retain/release per access.
+        explicit Page(const TupleBuffer& buffer) : buffer(const_cast<TupleBuffer&>(buffer)) { }
 
         struct Header
         {
@@ -62,14 +63,19 @@ public:
 
         [[nodiscard]] const Header& header() const { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
-        TupleBuffer buffer;
+        TupleBuffer& buffer;
     };
 
     /// Paged Vector magic numbers
     static constexpr auto VALID_PV = 8254372433832867;
     static constexpr auto INVALID_PV = 0;
 
-    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize);
+    /// @param inlineSizeInBytes the space in the main buffer behind the header that stores the first records, instead of a page. The main
+    /// buffer then acts like a page in front of the first one, which saves a buffer for vectors with few records. It has to be at least
+    /// getMainBufferSize(inlineSizeInBytes) large, otherwise the inline space is what fits. The records of a vector with inline space
+    /// cannot be moved or copied to another vector. Child buffers of the inline records (var sized data) are children of the main buffer,
+    /// in front of the pages.
+    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize, uint64_t inlineSizeInBytes = 0);
     static PagedVector load(const TupleBuffer& buffer);
 
     /// @brief Appends a new page to the pages vector if the last page is full.
@@ -87,14 +93,28 @@ public:
 
     [[nodiscard]] uint64_t getStatus() const;
     [[nodiscard]] uint64_t getTotalNumberOfRecords() const;
+    /// @brief Counts one record that was written to the last page. Writers have to call this for every record they add.
+    void incrementNumberOfRecords();
     [[nodiscard]] uint64_t getNumberOfPages() const;
     /// @brief Returns the size of the buffer for each one of the paged vector's pages.
     [[nodiscard]] uint64_t getPageBufferSize() const;
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getPageCapacity() const;
+    /// @brief The number of records that fit into the main buffer behind the header, 0 if the vector has no inline page.
+    [[nodiscard]] uint64_t getInlineCapacity() const;
+    /// @brief The child index of a page in the main buffer
+    [[nodiscard]] ChildBufferIndex getPageChildIndex(uint64_t pageIndex) const;
+    /// @brief The address of the record at the position in the vector, which is stored in the main buffer or in one of the pages.
+    [[nodiscard]] int8_t* locateRecord(uint64_t recordIndex) const;
+    /// @brief Makes room for one more record, counts it and returns its address. Appends a page if the last one is full.
+    /// The caller writes the record to the address. This is the runtime counterpart of PagedVectorRef::pushBack for records without var sized data.
+    [[nodiscard]] int8_t* reserveRecordSlot(AbstractBufferProvider* bufferProvider);
+    /// @brief The address of the record at `indexInPage` in `page`, which is either one of the pages or the main buffer.
+    [[nodiscard]] int8_t* getRecordAddress(const TupleBuffer& page, uint64_t indexInPage) const;
     [[nodiscard]] bool isEmpty() const;
     /// @brief Returns the size of the paged vector's main buffer (header) in bytes
-    [[nodiscard]] static uint64_t getMainBufferSize();
+    /// @brief Returns the size of the paged vector's main buffer (header and inline space) in bytes
+    [[nodiscard]] static uint64_t getMainBufferSize(uint64_t inlineSizeInBytes = 0);
     /// @brief Returns the index of the page that stores the record at the given global record index.
     [[nodiscard]] size_t getPageIndex(uint64_t recordIndex) const;
 
@@ -103,9 +123,15 @@ private:
     {
         uint64_t status;
         uint64_t numPages;
+        /// Number of records over all pages, which saves loading pages to count them.
+        uint64_t numRecords = 0;
         uint64_t pageBufferSize;
         uint64_t pageCapacity;
         uint64_t tupleSize;
+        /// Number of records that are stored behind the header of the main buffer. Pages only hold the records after these.
+        uint64_t inlineCapacity = 0;
+        /// The child index of the first page in the main buffer, as the children in front of it belong to the inline records.
+        uint64_t firstPageChildIndex = 0;
 
         Header(uint64_t numPages, uint64_t bufferSize, uint64_t tupleSize)
             : numPages(numPages), pageBufferSize(bufferSize), tupleSize(tupleSize)
@@ -117,7 +143,8 @@ private:
         }
     };
 
-    explicit PagedVector(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+    /// A view, not an owner: the caller's buffer has to outlive the PagedVector.
+    explicit PagedVector(const TupleBuffer& buffer) : buffer(const_cast<TupleBuffer&>(buffer)) { }
 
     [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
@@ -128,7 +155,7 @@ private:
     void updateCumulativeSumAllPages() const;
     void addNewPage(AbstractBufferProvider* bufferProvider, uint64_t bufferSize);
 
-    TupleBuffer buffer;
+    TupleBuffer& buffer;
 };
 
 }

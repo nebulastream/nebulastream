@@ -36,8 +36,14 @@ class TestablePagedVector
 public:
     /// @param pageBufferSize page size the PagedVector is initialized with. Pass bufferManager.getBufferSize() for provider-buffer-sized
     /// pages, or a smaller value for the smaller-pages configuration the hash-join build uses.
+    /// @param inlineSizeInBytes the space in the main buffer of the paged vector for the first records, as the hash-join build uses it.
+    /// Such a vector cannot be concatenated with another one.
     TestablePagedVector(
-        const std::vector<DataType>& fieldTypes, AbstractBufferProvider& bufferManager, EngineMode mode, uint64_t pageBufferSize);
+        const std::vector<DataType>& fieldTypes,
+        AbstractBufferProvider& bufferManager,
+        EngineMode mode,
+        uint64_t pageBufferSize,
+        uint64_t inlineSizeInBytes = 0);
 
     ~TestablePagedVector() = default;
     TestablePagedVector(const TestablePagedVector&) = delete;
