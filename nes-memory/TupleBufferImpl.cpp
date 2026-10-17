@@ -146,6 +146,28 @@ bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler
     return false;
 }
 
+bool BufferControlBlock::prepareBorrowed(BufferRecycler* recycler)
+{
+    /// See prepare() for the poisoning and the reference counter hand-out.
+    ASAN_UNPOISON_MEMORY_REGION(this, sizeof(*this));
+    int32_t expected = 0;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    std::unique_lock lock(owningThreadsMutex);
+    ThreadOwnershipInfo info;
+    fillThreadOwnershipInfo(info.threadName, info.callstack);
+    owningThreads[std::this_thread::get_id()].emplace_back(info);
+#endif
+    if (referenceCounter.compare_exchange_strong(expected, 1))
+    {
+        INVARIANT(borrowedBufferRecycler == nullptr, "Buffer should not retain a reference to its owner while unused");
+        borrowedBufferRecycler = recycler;
+        watermark = Timestamp(Timestamp::INITIAL_VALUE);
+        return true;
+    }
+    NES_ERROR("Invalid reference counter: {}", expected);
+    return false;
+}
+
 BufferControlBlock* BufferControlBlock::retain()
 {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -209,6 +231,13 @@ bool BufferControlBlock::release()
             owningThreads.clear();
         }
 #endif
+        if (borrowedBufferRecycler != nullptr)
+        {
+            auto* const borrowedRecycler = std::exchange(borrowedBufferRecycler, nullptr);
+            numberOfTuples = 0;
+            recycleCallback(owner, borrowedRecycler);
+            return true;
+        }
         const auto recycler = std::move(owningBufferRecycler);
         numberOfTuples = 0;
         recycleCallback(owner, recycler.get());

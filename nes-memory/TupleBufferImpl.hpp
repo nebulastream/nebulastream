@@ -81,6 +81,9 @@ public:
     /// reference counter is zero. If that's not the case, an exception is thrown.
     /// Returns true if the mem segment can be used to create a TupleBuffer.
     bool prepare(const std::shared_ptr<BufferRecycler>& recycler);
+    /// Like prepare, but the control block does not keep the recycler alive: the caller guarantees that the recycler outlives every
+    /// buffer it hands out. This saves the atomic reference count updates on the recycler's shared state for every buffer.
+    bool prepareBorrowed(BufferRecycler* recycler);
 
     /// Increase the reference counter by one.
     BufferControlBlock* retain();
@@ -126,6 +129,7 @@ private:
 public:
     MemorySegment* owner;
     std::shared_ptr<BufferRecycler> owningBufferRecycler = nullptr;
+    BufferRecycler* borrowedBufferRecycler = nullptr;
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

@@ -293,7 +293,13 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     {
         return std::nullopt;
     }
+    #ifdef NDEBUG
+    /// Release builds rely on the manager outliving its buffers, which saves the atomic reference count updates on the manager's shared state for every buffer.
+    if (memSegment->controlBlock->prepareBorrowed(this))
+#else
+    /// Debug builds make the buffers keep the manager alive.
     if (memSegment->controlBlock->prepare(shared_from_this()))
+#endif
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
         ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
@@ -320,7 +326,13 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     {
         return std::nullopt;
     }
+    #ifdef NDEBUG
+    /// Release builds rely on the manager outliving its buffers, which saves the atomic reference count updates on the manager's shared state for every buffer.
+    if (memSegment->controlBlock->prepareBorrowed(this))
+#else
+    /// Debug builds make the buffers keep the manager alive.
     if (memSegment->controlBlock->prepare(shared_from_this()))
+#endif
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
         ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
