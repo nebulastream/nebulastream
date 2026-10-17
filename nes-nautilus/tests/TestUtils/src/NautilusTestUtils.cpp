@@ -150,7 +150,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
             i + 1,
             sizeVarSizedData,
             outputBufferIndex.data());
-        buffers.push_back(buffer);
+        buffers.push_back(std::move(buffer));
     }
 
     /// Returning the buffers with the values but before that shuffle the buffers to have a random order

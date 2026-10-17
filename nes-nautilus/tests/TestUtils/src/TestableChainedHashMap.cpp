@@ -130,7 +130,7 @@ TestableChainedHashMap::TestableChainedHashMap(
     {
         throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", hashMapBufferSize);
     }
-    chainedHashMapBuffer = chainedHashMapBufferOpt.value();
+    chainedHashMapBuffer = std::move(chainedHashMapBufferOpt.value());
     ChainedHashMap::init(chainedHashMapBuffer, hashMapConfig);
 
     insertFn.emplace(engine->registerFunction(
@@ -255,7 +255,7 @@ std::optional<AnyVec> TestableChainedHashMap::at(const AnyVec& key)
     {
         throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", probeBufferSize);
     }
-    auto probeBuffer = probeBufferOpt.value();
+    auto probeBuffer = std::move(probeBufferOpt.value());
     ChainedHashMap::init(probeBuffer, probeConfig);
 
     AnyVec out(valueDataTypes.size());
