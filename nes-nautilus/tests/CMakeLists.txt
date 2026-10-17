@@ -40,3 +40,10 @@ target_link_libraries(TestTupleBufferTest nes-nautilus-test-util)
 
 add_nes_unit_test(bloom-filter-unit-tests "UnitTests/BloomFilterTest.cpp")
 target_link_libraries(bloom-filter-unit-tests nes-nautilus-test-util)
+
+# Micro benchmark of the hash join state (chained hash map + paged vectors). It needs google benchmark, which is not a vcpkg dependency.
+find_package(benchmark QUIET)
+if (benchmark_FOUND)
+    add_executable(hash-join-state-benchmark Benchmarks/HashJoinStateBenchmark.cpp)
+    target_link_libraries(hash-join-state-benchmark PRIVATE nes-nautilus-test-util rapidcheck benchmark::benchmark)
+endif ()
