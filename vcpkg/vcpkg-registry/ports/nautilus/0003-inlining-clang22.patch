@@ -1,0 +1,40 @@
+diff -ruN a/plugins/inlining/cmake/NautilusInline.cmake b/plugins/inlining/cmake/NautilusInline.cmake
+--- a/plugins/inlining/cmake/NautilusInline.cmake	2026-10-16 23:55:38.906048978 +0200
++++ b/plugins/inlining/cmake/NautilusInline.cmake	2026-10-16 23:55:45.490083801 +0200
+@@ -25,11 +25,11 @@
+     endif ()
+ 
+     # Check clang version
+-    # Inlining is supported for clang 19 through 21.
++    # Inlining is supported for clang 19 through 22.
+     # The LLVM pass API can change between major versions, so new versions should be validated before adding them here.
+     if (NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+             AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "19.0.0"
+-            AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "22"))
++            AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "23"))
+         message(WARNING "Nautilus function inlining is not supported for the active compiler version and will not be applied. You can safely ignore this warning.")
+         set(${result_var} FALSE PARENT_SCOPE)
+         return()
+@@ -82,6 +82,6 @@
+             message(WARNING "nautilus_inline(${target}) called but the InliningPass target is not available. Enable both ENABLE_INLINING_PLUGIN (top-level) and ENABLE_INLINING_PASS (plugin-local) to build it. Skipping.")
+         endif ()
+     else ()
+-        message(WARNING "Function inlining requires clang 19-21 during compilation.")
++        message(WARNING "Function inlining requires clang 19-22 during compilation.")
+     endif ()
+ endfunction()
+diff -ruN a/plugins/inlining/pass/FunctionInliningPass.cpp b/plugins/inlining/pass/FunctionInliningPass.cpp
+--- a/plugins/inlining/pass/FunctionInliningPass.cpp	2026-10-16 23:55:38.906048978 +0200
++++ b/plugins/inlining/pass/FunctionInliningPass.cpp	2026-10-16 23:55:45.490083801 +0200
+@@ -6,7 +6,11 @@
+ #include "llvm/IR/PassManager.h"
+ #include "llvm/IR/Type.h"
+ #include "llvm/Passes/PassBuilder.h"
++#if __has_include("llvm/Plugins/PassPlugin.h")
++#include "llvm/Plugins/PassPlugin.h" // LLVM 22 moved the header
++#else
+ #include "llvm/Passes/PassPlugin.h"
++#endif
+ #include "llvm/Support/CrashRecoveryContext.h"
+ #include "llvm/Transforms/Utils/Cloning.h"
+ #include "llvm/Transforms/Utils/ModuleUtils.h"

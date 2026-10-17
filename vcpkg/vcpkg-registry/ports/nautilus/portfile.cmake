@@ -18,6 +18,7 @@ vcpkg_from_github(
         PATCHES
         0001-fmt-fix.patch
         0002-move-function-wrapper.patch
+        0003-inlining-clang22.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

@@ -98,6 +98,8 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     {
         case ExecutionMode::COMPILER: {
             options.setOption("engine.Compilation", true);
+            /// Splices the bodies of NAUTILUS_INLINE functions into the compiled pipeline instead of calling them.
+            options.setOption("mlir.inline_invoke_calls", true);
             break;
         }
         case ExecutionMode::INTERPRETER: {

@@ -31,4 +31,6 @@ target_include_directories(nes-memory
 find_package(folly REQUIRED)
 target_link_libraries(nes-memory PUBLIC nes-common PRIVATE folly::folly)
 
+# Functions marked NAUTILUS_INLINE are spliced into the compiled query pipelines.
+nautilus_inline(nes-memory)
 add_tests_if_enabled(tests)
