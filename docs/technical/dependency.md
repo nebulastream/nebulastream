@@ -140,6 +140,12 @@ The Paho MQTT C and C++ ports apply a libc++ compatibility patch. Paho's C++ cli
 non-standard specialization; the standard only mandates it for `char`, `wchar_t`, `char8_t`, `char16_t`, and
 `char32_t`. The patch stores the data as `char` instead, allowing the MQTT dependencies to build with libc++.
 
+The Paho MQTT C port (vcpkg and nix) additionally carries the fix from upstream PR
+[#1706](https://github.com/eclipse-paho/paho.mqtt.c/pull/1706) for
+[#1622](https://github.com/eclipse-paho/paho.mqtt.c/issues/1622): a QoS 1/2 publish that fails with `SOCKET_ERROR` frees
+its payload although the stored publication already owns it, so the payload is freed a second time when the session is
+cleaned up. Drop the patch once a Paho release contains the fix.
+
 ### Nautilus
 
 Nautilus is not in the vcpkg registry, we provide our own port pinned to a commit of
