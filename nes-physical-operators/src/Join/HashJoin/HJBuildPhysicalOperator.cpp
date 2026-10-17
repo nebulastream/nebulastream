@@ -100,8 +100,9 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                         const uint64_t tupleSize,
                         const uint64_t pageSize) -> void
                     {
-                        auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(), *bufferProvider);
-                        PagedVector::init(pagedVectorBuffer, pageSize, tupleSize);
+                        /// A paged vector of a key usually holds a few records. They are stored in the main buffer, which then is a full buffer.
+                        auto pagedVectorBuffer = getPooledBufferIfFits(bufferProvider->getBufferSize(), *bufferProvider);
+                        PagedVector::init(pagedVectorBuffer, pageSize, tupleSize, /*inlineFirstPage=*/true);
                         auto childIndex = hashMapBuf->storeChildBuffer(std::move(pagedVectorBuffer));
                         *valueMemArea = childIndex.getRawValue();
                     },

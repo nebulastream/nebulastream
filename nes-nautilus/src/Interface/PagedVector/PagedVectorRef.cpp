@@ -53,19 +53,26 @@ uint64_t getTotalNumberOfRecordsProxy(const TupleBuffer* pagedVectorBuffer)
 }
 
 /// Resolves the page containing `entryPos`, loads its TupleBuffer into `outPageBuffer`, and returns the in-page index.
+/// The page is the paged vector's main buffer itself for the records that are stored inline.
 uint64_t loadPageForEntryProxy(const TupleBuffer* pagedVectorBuffer, const uint64_t entryPos, TupleBuffer* outPageBuffer)
 {
     const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
     PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for access.");
+    const auto inlineCapacity = pagedVector.getInlineCapacity();
+    if (entryPos < inlineCapacity)
+    {
+        *outPageBuffer = pagedVectorBuffer->view();
+        return entryPos;
+    }
     const auto pageIdx = pagedVector.getPageIndex(entryPos);
-    *outPageBuffer = pagedVectorBuffer->viewChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx)});
+    *outPageBuffer = pagedVectorBuffer->viewChildBuffer(pagedVector.getPageChildIndex(pageIdx));
     uint64_t prevCumulativeSum = 0;
     if (pageIdx > 0)
     {
-        const auto prevPageBuffer = pagedVectorBuffer->viewChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx - 1)});
+        const auto prevPageBuffer = pagedVectorBuffer->viewChildBuffer(pagedVector.getPageChildIndex(pageIdx - 1));
         prevCumulativeSum = PagedVector::Page::load(prevPageBuffer).getCumulativeSum();
     }
-    return entryPos - prevCumulativeSum;
+    return (entryPos - inlineCapacity) - prevCumulativeSum;
 }
 
 /// Factory method that returns the lambda function to read a record from a given page. The pageBuffer argument is the capture variable of the page to read from.
@@ -248,9 +255,14 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
             PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for push_back.");
             pagedVector.appendPageIfFull(bufferProvider);
+            if (pagedVector.getTotalNumberOfRecords() < pagedVector.getInlineCapacity())
+            {
+                /// The record is stored in the main buffer
+                *currentPage = pagedVectorBuffer->view();
+                return;
+            }
             auto numPages = pagedVector.getNumberOfPages();
-            const ChildBufferIndex lastPageIndex{static_cast<uint32_t>(numPages - 1)};
-            *currentPage = pagedVectorBuffer->viewChildBuffer(lastPageIndex);
+            *currentPage = pagedVectorBuffer->viewChildBuffer(pagedVector.getPageChildIndex(numPages - 1));
         },
         pagedVectorBuffer.asArg(),
         bufferProvider,
@@ -263,14 +275,11 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             const auto totalTuplesNum = pagedVector.getTotalNumberOfRecords();
-            /// compute index WITHIN the last page
-            const uint64_t indexWithinPage = totalTuplesNum % pagedVector.getPageCapacity();
-            /// get base address of the page
-            const auto pageBufferAddress = lastPageBuffer->getAvailableMemoryArea<>();
-            auto* base = std::to_address(pageBufferAddress.begin());
-            /// Compute offset safely
-            const uint64_t offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * indexWithinPage);
-            return std::next(std::bit_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
+            const auto inlineCapacity = pagedVector.getInlineCapacity();
+            /// compute index WITHIN the last page, or within the main buffer for the inline records
+            const uint64_t indexWithinPage
+                = totalTuplesNum < inlineCapacity ? totalTuplesNum : (totalTuplesNum - inlineCapacity) % pagedVector.getPageCapacity();
+            return pagedVector.getRecordAddress(*lastPageBuffer, indexWithinPage);
         },
         pagedVectorBuffer.asArg(),
         lastPageBuffer.asArg());
@@ -299,10 +308,7 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
         +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, const uint64_t entryBufferPos) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
-            const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
-            auto* base = std::to_address(pageBufferAddress.begin());
-            const auto offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * entryBufferPos);
-            return std::next(std::bit_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
+            return pagedVector.getRecordAddress(*pageBuffer, entryBufferPos);
         },
         pagedVectorBuffer.asArg(),
         pageBuffer.asArg(),
@@ -318,7 +324,10 @@ PagedVectorRefIter PagedVectorRef::begin() const
         return PagedVectorRefIter(*this, tupleLayout, OwnedNautilusBuffer{}, 0, 0);
     }
 
-    return PagedVectorRefIter(*this, tupleLayout, pagedVectorBuffer.getChild(0), 0, 0);
+    /// The first page is the main buffer if the paged vector has an inline page.
+    OwnedNautilusBuffer firstPage;
+    invoke({.noUnwind = true}, loadPageForEntryProxy, pagedVectorBuffer.asArg(), nautilus::val<uint64_t>(0), firstPage.asArg());
+    return PagedVectorRefIter(*this, tupleLayout, std::move(firstPage), 0, 0);
 }
 
 PagedVectorRefIterSentinel PagedVectorRef::end() const
@@ -368,11 +377,7 @@ Record PagedVectorRefIter::operator*() const
         +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, uint64_t entryBufferPos) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
-            const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
-            /// get record address
-            auto* base = std::to_address(pageBufferAddress.begin());
-            const auto offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * entryBufferPos);
-            return std::next(std::bit_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
+            return pagedVector.getRecordAddress(*pageBuffer, entryBufferPos);
         },
         pagedVector.pagedVectorBuffer.asArg(),
         curPage.asArg(),

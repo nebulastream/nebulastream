@@ -190,6 +190,9 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
+    /// @brief A borrowed handle to this buffer itself, which does not take a reference. It must not outlive this buffer.
+    [[nodiscard]] TupleBuffer view() const noexcept;
+
     /// @brief Looks at a child buffer without taking a reference. The returned handle is borrowed: it does not release the buffer, and
     /// it is only valid while this buffer is alive. Use share() to get an owning handle.
     [[nodiscard]] TupleBuffer viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept;

@@ -80,10 +80,11 @@ struct Workload
     uint32_t payloadFields;
     uint64_t varSizedBytes;
     uint64_t buckets; /// number_of_partitions of the query execution configuration
+    bool inlineFirstPage; /// stores the first records of a key in the main buffer of its paged vector
 
     [[nodiscard]] std::string toString() const
     {
-        return std::to_string(keys) + "/" + std::to_string(payloadFields) + "/" + std::to_string(varSizedBytes) + "/" + std::to_string(buckets);
+        return std::to_string(keys) + "/" + std::to_string(payloadFields) + "/" + std::to_string(varSizedBytes) + "/" + std::to_string(buckets) + "/" + std::to_string(inlineFirstPage);
     }
 };
 
@@ -180,10 +181,11 @@ void buildOne(
                     uint32_t* valueMemArea,
                     AbstractBufferProvider* provider,
                     const uint64_t tupleSizeInBytes,
-                    const uint64_t pageSizeInBytes) -> void
+                    const uint64_t pageSizeInBytes,
+                    const uint64_t inlineFirstPage) -> void
                 {
-                    auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(), *provider);
-                    PagedVector::init(pagedVectorBuffer, pageSizeInBytes, tupleSizeInBytes);
+                    auto pagedVectorBuffer = getPooledBufferIfFits(inlineFirstPage != 0 ? provider->getBufferSize() : PagedVector::getMainBufferSize(), *provider);
+                    PagedVector::init(pagedVectorBuffer, pageSizeInBytes, tupleSizeInBytes, inlineFirstPage != 0);
                     auto childIndex = hashMapBuf->storeChildBuffer(std::move(pagedVectorBuffer));
                     *valueMemArea = childIndex.getRawValue();
                 },
@@ -191,7 +193,8 @@ void buildOne(
                 static_cast<nautilus::val<uint32_t*>>(state),
                 bufferProvider,
                 tupleSize,
-                pageSize);
+                pageSize,
+                nautilus::val<uint64_t>(shared.workload.inlineFirstPage ? 1 : 0));
         },
         bufferProvider);
 
@@ -328,73 +331,79 @@ Workload workloadOf(const benchmark::State& state)
         .keys = static_cast<uint64_t>(state.range(0)),
         .payloadFields = static_cast<uint32_t>(state.range(2)),
         .varSizedBytes = static_cast<uint64_t>(state.range(3)),
-        .buckets = static_cast<uint64_t>(state.range(4))};
+        .buckets = static_cast<uint64_t>(state.range(4)),
+        .inlineFirstPage = state.range(5) != 0};
 }
 
+/// A window of the join: every iteration builds `maps` hash maps (one after the other, each replaces the previous one like the
+/// garbage collection of slices does) with `records` records from `keys` keys.
 void benchmarkBuild(benchmark::State& state)
 {
     auto& shared = getShared(workloadOf(state));
     const auto records = static_cast<uint64_t>(state.range(1));
+    const auto maps = static_cast<uint64_t>(state.range(6));
     ThreadLocalBufferManager provider(shared.bufferManager);
     HashMap map(shared, provider);
     uint64_t round = 0;
     for (auto _ : state)
     {
-        state.PauseTiming();
-        map.reset();
-        state.ResumeTiming();
-        (*shared.build)(&map.buffer, &provider, records, round++ * records);
+        for (uint64_t window = 0; window < maps; ++window)
+        {
+            map.reset();
+            (*shared.build)(&map.buffer, &provider, records, round++ * records);
+        }
     }
-    state.SetItemsProcessed(static_cast<int64_t>(state.iterations()) * static_cast<int64_t>(records));
+    state.SetItemsProcessed(static_cast<int64_t>(state.iterations()) * static_cast<int64_t>(records * maps));
 }
 
+/// Probes `maps` pairs of hash maps with `records` records each.
 void benchmarkProbe(benchmark::State& state)
 {
     auto& shared = getShared(workloadOf(state));
     const auto records = static_cast<uint64_t>(state.range(1));
+    const auto maps = static_cast<uint64_t>(state.range(6));
     ThreadLocalBufferManager provider(shared.bufferManager);
-    HashMap left(shared, provider);
-    HashMap right(shared, provider);
-    (*shared.build)(&left.buffer, &provider, records, 0);
-    (*shared.build)(&right.buffer, &provider, records, records);
+    std::vector<std::unique_ptr<HashMap>> left;
+    std::vector<std::unique_ptr<HashMap>> right;
+    for (uint64_t window = 0; window < maps; ++window)
+    {
+        left.emplace_back(std::make_unique<HashMap>(shared, provider));
+        right.emplace_back(std::make_unique<HashMap>(shared, provider));
+        (*shared.build)(&left.back()->buffer, &provider, records, window * 2 * records);
+        (*shared.build)(&right.back()->buffer, &provider, records, (window * 2 + 1) * records);
+    }
     uint64_t checksum = 0;
     for (auto _ : state)
     {
-        checksum += (*shared.probe)(&left.buffer, &right.buffer);
+        for (uint64_t window = 0; window < maps; ++window)
+        {
+            checksum += (*shared.probe)(&left[window]->buffer, &right[window]->buffer);
+        }
     }
     benchmark::DoNotOptimize(checksum);
-    /// Count what the probe walks: both sides' records.
-    state.SetItemsProcessed(static_cast<int64_t>(state.iterations()) * static_cast<int64_t>(records) * 2);
+    /// The checksum is the same for every setup of the data structures, which verifies them.
+    state.counters["checksum"] = static_cast<double>(checksum / static_cast<uint64_t>(state.iterations()));
+    /// Count what the probe walks: the records of both sides.
+    state.SetItemsProcessed(static_cast<int64_t>(state.iterations()) * static_cast<int64_t>(records * maps * 2));
 }
 
-/// keys, records, payload fields, var sized bytes, buckets
-void buildArguments(benchmark::internal::Benchmark* benchmark)
+/// keys, records per map, payload fields, var sized bytes, buckets, inline first page, maps
+/// The sizes follow the 10 s windows of Nexmark: a few hundred records with a few dozen keys per window and worker thread.
+void arguments(benchmark::internal::Benchmark* benchmark)
 {
-    for (const int64_t buckets : {128, 131072})
+    for (const int64_t inlineFirstPage : {0, 1})
     {
-        for (const int64_t keys : {1000, 100000, 1000000})
-        {
-            benchmark->Args({keys, 1000000, 3, 0, buckets});
-        }
-        benchmark->Args({100000, 1000000, 3, 32, buckets});
+        benchmark->Args({50, 250, 3, 0, 128, inlineFirstPage, 2000});
+        benchmark->Args({50, 250, 3, 32, 128, inlineFirstPage, 2000});
+        benchmark->Args({50, 250, 8, 32, 128, inlineFirstPage, 2000});
+        /// more records per key, which spill into pages
+        benchmark->Args({10, 2000, 3, 0, 128, inlineFirstPage, 500});
+        benchmark->Args({1000, 1000, 3, 0, 128, inlineFirstPage, 500});
     }
 }
 
-/// The probe pairs up the records of a key, so the number of records per key stays small (10 to 100): otherwise the pairing dominates.
-void probeArguments(benchmark::internal::Benchmark* benchmark)
-{
-    for (const int64_t buckets : {128, 131072})
-    {
-        for (const int64_t keys : {10000, 100000, 1000000})
-        {
-            benchmark->Args({keys, 1000000, 3, 0, buckets});
-        }
-        benchmark->Args({100000, 1000000, 3, 32, buckets});
-    }
-}
-
-BENCHMARK(benchmarkBuild)->Apply(buildArguments)->Unit(benchmark::kMillisecond)->Threads(1)->Threads(8)->UseRealTime();
-BENCHMARK(benchmarkProbe)->Apply(probeArguments)->Unit(benchmark::kMillisecond)->Threads(1)->Threads(8)->UseRealTime();
+BENCHMARK(benchmarkBuild)->Apply(arguments)->Unit(benchmark::kMillisecond)->Threads(1)->Threads(8)->UseRealTime();
+BENCHMARK(benchmarkProbe)->Apply(arguments)->Unit(benchmark::kMillisecond)->Threads(1)->Threads(8)->UseRealTime();
 
 }
 }

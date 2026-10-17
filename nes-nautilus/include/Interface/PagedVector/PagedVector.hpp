@@ -70,7 +70,11 @@ public:
     static constexpr auto VALID_PV = 8254372433832867;
     static constexpr auto INVALID_PV = 0;
 
-    static void init(TupleBuffer& buffer, uint64_t pageBufferSize, uint64_t tupleSize);
+    /// @param inlineFirstPage stores the first records in the main buffer itself, behind the header, instead of in pages. The main buffer
+    /// then acts like a page in front of the first one, which saves a buffer for vectors with few records. The records of a vector with
+    /// an inline page cannot be moved or copied to another vector. Child buffers of the inline records (var sized data) are children of
+    /// the main buffer, in front of the pages.
+    static void init(TupleBuffer& buffer, uint64_t pageBufferSize, uint64_t tupleSize, bool inlineFirstPage = false);
     static PagedVector load(const TupleBuffer& buffer);
 
     /// @brief Appends a new page to the pages vector if the last page is full.
@@ -95,6 +99,12 @@ public:
     [[nodiscard]] uint64_t getPageBufferSize() const;
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getPageCapacity() const;
+    /// @brief The number of records that fit into the main buffer behind the header, 0 if the vector has no inline page.
+    [[nodiscard]] uint64_t getInlineCapacity() const;
+    /// @brief The child index of a page in the main buffer
+    [[nodiscard]] ChildBufferIndex getPageChildIndex(uint64_t pageIndex) const;
+    /// @brief The address of the record at `indexInPage` in `page`, which is either one of the pages or the main buffer.
+    [[nodiscard]] int8_t* getRecordAddress(const TupleBuffer& page, uint64_t indexInPage) const;
     [[nodiscard]] bool isEmpty() const;
     /// @brief Returns the size of the paged vector's main buffer (header) in bytes
     [[nodiscard]] static uint64_t getMainBufferSize();
@@ -111,6 +121,10 @@ private:
         uint64_t pageBufferSize;
         uint64_t pageCapacity;
         uint64_t tupleSize;
+        /// Number of records that are stored behind the header of the main buffer. Pages only hold the records after these.
+        uint64_t inlineCapacity = 0;
+        /// The child index of the first page in the main buffer, as the children in front of it belong to the inline records.
+        uint64_t firstPageChildIndex = 0;
 
         Header(uint64_t numPages, uint64_t bufferSize, uint64_t tupleSize)
             : numPages(numPages), pageBufferSize(bufferSize), tupleSize(tupleSize)

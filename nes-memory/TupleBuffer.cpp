@@ -171,6 +171,16 @@ ChildBufferIndex TupleBuffer::storeChildBuffer(TupleBuffer&& buffer) noexcept
     return controlBlock->adoptChildBuffer(control);
 }
 
+TupleBuffer TupleBuffer::view() const noexcept
+{
+    TupleBuffer alias;
+    alias.controlBlock = controlBlock;
+    alias.ptr = ptr;
+    alias.size = size;
+    alias.borrowed = true;
+    return alias;
+}
+
 TupleBuffer TupleBuffer::viewChildBuffer(ChildBufferIndex bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
