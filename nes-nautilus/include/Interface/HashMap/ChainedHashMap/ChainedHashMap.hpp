@@ -143,7 +143,8 @@ protected:
 
 private:
     /// private constructor that takes a pre-filled buffer
-    explicit ChainedHashMap(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+    /// A view, not an owner: the caller's buffer has to outlive the map. Saves an atomic retain/release per proxy call.
+    explicit ChainedHashMap(const TupleBuffer& buffer) : buffer(const_cast<TupleBuffer&>(buffer)) { }
 
     friend class ChainedHashMapRef;
 
@@ -180,6 +181,6 @@ private:
     }
 
     /// the main tuple buffer for this chained hash map
-    TupleBuffer buffer;
+    TupleBuffer& buffer;
 };
 }

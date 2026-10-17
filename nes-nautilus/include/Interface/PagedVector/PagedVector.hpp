@@ -40,7 +40,7 @@ public:
     struct Page
     {
         static void init(TupleBuffer buffer);
-        static Page load(TupleBuffer buffer);
+        static Page load(const TupleBuffer& buffer);
         static uint64_t getHeaderSize();
 
         [[nodiscard]] size_t getCumulativeSum() const;
@@ -49,7 +49,8 @@ public:
         [[nodiscard]] uint64_t getNumberOfTuples() const;
 
     private:
-        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+        /// ponytail: a view, not an owner. The caller's buffer has to outlive the Page; this saves an atomic retain/release per access.
+        explicit Page(const TupleBuffer& buffer) : buffer(const_cast<TupleBuffer&>(buffer)) { }
 
         struct Header
         {
@@ -62,7 +63,7 @@ public:
 
         [[nodiscard]] const Header& header() const { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
-        TupleBuffer buffer;
+        TupleBuffer& buffer;
     };
 
     /// Paged Vector magic numbers
@@ -121,7 +122,8 @@ private:
         }
     };
 
-    explicit PagedVector(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+    /// A view, not an owner: the caller's buffer has to outlive the PagedVector.
+    explicit PagedVector(const TupleBuffer& buffer) : buffer(const_cast<TupleBuffer&>(buffer)) { }
 
     [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
@@ -132,7 +134,7 @@ private:
     void updateCumulativeSumAllPages() const;
     void addNewPage(AbstractBufferProvider* bufferProvider, uint64_t bufferSize);
 
-    TupleBuffer buffer;
+    TupleBuffer& buffer;
 };
 
 }

@@ -39,9 +39,9 @@ void PagedVector::Page::init(TupleBuffer buffer)
     new (buffer.getAvailableMemoryArea<Header>().data()) Header(0);
 }
 
-PagedVector::Page PagedVector::Page::load(TupleBuffer buffer)
+PagedVector::Page PagedVector::Page::load(const TupleBuffer& buffer)
 {
-    return Page(std::move(buffer));
+    return Page(buffer);
 }
 
 uint64_t PagedVector::Page::getHeaderSize()
