@@ -295,7 +295,9 @@ std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
 {
     INVARIANT(not pipelineIdToSliceCacheStarts.rlock()->contains(pipelineId), "We expect this method to be called once per pipelineId!");
 
-    auto buffer = getPooledBufferIfFits(sliceCacheMemorySize, bufferProvider);
+    /// The cache holds entries for every worker thread, so it grows with the thread count and might exceed a default buffer.
+    auto buffer = sliceCacheMemorySize <= bufferProvider.getBufferSize() ? bufferProvider.getBufferBlocking()
+                                                                         : getBuffer(sliceCacheMemorySize, bufferProvider);
 
     /// We set everything to 0, as there might be old data in the tuple buffer
     std::ranges::fill(buffer.getAvailableMemoryArea(), std::byte{0});

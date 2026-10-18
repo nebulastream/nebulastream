@@ -53,8 +53,8 @@ public:
            "Total memory budget in bytes for the global buffer pool (pooled + unpooled).",
            {std::make_shared<NumberValidation>(), std::make_shared<NonZeroValidation>()}};
 
-    /// Share (0.0-1.0) of total_memory_in_bytes reserved for unpooled (variable-sized) buffers, used by operator state
-    /// (hash maps, paged vectors, var-sized data). On breach, the requesting query fails with CannotAllocateBuffer
+    /// Share (0.0-1.0) of total_memory_in_bytes reserved for unpooled (variable-sized) buffers, used by oversized var-sized data.
+    /// Operator state (hash maps, paged vectors) lives in pooled buffers. On breach, the requesting query fails with CannotAllocateBuffer
     /// instead of the worker running out of physical memory.
     FloatOption unpooledMemoryFraction
         = {"unpooled_memory_fraction",

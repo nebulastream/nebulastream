@@ -269,8 +269,8 @@ void MedianAggregationPhysicalFunction::reset(
         {
             /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): aggregation state stores a TupleBuffer at this slot.
             /// initialize paged vector buffer
-            auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(), *bufferProvider);
-            PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize);
+            auto pagedVectorBuffer = bufferProvider->getBufferBlocking();
+            PagedVector::init(pagedVectorBuffer, *bufferProvider, tupleSize);
             auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
             return childBufferIndex.getRawValue();
         },

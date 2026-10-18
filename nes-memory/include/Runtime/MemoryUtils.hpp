@@ -26,10 +26,6 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
 /// Returns a buffer for the specified size and optimizes internally for either pooled or unpooled.
 /// TODO #1582: This logic will be refactored into the Buffer Provider
 TupleBuffer getBuffer(uint64_t size, AbstractBufferProvider& provider);
-
-/// Returns a pooled buffer of the default size if `size` fits into it, and only otherwise an unpooled buffer of exactly `size`.
-/// The returned buffer can be larger than `size`.
-TupleBuffer getPooledBufferIfFits(uint64_t size, AbstractBufferProvider& provider);
 }
 
 /**

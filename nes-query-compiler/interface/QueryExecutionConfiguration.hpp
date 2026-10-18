@@ -31,8 +31,7 @@
 namespace NES
 {
 
-static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 1024;
-static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
+static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 128;
 static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
 static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
 
@@ -53,11 +52,6 @@ public:
            "Number of buckets in a hash table. Fixed at query-compilation time and never grown: the hash maps do not rehash, so too low "
            "a value lengthens the chains, while too high a one costs a chain pointer per hash map, worker thread and slice.",
            {std::make_shared<NumberValidation>(), std::make_shared<NonZeroValidation>()}};
-    UIntOption pageSize
-        = {"page_size",
-           std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
-           "Page size of any other paged data structure",
-           {std::make_shared<NumberValidation>()}};
     UIntOption numberOfRecordsPerKey
         = {"number_of_records_per_key",
            std::to_string(DEFAULT_NUMBER_OF_RECORDS_PER_KEY),
@@ -78,7 +72,6 @@ private:
     {
         return {
             &executionMode,
-            &pageSize,
             &numberOfPartitions,
             &numberOfRecordsPerKey,
             &operatorBufferSize,
