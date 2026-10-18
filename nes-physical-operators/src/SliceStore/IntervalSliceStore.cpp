@@ -28,6 +28,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/IntervalJoin/IntervalJoinSlice.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
@@ -177,14 +178,9 @@ IntervalSliceStore::allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, Pi
     INVARIANT(
         not pipelineIdToSliceCacheStarts.rlock()->contains(pipelineId), "Slice cache for pipelineId {} already allocated", pipelineId);
 
-    auto buffer = bufferProvider.getUnpooledBuffer(sliceCacheMemorySize);
-    if (not buffer.has_value())
-    {
-        throw BufferAllocationFailure("Cannot allocate buffer for interval-join slice cache of size {}", sliceCacheMemorySize);
-    }
-
-    std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
-    auto sliceCacheStartBuffer = std::make_unique<TupleBuffer>(buffer.value());
+    auto buffer = getBufferOfAtLeast(sliceCacheMemorySize, bufferProvider, "The slice cache of an interval join");
+    std::ranges::fill(buffer.getAvailableMemoryArea(), std::byte{0});
+    auto sliceCacheStartBuffer = std::make_unique<TupleBuffer>(buffer);
     const auto memArea = sliceCacheStartBuffer->getAvailableMemoryArea();
     pipelineIdToSliceCacheStarts.wlock()->emplace(pipelineId, std::move(sliceCacheStartBuffer));
     return memArea;

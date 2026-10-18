@@ -15,6 +15,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -27,9 +28,10 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
 /// TODO #1582: This logic will be refactored into the Buffer Provider
 TupleBuffer getBuffer(uint64_t size, AbstractBufferProvider& provider);
 
-/// Returns a pooled buffer of the default size if `size` fits into it, and only otherwise an unpooled buffer of exactly `size`.
-/// The returned buffer can be larger than `size`.
-TupleBuffer getPooledBufferIfFits(uint64_t size, AbstractBufferProvider& provider);
+/// Returns a buffer of at least `size` bytes: a pooled buffer if `size` fits into one, which is the normal case, and otherwise an
+/// unpooled buffer of exactly `size`. Everything should fit into pooled buffers, so the first unpooled allocation for each `what` logs a
+/// warning that names what needed it, which tells that a configuration needs tuning (e.g. a larger buffer size).
+TupleBuffer getBufferOfAtLeast(uint64_t size, AbstractBufferProvider& provider, std::string_view what);
 }
 
 /**

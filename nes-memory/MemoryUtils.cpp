@@ -17,9 +17,15 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <mutex>
 #include <span>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+#include <utility>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -40,13 +46,32 @@ TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
     throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", size);
 }
 
-TupleBuffer getPooledBufferIfFits(const uint64_t size, AbstractBufferProvider& provider)
+TupleBuffer getBufferOfAtLeast(const uint64_t size, AbstractBufferProvider& provider, const std::string_view what)
 {
     if (size <= provider.getBufferSize())
     {
         return provider.getBufferBlocking();
     }
-    return getBuffer(size, provider);
+    {
+        static std::mutex mutex;
+        static std::unordered_set<std::string> warned;
+        const std::scoped_lock lock{mutex};
+        if (warned.emplace(what).second)
+        {
+            NES_WARNING(
+                "{} needs {} bytes, more than a pooled buffer of {} bytes, and is allocated unpooled. Further unpooled allocations for it are "
+                "not logged. A larger buffer size keeps it in pooled buffers.",
+                what,
+                size,
+                provider.getBufferSize());
+        }
+    }
+    auto buffer = provider.getUnpooledBuffer(size);
+    if (not buffer.has_value())
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer of {} bytes available for {}", size, what);
+    }
+    return std::move(buffer).value();
 }
 
 TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)

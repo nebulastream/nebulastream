@@ -109,14 +109,26 @@ struct FieldNamesExtension
 /// count bounds nothing: the hash maps never rehash, they only lengthen their chains, so a map routinely
 /// holds far more keys than it has buckets. Sizing the filter for the bucket count would saturate every bit
 /// and make mightContain() always true, i.e. pay the hash positions and skip nothing.
-std::optional<Nautilus::Interface::BloomFilterParams> createBloomFilterParams(const QueryExecutionConfiguration& conf)
+///
+/// The chains and the filter live in one buffer of the operator buffer size, so the filter is switched off when it does not fit next to the chains.
+std::optional<Nautilus::Interface::BloomFilterParams>
+createBloomFilterParams(const QueryExecutionConfiguration& conf, const uint64_t numberOfBuckets)
 {
     if (not conf.bloomFilterConfiguration.enableBloomFilter)
     {
         return std::nullopt;
     }
-    return Nautilus::Interface::BloomFilterParams{
+    const Nautilus::Interface::BloomFilterParams params{
         conf.bloomFilterConfiguration.expectedEntries, conf.bloomFilterConfiguration.falsePositiveRate};
+    if (ChainedHashMap::calculateBufferSize(numberOfBuckets, params.allocationByteCount()) > conf.operatorBufferSize)
+    {
+        NES_WARNING(
+            "Disabling the bloom filter of the hash join: its chains and filter do not fit into an operator buffer of {} bytes. Increase "
+            "operator_buffer_size or decrease number_of_partitions or bloom_filter.expected_entries to keep it.",
+            conf.operatorBufferSize);
+        return std::nullopt;
+    }
+    return params;
 }
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
@@ -244,9 +256,19 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
         fieldKeyNames.emplace_back(fieldExtension.newField.getFullyQualifiedName());
     }
 
-    /// State pages have the size of a pooled buffer, so they never need an unpooled allocation.
+    /// State is always stored in pooled buffers of the operator buffer size.
     const auto pageSize = conf.operatorBufferSize;
-    const auto numberOfBuckets = conf.numberOfPartitions;
+    /// The chains of the hash map live in one buffer, so there are not more buckets than fit into it.
+    const auto numberOfBuckets = ChainedHashMap::limitNumberOfBuckets(conf.numberOfPartitions, pageSize);
+    if (numberOfBuckets < conf.numberOfPartitions)
+    {
+        NES_WARNING(
+            "Using {} instead of {} partitions for the hash join, as the chains of the hash map have to fit into an operator buffer of {} "
+            "bytes.",
+            numberOfBuckets,
+            conf.numberOfPartitions,
+            pageSize);
+    }
     /// The entry of a key stores its first records, which is the expected number of records per key, and a paged vector for more of them
     const auto inlineRecords = EntryRecordsRef::getEffectiveInlineRecords(inputSchema, conf.numberOfRecordsPerKey, pageSize);
     const auto valueSize = EntryRecordsRef::getValueAreaSize(inlineRecords, getSizeInBytes(inputSchema));
@@ -258,8 +280,7 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
         ChainedHashMapConfig{
             .entrySize = entrySize,
             .numberOfBuckets = numberOfBuckets,
-            .pageSize = pageSize,
-            .bloomFilterParams = createBloomFilterParams(conf),
+            .bloomFilterParams = createBloomFilterParams(conf, numberOfBuckets),
             .fieldKeys = fieldKeys,
             .fieldValues = fieldValues,
             .hashFunction = std::make_shared<MurMur3HashFunction>(),
@@ -315,21 +336,32 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [leftHashMapConfig, leftKeyFunctions] = createChainedHashMapConfig(leftJoinFields, newLeftInputSchema, conf);
     auto [rightHashMapConfig, rightKeyFunctions] = createChainedHashMapConfig(rightJoinFields, newRightInputSchema, conf);
 
-    /// The build stores every distinct key's tuples in its own PagedVector sized by the same page-size knob, so the knob must also hold a
-    /// tuple - the same "does one element fit on a page" contract ChainedHashMapConfig enforces for entriesPerPage.
-    const auto requireTupleFitsOnPage = [](const uint64_t pageSize, const auto& tupleLayout, const std::string_view side)
+    /// The build stores every distinct key's tuples in its own PagedVector, whose pages are buffers of the operator buffer size, so a
+    /// tuple and an entry of the hash map have to fit into one such buffer.
+    const auto bufferSize = conf.operatorBufferSize;
+    const auto requireStateFitsInBuffer
+        = [bufferSize](const ChainedHashMapConfig& hashMapConfig, const auto& tupleLayout, const std::string_view side)
     {
-        if (const auto minimumPageSize = tupleLayout->getMinimumPageSize(); pageSize < minimumPageSize)
+        if (const auto minimumBufferSize = tupleLayout->getMinimumPageSize(); bufferSize < minimumBufferSize)
         {
             throw QueryCompilerError(
-                "The {} join input needs a page size of at least {} bytes, but the configured page size is {}. Increase the page size.",
+                "The {} join input needs an operator buffer size of at least {} bytes, but it is {}. Increase operator_buffer_size.",
                 side,
-                minimumPageSize,
-                pageSize);
+                minimumBufferSize,
+                bufferSize);
+        }
+        if (bufferSize < hashMapConfig.entrySize)
+        {
+            throw QueryCompilerError(
+                "The {} hash map needs buffers of at least {} bytes for one entry, but the operator buffer size is {}. Increase "
+                "operator_buffer_size.",
+                side,
+                hashMapConfig.entrySize,
+                bufferSize);
         }
     };
-    requireTupleFitsOnPage(leftHashMapConfig.pageSize, leftTupleLayout, "left");
-    requireTupleFitsOnPage(rightHashMapConfig.pageSize, rightTupleLayout, "right");
+    requireStateFitsInBuffer(leftHashMapConfig, leftTupleLayout, "left");
+    requireStateFitsInBuffer(rightHashMapConfig, rightTupleLayout, "right");
 
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();

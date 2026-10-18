@@ -68,6 +68,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -90,7 +91,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
     auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
-    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize, physicalInputSchema, memoryLayoutType);
+    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.operatorBufferSize, physicalInputSchema, memoryLayoutType);
 
     for (const auto& descriptor : aggregationDescriptors)
     {
@@ -169,9 +170,25 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
-    const auto numberOfBuckets = conf.numberOfPartitions;
-    /// State pages have the size of a pooled buffer, so they never need an unpooled allocation.
-    const auto pageSize = conf.operatorBufferSize;
+    /// The state is stored in buffers of the operator buffer size, so the chains of the hash map have to fit into one.
+    const auto numberOfBuckets = ChainedHashMap::limitNumberOfBuckets(conf.numberOfPartitions, conf.operatorBufferSize);
+    if (numberOfBuckets < conf.numberOfPartitions)
+    {
+        NES_WARNING(
+            "Using {} instead of {} partitions for the aggregation, as the chains of the hash map have to fit into an operator buffer of "
+            "{} bytes.",
+            numberOfBuckets,
+            conf.numberOfPartitions,
+            conf.operatorBufferSize);
+    }
+    if (conf.operatorBufferSize < entrySize)
+    {
+        throw QueryCompilerError(
+            "The aggregation hash map needs buffers of at least {} bytes for one entry, but the operator buffer size is {}. Increase "
+            "operator_buffer_size.",
+            entrySize,
+            conf.operatorBufferSize);
+    }
 
     const auto fieldKeyNames
         = boundGroupingKeys | std::views::transform([](const auto& field) { return QualifiedIdentifier{field->getField().getLastName()}; });
@@ -193,7 +210,6 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const ChainedHashMapConfig hashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
-        .pageSize = pageSize,
         .bloomFilterParams = std::nullopt,
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,

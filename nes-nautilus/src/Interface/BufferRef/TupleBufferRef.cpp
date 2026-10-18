@@ -35,6 +35,8 @@
 #include <Interface/VariableSizedAccess.hpp>
 #include <Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
+
 #include <Runtime/TupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -53,13 +55,15 @@ namespace
 TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
-    if (tupleBufferProvider.getBufferSize() > newBufferSize)
+    if (tupleBufferProvider.getBufferSize() <= newBufferSize)
     {
-        if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
-        {
-            return newBuffer.value();
-        }
+        return getBufferOfAtLeast(newBufferSize, tupleBufferProvider, "A variable-sized value of an output buffer");
     }
+    if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
+    {
+        return newBuffer.value();
+    }
+    /// No pooled buffer is free right now: writing a record must not block, so it takes an unpooled one.
     const auto unpooledBuffer = tupleBufferProvider.getUnpooledBuffer(newBufferSize);
     if (not unpooledBuffer.has_value())
     {

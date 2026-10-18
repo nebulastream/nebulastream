@@ -68,10 +68,12 @@ const ConfigField<uint64_t> EXPECTED_ENTRIES{
     Identifier::parse("expected_entries"),
     "Number of keys one hash map is expected to hold, which is what the bit array is sized for. This is not bounded by "
     "number_of_partitions: the hash maps never rehash, they just grow their chains, so the entry count is a property of the "
-    "workload. Too low saturates the filter and it stops skipping anything; too high wastes memory per hash map.",
+    "workload. Too low saturates the filter and it stops skipping anything; too high wastes memory per hash map. The bit array lives "
+    "in the buffer of the hash map together with the chains, so the filter is disabled (with a warning) if they do not fit into one "
+    "operator buffer.",
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
-    uint64_t{10'000}};
+    uint64_t{1'000}};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }

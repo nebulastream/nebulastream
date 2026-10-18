@@ -48,13 +48,12 @@ public:
         const BorrowedNautilusBuffer& hashMapBuffer,
         const nautilus::val<int8_t*>& valueMemArea,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-        uint64_t inlineRecords,
-        uint64_t pageSize);
+        uint64_t inlineRecords);
 
     /// The number of inline records that are used for records of the schema. The small buffer is only used for records without var sized
     /// data and small compared to a page, so 0 might be returned for the requested number.
     [[nodiscard]] static uint64_t
-    getEffectiveInlineRecords(const Schema<QualifiedUnboundField, Ordered>& schema, uint64_t requestedInlineRecords, uint64_t pageSize);
+    getEffectiveInlineRecords(const Schema<QualifiedUnboundField, Ordered>& schema, uint64_t requestedInlineRecords, uint64_t bufferSize);
 
     /// The size in bytes of the value area of an entry for records of the size `tupleSize`.
     [[nodiscard]] static uint64_t getValueAreaSize(uint64_t inlineRecords, uint64_t tupleSize);
@@ -65,7 +64,6 @@ public:
         const nautilus::val<int8_t*>& valueMemArea,
         const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout,
         uint64_t inlineRecords,
-        uint64_t pageSize,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider);
 
     /// Appends a record.
@@ -128,7 +126,6 @@ private:
     nautilus::val<int8_t*> valueMemArea;
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
     uint64_t inlineRecords;
-    uint64_t pageSize;
     uint64_t tupleSize;
     /// The records of the key if there are no inline records
     std::optional<PagedVectorRef> pagedVector;

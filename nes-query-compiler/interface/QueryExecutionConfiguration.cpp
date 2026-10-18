@@ -75,14 +75,7 @@ const ConfigField<uint64_t> NUMBER_OF_PARTITIONS{
                     return value;
                 });
     },
-    uint64_t{1024}};
-
-const ConfigField<uint64_t> PAGE_SIZE{
-    Identifier::parse("page_size"),
-    "Page size of any other paged data structure",
-    [](const ConfigLiteral& literal)
-    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
-    uint64_t{1024}};
+    uint64_t{128}};
 
 const ConfigField<uint64_t> NUMBER_OF_RECORDS_PER_KEY{
     Identifier::parse("number_of_records_per_key"),
@@ -113,7 +106,6 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
     return createConfigSchema(
         Identifier::parse("default_query_execution"),
         EXECUTION_MODE,
-        PAGE_SIZE,
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
@@ -127,7 +119,6 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
     return {
         config.get(EXECUTION_MODE),
         config.get(NUMBER_OF_PARTITIONS),
-        config.get(PAGE_SIZE),
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
         SliceCacheConfiguration::fromConfig(config),

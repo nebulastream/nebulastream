@@ -64,9 +64,10 @@ uint64_t PagedVector::Page::getNumberOfTuples() const
     return buffer.getNumberOfTuples();
 }
 
-void PagedVector::init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize, const uint64_t inlineSizeInBytes)
+void PagedVector::init(
+    TupleBuffer buffer, const AbstractBufferProvider& bufferProvider, uint64_t tupleSize, const uint64_t inlineSizeInBytes)
 {
-    auto* const header = new (buffer.getAvailableMemoryArea<Header>().data()) Header(0, pageBufferSize, tupleSize);
+    auto* const header = new (buffer.getAvailableMemoryArea<Header>().data()) Header(0, bufferProvider.getBufferSize(), tupleSize);
     buffer.setNumberOfTuples(0);
     if (buffer.getBufferSize() > sizeof(Header))
     {
@@ -156,10 +157,13 @@ uint64_t PagedVector::getMainBufferSize(const uint64_t inlineSizeInBytes)
     return sizeof(Header) + inlineSizeInBytes;
 }
 
-void PagedVector::addNewPage(AbstractBufferProvider* bufferProvider, const uint64_t bufferSize)
+void PagedVector::addNewPage(AbstractBufferProvider* bufferProvider)
 {
     /// Either no pages exist, or the last page is full so allocate a new one
-    auto page = getPooledBufferIfFits(bufferSize, *bufferProvider);
+    auto page = bufferProvider->getBufferBlocking();
+    INVARIANT(
+        page.getBufferSize() == getPageBufferSize(),
+        "The buffer provider hands out buffers of another size than the paged vector was initialized with");
     updateCumulativeSumLastItem();
     Page::init(page);
     if (getNumberOfPages() == 0)
@@ -191,7 +195,7 @@ void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider)
     }
     /// Either no pages exist, or the last page is full so allocate a new one.
     /// The page must be exactly as large as the capacity computed at init assumes.
-    addNewPage(bufferProvider, getPageBufferSize());
+    addNewPage(bufferProvider);
 }
 
 size_t PagedVector::getPageIndex(uint64_t recordIndex) const

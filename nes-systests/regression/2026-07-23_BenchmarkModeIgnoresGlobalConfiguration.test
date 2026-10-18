@@ -3,11 +3,11 @@
 # label, so the override silently had no effect and only surfaced as an unrelated crash deep inside a query.
 #
 # This query keeps one paged vector per median in the aggregation state, so its hash map entry does not fit a
-# page at the default size of 1024 bytes: without the page size below, lowering aborts on the entriesPerPage
+# buffer at the default size of 4096 bytes: without the buffer size below, lowering aborts on the entriesPerPage
 # invariant instead of running. Run it with -b, where the regression lived.
 # groups: [regression]
 
-GlobalConfiguration worker.default_query_execution.page_size: [16384]
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [16384]
 
 CREATE LOGICAL SOURCE stream(value INT64 NOT NULL, ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;

@@ -106,8 +106,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
                 outerHashMapBuffer,
                 outerEntryRef.getValueMemArea(),
                 outerTupleLayout,
-                outerHashMapConfig.inlineRecords,
-                outerHashMapConfig.pageSize};
+                outerHashMapConfig.inlineRecords};
             const auto outerEnd = outerRecords.end();
 
             if (not residual.has_value())
@@ -159,8 +158,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
                                 innerHashMapBuffer,
                                 innerEntryRef.getValueMemArea(),
                                 innerTupleLayout,
-                                innerHashMapConfig.inlineRecords,
-                                innerHashMapConfig.pageSize};
+                                innerHashMapConfig.inlineRecords};
                             const auto innerEnd = innerRecords.end();
                             for (auto innerIt = innerRecords.begin(); innerIt != innerEnd and not matched; ++innerIt)
                             {

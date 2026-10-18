@@ -76,7 +76,6 @@ TestableChainedHashMap::TestableChainedHashMap(
     EngineMode mode,
     uint64_t numberOfBuckets,
     size_t numKeyFields,
-    uint64_t numEntriesPerPage,
     const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams,
     std::optional<uint64_t> inlineRecords)
     : dataTypes(fieldTypes), bufferManager(bufferManager), bloomFilterParams(bloomFilterParams), storesRecords(inlineRecords.has_value())
@@ -102,19 +101,22 @@ TestableChainedHashMap::TestableChainedHashMap(
     valueDataTypes
         = std::vector<DataType>(fieldTypes.begin() + numKeyFields, fieldTypes.end()); /// NOLINT(cppcoreguidelines-narrowing-conversions)
 
+    PRECONDITION(
+        fits(fieldTypes, numKeyFields, bufferManager.getBufferSize(), inlineRecords),
+        "The entries do not fit into a buffer of size {}",
+        bufferManager.getBufferSize());
     const uint64_t keySize = getSizeInBytes(createSchemaFromDataTypes(keyDataTypes));
     const uint64_t valueSize = getSizeInBytes(createSchemaFromDataTypes(valueDataTypes));
     /// A map that stores the records of its keys has their records in the value area of an entry instead of value fields.
     const auto recordLayout = std::make_shared<DefaultPagedVectorTupleLayout>(schema);
     const uint64_t recordSize = getSizeInBytes(schema);
-    uint64_t recordsPageSize = std::max<uint64_t>(bufferManager.getBufferSize(), recordLayout->getMinimumPageSize());
-    const uint64_t recordsInline = inlineRecords ? EntryRecordsRef::getEffectiveInlineRecords(schema, *inlineRecords, recordsPageSize) : 0;
+    const uint64_t recordsInline
+        = inlineRecords ? EntryRecordsRef::getEffectiveInlineRecords(schema, *inlineRecords, bufferManager.getBufferSize()) : 0;
     const uint64_t entrySize = inlineRecords
         ? sizeof(ChainedHashMapEntry) + keySize + EntryRecordsRef::getValueAreaSize(recordsInline, recordSize)
         : sizeof(ChainedHashMapEntry) + keySize + valueSize;
     if (inlineRecords)
     {
-        recordsPageSize = std::max<uint64_t>(recordsPageSize, entrySize * numEntriesPerPage);
         fieldValues.clear();
     }
     /// A probe entry never stores value bytes: findEntry() only reads the key region + hash off the
@@ -126,8 +128,6 @@ TestableChainedHashMap::TestableChainedHashMap(
     hashMapConfig = ChainedHashMapConfig{
         .entrySize = entrySize,
         .numberOfBuckets = numberOfBuckets,
-        /// State pages are pooled buffers, so a page is never smaller than the buffer size, as in the query compiler.
-        .pageSize = inlineRecords ? recordsPageSize : std::max<uint64_t>(entrySize * numEntriesPerPage, bufferManager.getBufferSize()),
         .bloomFilterParams = bloomFilterParams,
         .fieldKeys = fieldKeys,
         .fieldValues = fieldValues,
@@ -138,7 +138,6 @@ TestableChainedHashMap::TestableChainedHashMap(
     probeConfig = ChainedHashMapConfig{
         .entrySize = probeEntrySize,
         .numberOfBuckets = 1,
-        .pageSize = probeEntrySize,
         .bloomFilterParams = std::nullopt,
         .fieldKeys = fieldKeys,
         .fieldValues = {},
@@ -326,17 +325,36 @@ ChainedHashMap TestableChainedHashMap::raw()
     return ChainedHashMap::load(chainedHashMapBuffer);
 }
 
+bool TestableChainedHashMap::fits(
+    const std::vector<DataType>& fieldTypes,
+    const size_t numKeyFields,
+    const uint64_t bufferSize,
+    const std::optional<uint64_t>& inlineRecords)
+{
+    const auto schema = createSchemaFromDataTypes(fieldTypes);
+    const auto keyTypes
+        = std::vector<DataType>(fieldTypes.begin(), fieldTypes.begin() + numKeyFields); /// NOLINT(cppcoreguidelines-narrowing-conversions)
+    const auto valueTypes
+        = std::vector<DataType>(fieldTypes.begin() + numKeyFields, fieldTypes.end()); /// NOLINT(cppcoreguidelines-narrowing-conversions)
+    const uint64_t keySize = getSizeInBytes(createSchemaFromDataTypes(keyTypes));
+    if (not inlineRecords)
+    {
+        return sizeof(ChainedHashMapEntry) + keySize + getSizeInBytes(createSchemaFromDataTypes(valueTypes)) <= bufferSize;
+    }
+    const auto recordsInline = EntryRecordsRef::getEffectiveInlineRecords(schema, *inlineRecords, bufferSize);
+    const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + EntryRecordsRef::getValueAreaSize(recordsInline, getSizeInBytes(schema));
+    return entrySize <= bufferSize and DefaultPagedVectorTupleLayout{schema}.getMinimumPageSize() <= bufferSize;
+}
+
 void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<PagedVectorTupleLayout>& layout, const uint64_t recordsInline)
 {
     /// The value area of the entries holds the records, so the entries have no value fields.
     const decltype(fieldValues) noValues;
-    const auto pageSize = hashMapConfig.pageSize;
 
     insertFn.emplace(engine->registerFunction(
         std::function(
             [layout,
              recordsInline,
-             pageSize,
              dataTypes = dataTypes,
              projections = projections,
              fieldKeys = fieldKeys,
@@ -352,11 +370,11 @@ void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<Paged
                     [&](const nautilus::val<AbstractHashMapEntry*>& newEntry)
                     {
                         const ChainedHashMapRef::ChainedEntryRef newEntryRef{newEntry, borrowedBuffer, fieldKeys, noValues};
-                        EntryRecordsRef::initialize(borrowedBuffer, newEntryRef.getValueMemArea(), layout, recordsInline, pageSize, bm);
+                        EntryRecordsRef::initialize(borrowedBuffer, newEntryRef.getValueMemArea(), layout, recordsInline, bm);
                     },
                     bm);
                 const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, noValues};
-                EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline, pageSize};
+                EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
                 records.pushBack(record, bm);
             })));
 
@@ -368,7 +386,6 @@ void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<Paged
         std::function(
             [layout,
              recordsInline,
-             pageSize,
              keyDataTypes = keyDataTypes,
              keyProjections = fieldKeyNames,
              fieldKeys = fieldKeys,
@@ -395,7 +412,7 @@ void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<Paged
                 {
                     const ChainedHashMapRef::ChainedEntryRef entryRef{
                         static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry), borrowedBuffer, fieldKeys, noValues};
-                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline, pageSize};
+                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
                     storeRecordToAnyVec(out, *records.begin(), valueNames, valueTypes);
                 }
                 return found;
@@ -405,7 +422,6 @@ void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<Paged
         std::function(
             [layout,
              recordsInline,
-             pageSize,
              keyDataTypes = keyDataTypes,
              keyProjections = fieldKeyNames,
              fieldKeys = fieldKeys,
@@ -432,7 +448,7 @@ void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<Paged
                 {
                     const ChainedHashMapRef::ChainedEntryRef entryRef{
                         static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry), borrowedBuffer, fieldKeys, noValues};
-                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline, pageSize};
+                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
                     const auto end = records.end();
                     for (auto it = records.begin(); it != end; ++it)
                     {
@@ -447,7 +463,6 @@ void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<Paged
         std::function(
             [layout,
              recordsInline,
-             pageSize,
              fieldKeys = fieldKeys,
              noValues,
              dataTypes = dataTypes,
@@ -466,7 +481,7 @@ void TestableChainedHashMap::registerRecordFunctions(const std::shared_ptr<Paged
                 for (const auto entry : chmRef)
                 {
                     const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, noValues};
-                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline, pageSize};
+                    const EntryRecordsRef records{borrowedBuffer, entryRef.getValueMemArea(), layout, recordsInline};
                     auto out = anyVecPushBack(outVector, nautilus::val<size_t>{dataTypes.size()});
                     storeRecordToAnyVec(out, *records.begin(), projections, dataTypes);
                 }

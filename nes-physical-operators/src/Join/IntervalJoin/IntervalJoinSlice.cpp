@@ -36,19 +36,11 @@ IntervalJoinSlice::IntervalJoinSlice(
     const uint64_t tupleSize)
     : Slice(sliceStart, sliceEnd)
 {
-    const uint64_t pvMainBufferSize = PagedVector::getMainBufferSize();
-    const uint64_t pvPageBufferSize = bufferProvider.getBufferSize();
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
-        {
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSize);
-            pagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for interval-join paged vector main buffer");
-        }
+        auto pagedVectorBuffer = bufferProvider.getBufferBlocking();
+        PagedVector::init(pagedVectorBuffer, bufferProvider, tupleSize);
+        pagedVectorBuffers.emplace_back(std::move(pagedVectorBuffer));
     }
 }
 

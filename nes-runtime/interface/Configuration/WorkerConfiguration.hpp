@@ -64,8 +64,8 @@ struct WorkerConfiguration
     /// share (see unpooled_memory_fraction) and a pooled share; the pooled share is divided into operator buffers.
     uint64_t totalMemoryInBytes;
 
-    /// Share (0.0-1.0) of total_memory_in_bytes reserved for unpooled (variable-sized) buffers, used by operator state
-    /// (hash maps, paged vectors, var-sized data). On breach, the requesting query fails with CannotAllocateBuffer
+    /// Share (0.0-1.0) of total_memory_in_bytes reserved for unpooled (variable-sized) buffers, used by oversized var-sized data.
+    /// Operator state (hash maps, paged vectors) lives in pooled buffers. On breach, the requesting query fails with CannotAllocateBuffer
     /// instead of the worker running out of physical memory.
     float unpooledMemoryFraction;
 

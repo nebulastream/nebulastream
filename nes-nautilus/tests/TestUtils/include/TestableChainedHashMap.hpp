@@ -44,16 +44,21 @@ public:
     /// With it, the map stores the records of the keys as the hash join does: every put appends a record to its key, in the value area of the
     /// key's entry, which holds this many records and a paged vector for more of them (the number is limited by the size of the records).
     /// at() then returns the value of the first record and getAll() one entry per key, so the same properties hold for both.
+    /// The pages of the map are buffers of the size of the bufferManager, so an entry (and for records a record) has to fit into one:
+    /// see fits().
     TestableChainedHashMap(
         const std::vector<DataType>& fieldTypes,
         AbstractBufferProvider& bufferManager,
         EngineMode mode,
         uint64_t numberOfBuckets,
         size_t numKeyFields,
-        uint64_t numEntriesPerPage,
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): matches the pre-existing default here.
         const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams = std::nullopt,
         std::optional<uint64_t> inlineRecords = std::nullopt);
+
+    /// Whether the entries of a map with these parameters fit into a buffer of size `bufferSize`, which the constructor requires.
+    [[nodiscard]] static bool
+    fits(const std::vector<DataType>& fieldTypes, size_t numKeyFields, uint64_t bufferSize, const std::optional<uint64_t>& inlineRecords);
 
     ~TestableChainedHashMap() = default;
     TestableChainedHashMap(const TestableChainedHashMap&) = delete;

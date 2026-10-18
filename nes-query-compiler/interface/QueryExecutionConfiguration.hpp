@@ -35,7 +35,6 @@ struct QueryExecutionConfiguration
     QueryExecutionConfiguration(
         ExecutionMode executionMode,
         uint64_t numberOfPartitions,
-        uint64_t pageSize,
         uint64_t numberOfRecordsPerKey,
         uint64_t operatorBufferSize,
         SliceCacheConfiguration sliceCacheConfiguration,
@@ -43,7 +42,6 @@ struct QueryExecutionConfiguration
         bool nautilusPerf = false)
         : executionMode(executionMode)
         , numberOfPartitions(numberOfPartitions)
-        , pageSize(pageSize)
         , numberOfRecordsPerKey(numberOfRecordsPerKey)
         , operatorBufferSize(operatorBufferSize)
         , sliceCacheConfiguration(sliceCacheConfiguration)
@@ -54,7 +52,6 @@ struct QueryExecutionConfiguration
 
     ExecutionMode executionMode;
     uint64_t numberOfPartitions;
-    uint64_t pageSize;
     uint64_t numberOfRecordsPerKey;
     uint64_t operatorBufferSize;
     SliceCacheConfiguration sliceCacheConfiguration;
