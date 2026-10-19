@@ -973,10 +973,6 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
 
     test.start();
     {
-        /// instruct DataGenerator to emit failure for source 0 after 3 tuple buffer
-        DataGenerator<FailAfter<3, 0>> dataGenerator;
-        dataGenerator.start(sourcesCtrls);
-
         /// start all queries
         for (auto& query : queryPlans)
         {
@@ -984,6 +980,11 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
             test.startQuery(std::move(query));
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
+
+        /// Source activity can precede the Running notification, so a query could fail before reporting Running.
+        /// Only generate data once every query has reported Running.
+        DataGenerator<FailAfter<3, 0>> dataGenerator;
+        dataGenerator.start(sourcesCtrls);
 
         /// Expect Query 1 to be terminated by the failure.
         ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -1455,10 +1456,6 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
 
     test.start();
     {
-        /// instruct DataGenerator to emit failure for source 0 after 3 tuple buffer
-        DataGenerator dataGenerator;
-        dataGenerator.start(sourcesCtrls);
-
         /// start all queries
         for (auto& query : queryPlans)
         {
@@ -1466,6 +1463,11 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
             test.startQuery(std::move(query));
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
+
+        /// Source activity can precede the Running notification, so a query could fail before reporting Running.
+        /// Only generate data once every query has reported Running.
+        DataGenerator dataGenerator;
+        dataGenerator.start(sourcesCtrls);
 
         /// Expect all other queries to have failed
         for (size_t idx = 1; auto& query : queryPlans | std::ranges::views::drop(1))
