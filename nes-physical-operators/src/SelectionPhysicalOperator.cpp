@@ -23,10 +23,9 @@
 namespace NES
 {
 
-void SelectionPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void SelectionPhysicalOperator::setup(ExecutionContext&, CompilationContext& compilationContext) const
 {
     function.setup(compilationContext);
-    setupChild(executionCtx, compilationContext);
 }
 
 void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
