@@ -43,6 +43,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <folly/Synchronized.h>
+#include <grpcpp/resource_quota.h>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
@@ -269,6 +270,9 @@ int main(const int argc, const char* argv[])
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
+            grpc::ResourceQuota resourceQuota;
+            resourceQuota.SetMaxThreads(4);
+            builder.SetResourceQuota(resourceQuota);
             int selectedPort = 0;
             builder.AddListeningPort(configuration.grpcAddressUri, grpc::InsecureServerCredentials(), &selectedPort);
             builder.RegisterService(&workerService);
