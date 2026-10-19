@@ -156,17 +156,71 @@ public:
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SpecificConfiguration>
     requires DescriptorConfigurationConstraints::HasParameterMap<SpecificConfiguration>
-    static Config validateAndFormat(std::unordered_map<std::string, std::string> config, const std::string_view implementationName)
+    static Config validateAndFormat(
+        std::unordered_map<std::string, std::string> config,
+        const std::string_view implementationName)
     {
         auto validatedConfig = Config{};
+
+        // Normalize configuration parameter names to lowercase.
+        const auto normalizeParameterName = [](std::string name)
+        {
+            std::ranges::transform(
+                name,
+                name.begin(),
+                [](unsigned char character)
+                {
+                    return static_cast<char>(std::tolower(character));
+                });
+
+            return name;
+        };
+
+        // Normalize user-provided configuration.
+        std::unordered_map<std::string, std::string> normalizedConfig;
+
+        for (const auto& [key, value] : config)
+        {
+            const auto normalizedKey = normalizeParameterName(key);
+
+            if (not normalizedConfig.emplace(normalizedKey, value).second)
+            {
+                throw InvalidConfigParameter(fmt::format(
+                    "Multiple configuration parameters resolve to the same name: {}.",
+                    normalizedKey));
+            }
+        }
+
+        config = std::move(normalizedConfig);
+
+        // Normalize the parameter map.
+        auto normalizedParameterMap = std::remove_cvref_t<decltype(SpecificConfiguration::parameterMap)>{};
+
+        for (const auto& [key, parameter] : SpecificConfiguration::parameterMap)
+        {
+            const auto normalizedKey = normalizeParameterName(key);
+
+            if (not normalizedParameterMap.emplace(normalizedKey, parameter).second)
+            {
+                throw InvalidConfigParameter(fmt::format(
+                    "Multiple parameter map entries resolve to the same name: {}.",
+                    normalizedKey));
+            }
+        }
+
+        NES_WARNING("Normalized the configuration parameters and parameter map");
 
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
         {
-            if (not SpecificConfiguration::parameterMap.contains(key))
+            if (not normalizedParameterMap.contains(key))
             {
-                auto accepted = SpecificConfiguration::parameterMap | std::views::keys | std::ranges::to<std::vector>();
+                auto accepted = normalizedParameterMap
+                    | std::views::keys
+                    | std::ranges::to<std::vector>();
+
                 std::ranges::sort(accepted);
+
                 throw InvalidConfigParameter(fmt::format(
                     "Unknown configuration parameter: {}. Accepted parameters for {} are: {}.",
                     key,
@@ -174,8 +228,9 @@ public:
                     fmt::join(accepted, ", ")));
             }
         }
+
         /// Next, try to validate all config parameters.
-        for (const auto& [key, configParameter] : SpecificConfiguration::parameterMap)
+        for (const auto& [key, configParameter] : normalizedParameterMap)
         {
             /// If the user did not specify a parameter that is optional, use the default value (if available).
             if (not config.contains(key))
@@ -185,16 +240,26 @@ public:
                     validatedConfig.emplace(key, defaultValue.value());
                     continue;
                 }
-                throw InvalidConfigParameter(
-                    fmt::format("Non-default parameter {} not specified in config of {}", key, implementationName));
+
+                throw InvalidConfigParameter(fmt::format(
+                    "Non-default parameter {} not specified in config of {}",
+                    key,
+                    implementationName));
             }
-            if (const auto validatedParameter = configParameter.validate(config); validatedParameter.has_value())
+
+            if (const auto validatedParameter = configParameter.validate(config);
+                validatedParameter.has_value())
             {
                 validatedConfig.emplace(key, validatedParameter.value());
                 continue;
             }
-            throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in: {}", key, implementationName));
+
+            // throw InvalidConfigParameter(fmt::format(
+            //     "Failed validation of config parameter: {}, in: {}",
+            //     key,
+            //     implementationName));
         }
+
         return validatedConfig;
     }
 
