@@ -69,6 +69,7 @@
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
+#include <HashMapSliceCheckpoint.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -199,25 +200,27 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    /// NOLINTNEXTLINE(bugprone-exception-escape): dynamic_cast<ref> may throw std::bad_cast on bug; non-recoverable here.
+    const auto createSlices = [hashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+    {
+        auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
+        const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, bufferProvider};
+        return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
+    };
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider) -> const TupleBuffer*
         {
             auto& aggregationSlice = dynamic_cast<AggregationSlice&>(slice);
             return aggregationSlice.getOrCreateHashMapBufferRefForWorker(bufferProvider, workerThreadId);
         },
-        /// NOLINTNEXTLINE(bugprone-exception-escape): dynamic_cast<ref> may throw std::bad_cast on bug; non-recoverable here.
-        [hashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
-        {
-            auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, bufferProvider};
-            return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
-        });
+        createSlices);
     const AggregationBuildPhysicalOperator build{
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(
         *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore));
+    handler->enableCheckpointing(HashMapSliceCheckpoint{{hashMapConfig}, createSlices});
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

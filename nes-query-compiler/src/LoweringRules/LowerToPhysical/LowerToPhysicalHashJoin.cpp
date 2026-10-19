@@ -81,6 +81,7 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
+#include <HashMapSliceCheckpoint.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
@@ -349,17 +350,19 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto handlerId = getNextOperatorHandlerId();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    const auto createLeftSlices
+        = [hashMapConfig = leftHashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+    {
+        const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, bufferProvider};
+        return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
+    };
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider)
         {
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
             return hjSlice.getOrCreateHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Left, bufferProvider);
         },
-        [hashMapConfig = leftHashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
-        {
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, bufferProvider};
-            return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
-        });
+        createLeftSlices);
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider)
         {
@@ -393,6 +396,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     auto handler
         = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    /// Both sides share the sizing of a slice's hash maps, so the left side's function creates the slices for both.
+    handler->enableCheckpointing(HashMapSliceCheckpoint{{leftHashMapConfig, rightHashMapConfig}, createLeftSlices});
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{

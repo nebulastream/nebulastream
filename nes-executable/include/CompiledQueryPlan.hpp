@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -68,5 +70,10 @@ struct CompiledQueryPlan
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<Sink> sinks;
     std::vector<Source> sources;
+    /// The handlers whose state the worker can checkpoint. Their ids are stable across compilations of the same query.
+    std::map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> checkpointableHandlers;
+    /// False if a stateful handler, e.g., of a nested loop join, cannot be checkpointed. The worker then recovers the query by replaying
+    /// its input from the beginning.
+    bool checkpointsAllState = true;
 };
 }

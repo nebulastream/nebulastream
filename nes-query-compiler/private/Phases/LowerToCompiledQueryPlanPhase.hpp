@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -22,6 +23,7 @@
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <PipelinedQueryPlan.hpp>
@@ -59,6 +61,8 @@ private:
     std::vector<CompiledQueryPlan::Sink> sinks;
     std::vector<CompiledQueryPlan::Source> sources;
     std::unordered_map<PipelineId, std::shared_ptr<ExecutablePipeline>> pipelineToExecutableMap;
+    std::map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> checkpointableHandlers;
+    bool checkpointsAllState = true;
 
     std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan;
 

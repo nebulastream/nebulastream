@@ -22,6 +22,7 @@
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Phases/PipeliningPhase.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -32,6 +33,7 @@ namespace NES::QueryCompilation
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
+    const DeterministicOperatorHandlerIdScope deterministicOperatorHandlerIds;
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
 
     auto compilationCache = CompilationCache(compilationCacheConfiguration);

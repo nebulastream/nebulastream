@@ -16,6 +16,7 @@
 
 #include <CompilationCache.hpp>
 
+#include <map>
 #include <memory>
 #include <ranges>
 #include <utility>
@@ -23,6 +24,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -33,6 +35,7 @@
 #include <PipelinedQueryPlan.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourceDescriptorPhysicalOperator.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 #include <options.hpp>
 
 namespace NES
@@ -85,6 +88,17 @@ void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, 
 
 std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage(const std::shared_ptr<Pipeline>& pipeline)
 {
+    for (const auto& [handlerId, handler] : pipeline->getOperatorHandlers())
+    {
+        if (handler->supportsCheckpointing())
+        {
+            checkpointableHandlers.emplace(handlerId, handler);
+        }
+        else if (dynamic_cast<const WindowBasedOperatorHandler*>(handler.get()) != nullptr)
+        {
+            checkpointsAllState = false;
+        }
+    }
     nautilus::engine::Options options;
     /// We disable multithreading in MLIR by default to not interfere with NebulaStream's thread model
     options.setOption("mlir.enableMultithreading", false);
@@ -171,7 +185,11 @@ std::unique_ptr<CompiledQueryPlan> LowerToCompiledQueryPlanPhase::apply(const st
 
     auto pipelines = std::move(pipelineToExecutableMap) | std::views::values | std::ranges::to<std::vector>();
 
-    return CompiledQueryPlan::create(pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(sources));
+    auto compiledQueryPlan
+        = CompiledQueryPlan::create(pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(sources));
+    compiledQueryPlan->checkpointableHandlers = std::move(checkpointableHandlers);
+    compiledQueryPlan->checkpointsAllState = checkpointsAllState;
+    return compiledQueryPlan;
 }
 
 }
