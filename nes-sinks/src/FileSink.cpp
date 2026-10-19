@@ -31,6 +31,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -42,6 +43,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -62,12 +64,52 @@ std::ostream& FileSink::toString(std::ostream& str) const
     return str;
 }
 
+FileSink::~FileSink()
+{
+    unregisterCheckpointCallback();
+}
+
+void FileSink::enableCheckpointing(std::shared_ptr<CheckpointManager> checkpointManager, QueryId queryId)
+{
+    this->checkpointManager = std::move(checkpointManager);
+    checkpointedQuery = std::move(queryId);
+}
+
+std::optional<uint64_t> FileSink::getRecoveredOutputLength() const
+{
+    if (not checkpointManager or not checkpointManager->shouldRecoverFromCheckpoint())
+    {
+        return std::nullopt;
+    }
+    const auto recoveryRound = checkpointManager->getRecoveryRoundDirectory(*checkpointedQuery);
+    if (not recoveryRound)
+    {
+        return std::nullopt;
+    }
+    return CheckpointManager::loadFile(*recoveryRound / "sink").transform([](const auto& length) { return std::stoull(length); });
+}
+
+void FileSink::unregisterCheckpointCallback()
+{
+    if (checkpointCallback)
+    {
+        checkpointManager->unregisterCallback(*checkpointCallback);
+        checkpointCallback.reset();
+    }
+}
+
 void FileSink::start(PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
+    const auto recoveredOutputLength = getRecoveredOutputLength();
     const auto stream = outputFileStream.wlock();
+    /// A recovered query emits again what it emitted after its checkpoint.
+    if (recoveredOutputLength and std::filesystem::exists(outputFilePath))
+    {
+        std::filesystem::resize_file(outputFilePath, *recoveredOutputLength);
+    }
     /// Remove an existing file unless the isAppend mode is isAppend.
-    if (!isAppend)
+    else if (!isAppend)
     {
         if (std::filesystem::exists(outputFilePath.c_str()))
         {
@@ -97,6 +139,25 @@ void FileSink::start(PipelineExecutionContext&)
         const auto schemaStr = schemaFormatter.getFormattedSchema();
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
+
+    if (checkpointManager and checkpointManager->isCheckpointingEnabled())
+    {
+        checkpointCallback = CheckpointManager::getQueryCallbackPrefix(*checkpointedQuery) + "sink";
+        checkpointManager->registerCallback(
+            *checkpointCallback,
+            [this](const uint64_t round)
+            {
+                const auto length = [this]
+                {
+                    const auto lockedStream = outputFileStream.wlock();
+                    lockedStream->flush();
+                    return static_cast<uint64_t>(lockedStream->tellp());
+                }();
+                checkpointManager->persistFile(
+                    checkpointManager->getRoundDirectory(*checkpointedQuery, round) / "sink", std::to_string(length));
+            },
+            CheckpointManager::CallbackPhase::Prepare);
+    }
 }
 
 void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
@@ -124,9 +185,29 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
 void FileSink::stop(PipelineExecutionContext&)
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
-    const auto stream = outputFileStream.wlock();
-    stream->flush();
-    stream->close();
+    const auto outputLength = [this]
+    {
+        const auto stream = outputFileStream.wlock();
+        stream->flush();
+        return static_cast<uint64_t>(stream->tellp());
+    }();
+    keepOutputLengthInCheckpoints(outputLength);
+    outputFileStream.wlock()->close();
+}
+
+void FileSink::keepOutputLengthInCheckpoints(const uint64_t outputLength)
+{
+    if (not checkpointCallback)
+    {
+        return;
+    }
+    /// The rounds until the query stopped must still truncate the output of a recovered query to its final length.
+    checkpointManager->registerCallback(
+        *checkpointCallback,
+        [checkpointManager = checkpointManager.get(), queryId = *checkpointedQuery, outputLength](const uint64_t round)
+        { checkpointManager->persistFile(checkpointManager->getRoundDirectory(queryId, round) / "sink", std::to_string(outputLength)); },
+        CheckpointManager::CallbackPhase::Prepare);
+    checkpointCallback.reset();
 }
 
 DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

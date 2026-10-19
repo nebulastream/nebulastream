@@ -14,13 +14,16 @@
 
 #pragma once
 
+#include <memory>
 #include <ostream>
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
+class CheckpointManager;
 
 class Sink : public ExecutablePipelineStage
 {
@@ -29,6 +32,9 @@ public:
 
     ~Sink() override = default;
     friend std::ostream& operator<<(std::ostream& out, const Sink& sink);
+
+    /// A sink that supports it records how much output each checkpoint round covers. A recovered query continues its output from there.
+    virtual void enableCheckpointing(std::shared_ptr<CheckpointManager> /*checkpointManager*/, QueryId /*queryId*/) { }
 
     BackpressureController backpressureController;
 };

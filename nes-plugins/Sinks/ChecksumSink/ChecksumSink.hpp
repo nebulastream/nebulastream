@@ -19,6 +19,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <shared_mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -29,6 +30,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Checksum.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -43,11 +45,21 @@ public:
     static constexpr std::string_view NAME = "Checksum";
     explicit ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
+    ~ChecksumSink() override;
+
+    ChecksumSink(const ChecksumSink&) = delete;
+    ChecksumSink& operator=(const ChecksumSink&) = delete;
+    ChecksumSink(ChecksumSink&&) = delete;
+    ChecksumSink& operator=(ChecksumSink&&) = delete;
+
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    /// Every checkpoint round records the checksum, which a recovered query continues from.
+    void enableCheckpointing(std::shared_ptr<CheckpointManager> checkpointManager, QueryId queryId) override;
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
@@ -57,6 +69,13 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Checksum checksum;
+    /// Executions add to the checksum concurrently, a checkpoint captures its count and checksum together.
+    std::shared_mutex checksumMutex;
+    std::shared_ptr<CheckpointManager> checkpointManager;
+    std::optional<QueryId> checkpointedQuery;
+    std::optional<std::string> checkpointCallback;
+
+    void restoreChecksum();
 };
 
 struct ConfigParametersChecksum

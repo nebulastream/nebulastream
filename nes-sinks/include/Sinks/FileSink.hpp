@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <optional>
@@ -30,6 +31,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -39,7 +41,7 @@ class FileSink final : public Sink
 public:
     static constexpr std::string_view NAME = "File";
     explicit FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
-    ~FileSink() override = default;
+    ~FileSink() override;
 
     FileSink(const FileSink&) = delete;
     FileSink& operator=(const FileSink&) = delete;
@@ -49,6 +51,7 @@ public:
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
+    void enableCheckpointing(std::shared_ptr<CheckpointManager> checkpointManager, QueryId queryId) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
@@ -62,6 +65,13 @@ private:
     bool isOpen;
     folly::Synchronized<std::ofstream> outputFileStream;
     SchemaFormatter schemaFormatter;
+    std::shared_ptr<CheckpointManager> checkpointManager;
+    std::optional<QueryId> checkpointedQuery;
+    std::optional<std::string> checkpointCallback;
+
+    [[nodiscard]] std::optional<uint64_t> getRecoveredOutputLength() const;
+    void unregisterCheckpointCallback();
+    void keepOutputLengthInCheckpoints(uint64_t outputLength);
 };
 
 struct ConfigParametersFile

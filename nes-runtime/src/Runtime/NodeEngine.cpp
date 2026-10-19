@@ -48,12 +48,14 @@ NodeEngine::NodeEngine(
     std::shared_ptr<SystemEventListener> systemEventListener,
     std::shared_ptr<QueryLog> queryLog,
     std::unique_ptr<QueryEngine> queryEngine,
-    std::unique_ptr<SourceProvider> sourceProvider)
+    std::unique_ptr<SourceProvider> sourceProvider,
+    std::shared_ptr<CheckpointManager> checkpointManager)
     : bufferManager(std::move(bufferManager))
     , queryLog(std::move(queryLog))
     , systemEventListener(std::move(systemEventListener))
     , queryEngine(std::move(queryEngine))
     , sourceProvider(std::move(sourceProvider))
+    , checkpointManager(std::move(checkpointManager))
 {
 }
 
@@ -62,7 +64,7 @@ void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> 
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
     systemEventListener->onEvent(StartQuerySystemEvent(std::move(queryId)));
-    queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
+    queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider, checkpointManager));
 }
 
 void NodeEngine::stopQuery(QueryId queryId)

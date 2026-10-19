@@ -40,7 +40,9 @@ NodeEngineBuilder::NodeEngineBuilder(
     const WorkerConfiguration& workerConfiguration,
     std::shared_ptr<StatisticListener> statisticsListener,
     std::shared_ptr<CheckpointManager> checkpointManager)
-    : workerConfiguration(workerConfiguration), statisticsListener(std::move(statisticsListener)), checkpointManager(std::move(checkpointManager))
+    : workerConfiguration(workerConfiguration)
+    , statisticsListener(std::move(statisticsListener))
+    , checkpointManager(std::move(checkpointManager))
 {
 }
 
@@ -60,7 +62,12 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
         = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager, checkpointManager);
 
     return std::make_unique<NodeEngine>(
-        std::move(bufferManager), statisticsListener, std::move(queryLog), std::move(queryEngine), std::move(sourceProvider));
+        std::move(bufferManager),
+        statisticsListener,
+        std::move(queryLog),
+        std::move(queryEngine),
+        std::move(sourceProvider),
+        checkpointManager);
 }
 
 }

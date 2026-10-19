@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -32,7 +33,10 @@ namespace NES
 struct ExecutableQueryPlan
 {
     using SourceWithSuccessor = std::pair<std::unique_ptr<SourceHandle>, std::vector<std::weak_ptr<ExecutablePipeline>>>;
-    static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
+    static std::unique_ptr<ExecutableQueryPlan> instantiate(
+        CompiledQueryPlan& compiledQueryPlan,
+        const SourceProvider& sourceProvider,
+        const std::shared_ptr<CheckpointManager>& checkpointManager);
 
     ExecutableQueryPlan(
         QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);

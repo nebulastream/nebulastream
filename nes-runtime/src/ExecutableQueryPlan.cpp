@@ -62,8 +62,8 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
     return os;
 }
 
-std::unique_ptr<ExecutableQueryPlan>
-ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider)
+std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
+    CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, const std::shared_ptr<CheckpointManager>& checkpointManager)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
@@ -78,7 +78,12 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
 
     auto& [pipelineId, descriptor, predecessors] = compiledQueryPlan.sinks.front();
 
-    auto sink = ExecutablePipeline::create(pipelineId, lower(std::move(backpressureController), descriptor), {});
+    auto sinkStage = lower(std::move(backpressureController), descriptor);
+    if (checkpointManager)
+    {
+        sinkStage->enableCheckpointing(checkpointManager, compiledQueryPlan.queryId);
+    }
+    auto sink = ExecutablePipeline::create(pipelineId, std::move(sinkStage), {});
     compiledQueryPlan.pipelines.push_back(sink);
     for (const auto& predecessor : predecessors)
     {
@@ -94,7 +99,8 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[operatorId], std::back_inserter(successors));
-        instantiatedSources.emplace_back(sourceProvider.lower(compiledQueryPlan.queryId, originId, backpressureListener, descriptor), std::move(successors));
+        instantiatedSources.emplace_back(
+            sourceProvider.lower(compiledQueryPlan.queryId, originId, backpressureListener, descriptor), std::move(successors));
     }
 
 
