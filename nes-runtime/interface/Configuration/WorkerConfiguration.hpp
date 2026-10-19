@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <Configuration/CheckpointConfiguration.hpp>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
@@ -46,6 +47,7 @@ public:
     QueryOptimizerConfiguration defaultQueryOptimization = {"default_query_optimization", "Default configuration for query optimizations"};
     WorkerNetworkConfiguration network = {"network", "Default configuration for network sources and sinks"};
     CompilationCacheConfiguration compilationCache = {"compilation_cache", "Configuration for persistent compilation caching"};
+    CheckpointConfiguration checkpoint = {"checkpoint", "Configuration for checkpointing and recovering queries"};
 
     /// Total memory budget in bytes shared by the global buffer pool. The buffer manager splits it into an unpooled
     /// share (see unpooled_memory_fraction) and a pooled share; the pooled share is divided into operator buffers.
@@ -101,7 +103,8 @@ private:
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIR,
             &dumpGraph,
-            &compilationCache};
+            &compilationCache,
+            &checkpoint};
     }
 };
 }

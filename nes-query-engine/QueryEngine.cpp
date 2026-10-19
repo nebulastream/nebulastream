@@ -501,6 +501,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+        task.checkpointedStateLock = pipeline->stage->lockCheckpointedState();
         pipeline->stage->execute(task.buf, pec);
 
         if (requiresTaskRepetition)

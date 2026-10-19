@@ -133,6 +133,8 @@ struct WorkTask : BaseTask
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
     TupleBuffer buf;
+    /// Held until the task completed, see ExecutablePipelineStage::lockCheckpointedState().
+    std::shared_ptr<void> checkpointedStateLock;
 };
 
 struct StartPipelineTask : BaseTask

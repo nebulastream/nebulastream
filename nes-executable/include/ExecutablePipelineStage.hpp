@@ -35,6 +35,11 @@ public:
     /// `execute` should never be called on a pipeline that has not previously been `started`.
     virtual void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
 
+    /// Keeps checkpoints from capturing the state of the stage's operator handlers while the returned lock is alive. The query engine
+    /// holds it from executing a task until the task completed, so that a checkpoint captures the state that the task changed together
+    /// with the source progress that the task's completion reports.
+    [[nodiscard]] virtual std::shared_ptr<void> lockCheckpointedState() const { return nullptr; }
+
     /// Stops the ExecutablePipelineStage allowing it to flush left over state.
     /// `stop` should never be called on a pipeline that has not previously been `started`.
     /// `stop` is not guaranteed to be called, thus the destructor should take care of cleanup.

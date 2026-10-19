@@ -16,11 +16,16 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <ostream>
+#include <ranges>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -95,6 +100,7 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
+    const auto checkpointStateLocks = lockCheckpointedHandlers();
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena), &operatorHandlerBindings);
     pipeline->getRootOperator().terminate(ctx);
@@ -105,8 +111,39 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
     return os << "CompiledExecutablePipelineStage()";
 }
 
+std::shared_ptr<void> CompiledExecutablePipelineStage::lockCheckpointedState() const
+{
+    if (checkpointedHandlers.empty())
+    {
+        return nullptr;
+    }
+    return std::make_shared<std::vector<std::shared_lock<std::shared_mutex>>>(lockCheckpointedHandlers());
+}
+
+std::vector<std::shared_lock<std::shared_mutex>> CompiledExecutablePipelineStage::lockCheckpointedHandlers() const
+{
+    std::vector<std::shared_lock<std::shared_mutex>> locks;
+    locks.reserve(checkpointedHandlers.size());
+    for (const auto& handler : checkpointedHandlers)
+    {
+        locks.push_back(handler->acquireCheckpointStateReadLock());
+    }
+    return locks;
+}
+
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
+    /// Locking in the order of the handler ids keeps two pipelines that share more than one checkpointed handler from deadlocking.
+    std::map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlersById;
+    for (const auto& [handlerId, handler] : operatorHandlers)
+    {
+        if (handler->isCheckpointed())
+        {
+            handlersById.emplace(handlerId, handler);
+        }
+    }
+    checkpointedHandlers = handlersById | std::views::values | std::ranges::to<std::vector>();
+
     operatorHandlerBindings.clear();
     nautilus::RuntimeBindings runtimeBindings;
     Arena arena(pipelineExecutionContext.getBufferManager());
@@ -116,7 +153,10 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         auto module = engine.createModule();
         module.setOption("nes.numberOfWorkerThreads", std::to_string(pipelineExecutionContext.getNumberOfWorkerThreads()));
         CompilationContext compilationCtx{pipelineExecutionContext, operatorHandlers, runtimeBindings, operatorHandlerBindings};
-        pipeline->getRootOperator().setup(ctx, compilationCtx);
+        {
+            const auto checkpointStateLocks = lockCheckpointedHandlers();
+            pipeline->getRootOperator().setup(ctx, compilationCtx);
+        }
         registerPipelineFunction(module);
         module.setRuntimeBindings(runtimeBindings);
         auto compiledModule = module.compile();

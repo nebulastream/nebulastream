@@ -15,7 +15,9 @@
 
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -43,6 +45,7 @@ public:
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
+    [[nodiscard]] std::shared_ptr<void> lockCheckpointedState() const override;
 
 protected:
     std::ostream& toString(std::ostream& os) const override;
@@ -54,9 +57,12 @@ private:
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
 
+    [[nodiscard]] std::vector<std::shared_lock<std::shared_mutex>> lockCheckpointedHandlers() const;
+
     nautilus::engine::NautilusEngine engine;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
+    std::vector<std::shared_ptr<OperatorHandler>> checkpointedHandlers;
     OperatorHandlerBindings operatorHandlerBindings;
     std::shared_ptr<Pipeline> pipeline;
 };
