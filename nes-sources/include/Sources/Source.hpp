@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <stop_token>
@@ -73,6 +74,10 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 
     [[nodiscard]] virtual bool addsMetadata() const { return false; }
+
+    /// A recovered source continues reading after the input that it emitted before the worker stopped. Returns false if the source
+    /// cannot skip input, in which case a recovered query reads it again.
+    [[nodiscard]] virtual bool resumeAtByteOffset(uint64_t /*byteOffset*/) { return false; }
 
 protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.

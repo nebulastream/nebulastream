@@ -22,6 +22,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <QueryEngine.hpp>
@@ -32,6 +33,14 @@ namespace NES
 
 NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticsListener)
     : workerConfiguration(workerConfiguration), statisticsListener(std::move(statisticsListener))
+{
+}
+
+NodeEngineBuilder::NodeEngineBuilder(
+    const WorkerConfiguration& workerConfiguration,
+    std::shared_ptr<StatisticListener> statisticsListener,
+    std::shared_ptr<CheckpointManager> checkpointManager)
+    : workerConfiguration(workerConfiguration), statisticsListener(std::move(statisticsListener)), checkpointManager(std::move(checkpointManager))
 {
 }
 
@@ -47,7 +56,8 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
 
-    auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager);
+    auto sourceProvider
+        = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager, checkpointManager);
 
     return std::make_unique<NodeEngine>(
         std::move(bufferManager), statisticsListener, std::move(queryLog), std::move(queryEngine), std::move(sourceProvider));

@@ -19,13 +19,17 @@
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <thread>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/ReplayableSourceStorage.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceCheckpointProgress.hpp>
+#include <Sources/SourceCheckpointing.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -62,7 +66,8 @@ public:
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::optional<SourceCheckpointing> checkpointing = std::nullopt);
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -86,6 +91,9 @@ public:
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getOriginId() const;
 
+    /// Null if the worker does not checkpoint the query of this source.
+    [[nodiscard]] std::shared_ptr<SourceCheckpointProgress> getCheckpointProgress() const;
+
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 
 protected:
@@ -94,6 +102,14 @@ protected:
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
+    std::optional<SourceCheckpointing> checkpointing;
+    std::shared_ptr<SourceCheckpointProgress> checkpointProgress;
+    std::shared_ptr<ReplayableSourceStorage> replayStorage;
+    /// Persisted sequence number of the buffer before the first one this source emits. A recovered source numbers its buffers from
+    /// the initial sequence number again, so that the operators see a gapless sequence, but persists them after the checkpointed ones.
+    SequenceNumber::Underlying persistedSequenceOffset = 0;
+
+    void setUpReplay();
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

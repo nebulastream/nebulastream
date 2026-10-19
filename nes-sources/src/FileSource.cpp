@@ -52,6 +52,17 @@ void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
     {
         throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
     }
+    if (resumeByteOffset > 0 and not this->inputFile.seekg(static_cast<std::streamoff>(resumeByteOffset)))
+    {
+        throw InvalidConfigParameter("Cannot resume reading {} at byte {}", this->filePath, resumeByteOffset);
+    }
+    totalNumBytesRead = resumeByteOffset;
+}
+
+bool FileSource::resumeAtByteOffset(const uint64_t byteOffset)
+{
+    resumeByteOffset = byteOffset;
+    return true;
 }
 
 void FileSource::close()

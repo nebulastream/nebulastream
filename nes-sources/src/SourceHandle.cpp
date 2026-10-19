@@ -33,11 +33,16 @@ SourceHandle::SourceHandle(
     OriginId originId,
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::optional<SourceCheckpointing> checkpointing)
     : configuration(std::move(configuration))
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
+        std::move(backpressureListener),
+        std::move(originId),
+        std::move(bufferPool),
+        std::move(sourceImplementation),
+        std::move(checkpointing));
 }
 
 SourceHandle::~SourceHandle() = default;
@@ -60,6 +65,11 @@ SourceReturnType::TryStopResult SourceHandle::tryStop(const std::chrono::millise
 OriginId SourceHandle::getSourceId() const
 {
     return this->sourceThread->getOriginId();
+}
+
+std::shared_ptr<SourceCheckpointProgress> SourceHandle::getCheckpointProgress() const
+{
+    return this->sourceThread->getCheckpointProgress();
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)

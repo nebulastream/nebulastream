@@ -21,9 +21,11 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
+class CheckpointManager;
 
 /// Takes a SourceDescriptor and in exchange returns a SourceHandle.
 /// The SourceThread spawns an independent thread for data ingestion and it manages the pipeline and task logic.
@@ -32,14 +34,22 @@ class SourceProvider
 {
     size_t defaultMaxInflightBuffers;
     std::shared_ptr<AbstractBufferProvider> bufferPool;
+    std::shared_ptr<CheckpointManager> checkpointManager;
 
 public:
     /// Constructor that can be configured with various options
     SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr<AbstractBufferProvider> bufferPool);
+    /// The sources take part in the checkpoints of the checkpoint manager.
+    SourceProvider(
+        size_t defaultMaxInflightBuffers,
+        std::shared_ptr<AbstractBufferProvider> bufferPool,
+        std::shared_ptr<CheckpointManager> checkpointManager);
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     [[nodiscard]] std::unique_ptr<SourceHandle>
     lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const;
+    [[nodiscard]] std::unique_ptr<SourceHandle>
+    lower(QueryId queryId, OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const;
 
     [[nodiscard]] bool contains(const std::string& sourceType) const;
 };

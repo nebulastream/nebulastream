@@ -17,8 +17,11 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceCheckpointProgress.hpp>
+#include <Sources/SourceCheckpointing.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
@@ -49,7 +52,8 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::optional<SourceCheckpointing> checkpointing = std::nullopt);
 
     ~SourceHandle();
 
@@ -65,6 +69,9 @@ public:
     [[nodiscard]] OriginId getSourceId() const;
 
     const SourceRuntimeConfiguration& getRuntimeConfiguration() const { return configuration; }
+
+    /// Null if the worker does not checkpoint the query of this source. Otherwise, the query reports each buffer it finished processing.
+    [[nodiscard]] std::shared_ptr<SourceCheckpointProgress> getCheckpointProgress() const;
 
 private:
     SourceRuntimeConfiguration configuration;

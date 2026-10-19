@@ -14,20 +14,29 @@
 
 #include <SourceThread.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <exception>
+#include <filesystem>
 #include <functional>
 #include <future>
+#include <limits>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/ReplayableSourceStorage.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceCheckpointProgress.hpp>
+#include <Sources/SourceCheckpointing.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -44,13 +53,19 @@ SourceThread::SourceThread(
     BackpressureListener backpressureListener,
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::optional<SourceCheckpointing> checkpointing)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
+    , checkpointing(std::move(checkpointing))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
+    if (this->checkpointing and this->checkpointing->checkpointManager->isCheckpointingEnabled())
+    {
+        checkpointProgress = std::make_shared<SourceCheckpointProgress>();
+    }
 }
 
 namespace
@@ -152,22 +167,43 @@ void dataSourceThread(
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
-    std::shared_ptr<AbstractBufferProvider> bufferProvider)
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    ReplayableSourceStorage* replayStorage,
+    const SequenceNumber::Underlying persistedSequenceOffset)
 {
-    size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
+    SequenceNumber::Underlying sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {
-            addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
+            const auto sequenceNumber = sequenceNumberGenerator++;
+            addBufferMetaData(originId, SequenceNumber(sequenceNumber), buffer);
+            if (replayStorage != nullptr)
+            {
+                replayStorage->persist(persistedSequenceOffset + sequenceNumber, buffer);
+            }
         }
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
-
+    const auto replayEmit = [&](const SequenceNumber::Underlying persistedSequence, TupleBuffer&& buffer)
+    {
+        const auto sequenceNumber = sequenceNumberGenerator++;
+        if (persistedSequence != persistedSequenceOffset + sequenceNumber)
+        {
+            throw CheckpointError(
+                "Source {} cannot replay persisted buffer {}, as the buffers before it are missing", originId, persistedSequence);
+        }
+        addBufferMetaData(originId, SequenceNumber(sequenceNumber), buffer);
+        emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
+    };
 
     cpptrace::try_catch(
         [&]()
         {
+            if (replayStorage != nullptr)
+            {
+                replayStorage->replayAfter(persistedSequenceOffset, *bufferProvider, replayEmit, stopToken);
+            }
             result.set_value_at_thread_exit(
                 dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
             if (!stopToken.stop_requested())
@@ -199,6 +235,10 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     }
 
     NES_DEBUG("Starting source with originId: {}", originId);
+    if (checkpointing)
+    {
+        setUpReplay();
+    }
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
@@ -210,9 +250,100 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager);
+        localBufferManager,
+        replayStorage.get(),
+        persistedSequenceOffset);
     thread = std::move(sourceThread);
     return true;
+}
+
+void SourceThread::setUpReplay()
+{
+    auto& checkpointManager = *checkpointing->checkpointManager;
+    if (sourceImplementation->addsMetadata())
+    {
+        NES_WARNING("Source {} assigns its own sequence numbers, so a recovered query cannot replay its input", originId);
+        return;
+    }
+    const auto& queryId = checkpointing->queryId;
+    const auto originDirectoryName = fmt::format("origin_{}", originId);
+    const auto liveDirectory = checkpointManager.getQueryDirectory(queryId) / "source_replay" / originDirectoryName;
+    const auto recoveryDirectory = checkpointManager.getRecoveryQueryDirectory(queryId) / "source_replay" / originDirectoryName;
+    const auto recovers = checkpointManager.shouldRecoverFromCheckpoint() and std::filesystem::exists(recoveryDirectory);
+    if (not recovers and not checkpointManager.isCheckpointingEnabled())
+    {
+        return;
+    }
+    /// A recovered source continues with the live directory, which no one changed since the worker took the recovery snapshot of it.
+    /// Replacing it with the snapshot instead would lose the persisted input if the worker crashed again while copying.
+    if (not recovers)
+    {
+        std::filesystem::remove_all(liveDirectory);
+    }
+
+    replayStorage = std::make_shared<ReplayableSourceStorage>(liveDirectory);
+    if (recovers)
+    {
+        if (const auto recoveryRound = checkpointManager.getRecoveryRoundDirectory(queryId))
+        {
+            if (const auto cut = CheckpointManager::loadFile(*recoveryRound / "source" / originDirectoryName))
+            {
+                persistedSequenceOffset = std::stoull(*cut);
+            }
+        }
+        if (not sourceImplementation->resumeAtByteOffset(
+                replayStorage->getByteOffsetAfter(std::numeric_limits<SequenceNumber::Underlying>::max())))
+        {
+            NES_WARNING("Source {} cannot skip the input it emitted before the recovery, so the recovered query reads it again", originId);
+        }
+    }
+
+    if (not checkpointProgress)
+    {
+        return;
+    }
+    const auto callbackPrefix = CheckpointManager::getQueryCallbackPrefix(queryId) + fmt::format("source/{}/", originId);
+
+    struct PreparedCut
+    {
+        std::mutex mutex;
+        uint64_t round = 0;
+        SequenceNumber::Underlying cut = 0;
+    };
+
+    auto preparedCut = std::make_shared<PreparedCut>();
+    /// The callbacks stay registered after the source stopped, so that every round of the query covers the source, until the worker
+    /// removes the query's callbacks.
+    checkpointManager.registerCallback(
+        callbackPrefix + "prepare",
+        [&checkpointManager, queryId, originDirectoryName, progress = checkpointProgress, preparedCut, offset = persistedSequenceOffset](
+            const uint64_t round)
+        {
+            const auto cut = offset + progress->getHighestContiguousCompletedSequence();
+            checkpointManager.persistFile(
+                checkpointManager.getRoundDirectory(queryId, round) / "source" / originDirectoryName, std::to_string(cut));
+            const std::scoped_lock lock(preparedCut->mutex);
+            preparedCut->round = round;
+            preparedCut->cut = cut;
+        },
+        CheckpointManager::CallbackPhase::Prepare);
+    /// A round that the query skipped does not cover the input of the round the source prepared last.
+    checkpointManager.registerCallback(
+        callbackPrefix + "commit",
+        [storage = replayStorage, preparedCut](const uint64_t round)
+        {
+            const std::scoped_lock lock(preparedCut->mutex);
+            if (preparedCut->round == round)
+            {
+                storage->prune(preparedCut->cut);
+            }
+        },
+        CheckpointManager::CallbackPhase::Commit);
+}
+
+std::shared_ptr<SourceCheckpointProgress> SourceThread::getCheckpointProgress() const
+{
+    return checkpointProgress;
 }
 
 void SourceThread::stop()

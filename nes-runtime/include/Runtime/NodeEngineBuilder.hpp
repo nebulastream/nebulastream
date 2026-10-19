@@ -17,6 +17,7 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/StatisticListener.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 namespace NES
@@ -28,11 +29,17 @@ public:
     NodeEngineBuilder() = delete;
 
     explicit NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticListener);
+    /// The sources of the node engine take part in the checkpoints of the checkpoint manager.
+    NodeEngineBuilder(
+        const WorkerConfiguration& workerConfiguration,
+        std::shared_ptr<StatisticListener> statisticListener,
+        std::shared_ptr<CheckpointManager> checkpointManager);
 
     std::unique_ptr<NodeEngine> build(const Host& host);
 
 private:
     WorkerConfiguration workerConfiguration;
     std::shared_ptr<StatisticListener> statisticsListener;
+    std::shared_ptr<CheckpointManager> checkpointManager;
 };
 }

@@ -15,6 +15,7 @@
 #include <RunningSource.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -27,6 +28,7 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Sources/SourceCheckpointProgress.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
@@ -43,6 +45,7 @@ namespace
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
+    std::shared_ptr<SourceCheckpointProgress> checkpointProgress,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
@@ -50,7 +53,13 @@ SourceReturnType::EmitFunction emitFunction(
 {
     auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
         std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
-    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
+    return [&controller,
+            successors = std::move(successors),
+            checkpointProgress = std::move(checkpointProgress),
+            source,
+            &emitter,
+            queryId,
+            availableBuffer = std::move(availableBuffer)](
                const OriginId sourceId,
                SourceReturnType::SourceReturnType event,
                const std::stop_token& stopToken) -> SourceReturnType::EmitResult
@@ -59,6 +68,12 @@ SourceReturnType::EmitFunction emitFunction(
             Overloaded{
                 [&](const SourceReturnType::Data& data)
                 {
+                    if (checkpointProgress and successors.empty())
+                    {
+                        checkpointProgress->noteCompletedSequence(data.buffer.getSequenceNumber());
+                    }
+                    /// A checkpoint may only cover a buffer once all successors processed it.
+                    const auto remainingSuccessors = std::make_shared<std::atomic_size_t>(successors.size());
                     for (const auto& successor : successors)
                     {
                         {
@@ -75,7 +90,15 @@ SourceReturnType::EmitFunction emitFunction(
                             queryId,
                             successor,
                             data.buffer,
-                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
+                            TaskCallback{TaskCallback::OnComplete(
+                                [availableBuffer, checkpointProgress, remainingSuccessors, sequenceNumber = data.buffer.getSequenceNumber()]
+                                {
+                                    availableBuffer->release();
+                                    if (checkpointProgress and remainingSuccessors->fetch_sub(1) == 1)
+                                    {
+                                        checkpointProgress->noteCompletedSequence(sequenceNumber);
+                                    }
+                                })},
                             PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                             if (stopToken.stop_requested())
@@ -130,12 +153,14 @@ std::shared_ptr<RunningSource> RunningSource::create(
     WorkEmitter& emitter)
 {
     const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
+    auto checkpointProgress = source->getCheckpointProgress();
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+        runningSource->source->start(emitFunction(
+            queryId, maxInflightBuffers, std::move(checkpointProgress), runningSource, std::move(successors), controller, emitter));
     }
     return runningSource;
 }
