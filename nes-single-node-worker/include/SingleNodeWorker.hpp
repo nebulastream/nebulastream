@@ -22,11 +22,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <Util/Pointers.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryCheckpointing.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
@@ -46,9 +48,16 @@ inline constexpr std::string_view SingleNodeWorkerBinaryName{"nes-single-node-wo
 class SingleNodeWorker
 {
     SharedPtr<CompositeStatisticListener> listener;
+    /// Null, if the worker neither checkpoints nor recovers queries.
+    std::shared_ptr<CheckpointManager> checkpointManager;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
+    /// Declared after the node engine, so that it stops cleaning up the checkpoints of stopped queries before the node engine stops all
+    /// queries during its destruction.
+    std::unique_ptr<QueryCheckpointing> queryCheckpointing;
+
+    void recoverQueries();
 
 public:
     explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&, const Host& = Host("SingleNodeWorker"));
@@ -70,6 +79,9 @@ public:
     /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query
     std::expected<void, Exception> stopQuery(QueryId queryId) noexcept;
+
+    /// Runs a checkpoint round in addition to the periodic ones. Requires that the worker checkpoints its queries.
+    std::expected<void, Exception> checkpoint() noexcept;
 
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;

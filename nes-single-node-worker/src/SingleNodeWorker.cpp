@@ -29,6 +29,7 @@
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 
 #include <Util/Logger/Logger.hpp>
@@ -41,11 +42,13 @@
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <NetworkOptions.hpp>
+#include <QueryCheckpointing.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+#include <scope_guard.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
@@ -73,9 +76,22 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
+    const auto& checkpointConfiguration = configuration.workerConfiguration.checkpoint;
+    if (checkpointConfiguration.checkpointIntervalMs.getValue() > 0 or checkpointConfiguration.recoverFromCheckpoint.getValue())
+    {
+        checkpointManager = std::make_shared<CheckpointManager>(
+            checkpointConfiguration.checkpointDirectory.getValue(),
+            std::chrono::milliseconds(checkpointConfiguration.checkpointIntervalMs.getValue()),
+            checkpointConfiguration.recoverFromCheckpoint.getValue());
+    }
+
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener), checkpointManager).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(
         configuration.workerConfiguration.defaultQueryExecution, configuration.workerConfiguration.compilationCache);
+    if (checkpointManager)
+    {
+        queryCheckpointing = std::make_unique<QueryCheckpointing>(checkpointManager, nodeEngine->getQueryLog());
+    }
 
     if (!configuration.dataAddress.getValue().empty())
     {
@@ -90,6 +106,27 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                 .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
                 .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
             });
+    }
+
+    if (checkpointManager and checkpointManager->shouldRecoverFromCheckpoint())
+    {
+        recoverQueries();
+    }
+}
+
+void SingleNodeWorker::recoverQueries()
+{
+    for (auto& [plan, queryDirectory] : queryCheckpointing->findRecoverableQueries())
+    {
+        const auto queryId = plan.getQueryId();
+        if (const auto started = startQuery(std::move(plan)))
+        {
+            NES_INFO("Recovered query {} from {}", queryId, queryDirectory.string());
+        }
+        else
+        {
+            NES_ERROR("Cannot recover the query checkpointed in {}: {}", queryDirectory.string(), started.error().what());
+        }
     }
 }
 
@@ -123,6 +160,19 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         request->dumpCompilationResult = dumpMode;
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
+        if (not queryCheckpointing)
+        {
+            nodeEngine->startQuery(plan.getQueryId(), std::move(result));
+            return plan.getQueryId();
+        }
+        queryCheckpointing->registerQuery(plan, *result);
+        /// Throwing during the unwinding of the start failure would terminate the worker.
+        SCOPE_FAIL
+        {
+            cpptrace::try_catch(
+                [&] { queryCheckpointing->unregisterQuery(plan.getQueryId()); },
+                [&] { NES_ERROR("Cannot remove the checkpoint of query {}: {}", plan.getQueryId(), wrapExternalException().what()); });
+        };
         nodeEngine->startQuery(plan.getQueryId(), std::move(result));
         return plan.getQueryId();
     }
@@ -139,6 +189,21 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noex
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId);
+        return {};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
+std::expected<void, Exception> SingleNodeWorker::checkpoint() noexcept
+{
+    CPPTRACE_TRY
+    {
+        PRECONDITION(checkpointManager and checkpointManager->isCheckpointingEnabled(), "The worker does not checkpoint its queries");
+        checkpointManager->runCheckpointRound();
         return {};
     }
     CPPTRACE_CATCH(...)
