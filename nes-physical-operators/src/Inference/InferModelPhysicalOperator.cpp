@@ -118,9 +118,8 @@ InferModelPhysicalOperator::InferModelPhysicalOperator(
     threadLocal = std::make_shared<ThreadLocalRuntimeWrapper>(std::move(model));
 }
 
-void InferModelPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void InferModelPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
-    setupChild(executionCtx, compilationContext);
     nautilus::invoke(setupSessions, nautilus::val<ThreadLocalRuntimeWrapper*>(threadLocal.get()), executionCtx.pipelineContext);
 }
 

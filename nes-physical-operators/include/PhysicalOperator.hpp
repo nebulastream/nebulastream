@@ -61,7 +61,8 @@ struct PhysicalOperatorConcept
     [[nodiscard]] virtual std::optional<struct PhysicalOperator> getChild() const = 0;
     virtual void setChild(struct PhysicalOperator child) = 0;
 
-    /// This is called once before the operator starts processing records.
+    /// This is called once before the operator starts processing records. It sets up this operator only; the
+    /// PhysicalOperator wrapper sets up the child afterwards.
     virtual void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
 
     /// Opens the operator for processing records.
@@ -84,7 +85,6 @@ struct PhysicalOperatorConcept
 
 protected:
     /// Helper classes to propagate to the child
-    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
     void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void executeChild(ExecutionContext& executionCtx, Record& record) const;
