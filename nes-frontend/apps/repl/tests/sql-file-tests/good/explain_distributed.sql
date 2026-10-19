@@ -15,7 +15,7 @@ CREATE PHYSICAL SOURCE FOR stream2 TYPE Generator SET(
 
 
 CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA);
-CREATE WORKER 'source-node:8080' SET ('source-node:9090' AS DATA, 'sink-node:8080' AS "DOWNSTREAM", 2 AS "CAPACITY");
+CREATE WORKER 'source-node:8080' SET ('source-node:9090' AS DATA, 'sink-node:8080' AS "DOWNSTREAM", 2 AS "MAX_OPERATORS");
 
 EXPLAIN (LOGICAL) FORMAT TEXT SELECT start, end, id, value, timestamp, id2, value2, timestamp2 FROM ( SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2) WINDOW TUMBLING (timestamp, timestamp2, size 1 sec)) INTO Void('sink-node:8080' AS "SINK"."HOST");
 EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT start, end, id, value, timestamp, id2, value2, timestamp2 FROM ( SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2) WINDOW TUMBLING (timestamp, timestamp2, size 1 sec)) INTO Void('sink-node:8080' AS "SINK"."HOST");

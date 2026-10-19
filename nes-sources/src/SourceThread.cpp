@@ -22,6 +22,7 @@
 #include <memory>
 #include <stop_token>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
@@ -228,7 +229,7 @@ void SourceThread::stop()
 
     try
     {
-        this->terminationFuture.get();
+        std::ignore = this->terminationFuture.get();
     }
     catch (const Exception& exception)
     {

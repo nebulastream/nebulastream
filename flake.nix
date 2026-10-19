@@ -21,9 +21,19 @@
         };
         lib = pkgs.lib;
         rustToolchain = pkgs.rust-bin.stable.latest.default;
-        llvm = pkgs.llvmPackages_19;
-        clangToolsVersion = lib.getVersion llvm.clang-tools;
-        llvmToolchainVersion = lib.versions.major clangToolsVersion;
+        # The single place to change when upgrading the compiler toolchain or the prebuilt MLIR binaries.
+        # The MLIR hashes in .nix/mlir/package.nix belong to mlirRelease.
+        llvmToolchain = rec {
+          llvmToolchainVersion = "22";
+          llvmPackages = pkgs.${"llvmPackages_${llvmToolchainVersion}"};
+          mlirVersion = "22";
+          mlirBuild = "clang${llvmToolchainVersion}-v2";
+          mlirRelease = "vmlir-${mlirVersion}-${mlirBuild}";
+          mlirAssetPrefix = "nes-llvm-${mlirVersion}-${mlirBuild}";
+        };
+        llvm = llvmToolchain.llvmPackages;
+        packageToolchainArgs = { inherit (llvmToolchain) llvmPackages; };
+        inherit (llvmToolchain) llvmToolchainVersion;
         clangTidyDiffCommand = "clang-tidy-diff-${llvmToolchainVersion}.py";
         clangStdenv = llvm.stdenv;
         libcxxStdenv = llvm.libcxxStdenv;
@@ -180,7 +190,7 @@
             boostPkg = overrideStdenv pkgs.boost;
             tbbPkg = overrideStdenv pkgs.tbb;
             pugixmlPkg = overrideStdenv pkgs.pugixml;
-            xbyakPkg = overrideStdenv pkgs.xbyak;
+            xbyakPkg = overrideStdenv xbyakBasePkg;
             simdjsonPkg = overrideStdenv simdjsonBasePkg;
             nlohmannJsonPkg = nlohmannJsonPackages.withSanitizer {
               extraBuildInputs = extraInputs;
@@ -271,12 +281,22 @@
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
           };
 
-        nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
-        abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix { };
-        re2Packages = pkgs.callPackage ./.nix/re2/package.nix { };
-        protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix { };
-        grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix { };
-        openvinoPackages = pkgs.callPackage ./.nix/openvino/package.nix { };
+        nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix packageToolchainArgs;
+        abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix (packageToolchainArgs // { abseil-cpp = pkgs.abseil-cpp_202608; });
+        re2Packages = pkgs.callPackage ./.nix/re2/package.nix packageToolchainArgs;
+        protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix packageToolchainArgs;
+        grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix packageToolchainArgs;
+        # OpenVINO 2025.3.0 uses CPU feature flags that newer xbyak releases removed; this is the version vcpkg builds it with.
+        xbyakBasePkg = pkgs.xbyak.overrideAttrs (_: rec {
+          version = "7.28";
+          src = pkgs.fetchFromGitHub {
+            owner = "herumi";
+            repo = "xbyak";
+            rev = "v${version}";
+            hash = "sha256-jBxpNeA2Ed13zpJ++ODsjKgSC14z/RTFX3px4SapeS0=";
+          };
+        });
+        openvinoPackages = pkgs.callPackage ./.nix/openvino/package.nix (packageToolchainArgs // { xbyak = xbyakBasePkg; });
 
         ccacheFlags = [
           "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
@@ -291,23 +311,31 @@
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
         '';
 
-        antlr4Packages = pkgs.callPackage ./.nix/antlr4/package.nix { };
-        cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix { };
-        argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix { };
-        libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
-        magicEnumPackages = pkgs.callPackage ./.nix/magic_enum/package.nix { };
-        reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
-        nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix { };
-        scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix { };
-        spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix { };
-        follyPackages = pkgs.callPackage ./.nix/folly/package.nix { };
-        pahoMqttPackages = pkgs.callPackage ./.nix/paho_mqtt/package.nix { };
+        antlr4Packages = pkgs.callPackage ./.nix/antlr4/package.nix packageToolchainArgs;
+        cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix packageToolchainArgs;
+        argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix packageToolchainArgs;
+        libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix packageToolchainArgs;
+        magicEnumPackages = pkgs.callPackage ./.nix/magic_enum/package.nix packageToolchainArgs;
+        reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix packageToolchainArgs;
+        nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix packageToolchainArgs;
+        scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix packageToolchainArgs;
+        spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix packageToolchainArgs;
+        follyPackages = pkgs.callPackage ./.nix/folly/package.nix packageToolchainArgs;
+        pahoMqttPackages = pkgs.callPackage ./.nix/paho_mqtt/package.nix packageToolchainArgs;
 
-        mlirPackages = import ./.nix/mlir/package.nix { inherit pkgs; };
+        mlirPackages = import ./.nix/mlir/package.nix {
+          inherit pkgs;
+          inherit (llvmToolchain) mlirVersion mlirRelease mlirAssetPrefix;
+        };
         mlirBinaryFor = cfg: mlirPackages.forOptions cfg;
 
-        nautilusPackagesFor = mlirBinary:
-          import ./.nix/nautilus/package.nix { inherit pkgs mlirBinary; };
+        # nautilus must see the same fmt and spdlog as NebulaStream, their headers are part of its interface.
+        nautilusPackagesFor = { mlirBinary, packageSet }:
+          import ./.nix/nautilus/package.nix {
+            inherit pkgs mlirBinary;
+            inherit (llvmToolchain) llvmPackages;
+            inherit (packageSet) fmtPkg spdlogPkg;
+          };
 
         sanitizerPackageSet = {
           antlr4 = antlr4Packages;
@@ -338,7 +366,7 @@
               linkerFlags = sanitizer.linkerFlags;
             };
             sanitizedDeps = map (pkg: pkg.withSanitizer sanitizerArgs) sanitizerPackages;
-            nautilusPackages = nautilusPackagesFor mlirBinary;
+            nautilusPackages = nautilusPackagesFor { inherit mlirBinary packageSet; };
             sanitizedNautilus = nautilusPackages.withSanitizer {
               extraBuildInputs = extraInputs;
               inherit useLibcxx;
@@ -388,6 +416,10 @@
               C_INCLUDE_PATH = CPATH;
               LIBRARY_PATH = libraryPath;
               CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES = includePathCMake;
+              # cargo links through `cc` by default, which is gcc here. gcc hands its options to collect2 in a
+              # single environment variable, which exceeds the kernel's per-string limit with this many inputs.
+              CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER = "clang";
+              CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "clang";
             };
             extraEnv = lib.optionalAttrs (linkerFlags != "") {
               LDFLAGS = linkerFlags;
@@ -538,10 +570,7 @@
           '';
         };
 
-        clangTidyDiffScript = pkgs.fetchurl {
-          url = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-${clangToolsVersion}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
-          hash = "sha256-+64k7MRZjQOFQVltm8sEZMhu3VEYfYax+86MxOAO2sU=";
-        };
+        clangTidyDiffScript = "${llvm.clang-unwrapped.src}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
 
         clangTidyDiffRunner = pkgs.writeShellApplication {
           name = clangTidyDiffCommand;
@@ -676,6 +705,18 @@
           '';
         };
 
+        # Corrosion uses a cxxbridge on PATH if its version matches the cxx crate in Cargo.lock, and runs
+        # `cargo install` otherwise, which does not link inside the dev shell.
+        cxxbridgeCmd = pkgs.rustPlatform.buildRustPackage rec {
+          pname = "cxxbridge-cmd";
+          version = "1.0.197";
+          src = pkgs.fetchCrate {
+            inherit pname version;
+            hash = "sha256-YwSq6RUf/owLyB7UUEltxlV/SqdFufglKRUPPQi+f8c=";
+          };
+          cargoHash = "sha256-TWue1RHti+L23txZF/82NhWL7vi6gew3mQTRfGgKaMQ=";
+        };
+
         # Core development tools
         buildTools = with pkgs; [
           cmake
@@ -685,6 +726,7 @@
           ccache
           mold
           rustToolchain
+          cxxbridgeCmd
         ];
 
         # LLVM toolchain with versioned symlinks for vcpkg
@@ -729,6 +771,8 @@
           gdb
           llvm.lldb
           python3
+          jq
+          (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
         ];
 
         packageInstallPhase = ''
@@ -770,7 +814,7 @@
               [
                 "-DCMAKE_BUILD_TYPE=Release"
                 "-DNES_ENABLES_TESTS=ON"
-                "-DUSE_CCACHE_IF_AVAILABLE=OFF"
+                "-DUSE_BUILD_CACHE=OFF"
                 "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
               ]
               ++ cmakeCommonFlags combo;
@@ -907,7 +951,14 @@
               sanitizer = defaultSanitizer.cmakeValue;
               stdlib = defaultStdlib.name;
             };
-            nautilusPackages = nautilusPackagesFor defaultMlirBinary;
+            nautilusPackages = nautilusPackagesFor {
+              mlirBinary = defaultMlirBinary;
+              packageSet = packagesForStdlib {
+                stdlib = defaultStdlib;
+                sanitizer = defaultSanitizer;
+                inherit extraInputs;
+              };
+            };
           in {
             antlr4 = antlr4Packages.withSanitizer sanitizerArgs;
             cpptrace = cpptracePackages.withSanitizer sanitizerArgs;

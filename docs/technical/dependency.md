@@ -130,8 +130,8 @@ Based on the current vcpkg version (22.1.8). The LLVM patch simply disables all 
 `vcpkg.json` because llvm is included via
 nautilus. The remaining patches only fix install directories and disable the libomp aliases so that the port installs
 into the vcpkg layout. This port is only used when MLIR is built via vcpkg; the docker images and the nix flake use the
-prebuilt MLIR binaries from [clang-binaries](https://github.com/nebulastream/clang-binaries) (release `vmlir-22-clang19`,
-MLIR 22 built with our clang 19 toolchain, so that it only needs libc++ 19 runtime symbols).
+prebuilt MLIR binaries from [clang-binaries](https://github.com/nebulastream/clang-binaries) (release `vmlir-22-clang22-v2`,
+MLIR 22 built with our clang 22 toolchain).
 
 ### Paho MQTT
 
@@ -145,7 +145,8 @@ non-standard specialization; the standard only mandates it for `char`, `wchar_t`
 Nautilus is not in the vcpkg registry, we provide our own port pinned to a commit of
 [nebulastream/nautilus](https://github.com/nebulastream/nautilus). The port builds the MLIR, AsmJit and threaded-bytecode
 (TBC, including its copy-and-patch JIT) backends and all plugins except the GPU plugin; the bytecode (bc) and C++ backends
-are disabled. It carries no patches: fixes we need go into nautilus itself. The nix flake builds the same nautilus commit
+are disabled. It carries two patches until they are upstream: one includes `fmt/format.h` where newer fmt versions
+require it, the other moves a by-value `std::function` argument that clang-tidy 22 otherwise reports in our code. The nix flake builds the same nautilus commit
 (`.nix/nautilus`), keep both in sync when bumping.
 
 ### libuuid

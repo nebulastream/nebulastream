@@ -40,7 +40,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -125,8 +124,6 @@ class SmallFilesTest : public Testing::BaseUnitTest
                 "operation_state",
                 "radiation_level",
                 "orbital_velocity"}}}};
-
-    SourceCatalog sourceCatalog;
 
 public:
     static void SetUpTestCase()
@@ -230,8 +227,8 @@ public:
             std::make_shared<NesDefaultMemoryAllocator>());
 
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
-        const auto [backpressureController, fileSource] = InputFormatterTestUtil::createFileSource(
-            sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
+        const auto [backpressureController, fileSource]
+            = InputFormatterTestUtil::createFileSource(testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         INVARIANT(
@@ -355,93 +352,100 @@ public:
 
 TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .formatterType = "JSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 128,
-        .isCompiled = true});
+    runTest(
+        TestConfig{
+            .testFileName = "TwoIntegerColumns",
+            .formatterType = "JSON",
+            .fileEnding = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 128,
+            .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testBimboDataJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "Bimbo",
-        .formatterType = "JSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 128,
-        .isCompiled = true});
+    runTest(
+        TestConfig{
+            .testFileName = "Bimbo",
+            .formatterType = "JSON",
+            .fileEnding = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 128,
+            .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testFoodDataJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "Food",
-        .formatterType = "JSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 128,
-        .isCompiled = true});
+    runTest(
+        TestConfig{
+            .testFileName = "Food",
+            .formatterType = "JSON",
+            .fileEnding = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 128,
+            .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "Spacecraft_Telemetry",
-        .formatterType = "JSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 128,
-        .isCompiled = true});
+    runTest(
+        TestConfig{
+            .testFileName = "Spacecraft_Telemetry",
+            .formatterType = "JSON",
+            .fileEnding = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 128,
+            .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .formatterType = "CSV",
-        .fileEnding = "CSV",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        .isCompiled = true});
+    runTest(
+        TestConfig{
+            .testFileName = "TwoIntegerColumns",
+            .formatterType = "CSV",
+            .fileEnding = "CSV",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16,
+            .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testBimboData)
 {
-    runTest(TestConfig{
-        .testFileName = "Bimbo",
-        .formatterType = "CSV",
-        .fileEnding = "CSV",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 2,
-        .isCompiled = true});
+    runTest(
+        TestConfig{
+            .testFileName = "Bimbo",
+            .formatterType = "CSV",
+            .fileEnding = "CSV",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 2,
+            .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testFoodData)
 {
-    runTest(TestConfig{
-        .testFileName = "Food",
-        .formatterType = "CSV",
-        .fileEnding = "CSV",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 10,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 2,
-        .isCompiled = true});
+    runTest(
+        TestConfig{
+            .testFileName = "Food",
+            .formatterType = "CSV",
+            .fileEnding = "CSV",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 10,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 2,
+            .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)

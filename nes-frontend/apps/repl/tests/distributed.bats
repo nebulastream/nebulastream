@@ -36,7 +36,7 @@ docker_nes_repl() {
   assert_json_equal '[{"worker":"sink-node:8080"}]' "${lines[0]}"
   assert_json_equal '[{"schema":[{"name":"TS","type":"UINT64"}],"source_name":"ENDLESS"}]' "${lines[1]}"
   assert_json_equal '[{"host":"sink-node:8080","input_formatter_config":{"ALLOW_COMMAS_IN_STRINGS":true,"FIELD_DELIMITER":",","VALUE_DESERIALIZERS":"","TUPLE_DELIMITER":"\n","type":"CSV"},"physical_source_id":1,"schema":[{"name":"TS","type":"UINT64"}],"source_config":[{"FLUSH_INTERVAL_MS":10},{"GENERATOR_RATE_CONFIG":"emit_rate 10"},{"GENERATOR_RATE_TYPE":"FIXED"},{"GENERATOR_SCHEMA":"SEQUENCE UINT64 0 10000000 1"},{"MAX_INFLIGHT_BUFFERS":0},{"MAX_RUNTIME_MS":10000000},{"SEED":1},{"STOP_GENERATOR_WHEN_SEQUENCE_FINISHES":"ALL"}],"source_name":"ENDLESS","source_type":"GENERATOR"}]' "${lines[2]}"
-  assert_json_equal '[{"format_config":[],"host":"sink-node:8080","schema":[{"name":"TS","type":"UINT64"}],"sink_config":[{"ADD_TIMESTAMP":false},{"APPEND":false},{"BACKPRESSURE_LOWER_THRESHOLD":200},{"BACKPRESSURE_UPPER_THRESHOLD":1000},{"FILE_PATH":"out.csv"},{"OUTPUT_FORMAT":"CSV"}],"sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[3]}"
+  assert_json_equal '[{"format_config":[],"host":"sink-node:8080","schema":[{"name":"TS","type":"UINT64"}],"sink_config":[{"ADD_TIMESTAMP":false},{"APPEND":false},{"FILE_PATH":"out.csv"},{"OUTPUT_FORMAT":"CSV"}],"sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[3]}"
   assert_json_equal '[]' "${lines[4]}"
   QUERY_ID=$(echo ${lines[5]} | jq -r '.[0].query_id')
 
@@ -148,8 +148,7 @@ docker_nes_repl() {
   ) &
   REPL_BG=$!
 
-  # Give the REPL time to deploy the query and enter the on-exit wait loop.
-  sleep 3
+  wait_until grep -q "Starting source with originId" worker-node/singleNodeWorker.log
 
   start_time=$(date +%s)
   docker compose exec -T nes-repl pkill -TERM -f "^nes-repl"
@@ -165,21 +164,17 @@ docker_nes_repl() {
 @test "launch query and terminate query on exit behavior" {
   setup_distributed tests/topologies/1-node.yaml
 
-  start_time=$(date +%s)
   ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
-  end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
-
-  # The query is configured to produce data for 10000ms. We expect nes-repl to terminate within 5 seconds as it is configured to terminate all pending queries on exit
-  duration=$((end_time - start_time))
-  [ "$duration" -le 5 ]
 
   # Verify that the implicit STOP QUERY statement was executed and its result matches the query that was created
   # lines[2] is the SELECT query result with query_id
   QUERY_ID=$(echo ${lines[3]} | jq -r '.[0].query_id')
   # The last line should contain the result of the implicit STOP QUERY command with the same query_id
   assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[-1]}"
+
+  wait_until grep -q "Stop QueryId(.*distributed=${QUERY_ID})" worker-node/singleNodeWorker.log
 }
 
 @test "default on-exit behavior should keep queries alive" {

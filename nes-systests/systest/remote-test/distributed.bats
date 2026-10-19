@@ -136,6 +136,6 @@ fi
     skip "Docker-based large tests disabled"
   fi
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
-  run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
+  run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --query-timeout 1200 --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
 }

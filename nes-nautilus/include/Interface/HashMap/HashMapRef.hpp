@@ -44,8 +44,7 @@ public:
     virtual nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
         const Record& recordKey,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider)
-        = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) = 0;
 
     /// This function inserts an already existing entry from another hash map to this hash map.
     /// To this end, we assume that both hash maps use the same hash function.
@@ -54,8 +53,7 @@ public:
         const nautilus::val<AbstractHashMapEntry*>& otherEntry,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider)
-        = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) = 0;
 
     /// This function performs a lookup to the hash map with the otherEntry.
     /// It returns either the entry or a nullptr, depending on if the other entry key is in the hash map or not

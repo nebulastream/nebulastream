@@ -1,0 +1,44 @@
+diff --git a/src/cpu/aarch64/injectors/jit_uni_eltwise_injector.hpp b/src/cpu/aarch64/injectors/jit_uni_eltwise_injector.hpp
+index 355f877..dbff608 100644
+--- a/src/cpu/aarch64/injectors/jit_uni_eltwise_injector.hpp
++++ b/src/cpu/aarch64/injectors/jit_uni_eltwise_injector.hpp
+@@ -320,7 +320,8 @@ private:
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+         // TODO: enforce through data structure
+-        const auto it = entry_map_.find(key); // search an entry for a key
++        // multimap::find may return any of the entries sharing a key, the table offset is the one of the first.
++        const auto it = entry_map_.count(key) != 0 ? entry_map_.lower_bound(key) : entry_map_.end();
+         assert(it != entry_map_.end());
+         const auto &te = (*it).second;
+         const auto scale = te.bcast ? vlen : sizeof(table_entry_val_t);
+diff --git a/src/cpu/x64/injectors/jit_uni_eltwise_injector.cpp b/src/cpu/x64/injectors/jit_uni_eltwise_injector.cpp
+index b1e45e4..38cf057 100644
+--- a/src/cpu/x64/injectors/jit_uni_eltwise_injector.cpp
++++ b/src/cpu/x64/injectors/jit_uni_eltwise_injector.cpp
+@@ -1043,7 +1043,10 @@ void jit_uni_eltwise_injector_t<isa, Wmm>::log_compute_vector_fwd(
+             vlen_ / sizeof(float)); // equal to 2/3/4 for xmm/ymm/zmm
+     vec_shift(vmm_aux(1), vmm_aux(1), true, simd_w);
+ 
+-    const auto it = entry_map_.find(log_predefined_vals);
++    // multimap::find may return any of the entries sharing a key, the table starts at the first.
++    const auto it = entry_map_.count(log_predefined_vals) != 0
++            ? entry_map_.lower_bound(log_predefined_vals)
++            : entry_map_.end();
+     if (it == entry_map_.end()) {
+         assert(it != entry_map_.end());
+         return;
+diff --git a/src/cpu/x64/injectors/jit_uni_eltwise_injector.hpp b/src/cpu/x64/injectors/jit_uni_eltwise_injector.hpp
+index 06e45f9..b17109e 100644
+--- a/src/cpu/x64/injectors/jit_uni_eltwise_injector.hpp
++++ b/src/cpu/x64/injectors/jit_uni_eltwise_injector.hpp
+@@ -337,7 +337,8 @@ private:
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+         // TODO: enforce through data structure
+-        const auto it = entry_map_.find(key); // search an entry for a key
++        // multimap::find may return any of the entries sharing a key, the table offset is the one of the first.
++        const auto it = entry_map_.count(key) != 0 ? entry_map_.lower_bound(key) : entry_map_.end();
+         if (it == entry_map_.end()) {
+             assert(!"Non-existent key");
+             return 0;

@@ -1,16 +1,16 @@
 {
   pkgs,
   mlirBinary,
+  llvmPackages,
+  fmtPkg ? pkgs.fmt_11,
+  spdlogPkg ? pkgs.spdlog.override { fmt = fmtPkg; },
 }:
 
 let
   lib = pkgs.lib;
-  llvm = pkgs.llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
-
-  fmtPkg = pkgs.fmt_11;
-  spdlogPkg = pkgs.spdlog.override { fmt = fmtPkg; };
 
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
@@ -49,6 +49,10 @@ let
       version = "0.1";
 
       src = nautilusSrc;
+      patches = [
+        ../../vcpkg/vcpkg-registry/ports/nautilus/0001-fmt-fix.patch
+        ../../vcpkg/vcpkg-registry/ports/nautilus/0002-move-function-wrapper.patch
+      ];
 
       nativeBuildInputs = [
         pkgs.cmake

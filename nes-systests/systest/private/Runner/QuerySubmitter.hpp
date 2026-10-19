@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <chrono>
 #include <expected>
-#include <unordered_set>
+#include <memory>
+#include <unordered_map>
 #include <vector>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Pointers.hpp>
@@ -26,20 +28,33 @@
 namespace NES
 {
 
+/// A query that is no longer running: it stopped, failed, or ran past the timeout and the submitter stopped it.
+struct FinishedQuery
+{
+    DistributedQueryId id;
+    std::expected<DistributedQueryStatusSnapshot, Exception> outcome;
+};
+
 /// Interface for submitting queries to a NebulaStream Worker.
 class QuerySubmitter
 {
 public:
-    explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
+    /// The timeout bounds how long a submitted query may take to reach a terminal state.
+    /// Zero disables the timeout.
+    QuerySubmitter(std::unique_ptr<QueryManager> queryManager, std::chrono::milliseconds timeout);
     std::expected<DistributedQueryId, Exception> startQuery(const DistributedLogicalPlan& plan);
     void stopQuery(const DistributedQueryId& query);
     DistributedQueryStatusSnapshot waitForQueryTermination(const DistributedQueryId& query);
 
-    /// Blocks until atleast one query has finished (or potentially failed)
-    std::vector<DistributedQueryStatusSnapshot> finishedQueries();
+    /// Blocks until at least one query is finished, and returns every finished query.
+    /// The submitter stops a query past the timeout and reports it as a timeout error.
+    /// A query that never ends then fails its test instead of blocking the whole run.
+    std::vector<FinishedQuery> finishedQueries();
 
 private:
     UniquePtr<QueryManager> queryManager;
-    std::unordered_set<DistributedQueryId> ids;
+    std::chrono::milliseconds timeout;
+    /// The running queries and when each was submitted, which the timeout counts from.
+    std::unordered_map<DistributedQueryId, std::chrono::steady_clock::time_point> running;
 };
 }

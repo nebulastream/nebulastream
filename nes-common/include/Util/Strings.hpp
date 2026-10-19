@@ -53,7 +53,9 @@ requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + inp
 {
     auto trimmed = trimWhiteSpaces(input);
     T value;
-    if (auto result = std::from_chars<T>(trimmed.data(), trimmed.data() + trimmed.size(), value); result.ec != std::errc())
+    const auto* const end = trimmed.data() + trimmed.size();
+    auto result = std::from_chars<T>(trimmed.data(), end, value);
+    if (result.ec != std::errc() || result.ptr != end)
     {
         return {};
     }
@@ -73,48 +75,17 @@ std::optional<bool> from_chars(std::string_view input);
 template <>
 std::optional<char> from_chars(std::string_view input);
 
-
-template <typename T>
-T from_chars_with_exception(std::string_view input) = delete;
-
+/// Same as from_chars, but throws CannotFormatMalformedStringValue instead of returning an empty optional.
 template <typename T>
 T from_chars_with_exception(std::string_view input)
-requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + input.size(), value); })
+requires(requires { from_chars<T>(input); })
 {
-    T value;
-    const bool isBase16 = input.size() > 2 and input[0] == '0' and (input[1] == 'x' or input[1] == 'X');
-    const int base = isBase16 ? 16 : 10;
-    input = isBase16 ? input.substr(2) : input;
-    const auto [parsedTillPtr, errorCode] = std::from_chars<T>(input.data(), input.data() + input.size(), value, base);
-
-    if (errorCode == std::errc::invalid_argument)
+    if (auto value = from_chars<T>(input))
     {
-        throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, NAMEOF_TYPE(T));
+        return *value;
     }
-    if (errorCode == std::errc::result_out_of_range)
-    {
-        throw CannotFormatMalformedStringValue("Value '{}', is too large for type: {}.", input, NAMEOF_TYPE(T));
-    }
-    if (parsedTillPtr != input.data() + input.size())
-    {
-        throw CannotFormatMalformedStringValue("Could not parse all of value '{}' for type: {}.", input, NAMEOF_TYPE(T));
-    }
-    if (errorCode == std::errc())
-    {
-        return value;
-    }
-
-    throw CannotFormatMalformedStringValue("Unknown from_chars error.");
+    throw CannotFormatMalformedStringValue("'{}' is not a valid value of type {}.", input, NAMEOF_TYPE(T));
 }
-
-template <>
-float from_chars_with_exception(std::string_view input);
-template <>
-double from_chars_with_exception(std::string_view input);
-template <>
-bool from_chars_with_exception(std::string_view input);
-template <>
-char from_chars_with_exception(std::string_view input);
 
 /// Formats floating points similiar to flink:
 /// We preserve at least 1 digit and at most 6 digits after the decimal point

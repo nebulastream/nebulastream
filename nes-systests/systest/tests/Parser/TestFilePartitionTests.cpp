@@ -59,13 +59,14 @@ std::vector<std::string> collectSqlOf(const TestFilePartition& part)
     sql.reserve(part.file.statements.size());
     for (const auto& statement : part.file.statements)
     {
-        sql.push_back(std::visit(
-            Overloaded{
-                [](const CreateStatement& each) { return each.sql; },
-                [](const SelectStatement& each) { return each.sql; },
-                [](const DifferentialStatement& each) { return each.firstSql; },
-                [](const ExplainStatement& each) { return each.sql; }},
-            statement));
+        sql.push_back(
+            std::visit(
+                Overloaded{
+                    [](const CreateStatement& each) { return each.sql; },
+                    [](const SelectStatement& each) { return each.sql; },
+                    [](const DifferentialStatement& each) { return each.firstSql; },
+                    [](const ExplainStatement& each) { return each.sql; }},
+                statement));
     }
     return sql;
 }

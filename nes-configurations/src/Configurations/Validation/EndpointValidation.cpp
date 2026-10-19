@@ -34,9 +34,6 @@ namespace
 /// Maximum valid port number (2^16 - 1)
 constexpr size_t MaxPortNumber = 65535;
 
-/// Minimum valid port number
-constexpr size_t MinPortNumber = 1;
-
 /// Maximum hostname length per RFC 1035
 constexpr size_t MaxHostnameLength = 253;
 
@@ -53,9 +50,10 @@ std::expected<void, std::string> validatePort(std::string_view portStr)
         return std::unexpected(fmt::format("Invalid port format: '{}' is not valid", portStr));
     }
 
-    if (*portResult < MinPortNumber || *portResult > MaxPortNumber)
+    /// Port zero is valid: it lets the OS select an available port when binding.
+    if (*portResult > MaxPortNumber)
     {
-        return std::unexpected(fmt::format("Port number out of valid range ({}-{}): {}", MinPortNumber, MaxPortNumber, *portResult));
+        return std::unexpected(fmt::format("Port number out of valid range (0-{}): {}", MaxPortNumber, *portResult));
     }
 
     return {};
@@ -115,8 +113,9 @@ bool isValidHostname(std::string_view host)
         return false;
     }
 
-    const std::regex hostnamePattern("^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?"
-                                     "(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$");
+    const std::regex hostnamePattern(
+        "^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?"
+        "(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$");
 
     return std::regex_match(host.begin(), host.end(), hostnamePattern);
 }

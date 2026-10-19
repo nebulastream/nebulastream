@@ -475,19 +475,20 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
     for (const auto mode : {TestUtils::EngineMode::Interpreter, TestUtils::EngineMode::Compiler})
     {
         auto engine = TestUtils::makeEngine(mode);
-        auto iterate = engine.registerFunction(std::function(
-            /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
-            [hashMapConfig](nautilus::val<TupleBuffer*> buffer)
-            {
-                const ChainedHashMapRef ref{BorrowedNautilusBuffer::from(buffer), hashMapConfig};
-                nautilus::val<uint64_t> count = 0;
-                for (const auto entry : ref)
+        auto iterate = engine.registerFunction(
+            std::function(
+                /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
+                [hashMapConfig](nautilus::val<TupleBuffer*> buffer)
                 {
-                    std::ignore = entry;
-                    ++count;
-                }
-                return count;
-            }));
+                    const ChainedHashMapRef ref{BorrowedNautilusBuffer::from(buffer), hashMapConfig};
+                    nautilus::val<uint64_t> count = 0;
+                    for (const auto entry : ref)
+                    {
+                        std::ignore = entry;
+                        ++count;
+                    }
+                    return count;
+                }));
 
         EXPECT_EQ(iterate(&hashMapBuffer), 0);
     }

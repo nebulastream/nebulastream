@@ -1,6 +1,6 @@
 {
   lib,
-  llvmPackages_19,
+  llvmPackages,
   cmake,
   ninja,
   pkg-config,
@@ -10,7 +10,7 @@
 }:
 
 let
-  llvm = llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 

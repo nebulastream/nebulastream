@@ -41,7 +41,6 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const ArenaRef& arena) const
-        = 0;
+        const ArenaRef& arena) const = 0;
 };
 }

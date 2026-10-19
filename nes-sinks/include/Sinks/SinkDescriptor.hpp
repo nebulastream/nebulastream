@@ -39,15 +39,14 @@
 namespace NES
 {
 class OperatorSerializationUtil;
-class SinkCatalog;
 }
 
 namespace NES
 {
 class NamedSinkDescriptor final : public Descriptor
 {
-    friend SinkCatalog;
     friend OperatorSerializationUtil;
+    friend class SinkDescriptor;
 
 public:
     ~NamedSinkDescriptor() = default;
@@ -55,7 +54,9 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const NamedSinkDescriptor& sinkDescriptor);
     friend bool operator==(const NamedSinkDescriptor& lhs, const NamedSinkDescriptor& rhs);
 
-    [[nodiscard]] std::optional<std::string_view> getFormatType() const;
+    [[nodiscard]] std::optional<std::string> getFormatType() const;
+
+    [[nodiscard]] SinkId getSinkId() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> getSchema() const;
@@ -64,6 +65,7 @@ public:
 
 private:
     explicit NamedSinkDescriptor(
+        SinkId id,
         Identifier name,
         Schema<UnqualifiedUnboundField, Ordered> nameWithSchema,
         std::string_view sinkType,
@@ -71,6 +73,7 @@ private:
         std::unordered_map<Identifier, std::string> formatConfig,
         DescriptorConfig::Config config);
 
+    SinkId id;
     Identifier name;
     std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> schema;
     std::string sinkType;
@@ -82,10 +85,10 @@ private:
 
 class AnonymousSinkDescriptor final : public Descriptor
 {
-    friend SinkCatalog;
     friend OperatorSerializationUtil;
     friend struct SinkLogicalOperator;
     friend class CalcTargetOrderRule;
+    friend class SinkDescriptor;
 
 public:
     ~AnonymousSinkDescriptor() = default;
@@ -101,13 +104,15 @@ public:
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
     getSchema() const;
-    [[nodiscard]] uint64_t getSinkId() const;
+
+    [[nodiscard]] SinkId getSinkId() const;
+
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
 
 private:
     explicit AnonymousSinkDescriptor(
-        uint64_t sinkId,
+        SinkId id,
         std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema,
         std::string_view sinkType,
         Host host,
@@ -116,7 +121,7 @@ private:
 
     [[nodiscard]] AnonymousSinkDescriptor withSchemaOrder(const Schema<UnqualifiedUnboundField, Ordered>& newSchema) const;
 
-    uint64_t sinkId;
+    SinkId id;
     std::variant<
         std::monostate,
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
@@ -131,7 +136,6 @@ private:
 
 class SinkDescriptor final : public Descriptor
 {
-    friend SinkCatalog;
     friend OperatorSerializationUtil;
     friend Unreflector<SinkDescriptor>;
     friend class CalcTargetOrderRule;
@@ -151,6 +155,7 @@ public:
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>> getSchema() const;
     [[nodiscard]] Identifier getSinkName() const;
+    [[nodiscard]] SinkId getSinkId() const;
     [[nodiscard]] bool isAnonymous() const;
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
@@ -176,27 +181,28 @@ public:
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
-        "BACKPRESSURE_UPPER_THRESHOLD",
-        1000,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
-        "BACKPRESSURE_LOWER_THRESHOLD",
-        200,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
-
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            OUTPUT_FORMAT, ADD_TIMESTAMP, BACKPRESSURE_UPPER_THRESHOLD, BACKPRESSURE_LOWER_THRESHOLD);
+        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
 
     static std::optional<DescriptorConfig::Config>
     validateAndFormatConfig(std::string_view sinkType, std::unordered_map<Identifier, std::string> configPairs);
+
+    static std::optional<SinkDescriptor> createNamed(
+        SinkId id,
+        Identifier name,
+        const Identifier& sinkType,
+        const Schema<UnqualifiedUnboundField, Ordered>& schema,
+        Host host,
+        std::unordered_map<Identifier, std::string> descriptorConfig,
+        std::unordered_map<Identifier, std::string> formatConfig);
+
+    static std::optional<SinkDescriptor> createAnonymous(
+        SinkId id,
+        const Identifier& sinkType,
+        const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
+        Host host,
+        std::unordered_map<Identifier, std::string> descriptorConfig,
+        std::unordered_map<Identifier, std::string> formatConfig);
 
     friend struct SinkLogicalOperator;
 };
@@ -217,7 +223,7 @@ namespace detail
 {
 struct ReflectedAnonymousSinkDescriptor
 {
-    uint64_t sinkId;
+    int64_t id;
     std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema;
     std::string sinkType;
     Host host;
@@ -227,6 +233,7 @@ struct ReflectedAnonymousSinkDescriptor
 
 struct ReflectedNamedSinkDescriptor
 {
+    int64_t id;
     Identifier name;
     Schema<UnqualifiedUnboundField, Ordered> schema;
     std::string sinkType;

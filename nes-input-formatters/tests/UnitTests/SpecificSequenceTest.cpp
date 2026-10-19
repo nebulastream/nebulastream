@@ -59,9 +59,8 @@ TEST_F(SpecificSequenceTest, oneTupleWithTupleDelimiters)
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -78,9 +77,8 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOutOfOrder)
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -97,9 +95,8 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,12345\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,123456789\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,12345\n"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,123456789\n"}}});
 }
 
 /// TODO #1154: We currently don't support delimiters that are larger than one byte
@@ -116,9 +113,8 @@ TEST_F(SpecificSequenceTest, DISABLED_testDelimiterThatIsMoreThanOneCharacter)
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,1234--"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,12345678--"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,1234--"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,12345678--"}}});
 }
 
 /// Index buffer can only represent a single tuple. Requires 7 (nested) index buffers for first buffer ("1\n2\n3\n4\n5\n6\n7\n8\n").
@@ -139,9 +135,8 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
             {{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}},
              {TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
              {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "1\n2\n3\n4\n5\n6\n7\n8\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "1234\n5678\n1001\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "1\n2\n3\n4\n5\n6\n7\n8\n"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "1234\n5678\n1001\n"}}});
 }
 
 /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
@@ -260,10 +255,9 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
         = {WorkerThreadResults<TestTuple>{{{TestTuple(1234)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(567), TestTuple(89)}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"},
-           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"},
+                              /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"}}});
 }
 
 /// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 3, this leads to an empty spanning tuple between the ending '}'-byte
@@ -283,10 +277,9 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
         .expectedResults
         = {WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}},
 
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
-           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
+                              /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"}}});
 }
 }
 

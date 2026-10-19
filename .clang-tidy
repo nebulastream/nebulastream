@@ -52,11 +52,13 @@ Checks: [
   "-llvm-header-guard", # header guards are not needed as we use pragma once
   "-llvm-include-order", # conflicts with the order of includes forced by our formatter
   "-llvm-namespace-comment", # we do not require namespace comments
+  "-llvm-prefer-static-over-anonymous-namespace", # we use anonymous namespaces for internal linkage
   "-misc-non-private-member-variables-in-classes", # it is not possible to disable this for structs
   "-misc-no-recursion", # we allow recursion
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-readability-named-parameter", # does not work with our error of unused variable
   "-cert-err60-cpp", # conflicts with using cpptrace::lazy_exception
+  "-portability-template-virtual-member-function", # we only build with clang
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
@@ -120,6 +122,7 @@ WarningsAsErrors: '
   -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-missing-std-forward,
   -cppcoreguidelines-narrowing-conversions,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-const-cast,

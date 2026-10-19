@@ -52,13 +52,11 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
         }
     }
 
-    try
+    /// A concurrent run sharing the log directory may install the symlink first; either target is valid.
+    create_symlink(relativeLogPath, symlinkPath, errorCode);
+    if (errorCode and errorCode != std::errc::file_exists)
     {
-        create_symlink(relativeLogPath, symlinkPath);
-    }
-    catch (const std::filesystem::filesystem_error& e)
-    {
-        std::cerr << "Error creating symlink during logger setup: " << e.what() << '\n';
+        std::cerr << "Error creating symlink during logger setup: " << errorCode.message() << "\n";
     }
 }
 }
