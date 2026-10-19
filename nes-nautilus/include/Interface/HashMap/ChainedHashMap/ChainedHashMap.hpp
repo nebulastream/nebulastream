@@ -17,7 +17,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <istream>
 #include <memory>
+#include <ostream>
 #include <span>
 #include <type_traits>
 #include <utility>
@@ -101,6 +103,13 @@ public:
 
     /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
     static ChainedHashMap load(const TupleBuffer& tupleBuffer);
+
+    /// Writes the map, including all of its child buffers, in a form that a different process can read back. The entries' vtable and
+    /// chain pointers and the var-sized field pointers are process-local, so deserialize() rebuilds them from the very config this map
+    /// was init()ed with.
+    void serialize(std::ostream& out, const ChainedHashMapConfig& config) const;
+    [[nodiscard]] static TupleBuffer
+    deserialize(std::istream& in, const ChainedHashMapConfig& config, AbstractBufferProvider& bufferProvider);
 
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
 

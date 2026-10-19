@@ -67,6 +67,10 @@ public:
 
     [[nodiscard]] uint64_t size() const;
 
+    /// Round-trips the map through ChainedHashMap::serialize()/deserialize() and continues on the restored copy. The original buffers
+    /// are overwritten before they are released, so any pointer the copy still shares with them corrupts its contents.
+    void replaceWithSerializedCopy();
+
     ChainedHashMap raw();
 
     [[nodiscard]] size_t numKeyFields() const;

@@ -14,26 +14,146 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
+#include <istream>
+#include <iterator>
+#include <limits>
 #include <memory>
+#include <new>
+#include <ostream>
 #include <span>
 #include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Interface/TupleBufferSerialization.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
+namespace
+{
+constexpr std::array<char, 8> SerializationMagic{'N', 'E', 'S', 'C', 'H', 'M', '0', '1'};
+constexpr uint64_t NoVarSizedPage = std::numeric_limits<uint64_t>::max();
+
+struct SerializedLayout
+{
+    uint64_t numberOfChains;
+    uint64_t entrySize;
+    uint64_t bloomBytes;
+
+    bool operator==(const SerializedLayout&) const = default;
+};
+
+struct VarSizedLocation
+{
+    uint64_t pageIndex;
+    uint64_t offset;
+};
+
+struct VarSizedPageRange
+{
+    const std::byte* begin;
+    const std::byte* end;
+    uint64_t pageIndex;
+};
+
+template <typename T>
+void writeValue(std::ostream& out, const T& value)
+{
+    out.write(reinterpret_cast<const char*>(&value), sizeof(T)); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (!out)
+    {
+        throw CannotSerialize("Failed to write a chained hash map");
+    }
+}
+
+template <typename T>
+T readValue(std::istream& in)
+{
+    T value{};
+    in.read(reinterpret_cast<char*>(&value), sizeof(T)); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (!in)
+    {
+        throw CannotDeserialize("Truncated chained hash map");
+    }
+    return value;
+}
+
+SerializedLayout layoutOf(const ChainedHashMapConfig& config)
+{
+    return {
+        .numberOfChains = ChainedHashMap::calculateNumberOfChains(config.numberOfBuckets),
+        .entrySize = config.entrySize,
+        .bloomBytes = config.bloomFilterMemAreaSize()};
+}
+
+/// The entry stores the pointer to a var-sized field behind the field's null byte.
+std::vector<uint64_t> varSizedPointerOffsets(const ChainedHashMapConfig& config)
+{
+    std::vector<uint64_t> offsets;
+    for (const auto& fields : {std::cref(config.fieldKeys), std::cref(config.fieldValues)})
+    {
+        for (const auto& field : fields.get())
+        {
+            if (field.type.isType(DataType::Type::VARSIZED))
+            {
+                offsets.push_back(field.fieldOffset + (field.type.nullable ? 1 : 0));
+            }
+        }
+    }
+    return offsets;
+}
+
+/// Entries are visited in insertion order, as insertEntry() fills the pages one after the other.
+template <typename Visitor>
+void forEachEntry(const ChainedHashMap& map, const uint64_t entrySize, Visitor&& visitor)
+{
+    for (uint64_t pageIndex = 0; pageIndex < map.getNumberOfPages(); ++pageIndex)
+    {
+        auto page = map.getPage(pageIndex);
+        auto pageMemory = page.getAvailableMemoryArea();
+        for (uint64_t entryIndex = 0; entryIndex < page.getNumberOfTuples(); ++entryIndex)
+        {
+            visitor(pageMemory.subspan(entryIndex * entrySize, entrySize).data());
+        }
+    }
+}
+
+VarSizedLocation locateVarSized(const std::vector<VarSizedPageRange>& pagesByAddress, const std::byte* pointer)
+{
+    const auto candidate = std::ranges::upper_bound(pagesByAddress, pointer, std::less{}, &VarSizedPageRange::begin);
+    if (candidate == pagesByAddress.begin())
+    {
+        return {.pageIndex = NoVarSizedPage, .offset = 0};
+    }
+    const auto& page = *std::prev(candidate);
+    if (pointer >= page.end)
+    {
+        return {.pageIndex = NoVarSizedPage, .offset = 0};
+    }
+    return {.pageIndex = page.pageIndex, .offset = static_cast<uint64_t>(pointer - page.begin)};
+}
+
+uint64_t offsetOfHashInEntry()
+{
+    const ChainedHashMapEntry probe{0};
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    return static_cast<uint64_t>(reinterpret_cast<const std::byte*>(&probe.hash) - reinterpret_cast<const std::byte*>(&probe));
+}
+}
 
 /// Taken from https://github.com/TimoKersten/db-engine-paradigms/blob/ae3286b279ad26ab294224d630d650bc2f2f3519/include/common/runtime/Hashmap.hpp#L193
 /// Calculates the capacity of the hash map for the expected number of keys
@@ -377,6 +497,131 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
 ChainedHashMapEntry* ChainedHashMap::getChain(const uint64_t pos)
 {
     return chainsBegin()[pos]; /// NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+}
+
+void ChainedHashMap::serialize(std::ostream& out, const ChainedHashMapConfig& config) const
+{
+    writeValue(out, SerializationMagic);
+    writeValue(out, layoutOf(config));
+    serializeTupleBufferTree(out, buffer);
+
+    const auto pointerOffsets = varSizedPointerOffsets(config);
+    if (pointerOffsets.empty())
+    {
+        return;
+    }
+    std::vector<TupleBuffer> varSizedPages;
+    std::vector<VarSizedPageRange> pagesByAddress;
+    for (uint64_t pageIndex = 0; pageIndex < getNumberOfVarSizedPages(); ++pageIndex)
+    {
+        const auto& page = varSizedPages.emplace_back(getVarSizedPage(pageIndex));
+        const auto pageMemory = page.getAvailableMemoryArea();
+        pagesByAddress.push_back({.begin = pageMemory.data(), .end = pageMemory.data() + pageMemory.size(), .pageIndex = pageIndex});
+    }
+    std::ranges::sort(pagesByAddress, std::less{}, &VarSizedPageRange::begin);
+
+    forEachEntry(
+        *this,
+        config.entrySize,
+        [&](const std::byte* entry)
+        {
+            for (const auto pointerOffset : pointerOffsets)
+            {
+                const std::byte* pointer = nullptr;
+                std::memcpy(static_cast<void*>(&pointer), entry + pointerOffset, sizeof(pointer));
+                writeValue(out, locateVarSized(pagesByAddress, pointer));
+            }
+        });
+}
+
+TupleBuffer ChainedHashMap::deserialize(std::istream& in, const ChainedHashMapConfig& config, AbstractBufferProvider& bufferProvider)
+{
+    if (readValue<std::array<char, SerializationMagic.size()>>(in) != SerializationMagic)
+    {
+        throw CannotDeserialize("Unknown chained hash map format");
+    }
+    const auto expectedLayout = layoutOf(config);
+    if (const auto layout = readValue<SerializedLayout>(in); layout != expectedLayout)
+    {
+        throw CannotDeserialize(
+            "Chained hash map was written with {} chains, entry size {} and {} bloom filter bytes, but the config expects {}, {} and {}",
+            layout.numberOfChains,
+            layout.entrySize,
+            layout.bloomBytes,
+            expectedLayout.numberOfChains,
+            expectedLayout.entrySize,
+            expectedLayout.bloomBytes);
+    }
+
+    auto tupleBuffer = deserializeTupleBufferTree(in, bufferProvider);
+    if (tupleBuffer.getBufferSize() < calculateBufferSize(config.numberOfBuckets, expectedLayout.bloomBytes))
+    {
+        throw CannotDeserialize("Chained hash map buffer of {} bytes is too small for its config", tupleBuffer.getBufferSize());
+    }
+    ChainedHashMap map{tupleBuffer};
+    if (map.header().status != VALID_CHM)
+    {
+        throw CannotDeserialize("Invalid chained hash map status {}", map.header().status);
+    }
+
+    auto* chains = map.chainsBegin();
+    std::fill_n(chains, expectedLayout.numberOfChains, nullptr);
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    chains[expectedLayout.numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&chains[expectedLayout.numberOfChains]);
+
+    const auto hashOffset = offsetOfHashInEntry();
+    const auto mask = expectedLayout.numberOfChains - 1;
+    uint64_t numberOfEntries = 0;
+    forEachEntry(
+        map,
+        config.entrySize,
+        [&](std::byte* entryMemory)
+        {
+            HashFunction::HashValue::raw_type hash{};
+            std::memcpy(&hash, entryMemory + hashOffset, sizeof(hash));
+            auto* entry = new (entryMemory) ChainedHashMapEntry(hash);
+            auto& chain = chains[hash & mask]; /// NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            entry->next = chain;
+            chain = entry;
+            ++numberOfEntries;
+        });
+    if (numberOfEntries != map.header().numRecords)
+    {
+        throw CannotDeserialize(
+            "Chained hash map pages hold {} entries, but its header expects {}", numberOfEntries, map.header().numRecords);
+    }
+
+    const auto pointerOffsets = varSizedPointerOffsets(config);
+    if (pointerOffsets.empty())
+    {
+        return tupleBuffer;
+    }
+    std::vector<TupleBuffer> varSizedPages;
+    for (uint64_t pageIndex = 0; pageIndex < map.getNumberOfVarSizedPages(); ++pageIndex)
+    {
+        varSizedPages.emplace_back(map.getVarSizedPage(pageIndex));
+    }
+    forEachEntry(
+        map,
+        config.entrySize,
+        [&](std::byte* entry)
+        {
+            for (const auto pointerOffset : pointerOffsets)
+            {
+                const auto location = readValue<VarSizedLocation>(in);
+                std::byte* pointer = nullptr;
+                if (location.pageIndex != NoVarSizedPage)
+                {
+                    if (location.pageIndex >= varSizedPages.size() || location.offset >= varSizedPages[location.pageIndex].getBufferSize())
+                    {
+                        throw CannotDeserialize("Var-sized field points outside of the chained hash map's var-sized pages");
+                    }
+                    pointer = varSizedPages[location.pageIndex].getAvailableMemoryArea().subspan(location.offset).data();
+                }
+                std::memcpy(entry + pointerOffset, static_cast<const void*>(&pointer), sizeof(pointer));
+            }
+        });
+    return tupleBuffer;
 }
 
 }

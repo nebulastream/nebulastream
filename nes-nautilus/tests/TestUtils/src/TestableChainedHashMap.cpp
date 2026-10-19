@@ -14,12 +14,14 @@
 
 #include <TestableChainedHashMap.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -63,6 +65,16 @@ std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<DataType>> spl
         types.push_back(field.type);
     }
     return {std::move(names), std::move(types)};
+}
+
+void overwriteBufferTree(TupleBuffer& buffer)
+{
+    std::ranges::fill(buffer.getAvailableMemoryArea(), std::byte{0xA5});
+    for (uint32_t childIndex = 0; childIndex < buffer.getNumberOfChildBuffers(); ++childIndex)
+    {
+        auto child = buffer.loadChildBuffer(ChildBufferIndex{childIndex});
+        overwriteBufferTree(child);
+    }
 }
 }
 
@@ -288,6 +300,15 @@ std::vector<std::pair<AnyVec, AnyVec>> TestableChainedHashMap::getAll()
 uint64_t TestableChainedHashMap::size() const
 {
     return ChainedHashMap::load(chainedHashMapBuffer).getTotalNumberOfRecords();
+}
+
+void TestableChainedHashMap::replaceWithSerializedCopy()
+{
+    std::stringstream serialized;
+    raw().serialize(serialized, hashMapConfig);
+    auto restored = ChainedHashMap::deserialize(serialized, hashMapConfig, bufferManager);
+    overwriteBufferTree(chainedHashMapBuffer);
+    chainedHashMapBuffer = std::move(restored);
 }
 
 ChainedHashMap TestableChainedHashMap::raw()

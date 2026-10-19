@@ -19,6 +19,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -30,6 +31,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -38,6 +40,7 @@
 #include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed via macros expanded from rapidcheck/gtest.h
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
+#include <ErrorHandling.hpp>
 #include <TestableChainedHashMap.hpp>
 #include <static.hpp> /// NOLINT(misc-include-cleaner)
 #include <val_arith.hpp>
@@ -410,6 +413,86 @@ void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
         verifyLookups(chainedHashMap, reference, fieldTypes);
     }
 }
+
+/// Verify that a map read back from its serialized form holds the same entries and keeps accepting new ones. The second batch of
+/// inserts runs against the rebuilt chains and appends to the restored storage and var-sized pages.
+/// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): matches the pre-existing default here.
+void serializeAndRestoreProperty(TestUtils::EngineMode mode, bool enableBloomFilter = false)
+{
+    const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
+    const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
+    const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
+    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
+    const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams
+        = enableBloomFilter ? std::optional{genBloomFilterParams()} : std::nullopt;
+
+    NES_INFO(
+        "Property serializeAndRestore: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, bloom={}, "
+        "field_types={}",
+        fieldTypes.size(),
+        numberOfItems,
+        bufferSize,
+        numKeyFields,
+        numberOfBuckets,
+        numEntriesPerPage,
+        enableBloomFilter,
+        fmt::join(fieldTypes, ", "));
+
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestableChainedHashMap chainedHashMap{
+        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage, bloomFilterParams};
+    auto reference = makeEmptyReference(chainedHashMap);
+    populateReference(chainedHashMap, fieldTypes, numberOfItems, reference);
+
+    chainedHashMap.replaceWithSerializedCopy();
+    RC_ASSERT(chainedHashMap.size() == reference.size());
+    verifyGetAll(chainedHashMap, reference);
+    verifyLookups(chainedHashMap, reference, fieldTypes);
+
+    populateReference(chainedHashMap, fieldTypes, numberOfItems, reference);
+    RC_ASSERT(chainedHashMap.size() == reference.size());
+    verifyGetAll(chainedHashMap, reference);
+    verifyLookups(chainedHashMap, reference, fieldTypes);
+}
+
+ChainedHashMapConfig createUInt64KeyConfig(const uint64_t numberOfBuckets)
+{
+    constexpr uint64_t entrySize = sizeof(ChainedHashMapEntry) + sizeof(uint64_t);
+    return ChainedHashMapConfig{
+        .entrySize = entrySize,
+        .numberOfBuckets = numberOfBuckets,
+        .pageSize = entrySize * 4,
+        .bloomFilterParams = std::nullopt,
+        .fieldKeys = {},
+        .fieldValues = {},
+        .hashFunction = std::make_shared<MurMur3HashFunction>()};
+}
+
+std::string serializeEmptyMap(const ChainedHashMapConfig& config, AbstractBufferProvider& bufferProvider)
+{
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access): .value() throws on nullopt, which fails the test.
+    auto hashMapBuffer = bufferProvider.getUnpooledBuffer(ChainedHashMap::calculateBufferSize(config.numberOfBuckets, 0)).value();
+    ChainedHashMap::init(hashMapBuffer, config);
+    std::stringstream serialized;
+    ChainedHashMap::load(hashMapBuffer).serialize(serialized, config);
+    return serialized.str();
+}
+
+void expectDeserializationFailure(const std::string& serialized, const ChainedHashMapConfig& config, AbstractBufferProvider& bufferProvider)
+{
+    std::stringstream in(serialized);
+    try
+    {
+        std::ignore = ChainedHashMap::deserialize(in, config, bufferProvider);
+        FAIL() << "Expected deserialization to fail";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::CannotDeserialize);
+    }
+}
 } /// anonymous namespace
 
 /// One RC_GTEST_PROP per (property, backend) combination so that a failure on one backend doesn't mask the other and
@@ -532,6 +615,40 @@ RC_GTEST_PROP(ChainedHashMapPropertyTest, bloomFilterMatchesDisabledInterpreter,
 {
     Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
     bloomFilterMatchesDisabledProperty(TestUtils::EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, serializeAndRestoreCompiler, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    serializeAndRestoreProperty(TestUtils::EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, serializeAndRestoreInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    serializeAndRestoreProperty(TestUtils::EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, serializeAndRestoreWithBloomFilterInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    serializeAndRestoreProperty(TestUtils::EngineMode::Interpreter, true);
+}
+
+TEST(ChainedHashMapSerializationTest, rejectsMapWrittenWithDifferentSizing)
+{
+    auto bufferManager = TestUtils::createBufferManager(4096, 16);
+    const auto serialized = serializeEmptyMap(createUInt64KeyConfig(16), *bufferManager);
+    expectDeserializationFailure(serialized, createUInt64KeyConfig(1024), *bufferManager);
+}
+
+TEST(ChainedHashMapSerializationTest, rejectsTruncatedInput)
+{
+    auto bufferManager = TestUtils::createBufferManager(4096, 16);
+    const auto config = createUInt64KeyConfig(16);
+    const auto serialized = serializeEmptyMap(config, *bufferManager);
+    expectDeserializationFailure(serialized.substr(0, serialized.size() / 2), config, *bufferManager);
+    expectDeserializationFailure("not a chained hash map", config, *bufferManager);
 }
 
 }
