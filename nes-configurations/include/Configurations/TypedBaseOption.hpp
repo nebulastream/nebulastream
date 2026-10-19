@@ -70,7 +70,12 @@ protected:
 public:
     void accept(OptionVisitor& visitor) override
     {
-        if constexpr (requires { std::to_string(defaultValue); })
+        if constexpr (std::same_as<bool, T>)
+        {
+            /// The option parsers only accept the words.
+            visitor.visitOption({name, description, defaultValue ? "true" : "false", value ? "true" : "false", explicitlySet});
+        }
+        else if constexpr (requires { std::to_string(defaultValue); })
         {
             visitor.visitOption({name, description, std::to_string(defaultValue), std::to_string(value), explicitlySet});
         }
