@@ -25,10 +25,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <folly/Synchronized.h>
 
-#ifndef NO_ASSERT
-    #include <set>
-#endif
-
 namespace NES
 {
 
@@ -64,12 +60,6 @@ public:
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     folly::Synchronized<std::map<SequenceNumberForOriginId, SequenceState>> sequenceStates;
-
-#ifndef NO_ASSERT
-    /// We assume that every tuple of (SequenceNumber, ChunkNumber, OriginId) is unique per query.
-    /// In debug mode we track the completed sequence numbers to catch bugs related to bad sequence/chunk numbers
-    folly::Synchronized<std::set<SequenceNumberForOriginId>> completedSequences;
-#endif
 };
 }
 

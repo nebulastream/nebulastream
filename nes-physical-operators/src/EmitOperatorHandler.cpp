@@ -39,15 +39,6 @@ void EmitOperatorHandler::setChunkNumber(
     /// Assign a unique chunk number to the buffer and increment the internal counter
     auto& [nextChunkNumberCounter, lastChunkNumber, seenChunks] = (*lock)[seqNumberOriginId];
 
-#ifndef NO_ASSERT
-    const auto completedSequencesLock = completedSequences.wlock();
-    INVARIANT(
-        !completedSequencesLock->contains(seqNumberOriginId),
-        "Received chunk for sequence {} that was already completed",
-        seqNumberOriginId);
-#endif
-
-
     const auto nextChunkNumber = ChunkNumber(nextChunkNumberCounter);
     nextChunkNumberCounter += 1;
 
@@ -74,9 +65,6 @@ void EmitOperatorHandler::setChunkNumber(
         if (lastChunkNumber != INVALID<ChunkNumber> && seenChunks - 1 == lastChunkNumber.getRawValue() - ChunkNumber::INITIAL)
         {
             lock->erase(seqNumberOriginId);
-#ifndef NO_ASSERT
-            completedSequencesLock->emplace(seqNumberOriginId);
-#endif
             buffer.setLastChunk(true);
         }
     }
