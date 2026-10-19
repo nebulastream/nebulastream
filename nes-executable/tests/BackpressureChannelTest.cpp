@@ -17,6 +17,7 @@
 #include <atomic>
 #include <barrier>
 #include <chrono>
+#include <cstddef>
 #include <future>
 #include <latch>
 #include <memory>
@@ -32,6 +33,8 @@
 
 namespace NES
 {
+
+constexpr size_t NUMBER_OF_OPEN_CHANNEL_WAITS = 100;
 
 class BackpressureChannelTest : public ::testing::Test
 {
@@ -81,7 +84,7 @@ TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWhenNoPressure)
     std::jthread backpressureListenerThread(
         [&](const std::stop_token& stopToken)
         {
-            for (size_t i = 0; i < 100; ++i)
+            for (size_t i = 0; i < NUMBER_OF_OPEN_CHANNEL_WAITS; ++i)
             {
                 backpressureListener.wait(stopToken);
             }
@@ -103,7 +106,7 @@ TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWithPressure)
     std::jthread backpressureListenerThread(
         [&](const std::stop_token& stopToken)
         {
-            for (size_t i = 0; i < 100; ++i)
+            for (size_t i = 0; i < NUMBER_OF_OPEN_CHANNEL_WAITS; ++i)
             {
                 backpressureListener.wait(stopToken);
             }
@@ -135,6 +138,7 @@ TEST_F(BackpressureChannelTest, IngestionWaitsWhenPressureApplied)
     std::latch readyToWait{numberOfSources};
     std::vector<std::promise<void>> completed(numberOfSources);
     std::vector<std::future<void>> completions;
+    completions.reserve(numberOfSources);
     for (auto& promise : completed)
     {
         completions.emplace_back(promise.get_future());
@@ -152,7 +156,7 @@ TEST_F(BackpressureChannelTest, IngestionWaitsWhenPressureApplied)
             {
                 readyToWait.count_down();
                 backpressureListener.wait(stopToken);
-                completed[i].set_value();
+                completed.at(i).set_value();
             });
     }
     readyToWait.wait();
@@ -207,11 +211,11 @@ TEST_F(BackpressureChannelTest, MultithreadedStressTest)
                     syncBarrier.arrive_and_wait();
 
                     /// Ensure activity even if this thread is first scheduled after the test duration.
-                    do
+                    for (bool first = true; first || !stopToken.stop_requested(); first = false)
                     {
-                        channels[channelId].second.wait(stopToken);
+                        channels.at(channelId).second.wait(stopToken);
                         successfulWaits.fetch_add(1);
-                    } while (!stopToken.stop_requested());
+                    }
                 });
         }
     }
@@ -230,20 +234,20 @@ TEST_F(BackpressureChannelTest, MultithreadedStressTest)
                 std::uniform_int_distribution<> dist(0, 1);
 
                 /// Perform at least one operation before honoring a stop request.
-                do
+                for (bool first = true; first || !stopToken.stop_requested(); first = false)
                 {
                     if (dist(rng) == 0)
                     {
-                        channels[channelId].first.applyPressure();
+                        channels.at(channelId).first.applyPressure();
                     }
                     else
                     {
-                        channels[channelId].first.releasePressure();
+                        channels.at(channelId).first.releasePressure();
                     }
 
                     totalOperations.fetch_add(1);
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                } while (!stopToken.stop_requested());
+                }
             });
     }
 
