@@ -21,6 +21,7 @@ add_source_files(nes-physical-operators
         EmitOperatorHandler.cpp
         ScanPhysicalOperator.cpp
         HashMapSlice.cpp
+        HashMapSliceCheckpoint.cpp
         SourceDescriptorPhysicalOperator.cpp
         SinkPhysicalOperator.cpp
         WindowBasedOperatorHandler.cpp

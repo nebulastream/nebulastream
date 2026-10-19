@@ -15,7 +15,9 @@
 #include <WindowBasedOperatorHandler.hpp>
 
 #include <cstdint>
+#include <filesystem>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -24,6 +26,8 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <ErrorHandling.hpp>
+#include <HashMapSliceCheckpoint.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -44,6 +48,27 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+    if (checkpoint and getRecoveryStateDirectory())
+    {
+        std::call_once(
+            stateRestored, [&] { checkpoint->restore(*this, *getRecoveryStateDirectory(), *pipelineExecutionContext.getBufferManager()); });
+    }
+}
+
+void WindowBasedOperatorHandler::enableCheckpointing(HashMapSliceCheckpoint hashMapSliceCheckpoint)
+{
+    checkpoint.emplace(std::move(hashMapSliceCheckpoint));
+}
+
+bool WindowBasedOperatorHandler::supportsCheckpointing() const
+{
+    return checkpoint.has_value();
+}
+
+void WindowBasedOperatorHandler::serializeState(const std::filesystem::path& stateDirectory)
+{
+    PRECONDITION(checkpoint.has_value(), "Checkpointing was not enabled for this window operator");
+    checkpoint->write(*this, stateDirectory);
 }
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)

@@ -77,6 +77,16 @@ public:
     /// Retrieves the slice by its end timestamp. If no slice exists for the given slice end, the optional return value is nullopt
     virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) = 0;
 
+    /// Retrieves all slices that have not been garbage collected yet, ordered by their end
+    virtual std::vector<std::shared_ptr<Slice>> getActiveSlices() = 0;
+
+    /// All windows that end at or before the returned timestamp have been emitted to the probe. Zero if no window has been emitted yet.
+    virtual Timestamp getEmittedWindowsEnd() const = 0;
+
+    /// Marks the windows that end at or before windowsEnd as emitted, so that restoring their slices from a checkpoint does not emit
+    /// them again.
+    virtual void markWindowsAsEmitted(Timestamp windowsEnd) = 0;
+
     /// Retrieves all current non-deleted slices that have not been triggered yet
     /// This method returns for each window all slices that have not been triggered yet, regardless of any watermark timestamp
     /// Additionally, it returns a sequence number per window that is incremented for each window and thus, it can be used to set it in the emitted tuple buffer for the probe operator.

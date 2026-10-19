@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <utility>
 #include <vector>
@@ -129,6 +130,7 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
         }
 
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
+        emittedWindowsEnd = std::max(emittedWindowsEnd.load(), windowInfo.windowEnd.getRawValue());
         /// As the windows are sorted, we can simply increment the sequence number here.
         const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
         for (auto& slice : windowSlicesAndState.windowSlices)
@@ -146,6 +148,30 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
         return slicesReadLocked->find(sliceEnd)->second;
     }
     return {};
+}
+
+std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getActiveSlices()
+{
+    return *slices.rlock() | std::views::values | std::ranges::to<std::vector>();
+}
+
+Timestamp DefaultTimeBasedSliceStore::getEmittedWindowsEnd() const
+{
+    return Timestamp(emittedWindowsEnd.load());
+}
+
+void DefaultTimeBasedSliceStore::markWindowsAsEmitted(const Timestamp windowsEnd)
+{
+    const auto windowsWriteLocked = windows.wlock();
+    for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
+    {
+        if (windowInfo.windowEnd > windowsEnd)
+        {
+            break;
+        }
+        windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
+    }
+    emittedWindowsEnd = std::max(emittedWindowsEnd.load(), windowsEnd.getRawValue());
 }
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> DefaultTimeBasedSliceStore::getAllNonTriggeredSlices()
@@ -168,6 +194,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
+        emittedWindowsEnd = std::max(emittedWindowsEnd.load(), windowInfo.windowEnd.getRawValue());
     };
 
     /// We are iterating over all windows and check if they can be triggered

@@ -17,13 +17,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <istream>
 #include <memory>
 #include <numeric>
+#include <ostream>
+#include <span>
 #include <utility>
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -32,6 +36,28 @@
 
 namespace NES
 {
+namespace
+{
+void writeValue(std::ostream& out, const uint64_t value)
+{
+    out.write(reinterpret_cast<const char*>(&value), sizeof(value)); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (!out)
+    {
+        throw CannotSerialize("Failed to write hash map slice");
+    }
+}
+
+uint64_t readValue(std::istream& in)
+{
+    uint64_t value = 0;
+    in.read(reinterpret_cast<char*>(&value), sizeof(value)); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (!in)
+    {
+        throw CannotDeserialize("Truncated hash map slice");
+    }
+    return value;
+}
+}
 
 HashMapSlice::HashMapSlice(
     SliceStart sliceStart,
@@ -96,4 +122,59 @@ HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider
     }
     return &hashMapBuffers[pos];
 }
+
+void HashMapSlice::serializeHashMaps(std::ostream& out, const std::span<const ChainedHashMapConfig> configPerInputStream) const
+{
+    PRECONDITION(
+        configPerInputStream.size() == numInputStreams,
+        "Expected one hash map config per input stream, but got {} for {} input streams",
+        configPerInputStream.size(),
+        numInputStreams);
+    std::vector<uint64_t> createdHashMaps;
+    for (uint64_t position = 0; position < numHashMaps; ++position)
+    {
+        if (hashMapBuffersState[position] == HashMapBufferState::INITIALIZED)
+        {
+            createdHashMaps.push_back(position);
+        }
+    }
+
+    writeValue(out, numHashmapsPerInputStream);
+    writeValue(out, createdHashMaps.size());
+    for (const auto position : createdHashMaps)
+    {
+        writeValue(out, position);
+        ChainedHashMap::load(hashMapBuffers[position]).serialize(out, configPerInputStream[position / numHashmapsPerInputStream]);
+    }
+}
+
+void HashMapSlice::deserializeHashMaps(
+    std::istream& in, const std::span<const ChainedHashMapConfig> configPerInputStream, AbstractBufferProvider& bufferProvider)
+{
+    PRECONDITION(
+        configPerInputStream.size() == numInputStreams,
+        "Expected one hash map config per input stream, but got {} for {} input streams",
+        configPerInputStream.size(),
+        numInputStreams);
+    if (const auto hashMapsPerInputStream = readValue(in); hashMapsPerInputStream != numHashmapsPerInputStream)
+    {
+        throw CannotDeserialize(
+            "Slice was written with {} hash maps per input stream, but has {}. Was the number of worker threads changed?",
+            hashMapsPerInputStream,
+            numHashmapsPerInputStream);
+    }
+    const auto numberOfCreatedHashMaps = readValue(in);
+    for (uint64_t hashMap = 0; hashMap < numberOfCreatedHashMaps; ++hashMap)
+    {
+        const auto position = readValue(in);
+        if (position >= numHashMaps)
+        {
+            throw CannotDeserialize("Hash map position {} is out of range for a slice with {} hash maps", position, numHashMaps);
+        }
+        hashMapBuffers[position]
+            = ChainedHashMap::deserialize(in, configPerInputStream[position / numHashmapsPerInputStream], bufferProvider);
+        hashMapBuffersState[position] = HashMapBufferState::INITIALIZED;
+    }
+}
+
 }

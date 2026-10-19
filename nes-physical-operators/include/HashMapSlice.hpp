@@ -16,8 +16,11 @@
 
 #include <cstdint>
 #include <functional>
+#include <istream>
 #include <memory>
 #include <optional>
+#include <ostream>
+#include <span>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -74,6 +77,14 @@ public:
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
     [[nodiscard]] uint64_t getNumInputStreams() const;
     [[nodiscard]] uint64_t getNumHashMapsPerInputStream() const;
+
+    /// Writes the hash maps created so far together with their positions in this slice. configPerInputStream holds the config of the
+    /// hash maps of each input stream.
+    void serializeHashMaps(std::ostream& out, std::span<const ChainedHashMapConfig> configPerInputStream) const;
+
+    /// Puts the hash maps written by serializeHashMaps() at their original positions in this slice.
+    void deserializeHashMaps(
+        std::istream& in, std::span<const ChainedHashMapConfig> configPerInputStream, AbstractBufferProvider& bufferProvider);
 
 protected:
     /// @brief Returns the hash map buffer at childBufferIndex if it has already been lazily created, or nullptr

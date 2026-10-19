@@ -15,9 +15,12 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -27,6 +30,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <HashMapSliceCheckpoint.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -64,8 +68,14 @@ public:
 
     ~WindowBasedOperatorHandler() override = default;
 
+    /// Restores the checkpointed slices if the handler recovers a query. The probe calls start() during its setup, before any build
+    /// pipeline processes data.
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
+
+    void enableCheckpointing(HashMapSliceCheckpoint hashMapSliceCheckpoint);
+    [[nodiscard]] bool supportsCheckpointing() const override;
+    void serializeState(const std::filesystem::path& stateDirectory) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
 
@@ -98,5 +108,9 @@ protected:
     uint64_t numberOfWorkerThreads = 0;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
+
+private:
+    std::optional<HashMapSliceCheckpoint> checkpoint;
+    std::once_flag stateRestored;
 };
 }
