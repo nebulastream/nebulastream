@@ -92,7 +92,8 @@ TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWhenNoPressure)
 /// Test that backpressureListener is blocked when pressure is applied
 TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWithPressure)
 {
-    std::barrier syncBarrier{2};
+    std::latch ingestionDone{1};
+    std::latch pressureApplied{1};
     std::latch readyToWait{1};
     std::promise<void> completed;
     auto completion = completed.get_future();
@@ -106,8 +107,8 @@ TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWithPressure)
             {
                 backpressureListener.wait(stopToken);
             }
-            syncBarrier.arrive_and_wait();
-            syncBarrier.arrive_and_wait();
+            ingestionDone.count_down();
+            pressureApplied.wait();
 
             readyToWait.count_down();
             backpressureListener.wait(stopToken);
@@ -115,9 +116,9 @@ TEST_F(BackpressureChannelTest, BackpressureListenerProceedsWithPressure)
         });
 
     /// Wait for open-channel ingestion to finish before applying pressure.
-    syncBarrier.arrive_and_wait();
+    ingestionDone.wait();
     EXPECT_TRUE(backpressureController.applyPressure());
-    syncBarrier.arrive_and_wait();
+    pressureApplied.count_down();
     readyToWait.wait();
 
     /// Observe that ingestion does not complete while pressure is applied.
