@@ -36,9 +36,10 @@ RUN apt-get update && apt-get install -y python3 python3-venv && \
     ovc --version && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
-# Runtime library for the PyPy-backed UDF bridge (nes-udf/bridge-pypy); see Development.dockerfile
-# for the build-time pypy3-dev install.
-RUN apt-get update && apt-get install -y pypy3 && \
+# Runtime libraries for the PyPy- and CPython-backed UDF bridges (nes-udf/bridge-pypy, nes-udf/bridge-cpython); see
+# Development.dockerfile for the build-time installs. The bridges link against the versions of the development image's
+# Ubuntu release, so this image must use the same release.
+RUN apt-get update && apt-get install -y pypy3 libpython3.14 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Downstream images run as this unprivileged user. uid/gid are pinned so volume ownership is
