@@ -38,7 +38,8 @@ public:
         const std::filesystem::path& testDataDir,
         const std::filesystem::path& configDir,
         const QueryOptimizerConfiguration& queryOptimizerConfiguration,
-        SystestClusterConfiguration clusterConfig);
+        SystestClusterConfiguration clusterConfig,
+        bool readFileSourcesTupleByTuple);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t>

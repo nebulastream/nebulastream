@@ -56,6 +56,7 @@
 #include <ResultChecker/ExplainChecker.hpp>
 #include <ResultChecker/QueryResultChecker.hpp>
 #include <Runner/QuerySubmitter.hpp>
+#include <Runner/RestartingWorkerQuerySubmissionBackend.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <Util/Variant.hpp>
@@ -470,6 +471,22 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
     QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
+}
+
+std::vector<RunningQuery> runQueriesAtRestartingWorker(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
+    const SingleNodeWorkerConfiguration& configuration,
+    const uint64_t crashEveryNTuples,
+    const std::filesystem::path& workingDirectory,
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+{
+    auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
+    QuerySubmitter submitter(std::make_unique<QueryManager>(
+        std::move(catalog), createRestartingWorkerBackend(configuration, crashEveryNTuples, workingDirectory)));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 

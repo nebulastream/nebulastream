@@ -71,6 +71,10 @@ public:
     StringOption clusterConfigPath = {"cluster_config", TEST_CONFIGURATION_DIR "/topologies/two-node.yaml", "cluster configuration"};
     BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
     BoolOption endlessMode = {"endless_mode", "false", "continuously issue queries to the worker"};
+    UIntOption restartWorkerEveryNTuples
+        = {"restart_worker_every_n_tuples",
+           "0",
+           "Crash the worker whenever a file source read n tuples and restart it from its checkpoints. 0 disables the restarts."};
 
     bool excludeGroupsConfiguredInDisableConfig = false;
     bool excludedGroupsProvidedOnCommandLine = false;

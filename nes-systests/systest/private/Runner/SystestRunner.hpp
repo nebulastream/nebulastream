@@ -71,6 +71,18 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
+/// Runs the worker in its own process, which crashes whenever a file source read crashEveryNTuples tuples and restarts from its
+/// checkpoints. The results must not differ from the ones of runQueriesAtLocalWorker().
+[[nodiscard]] std::vector<RunningQuery> runQueriesAtRestartingWorker(
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
+    const SingleNodeWorkerConfiguration& configuration,
+    uint64_t crashEveryNTuples,
+    const std::filesystem::path& workingDirectory,
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(

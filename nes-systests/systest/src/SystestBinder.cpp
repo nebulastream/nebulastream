@@ -458,12 +458,14 @@ struct SystestBinder::Impl
         std::filesystem::path testDataDir,
         std::filesystem::path configDir,
         QueryOptimizerConfiguration queryOptimizerConfiguration,
-        SystestClusterConfiguration clusterConfiguration)
+        SystestClusterConfiguration clusterConfiguration,
+        const bool readFileSourcesTupleByTuple)
         : workingDir(std::move(workingDir))
         , testDataDir(std::move(testDataDir))
         , configDir(std::move(configDir))
         , queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
         , clusterConfiguration(std::move(clusterConfiguration))
+        , readFileSourcesTupleByTuple(readFileSourcesTupleByTuple)
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
         for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
@@ -600,6 +602,16 @@ struct SystestBinder::Impl
         }
     }
 
+    /// The SystestTupleFile source reads one tuple per buffer and can crash the worker between any two tuples.
+    [[nodiscard]] Identifier getSourceType(const Identifier& sourceType) const
+    {
+        if (readFileSourcesTupleByTuple and sourceType == Identifier::parse("File"))
+        {
+            return Identifier::parse("SystestTupleFile");
+        }
+        return sourceType;
+    }
+
     void createPhysicalSource(
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
@@ -613,7 +625,7 @@ struct SystestBinder::Impl
 
         PhysicalSourceConfig physicalSourceConfig{
             .logical = statement.attachedTo.asCanonicalString(),
-            .type = statement.sourceType,
+            .type = getSourceType(statement.sourceType),
             .parserConfig = statement.parserConfig,
             .sourceConfig = statement.sourceConfig};
 
@@ -736,10 +748,12 @@ struct SystestBinder::Impl
                 "Topology must list at least one worker in allow_source_placement to assign a default anonymous source host");
             sourceConfig.try_emplace(Identifier::parse("host"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
-            if (sourceConfig != anonymousSource.value()->getSourceConfig() || parserConfig != anonymousSource.value()->getParserConfig())
+            const auto sourceType = getSourceType(anonymousSource.value()->getSourceType());
+            if (sourceType != anonymousSource.value()->getSourceType() || sourceConfig != anonymousSource.value()->getSourceConfig()
+                || parserConfig != anonymousSource.value()->getParserConfig())
             {
                 const auto newOperator = AnonymousSourceLogicalOperator::create(
-                    anonymousSource.value()->getSourceType(), anonymousSource.value()->getSourceSchema(), sourceConfig, parserConfig);
+                    sourceType, anonymousSource.value()->getSourceSchema(), sourceConfig, parserConfig);
 
                 return newOperator.withChildrenUnsafe(newChildren);
             }
@@ -1063,6 +1077,7 @@ private:
     std::filesystem::path configDir;
     QueryOptimizerConfiguration queryOptimizerConfiguration;
     SystestClusterConfiguration clusterConfiguration;
+    bool readFileSourcesTupleByTuple;
 
     SharedPtr<WorkerCatalog> workerCatalog;
 };
@@ -1072,8 +1087,10 @@ SystestBinder::SystestBinder(
     const std::filesystem::path& testDataDir,
     const std::filesystem::path& configDir,
     const QueryOptimizerConfiguration& queryOptimizerConfiguration,
-    SystestClusterConfiguration clusterConfiguration)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, queryOptimizerConfiguration, std::move(clusterConfiguration)))
+    SystestClusterConfiguration clusterConfiguration,
+    const bool readFileSourcesTupleByTuple)
+    : impl(std::make_unique<Impl>(
+          workingDir, testDataDir, configDir, queryOptimizerConfiguration, std::move(clusterConfiguration), readFileSourcesTupleByTuple))
 {
 }
 

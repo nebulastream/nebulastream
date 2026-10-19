@@ -16,10 +16,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -101,6 +103,10 @@ void configureArgumentParser(ArgumentParser& program)
         .scan<'i', int>();
     program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
+    program.add_argument("--restart-worker-every-n-tuples")
+        .help("read file sources tuple by tuple and crash the worker whenever a source read n tuples, then restart it from its "
+              "checkpoints. Requires a topology with a single worker.")
+        .scan<'u', uint64_t>();
     program.add_argument("--optimizer")
         .default_value<std::vector<std::string>>({})
         .append()
@@ -426,6 +432,25 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     if (program.is_used("--endless"))
     {
         config.endlessMode = true;
+    }
+
+    if (program.is_used("--restart-worker-every-n-tuples"))
+    {
+        config.restartWorkerEveryNTuples = program.get<uint64_t>("--restart-worker-every-n-tuples");
+        const auto incompatibleMode = config.remoteWorker.getValue() ? std::optional{"--remote"}
+            : config.endlessMode.getValue()                          ? std::optional{"--endless"}
+            : config.benchmark.getValue()                            ? std::optional{"-b"}
+                                                                     : std::nullopt;
+        if (incompatibleMode)
+        {
+            std::cerr << "--restart-worker-every-n-tuples cannot be combined with " << *incompatibleMode << '\n';
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        }
+        if (config.clusterConfig.workers.size() != 1)
+        {
+            std::cerr << "--restart-worker-every-n-tuples requires a topology with a single worker, e.g., single-node.yaml\n";
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        }
     }
 }
 

@@ -216,7 +216,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
             config.testDataDir.getValue(),
             config.configDir.getValue(),
             config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
-            config.clusterConfig};
+            config.clusterConfig,
+            config.restartWorkerEveryNTuples.getValue() > 0};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
@@ -337,13 +338,22 @@ SystestExecutorResult SystestExecutor::executeSystests()
             else
             {
                 std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> queriesByOverride;
+                uint64_t numberOfQueries = 0;
                 for (const auto& query : queries)
                 {
+                    /// The worker of the restart mode runs in its own process, which reports errors without their original code.
+                    if (config.restartWorkerEveryNTuples.getValue() > 0 and std::holds_alternative<ExpectedError>(query.expectation))
+                    {
+                        std::cout << "Skipping query expecting error when restarting the worker: " << query.testName << ":"
+                                  << query.queryIdInFile.toString() << "\n";
+                        continue;
+                    }
                     queriesByOverride[query.configurationOverride].push_back(query);
+                    ++numberOfQueries;
                 }
 
                 progressTracker.reset();
-                progressTracker.setTotalQueries(queries.size());
+                progressTracker.setTotalQueries(numberOfQueries);
                 for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
                 {
                     auto configCopy = singleNodeWorkerConfiguration;
@@ -355,8 +365,23 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         ? QueryPerformanceMessageBuilder{[](RunningQuery& runningQuery)
                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                         : QueryPerformanceMessageBuilder{discardPerformanceMessage};
-                    auto failed = runQueriesAtLocalWorker(
-                        queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker, performanceMessage);
+                    auto failed = config.restartWorkerEveryNTuples.getValue() > 0
+                        ? runQueriesAtRestartingWorker(
+                              queriesForConfig,
+                              numberConcurrentQueries,
+                              config.clusterConfig,
+                              configCopy,
+                              config.restartWorkerEveryNTuples.getValue(),
+                              std::filesystem::path(config.workingDir.getValue()) / "restarting-worker",
+                              progressTracker,
+                              performanceMessage)
+                        : runQueriesAtLocalWorker(
+                              queriesForConfig,
+                              numberConcurrentQueries,
+                              config.clusterConfig,
+                              configCopy,
+                              progressTracker,
+                              performanceMessage);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }

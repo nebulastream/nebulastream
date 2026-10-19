@@ -12,6 +12,7 @@
 
 add_source_files(nes-systest-lib
         SystestRunner.cpp
+        RestartingWorkerQuerySubmissionBackend.cpp
         QuerySubmitter.cpp
         DataStaging.cpp
 )
