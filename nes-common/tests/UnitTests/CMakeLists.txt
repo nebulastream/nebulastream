@@ -12,3 +12,4 @@
 
 add_subdirectory(Util)
 add_nes_unit_test(identifier-test "IdentifierTest.cpp")
+add_nes_unit_test(timestamp-test "TimestampTest.cpp")

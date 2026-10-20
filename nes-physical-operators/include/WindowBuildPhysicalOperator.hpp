@@ -20,6 +20,7 @@
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
+#include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <OperatorState.hpp>
@@ -33,12 +34,19 @@ namespace NES
 class WindowOperatorBuildLocalState : public OperatorState
 {
 public:
-    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler) : operatorHandler(operatorHandler) { }
+    WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler, const nautilus::val<Timestamp>& lowerBound)
+        : operatorHandler(operatorHandler), lowerBound(lowerBound)
+    {
+    }
 
     nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
 
+    /// Timestamps of an in-order buffer are never below the watermark its origin had when the buffer was opened.
+    nautilus::val<Timestamp> getLowerBound() { return lowerBound; }
+
 private:
     nautilus::val<OperatorHandler*> operatorHandler;
+    nautilus::val<Timestamp> lowerBound;
 };
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
@@ -61,13 +69,17 @@ public:
     /// Passes emits slices that are ready to the second phase (probe) for further processing
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-    /// Emits/Flushes all slices and windows, as the query will be terminated
-    void terminate(ExecutionContext& executionCtx) const override;
+    /// Windows are triggered by watermarks, including the infinite watermark at the end of a stream, so there is nothing left to flush.
+    void terminate(ExecutionContext&) const override { }
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
 protected:
+    /// The slice cache and the garbage collection rely on in-order timestamps, thus a timestamp below the lower bound of the
+    /// current buffer fails the query.
+    void failIfOutOfOrder(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& timestamp) const;
+
     std::optional<PhysicalOperator> child;
     const OperatorHandlerId operatorHandlerId;
     const std::unique_ptr<TimeFunction> timeFunction;

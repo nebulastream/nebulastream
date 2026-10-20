@@ -1,5 +1,5 @@
 # name: sources/OutofOrder.test
-# description: Out-of-order tuples in a sliding-window aggregation and join trigger the "add slices to a window that has already been triggered" exception in DefaultTimeBasedSliceStore.
+# description: Out-of-order tuples in a sliding-window aggregation and join fail the query, as window operators only support in-order timestamps.
 # groups: [Sources, windowAggregation, large]
 
 # We set the buffer size and the number of threads to ensure a deterministic trigger of the exception
@@ -14,7 +14,7 @@ CREATE LOGICAL SOURCE outOfOrderStreamB(consumerId2 INT32 NOT NULL, sectorId2 IN
 CREATE PHYSICAL SOURCE FOR outOfOrderStreamB TYPE File;
 ATTACH FILE outoforder/outOfOrderStreamB.csv
 
-# Query 1: sliding-window aggregation over outOfOrderStreamA. A late tuple creates a new slice in an already-triggered window, which raises WindowingError.
+# Query 1: sliding-window aggregation over outOfOrderStreamA. A tuple with a timestamp below the watermark of its origin raises WindowingError.
 SELECT start, end, sectorId, SUM(consumedPower) AS consumedPower
 FROM outOfOrderStreamA
 GROUP BY sectorId
@@ -23,7 +23,7 @@ INTO Checksum();
 ----
 ERROR 3014
 
-# Query 2: sliding-window join of the two streams on consumerId, exercising the same out-of-order slice store path.
+# Query 2: sliding-window join of the two streams on consumerId, exercising the same out-of-order check.
 SELECT *
 FROM (SELECT * FROM outOfOrderStreamA)
 INNER JOIN (SELECT * FROM outOfOrderStreamB) ON consumerId = consumerId2
