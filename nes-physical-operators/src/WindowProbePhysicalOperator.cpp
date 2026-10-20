@@ -43,6 +43,8 @@ void garbageCollectSlicesProxy(
     const OriginId originId)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    INVARIANT(
+        watermarkTs.getRawValue() != Timestamp::INVALID_VALUE, "Window probe received a buffer of origin {} without a watermark", originId);
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
