@@ -13,3 +13,6 @@
 *.pdiparams binary
 # TensorFlow SavedModel checkpoint shards have no usable suffix
 nes-inference/tests/testdata/tiny_savedmodel/variables/* binary
+
+# The conn-test configs are NebulaStream SQL, so GitHub highlights them as SQL.
+*.nesql linguist-language=SQL

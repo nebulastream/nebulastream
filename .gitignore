@@ -26,6 +26,8 @@ docker/executableImage/resources/NebulaStream*.deb
 
 # Python virtual environment
 venv
+# uv workspace virtual environment; the root uv.lock is tracked.
+/.venv/
 
 # Rust target dir
 target/
@@ -45,7 +47,7 @@ nes-asp/data/*.csv
 *.log
 *.undo
 
-scripts/__pycache__
+__pycache__/
 .ccache
 
 # Ignore nix symlinks
