@@ -127,3 +127,12 @@ It manages the task hierarchy for workers and query fragments and supports remot
 ### [Request Handler](coordinator/src/request_handler/README.md)
 
 The `request_handler` processes coordinator requests and applies query wait conditions before returning results.
+
+
+### [Bridge](bridge/README.md)
+
+The `bridge` connects the Rust coordinator with the C++ frontends, SQL planner, and embedded workers.
+
+## Testing
+
+The [coordinator simulation tests](coordinator/tests/simulation/README.md) check how the coordinator responds as workers and queries change over time, including during failures and network disruptions.
