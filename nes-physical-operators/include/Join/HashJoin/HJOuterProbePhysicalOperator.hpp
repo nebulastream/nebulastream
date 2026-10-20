@@ -53,13 +53,14 @@ public:
         ChainedHashMapConfig leftHashMapBasedOptions,
         ChainedHashMapConfig rightHashMapBasedOptions);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
         return joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN
             || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
     }
+
+protected:
+    void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
     /// `outerOffset`/`innerOffset` are the absolute child-buffer indices (on the record buffer) at which the outer's

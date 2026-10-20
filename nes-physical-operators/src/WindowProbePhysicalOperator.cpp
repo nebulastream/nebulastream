@@ -44,7 +44,7 @@ void garbageCollectSlicesProxy(
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
 
-    const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
 
     opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
@@ -81,9 +81,25 @@ void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
 }
 
+void WindowProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+    executionCtx.currentTs = recordBuffer.getCreatingTs();
+    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
+    executionCtx.lastChunk = recordBuffer.isLastChunk();
+    executionCtx.originId = recordBuffer.getOriginId();
+    openChild(executionCtx, recordBuffer);
+
+    if (recordBuffer.getNumRecords() != nautilus::val<uint64_t>{0})
+    {
+        probeWindow(executionCtx, recordBuffer);
+    }
+}
+
 void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    /// Update the watermark for the probe and delete all slices that can be deleted
+    /// Update the watermark for the probe and delete all slices and windows that are no longer needed.
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(
         garbageCollectSlicesProxy,

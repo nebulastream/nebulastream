@@ -139,6 +139,7 @@ bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler
     {
         const auto previousOwner = std::exchange(this->owningBufferRecycler, recycler);
         INVARIANT(previousOwner == nullptr, "Buffer should not retain a reference to its owner while unused");
+        watermark = Timestamp(Timestamp::INITIAL_VALUE);
         return true;
     }
     NES_ERROR("Invalid reference counter: {}", expected);
