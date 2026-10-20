@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
+#include <set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -27,6 +29,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -70,14 +73,16 @@ public:
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore.
-    void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
+    void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData);
+
+    /// Returns the watermark of the origin, which is the lower bound for the timestamps of an in-order buffer of that origin.
+    /// Slices at or above the lower bound are not garbage collected until the matching call to finishBuildBuffer.
+    [[nodiscard]] Timestamp startBuildBuffer(OriginId originId);
+    void finishBuildBuffer(Timestamp lowerBound);
 
     /// Checks and triggers windows that are ready to be triggered, e.g., the watermark has passed the window end for time-based windows.
     /// This method updates the watermarkProcessor and is thread-safe
     virtual void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
-
-    /// Triggers all windows that have not been already emitted to the probe
-    virtual void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
 
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
@@ -97,5 +102,9 @@ protected:
     uint64_t numberOfWorkerThreads = 0;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
+    /// A window can only become triggerable when the global watermark advances past this value.
+    std::atomic<Timestamp::Underlying> highestTriggeredWatermark{Timestamp::INITIAL_VALUE};
+    /// Lower bounds of all buffers that are currently processed by a build operator.
+    folly::Synchronized<std::multiset<Timestamp::Underlying>> buildLowerBounds;
 };
 }
