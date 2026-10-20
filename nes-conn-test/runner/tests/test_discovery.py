@@ -25,6 +25,7 @@ from conntest_runner.discovery import (
     binding_problems,
     discover_plugin,
     parse_expectation,
+    registered_connectors,
 )
 
 _LOADER = (
@@ -39,6 +40,28 @@ _LOADER = (
 # The image tag has a digit on purpose: the port must come from `expose:`, not from a digit elsewhere.
 # `postgres:16` was once read as port 16.
 _COMPOSE_ONE_SERVICE = 'services:\n  {service}:\n    image: busybox:1.36\n    expose: ["1234"]\n'
+
+
+# These run against the connectors that the build registered, but name none of them,
+# because the framework must stay plugin-agnostic.
+
+
+@pytest.fixture
+def registered(request: pytest.FixtureRequest, repo_root: Path) -> dict[str, Path]:
+    build_dir = request.config.getoption("--build-dir")
+    if build_dir is None:
+        pytest.skip("no --build-dir given")
+    return registered_connectors(Path(build_dir), repo_root)
+
+
+def test_every_registered_connector_loads(registered: dict[str, Path]) -> None:
+    # Loading raises on a compose.yaml without exactly one exposed service,
+    # so a clean load also checks every connector's topology.
+    assert registered
+    for name, conn_test_dir in registered.items():
+        p = discover_plugin(name, conn_test_dir)
+        assert p.scenarios, name
+        assert all(isinstance(s, Scenario) and s.name for s in p.scenarios), name
 
 
 def test_missing_scenarios_raises(tmp_path: Path) -> None:
