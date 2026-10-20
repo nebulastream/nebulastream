@@ -101,8 +101,8 @@ JSONOutputFormatter::JSONOutputFormatter(
     serializerTypes[DataType::Type::INT16] = "DefaultINT16";
     serializerTypes[DataType::Type::INT32] = "DefaultINT32";
     serializerTypes[DataType::Type::INT64] = "DefaultINT64";
-    serializerTypes[DataType::Type::FLOAT32] = "DefaultF32";
-    serializerTypes[DataType::Type::FLOAT64] = "DefaultF64";
+    serializerTypes[DataType::Type::FLOAT32] = "JSONF32";
+    serializerTypes[DataType::Type::FLOAT64] = "JSONF64";
     serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
     serializerTypes[DataType::Type::CHAR] = "JSONCHAR";
     serializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
