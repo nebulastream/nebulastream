@@ -200,3 +200,55 @@ function(add_e2e_test)
         LABELS "${_labels}"
     )
 endfunction()
+
+# Adds the connection tests of the connector whose conn-test/ directory is next to the caller.
+# The battery is added only with uv (ENABLE_CONN_TESTS) and Docker (ENABLE_DOCKER_TESTS).
+# The runner finds a connector only through this call, so the directory can be anywhere in the tree.
+#
+# PLUGIN: the connector's name, e.g. TCPSource.
+function(add_conn_test)
+    cmake_parse_arguments(ARG "" "PLUGIN" "" ${ARGN})
+    if (NOT ARG_PLUGIN)
+        message(FATAL_ERROR "add_conn_test requires PLUGIN")
+    endif ()
+    if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/conn-test/loader.py)
+        message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${CMAKE_CURRENT_SOURCE_DIR}/conn-test/loader.py does not exist")
+    endif ()
+    if (NOT NES_ENABLES_TESTS)
+        return()
+    endif ()
+    get_property(_registered GLOBAL PROPERTY NES_CONN_TEST_CONNECTORS)
+    if ("${ARG_PLUGIN}" IN_LIST _registered)
+        message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): a connector of this name is already registered")
+    endif ()
+    file(RELATIVE_PATH _conn_test_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conn-test)
+    set_property(GLOBAL APPEND PROPERTY NES_CONN_TEST_CONNECTORS ${ARG_PLUGIN})
+    set_property(GLOBAL APPEND PROPERTY NES_CONN_TEST_DIRS ${_conn_test_dir})
+    # The connector's committed configs must bind unmodified.
+    # This needs no external service, so it runs wherever the unit tests run.
+    add_test(NAME conntest-${ARG_PLUGIN}-configs COMMAND conntest-config-test)
+    set_tests_properties(conntest-${ARG_PLUGIN}-configs PROPERTIES
+            LABELS "ConnTest"
+            ENVIRONMENT "CONNTEST_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}/conn-test/configs")
+    if (NOT ENABLE_CONN_TESTS OR NOT ENABLE_DOCKER_TESTS)
+        return()
+    endif ()
+    add_test(NAME conntest-${ARG_PLUGIN}
+            COMMAND ${PROJECT_SOURCE_DIR}/nes-conn-test/runner/conntest run
+                    --plugin ${ARG_PLUGIN}
+                    --build-dir ${CMAKE_BINARY_DIR}
+    )
+    set_tests_properties(conntest-${ARG_PLUGIN} PROPERTIES LABELS "ConnTest;DockerCompose")
+endfunction()
+
+# Writes the connectors that called add_conn_test to <build>/nes-conn-test/connectors.txt for the runner.
+# One line per connector, with its directory relative to the repo root: `TCPSource nes-plugins/Sources/TCPSource/conn-test`.
+function(write_conn_test_connectors)
+    get_property(_names GLOBAL PROPERTY NES_CONN_TEST_CONNECTORS)
+    get_property(_dirs GLOBAL PROPERTY NES_CONN_TEST_DIRS)
+    set(_content "")
+    foreach (_name _dir IN ZIP_LISTS _names _dirs)
+        string(APPEND _content "${_name} ${_dir}\n")
+    endforeach ()
+    file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/nes-conn-test/connectors.txt CONTENT "${_content}")
+endfunction()

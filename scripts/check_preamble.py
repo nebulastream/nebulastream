@@ -75,6 +75,7 @@ INGORED_ENDINGS = {
     "zip",
     "bin",
     "sql",
+    "nesql",
     "nix",
     "lock",
     "nes",
