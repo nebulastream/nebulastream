@@ -133,6 +133,16 @@ a { color: var(--accent); }
 
 .content h1 { margin-top: 0; }
 
+/* Extra space above top-level sections so that a new part of the page is easy to spot. */
+.content h2 { margin-top: 4rem; }
+
+.content h1 + h2,
+.content h1 + p + h2 { margin-top: 1.5rem; }
+
+/* Browsers render h5 and h6 smaller than body text; keep them at body text size. */
+.content h5,
+.content h6 { font-size: 1rem; }
+
 .content img { max-width: 100%; height: auto; }
 
 .content pre {
@@ -161,11 +171,22 @@ a { color: var(--accent); }
 
 .content table {
   display: block;
+  width: 100%;
   max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
   margin: 1rem 0;
 }
+
+/* Inside tables, keep flags, keys and values in one piece instead of breaking them mid-word;
+   cells still wrap at spaces, and wide tables scroll horizontally. */
+.content td code {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* The first column holds names (flags, parameters, keys); keep it on one line so the description column wraps instead. */
+.content td:first-child code { white-space: nowrap; }
 
 .content th,
 .content td {

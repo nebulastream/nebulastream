@@ -1,4 +1,4 @@
-> **[OUTDATED] as of 2026-09:** The configure-time `GeneratedRegistrar`/`add_plugin_library` design described here has been superseded by runtime registries (`create_runtime_registry`/`add_registry_entry`, see `cmake/RuntimeRegistrationUtil.cmake` and [guide/extensibility.md](../guide/extensibility.md)). This document is kept for historical context.
+> **[OUTDATED] as of 2026-09:** The configure-time `GeneratedRegistrar`/`add_plugin_library` design described here has been superseded by runtime registries (`create_runtime_registry`/`add_registry_entry`, see `cmake/RuntimeRegistrationUtil.cmake` and [development/extensibility.md](../development/extensibility.md)). This document is kept for historical context.
 
 # The Problem
 Adding a new feature to NebulaStream usually means adding code to the core of NebulaStream. Adding a single source, e.g., an [OBC](https://encyclopedia.pub/entry/43375) source or an arbitrarily exotic source or operator or data type that is needed by a single person means adding ~20 files to core code paths of NebulaStream, at very different places.

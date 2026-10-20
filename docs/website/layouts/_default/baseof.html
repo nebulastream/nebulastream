@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} · {{ .Site.Title }}{{ end }}</title>
   <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
-  <link rel="stylesheet" href="{{ (resources.Get "scss/style.scss" | css.Sass).Permalink }}">
+  <link rel="stylesheet" href="{{ (resources.Get "scss/style.scss" | css.Sass | fingerprint).Permalink }}">
 </head>
 <body>
   {{ partial "header.html" . }}

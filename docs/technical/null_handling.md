@@ -43,8 +43,6 @@ NULL values are rendered as the string `NULL` in CSV output and as `null` in JSO
 {"ts": 2, "temperature": 25, "location": null}
 ```
 
----
-
 ## Operations
 
 ### Filter (WHERE)
@@ -340,8 +338,6 @@ Because a NULL predicate excludes the row, a NULL value is returned by **neither
 ```sql
 SELECT * FROM stream WHERE ISNULL(value) OR ISNAN(value);
 ```
-
----
 
 ## Summary
 
