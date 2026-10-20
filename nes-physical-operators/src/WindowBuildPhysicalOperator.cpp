@@ -46,6 +46,10 @@ void checkWindowsTriggerProxy(
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
+    INVARIANT(
+        watermarkTs.getRawValue() != Timestamp::INVALID_VALUE,
+        "Window build received a buffer of origin {} without a watermark; the pipeline lacks a watermark assigner",
+        originId);
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
