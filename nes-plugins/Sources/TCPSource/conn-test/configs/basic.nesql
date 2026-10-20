@@ -1,0 +1,13 @@
+-- A minimal TCP source.
+-- The connection tests replace SOCKET_HOST and SOCKET_PORT with the endpoint of each test.
+-- The tests run no formatter; 'JSON' describes the bytes on the wire.
+-- "SOURCE" and "TYPE" are reserved words, so they must be quoted.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE TCP SET (
+    'localhost' AS "SOURCE".SOCKET_HOST,
+    9000        AS "SOURCE".SOCKET_PORT,
+    -- Only bounds how long a partly filled buffer is held back; an empty buffer keeps waiting.
+    100         AS "SOURCE".FLUSH_INTERVAL_MS,
+    'JSON'      AS INPUT_FORMATTER."TYPE"
+);
