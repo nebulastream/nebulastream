@@ -53,13 +53,14 @@ public:
         std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
         return joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN
             || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
     }
+
+protected:
+    void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
     /// Null-fill probe: for each tuple on the preserved side, iterates all inner-side PagedVectors
