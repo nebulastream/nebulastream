@@ -32,7 +32,15 @@ TEST(TimestampTest, ArithmeticSaturates)
     EXPECT_EQ(Timestamp{Timestamp::INFINITE_VALUE - 1} + 10, Timestamp{Timestamp::INFINITE_VALUE});
     EXPECT_EQ(Timestamp{Timestamp::INFINITE_VALUE} + 10, Timestamp{Timestamp::INFINITE_VALUE});
     EXPECT_EQ(Timestamp{0} + UINT64_MAX, Timestamp{Timestamp::INFINITE_VALUE});
-    EXPECT_EQ(Timestamp{Timestamp::INVALID_VALUE} + 10, Timestamp{Timestamp::INVALID_VALUE});
 }
+
+#ifndef NO_ASSERT
+TEST(TimestampDeathTest, ArithmeticOnInvalidTimestampFails)
+{
+    EXPECT_DEATH_IF_SUPPORTED((void)(Timestamp{Timestamp::INVALID_VALUE} + 10), ".*");
+    EXPECT_DEATH_IF_SUPPORTED((void)(Timestamp{Timestamp::INVALID_VALUE} - 10), ".*");
+    EXPECT_DEATH_IF_SUPPORTED((void)(Timestamp{25} - Timestamp{Timestamp::INVALID_VALUE}), ".*");
+}
+#endif
 
 }
