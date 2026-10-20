@@ -1,0 +1,16 @@
+# name: NonFiniteFloatsJSON.test
+# description: Checks that the JSONOutputFormatter writes non-finite floating point values as null
+# groups: [JSON]
+
+CREATE LOGICAL SOURCE floatSource(id UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR floatSource TYPE File;
+ATTACH INLINE;
+1,1.5,2.25
+2,nan,nan
+3,inf,-inf
+
+SELECT * FROM floatSource INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"F32":1.5,"F64":2.25}
+{"ID":2,"F32":null,"F64":null}
+{"ID":3,"F32":null,"F64":null}

@@ -53,4 +53,32 @@ public:
 
     static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
 };
+
+class JSONF32ValueSerializer final : public ValueSerializer
+{
+public:
+    explicit JSONF32ValueSerializer() noexcept = default;
+    [[nodiscard]] nautilus::val<uint64_t> serializeAndWrite(
+        const VarVal& value,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<int8_t*>& startingAddress) const override;
+
+    static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
+};
+
+class JSONF64ValueSerializer final : public ValueSerializer
+{
+public:
+    explicit JSONF64ValueSerializer() noexcept = default;
+    [[nodiscard]] nautilus::val<uint64_t> serializeAndWrite(
+        const VarVal& value,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<int8_t*>& startingAddress) const override;
+
+    static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
+};
 }
