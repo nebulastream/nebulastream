@@ -138,10 +138,8 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity) outer join dispatches by task type and delegates to inner/null-fill probes
-void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void HJOuterProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
-
     /// Parse the trigger buffer
     const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto leftNumberOfHashMaps
