@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <ostream>
 #include <Util/Logger/Formatter.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -39,10 +40,12 @@ public:
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     }
 
-    /// Arithmetic saturates: infinity and invalid remain unchanged, and a finite timestamp never leaves [INITIAL_VALUE, INFINITE_VALUE].
+    /// Arithmetic saturates: infinity remains unchanged, and a finite timestamp never leaves [INITIAL_VALUE, INFINITE_VALUE].
+    /// An invalid timestamp was never set, so using it is a bug.
     constexpr Timestamp operator+(const Underlying offset) const
     {
-        if (value >= INFINITE_VALUE)
+        PRECONDITION(value != INVALID_VALUE, "Arithmetic on an invalid timestamp");
+        if (value == INFINITE_VALUE)
         {
             return *this;
         }
@@ -51,14 +54,19 @@ public:
 
     constexpr Timestamp operator-(const Underlying offset) const
     {
-        if (value >= INFINITE_VALUE)
+        PRECONDITION(value != INVALID_VALUE, "Arithmetic on an invalid timestamp");
+        if (value == INFINITE_VALUE)
         {
             return *this;
         }
         return Timestamp(value > offset ? value - offset : INITIAL_VALUE);
     }
 
-    constexpr Timestamp operator-(const Timestamp other) const { return *this - other.value; }
+    constexpr Timestamp operator-(const Timestamp other) const
+    {
+        PRECONDITION(other.value != INVALID_VALUE, "Arithmetic on an invalid timestamp");
+        return *this - other.value;
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp) { return os << timestamp.value; }
 

@@ -321,8 +321,9 @@ struct TestPipeline final : ExecutablePipelineStage
         const size_t maxRepeats = controller->repeatCount.load();
         if (maxRepeats > 0)
         {
-            /// Get current repeat count from creation timestamp
-            const uint64_t currentRepeatCount = inputTupleBuffer.getWatermark().getRawValue();
+            /// The repeat count is kept in the watermark field; data buffers from sources start without a watermark.
+            const auto watermark = inputTupleBuffer.getWatermark().getRawValue();
+            const uint64_t currentRepeatCount = watermark == Timestamp::INVALID_VALUE ? 0 : watermark;
             if (currentRepeatCount < maxRepeats)
             {
                 auto copiedBuffer = deepCopyBuffer(inputTupleBuffer, *pipelineExecutionContext.getBufferManager());
@@ -402,8 +403,9 @@ public:
         const size_t maxRepeats = controller->repeatCount.load();
         if (maxRepeats > 0)
         {
-            /// Get current repeat count from creation timestamp
-            const uint64_t currentRepeatCount = inputBuffer.getWatermark().getRawValue();
+            /// The repeat count is kept in the watermark field; data buffers from sources start without a watermark.
+            const auto watermark = inputBuffer.getWatermark().getRawValue();
+            const uint64_t currentRepeatCount = watermark == Timestamp::INVALID_VALUE ? 0 : watermark;
             if (currentRepeatCount < maxRepeats)
             {
                 auto copiedBuffer = deepCopyBuffer(inputBuffer, *bufferProvider);

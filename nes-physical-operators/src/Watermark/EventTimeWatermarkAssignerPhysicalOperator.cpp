@@ -32,6 +32,11 @@ EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOp
 
 void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    /// Buffers from sources carry no watermark; the assigner is where event-time progress starts.
+    if (executionCtx.watermarkTs == nautilus::val<Timestamp>(Timestamp(Timestamp::INVALID_VALUE)))
+    {
+        executionCtx.watermarkTs = nautilus::val<Timestamp>(Timestamp(Timestamp::INITIAL_VALUE));
+    }
     openChild(executionCtx, recordBuffer);
     timeFunction.open(executionCtx, recordBuffer);
 }

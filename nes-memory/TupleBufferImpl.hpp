@@ -115,7 +115,7 @@ public:
 private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
-    Timestamp watermark = Timestamp(Timestamp::INITIAL_VALUE);
+    Timestamp watermark = Timestamp(Timestamp::INVALID_VALUE);
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
