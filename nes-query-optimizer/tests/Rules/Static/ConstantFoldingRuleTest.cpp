@@ -60,6 +60,50 @@ TEST_F(ConstantFoldingRuleTest, simpleAdditionInSelection)
     auto sink = utils.createSink(select, "simpleAdditionSink", {"a"});
     auto plan = utils.createPlan(sink);
 
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    //NES_DEBUG("op1 explain: {}", op1.explain(ExplainVerbosity::Debug));
+    //NES_DEBUG("predicate: {}", op1.getAs<SelectionLogicalOperator>()->getPredicate().explain(ExplainVerbosity::Debug));
+    //NES_DEBUG("predicate children: {}", op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().size());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "4");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+
+}
+
+TEST_F(ConstantFoldingRuleTest, nestedAdditionInSelection)
+{
+    /// BEFORE: Sink < Selection(a = (2 + (1+2))) < Source
+    /// AFTER: Sink < Selection(a = 5) < Source
+
+    auto source = utils.createSource("simpleAdditionSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        AddLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "2"},
+            AddLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "1"},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "2"}}}
+    });
+
+    auto sink = utils.createSink(select, "simpleAdditionSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "5");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)

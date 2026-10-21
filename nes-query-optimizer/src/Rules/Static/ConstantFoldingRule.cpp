@@ -20,6 +20,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <typeinfo>
 #include <utility>
 #include <vector>
+#include <string>
 
 
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
@@ -40,6 +41,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 
 
@@ -49,60 +51,84 @@ namespace
 {
 
 struct OperatorContext
-{
-    std::optional<LogicalFunction> foldedPredicate; // std::optional in case we dont need to fold anything? or maybe throw a check for that earlier?
+{   // std::expected?
+    std::optional<LogicalFunction> foldedPredicate;
 };
 
 using Visitor = PlanVisitor<OperatorContext>;
 //[[nodiscard]] PlanVisitor<>::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/);
 
-
-LogicalFunction calculateExpression(/*const LogicalOperator& op*/const LogicalFunction& function)
+DataType chooseDataType(DataType left, DataType right)
 {
-    // check if we have an arithmetic expression in the WHERE-clause
-    for (const auto& child : function->getChildren())
+    // todo: handle diff sizes
+    //auto dataType = DataType::inferNumericDataType(left, right);
+    // <32 get upped to 32 else use larger, except with float then take float -> DataType.cpp l.38
+    if (!(left.isFloat() && right.isFloat())) // if we dont have a float, we use the unsigned data type (see DataType.cpp l.38)
     {
-        if (const auto& add = child.tryGetAs<AddLogicalFunction>())
-        {
-            const auto& children = add.value()->getChildren();
-            const auto& left = children.at(0);
-            const auto& right = children.at(1);
-            if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
-            {
-                const auto& leftConstant = children.at(0).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-                const auto& rightConstant = children.at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-                const auto& leftDataType = children.at(0).tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
-                const auto& rightDataType = children.at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
-                //todo: Can I assume the ConstantValueLogicalFunction only accepts INT and UINT?
-                //todo: do i have to check for every U(INT) type when calculating? Is there a rule that both sides need to be the same size? i.e. UINT16, UINT16
+        return (left.isSignedInteger() and right.isInteger()) ? right : left;
+    }
 
-            }
-        }
-        else
+    if (left.isFloat() || right.isFloat())
+    {
+        return left.isFloat() ? left : right;
+    }
+    return {}; // std::expected? string can be constant value
+}
+
+LogicalFunction handleAddition(const std::string left, const std::string right, const DataType dataType)
+{
+    if (!dataType.isFloat())
+    {
+        return (dataType.isInteger() ? ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) + std::stoul(right)))
+            : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) + std::stoi(right))));
+    }
+    // if not INT or UINT it must be a float
+    // warning: if we get more datatypes, this needs to be adjusted!
+    return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) + std::stof(right)));
+
+}
+
+LogicalFunction calculateExpression(const LogicalFunction& function)
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : function.getChildren())
+    {
+        newChildren.push_back(calculateExpression(child));
+    }
+    if (function.tryGetAs<AddLogicalFunction>())
+    {
+        const auto& left = newChildren.at(0);
+        const auto& right = newChildren.at(1);
+        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
         {
-            //todo: recursively check for the next children if/until we find a calculation with constants
-            calculateExpression(child); // todo: fix, this wont actually propagate anything
+            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            const auto& leftDataType = left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
+            const auto& rightDataType = right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
+
+            const auto dataType = chooseDataType(leftDataType, rightDataType);
+            return handleAddition(leftConstant, rightConstant, dataType);
         }
     }
-    //return op;
-
-} // return something
+    return function.withChildren(newChildren);
+}
 
 Visitor::UpResult rebuildPlan(LogicalOperator op, std::vector<LogicalOperator> children, OperatorContext context) // context: the predicate from the selection
 {
-    auto tmp = op;
-    auto tmp2 = children;
+    //if (selct and pred then set pred new)
+    //{
 
-    // todo: if we found a predicate to fold, rebuild the plan
-    if (context.foldedPredicate) // check if there is a value aka a folded expression
+    //}
+    //return op.withChildren(children);
+    if (op.tryGetAs<SelectionLogicalOperator>() && context.foldedPredicate)
     {
-
+        LogicalOperator newSelection = SelectionLogicalOperator::create(children.at(0), context.foldedPredicate.value());
+        return newSelection;
     }
-
     return op.withChildren(std::move(children));
 }
 
-    Visitor::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/) // todo: should this be a downResult?
+Visitor::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/) // todo: should this be a downResult?
 {
     //auto tmp = downContexts;
     Visitor::DownResult downResult;
