@@ -43,3 +43,10 @@ add_e2e_test(
     BATS_FILE tests/async.bats
     EXTRA_ENV NES_ASYNC_WORKER_ARGS=--worker.default_query_execution.execution_mode=INTERPRETER
 )
+# The suite measures time (calls that cannot keep up show as a run that takes too long), so it must not share the machine
+# with other tests. add_e2e_test registers nothing when bats tests are disabled.
+foreach (test IN ITEMS async-repl-test async-repl-test-interpreter)
+    if (TEST ${test})
+        set_tests_properties(${test} PROPERTIES RUN_SERIAL TRUE)
+    endif ()
+endforeach ()
