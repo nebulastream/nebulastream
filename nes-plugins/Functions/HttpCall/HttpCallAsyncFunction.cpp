@@ -20,12 +20,12 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <Util/Strings.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/system/system_error.hpp>
-#include <Util/Strings.hpp>
 #include <boost/url/parse.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -94,9 +94,12 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     }
 }
 
-boost::asio::awaitable<std::string>
-HttpCallAsyncFunction::exchange(
-    const std::string& host, const std::string& port, const std::string& target, const std::string& body, const std::chrono::milliseconds timeout)
+boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
+    const std::string& host,
+    const std::string& port,
+    const std::string& target,
+    const std::string& body,
+    const std::chrono::milliseconds timeout)
 {
     using boost::asio::use_awaitable;
     if (!stream || connectedTo != host + ":" + port)

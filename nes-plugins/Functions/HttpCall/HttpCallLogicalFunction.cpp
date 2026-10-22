@@ -71,9 +71,11 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
     {
         copy.timeoutMillis = timeoutMillis->withInferredDataType(schema);
         /// The Async source reads only VARSIZED fields, so the timeout has to be a constant.
-        if (not copy.timeoutMillis->tryGetAs<ConstantValueLogicalFunction>().has_value() or not copy.timeoutMillis->getDataType().isInteger())
+        if (not copy.timeoutMillis->tryGetAs<ConstantValueLogicalFunction>().has_value()
+            or not copy.timeoutMillis->getDataType().isInteger())
         {
-            throw DifferentFieldTypeExpected("HTTP_CALL expects an integer constant timeout in milliseconds, but got {}", *copy.timeoutMillis);
+            throw DifferentFieldTypeExpected(
+                "HTTP_CALL expects an integer constant timeout in milliseconds, but got {}", *copy.timeoutMillis);
         }
     }
     return copy;
@@ -114,8 +116,11 @@ std::string HttpCallLogicalFunction::explain(ExplainVerbosity verbosity) const
 Reflected Reflector<HttpCallLogicalFunction>::operator()(const HttpCallLogicalFunction& function, const ReflectionContext& context) const
 {
     const auto children = function.getChildren();
-    return context.reflect(detail::ReflectedHttpCallLogicalFunction{
-        .body = children.at(0), .url = children.at(1), .timeoutMillis = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt});
+    return context.reflect(
+        detail::ReflectedHttpCallLogicalFunction{
+            .body = children.at(0),
+            .url = children.at(1),
+            .timeoutMillis = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt});
 }
 
 HttpCallLogicalFunction Unreflector<HttpCallLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
