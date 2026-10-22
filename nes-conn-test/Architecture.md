@@ -54,7 +54,7 @@ Each command is one line, and each reply is one JSON line:
 ```
 BIND                     bind the config
 OPEN                     create the connector and start its source thread, which waits for the first FILL
-FILL <n_rows> <n_bytes>  let the source read until <n_bytes> arrived or the stream ended
+FILL <n_rows> <n_bytes>  let the source read until <n_bytes> arrived or the stream ended; `FILL 0 0` returns once the connector is in a read
 CLOSE                    stop the source thread, which closes the connector
 ```
 
@@ -62,6 +62,8 @@ A failure reply has the error's origin, code, name and phase, for example
 `{"ok":false,"phase":"open","origin":"connector","code":4002,"name":"CannotOpenSource","message":"..."}`.
 A scenario may expect a connector error; a harness error, such as a config that does not bind or a step timeout, always fails it.
 Each step has a timeout (`--step-timeout-ms`, 30 s), and the runner kills a harness that exceeds the test's deadline (120 s).
+Stopping a source has the step timeout too. A connector that ignores the stop request fails the step with `StepTimeout`,
+and the harness then exits with code 3, because the stuck source thread still uses its state.
 The bytes of each FILL go to the file in `--observed-path`, where the runner reads them back.
 
 ## One round trip

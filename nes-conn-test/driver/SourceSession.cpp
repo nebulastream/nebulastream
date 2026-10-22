@@ -19,12 +19,14 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <exception>
 #include <expected>
 #include <filesystem>
 #include <fstream>
 #include <future>
 #include <ios>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <stop_token>
@@ -97,6 +99,20 @@ public:
     {
         /// Covers an EOF that arrives without a CLOSE.
         resetSource();
+        if (stuck)
+        {
+            exitStuck();
+        }
+    }
+
+    /// The source thread did not stop within the step timeout and still uses the session's state.
+    [[nodiscard]] bool isStuck() const { return stuck; }
+
+    /// Nothing that the stuck source thread uses can be torn down safely, so the harness exits without unwinding.
+    [[noreturn]] static void exitStuck()
+    {
+        std::cerr << "conntest-harness: the source did not stop within the step timeout, exiting\n";
+        std::_Exit(SOURCE_STUCK_EXIT_CODE);
     }
 
     std::string dispatch(std::string_view line)
@@ -166,6 +182,10 @@ private:
         }
 
         resetSource();
+        if (stuck)
+        {
+            return errorReply(harnessErrorInfo("open", "StepTimeout", stopTimeoutMessage()));
+        }
 
         if (!pool)
         {
@@ -211,9 +231,10 @@ private:
         /// open() runs on the source thread, so the wrapper fulfils this promise to give OPEN a synchronous result.
         /// The wrapper also records a read error with its real code before the source thread wraps it.
         errorSlot = std::make_shared<ConnectorErrorSlot>();
+        reading = std::make_shared<std::atomic<bool>>(false);
         auto openedPromise = std::make_shared<std::promise<void>>();
         auto openedFuture = openedPromise->get_future();
-        auto wrapped = std::make_unique<InterceptorSource>(std::move(inner), std::move(openedPromise), errorSlot);
+        auto wrapped = std::make_unique<InterceptorSource>(std::move(inner), std::move(openedPromise), errorSlot, reading);
 
         /// The handle is built here, not by the source provider, so that the wrapper can be injected.
         /// The in-flight limit is not enforced here; the bounded queue applies the backpressure.
@@ -296,6 +317,7 @@ private:
     }
 
     /// A source may legitimately end before the quota is met, which is reported with eos set, not as an error.
+    /// A quota of 0 returns once the connector has entered a read, so that a scenario can stop a connector that waits for data.
     /// NOLINTNEXTLINE(readability-function-cognitive-complexity): one state machine, splitting it would spread the FILL logic over several functions
     std::string ingest(std::string_view phase, std::uint64_t quota)
     {
@@ -330,7 +352,7 @@ private:
         const auto deadline = std::chrono::steady_clock::now() + options.stepTimeout;
         while (true)
         {
-            if (bytesObserved >= quota)
+            if (bytesObserved >= quota && (quota > 0 || reading->load()))
             {
                 break;
             }
@@ -372,7 +394,7 @@ private:
             return errorReply(*err);
         }
         /// A timeout is reported as a harness error so that no scenario can list it as an expected connector error.
-        const bool quotaMet = bytesObserved >= quota;
+        const bool quotaMet = bytesObserved >= quota && (quota > 0 || reading->load());
         if (timedOut && !quotaMet && !sawEoS)
         {
             return errorReply(harnessErrorInfo(
@@ -392,21 +414,38 @@ private:
         /// The connector's close() runs on the source thread while it stops.
         /// An error from that close() is not reported, because no source scenario expects one.
         resetSource();
+        if (stuck)
+        {
+            /// A harness error, so that a connector that ignores the stop request fails every scenario that stops it.
+            return errorReply(harnessErrorInfo("close", "StepTimeout", stopTimeoutMessage()));
+        }
         return okReply("close");
     }
 
+    [[nodiscard]] std::string stopTimeoutMessage() const
+    {
+        return fmt::format("the source did not stop within {} ms; its connector ignores the stop request", options.stepTimeout.count());
+    }
+
+    /// The stop has the step timeout, so a connector that ignores the stop request fails the step instead of hanging the session.
+    /// When it times out, the source thread keeps running and uses the members below, so they stay alive and `stuck` is set.
     /// The controller must outlive the source's listener, so the source stops before the controller is dropped.
     void resetSource()
     {
         if (handle)
         {
-            handle->stop();
+            if (handle->tryStop(options.stepTimeout) == SourceReturnType::TryStopResult::TIMEOUT)
+            {
+                stuck = true;
+                return;
+            }
             handle.reset();
         }
         controller.reset();
         queue.reset();
         eos.store(false);
         errorSlot.reset();
+        reading.reset();
     }
 
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members): non-owning view into runSourceSession's options; the state's lifetime is strictly contained by the loop's.
@@ -418,6 +457,9 @@ private:
     std::unique_ptr<folly::MPMCQueue<TupleBuffer>> queue;
     std::atomic<bool> eos{false};
     std::shared_ptr<ConnectorErrorSlot> errorSlot;
+    /// Set by the wrapper when the connector enters fillTupleBuffer.
+    std::shared_ptr<std::atomic<bool>> reading;
+    bool stuck = false;
 
     /// The harness holds the controller in place of a sink.
     /// Declared before the handle so that it outlives the source's listener.
@@ -443,7 +485,12 @@ bool runSourceSession(const SourceSessionOptions& options, ControlChannel& chann
         {
             continue; /// Blank keep-alive line.
         }
-        if (!channel.writeLine(state.dispatch(*line)))
+        const bool written = channel.writeLine(state.dispatch(*line));
+        if (state.isStuck())
+        {
+            SourceSessionState::exitStuck();
+        }
+        if (!written)
         {
             return false;
         }

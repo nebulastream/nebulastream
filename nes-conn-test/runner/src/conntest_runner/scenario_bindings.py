@@ -42,6 +42,11 @@ def bad_endpoint(config: str, *, error: int | str) -> Scenario:
     return Scenario("bad_endpoint", config=config, outcome=_error(error))
 
 
+def close_while_reading(*globs: str) -> Scenario:
+    """Bind a config whose read blocks longer than the step timeout, such as a long flush interval, so that only an interrupted read passes."""
+    return Scenario("close_while_reading", configs=list(globs))
+
+
 def crash_recovery(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that cannot resume after the process dies."""
     return Scenario("crash_recovery", config=config, outcome=_error(error))

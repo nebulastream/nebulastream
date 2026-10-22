@@ -18,6 +18,7 @@ The broker delivers only to existing subscriptions, so every scenario seeds afte
 
 from conntest_runner.scenario_bindings import (
     bad_endpoint,
+    close_while_reading,
     crash_recovery,
     empty,
     round_trip_1_buffer,
@@ -34,6 +35,8 @@ SCENARIOS = [
     empty("basic.nesql"),
     # The client library's connect fails, and open() rethrows it as CannotOpenSource (4002).
     bad_endpoint("basic.nesql", error=4002),
+    # The 100 s flush interval outlasts the step timeout, so CLOSE finishes in time only if the stop request interrupts the wait.
+    close_while_reading("basic.nesql", "very_long_flush.nesql"),
     # The respawned source subscribes again under a new client id, and the loader publishes the rest there.
     crash_recovery("basic.nesql"),
 ]

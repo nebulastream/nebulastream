@@ -42,6 +42,7 @@ enum class ExitCode : std::uint8_t
     Ok = 0,
     ChannelError = 1,
     BadArguments = 2,
+    SourceStuck = SOURCE_STUCK_EXIT_CODE,
 };
 
 void configureArgumentParser(argparse::ArgumentParser& program)

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <exception>
 #include <future>
 #include <memory>
@@ -53,15 +54,18 @@ struct ConnectorErrorSlot
     }
 };
 
-/// Wraps a connector so that the harness sees its real error codes and learns when open() has finished.
+/// Wraps a connector so that the harness sees its real error codes and learns when open() has finished and when a read has begun.
 /// A successful open emits no event, so the promise is the only completion signal.
 /// Metadata support must match the inner source, because the source thread's metadata handling depends on it.
 class InterceptorSource final : public NES::Source
 {
 public:
     InterceptorSource(
-        std::unique_ptr<NES::Source> inner, std::shared_ptr<std::promise<void>> opened, std::shared_ptr<ConnectorErrorSlot> errorSlot)
-        : inner(std::move(inner)), opened(std::move(opened)), errorSlot(std::move(errorSlot))
+        std::unique_ptr<NES::Source> inner,
+        std::shared_ptr<std::promise<void>> opened,
+        std::shared_ptr<ConnectorErrorSlot> errorSlot,
+        std::shared_ptr<std::atomic<bool>> reading)
+        : inner(std::move(inner)), opened(std::move(opened)), errorSlot(std::move(errorSlot)), reading(std::move(reading))
     {
     }
 
@@ -82,6 +86,7 @@ public:
 
     NES::Source::FillTupleBufferResult fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override
     {
+        reading->store(true);
         try
         {
             return inner->fillTupleBuffer(tupleBuffer, stopToken);
@@ -115,6 +120,7 @@ private:
     std::unique_ptr<NES::Source> inner;
     std::shared_ptr<std::promise<void>> opened;
     std::shared_ptr<ConnectorErrorSlot> errorSlot;
+    std::shared_ptr<std::atomic<bool>> reading;
 };
 
 }

@@ -18,6 +18,7 @@ End-of-stream is the peer closing the connection, so the source waits through si
 
 from conntest_runner.scenario_bindings import (
     bad_endpoint,
+    close_while_reading,
     crash_recovery,
     empty,
     round_trip_1_buffer,
@@ -32,6 +33,8 @@ SCENARIOS = [
     empty("basic.nesql"),
     # An unreachable endpoint fails the open with CannotOpenSource (4002).
     bad_endpoint("basic.nesql", error=4002),
+    # The source waits on the silent connection, so the stop request must interrupt its read.
+    close_while_reading("basic.nesql"),
     # The respawned source opens a new connection, and the loader sends the rest of the data there.
     crash_recovery("basic.nesql"),
 ]

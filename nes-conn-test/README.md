@@ -48,6 +48,7 @@ and supplies the binding: which config(s) and the expected outcome.
 | `round_trip_n_buffers` | the same with more buffers than the harness pools, so the source must wait (100 by default, `n_buffers=N` changes it) |
 | `empty` | open → close with nothing seeded |
 | `bad_endpoint` | opening against a dead endpoint raises the declared error |
+| `close_while_reading` | close while the connector waits in a read for data that never comes; the stop must interrupt it within the step timeout |
 | `crash_recovery` | SIGKILL the harness after a first batch; a fresh process re-opens and reads the second |
 
 The catalog function writes only the ideal path. `run_case` enforces the declared outcome: an `OK`

@@ -102,6 +102,10 @@ class Ctx:
         """The next connect spawns a fresh harness process and connector."""
         self.source.kill()
 
+    def start_reading(self) -> None:
+        """Returns once the connector is inside a read, waiting for data that is never seeded."""
+        self.source.fill(0, 0)
+
     def split_rows(self) -> tuple[list[Any], list[Any]]:
         """Two halves, to seed one before and one after a fault."""
         middle = (len(self.rows) + 1) // 2
@@ -146,6 +150,17 @@ def empty(ctx: Ctx) -> None:
 def bad_endpoint(ctx: Ctx) -> None:
     """The config points at a dead endpoint, so OPEN must fail with the declared error."""
     ctx.connect()
+
+
+@scenario("close_while_reading")
+def close_while_reading(ctx: Ctx) -> None:
+    """Models a worker that stops a query while its source waits for data, for example during a long flush interval.
+    The stop request must interrupt the connector's read: CLOSE has the step timeout, so a connector that ignores it fails.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.start_reading()
+    ctx.disconnect()
 
 
 @scenario("crash_recovery", default_buffers=2)

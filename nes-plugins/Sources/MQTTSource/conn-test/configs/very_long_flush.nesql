@@ -1,0 +1,10 @@
+-- An MQTT source that holds a partly filled buffer back for 100 s, longer than the connection tests' step timeout.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'tcp://localhost:1883' AS "SOURCE".SERVER_URI,
+    'sensors'              AS "SOURCE".TOPIC,
+    '1'                    AS "SOURCE".QOS,
+    '100000'               AS "SOURCE".FLUSH_INTERVAL_MS,
+    'JSON'                 AS INPUT_FORMATTER."TYPE"
+);
