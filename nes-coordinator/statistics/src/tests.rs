@@ -14,8 +14,8 @@
 
 use crate::placement;
 use crate::query_gen::{
-    CollectRequest, GenerateError, TimeCharacteristic, TimeMeasure, TimeUnit, VALUE, WindowType,
-    probe_query, window_clause,
+    COLLECTION_PROBE_ID, CollectRequest, GenerateError, TimeCharacteristic, TimeMeasure, TimeUnit,
+    VALUE, WindowType, probe_query, window_clause,
 };
 use crate::registry::{CollectionDomain, Metric, Report};
 use crate::service::{
@@ -578,6 +578,64 @@ async fn get_statistics_sums_what_the_probe_reports() {
         1,
         "the probe query must not outlive the probe that deployed it"
     );
+}
+
+#[tokio::test]
+async fn watchers_receive_the_statistics_reports_but_not_probe_answers() {
+    let submitter = Arc::new(StubSubmitter::default());
+    let service = service(submitter.clone());
+
+    let request = average_over_value("true");
+    let collected = service.collect_new_statistic(&request, None).await.unwrap();
+    let key = StatisticService::key_of(&request);
+    let (watcher, reports) = async_channel::unbounded();
+    assert!(service.add_condition_trigger(&key, watcher));
+
+    let reporter = service.clone();
+    let reporting_submitter = submitter.clone();
+    let statistic_id = collected.statistic_id;
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+        let probe_id = probe_id_in(&reporting_submitter.queries().pop().unwrap());
+        reporter.on_report(Report {
+            statistic_id,
+            start_ts: 0,
+            end_ts: 1000,
+            value: 20.0,
+            probe_id,
+        });
+    });
+    let probed = service
+        .get_statistics(std::slice::from_ref(&key), 0, 10_000)
+        .await
+        .unwrap();
+    assert_eq!(probed, Some(20.0));
+    assert!(
+        reports.try_recv().is_err(),
+        "a probe's answer belongs to the get that asked for it"
+    );
+
+    let late_probe_id = probe_id_in(&submitter.queries().pop().unwrap());
+    service.on_report(Report {
+        statistic_id,
+        start_ts: 1000,
+        end_ts: 2000,
+        value: 30.0,
+        probe_id: late_probe_id,
+    });
+    assert!(
+        reports.try_recv().is_err(),
+        "an answer arriving after its probe ended reaches nobody"
+    );
+
+    service.on_report(Report {
+        statistic_id,
+        start_ts: 2000,
+        end_ts: 3000,
+        value: 40.0,
+        probe_id: COLLECTION_PROBE_ID,
+    });
+    assert_eq!(reports.try_recv().unwrap().value, 40.0);
 }
 
 #[tokio::test]

@@ -12,7 +12,9 @@
     limitations under the License.
 */
 use crate::placement;
-use crate::query_gen::{self, CollectRequest, GenerateError, QueryShape, VALUE};
+use crate::query_gen::{
+    self, COLLECTION_PROBE_ID, CollectRequest, GenerateError, QueryShape, VALUE,
+};
 use crate::registry::{
     CollectionDomain, Deploying, Deregistration, Key, Metric, Registered, Registry, Report,
     Reservation, Slot, Trigger,
@@ -195,7 +197,7 @@ impl StatisticService {
         Self {
             registry: Registry::default(),
             next_statistic_id: AtomicU64::new(1),
-            next_probe_id: AtomicU64::new(1),
+            next_probe_id: AtomicU64::new(COLLECTION_PROBE_ID + 1),
             next_probe_port: AtomicU16::new(0),
             submitter,
             catalog,
@@ -546,7 +548,11 @@ impl StatisticService {
         if claimed {
             self.reported.notify_waiters();
         }
-        self.registry.dispatch(report);
+        // A probe's answer belongs to the get that deployed the probe; watchers receive what the statistic's own query
+        // reports while its condition holds.
+        if report.probe_id == COLLECTION_PROBE_ID {
+            self.registry.dispatch(report);
+        }
     }
 
     /// Reads each target statistic back through a probe query of its own, placed on the worker that holds it.

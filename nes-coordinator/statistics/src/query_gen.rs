@@ -21,6 +21,10 @@ pub const START_TS: &str = "STATISTICSTART";
 pub const END_TS: &str = "STATISTICEND";
 pub const VALUE: &str = "STATISTICVALUE";
 
+/// The probe id a statistic's own query stamps on the reports it sends while its condition holds. Probe queries, which
+/// read a statistic back for a get, take ids above it.
+pub const COLLECTION_PROBE_ID: u64 = 0;
+
 #[derive(Clone, Debug, thiserror::Error)]
 pub enum GenerateError {
     #[error("{0}")]
@@ -348,7 +352,7 @@ pub fn collection_query(
 
     Ok(format!(
         "SELECT {STATISTIC_ID}, {START_TS}, {END_TS}, {VALUE} FROM ({probe}){filter} {}",
-        grpc_sink(service_address, 0, sink_worker)?
+        grpc_sink(service_address, COLLECTION_PROBE_ID, sink_worker)?
     ))
 }
 
