@@ -13,7 +13,11 @@
 */
 use crate::placement;
 use crate::query_gen::{self, CollectRequest, GenerateError, QueryShape, VALUE};
-use crate::registry::{CollectionDomain, Key, Metric, Registered, Registry, Report, Trigger};
+use crate::registry::{
+    CollectionDomain, Deploying, Deregistration, Key, Metric, Registered, Registry, Report,
+    Reservation, Slot, Trigger,
+};
+use futures::FutureExt;
 use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
@@ -29,7 +33,8 @@ pub const PROBE_SOURCE_PORT_BASE: u16 = 10000;
 pub const PROBE_SOURCE_PORT_RANGE: u16 = 100;
 pub const PROBE_SOURCE_PORT_ATTEMPTS: u16 = 10;
 
-#[derive(Debug, thiserror::Error)]
+/// Cloned because every collect awaiting one deployment receives its error.
+#[derive(Clone, Debug, thiserror::Error)]
 pub enum StatisticError {
     #[error(transparent)]
     Generate(#[from] GenerateError),
@@ -41,6 +46,20 @@ pub enum StatisticError {
     CollectedDifferently {
         statistic_id: u64,
         differences: String,
+    },
+    #[error("statistic {statistic_id} is being deregistered")]
+    Deregistering { statistic_id: u64 },
+    #[error("statistic {statistic_id} was deregistered before its query was deployed")]
+    DeregisteredWhileDeploying { statistic_id: u64 },
+    #[error("the deployment of statistic {statistic_id} ended abruptly: {reason}")]
+    DeploymentAborted { statistic_id: u64, reason: String },
+    #[error(
+        "stopping query {query_id} of statistic {statistic_id} failed, so the statistic stays registered: {reason}"
+    )]
+    StopFailed {
+        query_id: u64,
+        statistic_id: u64,
+        reason: String,
     },
     #[error("the statistic service has no address; start its gRPC server first")]
     NoServiceAddress,
@@ -129,6 +148,19 @@ struct PendingProbe {
     probe_id: u64,
 }
 
+/// Frees a reserved key when its deployment ends, unless the deployment registered its statistic first.
+struct ReservationGuard<'a> {
+    registry: &'a Registry,
+    key: &'a Key,
+    statistic_id: u64,
+}
+
+impl Drop for ReservationGuard<'_> {
+    fn drop(&mut self) {
+        self.registry.abandon(self.key, self.statistic_id);
+    }
+}
+
 /// A deployed probe query and the endpoint its source listens on.
 struct ProbeQuery {
     statistic_id: u64,
@@ -198,39 +230,123 @@ impl StatisticService {
         }
     }
 
+    /// Collects the statistic `request` asks for. Its key is reserved before the query is deployed, so concurrent
+    /// requests for one statistic share a single deployment and its outcome.
     pub async fn collect_new_statistic(
-        &self,
+        self: &Arc<Self>,
         request: &CollectRequest,
         trigger: Option<Trigger>,
     ) -> Result<CollectResult, StatisticError> {
         let address = self.address()?;
-        let key = Self::key_of(request);
-        let shape = QueryShape::of(request);
-
-        if let Some(registered) = self.registry.find(&key) {
-            // The running query keeps its shape, so a request asking for another one would silently get the wrong
-            // statistic or the wrong reports.
-            if let Some(differences) = shape.differences_from(&registered.shape) {
-                return Err(StatisticError::CollectedDifferently {
-                    statistic_id: registered.statistic_id,
-                    differences,
-                });
-            }
-            if let Some(trigger) = trigger {
-                self.registry.add_trigger(&key, trigger);
-            }
-            return Ok(CollectResult {
-                query_id: registered.query_id,
-                statistic_id: registered.statistic_id,
-                already_existed: true,
-            });
-        }
-
         // A request this port cannot serve is rejected before any worker is looked up.
-        let (logical_source, _) = query_gen::collected_field(request)?;
+        query_gen::collected_field(request)?;
         query_gen::aggregation(request.metric)?;
 
+        let key = Self::key_of(request);
+        let shape = QueryShape::of(request);
+        let (holder, already_existed) = match self
+            .registry
+            .reserve(&key, || self.start_deployment(&key, request, address))
+        {
+            Reservation::Reserved(deploying) => (Slot::Deploying(deploying), false),
+            Reservation::Taken(slot) => (slot, true),
+        };
+
+        let existing = match &holder {
+            Slot::Stopping(registered) => {
+                return Err(StatisticError::Deregistering {
+                    statistic_id: registered.statistic_id,
+                });
+            }
+            Slot::Deploying(deploying) => &deploying.shape,
+            Slot::Registered(registered) => &registered.shape,
+        };
+        // The query keeps the shape it was deployed with, so a request asking for another one would silently get the
+        // wrong statistic or the wrong reports.
+        if let Some(differences) = shape.differences_from(existing) {
+            return Err(StatisticError::CollectedDifferently {
+                statistic_id: holder.statistic_id(),
+                differences,
+            });
+        }
+        if let Some(trigger) = trigger {
+            self.registry.add_trigger(&key, trigger);
+        }
+
+        let registered = match holder {
+            Slot::Deploying(deploying) => deploying.outcome.await?,
+            Slot::Registered(registered) | Slot::Stopping(registered) => registered,
+        };
+        Ok(CollectResult {
+            query_id: registered.query_id,
+            statistic_id: registered.statistic_id,
+            already_existed,
+        })
+    }
+
+    /// Allocates the statistic for a reserved key and deploys its query in a task of its own, which settles the
+    /// reservation even if every collect awaiting it goes away. Runs under the registry's lock, so it only spawns.
+    fn start_deployment(
+        self: &Arc<Self>,
+        key: &Key,
+        request: &CollectRequest,
+        address: &str,
+    ) -> Deploying {
         let statistic_id = self.next_statistic_id.fetch_add(1, Ordering::Relaxed);
+        let shape = QueryShape::of(request);
+        let deployment = tokio::spawn(Arc::clone(self).deploy(
+            key.clone(),
+            request.clone(),
+            address.to_string(),
+            statistic_id,
+        ));
+        let outcome = async move {
+            deployment.await.unwrap_or_else(|error| {
+                Err(StatisticError::DeploymentAborted {
+                    statistic_id,
+                    reason: error.to_string(),
+                })
+            })
+        };
+        Deploying {
+            statistic_id,
+            shape,
+            outcome: outcome.boxed().shared(),
+        }
+    }
+
+    /// Deploys the query of a reserved statistic and registers it in place of the reservation.
+    async fn deploy(
+        self: Arc<Self>,
+        key: Key,
+        request: CollectRequest,
+        address: String,
+        statistic_id: u64,
+    ) -> Result<Registered, StatisticError> {
+        // Frees the key when the deployment ends without registering, whether it fails or panics.
+        let _reservation = ReservationGuard {
+            registry: &self.registry,
+            key: &key,
+            statistic_id,
+        };
+        let registered = self.deploy_query(&request, &address, statistic_id).await?;
+        if self.registry.finish(&key, registered.clone()) {
+            return Ok(registered);
+        }
+        // The statistic was deregistered while its query was deploying, so nothing holds the query any more.
+        if let Err(error) = self.submitter.stop(registered.query_id).await {
+            tracing::warn!(query_id = registered.query_id, %error, "the query of a statistic deregistered while deploying could not be stopped");
+        }
+        Err(StatisticError::DeregisteredWhileDeploying { statistic_id })
+    }
+
+    async fn deploy_query(
+        &self,
+        request: &CollectRequest,
+        address: &str,
+        statistic_id: u64,
+    ) -> Result<Registered, StatisticError> {
+        let (logical_source, _) = query_gen::collected_field(request)?;
         let payload_type = self
             .scalar_payload_type(request.metric, &request.domain)
             .await;
@@ -261,17 +377,11 @@ impl StatisticService {
                         });
                     };
                     tracing::debug!(statistic_id, sink = %worker, %writer, "statistic query deployed");
-                    let registered = Registered {
+                    return Ok(Registered {
                         query_id,
                         statistic_id,
                         worker: writer,
-                        shape,
-                    };
-                    self.registry.register(key, registered, trigger);
-                    return Ok(CollectResult {
-                        query_id,
-                        statistic_id,
-                        already_existed: false,
+                        shape: QueryShape::of(request),
                     });
                 }
                 Err(SubmitError::Placement(error)) => {
@@ -349,8 +459,38 @@ impl StatisticService {
         self.registry.add_trigger(key, trigger)
     }
 
-    pub fn deregister_statistic(&self, key: &Key) -> bool {
-        self.registry.deregister(key)
+    /// Stops the statistic's query and forgets the statistic; false if no statistic holds the key. A statistic still
+    /// deploying is forgotten at once, and its deployment stops the query once it is up. If the query cannot be
+    /// stopped, the statistic stays registered so that its query is not lost track of.
+    pub async fn deregister_statistic(self: &Arc<Self>, key: &Key) -> Result<bool, StatisticError> {
+        let registered = match self.registry.begin_deregister(key) {
+            Deregistration::Unknown => return Ok(false),
+            Deregistration::Forgotten => return Ok(true),
+            Deregistration::AlreadyStopping { statistic_id } => {
+                return Err(StatisticError::Deregistering { statistic_id });
+            }
+            Deregistration::Stop(registered) => registered,
+        };
+        let (query_id, statistic_id) = (registered.query_id, registered.statistic_id);
+        // Stopped in a task of its own, so the statistic does not stay stopping if the caller goes away.
+        let service = Arc::clone(self);
+        let key = key.clone();
+        let stopping = tokio::spawn(async move {
+            let stopped = service.submitter.stop(query_id).await;
+            service
+                .registry
+                .end_deregister(&key, statistic_id, stopped.is_ok());
+            stopped
+        });
+        let stopped = stopping
+            .await
+            .unwrap_or_else(|error| Err(error.to_string()));
+        stopped.map_err(|reason| StatisticError::StopFailed {
+            query_id,
+            statistic_id,
+            reason,
+        })?;
+        Ok(true)
     }
 
     pub fn registered_statistics(&self) -> usize {

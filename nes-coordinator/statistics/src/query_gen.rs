@@ -21,7 +21,7 @@ pub const START_TS: &str = "STATISTICSTART";
 pub const END_TS: &str = "STATISTICEND";
 pub const VALUE: &str = "STATISTICVALUE";
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Clone, Debug, thiserror::Error)]
 pub enum GenerateError {
     #[error("{0}")]
     NotImplemented(String),

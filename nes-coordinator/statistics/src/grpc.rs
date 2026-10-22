@@ -143,6 +143,14 @@ fn request_from_proto(request: &proto::CollectStatisticRequest) -> Result<Collec
     })
 }
 
+fn status_of(error: StatisticError) -> Status {
+    match error {
+        StatisticError::CollectedDifferently { .. } => Status::already_exists(error.to_string()),
+        StatisticError::DeregisteredWhileDeploying { .. } => Status::aborted(error.to_string()),
+        error => Status::failed_precondition(error.to_string()),
+    }
+}
+
 pub struct ReportService {
     service: Arc<StatisticService>,
 }
@@ -195,12 +203,7 @@ impl proto::statistic_control_service_server::StatisticControlService for Contro
             .service
             .collect_new_statistic(&request, None)
             .await
-            .map_err(|error| match error {
-                StatisticError::CollectedDifferently { .. } => {
-                    Status::already_exists(error.to_string())
-                }
-                error => Status::failed_precondition(error.to_string()),
-            })?;
+            .map_err(status_of)?;
         Ok(Response::new(proto::CollectStatisticResponse {
             query_id: result.query_id,
             statistic_id: result.statistic_id,
@@ -222,7 +225,7 @@ impl proto::statistic_control_service_server::StatisticControlService for Contro
             .service
             .get_statistics(&keys, request.start_ts, request.end_ts)
             .await
-            .map_err(|error| Status::failed_precondition(error.to_string()))?;
+            .map_err(status_of)?;
         Ok(Response::new(proto::GetStatisticsResponse {
             has_value: value.is_some(),
             value: value.unwrap_or_default(),
@@ -234,8 +237,13 @@ impl proto::statistic_control_service_server::StatisticControlService for Contro
         request: Request<proto::DeregisterStatisticRequest>,
     ) -> Result<Response<proto::DeregisterStatisticResponse>, Status> {
         let key = key_from_proto(&request.into_inner().key)?;
+        let removed = self
+            .service
+            .deregister_statistic(&key)
+            .await
+            .map_err(status_of)?;
         Ok(Response::new(proto::DeregisterStatisticResponse {
-            removed: self.service.deregister_statistic(&key),
+            removed,
         }))
     }
 

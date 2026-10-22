@@ -26,6 +26,7 @@ use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use tokio::sync::Semaphore;
 
 const SOURCE: &str = "teststream";
 const ADDRESS: &str = "localhost:1234";
@@ -65,13 +66,24 @@ struct StubSubmitter {
     writer_on: Option<String>,
     /// Deploys a build without its writer, as a planner that lost it would.
     omit_writer: bool,
+    /// Holds each submission until the test adds a permit, so requests can overlap a deployment.
+    submit_gate: Option<Arc<Semaphore>>,
+    /// Holds each stop until the test adds a permit.
+    stop_gate: Option<Arc<Semaphore>>,
+    fail_stop: bool,
 }
 
 #[async_trait::async_trait]
 impl QuerySubmitter for StubSubmitter {
     async fn submit(&self, sql: String) -> Result<Deployment, SubmitError> {
-        let mut submitted = self.submitted.lock().unwrap();
-        submitted.push(sql.clone());
+        let query_id = {
+            let mut submitted = self.submitted.lock().unwrap();
+            submitted.push(sql.clone());
+            submitted.len() as u64
+        };
+        if let Some(gate) = &self.submit_gate {
+            gate.acquire().await.unwrap().forget();
+        }
         if self.fail {
             return Err(SubmitError::Other("submission refused".into()));
         }
@@ -98,15 +110,51 @@ impl QuerySubmitter for StubSubmitter {
             _ => vec![],
         };
         Ok(Deployment {
-            query_id: submitted.len() as u64,
+            query_id,
             fragments,
         })
     }
 
     async fn stop(&self, query_id: u64) -> Result<(), String> {
+        if let Some(gate) = &self.stop_gate {
+            gate.acquire().await.unwrap().forget();
+        }
+        if self.fail_stop {
+            return Err("stop refused".into());
+        }
         self.stopped.lock().unwrap().push(query_id);
         Ok(())
     }
+}
+
+/// A gate for the stub that holds everything until the test adds permits.
+fn closed_gate() -> Arc<Semaphore> {
+    Arc::new(Semaphore::new(0))
+}
+
+/// Lets the spawned tasks run until each waits on something the test controls.
+async fn settle() {
+    for _ in 0..10 {
+        tokio::task::yield_now().await;
+    }
+}
+
+/// Awaits a spawned task, failing rather than hanging if it never finishes.
+async fn joined<T>(task: tokio::task::JoinHandle<T>) -> T {
+    tokio::time::timeout(Duration::from_secs(5), task)
+        .await
+        .expect("the task never finished")
+        .unwrap()
+}
+
+async fn until(condition: impl Fn() -> bool) {
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while !condition() {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("the condition never held");
 }
 
 impl StubSubmitter {
@@ -571,12 +619,267 @@ async fn triggers_can_be_added_and_entries_removed() {
     assert_eq!(reports.try_recv().unwrap().value, 42.0);
 
     assert_eq!(service.registered_statistics(), 1);
-    assert!(service.deregister_statistic(&key));
+    assert!(service.deregister_statistic(&key).await.unwrap());
+    assert_eq!(
+        submitter.stopped(),
+        vec![collected.query_id],
+        "deregistering stops the statistic's query"
+    );
     assert!(
-        !service.deregister_statistic(&key),
+        !service.deregister_statistic(&key).await.unwrap(),
         "deregistering twice removes nothing the second time"
     );
     assert_eq!(service.registered_statistics(), 0);
+}
+
+#[tokio::test]
+async fn concurrent_collects_of_one_shape_share_one_deployment() {
+    let gate = closed_gate();
+    let submitter = Arc::new(StubSubmitter {
+        submit_gate: Some(gate.clone()),
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let collect = |condition: &'static str| {
+        let service = service.clone();
+        tokio::spawn(async move {
+            service
+                .collect_new_statistic(&average_over_value(condition), None)
+                .await
+        })
+    };
+
+    let first = collect("true");
+    until(|| submitter.queries().len() == 1).await;
+    let second = collect("true");
+    settle().await;
+    assert!(
+        !second.is_finished(),
+        "the second collect waits for the first one's deployment"
+    );
+
+    gate.add_permits(1);
+    let first = joined(first).await.unwrap();
+    let second = joined(second).await.unwrap();
+    assert!(!first.already_existed);
+    assert!(second.already_existed);
+    assert_eq!(second.statistic_id, first.statistic_id);
+    assert_eq!(second.query_id, first.query_id);
+    assert_eq!(submitter.queries().len(), 1);
+    assert_eq!(service.registered_statistics(), 1);
+}
+
+#[tokio::test]
+async fn a_collect_with_another_shape_is_refused_while_the_first_deploys() {
+    let gate = closed_gate();
+    let submitter = Arc::new(StubSubmitter {
+        submit_gate: Some(gate.clone()),
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let first = tokio::spawn({
+        let service = service.clone();
+        async move {
+            service
+                .collect_new_statistic(&average_over_value("true"), None)
+                .await
+        }
+    });
+    until(|| submitter.queries().len() == 1).await;
+
+    let refused = tokio::time::timeout(
+        Duration::from_secs(1),
+        service.collect_new_statistic(&average_over_value("false"), None),
+    )
+    .await
+    .expect("a mismatch is refused without waiting for the deployment");
+    assert!(
+        matches!(refused, Err(StatisticError::CollectedDifferently { .. })),
+        "{refused:?}"
+    );
+
+    gate.add_permits(1);
+    assert!(!joined(first).await.unwrap().already_existed);
+    assert_eq!(submitter.queries().len(), 1);
+}
+
+#[tokio::test]
+async fn collects_waiting_for_a_failed_deployment_receive_its_error() {
+    let gate = closed_gate();
+    let submitter = Arc::new(StubSubmitter {
+        submit_gate: Some(gate.clone()),
+        fail: true,
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let collect = || {
+        let service = service.clone();
+        tokio::spawn(async move {
+            service
+                .collect_new_statistic(&average_over_value("true"), None)
+                .await
+        })
+    };
+
+    let first = collect();
+    until(|| submitter.queries().len() == 1).await;
+    let second = collect();
+    settle().await;
+    gate.add_permits(1);
+
+    let first = joined(first).await.unwrap_err();
+    let second = joined(second).await.unwrap_err();
+    assert!(matches!(&first, StatisticError::Submit(_)), "{first}");
+    assert_eq!(second.to_string(), first.to_string());
+    assert_eq!(submitter.queries().len(), 1);
+    assert_eq!(
+        service.registered_statistics(),
+        0,
+        "a failed deployment frees its key"
+    );
+
+    gate.add_permits(1);
+    let retry = service
+        .collect_new_statistic(&average_over_value("true"), None)
+        .await;
+    assert!(retry.is_err());
+    assert_eq!(
+        submitter.queries().len(),
+        2,
+        "a later collect deploys afresh"
+    );
+}
+
+#[tokio::test]
+async fn a_cancelled_collect_still_registers_its_statistic() {
+    let gate = closed_gate();
+    let submitter = Arc::new(StubSubmitter {
+        submit_gate: Some(gate.clone()),
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let cancelled = tokio::spawn({
+        let service = service.clone();
+        async move {
+            service
+                .collect_new_statistic(&average_over_value("true"), None)
+                .await
+        }
+    });
+    until(|| submitter.queries().len() == 1).await;
+    cancelled.abort();
+    assert!(cancelled.await.unwrap_err().is_cancelled());
+
+    gate.add_permits(1);
+    settle().await;
+    // Only a registered statistic has a query to stop; one still deploying would merely be forgotten.
+    let key = StatisticService::key_of(&average_over_value("true"));
+    assert!(service.deregister_statistic(&key).await.unwrap());
+    assert_eq!(
+        submitter.stopped(),
+        vec![1],
+        "the deployment registers its statistic although nobody awaits it"
+    );
+    assert_eq!(submitter.queries().len(), 1);
+}
+
+#[tokio::test]
+async fn deregistering_a_deploying_statistic_stops_its_query_once_up() {
+    let gate = closed_gate();
+    let submitter = Arc::new(StubSubmitter {
+        submit_gate: Some(gate.clone()),
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let request = average_over_value("true");
+    let collecting = tokio::spawn({
+        let service = service.clone();
+        let request = request.clone();
+        async move { service.collect_new_statistic(&request, None).await }
+    });
+    until(|| submitter.queries().len() == 1).await;
+
+    let key = StatisticService::key_of(&request);
+    assert!(service.deregister_statistic(&key).await.unwrap());
+    assert_eq!(service.registered_statistics(), 0);
+
+    gate.add_permits(1);
+    let error = joined(collecting).await.unwrap_err();
+    assert!(
+        matches!(error, StatisticError::DeregisteredWhileDeploying { .. }),
+        "{error}"
+    );
+    assert_eq!(submitter.stopped(), vec![1]);
+    assert_eq!(service.registered_statistics(), 0);
+}
+
+#[tokio::test]
+async fn a_statistic_whose_query_cannot_be_stopped_stays_registered() {
+    let submitter = Arc::new(StubSubmitter {
+        fail_stop: true,
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let request = average_over_value("false");
+    service.collect_new_statistic(&request, None).await.unwrap();
+    let key = StatisticService::key_of(&request);
+
+    let error = service.deregister_statistic(&key).await.unwrap_err();
+    assert!(
+        matches!(error, StatisticError::StopFailed { .. }),
+        "{error}"
+    );
+    assert_eq!(service.registered_statistics(), 1);
+    assert!(
+        service
+            .collect_new_statistic(&request, None)
+            .await
+            .unwrap()
+            .already_existed,
+        "the statistic is registered again"
+    );
+}
+
+#[tokio::test]
+async fn a_statistic_being_deregistered_refuses_collects() {
+    let gate = closed_gate();
+    let submitter = Arc::new(StubSubmitter {
+        stop_gate: Some(gate.clone()),
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let request = average_over_value("false");
+    service.collect_new_statistic(&request, None).await.unwrap();
+    let key = StatisticService::key_of(&request);
+
+    let deregistering = tokio::spawn({
+        let service = service.clone();
+        let key = key.clone();
+        async move { service.deregister_statistic(&key).await }
+    });
+    settle().await;
+    let refused = tokio::time::timeout(
+        Duration::from_secs(1),
+        service.collect_new_statistic(&request, None),
+    )
+    .await
+    .expect("a statistic being deregistered refuses without waiting");
+    assert!(
+        matches!(refused, Err(StatisticError::Deregistering { .. })),
+        "{refused:?}"
+    );
+    assert!(
+        matches!(
+            service.deregister_statistic(&key).await,
+            Err(StatisticError::Deregistering { .. })
+        ),
+        "a second deregistration does not stop the query again"
+    );
+
+    gate.add_permits(1);
+    assert!(joined(deregistering).await.unwrap());
+    assert_eq!(service.registered_statistics(), 0);
+    assert_eq!(submitter.stopped(), vec![1]);
 }
 
 #[tokio::test]
@@ -1186,7 +1489,7 @@ mod transport {
     #[tokio::test]
     async fn deregistering_over_the_wire_removes_the_entry() {
         let submitter = Arc::new(StubSubmitter::default());
-        let service = service(submitter);
+        let service = service(submitter.clone());
         let endpoint = serve(service.clone()).await;
 
         let mut client =
@@ -1210,5 +1513,6 @@ mod transport {
             .into_inner();
         assert!(removed.removed);
         assert_eq!(service.registered_statistics(), 0);
+        assert_eq!(submitter.stopped(), vec![1]);
     }
 }
