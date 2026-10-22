@@ -19,6 +19,7 @@ add_source_files(nes-query-optimizer
         WatermarkAssignerPushdownRule.cpp
         DecideFieldMappings.cpp
         DecideFieldOrder.cpp
+        OriginSplitInsertionRule.cpp
         OriginIdInferenceRule.cpp)
 
 add_registry_entry(PlanRule DecideJoinTypesRule KEY DecideJoinTypes)
@@ -29,4 +30,5 @@ add_registry_entry(PlanRule ProjectionPushdownRule KEY ProjectionPushdown)
 add_registry_entry(PlanRule WatermarkAssignerPushdownRule KEY WatermarkAssignerPushdown)
 add_registry_entry(PlanRule DecideFieldMappings)
 add_registry_entry(PlanRule DecideFieldOrder)
+add_registry_entry(PlanRule OriginSplitInsertionRule KEY OriginSplitInsertion)
 add_registry_entry(PlanRule OriginIdInferenceRule KEY OriginIdInference)

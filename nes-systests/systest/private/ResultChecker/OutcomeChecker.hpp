@@ -18,6 +18,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <vector>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Model/RunnableTestFile.hpp>
@@ -35,8 +36,9 @@ struct StatementOutcome
     /// Final worker status, or the error that stopped the statement first.
     std::expected<DistributedQueryStatusSnapshot, Exception> reached;
 
-    /// Result file schema, absent for a negative or EXPLAIN case where we don't produce any actual result tuples.
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchema;
+    /// Result file schema of each sink, in the order the query lists them.
+    /// Empty for a negative or EXPLAIN case where we don't produce any actual result tuples.
+    std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchemas;
 
     std::optional<std::string> explained;
 };

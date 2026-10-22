@@ -67,17 +67,27 @@ const Schema<UnqualifiedUnboundField, Ordered>& getChecksumSchema()
     return ChecksumSchema;
 }
 
-Schema<UnqualifiedUnboundField, Ordered> getSinkOutputSchema(const DistributedLogicalPlan& plan)
+/// The schema of the rows in each sink's result file, which the result check aligns that sink's expected rows against.
+/// The plan keeps its sinks as roots in the order the query lists them, which is also the order of the result files.
+std::vector<Schema<UnqualifiedUnboundField, Ordered>> getSinkOutputSchemas(const DistributedLogicalPlan& plan)
 {
-    const auto sinkOperator = plan.getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
-    INVARIANT(sinkOperator.has_value(), "The optimized plan should have a sink operator");
-    const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
-    INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
-    if (Sql::sameName(descriptor->getSinkType(), Sql::Checksum))
+    std::vector<Schema<UnqualifiedUnboundField, Ordered>> schemas;
+    for (const auto& root : plan.getGlobalPlan().getRootOperators())
     {
-        return getChecksumSchema();
+        const auto sinkOperator = root.tryGetAs<SinkLogicalOperator>();
+        INVARIANT(sinkOperator.has_value(), "Every root of the optimized plan should be a sink operator");
+        const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
+        INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
+        if (Sql::sameName(descriptor->getSinkType(), Sql::Checksum))
+        {
+            schemas.push_back(getChecksumSchema());
+        }
+        else
+        {
+            schemas.push_back(*get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor->getSchema()));
+        }
     }
-    return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor->getSchema());
+    return schemas;
 }
 
 template <typename T>
@@ -205,8 +215,8 @@ private:
         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
         plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
         auto optimized = queryOptimizer.optimize(plan);
-        auto schema = getSinkOutputSchema(optimized);
-        return BoundPlan{.plan = std::move(optimized), .sinkOutputSchema = std::move(schema)};
+        auto schemas = getSinkOutputSchemas(optimized);
+        return BoundPlan{.plan = std::move(optimized), .sinkOutputSchemas = std::move(schemas)};
     }
 
     [[nodiscard]] std::string runExplain(const std::string& sql) const

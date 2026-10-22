@@ -16,6 +16,7 @@ add_source_files(nes-query-optimizer
         JoinImplementationTypeTrait.cpp
         MemoryLayoutTypeTrait.cpp
         OutputOriginIdsTrait.cpp
+        OriginMappingTrait.cpp
         FieldMappingTrait.cpp
         FieldOrderingTrait.cpp
         PlacementTrait.cpp)
@@ -23,6 +24,7 @@ add_source_files(nes-query-optimizer
 add_unreflection_entry(Trait JoinImplementationType)
 add_unreflection_entry(Trait MemoryLayoutType)
 add_unreflection_entry(Trait OutputOriginIds)
+add_unreflection_entry(Trait OriginMapping)
 add_unreflection_entry(Trait Placement)
 add_unreflection_entry(Trait FieldMapping)
 add_unreflection_entry(Trait FieldOrdering)

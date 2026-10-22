@@ -17,6 +17,7 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <LoweringRules/AbstractLoweringRule.hpp>
@@ -72,68 +73,79 @@ resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRe
     }
     throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
 }
-}
 
-LoweringRuleResultSubgraph::SubGraphRoot
-lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringRuleRegistryArguments& registryArgument)
+/// Maps an already-lowered operator to its wrapper so an operator shared by multiple parents (fan-out to
+/// multiple sinks) lowers to one wrapper, keeping the DAG instead of duplicating the shared subplan per root.
+using LoweredOperatorMemo = std::unordered_map<LogicalOperator, LoweringRuleResultSubgraph::SubGraphRoot>;
+
+LoweringRuleResultSubgraph::SubGraphRoot lowerOperatorRecursively(
+    const LogicalOperator& logicalOperator, const LoweringRuleRegistryArguments& registryArgument, LoweredOperatorMemo& memo)
 {
+    if (const auto memoized = memo.find(logicalOperator); memoized != memo.end())
+    {
+        return memoized->second;
+    }
+
     /// Try to resolve lowering rule for the current logical operator
     const auto rule = resolveLoweringRule(logicalOperator, registryArgument);
 
     /// We apply the rule and receive a subgraph
     const auto [root, leaves] = rule->apply(logicalOperator);
+    const auto children = logicalOperator.getChildren();
     INVARIANT(
-        leaves.size() == logicalOperator.getChildren().size(),
+        leaves.size() == children.size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
         logicalOperator,
-        logicalOperator.getChildren().size(),
-        leaves.size());
-    /// if the lowering result is empty we bypass the operator
-    if (not root)
-    {
-        if (not logicalOperator.getChildren().empty())
-        {
-            INVARIANT(
-                logicalOperator.getChildren().size() == 1,
-                "Empty lowering results of operators with multiple keys are not supported for {}",
-                logicalOperator);
-            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
-        }
-        return {};
-    }
-    /// We embed the subgraph into the resulting plan of physical operator wrappers
-    auto children = logicalOperator.getChildren();
-    INVARIANT(
-        children.size() == leaves.size(),
-        "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
         children.size(),
-        leaves.size(),
-        logicalOperator);
-
-    std::ranges::for_each(
-        std::views::zip(children, leaves),
-        [&registryArgument](const auto& zippedPair)
+        leaves.size());
+    const auto loweredOperator = [&]() -> LoweringRuleResultSubgraph::SubGraphRoot
+    {
+        /// if the lowering result is empty we bypass the operator
+        if (not root)
         {
-            const auto& [child, leaf] = zippedPair;
-            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
-            leaf->addChild(rootNodeOfLoweredChild);
-        });
-    return root;
+            if (children.empty())
+            {
+                return {};
+            }
+            INVARIANT(
+                children.size() == 1, "Empty lowering result of operators with multiple children are not supported {}", logicalOperator);
+            return lowerOperatorRecursively(children.front(), registryArgument, memo);
+        }
+
+        /// We embed the subgraph into the resulting plan of physical operator wrappers
+        std::ranges::for_each(
+            std::views::zip(children, leaves),
+            [&registryArgument, &memo](const auto& zippedPair)
+            {
+                const auto& [child, leaf] = zippedPair;
+                auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument, memo);
+                leaf->addChild(rootNodeOfLoweredChild);
+            });
+        return root;
+    }();
+
+    memo.emplace(logicalOperator, loweredOperator);
+    return loweredOperator;
+}
 }
 
 PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
 {
     const auto registryArgument = LoweringRuleRegistryArguments{conf};
+    LoweredOperatorMemo memo;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
     for (const auto& logicalRoot : queryPlan.getRootOperators())
     {
-        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
+        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument, memo));
     }
 
     INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
     auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
-    physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
+    for (const auto& root : newRootOperators)
+    {
+        physicalPlanBuilder.addSinkRoot(root);
+    }
     physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());
     physicalPlanBuilder.setOperatorBufferSize(conf.operatorBufferSize.getValue());
     return std::move(physicalPlanBuilder).finalize();
