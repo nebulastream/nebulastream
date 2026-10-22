@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <SourceValidationRegistry.hpp>
+#include <SourceConfigRegistry.hpp>
 
 namespace NES
 {
 
-SourceValidationRegistry& SourceValidationRegistry::instance()
+SourceConfigRegistry& SourceConfigRegistry::instance()
 {
-    static SourceValidationRegistry inst;
+    static SourceConfigRegistry inst;
     return inst;
 }
 

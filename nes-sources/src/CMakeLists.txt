@@ -17,15 +17,19 @@ add_source_files(nes-sources
         SourceHandle.cpp
         SourceProvider.cpp
         SourceRegistry.cpp
-        SourceValidationRegistry.cpp
-        SourceValidationProvider.cpp
+        SourceConfigRegistry.cpp
+        SourceConfigSchemaRegistry.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
         FileSource.cpp
         NetworkSource.cpp
 )
 
+# Runtime registry entries (source factory, config schema, typed config)
 add_registry_entry(Source File)
+add_registry_entry(SourceConfigSchema File)
+add_registry_entry(SourceConfig File)
+
 add_registry_entry(Source Network HEADER Sources/NetworkSource.hpp)
-add_registry_entry(SourceValidation File)
-add_registry_entry(SourceValidation Network HEADER Sources/NetworkSource.hpp)
+add_registry_entry(SourceConfigSchema Network HEADER Sources/NetworkSource.hpp)
+add_registry_entry(SourceConfig Network HEADER Sources/NetworkSource.hpp)

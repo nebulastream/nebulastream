@@ -14,7 +14,8 @@
 
 #include <Sources/SourceDescriptor.hpp>
 
-#include <expected>
+#include <cstddef>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -23,93 +24,50 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Util/Any.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
-
-#include <Sources/SourceValidationProvider.hpp>
-#include <InputFormatterValidationProvider.hpp>
+#include <SourceConfigRegistry.hpp>
 
 namespace NES
 {
 
 SourceDescriptor::SourceDescriptor(
     const PhysicalSourceId physicalSourceId,
-    LogicalSource logicalSource,
-    std::string_view sourceType,
+    Schema<UnqualifiedUnboundField, Ordered> schema,
     Host host,
-    DescriptorConfig::Config config,
-    const InputFormatterDescriptor& inputFormatterDescriptor,
-    bool isAnonymous)
-    : Descriptor(std::move(config))
-    , physicalSourceId(physicalSourceId)
-    , logicalSource(std::move(logicalSource))
-    , sourceType(std::move(sourceType))
+    const std::optional<size_t> maxInflightBuffers,
+    PluginSourceConfiguration pluginData,
+    InputFormatterDescriptor inputFormatterDescriptor,
+    std::optional<Identifier> logicalSourceName)
+    : physicalSourceId(physicalSourceId)
+    , schema(std::move(schema))
     , host(std::move(host))
-    , inputFormatterDescriptor(inputFormatterDescriptor)
-    , isAnonymous(isAnonymous)
+    , maxInflightBuffers(maxInflightBuffers)
+    , pluginSourceConfig(std::move(pluginData))
+    , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
+    , logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-std::expected<SourceDescriptor, Exception> SourceDescriptor::create(
-    PhysicalSourceId id,
-    LogicalSource logicalSource,
-    const Identifier& sourceType,
-    Host host,
-    std::unordered_map<Identifier, std::string> descriptorConfig,
-    const std::unordered_map<Identifier, std::string>& inputFormatterConfig,
-    bool isAnonymous)
+const Schema<UnqualifiedUnboundField, Ordered>& SourceDescriptor::getSchema() const
 {
-    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(descriptorConfig));
-    if (not descriptorConfigOpt.has_value())
-    {
-        return std::unexpected{
-            UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
-    }
-    std::unordered_map<std::string, std::string> formatterConfigStringMap;
-    formatterConfigStringMap.reserve(inputFormatterConfig.size());
-    for (const auto& [key, value] : inputFormatterConfig)
-    {
-        formatterConfigStringMap.emplace(key.asCanonicalString(), value);
-    }
-    if (not formatterConfigStringMap.contains(InputFormatterDescriptor::getTypeString()))
-    {
-        return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
-    }
-
-    const std::string inputFormat = formatterConfigStringMap.at(InputFormatterDescriptor::getTypeString());
-    const auto formatterConfig = inputFormat == "NATIVE" ? DescriptorConfig::Config{}
-                                                         : InputFormatterValidationProvider::provide(inputFormat, formatterConfigStringMap);
-    if (not formatterConfig.has_value())
-    {
-        return std::unexpected{UnknownSourceType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat)};
-    }
-    const InputFormatterDescriptor formatDescriptor{inputFormat, formatterConfig.value()};
-    return SourceDescriptor{
-        id,
-        std::move(logicalSource),
-        sourceType.asCanonicalString(),
-        std::move(host),
-        std::move(descriptorConfigOpt.value()),
-        formatDescriptor,
-        isAnonymous};
+    return schema;
 }
 
-LogicalSource SourceDescriptor::getLogicalSource() const
+const Identifier& SourceDescriptor::getSourceType() const
 {
-    return logicalSource;
-}
-
-std::string SourceDescriptor::getSourceType() const
-{
-    return sourceType;
+    return pluginSourceConfig.getType();
 }
 
 InputFormatterDescriptor SourceDescriptor::getInputFormatterDescriptor() const
@@ -117,7 +75,7 @@ InputFormatterDescriptor SourceDescriptor::getInputFormatterDescriptor() const
     return inputFormatterDescriptor;
 }
 
-std::string SourceDescriptor::getInputFormatType() const
+const Identifier& SourceDescriptor::getInputFormatType() const
 {
     return inputFormatterDescriptor.getInputFormatterType();
 }
@@ -127,14 +85,19 @@ Host SourceDescriptor::getHost() const
     return host;
 }
 
+std::optional<size_t> SourceDescriptor::getMaxInflightBuffers() const
+{
+    return maxInflightBuffers;
+}
+
+const ExplicitAny& SourceDescriptor::getPluginData() const
+{
+    return pluginSourceConfig.getPluginData();
+}
+
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
 {
     return physicalSourceId;
-}
-
-bool SourceDescriptor::isAnonymousSource() const
-{
-    return isAnonymous;
 }
 
 std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
@@ -151,14 +114,8 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     }
     else if (verbosity == ExplainVerbosity::Short)
     {
-        if (isAnonymousSource())
-        {
-            stringstream << sourceType;
-        }
-        else
-        {
-            stringstream << fmt::format("{}", logicalSource.getLogicalSourceName());
-        }
+        stringstream << logicalSourceName.transform([](const auto& name) { return fmt::format("{}", name); })
+                            .value_or(fmt::format("{}", getSourceType()));
     }
     return stringstream.str();
 }
@@ -169,21 +126,49 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, host: {}, inputFormatterDescriptor: {})",
                descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
-               descriptor.getLogicalSource(),
+               descriptor.logicalSourceName,
                descriptor.getHost(),
                descriptor.getInputFormatterDescriptor());
+}
+
+const std::optional<Identifier>& SourceDescriptor::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
+
+Reflected Reflector<PluginSourceConfiguration>::operator()(const PluginSourceConfiguration& config, const ReflectionContext& context) const
+{
+    const auto entry = SourceConfigRegistry::instance().find(config.getType().asCanonicalString());
+    PRECONDITION(entry.has_value(), "Unknown source type: {}", config.getType());
+
+    const detail::ReflectedPluginSourceConfiguration pluginSourceConfig{
+        .type = config.getType(), .pluginData = entry->reflect(config.getPluginData(), context)};
+
+    return context.reflect(pluginSourceConfig);
+}
+
+PluginSourceConfiguration Unreflector<PluginSourceConfiguration>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+{
+    auto [type, configData] = context.unreflect<detail::ReflectedPluginSourceConfiguration>(rfl);
+    const auto entry = SourceConfigRegistry::instance().find(type.asCanonicalString());
+    if (not entry.has_value())
+    {
+        throw CannotDeserialize("Unknown source type {}", type);
+    }
+
+    return PluginSourceConfiguration{std::move(type), ExplicitAny{entry->unreflect(configData, context)}};
 }
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor, const ReflectionContext& context) const
 {
     const detail::ReflectedSourceDescriptor descriptor{
-        .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
-        .logicalSource = sourceDescriptor.logicalSource,
-        .type = sourceDescriptor.sourceType,
+        .physicalSourceId = sourceDescriptor.physicalSourceId,
+        .schema = sourceDescriptor.schema,
         .host = sourceDescriptor.host,
+        .maxInflightBuffers = sourceDescriptor.maxInflightBuffers,
+        .pluginSourceConfig = sourceDescriptor.pluginSourceConfig,
         .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
-        .isAnonymous = sourceDescriptor.isAnonymous,
-        .config = sourceDescriptor.getReflectedConfig(context)};
+        .logicalSourceName = sourceDescriptor.logicalSourceName};
 
     return context.reflect(descriptor);
 }
@@ -194,11 +179,11 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl,
 
     return SourceDescriptor{
         PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
-        LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
-        reflectedSourceDescriptor.type,
-        reflectedSourceDescriptor.host,
-        Descriptor::unreflectConfig(reflectedSourceDescriptor.config, context),
-        reflectedSourceDescriptor.inputFormatterDescriptor,
-        reflectedSourceDescriptor.isAnonymous};
+        std::move(reflectedSourceDescriptor.schema),
+        std::move(reflectedSourceDescriptor.host),
+        reflectedSourceDescriptor.maxInflightBuffers,
+        std::move(reflectedSourceDescriptor.pluginSourceConfig),
+        std::move(reflectedSourceDescriptor.inputFormatterDescriptor),
+        std::move(reflectedSourceDescriptor.logicalSourceName)};
 }
 }
