@@ -30,3 +30,5 @@ add_e2e_test(
     DOCKER_COMPOSE
     JOBS 4
 )
+
+add_conn_test(PLUGIN MQTTSource)

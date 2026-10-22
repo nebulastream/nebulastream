@@ -1,0 +1,15 @@
+-- A minimal MQTT source.
+-- The connection tests replace SERVER_URI and TOPIC with the broker and a topic of each test.
+-- The tests run no formatter; 'JSON' describes the bytes that the source delivers.
+-- Each message is one JSON row, and the source appends the default IMPLICIT_MESSAGE_DELIMITER ('\n') to it.
+-- "SOURCE" and "TYPE" are reserved words, so they must be quoted.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'tcp://localhost:1883' AS "SOURCE".SERVER_URI,
+    'sensors'              AS "SOURCE".TOPIC,
+    '1'                    AS "SOURCE".QOS,
+    -- Without a flush interval a partly filled buffer is held back until more messages arrive.
+    '100'                  AS "SOURCE".FLUSH_INTERVAL_MS,
+    'JSON'                 AS INPUT_FORMATTER."TYPE"
+);
