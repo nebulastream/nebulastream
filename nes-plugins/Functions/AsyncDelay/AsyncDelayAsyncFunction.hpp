@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 #include <Sources/AsyncFunction.hpp>
@@ -23,13 +25,22 @@
 namespace NES
 {
 
-/// Executes `ASYNC_DELAY(value, millis)` on a timer, so a waiting call occupies no thread.
+/// Executes `ASYNC_DELAY(value, millis[, max_concurrency])` on a timer, so a waiting call occupies no thread. Each row
+/// gets its value and the delay it waited.
 class AsyncDelayAsyncFunction final : public AsyncFunction
 {
 public:
-    static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments);
+    explicit AsyncDelayAsyncFunction(std::optional<size_t> concurrencyLimit) : concurrencyLimit(concurrencyLimit) { }
 
-    boost::asio::awaitable<std::string> call(std::vector<std::string> arguments) override;
+    /// The configuration is the concurrency limit, empty for none.
+    static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
+
+    boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments) override;
+
+    [[nodiscard]] std::optional<size_t> maxConcurrency() const override { return concurrencyLimit; }
+
+private:
+    std::optional<size_t> concurrencyLimit;
 };
 
 }

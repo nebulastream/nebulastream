@@ -17,27 +17,37 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
+#include <Util/Strings.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
-#include <Util/Strings.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-AsyncFunctionRegistryReturnType AsyncDelayAsyncFunction::create(AsyncFunctionRegistryArguments)
+AsyncFunctionRegistryReturnType AsyncDelayAsyncFunction::create(AsyncFunctionRegistryArguments arguments)
 {
-    return std::make_unique<AsyncDelayAsyncFunction>();
+    if (arguments.configuration.empty())
+    {
+        return std::make_unique<AsyncDelayAsyncFunction>(std::nullopt);
+    }
+    const auto limit = from_chars<uint64_t>(arguments.configuration);
+    if (!limit || *limit == 0)
+    {
+        throw CannotOpenSource("ASYNC_DELAY expects a positive concurrency limit, got {}", arguments.configuration);
+    }
+    return std::make_unique<AsyncDelayAsyncFunction>(*limit);
 }
 
-boost::asio::awaitable<std::string> AsyncDelayAsyncFunction::call(std::vector<std::string> arguments)
+boost::asio::awaitable<AsyncCallResult> AsyncDelayAsyncFunction::callValues(std::vector<std::string> arguments)
 {
-    PRECONDITION(arguments.size() == 2, "ASYNC_DELAY takes (value, millis)");
+    PRECONDITION(arguments.size() >= 2, "ASYNC_DELAY takes (value, millis[, max_concurrency])");
     const auto millis = from_chars<uint64_t>(arguments[1]);
     if (!millis)
     {
@@ -45,7 +55,7 @@ boost::asio::awaitable<std::string> AsyncDelayAsyncFunction::call(std::vector<st
     }
     boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, std::chrono::milliseconds{*millis}};
     co_await timer.async_wait(boost::asio::use_awaitable);
-    co_return std::move(arguments[0]);
+    co_return AsyncCallResult{std::move(arguments[0]), std::to_string(*millis)};
 }
 
 }

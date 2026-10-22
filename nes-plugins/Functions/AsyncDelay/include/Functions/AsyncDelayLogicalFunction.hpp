@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -31,14 +33,17 @@
 namespace NES
 {
 
-/// `ASYNC_DELAY(value, millis)`: evaluates to `value` after waiting `millis` milliseconds without blocking a thread.
-/// A stand-in for a slow external service. Asynchronous only; there is no Nautilus implementation.
+/// `ASYNC_DELAY(value, millis[, max_concurrency])`: evaluates to `value` after waiting `millis` milliseconds without
+/// blocking a thread. A stand-in for a slow external service. Asynchronous only; there is no Nautilus implementation.
+///
+/// It also stands in for what a real service brings along: `max_concurrency` bounds how many of its calls are in flight,
+/// as a rate-limited endpoint would, and its second value, read with `ASYNC_OUTPUT(..., 1)`, is the delay it waited.
 class AsyncDelayLogicalFunction final : public AsyncLogicalFunction
 {
 public:
     static constexpr std::string_view NAME = "AsyncDelay";
 
-    AsyncDelayLogicalFunction(LogicalFunction value, LogicalFunction millis);
+    AsyncDelayLogicalFunction(LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> maxConcurrency);
 
     [[nodiscard]] bool operator==(const AsyncDelayLogicalFunction& rhs) const;
 
@@ -51,12 +56,19 @@ public:
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
+    /// The concurrency limit, which the implementation needs before the first row arrives.
+    [[nodiscard]] std::string getAsyncConfiguration() const override;
+
+    /// The value, and the delay it waited.
+    [[nodiscard]] size_t getNumberOfAsyncOutputs() const override { return 2; }
+
     static LogicalFunctionRegistryReturnType createASYNC_DELAY(LogicalFunctionRegistryArguments arguments);
 
 private:
     DataType dataType;
     LogicalFunction value;
     LogicalFunction millis;
+    std::optional<LogicalFunction> maxConcurrency;
 };
 
 namespace detail
@@ -65,6 +77,7 @@ struct ReflectedAsyncDelayLogicalFunction
 {
     LogicalFunction value;
     LogicalFunction millis;
+    std::optional<LogicalFunction> maxConcurrency;
 };
 }
 

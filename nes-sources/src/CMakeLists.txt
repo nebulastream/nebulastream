@@ -19,6 +19,7 @@ add_source_files(nes-sources
         SourceRegistry.cpp
         SourceConfigRegistry.cpp
         SourceConfigSchemaRegistry.cpp
+        AsyncFunction.cpp
         AsyncFunctionRegistry.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
