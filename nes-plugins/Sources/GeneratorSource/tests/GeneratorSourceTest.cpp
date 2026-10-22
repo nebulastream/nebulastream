@@ -21,7 +21,6 @@
 #include <string_view>
 #include <tuple>
 
-#include <Configurations/Descriptor.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>

@@ -25,7 +25,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -81,21 +80,6 @@ inline rfl::Generic toFrontendGeneric(const Schema<UnqualifiedUnboundField, Orde
         fields.emplace_back(toFrontendGeneric(field, context));
     }
     return fields;
-}
-
-/// reflectcpp's native std::unordered_map handler outputs a flat JSON object. The historical layout
-/// for DescriptorConfig::Config is a sorted array of single-key objects, so we override it here.
-inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config, const ReflectionContext& context)
-{
-    rfl::Generic::Array entries;
-    const auto ordered = config | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
-    for (const auto& [key, val] : ordered)
-    {
-        rfl::Object<rfl::Generic> entry;
-        entry[key] = std::visit([&context](auto&& arg) -> rfl::Generic { return *context.reflect(arg); }, val);
-        entries.emplace_back(std::move(entry));
-    }
-    return entries;
 }
 
 /// Flat object: the formatter type under "type", then each member of the formatter-defined config
