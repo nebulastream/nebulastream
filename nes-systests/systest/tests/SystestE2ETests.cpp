@@ -33,7 +33,7 @@
 #include <BaseUnitTest.hpp>
 #include <Executor.hpp>
 #include <TemporaryDirectory.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace
 {
@@ -79,11 +79,12 @@ public:
     static SystestConfiguration createConfigFor(const std::string_view testFile)
     {
         SystestConfiguration config{};
+        config.permitConflictingOptions = true;
         config.testDiscoverRoot = SYSTEST_DATA_DIR;
         config.directlySpecifiedTestFiles = fmt::format("{}/errors/{}{}", SYSTEST_DATA_DIR, testFile, EXTENSION);
         config.workingDir = fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile);
         config.clusterConfig = SystestClusterConfiguration{
-            .workers = {WorkerConfig{
+            .workers = {WorkerCatalogEntry{
                 .host = Host{"localhost:8080"},
                 .dataAddress = "localhost:9090",
                 .maxOperators = Capacity{CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}},

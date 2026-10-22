@@ -247,6 +247,15 @@ By default, the systest runner discovers tests in `nes-systests/` (recursively).
 
 Tests can also be filtered by group (`-g group1 group2`, `-e excludedGroup`).
 Tests can be run with specific configuration settings (`-- --worker.total_memory_in_bytes=81920000`).
+
+Embedded worker settings are resolved from these layers, in increasing priority:
+
+1. The `-w`/`--workerConfig` YAML file and arguments after `--`, using fully qualified keys such as `worker.query_engine.number_of_worker_threads` and `optimizer.join_strategy`.
+2. Each worker's `config` map in the topology YAML.
+3. The test file's worker configuration directives.
+
+Setting an option in more than one layer is an error, even when the values agree. Pass `--permit-conflicting-options` to allow the higher-priority layer to win; every overwrite is reported. The `-w` file and arguments after `--` must always be disjoint, including with this flag. Remote runs cannot change settings of workers started elsewhere and skip test partitions requiring worker overrides.
+
 Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
 To measure the execution time of tests use the benchmark mode (`-b`).
 To send queries to remote workers, use remote mode (`-r` or `--remote`).

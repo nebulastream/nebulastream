@@ -107,6 +107,8 @@ NES::Identifier bindIdentifierName(std::string_view identifier)
 
 namespace NES::CLI
 {
+namespace
+{
 /// In CLI SchemaField, Sink, LogicalSource, PhysicalSource and QueryConfig are used as target for the YAML parser.
 /// These types should not be used anywhere else in NES; instead we use the bound and validated types, such as LogicalSource and SourceDescriptor.
 struct SchemaField
@@ -144,7 +146,7 @@ struct PhysicalSource
     std::unordered_map<std::string, std::string> sourceConfig;
 };
 
-struct WorkerConfig
+struct WorkerCatalogEntry
 {
     std::string host;
     std::string dataAddress;
@@ -168,9 +170,10 @@ struct QueryConfig
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
     YAML::Node optimizer;
-    std::vector<WorkerConfig> workers;
+    std::vector<WorkerCatalogEntry> workers;
     std::vector<Model> models;
 };
+}
 }
 
 namespace
@@ -389,9 +392,9 @@ struct convert<NES::CLI::PhysicalSource>
 };
 
 template <>
-struct convert<NES::CLI::WorkerConfig>
+struct convert<NES::CLI::WorkerCatalogEntry>
 {
-    static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
+    static bool decode(const Node& node, NES::CLI::WorkerCatalogEntry& rhs)
     {
         acceptKeys({"host", "data_address", "max_operators", "downstream", "config"}, node);
         rhs.maxOperators = getOptional<size_t>(node, "max_operators");
@@ -446,7 +449,7 @@ struct convert<NES::CLI::QueryConfig>
                 rhs.query.emplace_back(node["query"].as<std::string>());
             }
         }
-        rhs.workers = getList<NES::CLI::WorkerConfig>(node, "workers");
+        rhs.workers = getList<NES::CLI::WorkerCatalogEntry>(node, "workers");
         return true;
     }
 };

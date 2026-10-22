@@ -32,8 +32,8 @@
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Config/WorkerConfigResolution.hpp>
 #include <Configurations/ConfigParsing.hpp>
-#include <Configurations/Util.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
@@ -50,8 +50,6 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
-#include <WorkerOptimizerConfig.hpp>
 
 /// In-memory transport: sockets allow one receiver per process.
 extern void enable_memcom();
@@ -92,6 +90,7 @@ TestRunner::TestRunner(const SystestConfiguration& config, std::vector<RunnableP
     : binder{config}
     , clusterConfig{config.clusterConfig}
     , remote{config.remoteWorker}
+    , permitConflictingOptions{config.permitConflictingOptions}
     , baseWorker{config.workerOptimizerConfigLiterals}
     , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds}}
 {
@@ -130,28 +129,17 @@ void TestRunner::setUp(std::vector<RunnablePartition> partitions)
 
 QuerySubmitter TestRunner::createSubmitterFor(const ConfigurationOverride& overrides) const
 {
-    auto resolveWorker = [base = baseWorker, overrides](const WorkerConfig& worker)
+    std::vector<std::string> arguments;
+    for (const auto& [key, value] : overrides)
     {
-        std::vector<std::string> arguments;
-        for (const auto& [key, value] : overrides)
-        {
-            std::string argument{"--"};
-            argument += key;
-            argument += '=';
-            argument += value;
-            arguments.push_back(std::move(argument));
-        }
-        auto merged = mergeConfigLayers(
-            {{.name = "topology", .literals = worker.config},
-             {.name = "run configuration", .literals = base},
-             {.name = "test file", .literals = parseCommandLineConfig(arguments)}});
-        auto resolved = resolveConfiguration<WorkerOptimizerConfig>(merged.literals);
-        if (!resolved)
-        {
-            throw InvalidConfigParameter("{}", resolved.error());
-        }
-        return std::move(resolved)->worker;
-    };
+        std::string argument{"--"};
+        argument += key;
+        argument += '=';
+        argument += value;
+        arguments.push_back(std::move(argument));
+    }
+    auto resolveWorker
+        = makeWorkerConfigResolver(baseWorker, parseCommandLineConfig(arguments), permitConflictingOptions, "test partition");
     auto backend = remote ? createGRPCBackend() : createEmbeddedBackend(std::move(resolveWorker));
     return QuerySubmitter{
         std::make_unique<QueryManager>(std::make_shared<WorkerCatalog>(clusterConfig.workers), std::move(backend)), queryTimeout};

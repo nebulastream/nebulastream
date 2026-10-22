@@ -14,7 +14,7 @@
 
 #include <variant>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -91,7 +91,7 @@ TEST_F(WorkerCatalogTest, AddWorkerWithLimitedCapacity)
     EXPECT_THAT(std::get<CapacityKind::Limited>(retrieved->maxOperators).value, Eq(100U));
 }
 
-/// RemoveWorker: removing existing worker returns the WorkerConfig, size() decreases
+/// RemoveWorker: removing existing worker returns the WorkerCatalogEntry, size() decreases
 TEST_F(WorkerCatalogTest, RemoveWorker)
 {
     WorkerCatalog catalog;

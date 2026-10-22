@@ -86,7 +86,7 @@ jobs:
             echo " - PAGE_SIZE: ${{ inputs.page_size }}"
             echo " - NUMBER_OF_PARTITIONS: ${{ inputs.number_of_partitions }}"
 
-            build/nes-systests/systest/systest \
+            build/nes-systests/systest/systest --permit-conflicting-options \
                 --workingDir=build/nes-systests/large_scale \
                 --data build/nes-systests/testdata \
                 --groups large \

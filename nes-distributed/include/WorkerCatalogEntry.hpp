@@ -40,14 +40,14 @@ struct Limited
 
 using Capacity = std::variant<CapacityKind::Unlimited, CapacityKind::Limited>;
 
-struct WorkerConfig
+struct WorkerCatalogEntry
 {
     Host host; /// gRPC management endpoint, used as primary worker identity
     std::string dataAddress; /// Data-plane address for network sources/sinks (set via --data_address)
     Capacity maxOperators;
     std::vector<Host> downstream;
     /// Worker config literals from the topology file. They are merged with the CLI literals
-    /// (CLI wins) and resolved against SingleNodeWorkerConfiguration's declared schema when the
+    /// under the frontend's explicit precedence policy, then resolved when the
     /// worker is instantiated.
     Schema<LiteralConfigValue, Ordered> config;
 };
