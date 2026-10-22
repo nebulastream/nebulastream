@@ -21,6 +21,12 @@ ctest --test-dir <build> -L ConnTest --output-on-failure
 run without Docker. The battery and the runner tests need `uv`, which the development image ships. In CI the battery runs in the Docker lane, with the sanitizer options of
 `.github/.env/test-<sanitizer>.env` forwarded to the harness.
 
+The Python dependencies of the runner and of every loader are in the root `pyproject.toml`.
+The development image ships them in its venv, installed from `uv.lock`,
+so with it the tests run without network, once the data services' images are pulled.
+`pyproject.toml` and `uv.lock` are part of the dependency hash, so changing them needs the development image of the new hash.
+Outside the development image, uv installs the dependencies, which needs network.
+
 ctest calls the runner's CLI, which can also be used directly, e.g. to pass arguments to pytest:
 
 ```bash
@@ -70,7 +76,7 @@ not in config files.
 ## Adding a connector
 
 A connector's whole test surface is in a `conn-test/` directory next to its `CMakeLists.txt`;
-nothing under `nes-conn-test/` changes:
+nothing under `nes-conn-test/` changes, and only a loader with a client library edits a shared file, the root `pyproject.toml`:
 
 ```
 conn-test/
@@ -78,7 +84,6 @@ conn-test/
   configs/*.nesql       valid configs (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE); each must bind as committed
   loader.py             a SourceLoader subclass that seeds the service
   scenarios.py          SCENARIOS = [...] built from conntest_runner.scenario_bindings
-  pyproject.toml        a uv workspace member declaring the loader's Python dependencies
 ```
 
 and one line in the connector's `CMakeLists.txt`:
@@ -88,8 +93,8 @@ add_conn_test(PLUGIN <Name>)
 ```
 
 The runner finds a connector only through this call, which records it in `<build>/nes-conn-test/connectors.txt`.
-The uv workspace in the root `pyproject.toml` includes `nes-plugins/Sources/*/conn-test`;
-a connector elsewhere adds its directory to the workspace members.
+A loader's client library goes into `dependencies` in the root `pyproject.toml`, followed by `uv lock` at the repo root;
+both files are part of the dependency hash, like a vcpkg change.
 
 The loader implements three methods (`conntest_runner/contracts.py`):
 

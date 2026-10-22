@@ -53,12 +53,10 @@ if (NES_ENABLES_TESTS)
     target_link_libraries(conntest-config-test PRIVATE conntest-binder nes-test-util)
 
     # The runner's own unit tests need no external service.
-    # Their venv is in the build dir, apart from the one that the conformance runs create inside their containers.
+    # They run in the development image's venv (UV_PROJECT_ENVIRONMENT), or else in the one that uv creates.
     if (ENABLE_CONN_TESTS)
         add_test(NAME conntest-runner-tests
-                COMMAND ${CMAKE_COMMAND} -E env UV_PROJECT_ENVIRONMENT=${CMAKE_CURRENT_BINARY_DIR}/venv
-                        ${UV_EXECUTABLE} run --frozen --all-packages
-                        pytest tests --build-dir=${CMAKE_BINARY_DIR}
+                COMMAND ${UV_EXECUTABLE} run --frozen pytest tests --build-dir=${CMAKE_BINARY_DIR}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runner
         )
         set_tests_properties(conntest-runner-tests PROPERTIES LABELS "ConnTest")

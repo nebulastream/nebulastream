@@ -23,9 +23,10 @@ services:
       - ${HOST_NEBULASTREAM_ROOT}:${CONNTEST_CONTAINER_REPO}
     working_dir: ${CONNTEST_CONTAINER_REPO}/nes-conn-test/runner
     environment:
-      # uv keeps its cache and venv inside the container, apart from any venv on the mounted repo.
+      # uv keeps its cache inside the container, apart from the mounted repo.
       HOME: /tmp
-      UV_PROJECT_ENVIRONMENT: /tmp/conntest-venv
+      # The development image's venv, which the caller's environment names, or else one that uv creates in the container.
+      UV_PROJECT_ENVIRONMENT: ${UV_PROJECT_ENVIRONMENT:-/tmp/nes-venv}
       # CI's sanitizer options (.github/.env/test-<sanitizer>.env) reach the harness unchanged.
       ASAN_OPTIONS: ${ASAN_OPTIONS:-}
       LSAN_OPTIONS: ${LSAN_OPTIONS:-}

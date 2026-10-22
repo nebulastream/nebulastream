@@ -10,27 +10,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Virtual uv workspace root for the conn-test Python, with one shared uv.lock.
-# Each connector declares its loader's client libraries in its own conn-test/pyproject.toml,
-# so adding a connector edits no shared file.
-# All members install into one .venv.
-# A connector outside nes-plugins/Sources adds its conn-test directory to the members.
-#
-# uv fails the whole resolve when a matched conn-test/ directory has no pyproject.toml,
-# so a connector without third-party libraries still ships one with `dependencies = []`.
+# The Python dependencies of the repository's tooling, in one place like the Rust workspace's dependencies in Cargo.toml.
+# uv locks them into uv.lock, and the development image installs that lock into its venv (UV_PROJECT_ENVIRONMENT),
+# so that tools run offline in it. After changing a dependency, run `uv lock`; the lock is part of the dependency hash.
+# The repository's Python is not installed: the conn-test runner imports its code from the checkout.
 
 [project]
-name = "nebulastream-conntest-workspace"
+name = "nebulastream"
 version = "0"
 requires-python = ">=3.12"
+dependencies = [
+    # nes-conn-test/runner
+    "pytest>=8.3",
+    # Connection-test loaders, nes-plugins/Sources/<Connector>/conn-test/loader.py
+    "paho-mqtt>=2.1", # MQTTSource
+]
 
 [tool.uv]
 package = false
-
-[tool.uv.workspace]
-members = [
-    "nes-conn-test/runner",
-    "nes-plugins/Sources/*/conn-test",
-]
-# uv has no per-member opt-out, so a conn-test directory leaves the workspace only through this list.
-exclude = []

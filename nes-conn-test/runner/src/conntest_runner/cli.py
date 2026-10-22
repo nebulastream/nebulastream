@@ -39,9 +39,8 @@ _RUNNER_COMPOSE = _RUNNER_DIR / "runner.compose.yaml"
 # A user selector that deselects every test of one connector is not a failure.
 _PYTEST_EXIT_NO_TESTS = 5
 
-# The runner installs every workspace member, so one venv serves every connector.
-# The venv is inside the container, apart from the host's.
-_RUNNER_SCRIPT = 'set -e; uv sync --frozen --all-packages; exec uv run --frozen --no-sync pytest "$@"'
+# uv runs pytest in the venv of the root pyproject.toml, which holds every connector's dependencies.
+_RUN_PYTEST = ("uv", "run", "--frozen", "pytest")
 
 
 def _log(msg: str) -> None:
@@ -144,7 +143,7 @@ def _run_connector(
                 *("-e", f"CONNTEST_DIR={container_conn_test_dir}"),
                 "runner",
             ]
-            rc = subprocess.run([*run, "bash", "-c", _RUNNER_SCRIPT, "bash", *args], env=env, check=False).returncode
+            rc = subprocess.run([*run, *_RUN_PYTEST, *args], env=env, check=False).returncode
             if rc == _PYTEST_EXIT_NO_TESTS and pytest_args:
                 _log(f"{plugin}: no test matched the selector")
                 return 0

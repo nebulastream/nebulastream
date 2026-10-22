@@ -6,14 +6,6 @@ resolution-markers = [
     "python_full_version < '3.15'",
 ]
 
-[manifest]
-members = [
-    "conntest-plugin-mqttsource",
-    "conntest-plugin-tcpsource",
-    "conntest-runner",
-    "nebulastream-conntest-workspace",
-]
-
 [[package]]
 name = "colorama"
 version = "0.4.6"
@@ -22,37 +14,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
 ]
-
-[[package]]
-name = "conntest-plugin-mqttsource"
-version = "0"
-source = { virtual = "nes-plugins/Sources/MQTTSource/conn-test" }
-dependencies = [
-    { name = "paho-mqtt" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "paho-mqtt", specifier = ">=2.1" }]
-
-[[package]]
-name = "conntest-plugin-tcpsource"
-version = "0"
-source = { virtual = "nes-plugins/Sources/TCPSource/conn-test" }
-
-[[package]]
-name = "conntest-runner"
-version = "0.1.0"
-source = { editable = "nes-conn-test/runner" }
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8.3" }]
 
 [[package]]
 name = "iniconfig"
@@ -64,9 +25,19 @@ wheels = [
 ]
 
 [[package]]
-name = "nebulastream-conntest-workspace"
+name = "nebulastream"
 version = "0"
 source = { virtual = "." }
+dependencies = [
+    { name = "paho-mqtt" },
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "paho-mqtt", specifier = ">=2.1" },
+    { name = "pytest", specifier = ">=8.3" },
+]
 
 [[package]]
 name = "packaging"
