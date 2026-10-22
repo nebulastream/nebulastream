@@ -39,19 +39,19 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/deferred.hpp>
 #include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/asio/this_coro.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio/deferred.hpp>
-#include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <fmt/format.h>
-#include <Util/Logger/Logger.hpp>
 #include <rfl/json/read.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -141,21 +141,23 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
     }
     INVARIANT(inputRowSize == outputRowSize, "handed-off rows must have the async source's fields");
 
-    for (const auto& [output, function, arguments] : descriptions.value())
+    for (const auto& [outputs, function, configuration, arguments] : descriptions.value())
     {
-        BoundCall call{.arguments = {}, .outputOffset = std::nullopt, .level = 0, .instances = {}};
-        if (output)
+        BoundCall call{
+            .function = function, .configuration = configuration, .arguments = {}, .requiredValues = 1, .level = 0, .instances = {}};
+        for (const auto& [index, field] : outputs)
         {
-            const auto& [outputOffset, outputType] = outputFields.at(*output);
+            const auto& [outputOffset, outputType] = outputFields.at(field);
             requireVarSized(outputType, "result");
-            call.outputOffset = outputOffset;
+            outputValues.push_back({.call = calls.size(), .index = index, .outputOffset = outputOffset});
+            call.requiredValues = std::max(call.requiredValues, index + 1);
         }
-        for (const auto& [field, constant, earlierCall] : arguments)
+        for (const auto& [field, constant, earlierCall, output] : arguments)
         {
             if (field)
             {
                 requireVarSized(outputFields.at(*field).second, "argument");
-                call.arguments.push_back({.inputOffset = inputOffsets.at(*field), .call = std::nullopt, .constant = {}});
+                call.arguments.push_back({.inputOffset = inputOffsets.at(*field), .call = std::nullopt, .output = 0, .constant = {}});
             }
             else if (earlierCall)
             {
@@ -164,11 +166,13 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
                     throw CannotOpenSource("async call reads call {}, which is not listed before it", *earlierCall);
                 }
                 call.level = std::max(call.level, calls[*earlierCall].level + 1);
-                call.arguments.push_back({.inputOffset = std::nullopt, .call = *earlierCall, .constant = {}});
+                calls[*earlierCall].requiredValues = std::max(calls[*earlierCall].requiredValues, output + 1);
+                call.arguments.push_back({.inputOffset = std::nullopt, .call = *earlierCall, .output = output, .constant = {}});
             }
             else
             {
-                call.arguments.push_back({.inputOffset = std::nullopt, .call = std::nullopt, .constant = constant.value_or("")});
+                call.arguments.push_back(
+                    {.inputOffset = std::nullopt, .call = std::nullopt, .output = 0, .constant = constant.value_or("")});
             }
         }
         const auto factory = AsyncFunctionRegistry::instance().find(function);
@@ -176,19 +180,18 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
         {
             throw UnknownFunctionType("no async implementation registered for {}", function);
         }
-        for (size_t worker = 0; worker < maxConcurrency; ++worker)
-        {
-            call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{}));
-        }
+        /// The first instance tells what the function allows; the stage runs within the strictest bounds of its functions.
+        call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.configuration = configuration}));
+        maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, call.instances.front()->maxConcurrency().value_or(maxConcurrency)));
         levels = std::max(levels, call.level + 1);
         calls.push_back(std::move(call));
     }
-
-    for (size_t index = 0; index < calls.size(); ++index)
+    for (auto& call : calls)
     {
-        if (calls[index].outputOffset)
+        const auto factory = AsyncFunctionRegistry::instance().find(call.function);
+        while (call.instances.size() < maxConcurrency)
         {
-            outputCalls.push_back(index);
+            call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.configuration = call.configuration}));
         }
     }
     cancelSignals = std::vector<boost::asio::cancellation_signal>(maxConcurrency);
@@ -199,7 +202,10 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
 
     for (const auto& [name, inputOffset] : inputOffsets)
     {
-        if (std::ranges::none_of(descriptions.value(), [&](const AsyncCall& call) { return call.output == name; }))
+        if (std::ranges::none_of(
+                descriptions.value(),
+                [&](const AsyncCall& call)
+                { return std::ranges::any_of(call.outputs, [&](const AsyncCallOutput& output) { return output.field == name; }); }))
         {
             const auto& [outputOffset, type] = outputFields.at(name);
             copiedFields.push_back({.inputOffset = inputOffset, .outputOffset = outputOffset, .size = type.getSizeInBytesWithNull()});
@@ -235,15 +241,15 @@ void AsyncSource::close()
 }
 
 std::vector<std::string> AsyncSource::readArguments(
-    const BoundCall& call, const TupleBuffer& input, const size_t row, const std::vector<std::string>& results) const
+    const BoundCall& call, const TupleBuffer& input, const size_t row, const std::vector<AsyncCallResult>& results) const
 {
     const auto rowBytes = input.getAvailableMemoryArea().subspan(row * inputRowSize, inputRowSize);
     std::vector<std::string> arguments;
-    for (const auto& [inputOffset, earlierCall, constant] : call.arguments)
+    for (const auto& [inputOffset, earlierCall, output, constant] : call.arguments)
     {
         if (earlierCall)
         {
-            arguments.push_back(results[*earlierCall]);
+            arguments.push_back(results[*earlierCall][output]);
             continue;
         }
         if (!inputOffset)
@@ -259,18 +265,34 @@ std::vector<std::string> AsyncSource::readArguments(
     return arguments;
 }
 
-boost::asio::awaitable<std::string> AsyncSource::callWithRetries(AsyncFunction& function, std::vector<std::string> arguments) const
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncCallResult>
+AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vector<std::string> arguments) const
 {
+    const auto& call = calls[callIndex];
+    auto& function = *call.instances[slot];
     for (size_t attempt = 0;; ++attempt)
     {
+        std::optional<AsyncCallResult> result;
         std::exception_ptr failure;
         try
         {
-            co_return co_await function.call(arguments);
+            result = co_await function.callValues(arguments);
         }
-        catch (...)
+        /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
+        catch (...) /// NOLINT(no-raw-catch-all)
         {
             failure = std::current_exception();
+        }
+        if (result)
+        {
+            /// A bug in the function rather than a failure of the service it calls, so it is not retried.
+            if (result->size() < call.requiredValues)
+            {
+                throw CannotReadFromSource(
+                    "async function {} produced {} values, but the query reads {}", call.function, result->size(), call.requiredValues);
+            }
+            co_return std::move(*result);
         }
         if (attempt >= maxRetries
             || (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
@@ -278,7 +300,8 @@ boost::asio::awaitable<std::string> AsyncSource::callWithRetries(AsyncFunction& 
             std::rethrow_exception(failure);
         }
         const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
-        NES_WARNING("Async call failed, attempt {} of {} follows in {} ms", attempt + 2, maxRetries + 1, backoff.count());
+        NES_WARNING(
+            "Async call of {} failed, attempt {} of {} follows in {} ms", call.function, attempt + 2, maxRetries + 1, backoff.count());
         boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
         co_await timer.async_wait(boost::asio::use_awaitable);
     }
@@ -288,9 +311,9 @@ boost::asio::awaitable<std::string> AsyncSource::callWithRetries(AsyncFunction& 
 boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const std::shared_ptr<InFlightBuffer> buffer, const size_t row)
 {
     using CallOperation
-        = decltype(boost::asio::co_spawn(strand, std::declval<boost::asio::awaitable<std::string>>(), boost::asio::deferred));
-    /// Level by level: the calls of one level run in parallel and only read results of lower levels.
-    std::vector<std::string> results(calls.size());
+        = decltype(boost::asio::co_spawn(strand, std::declval<boost::asio::awaitable<AsyncCallResult>>(), boost::asio::deferred));
+    /// One result per call. Level by level: the calls of one level run in parallel and only read results of lower levels.
+    std::vector<AsyncCallResult> results(calls.size());
     for (size_t level = 0; level < levels; ++level)
     {
         std::vector<size_t> started;
@@ -300,10 +323,11 @@ boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const st
             if (calls[index].level == level)
             {
                 started.push_back(index);
-                operations.push_back(boost::asio::co_spawn(
-                    strand,
-                    callWithRetries(*calls[index].instances[slot], readArguments(calls[index], buffer->input, row, results)),
-                    boost::asio::deferred));
+                operations.push_back(
+                    boost::asio::co_spawn(
+                        strand,
+                        callWithRetries(index, slot, readArguments(calls[index], buffer->input, row, results)),
+                        boost::asio::deferred));
             }
         }
         auto [order, failures, values] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
@@ -318,10 +342,10 @@ boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const st
         }
     }
     auto& outputs = buffer->results[row];
-    outputs.reserve(outputCalls.size());
-    for (const auto index : outputCalls)
+    outputs.reserve(outputValues.size());
+    for (const auto& [call, index, outputOffset] : outputValues)
     {
-        outputs.push_back(std::move(results[index]));
+        outputs.push_back(results[call][index]);
     }
 }
 
@@ -334,7 +358,8 @@ void AsyncSource::startRows()
         size_t row = 0;
         {
             const std::scoped_lock lock(window.mutex);
-            const auto next = std::ranges::find_if(window.buffers, [](const auto& candidate) { return candidate->nextRow < candidate->rows; });
+            const auto next
+                = std::ranges::find_if(window.buffers, [](const auto& candidate) { return candidate->nextRow < candidate->rows; });
             if (window.failure || next == window.buffers.end())
             {
                 break;
@@ -421,14 +446,14 @@ void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output)
     {
         for (const auto& [inputOffset, outputOffset, size] : copiedFields)
         {
-            std::memcpy(out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
+            std::memcpy(
+                out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
         }
-        for (size_t position = 0; position < outputCalls.size(); ++position)
+        for (size_t position = 0; position < outputValues.size(); ++position)
         {
             const auto access
                 = TupleBufferRef::writeVarSized(output, *bufferProvider, std::as_bytes(std::span{buffer.results[row][position]}));
-            const auto outputOffset = calls[outputCalls[position]].outputOffset.value();
-            std::memcpy(out.subspan((row * outputRowSize) + outputOffset).data(), &access, sizeof(access));
+            std::memcpy(out.subspan((row * outputRowSize) + outputValues[position].outputOffset).data(), &access, sizeof(access));
         }
     }
 }

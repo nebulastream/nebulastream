@@ -14,6 +14,7 @@
 
 #include <Functions/AsyncDelayLogicalFunction.hpp>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -36,14 +37,18 @@
 namespace NES
 {
 
-AsyncDelayLogicalFunction::AsyncDelayLogicalFunction(LogicalFunction value, LogicalFunction millis)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), value(std::move(value)), millis(std::move(millis))
+AsyncDelayLogicalFunction::AsyncDelayLogicalFunction(
+    LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> maxConcurrency)
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
+    , value(std::move(value))
+    , millis(std::move(millis))
+    , maxConcurrency(std::move(maxConcurrency))
 {
 }
 
 bool AsyncDelayLogicalFunction::operator==(const AsyncDelayLogicalFunction& rhs) const
 {
-    return value == rhs.value and millis == rhs.millis;
+    return value == rhs.value and millis == rhs.millis and maxConcurrency == rhs.maxConcurrency;
 }
 
 DataType AsyncDelayLogicalFunction::getDataType() const
@@ -65,11 +70,24 @@ LogicalFunction AsyncDelayLogicalFunction::withInferredDataType(const Schema<Fie
     {
         throw DifferentFieldTypeExpected("ASYNC_DELAY expects an integer constant delay in milliseconds, but got {}", copy.millis);
     }
+    if (maxConcurrency)
+    {
+        copy.maxConcurrency = maxConcurrency->withInferredDataType(schema);
+        if (not copy.maxConcurrency->tryGetAs<ConstantValueLogicalFunction>().has_value()
+            or not copy.maxConcurrency->getDataType().isInteger())
+        {
+            throw DifferentFieldTypeExpected("ASYNC_DELAY expects an integer constant concurrency limit, but got {}", *copy.maxConcurrency);
+        }
+    }
     return copy;
 }
 
 std::vector<LogicalFunction> AsyncDelayLogicalFunction::getChildren() const
 {
+    if (maxConcurrency)
+    {
+        return {value, millis, *maxConcurrency};
+    }
     return {value, millis};
 }
 
@@ -78,6 +96,7 @@ AsyncDelayLogicalFunction AsyncDelayLogicalFunction::withChildren(const std::vec
     auto copy = *this;
     copy.value = children.at(0);
     copy.millis = children.at(1);
+    copy.maxConcurrency = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt;
     return copy;
 }
 
@@ -88,29 +107,53 @@ std::string_view AsyncDelayLogicalFunction::getType() const /// NOLINT(readabili
 
 std::string AsyncDelayLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
+    if (maxConcurrency)
+    {
+        return fmt::format(
+            "ASYNC_DELAY({}, {}, {})", value.explain(verbosity), millis.explain(verbosity), maxConcurrency->explain(verbosity));
+    }
     return fmt::format("ASYNC_DELAY({}, {})", value.explain(verbosity), millis.explain(verbosity));
 }
 
-Reflected Reflector<AsyncDelayLogicalFunction>::operator()(const AsyncDelayLogicalFunction& function, const ReflectionContext& context) const
+std::string AsyncDelayLogicalFunction::getAsyncConfiguration() const
 {
-    const auto children = function.getChildren();
-    return context.reflect(detail::ReflectedAsyncDelayLogicalFunction{.value = children.at(0), .millis = children.at(1)});
+    if (const auto constant = maxConcurrency ? maxConcurrency->tryGetAs<ConstantValueLogicalFunction>() : std::nullopt)
+    {
+        return constant.value()->getConstantValue();
+    }
+    return {};
 }
 
-AsyncDelayLogicalFunction Unreflector<AsyncDelayLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+Reflected
+Reflector<AsyncDelayLogicalFunction>::operator()(const AsyncDelayLogicalFunction& function, const ReflectionContext& context) const
 {
-    auto [value, millis] = context.unreflect<detail::ReflectedAsyncDelayLogicalFunction>(reflected);
-    return AsyncDelayLogicalFunction{std::move(value), std::move(millis)};
+    const auto children = function.getChildren();
+    return context.reflect(
+        detail::ReflectedAsyncDelayLogicalFunction{
+            .value = children.at(0),
+            .millis = children.at(1),
+            .maxConcurrency = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt});
+}
+
+AsyncDelayLogicalFunction
+Unreflector<AsyncDelayLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+{
+    auto [value, millis, maxConcurrency] = context.unreflect<detail::ReflectedAsyncDelayLogicalFunction>(reflected);
+    return AsyncDelayLogicalFunction{std::move(value), std::move(millis), std::move(maxConcurrency)};
 }
 
 LogicalFunctionRegistryReturnType AsyncDelayLogicalFunction::createASYNC_DELAY(LogicalFunctionRegistryArguments arguments)
 {
     /// The argument count comes straight from the user's query, so a bad count is reported rather than asserted.
-    if (arguments.children.size() != 2)
+    if (arguments.children.size() != 2 and arguments.children.size() != 3)
     {
-        throw InvalidQuerySyntax("ASYNC_DELAY expects 2 arguments (value, millis), but got {}", arguments.children.size());
+        throw InvalidQuerySyntax(
+            "ASYNC_DELAY expects 2 or 3 arguments (value, millis[, max_concurrency]), but got {}", arguments.children.size());
     }
-    return AsyncDelayLogicalFunction{arguments.children.at(0), arguments.children.at(1)};
+    return AsyncDelayLogicalFunction{
+        arguments.children.at(0),
+        arguments.children.at(1),
+        arguments.children.size() > 2 ? std::optional{arguments.children.at(2)} : std::nullopt};
 }
 
 }

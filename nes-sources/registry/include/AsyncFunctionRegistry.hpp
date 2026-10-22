@@ -27,6 +27,8 @@ using AsyncFunctionRegistryReturnType = std::unique_ptr<AsyncFunction>;
 
 struct AsyncFunctionRegistryArguments
 {
+    /// What the logical function's `getAsyncConfiguration` returned for this call, e.g. a serialized model.
+    std::string configuration;
 };
 
 using AsyncFunctionFn = std::function<AsyncFunctionRegistryReturnType(AsyncFunctionRegistryArguments)>;
