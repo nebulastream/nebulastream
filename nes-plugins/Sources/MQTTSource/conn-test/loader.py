@@ -35,7 +35,8 @@ if TYPE_CHECKING:
 
 _CONNECT_TIMEOUT_S = 10.0
 _PUBLISH_TIMEOUT_S = 60.0
-_QOS = 1
+# The broker delivers at the lower of the publish and the subscription QoS, so the config QoS is the effective one.
+_QOS = 2
 
 
 def _close(client: mqtt.Client) -> None:

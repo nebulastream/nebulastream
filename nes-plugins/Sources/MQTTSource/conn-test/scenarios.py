@@ -25,9 +25,11 @@ from conntest_runner.scenario_bindings import (
 )
 
 SCENARIOS = [
-    round_trip_1_buffer("basic.nesql"),
+    # A 5 s flush interval only delays the partly filled buffer, well within the step timeout.
+    round_trip_1_buffer("basic.nesql", "qos0.nesql", "qos2.nesql", "long_flush.nesql", "log_messages.nesql"),
     # Only this round trip also covers the multi-column schema.
-    round_trip_n_buffers("basic.nesql", "multicol.nesql"),
+    # QoS 0 must not lose data either: the broker queue is unlimited and the client buffers what the held-back source does not read.
+    round_trip_n_buffers("basic.nesql", "multicol.nesql", "qos0.nesql", "qos2.nesql"),
     # Nothing is published, so the source waits on the silent subscription until the harness closes it.
     empty("basic.nesql"),
     # The client library's connect fails, and open() rethrows it as CannotOpenSource (4002).
