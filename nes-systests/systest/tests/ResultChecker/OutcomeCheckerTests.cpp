@@ -13,8 +13,8 @@
 */
 
 #include <exception>
-#include <filesystem>
 #include <expected>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <utility>
@@ -66,7 +66,11 @@ RewrittenTestCase createQueryExpecting(Expectation expectation, std::vector<std:
 {
     return RewrittenTestCase{
         .action = RewrittenQuery{
-            .sql = "", .id = SystestQueryId{1}, .resultFiles = std::move(resultFiles), .inputFiles = {}, .expected = std::move(expectation)}};
+            .sql = "",
+            .id = SystestQueryId{1},
+            .resultFiles = std::move(resultFiles),
+            .inputFiles = {},
+            .expected = std::move(expectation)}};
 }
 
 StatementOutcome createExplainedOutcome(std::string plan)

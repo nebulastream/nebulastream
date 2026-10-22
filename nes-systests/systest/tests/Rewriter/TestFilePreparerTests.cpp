@@ -831,7 +831,8 @@ TEST_F(TestFilePreparerTest, KeepsAVoidSinkThatWritesNoResult)
         "----\n");
 
     ASSERT_EQ(queries.size(), 1U);
-    EXPECT_EQ(std::get<RewrittenQuery>(queries.at(0).action).resultFiles, (std::vector<std::optional<std::filesystem::path>>{std::nullopt}));
+    EXPECT_EQ(
+        std::get<RewrittenQuery>(queries.at(0).action).resultFiles, (std::vector<std::optional<std::filesystem::path>>{std::nullopt}));
 }
 
 /// The grammar allows one SET clause per sink.

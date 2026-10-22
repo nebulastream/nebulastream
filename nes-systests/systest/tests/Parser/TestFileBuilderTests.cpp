@@ -313,12 +313,13 @@ TEST_F(TestFileParserTest, ReadsCreatesAndQueryWithExpectedRows)
 /// order. The query runs once per listed alternative, and every run expects the rows of every sink.
 TEST_F(TestFileParserTest, ReadsOneResultBlockPerSink)
 {
-    const auto [path, statements] = readSlt("Configuration worker.query_engine.number_of_worker_threads: [1, 2]\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkA, sinkB;\n"
-                                            "----\n"
-                                            "1\n"
-                                            "----\n"
-                                            "2\n");
+    const auto [path, statements] = readSlt(
+        "Configuration worker.query_engine.number_of_worker_threads: [1, 2]\n"
+        "SELECT field_1 FROM oneTuple INTO sinkA, sinkB;\n"
+        "----\n"
+        "1\n"
+        "----\n"
+        "2\n");
 
     ASSERT_EQ(statements.size(), 2U);
     for (const auto& statement : statements)

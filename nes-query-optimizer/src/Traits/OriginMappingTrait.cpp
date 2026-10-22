@@ -88,8 +88,9 @@ Reflected Reflector<OriginMappingTrait>::operator()(const OriginMappingTrait& tr
         upstreamOriginIds.push_back(upstreamOriginId.getRawValue());
         branchOriginIds.push_back(branchOriginId.getRawValue());
     }
-    return context.reflect(detail::ReflectedOriginMappingTrait{
-        .upstreamOriginIds = std::move(upstreamOriginIds), .branchOriginIds = std::move(branchOriginIds)});
+    return context.reflect(
+        detail::ReflectedOriginMappingTrait{
+            .upstreamOriginIds = std::move(upstreamOriginIds), .branchOriginIds = std::move(branchOriginIds)});
 }
 
 OriginMappingTrait Unreflector<OriginMappingTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const

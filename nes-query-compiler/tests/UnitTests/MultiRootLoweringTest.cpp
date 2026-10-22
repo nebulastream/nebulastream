@@ -131,8 +131,9 @@ public:
     static std::unique_ptr<CompiledQueryPlan> compile(LogicalPlan plan)
     {
         auto compiler = QueryCompilation::QueryCompiler{QueryExecutionConfiguration{}};
-        return compiler.compileQuery(std::make_unique<QueryCompilation::QueryCompilationRequest>(
-            QueryCompilation::QueryCompilationRequest{.queryPlan = std::move(plan)}));
+        return compiler.compileQuery(
+            std::make_unique<QueryCompilation::QueryCompilationRequest>(
+                QueryCompilation::QueryCompilationRequest{.queryPlan = std::move(plan)}));
     }
 
     std::shared_ptr<SourceCatalog> sourceCatalog = std::make_shared<SourceCatalog>();

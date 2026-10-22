@@ -232,7 +232,8 @@ void TestRunner::submitGroup(
             run.outcomes.push_back(
                 StatementOutcome{
                     .reached = std::move(outcome),
-                    .sinkOutputSchemas = plan.has_value() ? plan->sinkOutputSchemas : std::vector<Schema<UnqualifiedUnboundField, Ordered>>{},
+                    .sinkOutputSchemas
+                    = plan.has_value() ? plan->sinkOutputSchemas : std::vector<Schema<UnqualifiedUnboundField, Ordered>>{},
                     .explained = std::nullopt});
             run.timings.push_back(StatementTiming{.execution = executionTime});
             run.remaining = run.remaining.subspan(1);
