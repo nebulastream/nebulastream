@@ -15,7 +15,7 @@ sinks:
     host: host1:8080
     type: Void
     config: { }
-    parser_config: { }
+    parser_config: { type: CSV }
 
 logical:
   - name: mock_source

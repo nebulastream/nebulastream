@@ -34,11 +34,18 @@ constexpr auto Source = "SOURCE";
 constexpr auto Sink = "SINK";
 constexpr auto InputFormatter = "INPUT_FORMATTER";
 constexpr auto OutputFormatter = "OUTPUT_FORMATTER";
+constexpr auto FileSource = "FILE_SOURCE";
+constexpr auto TcpSource = "TCP_SOURCE";
+constexpr auto CsvOutputFormatter = "CSV_OUTPUT_FORMATTER";
+
+inline std::string sinkConfigGroup(const std::string_view type)
+{
+    return Identifier::parse(std::string{type}).asCanonicalString() + "_SINK";
+}
 
 /// Config keys within the groups.
 constexpr auto FilePath = "FILE_PATH";
 constexpr auto Host = "HOST";
-constexpr auto OutputFormat = "OUTPUT_FORMAT";
 constexpr auto Type = "TYPE";
 constexpr auto Schema = "SCHEMA";
 constexpr auto QuoteStrings = "QUOTE_STRINGS";
@@ -81,11 +88,17 @@ inline std::string stringLiteral(const std::string_view value)
     return fmt::format("'{}'", replaceAll(value, "'", "''"));
 }
 
+/// Returns a config option from an already formatted SQL literal.
+inline std::string literalOption(const std::string_view group, const std::string_view key, const std::string_view literal)
+{
+    return fmt::format(R"({} AS "{}"."{}")", literal, group, key);
+}
+
 /// Returns one config option, `'value' AS "group"."key"`.
 /// Both names are quoted, so the parser treats a name that is or becomes a keyword as an identifier and no caller has to distinguish.
 inline std::string option(const std::string_view group, const std::string_view key, const std::string_view value)
 {
-    return fmt::format(R"({} AS "{}"."{}")", stringLiteral(value), group, key);
+    return literalOption(group, key, stringLiteral(value));
 }
 
 /// Returns a config option whose value is a schema literal rather than a quoted string, `SCHEMA<body> AS "group"."SCHEMA"`.
