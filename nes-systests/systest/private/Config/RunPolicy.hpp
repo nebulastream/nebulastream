@@ -57,7 +57,7 @@ struct SubmitUntilStopped
 
 using RepetitionPolicy = std::variant<SubmitOnce, SubmitRounds, SubmitUntilStopped>;
 
-class SystestConfiguration;
+struct SystestConfiguration;
 
 /// One invocation's policy, read once from the systest config.
 struct RunPolicy

@@ -32,6 +32,8 @@
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/Util.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
@@ -48,6 +50,8 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
+#include <WorkerOptimizerConfig.hpp>
 
 /// In-memory transport: sockets allow one receiver per process.
 extern void enable_memcom();
@@ -56,16 +60,6 @@ namespace NES
 {
 namespace
 {
-
-SingleNodeWorkerConfiguration applyOverrides(const SingleNodeWorkerConfiguration& base, const ConfigurationOverride& overrides)
-{
-    auto configured = base;
-    for (const auto& [key, value] : overrides)
-    {
-        configured.overwriteConfigWithCommandLineInput({{key, value}});
-    }
-    return configured;
-}
 
 /// From the running state (not starting) so source and pipeline startup do not count.
 std::chrono::nanoseconds extractExecutionTime(const DistributedQueryStatusSnapshot& snapshot)
@@ -97,14 +91,10 @@ void appendSkipped(std::vector<ReportEntry>& rejected, const RunnablePartition& 
 TestRunner::TestRunner(const SystestConfiguration& config, std::vector<RunnablePartition> partitions)
     : binder{config}
     , clusterConfig{config.clusterConfig}
-    , remote{config.remoteWorker.getValue()}
-    , baseWorker{config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{})}
-    , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds.getValue()}}
+    , remote{config.remoteWorker}
+    , baseWorker{config.workerOptimizerConfigLiterals}
+    , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds}}
 {
-    if (not config.workerConfig.getValue().empty())
-    {
-        baseWorker.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig.getValue());
-    }
     if (not remote)
     {
         enable_memcom();
@@ -140,7 +130,29 @@ void TestRunner::setUp(std::vector<RunnablePartition> partitions)
 
 QuerySubmitter TestRunner::createSubmitterFor(const ConfigurationOverride& overrides) const
 {
-    auto backend = remote ? createGRPCBackend() : createEmbeddedBackend(applyOverrides(baseWorker, overrides));
+    auto resolveWorker = [base = baseWorker, overrides](const WorkerConfig& worker)
+    {
+        std::vector<std::string> arguments;
+        for (const auto& [key, value] : overrides)
+        {
+            std::string argument{"--"};
+            argument += key;
+            argument += '=';
+            argument += value;
+            arguments.push_back(std::move(argument));
+        }
+        auto merged = mergeConfigLayers(
+            {{.name = "topology", .literals = worker.config},
+             {.name = "run configuration", .literals = base},
+             {.name = "test file", .literals = parseCommandLineConfig(arguments)}});
+        auto resolved = resolveConfiguration<WorkerOptimizerConfig>(merged.literals);
+        if (!resolved)
+        {
+            throw InvalidConfigParameter("{}", resolved.error());
+        }
+        return std::move(resolved)->worker;
+    };
+    auto backend = remote ? createGRPCBackend() : createEmbeddedBackend(std::move(resolveWorker));
     return QuerySubmitter{
         std::make_unique<QueryManager>(std::make_shared<WorkerCatalog>(clusterConfig.workers), std::move(backend)), queryTimeout};
 }

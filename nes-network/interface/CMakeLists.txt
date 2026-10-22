@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-network-interface INTERFACE)
-target_include_directories(nes-network-interface INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(nes-network-interface INTERFACE nes-configurations)
+add_library(nes-network-interface WorkerNetworkConfiguration.cpp QueryOptimizerNetworkConfiguration.cpp)
+target_include_directories(nes-network-interface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(nes-network-interface PUBLIC nes-configurations)
