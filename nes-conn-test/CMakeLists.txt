@@ -38,10 +38,12 @@ if (NES_ENABLES_TESTS)
     )
 
     find_package(argparse CONFIG REQUIRED)
+    find_package(boost_asio CONFIG REQUIRED)
     target_link_libraries(conntest-harness PRIVATE
             conntest-binder
             nes-memory
             argparse::argparse
+            Boost::asio
     )
     # The runner expects the binary at <build-dir>/nes-conn-test/conntest-harness.
     set_target_properties(conntest-harness PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

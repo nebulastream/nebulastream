@@ -15,135 +15,53 @@
 #include <ControlChannel.hpp>
 
 #include <array>
-#include <cerrno>
 #include <cstddef>
-#include <cstring>
-#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
 
-#include <unistd.h>
-#include <sys/socket.h>
-/// clang-tidy does not map `ssize_t` to this header and flags it as unused.
-/// NOLINTNEXTLINE(misc-include-cleaner)
-#include <sys/types.h>
-#include <sys/un.h>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/local/stream_protocol.hpp>
+/// The include cleaner maps read_until and write to their impl/ headers, which do not compile without these public ones.
+#include <boost/asio/read_until.hpp> /// NOLINT(misc-include-cleaner)
+#include <boost/asio/write.hpp> /// NOLINT(misc-include-cleaner)
+#include <boost/system/detail/error_code.hpp>
 
 namespace NES::ConnTest
 {
 
-std::optional<ControlChannel> ControlChannel::connect(std::string_view path)
+ControlChannel::ControlChannel(const std::string_view path)
 {
-    if (path.size() >= sizeof(sockaddr_un::sun_path))
-    {
-        std::cerr << "conntest-harness: control-sock path too long: " << path << "\n";
-        return std::nullopt;
-    }
-
-    const int fileDescriptor = ::socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fileDescriptor < 0)
-    {
-        /// NOLINTNEXTLINE(concurrency-mt-unsafe): conntest-harness is single-process; the control channel is not shared across threads.
-        std::cerr << "conntest-harness: socket(AF_UNIX) failed: " << std::strerror(errno) << "\n";
-        return std::nullopt;
-    }
-
-    sockaddr_un addr{};
-    addr.sun_family = AF_UNIX;
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay): sockaddr_un::sun_path is a C array; the kernel ABI takes the decayed pointer.
-    std::memcpy(addr.sun_path, path.data(), path.size());
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index): the early `if (path.size() >= sizeof(sun_path)) return std::nullopt;` bounds the index.
-    addr.sun_path[path.size()] = '\0';
-
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): the POSIX socket API takes a generic `sockaddr*`; bridging a typed `sockaddr_un` to it requires the cast.
-    while (::connect(fileDescriptor, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
-    {
-        if (errno == EINTR)
-        {
-            continue;
-        }
-        /// NOLINTNEXTLINE(concurrency-mt-unsafe): conntest-harness is single-process; the control channel is not shared across threads.
-        std::cerr << "conntest-harness: connect(" << path << ") failed: " << std::strerror(errno) << "\n";
-        ::close(fileDescriptor);
-        return std::nullopt;
-    }
-    return ControlChannel{fileDescriptor};
-}
-
-ControlChannel::~ControlChannel()
-{
-    if (fileDescriptor >= 0)
-    {
-        ::close(fileDescriptor);
-    }
-}
-
-ControlChannel::ControlChannel(ControlChannel&& other) noexcept : fileDescriptor(other.fileDescriptor), buffer(std::move(other.buffer))
-{
-    other.fileDescriptor = -1;
+    socket.connect(boost::asio::local::stream_protocol::endpoint{path});
 }
 
 std::optional<std::string> ControlChannel::readLine()
 {
-    while (true)
+    boost::system::error_code errorCode;
+    /// Returns at once when the buffer already holds a line, and reports EOF only when no complete line is left.
+    /// The runner sends only whole lines, so unterminated trailing bytes are dropped.
+    /// NOLINTNEXTLINE(misc-include-cleaner): provided by <boost/asio/read_until.hpp>, see the includes.
+    const std::size_t lineLength = boost::asio::read_until(socket, boost::asio::dynamic_buffer(buffer), '\n', errorCode);
+    if (errorCode)
     {
-        if (const auto newlinePos = buffer.find('\n'); newlinePos != std::string::npos)
-        {
-            std::string line = buffer.substr(0, newlinePos);
-            buffer.erase(0, newlinePos + 1);
-            if (!line.empty() && line.back() == '\r')
-            {
-                line.pop_back();
-            }
-            return line;
-        }
-
-        /// Command and reply lines are short, so this size only bounds the number of syscalls.
-        constexpr std::size_t readChunkSize = 4096;
-        std::array<char, readChunkSize> chunk{};
-        /// NOLINTNEXTLINE(misc-include-cleaner): ssize_t is provided by <sys/types.h> (above); clang-tidy doesn't see the symbol mapping.
-        const ssize_t numberOfBytes = ::read(fileDescriptor, chunk.data(), chunk.size());
-        if (numberOfBytes > 0)
-        {
-            buffer.append(chunk.data(), static_cast<std::size_t>(numberOfBytes));
-            continue;
-        }
-        if (numberOfBytes < 0 && errno == EINTR)
-        {
-            continue;
-        }
-        /// The runner sends only whole lines, so unterminated trailing bytes are dropped.
         return std::nullopt;
     }
+    std::string line = buffer.substr(0, lineLength - 1);
+    buffer.erase(0, lineLength);
+    if (!line.empty() && line.back() == '\r')
+    {
+        line.pop_back();
+    }
+    return line;
 }
 
-bool ControlChannel::writeLine(std::string_view line) const
+bool ControlChannel::writeLine(std::string_view line)
 {
-    std::string framed;
-    framed.reserve(line.size() + 1);
-    framed.append(line);
-    framed.push_back('\n');
-
-    std::size_t offset = 0;
-    while (offset < framed.size())
-    {
-        /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,misc-include-cleaner): partial-write loop; ssize_t is from <sys/types.h>.
-        const ssize_t numberOfBytes = ::write(fileDescriptor, framed.data() + offset, framed.size() - offset);
-        /// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,misc-include-cleaner)
-        if (numberOfBytes > 0)
-        {
-            offset += static_cast<std::size_t>(numberOfBytes);
-            continue;
-        }
-        if (numberOfBytes < 0 && errno == EINTR)
-        {
-            continue;
-        }
-        return false;
-    }
-    return true;
+    const std::array buffers{boost::asio::buffer(line), boost::asio::buffer(std::string_view{"\n"})};
+    boost::system::error_code errorCode;
+    /// NOLINTNEXTLINE(misc-include-cleaner): provided by <boost/asio/write.hpp>, see the includes.
+    boost::asio::write(socket, buffers, errorCode);
+    return !errorCode;
 }
 
 }

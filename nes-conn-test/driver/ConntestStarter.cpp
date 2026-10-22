@@ -30,6 +30,7 @@
 #include <SourceSession.hpp>
 
 #include <argparse/argparse.hpp>
+#include <boost/system/system_error.hpp>
 
 namespace NES::ConnTest
 {
@@ -114,11 +115,18 @@ int main(int argc, char** argv)
     /// Connectors are registered at runtime, and binding and OPEN look them up by type.
     NES::loadBuiltinPlugins();
 
-    auto channel = NES::ConnTest::ControlChannel::connect(program.get<std::string>("--control-sock"));
-    if (not channel)
+    /// Only the connect is in the try block, so an exception from the session is not reported as a channel error.
+    const auto controlSock = program.get<std::string>("--control-sock");
+    std::optional<NES::ConnTest::ControlChannel> channel;
+    try
     {
+        channel.emplace(controlSock);
+    }
+    catch (const boost::system::system_error& error)
+    {
+        std::cerr << "conntest-harness: cannot connect to the control socket " << controlSock << ": " << error.code().message() << '\n';
         return std::to_underlying(NES::ConnTest::ExitCode::ChannelError);
     }
 
-    return std::to_underlying(NES::ConnTest::runSource(program, channel.value()));
+    return std::to_underlying(NES::ConnTest::runSource(program, *channel));
 }
