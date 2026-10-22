@@ -47,7 +47,7 @@ service StatisticControlService {
   rpc CollectNewStatistic (CollectStatisticRequest) returns (CollectStatisticResponse) {}
   rpc GetStatistics (GetStatisticsRequest) returns (GetStatisticsResponse) {}
   rpc DeregisterStatistic (DeregisterStatisticRequest) returns (DeregisterStatisticResponse) {}
-  rpc WatchStatistic (WatchStatisticRequest) returns (stream StatisticReport) {}
+  rpc WatchStatistic (WatchStatisticRequest) returns (stream WatchStatisticResponse) {}
 }
 
 enum Metric {
@@ -169,4 +169,14 @@ message DeregisterStatisticResponse {
 
 message WatchStatisticRequest {
   StatisticKey key = 1;
+}
+
+/// One report of the watched statistic's own query. A watcher that reads too slowly misses reports rather than its
+/// watch: dropped_before counts those it missed right before this one.
+message WatchStatisticResponse {
+  uint64 statistic_id = 1;
+  uint64 start_ts = 2;
+  uint64 end_ts = 3;
+  double value = 4;
+  uint64 dropped_before = 5;
 }

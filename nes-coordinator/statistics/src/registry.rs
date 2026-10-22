@@ -61,7 +61,20 @@ pub struct Report {
     pub probe_id: u64,
 }
 
-pub type Trigger = async_channel::Sender<Report>;
+/// A report as a watcher receives it, with how many reports it missed right before this one because it read too slowly.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Watched {
+    pub report: Report,
+    pub dropped_before: u64,
+}
+
+pub type Trigger = async_channel::Sender<Watched>;
+
+/// A trigger and how many reports did not fit into it since the last one that did.
+struct Attached {
+    trigger: Trigger,
+    dropped: u64,
+}
 
 /// What every collect for a deploying statistic awaits: the registered statistic, or why its deployment failed.
 pub type Outcome = Shared<BoxFuture<'static, Result<Registered, StatisticError>>>;
@@ -101,11 +114,18 @@ impl Slot {
             Slot::Registered(registered) | Slot::Stopping(registered) => registered.statistic_id,
         }
     }
+
+    pub fn shape(&self) -> &QueryShape {
+        match self {
+            Slot::Deploying(deploying) => &deploying.shape,
+            Slot::Registered(registered) | Slot::Stopping(registered) => &registered.shape,
+        }
+    }
 }
 
-pub struct Entry {
-    pub slot: Slot,
-    pub triggers: Vec<Trigger>,
+struct Entry {
+    slot: Slot,
+    triggers: Vec<Attached>,
 }
 
 pub enum Reservation {
@@ -183,16 +203,24 @@ impl Registry {
         }
     }
 
-    /// Sends the statistic's reports to `trigger`. False if no statistic holds the key or it is being deregistered.
-    pub fn add_trigger(&self, key: &Key, trigger: Trigger) -> bool {
+    /// Sends the reports of the statistic under `key` to `trigger`. Refused if no statistic holds the key, it is being
+    /// deregistered, or its query reports nothing.
+    pub fn add_trigger(&self, key: &Key, trigger: Trigger) -> Result<(), StatisticError> {
         let mut entries = self.entries.lock().expect("statistic registry poisoned");
-        match entries.get_mut(key) {
-            Some(entry) if !matches!(entry.slot, Slot::Stopping(_)) => {
-                entry.triggers.push(trigger);
-                true
-            }
-            _ => false,
+        let entry = entries.get_mut(key).ok_or(StatisticError::UnknownKey)?;
+        if matches!(entry.slot, Slot::Stopping(_)) {
+            return Err(StatisticError::Deregistering {
+                statistic_id: entry.slot.statistic_id(),
+            });
         }
+        if !entry.slot.shape().reports() {
+            return Err(StatisticError::NeverReports);
+        }
+        entry.triggers.push(Attached {
+            trigger,
+            dropped: 0,
+        });
+        Ok(())
     }
 
     /// Starts deregistering the statistic under `key`.
@@ -249,9 +277,25 @@ impl Registry {
             if entry.slot.statistic_id() != report.statistic_id {
                 continue;
             }
-            entry
-                .triggers
-                .retain(|trigger| trigger.try_send(report).is_ok());
+            entry.triggers.retain_mut(|attached| {
+                let watched = Watched {
+                    report,
+                    dropped_before: attached.dropped,
+                };
+                match attached.trigger.try_send(watched) {
+                    Ok(()) => {
+                        attached.dropped = 0;
+                        true
+                    }
+                    // A watcher reading too slowly misses this report rather than its watch, and learns of the gap
+                    // with the next report that fits.
+                    Err(async_channel::TrySendError::Full(_)) => {
+                        attached.dropped = attached.dropped.saturating_add(1);
+                        true
+                    }
+                    Err(async_channel::TrySendError::Closed(_)) => false,
+                }
+            });
         }
     }
 }

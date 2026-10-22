@@ -14,7 +14,7 @@
 
 use crate::proto;
 use crate::query_gen::{CollectRequest, TimeCharacteristic, TimeMeasure, TimeUnit, WindowType};
-use crate::registry::{CollectionDomain, Key, Metric, Report};
+use crate::registry::{CollectionDomain, Key, Metric, Report, Watched};
 use crate::service::{StatisticError, StatisticService};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -192,7 +192,8 @@ impl ControlService {
 
 #[tonic::async_trait]
 impl proto::statistic_control_service_server::StatisticControlService for ControlService {
-    type WatchStatisticStream = async_channel::Receiver<Result<proto::StatisticReport, Status>>;
+    type WatchStatisticStream =
+        async_channel::Receiver<Result<proto::WatchStatisticResponse, Status>>;
 
     async fn collect_new_statistic(
         &self,
@@ -253,20 +254,27 @@ impl proto::statistic_control_service_server::StatisticControlService for Contro
     ) -> Result<Response<Self::WatchStatisticStream>, Status> {
         let request = request.into_inner();
         let key = key_from_proto(&request.key)?;
-        let (reports_tx, reports_rx) = async_channel::bounded::<Report>(WATCH_CHANNEL_CAPACITY);
-        if !self.service.add_condition_trigger(&key, reports_tx) {
-            return Err(Status::not_found("statistic key is not registered"));
-        }
+        let (reports_tx, reports_rx) = async_channel::bounded::<Watched>(WATCH_CHANNEL_CAPACITY);
+        self.service
+            .add_condition_trigger(&key, reports_tx)
+            .map_err(|error| match error {
+                StatisticError::UnknownKey => Status::not_found(error.to_string()),
+                error => status_of(error),
+            })?;
 
         let (stream_tx, stream_rx) = async_channel::bounded(WATCH_CHANNEL_CAPACITY);
         tokio::spawn(async move {
-            while let Ok(report) = reports_rx.recv().await {
-                let message = proto::StatisticReport {
+            while let Ok(Watched {
+                report,
+                dropped_before,
+            }) = reports_rx.recv().await
+            {
+                let message = proto::WatchStatisticResponse {
                     statistic_id: report.statistic_id,
                     start_ts: report.start_ts,
                     end_ts: report.end_ts,
                     value: report.value,
-                    probe_id: report.probe_id,
+                    dropped_before,
                 };
                 if stream_tx.send(Ok(message)).await.is_err() {
                     break;

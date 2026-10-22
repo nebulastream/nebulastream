@@ -17,7 +17,7 @@ use crate::query_gen::{
     COLLECTION_PROBE_ID, CollectRequest, GenerateError, TimeCharacteristic, TimeMeasure, TimeUnit,
     VALUE, WindowType, probe_query, window_clause,
 };
-use crate::registry::{CollectionDomain, Metric, Report};
+use crate::registry::{CollectionDomain, Metric, Report, Watched};
 use crate::service::{
     Deployment, PROBE_SOURCE_PORT_BASE, PROBE_SOURCE_PORT_RANGE, ProbeImpulse, QuerySubmitter,
     SchemaResolver, StatisticError, StatisticService, SubmitError, WorkerCatalog,
@@ -589,7 +589,7 @@ async fn watchers_receive_the_statistics_reports_but_not_probe_answers() {
     let collected = service.collect_new_statistic(&request, None).await.unwrap();
     let key = StatisticService::key_of(&request);
     let (watcher, reports) = async_channel::unbounded();
-    assert!(service.add_condition_trigger(&key, watcher));
+    service.add_condition_trigger(&key, watcher).unwrap();
 
     let reporter = service.clone();
     let reporting_submitter = submitter.clone();
@@ -635,7 +635,77 @@ async fn watchers_receive_the_statistics_reports_but_not_probe_answers() {
         value: 40.0,
         probe_id: COLLECTION_PROBE_ID,
     });
-    assert_eq!(reports.try_recv().unwrap().value, 40.0);
+    assert_eq!(reports.try_recv().unwrap().report.value, 40.0);
+}
+
+#[tokio::test]
+async fn a_slow_watcher_misses_reports_but_keeps_its_watch() {
+    let service = service(Arc::new(StubSubmitter::default()));
+    let request = average_over_value("true");
+    let collected = service.collect_new_statistic(&request, None).await.unwrap();
+    let (watcher, reports) = async_channel::bounded(1);
+    service
+        .add_condition_trigger(&StatisticService::key_of(&request), watcher)
+        .unwrap();
+    let report = |value| Report {
+        statistic_id: collected.statistic_id,
+        start_ts: 0,
+        end_ts: 1000,
+        value,
+        probe_id: COLLECTION_PROBE_ID,
+    };
+
+    for value in [1.0, 2.0, 3.0] {
+        service.on_report(report(value));
+    }
+    assert_eq!(
+        reports.try_recv().unwrap(),
+        Watched {
+            report: report(1.0),
+            dropped_before: 0
+        }
+    );
+    assert!(
+        reports.try_recv().is_err(),
+        "the reports that did not fit are gone"
+    );
+
+    service.on_report(report(4.0));
+    assert_eq!(
+        reports.try_recv().unwrap(),
+        Watched {
+            report: report(4.0),
+            dropped_before: 2
+        },
+        "the next report that fits tells how many were missed"
+    );
+    service.on_report(report(5.0));
+    assert_eq!(reports.try_recv().unwrap().dropped_before, 0);
+}
+
+#[tokio::test]
+async fn watching_a_statistic_that_never_reports_is_refused() {
+    let submitter = Arc::new(StubSubmitter::default());
+    let service = service(submitter.clone());
+    let (watcher, _reports) = async_channel::unbounded();
+
+    let request = average_over_value("");
+    assert!(
+        matches!(
+            service
+                .collect_new_statistic(&request, Some(watcher.clone()))
+                .await,
+            Err(StatisticError::NeverReports)
+        ),
+        "a collect that brings a watcher must report"
+    );
+    assert!(submitter.queries().is_empty());
+
+    service.collect_new_statistic(&request, None).await.unwrap();
+    assert!(matches!(
+        service.add_condition_trigger(&StatisticService::key_of(&request), watcher),
+        Err(StatisticError::NeverReports)
+    ));
 }
 
 #[tokio::test]
@@ -655,17 +725,20 @@ async fn triggers_can_be_added_and_entries_removed() {
     let submitter = Arc::new(StubSubmitter::default());
     let service = service(submitter.clone());
 
-    let request = average_over_value("false");
+    let request = average_over_value("true");
     let unknown_key = StatisticService::key_of(&request);
     let (sink, reports) = async_channel::unbounded();
     assert!(
-        !service.add_condition_trigger(&unknown_key, sink.clone()),
+        matches!(
+            service.add_condition_trigger(&unknown_key, sink.clone()),
+            Err(StatisticError::UnknownKey)
+        ),
         "a trigger cannot attach to a statistic that was never requested"
     );
 
     let collected = service.collect_new_statistic(&request, None).await.unwrap();
     let key = StatisticService::key_of(&request);
-    assert!(service.add_condition_trigger(&key, sink));
+    service.add_condition_trigger(&key, sink).unwrap();
 
     service.on_report(Report {
         statistic_id: collected.statistic_id,
@@ -674,7 +747,7 @@ async fn triggers_can_be_added_and_entries_removed() {
         value: 42.0,
         probe_id: 0,
     });
-    assert_eq!(reports.try_recv().unwrap().value, 42.0);
+    assert_eq!(reports.try_recv().unwrap().report.value, 42.0);
 
     assert_eq!(service.registered_statistics(), 1);
     assert!(service.deregister_statistic(&key).await.unwrap());
@@ -1542,6 +1615,36 @@ mod transport {
             .await
             .unwrap_err();
         assert_eq!(status.code(), tonic::Code::NotFound);
+    }
+
+    #[tokio::test]
+    async fn watching_a_statistic_that_never_reports_fails_on_the_wire() {
+        let submitter = Arc::new(StubSubmitter::default());
+        let service = service(submitter);
+        let endpoint = serve(service).await;
+
+        let mut client =
+            proto::statistic_control_service_client::StatisticControlServiceClient::connect(
+                endpoint,
+            )
+            .await
+            .unwrap();
+        client
+            .collect_new_statistic(collect_request("false"))
+            .await
+            .unwrap();
+        let status = client
+            .watch_statistic(proto::WatchStatisticRequest {
+                key: Some(statistic_key()),
+            })
+            .await
+            .unwrap_err();
+        assert_eq!(status.code(), tonic::Code::FailedPrecondition);
+        assert!(
+            status.message().contains("without a condition"),
+            "{}",
+            status.message()
+        );
     }
 
     #[tokio::test]

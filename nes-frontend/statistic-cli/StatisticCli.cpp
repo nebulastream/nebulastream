@@ -185,13 +185,17 @@ int main(const int argc, char** argv)
 
         /// Prints each report the statistic's query sends while its condition holds, until --count arrived.
         const auto reader = stub->WatchStatistic(&context, request);
-        StatisticReport statisticReport;
+        WatchStatisticResponse statisticReport;
         const auto count = arguments.get<uint64_t>("--count");
         for (uint64_t received = 0; received < count; ++received)
         {
             if (not reader->Read(&statisticReport))
             {
                 return report(reader->Finish());
+            }
+            if (statisticReport.dropped_before() > 0)
+            {
+                std::cerr << statisticReport.dropped_before() << " reports were missed before the next one\n";
             }
             std::cout << statisticReport.statistic_id() << "," << statisticReport.start_ts() << "," << statisticReport.end_ts() << ","
                       << statisticReport.value() << "\n"

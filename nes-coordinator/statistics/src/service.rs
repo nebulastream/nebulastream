@@ -53,6 +53,8 @@ pub enum StatisticError {
     Deregistering { statistic_id: u64 },
     #[error("statistic {statistic_id} was deregistered before its query was deployed")]
     DeregisteredWhileDeploying { statistic_id: u64 },
+    #[error("a statistic collected without a condition sends no reports to watch")]
+    NeverReports,
     #[error("the deployment of statistic {statistic_id} ended abruptly: {reason}")]
     DeploymentAborted { statistic_id: u64, reason: String },
     #[error(
@@ -246,6 +248,9 @@ impl StatisticService {
 
         let key = Self::key_of(request);
         let shape = QueryShape::of(request);
+        if trigger.is_some() && !shape.reports() {
+            return Err(StatisticError::NeverReports);
+        }
         let (holder, already_existed) = match self
             .registry
             .reserve(&key, || self.start_deployment(&key, request, address))
@@ -272,7 +277,8 @@ impl StatisticService {
             });
         }
         if let Some(trigger) = trigger {
-            self.registry.add_trigger(&key, trigger);
+            // Fails only if the statistic was deregistered meanwhile, which the outcome below reports.
+            let _ = self.registry.add_trigger(&key, trigger);
         }
 
         let registered = match holder {
@@ -457,7 +463,7 @@ impl StatisticService {
         }
     }
 
-    pub fn add_condition_trigger(&self, key: &Key, trigger: Trigger) -> bool {
+    pub fn add_condition_trigger(&self, key: &Key, trigger: Trigger) -> Result<(), StatisticError> {
         self.registry.add_trigger(key, trigger)
     }
 

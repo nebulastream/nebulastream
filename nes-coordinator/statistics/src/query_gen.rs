@@ -129,6 +129,11 @@ impl QueryShape {
         }
     }
 
+    /// Whether the query sends reports at all, rather than only building the statistic.
+    pub fn reports(&self) -> bool {
+        !sends_never(&self.condition)
+    }
+
     /// How this shape differs from the `existing` one, or `None` if both build the same query. Windows compare by size
     /// and slide, so a tumbling window equals a sliding one that advances by its size. Conditions compare after
     /// trimming, with the literal ones matched as the query generator reads them.
