@@ -39,8 +39,7 @@ public:
     boost::asio::awaitable<std::string> call(std::vector<std::string> arguments) override;
 
 private:
-    boost::asio::awaitable<std::string>
-    exchange(
+    boost::asio::awaitable<std::string> exchange(
         const std::string& host,
         const std::string& port,
         const std::string& target,
