@@ -63,7 +63,7 @@ class NLJOperatorHandler final : public StreamJoinOperatorHandler
 {
 public:
     NLJOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
+        SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);

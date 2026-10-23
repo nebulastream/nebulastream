@@ -22,6 +22,7 @@ add_source_files(nes-query-compiler
         LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
         LowerToPhysicalEventTimeWatermarkAssigner.cpp
         LowerToPhysicalInferModel.cpp
+        SourcesOfInputOrigins.cpp
 )
 
 add_registry_entry(LoweringRule NLJoin)
