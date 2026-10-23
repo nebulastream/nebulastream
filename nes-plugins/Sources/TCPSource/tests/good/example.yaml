@@ -1,0 +1,64 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Topology:
+#
+#   ┌──────────────┐         ┌─────────────────────────┐
+#   │ tcp-peer     │  ◀──    │  worker-1  (cap: 10000) │
+#   │ port: 9999   │ connect │  S: TCP_SOURCE          │
+#   │              │         │  K: FILE_SINK           │
+#   │              │         │  → results.csv          │
+#   └──────────────┘         └─────────────────────────┘
+#
+#   Single worker connects to the external TCP server, parses CSV,
+#   and writes the UINT64 column to results.csv.
+
+query: |
+  SELECT
+    *
+  FROM
+    TCP
+  INTO
+    FILE_SINK
+sinks:
+  - name: FILE_SINK
+    host: worker-1:8080
+    schema:
+      - name: ID
+        type: UINT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: results.csv
+
+logical:
+  - name: TCP
+    schema:
+      - name: ID
+        type: UINT64
+
+physical:
+  - logical: TCP
+    host: worker-1:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: TCP
+    source_config:
+      socket_host: tcp-peer
+      socket_port: 9999
+      flush_interval_ms: 100
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000

@@ -156,13 +156,15 @@ struct ConfigParametersTCP
 
 class TCPSource : public Source
 {
-    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
     /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
     constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
     /// We implicitly add one microsecond to avoid operation from never timing out
     /// (https://linux.die.net/man/7/socket)
     constexpr static suseconds_t IMPLICIT_TIMEOUT_USEC = 1;
     constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
+    /// Bounded backoff between polls of an idle connection. Keeps an idle/slow peer (or a sub-millisecond
+    /// SO_RCVTIMEO) from pinning a CPU core at 100% while staying responsive to query teardown.
+    constexpr static std::chrono::milliseconds IDLE_POLL_BACKOFF{10};
 
 public:
     static const std::string& name()
@@ -191,8 +193,21 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    /// Classification of a single read() result. Only EndOfStream may end the stream: transient conditions
+    /// are retried and a genuine socket error fails the query.
+    enum class ReadOutcome : uint8_t
+    {
+        Data, /// read returned > 0 bytes
+        EndOfStream, /// peer closed the connection cleanly (read returned 0)
+        Retry, /// interrupted before any data arrived (EINTR); read must be retried
+        WouldBlock, /// no data within the receive timeout (EAGAIN/EWOULDBLOCK); poll again
+        Error, /// genuine socket error (e.g. ECONNRESET); caller must surface it
+    };
+
+    [[nodiscard]] static ReadOutcome classifyReadResult(ssize_t bytesReceived, int errnoValue);
+
+    bool tryToConnect(const addrinfo* result);
+    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes, const std::stop_token& stopToken);
 
     int connection = -1;
     int sockfd = -1;
