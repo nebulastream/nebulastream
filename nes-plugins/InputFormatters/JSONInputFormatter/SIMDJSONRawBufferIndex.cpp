@@ -50,6 +50,7 @@
 #include <val_ptr.hpp>
 #include <val_std.hpp>
 
+#include <DataTypes/LazyValueData.hpp>
 #include <SIMDJSONInputFormatIndexer.hpp>
 #include <ValueDeserializer.hpp>
 #include <ValueDeserializerUtil.hpp>
@@ -179,14 +180,17 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         const nautilus::val<const int8_t*> address = fieldAccessResult.get(&RawJsonAccessResult::ptrToRawJson);
         const nautilus::val<uint64_t> size = fieldAccessResult.get(&RawJsonAccessResult::sizeOfRawJson);
 
-        /// Create the deserializer for the field and deserialize the value.
-        /// These are the temporary defaults for our JSON format. Later, these arguments will be set by the user in the source definition.
-        const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = true, .hasTrailingSpaces = true};
-        const std::unique_ptr<ValueDeserializer> valueDeserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal parsedVal
-            = valueDeserializer->deserializeToVarVal(static_cast<nautilus::val<int8_t*>>(address), size, indexer.getNullValues(), arena);
-        record.write(fieldName, parsedVal);
+        /// Create and write a lazy value representation of the value to deserialize on-demand.
+        const LazyValueData lazyVal{
+            static_cast<nautilus::val<int8_t*>>(address),
+            size,
+            indexer.getDeserializerType(fieldName, fieldDataType.type),
+            true, /// JSON Strings are quoted
+            true, /// The raw json value might have trailing spaces
+            fieldDataType,
+            indexer.getNullValues(),
+            arena.getArena()};
+        record.write(fieldName, VarVal{lazyVal, fieldDataType.nullable, false});
     }
     /// Increment iterator and return record
     nautilus::invoke(

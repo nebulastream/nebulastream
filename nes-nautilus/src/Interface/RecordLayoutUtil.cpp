@@ -99,7 +99,8 @@ void writeRecordFields(const std::vector<FieldAccess>& fields, const Record& rec
         const auto& [name, dataType, address] = fields.at(i);
         if (record.hasField(name))
         {
-            writeFieldValue(dataType, address, record.read(name), storeVarSized);
+            /// Deserialize remaining lazy values before writing them into the buffer.
+            writeFieldValue(dataType, address, record.read(name).getAsDeserializedUnderlyingValue(), storeVarSized);
         }
     }
 }

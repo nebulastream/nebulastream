@@ -17,7 +17,6 @@
 #include <numeric>
 #include <ostream>
 #include <ranges>
-#include <string>
 #include <unordered_map>
 #include <DataTypes/VarVal.hpp>
 #include <fmt/format.h>
@@ -60,6 +59,14 @@ void Record::reassignFields(const Record& other)
     for (const auto& [fieldIdentifier, value] : nautilus::static_iterable(other.recordFields))
     {
         write(fieldIdentifier, value);
+    }
+}
+
+void Record::deserializeAllFields()
+{
+    for (auto& [fieldName, value] : nautilus::static_iterable(recordFields))
+    {
+        value.deserializeUnderlyingVal();
     }
 }
 
