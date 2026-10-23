@@ -1,0 +1,10 @@
+-- A TCP source whose flush interval (one day) never expires during a test,
+-- so a buffer can only go downstream because it is full.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE TCP SET (
+    'localhost' AS "SOURCE".SOCKET_HOST,
+    '9000'      AS "SOURCE".SOCKET_PORT,
+    '86400000'  AS "SOURCE".FLUSH_INTERVAL_MS,
+    'JSON'      AS INPUT_FORMATTER."TYPE"
+);
