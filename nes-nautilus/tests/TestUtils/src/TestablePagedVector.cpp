@@ -40,7 +40,7 @@ namespace NES::TestUtils
 
 /// NOLINTBEGIN(bugprone-unchecked-optional-access, performance-unnecessary-value-param)
 TestablePagedVector::TestablePagedVector(
-    const std::vector<DataType>& fieldTypes, AbstractBufferProvider& bufferManager, EngineMode mode, uint64_t pageBufferSize)
+    const std::vector<DataType>& fieldTypes, AbstractBufferProvider& bufferManager, EngineMode mode, const uint64_t inlineSizeInBytes)
     : dataTypes(fieldTypes), bufferManager(bufferManager)
 {
     const auto schema = createSchemaFromDataTypes(dataTypes);
@@ -53,8 +53,8 @@ TestablePagedVector::TestablePagedVector(
     options.setOption("mlir.enableMultithreading", false);
     engine = std::make_unique<nautilus::engine::NautilusEngine>(makeEngine(mode));
 
-    pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
-    PagedVector::init(pagedVector, pageBufferSize, getSizeInBytes(layout->getSchema()));
+    pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize(inlineSizeInBytes)).value();
+    PagedVector::init(pagedVector, bufferManager, getSizeInBytes(layout->getSchema()), inlineSizeInBytes);
 
     pushbackFn.emplace(engine->registerFunction(
         std::function(
@@ -145,7 +145,8 @@ bool TestablePagedVector::pagesMatchInitPageSize() const
     const auto pageBufferSize = loaded.getPageBufferSize();
     for (uint64_t pageIdx = 0; pageIdx < loaded.getNumberOfPages(); ++pageIdx)
     {
-        if (pagedVector.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx)}).getBufferSize() != pageBufferSize)
+        /// A page is a pooled buffer of the provider, never smaller than the page size of the vector.
+        if (pagedVector.loadChildBuffer(loaded.getPageChildIndex(pageIdx)).getBufferSize() < pageBufferSize)
         {
             return false;
         }

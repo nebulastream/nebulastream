@@ -24,6 +24,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/EntryRecordsRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
@@ -85,47 +86,23 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
             record,
             [&](const nautilus::val<AbstractHashMapEntry*>& entry)
             {
-                /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
+                /// If the entry for the provided keys does not exist, we need to create a new one and prepare where its records are stored
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
                     entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
-                const auto state = entryRefReset.getValueMemArea();
-                const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
-                /// One paged vector exists per distinct key per hash map, so its pages follow the state page-size knob. Sizing them by the
-                /// operator buffer size instead multiplies the join state by bufferSize/pageSize, which exhausts the unpooled budget once
-                /// garbage collection falls behind the build.
-                const nautilus::val<uint64_t> pageSize = hashMapConfig.pageSize;
-                nautilus::invoke(
-                    +[](TupleBuffer* hashMapBuf,
-                        uint32_t* valueMemArea,
-                        AbstractBufferProvider* bufferProvider,
-                        const uint64_t tupleSize,
-                        const uint64_t pageSize) -> void
-                    {
-                        if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-                        {
-                            PagedVector::init(pagedVectorBuffer.value(), pageSize, tupleSize);
-                            auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer.value());
-                            *valueMemArea = childIndex.getRawValue();
-                            return;
-                        }
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
-                    },
-                    hashMapBuffer.asArg(),
-                    static_cast<nautilus::val<uint32_t*>>(state),
-                    ctx.pipelineMemoryProvider.bufferProvider,
-                    tupleSize,
-                    pageSize);
+                EntryRecordsRef::initialize(
+                    borrowedHashMapBuffer,
+                    entryRefReset.getValueMemArea(),
+                    tupleLayout,
+                    hashMapConfig.inlineRecords,
+                    ctx.pipelineMemoryProvider.bufferProvider);
             },
             ctx.pipelineMemoryProvider.bufferProvider);
 
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{
             hashMapEntry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
-        auto pagedVecBuffer
-            = borrowedHashMapBuffer.getChildFromIndexAddress(static_cast<nautilus::val<uint32_t*>>(entryRef.getValueMemArea()));
-        /// Move the owned buffer into the PagedVectorRef (which takes a NautilusBuffer), so it keeps the paged vector alive.
-        PagedVectorRef pagedVectorRef{std::move(pagedVecBuffer), tupleLayout};
-        pagedVectorRef.pushBack(record, ctx.pipelineMemoryProvider.bufferProvider);
+        EntryRecordsRef records{borrowedHashMapBuffer, entryRef.getValueMemArea(), tupleLayout, hashMapConfig.inlineRecords};
+        records.pushBack(record, ctx.pipelineMemoryProvider.bufferProvider);
     }
 }
 
