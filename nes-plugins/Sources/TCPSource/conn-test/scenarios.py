@@ -22,6 +22,7 @@ from conntest_runner.scenario_bindings import (
     crash_recovery,
     empty,
     full_buffer_not_held,
+    partial_buffer_held,
     round_trip_1_buffer,
     round_trip_n_buffers,
 )
@@ -38,6 +39,8 @@ SCENARIOS = [
     close_while_reading("basic.nesql"),
     # One full buffer is emitted, while the one-day flush interval holds back the partly filled remainder.
     full_buffer_not_held("no_flush.nesql"),
+    # A partly filled buffer is held back for the whole 2 s interval that short_flush.nesql sets.
+    partial_buffer_held("short_flush.nesql", flush_interval_ms=2000),
     # The respawned source opens a new connection, and the loader sends the rest of the data there.
     crash_recovery("basic.nesql"),
 ]
