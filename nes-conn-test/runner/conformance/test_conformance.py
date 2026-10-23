@@ -22,13 +22,16 @@ import pytest
 from conntest_runner.config_rewrite import apply_overrides
 from conntest_runner.datamodel import SourceModel, parse_source_schema
 from conntest_runner.discovery import PluginEntry, binding_problems, discover_plugin, resolve_configs
+from conntest_runner.endpoint import split_endpoint
 from conntest_runner.harness import Source
+from conntest_runner.link import Link
 from conntest_runner.naming import unique_token
 from conntest_runner.scenarios import (
     Ctx,
     get_scenario,
     get_spec,
     run_case,
+    scenario_needs_link,
     scenario_names,
 )
 
@@ -117,28 +120,41 @@ def test_scenario(
     connector_endpoint = loader.dead_endpoint if scenario.name == "bad_endpoint" else loader.endpoint
     if connector_endpoint is None:
         pytest.fail(f"{plugin.name} has no compose service, so its loader must set its endpoint")
+    link = None
+    if scenario_needs_link(scenario.name):
+        # The proxy listens on the backend's port number in the stack's only toxiproxy container.
+        # Parallel pytest workers would all bind that port, so this relies on the runner running one test at a time.
+        _, port = split_endpoint(connector_endpoint)
+        link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), listen_port=port, upstream=connector_endpoint).create()
+        connector_endpoint = f"toxiproxy:{port}"
     cfg_file = _render_config(loader, config_path, endpoint=connector_endpoint, target=target, out_dir=tmp_path)
     schema = parse_source_schema(config_path.read_text(encoding="utf-8"))
     data_model = SourceModel(schema)
 
     observed_path = tmp_path / "observed.jsonl"
-    with Source(
-        harness=harness_binary,
-        config=cfg_file,
-        observed_path=observed_path,
-        extra_args=[f"--observed-path={observed_path}", f"--buffer-size={_BUFFER_SIZE}"],
-        global_deadline_s=_GLOBAL_DEADLINE_S,
-        # Kept next to the config and the observed bytes, so a failed case has all of its artifacts in one place.
-        log_path=tmp_path / "harness.log",
-    ) as source:
-        n_buffers = _buffers(scenario)
-        ctx = Ctx(
-            loader=loader,
-            data=data_model,
-            target=target,
-            source=source,
-            rows=data_model.make_rows(n_buffers, _DEFAULT_SEED, _BUFFER_SIZE) if n_buffers is not None else [],
-            schema=schema,
-            args=scenario.args,
-        )
-        run_case(get_scenario(scenario.name), ctx, expect)
+    try:
+        with Source(
+            harness=harness_binary,
+            config=cfg_file,
+            observed_path=observed_path,
+            extra_args=[f"--observed-path={observed_path}", f"--buffer-size={_BUFFER_SIZE}"],
+            global_deadline_s=_GLOBAL_DEADLINE_S,
+            # Kept next to the config and the observed bytes, so a failed case has all of its artifacts in one place.
+            log_path=tmp_path / "harness.log",
+        ) as source:
+            n_buffers = _buffers(scenario)
+            ctx = Ctx(
+                loader=loader,
+                data=data_model,
+                target=target,
+                source=source,
+                rows=data_model.make_rows(n_buffers, _DEFAULT_SEED, _BUFFER_SIZE) if n_buffers is not None else [],
+                schema=schema,
+                args=scenario.args,
+                link=link,
+            )
+            run_case(get_scenario(scenario.name), ctx, expect)
+    finally:
+        # After the harness has stopped, so the connector never sees the proxy vanish mid-scenario.
+        if link is not None:
+            link.cleanup()
