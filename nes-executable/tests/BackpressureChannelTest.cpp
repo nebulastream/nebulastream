@@ -43,20 +43,33 @@ protected:
     void SetUp() override { Logger::setupLogging("BackpressureChannelTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
-/// Returns whether `wait` is still blocked after a grace period. The waiting thread is unblocked via its stop token.
+/// Returns whether `wait` returns within `timeout`. A still blocked waiting thread is unblocked via its stop token.
+static bool passesWithin(const BackpressureListener& listener, std::chrono::milliseconds timeout)
+{
+    std::promise<void> passed;
+    auto future = passed.get_future();
+    const std::jthread waiter(
+        [&](const std::stop_token& stopToken)
+        {
+            listener.wait(stopToken);
+            if (!stopToken.stop_requested())
+            {
+                passed.set_value();
+            }
+        });
+    return future.wait_for(timeout) == std::future_status::ready;
+}
+
+/// A short grace period suffices to detect a blocked listener, as a slow waiting thread only makes it look more blocked.
 static bool isBlocked(const BackpressureListener& listener)
 {
-    std::atomic passed{false};
-    {
-        const std::jthread waiter(
-            [&](const std::stop_token& stopToken)
-            {
-                listener.wait(stopToken);
-                passed = !stopToken.stop_requested();
-            });
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-    return !passed;
+    return !passesWithin(listener, std::chrono::milliseconds(50));
+}
+
+/// An unblocked listener gets a generous timeout, as the waiting thread may be slow to start on a loaded machine.
+static bool isUnblocked(const BackpressureListener& listener)
+{
+    return passesWithin(listener, std::chrono::seconds(10));
 }
 
 /// Test basic construction and destruction of Backpressure Controller and BackpressureListener
@@ -353,7 +366,7 @@ TEST_F(BackpressureChannelTest, ChannelIsBlockedWhileAnyHolderAppliesPressure)
     EXPECT_TRUE(isBlocked(listener));
 
     EXPECT_TRUE(second.releasePressure());
-    EXPECT_FALSE(isBlocked(listener));
+    EXPECT_TRUE(isUnblocked(listener));
 }
 
 TEST_F(BackpressureChannelTest, CopyStartsWithoutPressure)
@@ -374,7 +387,7 @@ TEST_F(BackpressureChannelTest, DestroyingHolderReleasesItsPressure)
         EXPECT_TRUE(second.applyPressure());
         EXPECT_TRUE(isBlocked(listener));
     }
-    EXPECT_FALSE(isBlocked(listener));
+    EXPECT_TRUE(isUnblocked(listener));
 }
 
 TEST_F(BackpressureChannelTest, PressureOnOriginOnlyBlocksItsListener)
@@ -385,10 +398,10 @@ TEST_F(BackpressureChannelTest, PressureOnOriginOnlyBlocksItsListener)
 
     EXPECT_TRUE(controller.applyPressure(OriginId(1)));
     EXPECT_TRUE(isBlocked(listeners.at(OriginId(1))));
-    EXPECT_FALSE(isBlocked(listeners.at(OriginId(2))));
+    EXPECT_TRUE(isUnblocked(listeners.at(OriginId(2))));
 
     EXPECT_TRUE(controller.releasePressure());
-    EXPECT_FALSE(isBlocked(listeners.at(OriginId(1))));
+    EXPECT_TRUE(isUnblocked(listeners.at(OriginId(1))));
 }
 
 }
