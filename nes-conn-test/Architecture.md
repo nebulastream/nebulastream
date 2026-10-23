@@ -58,6 +58,8 @@ FILL <n_rows> <n_bytes>  let the source read until <n_bytes> arrived or the stre
 CLOSE                    stop the source thread, which closes the connector
 ```
 
+A FILL reply also lists how long each read that returned a partly filled buffer took (`partial_read_ms`),
+measured by the harness around the connector's `fillTupleBuffer`, so a scenario can check the flush interval without a timed window.
 A failure reply has the error's origin, code, name and phase, for example
 `{"ok":false,"phase":"open","origin":"connector","code":4002,"name":"CannotOpenSource","message":"..."}`.
 A scenario may expect a connector error; a harness error, such as a config that does not bind or a step timeout, always fails it.

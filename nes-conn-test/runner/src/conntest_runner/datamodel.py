@@ -184,8 +184,16 @@ class SourceModel:
         self.schema = schema
 
     def make_rows(self, n_buffers: int, seed: int, buffer_size: int) -> list[tuple[Any, ...]]:
-        """As many rows as fill ``n_buffers`` in the JSONL encoding that a byte source such as TCP receives."""
-        return generate_rows(self.schema, seed=seed, max_bytes=n_buffers * buffer_size)
+        """As many rows as fit in less than ``n_buffers`` in the JSONL encoding that a byte source such as TCP receives.
+
+        One byte short of ``n_buffers`` means the last buffer is never full,
+        so every scenario sends ``n_buffers - 1`` full buffers and one partly filled one.
+        """
+        return generate_rows(self.schema, seed=seed, max_bytes=n_buffers * buffer_size - 1)
+
+    def encode(self, rows: list[tuple[Any, ...]]) -> bytes:
+        """The JSONL bytes that a byte source receives for ``rows``."""
+        return rows_to_jsonl(self.schema, rows)
 
     def fill_counts(self, rows: list[tuple[Any, ...]]) -> tuple[int, int]:
         return len(rows), len(rows_to_jsonl(self.schema, rows))

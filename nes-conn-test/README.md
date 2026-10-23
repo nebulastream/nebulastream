@@ -55,6 +55,8 @@ and supplies the binding: which config(s) and the expected outcome.
 | `empty` | open → close with nothing seeded |
 | `bad_endpoint` | opening against a dead endpoint raises the declared error |
 | `close_while_reading` | close while the connector waits in a read for data that never comes; the stop must interrupt it within the step timeout |
+| `full_buffer_not_held` | with a flush interval that never expires during a test, a full buffer still arrives, and the partly filled rest does not |
+| `partial_buffer_held` | a partly filled buffer is held back for the whole flush interval that the binding declares; the harness measures each read that returns one |
 | `crash_recovery` | SIGKILL the harness after a first batch; a fresh process re-opens and reads the second |
 
 The catalog function writes only the ideal path. `run_case` enforces the declared outcome: an `OK`
@@ -64,7 +66,8 @@ and a harness-origin error (infrastructure failure, step timeout) always fails.
 Data comes from one deterministic generator: it parses the schema from the config's
 `CREATE LOGICAL SOURCE`, and its rows are both
 what the loader seeds and the oracle the observed stream is compared against. The wire form is JSONL.
-N buffers of data are as many rows as fit in N times the harness's buffer size (4096 bytes) in that encoding.
+N buffers of data are as many rows as fit in less than N times the harness's buffer size (4096 bytes) in that encoding,
+so the last buffer is always partly filled.
 A failing test id carries N (e.g. `round_trip_n_buffers-TCPSource-basic-N100`), so it replays exactly.
 
 Config validation is not a scenario.
@@ -102,6 +105,7 @@ The loader implements three methods (`conntest_runner/contracts.py`):
   a topic) onto the config keys the `.nesql` declares; every other authored value passes through.
 - `setup(target, schema)` prepares the service before the connector opens.
 - `seed_batch(rows, target)` writes one batch of generated rows (`rows_to_jsonl` renders them).
+- `wait_seeded()` is optional: a loader whose `seed_batch` returns before the backend has the rows waits for them here.
 
 The loader gets the endpoint of the service in `compose.yaml`.
 A connector without a service has no `compose.yaml`, and its loader starts the server itself and sets its own endpoint.

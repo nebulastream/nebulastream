@@ -14,9 +14,12 @@
 
 #include <Reply.hpp>
 
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include <ErrorHandling.hpp>
 
@@ -45,6 +48,7 @@ struct FillReply
     bool ok = true;
     std::string phase;
     bool eos = false;
+    std::vector<std::int64_t> partial_read_ms; /// NOLINT(readability-identifier-naming): the member name is the JSON key
 };
 
 struct ErrorReply
@@ -106,9 +110,15 @@ std::string okReply(const std::string_view phase)
     return write(OkReply{.phase = std::string{phase}});
 }
 
-std::string fillReply(const std::string_view phase, const bool eos)
+std::string fillReply(const std::string_view phase, const bool eos, const std::vector<std::chrono::milliseconds>& partialReads)
 {
-    return write(FillReply{.phase = std::string{phase}, .eos = eos});
+    std::vector<std::int64_t> partialReadMs;
+    partialReadMs.reserve(partialReads.size());
+    for (const auto duration : partialReads)
+    {
+        partialReadMs.push_back(duration.count());
+    }
+    return write(FillReply{.phase = std::string{phase}, .eos = eos, .partial_read_ms = std::move(partialReadMs)});
 }
 
 }
