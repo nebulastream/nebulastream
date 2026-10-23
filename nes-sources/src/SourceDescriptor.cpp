@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>

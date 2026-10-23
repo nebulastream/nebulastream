@@ -14,21 +14,31 @@
 
 #pragma once
 
-#include <cstddef>
-#include <optional>
+#include <expected>
 #include <ostream>
-#include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+/// Sink-defined config struct: the void sink declares no config parameters, but the (empty)
+/// struct still travels through the SinkDescriptor and its registry entry so that descriptors
+/// are handled uniformly.
+struct VoidSinkConfig
+{
+    static std::expected<VoidSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// A sink that simply dumps input tuples into the void
 /// As such the output written to file will always be
@@ -37,29 +47,15 @@ class VoidSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Void";
-    explicit VoidSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit VoidSink(BackpressureController backpressureController, const VoidSinkConfig& config);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
-};
-
-struct ConfigParametersVoid
-{
-    /// Void performs no I/O, but the output formatting in front of it is part of what a benchmark may want to
-    /// measure. Defaults to Native, which hands the buffers to the sink without a formatting step.
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "OUTPUT_FORMAT",
-        "Native",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT);
 };
 }
 
