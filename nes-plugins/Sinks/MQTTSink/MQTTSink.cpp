@@ -14,10 +14,10 @@
 
 #include <MQTTSink.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -112,8 +112,18 @@ void MQTTSink::start(PipelineExecutionContext&)
     }
 }
 
-SendResult MQTTSink::tryPublish(const TupleBuffer& buffer)
+void MQTTSink::throwIfConnectionLost() const
 {
+    if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
+    {
+        throw CannotWriteToSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
+    }
+}
+
+bool MQTTSink::tryPublish(const TupleBuffer& buffer)
+{
+    throwIfConnectionLost();
+
     size_t messageSize = buffer.getNumberOfTuples();
     for (size_t index = 0; index < buffer.getNumberOfChildBuffers(); index++)
     {
@@ -138,11 +148,11 @@ SendResult MQTTSink::tryPublish(const TupleBuffer& buffer)
     {
         if (e.get_return_code() == MQTTASYNC_MAX_BUFFERED_MESSAGES)
         {
-            return SendResult::Full;
+            return false;
         }
         throw CannotWriteToSink("MQTTSink publish to topic {} failed: {}", topic, e.what());
     }
-    return SendResult::Ok;
+    return true;
 }
 
 void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
@@ -150,32 +160,10 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     PRECONDITION(client, "MQTTSink client is not initialized");
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in MQTTSink.");
 
-    if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
+    if (const auto retry = backpressureHandler.send(
+            inputTupleBuffer, backpressureController, [this](const TupleBuffer& buffer) { return tryPublish(buffer); }))
     {
-        throw CannotWriteToSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
-    }
-
-    auto currentBuffer = std::optional(inputTupleBuffer);
-    while (currentBuffer)
-    {
-        switch (tryPublish(*currentBuffer))
-        {
-            case SendResult::Ok: {
-                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
-                continue;
-            }
-            case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
-                {
-                    pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
-                }
-                return;
-            }
-            case SendResult::Closed: {
-                /// tryPublish() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
-                INVARIANT(false, "tryPublish unexpectedly returned SendResult::Closed");
-            }
-        }
+        pec.repeatTask(*retry, BackpressureHandler::RETRY_INTERVAL);
     }
 }
 
@@ -185,22 +173,27 @@ void MQTTSink::stop(PipelineExecutionContext& pec)
     {
         return;
     }
-    INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
-    if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
-    {
-        NES_WARNING("lost connection to broker {}: {}", serverURI, cause);
-    }
     try
     {
-        /// Wait for all in-flight QoS>=1 messages to be acknowledged before disconnecting.
-        /// QoS 0 messages have no pending token; nothing to wait for.
-        for (const auto& token : client->get_pending_delivery_tokens())
+        if (!backpressureHandler.stop(
+                backpressureController,
+                [this](const TupleBuffer& buffer) { return tryPublish(buffer); },
+                [this]
+                {
+                    throwIfConnectionLost();
+                    /// Wait for all in-flight QoS>=1 messages to be acknowledged before disconnecting.
+                    /// QoS 0 messages have no pending token; nothing to wait for.
+                    return std::ranges::all_of(
+                        client->get_pending_delivery_tokens(), [](const auto& token) { return token->is_complete(); });
+                }))
         {
-            if (!token->is_complete())
+            if (stopRetries++ < MAX_STOP_RETRIES)
             {
-                pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
+                pec.repeatTask({}, BackpressureHandler::RETRY_INTERVAL);
                 return;
             }
+            NES_WARNING("MQTTSink for topic {} could not flush to {} within {} retries", topic, serverURI, MAX_STOP_RETRIES);
+            backpressureHandler.close(backpressureController);
         }
         if (client->is_connected())
         {

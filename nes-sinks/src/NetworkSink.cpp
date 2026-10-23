@@ -17,7 +17,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <span>
 #include <string>
@@ -83,17 +82,15 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
         return;
     }
 
-    if (!closed)
+    /// Once the queued buffers are sent, the sender network service still has to send its own pending buffers.
+    if (!backpressureHandler.stop(
+            backpressureController,
+            [this](const TupleBuffer& buffer) { return trySend(buffer); },
+            [this] { return flush_sender_channel(*this->channel.value()); }))
     {
-        INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
-
-        /// Check if the sender network service has pending buffers to send
-        /// If yes, keep the pipeline alive by emitting an empty buffer
-        if (!flush_sender_channel(*this->channel.value()))
-        {
-            pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
-            return;
-        }
+        /// Not bounded: the receiving side may legitimately take long to register its channel or to consume.
+        pec.repeatTask({}, BackpressureHandler::RETRY_INTERVAL);
+        return;
     }
 
     NES_DEBUG("Closing Sender channel {}", channelId);
@@ -101,72 +98,57 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
     NES_DEBUG("Sender channel {} closed", channelId);
 }
 
+bool NetworkSink::trySend(const TupleBuffer& buffer)
+{
+    /// Set buffer header
+    const SerializedTupleBufferHeader metadata{
+        .sequence_number = buffer.getSequenceNumber().getRawValue(),
+        .origin_id = buffer.getOriginId().getRawValue(),
+        .chunk_number = buffer.getChunkNumber().getRawValue(),
+        .number_of_tuples = buffer.getNumberOfTuples(),
+        .watermark = buffer.getWatermark().getRawValue(),
+        .last_chunk = buffer.isLastChunk()};
+
+    /// Set child buffers
+    std::vector<rust::Slice<const uint8_t>> children;
+    children.reserve(buffer.getNumberOfChildBuffers());
+    for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
+    {
+        auto childBuffer = buffer.loadChildBuffer(ChildBufferIndex(childIdx));
+        auto childMemory = childBuffer.getAvailableMemoryArea<const uint8_t>();
+        const auto usedChildBytes = childBuffer.getNumberOfTuples();
+        const auto childPayload
+            = (usedChildBytes > 0 and usedChildBytes <= childMemory.size()) ? childMemory.subspan(0, usedChildBytes) : childMemory;
+        children.emplace_back(childPayload);
+    }
+
+    std::span usedBufferMemory(buffer.getAvailableMemoryArea<const uint8_t>().data(), buffer.getNumberOfTuples() * tupleSize);
+    /// Set data and send over the network
+    switch (send_buffer(*channel.value(), metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children)))
+    {
+        case SendResult::Ok:
+            NES_TRACE("Sent buffer {}", buffer.getSequenceNumber());
+            return true;
+        case SendResult::Full:
+            return false;
+        case SendResult::Closed:
+            /// Currently there is no way to propagate a query stop without a failure from a sink.
+            /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
+            /// from the downstream operator is unexpected, thus failing the query is reasonable.
+            throw CannotWriteToSink("NetworkSink was closed by the other side");
+    }
+    std::unreachable();
+}
+
 void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(channel, "Sender channel is not initialized");
     PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");
 
-    if (closed)
+    if (const auto retry
+        = backpressureHandler.send(inputBuffer, backpressureController, [this](const TupleBuffer& buffer) { return trySend(buffer); }))
     {
-        NES_WARNING("Sink is closed dropping buffer: {}-{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
-        return;
-    }
-
-    auto currentBuffer = std::optional(inputBuffer);
-    while (currentBuffer)
-    {
-        /// Set buffer header
-        const SerializedTupleBufferHeader metadata{
-            .sequence_number = currentBuffer->getSequenceNumber().getRawValue(),
-            .origin_id = currentBuffer->getOriginId().getRawValue(),
-            .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
-            .number_of_tuples = currentBuffer->getNumberOfTuples(),
-            .watermark = currentBuffer->getWatermark().getRawValue(),
-            .last_chunk = currentBuffer->isLastChunk()};
-
-        /// Set child buffers
-        std::vector<rust::Slice<const uint8_t>> children;
-        children.reserve(currentBuffer->getNumberOfChildBuffers());
-        for (size_t childIdx = 0; childIdx < currentBuffer->getNumberOfChildBuffers(); ++childIdx)
-        {
-            auto childBuffer = currentBuffer->loadChildBuffer(ChildBufferIndex(childIdx));
-            auto childMemory = childBuffer.getAvailableMemoryArea<const uint8_t>();
-            const auto usedChildBytes = childBuffer.getNumberOfTuples();
-            const auto childPayload
-                = (usedChildBytes > 0 and usedChildBytes <= childMemory.size()) ? childMemory.subspan(0, usedChildBytes) : childMemory;
-            children.emplace_back(childPayload);
-        }
-
-        std::span usedBufferMemory(
-            currentBuffer->getAvailableMemoryArea<const uint8_t>().data(), currentBuffer->getNumberOfTuples() * tupleSize);
-        /// Set data and send over the network
-        const auto sendResult = send_buffer(
-            *channel.value(), metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children));
-        switch (sendResult)
-        {
-            case SendResult::Closed: {
-                /// Future buffers are voided.
-                this->closed = true;
-                [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer, backpressureController);
-                /// Currently there is no way to propagate a query stop without a failure from a sink.
-                /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
-                /// from the downstream operator is unexpected, thus failing the query is reasonable.
-                throw CannotWriteToSink("NetworkSink was closed by the other side");
-            }
-            case SendResult::Ok: {
-                NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
-                /// Sent a buffer, check the backpressure handler to send another one
-                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
-                break;
-            }
-            case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
-                {
-                    pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
-                }
-                return;
-            }
-        }
+        pec.repeatTask(*retry, BackpressureHandler::RETRY_INTERVAL);
     }
 }
 

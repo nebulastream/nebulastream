@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -32,7 +32,6 @@
 #include <Util/Strings.hpp>
 #include <folly/Synchronized.h>
 #include <mqtt/async_client.h>
-#include <nes-network-bindings/lib.h>
 #include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -47,7 +46,8 @@ class MQTTSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "MQTT";
-    static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
+    /// Upper bound on how often stop() is repeated while waiting for the broker to accept and acknowledge outstanding buffers.
+    static constexpr size_t MAX_STOP_RETRIES = 1000;
 
     explicit MQTTSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
@@ -70,11 +70,12 @@ private:
         folly::Synchronized<std::string> lostCause;
     };
 
-    /// Outcome of a single publish attempt:
-    ///   Ok     - paho accepted the message into its outbound queue.
-    ///   Closed - non-recoverable paho error (disconnected, protocol, etc.); caller should fail the query.
-    ///   Full   - paho's outbound queue is at capacity; caller should buffer & retry.
-    SendResult tryPublish(const TupleBuffer& buffer);
+    /// Throws if paho reported the connection to the broker as lost.
+    void throwIfConnectionLost() const;
+
+    /// Returns true if paho accepted the message into its outbound queue and false if that queue is at capacity.
+    /// Throws on a non-recoverable paho error (disconnected, protocol, etc.).
+    bool tryPublish(const TupleBuffer& buffer);
 
     std::string serverURI;
     std::string clientId;
@@ -86,6 +87,7 @@ private:
     ConnectionCallback connectionCallback;
     std::unique_ptr<mqtt::async_client> client;
     BackpressureHandler backpressureHandler;
+    size_t stopRetries = 0;
 };
 
 /// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT sink config parameters.
