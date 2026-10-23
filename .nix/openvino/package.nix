@@ -8,7 +8,6 @@
   python3,
   nlohmann_json,
   pugixml,
-  tbb,
   xbyak,
 }:
 
@@ -40,7 +39,6 @@ let
       useLibcxx ? false,
       nlohmannJsonPkg ? nlohmann_json,
       pugixmlPkg ? pugixml,
-      tbbPkg ? tbb,
       xbyakPkg ? xbyak,
       compilerFlags ? [ ],
       linkerFlags ? [ ],
@@ -97,7 +95,6 @@ let
         [
           nlohmannJsonPkg
           pugixmlPkg
-          tbbPkg
           xbyakPkg
         ]
         ++ extraBuildInputs
@@ -106,7 +103,6 @@ let
       propagatedBuildInputs = [
         nlohmannJsonPkg
         pugixmlPkg
-        tbbPkg
         xbyakPkg
       ];
 
@@ -140,8 +136,7 @@ let
         "-DENABLE_PYTHON=OFF"
         "-DENABLE_SAMPLES=OFF"
         "-DENABLE_SYSTEM_PUGIXML=ON"
-        "-DENABLE_SYSTEM_TBB=ON"
-        "-DENABLE_TBBBIND_2_5=OFF"
+        "-DTHREADING=SEQ"
         "-DENABLE_TEMPLATE=OFF"
         "-DENABLE_TESTS=OFF"
         "-DBUILD_SHARED_LIBS=OFF"
@@ -170,7 +165,6 @@ let
         useLibcxx = false;
         nlohmannJsonPkg = nlohmann_json;
         pugixmlPkg = pugixml;
-        tbbPkg = tbb;
         xbyakPkg = xbyak;
         compilerFlags = [ ];
         linkerFlags = [ ];
@@ -187,7 +181,6 @@ let
         useLibcxx = arg.useLibcxx or false;
         nlohmannJsonPkg = arg.nlohmannJsonPkg or nlohmann_json;
         pugixmlPkg = arg.pugixmlPkg or pugixml;
-        tbbPkg = arg.tbbPkg or tbb;
         xbyakPkg = arg.xbyakPkg or xbyak;
         compilerFlags = arg.compilerFlags or [ ];
         linkerFlags = arg.linkerFlags or [ ];
@@ -198,7 +191,6 @@ let
         useLibcxx = false;
         nlohmannJsonPkg = nlohmann_json;
         pugixmlPkg = pugixml;
-        tbbPkg = tbb;
         xbyakPkg = xbyak;
         compilerFlags = [ ];
         linkerFlags = [ ];
