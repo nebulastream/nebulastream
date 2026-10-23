@@ -14,8 +14,11 @@
 
 #include <SinksParsing/BufferIterator.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
@@ -42,5 +45,29 @@ std::optional<BufferIterator::BufferElement> BufferIterator::getNextElement()
     const TupleBuffer childBuffer = tupleBuffer.loadChildBuffer(ChildBufferIndex(bufferIndex - 1));
     ++bufferIndex;
     return std::optional<BufferElement>({.buffer = childBuffer, .contentLength = childBuffer.getNumberOfTuples()});
+}
+
+size_t getTotalContentLength(const TupleBuffer& buffer)
+{
+    size_t total = buffer.getNumberOfTuples();
+    for (uint32_t childIndex = 0; childIndex < buffer.getNumberOfChildBuffers(); ++childIndex)
+    {
+        total += buffer.loadChildBuffer(ChildBufferIndex(childIndex)).getNumberOfTuples();
+    }
+    return total;
+}
+
+size_t copyInto(const TupleBuffer& buffer, std::span<std::byte> destination)
+{
+    size_t written = 0;
+    BufferIterator iterator{buffer};
+    for (auto element = iterator.getNextElement(); element.has_value() && written < destination.size(); element = iterator.getNextElement())
+    {
+        const auto content = std::as_bytes(element->buffer.getAvailableMemoryArea<char>().first(element->contentLength));
+        const auto source = content.first(std::min(content.size(), destination.size() - written));
+        std::ranges::copy(source, destination.subspan(written).begin());
+        written += source.size();
+    }
+    return written;
 }
 }
