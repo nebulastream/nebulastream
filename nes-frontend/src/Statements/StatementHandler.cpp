@@ -441,7 +441,7 @@ std::expected<WorkerStatusStatementResult, Exception> TopologyStatementHandler::
         [&](const auto& it)
         {
             auto found = std::ranges::find(statement.host, it.first.getRawValue());
-            return found != statement.host.end();
+            return found == statement.host.end();
         });
 
     return WorkerStatusStatementResult{status};
