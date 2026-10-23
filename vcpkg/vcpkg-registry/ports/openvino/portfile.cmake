@@ -26,6 +26,7 @@ vcpkg_from_github(
         guard-docs-and-template-extension.patch
         multimap-first-entry.patch
         no-sigaltstack.patch
+        onednn-acl-no-primitive-cache.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
