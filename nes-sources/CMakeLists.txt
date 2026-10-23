@@ -38,6 +38,11 @@ create_runtime_registry(SourceValidation nes-sources
         HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
+create_runtime_registry(AsyncFunction nes-sources
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}AsyncFunction::create"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}AsyncFunction.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
 add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 target_sources(nes-sources PRIVATE ${NES_SOURCES_SOURCE_FILES})

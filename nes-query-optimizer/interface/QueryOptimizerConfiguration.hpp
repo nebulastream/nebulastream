@@ -19,6 +19,7 @@
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <QueryOptimizerAsyncConfiguration.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 
 namespace NES
@@ -37,13 +38,15 @@ struct QueryOptimizerConfiguration
 
     QueryOptimizerConfiguration() = delete;
 
-    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, QueryOptimizerNetworkConfiguration network)
-        : joinStrategy(joinStrategy), network(network)
+    QueryOptimizerConfiguration(
+        StreamJoinStrategy joinStrategy, QueryOptimizerNetworkConfiguration network, QueryOptimizerAsyncConfiguration async)
+        : joinStrategy(joinStrategy), network(network), async(async)
     {
     }
 
     StreamJoinStrategy joinStrategy;
     QueryOptimizerNetworkConfiguration network;
+    QueryOptimizerAsyncConfiguration async;
 
     static QueryOptimizerConfiguration fromConfig(const InstantiatedConfig& config);
 };
