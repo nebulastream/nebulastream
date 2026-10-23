@@ -111,8 +111,11 @@ class Ctx:
         middle = (len(self.rows) + 1) // 2
         return self.rows[:middle], self.rows[middle:]
 
-    def seed_and_fill(self, rows: Any) -> None:
+    def seed(self, rows: Any) -> None:
         self.loader.seed_batch(rows, target=self.target)
+
+    def seed_and_fill(self, rows: Any) -> None:
+        self.seed(rows)
         result = self.source.fill(*self.data.fill_counts(rows))
         self.data.compare_fill(rows, observed=result.observed)
 
@@ -160,6 +163,26 @@ def close_while_reading(ctx: Ctx) -> None:
     ctx.setup()
     ctx.connect()
     ctx.start_reading()
+    ctx.disconnect()
+
+
+@scenario("full_buffer_not_held", default_buffers=2)
+def full_buffer_not_held(ctx: Ctx) -> None:
+    """A full buffer goes downstream at once, however long the flush interval is.
+
+    Bind a config whose flush interval never expires during a test, so a buffer can only arrive because it is full.
+    The rows fill more than one buffer, and the first buffer must arrive as a strict prefix of what was seeded:
+    the rest is a partly filled buffer, which the interval holds back.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.seed(ctx.rows)
+    expected = ctx.data.encode(ctx.rows)
+    observed = ctx.source.fill(0, 1).observed
+    if not observed or len(observed) >= len(expected) or not expected.startswith(observed):
+        raise AssertionError(
+            f"expected the first full buffer, a strict prefix of the {len(expected)} seeded bytes; got {len(observed)} bytes"
+        )
     ctx.disconnect()
 
 

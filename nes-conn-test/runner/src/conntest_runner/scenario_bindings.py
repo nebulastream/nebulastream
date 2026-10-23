@@ -47,6 +47,11 @@ def close_while_reading(*globs: str) -> Scenario:
     return Scenario("close_while_reading", configs=list(globs))
 
 
+def full_buffer_not_held(*globs: str) -> Scenario:
+    """Bind a config whose flush interval never expires during a test, such as one day."""
+    return Scenario("full_buffer_not_held", configs=list(globs))
+
+
 def crash_recovery(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that cannot resume after the process dies."""
     return Scenario("crash_recovery", config=config, outcome=_error(error))
