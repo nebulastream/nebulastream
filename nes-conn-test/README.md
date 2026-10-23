@@ -55,6 +55,7 @@ and supplies the binding: which config(s) and the expected outcome.
 | `empty` | open → close with nothing seeded |
 | `bad_endpoint` | opening against a dead endpoint raises the declared error |
 | `close_while_reading` | close while the connector waits in a read for data that never comes; the stop must interrupt it within the step timeout |
+| `full_buffer_not_held` | with a flush interval that never expires during a test, a full buffer still arrives, and the partly filled rest does not |
 | `crash_recovery` | SIGKILL the harness after a first batch; a fresh process re-opens and reads the second |
 
 The catalog function writes only the ideal path. `run_case` enforces the declared outcome: an `OK`
@@ -64,7 +65,8 @@ and a harness-origin error (infrastructure failure, step timeout) always fails.
 Data comes from one deterministic generator: it parses the schema from the config's
 `CREATE LOGICAL SOURCE`, and its rows are both
 what the loader seeds and the oracle the observed stream is compared against. The wire form is JSONL.
-N buffers of data are as many rows as fit in N times the harness's buffer size (4096 bytes) in that encoding.
+N buffers of data are as many rows as fit in less than N times the harness's buffer size (4096 bytes) in that encoding,
+so the last buffer is always partly filled.
 A failing test id carries N (e.g. `round_trip_n_buffers-TCPSource-basic-N100`), so it replays exactly.
 
 Config validation is not a scenario.
