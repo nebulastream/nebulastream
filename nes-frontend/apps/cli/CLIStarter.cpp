@@ -1303,7 +1303,12 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
         queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, udfCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
 
-    handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler, udfHandler);
+    /// Stopping and querying the status of already deployed queries never optimizes a plan, so the models are not needed and
+    /// their import, which converts every model, is skipped.
+    auto statements = loadStatements(topologyConfig) | std::views::as_rvalue
+        | std::views::filter([](const NES::Statement& statement) { return !std::holds_alternative<NES::CreateModelStatement>(statement); })
+        | std::ranges::to<std::vector>();
+    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler, udfHandler);
 
     if (program.is_subcommand_used("stop"))
     {
