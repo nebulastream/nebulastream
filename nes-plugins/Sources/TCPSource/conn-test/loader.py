@@ -45,11 +45,12 @@ class TcpSourceLoader(SourceLoader):
     """Discovery takes the single concrete loader class in this module, so its name is free."""
 
     def __init__(self, endpoint: str | None) -> None:  # noqa: ARG002  # TCP has no compose service, so endpoint is None
-        # The harness runs in the runner's container, so the source reaches the loader on loopback.
+        # The harness runs in the runner's container and reaches the loader at the container's address,
+        # which the fault proxy, a container of its own, can reach as well.
         # Each case has its own loader and port, so no two cases share a connection.
-        self._listener = socket.create_server(("127.0.0.1", 0))
+        self._listener = socket.create_server(("0.0.0.0", 0))  # noqa: S104  # only the compose network can reach it
         self._listener.settimeout(_ACCEPT_TIMEOUT_S)
-        super().__init__(f"127.0.0.1:{self._listener.getsockname()[1]}")
+        super().__init__(f"{socket.gethostbyname(socket.gethostname())}:{self._listener.getsockname()[1]}")
         self._sockets = [self._listener]
         self._conn: socket.socket | None = None
         # The source reads only during the FILL that follows a seed, and a large batch exceeds the socket buffers,

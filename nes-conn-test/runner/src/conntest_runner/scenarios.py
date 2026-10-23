@@ -18,6 +18,7 @@ Whether a raised error passes is decided by the binding's expectation.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
 
     from conntest_runner.discovery import Expectation
     from conntest_runner.harness import Source
+    from conntest_runner.link import Link
 
 
 @dataclass(frozen=True)
@@ -35,11 +37,13 @@ class ScenarioSpec:
     """``default_buffers`` is how much data the scenario seeds, and None for a scenario that seeds nothing.
 
     A binding can change it only where its constructor in ``scenario_bindings.py`` takes ``n_buffers``.
+    ``needs_link`` routes the connector through the fault proxy, which the scenario controls as ``ctx.link``.
     """
 
     name: str
     fn: Callable[[Ctx], None]
     default_buffers: int | None = None
+    needs_link: bool = False
 
 
 _CATALOG: dict[str, ScenarioSpec] = {}
@@ -49,12 +53,14 @@ def scenario(
     name: str,
     *,
     default_buffers: int | None = None,
+    needs_link: bool = False,
 ) -> Callable[[Callable[[Ctx], None]], Callable[[Ctx], None]]:
     def register(fn: Callable[[Ctx], None]) -> Callable[[Ctx], None]:
         _CATALOG[name] = ScenarioSpec(
             name=name,
             fn=fn,
             default_buffers=default_buffers,
+            needs_link=needs_link,
         )
         return fn
 
@@ -69,6 +75,12 @@ def get_spec(name: str) -> ScenarioSpec:
     if name not in _CATALOG:
         raise KeyError(f"unknown scenario {name!r}; catalog has {sorted(_CATALOG)}")
     return _CATALOG[name]
+
+
+def scenario_needs_link(name: str) -> bool:
+    """False for a name that is not in the catalog, which binding_problems reports separately."""
+    spec = _CATALOG.get(name)
+    return spec is not None and spec.needs_link
 
 
 def scenario_names() -> list[str]:
@@ -89,6 +101,13 @@ class Ctx:
     rows: list[Any] = field(default_factory=list)  # empty for a scenario that seeds nothing
     schema: Any = None
     args: dict[str, Any] = field(default_factory=dict)  # the binding's arguments for this scenario, see discovery.Scenario
+    link: Link | None = None  # set for a scenario that needs the link
+
+    @property
+    def fault(self) -> Link:
+        if self.link is None:
+            raise RuntimeError("the scenario uses the fault link but is not registered with needs_link=True")
+        return self.link
 
     def setup(self) -> None:
         self.loader.setup(target=self.target, schema=self.schema)
@@ -164,6 +183,65 @@ def close_while_reading(ctx: Ctx) -> None:
     ctx.setup()
     ctx.connect()
     ctx.start_reading()
+    ctx.disconnect()
+
+
+# The latency that slow_link adds in each direction.
+SLOW_LINK_LATENCY_MS = 200
+# How long silent_link keeps the connection silent; below the link's silence latency, see link.py.
+SILENCE_HOLD_S = 15
+
+
+@scenario("slow_link", default_buffers=2, needs_link=True)
+def slow_link(ctx: Ctx) -> None:
+    """Bytes flow, but late: a slow link must not be taken for a broken one.
+
+    The link is slow from before the connect, so the handshake is slow too.
+    """
+    ctx.setup()
+    ctx.fault.throttle(latency_ms=SLOW_LINK_LATENCY_MS)
+    ctx.connect()
+    ctx.seed_and_fill(ctx.rows)
+    ctx.disconnect()
+
+
+@scenario("silent_link", default_buffers=2, needs_link=True)
+def silent_link(ctx: Ctx) -> None:
+    """A live connection on which nothing flows for a while, as between bursts of a real stream.
+
+    A connector that takes the silence for a dead peer or for the end of the stream loses the second batch.
+    The silence is the fault itself, not a wait for some state, so it is a fixed duration.
+    """
+    ctx.setup()
+    ctx.connect()
+    head, tail = ctx.split_rows()
+    ctx.seed_and_fill(head)
+    ctx.fault.silence()
+    time.sleep(SILENCE_HOLD_S)
+    ctx.fault.unsilence()
+    ctx.seed_and_fill(tail)
+    ctx.disconnect()
+
+
+@scenario("connection_lost", default_buffers=1, needs_link=True)
+def connection_lost(ctx: Ctx) -> None:
+    """The connection to the backend goes away for good: the source must end its stream instead of waiting forever.
+
+    The data delivered before the loss must be complete.
+    A connector that reports the loss as an error instead binds the scenario with that error.
+    A connector that hangs fails the step with a StepTimeout.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.seed_and_fill(ctx.rows)
+    ctx.fault.cut()
+    # Asks for one more byte, which can only end with the end of the stream.
+    result = ctx.source.fill(0, 1)
+    if not result.got.eos or result.observed:
+        raise AssertionError(
+            f"expected the end of the stream with nothing more after the connection was lost; "
+            f"got eos={result.got.eos} and {len(result.observed)} bytes"
+        )
     ctx.disconnect()
 
 
