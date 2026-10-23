@@ -88,6 +88,7 @@ class Ctx:
     source: Source
     rows: list[Any] = field(default_factory=list)  # empty for a scenario that seeds nothing
     schema: Any = None
+    args: dict[str, Any] = field(default_factory=dict)  # the binding's arguments for this scenario, see discovery.Scenario
 
     def setup(self) -> None:
         self.loader.setup(target=self.target, schema=self.schema)
@@ -182,6 +183,33 @@ def full_buffer_not_held(ctx: Ctx) -> None:
     if not observed or len(observed) >= len(expected) or not expected.startswith(observed):
         raise AssertionError(
             f"expected the first full buffer, a strict prefix of the {len(expected)} seeded bytes; got {len(observed)} bytes"
+        )
+    ctx.disconnect()
+
+
+@scenario("partial_buffer_held", default_buffers=1)
+def partial_buffer_held(ctx: Ctx) -> None:
+    """A partly filled buffer is held back for the flush interval, not emitted as soon as data arrives.
+
+    The binding passes the interval that its config sets as ``flush_interval_ms``.
+    The data reaches the backend before the source may read, so it is there when the read starts.
+    The harness measures each read that returns a partly filled buffer, from entering the connector to its return.
+    A correct source starts its interval inside that read, so the measurement cannot come out shorter on a slow machine.
+    The check is one-sided on purpose: a source that flushes too late only fails when it misses the step timeout,
+    because a tighter upper bound would depend on how fast the machine schedules the source.
+    """
+    interval_ms = ctx.args["flush_interval_ms"]
+    ctx.setup()
+    ctx.connect()
+    ctx.seed(ctx.rows)
+    ctx.loader.wait_seeded()
+    result = ctx.source.fill(*ctx.data.fill_counts(ctx.rows))
+    ctx.data.compare_fill(ctx.rows, observed=result.observed)
+    reads = result.got.partial_read_ms
+    if not reads or min(reads) < interval_ms:
+        raise AssertionError(
+            f"expected every partly filled buffer to be held for the {interval_ms} ms flush interval; "
+            f"the reads that returned one took {list(reads)} ms"
         )
     ctx.disconnect()
 
