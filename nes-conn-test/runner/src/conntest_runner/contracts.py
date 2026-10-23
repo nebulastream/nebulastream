@@ -47,3 +47,10 @@ class SourceLoader(Loader):
     @abstractmethod
     def seed_batch(self, rows: Any, *, target: str) -> None:
         """A connector whose wire format is JSON serializes the rows with the framework's JSONL codec, not its own."""
+
+    def wait_seeded(self) -> None:  # noqa: B027  # an optional hook, not an abstract method
+        """Returns once every seeded batch has reached the backend.
+
+        A scenario that checks that the source holds data back calls it, so that the check cannot pass only because the data was still in flight.
+        A loader whose ``seed_batch`` returns only after the backend has the rows keeps this default.
+        """

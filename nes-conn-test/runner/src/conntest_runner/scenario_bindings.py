@@ -52,6 +52,14 @@ def full_buffer_not_held(*globs: str) -> Scenario:
     return Scenario("full_buffer_not_held", configs=list(globs))
 
 
+def partial_buffer_held(config: str, *, flush_interval_ms: int) -> Scenario:
+    """``flush_interval_ms`` is the interval that ``config`` sets; the scenario cannot read it, because its key is the connector's.
+
+    Keep it short, such as 2 s: the scenario waits for the flush.
+    """
+    return Scenario("partial_buffer_held", config=config, args={"flush_interval_ms": flush_interval_ms})
+
+
 def crash_recovery(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that cannot resume after the process dies."""
     return Scenario("crash_recovery", config=config, outcome=_error(error))

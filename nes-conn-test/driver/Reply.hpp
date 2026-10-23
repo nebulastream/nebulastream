@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <ErrorHandling.hpp>
 
@@ -41,8 +43,9 @@ std::string errorReply(const ErrorInfo& err);
 
 /// `{"ok":true,"phase":"open"}`.
 std::string okReply(std::string_view phase);
-/// `{"ok":true,"phase":"fill","eos":false}`.
-std::string fillReply(std::string_view phase, bool eos);
+/// `{"ok":true,"phase":"fill","eos":false,"partial_read_ms":[2001]}`.
+/// `partial_read_ms` lists how long each read that returned a partly filled buffer took during the step.
+std::string fillReply(std::string_view phase, bool eos, const std::vector<std::chrono::milliseconds>& partialReads);
 
 /// The error code's name, as in `ExceptionDefinitions.inc`.
 std::string_view errorCodeName(ErrorCode code);

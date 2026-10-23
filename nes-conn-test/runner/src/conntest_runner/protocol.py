@@ -91,9 +91,11 @@ class Got:
     """An ``ok:true`` reply.
 
     A FILL reply has no row counts, because the data is checked from the ``--observed-path`` file.
+    ``partial_read_ms`` lists how long each read that returned a partly filled buffer took during a FILL.
     """
 
     eos: bool = False
+    partial_read_ms: tuple[int, ...] = ()
 
 
 class ConnectorError(Exception):
@@ -124,7 +126,7 @@ class HarnessError(Exception):
 def read_reply(line: str) -> Got:
     j = json.loads(line)
     if j.get("ok"):
-        return Got(eos=bool(j.get("eos", False)))
+        return Got(eos=bool(j.get("eos", False)), partial_read_ms=tuple(int(ms) for ms in j.get("partial_read_ms", [])))
     origin = j.get("origin")
     phase = str(j.get("phase", ""))
     message = str(j.get("message", ""))

@@ -138,5 +138,6 @@ def test_scenario(
             source=source,
             rows=data_model.make_rows(n_buffers, _DEFAULT_SEED, _BUFFER_SIZE) if n_buffers is not None else [],
             schema=schema,
+            args=scenario.args,
         )
         run_case(get_scenario(scenario.name), ctx, expect)

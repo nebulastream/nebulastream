@@ -232,9 +232,10 @@ private:
         /// The wrapper also records a read error with its real code before the source thread wraps it.
         errorSlot = std::make_shared<ConnectorErrorSlot>();
         reading = std::make_shared<std::atomic<bool>>(false);
+        partialReads = std::make_shared<PartialReadLog>();
         auto openedPromise = std::make_shared<std::promise<void>>();
         auto openedFuture = openedPromise->get_future();
-        auto wrapped = std::make_unique<InterceptorSource>(std::move(inner), std::move(openedPromise), errorSlot, reading);
+        auto wrapped = std::make_unique<InterceptorSource>(std::move(inner), std::move(openedPromise), errorSlot, reading, partialReads);
 
         /// The handle is built here, not by the source provider, so that the wrapper can be injected.
         /// The in-flight limit is not enforced here; the bounded queue applies the backpressure.
@@ -318,6 +319,7 @@ private:
 
     /// A source may legitimately end before the quota is met, which is reported with eos set, not as an error.
     /// A quota of 0 returns once the connector has entered a read, so that a scenario can stop a connector that waits for data.
+    /// The reply lists how long each read that returned a partly filled buffer took, so the runner can check the flush interval.
     /// NOLINTNEXTLINE(readability-function-cognitive-complexity): one state machine, splitting it would spread the FILL logic over several functions
     std::string ingest(std::string_view phase, std::uint64_t quota)
     {
@@ -402,7 +404,7 @@ private:
                 "StepTimeout",
                 fmt::format("{} timed out after {} ms ({} of quota observed)", phase, options.stepTimeout.count(), bytesObserved)));
         }
-        return fillReply(phase, sawEoS);
+        return fillReply(phase, sawEoS, partialReads->take());
     }
 
     std::string close()
@@ -446,6 +448,7 @@ private:
         eos.store(false);
         errorSlot.reset();
         reading.reset();
+        partialReads.reset();
     }
 
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members): non-owning view into runSourceSession's options; the state's lifetime is strictly contained by the loop's.
@@ -459,6 +462,7 @@ private:
     std::shared_ptr<ConnectorErrorSlot> errorSlot;
     /// Set by the wrapper when the connector enters fillTupleBuffer.
     std::shared_ptr<std::atomic<bool>> reading;
+    std::shared_ptr<PartialReadLog> partialReads;
     bool stuck = false;
 
     /// The harness holds the controller in place of a sink.

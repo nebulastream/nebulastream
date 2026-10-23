@@ -1,0 +1,10 @@
+-- A TCP source that holds a partly filled buffer back for 2 s.
+-- partial_buffer_held declares the same interval in its binding, because the framework does not read connector keys.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE TCP SET (
+    'localhost' AS "SOURCE".SOCKET_HOST,
+    '9000'      AS "SOURCE".SOCKET_PORT,
+    '2000'      AS "SOURCE".FLUSH_INTERVAL_MS,
+    'JSON'      AS INPUT_FORMATTER."TYPE"
+);
