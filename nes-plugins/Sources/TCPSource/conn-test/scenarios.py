@@ -21,6 +21,7 @@ from conntest_runner.scenario_bindings import (
     close_while_reading,
     crash_recovery,
     empty,
+    full_buffer_not_held,
     round_trip_1_buffer,
     round_trip_n_buffers,
 )
@@ -35,6 +36,8 @@ SCENARIOS = [
     bad_endpoint("basic.nesql", error=4002),
     # The source waits on the silent connection, so the stop request must interrupt its read.
     close_while_reading("basic.nesql"),
+    # One full buffer is emitted, while the one-day flush interval holds back the partly filled remainder.
+    full_buffer_not_held("no_flush.nesql"),
     # The respawned source opens a new connection, and the loader sends the rest of the data there.
     crash_recovery("basic.nesql"),
 ]
