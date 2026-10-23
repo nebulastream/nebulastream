@@ -61,47 +61,45 @@ SINK(CALLSINK)
 ==END==
 
 # Each async stage becomes a Handoff sink / Async source pair on its worker; the producer half is a plan of its own.
+# Where the stages and the rest of the query land depends on the topology, which the remote systest varies, so the
+# distributed checks assert only what holds on any: the pair shares a worker, and no plan evaluates the call itself.
 EXPLAIN (DISTRIBUTED) FORMAT TEXT
 SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream INTO callSink;
 ----
-== Decomposed Plans ==
--- 1 plan(s) on sink-node:8080 --
-0:
-SINK(CALLSINK)
-  PROJECTION(fields: [ID, __ASYNC_CALL_0 as RESPONSE])
-    SOURCE(NETWORK)
--- 2 plan(s) on source-node:8080 --
-0:
-SINK(HANDOFF)
-  PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
-    SOURCE(TEXTSTREAM)
-1:
-SINK(NETWORK)
-  SOURCE(ASYNC)
+<REGEX>
+-- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
+(?:(?!--).*\n)*SINK\(HANDOFF\)
+  PROJECTION\(fields: \[DATA, ID,  as __ASYNC_CALL_0\]\)
+    SOURCE\(TEXTSTREAM\)
+(?:(?!--).*\n)*.*SOURCE\(ASYNC\)
+</REGEX>
+<REGEX>PROJECTION\(fields: \[ID, __ASYNC_CALL_0 as RESPONSE\]\)</REGEX>
+<REGEX>SINK\(CALLSINK\)</REGEX>
+<!REGEX>HTTP_CALL</!REGEX>
 ==END==
 
-# Nested calls: placement puts the second stage on another worker, so the pre-projection's output crosses the network first.
+# Nested calls: one pair per stage. Depending on placement, the second stage runs next to the first or on another
+# worker, in which case the pre-projection's output crosses the network first.
 EXPLAIN (DISTRIBUTED) FORMAT TEXT
 SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http://localhost/b') AS response FROM textStream INTO callSink;
 ----
-== Decomposed Plans ==
--- 2 plan(s) on sink-node:8080 --
-0:
-SINK(HANDOFF)
-  PROJECTION(fields: [DATA, ID, __ASYNC_CALL_0, CONCAT(__ASYNC_CALL_0, DATA) as __ASYNC_ARG_1,  as __ASYNC_CALL_2])
-    SOURCE(NETWORK)
-1:
-SINK(CALLSINK)
-  PROJECTION(fields: [ID, __ASYNC_CALL_2 as RESPONSE])
-    SOURCE(ASYNC)
--- 2 plan(s) on source-node:8080 --
-0:
-SINK(HANDOFF)
-  PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
-    SOURCE(TEXTSTREAM)
-1:
-SINK(NETWORK)
-  SOURCE(ASYNC)
+<REGEX>
+-- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
+(?:(?!--).*\n)*SINK\(HANDOFF\)
+  PROJECTION\(fields: \[DATA, ID,  as __ASYNC_CALL_0\]\)
+    SOURCE\(TEXTSTREAM\)
+(?:(?!--).*\n)*.*SOURCE\(ASYNC\)
+</REGEX>
+<REGEX>
+-- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
+(?:(?!--).*\n)*SINK\(HANDOFF\)
+  PROJECTION\(fields: \[DATA, ID, __ASYNC_CALL_0, CONCAT\(__ASYNC_CALL_0, DATA\) as __ASYNC_ARG_1,  as __ASYNC_CALL_2\]\)
+    SOURCE\((?:ASYNC|NETWORK)\)
+(?:(?!--).*\n)*.*SOURCE\(ASYNC\)
+</REGEX>
+<REGEX>PROJECTION\(fields: \[ID, __ASYNC_CALL_2 as RESPONSE\]\)</REGEX>
+<REGEX>SINK\(CALLSINK\)</REGEX>
+<!REGEX>HTTP_CALL</!REGEX>
 ==END==
 
 # An async predicate is evaluated into a field, filtered on, and projected away again.
