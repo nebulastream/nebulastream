@@ -5,3 +5,7 @@
 !**/Cargo.toml
 !**/Cargo.lock
 !**/*.rs
+
+# Allow only the project files needed by `uv sync` for the Python dependencies.
+!/pyproject.toml
+!/uv.lock
