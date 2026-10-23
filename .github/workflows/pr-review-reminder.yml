@@ -30,7 +30,9 @@ jobs:
                     "yschroeder97": "@**Yannik Schröder**",
                     "Artraxon": "@**Leonhard Rose**",
                     "greenBene": "@**Bene**",
-                    "ThanGeo": "@**Thanasis Georgiadis**"
+                    "ThanGeo": "@**Thanasis Georgiadis**",
+                    "oczerwia-2010": "@**Oliver Czerwiak**",
+                    "thedonatic": "@**Jannis**"
                   }
                 bot-api-key: ${{ secrets.PRBOT_API_KEY }}
                 bot-email: "pr-reminder-bot@nebulastream.zulipchat.com"
