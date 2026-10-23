@@ -39,6 +39,10 @@ public:
     nautilus::val<uint64_t> getNumberOfFields() const;
     [[nodiscard]] bool hasField(const RecordFieldIdentifier& fieldName) const;
 
+    /// To be called right before emitting the values out of a pipeline. Lazily represented values cannot persist in this state across pipelines.
+    /// Therefore, they need to be deserialized at this point.
+    void deserializeAllFields();
+
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
     friend nautilus::val<bool> operator==(const Record& lhs, const Record& rhs);
 

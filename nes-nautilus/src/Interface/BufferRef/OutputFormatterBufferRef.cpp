@@ -74,8 +74,11 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
             const auto fieldAddress = recordAddress + writtenForThisRecord;
             const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
             const auto& value = rec.read(name);
-            const auto amountWritten
-                = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
+            /// Deserialize any remaining lazy values.
+            /// This can be replaced with a more sophisticated method later:
+            /// If the deserializer and the serializer match in format, we do not need to serialize the lazy value and just write it directly.
+            const auto amountWritten = formatter->writeFormattedValue(
+                value.getAsDeserializedUnderlyingValue(), type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
             writtenForThisRecord += amountWritten;
         }
     }
