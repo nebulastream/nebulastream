@@ -50,6 +50,9 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Deserialize all fields that are used by this aggregation.
+    record.deserializeFields(accessedFields);
+
     /// Getting the operator handler from the local state
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
@@ -105,11 +108,13 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     std::unique_ptr<SliceStoreRef> sliceStoreRef,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
     ChainedHashMapConfig hashMapConfig,
-    std::vector<PhysicalFunction> keyFunctions)
+    std::vector<PhysicalFunction> keyFunctions,
+    std::vector<Record::RecordFieldIdentifier> accessedFields)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
+    , accessedFields(std::move(accessedFields))
 {
 }
 

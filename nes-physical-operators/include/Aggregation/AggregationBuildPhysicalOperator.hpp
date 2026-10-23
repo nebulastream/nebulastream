@@ -19,6 +19,7 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
+#include <Interface/Record.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
@@ -36,7 +37,8 @@ public:
         std::unique_ptr<SliceStoreRef> sliceStoreRef,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         ChainedHashMapConfig hashMapConfig,
-        std::vector<PhysicalFunction> keyFunctions);
+        std::vector<PhysicalFunction> keyFunctions,
+        std::vector<Record::RecordFieldIdentifier> accessedFields);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
@@ -46,6 +48,11 @@ private:
     ChainedHashMapConfig hashMapConfig;
     /// Extracts the key fields out of an incoming record. Operator logic, not hash map metadata, hence not in the config.
     std::vector<PhysicalFunction> keyFunctions;
+    /// The names of the fields accessed by the functions of this aggregation (time function, key functions, aggregation functions).
+    /// Only these are deserialized from their LazyValueData form when a record enters the operator.
+    /// The remaining fields of a lazily deserialized record stay untouched, saving unnecessary deserializes.
+    /// We can remove this member again, once the query compiler is able to recognize and remove unneeded deserializes by itself.
+    std::vector<Record::RecordFieldIdentifier> accessedFields;
 };
 
 }

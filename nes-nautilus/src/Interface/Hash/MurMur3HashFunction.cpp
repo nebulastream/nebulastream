@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <DataTypes/LazyValueData.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Hash/HashFunction.hpp>
@@ -122,6 +123,13 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 {
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
+                }
+                else if constexpr (std::is_same_v<T, LazyValueData>)
+                {
+                    /// Deserialize and calculate on deserialized value.
+                    /// This is necessary, since serialized, semantically equivalent values might not be equal on a byte-level in their serialized form.
+                    const auto deserializedVal = val.deserializeValue();
+                    return calculate(hash, deserializedVal);
                 }
                 else
                 {
