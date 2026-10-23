@@ -11,18 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Watermark/MultiOriginWatermarkProcessor.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <ranges>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
-#include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
@@ -70,6 +73,19 @@ std::string MultiOriginWatermarkProcessor::getCurrentStatus()
         ss << " id=" << origins[originIndex] << " watermark=" << watermarkProcessors[originIndex]->getCurrentValue();
     }
     return ss.str();
+}
+
+Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark(const OriginId origin) const
+{
+    for (const auto& [currentOrigin, processor] : std::views::zip(origins, watermarkProcessors))
+    {
+        if (currentOrigin == origin)
+        {
+            return Timestamp(processor->getCurrentValue());
+        }
+    }
+    INVARIANT(false, "watermark requested for non existing origin={}", origin);
+    std::unreachable();
 }
 
 Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
