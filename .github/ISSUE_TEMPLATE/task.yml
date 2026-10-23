@@ -1,0 +1,36 @@
+---
+name: 🔒✅ TASK (Maintainers only)
+description: A template about issues that can be closed by a single PR.
+title: "[TASK] "
+type: TASK
+body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: What is this task about?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Contribution to FEATURE/EPIC
+      description: Is this task part of a bigger FEATURE or EPIC? If so, how does it contribute to it?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Scope
+      description: What is included in this task?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Done when
+      description: How will we know this task is complete? When should it close?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Open questions / risks
+      description: Unknowns, dependencies, things that might change the plan.
+    validations:
+      required: false

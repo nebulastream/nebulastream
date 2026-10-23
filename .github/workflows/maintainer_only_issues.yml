@@ -1,0 +1,29 @@
+name: Close maintainer-only issues from non-maintainers
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  close-if-not-maintainer:
+    # "### Done when" is only produced by the EPIC/FEATURE/TASK issue forms
+    if: contains(github.event.issue.body, '### Done when')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close issue if author lacks maintain/admin access
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          ROLE=$(gh api "repos/$REPO/collaborators/$AUTHOR/permission" --jq .role_name)
+          echo "@$AUTHOR has role '$ROLE'" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ROLE" = "admin" ]; then
+            exit 0
+          fi
+
+          gh issue close "$ISSUE" --repo "$REPO" --reason "not planned" --comment \
+            "Hi @$AUTHOR, thanks for opening this! The EPIC/FEATURE/TASK templates are reserved for the maintainer team, so this issue was closed automatically. Please open a new issue using one of the other templates, or start a discussion."
