@@ -57,11 +57,18 @@ and supplies the binding: which config(s) and the expected outcome.
 | `close_while_reading` | close while the connector waits in a read for data that never comes; the stop must interrupt it within the step timeout |
 | `full_buffer_not_held` | with a flush interval that never expires during a test, a full buffer still arrives, and the partly filled rest does not |
 | `partial_buffer_held` | a partly filled buffer is held back for the whole flush interval that the binding declares; the harness measures each read that returns one |
+| `slow_link` | the connection is slowed by 200 ms in each direction from before the connect; every row still arrives |
+| `silent_link` | nothing flows on the live connection for 15 s between two batches; the second batch still arrives |
+| `connection_lost` | the connection is cut for good after a first batch; the source ends its stream (or raises its declared error) instead of hanging |
 | `crash_recovery` | SIGKILL the harness after a first batch; a fresh process re-opens and reads the second |
 
 The catalog function writes only the ideal path. `run_case` enforces the declared outcome: an `OK`
 binding must complete cleanly, an `ERROR <code>` binding must raise a connector error with that code,
 and a harness-origin error (infrastructure failure, step timeout) always fails.
+
+`slow_link`, `silent_link` and `connection_lost` route the connector through a toxiproxy container
+(`runner/toxiproxy.compose.yaml`, controlled by `conntest_runner/link.py`), which joins the stack only for a connector that binds one of them.
+The loader still seeds the backend directly, so a fault affects only the connector's connection.
 
 Data comes from one deterministic generator: it parses the schema from the config's
 `CREATE LOGICAL SOURCE`, and its rows are both
@@ -109,6 +116,7 @@ The loader implements three methods (`conntest_runner/contracts.py`):
 
 The loader gets the endpoint of the service in `compose.yaml`.
 A connector without a service has no `compose.yaml`, and its loader starts the server itself and sets its own endpoint.
+That server must listen on the container's address, not on loopback, so that the fault proxy can reach it.
 `TCPSource/conn-test/` is the reference for that case: the TCP source is a client, so its loader is the server it connects to.
 
 The design principles every change should keep are in `core_design_principles.md`.

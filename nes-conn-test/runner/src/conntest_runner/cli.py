@@ -15,6 +15,7 @@
 ``run`` starts each connector's compose stack, runs pytest in a runner container on the stack's network,
 and tears the stack down.
 A connector without a ``compose.yaml`` gets a stack of only the runner.
+The fault proxy joins the stack when the connector binds a scenario that needs it.
 This module uses only the stdlib, because pytest and the connectors' dependencies are installed in the runner.
 """
 
@@ -30,10 +31,12 @@ from pathlib import Path
 from typing import NoReturn
 
 from conntest_runner.discovery import read_plugin_scenarios, registered_connectors
+from conntest_runner.scenarios import scenario_needs_link
 
 _RUNNER_DIR = Path(__file__).resolve().parents[2]
 _REPO_ROOT = _RUNNER_DIR.parents[1]
 _RUNNER_COMPOSE = _RUNNER_DIR / "runner.compose.yaml"
+_TOXIPROXY_COMPOSE = _RUNNER_DIR / "toxiproxy.compose.yaml"
 
 # pytest's exit code for "no tests collected".
 # A user selector that deselects every test of one connector is not a failure.
@@ -134,6 +137,8 @@ def _run_connector(
     container_conn_test_dir = f"{env['CONNTEST_CONTAINER_REPO']}/{conn_test_dir.relative_to(_REPO_ROOT).as_posix()}"
     # A connector without a compose.yaml has no service, and the stack is only the runner.
     composes = [f for f in (conn_test_dir / "compose.yaml", _RUNNER_COMPOSE) if f.is_file()]
+    if any(scenario_needs_link(s.name) for s in read_plugin_scenarios(conn_test_dir)):
+        composes.append(_TOXIPROXY_COMPOSE)
     base = ["docker", "compose", *(a for f in composes for a in ("-f", str(f))), "-p", f"conntest-{uuid.uuid4().hex}"]
     try:
         rc = 0
