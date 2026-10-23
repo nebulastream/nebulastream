@@ -74,6 +74,10 @@ class TcpSourceLoader(SourceLoader):
             self._sent.result()
         self._sent = self._sender.submit(self._connection().sendall, rows_to_jsonl(self._schema, rows))
 
+    def wait_seeded(self) -> None:
+        if self._sent is not None:
+            self._sent.result()
+
     def _connection(self) -> socket.socket:
         """A respawned source connects again, and its connection replaces the dead one."""
         while self._conn is None or select.select([self._listener], [], [], 0)[0]:
