@@ -23,9 +23,11 @@ add_registry_entry(LogicalFunction HttpCall KEY HTTP_CALL)
 add_unreflection_entry(LogicalFunction HttpCall)
 
 # Async implementation: run by the Async source, registered in the registry owned by nes-sources.
-find_package(boost_beast CONFIG REQUIRED)
+# Beast is header-only. vcpkg installs a CMake package for it, but a b2-built Boost (as in the Nix build) does not:
+# there, header-only libraries are covered by boost_headers alone, which both provide.
+find_package(boost_headers CONFIG REQUIRED)
 add_library(http_call_async_function_plugin_library STATIC HttpCallAsyncFunction.cpp)
-target_link_libraries(http_call_async_function_plugin_library PRIVATE nes-sources Boost::beast)
+target_link_libraries(http_call_async_function_plugin_library PRIVATE nes-sources Boost::headers)
 target_include_directories(http_call_async_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 link_plugin_library(nes-sources http_call_async_function_plugin_library)
 add_registry_entry(AsyncFunction HttpCall)
