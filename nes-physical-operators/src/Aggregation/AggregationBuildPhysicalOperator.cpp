@@ -50,6 +50,9 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Convert lazy values into their deserialized form
+    record.deserializeAllFields();
+
     /// Getting the operator handler from the local state
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();

@@ -18,6 +18,7 @@
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/LazyValueData.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>
@@ -35,7 +36,7 @@ namespace NES
 namespace detail
 {
 template <typename... T>
-using var_val_helper = std::variant<VariableSizedData, nautilus::val<T>...>;
+using var_val_helper = std::variant<VariableSizedData, LazyValueData, nautilus::val<T>...>;
 using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, char>;
 
 
@@ -125,6 +126,14 @@ public:
             return std::get<T1>(value);
         }
 
+        /// Casting from lazy value data is allowed, but the value needs to be deserialized first.
+        if (std::holds_alternative<LazyValueData>(value))
+        {
+            const auto lazyVal = std::get<LazyValueData>(value);
+            const VarVal deserializedVal = lazyVal.deserializeValue();
+            return deserializedVal.getRawValueAs<T1>();
+        }
+
         return std::visit(
             []<typename T0>(T0&& underlyingValue) -> T1
             {
@@ -133,6 +142,10 @@ public:
                 if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
                 {
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
+                }
+                else if constexpr (std::is_same_v<removedCVRefT0, LazyValueData> || std::is_same_v<removedCVRefT1, LazyValueData>)
+                {
+                    throw UnknownOperation("Cannot cast to LazyValueData.");
                 }
                 else
                 {
@@ -144,6 +157,35 @@ public:
 
     /// Casts the underlying value to the provided type. castToType() or getRawValueAs<T>() should be the only way how the underlying value can be accessed.
     [[nodiscard]] VarVal castToType(DataType::Type type) const;
+
+    [[nodiscard]] bool isLazyValue() const { return std::holds_alternative<LazyValueData>(value); }
+
+    /// If the underlying value is still a serialized, lazy value, create a new varval with the deserialized value and return it
+    /// Will never manipulate this varval so it is thread-safe.
+    [[nodiscard]] VarVal getAsDeserializedUnderlyingValue() const
+    {
+        if (isLazyValue())
+        {
+            const auto lazyVal = getRawValueAs<LazyValueData>();
+            const VarVal deserializedVal = lazyVal.deserializeValue();
+            return deserializedVal;
+        }
+        return *this;
+    }
+
+    /// Will deserialize the underlying value into the nautilus val it represents, if it is still serialized / lazy, and replace its own value with it.
+    /// Use if you want to modify the VarVal itself and not create a new VarVal.
+    void deserializeUnderlyingVal()
+    {
+        if (isLazyValue())
+        {
+            const auto lazyVal = getRawValueAs<LazyValueData>();
+            const VarVal deserializedLazyVal = lazyVal.deserializeValue();
+            /// Both value and null are determined during deserialization, so they are both replaced here.
+            value = deserializedLazyVal.value;
+            null = deserializedLazyVal.null;
+        }
+    }
 
     template <typename T>
     VarVal customVisit(T t) const

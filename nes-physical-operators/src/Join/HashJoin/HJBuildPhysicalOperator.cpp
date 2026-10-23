@@ -53,6 +53,9 @@ namespace NES
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Convert lazy values into their deserialized form
+    record.deserializeAllFields();
+
     /// Getting the operator handler from the local state
     auto* localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
