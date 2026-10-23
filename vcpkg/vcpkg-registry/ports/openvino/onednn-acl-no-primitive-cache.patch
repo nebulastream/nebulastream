@@ -1,0 +1,12 @@
+--- a/src/plugins/intel_cpu/thirdparty/CMakeLists.txt
++++ b/src/plugins/intel_cpu/thirdparty/CMakeLists.txt
+@@ -81,6 +81,9 @@
+ 
+     if(AARCH64 OR ARM)
+         set(DNNL_USE_ACL ON CACHE BOOL "Use ARM Compute Library kernels in oneDNN" FORCE)
++        # While compiled models share primitives through this cache, inferences of different compiled models that run at the same
++        # time fail in ARM Compute Library functions.
++        set(DNNL_ENABLE_PRIMITIVE_CACHE OFF CACHE BOOL "" FORCE)
+     endif()
+ 
+     set(SDL_cmake_included ON)  ## to skip internal SDL flags. SDL flags are already set on OV level
