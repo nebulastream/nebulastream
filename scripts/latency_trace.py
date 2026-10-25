@@ -23,6 +23,9 @@ of the latency. Across workers, NetSend/NetRecv events with the same key are mat
 
     uv run scripts/latency_trace.py <dir-or-prefix> [--out <dir>]
 
+Buffers in flight while tracing was turned on or off at runtime (nes-cli trace on|off) lack events and are counted as
+incomplete.
+
 Writes breakdown.svg (p50/p90/p99/max stacked by stage), worst.svg (timeline of the slowest buffer), trace.json
 (open in https://ui.perfetto.dev) and report.html (interactive; pipeline graph, latency over time, stage distributions)
 to the output directory.
@@ -340,16 +343,21 @@ def short_description(description):
     return name.group(0)
 
 
-def graph(workers):
-    """Sources, pipelines and sinks of every traced query, with network edges between query fragments."""
+def graph(workers, queries):
+    """Sources, pipelines and sinks of `queries`, with network edges between query fragments. The plan file lists every
+    query, because tracing can be turned on while a query runs."""
     nodes, edges, channels = [], [], {}
     for worker in workers:
         for pipeline, (successors, description) in worker.pipelines.items():
+            if worker.queries[pipeline] not in queries:
+                continue
             kind = "network sink" if worker.is_network_sink(pipeline) else "sink" if not successors else "pipeline"
             nodes.append({"id": pipeline_node(worker, pipeline), "label": f"P{pipeline}", "what": short_description(description),
                           "detail": description, "query": worker.queries[pipeline], "kind": kind, "worker": worker.name})
             edges += [{"from": pipeline_node(worker, pipeline), "to": pipeline_node(worker, successor)} for successor in successors]
         for successors, description, query in worker.plan_sources:
+            if query not in queries:
+                continue
             network = re.search(r"NetworkSource\(([^)]+)\)", description)
             for successor in successors:
                 node = source_node(worker, successor)
@@ -360,6 +368,8 @@ def graph(workers):
                     channels[network.group(1)] = node
     for worker in workers:
         for pipeline, (_, description) in worker.pipelines.items():
+            if worker.queries[pipeline] not in queries:
+                continue
             channel = re.search(r"channelId: ([\w-]+)", description)
             if worker.is_network_sink(pipeline) and channel and channel.group(1) in channels:
                 sink, source = pipeline_node(worker, pipeline), channels[channel.group(1)]
@@ -377,7 +387,7 @@ def interactive_report(workers, chains, out):
                     for (name, t0, t1), node in zip(chain["segments"], chain["nodes"])]
         rows.append([queries.setdefault(chain["query"], len(queries)), round((chain["segments"][0][1] - start) / 1e6, 3),
                      chain["tuples"], int(chain["warmup"]), "/".join(map(str, chain["key"])), segments])
-    data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers)}
+    data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, {chain["query"] for chain in chains})}
     from plotly.offline import get_plotlyjs
 
     template = (Path(__file__).parent / "latency_trace_report.html").read_text()

@@ -45,7 +45,9 @@ def ev(stage, key, t0, t1=0, pipeline=0, key2=(0, 0, 0)):
 raw, formatted, window = (1, 1, 1), (1, 1, 2), (9, 1, 1)
 with tempfile.TemporaryDirectory() as d:
     # Worker A: data arrives at 100us, the source blocks on input until then.
-    write(d, 1, 0, 0, "query q(distributed=Q1)\nsource 1 1 GeneratorSource\npipeline 1 2 InputFormatter\npipeline 2 - NetworkSink(connectionId: b:9090, channelId: c1)\n", [
+    write(d, 1, 0, 0, "query q(distributed=Q1)\nsource 1 1 GeneratorSource\npipeline 1 2 InputFormatter\npipeline 2 - NetworkSink(connectionId: b:9090, channelId: c1)\n"
+          # A query that was never traced, e.g. because tracing is turned on at runtime only for Q1.
+          "query u(distributed=Untraced)\nsource 7 7 GeneratorSource\npipeline 7 - PrintSink\n", [
         ev(lt.SOURCE_BACKPRESSURE, raw, 0, 10 * US, 1),
         ev(lt.SOURCE_BUFFER_WAIT, raw, 10 * US, 20 * US, 1),
         (20 * US, 300 * US, *raw[:2], 0, 100 * US, raw[2], 0, 1, lt.SOURCE_FILL, 0),
@@ -69,6 +71,9 @@ with tempfile.TemporaryDirectory() as d:
         ev(lt.EXEC, window, 1680 * US, 1710 * US, 4),
         ev(lt.ENQUEUE, window, 1701 * US, 1701 * US, 5),
         ev(lt.EXEC, window, 1750 * US, 1800 * US, 5),
+        # Tracing was turned on while this buffer was in flight, so only its last execution was recorded.
+        ev(lt.ENQUEUE, (5, 5, 5), 1760 * US, 1761 * US, 5),
+        ev(lt.EXEC, (5, 5, 5), 1770 * US, 1780 * US, 5),
     ])
     workers, sends = lt.load(sorted(Path(d).glob("*.bin")))
     # Every pipeline runs once here, so the only chain starts during warm-up.
@@ -77,8 +82,9 @@ with tempfile.TemporaryDirectory() as d:
     lt.interactive_report(workers, chains, Path(d))
     page = (Path(d) / "report.html").read_text()
     assert "/*TRACE_DATA*/" not in page and '"network":true' in page, "report embeds the data and the network edge"
+    assert "Untraced" not in page, "the graph only shows traced queries"
 
-assert incomplete == 0 and len(chains) == 1, (chains, incomplete)
+assert incomplete == 1 and len(chains) == 1, (chains, incomplete)
 segments = chains[0]["segments"]
 names = [name for name, _, _ in segments]
 assert names[0] == "source fill (batching)", names
