@@ -82,6 +82,8 @@ struct RunningQueryPlanNode
     void fail(Exception exception) const;
 
     PipelineId id;
+    /// Decided once per query when the node is created, so the hot path only reads it.
+    bool latencyTraced = false;
 
     std::atomic_bool requiresTermination = false;
     std::atomic<ssize_t> pendingTasks = 0;

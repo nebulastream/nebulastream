@@ -31,6 +31,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -102,8 +103,9 @@ SourceImplementationTermination dataSourceThreadRoutine(
     };
 
     const bool requiresMetadata = !source.addsMetadata();
-    while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
+    while (NES_EVENT_STAMP(backpressureStart), backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
+        NES_EVENT_STAMP(backpressureEnd);
         /// 4 Things that could happen:
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
@@ -114,15 +116,18 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exists with an exception
 
         std::optional<TupleBuffer> emptyBuffer;
+        NES_EVENT_STAMP(bufferStart);
         while (!emptyBuffer && !stopToken.stop_requested())
         {
             emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
         }
+        NES_EVENT_STAMP(bufferEnd);
         if (stopToken.stop_requested())
         {
             return {SourceImplementationTermination::StopRequested};
         }
 
+        NES_EVENT_STAMP(fillStart);
         const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())

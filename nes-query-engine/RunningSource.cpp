@@ -28,6 +28,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -59,6 +60,12 @@ SourceReturnType::EmitFunction emitFunction(
             Overloaded{
                 [&](const SourceReturnType::Data& data)
                 {
+                    NES_EVENT(const auto emitted = EventTrace::now(); for (const auto& successor : successors) {
+                        if (successor->latencyTraced)
+                        {
+                            EventTrace::sourceEmitted(EventTrace::keyOf(data.buffer), successor->id.getRawValue(), emitted);
+                        }
+                    } EventTrace::sourceStamps.firstData = 0;);
                     for (const auto& successor : successors)
                     {
                         {

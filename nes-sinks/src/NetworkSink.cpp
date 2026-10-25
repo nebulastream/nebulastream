@@ -30,6 +30,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
@@ -155,6 +156,9 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
+                NES_EVENT(if (EventTrace::currentTaskTraced) {
+                    EventTrace::mark(EventTrace::Stage::NetSend, EventTrace::keyOf(*currentBuffer), 0, EventTrace::now());
+                });
                 /// Sent a buffer, check the backpressure handler to send another one
                 currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
                 break;

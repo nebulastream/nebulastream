@@ -27,7 +27,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/EventTrace.hpp>
 #include <absl/functional/any_invocable.h>
+#include <fmt/format.h>
 #include <CompiledQueryPlan.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -93,6 +95,7 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     auto node = std::shared_ptr<RunningQueryPlanNode>(
         new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(unregisterWithError), std::move(planRef)),
         RunningQueryPlanNodeDeleter{.emitter = emitter, .queryId = queryId});
+    NES_EVENT(node->latencyTraced = EventTrace::traces(fmt::format("{}", queryId)));
     emitter.emitPipelineStart(
         queryId,
         node,

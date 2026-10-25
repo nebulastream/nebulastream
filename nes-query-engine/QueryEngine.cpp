@@ -38,6 +38,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
+#include <Util/EventTrace.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <DelayedTaskSubmitter.hpp>
@@ -307,6 +308,7 @@ public:
         TaskCallback callback,
         const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
     {
+        NES_EVENT(const auto enqueueKey = EventTrace::keyOf(buffer); const auto enqueueStart = EventTrace::now());
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
         auto [complete, failure, success] = std::move(callback).take();
@@ -322,6 +324,9 @@ public:
         {
             /// Non-WorkerThread
             taskQueue.addAdmissionTaskBlocking({}, std::move(task));
+            NES_EVENT(if (node->latencyTraced) {
+                EventTrace::span(EventTrace::Stage::Enqueue, enqueueKey, node->id.getRawValue(), enqueueStart, EventTrace::now());
+            });
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;
         }
@@ -332,6 +337,9 @@ public:
             case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
             case PipelineExecutionContext::ContinuationPolicy::NEVER:
                 addInternalTask(std::move(task));
+                NES_EVENT(if (node->latencyTraced) {
+                    EventTrace::span(EventTrace::Stage::Enqueue, enqueueKey, node->id.getRawValue(), enqueueStart, EventTrace::now());
+                });
                 return true;
         }
         std::unreachable();
@@ -499,6 +507,10 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                NES_EVENT(if (pipeline->latencyTraced) {
+                    EventTrace::link(
+                        EventTrace::keyOf(tupleBuffer), EventTrace::keyOf(task.buf), pipeline->id.getRawValue(), EventTrace::now());
+                });
                 return std::ranges::all_of(
                     pipeline->successors,
                     [&](const auto& successor)
@@ -516,7 +528,16 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
-        pipeline->stage->execute(task.buf, pec);
+        {
+            NES_EVENT(
+                EventTrace::currentTaskTraced = pipeline->latencyTraced; const EventTrace::Scope execution(
+                    pipeline->latencyTraced,
+                    EventTrace::Stage::Exec,
+                    EventTrace::keyOf(task.buf),
+                    pipeline->id.getRawValue(),
+                    task.buf.getNumberOfTuples()));
+            pipeline->stage->execute(task.buf, pec);
+        }
 
         if (requiresTaskRepetition)
         {

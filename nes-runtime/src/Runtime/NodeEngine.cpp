@@ -17,11 +17,20 @@
 #include <chrono>
 #include <memory>
 #include <utility>
+#if defined(NES_EVENT_TRACE_RING) || defined(NES_EVENT_TRACE_ITT)
+    #include <algorithm>
+    #include <sstream>
+    #include <string>
+    #include <Sources/SourceHandle.hpp>
+    #include <fmt/format.h>
+    #include <ExecutablePipelineStage.hpp>
+#endif
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -43,6 +52,48 @@ NodeEngine::~NodeEngine()
     bufferManager.reset();
 }
 
+#ifdef NES_EVENT_TRACE_ENABLED
+namespace
+{
+/// One line per source and pipeline: `<kind> <id> <comma separated successor ids or -> <description>`.
+std::string latencyTracePlan(const ExecutableQueryPlan& plan)
+{
+    auto successorIds = [](const std::vector<std::weak_ptr<ExecutablePipeline>>& successors)
+    {
+        std::string ids;
+        for (const auto& successor : successors)
+        {
+            if (const auto pipeline = successor.lock())
+            {
+                ids += (ids.empty() ? "" : ",") + std::to_string(pipeline->id.getRawValue());
+            }
+        }
+        return ids.empty() ? std::string("-") : ids;
+    };
+    auto oneLine = [](const auto& printable)
+    {
+        std::stringstream stream;
+        stream << printable;
+        auto text = stream.str();
+        std::ranges::replace(text, '\n', ' ');
+        return text;
+    };
+
+    std::stringstream out;
+    out << "query " << plan.queryId << '\n';
+    for (const auto& [source, successors] : plan.sources)
+    {
+        out << "source " << source->getSourceId() << ' ' << successorIds(successors) << ' ' << oneLine(*source) << '\n';
+    }
+    for (const auto& pipeline : plan.pipelines)
+    {
+        out << "pipeline " << pipeline->id << ' ' << successorIds(pipeline->successors) << ' ' << oneLine(*pipeline->stage) << '\n';
+    }
+    return out.str();
+}
+}
+#endif
+
 NodeEngine::NodeEngine(
     std::shared_ptr<BufferManager> bufferManager,
     std::shared_ptr<SystemEventListener> systemEventListener,
@@ -62,7 +113,11 @@ void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> 
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
     systemEventListener->onEvent(StartQuerySystemEvent(std::move(queryId)));
-    queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
+    auto executableQueryPlan = ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider);
+    NES_EVENT(if (EventTrace::traces(fmt::format("{}", executableQueryPlan->queryId))) {
+        EventTrace::writePlan(latencyTracePlan(*executableQueryPlan));
+    });
+    queryEngine->start(std::move(executableQueryPlan));
 }
 
 void NodeEngine::stopQuery(QueryId queryId)
