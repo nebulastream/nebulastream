@@ -14,9 +14,11 @@
 #include <Phases/LowerToPhysicalOperators.hpp>
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <LoweringRules/AbstractLoweringRule.hpp>
@@ -25,6 +27,7 @@
 #include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
@@ -72,6 +75,24 @@ resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRe
     }
     throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
 }
+
+/// Physical functions cannot describe themselves, so every physical operator of a lowered subgraph keeps the description of the
+/// logical operator it computes. The subgraph has no children of other logical operators yet.
+void describe(const LoweringRuleResultSubgraph::SubGraphRoot& root, const std::string& description)
+{
+    std::vector pending{root};
+    std::unordered_set<PhysicalOperatorWrapper*> described;
+    while (!pending.empty())
+    {
+        const auto wrapper = pending.back();
+        pending.pop_back();
+        if (described.insert(wrapper.get()).second)
+        {
+            wrapper->setPhysicalOperator(wrapper->getPhysicalOperator().withDescription(description));
+            std::ranges::copy(wrapper->getChildren(), std::back_inserter(pending));
+        }
+    }
+}
 }
 
 LoweringRuleResultSubgraph::SubGraphRoot
@@ -101,6 +122,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
         }
         return {};
     }
+    describe(root, logicalOperator.explain(ExplainVerbosity::Short));
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
     INVARIANT(

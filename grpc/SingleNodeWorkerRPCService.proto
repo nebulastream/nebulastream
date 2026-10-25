@@ -20,6 +20,7 @@ import "google/protobuf/empty.proto";
 service WorkerRPCService {
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
+  rpc SetLatencyTracing (SetLatencyTracingRequest) returns (google.protobuf.Empty) {}
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
@@ -40,6 +41,11 @@ message StartQueryReply {
 
 message StopQueryRequest {
     NES.SerializableQueryId queryId = 1;
+}
+
+message SetLatencyTracingRequest {
+    NES.SerializableQueryId queryId = 1;
+    bool enabled = 2;
 }
 
 enum QueryState {

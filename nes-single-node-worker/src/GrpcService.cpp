@@ -152,6 +152,18 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
         context);
 }
 
+grpc::Status GRPCServer::SetLatencyTracing(grpc::ServerContext* context, const SetLatencyTracingRequest* request, google::protobuf::Empty*)
+{
+    return tryWithDefaultHandling(
+        [&]
+        {
+            const auto queryId = QueryPlanSerializationUtil::deserializeQueryId(request->queryid());
+            getValueOrThrow(delegate.setLatencyTracing(queryId, request->enabled()));
+            return grpc::Status::OK;
+        },
+        context);
+}
+
 grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const QueryStatusRequest* request, QueryStatusReply* reply)
 {
     return tryWithDefaultHandling(

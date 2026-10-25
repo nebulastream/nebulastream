@@ -109,7 +109,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 }
 
-[[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(const DistributedLogicalPlan& plan)
+[[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>>
+QueryManager::start(const DistributedLogicalPlan& plan, const StartWait wait)
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
 
@@ -358,6 +359,30 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(const Distributed
     }
     NES_DEBUG("Stopping query {} was successful.", queryId);
     /// Stopped queries stay registered so that their terminal status can still be queried.
+    return {};
+}
+
+std::expected<void, std::vector<Exception>> QueryManager::setLatencyTracing(const DistributedQueryId& queryId, bool enabled)
+{
+    auto query = getQuery(queryId);
+    if (!query.has_value())
+    {
+        return std::unexpected(std::vector{query.error()});
+    }
+
+    std::vector<Exception> exceptions{};
+    for (const auto& [host, localQueryId] : query->iterate())
+    {
+        INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
+        if (auto result = backends.at(host).setLatencyTracing(localQueryId, enabled); !result)
+        {
+            exceptions.push_back(std::move(result.error()));
+        }
+    }
+    if (not exceptions.empty())
+    {
+        return std::unexpected{exceptions};
+    }
     return {};
 }
 

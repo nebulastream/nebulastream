@@ -80,12 +80,14 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                 }
                 unflushed_acks = 0;
             }
+            let trace_channel = pending_buffer.trace_channel;
             select! {
                 _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
                 write_queue_result = buffer_queue.send(pending_buffer) => {
                     match write_queue_result {
                         Ok(_) => {
                             trace!("accepted data for sequence number {sequence:?}.");
+                            crate::trace::record(crate::trace::NetStep::Queued, trace_channel, sequence);
                             // The registered channel has accepted the data, acknowledge the sequence
                             // number. The ack is only fed here and flushed in batches, see `MAX_UNFLUSHED_ACKS`.
                             let Some(result) = cancellation_token.run_until_cancelled(connection_writer.feed(DataChannelResponse::AckData(sequence))).await else {
@@ -154,6 +156,7 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
             // Received data will be pushed to the registered channel on the next iteration
             DataChannelRequest::Data(buffer) => {
                 trace!("received data for sequence number {:?}.", buffer.sequence());
+                crate::trace::step(crate::trace::NetStep::Decoded, &buffer);
                 Some(buffer)
             }
             // The other side has closed the channel. This is propagated to the registered

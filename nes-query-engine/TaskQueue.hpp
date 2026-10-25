@@ -14,40 +14,20 @@
 
 #pragma once
 
-#include <atomic>
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <semaphore>
 #include <stop_token>
 #include <utility>
-#include <ittnotify.h>
+#include <Util/EventTrace.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES
 {
-
-namespace detail
-{
-inline __itt_domain* taskQueueDomain = __itt_domain_create("engine.taskqueue");
-inline __itt_string_handle* admissionQueueWrite = __itt_string_handle_create("Blocking write");
-inline __itt_string_handle* taskQueueRead = __itt_string_handle_create("Blocking read");
-inline __itt_counter taskQueueDepth = __itt_counter_create("Depth", "engine.taskqueue");
-inline std::atomic<size_t> taskQueueDepthValue{0};
-
-inline void increaseTaskQueueDepth()
-{
-    auto depth = taskQueueDepthValue.fetch_add(1, std::memory_order_relaxed) + 1;
-    __itt_counter_set_value(taskQueueDepth, &depth);
-}
-
-inline void decreaseTaskQueueDepth()
-{
-    auto depth = taskQueueDepthValue.fetch_sub(1, std::memory_order_relaxed) - 1;
-    __itt_counter_set_value(taskQueueDepth, &depth);
-}
-}
 
 /// The TaskQueue is a central component within the QueryEngine. External components like sources or users of the system can add new tasks
 /// to an admission queue which is bounded and will backpressure sources if necessary. Internally, WorkerThreads communicate via a shared
@@ -63,13 +43,17 @@ class TaskQueue
     /// INVARIANT: internal.size() + admission.size() >= tasksAvailable
     std::counting_semaphore<> tasksAvailable{0};
 
+    /// Declared after the queues they sample, so they stop sampling before the queues are destroyed.
+    NES_EVENT(
+        EventTrace::CounterUpdater internalLength{"task_queue_internal", [this] { return static_cast<int64_t>(internal.size()); }};
+        EventTrace::CounterUpdater admissionLength{"task_queue_admission", [this] { return std::max<int64_t>(admission.sizeGuess(), 0); }};)
+
     /// To provide cancellation, we only block for StopTokenCheckInterval.
     /// This parameter could be tuned to allow for more timely cancellation
     static constexpr std::chrono::milliseconds StopTokenCheckInterval{100};
 
     TaskType readElementAssumingItExists()
     {
-        detail::decreaseTaskQueueDepth();
         TaskType task;
         /// The semaphore guarantees that there is at least one element in either one of the queues.
         if (internal.try_dequeue(task))
@@ -94,32 +78,17 @@ public:
     template <typename T = TaskType>
     bool addAdmissionTaskBlocking(const std::stop_token& stoken, T&& task)
     {
-        if (stoken.stop_requested())
-        {
-            return false;
-        }
-        if (admission.write(std::forward<T>(task)))
-        {
-            detail::increaseTaskQueueDepth();
-            tasksAvailable.release();
-            return true;
-        }
-
-        __itt_task_begin(detail::taskQueueDomain, __itt_null, __itt_null, detail::admissionQueueWrite);
         while (!stoken.stop_requested())
         {
             /// The order of operation upholds the invariant
             /// NOLINTNEXTLINE(bugprone-use-after-move) no move happens if the write does not succeed. If a move happens, we return.
             if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
             {
-                __itt_task_end(detail::taskQueueDomain);
                 /// tasksAvailable is only increased if write to admission queue was successful.
-                detail::increaseTaskQueueDepth();
                 tasksAvailable.release();
                 return true;
             }
         }
-        __itt_task_end(detail::taskQueueDomain);
         return false;
     }
 
@@ -129,7 +98,6 @@ public:
     {
         /// The order of operation upholds the invariant. internal is unbounded which makes this write always succeed (unless oom)
         internal.enqueue(std::forward<T>(task));
-        detail::increaseTaskQueueDepth();
         tasksAvailable.release();
     }
 
@@ -139,21 +107,13 @@ public:
     /// the stop token.
     std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken)
     {
-        if (tasksAvailable.try_acquire())
-        {
-            return readElementAssumingItExists();
-        }
-
-        __itt_task_begin(detail::taskQueueDomain, __itt_null, __itt_null, detail::taskQueueRead);
         while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
         {
             if (stoken.stop_requested())
             {
-                __itt_task_end(detail::taskQueueDomain);
                 return std::nullopt;
             }
         }
-        __itt_task_end(detail::taskQueueDomain);
 
         return readElementAssumingItExists();
     }

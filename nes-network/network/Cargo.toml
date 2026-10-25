@@ -18,7 +18,12 @@ edition.workspace = true
 [lib]
 name = "nes_network"
 
+[features]
+# Records the steps of traced buffers through the event trace. Needs the C++ build to link, so cargo tests run without it.
+event-trace = ["dep:event_trace"]
+
 [dependencies]
+event_trace = { workspace = true, optional = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 async-channel = { workspace = true }

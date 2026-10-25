@@ -17,5 +17,8 @@ add_source_files(nes-common
         UUID.cpp
         Signal.cpp
         Wait.cpp
+        EventTrace.cpp
+        EventTraceRing.cpp
+        EventTraceItt.cpp
 )
 add_subdirectory(Logger)

@@ -33,6 +33,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
 #include <Util/Variant.hpp>
@@ -155,6 +156,8 @@ Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer& tupleB
 
     if (receive_buffer(**channel, builder))
     {
+        NES_EVENT_FIRST_DATA();
+        NES_EVENT(EventTrace::sourceState.networkSource = true);
         return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples()); /// Received one buffer
     }
 

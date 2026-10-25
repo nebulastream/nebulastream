@@ -29,7 +29,6 @@
 #include <optional>
 #include <span>
 #include <utility>
-#include <ittnotify.h>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -60,6 +59,12 @@ BufferManager::BufferManager(
 {
     PRECONDITION(numOfBuffers > 0, "BufferManager requires at least one pooled buffer, but the configured budget yields {}", numOfBuffers);
     initialize();
+    NES_EVENT(
+        pooledInUseCounter.emplace(
+            "buffer_manager_pooled_buffers_in_use",
+            [this] { return static_cast<int64_t>(this->numOfBuffers) - static_cast<int64_t>(getNumberOfAvailableBuffers()); });
+        unpooledBytesCounter.emplace(
+            "buffer_manager_unpooled_bytes", [this] { return static_cast<int64_t>(unpooledChunksManager->getAllocatedUnpooledBytes()); }););
 }
 
 std::shared_ptr<BufferManager> BufferManager::create(
@@ -97,6 +102,7 @@ void BufferManager::destroy()
     NES_DEBUG("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
+        NES_EVENT(pooledInUseCounter.reset(); unpooledBytesCounter.reset(););
         /// All buffers should be idle now, so their control blocks (and data regions) are poisoned. Clear all
         /// poison up front: the availability checks and the MemorySegment destructors in allBuffers.clear()
         /// below read the control blocks, and the arena is about to be returned to the allocator anyway.
@@ -253,18 +259,10 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
     detail::MemorySegment* memSegment = nullptr;
-    if (!availableBuffers.read(memSegment))
+    const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
+    if (!availableBuffers.tryReadUntil(deadline, memSegment))
     {
-        static __itt_domain* bufferManagerDomain = __itt_domain_create("buffer-manager");
-        static __itt_string_handle* waitForBuffer = __itt_string_handle_create("Wait for buffer");
-        __itt_task_begin(bufferManagerDomain, __itt_null, __itt_null, waitForBuffer);
-        const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
-        if (!availableBuffers.tryReadUntil(deadline, memSegment))
-        {
-            __itt_task_end(bufferManagerDomain);
-            return std::nullopt;
-        }
-        __itt_task_end(bufferManagerDomain);
+        return std::nullopt;
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {

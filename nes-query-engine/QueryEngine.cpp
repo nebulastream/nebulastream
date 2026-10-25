@@ -30,7 +30,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -39,7 +38,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
-#include <Util/Overloaded.hpp>
+#include <Util/EventTrace.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <DelayedTaskSubmitter.hpp>
@@ -62,7 +61,6 @@ namespace NES
 
 namespace
 {
-__itt_domain* taskExecutionDomain = __itt_domain_create("engine.task");
 
 /// Graceful pipeline shutdown can only happen if no task depends on the pipeline anymore.
 /// It could happen that tasks are waiting within the admission queue and do not get a chance to execute as long as the
@@ -186,6 +184,7 @@ public:
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
     void stopQuery(QueryId queryId);
+    void setLatencyTraced(QueryId queryId, bool traced);
 
     void clear()
     {
@@ -310,6 +309,9 @@ public:
         TaskCallback callback,
         const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
     {
+        NES_EVENT(
+            const EventTrace::Scope enqueue(
+                node->latencyTraced, EventTrace::Enqueue{.key = EventTrace::keyOf(buffer), .pipeline = node->id.getRawValue()}));
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
         auto [complete, failure, success] = std::move(callback).take();
@@ -333,6 +335,12 @@ public:
         switch (continuationPolicy)
         {
             case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
+                if (continuations && continuation.enabled)
+                {
+                    continueOnThisWorker(std::move(task));
+                    return true;
+                }
+                [[fallthrough]];
             case PipelineExecutionContext::ContinuationPolicy::NEVER:
                 addInternalTask(std::move(task));
                 return true;
@@ -402,10 +410,12 @@ public:
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
-        const size_t admissionQueueSize)
+        const size_t admissionQueueSize,
+        const bool continuations)
         : listener(std::move(listener))
         , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
+        , continuations(continuations)
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
     {
@@ -458,10 +468,58 @@ private:
         taskQueue.addInternalTaskNonBlocking(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
     }
 
+    /// A task that the task a worker executes emitted with ContinuationPolicy::POSSIBLE. The worker runs it right after the current
+    /// task, instead of handing it through the queue to a worker that may have to wake up for it. Only the first emission of a task
+    /// is kept; a second one returns it to the queue, so tasks that emit several buffers still spread them across the workers.
+    struct Continuation
+    {
+        std::optional<Task> task;
+        bool spilled = false;
+        /// Only the regular worker loop runs continuations. Terminating workers and other threads use the queue.
+        bool enabled = false;
+    };
+
+    static thread_local Continuation continuation;
+
+    void continueOnThisWorker(Task&& task)
+    {
+        if (!continuation.task && !continuation.spilled)
+        {
+            continuation.task.emplace(std::move(task));
+            return;
+        }
+        if (continuation.task)
+        {
+            addInternalTask(std::move(*continuation.task));
+            continuation.task.reset();
+            continuation.spilled = true;
+        }
+        addInternalTask(std::move(task));
+    }
+
+    /// Handles the task and then the continuations it leaves, one after another.
+    void handleWithContinuations(const WorkerThread& worker, Task task)
+    {
+        std::optional<Task> next{std::move(task)};
+        while (next)
+        {
+            continuation.spilled = false;
+            Task current{std::move(*next)};
+            next.reset();
+            handleTask(worker, std::move(current));
+            if (continuation.task)
+            {
+                next.emplace(std::move(*continuation.task));
+                continuation.task.reset();
+            }
+        }
+    }
+
     /// Order of destruction matters: TaskQueue has to outlive the pool
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    bool continuations;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
     TaskQueue<Task> taskQueue;
@@ -478,6 +536,7 @@ private:
 
 /// Marks every Thread which has not explicitly been created by the ThreadPool as a non-worker thread
 thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadId>;
+thread_local ThreadPool::Continuation ThreadPool::continuation;
 
 bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
@@ -502,6 +561,13 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                NES_EVENT(if (pipeline->latencyTraced) {
+                    EventTrace::instant(
+                        EventTrace::Emit{
+                            .output = EventTrace::keyOf(tupleBuffer),
+                            .input = EventTrace::keyOf(task.buf),
+                            .pipeline = pipeline->id.getRawValue()});
+                });
                 return std::ranges::all_of(
                     pipeline->successors,
                     [&](const auto& successor)
@@ -519,7 +585,16 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
-        pipeline->stage->execute(task.buf, pec);
+        {
+            NES_EVENT(
+                EventTrace::currentTaskTraced = pipeline->latencyTraced; const EventTrace::Scope execution(
+                    pipeline->latencyTraced,
+                    EventTrace::Exec{
+                        .key = EventTrace::keyOf(task.buf),
+                        .pipeline = pipeline->id.getRawValue(),
+                        .tuples = task.buf.getNumberOfTuples()}));
+            pipeline->stage->execute(task.buf, pec);
+        }
 
         if (requiresTaskRepetition)
         {
@@ -771,82 +846,6 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
-namespace
-{
-__itt_string_handle* taskLabel(const Task& task)
-{
-    return std::visit(
-        Overloaded{
-            [](const WorkTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Work");
-                return Label;
-            },
-            [](const StopQueryTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Stop query");
-                return Label;
-            },
-            [](const StartQueryTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Start query");
-                return Label;
-            },
-            [](const FailSourceTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Fail source");
-                return Label;
-            },
-            [](const StopSourceTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Stop source");
-                return Label;
-            },
-            [](const PendingPipelineStopTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Pending pipeline stop");
-                return Label;
-            },
-            [](const StopPipelineTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Stop pipeline");
-                return Label;
-            },
-            [](const StartPipelineTask&)
-            {
-                static __itt_string_handle* const Label = __itt_string_handle_create("Start pipeline");
-                return Label;
-            },
-        },
-        task);
-}
-
-///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-void addTaskMetadata(const QueryId& queryId, const uint64_t pipelineId = PipelineId::INVALID)
-{
-    static __itt_string_handle* const TaskMetadata = __itt_string_handle_create("Local query:%s, Distributed query:%s, Pipeline:%llu");
-    const auto localQueryId = queryId.getLocalQueryId().getRawValue();
-    const auto distributedQueryId = queryId.getDistributedQueryId().getRawValue();
-    __itt_formatted_metadata_add(taskExecutionDomain, TaskMetadata, localQueryId.c_str(), distributedQueryId.c_str(), pipelineId);
-}
-
-void addTaskMetadata(const Task& task)
-{
-    std::visit(
-        Overloaded{
-            [](const WorkTask& workTask) { addTaskMetadata(workTask.queryId, workTask.pipelineId.getRawValue()); },
-            [](const StopQueryTask& stopQueryTask) { addTaskMetadata(stopQueryTask.queryId); },
-            [](const StartQueryTask& startQueryTask) { addTaskMetadata(startQueryTask.queryId); },
-            [](const FailSourceTask& failSourceTask) { addTaskMetadata(failSourceTask.queryId); },
-            [](const StopSourceTask& stopSourceTask) { addTaskMetadata(stopSourceTask.queryId); },
-            [](const PendingPipelineStopTask& stopTask) { addTaskMetadata(stopTask.queryId, stopTask.pipeline->id.getRawValue()); },
-            [](const StopPipelineTask& stopTask) { addTaskMetadata(stopTask.queryId, stopTask.pipeline->id.getRawValue()); },
-            [](const StartPipelineTask& startTask) { addTaskMetadata(startTask.queryId, startTask.pipelineId.getRawValue()); },
-        },
-        task);
-}
-}
-
 void ThreadPool::addThread(const Host& host)
 {
     pool.emplace_back(
@@ -856,20 +855,18 @@ void ThreadPool::addThread(const Host& host)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             const WorkerThread worker{*this, false};
-            const auto handleProfiledTask = [](const WorkerThread& worker, Task task)
-            {
-                __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, taskLabel(task));
-                addTaskMetadata(task);
-                handleTask(worker, std::move(task));
-                __itt_task_end(taskExecutionDomain);
-            };
+            continuation.enabled = true;
             while (!stopToken.stop_requested())
             {
-                if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                NES_EVENT(EventTrace::begin(EventTrace::TaskQueueWait{}));
+                auto task = taskQueue.getNextTaskBlocking(stopToken);
+                NES_EVENT(EventTrace::end(EventTrace::TaskQueueWait{}));
+                if (task)
                 {
-                    handleProfiledTask(worker, std::move(*task));
+                    handleWithContinuations(worker, std::move(*task));
                 }
             }
+            continuation.enabled = false;
 
             /// The task delayer could add another task after the workers observe an empty task queue. Synchronously shutting it down first
             /// guarantees that no delayed submission is in flight and that later delayed submissions are failed instead of queued.
@@ -880,7 +877,7 @@ void ThreadPool::addThread(const Host& host)
             const WorkerThread terminatingWorker{*this, true};
             while (auto task = taskQueue.getNextTaskNonBlocking())
             {
-                handleProfiledTask(terminatingWorker, std::move(*task));
+                handleTask(terminatingWorker, std::move(*task));
             }
         });
 }
@@ -895,7 +892,8 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize))
+    , threadPool(
+          std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize, config.continuations))
     , host(host)
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads; ++i)
@@ -916,6 +914,12 @@ void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan
 {
     threadPool->taskQueue.addAdmissionTaskBlocking(
         {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+}
+
+/// NOLINTNEXTLINE Intentionally non-const
+void QueryEngine::setLatencyTraced(QueryId queryId, bool traced)
+{
+    queryCatalog->setLatencyTraced(queryId, traced);
 }
 
 QueryEngine::~QueryEngine()
@@ -1113,4 +1117,31 @@ void QueryCatalog::stopQuery(QueryId id)
         }
     }
 }
+
+void QueryCatalog::setLatencyTraced(QueryId id, bool traced)
+{
+    const std::scoped_lock lock(mutex);
+    const auto it = queryStates.find(id);
+    if (it == queryStates.end())
+    {
+        throw QueryNotFound("{}", id);
+    }
+    /// A transition into the same state accesses the plan under the state's lock, so it cannot be stopped concurrently.
+    const bool active = it->second->transition(
+        [traced](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+        {
+            starting.plan->setLatencyTraced(traced);
+            return Starting{std::move(starting.plan)};
+        },
+        [traced](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+        {
+            running.plan->setLatencyTraced(traced);
+            return Running{std::move(running.plan)};
+        });
+    if (!active)
+    {
+        throw QueryNotFound("{} is not running", id);
+    }
+}
+
 }

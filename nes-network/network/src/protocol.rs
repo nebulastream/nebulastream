@@ -129,6 +129,9 @@ pub struct TupleBuffer {
     pub last_chunk: bool,
     pub data: Vec<u8>,
     pub child_buffers: Vec<Vec<u8>>,
+    /// Tag of the channel for the event trace if the buffer belongs to a traced query, 0 otherwise. Both ends record the buffer's
+    /// steps through the network layer with it, because buffers of different queries can have the same sequence.
+    pub trace_channel: u64,
 }
 
 impl TupleBuffer {
@@ -150,15 +153,15 @@ impl Debug for TupleBuffer {
 /// ```text
 /// Close: u8 tag = 0
 /// Data:  u8 tag = 1, u64 sequence_number, u64 origin_id, u64 watermark, u64 chunk_number, u64 number_of_tuples,
-///        u8 last_chunk, u32 data_len, u32 child_count, data bytes, child_count * (u32 child_len, child bytes)
+///        u64 trace_channel, u8 last_chunk, u32 data_len, u32 child_count, data bytes, child_count * (u32 child_len, child bytes)
 /// ```
 #[derive(Debug, Default)]
 pub struct RawDataRequestCodec;
 
 const TAG_CLOSE: u8 = 0;
 const TAG_DATA: u8 = 1;
-/// tag + 5 * u64 + last_chunk + data_len + child_count
-const DATA_HEADER_LEN: usize = 1 + 5 * 8 + 1 + 4 + 4;
+/// tag + 6 * u64 + last_chunk + data_len + child_count
+const DATA_HEADER_LEN: usize = 1 + 6 * 8 + 1 + 4 + 4;
 
 fn invalid_data(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message.to_string())
@@ -191,6 +194,7 @@ impl Serializer<DataChannelRequest> for RawDataRequestCodec {
                 out.put_u64_le(buffer.watermark);
                 out.put_u64_le(buffer.chunk_number);
                 out.put_u64_le(buffer.number_of_tuples);
+                out.put_u64_le(buffer.trace_channel);
                 out.put_u8(buffer.last_chunk as u8);
                 out.put_u32_le(length_as_u32(buffer.data.len(), "data length")?);
                 out.put_u32_le(length_as_u32(
@@ -230,6 +234,7 @@ impl Deserializer<DataChannelRequest> for RawDataRequestCodec {
                 let watermark = src.get_u64_le();
                 let chunk_number = src.get_u64_le();
                 let number_of_tuples = src.get_u64_le();
+                let trace_channel = src.get_u64_le();
                 let last_chunk = src.get_u8() != 0;
                 let data_len = src.get_u32_le() as usize;
                 let child_count = src.get_u32_le() as usize;
@@ -269,6 +274,7 @@ impl Deserializer<DataChannelRequest> for RawDataRequestCodec {
                     last_chunk,
                     data,
                     child_buffers,
+                    trace_channel,
                 }))
             }
             _ => Err(invalid_data("unknown data channel frame tag")),
@@ -499,6 +505,7 @@ mod raw_codec_tests {
             last_chunk: true,
             data,
             child_buffers: children,
+            trace_channel: 5,
         }
     }
 

@@ -33,6 +33,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -117,7 +118,10 @@ SourceImplementationTermination dataSourceThreadRoutine(
     };
 
     const bool requiresMetadata = !source.addsMetadata();
-    while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
+    while (NES_EVENT_SOURCE_BEGIN(SourceBackpressure),
+           backpressureListener.wait(stopToken),
+           NES_EVENT_SOURCE_END(SourceBackpressure),
+           !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
@@ -128,12 +132,16 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
+        NES_EVENT_SOURCE_BEGIN(SourceBufferWait);
         auto emptyBuffer = getBufferUnlessStopped(*bufferProvider, stopToken);
+        NES_EVENT_SOURCE_END(SourceBufferWait);
         if (!emptyBuffer)
         {
             return {SourceImplementationTermination::StopRequested};
         }
 
+        /// The fill span ends when the engine receives the emitted buffer, see EventTrace::sourceEmitted.
+        NES_EVENT_SOURCE_BEGIN(SourceFill);
         const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())
@@ -145,6 +153,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
         }
         else
         {
+            NES_EVENT_SOURCE_END(SourceFill);
             if (stopToken.stop_requested())
             {
                 return {SourceImplementationTermination::StopRequested};

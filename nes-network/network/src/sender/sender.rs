@@ -15,7 +15,7 @@
 use super::control::*;
 use crate::channel::Communication;
 use crate::protocol::*;
-use crate::sender::channel::{ChannelCommand, ChannelCommandQueue, ChannelFailed};
+use crate::sender::channel::{ChannelCommand, ChannelCommandQueue, ChannelFailed, ChannelStats};
 use async_channel::TrySendError;
 use std::marker::PhantomData;
 use std::sync::atomic::Ordering;
@@ -85,6 +85,7 @@ pub struct SenderChannel {
     queue: ChannelCommandQueue,
     pending_flush: Mutex<Option<oneshot::Receiver<bool>>>,
     failed: ChannelFailed,
+    stats: Arc<ChannelStats>,
 }
 
 /// Result of a non-blocking send operation on a `SenderChannel`.
@@ -97,6 +98,22 @@ pub enum TrySendDataResult {
     Closed(TupleBuffer),
 }
 impl SenderChannel {
+    /// Buffers that wait to be written to the network: in the software queue or taken by the channel handler.
+    /// Lock-free, for monitoring; the value can be slightly stale.
+    pub fn queued_buffers(&self) -> usize {
+        self.queue.len() + self.stats.pending_writes.load(Ordering::Relaxed)
+    }
+
+    /// Buffers written to the network that the receiver has not acknowledged yet. Lock-free, for monitoring.
+    pub fn unacknowledged_buffers(&self) -> usize {
+        self.stats.awaiting_ack.load(Ordering::Relaxed)
+    }
+
+    /// Buffers written to the network since the channel was registered, including resends. Lock-free, for monitoring.
+    pub fn sent_buffers(&self) -> u64 {
+        self.stats.sent.load(Ordering::Relaxed)
+    }
+
     /// Attempts to send a tuple buffer through this channel without blocking.
     ///
     /// This method will immediately return with one of three results:
@@ -404,11 +421,12 @@ impl<C: Communication + 'static> NetworkService<C> {
         };
 
         // Receive the internal queue handle for the data channel
-        let (internal, failed) = rx.blocking_recv().map_err(|_| "Network Service Closed")?;
+        let (internal, failed, stats) = rx.blocking_recv().map_err(|_| "Network Service Closed")?;
         Ok(SenderChannel {
             queue: internal,
             pending_flush: Default::default(),
             failed,
+            stats,
         })
     }
 

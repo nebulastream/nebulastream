@@ -33,6 +33,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipeService.hpp>
@@ -124,6 +125,8 @@ Source::FillTupleBufferResult PipeSource::fillTupleBuffer(TupleBuffer& tupleBuff
                     else
                     {
                         const TupleBuffer& srcBuffer = msg;
+                        NES_EVENT_FIRST_DATA();
+                        NES_EVENT(EventTrace::sourceState.pipeUpstream = EventTrace::keyOf(srcBuffer));
                         PRECONDITION(
                             tupleBuffer.getBufferSize() >= srcBuffer.getBufferSize(),
                             "Attempt to copy pipe buffer of size: {} into smaller buffer of size: {}",

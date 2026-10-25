@@ -39,6 +39,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
 #include <Util/Variant.hpp>
@@ -190,6 +191,7 @@ Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupl
     /// If there is a stashed payload, consume it first
     if (!payloadStash.empty())
     {
+        NES_EVENT_FIRST_DATA();
         payload = payloadStash.consume(tbSize);
         writePayloadToBuffer(payload, tupleBuffer, tbOffset);
     }
@@ -237,6 +239,7 @@ Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupl
             continue;
         }
 
+        NES_EVENT_FIRST_DATA();
         const auto& receivedPayload = message->get_payload();
         if (logMessages)
         {

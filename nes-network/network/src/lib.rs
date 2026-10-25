@@ -18,4 +18,5 @@ mod memcom;
 pub mod protocol;
 pub mod receiver;
 pub mod sender;
+mod trace;
 mod util;

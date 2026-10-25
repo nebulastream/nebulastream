@@ -14,13 +14,15 @@
 
 use super::SenderConfig;
 use super::channel::{
-    ChannelCommandQueue, ChannelCommandQueueListener, ChannelFailed, create_channel_handler,
+    ChannelCommandQueue, ChannelCommandQueueListener, ChannelFailed, ChannelStats,
+    create_channel_handler,
 };
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use crate::util::{ActiveTokens, ScopedTask};
 use futures::SinkExt;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::oneshot;
 use tokio_retry2::RetryError::Transient;
@@ -51,6 +53,7 @@ pub(super) struct PendingChannel {
     pub max_pending_acks: usize,
     /// Set by the channel handler if the channel failed permanently
     pub failed: ChannelFailed,
+    pub stats: Arc<ChannelStats>,
 }
 
 /// Control commands sent to the network service dispatcher.
@@ -64,7 +67,7 @@ pub(super) enum NetworkServiceControlCommand {
     RegisterChannel(
         ConnectionIdentifier,
         ChannelIdentifier,
-        oneshot::Sender<(ChannelCommandQueue, ChannelFailed)>,
+        oneshot::Sender<(ChannelCommandQueue, ChannelFailed, Arc<ChannelStats>)>,
         SenderConfig,
     ),
 }
@@ -84,7 +87,7 @@ pub(super) enum NetworkingConnectionControlCommand {
     /// The SenderConfig provides queue sizing and flow control parameters.
     RegisterChannel(
         ChannelIdentifier,
-        oneshot::Sender<(ChannelCommandQueue, ChannelFailed)>,
+        oneshot::Sender<(ChannelCommandQueue, ChannelFailed, Arc<ChannelStats>)>,
         SenderConfig,
     ),
     /// Retry establishing a channel after a failure. This reuses the existing
@@ -445,6 +448,7 @@ async fn connection_handler<C: Communication + 'static>(
                 let (sender, queue) = async_channel::bounded(config.sender_queue_size);
                 let channel_cancellation = CancellationToken::new();
                 let failed = ChannelFailed::default();
+                let stats = Arc::<ChannelStats>::default();
 
                 let pending_channel = PendingChannel {
                     id: channel,
@@ -452,6 +456,7 @@ async fn connection_handler<C: Communication + 'static>(
                     queue,
                     max_pending_acks: config.max_pending_acks,
                     failed: failed.clone(),
+                    stats: stats.clone(),
                 };
 
                 tokio::spawn(
@@ -466,7 +471,7 @@ async fn connection_handler<C: Communication + 'static>(
                 );
 
                 active_channel.add_token(channel_cancellation);
-                let _ = response.send((sender, failed));
+                let _ = response.send((sender, failed, stats));
             }
             NetworkingConnectionControlCommand::RetryChannel(pending_channel) => {
                 tokio::spawn(
