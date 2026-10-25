@@ -114,9 +114,8 @@ void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> 
     queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
     systemEventListener->onEvent(StartQuerySystemEvent(std::move(queryId)));
     auto executableQueryPlan = ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider);
-    NES_EVENT(if (EventTrace::traces(fmt::format("{}", executableQueryPlan->queryId))) {
-        EventTrace::writePlan(latencyTracePlan(*executableQueryPlan));
-    });
+    /// Every query's plan is written, because latency tracing can be turned on while it runs.
+    NES_EVENT(EventTrace::writePlan(latencyTracePlan(*executableQueryPlan)));
     queryEngine->start(std::move(executableQueryPlan));
 }
 
@@ -126,6 +125,16 @@ void NodeEngine::stopQuery(QueryId queryId)
     NES_INFO("Stop {}", queryId);
     systemEventListener->onEvent(StopQuerySystemEvent(queryId));
     queryEngine->stop(queryId);
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) the trace backends are chosen at build time
+void NodeEngine::setLatencyTracing([[maybe_unused]] QueryId queryId, [[maybe_unused]] bool enabled)
+{
+#ifdef NES_EVENT_TRACE_ENABLED
+    queryEngine->setLatencyTraced(queryId, enabled);
+#else
+    throw NotImplemented("Latency tracing needs a build with -DNES_EVENT_TRACE_BACKENDS");
+#endif
 }
 
 }

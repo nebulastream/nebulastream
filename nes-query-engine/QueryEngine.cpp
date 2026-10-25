@@ -184,6 +184,7 @@ public:
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
     void stopQuery(QueryId queryId);
+    void setLatencyTraced(QueryId queryId, bool traced);
 
     void clear()
     {
@@ -842,6 +843,12 @@ void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan
         {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
 
+/// NOLINTNEXTLINE Intentionally non-const
+void QueryEngine::setLatencyTraced(QueryId queryId, bool traced)
+{
+    queryCatalog->setLatencyTraced(queryId, traced);
+}
+
 QueryEngine::~QueryEngine()
 {
     ThreadPool::WorkerThread::id = ThreadPool::terminatorThreadId;
@@ -1037,4 +1044,31 @@ void QueryCatalog::stopQuery(QueryId id)
         }
     }
 }
+
+void QueryCatalog::setLatencyTraced(QueryId id, bool traced)
+{
+    const std::scoped_lock lock(mutex);
+    const auto it = queryStates.find(id);
+    if (it == queryStates.end())
+    {
+        throw QueryNotFound("{}", id);
+    }
+    /// A transition into the same state accesses the plan under the state's lock, so it cannot be stopped concurrently.
+    const bool active = it->second->transition(
+        [traced](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+        {
+            starting.plan->setLatencyTraced(traced);
+            return Starting{std::move(starting.plan)};
+        },
+        [traced](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+        {
+            running.plan->setLatencyTraced(traced);
+            return Running{std::move(running.plan)};
+        });
+    if (!active)
+    {
+        throw QueryNotFound("{} is not running", id);
+    }
+}
+
 }

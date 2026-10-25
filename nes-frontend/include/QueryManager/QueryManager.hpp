@@ -47,6 +47,11 @@ public:
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
     [[nodiscard]] virtual std::expected<VersionInfo, Exception> version() const = 0;
+
+    virtual std::expected<void, Exception> setLatencyTracing(QueryId, bool /*enabled*/)
+    {
+        return std::unexpected{NotImplemented("Latency tracing is not supported by this backend")};
+    }
 };
 
 /// std::move_only_function is the C++23 equivalent but is not yet available in libc++19.
@@ -113,6 +118,8 @@ public:
     /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
     [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
     std::expected<void, std::vector<Exception>> stop(const DistributedQueryId& query);
+    /// Turns latency tracing on or off on every worker the query runs on.
+    std::expected<void, std::vector<Exception>> setLatencyTracing(const DistributedQueryId& query, bool enabled);
     [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query) const;
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;

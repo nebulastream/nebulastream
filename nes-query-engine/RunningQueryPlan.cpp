@@ -116,6 +116,17 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     return node;
 }
 
+void RunningQueryPlan::setLatencyTraced(bool traced)
+{
+    for (const auto& pipeline : internal.lock()->pipelines)
+    {
+        if (const auto node = pipeline.lock())
+        {
+            node->latencyTraced = traced;
+        }
+    }
+}
+
 RunningQueryPlanNode::~RunningQueryPlanNode()
 {
     assert(!requiresTermination && "Node was destroyed without termination. This should not happen");

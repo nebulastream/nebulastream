@@ -140,6 +140,20 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noex
     std::unreachable();
 }
 
+std::expected<void, Exception> SingleNodeWorker::setLatencyTracing(QueryId queryId, bool enabled) noexcept
+{
+    CPPTRACE_TRY
+    {
+        nodeEngine->setLatencyTracing(queryId, enabled);
+        return {};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
 std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
 {
     CPPTRACE_TRY

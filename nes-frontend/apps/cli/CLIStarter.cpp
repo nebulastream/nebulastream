@@ -723,6 +723,22 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector
     std::cout << rfl::json::write(result, rfl::json::pretty) << '\n';
 }
 
+void doTrace(NES::QueryManager& queryManager, const std::vector<NES::DistributedQueryId>& queries, bool enabled)
+{
+    for (const auto& query : queries)
+    {
+        if (auto result = queryManager.setLatencyTracing(query, enabled); !result)
+        {
+            for (const auto& exception : result.error() | std::views::drop(1))
+            {
+                NES_ERROR("{}", exception.what());
+            }
+            throw std::move(result.error().front());
+        }
+        std::cout << fmt::format("{}: latency tracing {}\n", query, enabled ? "on" : "off");
+    }
+}
+
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
@@ -764,6 +780,10 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     else if (program.is_subcommand_used("status"))
     {
         doStatus(queryHandler, topologyHandler, queries);
+    }
+    else if (program.is_subcommand_used("trace"))
+    {
+        doTrace(*queryManager, queries, subcommand.get<std::string>("state") == "on");
     }
     else
     {
@@ -863,15 +883,22 @@ int main(int argc, char** argv)
         ArgumentParser statusQuery("status");
         statusQuery.add_argument("queryId").nargs(argparse::nargs_pattern::any);
 
+        ArgumentParser traceQuery("trace");
+        traceQuery.add_description(
+            "Turns latency tracing of running queries on or off. Needs workers built with NES_EVENT_TRACE_BACKENDS.");
+        traceQuery.add_argument("state").choices("on", "off");
+        traceQuery.add_argument("queryId").nargs(argparse::nargs_pattern::at_least_one);
+
         ArgumentParser dump("dump");
         dump.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
         program.add_subparser(statusQuery);
+        program.add_subparser(traceQuery);
         program.add_subparser(dump);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery, statusQuery};
+        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery, statusQuery, traceQuery};
         std::vector<std::reference_wrapper<ArgumentParser>> querySubmissionCommands{startQuery, dump};
 
         try
