@@ -16,8 +16,11 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <Interface/NautilusBuffer.hpp>
@@ -28,6 +31,7 @@
 #include <cpptrace/from_current.hpp>
 #include <cpptrace/from_current_macros.hpp>
 #include <fmt/format.h>
+#include <nautilus/Executable.hpp>
 #include <nautilus/inline.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <CompilationContext.hpp>
@@ -125,7 +129,19 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 {
-    return os << "CompiledExecutablePipelineStage()";
+    /// Operators are separated by tabs, because their descriptions can contain any other separator.
+    os << "CompiledExecutablePipelineStage(";
+    std::string_view separator;
+    for (std::optional<PhysicalOperator> op = rootOperator; op.has_value(); op = op->getChild())
+    {
+        os << separator << *op;
+        if (!op->getDescription().empty())
+        {
+            os << ": " << op->getDescription();
+        }
+        separator = "\t";
+    }
+    return os << ")";
 }
 
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
@@ -146,6 +162,14 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         compilationCtx.resolveAfterCompilation(*compiledModule);
         compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
         terminateFunction = compiledModule->getFunction<TerminateSignature>(std::string{TERMINATE_FUNCTION_NAME});
+        /// The JIT generates machine code on the first symbol lookup, and getFunction() defers that lookup to the first call.
+        /// Looking the function up here keeps code generation out of the first execute(), where a buffer would wait for it.
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast) the executable is owned non-const by the module
+        if (auto* executable = const_cast<nautilus::compiler::Executable*>(compiledModule->getExecutable());
+            executable != nullptr && executable->hasInvocableFunctionPtr())
+        {
+            std::ignore = executable->getInvocableFunctionPtr(std::string{PIPELINE_FUNCTION_NAME});
+        }
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.

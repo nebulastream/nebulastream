@@ -1245,6 +1245,56 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector
     std::cout << rfl::json::write(result, rfl::json::pretty) << '\n';
 }
 
+/// The named queries in `names` and, transitively, the named queries that write the pipes they read. A pipe source starts a new chain
+/// of buffers, so tracing a query's latency from its sources needs the queries upstream of its pipes traced as well.
+std::vector<std::string> withPipeProducers(std::vector<std::string> names, const std::vector<NES::CLI::NamedQuery>& queries)
+{
+    std::unordered_map<NES::Identifier, std::string> producers;
+    for (const auto& query : queries | std::views::filter([](const auto& query) { return query.name.has_value() && !query.disabled; }))
+    {
+        for (const auto& endpoint : findPipeEndpoints(query).endpoints)
+        {
+            if (endpoint.type == PipeEndpointType::Sink)
+            {
+                producers.emplace(endpoint.name, query.name.value());
+            }
+        }
+    }
+    for (size_t next = 0; next < names.size(); ++next)
+    {
+        const auto query = std::ranges::find(queries, std::optional{names[next]}, &NES::CLI::NamedQuery::name);
+        if (query == queries.end())
+        {
+            continue;
+        }
+        for (const auto& endpoint : findPipeEndpoints(*query).endpoints)
+        {
+            const auto producer = producers.find(endpoint.name);
+            if (endpoint.type == PipeEndpointType::Source && producer != producers.end() && !std::ranges::contains(names, producer->second))
+            {
+                names.push_back(producer->second);
+            }
+        }
+    }
+    return names;
+}
+
+void doTrace(NES::QueryManager& queryManager, const std::vector<NES::DistributedQueryId>& queries, bool enabled)
+{
+    for (const auto& query : queries)
+    {
+        if (auto result = queryManager.setLatencyTracing(query, enabled); !result)
+        {
+            for (const auto& exception : result.error() | std::views::drop(1))
+            {
+                NES_ERROR("{}", exception.what());
+            }
+            throw std::move(result.error().front());
+        }
+        std::cout << fmt::format("{}: latency tracing {}\n", query, enabled ? "on" : "off");
+    }
+}
+
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
@@ -1254,7 +1304,12 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     std::unordered_map<NES::DistributedQueryId, NES::DistributedQuery> state;
     if (subcommand.is_used("queryId"))
     {
-        state = subcommand.get<std::vector<std::string>>("queryId")
+        auto queryIds = subcommand.get<std::vector<std::string>>("queryId");
+        if (program.is_subcommand_used("trace"))
+        {
+            queryIds = withPipeProducers(std::move(queryIds), topologyConfig.query);
+        }
+        state = queryIds
             | std::views::transform(
                     [&stateBackend](const std::string& queryId) -> std::pair<NES::DistributedQueryId, NES::DistributedQuery>
                     {
@@ -1317,6 +1372,10 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     else if (program.is_subcommand_used("status"))
     {
         doStatus(queryHandler, topologyHandler, queries);
+    }
+    else if (program.is_subcommand_used("trace"))
+    {
+        doTrace(*queryManager, queries, subcommand.get<std::string>("state") == "on");
     }
     else
     {
@@ -1438,15 +1497,23 @@ int main(int argc, char** argv)
         ArgumentParser statusQuery("status");
         statusQuery.add_argument("queryId").nargs(argparse::nargs_pattern::any);
 
+        ArgumentParser traceQuery("trace");
+        traceQuery.add_description(
+            "Turns latency tracing of running queries, and of the named queries writing the pipes they read, on or off. Needs workers "
+            "built with NES_EVENT_TRACE_BACKENDS.");
+        traceQuery.add_argument("state").choices("on", "off");
+        traceQuery.add_argument("queryId").nargs(argparse::nargs_pattern::at_least_one);
+
         ArgumentParser dump("dump");
         dump.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
         program.add_subparser(statusQuery);
+        program.add_subparser(traceQuery);
         program.add_subparser(dump);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery, statusQuery};
+        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery, statusQuery, traceQuery};
         std::vector<std::reference_wrapper<ArgumentParser>> querySubmissionCommands{startQuery, dump};
 
         try

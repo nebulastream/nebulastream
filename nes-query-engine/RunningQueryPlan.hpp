@@ -82,6 +82,8 @@ struct RunningQueryPlanNode
     void fail(Exception exception) const;
 
     PipelineId id;
+    /// Starts from the NES_LATENCY_TRACE_QUERY filter and can be changed while the query runs, see RunningQueryPlan::setLatencyTraced.
+    std::atomic_bool latencyTraced = false;
 
     std::atomic_bool requiresTermination = false;
     std::atomic<ssize_t> pendingTasks = 0;
@@ -134,6 +136,9 @@ struct RunningQueryPlan final
     /// 1. Not notify any listeners. `onDestruction` will not be called.
     /// 2. Pipelines are not terminated, just destroyed.
     static std::unique_ptr<ExecutableQueryPlan> dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
+
+    /// Turns latency tracing of all pipelines on or off. Buffers in flight are only partially traced.
+    void setLatencyTraced(bool traced);
 
     /// Destroying a RunningQueryPlan will:
     /// 1. Will invoke listeners!

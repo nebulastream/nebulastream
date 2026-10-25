@@ -67,6 +67,8 @@ get_source(nes-common NES_COMMON_SOURCE_FILES)
 add_library(nes-common ${NES_COMMON_SOURCE_FILES})
 # Version.cpp includes <BuildInfo.hpp> from the active configuration's generated directory.
 target_include_directories(nes-common PRIVATE "${NES_BUILD_INFO_DIR}/$<CONFIG>")
+# EventTraceBackends.hpp declares the backends behind the public EventTrace.hpp.
+target_include_directories(nes-common PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/Util")
 
 find_package(cpptrace   CONFIG REQUIRED)
 find_package(fmt        CONFIG REQUIRED)
@@ -80,10 +82,20 @@ find_package(boost_url CONFIG REQUIRED)
 find_package(PkgConfig)
 pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
 
-target_link_libraries(nes-common PUBLIC ittnotify nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid nes-logger-bindings)
+target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid nes-logger-bindings)
 target_link_rust_lib(nes-common spdlog_bindings)
+if (NES_EVENT_TRACE_BACKENDS)
+    # Describes the event types once at startup; recording events does not use it.
+    find_package(reflectcpp CONFIG REQUIRED)
+    target_link_libraries(nes-common PRIVATE reflectcpp::reflectcpp)
+endif ()
+if ("itt" IN_LIST NES_EVENT_TRACE_BACKENDS)
+    find_package(ittapi CONFIG REQUIRED)
+    target_link_libraries(nes-common PRIVATE ittapi::ittnotify)
+endif ()
 
 add_subdirectory(rust/spdlog-bindings)
+add_subdirectory(rust/event-trace)
 
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

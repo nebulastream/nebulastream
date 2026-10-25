@@ -119,6 +119,9 @@ struct PhysicalOperator
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
     [[nodiscard]] PhysicalOperator withChild(PhysicalOperator child) const;
+    /// What the operator computes, e.g. the logical operator it was lowered from, or empty.
+    [[nodiscard]] PhysicalOperator withDescription(std::string description) const;
+    [[nodiscard]] const std::string& getDescription() const;
 
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
@@ -171,6 +174,8 @@ private:
 
         [[nodiscard]] virtual std::shared_ptr<Concept> clone() const = 0;
         [[nodiscard]] virtual std::string toString() const = 0;
+
+        std::string description;
     };
 
     template <IsPhysicalOperator OperatorType>
@@ -182,7 +187,12 @@ private:
 
         Model(OperatorType d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
 
-        [[nodiscard]] std::shared_ptr<Concept> clone() const override { return std::make_shared<Model>(data, this->id); }
+        [[nodiscard]] std::shared_ptr<Concept> clone() const override
+        {
+            auto copy = std::make_shared<Model>(data, this->id);
+            copy->description = this->description;
+            return copy;
+        }
 
         [[nodiscard]] std::optional<PhysicalOperator> getChild() const override { return data.getChild(); }
 
@@ -269,6 +279,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     [[nodiscard]] const PhysicalOperator& getPhysicalOperator() const;
+    void setPhysicalOperator(PhysicalOperator newPhysicalOperator);
     [[nodiscard]] const std::optional<Schema<QualifiedUnboundField, Ordered>>& getInputSchema() const;
     [[nodiscard]] const std::optional<Schema<QualifiedUnboundField, Ordered>>& getOutputSchema() const;
     [[nodiscard]] const std::optional<MemoryLayoutType>& getInputMemoryLayoutType() const;

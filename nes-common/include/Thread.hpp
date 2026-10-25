@@ -14,13 +14,10 @@
 
 #pragma once
 #include <string>
-#include <string_view>
 #include <thread>
 
 #include <utility>
-#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
-#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <ErrorHandling.hpp>
 
@@ -117,19 +114,17 @@ public:
     {
         WorkerNodeId = std::move(worker_id);
         ThreadName = std::move(name);
-        setThreadName(ThreadName, WorkerNodeId.getRawValue());
+        setThreadName(ThreadName);
     }
 
     ///Sets the currents thread's name.
     ///threadName has to be non-empty and will be truncated to PTHREAD_NAME_LENGTH character
-    ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-    static void setThreadName(const std::string_view threadName, const std::string_view worker = "")
+    static void setThreadName(const std::string_view threadName)
     {
         PRECONDITION(!threadName.empty(), "Thread name cannot be empty");
         std::array<char, detail::PTHREAD_NAME_LENGTH + 1> truncatedStringName{};
         std::copy_n(threadName.begin(), std::min(detail::PTHREAD_NAME_LENGTH, threadName.size()), truncatedStringName.begin());
         pthread_setname_np(pthread_self(), truncatedStringName.data());
-        __itt_thread_set_name(worker.empty() ? std::string(threadName).c_str() : fmt::format("{}@{}", threadName, worker).c_str());
     }
 };
 }

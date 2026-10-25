@@ -16,6 +16,8 @@ use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -103,6 +105,18 @@ pub(super) enum ChannelCommand {
 pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
 pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
 
+/// Buffers that left the software queue of a channel, published by its channel handler for monitoring. Shared by all
+/// handlers of the channel, so it survives reconnects.
+#[derive(Default)]
+pub(super) struct ChannelStats {
+    /// Taken from the software queue but not written to the network yet.
+    pub pending_writes: AtomicUsize,
+    /// Written to the network and waiting for the receiver's acknowledgment.
+    pub awaiting_ack: AtomicUsize,
+    /// Buffers written to the network so far, counting a buffer again when it is resent after a nack or reconnect.
+    pub sent: AtomicU64,
+}
+
 /// Core event loop handler for a sender-side data channel.
 ///
 /// `ChannelHandler` implements a reliable, ordered data transmission protocol with
@@ -142,6 +156,7 @@ pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     reader: DataChannelSenderReader<R>,
     queue: ChannelCommandQueueListener,
     max_pending_acks: usize,
+    stats: Arc<ChannelStats>,
 }
 
 enum ErrorOrStatus {
@@ -157,6 +172,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         reader: DataChannelSenderReader<R>,
         writer: DataChannelSenderWriter<W>,
         max_pending_acks: usize,
+        stats: Arc<ChannelStats>,
     ) -> Self {
         Self {
             cancellation_token,
@@ -166,6 +182,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             writer,
             queue,
             max_pending_acks,
+            stats,
         }
     }
     /// Handles commands from the `SenderChannel` (software side).
@@ -179,7 +196,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         channel_control_message: ChannelCommand,
     ) -> InternalResult<()> {
         match channel_control_message {
-            ChannelCommand::Data(data) => self.pending_writes.push_back(data),
+            ChannelCommand::Data(data) => {
+                crate::trace::step(crate::trace::NetStep::Dequeue, &data);
+                self.pending_writes.push_back(data)
+            }
             ChannelCommand::Flush(done) => {
                 Self::cancellable(&self.cancellation_token, self.writer.flush())
                     .await?
@@ -220,11 +240,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 }
             }
             DataChannelResponse::AckData(seq) => {
-                if self.wait_for_ack.remove(&seq).is_none() {
+                let Some(buffer) = self.wait_for_ack.remove(&seq) else {
                     return Err(ErrorOrStatus::Error(
                         format!("Protocol Error. Unknown Seq {seq:?}").into(),
                     ));
                 };
+                crate::trace::step(crate::trace::NetStep::Acked, &buffer);
                 trace!("Ack for {seq:?}");
             }
         }
@@ -259,6 +280,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         writer: &mut DataChannelSenderWriter<W>,
         pending_writes: &mut VecDeque<TupleBuffer>,
         wait_for_ack: &mut HashMap<OriginSequenceNumber, TupleBuffer>,
+        sent: &AtomicU64,
     ) -> InternalResult<()> {
         let Some(buffer) = pending_writes.front() else {
             return Ok(());
@@ -277,7 +299,9 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         match result {
             Ok(()) => {
                 // feed() succeeded — now move to wait_for_ack
+                sent.fetch_add(1, Ordering::Relaxed);
                 let buffer = pending_writes.pop_front().expect("BUG: was front");
+                crate::trace::step(crate::trace::NetStep::Encoded, &buffer);
                 assert!(
                     wait_for_ack.insert(sequence_number, buffer).is_none(),
                     "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was sent via a single channel."
@@ -363,6 +387,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// entering `select!` so the receiver can see previously fed data and send acks.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
+            self.stats
+                .pending_writes
+                .store(self.pending_writes.len(), Ordering::Relaxed);
+            self.stats
+                .awaiting_ack
+                .store(self.wait_for_ack.len(), Ordering::Relaxed);
             let should_read_from_software = self.wait_for_ack.len() < self.max_pending_acks;
             let should_read_from_other_side = !self.wait_for_ack.is_empty();
             let should_send_pending = !self.pending_writes.is_empty();
@@ -380,7 +410,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 request = Self::read_from_software(&self.cancellation_token, &mut self.queue), if should_read_from_software => {
                     self.handle_request(request?).await?;
                 },
-                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
+                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack, &self.stats.sent), if should_send_pending => {
                     send_result?;
                 },
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {
@@ -484,6 +514,7 @@ async fn channel_handler(
         reader,
         writer,
         pending_channel.max_pending_acks,
+        pending_channel.stats,
     );
     handler.run().await
 }

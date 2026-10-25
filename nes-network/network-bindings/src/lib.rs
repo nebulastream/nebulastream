@@ -38,6 +38,8 @@ pub mod ffi {
         number_of_tuples: u64,
         watermark: u64,
         last_chunk: bool,
+        /// EventTrace::channelTag of the channel if the buffer belongs to a traced query, 0 otherwise.
+        trace_channel: u64,
     }
 
     /// Configuration for network services (sender and receiver).
@@ -165,7 +167,9 @@ struct SenderNetworkService {
 /// The `chan` field contains the actual channel implementation. The indirection
 /// is necessary because `cxx` requires opaque types to be wrapped in structs.
 struct SenderDataChannel {
-    chan: SenderChannel,
+    /// Declared before the channel they sample, so they are dropped first.
+    counters: [event_trace::CounterUpdater; 3],
+    chan: Arc<SenderChannel>,
 }
 
 /// Wrapper around `ReceiverChannel` for C++ FFI.
@@ -389,6 +393,7 @@ fn receive_buffer(
             chunk_number: buffer.chunk_number as u64,
             number_of_tuples: buffer.number_of_tuples as u64,
             last_chunk: buffer.last_chunk,
+            trace_channel: buffer.trace_channel,
         });
 
     buffer_builder.as_mut().setData(&buffer.data);
@@ -453,7 +458,22 @@ fn register_sender_channel(
     }
     .map_err(|_| "The NetworkingService was closed unexpectedly")?;
 
-    Ok(Box::new(SenderDataChannel { chan: data_queue }))
+    let chan = Arc::new(data_queue);
+    let counter = |what: &str, sample: fn(&SenderChannel) -> i64| {
+        let chan = chan.clone();
+        event_trace::CounterUpdater::new(
+            &format!("network_channel_{channel_id}_{what}"),
+            move || sample(&chan),
+        )
+    };
+    let counters = [
+        counter("queued", |chan| chan.queued_buffers() as i64),
+        counter("unacknowledged", |chan| {
+            chan.unacknowledged_buffers() as i64
+        }),
+        counter("sent", |chan| chan.sent_buffers() as i64),
+    ];
+    Ok(Box::new(SenderDataChannel { counters, chan }))
 }
 
 fn send_buffer(
@@ -471,6 +491,7 @@ fn send_buffer(
         last_chunk: metadata.last_chunk,
         data: Vec::from(data),
         child_buffers: children.iter().map(|bytes| Vec::from(*bytes)).collect(),
+        trace_channel: metadata.trace_channel,
     };
 
     // Because we copy the data anyway, we don't have to reuse the buffer if sending failed.
@@ -488,5 +509,9 @@ fn flush_sender_channel(channel: &SenderDataChannel) -> bool {
 // CXX requires the usage of Boxed types
 #[allow(clippy::boxed_local)]
 fn close_sender_channel(channel: Box<SenderDataChannel>) {
-    channel.chan.close();
+    let SenderDataChannel { counters, chan } = *channel;
+    drop(counters);
+    Arc::into_inner(chan)
+        .expect("the counters held the only other references to the channel")
+        .close();
 }

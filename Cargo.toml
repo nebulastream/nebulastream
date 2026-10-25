@@ -19,6 +19,7 @@ members = [
     "nes-network/network",
     "nes-network/network-bindings",
     "nes-common/rust/spdlog-bindings",
+    "nes-common/rust/event-trace",
     "nes-physical-operators/rust/cast-to-unix-timestamp",
 ]
 
@@ -29,6 +30,7 @@ edition = "2024"
 # Shared dependency declarations. Member crates opt in with `dep.workspace = true`.
 [workspace.dependencies]
 nes_network = { path = "nes-network/network" }
+event_trace = { path = "nes-common/rust/event-trace" }
 
 async-channel = "2.3.1"
 chrono = { version = "0.4.45", default-features = false, features = ["std"] }

@@ -38,6 +38,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
@@ -117,6 +118,9 @@ public:
     [[nodiscard]] ArvBufferStatus status() const { return (buffer != nullptr) ? arv_buffer_get_status(buffer) : ARV_BUFFER_STATUS_TIMEOUT; }
 
     [[nodiscard]] uint64_t timestamp() const { return arv_buffer_get_timestamp(buffer); }
+
+    /// When the host received the first packet of the frame, in nanoseconds of the system clock.
+    [[nodiscard]] uint64_t systemTimestamp() const { return arv_buffer_get_system_timestamp(buffer); }
 
     [[nodiscard]] uint64_t width() const { return arv_buffer_get_image_width(buffer); }
 
@@ -230,6 +234,8 @@ Source::FillTupleBufferResult VideoSource::fillTupleBuffer(TupleBuffer& tupleBuf
             continue;
         }
 
+        NES_EVENT_FIRST_DATA();
+        NES_EVENT_DATA_ARRIVED(EventTrace::fromSystemTime(image.systemTimestamp()));
         const auto bytes = image.data();
         auto childBuffer = bufferProvider->getUnpooledBuffer(bytes.size()).value();
         std::memcpy(childBuffer.getAvailableMemoryArea().data(), bytes.data(), bytes.size());

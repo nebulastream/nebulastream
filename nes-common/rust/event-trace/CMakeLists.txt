@@ -10,14 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(FetchContent)
-FetchContent_Declare(
-        ittapi
-        GIT_REPOSITORY https://github.com/intel/ittapi.git
-        GIT_TAG v3.26.7
+add_cxx_bridge(
+        nes-event-trace-bindings
+        CRATE event_trace
+        FILES lib.rs
 )
-FetchContent_MakeAvailable(ittapi)
-
-# Keep NES instrumentation separate from the ITT implementation embedded in static TBB.
-# Consumers need the same prefix because ittnotify.h expands calls to these symbols.
-target_compile_definitions(ittnotify PUBLIC INTEL_ITTNOTIFY_PREFIX=__nes_itt_)
+target_sources(nes-event-trace-bindings PRIVATE src/EventTraceBindings.cpp)
+target_include_directories(nes-event-trace-bindings PUBLIC include)
+target_link_libraries(nes-event-trace-bindings PUBLIC nes-common)
+target_link_rust_lib(nes-event-trace-bindings event_trace)

@@ -65,17 +65,22 @@ const ConfigField<uint64_t> ADMISSION_QUEUE_SIZE{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{1000}};
+const ConfigField<bool> CONTINUATIONS{
+    Identifier::parse("continuations"),
+    "Whether a worker thread executes the task its current task emitted for a successor pipeline itself, right after the current "
+    "task, instead of handing it to another worker through the task queue. Saves waking up another worker.",
+    true};
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryEngineConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("query_engine"), NUMBER_OF_WORKER_THREADS, ADMISSION_QUEUE_SIZE);
+    return createConfigSchema(Identifier::parse("query_engine"), NUMBER_OF_WORKER_THREADS, ADMISSION_QUEUE_SIZE, CONTINUATIONS);
 }
 
 QueryEngineConfiguration QueryEngineConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(NUMBER_OF_WORKER_THREADS), config.get(ADMISSION_QUEUE_SIZE)};
+    return {config.get(NUMBER_OF_WORKER_THREADS), config.get(ADMISSION_QUEUE_SIZE), config.get(CONTINUATIONS)};
 }
 }
