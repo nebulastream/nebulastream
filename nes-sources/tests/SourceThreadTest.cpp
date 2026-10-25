@@ -43,6 +43,7 @@
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <BackpressureTestUtil.hpp>
 #include <BaseUnitTest.hpp>
 #include <SourceThread.hpp>
 #include <TestSource.hpp>

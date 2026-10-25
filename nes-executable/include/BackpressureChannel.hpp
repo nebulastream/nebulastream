@@ -36,9 +36,6 @@ class BackpressureController;
 std::pair<BackpressureController, std::unordered_map<NES::OriginId, BackpressureListener>>
 createBackpressureChannels(const std::vector<NES::OriginId>& origins);
 
-/// Convenience for a single channel, keyed by INITIAL<OriginId>.
-std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
-
 /// A Backpressure Controller allows the user to apply and release backpressure, which blocks or unblocks either all connected listeners or
 /// only the listener of a specific origin.
 /// Every copy of a Backpressure Controller is an independent holder of backpressure: a channel is blocked as long as at least one holder

@@ -30,6 +30,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BackpressureTestUtil.hpp>
 #include <BaseUnitTest.hpp>
 
 namespace NES

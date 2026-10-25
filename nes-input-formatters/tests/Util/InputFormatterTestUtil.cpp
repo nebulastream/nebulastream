@@ -63,6 +63,7 @@
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <BackpressureChannel.hpp>
+#include <BackpressureTestUtil.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
