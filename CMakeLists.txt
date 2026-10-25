@@ -28,6 +28,7 @@ option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" OFF)
 
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
+set(NES_EVENT_TRACE_BACKENDS "" CACHE STRING "Event trace backends to compile in, any of: ring;itt (see nes-common/include/Util/EventTrace.hpp)")
 option(ALL_HASHMAP_TESTS "Run all hashmap test combinations." OFF)
 option(ALL_SLICE_CACHE_TESTS "Run system tests with and without slice cache." OFF)
 
@@ -61,6 +62,16 @@ endif ()
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/HostIdentification.cmake)
 include(cmake/Sanitizers.cmake)
+
+foreach (backend IN LISTS NES_EVENT_TRACE_BACKENDS)
+    if (backend STREQUAL "ring")
+        add_compile_definitions(NES_EVENT_TRACE_RING)
+    elseif (backend STREQUAL "itt")
+        add_compile_definitions(NES_EVENT_TRACE_ITT)
+    else ()
+        message(FATAL_ERROR "Unknown event trace backend '${backend}' in NES_EVENT_TRACE_BACKENDS, expected ring or itt")
+    endif ()
+endforeach ()
 
 if (NES_LOG_WITH_STACKTRACE)
     if (SANITIZER_OPTION STREQUAL "thread")
@@ -126,7 +137,6 @@ include(cmake/UseCompilerCache.cmake)
 include(cmake/UseMold.cmake)
 include(cmake/EnableRust.cmake)
 include(cmake/CheckTestUtilities.cmake)
-include(cmake/CheckITT.cmake)
 
 # Native/Generic march support
 if (NES_BUILD_NATIVE)

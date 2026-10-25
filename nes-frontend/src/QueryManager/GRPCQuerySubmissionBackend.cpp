@@ -188,6 +188,23 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
+std::expected<void, Exception> GRPCQuerySubmissionBackend::setLatencyTracing(QueryId queryId, bool enabled)
+{
+    grpc::ClientContext context;
+    SetLatencyTracingRequest request;
+    *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
+    request.set_enabled(enabled);
+    google::protobuf::Empty response;
+
+    const auto status = stub->SetLatencyTracing(&context, request, &response);
+    if (status.ok())
+    {
+        return {};
+    }
+    return std::unexpected{NES::LatencyTracingFailed(
+        "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
+}
+
 BackendProvider createGRPCBackend()
 {
     return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };

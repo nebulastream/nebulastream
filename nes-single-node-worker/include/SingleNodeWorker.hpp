@@ -71,6 +71,9 @@ public:
     /// @param queryId identifies the registered query
     std::expected<void, Exception> stopQuery(QueryId queryId) noexcept;
 
+    /// Turns latency tracing of a running query on or off.
+    std::expected<void, Exception> setLatencyTracing(QueryId queryId, bool enabled) noexcept;
+
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;
     [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;

@@ -32,6 +32,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
@@ -178,7 +179,13 @@ Sink::BufferResult NetworkSink::executeBuffer(const TupleBuffer& inputBuffer, Pi
             .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
             .number_of_tuples = currentBuffer->getNumberOfTuples(),
             .watermark = currentBuffer->getWatermark().getRawValue(),
-            .last_chunk = currentBuffer->isLastChunk()};
+            .last_chunk = currentBuffer->isLastChunk(),
+#ifdef NES_EVENT_TRACE_ENABLED
+            .trace_channel = EventTrace::currentTaskTraced ? EventTrace::channelTag(channelId) : 0
+#else
+            .trace_channel = 0
+#endif
+        };
 
         /// Set child buffers
         std::vector<rust::Slice<const uint8_t>> children;
@@ -211,6 +218,9 @@ Sink::BufferResult NetworkSink::executeBuffer(const TupleBuffer& inputBuffer, Pi
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
+                NES_EVENT(if (EventTrace::currentTaskTraced) {
+                    EventTrace::instant(EventTrace::NetSend{.key = EventTrace::keyOf(*currentBuffer), .channel = metadata.trace_channel});
+                });
                 /// Sent a buffer, check the backpressure handler to send another one
                 currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
                 break;

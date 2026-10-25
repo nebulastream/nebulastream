@@ -33,6 +33,8 @@ public:
 
     grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
 
+    grpc::Status SetLatencyTracing(grpc::ServerContext*, const SetLatencyTracingRequest*, google::protobuf::Empty*) override;
+
     grpc::Status RequestQueryStatus(grpc::ServerContext*, const QueryStatusRequest*, QueryStatusReply*) override;
 
     grpc::Status RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response) override;

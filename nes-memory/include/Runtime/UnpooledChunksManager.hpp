@@ -101,6 +101,8 @@ public:
     explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t unpooledMemoryBudgetInBytes);
     size_t getNumberOfUnpooledBuffers() const;
 
+    size_t getAllocatedUnpooledBytes() const { return currentlyAllocatedUnpooledBytes->load(std::memory_order_relaxed); }
+
     /// Returns std::nullopt if the unpooled memory budget would be exceeded or the underlying allocation fails.
     std::optional<TupleBuffer>
     getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler);

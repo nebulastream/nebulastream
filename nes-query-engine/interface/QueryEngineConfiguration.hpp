@@ -28,13 +28,15 @@ struct QueryEngineConfiguration
 
     QueryEngineConfiguration() = delete;
 
-    QueryEngineConfiguration(uint64_t numberOfWorkerThreads, uint64_t admissionQueueSize)
-        : numberOfWorkerThreads(numberOfWorkerThreads), admissionQueueSize(admissionQueueSize)
+    QueryEngineConfiguration(uint64_t numberOfWorkerThreads, uint64_t admissionQueueSize, bool continuations = true)
+        : numberOfWorkerThreads(numberOfWorkerThreads), admissionQueueSize(admissionQueueSize), continuations(continuations)
     {
     }
 
     uint64_t numberOfWorkerThreads;
     uint64_t admissionQueueSize;
+    /// Whether a worker runs a task that its current task emitted with ContinuationPolicy::POSSIBLE itself, right after it.
+    bool continuations;
 
     static QueryEngineConfiguration fromConfig(const InstantiatedConfig& config);
 };

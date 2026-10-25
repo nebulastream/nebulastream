@@ -26,9 +26,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -41,10 +41,6 @@ namespace NES
 
 namespace
 {
-__itt_domain* sourceDomain = __itt_domain_create("engine.source");
-__itt_string_handle* queueWrite = __itt_string_handle_create("Queue write");
-__itt_string_handle* waitForInflightBuffer = __itt_string_handle_create("Wait for inflight buffer");
-
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
@@ -64,24 +60,19 @@ SourceReturnType::EmitFunction emitFunction(
             Overloaded{
                 [&](const SourceReturnType::Data& data)
                 {
+                    NES_EVENT(EventTrace::sourceEmitted(EventTrace::keyOf(data.buffer), successors));
                     for (const auto& successor : successors)
                     {
                         {
                             /// release the semaphore in case the source wants to terminate
                             const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
-                            if (!availableBuffer->try_acquire())
-                            {
-                                __itt_task_begin(sourceDomain, __itt_null, __itt_null, waitForInflightBuffer);
-                                availableBuffer->acquire();
-                                __itt_task_end(sourceDomain);
-                            }
+                            availableBuffer->acquire();
                             if (stopToken.stop_requested())
                             {
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
                             }
                         }
                         /// The admission queue might be full, we have to reattempt
-                        __itt_task_begin(sourceDomain, __itt_null, __itt_null, queueWrite);
                         while (not emitter.emitWork(
                             queryId,
                             successor,
@@ -91,11 +82,9 @@ SourceReturnType::EmitFunction emitFunction(
                         {
                             if (stopToken.stop_requested())
                             {
-                                __itt_task_end(sourceDomain);
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
                             }
                         }
-                        __itt_task_end(sourceDomain);
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
                     return SourceReturnType::EmitResult::SUCCESS;

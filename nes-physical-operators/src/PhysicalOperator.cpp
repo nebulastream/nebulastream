@@ -121,6 +121,18 @@ PhysicalOperator PhysicalOperator::withChild(PhysicalOperator child) const
     return {copy};
 }
 
+PhysicalOperator PhysicalOperator::withDescription(std::string description) const
+{
+    auto copy = self->clone();
+    copy->description = std::move(description);
+    return {copy};
+}
+
+const std::string& PhysicalOperator::getDescription() const
+{
+    return self->description;
+}
+
 void PhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     self->setup(executionCtx, compilationContext);
@@ -267,6 +279,11 @@ std::string PhysicalOperatorWrapper::explain(ExplainVerbosity) const
 const PhysicalOperator& PhysicalOperatorWrapper::getPhysicalOperator() const
 {
     return physicalOperator;
+}
+
+void PhysicalOperatorWrapper::setPhysicalOperator(PhysicalOperator newPhysicalOperator)
+{
+    physicalOperator = std::move(newPhysicalOperator);
 }
 
 const std::optional<Schema<QualifiedUnboundField, Ordered>>& PhysicalOperatorWrapper::getInputSchema() const

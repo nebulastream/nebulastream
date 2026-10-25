@@ -1,0 +1,17 @@
+{
+  "name": "ittapi",
+  "version": "3.28.4",
+  "description": "Intel Instrumentation and Tracing Technology (ITT) API",
+  "homepage": "https://github.com/intel/ittapi",
+  "license": "BSD-3-Clause OR GPL-2.0-only",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

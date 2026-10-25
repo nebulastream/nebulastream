@@ -1,0 +1,579 @@
+<!doctype html>
+<!--
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+    Template for report.html, written by scripts/latency_trace.py, which fills in the PLOTLY_JS and TRACE_DATA placeholders.
+    Plotly is embedded rather than loaded from a CDN so that the report also opens on machines without internet access.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latency Trace Report</title>
+<script>/*PLOTLY_JS*/</script>
+<style>
+:root { --bg: #fafaf8; --card: #ffffff; --text: #1d1d1b; --muted: #6b6a66; --line: #e3e2dc; --accent: #2a78d6; --tail: #d0503b; }
+@media (prefers-color-scheme: dark) { :root { --bg: #161615; --card: #1f1f1e; --text: #ecebe6; --muted: #a09f99; --line: #34332f; --accent: #5b9bea; --tail: #e7745f; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, sans-serif; }
+header { padding: 16px 20px 8px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+h1 { font-size: 18px; font-weight: 600; margin: 0 12px 0 0; }
+h2 { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+.hint { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+select, button { font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+button { cursor: pointer; }
+.stats { display: flex; gap: 18px; flex-wrap: wrap; }
+.stat b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 12px; }
+main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 8px 20px 24px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.wide { grid-column: 1 / -1; }
+#graph { overflow-x: auto; }
+#graph svg { display: block; }
+.node rect { stroke: var(--line); stroke-width: 1; rx: 6; cursor: pointer; }
+.node.focus rect { stroke: var(--accent); stroke-width: 2.5; }
+.node text { fill: var(--text); font-size: 12px; pointer-events: none; }
+.node text.sub { fill: var(--muted); font-size: 11px; }
+.edge { fill: none; stroke: var(--muted); stroke-width: 1.3; }
+.edge.network { stroke-dasharray: 5 4; cursor: pointer; }
+.edge.network.focus { stroke: var(--accent); stroke-width: 2.5; }
+.edgelabel { fill: var(--muted); font-size: 11px; }
+#selection { color: var(--muted); font-size: 12px; }
+#gantt text.hovered { fill: var(--accent) !important; font-weight: 600; }
+#cdf .dimmed { opacity: 0.15 !important; }
+#cdf .trace.emphasized path.js-line { stroke-width: 4px !important; }
+#gantt path.hovered { stroke: var(--text) !important; stroke-width: 2px !important; stroke-opacity: 1 !important; filter: brightness(1.3); opacity: 1 !important; }
+#open table { border-collapse: collapse; font-size: 12px; width: 100%; }
+#open td, #open th { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
+#open td.age { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Latency trace</h1>
+  <label>Query <select id="query"></select></label>
+  <label><input type="checkbox" id="warmup"> include warm-up</label>
+  <div class="stats" id="stats"></div>
+  <span id="selection"></span>
+  <button id="reset" hidden>Clear time selection</button>
+</header>
+<main>
+  <section class="card wide">
+    <h2>Pipeline graph</h2>
+    <p class="hint">Mean time per buffer spent at each node, over all buffers and over the slowest 1%. Colour shows the share of the tail. Click a node or a dashed network edge to focus the stage charts on it.</p>
+    <p class="hint" id="workers"></p>
+    <div id="graph"></div>
+  </section>
+  <section class="card wide">
+    <h2>Latency over time</h2>
+    <p class="hint">One point per buffer (its worst tuple), coloured by the stage it spent most time in. Drag to select a time range, which filters every other chart; click a point for its timeline.</p>
+    <div id="timeline" style="height:340px"></div>
+  </section>
+  <section class="card wide" id="counters-card">
+    <h2>Counters</h2>
+    <p class="hint">Engine-wide values sampled every millisecond and recorded when they change, on the latency chart's time axis. Not specific to the selected query.</p>
+    <div id="counters"></div>
+  </section>
+  <section class="card">
+    <h2>Breakdown by percentile</h2>
+    <p class="hint">Mean time per stage of the buffers around each percentile. Not a sum of per-stage percentiles.</p>
+    <div id="breakdown" style="height:340px"></div>
+  </section>
+  <section class="card">
+    <h2>What dominates the tail</h2>
+    <p class="hint">For each buffer at or above p99: the stage it spent most time in, counted.</p>
+    <div id="attribution" style="height:340px"></div>
+  </section>
+  <section class="card wide">
+    <h2 id="cdf-title">Stage distributions</h2>
+    <p class="hint">CDF of each stage's duration over all buffers (solid) and over the slowest 1% (dashed). A stage that moves right in the tail drives it.</p>
+    <div id="cdf" style="height:360px"></div>
+  </section>
+  <section class="card wide">
+    <h2 id="gantt-title">Single buffer</h2>
+    <p class="hint">Click a point in the latency chart.</p>
+    <div id="gantt"></div>
+    <p class="hint" id="gantt-note"></p>
+    <div id="gantt-counters"></div>
+  </section>
+  <section class="card wide">
+    <h2>Open spans</h2>
+    <p class="hint">Spans that began but had not ended when the trace ended, oldest first: a stuck pipeline, or a source waiting for backpressure, a buffer or data.</p>
+    <div id="open"></div>
+  </section>
+</main>
+<script>
+const DATA = /*TRACE_DATA*/null;
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const GROUPS = [
+  ["source", s => s.startsWith("source")],
+  ["network", s => s.startsWith("net ") || s.startsWith("network source") || /^network P/.test(s)],
+  ["network sink", s => s.startsWith("network sink")],
+  ["waiting", s => /^(queue|enqueue|handoff) /.test(s)],
+  ["executing", s => s.startsWith("exec ")],
+];
+const GROUP_COLORS = {"source": "#d9774f", "network": "#6e62c9", "network sink": "#9a8fd6", "waiting": "#d9a23a", "executing": "#3b7dd8"};
+const groupOf = stage => (GROUPS.find(([, test]) => test(DATA.stages[stage])) || ["other"])[0];
+/// Stages of the same kind share a color in every chart: executions blue, waits in the engine amber, the network violet, sources
+/// orange. Lighter shades are the waits within a kind.
+const STAGE_KINDS = [
+  [s => s.startsWith("exec "), "#3b7dd8"],
+  [s => s.startsWith("queue "), "#d9a23a"],
+  [s => s.startsWith("enqueue ") || s.startsWith("handoff "), "#e8c57f"],
+  [s => s.startsWith("network sink"), "#9a8fd6"],
+  [s => s.startsWith("net sender queue") || s.startsWith("net receiver"), "#b3abe3"],
+  [s => s.startsWith("net ") || /^network P/.test(s), "#6e62c9"],
+  [s => s.startsWith("network source"), "#c7c1ea"],
+  [s => s.startsWith("source fill"), "#d9774f"],
+  [s => s.startsWith("source"), "#eab59b"],
+];
+const stageColor = stage => (STAGE_KINDS.find(([test]) => test(DATA.stages[stage])) || [, "#8a8984"])[1];
+
+const chains = DATA.chains.map(([query, start, bytes, warmup, key, segments], index) => {
+  const total = segments.reduce((sum, s) => sum + s[2], 0);
+  const dominant = segments.reduce((best, s) => (s[2] > best[2] ? s : best), segments[0])[0];
+  return {query, start, bytes, warmup: !!warmup, key, segments, total, dominant, index};
+});
+const state = {query: -1, warmup: false, range: null, focus: null};
+
+function percentileOf(sorted, p) {
+  const total = sorted.reduce((sum, c) => sum + c.bytes, 0);
+  let running = 0;
+  for (const chain of sorted) { running += chain.bytes; if (running >= p / 100 * total) return chain.total; }
+  return sorted.length ? sorted[sorted.length - 1].total : 0;
+}
+const ms = us => us / 1000;
+const fmt = us => (us >= 100000 ? ms(us).toFixed(0) : us >= 10000 ? ms(us).toFixed(1) : ms(us).toFixed(2)) + " ms";
+
+function current() {
+  return chains.filter(c => (state.query < 0 || c.query === state.query) && (state.warmup || !c.warmup));
+}
+function selected(list) {
+  return state.range ? list.filter(c => c.start >= state.range[0] && c.start <= state.range[1]) : list;
+}
+function tailOf(list) {
+  const sorted = [...list].sort((a, b) => a.total - b.total);
+  const p99 = percentileOf(sorted, 99);
+  return sorted.filter(c => c.total >= p99);
+}
+function layout(extra) {
+  return Object.assign({
+    margin: {l: 56, r: 16, t: 8, b: 44}, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: css("--text"), size: 12}, xaxis: {gridcolor: css("--line"), zerolinecolor: css("--line")},
+    yaxis: {gridcolor: css("--line"), zerolinecolor: css("--line")}, legend: {orientation: "h", y: -0.25},
+  }, extra);
+}
+const plotConfig = {displaylogo: false, responsive: true};
+
+function renderStats(list) {
+  const sorted = [...list].sort((a, b) => a.total - b.total);
+  const cells = [["buffers", list.length.toLocaleString()]];
+  if (sorted.length) {
+    for (const p of [50, 90, 99]) cells.push(["p" + p, fmt(percentileOf(sorted, p))]);
+    cells.push(["max", fmt(sorted[sorted.length - 1].total)]);
+  }
+  document.getElementById("stats").innerHTML = cells.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("");
+}
+
+function nodeTimes(list) {
+  const times = new Map();
+  for (const chain of list) {
+    const perNode = new Map();
+    for (const [, node, us] of chain.segments) perNode.set(node, (perNode.get(node) || 0) + us);
+    for (const [node, us] of perNode) times.set(node, (times.get(node) || 0) + us);
+  }
+  for (const [node, us] of times) times.set(node, us / Math.max(list.length, 1));
+  return times;
+}
+
+function renderGraph(list) {
+  const queryName = state.query < 0 ? null : DATA.queries[state.query];
+  // The query's chains also pass through the queries that write the pipes it reads.
+  const passed = new Set(chains.filter(c => c.query === state.query).flatMap(c => c.segments.map(s => DATA.nodes[s[1]])));
+  const nodes = DATA.graph.nodes.filter(n => !queryName || n.query === queryName || passed.has(n.id));
+  const ids = new Set(nodes.map(n => n.id));
+  const edges = DATA.graph.edges.filter(e => ids.has(e.from) && ids.has(e.to));
+  const depth = new Map(nodes.map(n => [n.id, 0]));
+  for (let i = 0; i < nodes.length; i++) for (const e of edges) depth.set(e.to, Math.max(depth.get(e.to), depth.get(e.from) + 1));
+  const layers = [];
+  for (const n of nodes) (layers[depth.get(n.id)] ||= []).push(n);
+  const W = 190, H = 64, GAPX = 70, GAPY = 22, PAD = 12;
+  const position = new Map();
+  layers.forEach((layer, x) => layer.forEach((n, y) => position.set(n.id, {x: PAD + x * (W + GAPX), y: PAD + y * (H + GAPY)})));
+  const width = PAD * 2 + layers.length * (W + GAPX) - GAPX;
+  const height = PAD * 2 + Math.max(...layers.map(l => l.length)) * (H + GAPY) - GAPY;
+
+  const index = new Map(DATA.nodes.map((id, i) => [id, i]));
+  const all = nodeTimes(list), tail = nodeTimes(tailOf(list));
+  const tailTotal = [...tail.values()].reduce((a, b) => a + b, 0) || 1;
+  const heat = share => `color-mix(in srgb, ${css("--tail")} ${Math.round(Math.min(1, share * 1.6) * 85)}%, ${css("--card")})`;
+  const label = id => {
+    const i = index.get(id);
+    return i === undefined ? "" : `${fmt(all.get(i) || 0)} · tail ${fmt(tail.get(i) || 0)}`;
+  };
+  let svg = `<svg viewBox="0 0 ${width} ${height + 14}" width="${width}" height="${height + 14}"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="${css("--muted")}"/></marker></defs>`;
+  for (const e of edges) {
+    const a = position.get(e.from), b = position.get(e.to);
+    const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2, mx = (x1 + x2) / 2;
+    const focus = e.network && state.focus === index.get(e.id) ? " focus" : "";
+    svg += `<path class="edge${e.network ? " network" : ""}${focus}" data-node="${e.network ? e.id : ""}" marker-end="url(#arrow)" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;
+    if (e.network) svg += `<text class="edgelabel" x="${mx}" y="${(y1 + y2) / 2 - 6}" text-anchor="middle">network ${label(e.id)}</text>`;
+  }
+  for (const n of nodes) {
+    const p = position.get(n.id), i = index.get(n.id);
+    const share = (tail.get(i) || 0) / tailTotal;
+    svg += `<g class="node${state.focus === i ? " focus" : ""}" data-node="${n.id}" transform="translate(${p.x},${p.y})">
+      <title>${n.detail.replace(/</g, "&lt;")}\n${workerLabel(n.worker)}: ${n.worker}</title>
+      <rect width="${W}" height="${H}" fill="${i === undefined ? css("--card") : heat(share)}"/>
+      <text x="10" y="20">${n.label} · ${n.what}</text>
+      <text class="sub" x="10" y="38">${workerLabel(n.worker)} · ${n.kind}</text>
+      <text class="sub" x="10" y="54">${label(n.id)}</text></g>`;
+  }
+  const container = document.getElementById("graph");
+  container.innerHTML = svg + "</svg>";
+  container.querySelectorAll("[data-node]").forEach(element => {
+    const id = element.getAttribute("data-node");
+    if (!id) return;
+    element.addEventListener("click", () => {
+      const i = index.get(id);
+      state.focus = state.focus === i || i === undefined ? null : i;
+      render();
+    });
+  });
+}
+
+function renderTimeline(list) {
+  const traces = Object.keys(GROUP_COLORS).concat("other").map(group => {
+    const own = list.filter(c => groupOf(c.dominant) === group);
+    return {
+      type: "scattergl", mode: "markers", name: group, x: own.map(c => c.start), y: own.map(c => ms(c.total)),
+      customdata: own.map(c => chains.indexOf(c)), marker: {size: 5, color: GROUP_COLORS[group] || "#73726c", opacity: 0.75},
+      hovertemplate: "%{y:.2f} ms at %{x:.0f} ms<extra>" + group + "</extra>",
+    };
+  }).filter(t => t.x.length);
+  const element = document.getElementById("timeline");
+  Plotly.react(element, traces, layout({
+    dragmode: "select", selectdirection: "h", xaxis: {title: "ms since the first traced buffer", gridcolor: css("--line")},
+    yaxis: {title: "latency (ms)", type: "log", gridcolor: css("--line")},
+  }), plotConfig);
+  if (!element.wired) {
+    element.wired = true;
+    element.on("plotly_selected", event => {
+      state.range = event && event.range ? event.range.x : null;
+      render(false);
+    });
+    element.on("plotly_click", event => renderGantt(chains[event.points[0].customdata]));
+  }
+}
+
+function renderCounters() {
+  const container = document.getElementById("counters");
+  if (!DATA.counters.length) { document.getElementById("counters-card").hidden = true; return; }
+  if (!container.childElementCount) {
+    for (const _ of DATA.counters) { const div = document.createElement("div"); div.style.height = "150px"; container.appendChild(div); }
+  }
+  const starts = chains.map(c => c.start);
+  const range = state.range || [Math.min(...starts), Math.max(...starts)];
+  DATA.counters.forEach((counter, i) => {
+    Plotly.react(container.children[i], [{
+      /// SVG, not WebGL: browsers keep only about 16 WebGL contexts and drop the oldest, e.g. the latency chart's.
+      type: "scatter", mode: "lines", line: {shape: "hv", color: css("--accent")}, x: counter.t, y: counter.v,
+      hovertemplate: "%{y} at %{x:.1f} ms<extra></extra>",
+    }], layout({
+      margin: {l: 56, r: 16, t: 22, b: 28}, showlegend: false,
+      title: {text: `${counter.name} <span style="font-size:11px">${workerLabel(counter.worker)}</span>`, font: {size: 12}, x: 0, xanchor: "left"},
+      xaxis: {range: range, gridcolor: css("--line")}, yaxis: {gridcolor: css("--line"), rangemode: "tozero"},
+    }), plotConfig);
+  });
+}
+
+function meanBreakdown(list) {
+  const sums = new Map();
+  for (const chain of list) for (const [stage, , us] of chain.segments) sums.set(stage, (sums.get(stage) || 0) + us);
+  return new Map([...sums].map(([stage, us]) => [stage, us / Math.max(list.length, 1)]));
+}
+
+function renderBreakdown(list) {
+  const sorted = [...list].sort((a, b) => a.total - b.total);
+  const band = (low, high) => sorted.filter(c => c.total >= percentileOf(sorted, low) && c.total <= percentileOf(sorted, high));
+  const rows = [["p50", band(45, 55)], ["p90", band(85, 95)], ["p99", band(99, 100)], ["max", sorted.slice(-1)]];
+  const means = rows.map(([, chains]) => meanBreakdown(chains));
+  const stages = [...new Set(means.flatMap(m => [...m.keys()]))].filter(s => state.focus === null || stageNodes(s).has(state.focus));
+  const traces = stages.map(stage => ({
+    type: "bar", orientation: "h", name: DATA.stages[stage], y: rows.map(([name]) => name), x: means.map(m => ms(m.get(stage) || 0)),
+    marker: {color: stageColor(stage), line: {color: css("--card"), width: 1}}, hovertemplate: "%{x:.3f} ms<extra>" + DATA.stages[stage] + "</extra>",
+  }));
+  Plotly.react("breakdown", traces, layout({barmode: "stack", showlegend: false, xaxis: {title: "ms", gridcolor: css("--line")},
+    yaxis: {autorange: "reversed"}, margin: {l: 44, r: 16, t: 8, b: 44}}), plotConfig);
+}
+
+function renderAttribution(list) {
+  const counts = new Map();
+  for (const chain of tailOf(list)) counts.set(chain.dominant, (counts.get(chain.dominant) || 0) + 1);
+  const entries = [...counts].sort((a, b) => a[1] - b[1]);
+  Plotly.react("attribution", [{
+    type: "bar", orientation: "h", y: entries.map(([s]) => DATA.stages[s]), x: entries.map(([, n]) => n),
+    marker: {color: entries.map(([s]) => GROUP_COLORS[groupOf(s)] || "#73726c")}, hovertemplate: "%{x} buffers<extra></extra>",
+  }], layout({xaxis: {title: "buffers at or above p99", gridcolor: css("--line")}, yaxis: {automargin: true}, margin: {l: 16, r: 16, t: 8, b: 44}}), plotConfig);
+}
+
+const stageNodeCache = new Map();
+function stageNodes(stage) {
+  if (!stageNodeCache.has(stage)) {
+    const nodes = new Set();
+    for (const chain of chains) for (const [s, node] of chain.segments) if (s === stage) nodes.add(node);
+    stageNodeCache.set(stage, nodes);
+  }
+  return stageNodeCache.get(stage);
+}
+
+function renderCdf(list) {
+  const tail = tailOf(list);
+  const durations = (chainList, stage) => chainList.map(c => c.segments.filter(s => s[0] === stage).reduce((a, s) => a + s[2], 0))
+    .filter(us => us > 0).sort((a, b) => a - b);
+  let stages;
+  if (state.focus !== null) {
+    stages = [...meanBreakdown(list).keys()].filter(s => stageNodes(s).has(state.focus));
+    const node = DATA.graph.nodes.find(n => n.id === DATA.nodes[state.focus]);
+    document.getElementById("cdf-title").textContent = "Stage distributions: " + (node ? `${node.label} · ${node.what}` : "network");
+  } else {
+    stages = [...meanBreakdown(tail)].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([s]) => s);
+    document.getElementById("cdf-title").textContent = "Stage distributions: the 6 stages that take longest in the tail";
+  }
+  const traces = [];
+  /// The plotted stages are often of one kind, so each line gets its own color here instead of its kind's.
+  const LINE_COLORS = ["#3b7dd8", "#d9a23a", "#6e62c9", "#d9774f", "#3fa34d", "#b85c9e", "#4fb3c4", "#8a8984"];
+  for (const [position, stage] of stages.entries()) {
+    for (const [chainList, dash, suffix] of [[list, "solid", ""], [tail, "dash", " (tail)"]]) {
+      const values = durations(chainList, stage);
+      if (!values.length) continue;
+      traces.push({type: "scatter", mode: "lines", name: DATA.stages[stage] + suffix, x: values.map(ms),
+        y: values.map((_, i) => (i + 1) / values.length), line: {color: LINE_COLORS[position % LINE_COLORS.length], dash, width: 2},
+        legendgroup: String(stage), hovertemplate: "%{x:.3f} ms, %{y:.0%}<extra>" + DATA.stages[stage] + suffix + "</extra>"});
+    }
+  }
+  Plotly.react("cdf", traces, layout({xaxis: {title: "ms (log)", type: "log", gridcolor: css("--line")},
+    yaxis: {title: "fraction of buffers", tickformat: ".0%", gridcolor: css("--line")}, legend: {orientation: "v", x: 1.02, y: 1}}), plotConfig);
+  highlightStageLines(document.getElementById("cdf"));
+}
+
+/// Hovering a line or its legend entry emphasizes that stage's lines (all buffers and tail) and dims the others. Classes are set
+/// on the SVG elements, so the chart is not redrawn.
+function highlightStageLines(element) {
+  const emphasize = group => {
+    const lines = element.querySelectorAll(".scatterlayer .trace");
+    const entries = element.querySelectorAll(".legend .traces");
+    element.data.forEach((trace, index) => {
+      const match = group === null || trace.legendgroup === group;
+      lines[index]?.classList.toggle("dimmed", !match);
+      lines[index]?.classList.toggle("emphasized", group !== null && match);
+      entries[index]?.classList.toggle("dimmed", !match);
+    });
+  };
+  element.querySelectorAll(".legend .traces").forEach((entry, index) => {
+    entry.onmouseenter = () => emphasize(element.data[index].legendgroup);
+    entry.onmouseleave = () => emphasize(null);
+  });
+  if (element.stageHighlightWired) return;
+  element.stageHighlightWired = true;
+  element.on("plotly_hover", event => emphasize(event.points[0].data.legendgroup));
+  element.on("plotly_unhover", () => emphasize(null));
+  /// A redraw, e.g. after a legend click, replaces the legend entries.
+  element.on("plotly_afterplot", () => highlightStageLines(element));
+}
+
+/// Short names of the worker processes, in the order of DATA.workers.
+const workerLabel = name => `W${DATA.workers.indexOf(name) + 1}`;
+const nodeWorkers = node => DATA.nodes[node].split(">").map(part => workerLabel(part.split("/")[0])).join("→");
+const SPAN_COLORS = {"exec": "#3b7dd8", "task queue wait": "#c9c7bf", "untraced work": "#5f5e5a", "enqueue": "#e8c57f"};
+const CPU_COLORS = ["#3fa34d", "#d0503b", "#e3b23c"];
+const spanColor = name => SPAN_COLORS[name] || (name.startsWith("source fill") ? "#d9774f" : name.startsWith("source") ? "#eab59b" : "#9a8fd6");
+
+function renderGantt(chain) {
+  let offset = 0;
+  const bars = chain.segments.map(([stage, node, us]) => { const bar = {stage, node, start: offset, us}; offset += us; return bar; });
+  document.getElementById("gantt-title").textContent =
+    `Single buffer: ${fmt(chain.total)}, key ${chain.key}, ${chain.bytes} bytes of output, at ${chain.start.toFixed(0)} ms`;
+  const activity = DATA.activity[chain.index];
+  const lanes = activity ? activity.lanes : [];
+  const laneName = ([worker, , name]) => `${workerLabel(DATA.workers[worker])} ${name}`;
+  const cpuName = lane => `${laneName(lane)} · CPU`;
+  const traces = [{
+    type: "bar", orientation: "h", y: bars.map(b => `${DATA.stages[b.stage]} · ${nodeWorkers(b.node)}`), x: bars.map(b => ms(b.us)),
+    base: bars.map(b => ms(b.start)), marker: {color: bars.map(b => stageColor(b.stage))},
+    /// %{x} of a bar with a base is where it ends, so the duration and start come from customdata.
+    customdata: bars.map(b => [ms(b.us), ms(b.start)]), hovertemplate: "%{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<extra></extra>",
+    showlegend: false,
+  }];
+  /// Spans of the tasks this buffer passed through keep full opacity and an outline; the others are dimmed.
+  const spanDetail = (lane, [, , , , pipeline, key, tuples, ofBuffer]) => [
+    pipeline ? (DATA.pipelineLabels[lane[0]][pipeline] || `P${pipeline}`) : "",
+    key ? `buffer ${key}` : "", tuples ? `${tuples} tuples` : "", ofBuffer ? "<b>part of this buffer's path</b>" : "",
+  ].filter(Boolean).join("<br>");
+  const byName = new Map();
+  for (const lane of lanes) {
+    for (const segment of lane[3]) {
+      const [start, us, name] = segment;
+      if (!byName.has(name)) byName.set(name, {y: [], x: [], base: [], customdata: [], opacity: [], outline: []});
+      const series = byName.get(name);
+      series.y.push(laneName(lane)); series.x.push(ms(us)); series.base.push(ms(start));
+      series.customdata.push([ms(us), ms(start), spanDetail(lane, segment)]);
+      series.opacity.push(segment[7] ? 1 : 0.35); series.outline.push(segment[7] ? 1.5 : 0);
+    }
+  }
+  for (const [name, {opacity, outline, ...series}] of byName) {
+    const label = DATA.spanNames[name];
+    traces.push({type: "bar", orientation: "h", yaxis: "y2", name: label, ...series,
+      marker: {color: spanColor(label), opacity, line: {color: css("--text"), width: outline},
+        pattern: label === "untraced work" ? {shape: "/", fgcolor: css("--card"), size: 6} : undefined},
+      hovertemplate: `${label}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<br>%{customdata[2]}<extra></extra>`});
+  }
+  /// OS scheduling (scripts/latency_sched.sh): below each thread, when it ran, waited for a CPU, or was asked to wake up by another
+  /// thread and not woken yet.
+  const waker = name => name.replace(/\((.+)\)$/, (_, worker) => `(${DATA.workers.includes(worker) ? workerLabel(worker) : worker})`);
+  DATA.cpuStates.forEach((state, index) => {
+    const series = {y: [], x: [], base: [], customdata: []};
+    for (const lane of lanes) {
+      for (const [start, us, cpu, by] of lane[4]) {
+        if (cpu !== index) continue;
+        series.y.push(cpuName(lane)); series.x.push(ms(us)); series.base.push(ms(start));
+        series.customdata.push([ms(us), ms(start), by ? `<br>requested by ${waker(by)}` : ""]);
+      }
+    }
+    if (series.y.length) {
+      traces.push({type: "bar", orientation: "h", yaxis: "y2", name: state, ...series, width: 0.5,
+        marker: {color: CPU_COLORS[index]}, hovertemplate: `${state}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms%{customdata[2]}<extra></extra>`});
+    }
+  });
+  const laneOrder = lanes.flatMap(lane => (lane[4].length ? [laneName(lane), cpuName(lane)] : [laneName(lane)]));
+  /// Dashed lines where the worker changes: between a worker's segments and a network hop, and between the workers' threads.
+  const segmentOrder = [...new Set(traces[0].y)];
+  const segmentWorker = label => label.slice(label.lastIndexOf(" · ") + 3);
+  const laneWorker = label => label.split(" ")[0];
+  const separators = (order, workerOf, axis) => order.flatMap((label, i) => (i > 0 && workerOf(label) !== workerOf(order[i - 1])
+    ? [{type: "line", xref: "paper", x0: 0, x1: 1, yref: axis, y0: i - 0.5, y1: i - 0.5, layer: "below",
+        line: {color: css("--muted"), width: 1, dash: "dash"}}] : []));
+  /// In the thread lanes, every other worker's rows get a shaded band and workers are divided by a solid line.
+  const workerBands = laneOrder.reduce((bands, label, i) => {
+    const last = bands[bands.length - 1];
+    if (last && last.worker === laneWorker(label)) last.end = i;
+    else bands.push({worker: laneWorker(label), start: i, end: i});
+    return bands;
+  }, []).flatMap((band, index) => [
+    ...(index % 2 ? [{type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: band.start - 0.5, y1: band.end + 0.5, layer: "below",
+      line: {width: 0}, fillcolor: css("--text"), opacity: 0.08}] : []),
+    ...(index > 0 ? [{type: "line", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: band.start - 0.5, y1: band.start - 0.5,
+      line: {color: css("--muted"), width: 1.5}}] : []),
+  ]);
+  const shapes = [...separators(segmentOrder, segmentWorker, "y"), ...workerBands];
+  const rows = bars.length, laneRows = laneOrder.length;
+  const split = laneRows ? laneRows / (rows + laneRows) : 0;
+  const range = activity ? [ms(activity.from), ms(activity.to)] : undefined;
+  Plotly.react("gantt", traces, layout({
+    barmode: "overlay", height: 90 + 24 * (rows + laneRows), shapes,
+    xaxis: {title: "ms since first data", gridcolor: css("--line"), range},
+    yaxis: {autorange: "reversed", automargin: true, dtick: 1, domain: [split ? split + 0.04 : 0, 1],
+      categoryorder: "array", categoryarray: segmentOrder},
+    yaxis2: {autorange: "reversed", automargin: true, dtick: 1, domain: [0, split], visible: laneRows > 0,
+      categoryorder: "array", categoryarray: laneOrder},
+    legend: {orientation: "h", y: 1.02, yanchor: "bottom", x: 0}, margin: {l: 16, r: 16, t: 28, b: 44},
+  }), plotConfig);
+  highlightHoveredRow(document.getElementById("gantt"));
+  document.getElementById("gantt-note").textContent = activity
+    ? "Below the buffer: what every thread of the workers it passed through did meanwhile, and their counters. Gaps on worker threads are untraced work, e.g. tasks of untraced queries. With scripts/latency_sched.sh, a CPU row under each thread shows when it ran, when it was runnable but waited for a CPU, and when another thread had asked to wake it but it was not woken yet."
+    : "Thread activity and counters are exported for the slowest buffers and a sample of the others; pick one of those.";
+  renderGanttCounters(chain, activity);
+}
+
+/// Highlights a hovered bar and the y-axis label of its row, directly in the SVG so the chart is not redrawn.
+function highlightHoveredRow(element) {
+  if (element.highlightWired) return;
+  element.highlightWired = true;
+  element.on("plotly_hover", event => {
+    const point = event.points[0];
+    for (const label of element.querySelectorAll(`.${point.yaxis._id}tick text`)) {
+      if (label.textContent === String(point.y)) label.classList.add("hovered");
+    }
+    const bars = element.querySelectorAll(".barlayer .trace")[point.curveNumber];
+    bars?.querySelectorAll(".point path")[point.pointNumber]?.classList.add("hovered");
+  });
+  element.on("plotly_unhover", () => element.querySelectorAll(".hovered").forEach(hovered => hovered.classList.remove("hovered")));
+}
+
+/// The counters of the chain's workers over the window of its thread activity.
+function renderGanttCounters(chain, activity) {
+  const container = document.getElementById("gantt-counters");
+  container.innerHTML = "";
+  if (!activity) return;
+  const involved = new Set(activity.lanes.map(([worker]) => DATA.workers[worker]));
+  const from = chain.start + ms(activity.from), to = chain.start + ms(activity.to);
+  for (const counter of DATA.counters.filter(c => involved.has(c.worker))) {
+    let first = counter.t.findIndex(t => t >= from);
+    if (first < 0) first = counter.t.length - 1;
+    first = Math.max(0, first - 1);
+    let last = counter.t.findIndex(t => t > to);
+    if (last < 0) last = counter.t.length;
+    const t = counter.t.slice(first, last + 1).map(t => Math.min(Math.max(t, from), to) - chain.start);
+    const v = counter.v.slice(first, last + 1);
+    const div = document.createElement("div");
+    div.style.height = "120px";
+    container.appendChild(div);
+    Plotly.react(div, [{type: "scatter", mode: "lines", line: {shape: "hv", color: css("--accent")}, x: t, y: v,
+      hovertemplate: "%{y} at %{x:.3f} ms<extra></extra>"}], layout({
+      margin: {l: 56, r: 16, t: 22, b: 24}, showlegend: false,
+      title: {text: `${counter.name} <span style="font-size:11px">${workerLabel(counter.worker)}</span>`, font: {size: 12}, x: 0, xanchor: "left"},
+      xaxis: {range: [ms(activity.from), ms(activity.to)], gridcolor: css("--line")}, yaxis: {gridcolor: css("--line")},
+    }), plotConfig);
+  }
+}
+
+function render(withTimeline = true) {
+  const list = current();
+  const chosen = selected(list);
+  renderStats(chosen);
+  document.getElementById("selection").textContent = state.range
+    ? `${chosen.length} buffers between ${state.range[0].toFixed(0)} and ${state.range[1].toFixed(0)} ms` : "";
+  document.getElementById("reset").hidden = !state.range;
+  renderGraph(chosen);
+  if (withTimeline) renderTimeline(list);
+  renderCounters();
+  renderBreakdown(chosen);
+  renderAttribution(chosen);
+  renderCdf(chosen);
+}
+
+const querySelect = document.getElementById("query");
+querySelect.innerHTML = (DATA.queries.length > 1 ? `<option value="-1">all queries</option>` : "") +
+  DATA.queries.map((q, i) => `<option value="${i}">${q.split("_D_").pop()}</option>`).join("");
+state.query = Number(querySelect.value);
+querySelect.addEventListener("change", () => { state.query = Number(querySelect.value); state.range = null; state.focus = null; render(); });
+document.getElementById("warmup").addEventListener("change", e => { state.warmup = e.target.checked; render(); });
+document.getElementById("reset").addEventListener("click", () => {
+  state.range = null;
+  Plotly.restyle("timeline", {selectedpoints: [null]});
+  render();
+});
+document.getElementById("workers").textContent = "Workers: " + DATA.workers.map(w => `${workerLabel(w)} ${w}`).join(", ");
+render();
+document.getElementById("open").innerHTML = DATA.open.length
+  ? `<table><tr><th>Stage</th><th>Pipeline</th><th>Worker / thread</th><th>Buffer</th><th>Open for</th></tr>` +
+    DATA.open.map(([stage, pipeline, where, key, age]) =>
+      `<tr><td>${stage}</td><td>${pipeline}</td><td>${where}</td><td>${key}</td><td class="age">${age.toFixed(1)} ms</td></tr>`).join("") +
+    `</table>`
+  : `<p class="hint">None.</p>`;
+const slowest = current().sort((a, b) => b.total - a.total)[0];
+if (slowest) renderGantt(slowest);
+</script>
+</body>
+</html>

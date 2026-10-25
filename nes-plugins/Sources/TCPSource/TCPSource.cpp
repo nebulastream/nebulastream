@@ -42,6 +42,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
+#include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
@@ -264,6 +265,10 @@ Source::FillTupleBufferResult TCPSource::fillTupleBuffer(NES::TupleBuffer& tuple
         }
 
         tbOffset += bytesRead;
+        if (bytesRead > 0)
+        {
+            NES_EVENT_FIRST_DATA();
+        }
         if (readError == boost::asio::error::operation_aborted)
         {
             continue;

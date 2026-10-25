@@ -50,6 +50,8 @@ public:
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
     void stopQuery(QueryId queryId);
+    /// Turns latency tracing of a running query on or off. Throws NotImplemented if no trace backend is compiled in.
+    void setLatencyTracing(QueryId queryId, bool enabled);
 
     [[nodiscard]] std::shared_ptr<BufferManager> getBufferManager() { return bufferManager; }
 

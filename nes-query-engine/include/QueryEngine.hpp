@@ -39,6 +39,8 @@ public:
         const Host& host);
     void stop(QueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
+    /// Turns latency tracing of a starting or running query on or off. Throws QueryNotFound otherwise.
+    void setLatencyTraced(QueryId queryId, bool traced);
     ~QueryEngine();
 
     /// Order of Member construction is top to bottom and order of destruction is reversed
