@@ -143,6 +143,12 @@ set(SYSTEST_EXCLUDE_GROUPS_NLJ_COMPILER ${SYSTEST_EXCLUDE_GROUPS_COMPILER} Neste
 set(SYSTEST_JOIN_TOTAL_MEMORY_BYTES 805306368) # 128 MiB pooled (1/6) + 640 MiB unpooled (5/6)
 set(SYSTEST_JOIN_UNPOOLED_FRACTION 0.8333333)
 
+# Under TSAN, the compiler backend takes minutes for the largest pipelines, e.g., 115 s for the 64 MEDIAN probe in
+# regression/2026-07-23_BenchmarkModeIgnoresGlobalConfiguration, which pushes such a query past the default 300 s timeout.
+if (SANITIZER_OPTION STREQUAL "thread")
+    set(SYSTEST_COMPILER_TIMEOUT_ARGS --query-timeout 900)
+endif ()
+
 # Add code coverage if enabled
 if (CODE_COVERAGE)
     foreach (enableSliceCache IN LISTS sliceCacheValues)
@@ -174,7 +180,7 @@ if (NOT CODE_COVERAGE)
     foreach (enableSliceCache IN LISTS sliceCacheValues)
         ExternalData_Add_Test(test-data
                 NAME systest_compiler_sliceCache_${enableSliceCache}
-                COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_sliceCache_${enableSliceCache} --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+                COMMAND systest -n 20 ${SYSTEST_COMPILER_TIMEOUT_ARGS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_sliceCache_${enableSliceCache} --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
         set_tests_properties(systest_compiler_sliceCache_${enableSliceCache} PROPERTIES LABELS "Systest" PROCESSORS 4)
     endforeach ()
 
@@ -182,7 +188,7 @@ if (NOT CODE_COVERAGE)
     # coverage is systest_large_benchmark_*, which is gated behind ENABLE_LARGE_TESTS.
     ExternalData_Add_Test(test-data
             NAME systest_benchmark_small
-            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/benchmark_small --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -b ${SYSTEST_COMPILER_TIMEOUT_ARGS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/benchmark_small --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_benchmark_small PROPERTIES LABELS "Systest" PROCESSORS 4)
 endif (NOT CODE_COVERAGE)
 
