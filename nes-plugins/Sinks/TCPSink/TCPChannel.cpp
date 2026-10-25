@@ -45,6 +45,8 @@
 #include <cpptrace/from_current_macros.hpp> ///NOLINT(misc-include-cleaner)
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -255,6 +257,13 @@ TCPChannel::tryConnect(const ResolvedAddress& address, const std::chrono::millis
         return Error{getErrorMessageFromERRNO()};
     }
     Socket candidate{candidateFd};
+    /// The sink writes each buffer as soon as it arrives. With Nagle's algorithm the tail of a write would wait until the
+    /// peer acknowledges the previous one, which delayed ACKs can hold back for tens of milliseconds.
+    const int noDelay = 1;
+    if (setsockopt(candidate.get(), IPPROTO_TCP, TCP_NODELAY, &noDelay, sizeof(noDelay)) != 0)
+    {
+        return Error{getErrorMessageFromERRNO()};
+    }
 
     /// POSIX connect accepts sockaddr while the resolved address uses sockaddr_storage.
     const auto* socketAddress = reinterpret_cast<const sockaddr*>(&address.storage); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
