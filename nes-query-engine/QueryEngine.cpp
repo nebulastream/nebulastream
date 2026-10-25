@@ -309,7 +309,9 @@ public:
         TaskCallback callback,
         const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
     {
-        NES_EVENT(const auto enqueueKey = EventTrace::keyOf(buffer); const auto enqueueStart = EventTrace::now());
+        NES_EVENT(
+            const EventTrace::Scope enqueue(
+                node->latencyTraced, EventTrace::Stage::Enqueue, EventTrace::keyOf(buffer), node->id.getRawValue()));
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
         auto [complete, failure, success] = std::move(callback).take();
@@ -325,9 +327,6 @@ public:
         {
             /// Non-WorkerThread
             taskQueue.addAdmissionTaskBlocking({}, std::move(task));
-            NES_EVENT(if (node->latencyTraced) {
-                EventTrace::span(EventTrace::Stage::Enqueue, enqueueKey, node->id.getRawValue(), enqueueStart, EventTrace::now());
-            });
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;
         }
@@ -338,9 +337,6 @@ public:
             case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
             case PipelineExecutionContext::ContinuationPolicy::NEVER:
                 addInternalTask(std::move(task));
-                NES_EVENT(if (node->latencyTraced) {
-                    EventTrace::span(EventTrace::Stage::Enqueue, enqueueKey, node->id.getRawValue(), enqueueStart, EventTrace::now());
-                });
                 return true;
         }
         std::unreachable();

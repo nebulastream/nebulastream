@@ -17,9 +17,9 @@
     #include <array>
     #include <cstddef>
     #include <cstdint>
-    #include <EventTraceBackends.hpp>
     #include <ittnotify.h>
     #include <Util/EventTrace.hpp>
+    #include <EventTraceBackends.hpp>
 
 namespace NES::EventTrace::Itt
 {
@@ -30,16 +30,9 @@ constexpr size_t StageCount = 8;
 constexpr std::array<const char*, StageCount> StageNames
     = {"SourceBackpressure", "SourceBufferWait", "SourceFill", "Enqueue", "Exec", "Emit", "NetSend", "NetRecv"};
 
-void steadyClockInfo(__itt_clock_info* info, void*)
-{
-    info->clock_freq = 1'000'000'000;
-    info->clock_base = now();
-}
-
 struct Handles
 {
     __itt_domain* domain = __itt_domain_create("NebulaStream");
-    __itt_clock_domain* clock = __itt_clock_domain_create(steadyClockInfo, nullptr);
     std::array<__itt_string_handle*, StageCount> stages{};
     __itt_string_handle* keyName = __itt_string_handle_create("key");
     __itt_string_handle* pipelineName = __itt_string_handle_create("pipeline");
@@ -81,10 +74,18 @@ __itt_id taskId(Stage stage, const Key& key, uint64_t pipeline) noexcept
 
 }
 
-void span(Stage stage, const Key& key, uint64_t pipeline, uint64_t t0, uint64_t t1, uint64_t extra) noexcept
+/// ITT records tasks, markers and relations at the time of the call, so the timestamps of mark() and link() are not used.
+void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept
 {
     const auto& h = handles();
-    __itt_task_begin_ex(h.domain, h.clock, t0, taskId(stage, key, pipeline), bufferId(key), stageName(h, stage));
+    const bool known = key.origin != 0 || key.seq != 0;
+    __itt_task_begin(h.domain, known ? taskId(stage, key, pipeline) : __itt_null, known ? bufferId(key) : __itt_null, stageName(h, stage));
+}
+
+void end(Stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept
+{
+    const auto& h = handles();
+    /// Metadata attaches to the current task, which is the one this call ends.
     std::array<uint64_t, 3> keyData{key.origin, key.seq, key.chunk};
     __itt_metadata_add(h.domain, __itt_null, h.keyName, __itt_metadata_u64, keyData.size(), keyData.data());
     __itt_metadata_add(h.domain, __itt_null, h.pipelineName, __itt_metadata_u64, 1, &pipeline);
@@ -92,20 +93,19 @@ void span(Stage stage, const Key& key, uint64_t pipeline, uint64_t t0, uint64_t 
     {
         __itt_metadata_add(h.domain, __itt_null, h.extraName, __itt_metadata_u64, 1, &extra);
     }
-    __itt_task_end_ex(h.domain, h.clock, t1);
+    __itt_task_end(h.domain);
 }
 
-void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept
+void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t) noexcept
 {
     const auto& h = handles();
-    __itt_marker_ex(h.domain, h.clock, t, taskId(stage, key, pipeline), stageName(h, stage), __itt_marker_scope_thread);
+    __itt_marker(h.domain, taskId(stage, key, pipeline), stageName(h, stage), __itt_marker_scope_thread);
 }
 
-void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept
+void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t) noexcept
 {
     const auto& h = handles();
-    __itt_relation_add_ex(
-        h.domain, h.clock, t, bufferId(output), __itt_relation_is_continuation_of, taskId(Stage::Exec, input, pipeline));
+    __itt_relation_add(h.domain, bufferId(output), __itt_relation_is_continuation_of, taskId(Stage::Exec, input, pipeline));
 }
 
 }

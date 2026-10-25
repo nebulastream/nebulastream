@@ -157,7 +157,7 @@ Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer& tupleB
     if (receive_buffer(**channel, builder))
     {
         NES_EVENT_FIRST_DATA();
-        NES_EVENT(EventTrace::sourceStamps.networkSource = true);
+        NES_EVENT(EventTrace::sourceState.networkSource = true);
         return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples()); /// Received one buffer
     }
 

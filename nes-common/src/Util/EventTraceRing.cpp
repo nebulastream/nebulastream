@@ -40,23 +40,32 @@ namespace
 
 constexpr size_t RING_CAPACITY = 1 << 15;
 constexpr auto FLUSH_INTERVAL = std::chrono::milliseconds(10);
-constexpr std::array<char, 8> MAGIC{'N', 'E', 'S', 'L', 'A', 'T', '0', '1'};
+constexpr std::array<char, 8> MAGIC{'N', 'E', 'S', 'L', 'A', 'T', '0', '2'};
+
+enum class Kind : uint8_t
+{
+    Point = 0,
+    Begin = 1,
+    End = 2,
+};
 
 /// The layout is the file format read by scripts/latency_trace.py.
 struct Event
 {
-    uint64_t t0 = 0;
-    uint64_t t1 = 0;
+    uint64_t time = 0;
+    uint64_t reserved = 0;
     uint64_t origin = 0;
     uint64_t seq = 0;
     uint64_t origin2 = 0;
-    /// The `extra` of a span, or the input sequence number of a link.
+    /// The `extra` of an end, or the input sequence number of a link.
     uint64_t seq2 = 0;
     uint32_t chunk = 0;
     uint32_t chunk2 = 0;
     uint32_t pipeline = 0;
-    Stage stage{};
-    uint16_t reserved = 0;
+    uint8_t stage = 0;
+    Kind kind = Kind::Point;
+    /// Identifies the recording thread within the process, so the stitcher can pair begins and ends.
+    uint16_t thread = 0;
 };
 
 static_assert(sizeof(Event) == 64, "Event layout is part of the file format");
@@ -64,6 +73,9 @@ static_assert(sizeof(Event) == 64, "Event layout is part of the file format");
 /// Single producer (the owning thread), single consumer (the flusher).
 struct RingBuffer
 {
+    explicit RingBuffer(uint16_t thread) : thread(thread) { }
+
+    uint16_t thread;
     std::array<Event, RING_CAPACITY> events{};
     std::atomic<size_t> head{0};
     std::atomic<size_t> tail{0};
@@ -144,8 +156,8 @@ public:
 
     std::shared_ptr<RingBuffer> registerRing()
     {
-        auto ring = std::make_shared<RingBuffer>();
         const std::scoped_lock lock(mutex);
+        auto ring = std::make_shared<RingBuffer>(nextThread++);
         rings.push_back(ring);
         return ring;
     }
@@ -192,6 +204,7 @@ private:
 
     std::mutex mutex;
     std::vector<std::shared_ptr<RingBuffer>> rings;
+    uint16_t nextThread = 0;
     std::FILE* file = nullptr;
     std::FILE* planFile = nullptr;
     std::jthread flusher;
@@ -215,10 +228,11 @@ struct LocalRing
     ~LocalRing() { ring->alive.store(false); }
 };
 
-void record(const Event& event) noexcept
+void record(Event event) noexcept
 {
     thread_local LocalRing local;
     auto& ring = *local.ring;
+    event.thread = ring.thread;
     const auto head = ring.head.load(std::memory_order_relaxed);
     if (head - ring.tail.load(std::memory_order_acquire) == RING_CAPACITY)
     {
@@ -230,29 +244,46 @@ void record(const Event& event) noexcept
 }
 }
 
-void span(Stage stage, const Key& key, uint64_t pipeline, uint64_t t0, uint64_t t1, uint64_t extra) noexcept
+void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept
 {
     record(
-        {.t0 = t0,
-         .t1 = t1,
+        {.time = now(),
+         .origin = key.origin,
+         .seq = key.seq,
+         .chunk = key.chunk,
+         .pipeline = static_cast<uint32_t>(pipeline),
+         .stage = static_cast<uint8_t>(stage),
+         .kind = Kind::Begin});
+}
+
+void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept
+{
+    record(
+        {.time = now(),
          .origin = key.origin,
          .seq = key.seq,
          .seq2 = extra,
          .chunk = key.chunk,
          .pipeline = static_cast<uint32_t>(pipeline),
-         .stage = stage});
+         .stage = static_cast<uint8_t>(stage),
+         .kind = Kind::End});
 }
 
 void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept
 {
     record(
-        {.t0 = t, .origin = key.origin, .seq = key.seq, .chunk = key.chunk, .pipeline = static_cast<uint32_t>(pipeline), .stage = stage});
+        {.time = t,
+         .origin = key.origin,
+         .seq = key.seq,
+         .chunk = key.chunk,
+         .pipeline = static_cast<uint32_t>(pipeline),
+         .stage = static_cast<uint8_t>(stage)});
 }
 
 void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept
 {
     record(
-        {.t0 = t,
+        {.time = t,
          .origin = output.origin,
          .seq = output.seq,
          .origin2 = input.origin,
@@ -260,7 +291,7 @@ void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) no
          .chunk = output.chunk,
          .chunk2 = input.chunk,
          .pipeline = static_cast<uint32_t>(pipeline),
-         .stage = Stage::Emit});
+         .stage = static_cast<uint8_t>(Stage::Emit)});
 }
 
 void writePlan(std::string_view plan)

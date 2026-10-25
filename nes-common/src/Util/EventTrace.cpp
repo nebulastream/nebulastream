@@ -25,13 +25,23 @@
 namespace NES::EventTrace
 {
 
-void span(Stage stage, const Key& key, uint64_t pipeline, uint64_t t0, uint64_t t1, uint64_t extra) noexcept
+void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept
 {
     #ifdef NES_EVENT_TRACE_RING
-    Ring::span(stage, key, pipeline, t0, t1, extra);
+    Ring::begin(stage, key, pipeline);
     #endif
     #ifdef NES_EVENT_TRACE_ITT
-    Itt::span(stage, key, pipeline, t0, t1, extra);
+    Itt::begin(stage, key, pipeline);
+    #endif
+}
+
+void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept
+{
+    #ifdef NES_EVENT_TRACE_RING
+    Ring::end(stage, key, pipeline, extra);
+    #endif
+    #ifdef NES_EVENT_TRACE_ITT
+    Itt::end(stage, key, pipeline, extra);
     #endif
 }
 

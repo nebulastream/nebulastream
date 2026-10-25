@@ -60,12 +60,7 @@ SourceReturnType::EmitFunction emitFunction(
             Overloaded{
                 [&](const SourceReturnType::Data& data)
                 {
-                    NES_EVENT(const auto emitted = EventTrace::now(); for (const auto& successor : successors) {
-                        if (successor->latencyTraced)
-                        {
-                            EventTrace::sourceEmitted(EventTrace::keyOf(data.buffer), successor->id.getRawValue(), emitted);
-                        }
-                    } EventTrace::sourceStamps.firstData = 0;);
+                    NES_EVENT(EventTrace::sourceEmitted(EventTrace::keyOf(data.buffer), successors));
                     for (const auto& successor : successors)
                     {
                         {

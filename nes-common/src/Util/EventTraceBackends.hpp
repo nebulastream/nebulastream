@@ -25,7 +25,8 @@ namespace NES::EventTrace
 #ifdef NES_EVENT_TRACE_RING
 namespace Ring
 {
-void span(Stage stage, const Key& key, uint64_t pipeline, uint64_t t0, uint64_t t1, uint64_t extra) noexcept;
+void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept;
+void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept;
 void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept;
 void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept;
 void writePlan(std::string_view plan);
@@ -35,7 +36,8 @@ void writePlan(std::string_view plan);
 #ifdef NES_EVENT_TRACE_ITT
 namespace Itt
 {
-void span(Stage stage, const Key& key, uint64_t pipeline, uint64_t t0, uint64_t t1, uint64_t extra) noexcept;
+void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept;
+void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept;
 void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept;
 void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept;
 }

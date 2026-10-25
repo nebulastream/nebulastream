@@ -103,9 +103,11 @@ SourceImplementationTermination dataSourceThreadRoutine(
     };
 
     const bool requiresMetadata = !source.addsMetadata();
-    while (NES_EVENT_STAMP(backpressureStart), backpressureListener.wait(stopToken), !stopToken.stop_requested())
+    while (NES_EVENT_SOURCE_BEGIN(SourceBackpressure),
+           backpressureListener.wait(stopToken),
+           NES_EVENT_SOURCE_END(SourceBackpressure),
+           !stopToken.stop_requested())
     {
-        NES_EVENT_STAMP(backpressureEnd);
         /// 4 Things that could happen:
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
@@ -116,18 +118,19 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exists with an exception
 
         std::optional<TupleBuffer> emptyBuffer;
-        NES_EVENT_STAMP(bufferStart);
+        NES_EVENT_SOURCE_BEGIN(SourceBufferWait);
         while (!emptyBuffer && !stopToken.stop_requested())
         {
             emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
         }
-        NES_EVENT_STAMP(bufferEnd);
+        NES_EVENT_SOURCE_END(SourceBufferWait);
         if (stopToken.stop_requested())
         {
             return {SourceImplementationTermination::StopRequested};
         }
 
-        NES_EVENT_STAMP(fillStart);
+        /// The fill span ends when the engine receives the emitted buffer, see EventTrace::sourceEmitted.
+        NES_EVENT_SOURCE_BEGIN(SourceFill);
         const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())
@@ -139,6 +142,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
         }
         else
         {
+            NES_EVENT_SOURCE_END(SourceFill);
             if (stopToken.stop_requested())
             {
                 return {SourceImplementationTermination::StopRequested};
