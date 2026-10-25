@@ -49,6 +49,9 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
 .edge.network.focus { stroke: var(--accent); stroke-width: 2.5; }
 .edgelabel { fill: var(--muted); font-size: 11px; }
 #selection { color: var(--muted); font-size: 12px; }
+#open table { border-collapse: collapse; font-size: 12px; width: 100%; }
+#open td, #open th { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
+#open td.age { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
@@ -91,6 +94,11 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
     <h2 id="gantt-title">Single buffer</h2>
     <p class="hint">Click a point in the latency chart.</p>
     <div id="gantt"></div>
+  </section>
+  <section class="card wide">
+    <h2>Open spans</h2>
+    <p class="hint">Spans that began but had not ended when the trace ended, oldest first: a stuck pipeline, or a source waiting for backpressure, a buffer or data.</p>
+    <div id="open"></div>
   </section>
 </main>
 <script>
@@ -348,6 +356,12 @@ document.getElementById("reset").addEventListener("click", () => {
   render();
 });
 render();
+document.getElementById("open").innerHTML = DATA.open.length
+  ? `<table><tr><th>Stage</th><th>Pipeline</th><th>Worker / thread</th><th>Buffer</th><th>Open for</th></tr>` +
+    DATA.open.map(([stage, pipeline, where, key, age]) =>
+      `<tr><td>${stage}</td><td>${pipeline}</td><td>${where}</td><td>${key}</td><td class="age">${age.toFixed(1)} ms</td></tr>`).join("") +
+    `</table>`
+  : `<p class="hint">None.</p>`;
 const slowest = current().sort((a, b) => b.total - a.total)[0];
 if (slowest) renderGantt(slowest);
 </script>

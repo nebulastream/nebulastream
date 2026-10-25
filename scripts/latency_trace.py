@@ -42,8 +42,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 HEADER = struct.Struct("<8sQQQ64s")
-EVENT = struct.Struct("<QQQQQQIIIHH")
+EVENT = struct.Struct("<QQQQQQIIIBBH")
 SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL, ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV = range(8)
+STAGE_NAMES = ["source backpressure", "source buffer wait", "source fill", "enqueue", "exec", "emit", "net send", "net recv"]
+POINT, BEGIN, END = range(3)
 # A source that reports first data within this many ns of starting the fill found the data already waiting, so the data also
 # waited through the preceding backpressure and buffer acquisition.
 DATA_WAS_WAITING_NS = 50_000
@@ -62,11 +64,15 @@ class Worker:
     network_fed: set = field(default_factory=set)  # pipelines fed directly by a network source
     queries: dict = field(default_factory=dict)  # pipeline -> query name
     plan_sources: list = field(default_factory=list)  # (successors, description, query)
+    siblings: dict = field(default_factory=dict)  # first successor of a source -> all its successors
     execs: dict = field(default_factory=lambda: defaultdict(list))  # (key, pipeline) -> [(t0, t1, tuples)]
     enqueues: dict = field(default_factory=lambda: defaultdict(list))  # (key, pipeline) -> [(t0, t1)]
     emits: dict = field(default_factory=lambda: defaultdict(list))  # key -> [(t, input key, pipeline)]
     sources: dict = field(default_factory=lambda: defaultdict(dict))  # (key, pipeline) -> stage -> (t0, t1, seq2)
     receives: dict = field(default_factory=dict)  # (key, pipeline) -> t
+    open_spans: list = field(default_factory=list)  # (stage, thread, key, pipeline, t) of begins without an end
+    unpaired: int = 0  # ends without a begin and begins without an end that a later begin superseded
+    end: int = 0  # the last event's time
 
     def label(self, pipeline):
         return f"P{pipeline} {short_description(self.pipelines.get(pipeline, ((), '?'))[1])}"
@@ -96,10 +102,9 @@ def load(paths):
     for path in paths:
         data = path.read_bytes()
         magic, pid, steady, system, host = HEADER.unpack_from(data)
-        if magic != b"NESLAT01":
+        if magic != b"NESLAT02":
             sys.exit(f"{path}: not a latency trace")
         worker = Worker(f"{host.rstrip(b'\0').decode()}:{pid}")
-        offset = system - steady
         plan = path.with_suffix(".plan")
         if plan.exists():
             query = "?"
@@ -113,6 +118,8 @@ def load(paths):
                 successors = [] if successors == "-" else [int(s) for s in successors.split(",")]
                 if kind == "source":
                     worker.plan_sources.append((successors, description, query))
+                    if successors:
+                        worker.siblings[successors[0]] = successors
                     fed = worker.network_fed if "NetworkSource" in description else worker.source_fed
                     fed.update(successors)
                     continue
@@ -121,25 +128,47 @@ def load(paths):
                 worker.queries[int(pipeline)] = query
                 for successor in successors:
                     worker.predecessors[successor].add(int(pipeline))
-        for t0, t1, origin, seq, origin2, seq2, chunk, chunk2, pipeline, stage, _ in EVENT.iter_unpack(data[HEADER.size :]):
-            key = (origin, seq, chunk)
-            t0 += offset
-            t1 = t1 + offset if t1 else 0
-            if stage == EXEC:
-                worker.execs[key, pipeline].append((t0, t1, seq2))
-            elif stage == ENQUEUE:
-                worker.enqueues[key, pipeline].append((t0, t1))
-            elif stage == EMIT:
-                worker.emits[key].append((t0, (origin2, seq2, chunk2), pipeline))
-            elif stage in (SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL):
-                first_data = seq2 + offset if stage == SOURCE_FILL and seq2 else 0
-                worker.sources[key, pipeline][stage] = (t0, t1, first_data)
-            elif stage == NET_SEND:
-                sends[key].append((t0, worker))
-            elif stage == NET_RECV:
-                worker.receives[key, pipeline] = t0
+        load_events(worker, data[HEADER.size :], system - steady, sends)
         workers.append(worker)
     return workers, sends
+
+
+def load_events(worker, data, offset, sends):
+    """Pairs the begins and ends of each thread into spans. Spans of one stage do not overlap on a thread, so an end closes the
+    last begin of its stage. Source backpressure and buffer wait end without a key; they belong to the next fill on the thread."""
+    opened, source_waits = {}, defaultdict(dict)
+    for time, _, origin, seq, origin2, seq2, chunk, chunk2, pipeline, stage, kind, thread in EVENT.iter_unpack(data):
+        key, time = (origin, seq, chunk), time + offset
+        worker.end = max(worker.end, time)
+        if kind == BEGIN:
+            if (thread, stage) in opened:
+                worker.unpaired += 1
+            opened[thread, stage] = (time, key, pipeline)
+            continue
+        if kind == END:
+            begin = opened.pop((thread, stage), None)
+            if begin is None:
+                worker.unpaired += 1
+                continue
+            t0 = begin[0]
+            if stage == EXEC:
+                worker.execs[key, pipeline].append((t0, time, seq2))
+            elif stage == ENQUEUE:
+                worker.enqueues[key, pipeline].append((t0, time))
+            elif stage in (SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT):
+                source_waits[thread][stage] = (t0, time, 0)
+            elif stage == SOURCE_FILL and key != (0, 0, 0):
+                stages = {**source_waits.pop(thread, {}), SOURCE_FILL: (t0, time, seq2 + offset if seq2 else 0)}
+                for successor in worker.siblings.get(pipeline, [pipeline]):
+                    worker.sources[key, successor] = stages
+            continue
+        if stage == EMIT:
+            worker.emits[key].append((time, (origin2, seq2, chunk2), pipeline))
+        elif stage == NET_SEND:
+            sends[key].append((time, worker))
+        elif stage == NET_RECV:
+            worker.receives[key, pipeline] = time
+    worker.open_spans = [(stage, thread, key, pipeline, t) for (thread, stage), (t, key, pipeline) in opened.items()]
 
 
 def warmup_end(workers):
@@ -204,6 +233,8 @@ def walk(worker, key, pipeline, end, sends):
     if first_data and first_data - fill_start > DATA_WAS_WAITING_NS:
         source = [("source fill (batching)", first_data, emitted, node)]
     elif first_data:
+        if SOURCE_BACKPRESSURE not in stages or SOURCE_BUFFER_WAIT not in stages:
+            raise Incomplete
         backpressure, buffer = stages[SOURCE_BACKPRESSURE], stages[SOURCE_BUFFER_WAIT]
         source = [
             ("source backpressure", backpressure[0], backpressure[1], node),
@@ -377,6 +408,17 @@ def graph(workers, queries):
     return {"nodes": nodes, "edges": edges}
 
 
+def open_spans(workers):
+    """Begins without an end, oldest first: (stage, pipeline, worker/thread, key, open for ms)."""
+    spans = []
+    for worker in workers:
+        for stage, thread, key, pipeline, t in worker.open_spans:
+            label = worker.label(pipeline) if pipeline else "-"
+            key_text = "/".join(map(str, key)) if key != (0, 0, 0) else "-"
+            spans.append((STAGE_NAMES[stage], label, f"{worker.name}/{thread}", key_text, (worker.end - t) / 1e6))
+    return sorted(spans, key=lambda span: -span[4])
+
+
 def interactive_report(workers, chains, out):
     """Writes report.html, a self-contained page that embeds the graph and the stitched chains."""
     stages, nodes, queries = {}, {}, {}
@@ -387,7 +429,8 @@ def interactive_report(workers, chains, out):
                     for (name, t0, t1), node in zip(chain["segments"], chain["nodes"])]
         rows.append([queries.setdefault(chain["query"], len(queries)), round((chain["segments"][0][1] - start) / 1e6, 3),
                      chain["tuples"], int(chain["warmup"]), "/".join(map(str, chain["key"])), segments])
-    data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, {chain["query"] for chain in chains})}
+    data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, {chain["query"] for chain in chains}),
+            "open": open_spans(workers)}
     from plotly.offline import get_plotlyjs
 
     template = (Path(__file__).parent / "latency_trace_report.html").read_text()
@@ -432,6 +475,11 @@ def main():
         own.sort(key=total)
         p50, p99 = (total(own[percentile_index(own, p)]) / 1e6 for p in (50, 99))
         print(f"  {query}: {len(own)} buffers, p50 {p50:.2f} ms, p99 {p99:.2f} ms")
+    spans = open_spans(workers)
+    unpaired = sum(worker.unpaired for worker in workers)
+    print(f"{len(spans)} spans still open at the end of the trace, {unpaired} unpaired begins or ends")
+    for stage, pipeline, where, key, age in spans[:10]:
+        print(f"  {age:10.1f} ms  {stage} {pipeline} on {where}, buffer {key}")
     if args.query is not None:
         chains = [chain for chain in chains if args.query in chain["query"]]
     if not chains:
