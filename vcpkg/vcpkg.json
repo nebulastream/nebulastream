@@ -54,6 +54,7 @@
     "grpc",
     "gtest",
     "highs",
+    "ittapi",
     "libcuckoo",
     "libuuid",
     "magic-enum",
