@@ -202,9 +202,3 @@ createBackpressureChannels(const std::vector<NES::OriginId>& origins)
     }
     return {BackpressureController{std::move(channels)}, std::move(listeners)};
 }
-
-std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
-{
-    auto [controller, listeners] = createBackpressureChannels({NES::INITIAL<NES::OriginId>});
-    return {std::move(controller), std::move(listeners.begin()->second)};
-}

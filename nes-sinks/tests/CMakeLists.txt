@@ -11,4 +11,4 @@
 # limitations under the License.
 
 add_nes_test(backpressure-handler-test BackpressureHandlerTest.cpp)
-target_link_libraries(backpressure-handler-test nes-sinks)
+target_link_libraries(backpressure-handler-test nes-sinks nes-executable-test-utils)

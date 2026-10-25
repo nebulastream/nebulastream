@@ -21,6 +21,7 @@
 #include <Sinks/BackpressureHandler.hpp>
 #include <gtest/gtest.h>
 #include <BackpressureChannel.hpp>
+#include <BackpressureTestUtil.hpp>
 
 namespace NES
 {
