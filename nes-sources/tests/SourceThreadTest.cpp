@@ -43,7 +43,7 @@
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <BackpressureTestUtil.hpp>
+#include <BackpressureChannel.hpp>
 #include <BaseUnitTest.hpp>
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
@@ -53,6 +53,13 @@ namespace NES
 {
 namespace
 {
+/// Convenience for a single backpressure channel, keyed by INITIAL<OriginId>.
+std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
+{
+    auto [controller, listeners] = createBackpressureChannels({INITIAL<OriginId>});
+    return {std::move(controller), std::move(listeners.begin()->second)};
+}
+
 constexpr std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::milliseconds(100);
 constexpr std::chrono::milliseconds DEFAULT_LONG_TIMEOUT = std::chrono::milliseconds(1000);
 constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
