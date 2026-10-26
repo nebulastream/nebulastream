@@ -38,15 +38,16 @@ mod ffi {
 
         type Counter;
         fn create_counter(name: &str, sample: Box<Sample>) -> UniquePtr<Counter>;
-        fn net_step(step: NetStep, origin: u64, seq: u64, chunk: u64);
+        fn net_step(step: NetStep, origin: u64, seq: u64, chunk: u64, channel: u64);
     }
 }
 
 pub use ffi::NetStep;
 
-/// Records that the buffer (origin, sequence number, chunk number) reached `step` in the network layer.
-pub fn net_step(step: NetStep, (origin, seq, chunk): (u64, u64, u64)) {
-    ffi::net_step(step, origin, seq, chunk);
+/// Records that the buffer (origin, sequence number, chunk number) reached `step` in the network layer of the channel with the
+/// tag `channel` (see `EventTrace::channelTag`).
+pub fn net_step(step: NetStep, (origin, seq, chunk): (u64, u64, u64), channel: u64) {
+    ffi::net_step(step, origin, seq, chunk, channel);
 }
 
 struct Sample(Box<dyn Fn() -> i64 + Send + Sync>);

@@ -32,5 +32,5 @@ public:
 };
 
 std::unique_ptr<Counter> create_counter(rust::Str name, rust::Box<Sample> sample);
-void net_step(NetStep step, uint64_t origin, uint64_t seq, uint64_t chunk) noexcept;
+void net_step(NetStep step, uint64_t origin, uint64_t seq, uint64_t chunk, uint64_t channel) noexcept;
 }

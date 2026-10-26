@@ -55,14 +55,14 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
         // amount of accidental backpressure
         if let Some(pending_buffer) = pending_buffer.take() {
             let sequence = pending_buffer.sequence();
-            let traced = pending_buffer.traced;
+            let trace_channel = pending_buffer.trace_channel;
             select! {
                 _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
                 write_queue_result = buffer_queue.send(pending_buffer) => {
                     match write_queue_result {
                         Ok(_) => {
                             trace!("accepted data for sequence number {sequence:?}.");
-                            crate::trace::record(crate::trace::NetStep::Queued, traced, sequence);
+                            crate::trace::record(crate::trace::NetStep::Queued, trace_channel, sequence);
                             // The registered channel has accepted the data, acknowledge the sequence
                             // number.
                             let Some(result) = cancellation_token.run_until_cancelled(connection_writer.send(DataChannelResponse::AckData(sequence))).await else {

@@ -71,6 +71,18 @@ Key keyOf(const Buffer& buffer)
         .chunk = buffer.getChunkNumber().getRawValue()};
 }
 
+/// Identifies a network channel in events, because buffers of different queries can have the same key. FNV-1a of the channel id,
+/// never 0; scripts/latency_trace.py computes the same from the channel ids in the plan.
+constexpr uint64_t channelTag(std::string_view channelId) noexcept
+{
+    uint64_t hash = 0xcbf29ce484222325ULL;
+    for (const char character : channelId)
+    {
+        hash = (hash ^ static_cast<uint8_t>(character)) * 0x100000001b3ULL;
+    }
+    return hash == 0 ? 1 : hash;
+}
+
 /// Nanoseconds on the steady clock. All event times use it.
 inline uint64_t now() noexcept
 {
@@ -139,12 +151,13 @@ struct Emit
     uint64_t pipeline = 0;
 };
 
-/// A buffer handed to the network layer.
+/// A buffer handed to the network layer of the channel with the tag `channel`, see channelTag().
 struct NetSend
 {
     static constexpr std::string_view name = "net send";
     static constexpr Category category = Category::Other;
     Key key;
+    uint64_t channel = 0;
 };
 
 /// A network source received the buffer `key` at `received` and hands it to `pipeline`.
@@ -157,14 +170,15 @@ struct NetRecv
     uint64_t received = 0;
 };
 
-/// Steps of a buffer through the network layer between NetSend and NetRecv, recorded by the Rust network crate for traced
-/// buffers. Sender: taken from the channel's software queue, serialized for the socket, acknowledged by the receiver.
+/// Steps of a buffer through the network layer of the channel `channel` between NetSend and NetRecv, recorded by the Rust network
+/// crate for traced buffers. Sender: taken from the channel's software queue, serialized for the socket, acknowledged by the receiver.
 /// Receiver: decoded from the socket, put into the queue the network source reads.
 struct NetDequeue
 {
     static constexpr std::string_view name = "net dequeue";
     static constexpr Category category = Category::Other;
     Key key;
+    uint64_t channel = 0;
 };
 
 struct NetEncoded
@@ -172,6 +186,7 @@ struct NetEncoded
     static constexpr std::string_view name = "net encoded";
     static constexpr Category category = Category::Other;
     Key key;
+    uint64_t channel = 0;
 };
 
 struct NetAcked
@@ -179,6 +194,7 @@ struct NetAcked
     static constexpr std::string_view name = "net acked";
     static constexpr Category category = Category::Other;
     Key key;
+    uint64_t channel = 0;
 };
 
 struct NetDecoded
@@ -186,6 +202,7 @@ struct NetDecoded
     static constexpr std::string_view name = "net decoded";
     static constexpr Category category = Category::Other;
     Key key;
+    uint64_t channel = 0;
 };
 
 struct NetQueued
@@ -193,6 +210,7 @@ struct NetQueued
     static constexpr std::string_view name = "net queued";
     static constexpr Category category = Category::Other;
     Key key;
+    uint64_t channel = 0;
 };
 
 /// A sample of a CounterUpdater.

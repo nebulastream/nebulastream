@@ -125,9 +125,9 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             .watermark = currentBuffer->getWatermark().getRawValue(),
             .last_chunk = currentBuffer->isLastChunk(),
 #ifdef NES_EVENT_TRACE_ENABLED
-            .traced = EventTrace::currentTaskTraced
+            .trace_channel = EventTrace::currentTaskTraced ? EventTrace::channelTag(channelId) : 0
 #else
-            .traced = false
+            .trace_channel = 0
 #endif
         };
 
@@ -163,7 +163,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
                 NES_EVENT(if (EventTrace::currentTaskTraced) {
-                    EventTrace::instant(EventTrace::NetSend{.key = EventTrace::keyOf(*currentBuffer)});
+                    EventTrace::instant(EventTrace::NetSend{.key = EventTrace::keyOf(*currentBuffer), .channel = metadata.trace_channel});
                 });
                 /// Sent a buffer, check the backpressure handler to send another one
                 currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);

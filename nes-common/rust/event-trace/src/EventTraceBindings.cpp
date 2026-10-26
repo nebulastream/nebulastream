@@ -48,25 +48,25 @@ std::unique_ptr<Counter> create_counter(rust::Str name, rust::Box<Sample> sample
     return std::make_unique<TracedCounter>(name, std::move(sample));
 }
 
-void net_step(NetStep step, uint64_t origin, uint64_t seq, uint64_t chunk) noexcept
+void net_step(NetStep step, uint64_t origin, uint64_t seq, uint64_t chunk, uint64_t channel) noexcept
 {
     const Key key{.origin = origin, .seq = seq, .chunk = chunk};
     switch (step)
     {
         case NetStep::Dequeue:
-            instant(NetDequeue{.key = key});
+            instant(NetDequeue{.key = key, .channel = channel});
             return;
         case NetStep::Encoded:
-            instant(NetEncoded{.key = key});
+            instant(NetEncoded{.key = key, .channel = channel});
             return;
         case NetStep::Acked:
-            instant(NetAcked{.key = key});
+            instant(NetAcked{.key = key, .channel = channel});
             return;
         case NetStep::Decoded:
-            instant(NetDecoded{.key = key});
+            instant(NetDecoded{.key = key, .channel = channel});
             return;
         case NetStep::Queued:
-            instant(NetQueued{.key = key});
+            instant(NetQueued{.key = key, .channel = channel});
             return;
     }
 }
@@ -77,7 +77,7 @@ std::unique_ptr<Counter> create_counter(rust::Str, rust::Box<Sample>)
     return std::make_unique<Counter>();
 }
 
-void net_step(NetStep, uint64_t, uint64_t, uint64_t) noexcept
+void net_step(NetStep, uint64_t, uint64_t, uint64_t, uint64_t) noexcept
 {
 }
 

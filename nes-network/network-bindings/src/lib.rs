@@ -38,8 +38,8 @@ pub mod ffi {
         number_of_tuples: u64,
         watermark: u64,
         last_chunk: bool,
-        /// Whether the buffer belongs to a traced query, see EventTrace::currentTaskTraced.
-        traced: bool,
+        /// EventTrace::channelTag of the channel if the buffer belongs to a traced query, 0 otherwise.
+        trace_channel: u64,
     }
 
     /// Configuration for network services (sender and receiver).
@@ -393,7 +393,7 @@ fn receive_buffer(
             chunk_number: buffer.chunk_number as u64,
             number_of_tuples: buffer.number_of_tuples as u64,
             last_chunk: buffer.last_chunk,
-            traced: buffer.traced,
+            trace_channel: buffer.trace_channel,
         });
 
     buffer_builder.as_mut().setData(&buffer.data);
@@ -491,7 +491,7 @@ fn send_buffer(
         last_chunk: metadata.last_chunk,
         data: Vec::from(data),
         child_buffers: children.iter().map(|bytes| Vec::from(*bytes)).collect(),
-        traced: metadata.traced,
+        trace_channel: metadata.trace_channel,
     };
 
     // Because we copy the data anyway, we don't have to reuse the buffer if sending failed.

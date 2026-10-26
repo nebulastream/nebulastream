@@ -126,9 +126,10 @@ pub struct TupleBuffer {
     pub last_chunk: bool,
     pub data: Vec<u8>,
     pub child_buffers: Vec<Vec<u8>>,
-    /// Whether the buffer belongs to a traced query, so both ends record its steps through the network layer.
+    /// Tag of the channel for the event trace if the buffer belongs to a traced query, 0 otherwise. Both ends record the buffer's
+    /// steps through the network layer with it, because buffers of different queries can have the same sequence.
     #[serde(default)]
-    pub traced: bool,
+    pub trace_channel: u64,
 }
 
 impl TupleBuffer {

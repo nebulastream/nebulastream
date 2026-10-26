@@ -29,15 +29,15 @@ pub(crate) enum NetStep {
 }
 
 pub(crate) fn step(step: NetStep, buffer: &TupleBuffer) {
-    record(step, buffer.traced, buffer.sequence());
+    record(step, buffer.trace_channel, buffer.sequence());
 }
 
-/// For buffers that were already handed on, by their `traced` flag and sequence.
-pub(crate) fn record(step: NetStep, traced: bool, sequence: OriginSequenceNumber) {
+/// For buffers that were already handed on, by their `trace_channel` and sequence.
+pub(crate) fn record(step: NetStep, trace_channel: u64, sequence: OriginSequenceNumber) {
     #[cfg(feature = "event-trace")]
-    if traced {
-        event_trace::net_step(step, sequence);
+    if trace_channel != 0 {
+        event_trace::net_step(step, sequence, trace_channel);
     }
     #[cfg(not(feature = "event-trace"))]
-    let _ = (step, traced, sequence);
+    let _ = (step, trace_channel, sequence);
 }
