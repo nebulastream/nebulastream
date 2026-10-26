@@ -17,6 +17,9 @@
     #include <array>
     #include <cstddef>
     #include <cstdint>
+    #include <string>
+    #include <string_view>
+    #include <unordered_map>
     #include <ittnotify.h>
     #include <Util/EventTrace.hpp>
     #include <EventTraceBackends.hpp>
@@ -26,9 +29,16 @@ namespace NES::EventTrace::Itt
 namespace
 {
 
-constexpr size_t StageCount = 8;
+constexpr size_t StageCount = 9;
 constexpr std::array<const char*, StageCount> StageNames
-    = {"SourceBackpressure", "SourceBufferWait", "SourceFill", "Enqueue", "Exec", "Emit", "NetSend", "NetRecv"};
+    = {"SourceBackpressure", "SourceBufferWait", "SourceFill", "Enqueue", "Exec", "Emit", "NetSend", "NetRecv", "Counter"};
+
+/// Only accessed with the sampler's lock held, see EventTraceBackends.hpp.
+std::unordered_map<uint32_t, __itt_counter>& counters()
+{
+    static std::unordered_map<uint32_t, __itt_counter> instance;
+    return instance;
+}
 
 struct Handles
 {
@@ -106,6 +116,28 @@ void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t) noex
 {
     const auto& h = handles();
     __itt_relation_add(h.domain, bufferId(output), __itt_relation_is_continuation_of, taskId(Stage::Exec, input, pipeline));
+}
+
+void counterCreated(uint32_t id, std::string_view name)
+{
+    counters()[id] = __itt_counter_create_typed(std::string(name).c_str(), "NebulaStream", __itt_metadata_s64);
+}
+
+void counterDestroyed(uint32_t id)
+{
+    if (const auto it = counters().find(id); it != counters().end())
+    {
+        __itt_counter_destroy(it->second);
+        counters().erase(it);
+    }
+}
+
+void counterValue(uint32_t id, int64_t value) noexcept
+{
+    if (const auto it = counters().find(id); it != counters().end())
+    {
+        __itt_counter_set_value(it->second, &value);
+    }
 }
 
 }

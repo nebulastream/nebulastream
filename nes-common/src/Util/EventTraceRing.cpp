@@ -32,6 +32,7 @@
     #include <thread>
     #include <vector>
     #include <unistd.h>
+    #include <fmt/format.h>
 
 namespace NES::EventTrace::Ring
 {
@@ -297,6 +298,16 @@ void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) no
 void writePlan(std::string_view plan)
 {
     recorder().writePlan(plan);
+}
+
+void counterCreated(uint32_t id, std::string_view name)
+{
+    recorder().writePlan(fmt::format("counter {} {}\n", id, name));
+}
+
+void counterValue(uint32_t id, int64_t value) noexcept
+{
+    record({.time = now(), .seq2 = static_cast<uint64_t>(value), .pipeline = id, .stage = static_cast<uint8_t>(Stage::Counter)});
 }
 
 }

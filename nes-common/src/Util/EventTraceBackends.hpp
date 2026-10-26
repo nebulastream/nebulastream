@@ -19,6 +19,7 @@
 #include <Util/EventTrace.hpp>
 
 /// The backends behind Util/EventTrace.hpp. EventTrace.cpp forwards every call to each backend that is compiled in.
+/// The counter functions are called with the sampler's lock held, so they never run concurrently.
 namespace NES::EventTrace
 {
 
@@ -30,6 +31,8 @@ void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcep
 void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept;
 void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept;
 void writePlan(std::string_view plan);
+void counterCreated(uint32_t id, std::string_view name);
+void counterValue(uint32_t id, int64_t value) noexcept;
 }
 #endif
 
@@ -40,6 +43,9 @@ void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept;
 void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept;
 void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept;
 void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept;
+void counterCreated(uint32_t id, std::string_view name);
+void counterDestroyed(uint32_t id);
+void counterValue(uint32_t id, int64_t value) noexcept;
 }
 #endif
 

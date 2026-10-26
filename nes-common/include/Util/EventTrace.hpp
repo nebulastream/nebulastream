@@ -30,6 +30,7 @@
 
     #include <chrono>
     #include <cstdint>
+    #include <functional>
     #include <string_view>
 
 namespace NES::EventTrace
@@ -52,6 +53,8 @@ enum class Stage : uint16_t
     /// Buffer handed to / received from the network layer. NetRecv carries the pipeline the network source feeds.
     NetSend = 6,
     NetRecv = 7,
+    /// A sample of a CounterUpdater. The pipeline field holds the counter id, `extra` the value.
+    Counter = 8,
 };
 
 struct Key
@@ -84,6 +87,27 @@ void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra = 0) noe
 void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept;
 /// `pipeline` produced the buffer `output` at time t while processing the buffer `input`.
 void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept;
+
+/// Samples a value, e.g. a queue length, every millisecond on the event trace's sampler thread while the CounterUpdater is alive.
+/// Samples are recorded when the value changes. Not tied to a query, so the samples show what happened around traced buffers.
+///
+/// The destructor waits for a running sample to finish, so `sample` may use everything that outlives the CounterUpdater; declare
+/// it after the members it captures. `sample` must be cheap, must not throw, and must not block on a lock that is held while a
+/// CounterUpdater is created or destroyed.
+class CounterUpdater
+{
+public:
+    CounterUpdater(std::string_view name, std::function<int64_t()> sample);
+    ~CounterUpdater();
+
+    CounterUpdater(const CounterUpdater&) = delete;
+    CounterUpdater(CounterUpdater&&) = delete;
+    CounterUpdater& operator=(const CounterUpdater&) = delete;
+    CounterUpdater& operator=(CounterUpdater&&) = delete;
+
+private:
+    uint32_t id;
+};
 
 /// Whether the query with this printed QueryId is traced.
 bool traces(std::string_view queryDescription);
