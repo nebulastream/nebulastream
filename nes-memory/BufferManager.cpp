@@ -60,8 +60,9 @@ BufferManager::BufferManager(
     PRECONDITION(numOfBuffers > 0, "BufferManager requires at least one pooled buffer, but the configured budget yields {}", numOfBuffers);
     initialize();
     NES_EVENT(
-        availablePooledCounter.emplace(
-            "buffer_manager_available_pooled_buffers", [this] { return static_cast<int64_t>(getNumberOfAvailableBuffers()); });
+        pooledInUseCounter.emplace(
+            "buffer_manager_pooled_buffers_in_use",
+            [this] { return static_cast<int64_t>(this->numOfBuffers) - static_cast<int64_t>(getNumberOfAvailableBuffers()); });
         unpooledBytesCounter.emplace(
             "buffer_manager_unpooled_bytes", [this] { return static_cast<int64_t>(unpooledChunksManager->getAllocatedUnpooledBytes()); }););
 }
@@ -101,7 +102,7 @@ void BufferManager::destroy()
     NES_DEBUG("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
-        NES_EVENT(availablePooledCounter.reset(); unpooledBytesCounter.reset(););
+        NES_EVENT(pooledInUseCounter.reset(); unpooledBytesCounter.reset(););
         /// All buffers should be idle now, so their control blocks (and data regions) are poisoned. Clear all
         /// poison up front: the availability checks and the MemorySegment destructors in allBuffers.clear()
         /// below read the control blocks, and the arena is about to be returned to the allocator anyway.

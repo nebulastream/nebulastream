@@ -170,8 +170,7 @@ private:
     std::atomic<bool> isDestroyed{false};
 
     /// Created once the pool is initialized and reset at the start of destroy(), which tears down what they sample.
-    NES_EVENT(
-        std::optional<EventTrace::CounterUpdater> availablePooledCounter; std::optional<EventTrace::CounterUpdater> unpooledBytesCounter;)
+    NES_EVENT(std::optional<EventTrace::CounterUpdater> pooledInUseCounter; std::optional<EventTrace::CounterUpdater> unpooledBytesCounter;)
 };
 
 
