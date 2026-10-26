@@ -39,13 +39,13 @@ TYPES = {
     "exec": (4, 0, [("key", "k"), ("pipeline", "u"), ("tuples", "u")]),
     "task queue wait": (5, 1, []),
     "emit": (6, 2, [("output", "k"), ("input", "k"), ("pipeline", "u")]),
-    "net send": (7, 2, [("key", "k")]),
+    "net send": (7, 2, [("key", "k"), ("channel", "u")]),
     "net recv": (8, 2, [("key", "k"), ("pipeline", "u"), ("received", "u")]),
     "counter": (9, 2, [("counter", "u"), ("value", "i")]),
-    "net dequeue": (10, 2, [("key", "k")]),
-    "net encoded": (11, 2, [("key", "k")]),
-    "net decoded": (13, 2, [("key", "k")]),
-    "net queued": (14, 2, [("key", "k")]),
+    "net dequeue": (10, 2, [("key", "k"), ("channel", "u")]),
+    "net encoded": (11, 2, [("key", "k"), ("channel", "u")]),
+    "net decoded": (13, 2, [("key", "k"), ("channel", "u")]),
+    "net queued": (14, 2, [("key", "k"), ("channel", "u")]),
 }
 SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL = "source backpressure", "source buffer wait", "source fill"
 ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV = "enqueue", "exec", "emit", "net send", "net recv"
@@ -104,11 +104,14 @@ def span(stage, key, t0, t1, pipeline, thread, extra=0):
 def point(stage, key, t, pipeline=0, key2=(0, 0, 0)):
     if stage == EMIT:
         return (0, lt.INSTANT, t, stage, {"output": key, "input": key2, "pipeline": pipeline})
-    return (0, lt.INSTANT, t, stage, {"key": key, "pipeline": pipeline, "received": t})
+    return (0, lt.INSTANT, t, stage, {"key": key, "pipeline": pipeline, "received": t, "channel": C1})
 
 
-def net(step, key, t):
-    return (8, lt.INSTANT, t, step, {"key": key})
+C1 = lt.channel_tag("c1")
+
+
+def net(step, key, t, channel=C1):
+    return (8, lt.INSTANT, t, step, {"key": key, "channel": channel})
 
 
 def counter(t, identifier, value):
@@ -139,6 +142,8 @@ with tempfile.TemporaryDirectory() as d:
         *span(TASK_QUEUE_WAIT, (0, 0, 0), 365 * US, 395 * US, 0, ENGINE),
         begin(TASK_QUEUE_WAIT, 450 * US, ENGINE),
         point(NET_SEND, formatted, 500 * US),
+        # Another query's sink sends a buffer with the same key on its own channel, after this one.
+        net(NET_SEND, formatted, 550 * US, lt.channel_tag("other")),
         # The network layer takes the buffer from the sender queue and serializes it.
         net("net dequeue", formatted, 520 * US),
         net("net encoded", formatted, 530 * US),
@@ -176,7 +181,7 @@ with tempfile.TemporaryDirectory() as d:
     assert "/*TRACE_DATA*/" not in page and '"network":true' in page, "report embeds the data and the network edge"
     assert "Untraced" not in page, "the graph only shows traced queries"
     assert workers[0].sources[raw, 1][lt.SOURCE_BACKPRESSURE] == (0, 10 * US, 0), "keyless waits belong to the next fill"
-    assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (530 * US, -1)])]
+    assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (550 * US, -1)])]
     activity = lt.thread_activity(chains[0], workers, names := {})
     lanes = {(worker, thread): (role, [(list(names)[n], start, us) for start, us, n, _ in segments])
              for worker, thread, role, segments in activity["lanes"]}

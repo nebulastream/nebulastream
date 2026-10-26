@@ -85,7 +85,9 @@ class Worker:
     unpaired: int = 0  # ends without a begin and begins without an end that a later begin superseded
     end: int = 0  # the last event's time
     spans: dict = field(default_factory=lambda: defaultdict(list))  # thread -> [(t0, t1, name, category)] sorted by t0
-    net_steps: dict = field(default_factory=lambda: defaultdict(list))  # (step name, key) -> [t], see NET_STEPS
+    net_steps: dict = field(default_factory=lambda: defaultdict(list))  # (step name, key, channel) -> [t], see NET_STEPS
+    sink_channels: dict = field(default_factory=dict)  # network sink pipeline -> channel tag
+    source_channels: dict = field(default_factory=dict)  # pipeline fed by a network source -> channel tag
     counter_names: dict = field(default_factory=dict)  # counter id -> name
     counters: dict = field(default_factory=lambda: defaultdict(list))  # counter id -> [(t, value)], recorded on change
 
@@ -125,6 +127,14 @@ class EventType:
         for name, kind in self.fields:
             fields[name] = (next(values), next(values), next(values)) if kind == "k" else next(values)
         return fields
+
+
+def channel_tag(channel_id):
+    """EventTrace::channelTag: FNV-1a of the channel id, never 0."""
+    tag = 0xCBF29CE484222325
+    for byte in channel_id.encode():
+        tag = ((tag ^ byte) * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
+    return tag or 1
 
 
 def read_name(data, offset):
@@ -185,9 +195,13 @@ def load(paths):
                         worker.siblings[successors[0]] = successors
                     fed = worker.network_fed if "NetworkSource" in description else worker.source_fed
                     fed.update(successors)
+                    if channel := re.search(r"NetworkSource\(([^)]+)\)", description):
+                        worker.source_channels.update({successor: channel_tag(channel.group(1)) for successor in successors})
                     continue
                 pipeline = identifier
                 worker.pipelines[int(pipeline)] = (successors, description)
+                if channel := re.search(r"channelId: ([\w-]+)", description):
+                    worker.sink_channels[int(pipeline)] = channel_tag(channel.group(1))
                 worker.queries[int(pipeline)] = query
                 for successor in successors:
                     worker.predecessors[successor].add(int(pipeline))
@@ -246,14 +260,14 @@ def load_events(worker, types, data, offset, clock_offset, sends):
         if name == "emit":
             worker.emits[fields["output"]].append((time, fields["input"], fields["pipeline"]))
         elif name == "net send":
-            sends[fields["key"]].append((time, worker))
+            sends[fields["key"], fields["channel"]].append((time, worker))
         elif name == "net recv":
             received = fields["received"] + clock_offset if fields["received"] else time
             worker.receives[fields["key"], fields["pipeline"]] = received
         elif name == "counter":
             worker.counters[fields["counter"]].append((time, fields["value"]))
         elif name in NET_STEPS:
-            worker.net_steps[name, fields["key"]].append(time)
+            worker.net_steps[name, fields["key"], fields["channel"]].append(time)
     for (thread, name), (t, _) in opened.items():
         worker.spans[thread].append((t, worker.end, name, types_by_name[name].category))
     for spans in worker.spans.values():
@@ -305,12 +319,14 @@ def walk(worker, key, pipeline, end, sends):
 
     if pipeline in worker.network_fed and (key, pipeline) in worker.receives:
         received = worker.receives[key, pipeline]
-        sent, sender = latest(sends.get(key, []), received)
-        sink = next((p for p in sender.pipelines if sender.is_network_sink(p) and (key, p) in sender.execs), None)
+        # Buffers of different queries can have the same key, so the channel decides which send this buffer came from.
+        channel = worker.source_channels.get(pipeline)
+        sent, sender = latest(sends.get((key, channel), []), received)
+        sink = next((p for p, tag in sender.sink_channels.items() if tag == channel), None)
         if sink is None:
             raise Incomplete
         source = source_node(worker, pipeline)
-        hop = network_hop(sender, worker, key, sent, received, f"{pipeline_node(sender, sink)}>{source}", sender.label(sink))
+        hop = network_hop(sender, worker, key, channel, sent, received, f"{pipeline_node(sender, sink)}>{source}", sender.label(sink))
         hop.append((f"network source to engine {label}", received, enqueue[0], source))
         return walk(sender, key, sink, sent, sends) + hop + segments
 
@@ -336,16 +352,16 @@ def walk(worker, key, pipeline, end, sends):
     return source + [("source in-flight limit", emitted, enqueue[0], node)] + segments
 
 
-def network_hop(sender, receiver, key, sent, received, edge, sink_label):
+def network_hop(sender, receiver, key, channel, sent, received, edge, sink_label):
     """Segments from NetSend on the sender to the network source taking the buffer on the receiver. Without the network
     layer's steps, e.g. for untraced resends, the hop is a single segment."""
     def first(worker, step, after):
-        return min((t for t in worker.net_steps.get((step, key), []) if after <= t <= received), default=None)
+        return min((t for t in worker.net_steps.get((step, key, channel), []) if after <= t <= received), default=None)
 
     dequeued = first(sender, "net dequeue", sent)
     encoded = dequeued and first(sender, "net encoded", dequeued)
-    queued = max((t for t in receiver.net_steps.get(("net queued", key), []) if t <= received), default=None)
-    decoded = queued and max((t for t in receiver.net_steps.get(("net decoded", key), []) if t <= queued), default=None)
+    queued = max((t for t in receiver.net_steps.get(("net queued", key, channel), []) if t <= received), default=None)
+    decoded = queued and max((t for t in receiver.net_steps.get(("net decoded", key, channel), []) if t <= queued), default=None)
     if not (dequeued and encoded and decoded and queued):
         return [(f"network {sink_label}", sent, received, edge)]
     # Named after the sending network sink, so the hops of a buffer through several workers stay apart.
