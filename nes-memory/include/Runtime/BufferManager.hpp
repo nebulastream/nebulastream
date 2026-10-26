@@ -28,6 +28,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/UnpooledChunksManager.hpp>
+#include <Util/EventTrace.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES
@@ -167,6 +168,10 @@ private:
 
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};
+
+    /// Created once the pool is initialized and reset at the start of destroy(), which tears down what they sample.
+    NES_EVENT(
+        std::optional<EventTrace::CounterUpdater> availablePooledCounter; std::optional<EventTrace::CounterUpdater> unpooledBytesCounter;)
 };
 
 

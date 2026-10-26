@@ -14,12 +14,15 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <semaphore>
 #include <stop_token>
 #include <utility>
+#include <Util/EventTrace.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
@@ -39,6 +42,11 @@ class TaskQueue
 
     /// INVARIANT: internal.size() + admission.size() >= tasksAvailable
     std::counting_semaphore<> tasksAvailable{0};
+
+    /// Declared after the queues they sample, so they stop sampling before the queues are destroyed.
+    NES_EVENT(
+        EventTrace::CounterUpdater internalLength{"task_queue_internal", [this] { return static_cast<int64_t>(internal.size()); }};
+        EventTrace::CounterUpdater admissionLength{"task_queue_admission", [this] { return std::max<int64_t>(admission.sizeGuess(), 0); }};)
 
     /// To provide cancellation, we only block for StopTokenCheckInterval.
     /// This parameter could be tuned to allow for more timely cancellation
