@@ -193,11 +193,15 @@ with tempfile.TemporaryDirectory() as d:
     assert workers[0].sources[raw, 1][lt.SOURCE_BACKPRESSURE] == (0, 10 * US, 0), "keyless waits belong to the next fill"
     assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (550 * US, -1)])]
     activity = lt.thread_activity(chains[0], workers, names := {})
-    lanes = {(worker, thread): (role, [(list(names)[n], start, us) for start, us, n, _ in segments])
+    lanes = {(worker, thread): (role, [(list(names)[n], start, us) for start, us, n, *_ in segments])
              for worker, thread, role, segments, _ in activity["lanes"]}
     role, segments = lanes[0, ENGINE]
     assert role == "WorkerThread-0" and ("task queue wait", 365 - 100, 30) in segments, segments
     assert ("untraced work", 410 - 100, 40) in segments, "gaps between spans of a worker thread are untraced work"
+    engine = next(lane[3] for lane in activity["lanes"] if lane[:2] == [0, ENGINE])
+    marked = {(list(names)[segment[2]], segment[5], segment[7]) for segment in engine}
+    assert ("exec", "1/1/1", 1) in marked and ("exec", "1/1/2", 1) in marked, "the chain's executions are marked"
+    assert ("task queue wait", "", 0) in marked, "other spans are not"
     spans = lt.open_spans(workers)
     assert [(stage, key) for stage, _, _, key, _ in spans] == [("exec", "9/2/1")], spans
     assert spans[0][4] == (1800 - 1790) / 1000, "open for the time until the last event"

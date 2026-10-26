@@ -370,19 +370,28 @@ function renderGantt(chain) {
     customdata: bars.map(b => [ms(b.us), ms(b.start)]), hovertemplate: "%{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<extra></extra>",
     showlegend: false,
   }];
+  /// Spans of the tasks this buffer passed through keep full opacity and an outline; the others are dimmed.
+  const spanDetail = (lane, [, , , , pipeline, key, tuples, ofBuffer]) => [
+    pipeline ? (DATA.pipelineLabels[lane[0]][pipeline] || `P${pipeline}`) : "",
+    key ? `buffer ${key}` : "", tuples ? `${tuples} tuples` : "", ofBuffer ? "<b>part of this buffer's path</b>" : "",
+  ].filter(Boolean).join("<br>");
   const byName = new Map();
   for (const lane of lanes) {
-    for (const [start, us, name] of lane[3]) {
-      if (!byName.has(name)) byName.set(name, {y: [], x: [], base: [], customdata: []});
+    for (const segment of lane[3]) {
+      const [start, us, name] = segment;
+      if (!byName.has(name)) byName.set(name, {y: [], x: [], base: [], customdata: [], opacity: [], outline: []});
       const series = byName.get(name);
-      series.y.push(laneName(lane)); series.x.push(ms(us)); series.base.push(ms(start)); series.customdata.push([ms(us), ms(start)]);
+      series.y.push(laneName(lane)); series.x.push(ms(us)); series.base.push(ms(start));
+      series.customdata.push([ms(us), ms(start), spanDetail(lane, segment)]);
+      series.opacity.push(segment[7] ? 1 : 0.35); series.outline.push(segment[7] ? 1.5 : 0);
     }
   }
-  for (const [name, series] of byName) {
+  for (const [name, {opacity, outline, ...series}] of byName) {
     const label = DATA.spanNames[name];
-    traces.push({type: "bar", orientation: "h", yaxis: "y2", name: label, ...series, marker: {color: spanColor(label),
-      pattern: label === "untraced work" ? {shape: "/", fgcolor: css("--card"), size: 6} : undefined},
-      hovertemplate: `${label}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<extra></extra>`});
+    traces.push({type: "bar", orientation: "h", yaxis: "y2", name: label, ...series,
+      marker: {color: spanColor(label), opacity, line: {color: css("--text"), width: outline},
+        pattern: label === "untraced work" ? {shape: "/", fgcolor: css("--card"), size: 6} : undefined},
+      hovertemplate: `${label}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<br>%{customdata[2]}<extra></extra>`});
   }
   /// OS scheduling (scripts/latency_sched.sh): below each thread, when it ran and when it was runnable but waited for a CPU.
   DATA.cpuStates.forEach((state, index) => {

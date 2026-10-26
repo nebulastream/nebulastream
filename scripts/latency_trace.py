@@ -84,7 +84,7 @@ class Worker:
     open_spans: list = field(default_factory=list)  # (stage, thread, key, pipeline, t) of begins without an end
     unpaired: int = 0  # ends without a begin and begins without an end that a later begin superseded
     end: int = 0  # the last event's time
-    spans: dict = field(default_factory=lambda: defaultdict(list))  # thread -> [(t0, t1, name, category)] sorted by t0
+    spans: dict = field(default_factory=lambda: defaultdict(list))  # thread -> [(t0, t1, name, category, key, pipeline, tuples)] by t0
     net_steps: dict = field(default_factory=lambda: defaultdict(list))  # (step name, key, channel) -> [t], see NET_STEPS
     sink_channels: dict = field(default_factory=dict)  # network sink pipeline -> channel tag
     clock_offset: int = 0  # system clock minus steady clock, added to every event time
@@ -298,7 +298,8 @@ def load_events(worker, types, data, offset, clock_offset, sends):
                 worker.unpaired += 1
                 continue
             t0 = begin[0]
-            worker.spans[thread].append((t0, time, name, event.category))
+            worker.spans[thread].append(
+                (t0, time, name, event.category, fields.get("key", (0, 0, 0)), fields.get("pipeline", 0), fields.get("tuples", 0)))
             if name == "exec":
                 worker.execs[fields["key"], fields["pipeline"]].append((t0, time, fields["tuples"]))
             elif name == "enqueue":
@@ -322,8 +323,9 @@ def load_events(worker, types, data, offset, clock_offset, sends):
             worker.counters[fields["counter"]].append((time, fields["value"]))
         elif name in NET_STEPS:
             worker.net_steps[name, fields["key"], fields["channel"]].append(time)
-    for (thread, name), (t, _) in opened.items():
-        worker.spans[thread].append((t, worker.end, name, types_by_name[name].category))
+    for (thread, name), (t, fields) in opened.items():
+        worker.spans[thread].append((t, worker.end, name, types_by_name[name].category, fields.get("key", (0, 0, 0)),
+                                     fields.get("pipeline", 0), fields.get("tuples", 0)))
     for spans in worker.spans.values():
         spans.sort()
     # A worker that waits for its next task when the trace ends is idle, not stuck.
@@ -343,9 +345,11 @@ def warmup_end(workers):
     return max((end for _, end in first.values()), default=0)
 
 
-def walk(worker, key, pipeline, end, sends):
+def walk(worker, key, pipeline, end, sends, tasks):
     """Segments (name, t0, t1, node) from the source buffer of `key` until `pipeline` finished with it at `end`.
-    `node` is the id of the pipeline, source or network edge in the report's graph that the segment belongs to."""
+    `node` is the id of the pipeline, source or network edge in the report's graph that the segment belongs to.
+    Adds the (worker name, key, pipeline) of every task on the way to `tasks`."""
+    tasks.add((worker.name, key, pipeline))
     execs = worker.execs.get((key, pipeline), [])
     if worker.is_network_sink(pipeline):
         # A full network channel repeats the sink task; the first execution is when the buffer reached the sink.
@@ -372,7 +376,7 @@ def walk(worker, key, pipeline, end, sends):
     emits = [e for e in worker.emits.get(key, []) if e[2] in worker.predecessors[pipeline]]
     if emits:
         emitted, input_key, from_pipeline = latest(emits, enqueue[0])
-        return walk(worker, input_key, from_pipeline, emitted, sends) + segments
+        return walk(worker, input_key, from_pipeline, emitted, sends, tasks) + segments
 
     if pipeline in worker.network_fed and (key, pipeline) in worker.receives:
         received = worker.receives[key, pipeline]
@@ -385,7 +389,7 @@ def walk(worker, key, pipeline, end, sends):
         source = source_node(worker, pipeline)
         hop = network_hop(sender, worker, key, channel, sent, received, f"{pipeline_node(sender, sink)}>{source}", sender.label(sink))
         hop.append((f"network source to engine {label}", received, enqueue[0], source))
-        return walk(sender, key, sink, sent, sends) + hop + segments
+        return walk(sender, key, sink, sent, sends, tasks) + hop + segments
 
     # Without an Emit link the buffer was produced outside of a task, e.g. a window flushed at end of stream.
     stages = worker.sources.get((key, pipeline))
@@ -441,8 +445,9 @@ def stitch(workers, sends, skip_warmup=True, keep_warmup=False):
             if pipeline not in sinks:
                 continue
             for _, end, tuples in execs:
+                tasks = set()
                 try:
-                    segments = walk(worker, key, pipeline, end, sends)
+                    segments = walk(worker, key, pipeline, end, sends, tasks)
                 except Incomplete:
                     incomplete += 1
                     continue
@@ -463,6 +468,7 @@ def stitch(workers, sends, skip_warmup=True, keep_warmup=False):
                     "nodes": [s[3] for s in stitched],
                     "query": worker.queries.get(pipeline, "?"),
                     "warmup": segments[0][1] < warm,
+                    "tasks": tasks,
                 })
     return chains, incomplete, warmup
 
@@ -612,7 +618,7 @@ def counter_series(workers):
 
 
 def thread_role(spans):
-    names = {name for _, _, name, _ in spans}
+    names = {span[2] for span in spans}
     return "worker" if TASK_QUEUE_WAIT in names else "source" if names & {SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL} else "other"
 
 
@@ -629,8 +635,8 @@ def chain_workers(chain, by_name):
 
 def thread_activity(chain, workers, span_names):
     """What the threads of the chain's workers did while the chain's buffer was on its way: lanes of
-    (worker index, thread, name, [(start, duration, span name index, category)], [(start, duration, CPU state)]) in us relative to
-    the chain's start. Gaps on worker threads are untraced work; the CPU states need scripts/latency_sched.sh."""
+    (worker index, thread, name, [(start, duration, span name index, category, pipeline, key, tuples, part of the chain)],
+    [(start, duration, CPU state)]) in us relative to the chain's start. Gaps on worker threads are untraced work; the CPU states need scripts/latency_sched.sh."""
     start, end = chain["segments"][0][1], chain["segments"][-1][2]
     pad = max(500_000, (end - start) // 10)
     low, high = start - pad, end + pad
@@ -643,20 +649,22 @@ def thread_activity(chain, workers, span_names):
             # ponytail: steps back a few spans to catch spans that began before the window; spans of a thread barely overlap.
             first = max(0, bisect.bisect_left(spans, (low,)) - 4)
             segments, covered = [], []
-            for t0, t1, name, category in spans[first:]:
+            for t0, t1, name, category, key, pipeline, tuples in spans[first:]:
                 if t0 >= high:
                     break
                 if t1 <= low:
                     continue
                 a, b = max(t0, low), min(t1, high)
-                segments.append([round((a - start) / 1000), round((b - a) / 1000), span_names.setdefault(name, len(span_names)), category])
+                relevant = int((worker.name, key, pipeline) in chain["tasks"])
+                segments.append([round((a - start) / 1000), round((b - a) / 1000), span_names.setdefault(name, len(span_names)), category,
+                                 pipeline, "/".join(map(str, key)) if key != (0, 0, 0) else "", tuples, relevant])
                 covered.append((a, b))
             if role == "worker":
                 position = low
                 for a, b in sorted(covered) + [(high, high)]:
                     if a > position:
                         segments.append([round((position - start) / 1000), round((a - position) / 1000),
-                                         span_names.setdefault(UNTRACED_WORK, len(span_names)), UNTRACED])
+                                         span_names.setdefault(UNTRACED_WORK, len(span_names)), UNTRACED, 0, "", 0, 0])
                     position = max(position, b)
             cpu = worker.cpu.get(thread, [])
             first = max(0, bisect.bisect_left(cpu, (low,)) - 1)
@@ -678,13 +686,16 @@ def interactive_report(workers, chains, out):
                     for (name, t0, t1), node in zip(chain["segments"], chain["nodes"])]
         rows.append([queries.setdefault(chain["query"], len(queries)), round((chain["segments"][0][1] - start) / 1e6, 3),
                      chain["tuples"], int(chain["warmup"]), "/".join(map(str, chain["key"])), segments])
+    traced = {chain["query"] for chain in chains}
     by_total = sorted(range(len(chains)), key=lambda i: total(chains[i]))
     rest = by_total[:-ACTIVITY_SLOWEST]
     detail = set(by_total[-ACTIVITY_SLOWEST:]) | set(rest[:: max(1, len(rest) // ACTIVITY_SAMPLED)])
     span_names = {}
     activity = {i: thread_activity(chains[i], workers, span_names) for i in sorted(detail)}
     data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, {chain["query"] for chain in chains}),
-            "workers": [worker.name for worker in workers], "spanNames": list(span_names), "activity": activity, "cpuStates": CPU_STATES,
+            "workers": [worker.name for worker in workers],
+            "pipelineLabels": [{pipeline: f"{worker.label(pipeline)} · {worker.queries[pipeline]}" for pipeline in worker.pipelines
+                                if worker.queries[pipeline] in traced} for worker in workers], "spanNames": list(span_names), "activity": activity, "cpuStates": CPU_STATES,
             "open": open_spans(workers),
             "counters": [{"name": name, "worker": where, "t": [round((t - start) / 1e6, 3) for t, _ in samples],
                           "v": [value for _, value in samples]} for name, where, samples in counter_series(workers)]}
