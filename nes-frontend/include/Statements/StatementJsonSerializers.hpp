@@ -25,7 +25,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -38,6 +37,7 @@
 #include <rfl/Generic.hpp>
 #include <rfl/Object.hpp>
 #include <rfl/to_generic.hpp>
+#include <InputFormatterConfigRegistry.hpp>
 #include <InputFormatterDescriptor.hpp>
 
 /// Local converters that translate frontend statement-result values into rfl::Generic for JSON output.
@@ -82,49 +82,29 @@ inline rfl::Generic toFrontendGeneric(const Schema<UnqualifiedUnboundField, Orde
     return fields;
 }
 
-/// reflectcpp's native std::unordered_map handler outputs a flat JSON object. The historical layout
-/// for DescriptorConfig::Config is a sorted array of single-key objects, so we override it here.
-inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config, const ReflectionContext& context)
-{
-    rfl::Generic::Array entries;
-    const auto ordered = config | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
-    for (const auto& [key, val] : ordered)
-    {
-        rfl::Object<rfl::Generic> entry;
-        entry[key] = std::visit([&context](auto&& arg) -> rfl::Generic { return *context.reflect(arg); }, val);
-        entries.emplace_back(std::move(entry));
-    }
-    return entries;
-}
-
-/// reflectcpp's native handler would reflect the InputFormatterDescriptor's nested storage (a wrapper
-/// around DescriptorConfig::Config) into a doubly-nested, type-tagged object. The historical layout is a
-/// flat object: the formatter type under "type", then each remaining config parameter. char-typed
-/// delimiters become single-character strings, matching the previous nlohmann output.
+/// Flat object: the formatter type under "type", then each member of the formatter-defined config
+/// struct (serialized via the formatter's InputFormatterConfigRegistry entry — the only place that
+/// knows the concrete type behind the descriptor's std::any). Formats without a config (NATIVE)
+/// yield only the type.
 inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor, const ReflectionContext& context)
 {
     rfl::Object<rfl::Generic> obj;
     obj["type"] = context.reflect(descriptor.getInputFormatterType());
-    const auto ordered = descriptor.getConfig() | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
-    for (const auto& [key, val] : ordered)
+    if (descriptor.getConfig().getUnderlying().has_value())
     {
-        if (key == InputFormatterDescriptor::getTypeString())
+        if (const auto configEntry = InputFormatterConfigRegistry::instance().find(descriptor.getInputFormatterType().asCanonicalString()))
         {
-            continue;
-        }
-        obj[key] = std::visit(
-            [&context](auto&& arg) -> rfl::Generic
+            const rfl::Generic reflectedConfig = configEntry->reflect(descriptor.getConfig(), context);
+            if (const auto configObject = reflectedConfig.to_object())
             {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, char>)
+                for (const auto& [key, value] : *configObject)
                 {
-                    return context.reflect(std::string(1, arg));
+                    /// Object key assignment inserts missing properties and updates existing ones.
+                    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+                    obj[key] = value;
                 }
-                else
-                {
-                    return context.reflect(arg);
-                }
-            },
-            val);
+            }
+        }
     }
     return obj;
 }

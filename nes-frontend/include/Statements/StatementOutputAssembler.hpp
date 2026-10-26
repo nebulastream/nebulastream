@@ -27,19 +27,23 @@
 #include <utility>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <rfl/json/write.hpp>
 #include <DistributedQuery.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <QueryStatus.hpp>
+#include <SinkConfigRegistry.hpp>
+#include <SourceConfigRegistry.hpp>
 #include <Version.hpp>
 
 namespace NES
@@ -75,24 +79,51 @@ constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_nam
 
 using SourceDescriptorOutputRowType = std::tuple<
     PhysicalSourceId,
-    Identifier,
+    /// Unset for physical sources not attached to a logical source.
+    std::optional<Identifier>,
     Schema<UnqualifiedUnboundField, Ordered>,
-    std::string,
+    Identifier,
     InputFormatterDescriptor,
-    NES::DescriptorConfig::Config,
+    /// The source-defined config struct, rendered to JSON via the source's SourceConfigRegistry entry.
+    std::string,
     Host>;
 constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "input_formatter_config", "source_config", "host"};
+
+/// Serialize the descriptor's type-erased config for display; only the source's registry entry
+/// knows the concrete type behind the std::any.
+inline std::string renderSourceConfig(const SourceDescriptor& descriptor)
+{
+    if (const auto configEntry = SourceConfigRegistry::instance().find(descriptor.getSourceType().asCanonicalString()))
+    {
+        const auto reflectedConfig = configEntry->reflect(descriptor.getPluginData(), ReflectionContext{});
+        return rfl::json::write(*reflectedConfig);
+    }
+    return "{}";
+}
+
+/// Serialize the descriptor's type-erased config for display; only the sink's registry entry
+/// knows the concrete type behind the std::any.
+inline std::string renderSinkConfig(const SinkDescriptor& descriptor)
+{
+    if (const auto configEntry = SinkConfigRegistry::instance().find(descriptor.getSinkType()))
+    {
+        const auto reflectedConfig = configEntry->reflect(descriptor.getPluginData(), ReflectionContext{});
+        return rfl::json::write(*reflectedConfig);
+    }
+    return "{}";
+}
 
 using SinkDescriptorOutputRowType = std::tuple<
     Identifier,
     Schema<UnqualifiedUnboundField, Ordered>,
     std::string,
-    NES::DescriptorConfig::Config,
+    /// The sink-defined config struct, rendered to JSON via the sink's SinkConfigRegistry entry.
+    std::string,
     Host,
-    std::unordered_map<Identifier, std::string>>;
+    OutputFormatterDescriptor>;
 constexpr std::array<std::string_view, 6> sinkDescriptorOutputColumns{
-    "sink_name", "schema", "sink_type", "sink_config", "host", "format_config"};
+    "sink_name", "schema", "sink_type", "sink_config", "host", "output_formatter_config"};
 
 using QueryIdOutputRowType = std::tuple<DistributedQueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
@@ -142,11 +173,11 @@ struct StatementOutputAssembler<CreatePhysicalSourceStatementResult>
             sourceDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.created.getPhysicalSourceId(),
-                result.created.getLogicalSource().getLogicalSourceName(),
-                *result.created.getLogicalSource().getSchema(),
+                result.created.getLogicalSourceName(),
+                result.created.getSchema(),
                 result.created.getSourceType(),
                 result.created.getInputFormatterDescriptor(),
-                result.created.getConfig(),
+                renderSourceConfig(result.created),
                 result.created.getHost())});
     }
 };
@@ -164,9 +195,9 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
                 result.created.getSinkName(),
                 *std::get<NamedSinkDescriptor>(result.created.getUnderlying()).getSchema(),
                 result.created.getSinkType(),
-                result.created.getConfig(),
+                renderSinkConfig(result.created),
                 result.created.getHost(),
-                result.created.getOutputFormatterConfig())});
+                result.created.getOutputFormatterDescriptor())});
     }
 };
 
@@ -200,11 +231,11 @@ struct StatementOutputAssembler<ShowPhysicalSourcesStatementResult>
         {
             output.emplace_back(
                 source.getPhysicalSourceId(),
-                source.getLogicalSource().getLogicalSourceName(),
-                *source.getLogicalSource().getSchema(),
+                source.getLogicalSourceName(),
+                source.getSchema(),
                 source.getSourceType(),
                 source.getInputFormatterDescriptor(),
-                source.getConfig(),
+                renderSourceConfig(source),
                 source.getHost());
         }
         return std::make_pair(sourceDescriptorOutputColumns, output);
@@ -226,9 +257,9 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
                 sink.getSinkName(),
                 *std::get<NamedSinkDescriptor>(sink.getUnderlying()).getSchema(),
                 sink.getSinkType(),
-                sink.getConfig(),
+                renderSinkConfig(sink),
                 sink.getHost(),
-                sink.getOutputFormatterConfig());
+                sink.getOutputFormatterDescriptor());
         }
         return std::make_pair(sinkDescriptorOutputColumns, output);
     }
@@ -256,11 +287,11 @@ struct StatementOutputAssembler<DropPhysicalSourceStatementResult>
             sourceDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.dropped.getPhysicalSourceId(),
-                result.dropped.getLogicalSource().getLogicalSourceName(),
-                *result.dropped.getLogicalSource().getSchema(),
+                result.dropped.getLogicalSourceName(),
+                result.dropped.getSchema(),
                 result.dropped.getSourceType(),
                 result.dropped.getInputFormatterDescriptor(),
-                result.dropped.getConfig(),
+                renderSourceConfig(result.dropped),
                 result.dropped.getHost())});
     }
 };
@@ -278,9 +309,9 @@ struct StatementOutputAssembler<DropSinkStatementResult>
                 result.dropped.getSinkName(),
                 *std::get<NamedSinkDescriptor>(result.dropped.getUnderlying()).getSchema(),
                 result.dropped.getSinkType(),
-                result.dropped.getConfig(),
+                renderSinkConfig(result.dropped),
                 result.dropped.getHost(),
-                result.dropped.getOutputFormatterConfig())});
+                result.dropped.getOutputFormatterDescriptor())});
     }
 };
 

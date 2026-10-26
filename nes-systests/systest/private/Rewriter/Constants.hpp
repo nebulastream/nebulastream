@@ -81,11 +81,17 @@ inline std::string stringLiteral(const std::string_view value)
     return fmt::format("'{}'", replaceAll(value, "'", "''"));
 }
 
+/// Returns a config option from an already formatted SQL literal.
+inline std::string literalOption(const std::string_view group, const std::string_view key, const std::string_view literal)
+{
+    return fmt::format(R"({} AS "{}"."{}")", literal, group, key);
+}
+
 /// Returns one config option, `'value' AS "group"."key"`.
 /// Both names are quoted, so the parser treats a name that is or becomes a keyword as an identifier and no caller has to distinguish.
 inline std::string option(const std::string_view group, const std::string_view key, const std::string_view value)
 {
-    return fmt::format(R"({} AS "{}"."{}")", stringLiteral(value), group, key);
+    return literalOption(group, key, stringLiteral(value));
 }
 
 /// Returns a config option whose value is a schema literal rather than a quoted string, `SCHEMA<body> AS "group"."SCHEMA"`.

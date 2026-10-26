@@ -15,9 +15,12 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Reflection.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <fmt/std.h>
 #include <magic_enum/magic_enum.hpp>
 
@@ -68,6 +71,14 @@ struct Unreflector<EnumWrapper>
         return EnumWrapper{context.unreflect<std::string>(rfl)};
     }
 };
+
+/// Helper function to list all members of an enum for configuration descriptions in the form: [enum1|enum2|...]
+template <typename E>
+std::string_view enumPipeList()
+{
+    static const std::string Text = fmt::format("[{}]", fmt::join(magic_enum::enum_names<E>(), "|"));
+    return Text;
+}
 }
 
 FMT_OSTREAM(NES::EnumWrapper);

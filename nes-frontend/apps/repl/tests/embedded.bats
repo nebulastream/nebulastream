@@ -32,8 +32,8 @@ setup()         { nes_offline_setup; }
   [ ${#lines[@]} -eq 8 ]
 
   assert_json_equal '[{"schema":[{"name":"TS","type":"UINT64"}],"source_name":"ENDLESS"}]' "${lines[0]}"
-  assert_json_equal '[{"host":"localhost:8080","input_formatter_config":{"ALLOW_COMMAS_IN_STRINGS":true,"FIELD_DELIMITER":",","VALUE_DESERIALIZERS":"","TUPLE_DELIMITER":"\n","type":"CSV"},"physical_source_id":1,"schema":[{"name":"TS","type":"UINT64"}],"source_config":[{"FLUSH_INTERVAL_MS":10},{"GENERATOR_RATE_CONFIG":"emit_rate 10"},{"GENERATOR_RATE_TYPE":"FIXED"},{"GENERATOR_SCHEMA":"SEQUENCE UINT64 0 10000000 1"},{"MAX_INFLIGHT_BUFFERS":0},{"MAX_RUNTIME_MS":10000000},{"SEED":1},{"STOP_GENERATOR_WHEN_SEQUENCE_FINISHES":"ALL"}],"source_name":"ENDLESS","source_type":"GENERATOR"}]' "${lines[1]}"
-  assert_json_equal '[{"format_config":[],"host":"localhost:8080","schema":[{"name":"TS","type":"UINT64"}],"sink_config":[{"ADD_TIMESTAMP":false},{"APPEND":false},{"FILE_PATH":"out.csv"},{"OUTPUT_FORMAT":"CSV"}],"sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[2]}"
+  assert_json_equal '[{"host":"localhost:8080","input_formatter_config":{"allowCommasInStrings":true,"fieldDelimiter":44,"tupleDelimiter":10,"valueDeserializers":"","type":"CSV"},"physical_source_id":1,"schema":[{"name":"TS","type":"UINT64"}],"source_config":"{\"seed\":1,\"maxRuntime\":10000000,\"generatorSchemaRaw\":\"SEQUENCE UINT64 0 10000000 1\",\"stopGeneratorWhenSequenceFinishes\":0,\"flushInterval\":10,\"generatorRateConfig\":{\"index\":0,\"value\":{\"emitRate\":10.0}}}","source_name":"ENDLESS","source_type":"GENERATOR"}]' "${lines[1]}"
+  assert_json_equal '[{"host":"localhost:8080","output_formatter_config":{"config":{"fieldDelimiter":",","quoteStrings":false,"tupleDelimiter":"\n","valueSerializers":""},"outputFormatterType":"CSV"},"schema":[{"name":"TS","type":"UINT64"}],"sink_config":"{\"filePath\":\"out.csv\",\"append\":false}","sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
   QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
 
@@ -78,15 +78,15 @@ setup()         { nes_offline_setup; }
 }
 
 @test "Fail on invalid optimizer config name" {
-  run $NES_REPL --optimizer test_invalid_config_name=INVALID
+  run $NES_REPL -- --optimizer.test_invalid_config_name=INVALID
   [ "$status" -ne 0 ]
-  grep "invalid config parameter; Unrecognized configuration key: 'test_invalid_config_name'" nes-repl.log
+  grep -i "Unresolvable fields: optimizer.test_invalid_config_name" nes-repl.log
 }
 
 @test "Fail on invalid optimizer config value" {
-  run $NES_REPL --optimizer join_strategy=INVALID
+  run $NES_REPL -- --optimizer.join_strategy=INVALID
   [ "$status" -ne 0 ]
-  grep "invalid config parameter; Enum for INVALID was not found." nes-repl.log
+  grep "Invalid join strategy, must be NESTED_LOOP_JOIN, HASH_JOIN or OPTIMIZER_CHOOSES: INVALID" nes-repl.log
 }
 
 

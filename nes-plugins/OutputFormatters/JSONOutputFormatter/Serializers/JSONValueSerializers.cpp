@@ -14,6 +14,8 @@
 
 #include <JSONValueSerializers.hpp>
 
+#include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -25,6 +27,7 @@
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Strings.hpp>
 #include <ValueSerializerRegistry.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
@@ -67,6 +70,20 @@ uint64_t serializeVarsized(
     return writeValueToBuffer(
         serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
+
+/// JSON has no literals for NaN or infinity, so non-finite values are written as null.
+template <std::floating_point T>
+uint64_t serializeFloat(
+    const T value,
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    const std::string serializedValue = std::isfinite(value) ? formatFloat(value) : "null";
+    return writeValueToBuffer(
+        serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
 }
 
 namespace NES
@@ -101,6 +118,35 @@ nautilus::val<uint64_t> JSONVARSIZEDValueSerializer::serializeAndWrite(
         bufferProvider);
 }
 
+nautilus::val<uint64_t> JSONF32ValueSerializer::serializeAndWrite(
+    const VarVal& value,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<int8_t*>& startingAddress) const
+{
+    const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
+    return nautilus::invoke(
+        JSONValueSerializer::serializeFloat<float>, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+}
+
+nautilus::val<uint64_t> JSONF64ValueSerializer::serializeAndWrite(
+    const VarVal& value,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<int8_t*>& startingAddress) const
+{
+    const auto castedVal = value.getRawValueAs<nautilus::val<double>>();
+    return nautilus::invoke(
+        JSONValueSerializer::serializeFloat<double>,
+        castedVal,
+        startingAddress,
+        remainingSize,
+        recordBuffer.getReference(),
+        bufferProvider);
+}
+
 ValueSerializerRegistryReturnType JSONCHARValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
 {
     return std::make_unique<JSONCHARValueSerializer>();
@@ -109,5 +155,15 @@ ValueSerializerRegistryReturnType JSONCHARValueSerializer::provideSerializer(Val
 ValueSerializerRegistryReturnType JSONVARSIZEDValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
 {
     return std::make_unique<JSONVARSIZEDValueSerializer>();
+}
+
+ValueSerializerRegistryReturnType JSONF32ValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
+{
+    return std::make_unique<JSONF32ValueSerializer>();
+}
+
+ValueSerializerRegistryReturnType JSONF64ValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
+{
+    return std::make_unique<JSONF64ValueSerializer>();
 }
 }

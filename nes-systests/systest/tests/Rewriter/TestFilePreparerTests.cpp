@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
@@ -451,8 +452,8 @@ TEST_F(TestFilePreparerTest, AddsSourceOptionsToAnAlreadyRewrittenStatement)
     EXPECT_EQ(
         addSourceOptions(
             R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET ('localhost:8080' AS "SOURCE"."HOST");)",
-            {SourceOption{.group = "SOURCE", .key = "SOCKET_PORT", .value = "4242"}}),
-        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET ('4242' AS "SOURCE"."SOCKET_PORT", 'localhost:8080' AS "SOURCE"."HOST");)");
+            {SourceOption{.group = "SOURCE", .key = "SOCKET_PORT", .value = int64_t{4242}}}),
+        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET (4242 AS "SOURCE"."SOCKET_PORT", 'localhost:8080' AS "SOURCE"."HOST");)");
 }
 
 /// The binder rejects a key set twice.
@@ -460,10 +461,10 @@ TEST_F(TestFilePreparerTest, AddSourceOptionsKeepsAValueThatTheTestWrote)
 {
     EXPECT_EQ(
         addSourceOptions(
-            R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET ('200' AS "SOURCE"."FLUSH_INTERVAL_MS");)",
-            {SourceOption{.group = "SOURCE", .key = "SOCKET_PORT", .value = "4242"},
-             SourceOption{.group = "SOURCE", .key = "FLUSH_INTERVAL_MS", .value = "100"}}),
-        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET ('4242' AS "SOURCE"."SOCKET_PORT", '200' AS "SOURCE"."FLUSH_INTERVAL_MS");)");
+            R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET (200 AS "SOURCE"."FLUSH_INTERVAL_MS");)",
+            {SourceOption{.group = "SOURCE", .key = "SOCKET_PORT", .value = int64_t{4242}},
+             SourceOption{.group = "SOURCE", .key = "FLUSH_INTERVAL_MS", .value = int64_t{100}}}),
+        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET (4242 AS "SOURCE"."SOCKET_PORT", 200 AS "SOURCE"."FLUSH_INTERVAL_MS");)");
 }
 
 /// The staged server sends the data, so an endpoint the test wrote would read from elsewhere.
@@ -917,7 +918,7 @@ TEST_F(TestFilePreparerTest, SelectionKeepsThePartitionKeyStable)
 
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
-    config.workingDir.setValue(tmp.get().string());
+    config.workingDir = tmp.get().string();
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
@@ -954,7 +955,7 @@ TEST_F(TestFilePreparerTest, RejectsASecondFileWhosePrefixedNameCollides)
 
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
-    config.workingDir.setValue(tmp.get().string());
+    config.workingDir = tmp.get().string();
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
@@ -974,7 +975,7 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
     }
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
-    config.workingDir.setValue(tmp.get().string());
+    config.workingDir = tmp.get().string();
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 

@@ -244,13 +244,13 @@ TOPEOF
 @test "optimizer configuration: -t with invalid optimizer configuration name" {
   run $NES_CLI -d -t tests/bad/invalid_optimizer_config_name.yaml dump
   [ "$status" -eq 1 ]
-  grep "invalid config parameter; Unrecognized configuration key: 'test_invalid_optimizer_config_name'" nes-cli.log
+  grep -i "Unresolvable fields: optimizer.test_invalid_optimizer_config_name" nes-cli.log
 }
 
 @test "optimizer configuration: -t with invalid optimizer configuration value" {
   run $NES_CLI -d -t tests/bad/invalid_optimizer_config_value.yaml dump
   [ "$status" -eq 1 ]
-  grep "invalid config parameter; Enum for INVALID was not found." nes-cli.log
+  grep "Invalid join strategy, must be NESTED_LOOP_JOIN, HASH_JOIN or OPTIMIZER_CHOOSES: INVALID" nes-cli.log
 }
 
 @test "topology validation: reject duplicate worker host" {
@@ -365,8 +365,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: Void/type: NonExistentSink/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Invalid configuration for sink"* ]]
-  [[ "$output" == *"NONEXISTENTSINK"* ]]
+  [[ "$output" == *"sink type 'NONEXISTENTSINK' is not registered"* ]]
 }
 
 @test "error: source on non-existing worker reports source name and host" {

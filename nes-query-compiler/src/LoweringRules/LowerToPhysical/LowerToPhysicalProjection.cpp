@@ -24,6 +24,7 @@
 
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FunctionProvider.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
@@ -70,7 +71,7 @@ NES::ScanPhysicalOperator createScanOperator(
     const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
     if (sourceDescriptorOpt.has_value())
     {
-        if (NES::toUpperCase(sourceDescriptorOpt.value().getInputFormatType()) != "NATIVE")
+        if (sourceDescriptorOpt.value().getInputFormatType() != NES::Identifier::parse("NATIVE"))
         {
             return NES::ScanPhysicalOperator(
                 provideInputFormatter(sourceDescriptorOpt.value().getInputFormatterDescriptor(), memoryProvider),
@@ -97,7 +98,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    auto bufferSize = conf.pageSize.getValue();
+    auto bufferSize = conf.pageSize;
     auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan,

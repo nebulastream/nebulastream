@@ -64,6 +64,7 @@ jobs:
             nebulastream/nes-runtime-base:${{ inputs.dev_image_tag }}
             ${{ matrix.run_docker && 'eclipse-mosquitto:2' || '' }}
             ${{ matrix.run_docker && 'apache/kafka:3.8.0' || '' }}
+            ${{ matrix.run_docker && 'busybox:1.38.0' || '' }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
 

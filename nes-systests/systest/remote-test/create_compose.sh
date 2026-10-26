@@ -131,6 +131,11 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     CONFIG_ARG="\"--workerConfig=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml\","
   fi
 
+  # The worker runs as the unprivileged nes user (uid 10000), so its bind-mounted working dir
+  # must exist with write access for it; docker would create it owned by root.
+  mkdir -p "$TEST_DIR/$HOST_NAME"
+  chmod 0777 "$TEST_DIR/$HOST_NAME"
+
   cat <<EOF
   $HOST_NAME:
     image: $WORKER_IMAGE

@@ -33,7 +33,6 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>

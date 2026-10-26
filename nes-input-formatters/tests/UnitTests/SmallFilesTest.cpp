@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-#include <Configuration/WorkerConfiguration.hpp>
+#include <Configurations/Util.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -50,7 +50,7 @@
 #include <ErrorHandling.hpp>
 #include <FileUtil.hpp>
 #include <InputFormatterTestUtil.hpp>
-#include <InputFormatterValidationProvider.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace
@@ -125,6 +125,7 @@ class SmallFilesTest : public Testing::BaseUnitTest
                 "radiation_level",
                 "orbital_velocity"}}}};
 
+
 public:
     static void SetUpTestCase()
     {
@@ -183,7 +184,7 @@ public:
     size_t getNumberOfExpectedBuffers(
         const TestConfig& testConfig, const std::filesystem::path& testFilePath, USED_IN_DEBUG const size_t sizeOfSchemaInBytes) const
     {
-        const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
+        const auto sizeOfFormattedBuffers = defaultConfiguration<QueryExecutionConfiguration>().operatorBufferSize;
         PRECONDITION(
             sizeOfFormattedBuffers >= sizeOfSchemaInBytes, "The formatted buffer must be large enough to hold at least one tuple.");
 
@@ -213,7 +214,7 @@ public:
                 "Could not find file test file: {}.<file_ending_of_{}>", testDirPath / currentTestFile.fileName, fileEnding);
         }(currentTestFile, testDirPath, testConfig.fileEnding);
 
-        const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
+        const auto sizeOfFormattedBuffers = defaultConfiguration<QueryExecutionConfiguration>().operatorBufferSize;
         const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, getSizeInBytes(schema));
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
@@ -308,13 +309,13 @@ public:
 
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
 
-            auto inputFormatterConfig = std::unordered_map<std::string, std::string>{{"TUPLE_DELIMITER", "\n"}};
+            auto inputFormatterConfig = std::vector<std::pair<std::string, std::string>>{{"TUPLE_DELIMITER", "\n"}};
             if (testConfig.formatterType == "CSV")
             {
-                inputFormatterConfig.emplace("FIELD_DELIMITER", "|");
+                inputFormatterConfig.emplace_back("FIELD_DELIMITER", "|");
             }
             const auto parserConfiguration
-                = InputFormatterValidationProvider::provide(testConfig.formatterType, std::move(inputFormatterConfig)).value();
+                = InputFormatterTestUtil::provideInputFormatterDescriptor(testConfig.formatterType, inputFormatterConfig);
             auto testStage = InputFormatterTestUtil::createInputFormatter(
                 parserConfiguration,
                 setupResult.schema,

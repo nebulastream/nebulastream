@@ -18,6 +18,8 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 quick_start_doc="$script_dir/../content/reference/GetStarted.md"
 
 work_dir="$(mktemp -d)"
+# The compose flow bind-mounts this directory into containers that run as an unprivileged user.
+chmod a+rx "$work_dir"
 compose_file="$work_dir/compose.yaml"
 commands_dir="$work_dir/commands"
 
