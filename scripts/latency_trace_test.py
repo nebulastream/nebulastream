@@ -124,7 +124,8 @@ with tempfile.TemporaryDirectory() as d:
     # Worker A: data arrives at 100us, the source blocks on input until then.
     write(d, 1, 0, 0, "query q(distributed=Q1)\nsource 1 1 GeneratorSource\npipeline 1 2 InputFormatter\npipeline 2 - NetworkSink(connectionId: b:9090, channelId: c1)\n"
           # A query that was never traced, e.g. because tracing is turned on at runtime only for Q1.
-          "query u(distributed=Untraced)\nsource 7 7 GeneratorSource\npipeline 7 - PrintSink\ncounter 1 task_queue_admission\n", [
+          "query u(distributed=Untraced)\nsource 7 7 GeneratorSource\npipeline 7 - PrintSink\ncounter 1 task_queue_admission\n"
+          f"thread {ENGINE} 4402 WorkerThread-0\n", [
         counter(5 * US, 1, 3),
         counter(9 * US, 1, -1),
         # The source spans only learn the key when the fill ends.
@@ -173,7 +174,15 @@ with tempfile.TemporaryDirectory() as d:
         begin(EXEC, 1790 * US, 3, (9, 2, 1), 4),
         end(EXEC, 1795 * US, 4, (9, 3, 1), 4),
     ])
+    # The engine thread of worker A is woken at 325us, waits 5us for a CPU, runs the formatter and sleeps from 362us.
+    (Path(d) / "sched.txt").write_text(
+        "<idle>-0 [001] dNh.. 0.000325: sched_wakeup: comm=WorkerThread-0 pid=4402 prio=120 target_cpu=001\n"
+        "<idle>-0 [001] d.... 0.000330: sched_switch: prev_comm=swapper/1 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=WorkerThread-0 next_pid=4402 next_prio=120\n"
+        # A record cut off and glued to the next one, as trace_pipe produces when it is read too slowly.
+        "WorkerThread-0-4402 [001] d.... 0.000340: sched_switch: prev_comm=WorkerThread-0 prev_pid=4402   other-9 [002] d.... 0.000341: sched_switch: prev_comm=other prev_pid=9 prev_prio=120 prev_state=S ==> next_comm=x next_pid=4402 next_prio=120\n"
+        "WorkerThread-0-4402 [001] d.... 0.000362: sched_switch: prev_comm=WorkerThread-0 prev_pid=4402 prev_prio=120 prev_state=S ==> next_comm=swapper/1 next_pid=0 next_prio=120\n")
     workers, sends = lt.load(sorted(Path(d).glob("*.bin")))
+    assert workers[0].cpu[ENGINE] == [(325 * US, 330 * US, lt.RUNNABLE), (330 * US, 362 * US, lt.RUNNING)], workers[0].cpu
     # Every pipeline runs once here, so the only chain starts during warm-up.
     assert lt.stitch(workers, sends)[0] == []
     chains, incomplete, _ = lt.stitch(workers, sends, skip_warmup=False)
@@ -185,9 +194,9 @@ with tempfile.TemporaryDirectory() as d:
     assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (550 * US, -1)])]
     activity = lt.thread_activity(chains[0], workers, names := {})
     lanes = {(worker, thread): (role, [(list(names)[n], start, us) for start, us, n, _ in segments])
-             for worker, thread, role, segments in activity["lanes"]}
+             for worker, thread, role, segments, _ in activity["lanes"]}
     role, segments = lanes[0, ENGINE]
-    assert role == "worker" and ("task queue wait", 365 - 100, 30) in segments, segments
+    assert role == "WorkerThread-0" and ("task queue wait", 365 - 100, 30) in segments, segments
     assert ("untraced work", 410 - 100, 40) in segments, "gaps between spans of a worker thread are untraced work"
     spans = lt.open_spans(workers)
     assert [(stage, key) for stage, _, _, key, _ in spans] == [("exec", "9/2/1")], spans

@@ -87,6 +87,9 @@ class Worker:
     spans: dict = field(default_factory=lambda: defaultdict(list))  # thread -> [(t0, t1, name, category)] sorted by t0
     net_steps: dict = field(default_factory=lambda: defaultdict(list))  # (step name, key, channel) -> [t], see NET_STEPS
     sink_channels: dict = field(default_factory=dict)  # network sink pipeline -> channel tag
+    clock_offset: int = 0  # system clock minus steady clock, added to every event time
+    thread_ids: dict = field(default_factory=dict)  # trace thread -> (OS thread id, thread name)
+    cpu: dict = field(default_factory=lambda: defaultdict(list))  # trace thread -> [(t0, t1, CPU state)], see load_sched
     source_channels: dict = field(default_factory=dict)  # pipeline fed by a network source -> channel tag
     counter_names: dict = field(default_factory=dict)  # counter id -> name
     counters: dict = field(default_factory=lambda: defaultdict(list))  # counter id -> [(t, value)], recorded on change
@@ -185,6 +188,9 @@ def load(paths):
                 if kind == "counter":
                     identifier, name = rest.split(" ", 1)
                     worker.counter_names[int(identifier)] = name
+                if kind == "thread":
+                    thread, os_thread, name = (rest.split(" ", 2) + [""])[:3]
+                    worker.thread_ids[int(thread)] = (int(os_thread), name)
                 if kind not in ("source", "pipeline"):
                     continue
                 identifier, successors, description = rest.split(" ", 2)
@@ -206,9 +212,57 @@ def load(paths):
                 for successor in successors:
                     worker.predecessors[successor].add(int(pipeline))
         types, offset = read_schemas(data, HEADER.size)
+        worker.clock_offset = system - steady
         load_events(worker, types, data, offset, system - steady, sends)
         workers.append(worker)
+    if (sched := paths[0].parent / "sched.txt").exists():
+        load_sched(sched, workers)
     return workers, sends
+
+
+RUNNING, RUNNABLE = 0, 1
+CPU_STATES = ["running", "waiting for a CPU"]
+SCHED_LINE = re.compile(r"^\s*.+-(\d+)\s+\[\d+\]\s+\S+\s+(\d+\.\d+): (sched_switch|sched_wakeup): (.*)$")
+
+
+def load_sched(path, workers):
+    """When the traced threads ran and waited for a CPU, from scripts/latency_sched.sh. A woken or preempted thread waits for a CPU
+    until it is switched in; a thread that switched out otherwise sleeps. Lines can be cut off and glued to the next record, so
+    such lines are skipped, and a transition that implies a lost record drops the interval instead of stretching it."""
+    threads = {os_thread: (worker, thread) for worker in workers for thread, (os_thread, _) in worker.thread_ids.items()}
+    state = {}  # OS thread id -> (CPU state or None for sleeping, since)
+
+    def leave(os_thread, time, expected):
+        current, since = state.get(os_thread, (None, time))
+        if current == expected and os_thread in threads:
+            worker, thread = threads[os_thread]
+            worker.cpu[thread].append((since + worker.clock_offset, time + worker.clock_offset, current))
+
+    skipped = 0
+    with path.open() as lines:
+        for line in lines:
+            match = SCHED_LINE.match(line)
+            if not match or line.count(": sched_") > 1:
+                skipped += 1
+                continue
+            time, event, fields = round(float(match.group(2)) * 1e9), match.group(3), match.group(4)
+            if event == "sched_wakeup":
+                woken = int(re.search(r" pid=(\d+)", " " + fields).group(1))
+                if state.get(woken, (None, 0))[0] != RUNNABLE:
+                    state[woken] = (RUNNABLE, time)
+                continue
+            previous = int(re.search(r"prev_pid=(\d+)", fields).group(1))
+            next_thread = int(re.search(r"next_pid=(\d+)", fields).group(1))
+            preempted = re.search(r"prev_state=(\S+)", fields).group(1).startswith("R")
+            leave(previous, time, RUNNING)
+            state[previous] = (RUNNABLE if preempted else None, time)
+            leave(next_thread, time, RUNNABLE)
+            state[next_thread] = (RUNNING, time)
+    for spans in (worker.cpu for worker in workers):
+        for intervals in spans.values():
+            intervals.sort()
+    if skipped:
+        print(f"{path}: skipped {skipped} unreadable scheduling records")
 
 
 def records(types, data, offset):
@@ -575,15 +629,16 @@ def chain_workers(chain, by_name):
 
 def thread_activity(chain, workers, span_names):
     """What the threads of the chain's workers did while the chain's buffer was on its way: lanes of
-    (worker index, thread, role, [(start, duration, span name index, category)]) in us relative to the chain's start.
-    Gaps on worker threads are untraced work."""
+    (worker index, thread, name, [(start, duration, span name index, category)], [(start, duration, CPU state)]) in us relative to
+    the chain's start. Gaps on worker threads are untraced work; the CPU states need scripts/latency_sched.sh."""
     start, end = chain["segments"][0][1], chain["segments"][-1][2]
     pad = max(500_000, (end - start) // 10)
     low, high = start - pad, end + pad
     by_name = {worker.name: worker for worker in workers}
     lanes = []
     for worker in chain_workers(chain, by_name):
-        for thread, spans in sorted(worker.spans.items()):
+        for thread in sorted(set(worker.spans) | set(worker.cpu)):
+            spans = worker.spans.get(thread, [])
             role = thread_role(spans)
             # ponytail: steps back a few spans to catch spans that began before the window; spans of a thread barely overlap.
             first = max(0, bisect.bisect_left(spans, (low,)) - 4)
@@ -603,8 +658,13 @@ def thread_activity(chain, workers, span_names):
                         segments.append([round((position - start) / 1000), round((a - position) / 1000),
                                          span_names.setdefault(UNTRACED_WORK, len(span_names)), UNTRACED])
                     position = max(position, b)
-            if segments:
-                lanes.append([workers.index(worker), thread, role, segments])
+            cpu = worker.cpu.get(thread, [])
+            first = max(0, bisect.bisect_left(cpu, (low,)) - 1)
+            cpu_segments = [[round((max(t0, low) - start) / 1000), round((min(t1, high) - max(t0, low)) / 1000), state]
+                            for t0, t1, state in cpu[first:] if t1 > low and t0 < high]
+            if segments or cpu_segments:
+                name = worker.thread_ids.get(thread, (0, ""))[1] or f"{role} thread {thread}"
+                lanes.append([workers.index(worker), thread, name, segments, cpu_segments])
     return {"from": round((low - start) / 1000), "to": round((high - start) / 1000), "lanes": lanes}
 
 
@@ -624,7 +684,7 @@ def interactive_report(workers, chains, out):
     span_names = {}
     activity = {i: thread_activity(chains[i], workers, span_names) for i in sorted(detail)}
     data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, {chain["query"] for chain in chains}),
-            "workers": [worker.name for worker in workers], "spanNames": list(span_names), "activity": activity,
+            "workers": [worker.name for worker in workers], "spanNames": list(span_names), "activity": activity, "cpuStates": CPU_STATES,
             "open": open_spans(workers),
             "counters": [{"name": name, "worker": where, "t": [round((t - start) / 1e6, 3) for t, _ in samples],
                           "v": [value for _, value in samples]} for name, where, samples in counter_series(workers)]}
