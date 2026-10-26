@@ -363,22 +363,24 @@ function renderGantt(chain) {
   const laneName = ([worker, thread, role]) => `${workerLabel(DATA.workers[worker])} ${role} thread ${thread}`;
   const traces = [{
     type: "bar", orientation: "h", y: bars.map(b => `${DATA.stages[b.stage]} · ${nodeWorkers(b.node)}`), x: bars.map(b => ms(b.us)),
-    base: bars.map(b => ms(b.start)), marker: {color: bars.map(b => stageColor(b.stage))}, hovertemplate: "%{x:.3f} ms<extra></extra>",
+    base: bars.map(b => ms(b.start)), marker: {color: bars.map(b => stageColor(b.stage))},
+    /// %{x} of a bar with a base is where it ends, so the duration and start come from customdata.
+    customdata: bars.map(b => [ms(b.us), ms(b.start)]), hovertemplate: "%{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<extra></extra>",
     showlegend: false,
   }];
   const byName = new Map();
   for (const lane of lanes) {
     for (const [start, us, name] of lane[3]) {
-      if (!byName.has(name)) byName.set(name, {y: [], x: [], base: []});
+      if (!byName.has(name)) byName.set(name, {y: [], x: [], base: [], customdata: []});
       const series = byName.get(name);
-      series.y.push(laneName(lane)); series.x.push(ms(us)); series.base.push(ms(start));
+      series.y.push(laneName(lane)); series.x.push(ms(us)); series.base.push(ms(start)); series.customdata.push([ms(us), ms(start)]);
     }
   }
   for (const [name, series] of byName) {
     const label = DATA.spanNames[name];
     traces.push({type: "bar", orientation: "h", yaxis: "y2", name: label, ...series, marker: {color: spanColor(label),
       pattern: label === "untraced work" ? {shape: "/", fgcolor: css("--card"), size: 6} : undefined},
-      hovertemplate: `${label}: %{x:.3f} ms at %{base:.3f} ms<extra></extra>`});
+      hovertemplate: `${label}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<extra></extra>`});
   }
   const rows = bars.length, laneRows = new Set(lanes.map(laneName)).size;
   const split = laneRows ? laneRows / (rows + laneRows) : 0;
