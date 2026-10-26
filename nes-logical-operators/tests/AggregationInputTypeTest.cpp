@@ -47,7 +47,7 @@ namespace
 
 constexpr std::array NonNumericAggregations{std::string_view{"COUNT"}};
 /// Aggregations over strings, which reject numbers instead; tested on their own below.
-constexpr std::array StringAggregations{std::string_view{"JSONAGG"}};
+constexpr std::array StringAggregations{std::string_view{"JSONAGG"}, std::string_view{"SEMANTICAGG"}};
 
 class AggregationInputTypeTest : public ::testing::Test
 {

@@ -66,6 +66,8 @@ struct EncodedPayload
     std::vector<std::string> outputFields;
     /// Only written for SEM_JOIN, so the payloads (and EXPLAIN hashes) of SEM_MAP and SEM_FILTER stay as they were.
     std::optional<bool> join;
+    /// Only written for SEM_AGG, for the same reason.
+    std::optional<bool> agg;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -118,7 +120,8 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .fusion = config.fusion,
             .inputFields = payload.inputFields,
             .outputFields = payload.outputFields,
-            .join = payload.join ? std::optional{true} : std::nullopt});
+            .join = payload.join ? std::optional{true} : std::nullopt,
+            .agg = payload.agg ? std::optional{true} : std::nullopt});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -164,7 +167,8 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .fusion = value.fusion},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
-        .join = value.join.value_or(false)};
+        .join = value.join.value_or(false),
+        .agg = value.agg.value_or(false)};
 }
 
 }

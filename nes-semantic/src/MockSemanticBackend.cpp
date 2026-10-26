@@ -88,6 +88,14 @@ std::optional<Behaviour> parseBehaviour(std::string_view behaviour)
     {
         return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::UNPARSEABLE, .label = {}});
     }
+    if (behaviour == "count")
+    {
+        return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::COUNT, .label = {}});
+    }
+    if (behaviour == "concat")
+    {
+        return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::CONCAT, .label = {}});
+    }
     if (behaviour == "match")
     {
         return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::MATCH, .label = {}});
@@ -159,7 +167,8 @@ MockSemanticBackend::MockSemanticBackend(const std::string_view behaviour, std::
     if (!parsed.has_value())
     {
         throw InvalidSemanticModel(
-            "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable, fail or match, each optionally followed by @<ms>)",
+            "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable, fail, match, count or concat, each optionally "
+            "followed by @<ms>)",
             behaviour);
     }
     mode = parsed->mode;
@@ -190,6 +199,35 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
             return std::unexpected{BackendError{.kind = BackendError::Kind::UNREACHABLE, .message = "mock endpoint is unreachable"}};
         case Mode::UNPARSEABLE:
             return "I am sorry, but I cannot classify these rows.";
+        case Mode::COUNT:
+        case Mode::CONCAT: {
+            /// The SEM_AGG layout ends in "Window:\n" and a JSON list of one-field objects.
+            constexpr std::string_view Marker = "\nWindow:\n";
+            const auto position = prompt.rfind(Marker);
+            const auto window = position == std::string::npos
+                ? nlohmann::ordered_json::array()
+                : nlohmann::ordered_json::parse(prompt.substr(position + Marker.size()), nullptr, false);
+            if (!window.is_array())
+            {
+                return std::string{"not a window"};
+            }
+            if (mode == Mode::COUNT)
+            {
+                return std::to_string(window.size());
+            }
+            std::string joined;
+            bool first = true;
+            for (const auto& record : window)
+            {
+                if (!first)
+                {
+                    joined.push_back('|');
+                }
+                first = false;
+                joined += rowText(record);
+            }
+            return joined;
+        }
         case Mode::MATCH: {
             auto response = nlohmann::json::object();
             for (const auto& [rowId, payload] : dataBlock(prompt).items())

@@ -42,6 +42,9 @@ struct SemanticCallPayload
     /// SEM_JOIN: the call judges one (left, right) pair with `SemanticJoinCodec`. The model is a filter model with two
     /// INPUT fields, the first one left; the call's single value is the verdict `'true'`/`'false'`.
     bool join = false;
+    /// SEM_AGG: the call's single input is the JSON array JSON_AGG wrote for a window; `SemanticAggCodec` turns it into one
+    /// prompt. The model is a map model with one INPUT and one OUTPUT field; the value is its answer.
+    bool agg = false;
 };
 
 [[nodiscard]] std::string encodeSemanticCallPayload(const SemanticCallPayload& payload);

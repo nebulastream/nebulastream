@@ -1,0 +1,96 @@
+# name: semantic/SemanticAgg.test
+# description: SEM_AGG(model, field) in a windowed aggregation, end to end under a real worker against the mock backend.
+#              The window computes JSON_AGG(field) in its place; one prompt per window and group, in the layout of
+#              llm_operator's SEM_AGG, carries all of its values. The mock's 'count' answers with the number of records
+#              in the window, 'concat' with the values joined by '|', so the expected output is exact. One worker
+#              thread, so a window holds its values in input order.
+# groups: [Semantic]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, movie VARSIZED NOT NULL, review VARSIZED NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,jaws,scary,100
+2,jaws,classic,200
+3,heat,tense,300
+4,jaws,long-winded,400
+5,heat,,1100
+6,heat,say "hi",1200
+7,jaws,Grüße,1300
+
+CREATE LOGICAL SOURCE scores(id UINT64 NOT NULL, score UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR scores TYPE File;
+ATTACH INLINE
+1,5,100
+
+CREATE SEM_MODEL counter
+INPUT (review VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('How many reviews are there?' AS LLM.PROMPT, 'count' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL joiner
+INPUT (review VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('List the reviews' AS LLM.PROMPT, 'concat' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'NOTHING' AS LLM.DEFAULT_VALUE);
+
+CREATE SEM_MODEL isPositive
+INPUT (review VARSIZED)
+SET ('Is the review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL twoInputs
+INPUT (movie VARSIZED, review VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('Summarize' AS LLM.PROMPT, 'count' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL downAgg
+INPUT (review VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('Summarize' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# Query 1: per group, next to COUNT, which stays an ordinary aggregation.
+SELECT start, end, movie, SEM_AGG(counter, review) AS summary, COUNT(id) AS n FROM reviews GROUP BY movie
+  WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+0,1000,heat,1,1
+0,1000,jaws,3,3
+1000,2000,heat,2,2
+1000,2000,jaws,1,1
+
+# Query 2: without GROUP BY; the values arrive in order, escaped and back.
+SELECT start, end, SEM_AGG(joiner, review) AS summary FROM reviews WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+0,1000,scary|classic|tense|long-winded
+1000,2000,|say "hi"|Grüße
+
+# Query 3: two SEM_AGGs in one window are two calls of the same stage.
+SELECT start, end, SEM_AGG(counter, review) AS how_many, SEM_AGG(joiner, movie) AS movies FROM reviews
+  WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+0,1000,4,jaws|jaws|heat|jaws
+1000,2000,3,heat|heat|jaws
+
+# Query 4: a filter model is not an aggregation model.
+SELECT start, end, SEM_AGG(isPositive, review) AS summary FROM reviews WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+ERROR 2048
+
+# Query 5: nor is a model with two inputs.
+SELECT start, end, SEM_AGG(twoInputs, review) AS summary FROM reviews WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+ERROR 2048
+
+# Query 6: an unknown model.
+SELECT start, end, SEM_AGG(noSuchModel, review) AS summary FROM reviews WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+ERROR 2046
+
+# Query 7: SEM_AGG takes strings only.
+SELECT start, end, SEM_AGG(counter, score) AS summary FROM scores WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+ERROR 2008
+
+# Query 8: an unreachable endpoint fails the query, as for SEM_MAP.
+SELECT start, end, SEM_AGG(downAgg, review) AS summary FROM reviews WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+ERROR 4006 "unreachable"

@@ -1371,6 +1371,27 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             isAggregation = true;
             break;
         default:
+            /// SEM_AGG(model, field): an aggregation of a semantic model, which gets the model name as its first field access.
+            if (funcName == "SEM_AGG")
+            {
+                auto& functions = helpers.top().functionBuilder;
+                if (context->argument.size() != 2 || functions.size() < 2 || !functions.back().tryGetAs<UnboundFieldAccessLogicalFunction>()
+                    || !functions[functions.size() - 2].tryGetAs<UnboundFieldAccessLogicalFunction>())
+                {
+                    throw InvalidQuerySyntax("SEM_AGG expects a semantic model name and a field at {}", context->getText());
+                }
+                const auto field = functions.back().getAs<UnboundFieldAccessLogicalFunction>();
+                const auto model = functions[functions.size() - 2].getAs<UnboundFieldAccessLogicalFunction>();
+                functions.resize(functions.size() - 2);
+                functions.emplace_back(field);
+                helpers.top().windowAggs.emplace_back(
+                    AggregationLogicalFunctionRegistry::instance()
+                        .find("SemanticAgg")
+                        .value()(AggregationLogicalFunctionRegistryArguments{.on = {model, field}, .includeNullValues = false}),
+                    std::nullopt);
+                isAggregation = true;
+                break;
+            }
             /// JSON_AGG has no keyword of its own: it is an aggregation by name.
             if (funcName == "JSON_AGG")
             {

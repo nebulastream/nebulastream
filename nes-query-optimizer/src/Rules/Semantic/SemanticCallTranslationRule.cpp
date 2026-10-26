@@ -38,6 +38,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/SemanticAggAggregationLogicalFunction.hpp>
 #include <Functions/SemanticMatchLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -46,7 +47,10 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/SemanticFilterLogicalOperator.hpp>
 #include <Operators/SemanticMapLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/JsonAggAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
@@ -295,6 +299,96 @@ LogicalOperator translateJoin(const JoinLogicalOperator& join, std::vector<Logic
     return selectOnVerdicts(evaluated, verdicts, kept);
 }
 
+bool containsSemanticAgg(const WindowedAggregationLogicalOperator& window)
+{
+    return std::ranges::any_of(
+        window.getWindowAggregation(),
+        [](const auto& aggregation)
+        { return aggregation.function.template tryGetAs<SemanticAggAggregationLogicalFunction>().has_value(); });
+}
+
+/// SEM_AGG, see the class comment. `children` are the window's children as the visitor returns them.
+LogicalOperator translateAggregation(
+    const WindowedAggregationLogicalOperator& window, std::vector<LogicalOperator> children, const SemanticModelCatalog* catalog)
+{
+    std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> aggregations;
+
+    struct Helper
+    {
+        Identifier field;
+        std::string payload;
+        Identifier name;
+    };
+
+    std::vector<Helper> helpers;
+    for (const auto& aggregation : window.getWindowAggregation())
+    {
+        const auto semanticAgg = aggregation.function.tryGetAs<SemanticAggAggregationLogicalFunction>();
+        if (!semanticAgg)
+        {
+            aggregations.push_back(aggregation);
+            continue;
+        }
+        const auto& modelName = semanticAgg.value()->getModelName();
+        if (catalog == nullptr || !catalog->hasModel(modelName))
+        {
+            throw UnknownSemanticModelName("Semantic model '{}' is not registered", modelName);
+        }
+        const auto model = catalog->load(modelName);
+        if (model.hasFilterStep() || model.getConfig().steps.size() != 1 || std::ranges::size(model.getSchema().inputs) != 1
+            || std::ranges::size(model.getSchema().outputs) != 1)
+        {
+            throw InvalidSemanticModel(
+                "SEM_AGG needs a map model with one INPUT and one OUTPUT field, but semantic model '{}' has {} INPUT and {} OUTPUT "
+                "fields{}",
+                model.getName(),
+                std::ranges::size(model.getSchema().inputs),
+                std::ranges::size(model.getSchema().outputs),
+                model.hasFilterStep() ? " and no OUTPUT clause" : "");
+        }
+        if (model.getConfig().batchSize != 1)
+        {
+            throw InvalidSemanticModel(
+                "Semantic model '{}' sets BATCH_SIZE {}, but SEM_AGG sends one prompt per window",
+                model.getName(),
+                model.getConfig().batchSize);
+        }
+        auto payload = payloadOf(model);
+        payload.agg = true;
+        const auto helper = Identifier::parse(fmt::format("__SEM_AGG_{}", helpers.size()));
+        helpers.push_back({.field = helper, .payload = encodeSemanticCallPayload(payload), .name = aggregation.name});
+        aggregations.push_back({.function = JsonAggAggregationLogicalFunction{semanticAgg.value()->getInputFunction()}, .name = helper});
+    }
+
+    /// The window computes JSON_AGG in place of every SEM_AGG; the other aggregations stay as they are.
+    const LogicalOperator aggregated = WindowedAggregationLogicalOperator::create(
+        children.at(0), window.getGroupingKeysWithName(), aggregations, window.getWindowType(), window.getCharacteristic());
+
+    std::vector<ProjectionLogicalOperator::UnboundProjection> evaluation;
+    for (const auto& helper : helpers)
+    {
+        evaluation.emplace_back(
+            helper.name,
+            LogicalFunctionProvider::provide(
+                "SEM_CALL",
+                {ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::VARSIZED), helper.payload},
+                 FieldAccessLogicalFunction{*aggregated.getOutputSchema()[helper.field]}}));
+    }
+    const LogicalOperator evaluated = ProjectionLogicalOperator::create(aggregated, evaluation, ProjectionLogicalOperator::Asterisk{true});
+
+    /// Drops the helpers again: the window's output with each SEM_AGG under its own name.
+    std::vector<ProjectionLogicalOperator::UnboundProjection> restored;
+    for (const auto& field : evaluated.getOutputSchema())
+    {
+        if (std::ranges::any_of(helpers, [&field](const Helper& helper) { return helper.field == field.getLastName(); }))
+        {
+            continue;
+        }
+        restored.emplace_back(field.getLastName(), FieldAccessLogicalFunction{field});
+    }
+    return ProjectionLogicalOperator::create(evaluated, restored, ProjectionLogicalOperator::Asterisk{false});
+}
+
 }
 
 LogicalPlan SemanticCallTranslationRule::apply(const LogicalPlan& queryPlan) const
@@ -309,6 +403,10 @@ LogicalPlan SemanticCallTranslationRule::apply(const LogicalPlan& queryPlan) con
             {
                 PRECONDITION(children.size() == 1, "Expected {} to have one child, but has {}", op.getName(), children.size());
                 return {translate(*model, children.front()), true};
+            }
+            if (const auto window = op.tryGetAs<WindowedAggregationLogicalOperator>(); window && containsSemanticAgg(window->get()))
+            {
+                return {translateAggregation(window->get(), std::move(children), semanticModelCatalog.get()), true};
             }
             if (const auto join = op.tryGetAs<JoinLogicalOperator>(); join && containsSemanticMatch(join->get().getJoinFunction()))
             {

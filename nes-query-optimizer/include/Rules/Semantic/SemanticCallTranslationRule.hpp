@@ -51,7 +51,14 @@ namespace NES
 ///                                             PROJECTION(*, SEM_CALL(m, l, r) AS __SEM_VERDICT_0)
 ///                                               JOIN(c)
 ///
-/// The model is looked up here, since the join condition carries only its name.
+/// SEM_AGG is an aggregation of a windowed aggregation, `SEM_AGG(m, f) AS s`. The model is a map model with one INPUT and
+/// one OUTPUT field, and one prompt per window and group carries all of the window's values:
+///
+///     WINDOW(…, SEM_AGG(m, f) AS s, …)  =>  PROJECTION(<window fields>, s)
+///                                             PROJECTION(*, SEM_CALL(m, __SEM_AGG_0) AS s)
+///                                               WINDOW(…, JSON_AGG(f) AS __SEM_AGG_0, …)
+///
+/// The model is looked up here, since the join condition and the aggregation carry only its name.
 class SemanticCallTranslationRule
 {
 public:

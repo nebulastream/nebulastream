@@ -22,6 +22,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <MockSemanticBackend.hpp>
+#include <SemanticAggCodec.hpp>
 #include <SemanticCallPayload.hpp>
 #include <SemanticFilterCodec.hpp>
 #include <SemanticHttpClient.hpp>
@@ -65,6 +66,7 @@ private:
     std::optional<SemanticMapCodec> mapCodec;
     std::optional<SemanticFilterCodec> filterCodec;
     std::optional<SemanticJoinCodec> joinCodec;
+    std::optional<SemanticAggCodec> aggCodec;
     /// Exactly one of the two transports.
     std::optional<MockSemanticBackend> mock;
     std::optional<SemanticHttpClient> http;

@@ -135,7 +135,15 @@ SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded
     }
     const bool hasFilter
         = std::ranges::any_of(config.steps, [](const SemanticStep& step) { return step.kind == SemanticStep::Kind::FILTER; });
-    if (payload.join)
+    if (payload.agg)
+    {
+        if (payload.inputFields.size() != 1 || config.steps.size() != 1 || hasFilter)
+        {
+            throw CannotOpenSource("SEM_CALL of aggregation model '{}' needs one MAP step and one input", payload.model);
+        }
+        aggCodec.emplace(config, payload.inputFields.front());
+    }
+    else if (payload.join)
     {
         if (payload.inputFields.size() != 2 || config.steps.size() != 1 || !hasFilter)
         {
@@ -188,6 +196,12 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
         payload.model,
         payload.inputFields.size(),
         arguments.size());
+    if (aggCodec)
+    {
+        /// One prompt per window: the argument is the window's JSON_AGG array.
+        const auto answer = co_await complete(aggCodec->buildPrompt(arguments[0]));
+        co_return AsyncCallResult{aggCodec->parse(answer)};
+    }
     if (joinCodec)
     {
         /// One pair per prompt; the reference numbers pairs `<window>_<i>_<j>`, a single pair needs no more than the row id.

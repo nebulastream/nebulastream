@@ -35,6 +35,8 @@ namespace NES
 ///   unparseable   answers with prose instead of JSON
 ///   fail          fails like an unreachable endpoint
 ///   match         SEM_JOIN: affirms a {left, right} pair whose two texts are equal ignoring case, with a boolean
+///   count         SEM_AGG: answers with the number of records in the window, as plain text
+///   concat        SEM_AGG: answers with the window's values joined by '|', in order, as plain text
 ///
 /// Any of them may be followed by `@<ms>`, as in `echo@200`, which makes one request take that
 /// long. Waiting is what a model actually does, and nothing else in a hermetic test can stand in
@@ -61,6 +63,8 @@ public:
         UNPARSEABLE,
         FAIL,
         MATCH,
+        COUNT,
+        CONCAT,
     };
 
     /// Throws InvalidSemanticModel for an unknown behaviour.

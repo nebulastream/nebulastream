@@ -1,0 +1,32 @@
+# name: explain/SemanticAggTranslation.test
+# description: SEM_AGG becomes JSON_AGG in the window aggregation, a SEM_CALL on that array above it, which the lifting
+#              rule moves into an ASYNC_PROJECTION, and a projection that drops the helper. Other aggregations of the
+#              window stay as they are.
+# groups: [explain, async, Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, movie VARSIZED NOT NULL, review VARSIZED NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,jaws,scary,100
+
+CREATE SEM_MODEL summarizer
+INPUT (review VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('Summarize the reviews' AS LLM.PROMPT, 'count' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SINK summaries(start UINT64 NOT NULL, end UINT64 NOT NULL, movie VARSIZED NOT NULL, summary VARSIZED NOT NULL, n UINT64 NOT NULL) TYPE File;
+
+# SEM_AGG next to COUNT, per group.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT start, end, movie, SEM_AGG(summarizer, review) AS summary, COUNT(id) AS n FROM reviews GROUP BY movie
+  WINDOW TUMBLING(ts, size 1 sec) INTO summaries;
+----
+== Optimized Global Plan ==
+SINK(SUMMARIES)
+  PROJECTION(fields: [END, MOVIE, N, START, __ASYNC_CALL_0 as SUMMARY])
+    ASYNC_PROJECTION(fields: [END, MOVIE, N, START, SEM_CALL(SUMMARIZER:b3d8053f, __SEM_AGG_0) as __ASYNC_CALL_0, __SEM_AGG_0])
+      PROJECTION(fields: [END, MOVIE, N, START, __SEM_AGG_0,  as __ASYNC_CALL_0])
+        WINDOW AGG(__SEM_AGG_0 as JsonAgg(), N as Count())
+          WATERMARK_ASSIGNER(Event time)
+            SOURCE(REVIEWS)
+==END==
