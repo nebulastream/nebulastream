@@ -108,6 +108,11 @@ impl SenderChannel {
         self.stats.awaiting_ack.load(Ordering::Relaxed)
     }
 
+    /// Buffers written to the network since the channel was registered, including resends. Lock-free, for monitoring.
+    pub fn sent_buffers(&self) -> u64 {
+        self.stats.sent.load(Ordering::Relaxed)
+    }
+
     /// Attempts to send a tuple buffer through this channel without blocking.
     ///
     /// This method will immediately return with one of three results:

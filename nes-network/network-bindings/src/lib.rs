@@ -166,7 +166,7 @@ struct SenderNetworkService {
 /// is necessary because `cxx` requires opaque types to be wrapped in structs.
 struct SenderDataChannel {
     /// Declared before the channel they sample, so they are dropped first.
-    counters: [event_trace::CounterUpdater; 2],
+    counters: [event_trace::CounterUpdater; 3],
     chan: Arc<SenderChannel>,
 }
 
@@ -456,16 +456,19 @@ fn register_sender_channel(
     .map_err(|_| "The NetworkingService was closed unexpectedly")?;
 
     let chan = Arc::new(data_queue);
-    let counter = |what: &str, sample: fn(&SenderChannel) -> usize| {
+    let counter = |what: &str, sample: fn(&SenderChannel) -> i64| {
         let chan = chan.clone();
         event_trace::CounterUpdater::new(
             &format!("network_channel_{channel_id}_{what}"),
-            move || sample(&chan) as i64,
+            move || sample(&chan),
         )
     };
     let counters = [
-        counter("queued", SenderChannel::queued_buffers),
-        counter("unacknowledged", SenderChannel::unacknowledged_buffers),
+        counter("queued", |chan| chan.queued_buffers() as i64),
+        counter("unacknowledged", |chan| {
+            chan.unacknowledged_buffers() as i64
+        }),
+        counter("sent", |chan| chan.sent_buffers() as i64),
     ];
     Ok(Box::new(SenderDataChannel { counters, chan }))
 }

@@ -17,7 +17,7 @@ use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -113,6 +113,8 @@ pub(super) struct ChannelStats {
     pub pending_writes: AtomicUsize,
     /// Written to the network and waiting for the receiver's acknowledgment.
     pub awaiting_ack: AtomicUsize,
+    /// Buffers written to the network so far, counting a buffer again when it is resent after a nack or reconnect.
+    pub sent: AtomicU64,
 }
 
 /// Core event loop handler for a sender-side data channel.
@@ -274,6 +276,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         writer: &mut DataChannelSenderWriter<W>,
         pending_writes: &mut VecDeque<TupleBuffer>,
         wait_for_ack: &mut HashMap<OriginSequenceNumber, TupleBuffer>,
+        sent: &AtomicU64,
     ) -> InternalResult<()> {
         let Some(buffer) = pending_writes.front() else {
             return Ok(());
@@ -292,6 +295,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         match result {
             Ok(()) => {
                 // feed() succeeded — now move to wait_for_ack
+                sent.fetch_add(1, Ordering::Relaxed);
                 let buffer = pending_writes.pop_front().expect("BUG: was front");
                 assert!(
                     wait_for_ack.insert(sequence_number, buffer).is_none(),
@@ -396,7 +400,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 request = Self::read_from_software(&self.cancellation_token, &mut self.queue), if should_read_from_software => {
                     self.handle_request(request?).await?;
                 },
-                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
+                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack, &self.stats.sent), if should_send_pending => {
                     send_result?;
                 },
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {
