@@ -114,7 +114,7 @@ const DATA = /*TRACE_DATA*/null;
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const GROUPS = [
   ["source", s => s.startsWith("source")],
-  ["network", s => s === "network" || s.startsWith("network source")],
+  ["network", s => s.startsWith("net ") || s.startsWith("network source") || /^network P/.test(s)],
   ["network sink", s => s.startsWith("network sink")],
   ["waiting", s => /^(queue|enqueue|handoff) /.test(s)],
   ["executing", s => s.startsWith("exec ")],

@@ -50,6 +50,9 @@ FIELD_FORMATS = {"k": "QQQ", "u": "Q", "i": "q"}
 # Event type names, see the structs in nes-common/include/Util/EventTrace.hpp.
 SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL = "source backpressure", "source buffer wait", "source fill"
 TASK_QUEUE_WAIT = "task queue wait"
+# Steps of a traced buffer through the network layer; dequeue, encoded and acked happen on the sender, decoded and queued on the
+# receiver.
+NET_STEPS = ("net dequeue", "net encoded", "net acked", "net decoded", "net queued")
 # Gaps between the spans of a worker thread, which executes tasks of untraced queries or engine work in them.
 UNTRACED_WORK, UNTRACED = "untraced work", 3
 # Thread activity is exported for this many of the slowest buffers and as many others, to bound the report's size.
@@ -82,6 +85,7 @@ class Worker:
     unpaired: int = 0  # ends without a begin and begins without an end that a later begin superseded
     end: int = 0  # the last event's time
     spans: dict = field(default_factory=lambda: defaultdict(list))  # thread -> [(t0, t1, name, category)] sorted by t0
+    net_steps: dict = field(default_factory=lambda: defaultdict(list))  # (step name, key) -> [t], see NET_STEPS
     counter_names: dict = field(default_factory=dict)  # counter id -> name
     counters: dict = field(default_factory=lambda: defaultdict(list))  # counter id -> [(t, value)], recorded on change
 
@@ -248,6 +252,8 @@ def load_events(worker, types, data, offset, clock_offset, sends):
             worker.receives[fields["key"], fields["pipeline"]] = received
         elif name == "counter":
             worker.counters[fields["counter"]].append((time, fields["value"]))
+        elif name in NET_STEPS:
+            worker.net_steps[name, fields["key"]].append(time)
     for (thread, name), (t, _) in opened.items():
         worker.spans[thread].append((t, worker.end, name, types_by_name[name].category))
     for spans in worker.spans.values():
@@ -304,10 +310,8 @@ def walk(worker, key, pipeline, end, sends):
         if sink is None:
             raise Incomplete
         source = source_node(worker, pipeline)
-        hop = [
-            ("network", sent, received, f"{pipeline_node(sender, sink)}>{source}"),
-            ("network source to engine", received, enqueue[0], source),
-        ]
+        hop = network_hop(sender, worker, key, sent, received, f"{pipeline_node(sender, sink)}>{source}", sender.label(sink))
+        hop.append((f"network source to engine {label}", received, enqueue[0], source))
         return walk(sender, key, sink, sent, sends) + hop + segments
 
     # Without an Emit link the buffer was produced outside of a task, e.g. a window flushed at end of stream.
@@ -330,6 +334,28 @@ def walk(worker, key, pipeline, end, sends):
     else:
         source = [("source fill (batching)", fill_start, emitted, node)]
     return source + [("source in-flight limit", emitted, enqueue[0], node)] + segments
+
+
+def network_hop(sender, receiver, key, sent, received, edge, sink_label):
+    """Segments from NetSend on the sender to the network source taking the buffer on the receiver. Without the network
+    layer's steps, e.g. for untraced resends, the hop is a single segment."""
+    def first(worker, step, after):
+        return min((t for t in worker.net_steps.get((step, key), []) if after <= t <= received), default=None)
+
+    dequeued = first(sender, "net dequeue", sent)
+    encoded = dequeued and first(sender, "net encoded", dequeued)
+    queued = max((t for t in receiver.net_steps.get(("net queued", key), []) if t <= received), default=None)
+    decoded = queued and max((t for t in receiver.net_steps.get(("net decoded", key), []) if t <= queued), default=None)
+    if not (dequeued and encoded and decoded and queued):
+        return [(f"network {sink_label}", sent, received, edge)]
+    # Named after the sending network sink, so the hops of a buffer through several workers stay apart.
+    return [
+        (f"net sender queue {sink_label}", sent, dequeued, edge),
+        (f"net encode {sink_label}", dequeued, encoded, edge),
+        (f"net transfer {sink_label}", encoded, decoded, edge),
+        (f"net receiver handoff {sink_label}", decoded, queued, edge),
+        (f"net receiver queue {sink_label}", queued, received, edge),
+    ]
 
 
 def stitch(workers, sends, skip_warmup=True, keep_warmup=False):

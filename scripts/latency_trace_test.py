@@ -42,6 +42,10 @@ TYPES = {
     "net send": (7, 2, [("key", "k")]),
     "net recv": (8, 2, [("key", "k"), ("pipeline", "u"), ("received", "u")]),
     "counter": (9, 2, [("counter", "u"), ("value", "i")]),
+    "net dequeue": (10, 2, [("key", "k")]),
+    "net encoded": (11, 2, [("key", "k")]),
+    "net decoded": (13, 2, [("key", "k")]),
+    "net queued": (14, 2, [("key", "k")]),
 }
 SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL = "source backpressure", "source buffer wait", "source fill"
 ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV = "enqueue", "exec", "emit", "net send", "net recv"
@@ -103,6 +107,10 @@ def point(stage, key, t, pipeline=0, key2=(0, 0, 0)):
     return (0, lt.INSTANT, t, stage, {"key": key, "pipeline": pipeline, "received": t})
 
 
+def net(step, key, t):
+    return (8, lt.INSTANT, t, step, {"key": key})
+
+
 def counter(t, identifier, value):
     return (7, lt.INSTANT, t, "counter", {"counter": identifier, "value": value})
 
@@ -131,9 +139,14 @@ with tempfile.TemporaryDirectory() as d:
         *span(TASK_QUEUE_WAIT, (0, 0, 0), 365 * US, 395 * US, 0, ENGINE),
         begin(TASK_QUEUE_WAIT, 450 * US, ENGINE),
         point(NET_SEND, formatted, 500 * US),
+        # The network layer takes the buffer from the sender queue and serializes it.
+        net("net dequeue", formatted, 520 * US),
+        net("net encoded", formatted, 530 * US),
     ])
     # Worker B: its steady clock is 1000us ahead of the system clock.
     write(d, 2, 2000 * US, 1000 * US, "query q2(distributed=Q1)\nsource 1 3 SourceThread(implementation:NetworkSource(c1))\npipeline 3 4 WindowBuild\npipeline 4 5 Probe\npipeline 5 - PrintSink\n", [
+        net("net decoded", formatted, 1560 * US),
+        net("net queued", formatted, 1580 * US),
         point(NET_RECV, formatted, 1600 * US, 3),
         # A source of another query with the same originId must not shadow the events above.
         *span(SOURCE_FILL, formatted, 1000 * US, 1010 * US, 99, 5),
@@ -163,7 +176,7 @@ with tempfile.TemporaryDirectory() as d:
     assert "/*TRACE_DATA*/" not in page and '"network":true' in page, "report embeds the data and the network edge"
     assert "Untraced" not in page, "the graph only shows traced queries"
     assert workers[0].sources[raw, 1][lt.SOURCE_BACKPRESSURE] == (0, 10 * US, 0), "keyless waits belong to the next fill"
-    assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (500 * US, -1)])]
+    assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (530 * US, -1)])]
     activity = lt.thread_activity(chains[0], workers, names := {})
     lanes = {(worker, thread): (role, [(list(names)[n], start, us) for start, us, n, _ in segments])
              for worker, thread, role, segments in activity["lanes"]}
@@ -180,7 +193,9 @@ segments = chains[0]["segments"]
 names = [name for name, _, _ in segments]
 assert names[0] == "source fill (batching)", names
 assert chains[0]["query"] == "Q1"
-assert "network" in names and "enqueue P1 InputFormatter" in names, names
+assert "enqueue P1 InputFormatter" in names, names
+network = {name.removesuffix(" P2 NetworkSink"): (t1 - t0) // US for name, t0, t1 in segments if name.startswith("net ")}
+assert network == {"net sender queue": 20, "net encode": 10, "net transfer": 30, "net receiver handoff": 20, "net receiver queue": 20}, network
 assert segments[0][1] == 100 * US, "latency starts at first data"
 assert segments[-1][2] == 800 * US, "sink exec end on worker B in system time"
 assert all(a[2] == b[1] for a, b in zip(segments, segments[1:])), "segments are contiguous"
