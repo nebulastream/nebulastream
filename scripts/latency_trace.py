@@ -42,12 +42,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 HEADER = struct.Struct("<8sQQQ64s")
-EVENT = struct.Struct("<QQQQQQIIIBBH")
-SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL, ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV, COUNTER, TASK_QUEUE_WAIT = range(10)
-STAGE_NAMES = [
-    "source backpressure", "source buffer wait", "source fill", "enqueue", "exec", "emit", "net send", "net recv", "counter", "task queue wait"
-]
-POINT, BEGIN, END = range(3)
+CHUNK = struct.Struct("<HI")  # thread, length
+RECORD = struct.Struct("<HBQ")  # type, kind, time
+BEGIN, END, INSTANT = range(3)
+# Field types of the schema: a buffer key, uint64_t and int64_t.
+FIELD_FORMATS = {"k": "QQQ", "u": "Q", "i": "q"}
+# Event type names, see the structs in nes-common/include/Util/EventTrace.hpp.
+SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL = "source backpressure", "source buffer wait", "source fill"
+TASK_QUEUE_WAIT = "task queue wait"
 # A source that reports first data within this many ns of starting the fill found the data already waiting, so the data also
 # waited through the preceding backpressure and buffer acquisition.
 DATA_WAS_WAITING_NS = 50_000
@@ -101,12 +103,57 @@ def latest(entries, limit, time=lambda entry: entry[0]):
     return max(candidates, key=time)
 
 
+@dataclass
+class EventType:
+    name: str
+    category: int  # EventTrace::Category: 0 work, 1 wait, 2 other
+    size: int
+    fields: list  # (name, type) in payload order
+    layout: struct.Struct
+
+    def decode(self, data, offset):
+        values, fields = iter(self.layout.unpack_from(data, offset)), {}
+        for name, kind in self.fields:
+            fields[name] = (next(values), next(values), next(values)) if kind == "k" else next(values)
+        return fields
+
+
+def read_name(data, offset):
+    (length,) = struct.unpack_from("<H", data, offset)
+    return data[offset + 2 : offset + 2 + length].decode(), offset + 2 + length
+
+
+def read_schemas(data, offset):
+    """The event types the trace was written with, by id, and the offset of the first chunk."""
+    (count,) = struct.unpack_from("<H", data, offset)
+    offset += 2
+    types = {}
+    for _ in range(count):
+        (type_id,) = struct.unpack_from("<H", data, offset)
+        name, offset = read_name(data, offset + 2)
+        category, size, field_count = struct.unpack_from("<BIH", data, offset)
+        offset += 7
+        fields = []
+        for _ in range(field_count):
+            field, offset = read_name(data, offset)
+            kind, field_offset = struct.unpack_from("<cI", data, offset)
+            offset += 5
+            fields.append((field_offset, field, kind.decode()))
+        layout, position = "<", 0
+        for field_offset, _, kind in sorted(fields):
+            layout += "x" * (field_offset - position) + FIELD_FORMATS[kind]
+            position = field_offset + struct.calcsize("<" + FIELD_FORMATS[kind])
+        layout += "x" * (size - position)
+        types[type_id] = EventType(name, category, size, [(f, k) for _, f, k in sorted(fields)], struct.Struct(layout))
+    return types, offset
+
+
 def load(paths):
     workers, sends = [], defaultdict(list)
     for path in paths:
         data = path.read_bytes()
         magic, pid, steady, system, host = HEADER.unpack_from(data)
-        if magic != b"NESLAT02":
+        if magic != b"NESLAT03":
             sys.exit(f"{path}: not a latency trace")
         worker = Worker(f"{host.rstrip(b'\0').decode()}:{pid}")
         plan = path.with_suffix(".plan")
@@ -135,52 +182,68 @@ def load(paths):
                 worker.queries[int(pipeline)] = query
                 for successor in successors:
                     worker.predecessors[successor].add(int(pipeline))
-        load_events(worker, data[HEADER.size :], system - steady, sends)
+        types, offset = read_schemas(data, HEADER.size)
+        load_events(worker, types, data, offset, system - steady, sends)
         workers.append(worker)
     return workers, sends
 
 
-def load_events(worker, data, offset, sends):
-    """Pairs the begins and ends of each thread into spans. Spans of one stage do not overlap on a thread, so an end closes the
-    last begin of its stage. Source backpressure and buffer wait end without a key; they belong to the next fill on the thread."""
+def records(types, data, offset):
+    """(thread, kind, time, event type, fields) of every record, in the order each thread recorded them."""
+    while offset < len(data):
+        thread, length = CHUNK.unpack_from(data, offset)
+        offset += CHUNK.size
+        end = offset + length
+        while offset < end:
+            type_id, kind, time = RECORD.unpack_from(data, offset)
+            event = types[type_id]
+            yield thread, kind, time, event, event.decode(data, offset + RECORD.size)
+            offset += RECORD.size + event.size
+
+
+def load_events(worker, types, data, offset, clock_offset, sends):
+    """Pairs the begins and ends of each thread into spans. Spans of one type do not overlap on a thread, so an end closes the
+    last begin of its type. Source backpressure and buffer wait have no key; they belong to the next fill on the thread."""
     opened, source_waits = {}, defaultdict(dict)
-    for time, _, origin, seq, origin2, seq2, chunk, chunk2, pipeline, stage, kind, thread in EVENT.iter_unpack(data):
-        key, time = (origin, seq, chunk), time + offset
+    for thread, kind, time, event, fields in records(types, data, offset):
+        time += clock_offset
         worker.end = max(worker.end, time)
+        name = event.name
         if kind == BEGIN:
-            if (thread, stage) in opened:
+            if (thread, name) in opened:
                 worker.unpaired += 1
-            opened[thread, stage] = (time, key, pipeline)
+            opened[thread, name] = (time, fields)
             continue
         if kind == END:
-            begin = opened.pop((thread, stage), None)
+            begin = opened.pop((thread, name), None)
             if begin is None:
                 worker.unpaired += 1
                 continue
             t0 = begin[0]
-            if stage == EXEC:
-                worker.execs[key, pipeline].append((t0, time, seq2))
-            elif stage == ENQUEUE:
-                worker.enqueues[key, pipeline].append((t0, time))
-            elif stage in (SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT):
-                source_waits[thread][stage] = (t0, time, 0)
-            elif stage == SOURCE_FILL and key != (0, 0, 0):
-                stages = {**source_waits.pop(thread, {}), SOURCE_FILL: (t0, time, seq2 + offset if seq2 else 0)}
-                for successor in worker.siblings.get(pipeline, [pipeline]):
-                    worker.sources[key, successor] = stages
+            if name == "exec":
+                worker.execs[fields["key"], fields["pipeline"]].append((t0, time, fields["tuples"]))
+            elif name == "enqueue":
+                worker.enqueues[fields["key"], fields["pipeline"]].append((t0, time))
+            elif name in (SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT):
+                source_waits[thread][name] = (t0, time, 0)
+            elif name == SOURCE_FILL and fields["key"] != (0, 0, 0):
+                first_data = fields["firstData"] + clock_offset if fields["firstData"] else 0
+                stages = {**source_waits.pop(thread, {}), SOURCE_FILL: (t0, time, first_data)}
+                for successor in worker.siblings.get(fields["pipeline"], [fields["pipeline"]]):
+                    worker.sources[fields["key"], successor] = stages
             continue
-        if stage == EMIT:
-            worker.emits[key].append((time, (origin2, seq2, chunk2), pipeline))
-        elif stage == NET_SEND:
-            sends[key].append((time, worker))
-        elif stage == NET_RECV:
-            worker.receives[key, pipeline] = time
-        elif stage == COUNTER:
-            worker.counters[pipeline].append((time, struct.unpack("<q", struct.pack("<Q", seq2))[0]))
+        if name == "emit":
+            worker.emits[fields["output"]].append((time, fields["input"], fields["pipeline"]))
+        elif name == "net send":
+            sends[fields["key"]].append((time, worker))
+        elif name == "net recv":
+            received = fields["received"] + clock_offset if fields["received"] else time
+            worker.receives[fields["key"], fields["pipeline"]] = received
+        elif name == "counter":
+            worker.counters[fields["counter"]].append((time, fields["value"]))
     # A worker that waits for its next task when the trace ends is idle, not stuck.
-    worker.open_spans = [
-        (stage, thread, key, pipeline, t) for (thread, stage), (t, key, pipeline) in opened.items() if stage != TASK_QUEUE_WAIT
-    ]
+    worker.open_spans = [(name, thread, fields.get("key", (0, 0, 0)), fields.get("pipeline", 0), t)
+                         for (thread, name), (t, fields) in opened.items() if name != TASK_QUEUE_WAIT]
 
 
 def warmup_end(workers):
@@ -427,7 +490,7 @@ def open_spans(workers):
         for stage, thread, key, pipeline, t in worker.open_spans:
             label = worker.label(pipeline) if pipeline else "-"
             key_text = "/".join(map(str, key)) if key != (0, 0, 0) else "-"
-            spans.append((STAGE_NAMES[stage], label, f"{worker.name}/{thread}", key_text, (worker.end - t) / 1e6))
+            spans.append((stage, label, f"{worker.name}/{thread}", key_text, (worker.end - t) / 1e6))
     return sorted(spans, key=lambda span: -span[4])
 
 
