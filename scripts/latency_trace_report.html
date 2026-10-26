@@ -49,6 +49,7 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
 .edge.network.focus { stroke: var(--accent); stroke-width: 2.5; }
 .edgelabel { fill: var(--muted); font-size: 11px; }
 #selection { color: var(--muted); font-size: 12px; }
+#gantt text.hovered { fill: var(--accent) !important; font-weight: 600; }
 #open table { border-collapse: collapse; font-size: 12px; width: 100%; }
 #open td, #open th { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
 #open td.age { text-align: right; font-variant-numeric: tabular-nums; }
@@ -422,10 +423,25 @@ function renderGantt(chain) {
       categoryorder: "array", categoryarray: laneOrder},
     legend: {orientation: "h", y: 1.02, yanchor: "bottom", x: 0}, margin: {l: 16, r: 16, t: 28, b: 44},
   }), plotConfig);
+  highlightHoveredRow(document.getElementById("gantt"));
   document.getElementById("gantt-note").textContent = activity
     ? "Below the buffer: what every thread of the workers it passed through did meanwhile, and their counters. Gaps on worker threads are untraced work, e.g. tasks of untraced queries. With scripts/latency_sched.sh, a CPU row under each thread shows when it ran, when it was runnable but waited for a CPU, and when another thread had asked to wake it but it was not woken yet."
     : "Thread activity and counters are exported for the slowest buffers and a sample of the others; pick one of those.";
   renderGanttCounters(chain, activity);
+}
+
+/// Highlights the y-axis label of the row a hovered bar belongs to.
+function highlightHoveredRow(element) {
+  if (element.highlightWired) return;
+  element.highlightWired = true;
+  const labels = axis => element.querySelectorAll(`.${axis}tick text`);
+  element.on("plotly_hover", event => {
+    const point = event.points[0];
+    for (const label of labels(point.yaxis._id)) {
+      if (label.textContent === String(point.y)) label.classList.add("hovered");
+    }
+  });
+  element.on("plotly_unhover", () => element.querySelectorAll(".hovered").forEach(label => label.classList.remove("hovered")));
 }
 
 /// The counters of the chain's workers over the window of its thread activity.
