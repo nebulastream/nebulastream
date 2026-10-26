@@ -304,11 +304,14 @@ def walk(worker, key, pipeline, end, sends):
         name = f"exec {worker.label(pipeline)}"
     enqueue = latest(worker.enqueues.get((key, pipeline), []), execution[0])
     label, node = worker.label(pipeline), pipeline_node(worker, pipeline)
+    # A worker can start the task before the enqueuing thread returns from the enqueue call, e.g. when the enqueuing thread loses
+    # its CPU after waking the worker. The enqueue then ends where the execution begins.
+    queued = min(enqueue[1], execution[0])
     # The handoff starts where the previous segment ended, e.g. a statistic listener between emit and enqueue.
     segments = [
         (f"handoff {label}", enqueue[0], enqueue[0], node),
-        (f"enqueue {label}", enqueue[0], enqueue[1], node),
-        (f"queue {label}", enqueue[1], execution[0], node),
+        (f"enqueue {label}", enqueue[0], queued, node),
+        (f"queue {label}", queued, execution[0], node),
         (name, execution[0], end, node),
     ]
 

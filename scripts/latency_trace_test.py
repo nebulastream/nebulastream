@@ -131,7 +131,8 @@ with tempfile.TemporaryDirectory() as d:
         begin(SOURCE_BACKPRESSURE, 0, SOURCE), end(SOURCE_BACKPRESSURE, 10 * US, SOURCE),
         begin(SOURCE_BUFFER_WAIT, 10 * US, SOURCE), end(SOURCE_BUFFER_WAIT, 20 * US, SOURCE),
         begin(SOURCE_FILL, 20 * US, SOURCE), end(SOURCE_FILL, 300 * US, SOURCE, raw, 1, 100 * US),
-        *span(ENQUEUE, raw, 310 * US, 320 * US, 1, SOURCE),
+        # The source thread returns from the enqueue only after the worker started the task.
+        *span(ENQUEUE, raw, 310 * US, 335 * US, 1, SOURCE),
         # The formatter enqueues its output while it executes, so the enqueue nests inside the execution.
         begin(EXEC, 330 * US, ENGINE, raw, 1),
         point(EMIT, formatted, 350 * US, 1, raw),
@@ -197,6 +198,8 @@ assert incomplete == 1 and len(chains) == 1, (chains, incomplete)
 segments = chains[0]["segments"]
 names = [name for name, _, _ in segments]
 assert names[0] == "source fill (batching)", names
+durations = {name: (t1 - t0) // US for name, t0, t1 in segments}
+assert durations["enqueue P1 InputFormatter"] == 20 and durations["exec P1 InputFormatter"] == 20, durations
 assert chains[0]["query"] == "Q1"
 assert "enqueue P1 InputFormatter" in names, names
 network = {name.removesuffix(" P2 NetworkSink"): (t1 - t0) // US for name, t0, t1 in segments if name.startswith("net ")}
