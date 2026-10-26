@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Records OS scheduling events next to an event trace, so the latency report can show when threads ran, waited for a CPU or slept.
+# Records OS scheduling events next to an event trace, so the latency report can show when threads ran, waited for a CPU, were
+# being woken or slept.
 #
 #   sudo scripts/latency_sched.sh <out-file> <pid> [seconds]
 #
@@ -27,7 +28,8 @@ pid=$2
 seconds=${3:-}
 tracing=/sys/kernel/tracing
 [ -d "$tracing/events" ] || mount -t tracefs nodev "$tracing"
-events=("$tracing/events/sched/sched_switch/enable" "$tracing/events/sched/sched_wakeup/enable")
+# sched_waking fires on the waking thread when it asks to wake another one; sched_wakeup when the woken thread becomes runnable.
+events=("$tracing/events/sched/sched_switch/enable" "$tracing/events/sched/sched_waking/enable" "$tracing/events/sched/sched_wakeup/enable")
 
 stop() {
   echo 0 > "$tracing/tracing_on"

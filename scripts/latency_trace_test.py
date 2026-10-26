@@ -174,15 +174,18 @@ with tempfile.TemporaryDirectory() as d:
         begin(EXEC, 1790 * US, 3, (9, 2, 1), 4),
         end(EXEC, 1795 * US, 4, (9, 3, 1), 4),
     ])
-    # The engine thread of worker A is woken at 325us, waits 5us for a CPU, runs the formatter and sleeps from 362us.
+    # A thread of another process asks to wake the engine thread of worker A at 321us; it is woken at 325us, waits 5us for a CPU,
+    # runs the formatter and sleeps from 362us.
     (Path(d) / "sched.txt").write_text(
+        "producer-77 [003] d.... 0.000321: sched_waking: comm=WorkerThread-0 pid=4402 prio=120 target_cpu=001\n"
         "<idle>-0 [001] dNh.. 0.000325: sched_wakeup: comm=WorkerThread-0 pid=4402 prio=120 target_cpu=001\n"
         "<idle>-0 [001] d.... 0.000330: sched_switch: prev_comm=swapper/1 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=WorkerThread-0 next_pid=4402 next_prio=120\n"
         # A record cut off and glued to the next one, as trace_pipe produces when it is read too slowly.
         "WorkerThread-0-4402 [001] d.... 0.000340: sched_switch: prev_comm=WorkerThread-0 prev_pid=4402   other-9 [002] d.... 0.000341: sched_switch: prev_comm=other prev_pid=9 prev_prio=120 prev_state=S ==> next_comm=x next_pid=4402 next_prio=120\n"
         "WorkerThread-0-4402 [001] d.... 0.000362: sched_switch: prev_comm=WorkerThread-0 prev_pid=4402 prev_prio=120 prev_state=S ==> next_comm=swapper/1 next_pid=0 next_prio=120\n")
     workers, sends = lt.load(sorted(Path(d).glob("*.bin")))
-    assert workers[0].cpu[ENGINE] == [(325 * US, 330 * US, lt.RUNNABLE), (330 * US, 362 * US, lt.RUNNING)], workers[0].cpu
+    assert workers[0].cpu[ENGINE] == [(321 * US, 325 * US, lt.WAKE_REQUESTED, "producer-77"), (325 * US, 330 * US, lt.RUNNABLE, ""),
+                                      (330 * US, 362 * US, lt.RUNNING, "")], workers[0].cpu
     # Every pipeline runs once here, so the only chain starts during warm-up.
     assert lt.stitch(workers, sends)[0] == []
     chains, incomplete, _ = lt.stitch(workers, sends, skip_warmup=False)

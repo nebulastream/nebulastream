@@ -220,23 +220,26 @@ def load(paths):
     return workers, sends
 
 
-RUNNING, RUNNABLE = 0, 1
-CPU_STATES = ["running", "waiting for a CPU"]
-SCHED_LINE = re.compile(r"^\s*.+-(\d+)\s+\[\d+\]\s+\S+\s+(\d+\.\d+): (sched_switch|sched_wakeup): (.*)$")
+RUNNING, RUNNABLE, WAKE_REQUESTED = 0, 1, 2
+CPU_STATES = ["running", "waiting for a CPU", "wake requested"]
+SCHED_LINE = re.compile(r"^\s*(.+)-(\d+)\s+\[\d+\]\s+\S+\s+(\d+\.\d+): (sched_switch|sched_waking|sched_wakeup): (.*)$")
 
 
 def load_sched(path, workers):
-    """When the traced threads ran and waited for a CPU, from scripts/latency_sched.sh. A woken or preempted thread waits for a CPU
-    until it is switched in; a thread that switched out otherwise sleeps. Lines can be cut off and glued to the next record, so
-    such lines are skipped, and a transition that implies a lost record drops the interval instead of stretching it."""
+    """When the traced threads ran, waited for a CPU and were being woken, from scripts/latency_sched.sh: (t0, t1, CPU state,
+    waking thread) per trace thread. A sleeping thread is "wake requested" from sched_waking, when another thread asks to wake it,
+    until sched_wakeup, when it becomes runnable; a woken or preempted thread waits for a CPU until it is switched in; a thread that
+    switched out otherwise sleeps. Lines can be cut off and glued to the next record, so such lines are skipped, and a transition
+    that implies a lost record drops the interval instead of stretching it."""
     threads = {os_thread: (worker, thread) for worker in workers for thread, (os_thread, _) in worker.thread_ids.items()}
-    state = {}  # OS thread id -> (CPU state or None for sleeping, since)
+    names = {os_thread: f"{name} ({worker.name})" for worker in workers for os_thread, name in worker.thread_ids.values()}
+    state = {}  # OS thread id -> (CPU state or None for sleeping, since, waking thread)
 
     def leave(os_thread, time, expected):
-        current, since = state.get(os_thread, (None, time))
+        current, since, waker = state.get(os_thread, (None, time, ""))
         if current == expected and os_thread in threads:
             worker, thread = threads[os_thread]
-            worker.cpu[thread].append((since + worker.clock_offset, time + worker.clock_offset, current))
+            worker.cpu[thread].append((since + worker.clock_offset, time + worker.clock_offset, current, waker))
 
     skipped = 0
     with path.open() as lines:
@@ -245,19 +248,25 @@ def load_sched(path, workers):
             if not match or line.count(": sched_") > 1:
                 skipped += 1
                 continue
-            time, event, fields = round(float(match.group(2)) * 1e9), match.group(3), match.group(4)
-            if event == "sched_wakeup":
+            comm, current, time, event, fields = match.group(1).strip(), int(match.group(2)), round(float(match.group(3)) * 1e9), match.group(4), match.group(5)
+            if event != "sched_switch":
                 woken = int(re.search(r" pid=(\d+)", " " + fields).group(1))
-                if state.get(woken, (None, 0))[0] != RUNNABLE:
-                    state[woken] = (RUNNABLE, time)
+                if event == "sched_waking":
+                    if state.get(woken, (None,))[0] is None:
+                        state[woken] = (WAKE_REQUESTED, time, names.get(current, f"{comm}-{current}"))
+                    continue
+                leave(woken, time, WAKE_REQUESTED)
+                if state.get(woken, (None,))[0] != RUNNABLE:
+                    state[woken] = (RUNNABLE, time, "")
                 continue
             previous = int(re.search(r"prev_pid=(\d+)", fields).group(1))
             next_thread = int(re.search(r"next_pid=(\d+)", fields).group(1))
             preempted = re.search(r"prev_state=(\S+)", fields).group(1).startswith("R")
             leave(previous, time, RUNNING)
-            state[previous] = (RUNNABLE if preempted else None, time)
+            state[previous] = (RUNNABLE if preempted else None, time, "")
             leave(next_thread, time, RUNNABLE)
-            state[next_thread] = (RUNNING, time)
+            leave(next_thread, time, WAKE_REQUESTED)
+            state[next_thread] = (RUNNING, time, "")
     for spans in (worker.cpu for worker in workers):
         for intervals in spans.values():
             intervals.sort()
@@ -636,7 +645,7 @@ def chain_workers(chain, by_name):
 def thread_activity(chain, workers, span_names):
     """What the threads of the chain's workers did while the chain's buffer was on its way: lanes of
     (worker index, thread, name, [(start, duration, span name index, category, pipeline, key, tuples, part of the chain)],
-    [(start, duration, CPU state)]) in us relative to the chain's start. Gaps on worker threads are untraced work; the CPU states need scripts/latency_sched.sh."""
+    [(start, duration, CPU state, waking thread)]) in us relative to the chain's start. Gaps on worker threads are untraced work; the CPU states need scripts/latency_sched.sh."""
     start, end = chain["segments"][0][1], chain["segments"][-1][2]
     pad = max(500_000, (end - start) // 10)
     low, high = start - pad, end + pad
@@ -668,8 +677,8 @@ def thread_activity(chain, workers, span_names):
                     position = max(position, b)
             cpu = worker.cpu.get(thread, [])
             first = max(0, bisect.bisect_left(cpu, (low,)) - 1)
-            cpu_segments = [[round((max(t0, low) - start) / 1000), round((min(t1, high) - max(t0, low)) / 1000), state]
-                            for t0, t1, state in cpu[first:] if t1 > low and t0 < high]
+            cpu_segments = [[round((max(t0, low) - start) / 1000), round((min(t1, high) - max(t0, low)) / 1000), state, waker]
+                            for t0, t1, state, waker in cpu[first:] if t1 > low and t0 < high]
             if segments or cpu_segments:
                 name = worker.thread_ids.get(thread, (0, ""))[1] or f"{role} thread {thread}"
                 lanes.append([workers.index(worker), thread, name, segments, cpu_segments])

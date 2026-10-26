@@ -351,7 +351,7 @@ function renderCdf(list) {
 const workerLabel = name => `W${DATA.workers.indexOf(name) + 1}`;
 const nodeWorkers = node => DATA.nodes[node].split(">").map(part => workerLabel(part.split("/")[0])).join("→");
 const SPAN_COLORS = {"exec": "#2a78d6", "task queue wait": "#c9c7bf", "untraced work": "#5f5e5a", "enqueue": "#eda100"};
-const CPU_COLORS = ["#3fa34d", "#d0503b"];
+const CPU_COLORS = ["#3fa34d", "#d0503b", "#e3b23c"];
 const spanColor = name => SPAN_COLORS[name] || (name.startsWith("source") ? "#eb6834" : "#9085e9");
 
 function renderGantt(chain) {
@@ -393,18 +393,21 @@ function renderGantt(chain) {
         pattern: label === "untraced work" ? {shape: "/", fgcolor: css("--card"), size: 6} : undefined},
       hovertemplate: `${label}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<br>%{customdata[2]}<extra></extra>`});
   }
-  /// OS scheduling (scripts/latency_sched.sh): below each thread, when it ran and when it was runnable but waited for a CPU.
+  /// OS scheduling (scripts/latency_sched.sh): below each thread, when it ran, waited for a CPU, or was asked to wake up by another
+  /// thread and not woken yet.
+  const waker = name => name.replace(/\((.+)\)$/, (_, worker) => `(${DATA.workers.includes(worker) ? workerLabel(worker) : worker})`);
   DATA.cpuStates.forEach((state, index) => {
     const series = {y: [], x: [], base: [], customdata: []};
     for (const lane of lanes) {
-      for (const [start, us, cpu] of lane[4]) {
+      for (const [start, us, cpu, by] of lane[4]) {
         if (cpu !== index) continue;
-        series.y.push(cpuName(lane)); series.x.push(ms(us)); series.base.push(ms(start)); series.customdata.push([ms(us), ms(start)]);
+        series.y.push(cpuName(lane)); series.x.push(ms(us)); series.base.push(ms(start));
+        series.customdata.push([ms(us), ms(start), by ? `<br>requested by ${waker(by)}` : ""]);
       }
     }
     if (series.y.length) {
       traces.push({type: "bar", orientation: "h", yaxis: "y2", name: state, ...series, width: 0.5,
-        marker: {color: CPU_COLORS[index]}, hovertemplate: `${state}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms<extra></extra>`});
+        marker: {color: CPU_COLORS[index]}, hovertemplate: `${state}: %{customdata[0]:.3f} ms, from %{customdata[1]:.3f} ms%{customdata[2]}<extra></extra>`});
     }
   });
   const laneOrder = lanes.flatMap(lane => (lane[4].length ? [laneName(lane), cpuName(lane)] : [laneName(lane)]));
@@ -420,7 +423,7 @@ function renderGantt(chain) {
     legend: {orientation: "h", y: 1.02, yanchor: "bottom", x: 0}, margin: {l: 16, r: 16, t: 28, b: 44},
   }), plotConfig);
   document.getElementById("gantt-note").textContent = activity
-    ? "Below the buffer: what every thread of the workers it passed through did meanwhile, and their counters. Gaps on worker threads are untraced work, e.g. tasks of untraced queries. With scripts/latency_sched.sh, a CPU row under each thread shows when it ran and when it was runnable but waited for a CPU."
+    ? "Below the buffer: what every thread of the workers it passed through did meanwhile, and their counters. Gaps on worker threads are untraced work, e.g. tasks of untraced queries. With scripts/latency_sched.sh, a CPU row under each thread shows when it ran, when it was runnable but waited for a CPU, and when another thread had asked to wake it but it was not woken yet."
     : "Thread activity and counters are exported for the slowest buffers and a sample of the others; pick one of those.";
   renderGanttCounters(chain, activity);
 }
