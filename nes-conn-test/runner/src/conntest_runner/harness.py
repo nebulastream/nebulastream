@@ -19,6 +19,7 @@ It is the only timer outside the harness.
 from __future__ import annotations
 
 import contextlib
+import shutil
 import socket
 import subprocess
 import tempfile
@@ -27,7 +28,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Self
+from typing import IO, Any, Self
 
 from conntest_runner.protocol import Got, HarnessError, read_reply
 
@@ -45,8 +46,17 @@ class FillResult:
 
 
 class _HarnessProc:
-    def __init__(self, argv: list[str], server: socket.socket, *, accept_timeout: float = _ACCEPT_TIMEOUT_S) -> None:
-        self.proc = subprocess.Popen(argv)  # noqa: S603  # argv is runner-built, not untrusted input
+    def __init__(
+        self,
+        argv: list[str],
+        server: socket.socket,
+        *,
+        log: IO[bytes] | None = None,
+        accept_timeout: float = _ACCEPT_TIMEOUT_S,
+    ) -> None:
+        # Without a log, the harness writes to the runner's stdout and stderr.
+        stderr = subprocess.STDOUT if log is not None else None
+        self.proc = subprocess.Popen(argv, stdout=log, stderr=stderr)  # noqa: S603  # argv is runner-built, not untrusted input
         # The accept polls the process, so a harness that exits before connecting fails at once and with its exit code.
         server.settimeout(_ACCEPT_POLL_S)
         deadline = time.monotonic() + accept_timeout
@@ -114,13 +124,18 @@ class _Stepper:
         config: Path,
         extra_args: list[str] | None = None,
         global_deadline_s: float = _DEFAULT_GLOBAL_DEADLINE_S,
+        log_path: Path | None = None,
     ) -> None:
+        """``log_path`` collects the output of every harness process of the case, a respawned one included."""
+        self._log = log_path.open("ab") if log_path is not None else None
         self._inferior_argv = [
             str(harness),
             f"--mode={mode}",
             f"--config={config}",
             *(extra_args or []),
         ]
+        # The socket lives outside the test's tmp_path, which can exceed the 108-byte AF_UNIX path limit.
+        # It is the directory's only file, so cleanup removes the directory.
         self._dir = Path(tempfile.mkdtemp(prefix="conntest-"))
         self._sock_path = self._dir / f"ctl-{uuid.uuid4().hex}.sock"
         self._server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -137,7 +152,7 @@ class _Stepper:
 
     def _spawn(self) -> None:
         argv = [*self._inferior_argv, f"--control-sock={self._sock_path}"]
-        self._proc = _HarnessProc(argv, self._server)
+        self._proc = _HarnessProc(argv, self._server, log=self._log)
 
     def _command(self, line: str) -> Got:
         if self._proc is None:
@@ -159,11 +174,11 @@ class _Stepper:
         if self._proc is not None:
             self._proc.end_session()
             self._proc = None
-        try:
+        with contextlib.suppress(OSError):
             self._server.close()
-            self._sock_path.unlink()
-        except OSError:
-            pass
+        shutil.rmtree(self._dir, ignore_errors=True)
+        if self._log is not None:
+            self._log.close()
 
     def __enter__(self) -> Self:
         return self

@@ -129,6 +129,8 @@ def test_scenario(
         observed_path=observed_path,
         extra_args=[f"--observed-path={observed_path}", f"--buffer-size={_BUFFER_SIZE}"],
         global_deadline_s=_GLOBAL_DEADLINE_S,
+        # Kept next to the config and the observed bytes, so a failed case has all of its artifacts in one place.
+        log_path=tmp_path / "harness.log",
     ) as source:
         n_buffers = _buffers(scenario)
         ctx = Ctx(
