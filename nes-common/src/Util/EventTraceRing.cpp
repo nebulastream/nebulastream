@@ -36,6 +36,7 @@
     #include <type_traits>
     #include <utility>
     #include <vector>
+    #include <pthread.h>
     #include <unistd.h>
     #include <fmt/format.h>
     #include <rfl/to_view.hpp>
@@ -47,7 +48,8 @@
 ///              id u16, name, category u8, payload size u32, field count u16,
 ///              per field: name, type u8 ('k' Key, 'u' uint64_t, 'i' int64_t), offset u32
 ///            where a name is a length u16 followed by its bytes
-///   chunks:  until the end of the file: thread u16, length u32, then `length` bytes of records of that thread
+///   chunks:  until the end of the file: thread u16, length u32, then `length` bytes of records of that thread. The plan file
+///            names each thread: `thread <thread> <OS thread id> <name>`.
 ///   record:  type u16, kind u8 (EventTrace::Kind), time u64, then the event's payload
 namespace NES::EventTrace::Ring
 {
@@ -160,6 +162,15 @@ struct FileHeader
 
 static_assert(sizeof(FileHeader) == 96, "FileHeader layout is part of the file format");
 
+uint64_t osThreadId()
+{
+    #ifdef __linux__
+    return static_cast<uint64_t>(gettid());
+    #else
+    return 0;
+    #endif
+}
+
 std::string prefix()
 {
     const auto* env = std::getenv("NES_LATENCY_TRACE_PREFIX"); /// NOLINT(concurrency-mt-unsafe) read once during initialization
@@ -222,11 +233,21 @@ public:
     Recorder& operator=(const Recorder&) = delete;
     Recorder& operator=(Recorder&&) = delete;
 
+    /// Called by the thread the ring belongs to. Its OS thread id and name go into the plan, so the stitcher can match the thread
+    /// with OS scheduling events (scripts/latency_sched.sh).
     std::shared_ptr<RingBuffer> registerRing()
     {
+        std::array<char, 16> name{};
+        pthread_getname_np(pthread_self(), name.data(), name.size());
         const std::scoped_lock lock(mutex);
         auto ring = std::make_shared<RingBuffer>(nextThread++);
         rings.push_back(ring);
+        if (planFile != nullptr)
+        {
+            const auto line = fmt::format("thread {} {} {}\n", ring->thread, osThreadId(), name.data());
+            std::fwrite(line.data(), 1, line.size(), planFile);
+            std::fflush(planFile);
+        }
         return ring;
     }
 
