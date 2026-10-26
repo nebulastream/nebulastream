@@ -94,12 +94,9 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     }
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
-    const std::string& host,
-    const std::string& port,
-    const std::string& target,
-    const std::string& body,
-    const std::chrono::milliseconds timeout)
+    std::string host, std::string port, std::string target, std::string body, const std::chrono::milliseconds timeout)
 {
     using boost::asio::use_awaitable;
     if (!stream || connectedTo != host + ":" + port)
@@ -114,7 +111,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
         connectedTo = host + ":" + port;
     }
 
-    http::request<http::string_body> request{http::verb::post, target, 11, body};
+    http::request<http::string_body> request{http::verb::post, target, 11, std::move(body)};
     request.set(http::field::host, host + ":" + port);
     request.set(http::field::content_type, "text/plain");
     request.keep_alive(true);

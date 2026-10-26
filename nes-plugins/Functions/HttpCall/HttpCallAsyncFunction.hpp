@@ -39,12 +39,9 @@ public:
     boost::asio::awaitable<std::string> call(std::vector<std::string> arguments) override;
 
 private:
-    boost::asio::awaitable<std::string> exchange(
-        const std::string& host,
-        const std::string& port,
-        const std::string& target,
-        const std::string& body,
-        std::chrono::milliseconds timeout);
+    /// Takes its arguments by value, as a coroutine has to own what it reads after its first suspension.
+    boost::asio::awaitable<std::string>
+    exchange(std::string host, std::string port, std::string target, std::string body, std::chrono::milliseconds timeout);
 
     std::optional<boost::beast::tcp_stream> stream;
     boost::beast::flat_buffer buffer;
