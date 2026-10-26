@@ -15,9 +15,11 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <AntlrSQLParser.h>
@@ -75,7 +77,7 @@ struct SourceOption
 {
     std::string group;
     std::string key;
-    std::string value;
+    std::variant<std::string, int64_t> value;
 };
 
 /// Adds config options to a physical source statement that the rewriter already emitted.

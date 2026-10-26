@@ -17,14 +17,15 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
 #include <tuple>
-#include <unordered_map>
-#include <utility>
+#include <variant>
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/connect.hpp>
@@ -32,12 +33,17 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/system/detail/error_code.hpp>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -54,13 +60,107 @@ std::string describe(const boost::system::error_code& error)
 {
     return error.message() + " [" + error.category().name() + ":" + std::to_string(error.value()) + "]";
 }
+
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::optional<std::string>> SOCKET_HOST{
+    Identifier::parse("SOCKET_HOST"),
+    "The host from which to read.",
+    [](const ConfigLiteral& literal) -> std::expected<std::optional<std::string>, Exception>
+    {
+        if (std::holds_alternative<std::monostate>(literal))
+        {
+            return std::nullopt;
+        }
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>());
+    }};
+
+const ConfigField<std::optional<uint32_t>> SOCKET_PORT{
+    Identifier::parse("SOCKET_PORT"),
+    "The port of the host from which to read, any number from 1 to including 65535",
+    [](const ConfigLiteral& literal) -> std::expected<std::optional<uint32_t>, Exception>
+    {
+        if (std::holds_alternative<std::monostate>(literal))
+        {
+            return std::nullopt;
+        }
+        return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>())
+            .and_then(narrowConfigValue<int64_t, uint32_t, 65535, 1>)
+            .transform([](const uint32_t value) { return std::optional{value}; });
+    }};
+
+/// Upper bound on how long a partial buffer is held back. Zero flushes as soon as bytes arrive.
+/// An empty buffer waits for data, peer close, or stop independently of this interval.
+const ConfigField<uint32_t> FLUSH_INTERVAL_MS{
+    Identifier::parse("FLUSH_INTERVAL_MS"),
+    "How long to hold a partially filled buffer, in whole milliseconds.",
+    [](const ConfigLiteral& literal)
+    { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(narrowConfigValue<int64_t, uint32_t>); },
+    100};
+
+const ConfigField<uint32_t> CONNECT_TIMEOUT_MS{
+    Identifier::parse("CONNECT_TIMEOUT_MS"),
+    "How long to wait for the TCP connection, in whole milliseconds. DNS resolution is not included.",
+    [](const ConfigLiteral& literal)
+    { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(narrowConfigValue<int64_t, uint32_t>); },
+    5000};
+
+/// Additional safety marker to prevent people from not setting host and port by accident outside of the systests
+const ConfigField<bool> OVERWRITEABLE_HOST_AND_PORT{
+    Identifier::parse("OVERWRITEABLE_HOST_AND_PORT"), "Internal marker, do NOT overwrite this", false};
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+
 }
 
-TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
-    : host(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::SOCKET_HOST))
-    , port(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::SOCKET_PORT))
-    , connectTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::CONNECT_TIMEOUT_MS))
-    , flushInterval(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::FLUSH_INTERVAL_MS))
+Schema<QualifiedErasedConfigField, Ordered> TCPSource::getConfigSchema()
+{
+    return createConfigSchema(
+        Identifier::parse("TCP_SOURCE"), SOCKET_HOST, SOCKET_PORT, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT_MS, OVERWRITEABLE_HOST_AND_PORT);
+}
+
+std::expected<TCPSourceConfig, Exception> TCPSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    bool overwriteableHostAndPort = config.get(OVERWRITEABLE_HOST_AND_PORT);
+    if (!overwriteableHostAndPort)
+    {
+        /// HOST and PORT are optional config fields so that the systests can set them, but at the end of the day they still need to be set.
+        if (!config.get(SOCKET_HOST).has_value())
+        {
+            return std::unexpected{InvalidConfigParameter("TCPSource: Missing required parameter: SOCKET_HOST")};
+        }
+        if (!config.get(SOCKET_PORT).has_value())
+        {
+            return std::unexpected{InvalidConfigParameter("TCPSource: Missing required parameter: SOCKET_PORT")};
+        }
+    }
+    else
+    {
+        if (config.get(SOCKET_HOST).has_value() and config.get(SOCKET_PORT).has_value())
+        {
+            overwriteableHostAndPort = false;
+        }
+        if (config.get(SOCKET_HOST).has_value() != config.get(SOCKET_PORT).has_value())
+        {
+            return std::unexpected{InvalidConfigParameter("TCPSource: HOST and PORT must be set together or left out in systests")};
+        }
+    }
+
+    /// In the overwriteable (systest) case host/port may be absent; the systest data adaptors
+    /// (provideInlineData/provideFileData) fill in the mock server's host and port later.
+    return TCPSourceConfig{
+        .socketDestination = overwriteableHostAndPort
+            ? std::optional<SocketDestination>{}
+            /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) - non-overwriteable configs always carry host and port
+            : SocketDestination{.socketHost = config.get(SOCKET_HOST).value(), .socketPort = config.get(SOCKET_PORT).value()},
+        .flushIntervalMs = config.get(FLUSH_INTERVAL_MS),
+        .connectTimeoutMs = config.get(CONNECT_TIMEOUT_MS)};
+}
+
+TCPSource::TCPSource(const TCPSourceConfig& config)
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) - the endpoint is supplied before construction
+    : host(config.socketDestination.value().socketHost)
+    , port(config.socketDestination.value().socketPort) /// NOLINT(bugprone-unchecked-optional-access)
+    , connectTimeout(config.connectTimeoutMs)
+    , flushInterval(config.flushIntervalMs)
 {
 }
 
@@ -195,11 +295,6 @@ void TCPSource::close()
     boost::system::error_code closeError;
     std::ignore = socket.close(closeError);
     NES_DEBUG("TCPSource to {}:{} closed", host, port);
-}
-
-DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersTCPSource>(std::move(config), NAME);
 }
 
 }

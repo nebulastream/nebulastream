@@ -28,7 +28,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -51,6 +50,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/sstream.h>
 #include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <TestTaskQueue.hpp>
 #include <Util.hpp>
 #include <val.hpp>
@@ -99,7 +99,7 @@ struct TestConfig
     size_t numRequiredBuffers{};
     uint64_t sizeOfRawBuffers{};
     uint64_t sizeOfFormattedBuffers{};
-    DescriptorConfig::Config parserConfig;
+    InputFormatterDescriptor parserConfig;
     std::vector<TestDataTypes> testSchema;
     const MemoryLayoutType memoryLayoutType;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
@@ -171,6 +171,11 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     std::shared_ptr<BufferManager> sourceBufferPool,
     size_t numberOfRequiredSourceBuffers);
 
+/// Resolves the literal values against the formatter's declared config schema and instantiates
+/// the formatter-defined config struct via the config registries.
+InputFormatterDescriptor
+provideInputFormatterDescriptor(const std::string& type, const std::vector<std::pair<std::string, std::string>>& values);
+
 /// Waits until source reached EoS
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
 
@@ -178,7 +183,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpe
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const DescriptorConfig::Config& parserConfiguration,
+    const InputFormatterDescriptor& parserConfiguration,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,

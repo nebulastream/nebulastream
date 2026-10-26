@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <cstring>
 #include <exception>
+#include <expected>
 #include <future>
 #include <memory>
 #include <mutex>
@@ -31,8 +32,11 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -40,6 +44,8 @@
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
+#include <Util/Variant.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -62,6 +68,48 @@ namespace NES
 
 namespace
 {
+/// Sizes and counts arrive as signed integer literals.
+std::expected<size_t, Exception> sizeFromLiteral(const ConfigLiteral& literal)
+{
+    return NES::tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>);
+}
+
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::string> CHANNEL{
+    Identifier::parse("CHANNEL"),
+    "UUID of the channel the Handoff sink of the same stage hands its buffers to",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<std::string, Exception>
+                {
+                    if (!stringToUUID(value))
+                    {
+                        return std::unexpected{InvalidConfigParameter("AsyncSource: channel must be a valid UUID, got: {}", value)};
+                    }
+                    return value;
+                });
+    }};
+
+const ConfigField<std::string> CALLS{Identifier::parse("CALLS"), "JSON list of the calls of the stage, see AsyncSourceConfig::calls"};
+
+const ConfigField<std::string> INPUT_FIELDS{Identifier::parse("INPUT_FIELDS"), "Comma-separated field order of the handed-off rows"};
+
+const ConfigField<size_t> MAX_CONCURRENCY{
+    Identifier::parse("MAX_CONCURRENCY"), "Rows whose calls are in flight at the same time", sizeFromLiteral, size_t{16}};
+
+const ConfigField<size_t> CHANNEL_CAPACITY{
+    Identifier::parse("CHANNEL_CAPACITY"),
+    "Buffers the channel holds, if this source creates it",
+    sizeFromLiteral,
+    HandoffChannel::DEFAULT_CAPACITY};
+
+const ConfigField<size_t> MAX_RETRIES{
+    Identifier::parse("MAX_RETRIES"), "Further attempts of a failed call, the n-th after 100 ms * 2^n", sizeFromLiteral, size_t{0}};
+
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+
 /// One event loop for all Async sources, so concurrent calls cost neither a thread per call nor a thread per source.
 /// ponytail: one loop thread; add threads if completions get expensive, the per-source strands keep that safe
 class SharedEventLoop
@@ -107,14 +155,31 @@ void requireVarSized(const DataType& type, std::string_view what)
 }
 }
 
-AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
-    : channelId(sourceDescriptor.getFromConfig(ConfigParametersAsync::CHANNEL))
-    , channelCapacity(sourceDescriptor.getFromConfig(ConfigParametersAsync::CHANNEL_CAPACITY))
-    , maxConcurrency(std::max<size_t>(1, sourceDescriptor.getFromConfig(ConfigParametersAsync::MAX_CONCURRENCY)))
-    , maxRetries(sourceDescriptor.getFromConfig(ConfigParametersAsync::MAX_RETRIES))
+Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
+{
+    return createConfigSchema(
+        Identifier::parse("ASYNC_SOURCE"), CHANNEL, CALLS, INPUT_FIELDS, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
+}
+
+std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return AsyncSourceConfig{
+        .channel = config.get(CHANNEL),
+        .calls = config.get(CALLS),
+        .inputFields = config.get(INPUT_FIELDS),
+        .maxConcurrency = config.get(MAX_CONCURRENCY),
+        .channelCapacity = config.get(CHANNEL_CAPACITY),
+        .maxRetries = config.get(MAX_RETRIES)};
+}
+
+AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor)
+    : channelId(config.channel)
+    , channelCapacity(config.channelCapacity)
+    , maxConcurrency(std::max<size_t>(1, config.maxConcurrency))
+    , maxRetries(config.maxRetries)
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
-    const auto descriptions = rfl::json::read<std::vector<AsyncCall>>(sourceDescriptor.getFromConfig(ConfigParametersAsync::CALLS));
+    const auto descriptions = rfl::json::read<std::vector<AsyncCall>>(config.calls);
     if (!descriptions)
     {
         throw CannotOpenSource("malformed CALLS of async source: {}", descriptions.error().what());
@@ -122,14 +187,13 @@ AsyncSource::AsyncSource(const SourceDescriptor& sourceDescriptor)
 
     /// Row layout: fields packed in order, each taking its size including the null flag.
     std::unordered_map<std::string, std::pair<size_t, DataType>> outputFields;
-    for (const auto& field : *sourceDescriptor.getLogicalSource().getSchema())
+    for (const auto& field : sourceDescriptor.getSchema())
     {
         outputFields.emplace(fmt::format("{}", field.getFullyQualifiedName()), std::pair{outputRowSize, field.getDataType()});
         outputRowSize += field.getDataType().getSizeInBytesWithNull();
     }
     std::unordered_map<std::string, size_t> inputOffsets;
-    for (const auto& name : sourceDescriptor.getFromConfig(ConfigParametersAsync::INPUT_FIELDS) | std::views::split(',')
-             | std::ranges::to<std::vector<std::string>>())
+    for (const auto& name : config.inputFields | std::views::split(',') | std::ranges::to<std::vector<std::string>>())
     {
         const auto field = outputFields.find(name);
         if (field == outputFields.end())
@@ -550,11 +614,6 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
 std::ostream& AsyncSource::toString(std::ostream& str) const
 {
     return str << "AsyncSource(" << channelId << ")";
-}
-
-DescriptorConfig::Config AsyncSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersAsync>(std::move(config), NAME);
 }
 
 }

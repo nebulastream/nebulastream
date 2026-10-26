@@ -142,7 +142,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         Identifier::parse("Network"),
         orderedUpstreamSchema,
         Host(channel.downstreamNode.getRawValue()),
-        {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "NATIVE"}},
+        {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
         sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
@@ -354,7 +354,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
         Identifier::parse("Async"),
         asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(),
         Host(node.getRawValue()),
-        {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "NATIVE"}},
+        {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
         sourceConfig);
     INVARIANT(asyncSourceDescriptor.has_value(), "Failed to add physical source for async operator");
     const auto sourceTraits = asyncOp.getTraitSet()

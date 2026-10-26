@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <deque>
 #include <exception>
+#include <expected>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -25,15 +26,16 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/UUID.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/io_context.hpp>
@@ -42,6 +44,27 @@
 
 namespace NES
 {
+
+struct AsyncSourceConfig
+{
+    /// UUID of the channel the `Handoff` sink of the same stage hands its buffers to.
+    std::string channel;
+    /// JSON list of `AsyncCall`: the fields each call's values go to, the async function's type and configuration, and
+    /// per argument the handed-off field it reads ({"field": ...}), a constant ({"constant": ...}) or a value of an
+    /// earlier call ({"call": ..., "output": ...}).
+    std::string calls;
+    /// Comma-separated field order of the handed-off rows. They have the same fields as this source's
+    /// output, possibly in a different order.
+    std::string inputFields;
+    /// Rows whose calls are in flight at the same time. A function of the stage may lower it.
+    size_t maxConcurrency;
+    /// Only used if the source opens before the Handoff sink, which then finds the channel this source created.
+    size_t channelCapacity;
+    /// Further attempts of a failed call, the n-th after 100 ms * 2^n.
+    size_t maxRetries;
+
+    static std::expected<AsyncSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// Consumer half of an asynchronously executed operator: takes the buffers the `Handoff` sink with the
 /// same channel handed off, evaluates the async calls and fills in their result slots.
@@ -59,7 +82,7 @@ class AsyncSource final : public Source
 public:
     static constexpr std::string_view NAME = "Async";
 
-    explicit AsyncSource(const SourceDescriptor& sourceDescriptor);
+    AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor);
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
@@ -68,7 +91,7 @@ public:
     /// Origin id, sequence and chunk number and watermark are taken over from the handed-off buffers.
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -185,61 +208,5 @@ private:
     std::vector<boost::asio::cancellation_signal> cancelSignals;
     bool stopping = false;
 };
-
-/// NOLINTBEGIN(cert-err58-cpp)
-struct ConfigParametersAsync
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "CHANNEL",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        {
-            auto value = DescriptorConfig::tryGet(CHANNEL, config);
-            if (value && !stringToUUID(*value))
-            {
-                return std::nullopt;
-            }
-            return value;
-        }};
-
-    /// JSON list of `AsyncCall`: the fields each call's values go to, the async function's type and configuration, and
-    /// per argument the handed-off field it reads ({"field": ...}), a constant ({"constant": ...}) or a value of an
-    /// earlier call ({"call": ..., "output": ...}).
-    static inline const DescriptorConfig::ConfigParameter<std::string> CALLS{
-        "CALLS",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CALLS, config); }};
-
-    /// Comma-separated field order of the handed-off rows. They have the same fields as this source's
-    /// output, possibly in a different order.
-    static inline const DescriptorConfig::ConfigParameter<std::string> INPUT_FIELDS{
-        "INPUT_FIELDS",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FIELDS, config); }};
-
-    /// Rows whose calls are in flight at the same time. A function of the stage may lower it.
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_CONCURRENCY{
-        "MAX_CONCURRENCY",
-        size_t{16},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_CONCURRENCY, config); }};
-
-    /// Only used if the source opens before the Handoff sink, which then finds the channel this source created.
-    static inline const DescriptorConfig::ConfigParameter<size_t> CHANNEL_CAPACITY{
-        "CHANNEL_CAPACITY",
-        HandoffChannel::DEFAULT_CAPACITY,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL_CAPACITY, config); }};
-
-    /// Further attempts of a failed call, the n-th after 100 ms * 2^n.
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_RETRIES{
-        "MAX_RETRIES",
-        size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RETRIES, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, CHANNEL, CALLS, INPUT_FIELDS, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
-};
-
-/// NOLINTEND(cert-err58-cpp)
 
 }
