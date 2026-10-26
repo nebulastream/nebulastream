@@ -22,8 +22,70 @@ teardown_file() {
   nes_distributed_teardown_file
 }
 
-setup()         { nes_distributed_setup; }
-teardown()      { nes_distributed_teardown; }
+setup() {
+  nes_distributed_setup
+  # Records container lifecycle events with timestamps, e.g. to time the restart of the TCP peer.
+  # Compose names the project after the test directory, lowercased and without characters other than [a-z0-9_-].
+  local project
+  project=$(basename "$TEST_DIR" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9_-')
+  local event event_filters=()
+  for event in create start restart kill die stop pause unpause oom health_status destroy; do
+    event_filters+=(--filter "event=$event")
+  done
+  docker events --filter "label=com.docker.compose.project=$project" --filter type=container "${event_filters[@]}" \
+    --format '{{.TimeNano}} {{index .Actor.Attributes "com.docker.compose.service"}} {{.Action}} {{index .Actor.Attributes "exitCode"}}' \
+    > "$TEST_DIR/docker-events.raw" 2>&1 3>&- &
+  TCP_SINK_EVENTS_PID=$!
+}
+
+teardown() {
+  if [ -z "${BATS_TEST_COMPLETED:-}" ]; then
+    dump_failure_diagnostics
+  fi
+  nes_distributed_teardown
+  kill "$TCP_SINK_EVENTS_PID" 2>/dev/null || true
+  wait "$TCP_SINK_EVENTS_PID" 2>/dev/null || true
+  # Docker's format templates cannot format time, so convert the nanosecond timestamps to match the other logs.
+  local nanoseconds rest
+  [ -f "$TEST_DIR/docker-events.raw" ] || return 0
+  while read -r nanoseconds rest; do
+    echo "$(date -u -d "@${nanoseconds:0:-9}.${nanoseconds: -9}" +%Y-%m-%dT%H:%M:%S.%NZ) $rest"
+  done < "$TEST_DIR/docker-events.raw" > "$TEST_DIR/docker-events.log"
+  rm -f "$TEST_DIR/docker-events.raw"
+}
+
+# Writes the socket state of both TCP endpoints and a summary of the received rows to *.log files, which CI uploads,
+# and to the test output. Send-Q on the worker together with Recv-Q on nc tell whether the peer stopped reading
+# or the data never arrived; gaps and duplicates in the ids show data lost or resent around a reconnect.
+dump_failure_diagnostics() {
+  local service container
+  for service in worker-1 tcp-client; do
+    container=$(docker compose ps -q "$service" 2>/dev/null)
+    {
+      echo "Sockets of $service:"
+      if [ -n "$container" ]; then
+        # Only the sink connection on port 9000; the worker also holds many gRPC health-check sockets.
+        docker run --rm --network "container:$container" busybox:1.38.0 netstat -tn 2>&1 | grep -E 'Proto|:9000 '
+      else
+        echo "not running"
+      fi
+    } | tee "$TEST_DIR/sockets-$service.log" | sed 's/^/# /' >&3
+  done
+
+  local ids distinct
+  ids=$(cut -d, -f1 "$TEST_DIR/results.csv" 2>/dev/null | grep -E '^[0-9]+$' | sort -n)
+  # grep -c exits non-zero when it counts nothing, which would abort the teardown.
+  distinct=$(uniq <<< "$ids" | grep -c . || true)
+  {
+    echo "results.csv: $(stat -c %s "$TEST_DIR/results.csv" 2>/dev/null || echo 0) bytes, $(grep -c . <<< "$ids") rows with an id"
+    if [ "$distinct" -gt 0 ]; then
+      local first last
+      first=$(head -n 1 <<< "$ids")
+      last=$(tail -n 1 <<< "$ids")
+      echo "ids $first..$last: $distinct distinct, $((last - first + 1 - distinct)) missing, $(uniq -d <<< "$ids" | grep -c .) duplicated"
+    fi
+  } | tee "$TEST_DIR/results-summary.log" | sed 's/^/# /' >&3
+}
 
 @test "streams formatted output to nc" {
   setup_distributed tests/good/example.yaml

@@ -45,6 +45,8 @@
 #include <cpptrace/from_current_macros.hpp> ///NOLINT(misc-include-cleaner)
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -56,6 +58,8 @@ namespace NES
 namespace
 {
 constexpr std::chrono::milliseconds::rep IO_POLL_INTERVAL_MS = 10;
+/// Interval at which a write that cannot make progress logs the socket state.
+constexpr std::chrono::seconds STALL_WARNING_INTERVAL{5};
 constexpr int MILLISECONDS_PER_SECOND = 1'000;
 
 template <typename State>
@@ -480,9 +484,56 @@ std::optional<TCPChannel::Socket> TCPChannel::connectUntil(const std::chrono::mi
     throw CannotOpenSink("Failed to connect TCPChannel to {}:{} within {} milliseconds: {}", host, port, timeout.count(), details);
 }
 
-TCPChannel::IOResult TCPChannel::writeData(const std::span<const char> data, Socket& socket, const std::stop_token& stopToken)
+/// Formats the local and remote endpoints of a connected socket, e.g. to match it against the peer's accepted connection.
+std::string TCPChannel::describeConnection(const Socket& socket)
+{
+    ResolvedAddress local;
+    ResolvedAddress remote;
+    local.size = sizeof(local.storage);
+    remote.size = sizeof(remote.storage);
+    /// POSIX socket name lookups accept sockaddr while the addresses use sockaddr_storage.
+    auto* localAddress = reinterpret_cast<sockaddr*>(&local.storage); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    auto* remoteAddress = reinterpret_cast<sockaddr*>(&remote.storage); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (getsockname(socket.get(), localAddress, &local.size) != 0 || getpeername(socket.get(), remoteAddress, &remote.size) != 0)
+    {
+        return fmt::format("unknown endpoints: {}", getErrorMessageFromERRNO());
+    }
+    local.family = local.storage.ss_family;
+    remote.family = remote.storage.ss_family;
+    return fmt::format("{} -> {}", local.toString(), remote.toString());
+}
+
+/// Formats the kernel's TCP state of the socket to tell a peer that does not read (zero-window probes)
+/// apart from a peer that does not acknowledge (retransmissions).
+std::string TCPChannel::describeTcpState(const Socket& socket)
+{
+    tcp_info info{};
+    socklen_t infoSize = sizeof(info);
+    if (getsockopt(socket.get(), IPPROTO_TCP, TCP_INFO, &info, &infoSize) != 0)
+    {
+        return fmt::format("TCP_INFO unavailable: {}", getErrorMessageFromERRNO());
+    }
+    return fmt::format(
+        "{}, tcp state {}, unacked segments {}, not sent bytes {}, acked bytes {}, retransmits {}, total retransmits {}, "
+        "zero-window probes {}, backoff {}, rto {} us, last ack received {} ms ago, last data sent {} ms ago",
+        describeConnection(socket),
+        info.tcpi_state,
+        info.tcpi_unacked,
+        info.tcpi_notsent_bytes,
+        info.tcpi_bytes_acked,
+        info.tcpi_retransmits,
+        info.tcpi_total_retrans,
+        info.tcpi_probes,
+        info.tcpi_backoff,
+        info.tcpi_rto,
+        info.tcpi_last_ack_recv,
+        info.tcpi_last_data_sent);
+}
+
+TCPChannel::IOResult TCPChannel::writeData(const std::span<const char> data, Socket& socket, const std::stop_token& stopToken) const
 {
     size_t offset = 0;
+    std::optional<std::chrono::steady_clock::time_point> stalledSince;
     while (offset < data.size())
     {
         if (stopToken.stop_requested())
@@ -494,6 +545,7 @@ TCPChannel::IOResult TCPChannel::writeData(const std::span<const char> data, Soc
         if (written > 0)
         {
             offset += static_cast<size_t>(written);
+            stalledSince.reset();
             continue;
         }
         if (written < 0 && errno == EINTR)
@@ -502,11 +554,26 @@ TCPChannel::IOResult TCPChannel::writeData(const std::span<const char> data, Soc
         }
         if (written < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
         {
+            const auto now = std::chrono::steady_clock::now();
+            if (!stalledSince)
+            {
+                stalledSince = now;
+            }
             pollfd descriptor{.fd = socket.get(), .events = POLLOUT, .revents = 0};
-            const auto pollResult = pollWithStop(std::span{&descriptor, 1}, std::nullopt, stopToken);
+            const auto pollResult = pollWithStop(std::span{&descriptor, 1}, now + STALL_WARNING_INTERVAL, stopToken);
             if (pollResult == PollResult::Stopped)
             {
                 return IOResult::Stopped;
+            }
+            if (pollResult == PollResult::TimedOut)
+            {
+                NES_WARNING(
+                    "TCPChannel to {}:{} has not been writable for {} ms: {}",
+                    host,
+                    port,
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - *stalledSince).count(),
+                    describeTcpState(socket));
+                continue;
             }
             if ((static_cast<uint32_t>(descriptor.revents) & static_cast<uint32_t>(POLLOUT)) != 0)
             {
@@ -571,7 +638,7 @@ TCPChannel::writeBuffer(const TupleBuffer& buffer, std::optional<Socket>& socket
         {
             return IOResult::Stopped;
         }
-        NES_INFO("Reconnected TCPChannel to {}:{}.", host, port);
+        NES_INFO("Reconnected TCPChannel to {}:{} ({}).", host, port, describeConnection(*socket));
     }
 }
 
@@ -588,7 +655,7 @@ void TCPChannel::run(const std::stop_token& stopToken)
         {
             return;
         }
-        NES_INFO("Connected TCPChannel to {}:{}.", host, port);
+        NES_INFO("Connected TCPChannel to {}:{} ({}).", host, port, describeConnection(*socket));
 
         while (true)
         {
