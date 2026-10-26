@@ -40,6 +40,12 @@ class SemanticCallAsyncFunction final : public AsyncFunction
 {
 public:
     explicit SemanticCallAsyncFunction(SemanticCallPayload payload);
+    /// The last instance of the process to go reports the run's latency and tokens (`SemanticCallStats`).
+    ~SemanticCallAsyncFunction() override;
+    SemanticCallAsyncFunction(const SemanticCallAsyncFunction&) = delete;
+    SemanticCallAsyncFunction& operator=(const SemanticCallAsyncFunction&) = delete;
+    SemanticCallAsyncFunction(SemanticCallAsyncFunction&&) = delete;
+    SemanticCallAsyncFunction& operator=(SemanticCallAsyncFunction&&) = delete;
 
     /// The configuration is the encoded `SemanticCallPayload`.
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);

@@ -15,6 +15,7 @@
 #include <SemanticCallAsyncFunction.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
@@ -32,6 +33,7 @@
 #include <ErrorHandling.hpp>
 #include <MockSemanticBackend.hpp>
 #include <SemanticCallPayload.hpp>
+#include <SemanticCallStats.hpp>
 #include <SemanticModelCatalog.hpp>
 #include <SemanticRowPayload.hpp>
 
@@ -78,10 +80,37 @@ std::vector<std::string> mockColumns(const SemanticModelConfig& config)
     return columns;
 }
 
+/// Instances alive in this process. Each Async source slot owns one, so the last one to go marks the end of a run, which
+/// is when the measurement is reported.
+std::atomic<size_t> liveInstances{0};
+
+/// The `usage` block of a chat-completion envelope, as vLLM, Ollama and the hosted APIs send it.
+void recordUsage(const nlohmann::json& envelope)
+{
+    const auto count = [&](const char* const field) -> std::optional<uint64_t>
+    {
+        if (!envelope.contains("usage") || !envelope["usage"].is_object() || !envelope["usage"].contains(field)
+            || !envelope["usage"][field].is_number_unsigned())
+        {
+            return std::nullopt;
+        }
+        return envelope["usage"][field].get<uint64_t>();
+    };
+    const auto prompt = count("prompt_tokens");
+    const auto completion = count("completion_tokens");
+    const bool cutOff = envelope.contains("choices") && envelope["choices"].is_array() && !envelope["choices"].empty()
+        && envelope["choices"][0].is_object() && envelope["choices"][0].value("finish_reason", "") == "length";
+    SemanticCallStats::instance().recordUsage(prompt && completion, prompt.value_or(0), completion.value_or(0), cutOff);
+}
+
 /// `choices[0].message.content` of a chat-completion envelope, if it has one.
 std::optional<std::string> messageContent(const std::string& body)
 {
     const auto envelope = nlohmann::json::parse(body, nullptr, false);
+    if (envelope.is_object())
+    {
+        recordUsage(envelope);
+    }
     if (!envelope.is_object() || !envelope.contains("choices") || !envelope["choices"].is_array() || envelope["choices"].empty())
     {
         return std::nullopt;
@@ -126,6 +155,16 @@ SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded
     {
         throw CannotOpenSource("Semantic model '{}' has unknown backend '{}'", payload.model, config.backend);
     }
+    /// Counted last, so that an instance whose construction threw is not counted.
+    ++liveInstances;
+}
+
+SemanticCallAsyncFunction::~SemanticCallAsyncFunction()
+{
+    if (--liveInstances == 0)
+    {
+        SemanticCallStats::instance().reportAndReset("SEM_CALL");
+    }
 }
 
 AsyncFunctionRegistryReturnType SemanticCallAsyncFunction::create(AsyncFunctionRegistryArguments arguments)
@@ -169,11 +208,27 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const st
         co_return std::move(answer).value();
     }
 
-    const nlohmann::json request{
+    nlohmann::json request{
         {"model", payload.config.modelName},
         {"messages", nlohmann::json::array({{{"role", "user"}, {"content", prompt}}})},
         {"stream", false}};
-    const auto response = co_await http->post(request.dump());
+    if (payload.config.maxTokens > 0)
+    {
+        request["max_tokens"] = payload.config.maxTokens;
+    }
+    const auto start = std::chrono::steady_clock::now();
+    std::optional<SemanticHttpResponse> exchanged;
+    try
+    {
+        exchanged = co_await http->post(request.dump());
+    }
+    catch (...)
+    {
+        SemanticCallStats::instance().recordCall(start, std::chrono::steady_clock::now(), true);
+        throw;
+    }
+    const auto& response = *exchanged;
+    SemanticCallStats::instance().recordCall(start, std::chrono::steady_clock::now(), response.status < 200 || response.status >= 300);
     if (response.status < 200 || response.status >= 300)
     {
         throw CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body);

@@ -392,6 +392,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"MAX_RETRIES"},
     std::string_view{"MAX_WAIT_MS"},
     std::string_view{"TIMEOUT_SECONDS"},
+    std::string_view{"MAX_TOKENS"},
     std::string_view{"API_KEY_ENV"},
     std::string_view{"BACKEND"},
     std::string_view{"EXECUTION"},
@@ -472,6 +473,7 @@ SemanticExecution bindExecution(const std::unordered_map<Identifier, std::string
 constexpr size_t MaxBatchSize = 1024;
 constexpr size_t MaxConcurrency = 1024;
 constexpr size_t MaxRetries = 10;
+constexpr size_t MaxTokens = 1U << 20U;
 constexpr size_t MaxWaitMs = 3'600'000;
 constexpr size_t MaxTimeoutSeconds = 86'400;
 
@@ -536,6 +538,7 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .maxRetries = numericOption(statement.config, "MAX_RETRIES", 2, MaxRetries),
         .maxWaitTime = std::chrono::milliseconds{numericOption(statement.config, "MAX_WAIT_MS", 1000, MaxWaitMs)},
         .requestTimeout = std::chrono::seconds{numericOption(statement.config, "TIMEOUT_SECONDS", 600, MaxTimeoutSeconds)},
+        .maxTokens = numericOption(statement.config, "MAX_TOKENS", 0, MaxTokens),
         .apiKeyEnvVar = apiKeyEnv == nullptr ? std::optional<std::string>{} : std::optional<std::string>{*apiKeyEnv},
         .backend = optionalOption(statement.config, "BACKEND", "http"),
         .execution = bindExecution(statement.config),

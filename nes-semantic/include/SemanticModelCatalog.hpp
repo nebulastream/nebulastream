@@ -101,6 +101,8 @@ struct SemanticModelConfig
     /// How long a partial batch waits before it is flushed anyway.
     std::chrono::milliseconds maxWaitTime{1000};
     std::chrono::seconds requestTimeout{600};
+    /// Upper bound on the tokens one answer may generate, sent as the request's `max_tokens`. 0 sends none.
+    size_t maxTokens = 0;
     /// Name of the environment variable holding the API key — never the key itself.
     /// The catalog entry travels from the coordinator to the workers, so a secret
     /// stored here would travel with it. Resolved worker-locally during lowering.

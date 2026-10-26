@@ -58,6 +58,7 @@ struct EncodedPayload
     int64_t maxRetries;
     int64_t maxWaitTimeMs;
     int64_t requestTimeoutSeconds;
+    int64_t maxTokens;
     std::optional<std::string> apiKeyEnvVar;
     std::string backend;
     bool fusion;
@@ -109,6 +110,7 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .maxRetries = static_cast<int64_t>(config.maxRetries),
             .maxWaitTimeMs = static_cast<int64_t>(config.maxWaitTime.count()),
             .requestTimeoutSeconds = static_cast<int64_t>(config.requestTimeout.count()),
+            .maxTokens = static_cast<int64_t>(config.maxTokens),
             .apiKeyEnvVar = config.apiKeyEnvVar,
             .backend = config.backend,
             .fusion = config.fusion,
@@ -151,6 +153,7 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .maxRetries = static_cast<size_t>(value.maxRetries),
             .maxWaitTime = std::chrono::milliseconds{value.maxWaitTimeMs},
             .requestTimeout = std::chrono::seconds{value.requestTimeoutSeconds},
+            .maxTokens = static_cast<size_t>(value.maxTokens),
             .apiKeyEnvVar = std::move(value.apiKeyEnvVar),
             .backend = std::move(value.backend),
             /// SEM_CALL runs on the async framework whatever the model declares.

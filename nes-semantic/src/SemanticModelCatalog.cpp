@@ -58,6 +58,8 @@ struct
     std::optional<int64_t> maxRetries;
     std::optional<int64_t> maxWaitTimeMs;
     std::optional<int64_t> requestTimeoutSeconds;
+    /// Optional on read: catalogs reflected before MAX_TOKENS existed carry none, which means 0.
+    std::optional<int64_t> maxTokens;
     std::optional<std::string> apiKeyEnvVar;
     std::optional<std::string> backend;
     std::optional<int64_t> execution;
@@ -89,12 +91,13 @@ Enum unreflectEnum(const int64_t raw, const Enum last, const std::string_view wh
 
 Reflected reflectStep(const SemanticStep& step, const ReflectionContext& context)
 {
-    return context.reflect(detail::ReflectedSemanticStep{
-        .kind = std::make_optional(static_cast<int64_t>(step.kind)),
-        .prompt = std::make_optional(step.prompt),
-        .outputColumn = std::make_optional(step.outputColumn),
-        .outputValues = std::make_optional(step.outputValues),
-        .defaultValue = std::make_optional(step.defaultValue)});
+    return context.reflect(
+        detail::ReflectedSemanticStep{
+            .kind = std::make_optional(static_cast<int64_t>(step.kind)),
+            .prompt = std::make_optional(step.prompt),
+            .outputColumn = std::make_optional(step.outputColumn),
+            .outputValues = std::make_optional(step.outputValues),
+            .defaultValue = std::make_optional(step.defaultValue)});
 }
 
 SemanticStep unreflectStep(const Reflected& rfl, const ReflectionContext& context)
@@ -338,25 +341,27 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
         reflectedSteps.push_back(reflectStep(step, context));
     }
 
-    return context.reflect(detail::ReflectedSemanticModel{
-        .name = std::make_optional(model.getName()),
-        .endpoint = std::make_optional(config.endpoint),
-        .modelName = std::make_optional(config.modelName),
-        .datasetPrompt = std::make_optional(config.datasetPrompt),
-        .steps = std::make_optional(std::move(reflectedSteps)),
-        .payloadFormat = std::make_optional(static_cast<int64_t>(config.payloadFormat)),
-        .batchSize = std::make_optional(static_cast<int64_t>(config.batchSize)),
-        .maxConcurrency = std::make_optional(static_cast<int64_t>(config.maxConcurrency)),
-        .maxRetries = std::make_optional(static_cast<int64_t>(config.maxRetries)),
-        .maxWaitTimeMs = std::make_optional(static_cast<int64_t>(config.maxWaitTime.count())),
-        .requestTimeoutSeconds = std::make_optional(static_cast<int64_t>(config.requestTimeout.count())),
-        .apiKeyEnvVar = config.apiKeyEnvVar,
-        .backend = std::make_optional(config.backend),
-        .execution = std::make_optional(static_cast<int64_t>(config.execution)),
-        .preserveOrder = std::make_optional(config.preserveOrder),
-        .fusion = std::make_optional(config.fusion),
-        .inputs = std::make_optional(model.getSchema().inputs),
-        .outputs = std::make_optional(model.getSchema().outputs)});
+    return context.reflect(
+        detail::ReflectedSemanticModel{
+            .name = std::make_optional(model.getName()),
+            .endpoint = std::make_optional(config.endpoint),
+            .modelName = std::make_optional(config.modelName),
+            .datasetPrompt = std::make_optional(config.datasetPrompt),
+            .steps = std::make_optional(std::move(reflectedSteps)),
+            .payloadFormat = std::make_optional(static_cast<int64_t>(config.payloadFormat)),
+            .batchSize = std::make_optional(static_cast<int64_t>(config.batchSize)),
+            .maxConcurrency = std::make_optional(static_cast<int64_t>(config.maxConcurrency)),
+            .maxRetries = std::make_optional(static_cast<int64_t>(config.maxRetries)),
+            .maxWaitTimeMs = std::make_optional(static_cast<int64_t>(config.maxWaitTime.count())),
+            .requestTimeoutSeconds = std::make_optional(static_cast<int64_t>(config.requestTimeout.count())),
+            .maxTokens = std::make_optional(static_cast<int64_t>(config.maxTokens)),
+            .apiKeyEnvVar = config.apiKeyEnvVar,
+            .backend = std::make_optional(config.backend),
+            .execution = std::make_optional(static_cast<int64_t>(config.execution)),
+            .preserveOrder = std::make_optional(config.preserveOrder),
+            .fusion = std::make_optional(config.fusion),
+            .inputs = std::make_optional(model.getSchema().inputs),
+            .outputs = std::make_optional(model.getSchema().outputs)});
 }
 
 RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -390,6 +395,7 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .maxRetries = static_cast<size_t>(reflected.maxRetries.value()),
         .maxWaitTime = std::chrono::milliseconds{reflected.maxWaitTimeMs.value()},
         .requestTimeout = std::chrono::seconds{reflected.requestTimeoutSeconds.value()},
+        .maxTokens = static_cast<size_t>(reflected.maxTokens.value_or(0)),
         .apiKeyEnvVar = reflected.apiKeyEnvVar,
         .backend = std::move(reflected.backend).value(),
         .execution = unreflectEnum(reflected.execution.value(), SemanticExecution::ASYNCHRONOUS, "SemanticExecution"),
