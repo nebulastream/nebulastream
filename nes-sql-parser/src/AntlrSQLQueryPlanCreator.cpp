@@ -60,6 +60,7 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/JsonAggAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
@@ -1370,6 +1371,16 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             isAggregation = true;
             break;
         default:
+            /// JSON_AGG has no keyword of its own: it is an aggregation by name.
+            if (funcName == "JSON_AGG")
+            {
+                ensureFieldAccessArgument();
+                helpers.top().windowAggs.emplace_back(
+                    JsonAggAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                    std::nullopt);
+                isAggregation = true;
+                break;
+            }
             helpers.top().hasUnnamedAggregation = false;
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())

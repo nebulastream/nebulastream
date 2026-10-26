@@ -34,3 +34,6 @@ if (ENABLE_INFERENCE_TESTS)
 endif ()
 
 add_nes_physical_operator_test(StreamJoinProbePhysicalOperatorTest StreamJoinProbePhysicalOperatorTest.cpp)
+add_nes_physical_operator_test(JsonAggEncodingTest JsonAggEncodingTest.cpp)
+find_package(nlohmann_json CONFIG REQUIRED)
+target_link_libraries(JsonAggEncodingTest nlohmann_json::nlohmann_json)

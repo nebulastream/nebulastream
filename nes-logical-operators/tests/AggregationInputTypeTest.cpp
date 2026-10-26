@@ -46,6 +46,8 @@ namespace
 {
 
 constexpr std::array NonNumericAggregations{std::string_view{"COUNT"}};
+/// Aggregations over strings, which reject numbers instead; tested on their own below.
+constexpr std::array StringAggregations{std::string_view{"JSONAGG"}};
 
 class AggregationInputTypeTest : public ::testing::Test
 {
@@ -83,7 +85,7 @@ TEST_F(AggregationInputTypeTest, RejectsNonNumericInput)
 
     for (const auto& name : AggregationLogicalFunctionRegistry::instance().getRegisteredNames())
     {
-        if (std::ranges::contains(NonNumericAggregations, name))
+        if (std::ranges::contains(NonNumericAggregations, name) || std::ranges::contains(StringAggregations, name))
         {
             continue;
         }
@@ -107,8 +109,30 @@ TEST_F(AggregationInputTypeTest, AcceptsNumericInput)
 
     for (const auto& name : AggregationLogicalFunctionRegistry::instance().getRegisteredNames())
     {
+        if (std::ranges::contains(StringAggregations, name))
+        {
+            continue;
+        }
         SCOPED_TRACE(name);
         EXPECT_NO_THROW(std::ignore = createAggregation(name, Identifier::parse("i8")).withInferredType(schema));
+    }
+}
+
+TEST_F(AggregationInputTypeTest, JsonAggTakesNotNullStringsOnly)
+{
+    const auto schema = makeSource()->getOutputSchema();
+    const auto aggregation = createAggregation("JSONAGG", Identifier::parse("key")).withInferredType(schema);
+    EXPECT_TRUE(aggregation->getAggregateType().isType(DataType::Type::VARSIZED));
+    EXPECT_FALSE(aggregation->getAggregateType().nullable);
+    try
+    {
+        std::ignore = createAggregation("JSONAGG", Identifier::parse("i8")).withInferredType(schema);
+        ADD_FAILURE() << "Expected an UnsupportedQuery exception";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::UnsupportedQuery);
+        EXPECT_TRUE(toUpperCase(exception.what()).contains("JSON_AGG IS ONLY SUPPORTED ON NOT NULL VARSIZED FIELDS"));
     }
 }
 }
