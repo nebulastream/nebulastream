@@ -786,7 +786,10 @@ void ThreadPool::addThread(const Host& host)
             const WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
-                if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                NES_EVENT(EventTrace::begin(EventTrace::Stage::TaskQueueWait, {}, 0));
+                auto task = taskQueue.getNextTaskBlocking(stopToken);
+                NES_EVENT(EventTrace::end(EventTrace::Stage::TaskQueueWait, {}, 0));
+                if (task)
                 {
                     handleTask(worker, std::move(*task));
                 }

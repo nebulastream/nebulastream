@@ -43,8 +43,10 @@ from pathlib import Path
 
 HEADER = struct.Struct("<8sQQQ64s")
 EVENT = struct.Struct("<QQQQQQIIIBBH")
-SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL, ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV, COUNTER = range(9)
-STAGE_NAMES = ["source backpressure", "source buffer wait", "source fill", "enqueue", "exec", "emit", "net send", "net recv"]
+SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL, ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV, COUNTER, TASK_QUEUE_WAIT = range(10)
+STAGE_NAMES = [
+    "source backpressure", "source buffer wait", "source fill", "enqueue", "exec", "emit", "net send", "net recv", "counter", "task queue wait"
+]
 POINT, BEGIN, END = range(3)
 # A source that reports first data within this many ns of starting the fill found the data already waiting, so the data also
 # waited through the preceding backpressure and buffer acquisition.
@@ -175,7 +177,10 @@ def load_events(worker, data, offset, sends):
             worker.receives[key, pipeline] = time
         elif stage == COUNTER:
             worker.counters[pipeline].append((time, struct.unpack("<q", struct.pack("<Q", seq2))[0]))
-    worker.open_spans = [(stage, thread, key, pipeline, t) for (thread, stage), (t, key, pipeline) in opened.items()]
+    # A worker that waits for its next task when the trace ends is idle, not stuck.
+    worker.open_spans = [
+        (stage, thread, key, pipeline, t) for (thread, stage), (t, key, pipeline) in opened.items() if stage != TASK_QUEUE_WAIT
+    ]
 
 
 def warmup_end(workers):

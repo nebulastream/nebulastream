@@ -55,6 +55,8 @@ enum class Stage : uint16_t
     NetRecv = 7,
     /// A sample of a CounterUpdater. The pipeline field holds the counter id, `extra` the value.
     Counter = 8,
+    /// A worker thread waiting for its next task. Belongs to no buffer or query, so it is recorded for every worker.
+    TaskQueueWait = 9,
 };
 
 struct Key

@@ -74,6 +74,9 @@ with tempfile.TemporaryDirectory() as d:
         *span(lt.ENQUEUE, formatted, 351 * US, 352 * US, 2, ENGINE),
         end(lt.EXEC, 360 * US, ENGINE, raw, 1),
         *span(lt.EXEC, formatted, 400 * US, 410 * US, 2, ENGINE),
+        # Waits for the next task belong to no buffer; the worker still waits when the trace ends.
+        *span(lt.TASK_QUEUE_WAIT, (0, 0, 0), 365 * US, 395 * US, 0, ENGINE),
+        begin(lt.TASK_QUEUE_WAIT, 450 * US, ENGINE),
         point(lt.NET_SEND, formatted, 500 * US),
     ])
     # Worker B: its steady clock is 1000us ahead of the system clock.

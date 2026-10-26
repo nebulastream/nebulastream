@@ -29,9 +29,9 @@ namespace NES::EventTrace::Itt
 namespace
 {
 
-constexpr size_t StageCount = 9;
+constexpr size_t StageCount = 10;
 constexpr std::array<const char*, StageCount> StageNames
-    = {"SourceBackpressure", "SourceBufferWait", "SourceFill", "Enqueue", "Exec", "Emit", "NetSend", "NetRecv", "Counter"};
+    = {"SourceBackpressure", "SourceBufferWait", "SourceFill", "Enqueue", "Exec", "Emit", "NetSend", "NetRecv", "Counter", "TaskQueueWait"};
 
 /// Only accessed with the sampler's lock held, see EventTraceBackends.hpp.
 std::unordered_map<uint32_t, __itt_counter>& counters()
