@@ -242,6 +242,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "event_trace"
+version = "0.1.0"
+dependencies = [
+ "cxx",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -565,6 +572,7 @@ name = "nes_network_bindings"
 version = "0.1.0"
 dependencies = [
  "cxx",
+ "event_trace",
  "nes_network",
  "tokio",
  "tracing",

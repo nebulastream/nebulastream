@@ -1,0 +1,41 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <cstdint>
+#include <memory>
+#include <rust/cxx.h>
+
+/// The C++ side of the event_trace crate's bridge (nes-common/rust/event-trace/src/lib.rs).
+namespace NES::EventTrace::Rust
+{
+enum class Stage : uint16_t;
+struct Key;
+struct Sample;
+
+/// Owns the C++ CounterUpdater of a Rust counter. Without trace backends it holds nothing.
+class Counter
+{
+public:
+    virtual ~Counter() = default;
+};
+
+std::unique_ptr<Counter> create_counter(rust::Str name, rust::Box<Sample> sample);
+
+uint64_t now() noexcept;
+void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept;
+void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept;
+void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t time) noexcept;
+}

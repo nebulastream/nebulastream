@@ -90,6 +90,7 @@ if ("itt" IN_LIST NES_EVENT_TRACE_BACKENDS)
 endif ()
 
 add_subdirectory(rust/spdlog-bindings)
+add_subdirectory(rust/event-trace)
 
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
