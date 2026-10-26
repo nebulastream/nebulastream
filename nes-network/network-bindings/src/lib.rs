@@ -165,7 +165,9 @@ struct SenderNetworkService {
 /// The `chan` field contains the actual channel implementation. The indirection
 /// is necessary because `cxx` requires opaque types to be wrapped in structs.
 struct SenderDataChannel {
-    chan: SenderChannel,
+    /// Declared before the channel they sample, so they are dropped first.
+    counters: [event_trace::CounterUpdater; 2],
+    chan: Arc<SenderChannel>,
 }
 
 /// Wrapper around `ReceiverChannel` for C++ FFI.
@@ -453,7 +455,19 @@ fn register_sender_channel(
     }
     .map_err(|_| "The NetworkingService was closed unexpectedly")?;
 
-    Ok(Box::new(SenderDataChannel { chan: data_queue }))
+    let chan = Arc::new(data_queue);
+    let counter = |what: &str, sample: fn(&SenderChannel) -> usize| {
+        let chan = chan.clone();
+        event_trace::CounterUpdater::new(
+            &format!("network_channel_{channel_id}_{what}"),
+            move || sample(&chan) as i64,
+        )
+    };
+    let counters = [
+        counter("queued", SenderChannel::queued_buffers),
+        counter("unacknowledged", SenderChannel::unacknowledged_buffers),
+    ];
+    Ok(Box::new(SenderDataChannel { counters, chan }))
 }
 
 fn send_buffer(
@@ -488,5 +502,9 @@ fn flush_sender_channel(channel: &SenderDataChannel) -> bool {
 // CXX requires the usage of Boxed types
 #[allow(clippy::boxed_local)]
 fn close_sender_channel(channel: Box<SenderDataChannel>) {
-    channel.chan.close();
+    let SenderDataChannel { counters, chan } = *channel;
+    drop(counters);
+    Arc::into_inner(chan)
+        .expect("the counters held the only other references to the channel")
+        .close();
 }

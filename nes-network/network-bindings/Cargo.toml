@@ -22,4 +22,5 @@ crate-type = ["rlib", "staticlib"]
 cxx = { workspace = true }
 tokio = { workspace = true }
 nes_network = { workspace = true }
+event_trace = { workspace = true }
 tracing = { workspace = true }

@@ -16,6 +16,8 @@ use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -103,6 +105,16 @@ pub(super) enum ChannelCommand {
 pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
 pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
 
+/// Buffers that left the software queue of a channel, published by its channel handler for monitoring. Shared by all
+/// handlers of the channel, so it survives reconnects.
+#[derive(Default)]
+pub(super) struct ChannelStats {
+    /// Taken from the software queue but not written to the network yet.
+    pub pending_writes: AtomicUsize,
+    /// Written to the network and waiting for the receiver's acknowledgment.
+    pub awaiting_ack: AtomicUsize,
+}
+
 /// Core event loop handler for a sender-side data channel.
 ///
 /// `ChannelHandler` implements a reliable, ordered data transmission protocol with
@@ -142,6 +154,7 @@ pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     reader: DataChannelSenderReader<R>,
     queue: ChannelCommandQueueListener,
     max_pending_acks: usize,
+    stats: Arc<ChannelStats>,
 }
 
 enum ErrorOrStatus {
@@ -157,6 +170,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         reader: DataChannelSenderReader<R>,
         writer: DataChannelSenderWriter<W>,
         max_pending_acks: usize,
+        stats: Arc<ChannelStats>,
     ) -> Self {
         Self {
             cancellation_token,
@@ -166,6 +180,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             writer,
             queue,
             max_pending_acks,
+            stats,
         }
     }
     /// Handles commands from the `SenderChannel` (software side).
@@ -358,6 +373,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// entering `select!` so the receiver can see previously fed data and send acks.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
+            self.stats
+                .pending_writes
+                .store(self.pending_writes.len(), Ordering::Relaxed);
+            self.stats
+                .awaiting_ack
+                .store(self.wait_for_ack.len(), Ordering::Relaxed);
             let should_read_from_software = self.wait_for_ack.len() < self.max_pending_acks;
             let should_read_from_other_side = !self.wait_for_ack.is_empty();
             let should_send_pending = !self.pending_writes.is_empty();
@@ -479,6 +500,7 @@ async fn channel_handler(
         reader,
         writer,
         pending_channel.max_pending_acks,
+        pending_channel.stats,
     );
     handler.run().await
 }
