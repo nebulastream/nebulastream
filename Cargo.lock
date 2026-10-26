@@ -555,6 +555,7 @@ name = "nes_network"
 version = "0.1.0"
 dependencies = [
  "async-channel",
+ "event_trace",
  "futures",
  "pin-project",
  "serde",

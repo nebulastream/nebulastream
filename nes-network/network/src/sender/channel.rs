@@ -196,7 +196,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         channel_control_message: ChannelCommand,
     ) -> InternalResult<()> {
         match channel_control_message {
-            ChannelCommand::Data(data) => self.pending_writes.push_back(data),
+            ChannelCommand::Data(data) => {
+                crate::trace::step(crate::trace::NetStep::Dequeue, &data);
+                self.pending_writes.push_back(data)
+            }
             ChannelCommand::Flush(done) => {
                 Self::cancellable(&self.cancellation_token, self.writer.flush())
                     .await?
@@ -237,11 +240,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 }
             }
             DataChannelResponse::AckData(seq) => {
-                if self.wait_for_ack.remove(&seq).is_none() {
+                let Some(buffer) = self.wait_for_ack.remove(&seq) else {
                     return Err(ErrorOrStatus::Error(
                         format!("Protocol Error. Unknown Seq {seq:?}").into(),
                     ));
                 };
+                crate::trace::step(crate::trace::NetStep::Acked, &buffer);
                 trace!("Ack for {seq:?}");
             }
         }
@@ -297,6 +301,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 // feed() succeeded — now move to wait_for_ack
                 sent.fetch_add(1, Ordering::Relaxed);
                 let buffer = pending_writes.pop_front().expect("BUG: was front");
+                crate::trace::step(crate::trace::NetStep::Encoded, &buffer);
                 assert!(
                     wait_for_ack.insert(sequence_number, buffer).is_none(),
                     "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was sent via a single channel."

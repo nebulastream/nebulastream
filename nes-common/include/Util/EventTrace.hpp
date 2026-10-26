@@ -157,6 +157,44 @@ struct NetRecv
     uint64_t received = 0;
 };
 
+/// Steps of a buffer through the network layer between NetSend and NetRecv, recorded by the Rust network crate for traced
+/// buffers. Sender: taken from the channel's software queue, serialized for the socket, acknowledged by the receiver.
+/// Receiver: decoded from the socket, put into the queue the network source reads.
+struct NetDequeue
+{
+    static constexpr std::string_view name = "net dequeue";
+    static constexpr Category category = Category::Other;
+    Key key;
+};
+
+struct NetEncoded
+{
+    static constexpr std::string_view name = "net encoded";
+    static constexpr Category category = Category::Other;
+    Key key;
+};
+
+struct NetAcked
+{
+    static constexpr std::string_view name = "net acked";
+    static constexpr Category category = Category::Other;
+    Key key;
+};
+
+struct NetDecoded
+{
+    static constexpr std::string_view name = "net decoded";
+    static constexpr Category category = Category::Other;
+    Key key;
+};
+
+struct NetQueued
+{
+    static constexpr std::string_view name = "net queued";
+    static constexpr Category category = Category::Other;
+    Key key;
+};
+
 /// A sample of a CounterUpdater.
 struct CounterSample
 {
@@ -167,8 +205,22 @@ struct CounterSample
 };
 
 /// The position of a type in this list is its id in the ring format.
-using EventTypes
-    = std::tuple<SourceBackpressure, SourceBufferWait, SourceFill, Enqueue, Exec, TaskQueueWait, Emit, NetSend, NetRecv, CounterSample>;
+using EventTypes = std::tuple<
+    SourceBackpressure,
+    SourceBufferWait,
+    SourceFill,
+    Enqueue,
+    Exec,
+    TaskQueueWait,
+    Emit,
+    NetSend,
+    NetRecv,
+    CounterSample,
+    NetDequeue,
+    NetEncoded,
+    NetAcked,
+    NetDecoded,
+    NetQueued>;
 
 namespace detail
 {

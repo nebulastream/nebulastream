@@ -14,10 +14,20 @@
 
 //! Safe Rust API for the NebulaStream event trace (nes-common/include/Util/EventTrace.hpp).
 //!
-//! All FFI lives in this crate. Without trace backends in the C++ build, counters are never sampled.
+//! All FFI lives in this crate. Without trace backends in the C++ build, counters are never sampled and events are dropped.
 
 #[cxx::bridge(namespace = "NES::EventTrace::Rust")]
 mod ffi {
+    /// A step of a buffer through the network layer, see the Net* event types in EventTrace.hpp.
+    #[repr(u8)]
+    enum NetStep {
+        Dequeue,
+        Encoded,
+        Acked,
+        Decoded,
+        Queued,
+    }
+
     extern "Rust" {
         type Sample;
         fn sample(sample: &Sample) -> i64;
@@ -28,7 +38,15 @@ mod ffi {
 
         type Counter;
         fn create_counter(name: &str, sample: Box<Sample>) -> UniquePtr<Counter>;
+        fn net_step(step: NetStep, origin: u64, seq: u64, chunk: u64);
     }
+}
+
+pub use ffi::NetStep;
+
+/// Records that the buffer (origin, sequence number, chunk number) reached `step` in the network layer.
+pub fn net_step(step: NetStep, (origin, seq, chunk): (u64, u64, u64)) {
+    ffi::net_step(step, origin, seq, chunk);
 }
 
 struct Sample(Box<dyn Fn() -> i64 + Send + Sync>);

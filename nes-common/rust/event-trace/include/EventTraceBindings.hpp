@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <rust/cxx.h>
 
@@ -21,6 +22,7 @@
 namespace NES::EventTrace::Rust
 {
 struct Sample;
+enum class NetStep : uint8_t;
 
 /// Owns the C++ CounterUpdater of a Rust counter. Without trace backends it holds nothing.
 class Counter
@@ -30,4 +32,5 @@ public:
 };
 
 std::unique_ptr<Counter> create_counter(rust::Str name, rust::Box<Sample> sample);
+void net_step(NetStep step, uint64_t origin, uint64_t seq, uint64_t chunk) noexcept;
 }

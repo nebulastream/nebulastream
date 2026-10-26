@@ -14,6 +14,7 @@
 
 #include <EventTraceBindings.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <string_view>
 #include <utility>
@@ -47,10 +48,37 @@ std::unique_ptr<Counter> create_counter(rust::Str name, rust::Box<Sample> sample
     return std::make_unique<TracedCounter>(name, std::move(sample));
 }
 
+void net_step(NetStep step, uint64_t origin, uint64_t seq, uint64_t chunk) noexcept
+{
+    const Key key{.origin = origin, .seq = seq, .chunk = chunk};
+    switch (step)
+    {
+        case NetStep::Dequeue:
+            instant(NetDequeue{.key = key});
+            return;
+        case NetStep::Encoded:
+            instant(NetEncoded{.key = key});
+            return;
+        case NetStep::Acked:
+            instant(NetAcked{.key = key});
+            return;
+        case NetStep::Decoded:
+            instant(NetDecoded{.key = key});
+            return;
+        case NetStep::Queued:
+            instant(NetQueued{.key = key});
+            return;
+    }
+}
+
 #else
 std::unique_ptr<Counter> create_counter(rust::Str, rust::Box<Sample>)
 {
     return std::make_unique<Counter>();
+}
+
+void net_step(NetStep, uint64_t, uint64_t, uint64_t) noexcept
+{
 }
 
 #endif
