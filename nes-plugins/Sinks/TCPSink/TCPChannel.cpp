@@ -446,6 +446,7 @@ std::optional<TCPChannel::Socket> TCPChannel::connectUntil(const std::chrono::mi
                 auto result = tryConnect(address, std::min(addressBudget, timeLeft), stopToken);
                 if (auto* connected = std::get_if<Ok>(&result))
                 {
+                    NES_DEBUG("TCPChannel to {}:{} connected via {}", host, port, address.toString());
                     return std::move(connected->socket);
                 }
                 if (std::holds_alternative<Stopped>(result))

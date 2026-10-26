@@ -23,7 +23,29 @@ teardown_file() {
 }
 
 setup()         { nes_distributed_setup; }
-teardown()      { nes_distributed_teardown; }
+teardown() {
+  # ponytail: diagnostics for the rare stall after the peer restart; remove once that is understood
+  if [ -z "${BATS_TEST_COMPLETED:-}" ]; then
+    dump_tcp_diagnostics > diagnostics.log 2>&1 || true
+  fi
+  nes_distributed_teardown
+}
+
+# Records whether the sink's connection is alive and whether its peer reads:
+# /proc/net/tcp shows each socket's state and its tx/rx queue sizes on both ends.
+dump_tcp_diagnostics() {
+  date -u +%FT%T.%NZ
+  docker compose ps --all
+  docker inspect --format '{{.Name}} started={{.State.StartedAt}} pid={{.State.Pid}} {{range .NetworkSettings.Networks}}ip={{.IPAddress}} mac={{.MacAddress}}{{end}}' \
+    $(docker compose ps --all --quiet)
+  docker events --since 10m --until "$(date +%s)" --filter label=com.docker.compose.service=tcp-client \
+    --format '{{.TimeNano}} {{.Action}} {{index .Actor.Attributes "exitCode"}}'
+  for service in worker-1 tcp-client; do
+    echo "## $service /proc/net/tcp and tcp6"
+    docker compose exec -T "$service" cat /proc/net/tcp /proc/net/tcp6
+  done
+  echo "## results.csv: $(awk 'NF { count++ } END { print count + 0 }' results.csv) lines"
+}
 
 @test "streams formatted output to nc" {
   setup_distributed tests/good/example.yaml
