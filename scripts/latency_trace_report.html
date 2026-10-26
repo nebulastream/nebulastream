@@ -269,7 +269,8 @@ function renderCounters() {
   const range = state.range || [Math.min(...starts), Math.max(...starts)];
   DATA.counters.forEach((counter, i) => {
     Plotly.react(container.children[i], [{
-      type: "scattergl", mode: "lines", line: {shape: "hv", color: css("--accent")}, x: counter.t, y: counter.v,
+      /// SVG, not WebGL: browsers keep only about 16 WebGL contexts and drop the oldest, e.g. the latency chart's.
+      type: "scatter", mode: "lines", line: {shape: "hv", color: css("--accent")}, x: counter.t, y: counter.v,
       hovertemplate: "%{y} at %{x:.1f} ms<extra></extra>",
     }], layout({
       margin: {l: 56, r: 16, t: 22, b: 28}, showlegend: false,
