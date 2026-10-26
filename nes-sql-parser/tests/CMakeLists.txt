@@ -11,6 +11,8 @@
 # limitations under the License.
 
 add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
+add_nes_unit_test(semantic-map-statement-test "SemanticMapStatementTest.cpp")
+target_link_libraries(semantic-map-statement-test nes-sql-parser nes-frontend-lib)
 target_link_libraries(statement-binder-test nes-sql-parser nes-frontend-lib)
 target_compile_definitions(statement-binder-test PRIVATE INFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
 if (ENABLE_INFERENCE_TESTS)

@@ -15,12 +15,16 @@
 #include <Statements/StatementHandler.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
+#include <cstddef>
 #include <expected>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <sstream>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -52,6 +56,7 @@
 #include <Model.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -301,6 +306,289 @@ std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operat
     }
     modelCatalog->removeModel(statement.name);
     return DropModelStatementResult{.name = statement.name};
+}
+
+SemanticModelStatementHandler::SemanticModelStatementHandler(std::shared_ptr<SemanticModelCatalog> semanticModelCatalog)
+    : semanticModelCatalog(std::move(semanticModelCatalog))
+{
+}
+
+namespace
+{
+
+/// Shows the first step only, which is complete for every catalog entry: CREATE registers exactly
+/// one step, and fused entries exist only inside an optimized plan, never in the catalog. The
+/// per-step OUTPUT_VALUES and DEFAULT_VALUE are not shown.
+SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
+{
+    const auto& config = model.getConfig();
+    const auto kind = config.steps.empty() || config.steps.front().kind == SemanticStep::Kind::MAP ? "MAP" : "FILTER";
+    return SemanticModelInfo{
+        .name = model.getName(),
+        .kind = kind,
+        .endpoint = config.endpoint,
+        .modelName = config.modelName,
+        .prompt = config.steps.empty() ? std::string{} : config.steps.front().prompt,
+        .inputSchema = model.getSchema().inputs,
+        .outputSchema = model.getSchema().outputs,
+    };
+}
+
+const std::string* findOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key)
+{
+    const auto it = config.find(Identifier::parse(std::string{key}));
+    return it == config.end() ? nullptr : &it->second;
+}
+
+std::string requireOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key)
+{
+    const auto* const value = findOption(config, key);
+    if (value == nullptr || value->empty())
+    {
+        throw InvalidSemanticModel("CREATE SEM_MODEL requires option LLM.{}", key);
+    }
+    return *value;
+}
+
+std::string optionalOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key, std::string fallback)
+{
+    const auto* const value = findOption(config, key);
+    return value == nullptr ? std::move(fallback) : *value;
+}
+
+/// `maxValue` keeps every knob far below the int64 range the catalog entry is serialized with,
+/// and rejects values that can only be typos (a 10^9-second timeout parks a worker thread forever).
+size_t numericOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key, size_t fallback, size_t maxValue)
+{
+    const auto* const value = findOption(config, key);
+    if (value == nullptr)
+    {
+        return fallback;
+    }
+    const auto parsed = from_chars<size_t>(*value);
+    if (!parsed.has_value())
+    {
+        throw InvalidSemanticModel("Option LLM.{} must be a non-negative integer, but was '{}'", key, *value);
+    }
+    if (parsed.value() > maxValue)
+    {
+        throw InvalidSemanticModel("Option LLM.{} must be at most {}, but was {}", key, maxValue, parsed.value());
+    }
+    return parsed.value();
+}
+
+/// Every option the handler reads. The binder only checks the LLM namespace, so without this a
+/// typo such as LLM.OUTPUT_VALUE would be dropped silently and the model registered without it.
+constexpr std::array KnownSemanticModelOptions{
+    std::string_view{"PROMPT"},
+    std::string_view{"ENDPOINT"},
+    std::string_view{"MODEL_NAME"},
+    std::string_view{"DATASET_PROMPT"},
+    std::string_view{"OUTPUT_VALUES"},
+    std::string_view{"DEFAULT_VALUE"},
+    std::string_view{"PAYLOAD_FORMAT"},
+    std::string_view{"BATCH_SIZE"},
+    std::string_view{"MAX_CONCURRENCY"},
+    std::string_view{"MAX_RETRIES"},
+    std::string_view{"MAX_WAIT_MS"},
+    std::string_view{"TIMEOUT_SECONDS"},
+    std::string_view{"API_KEY_ENV"},
+    std::string_view{"BACKEND"},
+    std::string_view{"EXECUTION"},
+    std::string_view{"PRESERVE_ORDER"},
+    std::string_view{"FUSION"},
+};
+
+void rejectUnknownOptions(const std::unordered_map<Identifier, std::string>& config)
+{
+    for (const auto& [key, _] : config)
+    {
+        const bool known = std::ranges::any_of(
+            KnownSemanticModelOptions, [&key](std::string_view name) { return key == Identifier::parse(std::string{name}); });
+        if (!known)
+        {
+            throw InvalidSemanticModel("Unknown option LLM.{}", key);
+        }
+    }
+}
+
+/// Splits a comma-separated option such as 'POSITIVE,NEGATIVE,NEUTRAL'. Empty entries are
+/// dropped by the splitter, so a trailing comma is harmless; each entry is then trimmed.
+std::vector<std::string> splitCommaSeparated(std::string_view value)
+{
+    std::vector<std::string> parts;
+    for (const auto& part : splitWithStringDelimiter<std::string>(value, ","))
+    {
+        if (const auto trimmed = trimWhiteSpaces(part); !trimmed.empty())
+        {
+            parts.emplace_back(trimmed);
+        }
+    }
+    return parts;
+}
+
+PayloadFormat bindPayloadFormat(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "PAYLOAD_FORMAT", "SPACE_JOINED");
+    if (raw == "SPACE_JOINED")
+    {
+        return PayloadFormat::SPACE_JOINED;
+    }
+    if (raw == "JSON_OBJECT")
+    {
+        return PayloadFormat::JSON_OBJECT;
+    }
+    throw InvalidSemanticModel("Option LLM.PAYLOAD_FORMAT must be SPACE_JOINED or JSON_OBJECT, but was '{}'", raw);
+}
+
+bool bindBooleanOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key, bool fallback)
+{
+    const auto raw = optionalOption(config, key, fallback ? "TRUE" : "FALSE");
+    if (raw == "TRUE")
+    {
+        return true;
+    }
+    if (raw == "FALSE")
+    {
+        return false;
+    }
+    throw InvalidSemanticModel("Option LLM.{} must be TRUE or FALSE, but was '{}'", key, raw);
+}
+
+SemanticExecution bindExecution(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "EXECUTION", "SYNC");
+    if (raw == "SYNC")
+    {
+        return SemanticExecution::SYNCHRONOUS;
+    }
+    if (raw == "ASYNC")
+    {
+        return SemanticExecution::ASYNCHRONOUS;
+    }
+    throw InvalidSemanticModel("Option LLM.EXECUTION must be SYNC or ASYNC, but was '{}'", raw);
+}
+
+constexpr size_t MaxBatchSize = 1024;
+constexpr size_t MaxConcurrency = 1024;
+constexpr size_t MaxRetries = 10;
+constexpr size_t MaxWaitMs = 3'600'000;
+constexpr size_t MaxTimeoutSeconds = 86'400;
+
+/// Answers that only make sense for a column; a filter model has none.
+constexpr std::array MapOnlyOptions{std::string_view{"OUTPUT_VALUES"}, std::string_view{"DEFAULT_VALUE"}};
+
+/// The one step a CREATE registers. With an OUTPUT clause it is a MAP step writing exactly that one
+/// field; without, a FILTER step. Longer step lists only arise from operator fusion in the optimizer.
+SemanticStep bindStep(const CreateSemanticModelStatement& statement)
+{
+    if (statement.outputs.size() == 0)
+    {
+        for (const auto option : MapOnlyOptions)
+        {
+            if (findOption(statement.config, option) != nullptr)
+            {
+                throw InvalidSemanticModel(
+                    "Semantic model '{}': LLM.{} requires an OUTPUT field; a model without OUTPUT is a filter model",
+                    statement.name,
+                    option);
+            }
+        }
+        /// The verdict's response key (`__filter_0`) is numbered by the codec.
+        return SemanticStep{
+            .kind = SemanticStep::Kind::FILTER,
+            .prompt = requireOption(statement.config, "PROMPT"),
+            .outputColumn = {},
+            .outputValues = {},
+            .defaultValue = {}};
+    }
+    if (statement.outputs.size() != 1)
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': SEM_MAP declares exactly one OUTPUT field, but got {}", statement.name, statement.outputs.size());
+    }
+
+    const auto& outputField = *statement.outputs.begin();
+    return SemanticStep{
+        .kind = SemanticStep::Kind::MAP,
+        .prompt = requireOption(statement.config, "PROMPT"),
+        .outputColumn = static_cast<const Identifier&>(outputField.getFullyQualifiedName()).asCanonicalString(),
+        .outputValues = splitCommaSeparated(optionalOption(statement.config, "OUTPUT_VALUES", "")),
+        .defaultValue = optionalOption(statement.config, "DEFAULT_VALUE", "")};
+}
+
+/// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
+SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& statement)
+{
+    rejectUnknownOptions(statement.config);
+    auto step = bindStep(statement);
+
+    const auto* const apiKeyEnv = findOption(statement.config, "API_KEY_ENV");
+
+    return SemanticModelConfig{
+        .endpoint = requireOption(statement.config, "ENDPOINT"),
+        .modelName = requireOption(statement.config, "MODEL_NAME"),
+        .datasetPrompt = optionalOption(statement.config, "DATASET_PROMPT", ""),
+        .steps = {std::move(step)},
+        .payloadFormat = bindPayloadFormat(statement.config),
+        .batchSize = numericOption(statement.config, "BATCH_SIZE", 1, MaxBatchSize),
+        .maxConcurrency = numericOption(statement.config, "MAX_CONCURRENCY", 10, MaxConcurrency),
+        .maxRetries = numericOption(statement.config, "MAX_RETRIES", 2, MaxRetries),
+        .maxWaitTime = std::chrono::milliseconds{numericOption(statement.config, "MAX_WAIT_MS", 1000, MaxWaitMs)},
+        .requestTimeout = std::chrono::seconds{numericOption(statement.config, "TIMEOUT_SECONDS", 600, MaxTimeoutSeconds)},
+        .apiKeyEnvVar = apiKeyEnv == nullptr ? std::optional<std::string>{} : std::optional<std::string>{*apiKeyEnv},
+        .backend = optionalOption(statement.config, "BACKEND", "http"),
+        .execution = bindExecution(statement.config),
+        .preserveOrder = bindBooleanOption(statement.config, "PRESERVE_ORDER", true),
+        .fusion = bindBooleanOption(statement.config, "FUSION", false)};
+}
+
+}
+
+std::expected<CreateSemanticModelStatementResult, Exception>
+SemanticModelStatementHandler::operator()(const CreateSemanticModelStatement& statement)
+{
+    /// Duplicate names are rejected by the catalog itself (SemanticModelAlreadyExists).
+    try
+    {
+        semanticModelCatalog->registerModel(
+            statement.name,
+            bindSemanticModelConfig(statement),
+            SemanticModelSchema{.inputs = statement.inputs, .outputs = statement.outputs});
+    }
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
+
+    return toSemanticModelInfo(semanticModelCatalog->load(statement.name));
+}
+
+std::expected<ShowSemanticModelsStatementResult, Exception>
+SemanticModelStatementHandler::operator()(const ShowSemanticModelsStatement&) const
+{
+    auto registeredModels = semanticModelCatalog->getRegisteredModels();
+    std::vector<SemanticModelInfo> models;
+    models.reserve(registeredModels.size());
+    for (const auto& model : registeredModels)
+    {
+        models.push_back(toSemanticModelInfo(model));
+    }
+    return ShowSemanticModelsStatementResult{.models = std::move(models)};
+}
+
+std::expected<DropSemanticModelStatementResult, Exception>
+SemanticModelStatementHandler::operator()(const DropSemanticModelStatement& statement)
+{
+    try
+    {
+        semanticModelCatalog->removeModel(statement.name);
+    }
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
+    return DropSemanticModelStatementResult{.name = statement.name};
 }
 
 QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer)

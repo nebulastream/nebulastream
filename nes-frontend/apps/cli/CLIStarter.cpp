@@ -74,6 +74,7 @@
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -745,17 +746,19 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
+    auto semanticModelCatalog = std::make_shared<NES::SemanticModelCatalog>();
     const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+    NES::SemanticModelStatementHandler semanticModelHandler{semanticModelCatalog};
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, semanticModelCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
 
-    handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler);
+    handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler, semanticModelHandler);
 
     if (program.is_subcommand_used("stop"))
     {
@@ -786,15 +789,17 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
+    auto semanticModelCatalog = std::make_shared<NES::SemanticModelCatalog>();
     auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
-    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler);
+    NES::SemanticModelStatementHandler semanticModelHandler{semanticModelCatalog};
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, semanticModelCatalog);
+    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler, semanticModelHandler);
 
     if (program.is_subcommand_used("start"))
     {

@@ -49,7 +49,14 @@ struct ModelDeclaration
     AntlrSQLParser::CreateModelDefinitionContext* definition;
 };
 
-using CreateDeclaration = std::variant<LogicalSourceDeclaration, PhysicalSourceDeclaration, SinkDeclaration, ModelDeclaration>;
+/// A semantic (LLM) model: catalog metadata only, referenced by SEM_MAP and SEM_FILTER.
+struct SemanticModelDeclaration
+{
+    AntlrSQLParser::CreateSemanticModelDefinitionContext* definition;
+};
+
+using CreateDeclaration
+    = std::variant<LogicalSourceDeclaration, PhysicalSourceDeclaration, SinkDeclaration, ModelDeclaration, SemanticModelDeclaration>;
 
 /// A pointer holds the parse, because a parse points at its own members and cannot move.
 /// The declaration points into that parse, so the two share one lifetime.

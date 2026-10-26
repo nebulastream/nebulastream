@@ -126,6 +126,12 @@ void Emitter::emitCreate(ClassifiedCreate create, const bool submitsDeclaredSink
                 }
             },
             [&](const ModelDeclaration& declaration) { runnable.setupStatements.emplace_back(modelStatement(*create.parse, declaration)); },
+            [&](const SemanticModelDeclaration&)
+            {
+                antlr4::TokenStreamRewriter rewriter{&create.parse->tokenStream()};
+                prefixNames(*create.parse, rewriter, declarations.names);
+                runnable.setupStatements.emplace_back(PlainStatement{.sql = rewriter.getText()});
+            },
             [&](const SinkDeclaration& declaration)
             {
                 /// An inlined sink needs no statement of its own.

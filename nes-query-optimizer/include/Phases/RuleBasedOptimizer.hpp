@@ -23,6 +23,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <SemanticModelCatalog.hpp>
 
 namespace NES
 {
@@ -33,7 +34,8 @@ public:
         QueryOptimizerConfiguration defaultQueryOptimization,
         std::shared_ptr<const SourceCatalog> sourceCatalog,
         std::shared_ptr<const SinkCatalog> sinkCatalog,
-        std::shared_ptr<const ModelCatalog> modelCatalog);
+        std::shared_ptr<const ModelCatalog> modelCatalog,
+        std::shared_ptr<const SemanticModelCatalog> semanticModelCatalog);
 
     [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
 
@@ -43,6 +45,7 @@ private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
     std::shared_ptr<const ModelCatalog> modelCatalog;
+    std::shared_ptr<const SemanticModelCatalog> semanticModelCatalog;
 };
 
 }

@@ -113,6 +113,12 @@ public:
     /// Flag set while parsing a MODEL_INFERENCE TVF source to suppress identifier capture as FROM source
     bool isModelInference = false;
 
+    /// Flag set while parsing a SEM_MAP TVF source to suppress identifier capture as FROM source
+    bool isSemanticMap = false;
+
+    /// Flag set while parsing a SEM_FILTER TVF source to suppress identifier capture as FROM source
+    bool isSemanticFilter = false;
+
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
     [[nodiscard]] std::vector<Projection>& getProjections();

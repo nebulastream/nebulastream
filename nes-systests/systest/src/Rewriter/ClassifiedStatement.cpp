@@ -55,6 +55,10 @@ CreateDeclaration classify(const SqlParse& parse, CreateStatement create)
     {
         return ModelDeclaration{.definition = model};
     }
+    if (auto* semanticModel = findFirst<AntlrSQLParser::CreateSemanticModelDefinitionContext>(parse.tree()))
+    {
+        return SemanticModelDeclaration{.definition = semanticModel};
+    }
     throw TestException("Unsupported CREATE statement: {}", create.sql);
 }
 

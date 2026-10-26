@@ -43,7 +43,7 @@ target_sources(nes-query-optimizer PRIVATE ${NES_OPTIMIZER_SOURCE_FILES})
 
 find_package(highs CONFIG REQUIRED)
 find_package(reflectcpp CONFIG REQUIRED)
-target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs reflectcpp::reflectcpp)
+target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed nes-semantic PRIVATE nes-input-formatter-provider highs::highs reflectcpp::reflectcpp)
 
 
 add_tests_if_enabled(tests)

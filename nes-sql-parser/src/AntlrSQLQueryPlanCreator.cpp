@@ -727,8 +727,8 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(bindIdentifier(context)));
     }
     else if (
-        helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference
-        and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+        helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference and not helpers.top().isSemanticMap
+        and not helpers.top().isSemanticFilter and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
         helpers.top().setSource(bindIdentifier(context));
@@ -1553,5 +1553,95 @@ void AntlrSQLQueryPlanCreator::exitModelInferenceRelation(AntlrSQLParser::ModelI
     helpers.top().queryPlans.push_back(std::move(plan));
     helpers.top().isModelInference = false;
     AntlrSQLBaseListener::exitModelInferenceRelation(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterSemanticMapRelation(AntlrSQLParser::SemanticMapRelationContext* context)
+{
+    helpers.top().isSemanticMap = true;
+    AntlrSQLBaseListener::enterSemanticMapRelation(context);
+}
+
+namespace
+{
+LogicalPlan buildSemanticPlan(antlr4::ParserRuleContext* source, std::vector<LogicalPlan>& queryPlans);
+
+/// The plan below a SEM_MAP or SEM_FILTER: a stream, a subquery or another semantic source.
+/// For subquery inputs, the inner query plan is already on the queryPlans vector (processed by the listener).
+LogicalPlan buildSemanticInputPlan(AntlrSQLParser::SemanticInputContext* input, std::vector<LogicalPlan>& queryPlans)
+{
+    if (auto* streamName = dynamic_cast<AntlrSQLParser::SemanticStreamNameContext*>(input))
+    {
+        std::string name;
+        for (auto* part : streamName->multipartIdentifier()->parts)
+        {
+            if (!name.empty())
+            {
+                name += "$";
+            }
+            name += fmt::format("{}", bindIdentifier(part->identifier()));
+        }
+        return LogicalPlanBuilder::createLogicalPlan(bindIdentifier(std::move(name)));
+    }
+    if (auto* nested = dynamic_cast<AntlrSQLParser::SemanticMapNestedContext*>(input))
+    {
+        return buildSemanticPlan(nested->semanticMapSource(), queryPlans);
+    }
+    if (auto* nested = dynamic_cast<AntlrSQLParser::SemanticFilterNestedContext*>(input))
+    {
+        return buildSemanticPlan(nested->semanticFilterSource(), queryPlans);
+    }
+    if (dynamic_cast<AntlrSQLParser::SemanticSubqueryContext*>(input))
+    {
+        /// The subquery has already been processed by the listener; its plan is on the queryPlans vector.
+        if (queryPlans.empty())
+        {
+            throw InvalidQuerySyntax("Semantic operator subquery plan not found");
+        }
+        auto plan = std::move(queryPlans.back());
+        queryPlans.pop_back();
+        return plan;
+    }
+    throw InvalidQuerySyntax("Semantic operator: unrecognized input type");
+}
+
+/// Recursively build a LogicalPlan from a semanticMapSource or semanticFilterSource context.
+LogicalPlan buildSemanticPlan(antlr4::ParserRuleContext* source, std::vector<LogicalPlan>& queryPlans)
+{
+    if (auto* map = dynamic_cast<AntlrSQLParser::SemanticMapSourceContext*>(source))
+    {
+        auto modelName = bindIdentifier(map->modelName);
+        const auto childPlan = buildSemanticInputPlan(map->semanticInput(), queryPlans);
+        return LogicalPlanBuilder::addSemanticMap(std::move(modelName), childPlan);
+    }
+    if (auto* filter = dynamic_cast<AntlrSQLParser::SemanticFilterSourceContext*>(source))
+    {
+        auto modelName = bindIdentifier(filter->modelName);
+        const auto childPlan = buildSemanticInputPlan(filter->semanticInput(), queryPlans);
+        return LogicalPlanBuilder::addSemanticFilter(std::move(modelName), childPlan);
+    }
+    throw InvalidQuerySyntax("Unrecognized semantic operator source");
+}
+}
+
+void AntlrSQLQueryPlanCreator::exitSemanticMapRelation(AntlrSQLParser::SemanticMapRelationContext* context)
+{
+    auto plan = buildSemanticPlan(context->semanticMapSource(), helpers.top().queryPlans);
+    helpers.top().queryPlans.push_back(std::move(plan));
+    helpers.top().isSemanticMap = false;
+    AntlrSQLBaseListener::exitSemanticMapRelation(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterSemanticFilterRelation(AntlrSQLParser::SemanticFilterRelationContext* context)
+{
+    helpers.top().isSemanticFilter = true;
+    AntlrSQLBaseListener::enterSemanticFilterRelation(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitSemanticFilterRelation(AntlrSQLParser::SemanticFilterRelationContext* context)
+{
+    auto plan = buildSemanticPlan(context->semanticFilterSource(), helpers.top().queryPlans);
+    helpers.top().queryPlans.push_back(std::move(plan));
+    helpers.top().isSemanticFilter = false;
+    AntlrSQLBaseListener::exitSemanticFilterRelation(context);
 }
 }

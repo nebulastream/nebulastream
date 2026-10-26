@@ -1,0 +1,136 @@
+# name: semantic/SemanticMapAsyncThroughput.test
+# description: Does MAX_CONCURRENCY put model calls in flight? Measured against the mock backend's
+#              delay suffix ('echo@200', 200 ms per request) rather than a model server, so what is
+#              measured is this framework and nothing else. A real endpoint caps concurrency of its
+#              own -- Ollama serves four requests in parallel by default -- which is why a
+#              real-model throughput comparison says little.
+#
+#              Two cases, and the first is the one that decides the question:
+#
+#              SINGLE BUFFER (30 rows, queries 1 and 2). Concurrency can only come from within one
+#              input buffer here, so this is the test that the unit of work really is the call and
+#              not the buffer: query 2 (MAX_CONCURRENCY 10) must come out roughly ten times faster
+#              than query 1 (MAX_CONCURRENCY 1). Measured 6.07 s against 0.66 s. Equal times would
+#              mean the regression is back and MAX_CONCURRENCY no longer means what it says.
+#
+#              MANY BUFFERS (760 rows, queries 3 to 7). Several hundred rows arrive in many buffers,
+#              so concurrency across buffers is available too. Measured 152.6 s, 30.5 s, 15.3 s and
+#              5.3 s for MAX_CONCURRENCY 1, 5, 10 and 30, which is within a few percent of the
+#              760 x 200 ms / concurrency the delay dictates. Query 7 is the synchronous path over
+#              the same input and delay, as the point of comparison.
+#
+#              Every query asserts record count and checksum, so a configuration that loses or
+#              duplicates a record fails rather than looking fast. The numbers to read are the wall
+#              times from --show-query-performance; drive it with
+#              scripts/measure_async_semantic_map.sh throughput.
+#
+#              Always pass the worker thread count explicitly. Left out, systest uses a single
+#              worker thread, which costs the synchronous path everything and the asynchronous path
+#              nothing -- it runs the calls on the source's own threads. Query 8 is therefore worth
+#              running at several thread counts, which is what the script does.
+#
+#              Deliberately slow -- seconds of waiting is the point -- hence never part of ctest.
+# groups: [Semantic-Nightly]
+
+CREATE LOGICAL SOURCE small(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR small TYPE File;
+ATTACH FILE async/reviews_30.csv
+
+CREATE LOGICAL SOURCE large(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR large TYPE File;
+ATTACH FILE async/reviews_760.csv
+
+CREATE SEM_MODEL sb1
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL sb10
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL mb1
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL mb5
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 5 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL mb10
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL mb30
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 30 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL msync
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL msyncWide
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 30 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK idsum(id UINT64 NOT NULL) TYPE Checksum;
+
+# Query 1: single buffer, one call at a time -- the serial baseline.
+SELECT id FROM SEM_MAP(sb1, small) INTO idsum;
+----
+30, 2916
+
+# Query 2: single buffer, ten calls allowed. Same time as query 1 means buffer granularity.
+SELECT id FROM SEM_MAP(sb10, small) INTO idsum;
+----
+30, 2916
+
+# Query 3: many buffers, one call at a time.
+SELECT id FROM SEM_MAP(mb1, large) INTO idsum;
+----
+760, 121109
+
+# Query 4: many buffers, five calls.
+SELECT id FROM SEM_MAP(mb5, large) INTO idsum;
+----
+760, 121109
+
+# Query 5: many buffers, ten calls.
+SELECT id FROM SEM_MAP(mb10, large) INTO idsum;
+----
+760, 121109
+
+# Query 6: many buffers, thirty calls.
+SELECT id FROM SEM_MAP(mb30, large) INTO idsum;
+----
+760, 121109
+
+# Query 7: the synchronous path with its own concurrency pinned to one, so that the serial cost of
+# 760 calls is on the record for both execution modes.
+SELECT id FROM SEM_MAP(msync, large) INTO idsum;
+----
+760, 121109
+
+# Query 8: the synchronous path allowed thirty concurrent calls. It cannot reach them from the
+# configuration alone, because its requests are issued from the worker pool: measured at 152.7 s,
+# 39.6 s and 22.8 s on 1, 4 and 8 worker threads. Reaching query 6's time would take roughly twenty
+# worker threads, all of them parked in a model call -- which is the cost the framework exists to
+# avoid, and what semantic/AsyncResponsiveness.test measures.
+SELECT id FROM SEM_MAP(msyncWide, large) INTO idsum;
+----
+760, 121109

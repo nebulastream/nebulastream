@@ -65,6 +65,7 @@
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <Thread.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
@@ -274,6 +275,7 @@ int main(int argc, char** argv)
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
+        auto semanticModelCatalog = std::make_shared<NES::SemanticModelCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
             sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
@@ -326,14 +328,16 @@ int main(int argc, char** argv)
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
-        auto queryOptimizer
-            = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+        NES::SemanticModelStatementHandler semanticModelStatementHandler{semanticModelCatalog};
+        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+            queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, semanticModelCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),
             std::move(topologyStatementHandler),
             std::move(modelStatementHandler),
+            std::move(semanticModelStatementHandler),
             queryStatementHandler,
             std::move(binder),
             errorBehaviour,

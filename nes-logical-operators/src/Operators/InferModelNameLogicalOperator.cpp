@@ -102,14 +102,16 @@ InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildrenUnsafe(
     return copy;
 }
 
-/// NOLINTBEGIN(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
-InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildren(std::vector<LogicalOperator>) const
+/// Generic plan-rewriting rules rebuild every operator they walk over via withChildren, so a
+/// guard here turns an unresolved placeholder into process death rather than a query error
+/// (mirror of SemanticMapNameLogicalOperator). Only schema inference stays guarded: it needs the resolved model.
+InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildren(std::vector<LogicalOperator> newChildren) const
 {
-    PRECONDITION(false, "InferModelName requires model resolution before schema inference");
-    std::unreachable();
+    PRECONDITION(newChildren.size() == 1, "Can only set exactly one child for InferModelName, got {}", newChildren.size());
+    auto copy = *this;
+    copy.child = std::move(newChildren.front());
+    return copy;
 }
-
-/// NOLINTEND(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 Schema<Field, Unordered> InferModelNameLogicalOperator::getOutputSchema() const

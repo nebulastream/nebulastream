@@ -66,7 +66,7 @@ explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
 
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition | createSemanticModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -84,6 +84,17 @@ createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
 modelInputField: identifier typeDefinition;
 modelOutputField: identifier typeDefinition;
 
+/// A semantic (LLM-backed) model. Unlike CREATE MODEL there is no artifact to load; the
+/// entry is pure metadata. Everything beyond the field schemas goes through the generic
+/// optionsClause (SET ('...' AS LLM.PROMPT, ...)) so that no new reserved keyword is
+/// introduced for each setting -- this grammar has no nonReserved rule, so every keyword
+/// would otherwise become unusable as a column name.
+/// Without OUTPUT the model is a filter model: it adds no column and is used with SEM_FILTER.
+createSemanticModelDefinition: SEM_MODEL modelName=identifier
+                               INPUT '(' modelInputField (',' modelInputField)* ')'
+                               (OUTPUT '(' modelOutputField (',' modelOutputField)* ')')?
+                               optionsClause?;
+
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 
@@ -93,8 +104,9 @@ nullableDefinition: NOT NULLTOKEN;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropSemanticModel | dropModel;
 dropModel: MODEL;
+dropSemanticModel: SEM_MODEL;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
@@ -111,6 +123,7 @@ showSubject: QUERIES #showQueriesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
     | SINKS #showSinksSubject
     | MODELS #showModelsSubject
+    | SEMANTIC MODELS #showSemanticModelsSubject
     | VERSION #showVersionSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
@@ -168,6 +181,8 @@ relationPrimary
     | inlineTable                             #inlineTableDefault2
     | anonymousSource                         #anonymousDefinedSource
     | modelInferenceSource                    #modelInferenceRelation
+    | semanticMapSource                       #semanticMapRelation
+    | semanticFilterSource                    #semanticFilterRelation
     ;
 
 modelInferenceSource
@@ -178,6 +193,22 @@ modelInferenceInput
     : multipartIdentifier                     #modelInferenceStreamName
     | '(' query ')'                           #modelInferenceSubquery
     | modelInferenceSource                    #modelInferenceNested
+    ;
+
+semanticMapSource
+    : SEM_MAP '(' modelName=identifier ',' semanticInput ')'
+    ;
+
+semanticFilterSource
+    : SEM_FILTER '(' modelName=identifier ',' semanticInput ')'
+    ;
+
+/// Shared by SEM_MAP and SEM_FILTER, so either nests inside the other.
+semanticInput
+    : multipartIdentifier                     #semanticStreamName
+    | '(' query ')'                           #semanticSubquery
+    | semanticMapSource                       #semanticMapNested
+    | semanticFilterSource                    #semanticFilterNested
     ;
 
 anonymousSource
@@ -557,6 +588,10 @@ MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
+SEMANTIC: 'SEMANTIC';
+SEM_MAP: 'SEM_MAP';
+SEM_MODEL: 'SEM_MODEL';
+SEM_FILTER: 'SEM_FILTER';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

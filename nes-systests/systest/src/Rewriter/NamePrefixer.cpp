@@ -256,6 +256,22 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefix(model->modelName);
     }
+    for (const auto* model : findAll<AntlrSQLParser::CreateSemanticModelDefinitionContext>(parse.tree()))
+    {
+        prefix(model->modelName);
+    }
+    for (const auto* semanticMap : findAll<AntlrSQLParser::SemanticMapSourceContext>(parse.tree()))
+    {
+        prefix(semanticMap->modelName);
+    }
+    for (const auto* semanticFilter : findAll<AntlrSQLParser::SemanticFilterSourceContext>(parse.tree()))
+    {
+        prefix(semanticFilter->modelName);
+    }
+    for (auto* input : findAll<AntlrSQLParser::SemanticStreamNameContext>(parse.tree()))
+    {
+        prefixParts(input->multipartIdentifier());
+    }
     for (auto* source : findAll<AntlrSQLParser::NamedSourceContext>(parse.tree()))
     {
         prefixParts(source->multipartIdentifier());

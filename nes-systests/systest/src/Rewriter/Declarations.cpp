@@ -41,6 +41,11 @@ void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkBy
                 /// A query that infers with a model refers to it, so a model is prefixed like a source.
                 registry.declare(declaration.definition->modelName->getText());
             },
+            [&](const SemanticModelDeclaration& declaration)
+            {
+                /// SEM_MAP and SEM_FILTER refer to a semantic model by name, so it is prefixed like a model.
+                registry.declare(declaration.definition->modelName->getText());
+            },
             [&](const SinkDeclaration& declaration)
             {
                 /// A sink name is catalog-visible only when its declaration is submitted.

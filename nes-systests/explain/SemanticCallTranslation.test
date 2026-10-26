@@ -1,0 +1,115 @@
+# name: explain/SemanticCallTranslation.test
+# description: SEM_MAP and SEM_FILTER become projections and selections over the async function SEM_CALL, which the
+#              lifting rule moves into ASYNC_PROJECTION stages. A fused chain is one call. A query without semantic
+#              operators keeps its plan.
+# groups: [explain, async, Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,good
+
+CREATE SEM_MODEL sentiment
+INPUT (description VARSIZED)
+OUTPUT (label VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL fusableTopic
+INPUT (description VARSIZED)
+OUTPUT (topic VARSIZED)
+SET ('Name the topic' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 'TRUE' AS LLM.FUSION);
+
+CREATE SEM_MODEL positive
+INPUT (description VARSIZED)
+SET ('Is the review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL fusableMap
+INPUT (description VARSIZED)
+OUTPUT (label VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 'TRUE' AS LLM.FUSION);
+
+CREATE SEM_MODEL fusableFilter
+INPUT (description VARSIZED)
+SET ('Is the review positive?' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 'TRUE' AS LLM.FUSION);
+
+CREATE SINK mapSink(id UINT64 NOT NULL, description VARSIZED NOT NULL, label VARSIZED NOT NULL) TYPE File;
+CREATE SINK twoSink(id UINT64 NOT NULL, description VARSIZED NOT NULL, label VARSIZED NOT NULL, topic VARSIZED NOT NULL) TYPE File;
+CREATE SINK filterSink(id UINT64 NOT NULL, description VARSIZED NOT NULL) TYPE File;
+
+# SEM_MAP: one call per row, its value is the OUTPUT field.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT * FROM SEM_MAP(sentiment, reviews) INTO mapSink;
+----
+== Optimized Global Plan ==
+SINK(MAPSINK)
+  PROJECTION(fields: [DESCRIPTION, ID, __ASYNC_CALL_0 as LABEL])
+    ASYNC_PROJECTION(fields: [DESCRIPTION, ID, SEM_CALL(SENTIMENT:7110ba80, DESCRIPTION) as __ASYNC_CALL_0])
+      PROJECTION(fields: [DESCRIPTION, ID,  as __ASYNC_CALL_0])
+        SOURCE(REVIEWS)
+==END==
+
+# Two fused SEM_MAPs: one call, the second OUTPUT field is ASYNC_OUTPUT(call, 1), so still one request per row.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT * FROM SEM_MAP(fusableTopic, SEM_MAP(fusableMap, reviews)) INTO twoSink;
+----
+== Optimized Global Plan ==
+SINK(TWOSINK)
+  PROJECTION(fields: [DESCRIPTION, ID, __ASYNC_CALL_0 as LABEL, __ASYNC_CALL_1 as TOPIC])
+    ASYNC_PROJECTION(fields: [DESCRIPTION, ID, SEM_CALL(FUSABLEMAP+FUSABLETOPIC:9596cebb, DESCRIPTION) as __ASYNC_CALL_0, ASYNC_OUTPUT(SEM_CALL(FUSABLEMAP+FUSABLETOPIC:9596cebb, DESCRIPTION), 1) as __ASYNC_CALL_1])
+      PROJECTION(fields: [DESCRIPTION, ID,  as __ASYNC_CALL_0,  as __ASYNC_CALL_1])
+        SOURCE(REVIEWS)
+==END==
+
+# SEM_FILTER: a selection on the call's verdict; the lifting rule projects the helper field away.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT * FROM SEM_FILTER(positive, reviews) INTO filterSink;
+----
+== Optimized Global Plan ==
+SINK(FILTERSINK)
+  PROJECTION(fields: [DESCRIPTION, ID])
+    SELECTION(__SEM_VERDICT_0 = true)
+      PROJECTION(fields: [DESCRIPTION, ID, __ASYNC_CALL_0 as __SEM_VERDICT_0])
+        ASYNC_PROJECTION(fields: [DESCRIPTION, ID, SEM_CALL(POSITIVE:b8dea045, DESCRIPTION) as __ASYNC_CALL_0])
+          PROJECTION(fields: [DESCRIPTION, ID,  as __ASYNC_CALL_0])
+            SOURCE(REVIEWS)
+==END==
+
+# A fused SEM_FILTER over SEM_MAP: one call whose step 0 is the label and step 1 the verdict.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT * FROM SEM_FILTER(fusableFilter, SEM_MAP(fusableMap, reviews)) INTO mapSink;
+----
+== Optimized Global Plan ==
+SINK(MAPSINK)
+  PROJECTION(fields: [DESCRIPTION, ID, LABEL])
+    SELECTION(__SEM_VERDICT_0 = true)
+      PROJECTION(fields: [DESCRIPTION, ID, __ASYNC_CALL_0 as LABEL, __ASYNC_CALL_1 as __SEM_VERDICT_0])
+        ASYNC_PROJECTION(fields: [DESCRIPTION, ID, SEM_CALL(FUSABLEMAP+FUSABLEFILTER:c0dfb359, DESCRIPTION) as __ASYNC_CALL_0, ASYNC_OUTPUT(SEM_CALL(FUSABLEMAP+FUSABLEFILTER:c0dfb359, DESCRIPTION), 1) as __ASYNC_CALL_1])
+          PROJECTION(fields: [DESCRIPTION, ID,  as __ASYNC_CALL_0,  as __ASYNC_CALL_1])
+            SOURCE(REVIEWS)
+==END==
+
+# Without fusion, two calls, one per operator, in two stages.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT * FROM SEM_FILTER(positive, SEM_MAP(sentiment, reviews)) INTO mapSink;
+----
+== Optimized Global Plan ==
+SINK(MAPSINK)
+  PROJECTION(fields: [DESCRIPTION, ID, LABEL])
+    SELECTION(__SEM_VERDICT_0 = true)
+      PROJECTION(fields: [DESCRIPTION, ID, LABEL, __ASYNC_CALL_1 as __SEM_VERDICT_0])
+        ASYNC_PROJECTION(fields: [DESCRIPTION, ID, LABEL, SEM_CALL(POSITIVE:b8dea045, DESCRIPTION) as __ASYNC_CALL_1])
+          PROJECTION(fields: [DESCRIPTION, ID, LABEL,  as __ASYNC_CALL_1])
+            PROJECTION(fields: [DESCRIPTION, ID, __ASYNC_CALL_0 as LABEL])
+              ASYNC_PROJECTION(fields: [DESCRIPTION, ID, SEM_CALL(SENTIMENT:7110ba80, DESCRIPTION) as __ASYNC_CALL_0])
+                PROJECTION(fields: [DESCRIPTION, ID,  as __ASYNC_CALL_0])
+                  SOURCE(REVIEWS)
+==END==
+
+# No semantic operator: the translation rule leaves the plan alone.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, description FROM reviews INTO filterSink;
+----
+== Optimized Global Plan ==
+SINK(FILTERSINK)
+  SOURCE(REVIEWS)
+==END==

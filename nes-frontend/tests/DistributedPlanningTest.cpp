@@ -14,6 +14,7 @@
 
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <SemanticModelCatalog.hpp>
 
 #include <cstddef>
 #include <iostream>
@@ -247,6 +248,7 @@ OptimizerAndPlan loadAndBind(std::string_view yamlContent)
     auto sinks = std::make_shared<NES::SinkCatalog>();
     auto workers = std::make_shared<NES::WorkerCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
+    auto semanticModelCatalog = std::make_shared<NES::SemanticModelCatalog>();
 
     auto queryConfig = YAML::Load(std::string(yamlContent)).as<NES::Test::QueryConfig>();
     auto statements = loadStatements(queryConfig);
@@ -259,7 +261,7 @@ OptimizerAndPlan loadAndBind(std::string_view yamlContent)
     renderTopology(workers->getTopology(), std::cout);
 
     auto optimizer = std::make_unique<NES::QueryOptimizer>(
-        NES::defaultConfiguration<NES::QueryOptimizerConfiguration>(), sources, sinks, workers, modelCatalog);
+        NES::defaultConfiguration<NES::QueryOptimizerConfiguration>(), sources, sinks, workers, modelCatalog, semanticModelCatalog);
     return {.queryOptimizer = std::move(optimizer), .plan = std::get<NES::ExplainQueryStatement>(statements.back()).plan};
 }
 

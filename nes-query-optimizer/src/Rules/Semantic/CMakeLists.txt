@@ -17,6 +17,9 @@ add_source_files(nes-query-optimizer
         TypeInferenceRule.cpp
         SinkBindingRule.cpp
         InferModelResolutionRule.cpp
+        SemanticMapResolutionRule.cpp
+        SemanticFusionRule.cpp
+        SemanticCallTranslationRule.cpp
         CalcTargetOrderRule.cpp
 )
 
@@ -26,5 +29,8 @@ add_registry_entry(PlanRule LogicalSourceExpansionRule KEY LogicalSourceExpansio
 add_registry_entry(PlanRule TypeInferenceRule KEY TypeInference)
 add_registry_entry(PlanRule SinkBindingRule KEY SinkBinding)
 add_registry_entry(PlanRule InferModelResolutionRule KEY InferModelResolution)
+add_registry_entry(PlanRule SemanticMapResolutionRule KEY SemanticMapResolution)
+add_registry_entry(PlanRule SemanticFusionRule KEY SemanticFusion)
+add_registry_entry(PlanRule SemanticCallTranslationRule KEY SemanticCallTranslation)
 add_registry_entry(PlanRule CalcTargetOrderRule KEY CalcTargetOrder)
 

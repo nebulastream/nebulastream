@@ -50,6 +50,7 @@
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -97,17 +98,20 @@ struct SystestBinder::Impl
         : sourceCatalog{std::make_shared<SourceCatalog>()}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
+        , semanticModelCatalog{std::make_shared<SemanticModelCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
+        , semanticModelHandler{semanticModelCatalog}
         , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
         , queryOptimizer{
               config.queryOptimizerConfig,
               sourceCatalog,
               sinkCatalog,
               copyPtr(workerCatalog),
-              modelCatalog}
+              modelCatalog,
+              semanticModelCatalog}
     {
         for (const auto& [host, data, maxOperators, downstream, workerConfig] : config.clusterConfig.workers)
         {
@@ -156,6 +160,7 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
+                [&](const CreateSemanticModelStatement& statement) { throwOnError(semanticModelHandler(statement)); },
                 [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
             binding);
     }
@@ -224,11 +229,13 @@ private:
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
+    std::shared_ptr<SemanticModelCatalog> semanticModelCatalog;
     SharedPtr<WorkerCatalog> workerCatalog;
 
     SourceStatementHandler sourceHandler;
     SinkStatementHandler sinkHandler;
     ModelStatementHandler modelHandler;
+    SemanticModelStatementHandler semanticModelHandler;
     StatementBinder statementBinder;
     QueryOptimizer queryOptimizer;
 };
