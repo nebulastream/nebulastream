@@ -38,26 +38,6 @@ namespace NES
 namespace
 {
 
-/// `self.sysprompt` of `Llm_operator`, which `_filter_with_llm` sends unchanged. The typographic
-/// apostrophe in "user’s" is part of the reference and goes out as UTF-8.
-constexpr std::string_view BaseSysprompt
-    = "You are a helpful AI assistant for semantic data operations.\n"
-      "Always respond in JSON format.\n"
-      "The response must have one key for each input row (_llm_call_id), and the value must be a JSON object with the answer and a "
-      "confidence score between 0 and 1.\n"
-      "Example output: {\n"
-      "  \"row1\": {\"answer\": true, \"confidence\": 0.95},\n"
-      "  \"row2\": {\"answer\": false, \"confidence\": 0.80}\n"
-      "}\n"
-      "Structure of the prompt:\n"
-      "1. Operator prompt: The operator-specific instruction.\n"
-      "2. User instructions: The user’s task or question.\n"
-      "3. Dataset context (optional): background/domain description of the input dataset.\n"
-      "4. Data: Input data, always in JSON format. Each data item (row) is a JSON object and always includes a unique row id field "
-      "named _llm_call_id.\n"
-      "Input data example: [ {\"_llm_call_id\": \"row1\", ...}, {\"_llm_call_id\": \"row2\", ...} ]\n"
-      "Do not add explanations.";
-
 /// The verdict a row or column entry carries. The reference reads `answer` from an object and takes
 /// any other value as the verdict itself (`bool(result)`); a missing `answer` is falsy.
 bool verdictOf(const nlohmann::json& entry)
@@ -104,7 +84,7 @@ std::string SemanticFilterCodec::buildPrompt(const std::span<const RowPayload> r
         operatorPrompt += "A row passes only if ALL conditions are true.";
     }
 
-    auto prompt = fmt::format("{}\n{}\n", BaseSysprompt, operatorPrompt);
+    auto prompt = fmt::format("{}\n{}\n", detail::BaseSysprompt, operatorPrompt);
     prompt += detail::datasetContextBlock(config);
     detail::appendDataBlock(prompt, rows, config.payloadFormat);
     return prompt;

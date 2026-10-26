@@ -25,6 +25,7 @@
 #include <SemanticCallPayload.hpp>
 #include <SemanticFilterCodec.hpp>
 #include <SemanticHttpClient.hpp>
+#include <SemanticJoinCodec.hpp>
 #include <SemanticMapCodec.hpp>
 
 namespace NES
@@ -63,6 +64,7 @@ private:
     /// Exactly one of the two codecs: the filter codec handles every step list with a FILTER step.
     std::optional<SemanticMapCodec> mapCodec;
     std::optional<SemanticFilterCodec> filterCodec;
+    std::optional<SemanticJoinCodec> joinCodec;
     /// Exactly one of the two transports.
     std::optional<MockSemanticBackend> mock;
     std::optional<SemanticHttpClient> http;

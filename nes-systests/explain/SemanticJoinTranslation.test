@@ -1,0 +1,59 @@
+# name: explain/SemanticJoinTranslation.test
+# description: SEM_JOIN, an inner join on SEM_MATCH(model, left, right), becomes the join without SEM_MATCH, a
+#              SEM_CALL verdict above it, which the lifting rule moves into an ASYNC_PROJECTION, a synchronous
+#              selection on the verdict and a projection that drops it. Other conjuncts stay in the join.
+# groups: [explain, async, Semantic]
+
+CREATE LOGICAL SOURCE items(id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR items TYPE File;
+ATTACH INLINE
+1,Apple,100
+
+CREATE LOGICAL SOURCE labels(id2 UINT64 NOT NULL, label VARSIZED NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR labels TYPE File;
+ATTACH INLINE
+10,APPLE,150
+
+CREATE SEM_MODEL sameThing
+INPUT (lhs VARSIZED, rhs VARSIZED)
+SET ('Both name the same fruit' AS LLM.PROMPT, 'match' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SINK pairs(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64 NOT NULL, label VARSIZED NOT NULL, ts2 UINT64 NOT NULL) TYPE File;
+
+# SEM_MATCH alone: the join keeps TRUE, every pair of the window is a candidate.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThing, items.name, labels.label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+== Optimized Global Plan ==
+SINK(PAIRS)
+  PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2])
+    SELECTION(__SEM_VERDICT_0 = true)
+      PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2, __ASYNC_CALL_0 as __SEM_VERDICT_0])
+        ASYNC_PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2, SEM_CALL(SAMETHING:9d91e1a3, NAME, LABEL) as __ASYNC_CALL_0])
+          PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2,  as __ASYNC_CALL_0])
+            Join(INNER_JOIN, true)
+              WATERMARK_ASSIGNER(Event time)
+                SOURCE(ITEMS)
+              WATERMARK_ASSIGNER(Event time)
+                SOURCE(LABELS)
+==END==
+
+# With another conjunct, which stays in the join.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThing, name, label) AND ts1 < ts2
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+== Optimized Global Plan ==
+SINK(PAIRS)
+  PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2])
+    SELECTION(__SEM_VERDICT_0 = true)
+      PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2, __ASYNC_CALL_0 as __SEM_VERDICT_0])
+        ASYNC_PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2, SEM_CALL(SAMETHING:9d91e1a3, NAME, LABEL) as __ASYNC_CALL_0])
+          PROJECTION(fields: [END, ID1, ID2, LABEL, NAME, START, TS1, TS2,  as __ASYNC_CALL_0])
+            Join(INNER_JOIN, TS1 < TS2)
+              WATERMARK_ASSIGNER(Event time)
+                SOURCE(ITEMS)
+              WATERMARK_ASSIGNER(Event time)
+                SOURCE(LABELS)
+==END==

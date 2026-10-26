@@ -770,6 +770,10 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         }
         helpers.top().hasUnnamedAggregation = false;
     }
+    else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex and isSourceQualifier(context))
+    {
+        /// `a.x` in a join condition: the field names of both sides are unique anyway, so the qualifier `a` is skipped.
+    }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         helpers.top().joinKeyRelationHelper.emplace_back(UnboundFieldAccessLogicalFunction(bindIdentifier(context)));
@@ -1388,20 +1392,19 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             else
             {
                 const auto numArgs = context->argument.size();
-                if (numArgs > helpers.top().functionBuilder.size())
+                /// Inside a join condition, the arguments were collected as join keys (SEM_MATCH is written there).
+                auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+                if (numArgs > functions.size())
                 {
                     throw InvalidQuerySyntax(
-                        "Function '{}' expects {} arguments but only {} are available",
-                        funcName,
-                        numArgs,
-                        helpers.top().functionBuilder.size());
+                        "Function '{}' expects {} arguments but only {} are available", funcName, numArgs, functions.size());
                 }
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
+                auto argsBegin = functions.end() - static_cast<std::ptrdiff_t>(numArgs);
+                std::vector<LogicalFunction> funcArgs(argsBegin, functions.end());
                 if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
                 {
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.push_back(*logicalFunction);
+                    functions.resize(functions.size() - numArgs);
+                    functions.push_back(*logicalFunction);
                 }
                 else
                 {

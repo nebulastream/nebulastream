@@ -268,6 +268,14 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefix(semanticFilter->modelName);
     }
+    /// SEM_MATCH(model, left, right) is an ordinary function call whose first argument names the semantic model.
+    for (auto* call : findAll<AntlrSQLParser::FunctionCallContext>(parse.tree()))
+    {
+        if (call->functionName() != nullptr && toUpperCase(call->functionName()->getText()) == "SEM_MATCH" && !call->argument.empty())
+        {
+            prefix(call->argument.front());
+        }
+    }
     for (auto* input : findAll<AntlrSQLParser::SemanticStreamNameContext>(parse.tree()))
     {
         prefixParts(input->multipartIdentifier());

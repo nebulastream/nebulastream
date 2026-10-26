@@ -31,6 +31,27 @@
 namespace NES::detail
 {
 
+/// `self.sysprompt` of `Llm_operator`, which `_filter_with_llm` and `SEMJoinOperator` send unchanged. The typographic
+/// apostrophe in "user’s" is part of the reference and goes out as UTF-8.
+inline constexpr std::string_view BaseSysprompt
+    = "You are a helpful AI assistant for semantic data operations.\n"
+      "Always respond in JSON format.\n"
+      "The response must have one key for each input row (_llm_call_id), and the value must be a JSON object with the answer and a "
+      "confidence score between 0 and 1.\n"
+      "Example output: {\n"
+      "  \"row1\": {\"answer\": true, \"confidence\": 0.95},\n"
+      "  \"row2\": {\"answer\": false, \"confidence\": 0.80}\n"
+      "}\n"
+      "Structure of the prompt:\n"
+      "1. Operator prompt: The operator-specific instruction.\n"
+      "2. User instructions: The user’s task or question.\n"
+      "3. Dataset context (optional): background/domain description of the input dataset.\n"
+      "4. Data: Input data, always in JSON format. Each data item (row) is a JSON object and always includes a unique row id field "
+      "named _llm_call_id.\n"
+      "Input data example: [ {\"_llm_call_id\": \"row1\", ...}, {\"_llm_call_id\": \"row2\", ...} ]\n"
+      "Do not add explanations.";
+
+
 /// A JSON string literal exactly as Python's `json.dumps` writes it with its defaults
 /// (`ensure_ascii=True`).
 void appendPythonJsonString(std::string& out, std::string_view text);

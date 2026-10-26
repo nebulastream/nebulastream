@@ -39,6 +39,9 @@ struct SemanticCallPayload
     std::vector<std::string> inputFields;
     /// The model's declared OUTPUT fields, canonical names, one per MAP step in step order.
     std::vector<std::string> outputFields;
+    /// SEM_JOIN: the call judges one (left, right) pair with `SemanticJoinCodec`. The model is a filter model with two
+    /// INPUT fields, the first one left; the call's single value is the verdict `'true'`/`'false'`.
+    bool join = false;
 };
 
 [[nodiscard]] std::string encodeSemanticCallPayload(const SemanticCallPayload& payload);

@@ -135,7 +135,15 @@ SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded
     }
     const bool hasFilter
         = std::ranges::any_of(config.steps, [](const SemanticStep& step) { return step.kind == SemanticStep::Kind::FILTER; });
-    if (hasFilter)
+    if (payload.join)
+    {
+        if (payload.inputFields.size() != 2 || config.steps.size() != 1 || !hasFilter)
+        {
+            throw CannotOpenSource("SEM_CALL of join model '{}' needs one FILTER step and two inputs", payload.model);
+        }
+        joinCodec.emplace(config);
+    }
+    else if (hasFilter)
     {
         filterCodec.emplace(config);
     }
@@ -180,6 +188,13 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
         payload.model,
         payload.inputFields.size(),
         arguments.size());
+    if (joinCodec)
+    {
+        /// One pair per prompt; the reference numbers pairs `<window>_<i>_<j>`, a single pair needs no more than the row id.
+        const std::vector pairs{JoinPairPayload{.pairId = "row1", .left = std::move(arguments[0]), .right = std::move(arguments[1])}};
+        const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
+        co_return AsyncCallResult{joinCodec->parse(answer, pairs).front() ? "true" : "false"};
+    }
     RowPayload row{.rowId = "row1", .fields = {}};
     for (size_t field = 0; field < arguments.size(); ++field)
     {

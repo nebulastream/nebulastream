@@ -88,6 +88,10 @@ std::optional<Behaviour> parseBehaviour(std::string_view behaviour)
     {
         return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::UNPARSEABLE, .label = {}});
     }
+    if (behaviour == "match")
+    {
+        return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::MATCH, .label = {}});
+    }
     if (behaviour == "fail")
     {
         return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::FAIL, .label = {}});
@@ -155,7 +159,7 @@ MockSemanticBackend::MockSemanticBackend(const std::string_view behaviour, std::
     if (!parsed.has_value())
     {
         throw InvalidSemanticModel(
-            "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable or fail, each optionally followed by @<ms>)",
+            "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable, fail or match, each optionally followed by @<ms>)",
             behaviour);
     }
     mode = parsed->mode;
@@ -186,6 +190,17 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
             return std::unexpected{BackendError{.kind = BackendError::Kind::UNREACHABLE, .message = "mock endpoint is unreachable"}};
         case Mode::UNPARSEABLE:
             return "I am sorry, but I cannot classify these rows.";
+        case Mode::MATCH: {
+            auto response = nlohmann::json::object();
+            for (const auto& [rowId, payload] : dataBlock(prompt).items())
+            {
+                const bool isPair = payload.is_object() && payload.contains("left") && payload.contains("right")
+                    && payload["left"].is_string() && payload["right"].is_string();
+                const bool matched = isPair && toLower(payload["left"].get<std::string>()) == toLower(payload["right"].get<std::string>());
+                response[rowId] = {{"answer", matched}, {"confidence", 1.0}};
+            }
+            return response.dump();
+        }
         case Mode::ECHO:
         case Mode::LABEL: {
             auto response = nlohmann::json::object();

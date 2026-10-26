@@ -14,12 +14,15 @@
 
 #pragma once
 
+#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 #include <PlanRuleRegistry.hpp>
+#include <SemanticModelCatalog.hpp>
 
 namespace NES
 {
@@ -39,15 +42,33 @@ namespace NES
 /// and one async stage; the selection is synchronous. Runs after `TypeInferenceRule`, because the top projection drops
 /// the verdicts again by naming the child's fields, and after `SemanticFusionRule`, so a fused chain becomes one call.
 /// A plan without semantic operators is returned unchanged.
+///
+/// SEM_JOIN is an inner join whose condition has `SEM_MATCH(m, left, right)` conjuncts. The join keeps the other
+/// conjuncts (TRUE if there are none), and each SEM_MATCH becomes a verdict above it, as for SEM_FILTER:
+///
+///     JOIN(SEM_MATCH(m, l, r) AND c)  =>  PROJECTION(<join fields>)
+///                                           SELECTION(__SEM_VERDICT_0 = 'true')
+///                                             PROJECTION(*, SEM_CALL(m, l, r) AS __SEM_VERDICT_0)
+///                                               JOIN(c)
+///
+/// The model is looked up here, since the join condition carries only its name.
 class SemanticCallTranslationRule
 {
 public:
+    explicit SemanticCallTranslationRule(std::shared_ptr<const SemanticModelCatalog> semanticModelCatalog)
+        : semanticModelCatalog(std::move(semanticModelCatalog))
+    {
+    }
+
     static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "SemanticCallTranslationRule";
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
     [[nodiscard]] std::set<std::type_index> needs() const;
     [[nodiscard]] std::set<std::type_index> neededBy() const;
+
+private:
+    std::shared_ptr<const SemanticModelCatalog> semanticModelCatalog;
 };
 
 static_assert(RuleConcept<SemanticCallTranslationRule, LogicalPlan>);

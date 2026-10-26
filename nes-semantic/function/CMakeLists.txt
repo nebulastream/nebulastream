@@ -15,12 +15,15 @@ include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 find_package(reflectcpp CONFIG REQUIRED)
 
 # Logical function: SEM_CALL is asynchronous and has no physical (Nautilus) implementation.
-add_library(semantic_call_logical_function_plugin_library STATIC SemanticCallLogicalFunction.cpp)
+add_library(semantic_call_logical_function_plugin_library STATIC SemanticCallLogicalFunction.cpp SemanticMatchLogicalFunction.cpp)
 target_link_libraries(semantic_call_logical_function_plugin_library PRIVATE nes-logical-operators nes-semantic reflectcpp::reflectcpp)
 target_include_directories(semantic_call_logical_function_plugin_library PUBLIC include PRIVATE .)
 link_plugin_library(nes-logical-operators semantic_call_logical_function_plugin_library)
 add_registry_entry(LogicalFunction SemanticCall KEY SEM_CALL)
 add_unreflection_entry(LogicalFunction SemanticCall)
+# SEM_MATCH(model, left, right): the join condition SEM_JOIN is written with; translated away before execution.
+add_registry_entry(LogicalFunction SemanticMatch KEY SEM_MATCH)
+add_unreflection_entry(LogicalFunction SemanticMatch)
 
 # Each generated glue translation unit includes the plugin header by basename, and the headers of
 # this plugin sit one directory deeper than the plugin root that the glue picks up by itself.

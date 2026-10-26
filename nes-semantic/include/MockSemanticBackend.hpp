@@ -34,6 +34,7 @@ namespace NES
 ///   label:<X>     answers every row with X
 ///   unparseable   answers with prose instead of JSON
 ///   fail          fails like an unreachable endpoint
+///   match         SEM_JOIN: affirms a {left, right} pair whose two texts are equal ignoring case, with a boolean
 ///
 /// Any of them may be followed by `@<ms>`, as in `echo@200`, which makes one request take that
 /// long. Waiting is what a model actually does, and nothing else in a hermetic test can stand in
@@ -59,6 +60,7 @@ public:
         LABEL,
         UNPARSEABLE,
         FAIL,
+        MATCH,
     };
 
     /// Throws InvalidSemanticModel for an unknown behaviour.

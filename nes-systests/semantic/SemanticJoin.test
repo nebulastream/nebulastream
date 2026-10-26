@@ -1,0 +1,112 @@
+# name: semantic/SemanticJoin.test
+# description: SEM_JOIN, written as an inner join on SEM_MATCH(model, left, right), end to end under a real worker
+#              against the mock backend. The model is a filter model with two INPUT fields; every pair of a window
+#              is one prompt in the layout of llm_operator's SEM_JOIN. The mock's 'match' behaviour affirms a pair
+#              whose two texts are equal ignoring case, so the expected pairs are exact.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE items(id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR items TYPE File;
+ATTACH INLINE
+1,Apple,100
+2,banana,200
+3,Cherry,300
+4,apple,1200
+
+CREATE LOGICAL SOURCE labels(id2 UINT64 NOT NULL, label VARSIZED NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR labels TYPE File;
+ATTACH INLINE
+10,APPLE,150
+11,cherry,250
+12,Banana!,350
+13,apple,1100
+
+# Same thing, ignoring case.
+CREATE SEM_MODEL sameThing
+INPUT (lhs VARSIZED, rhs VARSIZED)
+SET ('Both name the same fruit' AS LLM.PROMPT, 'match' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# A filter model with one input, and a map model: neither can judge a pair.
+CREATE SEM_MODEL oneSided
+INPUT (lhs VARSIZED)
+SET ('Is it a fruit?' AS LLM.PROMPT, 'match' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL pairMap
+INPUT (lhs VARSIZED, rhs VARSIZED)
+OUTPUT (relation VARSIZED)
+SET ('How are they related?' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# An endpoint that cannot be reached.
+CREATE SEM_MODEL downMatch
+INPUT (lhs VARSIZED, rhs VARSIZED)
+SET ('Both name the same fruit' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SINK pairs(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64 NOT NULL, label VARSIZED NOT NULL, ts2 UINT64 NOT NULL) TYPE File;
+
+# An outer join makes the other side nullable.
+CREATE SINK outerPairs(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64, label VARSIZED, ts2 UINT64) TYPE File;
+
+# Query 1: SEM_MATCH alone. Window [0, 1000) pairs 3 x 3 rows, window [1000, 2000) 1 x 1; banana / Banana! is no match.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThing, items.name, labels.label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+0,1000,1,Apple,100,10,APPLE,150
+0,1000,3,Cherry,300,11,cherry,250
+1000,2000,4,apple,1200,13,apple,1100
+
+# Query 2: other conjuncts stay in the join, on either side of SEM_MATCH.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON id2 > 10 AND SEM_MATCH(sameThing, name, label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+0,1000,3,Cherry,300,11,cherry,250
+1000,2000,4,apple,1200,13,apple,1100
+
+# Query 3: a predicate across both sides.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThing, name, label) AND ts1 < ts2
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+0,1000,1,Apple,100,10,APPLE,150
+
+# Query 4: the argument order is the model's INPUT order, left first; 'match' is symmetric, so the pairs are the same.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThing, label, name)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+0,1000,1,Apple,100,10,APPLE,150
+0,1000,3,Cherry,300,11,cherry,250
+1000,2000,4,apple,1200,13,apple,1100
+
+# Query 5: outer joins are rejected: a verdict above the join cannot bring back the unmatched rows.
+SELECT * FROM (SELECT * FROM items) LEFT OUTER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThing, name, label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO outerPairs;
+----
+ERROR 2008
+
+# Query 6: SEM_MATCH under OR cannot be moved above the join.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThing, name, label) OR id1 = id2
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+ERROR 2008
+
+# Query 7: a model with one input is not a join model.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(oneSided, name, label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+ERROR 2048
+
+# Query 8: nor is a map model.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(pairMap, name, label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+ERROR 2048
+
+# Query 9: an unknown model.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(noSuchModel, name, label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+ERROR 2046
+
+# Query 10: an unreachable endpoint fails the query, as for SEM_FILTER.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(downMatch, name, label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+ERROR 4006 "unreachable"
