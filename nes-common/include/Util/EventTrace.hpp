@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
+
 #pragma once
 
-/// Backend-independent engine events for latency analysis. Spans are recorded live with begin() and end() on the thread they
-/// happen on, marks and links are points in time. Events are keyed by the buffer identity (originId, sequenceNumber, chunkNumber)
-/// and the pipeline they belong to.
+/// Backend-independent engine events for latency analysis. An event type is a trivially copyable struct of the fields it records,
+/// with a `name` and a `category`. Spans are recorded live with begin() and end() on the thread they happen on; instants are points
+/// in time. Recording an event only copies the struct; the backends describe the types once, at startup.
 ///
 /// Backends are chosen at build time with -DNES_EVENT_TRACE_BACKENDS="ring;itt" (default: none, all macros compile to nothing):
-///  - ring: per-thread ring buffers drained into `<prefix>.<pid>.bin`, stitched offline by scripts/latency_trace.py.
+///  - ring: per-thread ring buffers drained into `<prefix>.<pid>.bin`, a self-describing format read by scripts/latency_trace.py.
 ///          The prefix comes from NES_LATENCY_TRACE_PREFIX (default: `nes-latency-trace`).
-///  - itt:  Intel ITT tasks, markers and relations, shown by VTune when it is attached.
-/// NES_LATENCY_TRACE_QUERY restricts tracing to queries whose printed QueryId contains it, e.g. a distributed query name.
+///  - itt:  Intel ITT tasks, markers and counters with the fields as task metadata, shown by VTune when it is attached.
+/// NES_LATENCY_TRACE_QUERY restricts per-buffer events to queries whose printed QueryId contains it, e.g. a distributed query name.
 /// It sets the initial state of a query, which can be changed while it runs (nes-cli trace on|off).
 
 #if defined(NES_EVENT_TRACE_RING) || defined(NES_EVENT_TRACE_ITT)
@@ -32,38 +33,33 @@
     #include <cstdint>
     #include <functional>
     #include <string_view>
+    #include <tuple>
+    #include <type_traits>
 
 namespace NES::EventTrace
 {
 
-/// The numeric values are part of the ring file format.
-enum class Stage : uint16_t
+/// Whether a span is useful work or waiting, so the report and VTune can separate the two.
+enum class Category : uint8_t
 {
-    /// Source thread: backpressure wait, buffer acquisition and buffer fill (until the buffer is handed to the engine).
-    /// For SourceFill, `extra` holds the time the first data arrived, or 0 if the source does not report it.
-    SourceBackpressure = 0,
-    SourceBufferWait = 1,
-    SourceFill = 2,
-    /// From emitWork entry until the task is in the task queue.
-    Enqueue = 3,
-    /// A pipeline execution with the task's input buffer as key. `extra` holds the number of tuples.
-    Exec = 4,
-    /// Reserved for links, see link().
-    Emit = 5,
-    /// Buffer handed to / received from the network layer. NetRecv carries the pipeline the network source feeds.
-    NetSend = 6,
-    NetRecv = 7,
-    /// A sample of a CounterUpdater. The pipeline field holds the counter id, `extra` the value.
-    Counter = 8,
-    /// A worker thread waiting for its next task. Belongs to no buffer or query, so it is recorded for every worker.
-    TaskQueueWait = 9,
+    Work = 0,
+    Wait = 1,
+    Other = 2,
 };
 
+enum class Kind : uint8_t
+{
+    Begin = 0,
+    End = 1,
+    Instant = 2,
+};
+
+/// Identifies a tuple buffer.
 struct Key
 {
     uint64_t origin = 0;
     uint64_t seq = 0;
-    uint32_t chunk = 0;
+    uint64_t chunk = 0;
 };
 
 template <typename Buffer>
@@ -72,23 +68,189 @@ Key keyOf(const Buffer& buffer)
     return {
         .origin = buffer.getOriginId().getRawValue(),
         .seq = buffer.getSequenceNumber().getRawValue(),
-        .chunk = static_cast<uint32_t>(buffer.getChunkNumber().getRawValue())};
+        .chunk = buffer.getChunkNumber().getRawValue()};
 }
 
-/// Nanoseconds on the steady clock. All timestamps passed to this API use it.
+/// Nanoseconds on the steady clock. All event times use it.
 inline uint64_t now() noexcept
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-/// A span of `stage` starts or ends now on the calling thread. Spans of the same stage on one thread do not overlap, so an end
-/// closes the last begin of its stage on that thread. The key and pipeline of a begin may be unknown ({} and 0); the end carries them.
-void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept;
-void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra = 0) noexcept;
-/// Something that happened to the buffer `key` at time t.
-void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept;
-/// `pipeline` produced the buffer `output` at time t while processing the buffer `input`.
-void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept;
+/// Event types. Fields are Key, uint64_t or int64_t. A span records the struct at its begin and at its end, so fields that are only
+/// known at the end are 0 in the begin record.
+
+/// Source thread: waiting for the backpressure signal, for an empty buffer, and filling the buffer until it is handed to the engine.
+struct SourceBackpressure
+{
+    static constexpr std::string_view name = "source backpressure";
+    static constexpr Category category = Category::Wait;
+};
+
+struct SourceBufferWait
+{
+    static constexpr std::string_view name = "source buffer wait";
+    static constexpr Category category = Category::Wait;
+};
+
+/// `firstData` is when the first data of the buffer arrived, or 0 if the source does not report it.
+struct SourceFill
+{
+    static constexpr std::string_view name = "source fill";
+    static constexpr Category category = Category::Other;
+    Key key;
+    uint64_t pipeline = 0;
+    uint64_t firstData = 0;
+};
+
+/// From emitWork entry until the task is in the task queue.
+struct Enqueue
+{
+    static constexpr std::string_view name = "enqueue";
+    static constexpr Category category = Category::Wait;
+    Key key;
+    uint64_t pipeline = 0;
+};
+
+/// A pipeline executing a task with the input buffer `key`.
+struct Exec
+{
+    static constexpr std::string_view name = "exec";
+    static constexpr Category category = Category::Work;
+    Key key;
+    uint64_t pipeline = 0;
+    uint64_t tuples = 0;
+};
+
+/// A worker thread waiting for its next task. Belongs to no buffer or query, so it is recorded for every worker.
+struct TaskQueueWait
+{
+    static constexpr std::string_view name = "task queue wait";
+    static constexpr Category category = Category::Wait;
+};
+
+/// `pipeline` produced the buffer `output` while processing the buffer `input`.
+struct Emit
+{
+    static constexpr std::string_view name = "emit";
+    static constexpr Category category = Category::Other;
+    Key output;
+    Key input;
+    uint64_t pipeline = 0;
+};
+
+/// A buffer handed to the network layer.
+struct NetSend
+{
+    static constexpr std::string_view name = "net send";
+    static constexpr Category category = Category::Other;
+    Key key;
+};
+
+/// A network source received the buffer `key` at `received` and hands it to `pipeline`.
+struct NetRecv
+{
+    static constexpr std::string_view name = "net recv";
+    static constexpr Category category = Category::Other;
+    Key key;
+    uint64_t pipeline = 0;
+    uint64_t received = 0;
+};
+
+/// A sample of a CounterUpdater.
+struct CounterSample
+{
+    static constexpr std::string_view name = "counter";
+    static constexpr Category category = Category::Other;
+    uint64_t counter = 0;
+    int64_t value = 0;
+};
+
+/// The position of a type in this list is its id in the ring format.
+using EventTypes
+    = std::tuple<SourceBackpressure, SourceBufferWait, SourceFill, Enqueue, Exec, TaskQueueWait, Emit, NetSend, NetRecv, CounterSample>;
+
+namespace detail
+{
+template <typename Event, typename... Events>
+consteval uint16_t indexOf(std::tuple<Events...>*)
+{
+    uint16_t index = 0;
+    (void)((std::is_same_v<Event, Events> ? false : (++index, true)) && ...);
+    return index;
+}
+}
+
+template <typename Event>
+constexpr uint16_t typeId = detail::indexOf<Event>(static_cast<EventTypes*>(nullptr));
+
+/// Empty event types record no payload.
+template <typename Event>
+constexpr uint32_t payloadSize = std::is_empty_v<Event> ? 0 : sizeof(Event);
+
+/// Forwards an event to the backends. Use begin(), end() and instant().
+void record(uint16_t type, Kind kind, const void* payload, uint32_t size) noexcept;
+
+template <typename Event>
+void emit(Kind kind, const Event& event) noexcept
+{
+    static_assert(std::is_trivially_copyable_v<Event>, "Event types are copied into the trace as bytes");
+    static_assert(typeId<Event> < std::tuple_size_v<EventTypes>, "Event types must be listed in EventTypes");
+    record(typeId<Event>, kind, &event, payloadSize<Event>);
+}
+
+/// A span starts or ends now on the calling thread. Spans of the same type on one thread do not overlap, so an end closes the last
+/// begin of its type on that thread.
+template <typename Event>
+void begin(const Event& event) noexcept
+{
+    emit(Kind::Begin, event);
+}
+
+template <typename Event>
+void end(const Event& event) noexcept
+{
+    emit(Kind::End, event);
+}
+
+template <typename Event>
+void instant(const Event& event) noexcept
+{
+    emit(Kind::Instant, event);
+}
+
+/// A span over the lifetime of the scope. Fields changed through event() before the scope ends are recorded at its end.
+template <typename Event>
+class Scope
+{
+public:
+    Scope(bool enabled, const Event& event) : enabled(enabled), recorded(event)
+    {
+        if (enabled)
+        {
+            begin(recorded);
+        }
+    }
+
+    Scope(const Scope&) = delete;
+    Scope(Scope&&) = delete;
+    Scope& operator=(const Scope&) = delete;
+    Scope& operator=(Scope&&) = delete;
+
+    ~Scope()
+    {
+        if (enabled)
+        {
+            end(recorded);
+        }
+    }
+
+    Event& event() { return recorded; }
+
+private:
+    bool enabled;
+    Event recorded;
+};
 
 /// Samples a value, e.g. a queue length, every millisecond on the event trace's sampler thread while the CounterUpdater is alive.
 /// Samples are recorded when the value changes. Not tied to a query, so the samples show what happened around traced buffers.
@@ -108,7 +270,7 @@ public:
     CounterUpdater& operator=(CounterUpdater&&) = delete;
 
 private:
-    uint32_t id;
+    uint64_t id;
 };
 
 /// Whether the query with this printed QueryId is traced.
@@ -119,42 +281,8 @@ void writePlan(std::string_view plan);
 /// Set by the worker thread for the task it executes, for code that runs inside a pipeline without knowing its query.
 inline thread_local bool currentTaskTraced = false;
 
-/// A span over the lifetime of the scope.
-class Scope
-{
-public:
-    Scope(bool enabled, Stage stage, const Key& key, uint64_t pipeline, uint64_t extra = 0)
-        : enabled(enabled), stage(stage), key(key), pipeline(pipeline), extra(extra)
-    {
-        if (enabled)
-        {
-            begin(stage, key, pipeline);
-        }
-    }
-
-    Scope(const Scope&) = delete;
-    Scope(Scope&&) = delete;
-    Scope& operator=(const Scope&) = delete;
-    Scope& operator=(Scope&&) = delete;
-
-    ~Scope()
-    {
-        if (enabled)
-        {
-            end(stage, key, pipeline, extra);
-        }
-    }
-
-private:
-    bool enabled;
-    Stage stage;
-    Key key;
-    uint64_t pipeline;
-    uint64_t extra;
-};
-
-/// State of the source thread. The buffer's key is only known once the buffer is emitted, so the source spans begin without it
-/// and the fill span ends with it when the source emits the buffer.
+/// State of the source thread. The buffer's key is only known once the buffer is emitted, so the fill span ends with it when the
+/// source emits the buffer.
 struct SourceState
 {
     /// Whether the query of the source was traced when it emitted its last buffer. Gates the begins and ends of the next buffer,
@@ -166,8 +294,8 @@ struct SourceState
 
 inline thread_local SourceState sourceState;
 
-/// Ends the fill span of a buffer that the source thread hands to the engine. `pipeline` is the first successor of the source.
-/// A network source forwards buffers that keep their upstream key; its receive time is recorded for each successor.
+/// Ends the fill span of a buffer that the source thread hands to the engine. Its pipeline is the first successor of the source.
+/// A network source forwards buffers that keep their upstream key; their receive time is recorded for each successor.
 template <typename Successors>
 void sourceEmitted(const Key& key, const Successors& successors) noexcept
 {
@@ -178,10 +306,10 @@ void sourceEmitted(const Key& key, const Successors& successors) noexcept
         {
             for (const auto& successor : successors)
             {
-                mark(Stage::NetRecv, key, successor->id.getRawValue(), state.firstData);
+                instant(NetRecv{.key = key, .pipeline = successor->id.getRawValue(), .received = state.firstData});
             }
         }
-        end(Stage::SourceFill, key, successors.front()->id.getRawValue(), state.firstData);
+        end(SourceFill{.key = key, .pipeline = successors.front()->id.getRawValue(), .firstData = state.firstData});
     }
     state.traced = false;
     for (const auto& successor : successors)
@@ -196,17 +324,17 @@ void sourceEmitted(const Key& key, const Successors& successors) noexcept
     /// Wraps statements that only exist when event tracing is enabled.
     #define NES_EVENT(...) __VA_ARGS__
     /// Begins or ends a source span of the buffer the source thread is producing.
-    #define NES_EVENT_SOURCE_BEGIN(stage) \
-        (::NES::EventTrace::sourceState.traced ? ::NES::EventTrace::begin(::NES::EventTrace::Stage::stage, {}, 0) : (void)0)
-    #define NES_EVENT_SOURCE_END(stage) \
-        (::NES::EventTrace::sourceState.traced ? ::NES::EventTrace::end(::NES::EventTrace::Stage::stage, {}, 0) : (void)0)
+    #define NES_EVENT_SOURCE_BEGIN(Event) \
+        (::NES::EventTrace::sourceState.traced ? ::NES::EventTrace::begin(::NES::EventTrace::Event{}) : (void)0)
+    #define NES_EVENT_SOURCE_END(Event) \
+        (::NES::EventTrace::sourceState.traced ? ::NES::EventTrace::end(::NES::EventTrace::Event{}) : (void)0)
     /// Sources that block waiting for input call this once data arrived, so the stitcher can start a buffer's latency there.
     #define NES_EVENT_FIRST_DATA() \
         (::NES::EventTrace::sourceState.firstData == 0 ? (void)(::NES::EventTrace::sourceState.firstData = ::NES::EventTrace::now()) \
                                                        : (void)0)
 #else
     #define NES_EVENT(...)
-    #define NES_EVENT_SOURCE_BEGIN(stage) ((void)0)
-    #define NES_EVENT_SOURCE_END(stage) ((void)0)
+    #define NES_EVENT_SOURCE_BEGIN(Event) ((void)0)
+    #define NES_EVENT_SOURCE_END(Event) ((void)0)
     #define NES_EVENT_FIRST_DATA() ((void)0)
 #endif

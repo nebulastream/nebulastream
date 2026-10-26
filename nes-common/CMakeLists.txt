@@ -84,6 +84,11 @@ pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
 
 target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid nes-logger-bindings)
 target_link_rust_lib(nes-common spdlog_bindings)
+if (NES_EVENT_TRACE_BACKENDS)
+    # Describes the event types once at startup; recording events does not use it.
+    find_package(reflectcpp CONFIG REQUIRED)
+    target_link_libraries(nes-common PRIVATE reflectcpp::reflectcpp)
+endif ()
 if ("itt" IN_LIST NES_EVENT_TRACE_BACKENDS)
     find_package(ittapi CONFIG REQUIRED)
     target_link_libraries(nes-common PRIVATE ittapi::ittnotify)

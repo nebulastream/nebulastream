@@ -311,7 +311,7 @@ public:
     {
         NES_EVENT(
             const EventTrace::Scope enqueue(
-                node->latencyTraced, EventTrace::Stage::Enqueue, EventTrace::keyOf(buffer), node->id.getRawValue()));
+                node->latencyTraced, EventTrace::Enqueue{.key = EventTrace::keyOf(buffer), .pipeline = node->id.getRawValue()}));
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
         auto [complete, failure, success] = std::move(callback).take();
@@ -505,8 +505,11 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 NES_EVENT(if (pipeline->latencyTraced) {
-                    EventTrace::link(
-                        EventTrace::keyOf(tupleBuffer), EventTrace::keyOf(task.buf), pipeline->id.getRawValue(), EventTrace::now());
+                    EventTrace::instant(
+                        EventTrace::Emit{
+                            .output = EventTrace::keyOf(tupleBuffer),
+                            .input = EventTrace::keyOf(task.buf),
+                            .pipeline = pipeline->id.getRawValue()});
                 });
                 return std::ranges::all_of(
                     pipeline->successors,
@@ -529,10 +532,10 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             NES_EVENT(
                 EventTrace::currentTaskTraced = pipeline->latencyTraced; const EventTrace::Scope execution(
                     pipeline->latencyTraced,
-                    EventTrace::Stage::Exec,
-                    EventTrace::keyOf(task.buf),
-                    pipeline->id.getRawValue(),
-                    task.buf.getNumberOfTuples()));
+                    EventTrace::Exec{
+                        .key = EventTrace::keyOf(task.buf),
+                        .pipeline = pipeline->id.getRawValue(),
+                        .tuples = task.buf.getNumberOfTuples()}));
             pipeline->stage->execute(task.buf, pec);
         }
 
@@ -786,9 +789,9 @@ void ThreadPool::addThread(const Host& host)
             const WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
-                NES_EVENT(EventTrace::begin(EventTrace::Stage::TaskQueueWait, {}, 0));
+                NES_EVENT(EventTrace::begin(EventTrace::TaskQueueWait{}));
                 auto task = taskQueue.getNextTaskBlocking(stopToken);
-                NES_EVENT(EventTrace::end(EventTrace::Stage::TaskQueueWait, {}, 0));
+                NES_EVENT(EventTrace::end(EventTrace::TaskQueueWait{}));
                 if (task)
                 {
                     handleTask(worker, std::move(*task));

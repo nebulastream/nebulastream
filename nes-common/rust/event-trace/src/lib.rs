@@ -14,32 +14,10 @@
 
 //! Safe Rust API for the NebulaStream event trace (nes-common/include/Util/EventTrace.hpp).
 //!
-//! All FFI lives in this crate. Without trace backends in the C++ build, every function is a no-op and counters are never
-//! sampled.
+//! All FFI lives in this crate. Without trace backends in the C++ build, counters are never sampled.
 
 #[cxx::bridge(namespace = "NES::EventTrace::Rust")]
 mod ffi {
-    /// The numeric values match `NES::EventTrace::Stage`.
-    #[repr(u16)]
-    enum Stage {
-        SourceBackpressure = 0,
-        SourceBufferWait = 1,
-        SourceFill = 2,
-        Enqueue = 3,
-        Exec = 4,
-        Emit = 5,
-        NetSend = 6,
-        NetRecv = 7,
-    }
-
-    /// Identifies a tuple buffer: origin id, sequence number and chunk number.
-    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-    struct Key {
-        origin: u64,
-        seq: u64,
-        chunk: u32,
-    }
-
     extern "Rust" {
         type Sample;
         fn sample(sample: &Sample) -> i64;
@@ -50,34 +28,7 @@ mod ffi {
 
         type Counter;
         fn create_counter(name: &str, sample: Box<Sample>) -> UniquePtr<Counter>;
-
-        fn now() -> u64;
-        fn begin(stage: Stage, key: &Key, pipeline: u64);
-        fn end(stage: Stage, key: &Key, pipeline: u64, extra: u64);
-        fn mark(stage: Stage, key: &Key, pipeline: u64, time: u64);
     }
-}
-
-pub use ffi::{Key, Stage};
-
-/// Steady-clock nanoseconds, the time base of all events.
-pub fn now() -> u64 {
-    ffi::now()
-}
-
-/// A span of `stage` starts now on the calling thread. See `EventTrace::begin` for how begins and ends pair up.
-pub fn begin(stage: Stage, key: Key, pipeline: u64) {
-    ffi::begin(stage, &key, pipeline);
-}
-
-/// The last span of `stage` that began on the calling thread ends now.
-pub fn end(stage: Stage, key: Key, pipeline: u64, extra: u64) {
-    ffi::end(stage, &key, pipeline, extra);
-}
-
-/// Something happened to the buffer `key` at `time` (see [`now`]).
-pub fn mark(stage: Stage, key: Key, pipeline: u64, time: u64) {
-    ffi::mark(stage, &key, pipeline, time);
 }
 
 struct Sample(Box<dyn Fn() -> i64 + Send + Sync>);

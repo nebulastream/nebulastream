@@ -33,43 +33,13 @@
 namespace NES::EventTrace
 {
 
-void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept
+void record(uint16_t type, Kind kind, const void* payload, uint32_t size) noexcept
 {
     #ifdef NES_EVENT_TRACE_RING
-    Ring::begin(stage, key, pipeline);
+    Ring::record(type, kind, payload, size);
     #endif
     #ifdef NES_EVENT_TRACE_ITT
-    Itt::begin(stage, key, pipeline);
-    #endif
-}
-
-void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept
-{
-    #ifdef NES_EVENT_TRACE_RING
-    Ring::end(stage, key, pipeline, extra);
-    #endif
-    #ifdef NES_EVENT_TRACE_ITT
-    Itt::end(stage, key, pipeline, extra);
-    #endif
-}
-
-void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept
-{
-    #ifdef NES_EVENT_TRACE_RING
-    Ring::mark(stage, key, pipeline, t);
-    #endif
-    #ifdef NES_EVENT_TRACE_ITT
-    Itt::mark(stage, key, pipeline, t);
-    #endif
-}
-
-void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept
-{
-    #ifdef NES_EVENT_TRACE_RING
-    Ring::link(output, input, pipeline, t);
-    #endif
-    #ifdef NES_EVENT_TRACE_ITT
-    Itt::link(output, input, pipeline, t);
+    Itt::record(type, kind, payload, size);
     #endif
 }
 
@@ -88,7 +58,7 @@ constexpr auto SAMPLE_INTERVAL = std::chrono::milliseconds(1);
 class Sampler
 {
 public:
-    uint32_t add(std::string_view name, std::function<int64_t()> sample)
+    uint64_t add(std::string_view name, std::function<int64_t()> sample)
     {
         const std::scoped_lock lock(mutex);
         const auto id = nextId++;
@@ -106,7 +76,7 @@ public:
         return id;
     }
 
-    void remove(uint32_t id)
+    void remove(uint64_t id)
     {
         const std::scoped_lock lock(mutex);
         std::erase_if(counters, [id](const auto& counter) { return counter.id == id; });
@@ -118,7 +88,7 @@ public:
 private:
     struct Counter
     {
-        uint32_t id;
+        uint64_t id;
         std::function<int64_t()> sample;
         std::optional<int64_t> last;
     };
@@ -137,19 +107,14 @@ private:
                     continue;
                 }
                 counter.last = value;
-    #ifdef NES_EVENT_TRACE_RING
-                Ring::counterValue(counter.id, value);
-    #endif
-    #ifdef NES_EVENT_TRACE_ITT
-                Itt::counterValue(counter.id, value);
-    #endif
+                instant(CounterSample{.counter = counter.id, .value = value});
             }
         }
     }
 
     std::mutex mutex;
     std::vector<Counter> counters;
-    uint32_t nextId = 1;
+    uint64_t nextId = 1;
     /// Declared last, so it stops before the members it uses are destroyed.
     std::jthread thread;
 };

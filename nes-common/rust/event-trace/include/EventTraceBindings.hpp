@@ -14,15 +14,12 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <rust/cxx.h>
 
 /// The C++ side of the event_trace crate's bridge (nes-common/rust/event-trace/src/lib.rs).
 namespace NES::EventTrace::Rust
 {
-enum class Stage : uint16_t;
-struct Key;
 struct Sample;
 
 /// Owns the C++ CounterUpdater of a Rust counter. Without trace backends it holds nothing.
@@ -33,9 +30,4 @@ public:
 };
 
 std::unique_ptr<Counter> create_counter(rust::Str name, rust::Box<Sample> sample);
-
-uint64_t now() noexcept;
-void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept;
-void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept;
-void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t time) noexcept;
 }

@@ -12,16 +12,21 @@
     limitations under the License.
 */
 
+
 #ifdef NES_EVENT_TRACE_ITT
 
     #include <array>
     #include <cstddef>
     #include <cstdint>
+    #include <cstring>
     #include <string>
     #include <string_view>
+    #include <tuple>
+    #include <type_traits>
     #include <unordered_map>
+    #include <vector>
     #include <ittnotify.h>
-    #include <Util/EventTrace.hpp>
+    #include <rfl/to_view.hpp>
     #include <EventTraceBackends.hpp>
 
 namespace NES::EventTrace::Itt
@@ -29,114 +34,127 @@ namespace NES::EventTrace::Itt
 namespace
 {
 
-constexpr size_t StageCount = 10;
-constexpr std::array<const char*, StageCount> StageNames
-    = {"SourceBackpressure", "SourceBufferWait", "SourceFill", "Enqueue", "Exec", "Emit", "NetSend", "NetRecv", "Counter", "TaskQueueWait"};
-
-/// Only accessed with the sampler's lock held, see EventTraceBackends.hpp.
-std::unordered_map<uint32_t, __itt_counter>& counters()
+/// A field of an event type, added as task metadata when a span ends.
+struct FieldInfo
 {
-    static std::unordered_map<uint32_t, __itt_counter> instance;
-    return instance;
-}
-
-struct Handles
-{
-    __itt_domain* domain = __itt_domain_create("NebulaStream");
-    std::array<__itt_string_handle*, StageCount> stages{};
-    __itt_string_handle* keyName = __itt_string_handle_create("key");
-    __itt_string_handle* pipelineName = __itt_string_handle_create("pipeline");
-    __itt_string_handle* extraName = __itt_string_handle_create("extra");
-
-    Handles()
-    {
-        for (size_t i = 0; i < StageCount; ++i)
-        {
-            stages[i] = __itt_string_handle_create(StageNames[i]);
-        }
-    }
+    __itt_string_handle* name;
+    uint32_t offset;
+    bool isKey;
+    bool isSigned;
 };
 
-const Handles& handles() noexcept
+struct TypeInfo
 {
-    static const Handles instance;
+    __itt_domain* domain = nullptr;
+    __itt_string_handle* name = nullptr;
+    std::vector<FieldInfo> fields;
+};
+
+/// VTune groups tasks by domain, so the category decides the domain.
+__itt_domain* domainOf(Category category)
+{
+    static const std::array<__itt_domain*, 3> domains{
+        __itt_domain_create("NebulaStream.Work"), __itt_domain_create("NebulaStream.Wait"), __itt_domain_create("NebulaStream.Other")};
+    return domains.at(static_cast<size_t>(category));
+}
+
+template <typename Event>
+TypeInfo describe()
+{
+    TypeInfo info{.domain = domainOf(Event::category), .name = __itt_string_handle_create(std::string(Event::name).c_str()), .fields = {}};
+    if constexpr (!std::is_empty_v<Event>)
+    {
+        Event instance{};
+        rfl::to_view(instance).apply(
+            [&](const auto& field)
+            {
+                using Field = std::remove_cvref_t<decltype(*field.value())>;
+                const auto* address
+                    = reinterpret_cast<const std::byte*>(field.value()); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                info.fields.push_back(
+                    {.name = __itt_string_handle_create(std::string(field.name()).c_str()),
+                     .offset = static_cast<uint32_t>(
+                         address - reinterpret_cast<const std::byte*>(&instance)), /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                     .isKey = std::is_same_v<Field, Key>,
+                     .isSigned = std::is_same_v<Field, int64_t>});
+            });
+    }
+    return info;
+}
+
+const std::vector<TypeInfo>& types()
+{
+    static const std::vector<TypeInfo> instance = []<typename... Events>(std::tuple<Events...>*)
+    { return std::vector<TypeInfo>{describe<Events>()...}; }(static_cast<EventTypes*>(nullptr));
     return instance;
 }
 
-__itt_string_handle* stageName(const Handles& h, Stage stage) noexcept
+/// Only accessed on the sampler thread with its lock held, see EventTraceBackends.hpp.
+std::unordered_map<uint64_t, __itt_counter>& counters()
 {
-    const auto index = static_cast<size_t>(stage);
-    return index < StageCount ? h.stages[index] : h.stages[static_cast<size_t>(Stage::Emit)];
+    static std::unordered_map<uint64_t, __itt_counter> instance;
+    return instance;
 }
 
-/// Identifies the buffer independently of the stage and pipeline. Every task of a buffer has it as parent, so a relation
-/// on it connects all tasks of that buffer.
-__itt_id bufferId(const Key& key) noexcept
+void addMetadata(const TypeInfo& info, const std::byte* payload)
 {
-    return __itt_id{key.origin, key.seq, key.chunk};
-}
-
-/// Unique per (stage, key, pipeline) as long as pipeline ids fit into 24 bits.
-__itt_id taskId(Stage stage, const Key& key, uint64_t pipeline) noexcept
-{
-    return __itt_id{key.origin, key.seq, key.chunk | (uint64_t{static_cast<uint16_t>(stage)} << 32) | (pipeline << 40)};
-}
-
-}
-
-/// ITT records tasks, markers and relations at the time of the call, so the timestamps of mark() and link() are not used.
-void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept
-{
-    const auto& h = handles();
-    const bool known = key.origin != 0 || key.seq != 0;
-    __itt_task_begin(h.domain, known ? taskId(stage, key, pipeline) : __itt_null, known ? bufferId(key) : __itt_null, stageName(h, stage));
-}
-
-void end(Stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept
-{
-    const auto& h = handles();
-    /// Metadata attaches to the current task, which is the one this call ends.
-    std::array<uint64_t, 3> keyData{key.origin, key.seq, key.chunk};
-    __itt_metadata_add(h.domain, __itt_null, h.keyName, __itt_metadata_u64, keyData.size(), keyData.data());
-    __itt_metadata_add(h.domain, __itt_null, h.pipelineName, __itt_metadata_u64, 1, &pipeline);
-    if (extra != 0)
+    for (const auto& field : info.fields)
     {
-        __itt_metadata_add(h.domain, __itt_null, h.extraName, __itt_metadata_u64, 1, &extra);
+        if (field.isKey)
+        {
+            Key key;
+            std::memcpy(&key, payload + field.offset, sizeof(key));
+            std::array<uint64_t, 3> values{key.origin, key.seq, key.chunk};
+            __itt_metadata_add(info.domain, __itt_null, field.name, __itt_metadata_u64, values.size(), values.data());
+            continue;
+        }
+        uint64_t value = 0;
+        std::memcpy(&value, payload + field.offset, sizeof(value));
+        __itt_metadata_add(info.domain, __itt_null, field.name, field.isSigned ? __itt_metadata_s64 : __itt_metadata_u64, 1, &value);
     }
-    __itt_task_end(h.domain);
+}
 }
 
-void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t) noexcept
+void record(uint16_t type, Kind kind, const void* payload, uint32_t) noexcept
 {
-    const auto& h = handles();
-    __itt_marker(h.domain, taskId(stage, key, pipeline), stageName(h, stage), __itt_marker_scope_thread);
+    if (type == typeId<CounterSample>)
+    {
+        CounterSample sample;
+        std::memcpy(&sample, payload, sizeof(sample));
+        if (const auto it = counters().find(sample.counter); it != counters().end())
+        {
+            __itt_counter_set_value(it->second, &sample.value);
+        }
+        return;
+    }
+    const auto& info = types().at(type);
+    switch (kind)
+    {
+        case Kind::Begin:
+            __itt_task_begin(info.domain, __itt_null, __itt_null, info.name);
+            return;
+        case Kind::End:
+            /// Metadata attaches to the current task, which is the one this call ends. The end record holds the final values.
+            addMetadata(info, static_cast<const std::byte*>(payload));
+            __itt_task_end(info.domain);
+            return;
+        case Kind::Instant:
+            __itt_marker(info.domain, __itt_null, info.name, __itt_marker_scope_thread);
+            return;
+    }
 }
 
-void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t) noexcept
-{
-    const auto& h = handles();
-    __itt_relation_add(h.domain, bufferId(output), __itt_relation_is_continuation_of, taskId(Stage::Exec, input, pipeline));
-}
-
-void counterCreated(uint32_t id, std::string_view name)
+void counterCreated(uint64_t id, std::string_view name)
 {
     counters()[id] = __itt_counter_create_typed(std::string(name).c_str(), "NebulaStream", __itt_metadata_s64);
 }
 
-void counterDestroyed(uint32_t id)
+void counterDestroyed(uint64_t id)
 {
     if (const auto it = counters().find(id); it != counters().end())
     {
         __itt_counter_destroy(it->second);
         counters().erase(it);
-    }
-}
-
-void counterValue(uint32_t id, int64_t value) noexcept
-{
-    if (const auto it = counters().find(id); it != counters().end())
-    {
-        __itt_counter_set_value(it->second, &value);
     }
 }
 

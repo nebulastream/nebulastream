@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+
 #ifdef NES_EVENT_TRACE_RING
 
     #include <EventTraceBackends.hpp>
@@ -20,6 +21,7 @@
     #include <array>
     #include <atomic>
     #include <chrono>
+    #include <cstddef>
     #include <cstdint>
     #include <cstdio>
     #include <cstdlib>
@@ -30,58 +32,121 @@
     #include <string>
     #include <string_view>
     #include <thread>
+    #include <tuple>
+    #include <type_traits>
+    #include <utility>
     #include <vector>
     #include <unistd.h>
     #include <fmt/format.h>
+    #include <rfl/to_view.hpp>
 
+/// File format, read by scripts/latency_trace.py. All integers are little endian.
+///
+///   header:  "NESLAT03", pid u64, steady clock ns u64, system clock ns u64, hostname char[64]
+///   schemas: count u16, then per event type:
+///              id u16, name, category u8, payload size u32, field count u16,
+///              per field: name, type u8 ('k' Key, 'u' uint64_t, 'i' int64_t), offset u32
+///            where a name is a length u16 followed by its bytes
+///   chunks:  until the end of the file: thread u16, length u32, then `length` bytes of records of that thread
+///   record:  type u16, kind u8 (EventTrace::Kind), time u64, then the event's payload
 namespace NES::EventTrace::Ring
 {
 namespace
 {
 
-constexpr size_t RING_CAPACITY = 1 << 15;
+constexpr size_t RING_BYTES = 1 << 21;
+constexpr size_t RECORD_HEADER_BYTES = sizeof(uint16_t) + sizeof(Kind) + sizeof(uint64_t);
 constexpr auto FLUSH_INTERVAL = std::chrono::milliseconds(10);
-constexpr std::array<char, 8> MAGIC{'N', 'E', 'S', 'L', 'A', 'T', '0', '2'};
+constexpr std::array<char, 8> MAGIC{'N', 'E', 'S', 'L', 'A', 'T', '0', '3'};
 
-enum class Kind : uint8_t
-{
-    Point = 0,
-    Begin = 1,
-    End = 2,
-};
-
-/// The layout is the file format read by scripts/latency_trace.py.
-struct Event
-{
-    uint64_t time = 0;
-    uint64_t reserved = 0;
-    uint64_t origin = 0;
-    uint64_t seq = 0;
-    uint64_t origin2 = 0;
-    /// The `extra` of an end, or the input sequence number of a link.
-    uint64_t seq2 = 0;
-    uint32_t chunk = 0;
-    uint32_t chunk2 = 0;
-    uint32_t pipeline = 0;
-    uint8_t stage = 0;
-    Kind kind = Kind::Point;
-    /// Identifies the recording thread within the process, so the stitcher can pair begins and ends.
-    uint16_t thread = 0;
-};
-
-static_assert(sizeof(Event) == 64, "Event layout is part of the file format");
-
-/// Single producer (the owning thread), single consumer (the flusher).
+/// Single producer (the owning thread), single consumer (the flusher). Positions count bytes and only grow; a record that reaches
+/// the end of the array continues at its start.
 struct RingBuffer
 {
     explicit RingBuffer(uint16_t thread) : thread(thread) { }
 
     uint16_t thread;
-    std::array<Event, RING_CAPACITY> events{};
+    std::array<std::byte, RING_BYTES> bytes{};
     std::atomic<size_t> head{0};
     std::atomic<size_t> tail{0};
     std::atomic<bool> alive{true};
+
+    void put(size_t position, const void* source, size_t size) noexcept
+    {
+        const auto index = position % RING_BYTES;
+        const auto first = std::min(size, RING_BYTES - index);
+        std::memcpy(&bytes[index], source, first);
+        std::memcpy(bytes.data(), static_cast<const std::byte*>(source) + first, size - first);
+    }
 };
+
+template <typename T>
+void append(std::string& out, T value)
+{
+    out.append(reinterpret_cast<const char*>(&value), sizeof(value)); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+}
+
+void appendName(std::string& out, std::string_view name)
+{
+    append(out, static_cast<uint16_t>(name.size()));
+    out.append(name);
+}
+
+template <typename Field>
+constexpr char fieldType()
+{
+    if constexpr (std::is_same_v<Field, Key>)
+    {
+        return 'k';
+    }
+    else if constexpr (std::is_same_v<Field, uint64_t>)
+    {
+        return 'u';
+    }
+    else
+    {
+        static_assert(std::is_same_v<Field, int64_t>, "Event fields are Key, uint64_t or int64_t");
+        return 'i';
+    }
+}
+
+template <typename Event>
+void appendSchema(std::string& out)
+{
+    append(out, typeId<Event>);
+    appendName(out, Event::name);
+    append(out, Event::category);
+    append(out, payloadSize<Event>);
+    std::string fields;
+    uint16_t count = 0;
+    if constexpr (!std::is_empty_v<Event>)
+    {
+        Event instance{};
+        rfl::to_view(instance).apply(
+            [&](const auto& field)
+            {
+                const auto* address
+                    = reinterpret_cast<const std::byte*>(field.value()); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                appendName(fields, field.name());
+                append(fields, fieldType<std::remove_cvref_t<decltype(*field.value())>>());
+                append(
+                    fields,
+                    static_cast<uint32_t>(
+                        address - reinterpret_cast<const std::byte*>(&instance))); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                ++count;
+            });
+    }
+    append(out, count);
+    out.append(fields);
+}
+
+std::string schemas()
+{
+    std::string out;
+    append(out, static_cast<uint16_t>(std::tuple_size_v<EventTypes>));
+    [&]<typename... Events>(std::tuple<Events...>*) { (appendSchema<Events>(out), ...); }(static_cast<EventTypes*>(nullptr));
+    return out;
+}
 
 /// The steady/system clock pair lets the stitcher align events of different processes on the system clock.
 struct FileHeader
@@ -118,6 +183,8 @@ public:
                 = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             gethostname(header.hostname.data(), header.hostname.size() - 1);
             std::fwrite(&header, sizeof(header), 1, file);
+            const auto schema = schemas();
+            std::fwrite(schema.data(), 1, schema.size(), file);
         }
         flusher = std::jthread(
             [this](const std::stop_token& stopToken)
@@ -183,16 +250,19 @@ private:
         {
             const auto tail = ring->tail.load(std::memory_order_relaxed);
             const auto head = ring->head.load(std::memory_order_acquire);
-            for (auto position = tail; position < head;)
+            if (head == tail || file == nullptr)
             {
-                const auto index = position % RING_CAPACITY;
-                const auto count = std::min(head - position, RING_CAPACITY - index);
-                if (file != nullptr)
-                {
-                    std::fwrite(&ring->events[index], sizeof(Event), count, file);
-                }
-                position += count;
+                ring->tail.store(head, std::memory_order_release);
+                continue;
             }
+            /// The producer publishes whole records, so a chunk always ends at a record boundary.
+            const auto length = static_cast<uint32_t>(head - tail);
+            std::fwrite(&ring->thread, sizeof(ring->thread), 1, file);
+            std::fwrite(&length, sizeof(length), 1, file);
+            const auto index = tail % RING_BYTES;
+            const auto first = std::min<size_t>(length, RING_BYTES - index);
+            std::fwrite(&ring->bytes[index], 1, first, file);
+            std::fwrite(ring->bytes.data(), 1, length - first, file);
             ring->tail.store(head, std::memory_order_release);
         }
         /// A ring of an exited thread can only be removed after its last events were drained above.
@@ -228,71 +298,27 @@ struct LocalRing
 
     ~LocalRing() { ring->alive.store(false); }
 };
+}
 
-void record(Event event) noexcept
+void record(uint16_t type, Kind kind, const void* payload, uint32_t size) noexcept
 {
     thread_local LocalRing local;
     auto& ring = *local.ring;
-    event.thread = ring.thread;
     const auto head = ring.head.load(std::memory_order_relaxed);
-    if (head - ring.tail.load(std::memory_order_acquire) == RING_CAPACITY)
+    const auto total = RECORD_HEADER_BYTES + size;
+    if (RING_BYTES - (head - ring.tail.load(std::memory_order_acquire)) < total)
     {
         recorder().dropped.fetch_add(1, std::memory_order_relaxed);
         return;
     }
-    ring.events[head % RING_CAPACITY] = event;
-    ring.head.store(head + 1, std::memory_order_release);
-}
-}
-
-void begin(Stage stage, const Key& key, uint64_t pipeline) noexcept
-{
-    record(
-        {.time = now(),
-         .origin = key.origin,
-         .seq = key.seq,
-         .chunk = key.chunk,
-         .pipeline = static_cast<uint32_t>(pipeline),
-         .stage = static_cast<uint8_t>(stage),
-         .kind = Kind::Begin});
-}
-
-void end(Stage stage, const Key& key, uint64_t pipeline, uint64_t extra) noexcept
-{
-    record(
-        {.time = now(),
-         .origin = key.origin,
-         .seq = key.seq,
-         .seq2 = extra,
-         .chunk = key.chunk,
-         .pipeline = static_cast<uint32_t>(pipeline),
-         .stage = static_cast<uint8_t>(stage),
-         .kind = Kind::End});
-}
-
-void mark(Stage stage, const Key& key, uint64_t pipeline, uint64_t t) noexcept
-{
-    record(
-        {.time = t,
-         .origin = key.origin,
-         .seq = key.seq,
-         .chunk = key.chunk,
-         .pipeline = static_cast<uint32_t>(pipeline),
-         .stage = static_cast<uint8_t>(stage)});
-}
-
-void link(const Key& output, const Key& input, uint64_t pipeline, uint64_t t) noexcept
-{
-    record(
-        {.time = t,
-         .origin = output.origin,
-         .seq = output.seq,
-         .origin2 = input.origin,
-         .seq2 = input.seq,
-         .chunk = output.chunk,
-         .chunk2 = input.chunk,
-         .pipeline = static_cast<uint32_t>(pipeline),
-         .stage = static_cast<uint8_t>(Stage::Emit)});
+    std::array<std::byte, RECORD_HEADER_BYTES> header; /// NOLINT(cppcoreguidelines-pro-type-member-init) fully written below
+    const auto time = now();
+    std::memcpy(header.data(), &type, sizeof(type));
+    std::memcpy(header.data() + sizeof(type), &kind, sizeof(kind));
+    std::memcpy(header.data() + sizeof(type) + sizeof(kind), &time, sizeof(time));
+    ring.put(head, header.data(), header.size());
+    ring.put(head + header.size(), payload, size);
+    ring.head.store(head + total, std::memory_order_release);
 }
 
 void writePlan(std::string_view plan)
@@ -300,14 +326,9 @@ void writePlan(std::string_view plan)
     recorder().writePlan(plan);
 }
 
-void counterCreated(uint32_t id, std::string_view name)
+void counterCreated(uint64_t id, std::string_view name)
 {
     recorder().writePlan(fmt::format("counter {} {}\n", id, name));
-}
-
-void counterValue(uint32_t id, int64_t value) noexcept
-{
-    record({.time = now(), .seq2 = static_cast<uint64_t>(value), .pipeline = id, .stage = static_cast<uint8_t>(Stage::Counter)});
 }
 
 }
