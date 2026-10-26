@@ -120,10 +120,22 @@ const GROUPS = [
   ["waiting", s => /^(queue|enqueue|handoff) /.test(s)],
   ["executing", s => s.startsWith("exec ")],
 ];
-const GROUP_COLORS = {"source": "#eb6834", "network": "#6250d6", "network sink": "#9085e9", "waiting": "#eda100", "executing": "#2a78d6"};
+const GROUP_COLORS = {"source": "#d9774f", "network": "#6e62c9", "network sink": "#9a8fd6", "waiting": "#d9a23a", "executing": "#3b7dd8"};
 const groupOf = stage => (GROUPS.find(([, test]) => test(DATA.stages[stage])) || ["other"])[0];
-/// Golden-angle hues keep every stage distinct however many stages a trace has.
-const stageColor = stage => `hsl(${(stage * 137.508) % 360}, 62%, 55%)`;
+/// Stages of the same kind share a color in every chart: executions blue, waits in the engine amber, the network violet, sources
+/// orange. Lighter shades are the waits within a kind.
+const STAGE_KINDS = [
+  [s => s.startsWith("exec "), "#3b7dd8"],
+  [s => s.startsWith("queue "), "#d9a23a"],
+  [s => s.startsWith("enqueue ") || s.startsWith("handoff "), "#e8c57f"],
+  [s => s.startsWith("network sink"), "#9a8fd6"],
+  [s => s.startsWith("net sender queue") || s.startsWith("net receiver"), "#b3abe3"],
+  [s => s.startsWith("net ") || /^network P/.test(s), "#6e62c9"],
+  [s => s.startsWith("network source"), "#c7c1ea"],
+  [s => s.startsWith("source fill"), "#d9774f"],
+  [s => s.startsWith("source"), "#eab59b"],
+];
+const stageColor = stage => (STAGE_KINDS.find(([test]) => test(DATA.stages[stage])) || [, "#8a8984"])[1];
 
 const chains = DATA.chains.map(([query, start, tuples, warmup, key, segments], index) => {
   const total = segments.reduce((sum, s) => sum + s[2], 0);
@@ -295,7 +307,7 @@ function renderBreakdown(list) {
   const stages = [...new Set(means.flatMap(m => [...m.keys()]))].filter(s => state.focus === null || stageNodes(s).has(state.focus));
   const traces = stages.map(stage => ({
     type: "bar", orientation: "h", name: DATA.stages[stage], y: rows.map(([name]) => name), x: means.map(m => ms(m.get(stage) || 0)),
-    marker: {color: stageColor(stage)}, hovertemplate: "%{x:.3f} ms<extra>" + DATA.stages[stage] + "</extra>",
+    marker: {color: stageColor(stage), line: {color: css("--card"), width: 1}}, hovertemplate: "%{x:.3f} ms<extra>" + DATA.stages[stage] + "</extra>",
   }));
   Plotly.react("breakdown", traces, layout({barmode: "stack", showlegend: false, xaxis: {title: "ms", gridcolor: css("--line")},
     yaxis: {autorange: "reversed"}, margin: {l: 44, r: 16, t: 8, b: 44}}), plotConfig);
@@ -335,12 +347,14 @@ function renderCdf(list) {
     document.getElementById("cdf-title").textContent = "Stage distributions: the 6 stages that take longest in the tail";
   }
   const traces = [];
-  for (const stage of stages) {
+  /// The plotted stages are often of one kind, so each line gets its own color here instead of its kind's.
+  const LINE_COLORS = ["#3b7dd8", "#d9a23a", "#6e62c9", "#d9774f", "#3fa34d", "#b85c9e", "#4fb3c4", "#8a8984"];
+  for (const [position, stage] of stages.entries()) {
     for (const [chainList, dash, suffix] of [[list, "solid", ""], [tail, "dash", " (tail)"]]) {
       const values = durations(chainList, stage);
       if (!values.length) continue;
       traces.push({type: "scatter", mode: "lines", name: DATA.stages[stage] + suffix, x: values.map(ms),
-        y: values.map((_, i) => (i + 1) / values.length), line: {color: stageColor(stage), dash, width: 2},
+        y: values.map((_, i) => (i + 1) / values.length), line: {color: LINE_COLORS[position % LINE_COLORS.length], dash, width: 2},
         legendgroup: String(stage), hovertemplate: "%{x:.3f} ms, %{y:.0%}<extra>" + DATA.stages[stage] + suffix + "</extra>"});
     }
   }
@@ -351,9 +365,9 @@ function renderCdf(list) {
 /// Short names of the worker processes, in the order of DATA.workers.
 const workerLabel = name => `W${DATA.workers.indexOf(name) + 1}`;
 const nodeWorkers = node => DATA.nodes[node].split(">").map(part => workerLabel(part.split("/")[0])).join("→");
-const SPAN_COLORS = {"exec": "#2a78d6", "task queue wait": "#c9c7bf", "untraced work": "#5f5e5a", "enqueue": "#eda100"};
+const SPAN_COLORS = {"exec": "#3b7dd8", "task queue wait": "#c9c7bf", "untraced work": "#5f5e5a", "enqueue": "#e8c57f"};
 const CPU_COLORS = ["#3fa34d", "#d0503b", "#e3b23c"];
-const spanColor = name => SPAN_COLORS[name] || (name.startsWith("source") ? "#eb6834" : "#9085e9");
+const spanColor = name => SPAN_COLORS[name] || (name.startsWith("source fill") ? "#d9774f" : name.startsWith("source") ? "#eab59b" : "#9a8fd6");
 
 function renderGantt(chain) {
   let offset = 0;
@@ -412,13 +426,22 @@ function renderGantt(chain) {
     }
   });
   const laneOrder = lanes.flatMap(lane => (lane[4].length ? [laneName(lane), cpuName(lane)] : [laneName(lane)]));
+  /// Dashed lines where the worker changes: between a worker's segments and a network hop, and between the workers' threads.
+  const segmentOrder = [...new Set(traces[0].y)];
+  const segmentWorker = label => label.slice(label.lastIndexOf(" · ") + 3);
+  const laneWorker = label => label.split(" ")[0];
+  const separators = (order, workerOf, axis) => order.flatMap((label, i) => (i > 0 && workerOf(label) !== workerOf(order[i - 1])
+    ? [{type: "line", xref: "paper", x0: 0, x1: 1, yref: axis, y0: i - 0.5, y1: i - 0.5, layer: "below",
+        line: {color: css("--muted"), width: 1, dash: "dash"}}] : []));
+  const shapes = [...separators(segmentOrder, segmentWorker, "y"), ...separators(laneOrder, laneWorker, "y2")];
   const rows = bars.length, laneRows = laneOrder.length;
   const split = laneRows ? laneRows / (rows + laneRows) : 0;
   const range = activity ? [ms(activity.from), ms(activity.to)] : undefined;
   Plotly.react("gantt", traces, layout({
-    barmode: "overlay", height: 90 + 24 * (rows + laneRows),
+    barmode: "overlay", height: 90 + 24 * (rows + laneRows), shapes,
     xaxis: {title: "ms since first data", gridcolor: css("--line"), range},
-    yaxis: {autorange: "reversed", automargin: true, dtick: 1, domain: [split ? split + 0.04 : 0, 1]},
+    yaxis: {autorange: "reversed", automargin: true, dtick: 1, domain: [split ? split + 0.04 : 0, 1],
+      categoryorder: "array", categoryarray: segmentOrder},
     yaxis2: {autorange: "reversed", automargin: true, dtick: 1, domain: [0, split], visible: laneRows > 0,
       categoryorder: "array", categoryarray: laneOrder},
     legend: {orientation: "h", y: 1.02, yanchor: "bottom", x: 0}, margin: {l: 16, r: 16, t: 28, b: 44},
