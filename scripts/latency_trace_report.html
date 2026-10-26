@@ -50,6 +50,8 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
 .edgelabel { fill: var(--muted); font-size: 11px; }
 #selection { color: var(--muted); font-size: 12px; }
 #gantt text.hovered { fill: var(--accent) !important; font-weight: 600; }
+#cdf .dimmed { opacity: 0.15 !important; }
+#cdf .trace.emphasized path.js-line { stroke-width: 4px !important; }
 #gantt path.hovered { stroke: var(--text) !important; stroke-width: 2px !important; stroke-opacity: 1 !important; filter: brightness(1.3); opacity: 1 !important; }
 #open table { border-collapse: collapse; font-size: 12px; width: 100%; }
 #open td, #open th { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
@@ -361,6 +363,32 @@ function renderCdf(list) {
   }
   Plotly.react("cdf", traces, layout({xaxis: {title: "ms (log)", type: "log", gridcolor: css("--line")},
     yaxis: {title: "fraction of buffers", tickformat: ".0%", gridcolor: css("--line")}, legend: {orientation: "v", x: 1.02, y: 1}}), plotConfig);
+  highlightStageLines(document.getElementById("cdf"));
+}
+
+/// Hovering a line or its legend entry emphasizes that stage's lines (all buffers and tail) and dims the others. Classes are set
+/// on the SVG elements, so the chart is not redrawn.
+function highlightStageLines(element) {
+  const emphasize = group => {
+    const lines = element.querySelectorAll(".scatterlayer .trace");
+    const entries = element.querySelectorAll(".legend .traces");
+    element.data.forEach((trace, index) => {
+      const match = group === null || trace.legendgroup === group;
+      lines[index]?.classList.toggle("dimmed", !match);
+      lines[index]?.classList.toggle("emphasized", group !== null && match);
+      entries[index]?.classList.toggle("dimmed", !match);
+    });
+  };
+  element.querySelectorAll(".legend .traces").forEach((entry, index) => {
+    entry.onmouseenter = () => emphasize(element.data[index].legendgroup);
+    entry.onmouseleave = () => emphasize(null);
+  });
+  if (element.stageHighlightWired) return;
+  element.stageHighlightWired = true;
+  element.on("plotly_hover", event => emphasize(event.points[0].data.legendgroup));
+  element.on("plotly_unhover", () => emphasize(null));
+  /// A redraw, e.g. after a legend click, replaces the legend entries.
+  element.on("plotly_afterplot", () => highlightStageLines(element));
 }
 
 /// Short names of the worker processes, in the order of DATA.workers.
