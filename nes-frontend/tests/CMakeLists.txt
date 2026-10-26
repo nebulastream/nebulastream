@@ -18,3 +18,6 @@ target_include_directories(distributed-planning-test
 
 add_nes_test(grpc-query-submission-backend-test GRPCQuerySubmissionBackendTest.cpp)
 target_link_libraries(grpc-query-submission-backend-test nes-frontend-lib)
+
+add_nes_test(multi-query-checkpoint-recovery-test MultiQueryCheckpointRecoveryTest.cpp)
+target_link_libraries(multi-query-checkpoint-recovery-test nes-frontend-lib nes-single-node-worker-lib)
