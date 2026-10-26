@@ -63,7 +63,6 @@
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <BackpressureChannel.hpp>
-#include <BackpressureTestUtil.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -75,6 +74,15 @@
 
 namespace NES::InputFormatterTestUtil
 {
+namespace
+{
+/// Convenience for a single backpressure channel, keyed by INITIAL<OriginId>.
+std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
+{
+    auto [controller, listeners] = createBackpressureChannels({INITIAL<OriginId>});
+    return {std::move(controller), std::move(listeners.begin()->second)};
+}
+}
 
 Schema<UnqualifiedUnboundField, Ordered> createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {

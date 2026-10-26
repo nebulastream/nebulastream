@@ -30,11 +30,19 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BackpressureTestUtil.hpp>
 #include <BaseUnitTest.hpp>
 
 namespace NES
 {
+namespace
+{
+/// Convenience for a single backpressure channel, keyed by INITIAL<OriginId>.
+std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
+{
+    auto [controller, listeners] = createBackpressureChannels({INITIAL<OriginId>});
+    return {std::move(controller), std::move(listeners.begin()->second)};
+}
+}
 
 constexpr size_t NUMBER_OF_OPEN_CHANNEL_WAITS = 100;
 
