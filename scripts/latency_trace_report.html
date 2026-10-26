@@ -68,6 +68,7 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
   <section class="card wide">
     <h2>Pipeline graph</h2>
     <p class="hint">Mean time per buffer spent at each node, over all buffers and over the slowest 1%. Colour shows the share of the tail. Click a node or a dashed network edge to focus the stage charts on it.</p>
+    <p class="hint" id="workers"></p>
     <div id="graph"></div>
   </section>
   <section class="card wide">
@@ -99,6 +100,8 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
     <h2 id="gantt-title">Single buffer</h2>
     <p class="hint">Click a point in the latency chart.</p>
     <div id="gantt"></div>
+    <p class="hint" id="gantt-note"></p>
+    <div id="gantt-counters"></div>
   </section>
   <section class="card wide">
     <h2>Open spans</h2>
@@ -121,10 +124,10 @@ const groupOf = stage => (GROUPS.find(([, test]) => test(DATA.stages[stage])) ||
 /// Golden-angle hues keep every stage distinct however many stages a trace has.
 const stageColor = stage => `hsl(${(stage * 137.508) % 360}, 62%, 55%)`;
 
-const chains = DATA.chains.map(([query, start, tuples, warmup, key, segments]) => {
+const chains = DATA.chains.map(([query, start, tuples, warmup, key, segments], index) => {
   const total = segments.reduce((sum, s) => sum + s[2], 0);
   const dominant = segments.reduce((best, s) => (s[2] > best[2] ? s : best), segments[0])[0];
-  return {query, start, tuples, warmup: !!warmup, key, segments, total, dominant};
+  return {query, start, tuples, warmup: !!warmup, key, segments, total, dominant, index};
 });
 const state = {query: -1, warmup: false, range: null, focus: null};
 
@@ -213,10 +216,10 @@ function renderGraph(list) {
     const p = position.get(n.id), i = index.get(n.id);
     const share = (tail.get(i) || 0) / tailTotal;
     svg += `<g class="node${state.focus === i ? " focus" : ""}" data-node="${n.id}" transform="translate(${p.x},${p.y})">
-      <title>${n.detail.replace(/</g, "&lt;")}\n${n.worker}</title>
+      <title>${n.detail.replace(/</g, "&lt;")}\n${workerLabel(n.worker)}: ${n.worker}</title>
       <rect width="${W}" height="${H}" fill="${i === undefined ? css("--card") : heat(share)}"/>
       <text x="10" y="20">${n.label} · ${n.what}</text>
-      <text class="sub" x="10" y="38">${n.kind}</text>
+      <text class="sub" x="10" y="38">${workerLabel(n.worker)} · ${n.kind}</text>
       <text class="sub" x="10" y="54">${label(n.id)}</text></g>`;
   }
   const container = document.getElementById("graph");
@@ -270,7 +273,7 @@ function renderCounters() {
       hovertemplate: "%{y} at %{x:.1f} ms<extra></extra>",
     }], layout({
       margin: {l: 56, r: 16, t: 22, b: 28}, showlegend: false,
-      title: {text: `${counter.name} <span style="font-size:11px">${counter.worker}</span>`, font: {size: 12}, x: 0, xanchor: "left"},
+      title: {text: `${counter.name} <span style="font-size:11px">${workerLabel(counter.worker)}</span>`, font: {size: 12}, x: 0, xanchor: "left"},
       xaxis: {range: range, gridcolor: css("--line")}, yaxis: {gridcolor: css("--line"), rangemode: "tozero"},
     }), plotConfig);
   });
@@ -343,16 +346,80 @@ function renderCdf(list) {
     yaxis: {title: "fraction of buffers", tickformat: ".0%", gridcolor: css("--line")}, legend: {orientation: "v", x: 1.02, y: 1}}), plotConfig);
 }
 
+/// Short names of the worker processes, in the order of DATA.workers.
+const workerLabel = name => `W${DATA.workers.indexOf(name) + 1}`;
+const nodeWorkers = node => DATA.nodes[node].split(">").map(part => workerLabel(part.split("/")[0])).join("→");
+const SPAN_COLORS = {"exec": "#2a78d6", "task queue wait": "#c9c7bf", "untraced work": "#5f5e5a", "enqueue": "#eda100"};
+const spanColor = name => SPAN_COLORS[name] || (name.startsWith("source") ? "#eb6834" : "#9085e9");
+
 function renderGantt(chain) {
   let offset = 0;
-  const bars = chain.segments.map(([stage, , us]) => { const bar = {stage, start: offset, us}; offset += us; return bar; });
+  const bars = chain.segments.map(([stage, node, us]) => { const bar = {stage, node, start: offset, us}; offset += us; return bar; });
   document.getElementById("gantt-title").textContent =
     `Single buffer: ${fmt(chain.total)}, key ${chain.key}, ${chain.tuples} tuples, at ${chain.start.toFixed(0)} ms`;
-  Plotly.react("gantt", [{
-    type: "bar", orientation: "h", y: bars.map(b => DATA.stages[b.stage]), x: bars.map(b => ms(b.us)), base: bars.map(b => ms(b.start)),
-    marker: {color: bars.map(b => stageColor(b.stage))}, hovertemplate: "%{x:.3f} ms<extra></extra>",
-  }], layout({xaxis: {title: "ms since first data", gridcolor: css("--line")}, height: 70 + 24 * bars.length,
-    yaxis: {autorange: "reversed", automargin: true, dtick: 1}, margin: {l: 16, r: 16, t: 8, b: 44}}), plotConfig);
+  const activity = DATA.activity[chain.index];
+  const lanes = activity ? activity.lanes : [];
+  const laneName = ([worker, thread, role]) => `${workerLabel(DATA.workers[worker])} ${role} thread ${thread}`;
+  const traces = [{
+    type: "bar", orientation: "h", y: bars.map(b => `${DATA.stages[b.stage]} · ${nodeWorkers(b.node)}`), x: bars.map(b => ms(b.us)),
+    base: bars.map(b => ms(b.start)), marker: {color: bars.map(b => stageColor(b.stage))}, hovertemplate: "%{x:.3f} ms<extra></extra>",
+    showlegend: false,
+  }];
+  const byName = new Map();
+  for (const lane of lanes) {
+    for (const [start, us, name] of lane[3]) {
+      if (!byName.has(name)) byName.set(name, {y: [], x: [], base: []});
+      const series = byName.get(name);
+      series.y.push(laneName(lane)); series.x.push(ms(us)); series.base.push(ms(start));
+    }
+  }
+  for (const [name, series] of byName) {
+    const label = DATA.spanNames[name];
+    traces.push({type: "bar", orientation: "h", yaxis: "y2", name: label, ...series, marker: {color: spanColor(label),
+      pattern: label === "untraced work" ? {shape: "/", fgcolor: css("--card"), size: 6} : undefined},
+      hovertemplate: `${label}: %{x:.3f} ms at %{base:.3f} ms<extra></extra>`});
+  }
+  const rows = bars.length, laneRows = new Set(lanes.map(laneName)).size;
+  const split = laneRows ? laneRows / (rows + laneRows) : 0;
+  const range = activity ? [ms(activity.from), ms(activity.to)] : undefined;
+  Plotly.react("gantt", traces, layout({
+    barmode: "overlay", height: 90 + 24 * (rows + laneRows),
+    xaxis: {title: "ms since first data", gridcolor: css("--line"), range},
+    yaxis: {autorange: "reversed", automargin: true, dtick: 1, domain: [split ? split + 0.04 : 0, 1]},
+    yaxis2: {autorange: "reversed", automargin: true, dtick: 1, domain: [0, split], visible: laneRows > 0},
+    legend: {orientation: "h", y: 1.02, yanchor: "bottom", x: 0}, margin: {l: 16, r: 16, t: 28, b: 44},
+  }), plotConfig);
+  document.getElementById("gantt-note").textContent = activity
+    ? "Below the buffer: what every thread of the workers it passed through did meanwhile, and their counters. Gaps on worker threads are untraced work, e.g. tasks of untraced queries."
+    : "Thread activity and counters are exported for the slowest buffers and a sample of the others; pick one of those.";
+  renderGanttCounters(chain, activity);
+}
+
+/// The counters of the chain's workers over the window of its thread activity.
+function renderGanttCounters(chain, activity) {
+  const container = document.getElementById("gantt-counters");
+  container.innerHTML = "";
+  if (!activity) return;
+  const involved = new Set(activity.lanes.map(([worker]) => DATA.workers[worker]));
+  const from = chain.start + ms(activity.from), to = chain.start + ms(activity.to);
+  for (const counter of DATA.counters.filter(c => involved.has(c.worker))) {
+    let first = counter.t.findIndex(t => t >= from);
+    if (first < 0) first = counter.t.length - 1;
+    first = Math.max(0, first - 1);
+    let last = counter.t.findIndex(t => t > to);
+    if (last < 0) last = counter.t.length;
+    const t = counter.t.slice(first, last + 1).map(t => Math.min(Math.max(t, from), to) - chain.start);
+    const v = counter.v.slice(first, last + 1);
+    const div = document.createElement("div");
+    div.style.height = "120px";
+    container.appendChild(div);
+    Plotly.react(div, [{type: "scatter", mode: "lines", line: {shape: "hv", color: css("--accent")}, x: t, y: v,
+      hovertemplate: "%{y} at %{x:.3f} ms<extra></extra>"}], layout({
+      margin: {l: 56, r: 16, t: 22, b: 24}, showlegend: false,
+      title: {text: `${counter.name} <span style="font-size:11px">${workerLabel(counter.worker)}</span>`, font: {size: 12}, x: 0, xanchor: "left"},
+      xaxis: {range: [ms(activity.from), ms(activity.to)], gridcolor: css("--line")}, yaxis: {gridcolor: css("--line")},
+    }), plotConfig);
+  }
 }
 
 function render(withTimeline = true) {
@@ -381,6 +448,7 @@ document.getElementById("reset").addEventListener("click", () => {
   Plotly.restyle("timeline", {selectedpoints: [null]});
   render();
 });
+document.getElementById("workers").textContent = "Workers: " + DATA.workers.map(w => `${workerLabel(w)} ${w}`).join(", ");
 render();
 document.getElementById("open").innerHTML = DATA.open.length
   ? `<table><tr><th>Stage</th><th>Pipeline</th><th>Worker / thread</th><th>Buffer</th><th>Open for</th></tr>` +

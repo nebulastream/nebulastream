@@ -50,6 +50,10 @@ FIELD_FORMATS = {"k": "QQQ", "u": "Q", "i": "q"}
 # Event type names, see the structs in nes-common/include/Util/EventTrace.hpp.
 SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL = "source backpressure", "source buffer wait", "source fill"
 TASK_QUEUE_WAIT = "task queue wait"
+# Gaps between the spans of a worker thread, which executes tasks of untraced queries or engine work in them.
+UNTRACED_WORK, UNTRACED = "untraced work", 3
+# Thread activity is exported for this many of the slowest buffers and as many others, to bound the report's size.
+ACTIVITY_SLOWEST = ACTIVITY_SAMPLED = 200
 # A source that reports first data within this many ns of starting the fill found the data already waiting, so the data also
 # waited through the preceding backpressure and buffer acquisition.
 DATA_WAS_WAITING_NS = 50_000
@@ -77,6 +81,7 @@ class Worker:
     open_spans: list = field(default_factory=list)  # (stage, thread, key, pipeline, t) of begins without an end
     unpaired: int = 0  # ends without a begin and begins without an end that a later begin superseded
     end: int = 0  # the last event's time
+    spans: dict = field(default_factory=lambda: defaultdict(list))  # thread -> [(t0, t1, name, category)] sorted by t0
     counter_names: dict = field(default_factory=dict)  # counter id -> name
     counters: dict = field(default_factory=lambda: defaultdict(list))  # counter id -> [(t, value)], recorded on change
 
@@ -205,6 +210,7 @@ def load_events(worker, types, data, offset, clock_offset, sends):
     """Pairs the begins and ends of each thread into spans. Spans of one type do not overlap on a thread, so an end closes the
     last begin of its type. Source backpressure and buffer wait have no key; they belong to the next fill on the thread."""
     opened, source_waits = {}, defaultdict(dict)
+    types_by_name = {event.name: event for event in types.values()}
     for thread, kind, time, event, fields in records(types, data, offset):
         time += clock_offset
         worker.end = max(worker.end, time)
@@ -220,6 +226,7 @@ def load_events(worker, types, data, offset, clock_offset, sends):
                 worker.unpaired += 1
                 continue
             t0 = begin[0]
+            worker.spans[thread].append((t0, time, name, event.category))
             if name == "exec":
                 worker.execs[fields["key"], fields["pipeline"]].append((t0, time, fields["tuples"]))
             elif name == "enqueue":
@@ -241,6 +248,10 @@ def load_events(worker, types, data, offset, clock_offset, sends):
             worker.receives[fields["key"], fields["pipeline"]] = received
         elif name == "counter":
             worker.counters[fields["counter"]].append((time, fields["value"]))
+    for (thread, name), (t, _) in opened.items():
+        worker.spans[thread].append((t, worker.end, name, types_by_name[name].category))
+    for spans in worker.spans.values():
+        spans.sort()
     # A worker that waits for its next task when the trace ends is idle, not stuck.
     worker.open_spans = [(name, thread, fields.get("key", (0, 0, 0)), fields.get("pipeline", 0), t)
                          for (thread, name), (t, fields) in opened.items() if name != TASK_QUEUE_WAIT]
@@ -501,6 +512,57 @@ def counter_series(workers):
             for worker in workers for identifier, samples in worker.counters.items()]
 
 
+def thread_role(spans):
+    names = {name for _, _, name, _ in spans}
+    return "worker" if TASK_QUEUE_WAIT in names else "source" if names & {SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL} else "other"
+
+
+def chain_workers(chain, by_name):
+    """The workers a chain passed through, in order. Network nodes name both ends."""
+    involved = []
+    for node in chain["nodes"]:
+        for part in node.split(">"):
+            worker = by_name[part.split("/")[0]]
+            if worker not in involved:
+                involved.append(worker)
+    return involved
+
+
+def thread_activity(chain, workers, span_names):
+    """What the threads of the chain's workers did while the chain's buffer was on its way: lanes of
+    (worker index, thread, role, [(start, duration, span name index, category)]) in us relative to the chain's start.
+    Gaps on worker threads are untraced work."""
+    start, end = chain["segments"][0][1], chain["segments"][-1][2]
+    pad = max(500_000, (end - start) // 10)
+    low, high = start - pad, end + pad
+    by_name = {worker.name: worker for worker in workers}
+    lanes = []
+    for worker in chain_workers(chain, by_name):
+        for thread, spans in sorted(worker.spans.items()):
+            role = thread_role(spans)
+            # ponytail: steps back a few spans to catch spans that began before the window; spans of a thread barely overlap.
+            first = max(0, bisect.bisect_left(spans, (low,)) - 4)
+            segments, covered = [], []
+            for t0, t1, name, category in spans[first:]:
+                if t0 >= high:
+                    break
+                if t1 <= low:
+                    continue
+                a, b = max(t0, low), min(t1, high)
+                segments.append([round((a - start) / 1000), round((b - a) / 1000), span_names.setdefault(name, len(span_names)), category])
+                covered.append((a, b))
+            if role == "worker":
+                position = low
+                for a, b in sorted(covered) + [(high, high)]:
+                    if a > position:
+                        segments.append([round((position - start) / 1000), round((a - position) / 1000),
+                                         span_names.setdefault(UNTRACED_WORK, len(span_names)), UNTRACED])
+                    position = max(position, b)
+            if segments:
+                lanes.append([workers.index(worker), thread, role, segments])
+    return {"from": round((low - start) / 1000), "to": round((high - start) / 1000), "lanes": lanes}
+
+
 def interactive_report(workers, chains, out):
     """Writes report.html, a self-contained page that embeds the graph and the stitched chains."""
     stages, nodes, queries = {}, {}, {}
@@ -511,7 +573,13 @@ def interactive_report(workers, chains, out):
                     for (name, t0, t1), node in zip(chain["segments"], chain["nodes"])]
         rows.append([queries.setdefault(chain["query"], len(queries)), round((chain["segments"][0][1] - start) / 1e6, 3),
                      chain["tuples"], int(chain["warmup"]), "/".join(map(str, chain["key"])), segments])
+    by_total = sorted(range(len(chains)), key=lambda i: total(chains[i]))
+    rest = by_total[:-ACTIVITY_SLOWEST]
+    detail = set(by_total[-ACTIVITY_SLOWEST:]) | set(rest[:: max(1, len(rest) // ACTIVITY_SAMPLED)])
+    span_names = {}
+    activity = {i: thread_activity(chains[i], workers, span_names) for i in sorted(detail)}
     data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, {chain["query"] for chain in chains}),
+            "workers": [worker.name for worker in workers], "spanNames": list(span_names), "activity": activity,
             "open": open_spans(workers),
             "counters": [{"name": name, "worker": where, "t": [round((t - start) / 1e6, 3) for t, _ in samples],
                           "v": [value for _, value in samples]} for name, where, samples in counter_series(workers)]}

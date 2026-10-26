@@ -164,6 +164,12 @@ with tempfile.TemporaryDirectory() as d:
     assert "Untraced" not in page, "the graph only shows traced queries"
     assert workers[0].sources[raw, 1][lt.SOURCE_BACKPRESSURE] == (0, 10 * US, 0), "keyless waits belong to the next fill"
     assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (500 * US, -1)])]
+    activity = lt.thread_activity(chains[0], workers, names := {})
+    lanes = {(worker, thread): (role, [(list(names)[n], start, us) for start, us, n, _ in segments])
+             for worker, thread, role, segments in activity["lanes"]}
+    role, segments = lanes[0, ENGINE]
+    assert role == "worker" and ("task queue wait", 365 - 100, 30) in segments, segments
+    assert ("untraced work", 410 - 100, 40) in segments, "gaps between spans of a worker thread are untraced work"
     spans = lt.open_spans(workers)
     assert [(stage, key) for stage, _, _, key, _ in spans] == [("exec", "9/2/1")], spans
     assert spans[0][4] == (1800 - 1790) / 1000, "open for the time until the last event"
