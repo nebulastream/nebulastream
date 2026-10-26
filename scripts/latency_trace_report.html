@@ -50,6 +50,7 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
 .edgelabel { fill: var(--muted); font-size: 11px; }
 #selection { color: var(--muted); font-size: 12px; }
 #gantt text.hovered { fill: var(--accent) !important; font-weight: 600; }
+#gantt path.hovered { stroke: var(--text) !important; stroke-width: 2px !important; stroke-opacity: 1 !important; filter: brightness(1.3); opacity: 1 !important; }
 #open table { border-collapse: collapse; font-size: 12px; width: 100%; }
 #open td, #open th { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
 #open td.age { text-align: right; font-variant-numeric: tabular-nums; }
@@ -453,18 +454,19 @@ function renderGantt(chain) {
   renderGanttCounters(chain, activity);
 }
 
-/// Highlights the y-axis label of the row a hovered bar belongs to.
+/// Highlights a hovered bar and the y-axis label of its row, directly in the SVG so the chart is not redrawn.
 function highlightHoveredRow(element) {
   if (element.highlightWired) return;
   element.highlightWired = true;
-  const labels = axis => element.querySelectorAll(`.${axis}tick text`);
   element.on("plotly_hover", event => {
     const point = event.points[0];
-    for (const label of labels(point.yaxis._id)) {
+    for (const label of element.querySelectorAll(`.${point.yaxis._id}tick text`)) {
       if (label.textContent === String(point.y)) label.classList.add("hovered");
     }
+    const bars = element.querySelectorAll(".barlayer .trace")[point.curveNumber];
+    bars?.querySelectorAll(".point path")[point.pointNumber]?.classList.add("hovered");
   });
-  element.on("plotly_unhover", () => element.querySelectorAll(".hovered").forEach(label => label.classList.remove("hovered")));
+  element.on("plotly_unhover", () => element.querySelectorAll(".hovered").forEach(hovered => hovered.classList.remove("hovered")));
 }
 
 /// The counters of the chain's workers over the window of its thread activity.
