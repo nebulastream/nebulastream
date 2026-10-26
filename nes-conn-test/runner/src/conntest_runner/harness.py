@@ -23,6 +23,7 @@ import socket
 import subprocess
 import tempfile
 import threading
+import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,6 +32,7 @@ from typing import Any, Self
 from conntest_runner.protocol import Got, HarnessError, read_reply
 
 _ACCEPT_TIMEOUT_S = 30.0
+_ACCEPT_POLL_S = 0.1
 _DEFAULT_GLOBAL_DEADLINE_S = 120.0
 
 
@@ -45,16 +47,28 @@ class FillResult:
 class _HarnessProc:
     def __init__(self, argv: list[str], server: socket.socket, *, accept_timeout: float = _ACCEPT_TIMEOUT_S) -> None:
         self.proc = subprocess.Popen(argv)  # noqa: S603  # argv is runner-built, not untrusted input
-        server.settimeout(accept_timeout)
-        try:
-            self.conn, _ = server.accept()
-        except TimeoutError as e:
-            self.proc.kill()
-            raise HarnessError(
-                name="SpawnTimeout",
-                phase="spawn",
-                message=f"harness did not connect within {accept_timeout}s",
-            ) from e
+        # The accept polls the process, so a harness that exits before connecting fails at once and with its exit code.
+        server.settimeout(_ACCEPT_POLL_S)
+        deadline = time.monotonic() + accept_timeout
+        while True:
+            try:
+                self.conn, _ = server.accept()
+                break
+            except TimeoutError as e:
+                if (rc := self.proc.poll()) is not None:
+                    raise HarnessError(
+                        name="SpawnFailed",
+                        phase="spawn",
+                        message=f"harness exited with {rc} before connecting",
+                    ) from e
+                if time.monotonic() >= deadline:
+                    self.proc.kill()
+                    self.proc.wait()
+                    raise HarnessError(
+                        name="SpawnTimeout",
+                        phase="spawn",
+                        message=f"harness did not connect within {accept_timeout}s",
+                    ) from e
         self._buf = b""
 
     def command(self, line: str) -> Got:
