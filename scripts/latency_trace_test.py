@@ -60,7 +60,9 @@ with tempfile.TemporaryDirectory() as d:
     # Worker A: data arrives at 100us, the source blocks on input until then.
     write(d, 1, 0, 0, "query q(distributed=Q1)\nsource 1 1 GeneratorSource\npipeline 1 2 InputFormatter\npipeline 2 - NetworkSink(connectionId: b:9090, channelId: c1)\n"
           # A query that was never traced, e.g. because tracing is turned on at runtime only for Q1.
-          "query u(distributed=Untraced)\nsource 7 7 GeneratorSource\npipeline 7 - PrintSink\n", [
+          "query u(distributed=Untraced)\nsource 7 7 GeneratorSource\npipeline 7 - PrintSink\ncounter 1 task_queue_admission\n", [
+        (5 * US, 0, 0, 0, 0, 3, 0, 0, 1, lt.COUNTER, lt.POINT, 7),
+        (9 * US, 0, 0, 0, 0, 2**64 - 1, 0, 0, 1, lt.COUNTER, lt.POINT, 7),
         # The source spans only learn the key when the fill ends.
         begin(lt.SOURCE_BACKPRESSURE, 0, SOURCE), end(lt.SOURCE_BACKPRESSURE, 10 * US, SOURCE),
         begin(lt.SOURCE_BUFFER_WAIT, 10 * US, SOURCE), end(lt.SOURCE_BUFFER_WAIT, 20 * US, SOURCE),
@@ -105,6 +107,7 @@ with tempfile.TemporaryDirectory() as d:
     assert "/*TRACE_DATA*/" not in page and '"network":true' in page, "report embeds the data and the network edge"
     assert "Untraced" not in page, "the graph only shows traced queries"
     assert workers[0].sources[raw, 1][lt.SOURCE_BACKPRESSURE] == (0, 10 * US, 0), "keyless waits belong to the next fill"
+    assert lt.counter_series(workers) == [("task_queue_admission", "host:1", [(5 * US, 3), (9 * US, -1), (500 * US, -1)])]
     spans = lt.open_spans(workers)
     assert [(stage, key) for stage, _, _, key, _ in spans] == [("exec", "9/2/1")], spans
     assert spans[0][4] == (1800 - 1790) / 1000, "open for the time until the last event"

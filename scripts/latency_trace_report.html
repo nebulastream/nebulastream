@@ -75,6 +75,11 @@ main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12p
     <p class="hint">One point per buffer (its worst tuple), coloured by the stage it spent most time in. Drag to select a time range, which filters every other chart; click a point for its timeline.</p>
     <div id="timeline" style="height:340px"></div>
   </section>
+  <section class="card wide" id="counters-card">
+    <h2>Counters</h2>
+    <p class="hint">Engine-wide values sampled every millisecond and recorded when they change, on the latency chart's time axis. Not specific to the selected query.</p>
+    <div id="counters"></div>
+  </section>
   <section class="card">
     <h2>Breakdown by percentile</h2>
     <p class="hint">Mean time per stage of the buffers around each percentile. Not a sum of per-stage percentiles.</p>
@@ -251,6 +256,26 @@ function renderTimeline(list) {
   }
 }
 
+function renderCounters() {
+  const container = document.getElementById("counters");
+  if (!DATA.counters.length) { document.getElementById("counters-card").hidden = true; return; }
+  if (!container.childElementCount) {
+    for (const _ of DATA.counters) { const div = document.createElement("div"); div.style.height = "150px"; container.appendChild(div); }
+  }
+  const starts = chains.map(c => c.start);
+  const range = state.range || [Math.min(...starts), Math.max(...starts)];
+  DATA.counters.forEach((counter, i) => {
+    Plotly.react(container.children[i], [{
+      type: "scattergl", mode: "lines", line: {shape: "hv", color: css("--accent")}, x: counter.t, y: counter.v,
+      hovertemplate: "%{y} at %{x:.1f} ms<extra></extra>",
+    }], layout({
+      margin: {l: 56, r: 16, t: 22, b: 28}, showlegend: false,
+      title: {text: `${counter.name} <span style="font-size:11px">${counter.worker}</span>`, font: {size: 12}, x: 0, xanchor: "left"},
+      xaxis: {range: range, gridcolor: css("--line")}, yaxis: {gridcolor: css("--line"), rangemode: "tozero"},
+    }), plotConfig);
+  });
+}
+
 function meanBreakdown(list) {
   const sums = new Map();
   for (const chain of list) for (const [stage, , us] of chain.segments) sums.set(stage, (sums.get(stage) || 0) + us);
@@ -339,6 +364,7 @@ function render(withTimeline = true) {
   document.getElementById("reset").hidden = !state.range;
   renderGraph(chosen);
   if (withTimeline) renderTimeline(list);
+  renderCounters();
   renderBreakdown(chosen);
   renderAttribution(chosen);
   renderCdf(chosen);

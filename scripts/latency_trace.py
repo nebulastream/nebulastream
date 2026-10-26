@@ -43,7 +43,7 @@ from pathlib import Path
 
 HEADER = struct.Struct("<8sQQQ64s")
 EVENT = struct.Struct("<QQQQQQIIIBBH")
-SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL, ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV = range(8)
+SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL, ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV, COUNTER = range(9)
 STAGE_NAMES = ["source backpressure", "source buffer wait", "source fill", "enqueue", "exec", "emit", "net send", "net recv"]
 POINT, BEGIN, END = range(3)
 # A source that reports first data within this many ns of starting the fill found the data already waiting, so the data also
@@ -73,6 +73,8 @@ class Worker:
     open_spans: list = field(default_factory=list)  # (stage, thread, key, pipeline, t) of begins without an end
     unpaired: int = 0  # ends without a begin and begins without an end that a later begin superseded
     end: int = 0  # the last event's time
+    counter_names: dict = field(default_factory=dict)  # counter id -> name
+    counters: dict = field(default_factory=lambda: defaultdict(list))  # counter id -> [(t, value)], recorded on change
 
     def label(self, pipeline):
         return f"P{pipeline} {short_description(self.pipelines.get(pipeline, ((), '?'))[1])}"
@@ -112,6 +114,9 @@ def load(paths):
                 kind, _, rest = line.partition(" ")
                 if kind == "query":
                     query = query_name(rest)
+                if kind == "counter":
+                    identifier, name = rest.split(" ", 1)
+                    worker.counter_names[int(identifier)] = name
                 if kind not in ("source", "pipeline"):
                     continue
                 identifier, successors, description = rest.split(" ", 2)
@@ -168,6 +173,8 @@ def load_events(worker, data, offset, sends):
             sends[key].append((time, worker))
         elif stage == NET_RECV:
             worker.receives[key, pipeline] = time
+        elif stage == COUNTER:
+            worker.counters[pipeline].append((time, struct.unpack("<q", struct.pack("<Q", seq2))[0]))
     worker.open_spans = [(stage, thread, key, pipeline, t) for (thread, stage), (t, key, pipeline) in opened.items()]
 
 
@@ -419,6 +426,13 @@ def open_spans(workers):
     return sorted(spans, key=lambda span: -span[4])
 
 
+def counter_series(workers):
+    """(name, worker, [(t, value)]) of every counter that recorded a sample. Values only are recorded when they change, so the last
+    one is repeated at the end of the trace."""
+    return [(worker.counter_names.get(identifier, f"counter {identifier}"), worker.name, samples + [(worker.end, samples[-1][1])])
+            for worker in workers for identifier, samples in worker.counters.items()]
+
+
 def interactive_report(workers, chains, out):
     """Writes report.html, a self-contained page that embeds the graph and the stitched chains."""
     stages, nodes, queries = {}, {}, {}
@@ -430,7 +444,9 @@ def interactive_report(workers, chains, out):
         rows.append([queries.setdefault(chain["query"], len(queries)), round((chain["segments"][0][1] - start) / 1e6, 3),
                      chain["tuples"], int(chain["warmup"]), "/".join(map(str, chain["key"])), segments])
     data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, {chain["query"] for chain in chains}),
-            "open": open_spans(workers)}
+            "open": open_spans(workers),
+            "counters": [{"name": name, "worker": where, "t": [round((t - start) / 1e6, 3) for t, _ in samples],
+                          "v": [value for _, value in samples]} for name, where, samples in counter_series(workers)]}
     from plotly.offline import get_plotlyjs
 
     template = (Path(__file__).parent / "latency_trace_report.html").read_text()
@@ -475,6 +491,9 @@ def main():
         own.sort(key=total)
         p50, p99 = (total(own[percentile_index(own, p)]) / 1e6 for p in (50, 99))
         print(f"  {query}: {len(own)} buffers, p50 {p50:.2f} ms, p99 {p99:.2f} ms")
+    for name, where, samples in counter_series(workers):
+        values = [value for _, value in samples]
+        print(f"counter {name} on {where}: {len(values)} changes, min {min(values)}, max {max(values)}")
     spans = open_spans(workers)
     unpaired = sum(worker.unpaired for worker in workers)
     print(f"{len(spans)} spans still open at the end of the trace, {unpaired} unpaired begins or ends")
