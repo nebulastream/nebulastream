@@ -335,6 +335,12 @@ public:
         switch (continuationPolicy)
         {
             case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
+                if (continuations && continuation.enabled)
+                {
+                    continueOnThisWorker(std::move(task));
+                    return true;
+                }
+                [[fallthrough]];
             case PipelineExecutionContext::ContinuationPolicy::NEVER:
                 addInternalTask(std::move(task));
                 return true;
@@ -404,10 +410,12 @@ public:
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
-        const size_t admissionQueueSize)
+        const size_t admissionQueueSize,
+        const bool continuations)
         : listener(std::move(listener))
         , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
+        , continuations(continuations)
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
     {
@@ -460,10 +468,58 @@ private:
         taskQueue.addInternalTaskNonBlocking(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
     }
 
+    /// A task that the task a worker executes emitted with ContinuationPolicy::POSSIBLE. The worker runs it right after the current
+    /// task, instead of handing it through the queue to a worker that may have to wake up for it. Only the first emission of a task
+    /// is kept; a second one returns it to the queue, so tasks that emit several buffers still spread them across the workers.
+    struct Continuation
+    {
+        std::optional<Task> task;
+        bool spilled = false;
+        /// Only the regular worker loop runs continuations. Terminating workers and other threads use the queue.
+        bool enabled = false;
+    };
+
+    static thread_local Continuation continuation;
+
+    void continueOnThisWorker(Task&& task)
+    {
+        if (!continuation.task && !continuation.spilled)
+        {
+            continuation.task.emplace(std::move(task));
+            return;
+        }
+        if (continuation.task)
+        {
+            addInternalTask(std::move(*continuation.task));
+            continuation.task.reset();
+            continuation.spilled = true;
+        }
+        addInternalTask(std::move(task));
+    }
+
+    /// Handles the task and then the continuations it leaves, one after another.
+    void handleWithContinuations(const WorkerThread& worker, Task task)
+    {
+        std::optional<Task> next{std::move(task)};
+        while (next)
+        {
+            continuation.spilled = false;
+            Task current{std::move(*next)};
+            next.reset();
+            handleTask(worker, std::move(current));
+            if (continuation.task)
+            {
+                next.emplace(std::move(*continuation.task));
+                continuation.task.reset();
+            }
+        }
+    }
+
     /// Order of destruction matters: TaskQueue has to outlive the pool
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    bool continuations;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
     TaskQueue<Task> taskQueue;
@@ -480,6 +536,7 @@ private:
 
 /// Marks every Thread which has not explicitly been created by the ThreadPool as a non-worker thread
 thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadId>;
+thread_local ThreadPool::Continuation ThreadPool::continuation;
 
 bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
@@ -787,6 +844,7 @@ void ThreadPool::addThread(const Host& host)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             const WorkerThread worker{*this, false};
+            continuation.enabled = true;
             while (!stopToken.stop_requested())
             {
                 NES_EVENT(EventTrace::begin(EventTrace::TaskQueueWait{}));
@@ -794,9 +852,10 @@ void ThreadPool::addThread(const Host& host)
                 NES_EVENT(EventTrace::end(EventTrace::TaskQueueWait{}));
                 if (task)
                 {
-                    handleTask(worker, std::move(*task));
+                    handleWithContinuations(worker, std::move(*task));
                 }
             }
+            continuation.enabled = false;
 
             /// The task delayer could add another task after the workers observe an empty task queue. Synchronously shutting it down first
             /// guarantees that no delayed submission is in flight and that later delayed submissions are failed instead of queued.
@@ -822,7 +881,8 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize))
+    , threadPool(
+          std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize, config.continuations))
     , host(host)
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads; ++i)

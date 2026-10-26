@@ -1191,6 +1191,61 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessors)
     test.stop();
 }
 
+/// A task that emits a single buffer with ContinuationPolicy::POSSIBLE leaves the successor's task to its own worker thread.
+TEST_F(QueryEngineTest, singleEmissionContinuesOnTheSameWorker)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+
+    auto query = test.addNewQuery(std::move(builder));
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+
+    std::mutex mutex;
+    std::vector<WorkerThreadId> emittingWorkers;
+    std::vector<WorkerThreadId> sinkWorkers;
+    const auto sinkId = test.pipelineIds.at(sink);
+    EXPECT_CALL(*test.statListener, onEvent(::testing::_))
+        .WillRepeatedly(
+            ::testing::Invoke(
+                [&](Event event)
+                {
+                    const std::scoped_lock lock(mutex);
+                    if (const auto* emit = std::get_if<TaskEmit>(&event); emit != nullptr && emit->toPipeline == sinkId)
+                    {
+                        emittingWorkers.push_back(emit->threadId);
+                    }
+                    if (const auto* start = std::get_if<TaskExecutionStart>(&event); start != nullptr && start->pipelineId == sinkId)
+                    {
+                        sinkWorkers.push_back(start->threadId);
+                    }
+                }));
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForStart());
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+        for (size_t i = 0; i < 4; ++i)
+        {
+            test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        }
+        test.sourceControls[source]->injectEoS();
+
+        ASSERT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffersOrMore(4));
+        ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+
+    std::ranges::sort(emittingWorkers);
+    std::ranges::sort(sinkWorkers);
+    EXPECT_EQ(emittingWorkers.size(), 4);
+    EXPECT_EQ(sinkWorkers, emittingWorkers);
+}
+
 TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
 {
     TestingHarness test;
