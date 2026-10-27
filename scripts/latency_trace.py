@@ -268,7 +268,8 @@ def clock_corrections(workers):
         offsets[pair] = statistics.median(offset for _, offset in values[: max(1, len(values) // 10)])
     # Spanning tree over the hosts, starting at the host with the most samples.
     corrections = {}
-    for start in sorted({host for pair in offsets for host in pair}, key=lambda h: -sum(len(v) for p, v in samples.items() if h in p)):
+    hosts = {host for pair in offsets for host in pair}
+    for start in sorted(hosts, key=lambda h: (-sum(len(v) for p, v in samples.items() if h in p), h)):
         if start in corrections:
             continue
         corrections[start], pending = 0, [start]
@@ -716,6 +717,10 @@ def thread_activity(chain, workers, span_names):
     by_name = {worker.name: worker for worker in workers}
     lanes = []
     for worker in chain_workers(chain, by_name):
+        # Threads can share a name, e.g. one DataSrc thread per source; their lanes must not collapse into one row.
+        name_counts = defaultdict(int)
+        for _, thread_name in worker.thread_ids.values():
+            name_counts[thread_name] += 1
         for thread in sorted(set(worker.spans) | set(worker.cpu)):
             spans = worker.spans.get(thread, [])
             role = thread_role(spans)
@@ -745,6 +750,8 @@ def thread_activity(chain, workers, span_names):
                             for t0, t1, state, waker in cpu[first:] if t1 > low and t0 < high]
             if segments or cpu_segments:
                 name = worker.thread_ids.get(thread, (0, ""))[1] or f"{role} thread {thread}"
+                if name_counts[name] > 1:
+                    name = f"{name} #{thread}"
                 lanes.append([workers.index(worker), thread, name, segments, cpu_segments])
     return {"from": round((low - start) / 1000), "to": round((high - start) / 1000), "lanes": lanes}
 

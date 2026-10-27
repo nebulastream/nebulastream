@@ -462,7 +462,19 @@ function renderGantt(chain) {
   const separators = (order, workerOf, axis) => order.flatMap((label, i) => (i > 0 && workerOf(label) !== workerOf(order[i - 1])
     ? [{type: "line", xref: "paper", x0: 0, x1: 1, yref: axis, y0: i - 0.5, y1: i - 0.5, layer: "below",
         line: {color: css("--muted"), width: 1, dash: "dash"}}] : []));
-  const shapes = [...separators(segmentOrder, segmentWorker, "y"), ...separators(laneOrder, laneWorker, "y2")];
+  /// In the thread lanes, every other worker's rows get a shaded band and workers are divided by a solid line.
+  const workerBands = laneOrder.reduce((bands, label, i) => {
+    const last = bands[bands.length - 1];
+    if (last && last.worker === laneWorker(label)) last.end = i;
+    else bands.push({worker: laneWorker(label), start: i, end: i});
+    return bands;
+  }, []).flatMap((band, index) => [
+    ...(index % 2 ? [{type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: band.start - 0.5, y1: band.end + 0.5, layer: "below",
+      line: {width: 0}, fillcolor: css("--text"), opacity: 0.08}] : []),
+    ...(index > 0 ? [{type: "line", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: band.start - 0.5, y1: band.start - 0.5,
+      line: {color: css("--muted"), width: 1.5}}] : []),
+  ]);
+  const shapes = [...separators(segmentOrder, segmentWorker, "y"), ...workerBands];
   const rows = bars.length, laneRows = laneOrder.length;
   const split = laneRows ? laneRows / (rows + laneRows) : 0;
   const range = activity ? [ms(activity.from), ms(activity.to)] : undefined;

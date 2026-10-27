@@ -249,7 +249,8 @@ with tempfile.TemporaryDirectory() as d:
         "WorkerThread-0-7 [001] d.... 0.001000: sched_switch: prev_comm=x prev_pid=7 prev_prio=120 prev_state=R ==> next_comm=y next_pid=8 next_prio=120\n"
         "y-8 [001] d.... 0.001004: sched_switch: prev_comm=y prev_pid=8 prev_prio=120 prev_state=S ==> next_comm=x next_pid=7 next_prio=120\n")
     paths = sorted(Path(d).glob("*.bin"))
-    assert lt.clock_corrections(lt.load(paths, correct_clocks=False)[0]) == {"b": -1000 * US}
+    corrections = lt.clock_corrections(lt.load(paths, correct_clocks=False)[0])
+    assert corrections == {"b": -1000 * US}, corrections
     workers, _ = lt.load(paths)
     a, b = workers
     assert (a.clock_correction, b.clock_correction) == (0, -1000 * US)
