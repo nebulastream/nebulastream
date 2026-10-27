@@ -36,6 +36,7 @@ import bisect
 import json
 import re
 import struct
+import statistics
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -87,6 +88,7 @@ class Worker:
     spans: dict = field(default_factory=lambda: defaultdict(list))  # thread -> [(t0, t1, name, category, key, pipeline, tuples)] by t0
     net_steps: dict = field(default_factory=lambda: defaultdict(list))  # (step name, key, channel) -> [t], see NET_STEPS
     sink_channels: dict = field(default_factory=dict)  # network sink pipeline -> channel tag
+    clock_correction: int = 0  # added to this host's event times to align its clock with the other hosts, see clock_corrections
     clock_offset: int = 0  # system clock minus steady clock, added to every event time
     thread_ids: dict = field(default_factory=dict)  # trace thread -> (OS thread id, thread name)
     cpu: dict = field(default_factory=lambda: defaultdict(list))  # trace thread -> [(t0, t1, CPU state)], see load_sched
@@ -170,7 +172,20 @@ def read_schemas(data, offset):
     return types, offset
 
 
-def load(paths):
+def load(paths, correct_clocks=True):
+    """Workers and network sends of the trace files. With correct_clocks, the clocks of different hosts are aligned with the offsets
+    that clock_corrections estimates from the trace, and each worker's `clock_correction` says by how much."""
+    workers, sends = load_files(paths, {})
+    if correct_clocks and (corrections := clock_corrections(workers)):
+        workers, sends = load_files(paths, corrections)
+    return workers, sends
+
+
+def host_of(worker):
+    return worker.name.rsplit(":", 1)[0]
+
+
+def load_files(paths, corrections):
     workers, sends = [], defaultdict(list)
     for path in paths:
         data = path.read_bytes()
@@ -212,12 +227,61 @@ def load(paths):
                 for successor in successors:
                     worker.predecessors[successor].add(int(pipeline))
         types, offset = read_schemas(data, HEADER.size)
-        worker.clock_offset = system - steady
-        load_events(worker, types, data, offset, system - steady, sends)
+        worker.clock_correction = corrections.get(host_of(worker), 0)
+        worker.clock_offset = system - steady + worker.clock_correction
+        load_events(worker, types, data, offset, worker.clock_offset, sends)
         workers.append(worker)
-    if (sched := paths[0].parent / "sched.txt").exists():
+    # OS thread ids are per host, so scheduling events are matched only with the workers of their host. sched.txt is for a trace
+    # of a single host.
+    directory = paths[0].parent
+    if (sched := directory / "sched.txt").exists():
         load_sched(sched, workers)
+    for host in sorted({host_of(worker) for worker in workers}):
+        if (sched := directory / f"sched.{host}.txt").exists():
+            load_sched(sched, [worker for worker in workers if host_of(worker) == host])
     return workers, sends
+
+
+def clock_corrections(workers):
+    """Corrections in ns to add to the event times of each host, so all hosts share the clock of one of them. Workers on one host
+    share its clock. For a traced buffer encoded at t1 on the sender, decoded at t2 and queued (which sends the ack) at t3 on the
+    receiver, and acked at t4 on the sender, the receiver's clock is ahead by ((t2 - t1) + (t3 - t4)) / 2 if both directions take
+    equally long, as in NTP. Uses the tenth of the buffers with the shortest round trip (t4 - t1) - (t3 - t2), whose directions
+    are least likely to have waited differently, and the median of their offsets."""
+    senders = {tag: worker for worker in workers for tag in worker.sink_channels.values()}
+    samples = defaultdict(list)  # (sender host, receiver host) -> [(round trip, offset)]
+    for receiver in workers:
+        for (step, key, channel), decoded in receiver.net_steps.items():
+            sender = senders.get(channel)
+            if step != "net decoded" or sender is None or host_of(sender) == host_of(receiver):
+                continue
+            encoded = sender.net_steps.get(("net encoded", key, channel))
+            acked = sender.net_steps.get(("net acked", key, channel))
+            queued = receiver.net_steps.get(("net queued", key, channel))
+            if not (encoded and acked and queued):
+                continue
+            t1, t2, t3, t4 = encoded[0], decoded[0], queued[0], acked[0]
+            samples[host_of(sender), host_of(receiver)].append(((t4 - t1) - (t3 - t2), ((t2 - t1) + (t3 - t4)) / 2))
+    offsets = {}  # (a, b) -> clock of b minus clock of a
+    for pair, values in samples.items():
+        values.sort()
+        offsets[pair] = statistics.median(offset for _, offset in values[: max(1, len(values) // 10)])
+    # Spanning tree over the hosts, starting at the host with the most samples.
+    corrections = {}
+    for start in sorted({host for pair in offsets for host in pair}, key=lambda h: -sum(len(v) for p, v in samples.items() if h in p)):
+        if start in corrections:
+            continue
+        corrections[start], pending = 0, [start]
+        while pending:
+            host = pending.pop()
+            for (a, b), offset in offsets.items():
+                if a == host and b not in corrections:
+                    corrections[b] = corrections[a] - offset
+                    pending.append(b)
+                elif b == host and a not in corrections:
+                    corrections[a] = corrections[b] + offset
+                    pending.append(a)
+    return {host: round(correction) for host, correction in corrections.items() if round(correction)}
 
 
 RUNNING, RUNNABLE, WAKE_REQUESTED = 0, 1, 2
@@ -733,6 +797,8 @@ def main():
     parser.add_argument("--out", type=Path, default=Path("."))
     parser.add_argument("--query", help="only buffers of queries whose name contains this")
     parser.add_argument("--keep-warmup", action="store_true", help="keep buffers that started before every pipeline ran once")
+    parser.add_argument("--no-clock-correction", action="store_true",
+                        help="trust the system clocks of different hosts instead of aligning them with offsets estimated from network acks")
     args = parser.parse_args()
     if args.input.is_dir():
         paths = sorted(args.input.glob("*.bin"))
@@ -741,7 +807,9 @@ def main():
     if not paths:
         sys.exit(f"no traces found for {args.input}")
 
-    workers, sends = load(paths)
+    workers, sends = load(paths, correct_clocks=not args.no_clock_correction)
+    for host, correction in sorted({(host_of(worker), worker.clock_correction) for worker in workers if worker.clock_correction}):
+        print(f"clock of {host} corrected by {correction / 1000:+.1f} us")
     everything, _, _ = stitch(workers, sends, keep_warmup=True)
     chains, incomplete, warmup = stitch(workers, sends, skip_warmup=not args.keep_warmup)
     print(f"{len(paths)} trace files, {len(chains)} complete chains, {incomplete} incomplete, {warmup} skipped as warm-up")

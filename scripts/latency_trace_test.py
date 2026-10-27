@@ -46,6 +46,7 @@ TYPES = {
     "net encoded": (11, 2, [("key", "k"), ("channel", "u")]),
     "net decoded": (13, 2, [("key", "k"), ("channel", "u")]),
     "net queued": (14, 2, [("key", "k"), ("channel", "u")]),
+    "net acked": (12, 2, [("key", "k"), ("channel", "u")]),
 }
 SOURCE_BACKPRESSURE, SOURCE_BUFFER_WAIT, SOURCE_FILL = "source backpressure", "source buffer wait", "source fill"
 ENQUEUE, EXEC, EMIT, NET_SEND, NET_RECV = "enqueue", "exec", "emit", "net send", "net recv"
@@ -71,11 +72,11 @@ def schemas():
     return out
 
 
-def write(directory, pid, steady, system, plan, events):
+def write(directory, pid, steady, system, plan, events, host=b"host"):
     """Writes each event as its own chunk; `events` are (thread, kind, time, type name, field values)."""
     path = Path(directory) / f"t.{pid}.bin"
     with path.open("wb") as f:
-        f.write(lt.HEADER.pack(b"NESLAT03", pid, steady, system, b"host") + schemas())
+        f.write(lt.HEADER.pack(b"NESLAT03", pid, steady, system, host) + schemas())
         for thread, kind, time, type_name, values in events:
             type_id, _, fields = TYPES[type_name]
             flat = [v for field, k in fields for v in (values.get(field, (0, 0, 0)) if k == "k" else (values.get(field, 0),))]
@@ -225,3 +226,34 @@ assert segments[-1][2] == 800 * US, "sink exec end on worker B in system time"
 assert all(a[2] == b[1] for a, b in zip(segments, segments[1:])), "segments are contiguous"
 assert sum(t1 - t0 for _, t0, t1 in segments) == 700 * US
 print("ok:", *(f"{n} {(t1 - t0) / US:.0f}us" for n, t0, t1 in segments), sep="\n  ")
+
+
+# Two hosts whose system clocks differ: host b's clock is 1000us ahead. Each direction of a hop takes 30us; the third buffer waited
+# 200us more on its way out, so its round trip is longer and it does not count.
+C9 = lt.channel_tag("c9")
+with tempfile.TemporaryDirectory() as d:
+    sender, receiver = [], []
+    for seq, extra in ((1, 0), (2, 0), (3, 200)):
+        start = seq * 1000 * US
+        key = (1, seq, 1)
+        sender += [*span(EXEC, key, start, start + 10 * US, 1, ENGINE), net("net encoded", key, start + 20 * US, C9),
+                   net("net acked", key, start + 20 * US + 30 * US + extra * US + 5 * US + 30 * US, C9)]
+        decoded = start + 20 * US + 30 * US + extra * US + 1000 * US
+        receiver += [net("net decoded", key, decoded, C9), net("net queued", key, decoded + 5 * US, C9)]
+    write(d, 1, 0, 0, "query q(distributed=Q2)\nsource 1 1 GeneratorSource\npipeline 1 - NetworkSink(connectionId: b:9090, channelId: c9)\n"
+          "thread 1 7 WorkerThread-0\n", sender, host=b"a")
+    write(d, 2, 0, 0, "query q2(distributed=Q2)\nsource 1 3 SourceThread(implementation:NetworkSource(c9))\npipeline 3 - PrintSink\n"
+          "thread 1 7 WorkerThread-0\n", receiver, host=b"b")
+    # Each host has its own scheduling events, and the OS thread id 7 exists on both.
+    (Path(d) / "sched.a.txt").write_text(
+        "WorkerThread-0-7 [001] d.... 0.001000: sched_switch: prev_comm=x prev_pid=7 prev_prio=120 prev_state=R ==> next_comm=y next_pid=8 next_prio=120\n"
+        "y-8 [001] d.... 0.001004: sched_switch: prev_comm=y prev_pid=8 prev_prio=120 prev_state=S ==> next_comm=x next_pid=7 next_prio=120\n")
+    paths = sorted(Path(d).glob("*.bin"))
+    assert lt.clock_corrections(lt.load(paths, correct_clocks=False)[0]) == {"b": -1000 * US}
+    workers, _ = lt.load(paths)
+    a, b = workers
+    assert (a.clock_correction, b.clock_correction) == (0, -1000 * US)
+    assert b.net_steps["net decoded", (1, 1, 1), C9] == [1000 * US + 50 * US], "host b's events are on host a's clock"
+    assert a.cpu[1] == [(1000 * US, 1004 * US, lt.RUNNABLE, "")] and not b.cpu, "scheduling events belong to their host only"
+print("ok: clocks of different hosts are aligned, scheduling events are matched per host")
+

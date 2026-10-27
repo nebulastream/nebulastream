@@ -17,10 +17,15 @@
 #
 #   sudo scripts/latency_sched.sh <out-file> <pid> [seconds]
 #
-# Records the process <pid> and everything it starts after <out-file>.ready exists, e.g. the shell that then launches the workers; the whole system
-# produces hundreds of thousands of events per second. Runs for the given time, or until it is terminated. Put <out-file> next to the trace's *.bin files as sched.txt, and
-# scripts/latency_trace.py picks it up. Needs root and the kernel's tracefs (in Docker: a --privileged container). Uses the
-# kernel's `mono` trace clock, which is the clock of the trace's steady-clock timestamps.
+# Records the process <pid> and everything it starts after <out-file>.ready exists, e.g. the shell that then launches the
+# workers; the whole system produces hundreds of thousands of events per second. Runs for the given time, or until it is
+# terminated.
+#
+# Put <out-file> next to the trace's *.bin files as sched.<hostname>.txt, with the host's `hostname`; scripts/latency_trace.py
+# matches it with that host's workers. sched.txt is matched with all workers, for a trace of a single host.
+#
+# Needs root and the kernel's tracefs (in Docker: a --privileged container with --pid=host). Uses the kernel's `mono` trace
+# clock, which is the clock of the trace's steady-clock timestamps.
 set -euo pipefail
 
 out=$1
