@@ -23,6 +23,7 @@
 #include <stop_token>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
@@ -48,36 +49,54 @@ HandoffChannel::HandoffChannel(const size_t capacity) : capacity(std::max<size_t
 {
 }
 
-std::shared_ptr<HandoffChannel> HandoffChannel::get(const std::string& id, const size_t capacity)
+/// Both locks are taken registry first, so that a source cannot attach to a channel that a sink is removing.
+HandoffChannel::Lease::Lease(std::string id, const size_t capacity, const Role role) : id(std::move(id)), role(role)
 {
     auto& [mutex, channels] = registry();
     const std::scoped_lock lock(mutex);
-    auto& channel = channels[id];
-    if (channel == nullptr)
+    auto& registered = channels[this->id];
+    if (registered == nullptr)
     {
-        channel = std::make_shared<HandoffChannel>(capacity);
+        registered = std::make_shared<HandoffChannel>(capacity);
     }
-    return channel;
+    channel = registered;
+    if (role == Role::SOURCE)
+    {
+        const std::scoped_lock channelLock(channel->mutex);
+        channel->sourceAttached = true;
+    }
 }
 
-void HandoffChannel::release(const std::string& id)
+HandoffChannel::Lease::~Lease()
 {
-    std::shared_ptr<HandoffChannel> channel;
+    release();
+}
+
+void HandoffChannel::Lease::release()
+{
+    if (!channel)
+    {
+        return;
+    }
+    std::deque<TupleBuffer> dropped;
     {
         auto& [mutex, channels] = registry();
         const std::scoped_lock lock(mutex);
-        if (const auto entry = channels.find(id); entry != channels.end())
+        const std::scoped_lock channelLock(channel->mutex);
+        const bool removes = role == Role::SOURCE || (!channel->sourceAttached && !channel->closed);
+        if (role == Role::SOURCE)
         {
-            channel = std::move(entry->second);
+            channel->consumerGone = true;
+            channel->listener = {};
+            dropped = std::exchange(channel->buffers, {});
+        }
+        /// A half that comes after this one may have registered a channel of its own under the same id.
+        if (const auto entry = channels.find(id); removes && entry != channels.end() && entry->second == channel)
+        {
             channels.erase(entry);
         }
     }
-    if (channel)
-    {
-        const std::scoped_lock lock(channel->mutex);
-        channel->consumerGone = true;
-        channel->buffers.clear();
-    }
+    channel.reset();
 }
 
 HandoffChannel::PushResult HandoffChannel::tryPush(const TupleBuffer& buffer)
@@ -88,7 +107,8 @@ HandoffChannel::PushResult HandoffChannel::tryPush(const TupleBuffer& buffer)
         {
             return PushResult::CONSUMER_GONE;
         }
-        if (buffers.size() >= capacity)
+        /// Before the source attached, a buffer stays with the sink, whose pending retry also holds back a graceful stop.
+        if (!sourceAttached || buffers.size() >= capacity)
         {
             return PushResult::FULL;
         }

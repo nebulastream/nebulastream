@@ -59,8 +59,7 @@ private:
     void dropRemaining(const TupleBuffer& buffer);
 
     std::string channelId;
-    size_t channelCapacity;
-    std::shared_ptr<HandoffChannel> channel;
+    HandoffChannel::Lease channel;
     /// Set once the Async source has stopped. Several worker threads may run `execute` at once.
     std::atomic<bool> consumerGone = false;
     /// Applies pressure as soon as the channel rejects a buffer: the channel itself is the buffer that absorbs bursts.
@@ -83,7 +82,7 @@ struct ConfigParametersHandoff
             return value;
         }};
 
-    /// Only used if the sink starts before the Async source, which then finds the channel this sink created.
+    /// Only used if the sink is created before the Async source, which then finds the channel this sink created.
     static inline const DescriptorConfig::ConfigParameter<size_t> CHANNEL_CAPACITY{
         "CHANNEL_CAPACITY",
         HandoffChannel::DEFAULT_CAPACITY,
