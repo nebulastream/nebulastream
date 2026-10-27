@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <Util/Strings.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -39,6 +40,14 @@ namespace http = boost::beast::http;
 
 /// Bounds the connect and, separately, the exchange, unless the call passes its own timeout.
 constexpr std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::seconds(30);
+
+/// The server closed the kept-alive connection before it answered. A timeout or a cancellation is not such a close: the
+/// server may have received the request, so sending it again could repeat it.
+bool closedByPeer(const boost::system::error_code& code)
+{
+    return code == http::error::end_of_stream || code == boost::asio::error::eof || code == boost::asio::error::connection_reset
+        || code == boost::asio::error::broken_pipe;
+}
 }
 
 AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegistryArguments)
@@ -78,7 +87,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     catch (const boost::system::system_error& error)
     {
         stream.reset();
-        if (!reused)
+        if (!reused || !closedByPeer(error.code()))
         {
             throw CannotReadFromSource("HTTP_CALL to {} failed: {}", url, error.what());
         }
