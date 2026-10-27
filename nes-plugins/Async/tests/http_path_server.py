@@ -12,10 +12,12 @@
 # limitations under the License.
 
 """HTTP server for the async e2e tests: answers every POST with "<path>:<body>" and logs each path.
-A `delay_ms` query parameter delays the answer, which makes the service slower than the queries calling it.
+A `delay_ms` query parameter delays the answer, which makes the service slower than the queries calling it;
+with `slow_after=N`, only the requests to a path after its first N are delayed.
 `fail_first` and `fail_after` turn answers into 500s, for the failure and retry tests.
 
-Binds an ephemeral port on 127.0.0.1 and prints it as the first line on stdout. Built on asyncio
+Binds an ephemeral port on 127.0.0.1 and prints it as the first line on stdout. An optional first argument names a
+file that logs every request's path when it arrives, so requests the client gave up on are counted as well. Built on asyncio
 rather than http.server: one thread per connection tops out below the rate the stress test needs.
 Speaks just enough HTTP/1.1 for the HTTP_CALL client: Content-Length bodies on kept-alive connections.
 """
@@ -26,6 +28,9 @@ from urllib.parse import parse_qs, urlsplit
 
 # Requests answered so far, per path including its query.
 requests = {}
+# Requests received so far, per path including its query.
+received = {}
+received_log = open(sys.argv[1], "a", buffering=1) if len(sys.argv) > 1 else None
 
 async def serve(reader, writer):
     try:
@@ -40,7 +45,11 @@ async def serve(reader, writer):
                     length = int(value)
             body = (await reader.readexactly(length)).decode()
             query = parse_qs(urlsplit(path).query)
-            await asyncio.sleep(int(query.get("delay_ms", ["0"])[0]) / 1000)
+            received[path] = received.get(path, 0) + 1
+            if received_log:
+                print(path, file=received_log)
+            if received[path] > int(query.get("slow_after", ["0"])[0]):
+                await asyncio.sleep(int(query.get("delay_ms", ["0"])[0]) / 1000)
             requests[path] = requests.get(path, 0) + 1
             # fail_first=K answers the first K requests to a path with 500, fail_after=N every request after the first N.
             failing = requests[path] <= int(query.get("fail_first", ["0"])[0]) or requests[path] > int(

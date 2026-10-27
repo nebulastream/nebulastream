@@ -30,7 +30,7 @@ teardown_file() { nes_offline_teardown_file; }
 
 setup() {
   nes_offline_setup
-  python3 tests/http_path_server.py > http_port.txt 2> http_paths.log &
+  python3 tests/http_path_server.py http_received.log > http_port.txt 2> http_paths.log &
   HTTP_SERVER_PID=$!
   wait_until test -s http_port.txt
   HTTP_SERVER="http://127.0.0.1:$(head -1 http_port.txt)"
@@ -282,4 +282,13 @@ sink_rows() { tail -n +2 "$1" | sort; }
   run_async_sql output_out_of_range.sql
   { echo "$output"; cat nes-repl.log; } | grep -q "ASYNC_OUTPUT reads value 1 of HTTP_CALL"
   [ "$(sink_rows responses.csv 2>/dev/null | wc -l)" -eq 0 ]
+}
+
+@test "HTTP_CALL: a call that timed out on a kept-alive connection is not sent again" {
+  run_async_sql resend_timeout.sql --optimizer.async.max_concurrency=1
+  [ "$status" -eq 0 ]
+
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/slow?slow_after=1&delay_ms=3000 failed" nes-repl.log
+  # The first row's request, and the second row's once: the service received it, only its answer was too slow.
+  [ "$(grep -c '^/slow?slow_after=1&delay_ms=3000$' http_received.log)" -eq 2 ]
 }
