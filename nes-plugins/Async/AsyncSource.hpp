@@ -58,7 +58,7 @@ struct AsyncSourceConfig
     std::string inputFields;
     /// Rows whose calls are in flight at the same time. A function of the stage may lower it.
     size_t maxConcurrency;
-    /// Only used if the source opens before the Handoff sink, which then finds the channel this source created.
+    /// Only used if the source is created before the Handoff sink, which then finds the channel this source created.
     size_t channelCapacity;
     /// Further attempts of a failed call, the n-th after 100 ms * 2^n.
     size_t maxRetries;
@@ -183,7 +183,6 @@ private:
     void finishRow(const std::shared_ptr<InFlightBuffer>& buffer, size_t slot, const std::exception_ptr& error);
 
     std::string channelId;
-    size_t channelCapacity;
     /// The configured bound, lowered to what the stage's functions allow.
     size_t maxConcurrency;
     size_t maxRetries;
@@ -195,7 +194,8 @@ private:
     std::vector<OutputValue> outputValues;
     size_t levels = 0;
 
-    std::shared_ptr<HandoffChannel> channel;
+    /// Taken when the source is created, so that a source that fails afterwards still releases the channel.
+    HandoffChannel::Lease channel;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     /// All coroutines of this source run here, so its state is never touched by two loop threads at once.
     boost::asio::strand<boost::asio::io_context::executor_type> strand;
