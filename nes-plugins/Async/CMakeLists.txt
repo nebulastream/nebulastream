@@ -33,6 +33,8 @@ link_plugin_library(nes-sinks handoff_sink_plugin_library)
 add_registry_entry(Sink Handoff)
 add_registry_entry(SinkValidation Handoff)
 
+add_tests_if_enabled(tests)
+
 # End-to-end tests in the embedded REPL against tests/http_path_server.py, once per execution mode: the slower
 # interpreter widens the windows in which the two halves of an async stage can race each other.
 add_e2e_test(

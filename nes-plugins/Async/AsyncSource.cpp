@@ -174,9 +174,9 @@ std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const 
 
 AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor)
     : channelId(config.channel)
-    , channelCapacity(config.channelCapacity)
     , maxConcurrency(std::max<size_t>(1, config.maxConcurrency))
     , maxRetries(config.maxRetries)
+    , channel(config.channel, config.channelCapacity, HandoffChannel::Role::SOURCE)
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
     const auto descriptions = rfl::json::read<std::vector<AsyncCall>>(config.calls);
@@ -280,7 +280,6 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
 void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     bufferProvider = std::move(provider);
-    channel = HandoffChannel::get(channelId, channelCapacity);
     channel->setListener(
         [this]
         {
@@ -296,12 +295,7 @@ void AsyncSource::close()
 {
     /// Also after a failure or a stop request, which already drained: rows of this source must not outlive it.
     cancelAndDrain();
-    if (channel)
-    {
-        channel->setListener({});
-        channel.reset();
-    }
-    HandoffChannel::release(channelId);
+    channel.release();
 }
 
 std::vector<std::string> AsyncSource::readArguments(

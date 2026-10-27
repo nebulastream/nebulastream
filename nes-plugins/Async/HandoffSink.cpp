@@ -31,23 +31,19 @@ namespace NES
 HandoffSink::HandoffSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , channelId(sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL))
-    , channelCapacity(sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL_CAPACITY))
+    , channel(channelId, sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL_CAPACITY), HandoffChannel::Role::SINK)
 {
 }
 
 void HandoffSink::start(PipelineExecutionContext&)
 {
-    channel = HandoffChannel::get(channelId, channelCapacity);
 }
 
+/// Only a graceful stop gets here. A hard stop skips it, and the lease, which goes with the sink, removes the channel if
+/// no source ever attached; closing it there would end the source's stream as if the producer had finished.
 void HandoffSink::stop(PipelineExecutionContext&)
 {
-    /// Stop also runs for a sink whose start failed.
-    if (channel)
-    {
-        channel->close();
-        channel.reset();
-    }
+    channel->close();
 }
 
 void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
@@ -66,8 +62,8 @@ void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecution
                 currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
                 break;
             case HandoffChannel::PushResult::FULL:
-                /// The Async source only takes the next buffer once the calls of its current one finished, so a full
-                /// channel means the calls fall behind: hold the producer's sources back until it drains.
+                /// The calls fall behind, or the Async source has not attached yet: hold the producer's sources back
+                /// until the channel takes buffers again.
                 if (const auto retry = backpressureHandler.onFull(*currentBuffer, backpressureController))
                 {
                     pipelineExecutionContext.repeatTask(*retry, RETRY_INTERVAL);
