@@ -41,7 +41,7 @@
 namespace NES
 {
 
-/// ponytail: values are VARSIZED, like every argument and result the Async source handles
+/// Values are VARSIZED, like every argument and result the Async source handles
 AsyncOutputLogicalFunction::AsyncOutputLogicalFunction(LogicalFunction call, const size_t index)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), call(std::move(call)), index(index)
 {
