@@ -88,15 +88,13 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark(const OriginId orig
     std::unreachable();
 }
 
-std::vector<std::pair<OriginId, Timestamp>> MultiOriginWatermarkProcessor::getCurrentWatermarkPerOrigin() const
+void MultiOriginWatermarkProcessor::getCurrentWatermarkPerOrigin(std::vector<std::pair<OriginId, Timestamp>>& watermarks) const
 {
-    std::vector<std::pair<OriginId, Timestamp>> watermarks;
-    watermarks.reserve(origins.size());
-    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
+    watermarks.clear();
+    for (const auto& [origin, processor] : std::views::zip(origins, watermarkProcessors))
     {
-        watermarks.emplace_back(origins[originIndex], Timestamp(watermarkProcessors[originIndex]->getCurrentValue()));
+        watermarks.emplace_back(origin, Timestamp(processor->getCurrentValue()));
     }
-    return watermarks;
 }
 
 Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const

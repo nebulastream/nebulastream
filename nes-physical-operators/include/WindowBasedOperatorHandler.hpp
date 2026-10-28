@@ -101,11 +101,14 @@ protected:
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
     virtual void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-        PipelineExecutionContext* pipelineCtx) = 0;
+        PipelineExecutionContext* pipelineCtx)
+        = 0;
 
     /// Backpressures the sources of input origins whose watermark is too far ahead of the slowest input origin, and releases them once the
     /// slowest origin has caught up.
     void applyWatermarkBackpressure();
+    /// Requires watermarkBackpressureMutex and an engaged watermarkBackpressure.
+    void updateWatermarkBackpressure();
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
@@ -120,7 +123,14 @@ protected:
     /// Guards the watermark backpressure and the throttled origins and sources.
     std::mutex watermarkBackpressureMutex;
     std::optional<WatermarkBackpressure> watermarkBackpressure;
+    /// Set once watermarkBackpressure is engaged, so operators without watermark gap backpressure never take the mutex.
+    std::atomic<bool> watermarkBackpressureEnabled{false};
+    /// Set by a thread that found the mutex taken; the holder reruns the update for it.
+    std::atomic<bool> watermarkBackpressureRequested{false};
     std::unordered_set<OriginId> throttledInputOrigins;
     std::unordered_set<OriginId> throttledSources;
+    /// Scratch space of updateWatermarkBackpressure, kept to avoid allocating on every update.
+    std::vector<std::pair<OriginId, Timestamp>> watermarkSnapshot;
+    std::unordered_set<OriginId> sourcesToThrottle;
 };
 }
