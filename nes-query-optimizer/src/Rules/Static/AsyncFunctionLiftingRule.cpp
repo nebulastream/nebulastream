@@ -331,7 +331,7 @@ private:
         for (const auto& call : calls)
         {
             auto name = freshName("call", child);
-            /// ponytail: "" or "0" covers VARSIZED and numeric results; BOOLEAN results need their own default
+            /// "" or "0" covers VARSIZED and numeric results; BOOLEAN results need their own default
             const auto emptySlot = call.getDataType().isType(DataType::Type::VARSIZED) ? "" : "0";
             preProjections.emplace_back(name, ConstantValueLogicalFunction{call.getDataType(), emptySlot});
             liftedCalls.emplace_back(callKey(call), name);
