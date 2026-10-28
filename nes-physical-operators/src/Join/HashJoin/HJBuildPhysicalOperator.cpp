@@ -87,7 +87,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
             {
                 /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                    entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
+                    static_cast<nautilus::val<ChainedHashMapEntry*>>(entry), borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
                 /// One paged vector exists per distinct key per hash map, so its pages follow the state page-size knob. Sizing them by the
@@ -110,7 +110,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                         }
                         throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
                     },
-                    hashMapBuffer.asArg(),
+                    static_cast<nautilus::val<TupleBuffer*>>(hashMapBuffer.asArg()),
                     static_cast<nautilus::val<uint32_t*>>(state),
                     ctx.pipelineMemoryProvider.bufferProvider,
                     tupleSize,
@@ -120,7 +120,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{
-            hashMapEntry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
+            static_cast<nautilus::val<ChainedHashMapEntry*>>(hashMapEntry), borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
         auto pagedVecBuffer
             = borrowedHashMapBuffer.getChildFromIndexAddress(static_cast<nautilus::val<uint32_t*>>(entryRef.getValueMemArea()));
         /// Move the owned buffer into the PagedVectorRef (which takes a NautilusBuffer), so it keeps the paged vector alive.

@@ -32,31 +32,32 @@ namespace NES
 /// Get member returns the MemRef to a specific class member as an offset to a objectReference.
 /// This is taken from https://stackoverflow.com/a/20141143 and modified to work with a nautilus::val<int8_t*>
 /// This does not work with multiple inheritance, for example, https://godbolt.org/z/qzExEd
+/// The helpers below accept a pointer of any type and do their byte arithmetic on a nautilus::val<int8_t*>.
+template <typename T, typename U, typename V>
+nautilus::val<int8_t*> getMemberRef(nautilus::val<V*> objectReference, U T::* member)
+{
+#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
+    return static_cast<nautilus::val<int8_t*>>(objectReference) + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
+}
+
 template <typename T, typename U>
-nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T::* member)
+static nautilus::val<T*> getMemberWithOffset(nautilus::val<U*> objectReference, const size_t memberOffset)
 {
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
+    return static_cast<nautilus::val<T*>>(static_cast<nautilus::val<int8_t*>>(objectReference) + memberOffset); /// NOLINT
 }
 
-template <typename T>
-static nautilus::val<T*> getMemberWithOffset(nautilus::val<int8_t*> objectReference, const size_t memberOffset)
+template <typename T, typename U>
+static nautilus::val<T**> getMemberPtrWithOffset(nautilus::val<U*> objectReference, const size_t memberOffset)
 {
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return static_cast<nautilus::val<T*>>(objectReference + memberOffset); /// NOLINT
+    return static_cast<nautilus::val<T**>>(static_cast<nautilus::val<int8_t*>>(objectReference) + memberOffset); /// NOLINT
 }
 
-template <typename T>
-static nautilus::val<T**> getMemberPtrWithOffset(nautilus::val<T*> objectReference, const size_t memberOffset)
+template <typename T, typename U>
+nautilus::val<T> readValueFromMemRef(const nautilus::val<U*>& memRef)
 {
-#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return static_cast<nautilus::val<T**>>(objectReference + memberOffset); /// NOLINT
-}
-
-template <typename T>
-nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
-{
-    return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
+    return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(static_cast<nautilus::val<int8_t*>>(memRef)));
 }
 
 inline const std::unordered_map<DataType::Type, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>> storeValueFunctionMap

@@ -96,7 +96,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
             const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
+                static_cast<nautilus::val<ChainedHashMapEntry*>>(entry), borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
@@ -108,7 +108,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Updating the aggregation states
     const ChainedHashMapRef::ChainedEntryRef entryRef{
-        hashMapEntry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
+        static_cast<nautilus::val<ChainedHashMapEntry*>>(hashMapEntry), borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {

@@ -175,7 +175,8 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
                                      nautilus::val<const InputFormatIndexer*>(&indexer),
                                      &fieldAccessResult);
 
-        const nautilus::val<const int8_t*> address = fieldAccessResult.get(&RawJsonAccessResult::ptrToRawJson);
+        const nautilus::val<const int8_t*> rawAddress = fieldAccessResult.get(&RawJsonAccessResult::ptrToRawJson);
+        const auto address = static_cast<nautilus::val<int8_t*>>(rawAddress);
         const nautilus::val<uint64_t> size = fieldAccessResult.get(&RawJsonAccessResult::sizeOfRawJson);
 
         /// Create the deserializer for the field and deserialize the value.

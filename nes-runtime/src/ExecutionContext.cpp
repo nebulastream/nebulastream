@@ -46,14 +46,14 @@ AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionContext* p
     return pipelineCtx->getBufferManager().get();
 }
 
-WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
+WorkerThreadId::Underlying getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 {
-    return pec->getWorkerThreadId();
+    return pec->getWorkerThreadId().getRawValue();
 }
 
-PipelineId getPipelineIdProxy(const PipelineExecutionContext* pec)
+PipelineId::Underlying getPipelineIdProxy(const PipelineExecutionContext* pec)
 {
-    return pec->getPipelineId();
+    return pec->getPipelineId().getRawValue();
 }
 }
 

@@ -149,7 +149,7 @@ VarSizedLoadFn TupleBufferRef::getRecordBufferLoad(const RecordBuffer& recordBuf
             variableSizedAccess);
 
         const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
-        return {varSizedPtr, size};
+        return {static_cast<nautilus::val<int8_t*>>(varSizedPtr), size};
     };
 }
 

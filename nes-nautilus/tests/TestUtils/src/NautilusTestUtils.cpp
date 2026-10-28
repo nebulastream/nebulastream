@@ -239,7 +239,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                         bufferProvider,
                         sizeVarSizedDataVal);
 
-                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData, sizeVarSizedDataVal)));
+                    record.write(fieldName, VarVal(VariableSizedData(static_cast<nautilus::val<int8_t*>>(pointerToVarSizedData), sizeVarSizedDataVal)));
                 }
                 else
                 {

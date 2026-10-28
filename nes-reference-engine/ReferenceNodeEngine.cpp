@@ -78,4 +78,18 @@ bool ReferenceNodeEngine::adaptQuery(
     return queryEngine->adapt(ExecutableQueryPlan::instantiate(*replacement, *sourceProvider, std::move(sharingIds)), stateTransfers);
 }
 
+std::unique_ptr<ReferenceSnapshot> ReferenceNodeEngine::pauseQuery(QueryId queryId)
+{
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    return queryEngine->pause(queryId);
+}
+
+void ReferenceNodeEngine::resumeQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan, const ReferenceSnapshot& snapshot)
+{
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
+    systemEventListener->onEvent(StartQuerySystemEvent(queryId));
+    queryEngine->resume(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider), snapshot);
+}
+
 }

@@ -41,6 +41,9 @@ public:
         std::unique_ptr<CompiledQueryPlan> replacement,
         const std::vector<std::pair<PipelineId, PipelineId>>& stateTransfers,
         ExecutableQueryPlan::SharingIds sharingIds = {});
+    /// Snapshot a single-source query in memory and remove it; resume it later from the same plan.
+    std::unique_ptr<ReferenceSnapshot> pauseQuery(QueryId queryId);
+    void resumeQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan, const ReferenceSnapshot& snapshot);
 
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
 

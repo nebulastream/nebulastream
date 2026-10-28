@@ -54,7 +54,7 @@ VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, Aren
     constexpr uint32_t iso8601OutputLen = 24;
     const nautilus::val<uint32_t> isoTimestampLength{iso8601OutputLen};
     auto timestampAsIso8601 = arena.allocateVariableSizedData(isoTimestampLength);
-    const auto payload = timestampAsIso8601.getContent();
+    const auto payload = static_cast<nautilus::val<char*>>(timestampAsIso8601.getContent());
 
     nautilus::invoke(
         +[](const uint64_t milliSecondsSinceEpoch, char* outTimestampIso8601Utc)

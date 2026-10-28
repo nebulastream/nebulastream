@@ -136,7 +136,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnUpdate)
                 {
                     /// Combining the aggregation states of the current entry with the aggregation states of the final hash map
-                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert{entryOnUpdate, pinnedFinalBuffer, fieldKeys, fieldValues};
+                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert{static_cast<nautilus::val<ChainedHashMapEntry*>>(entryOnUpdate), pinnedFinalBuffer, fieldKeys, fieldValues};
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
@@ -157,7 +157,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                 {
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
                     /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
-                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert{entryOnInsert, pinnedFinalBuffer, fieldKeys, fieldValues};
+                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert{static_cast<nautilus::val<ChainedHashMapEntry*>>(entryOnInsert), pinnedFinalBuffer, fieldKeys, fieldValues};
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))

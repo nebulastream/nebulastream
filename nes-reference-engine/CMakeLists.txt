@@ -40,6 +40,16 @@ set_target_properties(nes-reference-window-adaptation-prototype PROPERTIES ENABL
 target_link_libraries(nes-reference-window-adaptation-prototype PRIVATE
         nes-reference-engine nes-frontend-lib nes-sql-parser nes-query-optimizer nes-query-compiler nes-single-node-worker-lib)
 
+add_executable(nes-reference-snapshot-prototype SnapshotPrototype.cpp)
+set_target_properties(nes-reference-snapshot-prototype PROPERTIES ENABLE_EXPORTS ON)
+target_link_libraries(nes-reference-snapshot-prototype PRIVATE
+        nes-reference-engine nes-frontend-lib nes-sql-parser nes-query-optimizer nes-query-compiler nes-single-node-worker-lib)
+
+add_executable(nes-reference-interpreted-to-compiled-prototype InterpretedToCompiledPrototype.cpp)
+set_target_properties(nes-reference-interpreted-to-compiled-prototype PROPERTIES ENABLE_EXPORTS ON)
+target_link_libraries(nes-reference-interpreted-to-compiled-prototype PRIVATE
+        nes-reference-engine nes-frontend-lib nes-sql-parser nes-query-optimizer nes-query-compiler nes-single-node-worker-lib)
+
 if(NES_ENABLES_TESTS)
     add_test(
             NAME reference-adaptation-prototype
@@ -48,4 +58,10 @@ if(NES_ENABLES_TESTS)
             NAME reference-window-adaptation-prototype
             COMMAND $<TARGET_FILE:nes-reference-window-adaptation-prototype>
                     ${CMAKE_CURRENT_BINARY_DIR}/window-adaptation-prototype-test.csv 2)
+    add_test(
+            NAME reference-snapshot-prototype
+            COMMAND $<TARGET_FILE:nes-reference-snapshot-prototype> ${CMAKE_CURRENT_BINARY_DIR}/snapshot-prototype)
+    add_test(
+            NAME reference-interpreted-to-compiled-prototype
+            COMMAND $<TARGET_FILE:nes-reference-interpreted-to-compiled-prototype> ${CMAKE_CURRENT_BINARY_DIR}/interpreted-to-compiled-prototype 2 2)
 endif()

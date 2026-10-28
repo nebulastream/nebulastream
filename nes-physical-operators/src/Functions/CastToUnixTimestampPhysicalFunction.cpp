@@ -59,7 +59,7 @@ VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaR
             }
         },
         var.getSize(),
-        var.getContent());
+        static_cast<nautilus::val<const char*>>(var.getContent()));
 
     return VarVal{parsedMilliSeconds, value.isNullable(), false}.castToType(outputType.type);
 }

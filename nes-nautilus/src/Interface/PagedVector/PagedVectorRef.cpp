@@ -78,7 +78,7 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
         auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(fieldSlot);
         auto varSizedPtr = invoke(
             {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-            +[](TupleBuffer* pageBuffer, const VariableSizedAccess* access) -> int8_t*
+            +[](const TupleBuffer* pageBuffer, const VariableSizedAccess* access) -> int8_t*
             {
                 INVARIANT(pageBuffer != nullptr, "Page buffer MUST NOT be null");
                 INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
@@ -165,7 +165,7 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                 /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
                 return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
             },
-            lastPageBuffer.asArg(),
+            static_cast<nautilus::val<TupleBuffer*>>(lastPageBuffer.asArg()),
             bufferProvider,
             fieldSlot,
             allocationSize);

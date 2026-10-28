@@ -434,7 +434,7 @@ void AggregationBuildPhysicalOperator::traceEmitState(
                                 const nautilus::val<AbstractHashMapEntry*>& entry)
                             {
                                 const ChainedHashMapRef::ChainedEntryRef destination{
-                                    entry, combinedRef, config.fieldKeys, config.fieldValues};
+                                    static_cast<nautilus::val<ChainedHashMapEntry*>>(entry), combinedRef, config.fieldKeys, config.fieldValues};
                                 auto targetState = static_cast<nautilus::val<AggregationState*>>(destination.getValueMemArea());
                                 for (const auto& function : nautilus::static_iterable(functions))
                                 {
@@ -445,7 +445,7 @@ void AggregationBuildPhysicalOperator::traceEmitState(
                             },
                             provider);
                         const ChainedHashMapRef::ChainedEntryRef destination{
-                            destinationEntry, combinedRef, config.fieldKeys, config.fieldValues};
+                            static_cast<nautilus::val<ChainedHashMapEntry*>>(destinationEntry), combinedRef, config.fieldKeys, config.fieldValues};
                         auto targetState = static_cast<nautilus::val<AggregationState*>>(destination.getValueMemArea());
                         auto sourceState = static_cast<nautilus::val<AggregationState*>>(source.getValueMemArea());
                         for (const auto& function : nautilus::static_iterable(functions))

@@ -3,13 +3,20 @@ use reference_query_manager::query_plan::{
     QueryAdaptation, QueryPlanPipeline, QueryPlanPipelineId, QueryPlanSource, QueryPlanSourceId,
 };
 use reference_query_manager::traits::{
-    DataBuffer, DataUnit, Pipeline, PipelineExecutionContext, Sequence, Source, SourceResult,
+    DataBuffer, DataUnit, Pipeline, PipelineError, PipelineExecutionContext, Sequence, Source,
+    SourceResult,
 };
-use reference_query_manager::{QueryId, QueryListener, QueryManager, QueryPlan, SharingId};
+use reference_query_manager::{
+    QueryError, QueryFork, QueryId, QueryListener, QueryManager, QueryPlan, SharingId, StateDonor,
+};
+use std::collections::VecDeque;
 use std::ffi::{CStr, c_char, c_void};
 use std::slice;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
+use std::time::Duration;
 
 type Output = unsafe extern "C" fn(*mut c_void, *mut c_void, u64);
 
@@ -22,12 +29,13 @@ unsafe extern "C" {
         buffer: *mut c_void,
         output: Output,
         context: *mut c_void,
-    );
+    ) -> bool;
     fn nes_ref_pipeline_release(pipeline: *mut c_void);
     fn nes_ref_source_start(source: *mut c_void, sender: *mut c_void) -> bool;
     fn nes_ref_source_stop(source: *mut c_void);
     fn nes_ref_source_release(source: *mut c_void);
     fn nes_ref_query_stopped(listener: *mut c_void, query: usize);
+    fn nes_ref_query_failed(listener: *mut c_void, query: usize);
 }
 
 struct CppPipeline {
@@ -54,12 +62,16 @@ unsafe extern "C" fn output(context: *mut c_void, buffer: *mut c_void, sequence:
 }
 
 impl Pipeline for CppPipeline {
-    fn execute(&self, data: &DataUnit, context: &mut dyn PipelineExecutionContext) {
+    fn execute(
+        &self,
+        data: &DataUnit,
+        context: &mut dyn PipelineExecutionContext,
+    ) -> Result<(), PipelineError> {
         let Some(buffer) = (unsafe { data.data.as_opaque_raw() }) else {
-            return;
+            return Ok(());
         };
         let mut bridge = CppOutput(context);
-        unsafe {
+        let ok = unsafe {
             nes_ref_pipeline_execute(
                 self.handle,
                 buffer,
@@ -67,9 +79,15 @@ impl Pipeline for CppPipeline {
                 (&mut bridge as *mut CppOutput).cast(),
             )
         };
+        if ok {
+            Ok(())
+        } else {
+            Err("pipeline execution failed".into())
+        }
     }
 
-    fn absorb(&self, data: &DataUnit, _: &mut dyn PipelineExecutionContext) {
+    // ponytail: donor index ignored; C++ absorb expects exactly one donor per target.
+    fn absorb(&self, _donor: usize, data: &DataUnit, _: &mut dyn PipelineExecutionContext) {
         let state = unsafe { data.data.as_opaque_raw() }.unwrap_or(std::ptr::null_mut());
         self.initialized.store(
             unsafe { nes_ref_pipeline_absorb(self.handle, state) },
@@ -91,11 +109,27 @@ impl Drop for CppPipeline {
     }
 }
 
+/// A polled buffer and its raw byte count.
+type SourceItem = Option<(DataUnit, u64)>;
+
+/// The C++ callback's end of a source channel. `queued` counts buffers sent but not yet polled, so the C++
+/// source thread can wait instead of filling the buffer pool faster than the query drains it.
+struct SourceSender {
+    sender: Sender<SourceItem>,
+    queued: Arc<AtomicUsize>,
+}
+
 struct CppSource {
     handle: *mut c_void,
-    receiver: Receiver<Option<DataUnit>>,
-    sender: Option<Box<Sender<Option<DataUnit>>>>,
+    receiver: Receiver<SourceItem>,
+    sender: Option<Box<SourceSender>>,
+    queued: Arc<AtomicUsize>,
     started: bool,
+    /// Bytes consumed and next sequence number at the last poll: the source's
+    /// position at a commit's cut, which C++ skips to when it resumes.
+    bytes: u64,
+    next_sequence: u64,
+    answers: VecDeque<SourceResult>,
 }
 // SAFETY: Source is owned and polled on one Rust source thread. Its C++ source
 // is stopped synchronously before its callback sender is released.
@@ -107,16 +141,24 @@ impl Source for CppSource {
         self.started = unsafe {
             nes_ref_source_start(
                 self.handle,
-                (&**sender as *const Sender<_>).cast_mut().cast(),
+                (&**sender as *const SourceSender).cast_mut().cast(),
             )
         };
     }
     fn poll(&mut self) -> SourceResult {
+        if let Some(answer) = self.answers.pop_front() {
+            return answer;
+        }
         if !self.started {
             return SourceResult::EOS;
         }
         match self.receiver.try_recv() {
-            Ok(Some(data)) => SourceResult::Data(data),
+            Ok(Some((data, bytes))) => {
+                self.queued.fetch_sub(1, Ordering::Release);
+                self.bytes += bytes;
+                self.next_sequence = data.sequence.0 as u64 + 1;
+                SourceResult::Data(data)
+            }
             Ok(None) | Err(TryRecvError::Disconnected) => SourceResult::EOS,
             Err(TryRecvError::Empty) => SourceResult::Pending,
         }
@@ -126,6 +168,15 @@ impl Source for CppSource {
             unsafe { nes_ref_source_stop(self.handle) };
             self.started = false;
         }
+    }
+    fn request_state(&mut self) {
+        let mut position = self.bytes.to_le_bytes().to_vec();
+        position.extend(self.next_sequence.to_le_bytes());
+        self.answers.push_back(SourceResult::State(DataUnit {
+            sequence: Sequence(0),
+            data: position.into(),
+        }));
+        self.answers.push_back(SourceResult::StateEnd);
     }
 }
 impl Drop for CppSource {
@@ -138,22 +189,39 @@ impl Drop for CppSource {
 /// Called by C++ with an owned TupleBuffer copy. This callback only takes
 /// ownership when the sender is still alive.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn rq_source_data(sender: *mut c_void, buffer: *mut c_void, sequence: u64) {
+pub unsafe extern "C" fn rq_source_data(
+    sender: *mut c_void,
+    buffer: *mut c_void,
+    sequence: u64,
+    bytes: u64,
+) {
     let Some(data) = (unsafe { DataBuffer::from_opaque_raw(buffer, nes_ref_release_buffer) })
     else {
         return;
     };
-    let sender = unsafe { &*sender.cast::<Sender<Option<DataUnit>>>() };
-    let _ = sender.send(Some(DataUnit {
-        sequence: Sequence(sequence as usize),
-        data,
-    }));
+    let sender = unsafe { &*sender.cast::<SourceSender>() };
+    sender.queued.fetch_add(1, Ordering::Release);
+    let _ = sender.sender.send(Some((
+        DataUnit {
+            sequence: Sequence(sequence as usize),
+            data,
+        },
+        bytes,
+    )));
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rq_source_eos(sender: *mut c_void) {
-    let sender = unsafe { &*sender.cast::<Sender<Option<DataUnit>>>() };
-    let _ = sender.send(None);
+    let sender = unsafe { &*sender.cast::<SourceSender>() };
+    let _ = sender.sender.send(None);
+}
+
+/// Buffers the source sent that were not polled yet.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rq_source_queued(sender: *mut c_void) -> usize {
+    unsafe { &*sender.cast::<SourceSender>() }
+        .queued
+        .load(Ordering::Acquire)
 }
 
 struct Listener(*mut c_void);
@@ -161,6 +229,11 @@ unsafe impl Send for Listener {}
 impl QueryListener for Listener {
     fn on_query_stopped(&mut self, id: QueryId) {
         unsafe { nes_ref_query_stopped(self.0, id.0) };
+    }
+
+    fn on_query_failed(&mut self, id: QueryId, _: QueryError) {
+        // C++ keeps the original exception (error code included) and reports it.
+        unsafe { nes_ref_query_failed(self.0, id.0) };
     }
 }
 
@@ -217,6 +290,7 @@ pub unsafe extern "C" fn rq_plan_add_pipeline(
     // Initial attachment has no donor state. The reference manager only calls
     // absorb itself when migrating state from an existing pipeline.
     pipeline.absorb(
+        0,
         &DataUnit {
             sequence: Sequence(0),
             data: DataBuffer::from_bytes(Vec::new()),
@@ -255,6 +329,8 @@ pub unsafe extern "C" fn rq_plan_add_source(
     successors: *const usize,
     count: usize,
     sharing_id: *const c_char,
+    start_bytes: u64,
+    next_sequence: u64,
 ) {
     let successors = if count == 0 {
         &[]
@@ -266,6 +342,7 @@ pub unsafe extern "C" fn rq_plan_add_source(
     .map(QueryPlanPipelineId)
     .collect();
     let (tx, receiver) = mpsc::channel();
+    let queued = Arc::new(AtomicUsize::new(0));
     let sharing_id = if sharing_id.is_null() {
         None
     } else {
@@ -281,8 +358,15 @@ pub unsafe extern "C" fn rq_plan_add_source(
         source: Box::new(CppSource {
             handle,
             receiver,
-            sender: Some(Box::new(tx)),
+            sender: Some(Box::new(SourceSender {
+                sender: tx,
+                queued: Arc::clone(&queued),
+            })),
+            queued,
             started: false,
+            bytes: start_bytes,
+            next_sequence,
+            answers: VecDeque::new(),
         }),
         successors,
     });
@@ -321,4 +405,156 @@ pub unsafe extern "C" fn rq_manager_adapt(
         }
     }
     unsafe { &*manager }.adapt_query(adaptation).is_ok()
+}
+
+/// Units absorbed by a snapshot sink, tagged with their donor's position.
+pub struct Snapshot(Vec<(usize, DataUnit)>);
+
+/// Input-less snapshot sink. The engine drops it once it has absorbed every
+/// donor, which closes the channel and completes the snapshot.
+struct SnapshotSink(Mutex<Sender<(usize, DataUnit)>>);
+impl Pipeline for SnapshotSink {
+    fn execute(
+        &self,
+        _: &DataUnit,
+        _: &mut dyn PipelineExecutionContext,
+    ) -> Result<(), PipelineError> {
+        Ok(())
+    }
+    fn absorb(&self, donor: usize, data: &DataUnit, _: &mut dyn PipelineExecutionContext) {
+        let _ = self.0.lock().unwrap().send((donor, data.clone()));
+    }
+    fn emit(&self, _: &mut dyn PipelineExecutionContext) {}
+}
+
+/// Replays one donor's snapshot units as state, then ends.
+struct SnapshotSource {
+    units: Vec<DataUnit>,
+    answers: VecDeque<SourceResult>,
+}
+impl Source for SnapshotSource {
+    fn start(&mut self) {}
+    fn poll(&mut self) -> SourceResult {
+        self.answers.pop_front().unwrap_or(SourceResult::Pending)
+    }
+    fn stop(&mut self) {}
+    fn request_state(&mut self) {
+        self.answers
+            .extend(self.units.drain(..).map(SourceResult::State));
+        self.answers.push_back(SourceResult::StateEnd);
+        self.answers.push_back(SourceResult::EOS);
+    }
+}
+
+/// Pause a query in one commit: every listed pipeline and the source donate
+/// state to a snapshot sink, and the running plan is removed. Donor positions
+/// follow `pipelines`; the source is the last donor. Returns null on failure.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rq_manager_pause(
+    manager: *mut QueryManager,
+    query: usize,
+    pipelines: *const usize,
+    count: usize,
+    source: usize,
+) -> *mut Snapshot {
+    let (tx, rx) = mpsc::channel();
+    let mut plan = QueryPlan::new(QueryId(query));
+    let sink = plan.add_state_target(Box::new(SnapshotSink(Mutex::new(tx))));
+    let mut adaptation = QueryAdaptation::new(plan);
+    let pipelines = if count == 0 {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(pipelines, count) }
+    };
+    for &pipeline in pipelines {
+        adaptation = adaptation.transfer_state(QueryPlanPipelineId(pipeline), sink);
+    }
+    adaptation =
+        adaptation.transfer_state(StateDonor::Current(QueryPlanSourceId(source).into()), sink);
+    if unsafe { &*manager }.adapt_query(adaptation).is_err() {
+        return std::ptr::null_mut();
+    }
+    let mut units = Vec::new();
+    loop {
+        match rx.recv_timeout(Duration::from_secs(30)) {
+            Ok(unit) => units.push(unit),
+            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+            Err(mpsc::RecvTimeoutError::Timeout) => return std::ptr::null_mut(),
+        }
+    }
+    Box::into_raw(Box::new(Snapshot(units)))
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rq_snapshot_free(snapshot: *mut Snapshot) {
+    if !snapshot.is_null() {
+        drop(unsafe { Box::from_raw(snapshot) });
+    }
+}
+
+/// Reads the source position (bytes consumed, next sequence) donated by `donor`.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rq_snapshot_source_position(
+    snapshot: *const Snapshot,
+    donor: usize,
+    bytes: *mut u64,
+    next_sequence: *mut u64,
+) -> bool {
+    let snapshot = unsafe { &*snapshot };
+    let Some(position) = snapshot
+        .0
+        .iter()
+        .find(|(position, _)| *position == donor)
+        .and_then(|(_, unit)| unit.data.as_bytes())
+        .filter(|position| position.len() == 16)
+    else {
+        return false;
+    };
+    unsafe {
+        *bytes = u64::from_le_bytes(position[..8].try_into().unwrap());
+        *next_sequence = u64::from_le_bytes(position[8..].try_into().unwrap());
+    }
+    true
+}
+
+/// Adds a state source that replays `donor`'s snapshot units; returns its plan ID.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rq_plan_add_snapshot_source(
+    plan: *mut QueryPlan,
+    snapshot: *const Snapshot,
+    donor: usize,
+) -> usize {
+    let units = unsafe { &*snapshot }
+        .0
+        .iter()
+        .filter(|(position, _)| *position == donor)
+        .map(|(_, unit)| unit.clone())
+        .collect();
+    unsafe { &mut *plan }
+        .add_state_source(Box::new(SnapshotSource {
+            units,
+            answers: VecDeque::new(),
+        }))
+        .0
+}
+
+/// Start a query whose pipelines load their state from the plan's own sources.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rq_manager_start_from(
+    manager: *mut QueryManager,
+    plan: *mut QueryPlan,
+    sources: *const usize,
+    targets: *const usize,
+    count: usize,
+) -> bool {
+    let plan = unsafe { Box::from_raw(plan) };
+    let mut fork = QueryFork::detached(*plan);
+    if count != 0 {
+        let sources = unsafe { slice::from_raw_parts(sources, count) };
+        let targets = unsafe { slice::from_raw_parts(targets, count) };
+        for (&source, &target) in sources.iter().zip(targets) {
+            fork = fork.transfer_state(QueryPlanSourceId(source), QueryPlanPipelineId(target));
+        }
+    }
+    unsafe { &*manager }.start_query_from(fork).is_ok()
 }

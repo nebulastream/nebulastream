@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -25,10 +26,38 @@
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryId.hpp>
 
 namespace NES
 {
+/// Where a resumed source continues: raw bytes already consumed and the next sequence number.
+struct ReferenceSourcePosition
+{
+    uint64_t bytes = 0;
+    uint64_t nextSequence = SequenceNumber::INITIAL;
+};
+
+/// Pipeline and source IDs of a running reference query, in plan order.
+struct ReferenceQueryShape
+{
+    std::vector<size_t> pipelines;
+    std::vector<size_t> sources;
+};
+
+/// In-memory snapshot of a paused query: each pipeline's exported state and the source position.
+/// The state buffers belong to this engine's buffer manager, so a snapshot only resumes in the same process.
+struct ReferenceSnapshot
+{
+    ReferenceSnapshot() = default;
+    ReferenceSnapshot(const ReferenceSnapshot&) = delete;
+    ReferenceSnapshot& operator=(const ReferenceSnapshot&) = delete;
+    ~ReferenceSnapshot();
+
+    void* handle = nullptr;
+    size_t pipelines = 0;
+};
+
 class ReferenceQueryEngine final
 {
 public:
@@ -43,6 +72,10 @@ public:
     void start(std::unique_ptr<ExecutableQueryPlan> plan);
     bool adapt(std::unique_ptr<ExecutableQueryPlan> replacement, const std::vector<std::pair<PipelineId, PipelineId>>& stateTransfers);
     void stop(QueryId queryId);
+    /// Snapshots every pipeline and the source at one cut and removes the running query.
+    std::unique_ptr<ReferenceSnapshot> pause(QueryId queryId);
+    /// Starts `plan` with each pipeline loading the paused pipeline at the same position and the source skipping consumed input.
+    void resume(std::unique_ptr<ExecutableQueryPlan> plan, const ReferenceSnapshot& snapshot);
 
     std::shared_ptr<BufferManager> bufferManager;
     std::shared_ptr<AbstractQueryStatusListener> statusListener;
@@ -52,5 +85,8 @@ public:
     std::atomic_size_t nextReferenceQueryId = 1;
     std::mutex referenceQueryMutex;
     std::unordered_map<size_t, QueryId> referenceQueries;
+    /// First pipeline failure per reference query, reported once the reference manager fails the query.
+    std::unordered_map<size_t, Exception> referenceFailures;
+    std::unordered_map<size_t, ReferenceQueryShape> referenceShapes;
 };
 }

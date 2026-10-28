@@ -596,7 +596,7 @@ VarVal DefaultVARSIZEDValueDeserializer::deserializeToVarVal(
         trueFieldAddress = trueFieldAddress + nautilus::val<uint32_t>(1);
         trueFieldSize = trueFieldSize - nautilus::val<uint64_t>(2);
     }
-    const VariableSizedData varsized{trueFieldAddress, trueFieldSize};
+    const VariableSizedData varsized{static_cast<nautilus::val<int8_t*>>(trueFieldAddress), trueFieldSize};
     return VarVal{varsized, false, false};
 }
 
@@ -638,7 +638,7 @@ VarVal NullableDefaultVARSIZEDValueDeserializer::deserializeToVarVal(
             trueFieldSize = trueFieldSize - nautilus::val<uint64_t>(2);
         }
     }
-    const VariableSizedData varsized{trueFieldAddress, trueFieldSize};
+    const VariableSizedData varsized{static_cast<nautilus::val<int8_t*>>(trueFieldAddress), trueFieldSize};
     return VarVal{varsized, true, isNull};
 }
 
