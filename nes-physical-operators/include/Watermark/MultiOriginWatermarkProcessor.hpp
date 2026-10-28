@@ -42,7 +42,8 @@ public:
     [[nodiscard]] Timestamp getCurrentWatermark(OriginId origin) const;
 
     /// @brief Returns the current watermark of every origin
-    [[nodiscard]] std::vector<std::pair<OriginId, Timestamp>> getCurrentWatermarkPerOrigin() const;
+    /// Fills `watermarks` instead of returning a new vector, so a caller on the hot path can reuse its allocation.
+    void getCurrentWatermarkPerOrigin(std::vector<std::pair<OriginId, Timestamp>>& watermarks) const;
 
     std::string getCurrentStatus();
 

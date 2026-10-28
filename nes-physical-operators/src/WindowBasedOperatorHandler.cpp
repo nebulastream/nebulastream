@@ -59,6 +59,7 @@ void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecuti
     {
         const std::scoped_lock lock(watermarkBackpressureMutex);
         watermarkBackpressure = std::move(backpressure);
+        watermarkBackpressureEnabled.store(true, std::memory_order_release);
     }
 }
 
@@ -114,9 +115,11 @@ void WindowBasedOperatorHandler::finishBuildBuffer(const Timestamp lowerBound)
 
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
+    const auto originWatermarkBefore = watermarkProcessorBuild->getCurrentWatermark(bufferMetaData.originId);
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    const bool originWatermarkMoved = watermarkProcessorBuild->getCurrentWatermark(bufferMetaData.originId) != originWatermarkBefore;
 
     NES_TRACE(
         "New global watermark: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
@@ -125,8 +128,12 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
 
-    /// The gap between the origins also changes when the global watermark does not advance.
-    applyWatermarkBackpressure();
+    /// The gap between the origins also changes when the global watermark does not advance, but only if some origin's watermark
+    /// moved. The thread whose emplace moves an origin's watermark observes that move, so no change goes unapplied.
+    if (originWatermarkMoved)
+    {
+        applyWatermarkBackpressure();
+    }
 
     const auto newValue = newGlobalWatermark.getRawValue();
     auto highestWatermark = highestTriggeredWatermark.load();
@@ -164,18 +171,36 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
 
 void WindowBasedOperatorHandler::applyWatermarkBackpressure()
 {
-    const std::scoped_lock lock(watermarkBackpressureMutex);
-    if (!watermarkBackpressure)
+    if (!watermarkBackpressureEnabled.load(std::memory_order_acquire))
     {
         return;
     }
+    /// Instead of queueing on the lock, a thread leaves a request for the current holder. The holder reruns the update until no
+    /// request is left, so the last watermark change is always applied, e.g., the final watermark that releases all throttled sources.
+    watermarkBackpressureRequested.store(true, std::memory_order_release);
+    while (watermarkBackpressureRequested.load(std::memory_order_acquire))
+    {
+        const std::unique_lock lock(watermarkBackpressureMutex, std::try_to_lock);
+        if (!lock.owns_lock())
+        {
+            return; /// the holder sees the request after releasing the lock at the latest
+        }
+        while (watermarkBackpressureRequested.exchange(false, std::memory_order_acq_rel))
+        {
+            updateWatermarkBackpressure();
+        }
+    }
+}
+
+void WindowBasedOperatorHandler::updateWatermarkBackpressure()
+{
     auto& [controller, maxWatermarkGap] = *watermarkBackpressure;
-    const auto watermarks = watermarkProcessorBuild->getCurrentWatermarkPerOrigin();
+    watermarkProcessorBuild->getCurrentWatermarkPerOrigin(watermarkSnapshot);
     const auto [slowestOrigin, slowest]
-        = std::ranges::min(watermarks, {}, [](const auto& originAndWatermark) { return originAndWatermark.second; });
+        = std::ranges::min(watermarkSnapshot, {}, [](const auto& originAndWatermark) { return originAndWatermark.second; });
 
     /// Releasing at half the gap avoids toggling on every buffer.
-    for (const auto& [origin, watermark] : watermarks)
+    for (const auto& [origin, watermark] : watermarkSnapshot)
     {
         const auto gap = watermark.getRawValue() - slowest.getRawValue();
         if (watermark.getRawValue() == Timestamp::INFINITE_VALUE || gap <= maxWatermarkGap / 2)
@@ -190,7 +215,7 @@ void WindowBasedOperatorHandler::applyWatermarkBackpressure()
 
     /// Sources that drive the slowest origin are never throttled, which guarantees progress even if a source drives several origins.
     const auto& sourcesOfSlowest = sourcesOfInputOrigins.at(slowestOrigin);
-    std::unordered_set<OriginId> sourcesToThrottle;
+    sourcesToThrottle.clear();
     for (const auto origin : throttledInputOrigins)
     {
         for (const auto source : sourcesOfInputOrigins.at(origin))
@@ -216,7 +241,8 @@ void WindowBasedOperatorHandler::applyWatermarkBackpressure()
             NES_DEBUG("Applied watermark backpressure on source {}: slowest origin {} at {}", source, slowestOrigin, slowest);
         }
     }
-    throttledSources = std::move(sourcesToThrottle);
+    /// Swapping keeps both allocations for the next update.
+    std::swap(throttledSources, sourcesToThrottle);
 }
 
 }
