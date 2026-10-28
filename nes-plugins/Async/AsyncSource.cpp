@@ -231,7 +231,7 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
                 }
                 call.level = std::max(call.level, calls[*earlierCall].level + 1);
                 calls[*earlierCall].requiredValues = std::max(calls[*earlierCall].requiredValues, output + 1);
-                call.arguments.push_back({.inputOffset = std::nullopt, .call = *earlierCall, .output = output, .constant = {}});
+                call.arguments.push_back({.inputOffset = std::nullopt, .call = earlierCall, .output = output, .constant = {}});
             }
             else
             {

@@ -31,7 +31,8 @@ boost::asio::awaitable<std::string> AsyncFunction::call(std::vector<std::string>
 
 boost::asio::awaitable<AsyncCallResult> AsyncFunction::callValues(std::vector<std::string> arguments)
 {
-    co_return AsyncCallResult{co_await call(std::move(arguments))};
+    /// The analyzer follows Asio's awaitable frame into a path that the coroutine machinery never takes.
+    co_return AsyncCallResult{co_await call(std::move(arguments))}; /// NOLINT(clang-analyzer-core.CallAndMessage)
 }
 
 }

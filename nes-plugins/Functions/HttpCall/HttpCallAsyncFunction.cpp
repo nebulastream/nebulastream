@@ -103,6 +103,8 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     }
 }
 
+/// The analyzer follows Asio's awaitable frames into paths that the coroutine machinery never takes.
+/// NOLINTBEGIN(clang-analyzer-core.CallAndMessage)
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
     std::string host, std::string port, std::string target, std::string body, const std::chrono::milliseconds timeout)
@@ -140,5 +142,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
     }
     co_return std::move(response.body());
 }
+
+/// NOLINTEND(clang-analyzer-core.CallAndMessage)
 
 }

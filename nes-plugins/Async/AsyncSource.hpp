@@ -93,6 +93,7 @@ public:
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
+protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:

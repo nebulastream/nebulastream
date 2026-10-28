@@ -66,7 +66,7 @@ private:
     BackpressureHandler backpressureHandler;
 };
 
-/// NOLINTBEGIN(cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
 struct ConfigParametersHandoff
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
@@ -92,7 +92,7 @@ struct ConfigParametersHandoff
         = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CHANNEL, CHANNEL_CAPACITY);
 };
 
-/// NOLINTEND(cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
 
