@@ -65,7 +65,7 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     const auto negativeOne = VarVal{-1}.castToType(outputType.type);
     if (widenedValue < zero)
     {
-        return widenedValue * negativeOne;
+        return (widenedValue * negativeOne).castToType(outputType.type);
     }
     return widenedValue;
 }
