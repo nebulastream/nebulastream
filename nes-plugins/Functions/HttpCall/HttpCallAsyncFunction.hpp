@@ -30,7 +30,7 @@ namespace NES
 /// Executes `HTTP_CALL(body, url[, timeout_ms])`: POSTs `body` to `url` and returns the response body.
 /// Keeps its connection open between calls; a dropped keep-alive connection is reopened once.
 ///
-/// ponytail: http:// only; add a beast::ssl_stream (openssl is in the image) when a service needs https
+/// http:// only; add a beast::ssl_stream (openssl is in the image) when a service needs https
 class HttpCallAsyncFunction final : public AsyncFunction
 {
 public:
