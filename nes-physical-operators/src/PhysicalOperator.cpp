@@ -317,4 +317,14 @@ PhysicalOperatorWrapper::PipelineLocation PhysicalOperatorWrapper::getPipelineLo
     return pipelineLocation;
 }
 
+void PhysicalOperatorWrapper::setFieldsReadFromInput(std::vector<Record::RecordFieldIdentifier> fields)
+{
+    fieldsReadFromInput = std::move(fields);
+}
+
+const std::optional<std::vector<Record::RecordFieldIdentifier>>& PhysicalOperatorWrapper::getFieldsReadFromInput() const
+{
+    return fieldsReadFromInput;
+}
+
 }

@@ -282,6 +282,10 @@ public:
     [[nodiscard]] const std::optional<OperatorHandlerId>& getHandlerId() const;
     [[nodiscard]] PipelineLocation getPipelineLocation() const;
 
+    /// If this operator starts a pipeline, the scan in front of it reads only these fields.
+    void setFieldsReadFromInput(std::vector<Record::RecordFieldIdentifier> fields);
+    [[nodiscard]] const std::optional<std::vector<Record::RecordFieldIdentifier>>& getFieldsReadFromInput() const;
+
 private:
     PhysicalOperator physicalOperator;
     std::optional<MemoryLayoutType> inputMemoryLayoutType;
@@ -293,6 +297,7 @@ private:
     std::optional<std::shared_ptr<OperatorHandler>> handler;
     std::optional<OperatorHandlerId> handlerId;
     PipelineLocation pipelineLocation;
+    std::optional<std::vector<Record::RecordFieldIdentifier>> fieldsReadFromInput;
 };
 }
 
