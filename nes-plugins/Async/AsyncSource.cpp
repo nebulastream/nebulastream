@@ -145,7 +145,7 @@ constexpr std::chrono::milliseconds RETRY_BACKOFF{100};
 /// Caps the backoff at 100 ms * 2^10, about 100 s.
 constexpr size_t MAX_BACKOFF_DOUBLINGS = 10;
 
-/// ponytail: arguments and results are non-nullable VARSIZED only, which is what HTTP_CALL needs
+/// Arguments and results are non-nullable VARSIZED only, which is what HTTP_CALL needs
 void requireVarSized(const DataType& type, std::string_view what)
 {
     if (!type.isType(DataType::Type::VARSIZED) || type.nullable)
