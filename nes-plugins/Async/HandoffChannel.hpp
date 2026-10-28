@@ -76,6 +76,7 @@ public:
         Lease& operator=(Lease&&) = delete;
 
         HandoffChannel* operator->() const { return channel.get(); }
+
         /// Ends the lease before the destructor does. Further calls do nothing.
         void release();
 
