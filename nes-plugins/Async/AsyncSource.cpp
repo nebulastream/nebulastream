@@ -63,7 +63,7 @@ namespace NES
 namespace
 {
 /// One event loop for all Async sources, so concurrent calls cost neither a thread per call nor a thread per source.
-/// ponytail: one loop thread; add threads if completions get expensive, the per-source strands keep that safe
+/// One loop thread; add threads if completions get expensive, the per-source strands keep that safe
 class SharedEventLoop
 {
 public:
