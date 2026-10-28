@@ -14,7 +14,6 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalProjection.hpp>
 
-#include <cstddef>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -24,64 +23,22 @@
 
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterProvider.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
-#include <ScanPhysicalOperator.hpp>
-
-namespace
-{
-NES::ScanPhysicalOperator createScanOperator(
-    const NES::TypedLogicalOperator<NES::ProjectionLogicalOperator>& projectionOp,
-    const size_t bufferSize,
-    const NES::Schema<NES::QualifiedUnboundField, NES::Ordered>& inputSchema,
-    NES::MemoryLayoutType memoryLayoutType)
-{
-    const auto sourceDescriptorOpt = [&]
-    {
-        if (const auto sourceOp = projectionOp->getChild().tryGetAs<NES::SourceDescriptorLogicalOperator>())
-        {
-            return std::optional{sourceOp.value()->getSourceDescriptor()};
-        }
-        return std::optional<NES::SourceDescriptor>{};
-    }();
-
-    auto inputFieldNames = projectionOp->getAccessedFields()
-        | std::views::transform([](const auto& field) -> NES::QualifiedIdentifier { return field.getFullyQualifiedName(); })
-        | std::ranges::to<std::vector>();
-
-    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
-    if (sourceDescriptorOpt.has_value())
-    {
-        if (sourceDescriptorOpt.value().getInputFormatType() != NES::Identifier::parse("NATIVE"))
-        {
-            return NES::ScanPhysicalOperator(
-                provideInputFormatter(sourceDescriptorOpt.value().getInputFormatterDescriptor(), memoryProvider),
-                std::move(inputFieldNames));
-        }
-    }
-    return NES::ScanPhysicalOperator(memoryProvider, std::move(inputFieldNames));
-}
-
-}
 
 namespace NES
 {
@@ -98,30 +55,12 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    auto bufferSize = conf.pageSize;
+    auto accessedFields = projection->getAccessedFields()
+        | std::views::transform([](const auto& field) -> QualifiedIdentifier { return field.getFullyQualifiedName(); })
+        | std::ranges::to<std::vector>();
 
     std::shared_ptr<PhysicalOperatorWrapper> child;
     std::shared_ptr<PhysicalOperatorWrapper> leaf;
-    /// Create a scan if this projection was placed directly after the source.
-    /// Any other projection does not receive a scan here, otherwise we might create an unnecessary pipeline.
-    /// Scans needed for UNION are inserted in the Pipelining-Phase already.
-    if (projection->getChild().tryGetAs<SourceDescriptorLogicalOperator>())
-    {
-        auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
-        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            scan,
-            inputSchema,
-            outputSchema,
-            memoryLayoutType,
-            memoryLayoutType,
-            std::nullopt,
-            std::nullopt,
-            PhysicalOperatorWrapper::PipelineLocation::SCAN);
-
-        child = scanWrapper;
-        leaf = scanWrapper;
-    }
-
     auto fieldMappingTrait = traitSet.get<FieldMappingTrait>();
     for (const auto& [fieldName, function] : projection->getProjections())
     {
@@ -145,8 +84,10 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
         if (leaf == nullptr)
         {
             leaf = child;
+            leaf->setFieldsReadFromInput(std::move(accessedFields));
         }
     }
+    INVARIANT(leaf != nullptr, "Projection without any projected fields cannot be lowered");
     return {.root = child, .leaves = {leaf}};
 }
 }
