@@ -798,7 +798,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
-    NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
+    NES::SinkStatementHandler sinkHandler{sinkCatalog};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     auto queryOptimizer
         = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
@@ -840,7 +840,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
-    NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
+    NES::SinkStatementHandler sinkHandler{sinkCatalog};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     auto queryOptimizer
         = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);

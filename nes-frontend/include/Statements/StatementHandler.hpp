@@ -215,10 +215,9 @@ public:
 class SinkStatementHandler final : public StatementHandler<SinkStatementHandler>
 {
     std::shared_ptr<SinkCatalog> sinkCatalog;
-    HostPolicy hostPolicy;
 
 public:
-    SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog, HostPolicy hostPolicy);
+    explicit SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog);
     std::expected<CreateSinkStatementResult, Exception> operator()(const CreateSinkStatement& statement);
     std::expected<ShowSinksStatementResult, Exception> operator()(const ShowSinksStatement& statement) const;
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);

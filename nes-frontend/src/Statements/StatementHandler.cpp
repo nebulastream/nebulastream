@@ -25,7 +25,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/ConfigParsing.hpp>
@@ -39,7 +38,6 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Ranges.hpp>
@@ -171,26 +169,20 @@ std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandl
     return std::unexpected{UnknownSourceName("Unknown physical source: {}", statement.descriptor)};
 }
 
-SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog, HostPolicy hostPolicy)
-    : sinkCatalog(sinkCatalog), hostPolicy(std::move(hostPolicy))
+SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog) : sinkCatalog(sinkCatalog)
 {
 }
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    auto generalSinkConfig = statement.generalSinkConfig;
-    if (generalSinkConfig.host == Host{Host::INVALID})
+    /// A frontend that has a default host passes it to the binder as a SINK.HOST default, so an unset host here means none applies.
+    if (statement.generalSinkConfig.host == Host{Host::INVALID})
     {
-        generalSinkConfig.host = std::visit(
-            Overloaded{
-                [](const DefaultHost& defaultHost) -> Host { return Host(defaultHost.hostName); },
-                [](const RequireHostConfig&) -> Host
-                { throw InvalidStatement("Could not handle sink statement. `SINK`.`HOST` was not set"); }},
-            hostPolicy);
+        throw InvalidStatement("Could not handle sink statement. `SINK`.`HOST` was not set");
     }
 
     auto created = sinkCatalog->addSinkDescriptor(
-        statement.name, statement.schema, std::move(generalSinkConfig), statement.pluginSinkConfig, statement.outputFormatterDescriptor);
+        statement.name, statement.schema, statement.generalSinkConfig, statement.pluginSinkConfig, statement.outputFormatterDescriptor);
     if (created)
     {
         return CreateSinkStatementResult{created.value()};

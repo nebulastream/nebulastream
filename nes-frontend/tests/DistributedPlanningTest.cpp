@@ -263,7 +263,7 @@ OptimizerAndPlan loadAndBind(std::string_view yamlContent)
     auto statements = loadStatements(queryConfig);
 
     NES::TopologyStatementHandler topologyHandler{nullptr, workers};
-    NES::SinkStatementHandler sinkStatementHandler{sinks, NES::RequireHostConfig{}};
+    NES::SinkStatementHandler sinkStatementHandler{sinks};
     NES::SourceStatementHandler sourceStatementHandler{sources};
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);

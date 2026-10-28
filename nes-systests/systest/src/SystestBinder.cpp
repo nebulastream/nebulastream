@@ -117,7 +117,7 @@ struct SystestBinder::Impl
         , modelCatalog{std::make_shared<ModelCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog}
-        , sinkHandler{sinkCatalog, RequireHostConfig{}}
+        , sinkHandler{sinkCatalog}
         , modelHandler{modelCatalog}
         , queryBinder{makeSystestConfigDefaults(config), {}}
         , statementBinder{

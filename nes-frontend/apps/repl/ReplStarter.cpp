@@ -281,11 +281,13 @@ int main(int argc, char** argv)
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
 #ifdef EMBED_ENGINE
-        const auto& bindAddress = workerOptimizerConfig->worker.grpcAddressUri;
-        const auto defaultHost = "localhost" + bindAddress.substr(bindAddress.rfind(':'));
+        /// Derive a routable Host from the gRPC bind address.
+        /// The default bind address [::]:8080 is a wildcard, so we use localhost:<port> instead.
+        const auto& grpcBind = workerOptimizerConfig->worker.grpcAddressUri;
+        const auto grpcAddr = "localhost" + grpcBind.substr(grpcBind.rfind(':'));
         const NES::Schema<NES::ConfigFieldDefault, NES::Ordered> binderDefaults{
-            NES::ConfigFieldDefault{NES::QualifiedIdentifier::parse("SOURCE.HOST"), NES::ConfigLiteral{defaultHost}},
-            NES::ConfigFieldDefault{NES::QualifiedIdentifier::parse("SINK.HOST"), NES::ConfigLiteral{defaultHost}}};
+            NES::ConfigFieldDefault{NES::QualifiedIdentifier::parse("SOURCE.HOST"), NES::ConfigLiteral{grpcAddr}},
+            NES::ConfigFieldDefault{NES::QualifiedIdentifier::parse("SINK.HOST"), NES::ConfigLiteral{grpcAddr}}};
 #else
         const NES::Schema<NES::ConfigFieldDefault, NES::Ordered> binderDefaults;
 #endif
@@ -302,10 +304,6 @@ int main(int argc, char** argv)
         /// topology config (CLI wins); the resolved worker root serves the grpc/data reads below.
         const auto& singleNodeWorkerConfig = workerOptimizerConfig->worker;
 
-        /// Derive a routable Host from the gRPC bind address.
-        /// The default bind address [::]:8080 is a wildcard, so we use localhost:<port> instead.
-        const auto grpcBind = singleNodeWorkerConfig.grpcAddressUri;
-        const auto grpcAddr = "localhost" + grpcBind.substr(grpcBind.rfind(':'));
         const auto dataAddr = singleNodeWorkerConfig.dataAddress;
         const NES::WorkerConfig workerConfig{
             .host = NES::Host(grpcAddr),
@@ -336,11 +334,11 @@ int main(int argc, char** argv)
         queryManager
             = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(std::move(resolveWorkerConfiguration)));
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
-        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
+        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
 #else
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
-        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
+        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};

@@ -97,14 +97,15 @@ public:
         sourceCatalogHandle = SourceCatalog::create();
         sourceCatalog = copyPtr(sourceCatalogHandle);
         sinkCatalog = std::make_shared<SinkCatalog>();
+        /// A sink declared without a host gets this one, as it does in a frontend that has a default host.
         binder = std::make_shared<StatementBinder>(
-            Schema<ConfigFieldDefault, Ordered>{},
+            Schema<ConfigFieldDefault, Ordered>{{ConfigFieldDefault{QualifiedIdentifier::parse("SINK.HOST"), std::string{"localhost:9090"}}}},
             Schema<ConfigFieldTransformation, Unordered>{},
             sourceCatalog,
             [](auto&& queryContext)
             { return AntlrSQLQueryParser::QueryBinder{{}, {}}.bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
         sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog);
-        sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog, DefaultHost{"localhost:9090"});
+        sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog);
         modelStatementHandler = std::make_shared<ModelStatementHandler>(std::make_shared<ModelCatalog>());
     }
 };

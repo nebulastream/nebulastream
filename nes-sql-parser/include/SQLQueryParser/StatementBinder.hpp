@@ -243,17 +243,6 @@ inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& sta
     return std::visit(visitor, statement);
 }
 
-struct DefaultHost
-{
-    std::string hostName;
-};
-
-struct RequireHostConfig
-{
-};
-
-using HostPolicy = std::variant<RequireHostConfig, DefaultHost>;
-
 class StatementBinder
 {
     /// PIMPL pattern to hide all the internally used binder member functions
