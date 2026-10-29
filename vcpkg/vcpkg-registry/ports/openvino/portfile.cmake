@@ -26,6 +26,7 @@ vcpkg_from_github(
         guard-docs-and-template-extension.patch
         multimap-first-entry.patch
         no-sigaltstack.patch
+        onednn-acl-no-primitive-cache.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -172,8 +173,7 @@ vcpkg_cmake_configure(
         "-DENABLE_PYTHON=OFF"
         "-DENABLE_SAMPLES=OFF"
         "-DENABLE_SYSTEM_PUGIXML=ON"
-        "-DENABLE_SYSTEM_TBB=ON"
-        "-DENABLE_TBBBIND_2_5=OFF"
+        "-DTHREADING=SEQ"
         "-DENABLE_TEMPLATE=OFF"
         "-DENABLE_OV_JAX_FRONTEND=OFF"
         "-DPKG_CONFIG_EXECUTABLE=${PKGCONFIG}"

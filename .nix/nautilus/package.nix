@@ -32,7 +32,6 @@ let
     pkgs.libxml2
     pkgs.boost
     pkgs.openssl.dev
-    pkgs.tbb
     pkgs.python3
   ];
 

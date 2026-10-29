@@ -188,7 +188,6 @@
               inherit useLibcxx;
             };
             boostPkg = overrideStdenv pkgs.boost;
-            tbbPkg = overrideStdenv pkgs.tbb;
             pugixmlPkg = overrideStdenv pkgs.pugixml;
             xbyakPkg = overrideStdenv xbyakBasePkg;
             simdjsonPkg = overrideStdenv simdjsonBasePkg;
@@ -226,7 +225,6 @@
                 useLibcxx
                 nlohmannJsonPkg
                 pugixmlPkg
-                tbbPkg
                 xbyakPkg
                 ;
               compilerFlags = sanitizer.compilerFlags;
@@ -249,7 +247,6 @@
                 glogPkg
                 gtestPkg
                 rapidcheckPkg
-                tbbPkg
                 pugixmlPkg
                 xbyakPkg
                 follyPkg
