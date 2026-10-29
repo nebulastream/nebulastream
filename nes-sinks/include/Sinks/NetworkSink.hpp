@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <chrono>
 #include <cstddef>
 #include <expected>
 #include <optional>
@@ -59,8 +57,6 @@ struct NetworkSinkConfig
 class NetworkSink final : public Sink
 {
 public:
-    constexpr static auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
-
     static const std::string& name()
     {
         static const std::string Instance = "Network";
@@ -85,6 +81,9 @@ protected:
     std::ostream& toString(std::ostream& str) const override;
 
 private:
+    /// Returns true if the channel accepted the buffer and false if it is at capacity. Throws if the other side closed the channel.
+    bool trySend(const TupleBuffer& buffer);
+
     size_t tupleSize;
     folly::Synchronized<std::vector<TupleBuffer>> bufferBacklog;
     BackpressureHandler backpressureHandler;
@@ -95,7 +94,6 @@ private:
     std::string thisConnection;
     size_t senderQueueSize;
     size_t maxPendingAcks;
-    std::atomic_bool closed;
 };
 
 }
