@@ -24,8 +24,8 @@
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 #include <ErrorHandling.hpp>
-#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {

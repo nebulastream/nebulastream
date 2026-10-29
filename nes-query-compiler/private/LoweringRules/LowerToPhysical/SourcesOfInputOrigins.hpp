@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
-#include <WindowBasedOperatorHandler.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 
 namespace NES
 {

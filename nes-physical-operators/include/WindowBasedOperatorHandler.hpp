@@ -19,11 +19,7 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <mutex>
-#include <optional>
 #include <set>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -33,6 +29,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -56,9 +53,6 @@ struct BufferMetaData
     SequenceData seqNumber;
     OriginId originId;
 };
-
-/// Maps every input origin of a window-based operator to the origins of the sources of this worker whose data drives it.
-using SourcesOfInputOrigins = std::unordered_map<OriginId, std::vector<OriginId>>;
 
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
 /// It assumes that they have a build and a probe phase.
@@ -104,33 +98,15 @@ protected:
         PipelineExecutionContext* pipelineCtx)
         = 0;
 
-    /// Backpressures the sources of input origins whose watermark is too far ahead of the slowest input origin, and releases them once the
-    /// slowest origin has caught up.
-    void applyWatermarkBackpressure();
-    /// Requires watermarkBackpressureMutex and an engaged watermarkBackpressure.
-    void updateWatermarkBackpressure();
-
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads = 0;
     const OriginId outputOriginId;
-    const SourcesOfInputOrigins sourcesOfInputOrigins;
     /// A window can only become triggerable when the global watermark advances past this value.
     std::atomic<Timestamp::Underlying> highestTriggeredWatermark{Timestamp::INITIAL_VALUE};
     /// Lower bounds of all buffers that are currently processed by a build operator.
     folly::Synchronized<std::multiset<Timestamp::Underlying>> buildLowerBounds;
-    /// Guards the watermark backpressure and the throttled origins and sources.
-    std::mutex watermarkBackpressureMutex;
-    std::optional<WatermarkBackpressure> watermarkBackpressure;
-    /// Set once watermarkBackpressure is engaged, so operators without watermark gap backpressure never take the mutex.
-    std::atomic<bool> watermarkBackpressureEnabled{false};
-    /// Set by a thread that found the mutex taken; the holder reruns the update for it.
-    std::atomic<bool> watermarkBackpressureRequested{false};
-    std::unordered_set<OriginId> throttledInputOrigins;
-    std::unordered_set<OriginId> throttledSources;
-    /// Scratch space of updateWatermarkBackpressure, kept to avoid allocating on every update.
-    std::vector<std::pair<OriginId, Timestamp>> watermarkSnapshot;
-    std::unordered_set<OriginId> sourcesToThrottle;
+    WatermarkGapThrottle watermarkGapThrottle;
 };
 }
