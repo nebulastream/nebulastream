@@ -21,18 +21,30 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+#include <expected>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <ErrorHandling.hpp>
 #include <PipeService.hpp>
 
 namespace NES
 {
+
+struct PipeSourceConfig
+{
+    std::string pipeName;
+    size_t queueCapacity;
+
+    static std::expected<PipeSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// A source that reads TupleBuffers from a named pipe. Main-buffer data is copied into the provided TupleBuffer, while child buffers
 /// are shared because downstream pipelines do not modify input buffers.
@@ -43,7 +55,7 @@ class PipeSource final : public Source
 public:
     static constexpr std::string_view NAME = "Pipe";
 
-    explicit PipeSource(const SourceDescriptor& sourceDescriptor);
+    PipeSource(const PipeSourceConfig& config, const SourceDescriptor& sourceDescriptor);
     ~PipeSource() override = default;
 
     PipeSource(const PipeSource&) = delete;
@@ -63,7 +75,7 @@ public:
 
     [[nodiscard]] std::string_view getType() const override { return NAME; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -76,26 +88,6 @@ private:
     /// Used to ensure stop only occurs at sequence boundaries — no partial sequences.
     bool lastDeliveredWasLastChunk = true;
     std::optional<SequenceNumber::Underlying> sequenceNumberOffset;
-};
-
-struct ConfigParametersPipeSource
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> PIPE_NAME{
-        "PIPE_NAME",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PIPE_NAME, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<size_t> QUEUE_CAPACITY{
-        "QUEUE_CAPACITY",
-        PipeService::DEFAULT_QUEUE_CAPACITY,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
-        {
-            const auto capacity = DescriptorConfig::tryGet(QUEUE_CAPACITY, config);
-            return capacity && *capacity > 0 ? capacity : std::nullopt;
-        }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, PIPE_NAME, QUEUE_CAPACITY);
 };
 
 }

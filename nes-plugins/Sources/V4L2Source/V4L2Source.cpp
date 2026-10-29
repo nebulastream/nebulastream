@@ -21,13 +21,14 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <expected>
+#include <limits>
 #include <memory>
 #include <ostream>
 #include <ranges>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 
 #include <fcntl.h>
@@ -47,6 +48,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Schema/Schema.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -111,20 +117,20 @@ void checkedIoctl(const int device, const unsigned long request, void* argument,
 
 void validateSchema(const SourceDescriptor& sourceDescriptor)
 {
-    if (sourceDescriptor.getInputFormatType() != "NATIVE")
+    if (sourceDescriptor.getInputFormatType() != Identifier::parse("NATIVE"))
     {
         throw CannotOpenSource("V4L2 source requires the NATIVE input formatter");
     }
 
-    const auto schema = sourceDescriptor.getLogicalSource().getSchema();
-    if (schema->size() != videoFields.size())
+    const auto& schema = sourceDescriptor.getSchema();
+    if (schema.size() != videoFields.size())
     {
-        throw CannotOpenSource("V4L2 source expects {} non-nullable fields, but got {}", videoFields.size(), schema->size());
+        throw CannotOpenSource("V4L2 source expects {} non-nullable fields, but got {}", videoFields.size(), schema.size());
     }
 
     for (const auto [index, expected] : videoFields | views::enumerate)
     {
-        const auto actual = (*schema)[index];
+        const auto actual = schema[index];
         INVARIANT(actual.has_value(), "V4L2 source schema field {} is missing", index);
         const auto& actualName = static_cast<const Identifier&>(actual->getFullyQualifiedName());
         if (actualName != Identifier::parse(std::string{expected.name}) || actual->getDataType().type != expected.type
@@ -140,20 +146,79 @@ void validateSchema(const SourceDescriptor& sourceDescriptor)
     }
 }
 
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+std::expected<uint32_t, Exception> parseUInt32(const ConfigLiteral& literal)
+{
+    return tryGetOr<int64_t>(literal, expectedType<uint32_t>()).and_then(narrowConfigValue<int64_t, uint32_t>);
+}
+
+const ConfigField<std::string> DEVICE{
+    Identifier::parse("DEVICE"),
+    "The V4L2 capture device.",
+    [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
+    std::string{"/dev/video0"}};
+const ConfigField<uint32_t> WIDTH{Identifier::parse("WIDTH"), "The requested frame width.", parseUInt32, uint32_t{320}};
+const ConfigField<uint32_t> HEIGHT{Identifier::parse("HEIGHT"), "The requested frame height.", parseUInt32, uint32_t{240}};
+const ConfigField<uint32_t> FRAME_RATE{Identifier::parse("FRAME_RATE"), "The requested frame rate.", parseUInt32, uint32_t{30}};
+const ConfigField<std::string> PIXEL_FORMAT{
+    Identifier::parse("PIXEL_FORMAT"),
+    "The requested FourCC pixel format, e.g. MJPG.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<std::string, Exception>
+                {
+                    if (value.size() != 4)
+                    {
+                        return std::unexpected{InvalidConfigParameter("PIXEL_FORMAT must be a FourCC code, but was: {}", value)};
+                    }
+                    return value;
+                });
+    },
+    std::string{"MJPG"}};
+const ConfigField<uint32_t> BUFFER_COUNT{
+    Identifier::parse("BUFFER_COUNT"),
+    "The number of mapped capture buffers, at least 2.",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint32_t>()).and_then(narrowConfigValue<int64_t, uint32_t, std::numeric_limits<uint32_t>::max(), 2>); },
+    uint32_t{4}};
+const ConfigField<uint32_t> POLL_TIMEOUT_MS{
+    Identifier::parse("POLL_TIMEOUT_MS"), "How long to wait for a frame, in milliseconds.", parseUInt32, uint32_t{1000}};
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+
 uint64_t captureTimestampInNanoseconds()
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 }
 
-V4L2Source::V4L2Source(const SourceDescriptor& sourceDescriptor)
-    : devicePath(sourceDescriptor.getFromConfig(ConfigParametersV4L2::DEVICE))
-    , requestedWidth(sourceDescriptor.getFromConfig(ConfigParametersV4L2::WIDTH))
-    , requestedHeight(sourceDescriptor.getFromConfig(ConfigParametersV4L2::HEIGHT))
-    , requestedFrameRate(sourceDescriptor.getFromConfig(ConfigParametersV4L2::FRAME_RATE))
-    , requestedPixelFormat(parsePixelFormat(sourceDescriptor.getFromConfig(ConfigParametersV4L2::PIXEL_FORMAT)))
-    , requestedBufferCount(sourceDescriptor.getFromConfig(ConfigParametersV4L2::BUFFER_COUNT))
-    , pollTimeoutMs(sourceDescriptor.getFromConfig(ConfigParametersV4L2::POLL_TIMEOUT_MS))
+Schema<QualifiedErasedConfigField, Ordered> V4L2Source::getConfigSchema()
+{
+    return createConfigSchema(
+        Identifier::parse("V4L2_SOURCE"), DEVICE, WIDTH, HEIGHT, FRAME_RATE, PIXEL_FORMAT, BUFFER_COUNT, POLL_TIMEOUT_MS);
+}
+
+std::expected<V4L2SourceConfig, Exception> V4L2SourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return V4L2SourceConfig{
+        .device = config.get(DEVICE),
+        .width = config.get(WIDTH),
+        .height = config.get(HEIGHT),
+        .frameRate = config.get(FRAME_RATE),
+        .pixelFormat = config.get(PIXEL_FORMAT),
+        .bufferCount = config.get(BUFFER_COUNT),
+        .pollTimeoutMs = config.get(POLL_TIMEOUT_MS)};
+}
+
+V4L2Source::V4L2Source(const V4L2SourceConfig& config, const SourceDescriptor& sourceDescriptor)
+    : devicePath(config.device)
+    , requestedWidth(config.width)
+    , requestedHeight(config.height)
+    , requestedFrameRate(config.frameRate)
+    , requestedPixelFormat(parsePixelFormat(config.pixelFormat))
+    , requestedBufferCount(config.bufferCount)
+    , pollTimeoutMs(config.pollTimeoutMs)
 {
     validateSchema(sourceDescriptor);
 }
@@ -355,11 +420,6 @@ void V4L2Source::close()
         device = -1;
     }
     bufferProvider.reset();
-}
-
-DescriptorConfig::Config V4L2Source::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersV4L2>(std::move(config), NAME);
 }
 
 std::ostream& V4L2Source::toString(std::ostream& stream) const

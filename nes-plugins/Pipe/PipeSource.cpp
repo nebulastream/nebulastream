@@ -21,28 +21,66 @@
 #include <stop_token>
 #include <string>
 #include <type_traits>
-#include <unordered_map>
 #include <utility>
 #include <variant>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipeService.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
 
-PipeSource::PipeSource(const SourceDescriptor& sourceDescriptor)
-    : pipeName(sourceDescriptor.getFromConfig(ConfigParametersPipeSource::PIPE_NAME))
-    , queueCapacity(sourceDescriptor.getFromConfig(ConfigParametersPipeSource::QUEUE_CAPACITY))
-    , schema(sourceDescriptor.getLogicalSource().getSchema())
+namespace
+{
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::string> PIPE_NAME{Identifier::parse("PIPE_NAME"), "The name of the pipe to read from."};
+
+const ConfigField<size_t> QUEUE_CAPACITY{
+    Identifier::parse("QUEUE_CAPACITY"),
+    "The number of buffers the pipe queues for this source.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<size_t>())
+            .and_then(narrowConfigValue<int64_t, size_t>)
+            .and_then(
+                [](const size_t value) -> std::expected<size_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{InvalidConfigParameter("QUEUE_CAPACITY must not be zero")};
+                    }
+                    return value;
+                });
+    },
+    size_t{PipeService::DEFAULT_QUEUE_CAPACITY}};
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+}
+
+Schema<QualifiedErasedConfigField, Ordered> PipeSource::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("PIPE_SOURCE"), PIPE_NAME, QUEUE_CAPACITY);
+}
+
+std::expected<PipeSourceConfig, Exception> PipeSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return PipeSourceConfig{.pipeName = config.get(PIPE_NAME), .queueCapacity = config.get(QUEUE_CAPACITY)};
+}
+
+PipeSource::PipeSource(const PipeSourceConfig& config, const SourceDescriptor& sourceDescriptor)
+    : pipeName(config.pipeName)
+    , queueCapacity(config.queueCapacity)
+    , schema(std::make_shared<const PipeSchema>(sourceDescriptor.getSchema()))
 {
 }
 
@@ -143,11 +181,6 @@ Source::FillTupleBufferResult PipeSource::fillTupleBuffer(TupleBuffer& tupleBuff
 std::ostream& PipeSource::toString(std::ostream& str) const
 {
     return str << "PipeSource(pipe_name=" << pipeName << ")";
-}
-
-DescriptorConfig::Config PipeSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersPipeSource>(std::move(config), NAME);
 }
 
 

@@ -15,47 +15,37 @@
 #pragma once
 
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <alsa/asoundlib.h> ///NOLINT(misc-include-cleaner)
 #include <alsa/pcm.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-struct ConfigParametersAudio
+struct AudioSourceConfig
 {
-    static inline const DescriptorConfig::ConfigParameter<bool> REAL_TIMESTAMP{
-        "REAL_TIMESTAMP",
-        true,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
-    static inline const DescriptorConfig::ConfigParameter<std::string> DEVICE{
-        "DEVICE",
-        "default",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DEVICE, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_RATE{
-        "SAMPLE_RATE",
-        48'000,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto sampleRate = DescriptorConfig::tryGet(SAMPLE_RATE, config);
-            return sampleRate && *sampleRate > 0 ? sampleRate : std::nullopt;
-        }};
+    bool realTimestamp;
+    std::string device;
+    uint32_t sampleRate;
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, REAL_TIMESTAMP, DEVICE, SAMPLE_RATE);
+    static std::expected<AudioSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 /// Captures mono signed 16-bit PCM through ALSA and produces (SAMPLE FLOAT64, TIMESTAMP UINT64) tuples.
@@ -64,7 +54,7 @@ class AudioSource final : public Source
 public:
     static constexpr std::string_view NAME = "AUDIO";
 
-    explicit AudioSource(const SourceDescriptor& sourceDescriptor);
+    AudioSource(const AudioSourceConfig& config, const SourceDescriptor& sourceDescriptor);
     ~AudioSource() override;
 
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
@@ -73,7 +63,7 @@ public:
 
     [[nodiscard]] std::string_view getType() const override { return NAME; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& stream) const override;

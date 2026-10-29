@@ -318,7 +318,8 @@ public:
                         return policy.value();
                     });
         },
-        OutputOrderPolicy::IGNORE_ORDER};
+        OutputOrderPolicy::IGNORE_ORDER,
+        "IGNORE_ORDER"};
 
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
     static inline auto configSchema = createConfigSchema(Identifier::parse("SINK"), HOST, SCHEMA, ADD_TIMESTAMP, OUTPUT_ORDER);

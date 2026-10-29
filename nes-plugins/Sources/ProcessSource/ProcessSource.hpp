@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -24,16 +25,28 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <time.h>
-#include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Schema/Schema.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
+
+struct ProcessSourceConfig
+{
+    std::string command;
+    uint64_t refreshIntervalMs;
+    uint64_t flushIntervalMs;
+
+    static std::expected<ProcessSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// Repeatedly executes a Bash command and exposes its standard output as a raw byte stream.
 /// A process is never executed concurrently with its preceding invocation. If an invocation takes
@@ -43,7 +56,7 @@ class ProcessSource final : public Source
 public:
     static constexpr std::string_view NAME = "Process";
 
-    explicit ProcessSource(const SourceDescriptor& sourceDescriptor);
+    ProcessSource(const ProcessSourceConfig& config, const SourceDescriptor& sourceDescriptor);
     ~ProcessSource() override;
 
     ProcessSource(const ProcessSource&) = delete;
@@ -58,7 +71,7 @@ public:
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
@@ -79,40 +92,6 @@ private:
     pid_t processGroupId{-1};
     int standardOutputFd{-1};
     bool isOpen{false};
-};
-
-struct ConfigParametersProcessSource
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> COMMAND{
-        "COMMAND",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        {
-            const auto value = DescriptorConfig::tryGet(COMMAND, config);
-            return value && !value->empty() ? value : std::nullopt;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint64_t> REFRESH_INTERVAL_MS{
-        "REFRESH_INTERVAL_MS",
-        1000,
-        [](const std::unordered_map<std::string, std::string>& config)
-        {
-            const auto value = DescriptorConfig::tryGet(REFRESH_INTERVAL_MS, config);
-            return value && *value > 0 && *value <= static_cast<uint64_t>(std::chrono::milliseconds::max().count()) ? value : std::nullopt;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint64_t> FLUSH_INTERVAL_MS{
-        "FLUSH_INTERVAL_MS",
-        100,
-        [](const std::unordered_map<std::string, std::string>& config)
-        {
-            const auto value = DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config);
-            return value && *value > 0 && *value <= static_cast<uint64_t>(std::chrono::milliseconds::max().count()) ? value : std::nullopt;
-        }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, COMMAND, REFRESH_INTERVAL_MS, FLUSH_INTERVAL_MS);
 };
 
 }

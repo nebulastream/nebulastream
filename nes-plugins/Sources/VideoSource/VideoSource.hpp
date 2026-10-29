@@ -15,36 +15,32 @@
 #pragma once
 
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string_view>
-#include <unordered_map>
 
 #include <arv.h>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-struct ConfigParametersVideo
+struct VideoSourceConfig
 {
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOURCE_SELECTOR{
-        "SOURCE_SELECTOR",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto selector = DescriptorConfig::tryGet(SOURCE_SELECTOR, config);
-            return selector && *selector <= 3 ? selector : std::nullopt;
-        }};
+    uint32_t sourceSelector;
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, SOURCE_SELECTOR);
+    static std::expected<VideoSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 class VideoSource final : public Source
@@ -52,7 +48,7 @@ class VideoSource final : public Source
 public:
     static constexpr std::string_view NAME = "VIDEO";
 
-    explicit VideoSource(const SourceDescriptor& sourceDescriptor);
+    VideoSource(const VideoSourceConfig& config, const SourceDescriptor& sourceDescriptor);
     ~VideoSource() override;
 
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
@@ -61,7 +57,7 @@ public:
 
     [[nodiscard]] std::string_view getType() const override { return NAME; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& stream) const override;

@@ -21,14 +21,16 @@ target_link_libraries(pipe_source_plugin_library PRIVATE nes-sources PUBLIC pipe
 target_include_directories(pipe_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 link_plugin_library(nes-sources pipe_source_plugin_library)
 add_registry_entry(Source Pipe)
-add_registry_entry(SourceValidation Pipe)
+add_registry_entry(SourceConfigSchema Pipe)
+add_registry_entry(SourceConfig Pipe)
 
 add_library(pipe_sink_plugin STATIC PipeSink.cpp)
 target_link_libraries(pipe_sink_plugin PRIVATE nes-sinks PUBLIC pipe-service)
 target_include_directories(pipe_sink_plugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 link_plugin_library(nes-sinks pipe_sink_plugin)
 add_registry_entry(Sink Pipe)
-add_registry_entry(SinkValidation Pipe)
+add_registry_entry(SinkConfigSchema Pipe)
+add_registry_entry(SinkConfig Pipe)
 
 # --- Tests ---
 add_tests_if_enabled(tests)

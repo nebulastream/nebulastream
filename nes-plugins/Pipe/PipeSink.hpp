@@ -17,25 +17,36 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
+#include <expected>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <ErrorHandling.hpp>
 #include <PipeService.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+struct PipeSinkConfig
+{
+    std::string pipeName;
+
+    static std::expected<PipeSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// A sink that writes TupleBuffers into a named pipe, distributing them to all registered PipeSource instances.
 /// New sources are activated at sequence boundaries (when a new sequence number exceeds the max completed one)
@@ -47,13 +58,13 @@ public:
     static constexpr std::string_view NAME = "Pipe";
     static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
 
-    explicit PipeSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    PipeSink(BackpressureController backpressureController, const PipeSinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~PipeSink() override;
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "PipeSink(pipe_name=" << pipeName << ")"; }
@@ -81,17 +92,6 @@ private:
     /// New sources are only activated when a truly new sequence arrives (seqNum > maxSeqStarted),
     /// preventing mid-sequence promotion that would cause partial data.
     std::atomic<SequenceNumber::Underlying> maxSeqStarted{INVALID_SEQ_NUMBER.getRawValue()};
-};
-
-struct ConfigParametersPipeSink
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> PIPE_NAME{
-        "PIPE_NAME",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PIPE_NAME, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(PIPE_NAME, SinkDescriptor::OUTPUT_ORDER);
 };
 
 }

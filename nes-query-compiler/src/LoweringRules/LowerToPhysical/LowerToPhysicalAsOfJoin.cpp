@@ -137,8 +137,8 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
 
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftSchema);
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightSchema);
-    auto leftInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize.getValue(), leftSchema, memoryLayout);
-    auto rightInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize.getValue(), rightSchema, memoryLayout);
+    auto leftInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, leftSchema, memoryLayout);
+    auto rightInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, rightSchema, memoryLayout);
     const auto handlerId = getNextOperatorHandlerId();
     auto inputOrigins = leftOrigins;
     inputOrigins.insert(inputOrigins.end(), rightOrigins.begin(), rightOrigins.end());

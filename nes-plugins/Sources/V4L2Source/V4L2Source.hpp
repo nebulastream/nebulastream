@@ -16,68 +16,39 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-struct ConfigParametersV4L2
+struct V4L2SourceConfig
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> DEVICE{
-        "DEVICE",
-        "/dev/video0",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DEVICE, config); }};
+    std::string device;
+    uint32_t width;
+    uint32_t height;
+    uint32_t frameRate;
+    std::string pixelFormat;
+    uint32_t bufferCount;
+    uint32_t pollTimeoutMs;
 
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> WIDTH{
-        "WIDTH", 320, [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WIDTH, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> HEIGHT{
-        "HEIGHT", 240, [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HEIGHT, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> FRAME_RATE{
-        "FRAME_RATE",
-        30,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FRAME_RATE, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> PIXEL_FORMAT{
-        "PIXEL_FORMAT",
-        "MJPG",
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        {
-            const auto format = DescriptorConfig::tryGet(PIXEL_FORMAT, config);
-            return format.has_value() && format->size() == 4 ? format : std::nullopt;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> BUFFER_COUNT{
-        "BUFFER_COUNT",
-        4,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto count = DescriptorConfig::tryGet(BUFFER_COUNT, config);
-            return count.has_value() && *count >= 2 ? count : std::nullopt;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> POLL_TIMEOUT_MS{
-        "POLL_TIMEOUT_MS",
-        1000,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(POLL_TIMEOUT_MS, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, DEVICE, WIDTH, HEIGHT, FRAME_RATE, PIXEL_FORMAT, BUFFER_COUNT, POLL_TIMEOUT_MS);
+    static std::expected<V4L2SourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 class V4L2Source final : public Source
@@ -85,7 +56,7 @@ class V4L2Source final : public Source
 public:
     static constexpr std::string_view NAME = "V4L2";
 
-    explicit V4L2Source(const SourceDescriptor& sourceDescriptor);
+    V4L2Source(const V4L2SourceConfig& config, const SourceDescriptor& sourceDescriptor);
     ~V4L2Source() override;
 
     V4L2Source(const V4L2Source&) = delete;
@@ -97,7 +68,7 @@ public:
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void close() override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::string_view getType() const override {return "V4LS";}
 protected:

@@ -27,10 +27,8 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <unordered_map>
 #include <utility>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -41,8 +39,11 @@
 #include <alsa/error.h>
 #include <alsa/pcm.h>
 #include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Schema/Schema.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -89,15 +90,15 @@ constexpr uint64_t nanosecondsOf(const snd_htimestamp_t& timestamp)
 
 void validateSchema(const SourceDescriptor& sourceDescriptor)
 {
-    const auto schema = sourceDescriptor.getLogicalSource().getSchema();
-    if (schema->size() != audioFields.size())
+    const auto& schema = sourceDescriptor.getSchema();
+    if (schema.size() != audioFields.size())
     {
-        throw CannotOpenSource("Audio source expects {} non-nullable fields, but got {}", audioFields.size(), schema->size());
+        throw CannotOpenSource("Audio source expects {} non-nullable fields, but got {}", audioFields.size(), schema.size());
     }
 
     for (const auto [index, expected] : audioFields | views::enumerate)
     {
-        const auto actual = (*schema)[index];
+        const auto actual = schema[index];
         INVARIANT(actual.has_value(), "Audio source schema field {} is missing", index);
         const auto& actualName = static_cast<const Identifier&>(actual->getFullyQualifiedName());
         if (actualName != Identifier::parse(std::string{expected.name}) || actual->getDataType().type != expected.type
@@ -120,12 +121,52 @@ constexpr uint64_t timestampFor(uint64_t startTimestampNs, uint64_t sampleIndex,
 }
 
 static_assert(timestampFor(0, 48'000, 48'000) == 1'000'000'000ULL);
+
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<bool> REAL_TIMESTAMP{
+    Identifier::parse("REAL_TIMESTAMP"), "Stamp samples with the time the device captured them instead of a timeline from opening.", true};
+
+const ConfigField<std::string> DEVICE{
+    Identifier::parse("DEVICE"),
+    "The ALSA capture device.",
+    [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
+    std::string{"default"}};
+
+const ConfigField<uint32_t> SAMPLE_RATE{
+    Identifier::parse("SAMPLE_RATE"),
+    "The sample rate in Hz.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint32_t>())
+            .and_then(narrowConfigValue<int64_t, uint32_t>)
+            .and_then(
+                [](const uint32_t value) -> std::expected<uint32_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{InvalidConfigParameter("SAMPLE_RATE must not be zero")};
+                    }
+                    return value;
+                });
+    },
+    uint32_t{48'000}};
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+
 }
 
-AudioSource::AudioSource(const SourceDescriptor& sourceDescriptor)
-    : device(sourceDescriptor.getFromConfig(ConfigParametersAudio::DEVICE))
-    , sampleRate(sourceDescriptor.getFromConfig(ConfigParametersAudio::SAMPLE_RATE))
-    , realTimestamps(sourceDescriptor.getFromConfig(ConfigParametersAudio::REAL_TIMESTAMP))
+Schema<QualifiedErasedConfigField, Ordered> AudioSource::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("AUDIO_SOURCE"), REAL_TIMESTAMP, DEVICE, SAMPLE_RATE);
+}
+
+std::expected<AudioSourceConfig, Exception> AudioSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return AudioSourceConfig{
+        .realTimestamp = config.get(REAL_TIMESTAMP), .device = config.get(DEVICE), .sampleRate = config.get(SAMPLE_RATE)};
+}
+
+AudioSource::AudioSource(const AudioSourceConfig& config, const SourceDescriptor& sourceDescriptor)
+    : device(config.device), sampleRate(config.sampleRate), realTimestamps(config.realTimestamp)
 {
     validateSchema(sourceDescriptor);
 }
@@ -264,11 +305,6 @@ void AudioSource::close()
         snd_pcm_close(pcm);
         pcm = nullptr;
     }
-}
-
-DescriptorConfig::Config AudioSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersAudio>(std::move(config), NAME);
 }
 
 std::ostream& AudioSource::toString(std::ostream& stream) const

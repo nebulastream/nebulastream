@@ -37,6 +37,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <gtest/gtest.h>
 #include <linux/videodev2.h>
+#include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -72,10 +73,18 @@ SinkDescriptor descriptor(const Schema<UnqualifiedUnboundField, Ordered>& schema
             {})
         .value();
 }
+
+V4L2Sink makeSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+{
+    return V4L2Sink(std::move(backpressureController), sinkDescriptor.getPluginData().getAs<V4L2SinkConfig>(), sinkDescriptor);
+}
 }
 
 class V4L2SinkTest : public Testing::BaseUnitTest
 {
+public:
+    static void SetUpTestSuite() { Logger::setupLogging("V4L2SinkTest.log", LogLevel::LOG_DEBUG); }
+
 protected:
     std::shared_ptr<BufferManager> buffers
         = BufferManager::create(16384, 0.5, BufferAlignment{64}, 4096, std::make_shared<NesDefaultMemoryAllocator>());
@@ -84,21 +93,21 @@ protected:
 TEST_F(V4L2SinkTest, AcceptsSourceSchemaAndDefaultNativeFormat)
 {
     auto channel = createBackpressureChannel();
-    EXPECT_NO_THROW(V4L2Sink(std::move(channel.first), descriptor(frameSchema())));
+    EXPECT_NO_THROW(makeSink(std::move(channel.first), descriptor(frameSchema())));
     auto defaultChannel = createBackpressureChannel();
     SinkCatalog catalog;
     const auto sink
         = catalog.addSinkDescriptor(Identifier::parse("CAMERA"), frameSchema(), Identifier::parse("V4L2"), Host{"localhost"}, {}, {})
               .value();
-    EXPECT_NO_THROW(V4L2Sink(std::move(defaultChannel.first), sink));
+    EXPECT_NO_THROW(makeSink(std::move(defaultChannel.first), sink));
 }
 
 TEST_F(V4L2SinkTest, RejectsTextOutputAndNullableFrames)
 {
     auto textChannel = createBackpressureChannel();
-    EXPECT_THROW(V4L2Sink(std::move(textChannel.first), descriptor(frameSchema(), "CSV")), Exception);
+    EXPECT_THROW(makeSink(std::move(textChannel.first), descriptor(frameSchema(), "CSV")), Exception);
     auto nullableChannel = createBackpressureChannel();
-    EXPECT_THROW(V4L2Sink(std::move(nullableChannel.first), descriptor(frameSchema(true))), Exception);
+    EXPECT_THROW(makeSink(std::move(nullableChannel.first), descriptor(frameSchema(true))), Exception);
 }
 
 TEST_F(V4L2SinkTest, RejectsWrongSchemaOrder)
@@ -106,18 +115,23 @@ TEST_F(V4L2SinkTest, RejectsWrongSchemaOrder)
     auto schema = frameSchema();
     const Schema<UnqualifiedUnboundField, Ordered> reordered{*schema[1], *schema[0], *schema[2], *schema[3], *schema[4]};
     auto channel = createBackpressureChannel();
-    EXPECT_THROW(V4L2Sink(std::move(channel.first), descriptor(reordered)), Exception);
+    EXPECT_THROW(makeSink(std::move(channel.first), descriptor(reordered)), Exception);
 }
 
 TEST_F(V4L2SinkTest, ValidatesConfiguration)
 {
-    const auto defaults = V4L2Sink::validateAndFormat({});
-    EXPECT_EQ(std::get<std::string>(defaults.at("DEVICE")), "/dev/video10");
-    EXPECT_THROW(V4L2Sink::validateAndFormat({{"DEVICE", ""}}), Exception);
-    EXPECT_THROW(V4L2Sink::validateAndFormat({{"FRAME_RATE", "0"}}), Exception);
-    EXPECT_THROW(V4L2Sink::validateAndFormat({{"POLL_TIMEOUT_MS", "0"}}), Exception);
-    EXPECT_THROW(V4L2Sink::validateAndFormat({{"POLL_TIMEOUT_MS", "2147483648"}}), Exception);
-    EXPECT_THROW(V4L2Sink::validateAndFormat({{"UNKNOWN", "1"}}), Exception);
+    const auto withConfig = [](const std::string& key, const std::string& value)
+    {
+        SinkCatalog catalog;
+        return catalog.addSinkDescriptor(
+            Identifier::parse("CAMERA"), frameSchema(), Identifier::parse("V4L2"), Host{"localhost"}, {{Identifier::parse(key), value}}, {});
+    };
+    EXPECT_EQ(descriptor(frameSchema()).getPluginData().getAs<V4L2SinkConfig>().device, "/dev/video10");
+    EXPECT_FALSE(withConfig("DEVICE", "").has_value());
+    EXPECT_FALSE(withConfig("FRAME_RATE", "0").has_value());
+    EXPECT_FALSE(withConfig("POLL_TIMEOUT_MS", "0").has_value());
+    EXPECT_FALSE(withConfig("POLL_TIMEOUT_MS", "2147483648").has_value());
+    EXPECT_FALSE(withConfig("UNKNOWN", "1").has_value());
 }
 
 TEST_F(V4L2SinkTest, ReadsMultipleFramesWithChildBufferOffsets)

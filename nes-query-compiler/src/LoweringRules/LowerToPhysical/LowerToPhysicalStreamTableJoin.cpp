@@ -102,8 +102,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
 
     auto streamTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(streamSchema);
     auto tableTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(tableSchema);
-    auto streamInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize.getValue(), streamSchema, memoryLayout);
-    auto tableInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize.getValue(), tableSchema, memoryLayout);
+    auto streamInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, streamSchema, memoryLayout);
+    auto tableInputBufferRef = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, tableSchema, memoryLayout);
     const auto handlerId = getNextOperatorHandlerId();
     auto inputOrigins = streamOrigins;
     inputOrigins.insert(inputOrigins.end(), tableOrigins.begin(), tableOrigins.end());

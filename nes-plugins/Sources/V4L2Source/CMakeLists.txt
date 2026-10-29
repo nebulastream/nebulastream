@@ -18,4 +18,5 @@ target_include_directories(v4l2_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOU
 
 link_plugin_library(nes-sources v4l2_source_plugin_library)
 add_registry_entry(Source V4L2)
-add_registry_entry(SourceValidation V4L2)
+add_registry_entry(SourceConfigSchema V4L2)
+add_registry_entry(SourceConfig V4L2)

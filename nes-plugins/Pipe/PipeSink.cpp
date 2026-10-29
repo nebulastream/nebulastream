@@ -19,11 +19,15 @@
 #include <mutex>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <expected>
 #include <utility>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,15 +37,29 @@
 #include <ErrorHandling.hpp>
 #include <PipeService.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
 
-PipeSink::PipeSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController), sinkDescriptor)
-    , pipeName(sinkDescriptor.getFromConfig(ConfigParametersPipeSink::PIPE_NAME))
+namespace
+{
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::string> PIPE_NAME{Identifier::parse("PIPE_NAME"), "The name of the pipe to write to."};
+}
+
+Schema<QualifiedErasedConfigField, Ordered> PipeSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("PIPE_SINK"), PIPE_NAME);
+}
+
+std::expected<PipeSinkConfig, Exception> PipeSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return PipeSinkConfig{.pipeName = config.get(PIPE_NAME)};
+}
+
+PipeSink::PipeSink(BackpressureController backpressureController, const PipeSinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController))
+    , pipeName(config.pipeName)
     , schema(NES::get<std::shared_ptr<const PipeSchema>>(sinkDescriptor.getSchema()))
 {
 }
@@ -233,11 +251,5 @@ void PipeSink::updateMaxSequence(SequenceNumber sequenceNumber)
         }
     }
 }
-
-DescriptorConfig::Config PipeSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersPipeSink>(std::move(config), NAME);
-}
-
 
 }

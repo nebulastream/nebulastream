@@ -24,13 +24,11 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <arv.h>
 #include <glib.h>
 #include <glibconfig.h>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/VariableSizedAccess.hpp>
@@ -42,8 +40,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Schema/Schema.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -75,15 +76,15 @@ constexpr std::array videoFields{
 
 void validateSchema(const SourceDescriptor& sourceDescriptor)
 {
-    const auto schema = sourceDescriptor.getLogicalSource().getSchema();
-    if (schema->size() != videoFields.size())
+    const auto& schema = sourceDescriptor.getSchema();
+    if (schema.size() != videoFields.size())
     {
-        throw CannotOpenSource("Video source expects {} non-nullable fields, but got {}", videoFields.size(), schema->size());
+        throw CannotOpenSource("Video source expects {} non-nullable fields, but got {}", videoFields.size(), schema.size());
     }
 
     for (const auto [index, expected] : videoFields | views::enumerate)
     {
-        const auto actual = (*schema)[index];
+        const auto actual = schema[index];
         INVARIANT(actual.has_value(), "Video source schema field {} is missing", index);
         const auto& actualName = static_cast<const Identifier&>(actual->getFullyQualifiedName());
         if (actualName != Identifier::parse(std::string{expected.name}) || actual->getDataType().type != expected.type
@@ -151,8 +152,29 @@ void checkError(std::string_view operation, GError* error)
 }
 }
 
-VideoSource::VideoSource(const SourceDescriptor& sourceDescriptor)
-    : sourceSelector(sourceDescriptor.getFromConfig(ConfigParametersVideo::SOURCE_SELECTOR))
+namespace
+{
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<uint32_t> SOURCE_SELECTOR{
+    Identifier::parse("SOURCE_SELECTOR"),
+    "The camera's source selector, from 0 to 3.",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint32_t>()).and_then(narrowConfigValue<int64_t, uint32_t, 3, 0>); },
+    uint32_t{0}};
+}
+
+Schema<QualifiedErasedConfigField, Ordered> VideoSource::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("VIDEO_SOURCE"), SOURCE_SELECTOR);
+}
+
+std::expected<VideoSourceConfig, Exception> VideoSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return VideoSourceConfig{.sourceSelector = config.get(SOURCE_SELECTOR)};
+}
+
+VideoSource::VideoSource(const VideoSourceConfig& config, const SourceDescriptor& sourceDescriptor)
+    : sourceSelector(config.sourceSelector)
 {
     validateSchema(sourceDescriptor);
 }
@@ -261,11 +283,6 @@ void VideoSource::close()
     stream.reset();
     camera.reset();
     bufferProvider.reset();
-}
-
-DescriptorConfig::Config VideoSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersVideo>(std::move(config), NAME);
 }
 
 std::ostream& VideoSource::toString(std::ostream& stream) const

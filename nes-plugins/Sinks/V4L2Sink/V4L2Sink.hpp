@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <limits>
 #include <mutex>
 #include <optional>
@@ -24,50 +25,27 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
 
-struct ConfigParametersV4L2Sink
+struct V4L2SinkConfig
 {
-    /// NOLINTBEGIN(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> DEVICE{
-        "DEVICE",
-        "/dev/video10",
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        {
-            const auto device = DescriptorConfig::tryGet(DEVICE, config);
-            return device.has_value() && !device->empty() ? device : std::nullopt;
-        }};
+    std::string device;
+    uint32_t frameRate;
+    uint32_t pollTimeoutMs;
 
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> FRAME_RATE{
-        "FRAME_RATE",
-        30,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto rate = DescriptorConfig::tryGet(FRAME_RATE, config);
-            return rate.has_value() && *rate > 0 ? rate : std::nullopt;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> POLL_TIMEOUT_MS{
-        "POLL_TIMEOUT_MS",
-        1000,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto timeout = DescriptorConfig::tryGet(POLL_TIMEOUT_MS, config);
-            return timeout.has_value() && *timeout > 0 && *timeout <= std::numeric_limits<int>::max() ? timeout : std::nullopt;
-        }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, DEVICE, FRAME_RATE, POLL_TIMEOUT_MS);
-    /// NOLINTEND(cert-err58-cpp)
+    static std::expected<V4L2SinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 /// Publishes native V4L2 source tuples as individual frames to an existing video
@@ -78,13 +56,13 @@ class V4L2Sink final : public Sink
 public:
     static constexpr std::string_view NAME = "V4L2";
 
-    explicit V4L2Sink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    V4L2Sink(BackpressureController backpressureController, const V4L2SinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~V4L2Sink() override;
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;

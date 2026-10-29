@@ -22,18 +22,18 @@
 #include <cstdio>
 #include <cstring>
 #include <exception>
+#include <expected>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -50,6 +50,9 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <V4L2Frame.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -171,11 +174,62 @@ void validateSchema(const SinkDescriptor& descriptor)
 }
 }
 
-V4L2Sink::V4L2Sink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController), sinkDescriptor)
-    , devicePath(sinkDescriptor.getFromConfig(ConfigParametersV4L2Sink::DEVICE))
-    , frameRate(sinkDescriptor.getFromConfig(ConfigParametersV4L2Sink::FRAME_RATE))
-    , pollTimeoutMs(sinkDescriptor.getFromConfig(ConfigParametersV4L2Sink::POLL_TIMEOUT_MS))
+namespace
+{
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::string> DEVICE{
+    Identifier::parse("DEVICE"),
+    "The V4L2 output device, normally a v4l2loopback device.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<std::string, Exception>
+                {
+                    if (value.empty())
+                    {
+                        return std::unexpected{InvalidConfigParameter("DEVICE must not be empty")};
+                    }
+                    return value;
+                });
+    },
+    std::string{"/dev/video10"}};
+const ConfigField<uint32_t> FRAME_RATE{
+    Identifier::parse("FRAME_RATE"),
+    "The frame rate announced to the output device.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint32_t>())
+            .and_then(narrowConfigValue<int64_t, uint32_t, std::numeric_limits<uint32_t>::max(), 1>);
+    },
+    uint32_t{30}};
+const ConfigField<uint32_t> POLL_TIMEOUT_MS{
+    Identifier::parse("POLL_TIMEOUT_MS"),
+    "How long to wait for the output device to accept a frame, in milliseconds.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint32_t>())
+            .and_then(narrowConfigValue<int64_t, uint32_t, static_cast<uint32_t>(std::numeric_limits<int>::max()), 1>);
+    },
+    uint32_t{1000}};
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+}
+
+Schema<QualifiedErasedConfigField, Ordered> V4L2Sink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("V4L2_SINK"), DEVICE, FRAME_RATE, POLL_TIMEOUT_MS);
+}
+
+std::expected<V4L2SinkConfig, Exception> V4L2SinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return V4L2SinkConfig{.device = config.get(DEVICE), .frameRate = config.get(FRAME_RATE), .pollTimeoutMs = config.get(POLL_TIMEOUT_MS)};
+}
+
+V4L2Sink::V4L2Sink(BackpressureController backpressureController, const V4L2SinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController))
+    , devicePath(config.device)
+    , frameRate(config.frameRate)
+    , pollTimeoutMs(config.pollTimeoutMs)
 {
     validateSchema(sinkDescriptor);
 }
@@ -454,11 +508,6 @@ void V4L2Sink::close()
         device = -1;
     }
     frameSize = 0;
-}
-
-DescriptorConfig::Config V4L2Sink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersV4L2Sink>(std::move(config), NAME);
 }
 
 std::ostream& V4L2Sink::toString(std::ostream& stream) const

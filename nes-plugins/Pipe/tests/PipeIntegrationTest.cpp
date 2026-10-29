@@ -120,7 +120,7 @@ protected:
         auto desc = sinkCatalog.getAnonymousSink(
             schema, Identifier::parse("Pipe"), Host{"localhost"}, {{Identifier::parse("pipe_name"), pipeName}}, {});
         EXPECT_TRUE(desc.has_value());
-        return std::make_unique<PipeSink>(std::move(bpController), desc.value());
+        return std::make_unique<PipeSink>(std::move(bpController), desc->getPluginData().getAs<PipeSinkConfig>(), desc.value());
     }
 
     ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
@@ -133,7 +133,7 @@ protected:
             {{Identifier::parse("type"), "NATIVE"}},
             {{Identifier::parse("pipe_name"), pipeName}});
         EXPECT_TRUE(desc.has_value());
-        return std::make_unique<PipeSource>(desc.value());
+        return std::make_unique<PipeSource>(desc->getPluginData().getAs<PipeSourceConfig>(), desc.value());
     }
 
     PipeSchema schema;
@@ -431,7 +431,7 @@ TEST_F(PipeIntegrationTest, SourceStopsAtSequenceBoundary)
     sink->execute(buf2, pipeCtx);
 
     /// Request stop before reading — source should still deliver both chunks
-    const std::stop_source stopSource;
+    std::stop_source stopSource;
     stopSource.request_stop();
 
     auto out1 = bufferManager->getBufferBlocking();

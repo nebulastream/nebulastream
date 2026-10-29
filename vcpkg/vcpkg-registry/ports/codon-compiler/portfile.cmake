@@ -22,6 +22,7 @@ vcpkg_from_github(
         0003-fix-int64-min-unary-negation.patch
         0004-avoid-null-zero-length-memory-operations.patch
         0005-port-to-llvm-22.patch
+        0006-fix-fmt-formatter-specialization-order.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

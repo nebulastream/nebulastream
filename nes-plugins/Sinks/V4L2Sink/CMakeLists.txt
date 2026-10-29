@@ -18,7 +18,8 @@ target_include_directories(v4l2_sink_plugin_library PUBLIC ${CMAKE_CURRENT_SOURC
 
 link_plugin_library(nes-sinks v4l2_sink_plugin_library)
 add_registry_entry(Sink V4L2)
-add_registry_entry(SinkValidation V4L2)
+add_registry_entry(SinkConfigSchema V4L2)
+add_registry_entry(SinkConfig V4L2)
 
 if(NES_ENABLES_TESTS)
     add_nes_unit_test(V4L2SinkTest V4L2SinkTest.cpp)

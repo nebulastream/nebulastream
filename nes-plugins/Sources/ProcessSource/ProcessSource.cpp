@@ -23,6 +23,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <expected>
 #include <ctime>
 #include <format>
 #include <memory>
@@ -32,7 +33,6 @@
 #include <stop_token>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <utility>
 #include <fcntl.h>
 #include <poll.h>
@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -49,8 +48,12 @@
 #include <sys/poll.h>
 #include <sys/wait.h>
 #include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Schema/Schema.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -69,13 +72,70 @@ int timeoutUntil(const std::chrono::steady_clock::time_point timePoint)
 }
 }
 
-ProcessSource::ProcessSource(const SourceDescriptor& sourceDescriptor)
-    : command(sourceDescriptor.getFromConfig(ConfigParametersProcessSource::COMMAND))
+namespace
+{
+std::expected<uint64_t, Exception> parsePositiveMilliseconds(const ConfigLiteral& literal)
+{
+    return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+        .and_then(narrowConfigValue<int64_t, uint64_t>)
+        .and_then(
+            [](const uint64_t value) -> std::expected<uint64_t, Exception>
+            {
+                if (value == 0 || value > static_cast<uint64_t>(std::chrono::milliseconds::max().count()))
+                {
+                    return std::unexpected{InvalidConfigParameter("Interval must be a positive number of milliseconds, but was {}", value)};
+                }
+                return value;
+            });
+}
+
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::string> COMMAND{
+    Identifier::parse("COMMAND"),
+    "The Bash command whose standard output is read.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<std::string, Exception>
+                {
+                    if (value.empty())
+                    {
+                        return std::unexpected{InvalidConfigParameter("COMMAND must not be empty")};
+                    }
+                    return value;
+                });
+    }};
+
+const ConfigField<uint64_t> REFRESH_INTERVAL_MS{
+    Identifier::parse("REFRESH_INTERVAL_MS"), "How often the command is started, in milliseconds.", parsePositiveMilliseconds, uint64_t{1000}};
+
+const ConfigField<uint64_t> FLUSH_INTERVAL_MS{
+    Identifier::parse("FLUSH_INTERVAL_MS"),
+    "How long to hold a partially filled buffer, in milliseconds.",
+    parsePositiveMilliseconds,
+    uint64_t{100}};
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+}
+
+Schema<QualifiedErasedConfigField, Ordered> ProcessSource::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("PROCESS_SOURCE"), COMMAND, REFRESH_INTERVAL_MS, FLUSH_INTERVAL_MS);
+}
+
+std::expected<ProcessSourceConfig, Exception> ProcessSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return ProcessSourceConfig{
+        .command = config.get(COMMAND),
+        .refreshIntervalMs = config.get(REFRESH_INTERVAL_MS),
+        .flushIntervalMs = config.get(FLUSH_INTERVAL_MS)};
+}
+
+ProcessSource::ProcessSource(const ProcessSourceConfig& config, const SourceDescriptor& sourceDescriptor)
+    : command(config.command)
     , sourceId(sourceDescriptor.getPhysicalSourceId().getRawValue())
-    , refreshInterval(std::chrono::milliseconds{
-          static_cast<int64_t>(sourceDescriptor.getFromConfig(ConfigParametersProcessSource::REFRESH_INTERVAL_MS))})
-    , flushInterval(
-          std::chrono::milliseconds{static_cast<int64_t>(sourceDescriptor.getFromConfig(ConfigParametersProcessSource::FLUSH_INTERVAL_MS))})
+    , refreshInterval(std::chrono::milliseconds{static_cast<int64_t>(config.refreshIntervalMs)})
+    , flushInterval(std::chrono::milliseconds{static_cast<int64_t>(config.flushIntervalMs)})
 {
 }
 
@@ -360,11 +420,5 @@ std::ostream& ProcessSource::toString(std::ostream& str) const
     return str << std::format(
                "ProcessSource(command='{}', refresh_interval={}, flush_interval={})", command, refreshInterval, flushInterval);
 }
-
-DescriptorConfig::Config ProcessSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersProcessSource>(std::move(config), NAME);
-}
-
 
 }

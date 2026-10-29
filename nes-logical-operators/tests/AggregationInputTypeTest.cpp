@@ -111,8 +111,7 @@ TEST_F(AggregationInputTypeTest, RejectsNonNumericInput)
 
 TEST_F(AggregationInputTypeTest, LastAcceptsVariableSizedInput)
 {
-    SourceCatalog catalog;
-    const auto schema = makeSource(catalog)->getOutputSchema();
+    const auto schema = makeSource()->getOutputSchema();
     const auto last = createAggregation("LAST", Identifier::parse("key")).withInferredType(schema);
     EXPECT_EQ(last->getAggregateType().type, DataType::Type::VARSIZED);
 }
