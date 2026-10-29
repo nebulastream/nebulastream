@@ -280,7 +280,12 @@ struct DefaultPEC final : PipelineExecutionContext
     [[nodiscard]] std::optional<WatermarkBackpressure> getWatermarkBackpressure() const override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        return watermarkBackpressure ? *watermarkBackpressure : std::nullopt;
+        if (watermarkBackpressure == nullptr || !watermarkBackpressure->has_value())
+        {
+            return std::nullopt;
+        }
+        const auto& [controller, maxWatermarkGap] = **watermarkBackpressure;
+        return WatermarkBackpressure{.controller = controller.newHolder(), .maxWatermarkGap = maxWatermarkGap};
     }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override

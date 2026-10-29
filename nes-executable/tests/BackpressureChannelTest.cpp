@@ -367,7 +367,7 @@ TEST_F(BackpressureChannelTest, StopTokenFunctionality)
 TEST_F(BackpressureChannelTest, ChannelIsBlockedWhileAnyHolderAppliesPressure)
 {
     auto [first, listener] = createBackpressureChannel();
-    auto second = first;
+    auto second = first.newHolder();
 
     EXPECT_TRUE(first.applyPressure());
     EXPECT_TRUE(second.applyPressure());
@@ -378,12 +378,12 @@ TEST_F(BackpressureChannelTest, ChannelIsBlockedWhileAnyHolderAppliesPressure)
     EXPECT_TRUE(isUnblocked(listener));
 }
 
-TEST_F(BackpressureChannelTest, CopyStartsWithoutPressure)
+TEST_F(BackpressureChannelTest, NewHolderStartsWithoutPressure)
 {
     auto [first, listener] = createBackpressureChannel();
     EXPECT_TRUE(first.applyPressure());
 
-    auto second = first;
+    auto second = first.newHolder();
     EXPECT_FALSE(second.releasePressure());
     EXPECT_TRUE(isBlocked(listener));
 }
@@ -392,10 +392,33 @@ TEST_F(BackpressureChannelTest, DestroyingHolderReleasesItsPressure)
 {
     auto [first, listener] = createBackpressureChannel();
     {
-        auto second = first;
+        auto second = first.newHolder();
         EXPECT_TRUE(second.applyPressure());
         EXPECT_TRUE(isBlocked(listener));
     }
+    EXPECT_TRUE(isUnblocked(listener));
+}
+
+TEST_F(BackpressureChannelTest, MovedHolderKeepsItsPressure)
+{
+    auto [first, listener] = createBackpressureChannel();
+    auto second = first.newHolder();
+    EXPECT_TRUE(second.applyPressure());
+
+    auto moved = std::move(second);
+    EXPECT_TRUE(isBlocked(listener));
+    EXPECT_TRUE(moved.releasePressure());
+    EXPECT_TRUE(isUnblocked(listener));
+}
+
+TEST_F(BackpressureChannelTest, MoveAssignmentReleasesTheTargetsPressure)
+{
+    auto [first, listener] = createBackpressureChannel();
+    auto second = first.newHolder();
+    EXPECT_TRUE(second.applyPressure());
+    EXPECT_TRUE(isBlocked(listener));
+
+    second = first.newHolder();
     EXPECT_TRUE(isUnblocked(listener));
 }
 

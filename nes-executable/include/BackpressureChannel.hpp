@@ -17,7 +17,6 @@
 #include <memory>
 #include <stop_token>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -29,34 +28,37 @@ class BackpressureController;
 /// This is the entrypoint to backpressure. It creates one channel per origin, a single Backpressure Controller controlling all of them,
 /// and one BackpressureListener per origin. A Backpressure Controller controls the Backpressure, and a BackpressureListener only allows
 /// further progress if there is no backpressure on its channel.
-/// In NebulaStream every source of a query plan owns the listener of its origin. Copies of the Backpressure Controller can be handed to any
-/// component that needs to throttle sources, e.g., the sink.
-/// Currently, the Backpressure channel enforces the invariant that controllers always outlive sources. Thus, if the last copy of a
+/// In NebulaStream every source of a query plan owns the listener of its origin. Every component that needs to throttle sources, e.g., the
+/// sink, gets its own holder via `newHolder`.
+/// Currently, the Backpressure channel enforces the invariant that controllers always outlive sources. Thus, if the last holder of a
 /// Backpressure Controller is destroyed, all connected BackpressureListeners that are still alive and in use will report an assertion failure.
 std::pair<BackpressureController, std::unordered_map<NES::OriginId, BackpressureListener>>
 createBackpressureChannels(const std::vector<NES::OriginId>& origins);
 
 /// A Backpressure Controller allows the user to apply and release backpressure, which blocks or unblocks either all connected listeners or
 /// only the listener of a specific origin.
-/// Every copy of a Backpressure Controller is an independent holder of backpressure: a channel is blocked as long as at least one holder
-/// applies pressure to it. A copy starts without holding any pressure, and destroying a holder releases all pressure it still holds.
-/// A single holder must not be used concurrently.
+/// Every Backpressure Controller is an independent holder of backpressure: a channel is blocked as long as at least one holder applies
+/// pressure to it. Destroying a holder releases all pressure it still holds. A single holder must not be used concurrently.
+/// Holders are not copyable, as a copy would silently start out holding nothing; `newHolder` makes creating one explicit.
 class BackpressureController
 {
     struct Channels;
+    struct Holder;
     explicit BackpressureController(std::shared_ptr<Channels> channels);
 
-    std::shared_ptr<Channels> channels;
-    std::unordered_set<NES::OriginId> held;
+    std::unique_ptr<Holder> holder;
     friend std::pair<BackpressureController, std::unordered_map<NES::OriginId, BackpressureListener>>
     createBackpressureChannels(const std::vector<NES::OriginId>& origins);
 
 public:
-    BackpressureController(const BackpressureController& other);
-    BackpressureController& operator=(const BackpressureController& other);
+    BackpressureController(const BackpressureController& other) = delete;
+    BackpressureController& operator=(const BackpressureController& other) = delete;
     BackpressureController(BackpressureController&& other) noexcept;
     BackpressureController& operator=(BackpressureController&& other) noexcept;
     ~BackpressureController();
+
+    /// Returns a new holder of the same channels, which starts without holding any pressure.
+    [[nodiscard]] BackpressureController newHolder() const;
 
     /// Return true if this holder changed its pressure on at least one channel.
     bool applyPressure();
