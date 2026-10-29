@@ -52,7 +52,9 @@ using namespace NES;
 namespace
 {
 constexpr uint32_t POOLED_BUFFER_SIZE = 4096;
-constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+/// Enough to hold a full queue (PipeService::DEFAULT_QUEUE_CAPACITY) for each of a test's five consumers, plus the
+/// buffers the tests allocate on the side. Tests that fill queues block forever in getBufferBlocking with fewer.
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 8192;
 constexpr BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
@@ -533,6 +535,13 @@ TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
                     buffer.setChunkNumber(ChunkNumber(chunk));
                     buffer.setLastChunk(chunk == ChunksPerSeq - 1 || produced + count >= NumTuples);
                     sink->execute(buffer, pipeCtx);
+                    /// Retry what the sink rejected on a full queue, as the query engine does: until it is delivered,
+                    /// the sink holds back every later buffer.
+                    while (auto repeated = pipeCtx.takeRepeatedBuffer())
+                    {
+                        std::this_thread::sleep_for(PipeSink::BACKPRESSURE_RETRY_INTERVAL);
+                        sink->execute(*repeated, pipeCtx);
+                    }
                     produced += count;
                 }
                 ++seqNumCounter;
