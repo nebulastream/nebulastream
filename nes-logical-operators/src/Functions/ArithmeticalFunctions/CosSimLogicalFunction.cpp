@@ -1,0 +1,114 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Functions/ArithmeticalFunctions/CosSimLogicalFunction.hpp>
+
+#include <algorithm>
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
+
+namespace NES
+{
+
+CosSimLogicalFunction::CosSimLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right)) { };
+
+bool CosSimLogicalFunction::operator==(const CosSimLogicalFunction& rhs) const
+{
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
+}
+
+std::string CosSimLogicalFunction::explain(ExplainVerbosity verbosity) const
+{
+    return fmt::format("CosSim({}, {})", left.explain(verbosity), right.explain(verbosity));
+}
+
+DataType CosSimLogicalFunction::getDataType() const
+{
+    return dataType;
+};
+
+LogicalFunction CosSimLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+{
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if ((!copy.left.getDataType().isType(DataType::Type::VARSIZED)) || (!copy.right.getDataType().isType(DataType::Type::VARSIZED)))
+    {
+        throw CannotInferStamp("Can only apply cossim to two VARSIZED vector input, but got left: {}, right: {}",
+            copy.left.getDataType(), copy.right.getDataType());
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(),
+        [](const auto& child) { return child.getDataType().nullable; });
+    return copy;
+};
+
+std::vector<LogicalFunction> CosSimLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+CosSimLogicalFunction CosSimLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string_view CosSimLogicalFunction::getType() const
+{
+    return NAME;
+}
+
+Reflected Reflector<CosSimLogicalFunction>::operator()(const CosSimLogicalFunction& function, const ReflectionContext& context) const
+{
+    return context.reflect(detail::ReflectedCosSimLogicalFunction{.left = function.left, .right = function.right});
+}
+
+CosSimLogicalFunction Unreflector<CosSimLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+{
+    auto [left, right] = context.unreflect<detail::ReflectedCosSimLogicalFunction>(reflected);
+    return CosSimLogicalFunction{left, right};
+}
+
+LogicalFunctionRegistryReturnType CosSimLogicalFunction::createCosSim(LogicalFunctionRegistryArguments arguments)
+{
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
+    }
+    return CosSimLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
