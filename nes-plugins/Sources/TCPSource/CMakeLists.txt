@@ -23,3 +23,4 @@ add_registry_entry(SourceConfigSchema TCP)
 add_registry_entry(SourceConfig TCP)
 
 add_tests_if_enabled(tests)
+add_conn_test(PLUGIN TCPSource)
