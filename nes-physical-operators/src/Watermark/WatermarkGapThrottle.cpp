@@ -41,9 +41,24 @@ void WatermarkGapThrottle::start(std::optional<WatermarkBackpressure> backpressu
         && std::ranges::all_of(allSources, [&](const auto source) { return backpressure->controller.controls(source); }))
     {
         const std::scoped_lock lock(mutex);
+        /// Replacing the holder would release all throttled sources, as a new holder starts without holding any pressure.
+        if (this->backpressure)
+        {
+            return;
+        }
         this->backpressure = std::move(backpressure);
         enabled.store(true, std::memory_order_release);
     }
+}
+
+void WatermarkGapThrottle::stop()
+{
+    const std::scoped_lock lock(mutex);
+    enabled.store(false, std::memory_order_release);
+    /// Destroying the holder releases all pressure it holds.
+    backpressure.reset();
+    throttledInputOrigins.clear();
+    throttledSources.clear();
 }
 
 void WatermarkGapThrottle::onWatermarkMoved(const MultiOriginWatermarkProcessor& watermarks)
@@ -69,6 +84,11 @@ void WatermarkGapThrottle::onWatermarkMoved(const MultiOriginWatermarkProcessor&
 
 void WatermarkGapThrottle::update(const MultiOriginWatermarkProcessor& watermarks)
 {
+    /// A thread that saw the throttle enabled may get the mutex only after `stop`.
+    if (!backpressure)
+    {
+        return;
+    }
     auto& [controller, maxWatermarkGap] = *backpressure;
     watermarks.getCurrentWatermarkPerOrigin(watermarkSnapshot);
     const auto [slowestOrigin, slowest]

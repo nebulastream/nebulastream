@@ -55,6 +55,7 @@ void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecuti
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
+    watermarkGapThrottle.stop();
 }
 
 WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const

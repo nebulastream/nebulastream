@@ -41,7 +41,11 @@ public:
     explicit WatermarkGapThrottle(SourcesOfInputOrigins sourcesOfInputOrigins);
 
     /// Enables throttling if `backpressure` is set, there are several input origins and `backpressure` controls all their sources.
+    /// Starting again while enabled keeps the current throttle.
     void start(std::optional<WatermarkBackpressure> backpressure);
+
+    /// Disables throttling and releases all sources this throttle holds back.
+    void stop();
 
     /// Call whenever the watermark of an input origin moved. A thread that finds another thread updating leaves a request for it instead
     /// of waiting, and the updating thread repeats the update until no request is left, so the last watermark change is always applied,
@@ -49,7 +53,7 @@ public:
     void onWatermarkMoved(const MultiOriginWatermarkProcessor& watermarks);
 
 private:
-    /// Requires `mutex` and an engaged `backpressure`.
+    /// Requires `mutex`.
     void update(const MultiOriginWatermarkProcessor& watermarks);
 
     const SourcesOfInputOrigins sourcesOfInputOrigins;
