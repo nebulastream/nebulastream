@@ -84,7 +84,7 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
         for (const auto& pipeline : compiledQueryPlan.pipelines)
         {
             pipeline->watermarkBackpressure
-                = WatermarkBackpressure{.controller = backpressureController, .maxWatermarkGap = maxWatermarkGap};
+                = WatermarkBackpressure{.controller = backpressureController.newHolder(), .maxWatermarkGap = maxWatermarkGap};
         }
     }
 
