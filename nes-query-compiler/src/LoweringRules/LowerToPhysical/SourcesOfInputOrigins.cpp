@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -34,14 +35,21 @@ namespace
 {
 std::optional<LogicalOperator> findProducer(const LogicalOperator& child, const OriginId origin)
 {
+    /// Keyed by operator id, as the BFS reaches an operator below a diamond once per path.
+    std::unordered_map<OperatorId, LogicalOperator> producers;
     for (const auto& op : BFSRange<LogicalOperator>(child))
     {
         if (op.tryGetAs<OriginIdAssigner>().has_value() && std::ranges::contains(*op.getTraitSet().get<OutputOriginIdsTrait>(), origin))
         {
-            return op;
+            producers.emplace(op.getId(), op);
         }
     }
-    return std::nullopt;
+    INVARIANT(producers.size() <= 1, "{} operators below the window assign the origin {}", producers.size(), origin);
+    if (producers.empty())
+    {
+        return std::nullopt;
+    }
+    return producers.begin()->second;
 }
 
 std::vector<OriginId> getSourceOrigins(const LogicalOperator& producer)
@@ -51,8 +59,13 @@ std::vector<OriginId> getSourceOrigins(const LogicalOperator& producer)
     {
         if (op.tryGetAs<SourceDescriptorLogicalOperator>().has_value())
         {
-            /// Must be the origin id the source is lowered with, as it identifies the source's backpressure channel.
-            sourceOrigins.insert((*op.getTraitSet().get<OutputOriginIdsTrait>())[0]);
+            /// Must be the origin id the source is lowered with, as it identifies the source's backpressure channel. LowerToPhysicalSource
+            /// lowers a source with its first output origin; a network source carries all origins of its upstream plan.
+            /// For a network source, this is the channel of the local network source, so throttling stops at this worker: the upstream
+            /// producer keeps running until the network channel's bounded queue fills up.
+            const auto& outputOrigins = *op.getTraitSet().get<OutputOriginIdsTrait>();
+            INVARIANT(outputOrigins.size() > 0, "A source must have at least one output origin");
+            sourceOrigins.insert(outputOrigins[0]);
         }
     }
     return {sourceOrigins.begin(), sourceOrigins.end()};
