@@ -1,0 +1,83 @@
+# name: union-backpressure/union_drift_32.test
+# description: tumbling window over a union of 16 bid and 16 auction origins. Both files span the same event time, but auction has a tenth of
+# the rows, so the auction sources run ahead in event time.
+# groups: [union-backpressure]
+
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires INT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_modified_74M.csv
+
+CREATE SINK checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, num UINT64 NOT NULL) TYPE Checksum;
+
+SELECT start, end, id, COUNT(id) AS num
+FROM (SELECT timestamp, auctionId AS id FROM bid
+      UNION
+      SELECT timestamp, id FROM auction)
+GROUP BY id
+WINDOW TUMBLING (timestamp, size 10 sec)
+INTO checksum;
+----
+3439780 5062362082

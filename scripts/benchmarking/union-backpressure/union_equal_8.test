@@ -1,0 +1,30 @@
+# name: union-backpressure/union_equal_8.test
+# description: tumbling window over a union of 8 origins that read the same bids, so their watermarks advance alike
+# groups: [union-backpressure]
+
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+
+CREATE SINK checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, num UINT64 NOT NULL) TYPE Checksum;
+
+SELECT start, end, auctionId AS id, COUNT(auctionId) AS num FROM bid
+GROUP BY auctionId
+WINDOW TUMBLING (timestamp, size 10 sec)
+INTO checksum;
+----
+3276233 4745207185
