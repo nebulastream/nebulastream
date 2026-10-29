@@ -24,11 +24,24 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include <Configurations/ConfigField.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/Optional.hpp>
+#include <Util/Variant.hpp>
+#include <InputFormatterDescriptor.hpp>
+
 #include <AntlrSQLParser.h>
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -75,6 +88,81 @@ Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentif
     return idOpt.value();
 }
 
+std::
+    tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, std::optional<Schema<UnqualifiedUnboundField, Ordered>>>
+    bindSourceConfig(
+        const Identifier& sourceType,
+        const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptionsAst,
+        const Schema<ConfigFieldDefault, Ordered>& configDefaults,
+        const Schema<ConfigFieldTransformation, Unordered>& configTransformations)
+{
+    const auto configOptions = [&]() { return bindConfigValues(configOptionsAst); }();
+
+    /// Ugly but necesarry peak into the config values since the config schema of the input formatter depends on the type of the input formatter
+    const auto inputFormatterType = [&]
+    {
+        auto expected
+            = optionalToExpected(
+                  configOptions.getFieldByName(QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"))
+                      .or_else(
+                          [&]
+                          {
+                              return configDefaults.getFieldByName(QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"))
+                                  .transform(
+                                      [](const ConfigFieldDefault& defaultInputFormatter)
+                                      {
+                                          return LiteralConfigValue{
+                                              defaultInputFormatter.getFullyQualifiedName(), defaultInputFormatter.get()};
+                                      });
+                          }),
+                  [] { return InvalidQuerySyntax("INPUT_FORMATTER.TYPE must be specified"); })
+                  .and_then(
+                      [](const LiteralConfigValue& value)
+                      { return tryGetOr<std::string>(value.getValue(), expectedType<std::string>()).and_then(Identifier::tryParse); });
+        return unwrapOrThrow(std::move(expected));
+    }();
+
+    auto configSchema
+        = SourceCatalog::getConfigSchema(sourceType, inputFormatterType)
+              .transform([&](const SourceConfigSchema& configSchema)
+                         { return configSchema.withConfigDefaults(configDefaults).withConfigTransformations(configTransformations); });
+
+    return unwrapOrThrow(
+        configSchema.and_then([&](const SourceConfigSchema& configSchema) { return configSchema.resolveConfigs(configOptions); }));
+}
+
+std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor> bindSinkConfig(
+    const Identifier& sinkType,
+    const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptionsAst,
+    const Schema<ConfigFieldDefault, Ordered>& configDefaults,
+    const Schema<ConfigFieldTransformation, Unordered>& configTransformations)
+{
+    const auto configOptions = bindConfigValues(configOptionsAst);
+
+    const auto outputFormatterType = [&]
+    {
+        const auto typeLiteral
+            = configOptions.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
+                  .or_else(
+                      [&]
+                      {
+                          return configDefaults.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
+                              .transform([](const ConfigFieldDefault& defaultFormatter)
+                                         { return LiteralConfigValue{defaultFormatter.getFullyQualifiedName(), defaultFormatter.get()}; });
+                      });
+        if (not typeLiteral.has_value())
+        {
+            return Identifier::parse("NATIVE");
+        }
+        return unwrapOrThrow(tryGetOr<std::string>(typeLiteral->getValue(), expectedType<std::string>()).and_then(Identifier::tryParse));
+    }();
+    auto configSchema
+        = SinkCatalog::getConfigSchema(sinkType, outputFormatterType)
+              .transform([&](const SinkConfigSchema& schema)
+                         { return schema.withConfigDefaults(configDefaults).withConfigTransformations(configTransformations); });
+    return unwrapOrThrow(configSchema.and_then([&](const SinkConfigSchema& schema) { return schema.resolveConfigs(configOptions); }));
+}
+
 QualifiedIdentifier bindQualifiedIdentifier(AntlrSQLParser::IdentifierChainContext* identifierList)
 {
     return identifierList->strictIdentifier()
@@ -90,6 +178,46 @@ Identifier bindIdentifier(std::string identifier)
         throw std::move(identifierExpected).error();
     }
     return identifierExpected.value();
+}
+
+Schema<LiteralConfigValue, Ordered> bindConfigValues(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions)
+{
+    std::vector<LiteralConfigValue> options{};
+    for (auto* const configOption : configOptions)
+    {
+        auto configKey = bindQualifiedIdentifier(configOption->identifierChain());
+        std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>> value{};
+
+        if (configOption->constant() != nullptr)
+        {
+            value = bindLiteral(configOption->constant());
+        }
+        else if (configOption->schema() != nullptr)
+        {
+            value = bindSchema(configOption->schema()->schemaDefinition());
+        }
+        ConfigLiteral literalValue{std::visit(
+            Overloaded{
+                [](Literal simpleLiteralVariant) -> ConfigLiteral
+                {
+                    return std::visit(
+                        Overloaded{
+                            [](const uint64_t unsignedInt)
+                            {
+                                if (not std::in_range<int64_t>(unsignedInt))
+                                {
+                                    throw InvalidQuerySyntax("Integer literal {} exceeds the supported signed integer range", unsignedInt);
+                                }
+                                return ConfigLiteral{static_cast<int64_t>(unsignedInt)};
+                            },
+                            [](auto literal) -> ConfigLiteral { return ConfigLiteral{std::move(literal)}; }},
+                        std::move(simpleLiteralVariant));
+                },
+                [](Schema<UnqualifiedUnboundField, Ordered> schema) -> ConfigLiteral { return ConfigLiteral{std::move(schema)}; }},
+            std::move(value))};
+        options.emplace_back(std::move(configKey), std::move(literalValue));
+    }
+    return Schema<LiteralConfigValue, Ordered>{std::move(options)};
 }
 
 /// TODO #764 use identifier lists instead of map of maps
@@ -149,119 +277,6 @@ ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser:
         boundConfigOptions.emplace_back(std::move(pathExp).value(), value);
     }
     return boundConfigOptions;
-}
-
-namespace
-{
-/// Converts a config option entry to a string key-value pair.
-/// Returns std::nullopt for non-Literal values (e.g., Schema), which are handled by separate functions.
-std::optional<std::pair<Identifier, std::string>>
-configOptionToValue(const std::pair<const Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>& entry)
-{
-    if (!std::holds_alternative<Literal>(entry.second))
-    {
-        return std::nullopt;
-    }
-    const auto value = literalToString(std::get<Literal>(entry.second));
-    return std::make_pair(entry.first, value);
-}
-
-/// Preserve SQL strings when passing through the transitional text-map API. The separately
-/// consumed host or formatter type stays unquoted; other values are parsed as config literals.
-std::optional<std::pair<Identifier, std::string>> configOptionToLiteralValue(
-    const std::pair<const Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>& entry,
-    const Identifier& unquotedField)
-{
-    auto converted = configOptionToValue(entry);
-    if (converted && entry.first != unquotedField && std::holds_alternative<std::string>(std::get<Literal>(entry.second)))
-    {
-        converted->second = fmt::format("'{}'", converted->second);
-    }
-    return converted;
-}
-
-/// Collects all literal config options that live under any of the given top-level prefixes into a single key-value map.
-template <typename ConvertOption>
-std::unordered_map<Identifier, std::string>
-collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<std::string_view> prefixes, ConvertOption convertOption)
-{
-    auto config = std::unordered_map<Identifier, std::string>{};
-    for (const auto prefix : prefixes)
-    {
-        if (const auto configIter = configOptions.find(Identifier::parse(std::string{prefix})); configIter != configOptions.end())
-        {
-            for (const auto& entry : configIter->second | std::views::transform(convertOption))
-            {
-                if (entry.has_value())
-                {
-                    config.insert_or_assign(entry->first, entry->second);
-                }
-            }
-        }
-    }
-    return config;
-}
-} /// namespace
-
-std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const ConfigMap& configOptions)
-{
-    const auto typeField = Identifier::parse("TYPE");
-    return collectConfigBlock(
-        configOptions, {"INPUT_FORMATTER"}, [&typeField](const auto& entry) { return configOptionToLiteralValue(entry, typeField); });
-}
-
-std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
-{
-    return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"}, configOptionToValue);
-}
-
-std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions)
-{
-    const auto hostField = Identifier::parse("HOST");
-    return collectConfigBlock(
-        configOptions, {"SOURCE"}, [&hostField](const auto& entry) { return configOptionToLiteralValue(entry, hostField); });
-}
-
-std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions)
-{
-    std::unordered_map<Identifier, std::string> sinkOptions{};
-    if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SINK")); sourceConfigIter != configOptions.end())
-    {
-        sinkOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
-            | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<Identifier, std::string>>();
-    }
-
-    return sinkOptions;
-}
-
-namespace
-{
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSchema(ConfigMap configOptions, const Identifier& configName)
-{
-    if (const auto sourceConfigIter = configOptions.find(configName); sourceConfigIter != configOptions.end())
-    {
-        if (const auto schemaIter = sourceConfigIter->second.find(Identifier::parse("SCHEMA"));
-            schemaIter != sourceConfigIter->second.end())
-        {
-            if (std::holds_alternative<Schema<UnqualifiedUnboundField, Ordered>>(schemaIter->second))
-            {
-                return std::get<Schema<UnqualifiedUnboundField, Ordered>>(schemaIter->second);
-            }
-        }
-    }
-    return std::nullopt;
-}
-}
-
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions)
-{
-    return getSchema(std::move(configOptions), Identifier::parse("SOURCE"));
-}
-
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions)
-{
-    return getSchema(std::move(configOptions), Identifier::parse("SINK"));
 }
 
 namespace
@@ -335,6 +350,10 @@ Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST)
     if (auto* const booleanLocation = dynamic_cast<AntlrSQLParser::BooleanLiteralContext*>(literalAST))
     {
         return bindBooleanLiteral(booleanLocation);
+    }
+    if (dynamic_cast<AntlrSQLParser::NullLiteralContext*>(literalAST) != nullptr)
+    {
+        return std::monostate{};
     }
     INVARIANT(false, "Unknow literal type, is the binder out of sync or was a nullptr passed?");
     std::unreachable();
@@ -418,7 +437,8 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
             [](int64_t integer) { return std::to_string(integer); },
             [](uint64_t unsignedInteger) { return std::to_string(unsignedInteger); },
             [](const double doubleLiteral) { return std::to_string(doubleLiteral); },
-            [](const bool boolean) -> std::string { return boolean ? "true" : "false"; }},
+            [](const bool boolean) -> std::string { return boolean ? "true" : "false"; },
+            [](std::monostate) -> std::string { return "NULL"; }},
         literal);
 }
 }
