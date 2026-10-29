@@ -5,7 +5,9 @@
 # (worker, CLI, REPL, test containers) can skip network-heavy apt/wget steps at build time.
 # Changes to this image are included in the development-image dependency hash.
 ARG JEMALLOC_VERSION=5.3.0
-FROM ubuntu:26.04 AS jemalloc-build
+# Built on 24.04: 26.04's tar fails to extract the sources on CI runners whose Docker seccomp profile lacks the
+# syscalls it uses. The library and jeprof only need an older glibc than the runtime stage provides.
+FROM ubuntu:24.04 AS jemalloc-build
 ARG JEMALLOC_VERSION
 RUN apt-get update && apt-get install -y build-essential wget bzip2 \
     && wget -qO- https://github.com/jemalloc/jemalloc/releases/download/${JEMALLOC_VERSION}/jemalloc-${JEMALLOC_VERSION}.tar.bz2 | tar -xj -C /tmp \
