@@ -42,9 +42,7 @@ PowLogicalFunction::PowLogicalFunction(LogicalFunction left, LogicalFunction rig
 
 bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
-    const bool simpleMatch = left == rhs.left and right == rhs.right;
-    const bool commutativeMatch = left == rhs.right and right == rhs.left;
-    return simpleMatch or commutativeMatch;
+    return left == rhs.left and right == rhs.right;
 }
 
 std::string PowLogicalFunction::explain(ExplainVerbosity verbosity) const
