@@ -41,7 +41,7 @@ std::expected<std::optional<uint64_t>, Exception> optionalUInt(const ConfigLiter
         .transform([](const uint64_t value) { return std::optional{value}; });
 }
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::optional<uint64_t>> SENDER_QUEUE_SIZE{
     Identifier::parse("sender_queue_size"),
     "Size of the sender software queue per network channel.",
@@ -72,7 +72,7 @@ const ConfigField<std::optional<uint64_t>> BACKPRESSURE_LOWER_THRESHOLD{
     optionalUInt,
     std::nullopt,
     "Not set"};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

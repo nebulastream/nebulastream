@@ -56,7 +56,7 @@ Identifier::Identifier(std::string originalValue, std::string canonicalValue, co
 
 bool Identifier::isQuoted(std::string_view value)
 {
-    PRECONDITION(value.find('.') == std::string_view::npos, "Invalid identifier, cannot contain dot: {}", value);
+    PRECONDITION(not value.contains('.'), "Invalid identifier, cannot contain dot: {}", value);
     if (value.front() == '"')
     {
         const auto length = std::ranges::size(value);
@@ -71,7 +71,7 @@ bool Identifier::isQuoted(std::string_view value)
 
 std::expected<bool, Exception> Identifier::tryIsQuoted(std::string_view value)
 {
-    if (value.find('.') != std::string_view::npos)
+    if (value.contains('.'))
     {
         return std::unexpected{InvalidIdentifier("Cannot contain dot")};
     }

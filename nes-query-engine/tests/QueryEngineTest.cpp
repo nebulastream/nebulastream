@@ -1118,7 +1118,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
 template <typename T>
 auto IsInInclusiveRange(T lo, T hi)
 {
-    return ::testing::AllOf(::testing::Ge((lo)), ::testing::Le((hi)));
+    return ::testing::AllOf(::testing::Ge(lo), ::testing::Le(hi));
 }
 
 TEST_F(QueryEngineTest, singleQueryWithPipelineFailure)

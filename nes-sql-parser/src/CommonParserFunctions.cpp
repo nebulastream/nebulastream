@@ -70,6 +70,7 @@ Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentif
     }();
     if (not idOpt.has_value())
     {
+        /// NOLINTNEXTLINE(bugprone-exception-copy-constructor-throws) NES exceptions carry strings
         throw std::move(idOpt).error();
     }
     return idOpt.value();

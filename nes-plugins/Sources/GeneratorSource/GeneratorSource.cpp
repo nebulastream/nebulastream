@@ -167,7 +167,7 @@ uint64_t calcNumberOfTuplesForInterval(
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<GeneratorStop> SEQUENCE_STOPS_GENERATOR{
     Identifier::parse("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"),
     "One of ALL, ONE or NONE. ALL stops the generator source once all sequences have reached the end, "
@@ -312,7 +312,7 @@ const ConfigField<int32_t> MAX_RUNTIME_MS{
     [](const ConfigLiteral& config)
     { return NES::tryGetOr<int64_t>(config, expectedType<int64_t>()).and_then(narrowConfigValue<int64_t, int32_t>); },
     int32_t{-1}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

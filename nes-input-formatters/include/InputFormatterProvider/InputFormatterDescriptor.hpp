@@ -47,18 +47,18 @@ public:
 
     [[nodiscard]] const ExplicitAny& getConfig() const;
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) - process aborts anyway if config schema setup throws at startup
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization) - process aborts anyway if config schema setup throws at startup
     static inline auto TYPE_FIELD = ConfigField<Identifier>{
         Identifier::parse("TYPE"),
         "The type of the InputFormatter.",
         [](const ConfigLiteral& literal)
         { return tryGetOr<std::string>(literal, expectedType<std::string>()).and_then(Identifier::tryParse); }};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<std::string> VALUE_DESERIALIZERS{
         Identifier::parse("VALUE_DESERIALIZERS"), "Per-field value deserializer overrides", std::string{}};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline Schema<QualifiedErasedConfigField, Ordered> configSchema
         = createConfigSchema(Identifier::parse("INPUT_FORMATTER"), TYPE_FIELD, VALUE_DESERIALIZERS);
 

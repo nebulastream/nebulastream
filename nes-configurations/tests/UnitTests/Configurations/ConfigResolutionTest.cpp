@@ -36,7 +36,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 
 const ConfigField<uint64_t> THREADS{
     Identifier::parse("threads"),
@@ -72,7 +72,7 @@ const ConfigField<uint64_t> TIMEOUT_B{
 /// A field with no default — must be provided.
 const ConfigField<std::string> REQUIRED_FIELD{Identifier::parse("address"), "Required address"};
 
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 Schema<QualifiedErasedConfigField, Ordered> twoLevelSchema()
 {

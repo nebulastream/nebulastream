@@ -157,17 +157,17 @@ struct FieldValidator
 };
 
 /// @brief Array containing functions paired with the fields identifier used to validate the fields syntax
-/// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration
+/// NOLINTBEGIN(bugprone-throwing-static-initialization): do not warn about static storage duration
 static const std::array<FieldValidator, 4> Validators = {
     {{.identifier = FieldIdentifier::SEQUENCE, .validator = SequenceField::validate},
      {.identifier = FieldIdentifier::NORMAL_DISTRIBUTION, .validator = NormalDistributionField::validate},
      {.identifier = FieldIdentifier::WORDLIST, .validator = WordListField::validate},
      {.identifier = FieldIdentifier::RANDOMSTR, .validator = RandomStrField::validate}},
 };
-/// NOLINTEND(cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 /// @brief Multimap containing key-value pairs of the existing generator fields and which types they accept
-/// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration
+/// NOLINTBEGIN(bugprone-throwing-static-initialization): do not warn about static storage duration
 static const std::unordered_multimap<FieldIdentifier, DataType::Type> FieldNameToAcceptedTypes
     = {{FieldIdentifier::SEQUENCE, DataType::Type::INT64},
        {FieldIdentifier::SEQUENCE, DataType::Type::INT32},
@@ -183,5 +183,5 @@ static const std::unordered_multimap<FieldIdentifier, DataType::Type> FieldNameT
        {FieldIdentifier::NORMAL_DISTRIBUTION, DataType::Type::FLOAT32},
        {FieldIdentifier::WORDLIST, DataType::Type::VARSIZED},
        {FieldIdentifier::RANDOMSTR, DataType::Type::VARSIZED}};
-/// NOLINTEND(cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 }

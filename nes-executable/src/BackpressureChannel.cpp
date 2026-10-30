@@ -30,14 +30,14 @@
 /// The channel is initially open.
 struct Channel
 {
-    enum State : uint8_t
+    enum class State : uint8_t
     {
         OPEN,
         CLOSED,
         DESTROYED,
     };
 
-    folly::Synchronized<State, std::mutex> stateMtx{OPEN};
+    folly::Synchronized<State, std::mutex> stateMtx{State::OPEN};
     std::condition_variable_any change;
 };
 
@@ -49,23 +49,25 @@ BackpressureController::~BackpressureController()
 {
     if (channel)
     {
-        *channel->stateMtx.lock() = Channel::DESTROYED;
+        *channel->stateMtx.lock() = Channel::State::DESTROYED;
         channel->change.notify_all();
     }
 }
 
 bool BackpressureController::applyPressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::CLOSED);
-    INVARIANT(old != Channel::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
-    return old == Channel::OPEN;
+    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::State::CLOSED);
+    INVARIANT(
+        old != Channel::State::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
+    return old == Channel::State::OPEN;
 }
 
 bool BackpressureController::releasePressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::OPEN);
-    INVARIANT(old != Channel::DESTROYED, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
-    if (old == Channel::CLOSED)
+    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::State::OPEN);
+    INVARIANT(
+        old != Channel::State::DESTROYED, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
+    if (old == Channel::State::CLOSED)
     {
         /// The Backpressure Controller was opened, wake up all waiting BackpressureListeners
         channel->change.notify_all();
@@ -90,8 +92,8 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
         stopToken,
         [&destroyed, &state] -> bool
         {
-            destroyed = *state == Channel::DESTROYED;
-            return destroyed || *state == Channel::OPEN;
+            destroyed = *state == Channel::State::DESTROYED;
+            return destroyed || *state == Channel::State::OPEN;
         });
 
     INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");

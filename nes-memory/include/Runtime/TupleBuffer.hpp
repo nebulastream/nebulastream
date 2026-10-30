@@ -86,7 +86,7 @@ class TupleBuffer
 
 public:
     /// @brief Flag value for uninitialized child buffers.
-    /// NOLINTNEXTLINE(cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     inline static const ChildBufferIndex INVALID_CHILD_BUFFER_INDEX_VALUE{std::numeric_limits<ChildBufferIndex::Underlying>::max()};
 
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.

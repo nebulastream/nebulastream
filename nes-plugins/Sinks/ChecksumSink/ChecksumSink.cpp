@@ -51,7 +51,7 @@ namespace
 
 /// Config fields of the checksum sink, shared by getConfigSchema (declaration) and
 /// ChecksumSinkConfig::fromConfig (typed extraction).
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::filesystem::path> FILE_PATH{
     Identifier::parse("FILE_PATH"),
     "The path to the file to wich to wruiteite the final chescksum.",
@@ -60,7 +60,7 @@ const ConfigField<std::filesystem::path> FILE_PATH{
         return tryGetOr<std::string>(literal, expectedType<std::string>())
             .transform([](const auto& val) { return std::filesystem::path{val}; });
     }};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

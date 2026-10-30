@@ -341,9 +341,9 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
 std::ostream& NormalDistributionField::generate(std::ostream& os, std::mt19937& randEng)
 {
     std::visit(
-        [&os, &randEng, copyOfOutputType = outputType.type](auto& distribution)
+        [&os, &randEng](auto& distribution)
         {
-            if (copyOfOutputType == DataType::Type::UINT8 or copyOfOutputType == DataType::Type::INT8)
+            if constexpr (sizeof(typename std::decay_t<decltype(distribution)>::result_type) == 1)
             {
                 /// Need to cast it to an int32_t, as we would get 'NULL' and not '0'
                 os << static_cast<int32_t>(distribution(randEng));
