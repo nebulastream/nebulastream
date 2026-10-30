@@ -16,6 +16,8 @@
 #include <NESCodonPlugin/Plugin.hpp>
 @NES_CODON_PLUGIN_NATIVE_SYMBOL_INCLUDES@
 
+/// Generated C-ABI tables: plain arrays of aggregates that the plugin hands out through extern "C".
+/// NOLINTBEGIN(modernize-avoid-c-arrays,readability-static-definition-in-anonymous-namespace,modernize-use-designated-initializers,cppcoreguidelines-pro-bounds-array-to-pointer-decay)
 namespace
 {
 @NES_CODON_PLUGIN_MODULE_DECLARATIONS@
@@ -29,6 +31,7 @@ static constexpr NESCodonPluginV1 plugin{
     nativeSymbols,
     @NES_CODON_PLUGIN_NATIVE_SYMBOL_COUNT@};
 }
+/// NOLINTEND(modernize-avoid-c-arrays,readability-static-definition-in-anonymous-namespace,modernize-use-designated-initializers,cppcoreguidelines-pro-bounds-array-to-pointer-decay)
 
 extern "C" NES_CODON_PLUGIN_EXPORT const NESCodonPluginV1* nes_codon_plugin_v1()
 {
