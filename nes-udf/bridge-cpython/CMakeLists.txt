@@ -18,6 +18,10 @@ if (TARGET Python3::Python)
     add_library(nes-cpython-udf-bridge SHARED CPythonUdfBridge.cpp)
     target_include_directories(nes-cpython-udf-bridge PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
     target_link_libraries(nes-cpython-udf-bridge PRIVATE Python3::Python)
+    # Sanitizer runtimes are linked into executables only; the worker that dlopens the bridge provides them.
+    if (NOT SANITIZER_OPTION STREQUAL "none")
+        target_link_options(nes-cpython-udf-bridge PRIVATE "LINKER:-z,undefs")
+    endif ()
     # The systest binary (configured before this dir) dlopens the bridge; ensure it is built alongside.
     if (TARGET systest)
         add_dependencies(systest nes-cpython-udf-bridge)

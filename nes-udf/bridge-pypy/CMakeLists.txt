@@ -30,6 +30,10 @@ if (NES_PYPY_FOUND)
     add_library(nes-pypy-udf-bridge SHARED ${NES_PYPY_BRIDGE_GENERATED_C})
     target_include_directories(nes-pypy-udf-bridge PRIVATE ${NES_PYPY_INCLUDE_DIR})
     target_link_libraries(nes-pypy-udf-bridge PRIVATE ${NES_PYPY_RUNTIME_LIB})
+    # Sanitizer runtimes are linked into executables only; the worker that dlopens the bridge provides them.
+    if (NOT SANITIZER_OPTION STREQUAL "none")
+        target_link_options(nes-pypy-udf-bridge PRIVATE "LINKER:-z,undefs")
+    endif ()
 
     # The systest binary (configured before this dir) dlopens the bridge; ensure it is built alongside.
     if (TARGET systest)
