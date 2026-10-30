@@ -45,6 +45,7 @@ protected:
 
     static void SetUpTestSuite()
     {
+        /// NOLINTNEXTLINE(bugprone-random-generator-seed,cert-msc51-cpp) deterministic test input
         std::mt19937 gen(42);
         std::uniform_int_distribution dist(minBufferSize, maxBufferSize);
         bufferSize = dist(gen);

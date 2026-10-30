@@ -159,7 +159,7 @@ struct Stopping
 
 struct Terminated
 {
-    enum TerminationReason : uint8_t
+    enum class TerminationReason : uint8_t
     {
         Failed,
         Stopped
@@ -855,7 +855,7 @@ void QueryCatalog::start(
                     [](Reserved&&)
                     {
                         INVARIANT(false, "Bug: Jumping from reserved to running state should be impossible.");
-                        return Terminated{Terminated::Failed};
+                        return Terminated{Terminated::TerminationReason::Failed};
                     },
                     [](Starting&& starting) { return Running{std::move(starting.plan)}; });
                 if (didTransition)
@@ -879,24 +879,24 @@ void QueryCatalog::start(
                     [](Reserved&&)
                     {
                         ENGINE_LOG_DEBUG("Query was stopped before all pipeline starts were submitted");
-                        return Terminated{Terminated::Failed};
+                        return Terminated{Terminated::TerminationReason::Failed};
                     },
                     [&toDispose](Starting&& starting)
                     {
                         toDispose = std::move(starting.plan);
-                        return Terminated{Terminated::Failed};
+                        return Terminated{Terminated::TerminationReason::Failed};
                     },
                     [&toDispose](Running&& running)
                     {
                         toDispose = std::move(running.plan);
-                        return Terminated{Terminated::Failed};
+                        return Terminated{Terminated::TerminationReason::Failed};
                     },
                     [&toDispose](Stopping&& stopping)
                     {
                         toDispose = std::move(stopping.plan);
-                        return Terminated{Terminated::Failed};
+                        return Terminated{Terminated::TerminationReason::Failed};
                     },
-                    [](Terminated&&) { return Terminated{Terminated::Failed}; });
+                    [](Terminated&&) { return Terminated{Terminated::TerminationReason::Failed}; });
 
                 /// Dispose after the transition (lock released) to avoid deadlock
                 if (toDispose)
@@ -926,17 +926,17 @@ void QueryCatalog::start(
                     [&toDispose](Starting&& starting)
                     {
                         toDispose = std::move(starting.plan);
-                        return Terminated{Terminated::Stopped};
+                        return Terminated{Terminated::TerminationReason::Stopped};
                     },
                     [&toDispose](Running&& running)
                     {
                         toDispose = std::move(running.plan);
-                        return Terminated{Terminated::Stopped};
+                        return Terminated{Terminated::TerminationReason::Stopped};
                     },
                     [&toDispose](Stopping&& stopping)
                     {
                         toDispose = std::move(stopping.plan);
-                        return Terminated{Terminated::Stopped};
+                        return Terminated{Terminated::TerminationReason::Stopped};
                     });
 
                 /// Dispose after the transition (lock released) to avoid deadlock

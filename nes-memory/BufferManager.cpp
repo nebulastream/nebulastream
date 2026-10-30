@@ -144,8 +144,11 @@ void BufferManager::initialize()
     auto memorySizeInBytes = pages * page_size;
 
     uint64_t requiredMemorySpace = this->bufferSize * this->numOfBuffers;
-    double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
-    NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
+    NES_DEBUG(
+        "NES memory allocation requires {} out of {} (so {}%) available bytes",
+        requiredMemorySpace,
+        memorySizeInBytes,
+        (100.0 * requiredMemorySpace) / memorySizeInBytes);
 
     INVARIANT(
         requiredMemorySpace < memorySizeInBytes,

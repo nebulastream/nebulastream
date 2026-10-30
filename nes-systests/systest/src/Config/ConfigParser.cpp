@@ -517,7 +517,9 @@ void applyConfigurationFiles(const ArgumentParser& program, NES::SystestConfigur
 void applyOptimizerConfiguration(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
     if (not program.is_used("--optimizer"))
+    {
         return;
+    }
     std::vector<std::string> arguments;
     for (const auto& value : program.get<std::vector<std::string>>("--optimizer"))
     {

@@ -44,11 +44,12 @@ class ConcurrentSynchronizationTest : public ::testing::Test
 {
     using SequenceShredder = NES::SequenceShredder;
 
-public:
+protected:
     void SetUp() override { NES_INFO("Setting up ConcurrentSynchronizationTest."); }
 
     void TearDown() override { NES_INFO("Tear down ConcurrentSynchronizationTest class."); }
 
+public:
     template <size_t NUM_THREADS>
     class TestThreadPool
     {
@@ -63,6 +64,7 @@ public:
         {
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
+                /// NOLINTNEXTLINE(bugprone-random-generator-seed,cert-msc51-cpp) seeded below when a fixed seed is requested
                 std::mt19937_64 sequenceNumberGen;
                 std::bernoulli_distribution boolDistribution{0.5};
                 if (fixedSeed.has_value())

@@ -95,6 +95,7 @@ struct TestClock
     static void reset() { *now_.wlock() = time_point(std::chrono::nanoseconds(0)); }
 };
 
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) test clock
 folly::Synchronized<TestClock::time_point> TestClock::now_{time_point(std::chrono::nanoseconds(0))};
 
 using DelayedTaskSubmitter = NES::DelayedTaskSubmitter<TestClock>;

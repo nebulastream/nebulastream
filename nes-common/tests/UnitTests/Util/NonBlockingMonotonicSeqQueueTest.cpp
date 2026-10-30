@@ -174,6 +174,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadRandomeUpdaterTest)
         watermarkBarriers.emplace_back(
             std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), INITIAL<ChunkNumber>, true}, /*ts*/ i));
     }
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed,cert-msc51-cpp) deterministic test input
     std::mt19937 randomGenerator(42);
     std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), randomGenerator);
 
@@ -295,6 +296,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInR
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i <= noSeqNumbers; i++)
     {
+        /// NOLINTNEXTLINE(cert-msc50-cpp,misc-predictable-rand) deterministic test input
         auto noChunks = 1 + (rand() % maxChunksPerSeqNumber);
         for (auto chunk = ChunkNumber::INITIAL; chunk < ChunkNumber::INITIAL + noChunks; ++chunk)
         {
@@ -307,6 +309,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInR
                 /*ts*/ i));
     }
 
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed,cert-msc51-cpp) deterministic test input
     std::mt19937 randomGenerator(42);
     std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), randomGenerator);
 
@@ -342,6 +345,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i < noSeqNumbers + SequenceNumber::INITIAL; i++)
     {
+        /// NOLINTNEXTLINE(cert-msc50-cpp,misc-predictable-rand) deterministic test input
         auto noChunks = 1 + (rand() % maxChunksPerSeqNumber);
         for (auto chunk = ChunkNumber::INITIAL; chunk < noChunks + ChunkNumber::INITIAL; ++chunk)
         {
@@ -354,6 +358,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
                 /*ts*/ i));
     }
 
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed,cert-msc51-cpp) deterministic test input
     std::mt19937 randomGenerator(42);
     std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), randomGenerator);
 
@@ -362,6 +367,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     {
         const auto copyGlobalUpdateCounter = globalUpdateCounter.load();
         const auto missingUpdates = watermarkBarriers.size() - globalUpdateCounter;
+        /// NOLINTNEXTLINE(cert-msc50-cpp,misc-predictable-rand) deterministic test input
         const auto updatesThisRound = std::min(missingUpdates, 1 + (rand() % averageUpdatesPerRound));
         const auto maxUpdatePos = copyGlobalUpdateCounter + updatesThisRound;
 

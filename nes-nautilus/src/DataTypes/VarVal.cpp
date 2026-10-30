@@ -269,7 +269,7 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
             {
                 return os.operator<<(static_cast<nautilus::val<int>>(value));
             }
-            else if constexpr (requires(typename T::basic_type type) { os << (nautilus::val<typename T::basic_type>(type)); })
+            else if constexpr (requires(T::basic_type type) { os << (nautilus::val<typename T::basic_type>(type)); })
             {
                 return os.operator<<(nautilus::val<typename T::basic_type>(value));
             }

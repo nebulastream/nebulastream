@@ -139,6 +139,8 @@ void describeRegistry(PluginDescriptor& descriptor)
 {
     descriptor.registries.push_back(provideRegistry<${ARG_REGISTRY_CLASS}>(\"${ARG_REGISTRY_CLASS}\"));
 }
+/// Static registration is the purpose of this initializer; it only stores a function pointer.
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
 const auto collected${name}Registry = [] {
     BuiltinPlugins::instance().addDescriber(&describeRegistry);
     return 0;
@@ -315,6 +317,8 @@ void describeEntry(PluginDescriptor& descriptor)
 {
     descriptor.entries.push_back(${entry_provision});
 }
+/// Static registration is the purpose of this initializer; it only stores a function pointer.
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
 const auto collected_${registry_key_identifier}_\${REGISTRY} = [] {
     BuiltinPlugins::instance().addDescriber(&describeEntry);
     return 0;

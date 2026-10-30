@@ -176,7 +176,7 @@ private:
     template <typename ReplyT, typename RequestT>
     decltype(ReplyT::reply) submit(RequestT request) const
     {
-        const std::lock_guard lock(submitMutex);
+        const std::scoped_lock lock(submitMutex);
         requests.enqueue(Request{std::move(request)});
         Reply reply;
         replies.dequeue(reply);

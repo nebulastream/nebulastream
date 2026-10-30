@@ -308,6 +308,7 @@ private:
                 },
                 [](FunctionUpAlt2 fnUp) -> FunctionUp
                 {
+                    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks) std::function owns the lambda
                     return [fnUp](
                                LogicalOperator op,
                                std::vector<LogicalOperator> children,
@@ -317,6 +318,7 @@ private:
                 },
                 [](FunctionUpAlt3 fnUp) -> FunctionUp
                 {
+                    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks) std::function owns the lambda
                     return [fnUp](
                                LogicalOperator op,
                                std::vector<LogicalOperator> children,

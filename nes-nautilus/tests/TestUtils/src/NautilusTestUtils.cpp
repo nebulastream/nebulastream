@@ -141,6 +141,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
         const auto tuplesToFill = std::min(capacity, numberOfTuples - i);
         auto buffer = bufferManager.getBufferBlocking();
         auto outputBufferIndex = createShuffledVector(tuplesToFill);
+        /// NOLINTNEXTLINE(cert-msc50-cpp,misc-predictable-rand) test data only
         const auto sizeVarSizedData = (rand() % (maxSizeVarSizedData + 1 - minSizeVarSizedData)) + minSizeVarSizedData;
         callCompiledFunction<void, TupleBuffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>(
             {FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend},
@@ -224,6 +225,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                             {
                                 const std::string charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
                                 const size_t maxIndex = (charset.size() - 1);
+                                /// NOLINTNEXTLINE(cert-msc50-cpp,misc-predictable-rand) test data only
                                 return charset[rand() % maxIndex];
                             };
                             std::string randomString(size, 0);

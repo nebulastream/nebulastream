@@ -26,7 +26,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
-#if defined(__linux__)
+#ifdef __linux__
 #endif
 namespace NES::Testing
 {

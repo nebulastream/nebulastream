@@ -92,7 +92,7 @@ std::vector<NES::ConfigurationOverride> parseConfigurationLine(const std::string
         {
             invalidFormat("Use either single value or properly formatted list in square brackets");
         }
-        if (valueList.find(',') != std::string::npos)
+        if (valueList.contains(','))
         {
             invalidFormat("Multiple values must be enclosed in square brackets");
         }

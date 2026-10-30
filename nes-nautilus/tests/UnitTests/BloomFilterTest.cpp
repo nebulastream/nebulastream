@@ -78,6 +78,7 @@ constexpr uint64_t MAX_TOTAL_MULTIPLIER = 20;
 /// Extreme sizing inputs bracketing the collision spectrum. The no-false-negative invariant must hold at all
 /// three; the FP-rate bound needs no special casing because it derives from the actual sizing.
 /// Not constexpr: the validating constructor is not a constant expression.
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) test parameters
 const std::array<BloomFilterParams, 3> EXTREME_PARAMS = {
     BloomFilterParams{4, 5e-4}, /// 64 bits, 11 hashes: saturates after a handful of inserts, FP rate ~1
     BloomFilterParams{44, 0.9}, /// 64 bits, 1 hash: smallest filter, minimal hashing

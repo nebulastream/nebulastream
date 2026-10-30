@@ -92,6 +92,7 @@ enum class OnExitBehavior : uint8_t
 
 class SignalHandler
 {
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) std::stop_source only throws on allocation failure
     static inline std::stop_source signalSource;
 
 public:

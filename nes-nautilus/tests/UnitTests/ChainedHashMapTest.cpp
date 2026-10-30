@@ -87,6 +87,7 @@ KeyValueReference makeEmptyReference(const TestUtils::TestableChainedHashMap& ch
 /// Capped at ~2^18 bits (32KB): the bit area is inline in the map's unpooled TupleBuffer and the allocator
 /// reserves 10x the rolling average per chunk, so a larger map buffer blows the tests' unpooled budget.
 /// Not constexpr: the validating constructor is not a constant expression.
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) test parameters
 const std::array<Nautilus::Interface::BloomFilterParams, 4> BLOOM_COLLISION_EXTREMES = {
     Nautilus::Interface::BloomFilterParams{4, 5e-4}, /// 64 bits, 11 hashes
     Nautilus::Interface::BloomFilterParams{44, 0.9}, /// 64 bits, 1 hash

@@ -52,6 +52,7 @@ public:
         std::vector<int8_t> content(size);
         for (uint32_t i = 0; i < size; i++)
         {
+            /// NOLINTNEXTLINE(cert-msc50-cpp,misc-predictable-rand) test data only
             content[i] = rand() % 256;
         }
 
@@ -203,6 +204,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         std::srand(seed);
 
         constexpr auto maxSize = 5; /// We set the size quite small to ensure that we also happen to have the same content
+        /// NOLINTNEXTLINE(cert-msc50-cpp,misc-predictable-rand) test data only
         const auto sizeInBytes = (std::rand() % maxSize) + 1;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         auto otherVariableSizedData = createVariableSizedRandomData(sizeInBytes);

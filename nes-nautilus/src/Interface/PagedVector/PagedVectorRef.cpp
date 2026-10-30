@@ -267,7 +267,7 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
             auto* base = std::to_address(pageBufferAddress.begin());
             /// Compute offset safely
             const uint64_t offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * indexWithinPage);
-            return std::next(std::bit_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
+            return std::next(reinterpret_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
         },
         pagedVectorBuffer.asArg(),
         lastPageBuffer.asArg());
@@ -292,7 +292,7 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
             const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
             auto* base = std::to_address(pageBufferAddress.begin());
             const auto offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * entryBufferPos);
-            return std::next(std::bit_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
+            return std::next(reinterpret_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
         },
         pagedVectorBuffer.asArg(),
         pageBuffer.asArg(),
@@ -343,7 +343,7 @@ Record PagedVectorRefIter::operator*() const
             /// get record address
             auto* base = std::to_address(pageBufferAddress.begin());
             const auto offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * entryBufferPos);
-            return std::next(std::bit_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
+            return std::next(reinterpret_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
         },
         pagedVector.pagedVectorBuffer.asArg(),
         curPage.asArg(),

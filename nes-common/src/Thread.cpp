@@ -19,7 +19,9 @@
 
 namespace NES
 {
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) Host and std::string construction only throws on allocation failure
 thread_local Host Thread::WorkerNodeId = Host("Not A Worker");
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) Host and std::string construction only throws on allocation failure
 thread_local std::string Thread::ThreadName = "unnamed";
 
 }
