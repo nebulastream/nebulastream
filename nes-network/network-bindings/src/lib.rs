@@ -65,7 +65,8 @@ pub mod ffi {
         #[allow(non_snake_case)]
         fn setData(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
         #[allow(non_snake_case)]
-        fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        /// Throws when no child buffer can be allocated; the Result lets the exception cross into Rust as an error.
+        fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]) -> Result<()>;
         #[allow(non_snake_case)]
         fn identifyThread(thread_name: &str, worker_id: &str);
     }
@@ -400,7 +401,7 @@ fn receive_buffer(
 
     for child_buffer in buffer.child_buffers.iter() {
         assert!(!child_buffer.is_empty());
-        buffer_builder.as_mut().addChildBuffer(child_buffer);
+        buffer_builder.as_mut().addChildBuffer(child_buffer)?;
     }
 
     Ok(true)

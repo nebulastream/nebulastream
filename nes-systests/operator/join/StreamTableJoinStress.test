@@ -1,6 +1,6 @@
 # name: join/StreamTableJoinStress.test
 # description: Multi-origin and nested stream-table join concurrency stress tests
-# groups: [Join, StreamTableJoin, Concurrency, LongRunning]
+# groups: [Join, StreamTableJoin, Concurrency, LongRunning, SlowUnderSanitizers]
 # Oracle: DuckDB joins over the attached CSV files, with UNION ALL copies matching physical-source expansion.
 # Timed joins add table_timestamp <= stream_timestamp. Oracle CSVs are reduced with the repository checksum tool.
 

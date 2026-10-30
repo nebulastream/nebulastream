@@ -1,12 +1,11 @@
 # name: join/AsOfJoinVarSizedStateMemory.test
 # description: ASOF releases obsolete large VARSIZED right-side state
-# groups: [Join, StreamTableJoin]
+# groups: [Join, StreamTableJoin, MemoryBudget]
 
 # Each ASOF memory test generates 2 MiB of right-side payloads. Systest may execute both tests concurrently on the
-# same worker, so reserve 8 MiB for their bounded state, allocator chunking, and transient network buffers, which
-# pile up in slower (Debug) builds.
+# same worker, so reserve 4 MiB for their bounded state, allocator chunking, and transient network buffers.
 GlobalConfiguration worker.total_memory_in_bytes: [134217728]
-GlobalConfiguration worker.unpooled_memory_fraction: [0.0625]
+GlobalConfiguration worker.unpooled_memory_fraction: [0.03125]
 GlobalConfiguration worker.default_max_inflight_buffers: [2]
 
 CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_ts UINT64 NOT NULL);
