@@ -411,8 +411,9 @@ void sourceEmitted(const Key& key, const Successors& successors) noexcept
         {
             for (const auto& successor : successors)
             {
-                instant(PipeRecv{
-                    .key = key, .upstream = *state.pipeUpstream, .pipeline = successor->id.getRawValue(), .received = state.firstData});
+                instant(
+                    PipeRecv{
+                        .key = key, .upstream = *state.pipeUpstream, .pipeline = successor->id.getRawValue(), .received = state.firstData});
             }
         }
         end(SourceFill{

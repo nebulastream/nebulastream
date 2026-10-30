@@ -310,10 +310,9 @@ public:
         {
             throw InvalidStatement("CREATE FUNCTION ... BRIDGE '{}' compiles the ENTRYPOINT module and does not take FROM", CodonUdfBridge);
         }
-        const auto path = isCodon ? std::string{}
-            : functionDefAST->functionPath != nullptr
-            ? bindStringLiteral(functionDefAST->functionPath)
-            : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->bridge)).string();
+        const auto path = isCodon                     ? std::string{}
+            : functionDefAST->functionPath != nullptr ? bindStringLiteral(functionDefAST->functionPath)
+                                                      : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->bridge)).string();
         const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
 
         /// Argument names in the DDL are documentation only — a scalar UDF matches

@@ -35,9 +35,9 @@
 #include <Schema/Schema.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <linux/videodev2.h>
-#include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -124,7 +124,12 @@ TEST_F(V4L2SinkTest, ValidatesConfiguration)
     {
         SinkCatalog catalog;
         return catalog.addSinkDescriptor(
-            Identifier::parse("CAMERA"), frameSchema(), Identifier::parse("V4L2"), Host{"localhost"}, {{Identifier::parse(key), value}}, {});
+            Identifier::parse("CAMERA"),
+            frameSchema(),
+            Identifier::parse("V4L2"),
+            Host{"localhost"},
+            {{Identifier::parse(key), value}},
+            {});
     };
     EXPECT_EQ(descriptor(frameSchema()).getPluginData().getAs<V4L2SinkConfig>().device, "/dev/video10");
     EXPECT_FALSE(withConfig("DEVICE", "").has_value());

@@ -111,9 +111,8 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
         rightKeyField = children[1].getTraitSet().get<FieldMappingTrait>()->getMapping(rightLogicalField.unbound());
         INVARIANT(rightKeyField.has_value(), "Missing physical mapping for ASOF right key {}", rightLogicalField);
     }
-    auto physicalJoinFunction
-        = QueryCompilation::FunctionProvider::lowerFunction(
-            logicalJoinFunction, FieldMappingTrait{std::move(combinedMappings)}, conf.getPythonUdfImportPaths());
+    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(
+        logicalJoinFunction, FieldMappingTrait{std::move(combinedMappings)}, conf.getPythonUdfImportPaths());
 
     using BoundCharacteristics = std::array<Windowing::BoundTimeCharacteristic, 2>;
     const auto characteristics = join->getTimeCharacteristics();
@@ -128,7 +127,8 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
                 [&](const Windowing::BoundEventTimeCharacteristic& eventTime) -> std::unique_ptr<TimeFunction>
                 {
                     return std::make_unique<EventTimeFunction>(
-                        QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping, conf.getPythonUdfImportPaths()), eventTime.unit);
+                        QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping, conf.getPythonUdfImportPaths()),
+                        eventTime.unit);
                 }},
             characteristic);
     };
@@ -179,31 +179,33 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
     std::shared_ptr<PhysicalOperatorWrapper> joinWrapper;
     if (predicateFree)
     {
-        joinWrapper = makeJoinWrapper(PredicateFreeAsOfJoinPhysicalOperator{
-            handlerId,
-            std::move(physicalJoinFunction),
-            std::move(leftInputBufferRef),
-            std::move(rightInputBufferRef),
-            std::move(leftTupleLayout),
-            std::move(rightTupleLayout),
-            outputOrigin,
-            std::move(leftTimeFunction),
-            std::move(rightTimeFunction),
-            std::nullopt});
+        joinWrapper = makeJoinWrapper(
+            PredicateFreeAsOfJoinPhysicalOperator{
+                handlerId,
+                std::move(physicalJoinFunction),
+                std::move(leftInputBufferRef),
+                std::move(rightInputBufferRef),
+                std::move(leftTupleLayout),
+                std::move(rightTupleLayout),
+                outputOrigin,
+                std::move(leftTimeFunction),
+                std::move(rightTimeFunction),
+                std::nullopt});
     }
     else
     {
-        joinWrapper = makeJoinWrapper(EqualityAsOfJoinPhysicalOperator{
-            handlerId,
-            std::move(physicalJoinFunction),
-            std::move(leftInputBufferRef),
-            std::move(rightInputBufferRef),
-            std::move(leftTupleLayout),
-            std::move(rightTupleLayout),
-            outputOrigin,
-            std::move(leftTimeFunction),
-            std::move(rightTimeFunction),
-            std::move(rightKeyField)});
+        joinWrapper = makeJoinWrapper(
+            EqualityAsOfJoinPhysicalOperator{
+                handlerId,
+                std::move(physicalJoinFunction),
+                std::move(leftInputBufferRef),
+                std::move(rightInputBufferRef),
+                std::move(leftTupleLayout),
+                std::move(rightTupleLayout),
+                outputOrigin,
+                std::move(leftTimeFunction),
+                std::move(rightTimeFunction),
+                std::move(rightKeyField)});
     }
 
     return {.root = joinWrapper, .leaves = {leftWrapper, rightWrapper}};

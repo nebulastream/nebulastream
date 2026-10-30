@@ -34,6 +34,9 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -50,9 +53,6 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <V4L2Frame.hpp>
-#include <Configurations/InstantiatedConfigValue.hpp>
-#include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -67,7 +67,7 @@ void logStderr(fmt::format_string<Args...> format, Args&&... args) noexcept
         fmt::print(stderr, format, std::forward<Args>(args)...);
         std::fflush(stderr);
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
     }
 }
@@ -226,10 +226,7 @@ std::expected<V4L2SinkConfig, Exception> V4L2SinkConfig::fromConfig(const Instan
 }
 
 V4L2Sink::V4L2Sink(BackpressureController backpressureController, const V4L2SinkConfig& config, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , devicePath(config.device)
-    , frameRate(config.frameRate)
-    , pollTimeoutMs(config.pollTimeoutMs)
+    : Sink(std::move(backpressureController)), devicePath(config.device), frameRate(config.frameRate), pollTimeoutMs(config.pollTimeoutMs)
 {
     validateSchema(sinkDescriptor);
 }
@@ -272,7 +269,7 @@ void V4L2Sink::start(PipelineExecutionContext&)
         }
         logStderr("[V4L2Sink] device={} opened fd={} capabilities=0x{:08x}; waiting for first frame\n", devicePath, device, flags);
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         close();
         throw;

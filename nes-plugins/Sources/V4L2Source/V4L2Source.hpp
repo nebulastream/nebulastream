@@ -70,7 +70,8 @@ public:
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
-    [[nodiscard]] std::string_view getType() const override {return "V4LS";}
+    [[nodiscard]] std::string_view getType() const override { return "V4LS"; }
+
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& stream) const override;
 

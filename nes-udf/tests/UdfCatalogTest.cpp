@@ -162,7 +162,6 @@ TEST_F(UdfCatalogTest, DescriptorSurvivesReflectionRoundTrip)
     EXPECT_EQ(original, roundTripped);
 }
 
-
 TEST_F(UdfCatalogTest, RegistersCodonUdfWithoutLibraryPath)
 {
     UdfCatalog catalog;

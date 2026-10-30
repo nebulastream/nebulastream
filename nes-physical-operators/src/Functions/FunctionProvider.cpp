@@ -184,8 +184,8 @@ PhysicalFunction FunctionProvider::lowerFunction(
                                         codonImportPaths(pythonUdfImportPaths))}
                 .withSetupChildren(std::move(childFunctions));
         }
-        return PhysicalFunction{UDFPhysicalFunction(
-                                    childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor))}
+        return PhysicalFunction{
+            UDFPhysicalFunction(childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor))}
             .withSetupChildren(std::move(childFunctions));
     }
     /// Inline Python UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query
@@ -207,7 +207,8 @@ PhysicalFunction FunctionProvider::lowerFunction(
         }
         static constexpr std::string_view InlineFunctionName = "nes_inline_udf";
         const auto bridgePath = resolveBuiltinUdfBridgePath(interpreterBridgeName(pythonFunction.value()->getBackend()));
-        const auto source = buildInlinePythonSource(pythonFunction.value()->getParameterNames(), pythonFunction.value()->getBody(), InlineFunctionName);
+        const auto source
+            = buildInlinePythonSource(pythonFunction.value()->getParameterNames(), pythonFunction.value()->getBody(), InlineFunctionName);
         return PhysicalFunction{UDFPhysicalFunction(
                                     childFunctions,
                                     inputTypes,

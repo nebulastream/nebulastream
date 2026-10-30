@@ -141,6 +141,9 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     image: $WORKER_IMAGE
     pull_policy: never
     working_dir: $CONTAINER_WORKDIR/$HOST_NAME
+    environment:
+      # Python modules the UDF systests import (the systest binary sets this for local workers).
+      NES_UDF_PATH: "$NES_DIR/nes-systests/udf/pyudfs"
     healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$GRPC_PORT", "-connect-timeout", "5s" ]
       interval: 1s

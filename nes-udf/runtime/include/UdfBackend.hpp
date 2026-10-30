@@ -59,8 +59,7 @@ public:
         const std::int8_t* argNulls,
         std::int8_t* resultBuffer,
         std::uint64_t maxResultLen,
-        int* resultNull)
-        = 0;
+        int* resultNull) = 0;
 
     /// Load and prepare the UDF described by `descriptor`. v1 always returns an in-process backend.
     [[nodiscard]] static std::shared_ptr<UdfBackend> create(const UdfDescriptor& descriptor);

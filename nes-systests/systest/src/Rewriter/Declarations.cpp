@@ -42,7 +42,7 @@ void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkBy
                 registry.declare(declaration.definition->modelName->getText());
             },
             /// A UDF is looked up by its written name in the catalog, so it declares no prefixed name.
-            [](const FunctionDeclaration&) {},
+            [](const FunctionDeclaration&) { },
             [&](const SinkDeclaration& declaration)
             {
                 /// A sink name is catalog-visible only when its declaration is submitted.

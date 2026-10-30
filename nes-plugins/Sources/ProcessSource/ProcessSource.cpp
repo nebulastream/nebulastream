@@ -23,8 +23,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <expected>
 #include <ctime>
+#include <expected>
 #include <format>
 #include <memory>
 #include <optional>
@@ -41,19 +41,19 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sys/poll.h>
 #include <sys/wait.h>
 #include <ErrorHandling.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Schema/Schema.hpp>
-#include <Identifiers/Identifier.hpp>
-#include <Configurations/InstantiatedConfigValue.hpp>
-#include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -108,7 +108,10 @@ const ConfigField<std::string> COMMAND{
     }};
 
 const ConfigField<uint64_t> REFRESH_INTERVAL_MS{
-    Identifier::parse("REFRESH_INTERVAL_MS"), "How often the command is started, in milliseconds.", parsePositiveMilliseconds, uint64_t{1000}};
+    Identifier::parse("REFRESH_INTERVAL_MS"),
+    "How often the command is started, in milliseconds.",
+    parsePositiveMilliseconds,
+    uint64_t{1000}};
 
 const ConfigField<uint64_t> FLUSH_INTERVAL_MS{
     Identifier::parse("FLUSH_INTERVAL_MS"),

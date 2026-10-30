@@ -15,13 +15,13 @@
 #pragma once
 
 #include <cstddef>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <expected>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Identifiers/Identifiers.hpp>

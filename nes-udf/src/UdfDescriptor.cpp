@@ -77,13 +77,14 @@ struct ReflectedUdfDescriptor
 
 Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedUdfDescriptor{
-        .name = std::make_optional(descriptor.getName()),
-        .path = std::make_optional(descriptor.getPath().string()),
-        .entrypoint = std::make_optional(descriptor.getEntrypoint()),
-        .argTypes = std::make_optional(descriptor.getArgTypes()),
-        .returnType = std::make_optional(descriptor.getReturnType()),
-        .execution = std::make_optional(descriptor.getExecution())});
+    return context.reflect(
+        detail::ReflectedUdfDescriptor{
+            .name = std::make_optional(descriptor.getName()),
+            .path = std::make_optional(descriptor.getPath().string()),
+            .entrypoint = std::make_optional(descriptor.getEntrypoint()),
+            .argTypes = std::make_optional(descriptor.getArgTypes()),
+            .returnType = std::make_optional(descriptor.getReturnType()),
+            .execution = std::make_optional(descriptor.getExecution())});
 }
 
 UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const

@@ -111,6 +111,8 @@ setup() {
   volume=$(docker volume create)
   volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
   docker cp . $volume_host_container:/data
+  # The worker and CLI images run as the unprivileged nes user (uid 10000).
+  docker exec $volume_host_container chmod -R a+rwX /data
   docker stop -t0 $volume_host_container
   export TEST_VOLUME=$volume
   echo "# Using test volume: $TEST_VOLUME" >&3

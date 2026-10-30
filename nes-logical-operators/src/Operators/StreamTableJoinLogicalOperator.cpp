@@ -210,8 +210,9 @@ StreamTableJoinLogicalOperator StreamTableJoinLogicalOperator::withInferredSchem
 Reflected Reflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::operator()(
     const TypedLogicalOperator<StreamTableJoinLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedStreamTableJoinLogicalOperator{
-        .operatorId = op.getId(), .joinFunction = op->getJoinFunction(), .timeCharacteristics = op->getTimeCharacteristics()});
+    return context.reflect(
+        detail::ReflectedStreamTableJoinLogicalOperator{
+            .operatorId = op.getId(), .joinFunction = op->getJoinFunction(), .timeCharacteristics = op->getTimeCharacteristics()});
 }
 
 Unreflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::Unreflector(ContextType operatorMapping)

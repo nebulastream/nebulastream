@@ -38,21 +38,21 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Schema/Schema.hpp>
-#include <Configurations/InstantiatedConfigValue.hpp>
-#include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -181,10 +181,14 @@ const ConfigField<uint32_t> BUFFER_COUNT{
     Identifier::parse("BUFFER_COUNT"),
     "The number of mapped capture buffers, at least 2.",
     [](const ConfigLiteral& literal)
-    { return tryGetOr<int64_t>(literal, expectedType<uint32_t>()).and_then(narrowConfigValue<int64_t, uint32_t, std::numeric_limits<uint32_t>::max(), 2>); },
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint32_t>())
+            .and_then(narrowConfigValue<int64_t, uint32_t, std::numeric_limits<uint32_t>::max(), 2>);
+    },
     uint32_t{4}};
 const ConfigField<uint32_t> POLL_TIMEOUT_MS{
     Identifier::parse("POLL_TIMEOUT_MS"), "How long to wait for a frame, in milliseconds.", parseUInt32, uint32_t{1000}};
+
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 uint64_t captureTimestampInNanoseconds()
@@ -312,7 +316,7 @@ void V4L2Source::open(std::shared_ptr<AbstractBufferProvider> provider)
             pixelFormatToString(requestedPixelFormat),
             requestedFrameRate);
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         close();
         throw;
@@ -381,7 +385,7 @@ Source::FillTupleBufferResult V4L2Source::fillTupleBuffer(TupleBuffer& tupleBuff
                 .image = VariableSizedAccess{tupleBuffer.storeChildBuffer(*childBuffer), VariableSizedAccess::Size{buffer.bytesused}}};
             std::memcpy(tupleBuffer.getAvailableMemoryArea().data(), &tuple, sizeof(tuple));
         }
-        catch (...)
+        catch (...) /// NOLINT(no-raw-catch-all)
         {
             checkedIoctl(device, VIDIOC_QBUF, &buffer, "requeueing capture buffer after an error");
             throw;

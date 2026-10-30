@@ -96,8 +96,7 @@ void* InProcessBackend::loadBridge(const std::filesystem::path& bridgePath)
     if (executeFn == nullptr || cleanupFn == nullptr)
     {
         dlclose(handle);
-        throw CannotLoadUdf(
-            "UDF library '{}' does not export the required symbols execute_udf_row/cleanup_udf", bridgePath.string());
+        throw CannotLoadUdf("UDF library '{}' does not export the required symbols execute_udf_row/cleanup_udf", bridgePath.string());
     }
     return handle;
 }
@@ -150,8 +149,7 @@ InProcessBackend::InProcessBackend(
     auto* const initializeFn = reinterpret_cast<InitializeUdfFromSourceFn>(dlsym(libHandle, "initialize_udf_from_source"));
     if (initializeFn == nullptr)
     {
-        throw CannotLoadUdf(
-            "UDF bridge '{}' does not export the required symbol initialize_udf_from_source", bridgePath.string());
+        throw CannotLoadUdf("UDF bridge '{}' does not export the required symbol initialize_udf_from_source", bridgePath.string());
     }
 
     argTypeCodes.reserve(argCount);

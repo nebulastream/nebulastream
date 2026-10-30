@@ -1088,8 +1088,7 @@ void AntlrSQLQueryPlanCreator::exitPythonFunction(AntlrSQLParser::PythonFunction
     PRECONDITION(body.size() >= Delimiter.size() * 2, "Malformed Python UDF body");
     body = body.substr(Delimiter.size(), body.size() - Delimiter.size() * 2);
 
-    const auto backend
-        = context->bridge != nullptr ? parsePythonUdfBackend(bindStringLiteral(context->bridge)) : PythonUdfBackend::Codon;
+    const auto backend = context->bridge != nullptr ? parsePythonUdfBackend(bindStringLiteral(context->bridge)) : PythonUdfBackend::Codon;
 
     auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
     functions.emplace_back(PythonLogicalFunction(
@@ -1276,8 +1275,9 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
             : helpers.top().joinKeyRelationHelper.at(0);
         AsOfJoinTimeCharacteristics timeCharacteristics{
             std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value())};
-        helpers.top().queryPlans.push_back(LogicalPlanBuilder::addAsOfJoin(
-            leftQueryPlan, rightQueryPlan, joinFunction, std::move(timeCharacteristics), context->TABLE() != nullptr));
+        helpers.top().queryPlans.push_back(
+            LogicalPlanBuilder::addAsOfJoin(
+                leftQueryPlan, rightQueryPlan, joinFunction, std::move(timeCharacteristics), context->TABLE() != nullptr));
         AntlrSQLBaseListener::exitJoinRelation(context);
         return;
     }

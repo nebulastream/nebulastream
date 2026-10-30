@@ -26,15 +26,15 @@
 #include <string>
 #include <string_view>
 #include <time.h>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Schema/Schema.hpp>
-#include <Configurations/InstantiatedConfigValue.hpp>
-#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {

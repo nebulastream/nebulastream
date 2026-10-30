@@ -29,22 +29,22 @@
 #include <glib.h>
 #include <glibconfig.h>
 
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/EventTrace.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Schema/Schema.hpp>
-#include <Configurations/InstantiatedConfigValue.hpp>
-#include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -173,8 +173,7 @@ std::expected<VideoSourceConfig, Exception> VideoSourceConfig::fromConfig(const 
     return VideoSourceConfig{.sourceSelector = config.get(SOURCE_SELECTOR)};
 }
 
-VideoSource::VideoSource(const VideoSourceConfig& config, const SourceDescriptor& sourceDescriptor)
-    : sourceSelector(config.sourceSelector)
+VideoSource::VideoSource(const VideoSourceConfig& config, const SourceDescriptor& sourceDescriptor) : sourceSelector(config.sourceSelector)
 {
     validateSchema(sourceDescriptor);
 }

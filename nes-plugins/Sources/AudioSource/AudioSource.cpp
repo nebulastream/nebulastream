@@ -29,21 +29,21 @@
 #include <type_traits>
 #include <utility>
 
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Ranges.hpp>
 #include <alsa/error.h>
 #include <alsa/pcm.h>
 #include <ErrorHandling.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Schema/Schema.hpp>
-#include <Configurations/InstantiatedConfigValue.hpp>
-#include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/ConfigField.hpp>
 
 namespace NES
 {
@@ -221,8 +221,7 @@ uint64_t AudioSource::captureTimeOfOldestUnreadFrameNs() const
     /// No device timestamp: the frames queued right now were captured before the current time.
     const auto queued = snd_pcm_avail(pcm);
     const uint64_t backlogNs = queued > 0 ? (static_cast<uint64_t>(queued) * 1'000'000'000ULL) / sampleRate : 0;
-    const uint64_t now
-        = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const uint64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     return now > backlogNs ? now - backlogNs : now;
 }
 

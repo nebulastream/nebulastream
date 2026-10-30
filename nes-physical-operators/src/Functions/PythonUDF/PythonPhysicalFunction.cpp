@@ -3,8 +3,17 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-        http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
+
+#include <Functions/PythonPhysicalFunction.hpp>
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -31,7 +40,6 @@
 #include <unistd.h>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
-#include <Functions/PythonPhysicalFunction.hpp>
 #include <Functions/PythonUDF/PythonUdfFilesystem.hpp>
 #include <Functions/PythonUDF/PythonUdfRuntime.hpp>
 #include <Interface/Record.hpp>
@@ -207,12 +215,13 @@ std::string createPythonUdfSource(
     for (size_t index = 0; index < parameterNames.size(); ++index)
     {
         const auto pythonType = pythonTypeName(argumentTypes[index]);
-        parameters.emplace_back(fmt::format(
-            "{}: {}{}{}",
-            parameterNames[index],
-            argumentTypes[index].nullable ? "Optional[" : "",
-            pythonType,
-            argumentTypes[index].nullable ? "]" : ""));
+        parameters.emplace_back(
+            fmt::format(
+                "{}: {}{}{}",
+                parameterNames[index],
+                argumentTypes[index].nullable ? "Optional[" : "",
+                pythonType,
+                argumentTypes[index].nullable ? "]" : ""));
         if (argumentTypes[index].type == DataType::Type::VARSIZED)
         {
             abiParameters.emplace_back(fmt::format("_arg{}_ptr: Ptr[byte]", index));
@@ -220,12 +229,13 @@ std::string createPythonUdfSource(
             if (argumentTypes[index].nullable)
             {
                 abiParameters.emplace_back(fmt::format("_arg{}_is_null: u8", index));
-                bodyArguments.emplace_back(fmt::format(
-                    "Optional[str]() if bool(_arg{}_is_null) else Optional[str](str(_arg{}_ptr, int(_arg{}_size)))",
-                    index,
-                    index,
-                    index,
-                    index));
+                bodyArguments.emplace_back(
+                    fmt::format(
+                        "Optional[str]() if bool(_arg{}_is_null) else Optional[str](str(_arg{}_ptr, int(_arg{}_size)))",
+                        index,
+                        index,
+                        index,
+                        index));
             }
             else
             {
@@ -238,13 +248,14 @@ std::string createPythonUdfSource(
             if (argumentTypes[index].nullable)
             {
                 abiParameters.emplace_back(fmt::format("_arg{}_is_null: u8", index));
-                bodyArguments.emplace_back(fmt::format(
-                    "Optional[{}]() if bool(_arg{}_is_null) else Optional[{}]({}(_arg{}))",
-                    pythonType,
-                    index,
-                    pythonType,
-                    pythonType,
-                    index));
+                bodyArguments.emplace_back(
+                    fmt::format(
+                        "Optional[{}]() if bool(_arg{}_is_null) else Optional[{}]({}(_arg{}))",
+                        pythonType,
+                        index,
+                        pythonType,
+                        pythonType,
+                        index));
             }
             else
             {

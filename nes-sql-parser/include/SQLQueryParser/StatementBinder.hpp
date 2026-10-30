@@ -41,9 +41,9 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <UdfDescriptor.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
+#include <UdfDescriptor.hpp>
 
 namespace NES
 {

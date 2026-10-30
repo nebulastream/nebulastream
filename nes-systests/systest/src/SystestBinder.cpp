@@ -50,10 +50,10 @@
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
-#include <UdfCatalog.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <UdfCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES

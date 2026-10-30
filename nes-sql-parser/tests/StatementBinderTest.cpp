@@ -56,10 +56,10 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
-#include <UdfBridgeRegistry.hpp>
-#include <UdfDescriptor.hpp>
 #include <QueryId.hpp>
 #include <TCPSink.hpp>
+#include <UdfBridgeRegistry.hpp>
+#include <UdfDescriptor.hpp>
 
 namespace NES
 {

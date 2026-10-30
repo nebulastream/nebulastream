@@ -678,7 +678,8 @@ PipeQueryMetadata findPipeEndpoints(const NES::CLI::NamedQuery& query)
     /// Frontend-only shorthand. A sink is PIPE(name, "host"), while a source is PIPE(name).
     /// PIPE is intentionally found independent of its surrounding relation syntax so FROM, JOIN, and nested table expressions work.
     static const std::regex PipePattern{
-        R"pipe(\bPIPE\s*\(\s*((?:[a-zA-Z_][a-zA-Z0-9_]*)|(?:"[^"]*"))\s*(?:,\s*"([a-zA-Z0-9.:-]*)")?\s*\))pipe", std::regex_constants::icase};
+        R"pipe(\bPIPE\s*\(\s*((?:[a-zA-Z_][a-zA-Z0-9_]*)|(?:"[^"]*"))\s*(?:,\s*"([a-zA-Z0-9.:-]*)")?\s*\))pipe",
+        std::regex_constants::icase};
 
     PipeQueryMetadata metadata;
     for (auto iter = std::sregex_iterator(query.query.begin(), query.query.end(), PipePattern); iter != std::sregex_iterator{}; ++iter)
@@ -697,12 +698,13 @@ PipeQueryMetadata findPipeEndpoints(const NES::CLI::NamedQuery& query)
             throw NES::InvalidConfigParameter(
                 "Pipe source '{}' must not specify a host; its host is derived from the producing sink", match[1].str());
         }
-        metadata.endpoints.emplace_back(PipeEndpoint{
-            .type = isSink ? PipeEndpointType::Sink : PipeEndpointType::Source,
-            .name = std::move(name),
-            .host = host,
-            .offset = offset,
-            .length = static_cast<size_t>(match.length())});
+        metadata.endpoints.emplace_back(
+            PipeEndpoint{
+                .type = isSink ? PipeEndpointType::Sink : PipeEndpointType::Source,
+                .name = std::move(name),
+                .host = host,
+                .offset = offset,
+                .length = static_cast<size_t>(match.length())});
     }
     return metadata;
 }
@@ -1147,17 +1149,19 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         const auto isCodon = bridge.has_value() && *bridge == NES::CodonUdfBridge;
         if (isCodon && path.has_value())
         {
-            throw NES::InvalidConfigParameter("Function '{}': `bridge: {}` compiles the entrypoint module and takes no `path`", name, *bridge);
+            throw NES::InvalidConfigParameter(
+                "Function '{}': `bridge: {}` compiles the entrypoint module and takes no `path`", name, *bridge);
         }
         const auto libraryPath = isCodon ? std::string{} : path.has_value() ? *path : NES::resolveBuiltinUdfBridgePath(*bridge).string();
-        statements.emplace_back(NES::CreateFunctionStatement{
-            .name = fmt::format("{}", bindIdentifierName(name)),
-            .path = libraryPath,
-            .entrypoint = entrypoint,
-            .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
-                | std::ranges::to<std::vector<NES::DataType>>(),
-            .returnType = returns,
-            .execution = isCodon ? NES::UdfExecution::Codon : NES::UdfExecution::InProcess});
+        statements.emplace_back(
+            NES::CreateFunctionStatement{
+                .name = fmt::format("{}", bindIdentifierName(name)),
+                .path = libraryPath,
+                .entrypoint = entrypoint,
+                .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
+                    | std::ranges::to<std::vector<NES::DataType>>(),
+                .returnType = returns,
+                .execution = isCodon ? NES::UdfExecution::Codon : NES::UdfExecution::InProcess});
     }
     return statements;
 }

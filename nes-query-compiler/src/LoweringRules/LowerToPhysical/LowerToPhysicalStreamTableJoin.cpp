@@ -71,9 +71,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
         | std::views::transform([](const auto& child)
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
-    auto physicalJoinFunction
-        = QueryCompilation::FunctionProvider::lowerFunction(
-            join->getJoinFunction(), FieldMappingTrait{std::move(combinedMappings)}, conf.getPythonUdfImportPaths());
+    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(
+        join->getJoinFunction(), FieldMappingTrait{std::move(combinedMappings)}, conf.getPythonUdfImportPaths());
 
     std::unique_ptr<TimeFunction> streamTimeFunction;
     std::unique_ptr<TimeFunction> tableTimeFunction;
@@ -92,7 +91,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
                     [&](const Windowing::BoundEventTimeCharacteristic& eventTime) -> std::unique_ptr<TimeFunction>
                     {
                         return std::make_unique<EventTimeFunction>(
-                            QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping, conf.getPythonUdfImportPaths()), eventTime.unit);
+                            QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping, conf.getPythonUdfImportPaths()),
+                            eventTime.unit);
                     }},
                 characteristic);
         };
