@@ -69,7 +69,7 @@ public:
     void incrementNumberOfInputPipelines() override;
     uint64_t getWindowSize() const override;
     std::span<std::byte>
-    allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
+    allocateSpaceForSliceCache(const SliceCache& sliceCache, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
 
     /// Creates a SliceStoreRef that wraps this store. The store provides its own SliceCacheConfiguration;
     /// the caller only supplies the two operator-specific callbacks.
@@ -77,8 +77,21 @@ public:
         DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator);
 
 private:
+    /// Memory of one pipeline's slice cache plus the geometry needed to walk its entries during garbage collection
+    struct SliceCacheMemory
+    {
+        std::unique_ptr<TupleBuffer> buffer;
+        uint64_t totalNumberOfEntries;
+        uint64_t sizeOfEntry;
+    };
+
+    /// Slice caches hand out raw pointers into slices without consulting the slice store. Before garbage collection frees
+    /// slices, we therefore invalidate every cache entry that may point into one of them by setting its slice end to 0,
+    /// which no timestamp can match. This is the only write into the caches from outside their owning worker threads.
+    void invalidateSliceCacheEntries(SliceEnd highestDeletedSliceEnd);
+
     SliceCacheConfiguration sliceCacheConfiguration;
-    folly::Synchronized<std::unordered_map<PipelineId, std::unique_ptr<TupleBuffer>>> pipelineIdToSliceCacheStarts;
+    folly::Synchronized<std::unordered_map<PipelineId, SliceCacheMemory>> pipelineIdToSliceCacheMemory;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

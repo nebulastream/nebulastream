@@ -52,6 +52,16 @@ void SliceCache::setNumberOfWorkerThreads(const uint64_t numberOfWorkerThreads)
     this->numberOfWorkerThreads = numberOfWorkerThreads;
 }
 
+uint64_t SliceCache::getTotalNumberOfEntries() const
+{
+    return numberOfWorkerThreads * numberOfEntries;
+}
+
+uint64_t SliceCache::getSizeOfEntry() const
+{
+    return sizeOfEntry;
+}
+
 void SliceCache::setStartOfEntries(const std::span<std::byte>& startOfSliceCache)
 {
     ///NOLINTNEXTLINE (cppcoreguidelines-pro-type-reinterpret-cast)
