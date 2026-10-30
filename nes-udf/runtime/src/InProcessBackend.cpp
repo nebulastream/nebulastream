@@ -89,7 +89,11 @@ int toUdfTypeCode(const DataType::Type type)
 
 void* InProcessBackend::loadBridge(const std::filesystem::path& bridgePath)
 {
-    void* handle = dlopen(bridgePath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    /// RTLD_LOCAL, not RTLD_GLOBAL: the CPython and PyPy bridges each embed a Python runtime that defines the
+    /// same CPython API symbols (PyPy through cpyext). Loaded globally, whichever bridge comes first serves those
+    /// symbols to the other, which then initializes one runtime and calls into the other -- a segfault in the
+    /// worker. Kept local, each bridge resolves its own; the entry points are found through dlsym on the handle.
+    void* handle = dlopen(bridgePath.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (handle == nullptr)
     {
         throw CannotLoadUdf("Failed to load UDF library '{}': {}", bridgePath.string(), dlerror());

@@ -50,6 +50,8 @@ std::mutex g_mutex;
 std::unordered_map<int, UdfCtx*> g_registry;
 int g_nextHandle = 1;
 std::once_flag g_pyInit;
+/* Written once under g_pyInit, read afterwards: whether the embedded interpreter came up. */
+bool g_pyReady = false;
 
 char* dupString(const std::string& text)
 {
@@ -63,7 +65,23 @@ char* dupString(const std::string& text)
 
 void initPythonOnce()
 {
-    Py_InitializeEx(0);
+    /* A UDF naming this bridge by an explicit path and one resolved through BRIDGE load two copies of this
+     * library into the worker, each with its own g_pyInit, but both share the one embedded interpreter. Only
+     * the copy that actually starts it up holds the GIL afterwards; on an already running interpreter
+     * Py_InitializeEx returns without one, so take the GIL explicitly below rather than assume we hold it. */
+    if (Py_IsInitialized() == 0)
+    {
+        Py_InitializeEx(0);
+        /* Py_InitializeEx reports a failed start-up (e.g. a stdlib it cannot locate) by leaving the interpreter
+         * uninitialized rather than by returning, and every later C API call on that state segfaults. Record the
+         * outcome so the UDF entry points can fail the query instead of taking the process down with them. */
+        if (Py_IsInitialized() == 0)
+        {
+            return;
+        }
+        PyEval_SaveThread(); /* release the GIL so PyGILState_Ensure works from any thread */
+    }
+    const PyGILState_STATE gil = PyGILState_Ensure();
 
     /* Opt-in venv for third-party packages (e.g. onnxruntime) not on the system Python's site-packages.
      * NES_UDF_VENV names a `python -m venv` directory; unset (the default) leaves the embedded interpreter
@@ -105,7 +123,8 @@ void initPythonOnce()
         PyList_Insert(sysPath, 0, entry);
         Py_DECREF(entry);
     }
-    PyEval_SaveThread(); /* release the GIL so PyGILState_Ensure works from any thread */
+    g_pyReady = true;
+    PyGILState_Release(gil);
 }
 
 /* Must be called with the GIL held and a Python error set; returns a malloc'd message. */
@@ -335,6 +354,14 @@ extern "C" int initialize_udf(const char* entrypoint, int argc, const int* arg_t
         *errormessage = nullptr;
     }
     std::call_once(g_pyInit, initPythonOnce);
+    if (!g_pyReady)
+    {
+        if (errormessage != nullptr)
+        {
+            *errormessage = dupString("the embedded Python interpreter could not be initialized");
+        }
+        return -1;
+    }
     const PyGILState_STATE gil = PyGILState_Ensure();
 
     const std::string full = (entrypoint != nullptr) ? entrypoint : "";
@@ -375,6 +402,14 @@ extern "C" int initialize_udf_from_source(
         *errormessage = nullptr;
     }
     std::call_once(g_pyInit, initPythonOnce);
+    if (!g_pyReady)
+    {
+        if (errormessage != nullptr)
+        {
+            *errormessage = dupString("the embedded Python interpreter could not be initialized");
+        }
+        return -1;
+    }
     const PyGILState_STATE gil = PyGILState_Ensure();
 
     const std::string sourceText = (source != nullptr) ? source : "";
