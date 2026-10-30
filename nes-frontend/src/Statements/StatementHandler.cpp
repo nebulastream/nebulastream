@@ -465,7 +465,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
             distributedPlan.setQueryId(*statement.id);
         }
 
-        return queryManager->start(distributedPlan)
+        return queryManager->start(distributedPlan, QueryManager::StartWait::Running)
             .transform([](DistributedQueryId distQueryId) { return QueryStatementResult{std::move(distQueryId)}; })
             .transform_error(
                 [](auto vecOfErrors)

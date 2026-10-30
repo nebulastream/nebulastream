@@ -109,7 +109,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 }
 
-[[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(const DistributedLogicalPlan& plan)
+[[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>>
+QueryManager::start(const DistributedLogicalPlan& plan, const StartWait wait)
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
 
@@ -182,8 +183,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
     this->state.queries.emplace(id, std::move(localQueries));
 
-    /// Poll until all local queries are running or have terminated, so dependent queries can
-    /// safely use resources created during startup.
+    /// Poll until all local queries have advanced past Registered, or with StartWait::Running until they are running or
+    /// have terminated, so dependent queries can safely use resources created during startup.
     auto query = this->state.queries.at(id);
     auto waitForStatusChange = query.iterate()
         | std::views::transform([](const auto& pair) { return std::pair{std::get<0>(pair), std::get<1>(pair)}; })
@@ -207,6 +208,10 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 {
                     exceptions.emplace_back(QueryStartFailed("Waiting for query state to change: {}", result.error()));
                     return true;
+                }
+                if (wait == StartWait::Started)
+                {
+                    return result->state != QueryStatus::Registered;
                 }
                 return result->state == QueryStatus::Running or result->state == QueryStatus::Stopped
                     or result->state == QueryStatus::Failed;

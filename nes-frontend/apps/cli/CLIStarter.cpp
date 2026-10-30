@@ -1437,7 +1437,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
                 distributedPlan.setQueryId(*id);
             }
             resolvePipeSink(pipeMetadata[queryIndex], distributedPlan, resolvedPipes);
-            auto result = queryManager->start(distributedPlan);
+            auto result = queryManager->start(distributedPlan, NES::QueryManager::StartWait::Running);
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(*result);

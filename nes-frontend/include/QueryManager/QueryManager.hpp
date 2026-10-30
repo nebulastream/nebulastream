@@ -115,8 +115,19 @@ class QueryManager
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
-    /// Compiles and starts the distributed query on all assigned workers. Blocks until every local query is running or terminated.
-    [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
+    /// How long start() blocks after submitting the local queries.
+    enum class StartWait : uint8_t
+    {
+        /// Until every local query has left Registered, so its status is meaningful. Compilation may still be running.
+        Started,
+        /// Until every local query is running or terminated, so dependent queries can use resources created during startup.
+        /// Queries submitted one after another this way compile one after another.
+        Running,
+    };
+
+    /// Compiles and starts the distributed query on all assigned workers.
+    [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>>
+    start(const DistributedLogicalPlan& plan, StartWait wait = StartWait::Started);
     std::expected<void, std::vector<Exception>> stop(const DistributedQueryId& query);
     /// Turns latency tracing on or off on every worker the query runs on.
     std::expected<void, std::vector<Exception>> setLatencyTracing(const DistributedQueryId& query, bool enabled);
