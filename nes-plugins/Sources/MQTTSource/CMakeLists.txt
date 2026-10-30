@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Generally, when building a plugin, you can internally structure and link it how you want, you only need to connect
+# it correctly to the registry entry glue code, as is shown below
+
 include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
 # One implementation library serving all registries this plugin participates in.
@@ -20,7 +23,15 @@ target_include_directories(mqtt_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOU
 find_package(PahoMqttCpp CONFIG REQUIRED)
 target_link_libraries(mqtt_source_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 
+# This call ensures that the glue code that loads a plugin, which is part of the registry target, can refer to some symbols from the MQTT source header,
+# which get resolved during the final link time when everything is assembled into one big binary (interface link).
+# Als, it creates a direct dependency of this plugin on its library (private link).
 link_plugin_library(nes-sources mqtt_source_plugin_library)
+# These calls generate some glue-code for loading the plugin that is added to the registries target
+# It needs to include the headers of this MQTT Source so that it can refer to it.
+# That means that the header declaring the symbols (in this case the source constructor and the validateAndFormat function)
+# Needs to follow the naming convention set out by the registry, so that it can be found automatically.
+# For sources its "\${PLUGIN_NAME}Source.hpp" , so the header for the plugin named MQTT must be MQTTSource.hpp
 add_registry_entry(Source MQTT)
 add_registry_entry(SourceConfigSchema MQTT)
 add_registry_entry(SourceConfig MQTT)
