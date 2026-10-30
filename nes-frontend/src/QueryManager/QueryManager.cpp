@@ -123,6 +123,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
         throw QueryAlreadyRegistered("{}", plan.getQueryId());
     }
 
+    /// NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores) only read by NES_DEBUG, which may be compiled out
     const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
     std::vector<Exception> exceptions;
 

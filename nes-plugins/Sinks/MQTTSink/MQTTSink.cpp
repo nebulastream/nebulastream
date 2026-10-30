@@ -65,7 +65,7 @@ std::string generateClientId(std::string clientId)
     return clientId;
 }
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> SERVER_URI{Identifier::parse("SERVER_URI"), "The MQTT broker URI"};
 
 const ConfigField<std::string> CLIENT_ID{
@@ -98,7 +98,7 @@ const ConfigField<int64_t> MAX_OUTSTANDING_MESSAGES{
     "Maximum number of unacknowledged QoS>=1 messages; no effect under QoS 0",
     [](const ConfigLiteral& literal) { return tryGetOr<int64_t>(literal, expectedType<int64_t>()); },
     int64_t{128}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 }
 
 Schema<QualifiedErasedConfigField, Ordered> MQTTSink::getConfigSchema()

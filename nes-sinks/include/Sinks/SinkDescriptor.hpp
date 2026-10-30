@@ -244,7 +244,7 @@ private:
 public:
     /// General sink config fields, shared by all sink types. Host determines worker placement;
     /// the (optional) schema types the sink's input for anonymous sinks declared inside a query.
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<Host> HOST{
         Identifier::parse("HOST"),
         "Where to place the sink, in the form of host:port . Must be a NES node that is part of the topology.",
@@ -255,7 +255,7 @@ public:
         },
         Host{Host::INVALID}};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{
         Identifier::parse("SCHEMA"),
         "The schema of the sink, only specifiable as an option in anonymous sources.",
@@ -263,12 +263,12 @@ public:
         { return tryGetOr<Schema<UnqualifiedUnboundField, Ordered>>(literal, expectedType<Schema<UnqualifiedUnboundField, Ordered>>()); },
         std::nullopt};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<bool> ADD_TIMESTAMP{
         Identifier::parse("ADD_TIMESTAMP"), "A boolean indicating whether to add a timestamp to tuples", false};
 
     /// Shared declarations used only by sinks with backpressure support.
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<size_t> BACKPRESSURE_UPPER_THRESHOLD{
         Identifier::parse("BACKPRESSURE_UPPER_THRESHOLD"),
         "The number of buffers a sink is not able to emit, that needs to be reached before it starts applying backpressure.",
@@ -276,7 +276,7 @@ public:
         { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
         size_t{1000}};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<size_t> BACKPRESSURE_LOWER_THRESHOLD{
         Identifier::parse("BACKPRESSURE_LOWER_THRESHOLD"),
         "The number of buffers a sink a sink is not able to emit, that needs to be reached so that the sink stops applying backpressure.",
@@ -284,7 +284,7 @@ public:
         { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
         size_t{200}};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline auto configSchema = createConfigSchema(Identifier::parse("SINK"), HOST, SCHEMA, ADD_TIMESTAMP);
 
     friend struct SinkLogicalOperator;

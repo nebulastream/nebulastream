@@ -55,7 +55,7 @@ namespace
 
 /// Config fields of the file sink, shared by getConfigSchema (declaration) and
 /// FileSinkConfig::fromConfig (typed extraction).
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::filesystem::path> FILE_PATH{
     Identifier::parse("FILE_PATH"),
     "The path to the file to write tuples to.",
@@ -67,7 +67,7 @@ const ConfigField<std::filesystem::path> FILE_PATH{
 
 const ConfigField<bool> APPEND{
     Identifier::parse("APPEND"), "A boolean, where TRUE indicates to append to the specified file, and false to overwrite it.", false};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

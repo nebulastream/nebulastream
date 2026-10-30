@@ -73,7 +73,7 @@ private:
     DistributedQueryId distributedQueryId;
 };
 
-inline const QueryId INVALID_QUERY_ID = QueryId::invalid(); /// NOLINT(cert-err58-cpp)
+inline const QueryId INVALID_QUERY_ID = QueryId::invalid(); /// NOLINT(bugprone-throwing-static-initialization)
 
 }
 

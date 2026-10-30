@@ -54,7 +54,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> DATA_ENDPOINT{
     Identifier::parse("DATA_ENDPOINT"), "The data-plane host:port of the worker with corresponding network source."};
 
@@ -77,7 +77,7 @@ const ConfigField<size_t> MAX_PENDING_ACKS{
     { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
     size_t{0}};
 
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

@@ -52,7 +52,7 @@ void KafkaSink::DeliveryReportCallback::dr_cb(RdKafka::Message& message)
 
 namespace
 {
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> BROKERS{Identifier::parse("BROKERS"), "Comma-separated Kafka bootstrap servers"};
 
 const ConfigField<std::string> TOPIC{Identifier::parse("TOPIC"), "The Kafka topic to produce to"};
@@ -97,7 +97,7 @@ const ConfigField<int64_t> DELIVERY_TIMEOUT_MS{
         return value;
     },
     int64_t{5000}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 }
 
 Schema<QualifiedErasedConfigField, Ordered> KafkaSink::getConfigSchema()

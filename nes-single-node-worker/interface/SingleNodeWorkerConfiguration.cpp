@@ -38,7 +38,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> DATA_ADDRESS{
     Identifier::parse("data_address"), "Data-plane address. This is the {Hostname}:{PORT}", std::string{}};
 
@@ -83,7 +83,7 @@ const ConfigField<bool> ENABLE_GOOGLE_EVENT_TRACE{
     Identifier::parse("enable_event_trace"),
     "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis.",
     false};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

@@ -50,14 +50,14 @@ namespace
 
 /// Config fields of the print sink, shared by getConfigSchema (declaration) and
 /// PrintSinkConfig::fromConfig (typed extraction).
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<uint32_t> INGESTION{
     Identifier::parse("INGESTION"),
     "Artificial delay in milliseconds after emitting each buffer. 0 disables the delay.",
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint32_t>()).and_then(narrowConfigValue<int64_t, uint32_t>); },
     uint32_t{0}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

@@ -81,7 +81,7 @@ namespace
 
 /// Config fields of the CSV output formatter, shared by getConfigSchema (declaration) and
 /// CSVOutputFormatterConfig::fromConfig (typed extraction).
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<bool> QUOTE_STRINGS{
     Identifier::parse("QUOTE_STRINGS"), "A boolean, where true indicates that strings (varsized) elements should be quoted.", false};
 
@@ -90,7 +90,7 @@ const ConfigField<std::string> FIELD_DELIMITER{
 
 const ConfigField<std::string> TUPLE_DELIMITER{
     Identifier::parse("TUPLE_DELIMITER"), "A string to be used for delimiting tuples.", std::string{"\n"}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

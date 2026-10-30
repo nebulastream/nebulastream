@@ -48,7 +48,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::filesystem::path> FILE_PATH{
     Identifier::parse("FILE_PATH"),
     "Path to the file to be read",
@@ -57,7 +57,7 @@ const ConfigField<std::filesystem::path> FILE_PATH{
         return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
             .transform([](const auto& val) { return std::filesystem::path{val}; });
     }};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

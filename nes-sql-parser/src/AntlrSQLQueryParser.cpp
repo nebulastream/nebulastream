@@ -47,6 +47,7 @@ class ThrowingErrorListener final : public antlr4::BaseErrorListener
 public:
     explicit ThrowingErrorListener(std::string_view query) : query(query) { }
 
+private:
     void syntaxError(
         antlr4::Recognizer*, antlr4::Token*, size_t line, size_t charPositionInLine, const std::string& msg, std::exception_ptr) override
     {
@@ -54,7 +55,6 @@ public:
             "Antlr exception during parsing: {} in {}", fmt::format("line {}:{} {}", line, charPositionInLine, msg), query);
     }
 
-private:
     std::string_view query;
 };
 

@@ -40,7 +40,7 @@ HJSlice::getHashMapBufferRefForSide(const WorkerThreadId workerThreadId, const J
 {
     /// Hashmaps of the left build side come before right
     auto pos = (workerThreadId % getNumHashMapsPerInputStream())
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * getNumHashMapsPerInputStream()));
+        + (static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * getNumHashMapsPerInputStream());
     const auto numHashMaps = getNumberOfHashMaps();
     INVARIANT(
         numHashMaps > 0 and pos < numHashMaps,
@@ -56,7 +56,7 @@ HJSlice::getHashMapBufferRefForSide(const WorkerThreadId workerThreadId, const J
 {
     /// Hashmaps of the left build side come before right
     auto pos = (workerThreadId % getNumHashMapsPerInputStream())
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * getNumHashMapsPerInputStream()));
+        + (static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * getNumHashMapsPerInputStream());
     const auto numHashMaps = getNumberOfHashMaps();
     INVARIANT(
         numHashMaps > 0 and pos < numHashMaps,

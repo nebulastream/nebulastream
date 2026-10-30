@@ -133,7 +133,7 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
         const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
+            windowsToSlices[{.windowInfo = windowInfo, .sequenceNumber = newSequenceNumber}].emplace_back(slice);
         }
     }
     return windowsToSlices;
@@ -165,7 +165,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
         const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
+            windowsToSlices[{.windowInfo = windowInfo, .sequenceNumber = newSequenceNumber}].emplace_back(slice);
         }
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
     };
