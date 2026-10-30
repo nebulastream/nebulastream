@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/ArithmeticalFunctions/CosSimLogicalFunction.hpp>
+#include <Functions/VectorFunctions/CosSimLogicalFunction.hpp>
 
 #include <algorithm>
 #include <ranges>
@@ -64,7 +64,7 @@ LogicalFunction CosSimLogicalFunction::withInferredDataType(const Schema<Field, 
     copy.right = right.withInferredDataType(schema);
     if ((!copy.left.getDataType().isType(DataType::Type::VARSIZED)) || (!copy.right.getDataType().isType(DataType::Type::VARSIZED)))
     {
-        throw CannotInferStamp("Can only apply cossim to two VARSIZED vector input, but got left: {}, right: {}",
+        throw CannotInferStamp("Can only apply cossim to two VARSIZED vector inputs, but got left: {}, right: {}",
             copy.left.getDataType(), copy.right.getDataType());
     }
     copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);

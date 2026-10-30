@@ -14,7 +14,6 @@
 add_unreflection_entry(LogicalFunction Absolute KEY Abs)
 add_unreflection_entry(LogicalFunction Add)
 add_unreflection_entry(LogicalFunction Ceil)
-add_unreflection_entry(LogicalFunction CosSim)
 add_unreflection_entry(LogicalFunction Div)
 add_unreflection_entry(LogicalFunction Exp)
 add_unreflection_entry(LogicalFunction Floor)
@@ -28,7 +27,6 @@ add_unreflection_entry(LogicalFunction Sub)
 add_source_files(nes-logical-operators
         AbsoluteLogicalFunction.cpp
         AddLogicalFunction.cpp
-        CosSimLogicalFunction.cpp
         CeilLogicalFunction.cpp
         DivLogicalFunction.cpp
         ExpLogicalFunction.cpp
@@ -44,7 +42,6 @@ add_source_files(nes-logical-operators
 add_registry_entry(LogicalFunction Absolute KEY Abs)
 add_registry_entry(LogicalFunction Add)
 add_registry_entry(LogicalFunction Ceil)
-add_registry_entry(LogicalFunction CosSim)
 add_registry_entry(LogicalFunction Div)
 add_registry_entry(LogicalFunction Exp)
 add_registry_entry(LogicalFunction Floor)
