@@ -15,6 +15,7 @@
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -213,6 +214,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
 void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
     std::vector<std::shared_ptr<Slice>> slicesToDelete;
+    std::optional<SliceEnd> highestDeletedSliceEnd;
     {
         NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
 
@@ -256,6 +258,8 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
                         /// As we are first copying the shared_ptr the destructor of Slice will not be called.
                         /// This allows us to solely collect what slices to delete during holding the lock, while the time-consuming destructor is called without holding any locks
                         slicesToDelete.emplace_back(slicePtr);
+                        /// The slices are sorted by their end, so the last deleted slice has the highest end
+                        highestDeletedSliceEnd = sliceEnd;
                         slicesLockedIt = slicesWriteLocked->erase(slicesLockedIt);
                     }
                     else
@@ -268,8 +272,39 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
         }
     }
 
+    if (highestDeletedSliceEnd.has_value())
+    {
+        invalidateSliceCacheEntries(highestDeletedSliceEnd.value());
+    }
+
     /// Now we can remove/call destructor on every slice without still holding the lock
     slicesToDelete.clear();
+}
+
+void DefaultTimeBasedSliceStore::invalidateSliceCacheEntries(const SliceEnd highestDeletedSliceEnd)
+{
+    /// The owning worker threads read and write their entries concurrently and without synchronization. Writing only the
+    /// slice end keeps this safe: if a worker refills an entry between our load and our store, we merely turn its fresh
+    /// entry into a miss. The worker-side reads and writes are plain 8-byte accesses, which atomic_ref compiles to as well.
+    static_assert(alignof(SliceCacheEntry) >= std::atomic_ref<Timestamp::Underlying>::required_alignment);
+    const auto highestDeletedSliceEndRaw = highestDeletedSliceEnd.getRawValue();
+    const auto sliceCacheMemoryLocked = pipelineIdToSliceCacheMemory.rlock();
+    for (const auto& [pipelineId, sliceCacheMemory] : *sliceCacheMemoryLocked)
+    {
+        std::byte* const startOfEntries = sliceCacheMemory.buffer->getAvailableMemoryArea().data();
+        for (uint64_t i = 0; i < sliceCacheMemory.totalNumberOfEntries; ++i)
+        {
+            ///NOLINTNEXTLINE (cppcoreguidelines-pro-type-reinterpret-cast)
+            auto* const entry = reinterpret_cast<SliceCacheEntry*>(startOfEntries + (i * sliceCacheMemory.sizeOfEntry));
+            const std::atomic_ref entrySliceEnd{entry->sliceEnd};
+            const auto sliceEnd = entrySliceEnd.load(std::memory_order_relaxed);
+            /// Only write stale entries, as every write invalidates the cache line in the owning worker's CPU cache
+            if (sliceEnd != Timestamp::INITIAL_VALUE and sliceEnd <= highestDeletedSliceEndRaw)
+            {
+                entrySliceEnd.store(Timestamp::INITIAL_VALUE, std::memory_order_relaxed);
+            }
+        }
+    }
 }
 
 void DefaultTimeBasedSliceStore::deleteState()
@@ -290,10 +325,11 @@ uint64_t DefaultTimeBasedSliceStore::getWindowSize() const
 }
 
 std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
-    uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider)
+    const SliceCache& sliceCache, PipelineId pipelineId, AbstractBufferProvider& bufferProvider)
 {
-    INVARIANT(not pipelineIdToSliceCacheStarts.rlock()->contains(pipelineId), "We expect this method to be called once per pipelineId!");
+    INVARIANT(not pipelineIdToSliceCacheMemory.rlock()->contains(pipelineId), "We expect this method to be called once per pipelineId!");
 
+    const auto sliceCacheMemorySize = sliceCache.getCacheMemorySize();
     auto buffer = bufferProvider.getUnpooledBuffer(sliceCacheMemorySize);
     if (not buffer.has_value())
     {
@@ -304,7 +340,12 @@ std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
     std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
     auto sliceCacheStartBuffer = std::make_unique<TupleBuffer>(buffer.value());
     const auto& memArea = sliceCacheStartBuffer->getAvailableMemoryArea();
-    pipelineIdToSliceCacheStarts.wlock()->emplace(pipelineId, std::move(sliceCacheStartBuffer));
+    pipelineIdToSliceCacheMemory.wlock()->emplace(
+        pipelineId,
+        SliceCacheMemory{
+            .buffer = std::move(sliceCacheStartBuffer),
+            .totalNumberOfEntries = sliceCache.getTotalNumberOfEntries(),
+            .sizeOfEntry = sliceCache.getSizeOfEntry()});
     return memArea;
 }
 

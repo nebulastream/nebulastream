@@ -14,6 +14,7 @@
 
 #include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
 
+#include <atomic>
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
@@ -64,8 +65,9 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
 
     /// Use the data structure extractor to get the operator-specific data structure, then store its pointer for usage in nautilus
     entryToReplace->sliceStart = slices[0]->getSliceStart().getRawValue();
-    entryToReplace->sliceEnd = slices[0]->getSliceEnd().getRawValue();
     entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId, *bufferProvider);
+    /// Garbage collection may concurrently invalidate this entry by writing its slice end, see invalidateSliceCacheEntries()
+    std::atomic_ref{entryToReplace->sliceEnd}.store(slices[0]->getSliceEnd().getRawValue(), std::memory_order_relaxed);
 }
 
 DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(
@@ -127,8 +129,8 @@ void setupSliceStoreProxy(
     /// Creating new space for the slice cache of this pipeline
     /// The order is important. First, we need to set the number of worker threads, as the slice cache depends on it.
     self->sliceCache->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
-    const auto startOfEntries = sliceStore->allocateSpaceForSliceCache(
-        self->sliceCache->getCacheMemorySize(), pipelineCtx->getPipelineId(), *pipelineCtx->getBufferManager());
+    const auto startOfEntries
+        = sliceStore->allocateSpaceForSliceCache(*self->sliceCache, pipelineCtx->getPipelineId(), *pipelineCtx->getBufferManager());
     self->sliceCache->setStartOfEntries(startOfEntries);
 }
 

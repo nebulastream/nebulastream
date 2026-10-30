@@ -28,6 +28,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/TimestampRef.hpp>
+#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
@@ -55,6 +56,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
@@ -434,6 +436,89 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
 
         /// Verify the returned data pointer matches the reference cache's result
         EXPECT_EQ(rawResult, refPtr) << "Returned pointer does not match reference cache for timestamp " << op.timestamp;
+    }
+}
+
+/// Garbage collection must invalidate every cache entry of a deleted slice in every worker thread's partition, as the
+/// entry's data structure pointer dangles afterwards. Entries of slices that are still alive must stay untouched.
+TEST_P(SliceCacheNoneTest, testGarbageCollectionInvalidatesSliceCacheEntries)
+{
+    constexpr uint64_t windowSize = 10;
+    constexpr uint64_t numberOfEntriesPerThread = 4;
+    constexpr uint64_t numberOfWorkerThreads = 2;
+    DefaultTimeBasedSliceStore sliceStore{windowSize, windowSize, SliceCacheConfiguration{true, numberOfEntriesPerThread}};
+    sliceCache = std::make_unique<SliceCacheSecondChance>(numberOfEntriesPerThread, sizeof(SliceCacheEntrySecondChance));
+    sliceCache->setNumberOfWorkerThreads(numberOfWorkerThreads);
+    const auto cacheMemory = sliceStore.allocateSpaceForSliceCache(*sliceCache, PipelineId(1), *pec->bufferManager);
+    sliceCache->setStartOfEntries(cacheMemory);
+
+    /// Slices [0, 10), [10, 20) and [20, 30). Every worker thread caches all three of them.
+    const auto createSlice = [](const SliceStart sliceStart, const SliceEnd sliceEnd)
+    { return std::vector<std::shared_ptr<Slice>>{std::make_shared<Slice>(sliceStart, sliceEnd)}; };
+    std::vector<uint64_t> dataStructures{0, 1, 2};
+    ///NOLINTNEXTLINE (cppcoreguidelines-pro-type-reinterpret-cast)
+    auto* const entries = reinterpret_cast<SliceCacheEntrySecondChance*>(cacheMemory.data());
+    for (uint64_t sliceIdx = 0; sliceIdx < dataStructures.size(); ++sliceIdx)
+    {
+        const auto slice = sliceStore.getSlicesOrCreate(Timestamp{(sliceIdx * windowSize) + 5}, createSlice)[0];
+        for (uint64_t thread = 0; thread < numberOfWorkerThreads; ++thread)
+        {
+            auto& entry = entries[(thread * numberOfEntriesPerThread) + sliceIdx];
+            entry.sliceStart = slice->getSliceStart().getRawValue();
+            entry.sliceEnd = slice->getSliceEnd().getRawValue();
+            ///NOLINTNEXTLINE (cppcoreguidelines-pro-type-reinterpret-cast)
+            entry.dataStructure = reinterpret_cast<SliceCacheEntry::DataStructure>(&dataStructures[sliceIdx]);
+        }
+    }
+
+    /// A slice gets deleted once sliceEnd + windowSize < watermark, i.e., [0, 10) and [10, 20) but not [20, 30)
+    sliceStore.garbageCollectSlicesAndWindows(Timestamp{31});
+    for (uint64_t thread = 0; thread < numberOfWorkerThreads; ++thread)
+    {
+        const auto* const threadEntries = entries + (thread * numberOfEntriesPerThread);
+        EXPECT_EQ(threadEntries[0].sliceEnd, Timestamp::INITIAL_VALUE);
+        EXPECT_EQ(threadEntries[1].sliceEnd, Timestamp::INITIAL_VALUE);
+        EXPECT_EQ(threadEntries[2].sliceEnd, 30);
+        EXPECT_EQ(threadEntries[3].sliceEnd, Timestamp::INITIAL_VALUE) << "Empty entry should stay empty";
+    }
+
+    /// A late tuple for a deleted slice must now miss the cache instead of receiving the dangling pointer,
+    /// while a tuple for the surviving slice still hits.
+    using CompiledLookup = std::function<void(nautilus::val<Timestamp::Underlying>, nautilus::val<uint64_t>, nautilus::val<bool*>)>;
+    auto lookup = nautilusEngine->registerFunction(CompiledLookup(
+        [&](const nautilus::val<Timestamp::Underlying>& timestampRaw,
+            const nautilus::val<uint64_t>& workerThreadIdRaw,
+            const nautilus::val<bool*>& missedPtr)
+        {
+            sliceCache->getDataStructureRef(
+                nautilus::val<Timestamp>{timestampRaw},
+                nautilus::val<WorkerThreadId>{workerThreadIdRaw},
+                [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
+                {
+                    nautilus::invoke(
+                        +[](bool* missedFlag, SliceCacheEntry* entry)
+                        {
+                            *missedFlag = true;
+                            entry->sliceStart = Timestamp::INITIAL_VALUE;
+                            entry->sliceEnd = Timestamp::INITIAL_VALUE;
+                            entry->dataStructure = nullptr;
+                        },
+                        missedPtr,
+                        entryToReplace);
+                },
+                pec->bufferManager.get());
+        }));
+    const auto lookupMisses = [&](const Timestamp::Underlying timestamp, const uint64_t workerThreadId)
+    {
+        bool missed = false;
+        lookup(timestamp, workerThreadId, &missed);
+        return missed;
+    };
+    for (uint64_t thread = 0; thread < numberOfWorkerThreads; ++thread)
+    {
+        EXPECT_FALSE(lookupMisses(25, thread)) << "Slice [20, 30) is alive and must still hit for thread " << thread;
+        EXPECT_TRUE(lookupMisses(5, thread)) << "Slice [0, 10) is deleted and must miss for thread " << thread;
+        EXPECT_TRUE(lookupMisses(15, thread)) << "Slice [10, 20) is deleted and must miss for thread " << thread;
     }
 }
 

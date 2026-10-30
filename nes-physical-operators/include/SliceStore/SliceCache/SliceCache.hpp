@@ -79,6 +79,10 @@ public:
 
     void setStartOfEntries(const std::span<std::byte>& startOfSliceCache);
 
+    /// The slice store needs the cache geometry to invalidate entries of garbage collected slices.
+    [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
+    [[nodiscard]] uint64_t getSizeOfEntry() const;
+
 protected:
     SliceCacheEntry* startOfSliceCache;
     uint64_t numberOfEntries;
