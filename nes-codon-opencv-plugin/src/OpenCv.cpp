@@ -92,11 +92,11 @@ cv::Mat wrapImage(
     {
         throw std::invalid_argument("NES cv2 received an invalid contiguous image size");
     }
-    return cv::Mat(
+    return {
         static_cast<int>(height),
         static_cast<int>(width),
         CV_MAKETYPE(static_cast<int>(depth), static_cast<int>(channels)),
-        const_cast<uint8_t*>(imagePointer));
+        const_cast<uint8_t*>(imagePointer)};
 }
 
 cv::Mat

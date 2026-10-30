@@ -54,6 +54,9 @@
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 
+/// V4L2 is a C ioctl API: unions in its structs, variadic ioctl/fcntl, unsigned long requests, and EINTR retry loops.
+/// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access,cppcoreguidelines-pro-type-vararg,google-runtime-int,cppcoreguidelines-avoid-do-while)
+
 namespace NES
 {
 namespace
@@ -433,3 +436,5 @@ std::ostream& V4L2Source::toString(std::ostream& stream) const
 }
 
 }
+
+/// NOLINTEND(cppcoreguidelines-pro-type-union-access,cppcoreguidelines-pro-type-vararg,google-runtime-int,cppcoreguidelines-avoid-do-while)

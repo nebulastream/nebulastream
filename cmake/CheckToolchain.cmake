@@ -71,9 +71,10 @@ if (NOT ${USING_LIBCXX})
 endif ()
 
 if (${USING_LIBCXX})
-    add_compile_options(-stdlib=libc++)
+    # In CMAKE_CXX_FLAGS rather than add_compile_options: both flags are C++ only, and clang rejects them as
+    # unused arguments when compiling a C source.
     # Currently C++20 threading features are hidden behind the feature flag
-    add_compile_options(-fexperimental-library)
+    string(APPEND CMAKE_CXX_FLAGS " -stdlib=libc++ -fexperimental-library")
     if (NES_LIBCXX_HARDENING_MODE_NORMALIZED STREQUAL "AUTO")
         # Preserve the existing defaults: strongest checks in Debug and low-overhead checks in RelWithDebInfo.
         add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)

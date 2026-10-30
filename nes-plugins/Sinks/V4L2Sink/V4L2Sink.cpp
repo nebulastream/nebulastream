@@ -54,6 +54,9 @@
 #include <PipelineExecutionContext.hpp>
 #include <V4L2Frame.hpp>
 
+/// V4L2 is a C ioctl API: unions in its structs, variadic ioctl/fcntl, unsigned long requests, and EINTR retry loops.
+/// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access,cppcoreguidelines-pro-type-vararg,google-runtime-int,cppcoreguidelines-avoid-do-while)
+
 namespace NES
 {
 namespace
@@ -65,8 +68,10 @@ void logStderr(fmt::format_string<Args...> format, Args&&... args) noexcept
     try
     {
         fmt::print(stderr, format, std::forward<Args>(args)...);
-        std::fflush(stderr);
+        std::ignore = std::fflush(stderr);
     }
+    /// Diagnostics are best effort; failing to print them must not fail the sink.
+    /// NOLINTNEXTLINE(bugprone-empty-catch)
     catch (...) /// NOLINT(no-raw-catch-all)
     {
     }
@@ -84,7 +89,7 @@ std::string pixelFormatName(const uint32_t format)
 void logFrameStatistics(
     const std::string& devicePath, const uint64_t frameNumber, const detail::V4L2FrameTuple& frame, const std::span<const uint8_t> image)
 {
-    const auto [minimum, maximum] = std::minmax_element(image.begin(), image.end());
+    const auto [minimum, maximum] = std::ranges::minmax_element(image);
     logStderr(
         "[V4L2Sink] device={} received frame={} timestamp={} size={}x{} format={} bytes={} byte_min={} byte_max={}\n",
         devicePath,
@@ -118,7 +123,7 @@ void logFrameStatistics(
             frameNumber,
             minimumY,
             maximumY,
-            static_cast<double>(sumY) / (image.size() / 2),
+            static_cast<double>(sumY) / (static_cast<double>(image.size()) / 2.0),
             neutralChroma,
             minimumY == 16 && maximumY == 16 && neutralChroma);
     }
@@ -513,3 +518,5 @@ std::ostream& V4L2Sink::toString(std::ostream& stream) const
 }
 
 }
+
+/// NOLINTEND(cppcoreguidelines-pro-type-union-access,cppcoreguidelines-pro-type-vararg,google-runtime-int,cppcoreguidelines-avoid-do-while)

@@ -1086,7 +1086,7 @@ void AntlrSQLQueryPlanCreator::exitPythonFunction(AntlrSQLParser::PythonFunction
     auto body = context->body->getText();
     constexpr std::string_view Delimiter = "$python$";
     PRECONDITION(body.size() >= Delimiter.size() * 2, "Malformed Python UDF body");
-    body = body.substr(Delimiter.size(), body.size() - Delimiter.size() * 2);
+    body = body.substr(Delimiter.size(), body.size() - (Delimiter.size() * 2));
 
     const auto backend = context->bridge != nullptr ? parsePythonUdfBackend(bindStringLiteral(context->bridge)) : PythonUdfBackend::Codon;
 

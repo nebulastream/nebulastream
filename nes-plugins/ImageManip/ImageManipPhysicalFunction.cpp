@@ -71,6 +71,7 @@ struct OpenCVConfig
     }
 };
 
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) built once at load time
 static OpenCVConfig opencvConfig;
 
 namespace NES
@@ -320,7 +321,8 @@ static void audioToMFCC(const float* input, float* output)
         for (int sample = 0; sample < AUDIO_FRAME_SAMPLES; ++sample)
         {
             window.at<float>(fftPadding + sample) = 0.5F
-                - 0.5F * std::cos(2.0F * std::numbers::pi_v<float> * static_cast<float>(sample) / static_cast<float>(AUDIO_FRAME_SAMPLES));
+                - (0.5F
+                   * std::cos(2.0F * std::numbers::pi_v<float> * static_cast<float>(sample) / static_cast<float>(AUDIO_FRAME_SAMPLES)));
         }
         return window;
     }();
@@ -445,7 +447,7 @@ static VariableSizedData fromBase64(const VariableSizedData& input, ArenaRef& ar
                 throw InferenceRuntimeFailure(
                     "Base64 decoding failed for an input of {} bytes: EVP_DecodeBlock returned {}", size, lengthOfDecoded);
             }
-            if (static_cast<uint32_t>(lengthOfDecoded) > outputSize)
+            if (std::cmp_greater(lengthOfDecoded, outputSize))
             {
                 throw InferenceRuntimeFailure(
                     "Base64 decoding produced {} bytes for an input of {} bytes, exceeding the {}-byte output buffer",
@@ -471,7 +473,7 @@ static void set_pixel_color(std::span<int8_t> image, uint32_t x, uint32_t y, std
 {
     auto saneX = std::min(static_cast<uint32_t>(DEFAULT_IMAGE_WIDTH), x);
     auto saneY = std::min(static_cast<uint32_t>(DEFAULT_IMAGE_HEIGHT), y);
-    auto pixelIndex = (saneY * DEFAULT_IMAGE_WIDTH + saneX) * 2;
+    auto pixelIndex = ((saneY * DEFAULT_IMAGE_WIDTH) + saneX) * 2;
 
     image[pixelIndex] = yuv[0];
     image[pixelIndex + 1] = pixelIndex % 2 == 0 ? yuv[1] : yuv[2];
@@ -619,6 +621,7 @@ static VariableSizedData drawRectangle(const VariableSizedData& input, const nau
     return imageWithRectangle;
 }
 
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) built once at load time
 const static std::vector JPEG_COMPRESSION_PARAMETER = {cv::IMWRITE_JPEG_QUALITY, 90};
 
 thread_local static std::vector<uint8_t> jpegBuffer;
@@ -641,7 +644,7 @@ yuyvToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, co
                 throw InferenceRuntimeFailure(
                     "YUYV-to-JPEG encoding produced only {} bytes for a {}x{} image", jpegBuffer.size(), width, height);
             }
-            const auto signature = *std::bit_cast<uint16_t*>(jpegBuffer.data());
+            const auto signature = *reinterpret_cast<uint16_t*>(jpegBuffer.data());
             if (signature != 0xD8FF)
             {
                 throw InferenceRuntimeFailure(
@@ -847,7 +850,7 @@ static VariableSizedData mono16ToMono8(
             }
             auto max = std::max(mmin, mmax);
             auto min = std::min(mmin, mmax);
-            const std::span mono16Bytes(std::bit_cast<uint16_t*>(inputData), inputLength / 2);
+            const std::span mono16Bytes(reinterpret_cast<uint16_t*>(inputData), inputLength / 2);
 
             auto mono8Bytes = mono16Bytes
                 | std::views::transform(
@@ -859,7 +862,7 @@ static VariableSizedData mono16ToMono8(
                                       clamped /= max - min;
                                       return static_cast<int8_t>(clamped);
                                   });
-            std::ranges::copy(mono8Bytes, std::bit_cast<uint8_t*>(outputData));
+            std::ranges::copy(mono8Bytes, reinterpret_cast<uint8_t*>(outputData));
         },
         input.getSize(),
         input.getContent(),
@@ -1089,7 +1092,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
                     {
                         throw InferenceRuntimeFailure("PNG serialization produced only {} Base64 bytes; expected more than 14", size);
                     }
-                    const std::string_view prefix(std::bit_cast<char*>(data), 11);
+                    const std::string_view prefix(reinterpret_cast<char*>(data), 11);
                     if (prefix != "iVBORw0KGgo")
                     {
                         throw InferenceRuntimeFailure("PNG serialization produced an invalid Base64 prefix '{}'", prefix);
@@ -1110,7 +1113,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
                     {
                         throw InferenceRuntimeFailure("JPEG serialization produced only {} Base64 bytes; expected more than 14", size);
                     }
-                    const std::string_view prefix(std::bit_cast<char*>(data), 14);
+                    const std::string_view prefix(reinterpret_cast<char*>(data), 14);
                     if (prefix != "/9j/4AAQSkZJRg")
                     {
                         throw InferenceRuntimeFailure("JPEG serialization produced an invalid Base64 prefix '{}'", prefix);

@@ -133,7 +133,7 @@ Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, 
         return BufferResult::COMPLETED;
     }
 
-    const std::lock_guard lock(deliveryMutex);
+    const std::scoped_lock lock(deliveryMutex);
     if (pendingDelivery
         && (pendingDelivery->sequenceNumber != inputTupleBuffer.getSequenceNumber()
             || pendingDelivery->chunkNumber != inputTupleBuffer.getChunkNumber()))

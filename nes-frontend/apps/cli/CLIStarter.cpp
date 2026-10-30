@@ -1152,7 +1152,11 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             throw NES::InvalidConfigParameter(
                 "Function '{}': `bridge: {}` compiles the entrypoint module and takes no `path`", name, *bridge);
         }
-        const auto libraryPath = isCodon ? std::string{} : path.has_value() ? *path : NES::resolveBuiltinUdfBridgePath(*bridge).string();
+        std::string libraryPath;
+        if (not isCodon)
+        {
+            libraryPath = path.has_value() ? *path : NES::resolveBuiltinUdfBridgePath(*bridge).string();
+        }
         statements.emplace_back(
             NES::CreateFunctionStatement{
                 .name = fmt::format("{}", bindIdentifierName(name)),

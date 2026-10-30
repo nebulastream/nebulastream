@@ -729,7 +729,7 @@ CompiledPythonUdf compilePythonUdf(
                 elapsedMilliseconds(mutexWaitStart, compilationStart),
                 sourcePath);
         }
-        return {std::move(pipelineBitcode), std::move(interpreterBitcode)};
+        return {.pipelineBitcode = std::move(pipelineBitcode), .interpreterBitcode = std::move(interpreterBitcode)};
     }
     catch (const Exception&)
     {
@@ -783,6 +783,8 @@ nautilus::val<R> dynamicInvoke(const std::string& symbol, const std::vector<Pyth
 
 void appendPythonArgument(std::vector<PythonAbiValue>& arguments, const VarVal& argument, const DataType& type)
 {
+/// CPP_TYPE is a type that is used as a template argument, where it cannot be parenthesized.
+/// NOLINTBEGIN(bugprone-macro-parentheses)
 #define NES_APPEND_PYTHON(TYPE, CPP_TYPE) \
     case DataType::Type::TYPE: \
         arguments.emplace_back(argument.getRawValueAs<nautilus::val<CPP_TYPE>>()); \
@@ -818,6 +820,7 @@ void appendPythonArgument(std::vector<PythonAbiValue>& arguments, const VarVal& 
         arguments.emplace_back(nautilus::select(argument.isNull(), nautilus::val<uint8_t>{1}, nautilus::val<uint8_t>{0}));
     }
 #undef NES_APPEND_PYTHON
+    /// NOLINTEND(bugprone-macro-parentheses)
 }
 
 [[noreturn]] void throwPythonUdfError(UdfErrorHolder* error)
@@ -869,6 +872,8 @@ invokePythonScalar(const std::string& symbol, const bool nullable, ArenaRef& are
 
 VarVal invokePython(const std::string& symbol, const DataType& returnType, ArenaRef& arena, std::vector<PythonAbiValue>& arguments)
 {
+/// CPP_TYPE is a type that is used as a template argument, where it cannot be parenthesized.
+/// NOLINTBEGIN(bugprone-macro-parentheses)
 #define NES_INVOKE_PYTHON(TYPE, CPP_TYPE) \
     case DataType::Type::TYPE: { \
         const auto [value, isNull] = invokePythonScalar<CPP_TYPE>(symbol, returnType.nullable, arena, arguments); \
@@ -919,6 +924,7 @@ VarVal invokePython(const std::string& symbol, const DataType& returnType, Arena
             throw UnknownDataType("Unsupported Python UDF return type {}", returnType);
     }
 #undef NES_INVOKE_PYTHON
+    /// NOLINTEND(bugprone-macro-parentheses)
     INVARIANT(result.has_value(), "Python UDF result was not initialized");
     return std::move(*result);
 }
@@ -983,6 +989,8 @@ void storeInterpreterArgument(PythonUdfAbiValue& destination, PythonUdfScalarSto
 void appendInterpreterArgument(
     PythonUdfAbiValue& destination, PythonUdfScalarStorage& storage, const VarVal& argument, const DataType& type)
 {
+/// CPP_TYPE is a type that is used as a template argument, where it cannot be parenthesized.
+/// NOLINTBEGIN(bugprone-macro-parentheses)
 #define NES_STORE_INTERPRETER_ARGUMENT(TYPE, CPP_TYPE) \
     case DataType::Type::TYPE: \
         storeInterpreterArgument(destination, storage, argument.getRawValueAs<nautilus::val<CPP_TYPE>>()); \
@@ -1019,6 +1027,7 @@ void appendInterpreterArgument(
     }
     destination.isNull = type.nullable && nautilus::details::RawValueResolver<bool>::getRawValue(argument.isNull());
 #undef NES_STORE_INTERPRETER_ARGUMENT
+    /// NOLINTEND(bugprone-macro-parentheses)
 }
 
 template <typename T>
@@ -1044,12 +1053,15 @@ VarVal invokePythonInterpreter(
     }
 
     PythonUdfScalarStorage resultStorage;
-    PythonUdfAbiValue result{reinterpret_cast<int8_t*>(resultStorage.bytes.data()), sizeof(resultStorage.bytes), 0};
+    PythonUdfAbiValue result{
+        .data = reinterpret_cast<int8_t*>(resultStorage.bytes.data()), .size = sizeof(resultStorage.bytes), .isNull = 0};
     UdfErrorHolder error{};
     activatePythonUdfArena(nautilus::details::RawValueResolver<Arena*>::getRawValue(arena.getArena()));
     checkPythonUdfStatus(executable.function(abiArguments.data(), &result, &error), &error);
     const auto isNull = result.isNull != 0;
 
+/// CPP_TYPE is a type that is used as a template argument, where it cannot be parenthesized.
+/// NOLINTBEGIN(bugprone-macro-parentheses)
 #define NES_LOAD_INTERPRETER_RESULT(TYPE, CPP_TYPE) \
     case DataType::Type::TYPE: \
         return VarVal \
@@ -1080,6 +1092,7 @@ VarVal invokePythonInterpreter(
             throw UnknownDataType("Unsupported Python UDF return type {}", returnType);
     }
 #undef NES_LOAD_INTERPRETER_RESULT
+    /// NOLINTEND(bugprone-macro-parentheses)
     std::unreachable();
 }
 }
@@ -1137,7 +1150,7 @@ VarVal PythonPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     }
 
     std::vector<PythonAbiValue> abiArguments;
-    abiArguments.reserve(values.size() * 2 + 3);
+    abiArguments.reserve((values.size() * 2) + 3);
     for (size_t index = 0; index < values.size(); ++index)
     {
         appendPythonArgument(abiArguments, values[index], argumentTypes[index]);

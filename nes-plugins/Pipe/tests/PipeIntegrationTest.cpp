@@ -474,6 +474,7 @@ TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
         values[idx] = idx;
     }
     {
+        /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
         std::mt19937 rng(42);
         for (uint64_t i = 0; i + TuplesPerSequence <= NumTuples; i += TuplesPerSequence)
         {

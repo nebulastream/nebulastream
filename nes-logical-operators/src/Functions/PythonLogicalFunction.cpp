@@ -173,6 +173,6 @@ Reflected Reflector<PythonLogicalFunction>::operator()(const PythonLogicalFuncti
 PythonLogicalFunction Unreflector<PythonLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [parameterNames, body, returnType, arguments, backend] = context.unreflect<detail::ReflectedPythonLogicalFunction>(reflected);
-    return PythonLogicalFunction(std::move(parameterNames), std::move(body), returnType, std::move(arguments), backend);
+    return {std::move(parameterNames), std::move(body), returnType, std::move(arguments), backend};
 }
 }

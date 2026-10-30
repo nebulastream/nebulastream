@@ -33,6 +33,9 @@
 #include <UdfBackend.hpp>
 #include <UdfDescriptor.hpp>
 
+/// Calls a dlopen'ed bridge through the C ABI of UdfAbi.h: C types, C arrays, and malloc'ed strings the bridge hands over.
+/// NOLINTBEGIN(google-runtime-int,cppcoreguidelines-owning-memory,cppcoreguidelines-no-malloc,modernize-avoid-c-arrays,cppcoreguidelines-pro-bounds-array-to-pointer-decay,bugprone-multi-level-implicit-pointer-conversion)
+
 namespace NES
 {
 
@@ -103,7 +106,9 @@ void* InProcessBackend::loadBridge(const std::filesystem::path& bridgePath)
 
 InProcessBackend::InProcessBackend(const UdfDescriptor& descriptor) : argCount(descriptor.getArgTypes().size())
 {
-    libHandle = loadBridge(descriptor.getPath());
+    /// Not a member initializer: loadBridge also sets executeFn and cleanupFn, whose default member initializers would
+    /// reset them afterwards.
+    libHandle = loadBridge(descriptor.getPath()); /// NOLINT(cppcoreguidelines-prefer-member-initializer)
     auto* const initializeFn = reinterpret_cast<InitializeUdfFn>(dlsym(libHandle, "initialize_udf"));
     if (initializeFn == nullptr)
     {
@@ -145,7 +150,9 @@ InProcessBackend::InProcessBackend(
     const DataType& returnType)
     : argCount(argTypes.size())
 {
-    libHandle = loadBridge(bridgePath);
+    /// Not a member initializer: loadBridge also sets executeFn and cleanupFn, whose default member initializers would
+    /// reset them afterwards.
+    libHandle = loadBridge(bridgePath); /// NOLINT(cppcoreguidelines-prefer-member-initializer)
     auto* const initializeFn = reinterpret_cast<InitializeUdfFromSourceFn>(dlsym(libHandle, "initialize_udf_from_source"));
     if (initializeFn == nullptr)
     {
@@ -209,7 +216,7 @@ void InProcessBackend::invokeUdf(
             argPointers[i] = slot;
             argLengths[i] = 0;
         }
-        argNullFlags[i] = argNulls[i];
+        argNullFlags[i] = static_cast<unsigned char>(argNulls[i]);
     }
 
     char* errorMessage = nullptr;
@@ -237,7 +244,7 @@ void InProcessBackend::invokeUdf(
 void InProcessBackend::executeScalarRow(
     const std::int8_t* argValues, const std::int8_t* argLens, const std::int8_t* argNulls, std::int8_t* resultScalar, int* resultNull)
 {
-    const std::lock_guard lock(mutex);
+    const std::scoped_lock lock(mutex);
     char* resultString = nullptr;
     long long resultStringLen = 0;
     invokeUdf(argValues, argLens, argNulls, resultScalar, &resultString, &resultStringLen, resultNull);
@@ -252,7 +259,7 @@ std::uint64_t InProcessBackend::executeVarsizedRow(
     std::uint64_t maxResultLen,
     int* resultNull)
 {
-    const std::lock_guard lock(mutex);
+    const std::scoped_lock lock(mutex);
     std::int8_t scalarUnused[SLOT_BYTES] = {};
     char* resultString = nullptr;
     long long resultStringLen = 0;
@@ -263,7 +270,7 @@ std::uint64_t InProcessBackend::executeVarsizedRow(
         std::free(resultString);
         return 0;
     }
-    if (resultStringLen < 0 || static_cast<std::uint64_t>(resultStringLen) > maxResultLen)
+    if (resultStringLen < 0 || std::cmp_greater(resultStringLen, maxResultLen))
     {
         const long long length = resultStringLen;
         std::free(resultString);
@@ -290,3 +297,5 @@ std::shared_ptr<UdfBackend> UdfBackend::createFromSource(
 }
 
 }
+
+/// NOLINTEND(google-runtime-int,cppcoreguidelines-owning-memory,cppcoreguidelines-no-malloc,modernize-avoid-c-arrays,cppcoreguidelines-pro-bounds-array-to-pointer-decay,bugprone-multi-level-implicit-pointer-conversion)

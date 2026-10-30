@@ -27,6 +27,7 @@ namespace
 {
 /// Bridge name -> shipped bridge filename, relative to <currentExecutableDirectory()>/nes-udf-bridges/.
 /// Whether it was actually built is a file-existence check left to UdfCatalog::registerUdf.
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) built once at load time
 const std::unordered_map<std::string_view, std::string_view> kBuiltinBridges{
     {"cpython", "libnes-cpython-udf-bridge.so"},
     {"pypy", "libnes-pypy-udf-bridge.so"},

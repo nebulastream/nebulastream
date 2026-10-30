@@ -86,8 +86,8 @@ private:
     uint64_t framesWritten{0};
     uint64_t framesDropped{0};
     std::optional<uint64_t> lastWrittenTimestamp;
-    std::chrono::steady_clock::time_point lastFrameLog{};
-    std::chrono::steady_clock::time_point lastDropLog{};
+    std::chrono::steady_clock::time_point lastFrameLog;
+    std::chrono::steady_clock::time_point lastDropLog;
     /// Serialize timestamp comparisons and frame writes across worker threads.
     std::mutex mutex;
 };

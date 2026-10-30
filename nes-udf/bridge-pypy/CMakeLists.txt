@@ -17,11 +17,13 @@ include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
 nes_find_pypy()
 if (NES_PYPY_FOUND)
     set(NES_PYPY_BRIDGE_GLUE ${CMAKE_CURRENT_SOURCE_DIR}/pypy_udf_bridge.py)
-    set(NES_PYPY_BRIDGE_GENERATED_C ${CMAKE_CURRENT_BINARY_DIR}/nes_pypy_udf_bridge.c)
+    # Under _generated_src/ so that clang-tidy (scripts/tidy.sh) skips the cffi-generated code.
+    set(NES_PYPY_BRIDGE_GENERATED_C ${CMAKE_CURRENT_BINARY_DIR}/_generated_src/nes_pypy_udf_bridge.c)
 
     # pypy_udf_bridge.py's cffi embedding step generates a .c file; we compile it like any other target.
     add_custom_command(
             OUTPUT ${NES_PYPY_BRIDGE_GENERATED_C}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/_generated_src
             COMMAND ${NES_PYPY_EXECUTABLE} ${NES_PYPY_BRIDGE_GLUE} ${NES_PYPY_BRIDGE_GENERATED_C}
             DEPENDS ${NES_PYPY_BRIDGE_GLUE}
             COMMENT "Generating PyPy UDF bridge C source"

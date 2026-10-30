@@ -57,7 +57,8 @@ BackpressureController::~BackpressureController()
 bool BackpressureController::applyPressure()
 {
     const auto old = std::exchange(*channel->stateMtx.lock(), Channel::State::CLOSED);
-    INVARIANT(old != Channel::State::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
+    INVARIANT(
+        old != Channel::State::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
     return old == Channel::State::OPEN;
 }
 

@@ -133,7 +133,7 @@ struct SystestBinder::Impl
             udfCatalog->removeUdf(udfName);
         }
         /// Make the Python UDF modules (nes-systests/udf/pyudfs) importable by the Python bridge.
-        if (std::string_view{SYSTEST_PY_UDF_PATH}.size() > 0)
+        if (!std::string_view{SYSTEST_PY_UDF_PATH}.empty())
         {
             setenv("NES_UDF_PATH", SYSTEST_PY_UDF_PATH, /*overwrite=*/1);
         }

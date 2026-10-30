@@ -39,7 +39,7 @@ struct V4L2FrameTuple
 
 static_assert(std::is_trivially_copyable_v<V4L2FrameTuple>);
 static_assert(offsetof(V4L2FrameTuple, timestamp) == 0);
-static_assert(sizeof(V4L2FrameTuple) == 4 * sizeof(uint64_t) + sizeof(VariableSizedAccess));
+static_assert(sizeof(V4L2FrameTuple) == (4 * sizeof(uint64_t)) + sizeof(VariableSizedAccess));
 
 inline V4L2FrameTuple readV4L2Frame(const TupleBuffer& buffer, const size_t index)
 {
@@ -48,7 +48,7 @@ inline V4L2FrameTuple readV4L2Frame(const TupleBuffer& buffer, const size_t inde
         throw CannotOpenSink("V4L2 sink received an invalid native frame tuple buffer");
     }
     V4L2FrameTuple frame{};
-    std::memcpy(&frame, buffer.getAvailableMemoryArea().data() + index * sizeof(V4L2FrameTuple), sizeof(frame));
+    std::memcpy(&frame, buffer.getAvailableMemoryArea().data() + (index * sizeof(V4L2FrameTuple)), sizeof(frame));
     if (frame.width == 0 || frame.height == 0 || frame.pixelFormat == 0 || frame.width > std::numeric_limits<uint32_t>::max()
         || frame.height > std::numeric_limits<uint32_t>::max() || frame.pixelFormat > std::numeric_limits<uint32_t>::max())
     {

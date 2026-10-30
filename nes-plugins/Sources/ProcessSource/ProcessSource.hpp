@@ -69,11 +69,12 @@ public:
 
     [[nodiscard]] std::string_view getType() const override { return NAME; }
 
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     void startProcess();

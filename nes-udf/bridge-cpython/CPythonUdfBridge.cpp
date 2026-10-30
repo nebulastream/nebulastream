@@ -33,6 +33,9 @@
 
 #include <UdfAbi.h>
 
+/// Implements the C ABI of UdfAbi.h on top of the CPython C API: C types and malloc'ed strings owned by the caller.
+/// NOLINTBEGIN(google-runtime-int,cppcoreguidelines-owning-memory,cppcoreguidelines-no-malloc)
+
 namespace
 {
 
@@ -161,7 +164,7 @@ int registerCallable(PyObject* function, int argc, const int* arg_type_codes, in
     ctx->argTypes.assign(arg_type_codes, arg_type_codes + argc);
     ctx->returnType = return_type_code;
 
-    const std::lock_guard<std::mutex> lock(g_mutex);
+    const std::scoped_lock lock(g_mutex);
     const int handle = g_nextHandle++;
     g_registry[handle] = ctx;
     return handle;
@@ -432,7 +435,7 @@ extern "C" int execute_udf_row(
 
     UdfCtx* ctx = nullptr;
     {
-        const std::lock_guard<std::mutex> lock(g_mutex);
+        const std::scoped_lock lock(g_mutex);
         auto it = g_registry.find(handle);
         if (it == g_registry.end())
         {
@@ -500,7 +503,7 @@ extern "C" void cleanup_udf(int handle)
 {
     UdfCtx* ctx = nullptr;
     {
-        const std::lock_guard<std::mutex> lock(g_mutex);
+        const std::scoped_lock lock(g_mutex);
         auto it = g_registry.find(handle);
         if (it != g_registry.end())
         {
@@ -517,3 +520,5 @@ extern "C" void cleanup_udf(int handle)
     PyGILState_Release(gil);
     delete ctx;
 }
+
+/// NOLINTEND(google-runtime-int,cppcoreguidelines-owning-memory,cppcoreguidelines-no-malloc)

@@ -33,6 +33,9 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 
+/// Codon runtime ABI: pointers passed as integers, LEB128 decoding loops, and the C symbol table handed to Codon.
+/// NOLINTBEGIN(performance-no-int-to-ptr,cppcoreguidelines-avoid-do-while,modernize-avoid-c-arrays,clang-analyzer-core.NullDereference)
+
 namespace NES
 {
 namespace
@@ -140,7 +143,7 @@ CodonString copyCodonString(const std::string_view value)
     {
         std::memcpy(data, value.data(), value.size());
     }
-    return {static_cast<int64_t>(value.size()), data};
+    return {.length = static_cast<int64_t>(value.size()), .data = data};
 }
 
 template <typename T>
@@ -176,7 +179,7 @@ uintptr_t readUleb128(const uint8_t*& position)
 {
     uintptr_t result = 0;
     uintptr_t shift = 0;
-    uint8_t byte;
+    uint8_t byte = 0;
     do
     {
         byte = *position++;
@@ -190,7 +193,7 @@ uintptr_t readSleb128(const uint8_t*& position)
 {
     uintptr_t result = 0;
     uintptr_t shift = 0;
-    uint8_t byte;
+    uint8_t byte = 0;
     do
     {
         byte = *position++;
@@ -248,7 +251,7 @@ uintptr_t readEncodedPointer(const uint8_t*& position, const uint8_t encoding)
         return 0;
     }
     const auto* originalPosition = position;
-    uintptr_t result;
+    uintptr_t result = 0;
     switch (encoding & 0x0F)
     {
         case DwarfAbsolutePointer:
@@ -338,7 +341,7 @@ bool matchCodonAction(
         const auto nextActionOffset = static_cast<int64_t>(readSleb128(nextActionPosition));
         if (typeOffset > 0)
         {
-            const auto* entry = classInfo - typeOffset * encodingSize(typeEncoding);
+            const auto* entry = classInfo - (typeOffset * encodingSize(typeEncoding));
             const auto pointer = readEncodedPointer(entry, typeEncoding);
             const auto type = reinterpret_cast<const CodonBaseExceptionType*>(pointer)->type;
             if (type == 0 || isCodonInstance(exception->object, type))
@@ -516,26 +519,26 @@ extern "C" __attribute__((visibility("default"), used)) int64_t seq_time_monoton
 std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols()
 {
     static const PythonUdfRuntimeSymbol symbols[]{
-        {"seq_alloc", reinterpret_cast<void*>(&seq_alloc)},
-        {"seq_alloc_atomic", reinterpret_cast<void*>(&seq_alloc_atomic)},
-        {"seq_realloc", reinterpret_cast<void*>(&seq_realloc)},
-        {"seq_free", reinterpret_cast<void*>(&seq_free)},
-        {"seq_exc_offset", reinterpret_cast<void*>(&seq_exc_offset)},
-        {"seq_alloc_exc", reinterpret_cast<void*>(&seq_alloc_exc)},
-        {"seq_throw", reinterpret_cast<void*>(&seq_throw)},
-        {"seq_personality", reinterpret_cast<void*>(&seq_personality)},
-        {"seq_int_from_str", reinterpret_cast<void*>(&seq_int_from_str)},
-        {"seq_str_int", reinterpret_cast<void*>(&seq_str_int)},
-        {"seq_str_uint", reinterpret_cast<void*>(&seq_str_uint)},
-        {"seq_str_float", reinterpret_cast<void*>(&seq_str_float)},
-        {"seq_float_from_str", reinterpret_cast<void*>(&seq_float_from_str)},
-        {"seq_stdout", reinterpret_cast<void*>(&seq_stdout)},
-        {"seq_lock_new", reinterpret_cast<void*>(&seq_lock_new)},
-        {"seq_lock_acquire", reinterpret_cast<void*>(&seq_lock_acquire)},
-        {"seq_lock_release", reinterpret_cast<void*>(&seq_lock_release)},
-        {"seq_pid", reinterpret_cast<void*>(&seq_pid)},
-        {"seq_time", reinterpret_cast<void*>(&seq_time)},
-        {"seq_time_monotonic", reinterpret_cast<void*>(&seq_time_monotonic)},
+        {.name = "seq_alloc", .address = reinterpret_cast<void*>(&seq_alloc)},
+        {.name = "seq_alloc_atomic", .address = reinterpret_cast<void*>(&seq_alloc_atomic)},
+        {.name = "seq_realloc", .address = reinterpret_cast<void*>(&seq_realloc)},
+        {.name = "seq_free", .address = reinterpret_cast<void*>(&seq_free)},
+        {.name = "seq_exc_offset", .address = reinterpret_cast<void*>(&seq_exc_offset)},
+        {.name = "seq_alloc_exc", .address = reinterpret_cast<void*>(&seq_alloc_exc)},
+        {.name = "seq_throw", .address = reinterpret_cast<void*>(&seq_throw)},
+        {.name = "seq_personality", .address = reinterpret_cast<void*>(&seq_personality)},
+        {.name = "seq_int_from_str", .address = reinterpret_cast<void*>(&seq_int_from_str)},
+        {.name = "seq_str_int", .address = reinterpret_cast<void*>(&seq_str_int)},
+        {.name = "seq_str_uint", .address = reinterpret_cast<void*>(&seq_str_uint)},
+        {.name = "seq_str_float", .address = reinterpret_cast<void*>(&seq_str_float)},
+        {.name = "seq_float_from_str", .address = reinterpret_cast<void*>(&seq_float_from_str)},
+        {.name = "seq_stdout", .address = reinterpret_cast<void*>(&seq_stdout)},
+        {.name = "seq_lock_new", .address = reinterpret_cast<void*>(&seq_lock_new)},
+        {.name = "seq_lock_acquire", .address = reinterpret_cast<void*>(&seq_lock_acquire)},
+        {.name = "seq_lock_release", .address = reinterpret_cast<void*>(&seq_lock_release)},
+        {.name = "seq_pid", .address = reinterpret_cast<void*>(&seq_pid)},
+        {.name = "seq_time", .address = reinterpret_cast<void*>(&seq_time)},
+        {.name = "seq_time_monotonic", .address = reinterpret_cast<void*>(&seq_time_monotonic)},
     };
     return symbols;
 }
@@ -545,3 +548,5 @@ bool isPythonUdfRuntimeSymbol(const std::string_view name)
     return std::ranges::any_of(getPythonUdfRuntimeSymbols(), [name](const auto& symbol) { return symbol.name == name; });
 }
 }
+
+/// NOLINTEND(performance-no-int-to-ptr,cppcoreguidelines-avoid-do-while,modernize-avoid-c-arrays,clang-analyzer-core.NullDereference)

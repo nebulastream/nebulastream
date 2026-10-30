@@ -76,7 +76,7 @@ SinkDescriptor descriptor(const Schema<UnqualifiedUnboundField, Ordered>& schema
 
 V4L2Sink makeSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
 {
-    return V4L2Sink(std::move(backpressureController), sinkDescriptor.getPluginData().getAs<V4L2SinkConfig>(), sinkDescriptor);
+    return {std::move(backpressureController), sinkDescriptor.getPluginData().getAs<V4L2SinkConfig>(), sinkDescriptor};
 }
 }
 
@@ -168,7 +168,7 @@ TEST_F(V4L2SinkTest, ReadsMultipleFramesWithChildBufferOffsets)
         EXPECT_EQ(frame.timestamp, index + 1);
         const auto image = detail::getV4L2Image(parent, frame.image);
         ASSERT_EQ(image.size(), 3);
-        EXPECT_EQ(std::memcmp(image.data(), bytes.data() + 1 + index * 3, 3), 0);
+        EXPECT_EQ(std::memcmp(image.data(), bytes.data() + 1 + (index * 3), 3), 0);
     }
 }
 
@@ -199,7 +199,7 @@ TEST_F(V4L2SinkTest, RejectsInvalidImageReferences)
 TEST_F(V4L2SinkTest, RejectsInvalidFrameMetadataAndTupleCounts)
 {
     auto parent = buffers->getBufferBlocking();
-    parent.setNumberOfTuples(parent.getBufferSize() / sizeof(Frame) + 1);
+    parent.setNumberOfTuples((parent.getBufferSize() / sizeof(Frame)) + 1);
     EXPECT_THROW(detail::readV4L2Frame(parent, 0), Exception);
 
     parent.setNumberOfTuples(1);
