@@ -162,7 +162,15 @@ function(add_e2e_test)
         list(APPEND _bats_flags --filter-tags ${_bats_test_filter_string})
     endif()
 
+    # A query that stops within seconds in an optimized build takes minutes once every allocation is
+    # tracked, so the status polls in distributed_bats_lib.bash get a larger budget there.
+    set(_status_attempts 80)
+    if (NOT SANITIZER_OPTION STREQUAL "none" OR NES_DEBUG_TUPLE_BUFFER_LEAKS)
+        set(_status_attempts 240)
+    endif ()
+
     set(_env_pairs
+        NES_BATS_STATUS_ATTEMPTS=${_status_attempts}
         NES_DIR=${CMAKE_SOURCE_DIR}
         NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
         NES_BATS_LIB=${CMAKE_SOURCE_DIR}/scripts/testing/distributed_bats_lib.bash

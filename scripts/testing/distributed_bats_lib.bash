@@ -387,7 +387,9 @@ wait_until_status() {
     return 1
   fi
 
-  for i in $(seq 1 80); do
+  # Instrumented builds need more patience: CMake raises NES_BATS_STATUS_ATTEMPTS for sanitizer and
+  # buffer leak tracking builds, where a query that normally stops in seconds takes minutes.
+  for i in $(seq 1 "${NES_BATS_STATUS_ATTEMPTS:-80}"); do
     sleep 1
     run docker_nes_cli -t "$topology_file" status "$query_id"
     [ "$status" -eq 0 ]

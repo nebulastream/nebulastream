@@ -39,7 +39,10 @@ on:
 jobs:
   build-and-test-linux:
     name: "Run large scale tests on ${{matrix.arch}} with ${{matrix.stdlib}} in ${{ matrix.build_type }}"
-    timeout-minutes: 40
+    # The Python UDF queries over the 653M row Nexmark bids run two interpreters per row and take
+    # ~15 minutes each with the default worker config, more with the random one, so the suite needs
+    # well over the 40 minutes it fit into before those tests existed.
+    timeout-minutes: 70
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
       fail-fast: false
@@ -90,7 +93,7 @@ jobs:
                 --workingDir=build/nes-systests/large_scale \
                 --data build/nes-systests/testdata \
                 --groups large \
-                --query-timeout 1200 \
+                --query-timeout 2400 \
                 -- \
                 --worker.default_query_execution.execution_mode=COMPILER \
                 --worker.query_engine.number_of_worker_threads=${{ inputs.number_of_worker_threads }} \
