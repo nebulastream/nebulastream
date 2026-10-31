@@ -15,6 +15,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
@@ -39,6 +40,10 @@ public:
 
     /// @brief Returns the current watermark of a single origin
     [[nodiscard]] Timestamp getCurrentWatermark(OriginId origin) const;
+
+    /// @brief Returns the current watermark of every origin
+    /// Fills `watermarks` instead of returning a new vector, so a caller on the hot path can reuse its allocation.
+    void getCurrentWatermarkPerOrigin(std::vector<std::pair<OriginId, Timestamp>>& watermarks) const;
 
     std::string getCurrentStatus();
 

@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -26,6 +27,13 @@ namespace NES
 {
 namespace
 {
+/// Convenience for a single backpressure channel, keyed by INITIAL<OriginId>.
+std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
+{
+    auto [controller, listeners] = createBackpressureChannels({INITIAL<OriginId>});
+    return {std::move(controller), std::move(listeners.begin()->second)};
+}
+
 class BackpressureHandlerTest : public testing::Test
 {
 protected:

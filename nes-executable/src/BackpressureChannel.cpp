@@ -19,86 +19,194 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <ranges>
 #include <stop_token>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
+#include <Identifiers/Identifiers.hpp>
 #include <folly/Synchronized.h>
 
 #include <ErrorHandling.hpp>
 
 /// Represents the state of the backpressure channel guarded by a mutex and communicated to the listener via the condition variable.
-/// The channel is initially open.
+/// The channel is open as long as no holder applies pressure.
 struct Channel
 {
-    enum State : uint8_t
+    struct State
     {
-        OPEN,
-        CLOSED,
-        DESTROYED,
+        size_t holders = 0;
+        bool destroyed = false;
     };
 
-    folly::Synchronized<State, std::mutex> stateMtx{OPEN};
+    folly::Synchronized<State, std::mutex> stateMtx;
     std::condition_variable_any change;
 };
 
-BackpressureController::BackpressureController(std::shared_ptr<Channel> channel) : channel{std::move(channel)}
+/// Shared by all copies of a Backpressure Controller. Destroying it marks all channels as destroyed.
+struct BackpressureController::Channels
+{
+    std::unordered_map<NES::OriginId, std::shared_ptr<Channel>> byOrigin;
+
+    Channels() = default;
+    Channels(const Channels&) = delete;
+    Channels& operator=(const Channels&) = delete;
+    Channels(Channels&&) = delete;
+    Channels& operator=(Channels&&) = delete;
+
+    ~Channels()
+    {
+        for (const auto& channel : byOrigin | std::views::values)
+        {
+            channel->stateMtx.lock()->destroyed = true;
+            channel->change.notify_all();
+        }
+    }
+
+    Channel& at(const NES::OriginId origin) const
+    {
+        const auto it = byOrigin.find(origin);
+        INVARIANT(it != byOrigin.end(), "No backpressure channel for origin {}", origin);
+        return *it->second;
+    }
+};
+
+/// The pressure one Backpressure Controller holds. Destroying it releases that pressure.
+struct BackpressureController::Holder
+{
+    std::shared_ptr<Channels> channels;
+    std::unordered_set<NES::OriginId> held;
+
+    explicit Holder(std::shared_ptr<Channels> channels) : channels{std::move(channels)} { }
+
+    Holder(const Holder&) = delete;
+    Holder& operator=(const Holder&) = delete;
+    Holder(Holder&&) = delete;
+    Holder& operator=(Holder&&) = delete;
+
+    ~Holder()
+    {
+        /// The last holder must not release its pressure, as listeners that are still waiting must observe the destroyed channels instead.
+        if (channels.use_count() > 1)
+        {
+            releaseAll();
+        }
+    }
+
+    bool apply(const NES::OriginId origin)
+    {
+        auto& channel = channels->at(origin);
+        if (!held.insert(origin).second)
+        {
+            return false;
+        }
+        auto state = channel.stateMtx.lock();
+        INVARIANT(!state->destroyed, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
+        ++state->holders;
+        return true;
+    }
+
+    bool release(const NES::OriginId origin)
+    {
+        auto& channel = channels->at(origin);
+        if (held.erase(origin) == 0)
+        {
+            return false;
+        }
+        bool opened = false;
+        {
+            auto state = channel.stateMtx.lock();
+            INVARIANT(!state->destroyed, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
+            opened = --state->holders == 0;
+        }
+        if (opened)
+        {
+            channel.change.notify_all();
+        }
+        return true;
+    }
+
+    bool releaseAll()
+    {
+        bool changed = false;
+        /// Copy, as releasing modifies the set of held origins.
+        for (const auto origin : std::vector(held.begin(), held.end()))
+        {
+            changed |= release(origin);
+        }
+        return changed;
+    }
+};
+
+BackpressureController::BackpressureController(std::shared_ptr<Channels> channels) : holder{std::make_unique<Holder>(std::move(channels))}
 {
 }
 
-BackpressureController::~BackpressureController()
+BackpressureController::BackpressureController(BackpressureController&& other) noexcept = default;
+BackpressureController& BackpressureController::operator=(BackpressureController&& other) noexcept = default;
+BackpressureController::~BackpressureController() = default;
+
+BackpressureController BackpressureController::newHolder() const
 {
-    if (channel)
-    {
-        *channel->stateMtx.lock() = Channel::DESTROYED;
-        channel->change.notify_all();
-    }
+    return BackpressureController{holder->channels};
 }
 
 bool BackpressureController::applyPressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::CLOSED);
-    INVARIANT(old != Channel::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
-    return old == Channel::OPEN;
+    bool changed = false;
+    for (const auto origin : holder->channels->byOrigin | std::views::keys)
+    {
+        changed |= holder->apply(origin);
+    }
+    return changed;
 }
 
 bool BackpressureController::releasePressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::OPEN);
-    INVARIANT(old != Channel::DESTROYED, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
-    if (old == Channel::CLOSED)
-    {
-        /// The Backpressure Controller was opened, wake up all waiting BackpressureListeners
-        channel->change.notify_all();
-        return true;
-    }
-    return false;
+    return holder->releaseAll();
+}
+
+bool BackpressureController::applyPressure(const NES::OriginId origin)
+{
+    return holder->apply(origin);
+}
+
+bool BackpressureController::releasePressure(const NES::OriginId origin)
+{
+    return holder->release(origin);
+}
+
+bool BackpressureController::controls(const NES::OriginId origin) const
+{
+    return holder->channels->byOrigin.contains(origin);
 }
 
 void BackpressureListener::wait(const std::stop_token& stopToken) const
 {
     auto state = channel->stateMtx.lock();
-    /// If the channel is open, backpressureListener can proceed
-    if (*state == Channel::State::OPEN)
+    if (state->holders == 0 && !state->destroyed)
     {
         return;
     }
 
-    bool destroyed = false;
-    /// Wait for the channel state to change
-    channel->change.wait(
-        state.as_lock(),
-        stopToken,
-        [&destroyed, &state] -> bool
-        {
-            destroyed = *state == Channel::DESTROYED;
-            return destroyed || *state == Channel::OPEN;
-        });
+    channel->change.wait(state.as_lock(), stopToken, [&state] { return state->destroyed || state->holders == 0; });
 
-    INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
+    INVARIANT(!state->destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
 }
 
-std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
+std::pair<BackpressureController, std::unordered_map<NES::OriginId, BackpressureListener>>
+createBackpressureChannels(const std::vector<NES::OriginId>& origins)
 {
-    const auto channel = std::make_shared<Channel>();
-    return {BackpressureController{channel}, BackpressureListener{channel}};
+    auto channels = std::make_shared<BackpressureController::Channels>();
+    std::unordered_map<NES::OriginId, BackpressureListener> listeners;
+    for (const auto origin : origins)
+    {
+        const auto channel = std::make_shared<Channel>();
+        const bool inserted = channels->byOrigin.emplace(origin, channel).second;
+        INVARIANT(inserted, "Duplicate origin {} for backpressure channels", origin);
+        listeners.emplace(origin, BackpressureListener{channel});
+    }
+    return {BackpressureController{std::move(channels)}, std::move(listeners)};
 }

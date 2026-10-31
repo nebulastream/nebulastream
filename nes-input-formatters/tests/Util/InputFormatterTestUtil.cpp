@@ -74,6 +74,15 @@
 
 namespace NES::InputFormatterTestUtil
 {
+namespace
+{
+/// Convenience for a single backpressure channel, keyed by INITIAL<OriginId>.
+std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
+{
+    auto [controller, listeners] = createBackpressureChannels({INITIAL<OriginId>});
+    return {std::move(controller), std::move(listeners.begin()->second)};
+}
+}
 
 Schema<UnqualifiedUnboundField, Ordered> createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {
@@ -150,7 +159,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
                                       .value();
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, backpressureListener, sourceDescriptor)};
+    return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, std::move(backpressureListener), sourceDescriptor)};
 }
 
 InputFormatterDescriptor

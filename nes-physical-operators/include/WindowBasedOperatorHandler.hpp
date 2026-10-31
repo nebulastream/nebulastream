@@ -29,6 +29,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -61,7 +62,7 @@ class WindowBasedOperatorHandler : public OperatorHandler
 {
 public:
     WindowBasedOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
+        SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
@@ -101,10 +102,10 @@ protected:
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads = 0;
     const OriginId outputOriginId;
-    const std::vector<OriginId> inputOrigins;
     /// A window can only become triggerable when the global watermark advances past this value.
     std::atomic<Timestamp::Underlying> highestTriggeredWatermark{Timestamp::INITIAL_VALUE};
     /// Lower bounds of all buffers that are currently processed by a build operator.
     folly::Synchronized<std::multiset<Timestamp::Underlying>> buildLowerBounds;
+    WatermarkGapThrottle watermarkGapThrottle;
 };
 }

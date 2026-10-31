@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -33,24 +34,28 @@ namespace NES
 {
 
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
-    const std::vector<OriginId>& inputOrigins,
+    SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
-    , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
+    , watermarkProcessorBuild(
+          std::make_unique<MultiOriginWatermarkProcessor>(sourcesOfInputOrigins | std::views::keys | std::ranges::to<std::vector>()))
     , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId}))
     , outputOriginId(outputOriginId)
-    , inputOrigins(inputOrigins)
+    , watermarkGapThrottle(std::move(sourcesOfInputOrigins))
 {
 }
 
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+
+    watermarkGapThrottle.start(pipelineExecutionContext.getWatermarkBackpressure());
 }
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
+    watermarkGapThrottle.stop();
 }
 
 WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
@@ -101,9 +106,11 @@ void WindowBasedOperatorHandler::finishBuildBuffer(const Timestamp lowerBound)
 
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
+    const auto originWatermarkBefore = watermarkProcessorBuild->getCurrentWatermark(bufferMetaData.originId);
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    const bool originWatermarkMoved = watermarkProcessorBuild->getCurrentWatermark(bufferMetaData.originId) != originWatermarkBefore;
 
     NES_TRACE(
         "New global watermark: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
@@ -111,6 +118,13 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
         bufferMetaData.originId,
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
+
+    /// The gap between the origins also changes when the global watermark does not advance, but only if some origin's watermark
+    /// moved. The thread whose emplace moves an origin's watermark observes that move, so no change goes unapplied.
+    if (originWatermarkMoved)
+    {
+        watermarkGapThrottle.onWatermarkMoved(*watermarkProcessorBuild);
+    }
 
     const auto newValue = newGlobalWatermark.getRawValue();
     auto highestWatermark = highestTriggeredWatermark.load();
