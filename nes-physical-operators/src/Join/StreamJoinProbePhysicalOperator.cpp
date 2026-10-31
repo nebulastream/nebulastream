@@ -92,17 +92,6 @@ StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
 {
 }
 
-void StreamJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.currentTs = recordBuffer.getCreatingTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.originId = recordBuffer.getOriginId();
-    openChild(executionCtx, recordBuffer);
-}
-
 Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     const Record& outerRecord,
     const Record& innerRecord,

@@ -13,10 +13,12 @@
 */
 
 #pragma once
+#include <chrono>
 #include <compare>
 #include <cstdint>
 #include <ostream>
 #include <Util/Logger/Formatter.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -27,18 +29,44 @@ public:
     using Underlying = uint64_t;
     static constexpr Underlying INITIAL_VALUE = 0;
     static constexpr Underlying INVALID_VALUE = UINT64_MAX;
+    static constexpr Underlying INFINITE_VALUE = UINT64_MAX - 1;
 
     explicit constexpr Timestamp(const Underlying value) : value(value) { }
 
-    Timestamp operator+(const Underlying offset) const { return Timestamp(value + offset); }
+    /// The current wall-clock time in milliseconds since the Unix epoch.
+    [[nodiscard]] static Timestamp nowInMilliseconds()
+    {
+        return Timestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    }
 
-    Timestamp operator+=(const Underlying offset) const { return Timestamp(value + offset); }
+    /// Arithmetic saturates: infinity remains unchanged, and a finite timestamp never leaves [INITIAL_VALUE, INFINITE_VALUE].
+    /// An invalid timestamp was never set, so using it is a bug.
+    constexpr Timestamp operator+(const Underlying offset) const
+    {
+        PRECONDITION(value != INVALID_VALUE, "Arithmetic on an invalid timestamp");
+        if (value == INFINITE_VALUE)
+        {
+            return *this;
+        }
+        return Timestamp(offset < INFINITE_VALUE - value ? value + offset : INFINITE_VALUE);
+    }
 
-    Timestamp operator-(const Underlying offset) const { return Timestamp(value - offset); }
+    constexpr Timestamp operator-(const Underlying offset) const
+    {
+        PRECONDITION(value != INVALID_VALUE, "Arithmetic on an invalid timestamp");
+        if (value == INFINITE_VALUE)
+        {
+            return *this;
+        }
+        return Timestamp(value > offset ? value - offset : INITIAL_VALUE);
+    }
 
-    Timestamp operator-(const Timestamp other) const { return Timestamp(value - other.value); }
-
-    Timestamp operator-=(const Underlying offset) const { return Timestamp(value - offset); }
+    constexpr Timestamp operator-(const Timestamp other) const
+    {
+        PRECONDITION(other.value != INVALID_VALUE, "Arithmetic on an invalid timestamp");
+        return *this - other.value;
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp) { return os << timestamp.value; }
 
@@ -49,7 +77,6 @@ public:
 private:
     Underlying value;
 };
-
 
 }
 
