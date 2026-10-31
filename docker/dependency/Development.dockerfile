@@ -120,7 +120,7 @@ RUN python3 -m venv /opt/iree && \
     iree-compile --version && \
     iree-import-onnx --help > /dev/null
 
-# Install PyPy for the PyPy-backed UDF bridge (nes-udf/bridge-pypy). Optional and auto-detected via
+# Install PyPy for the PyPy-backed UDF bridge (nes-python-udf/bridges/pypy). Optional and auto-detected via
 # find_program(pypy3), same as IREE above -- absence just disables the feature, nothing fails.
 RUN apt-get update && apt-get install -y pypy3-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \

@@ -428,8 +428,21 @@ TEST_F(StatementBinderTest, BindShowFunctions)
     EXPECT_TRUE(std::holds_alternative<ShowFunctionsStatement>(*statement));
 }
 
+/// The Python bridges are registered by nes-python-udf, so tests that bind them only run in builds that ship them.
+namespace
+{
+bool isUdfBridgeShipped(const std::string& bridge)
+{
+    return UdfBridgeRegistry::instance().contains(bridge);
+}
+}
+
 TEST_F(StatementBinderTest, BindCreateFunctionWithBridge)
 {
+    if (!isUdfBridgeShipped("cpython"))
+    {
+        GTEST_SKIP() << "UDF bridge 'cpython' is not part of this build";
+    }
     const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
                                         "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
     const auto statement = binder->parseAndBindSingle(statementString);
@@ -437,7 +450,7 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithBridge)
     ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
 
     const auto& create = std::get<CreateFunctionStatement>(*statement);
-    EXPECT_EQ(create.path, resolveBuiltinUdfBridgePath("cpython").string());
+    EXPECT_EQ(create.path, resolveUdfBridgeLibraryPath(resolveUdfBridge("cpython")).string());
     EXPECT_EQ(create.entrypoint, "currency.add");
 }
 
@@ -453,6 +466,10 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithFromAndBridgePrefersFrom)
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridge)
 {
+    if (!isUdfBridgeShipped("codon"))
+    {
+        GTEST_SKIP() << "UDF bridge 'codon' is not part of this build";
+    }
     const std::string statementString = "CREATE FUNCTION discount (price FLOAT64) RETURNS FLOAT64 "
                                         "BRIDGE 'codon' ENTRYPOINT 'discount.apply_discount'";
     const auto statement = binder->parseAndBindSingle(statementString);
@@ -467,6 +484,10 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridge)
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithInterpreterBridgeIsInProcess)
 {
+    if (!isUdfBridgeShipped("cpython"))
+    {
+        GTEST_SKIP() << "UDF bridge 'cpython' is not part of this build";
+    }
     const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
                                         "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
     const auto statement = binder->parseAndBindSingle(statementString);
@@ -485,10 +506,26 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridgeAndFromThrows)
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownBridgeThrows)
 {
+    if (UdfBridgeRegistry::instance().getRegisteredNames().empty())
+    {
+        GTEST_SKIP() << "This build ships no UDF bridge";
+    }
     const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'cobol' ENTRYPOINT 'm.f'";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_FALSE(statement.has_value());
     ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedUdfLanguage);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithBridgeWithoutPythonUdfsThrows)
+{
+    if (!UdfBridgeRegistry::instance().getRegisteredNames().empty())
+    {
+        GTEST_SKIP() << "This build ships Python UDF bridges";
+    }
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'cpython' ENTRYPOINT 'm.f'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::PythonUdfsNotEnabled);
 }
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithNeitherFromNorLanguageThrows)

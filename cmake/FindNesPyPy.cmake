@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # Locates an installed pypy3 (nix devshell, apt pypy3/pypy3-dev, or any other install). A macro so each
-# caller (nes-udf/bridge-pypy, nes-single-node-worker, nes-systests/systest) gets its own NES_PYPY_* vars.
+# caller (nes-python-udf/bridges/pypy, nes-single-node-worker, nes-systests/systest) gets its own NES_PYPY_* vars.
 # .nix/nix-cmake.sh runs under `nix develop --ignore-environment`, which drops PATH, so set
 # NES_PYPY3_EXECUTABLE explicitly there (passed through by .nix/nix-run.sh).
 # Sets NES_PYPY_FOUND, and on success NES_PYPY_EXECUTABLE / NES_PYPY_RUNTIME_LIB / NES_PYPY_INCLUDE_DIR.

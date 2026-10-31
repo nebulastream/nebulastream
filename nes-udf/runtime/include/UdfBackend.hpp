@@ -65,7 +65,7 @@ public:
     [[nodiscard]] static std::shared_ptr<UdfBackend> create(const UdfDescriptor& descriptor);
 
     /// Load and prepare a UDF from literal source rather than a catalog descriptor: `bridgePath` is a
-    /// built-in bridge `.so` (resolved via resolveBuiltinUdfBridgePath), `source` is the UDF body's
+    /// shipped bridge `.so` (resolved via resolveUdfBridgeLibraryPath), `source` is the UDF body's
     /// Python source, and `functionName` names the callable it defines. Used for inline UDFs (e.g. SQL's
     /// PYTHON(...) expression with BRIDGE 'cpython'/'pypy'), which carry no catalog entry.
     [[nodiscard]] static std::shared_ptr<UdfBackend> createFromSource(

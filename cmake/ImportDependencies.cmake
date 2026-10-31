@@ -99,16 +99,16 @@ endif ()
 
 # By default we build MLIR via VCPKG. However the USE_LOCAL_MLIR options allows to supply a locally installed version
 # of MLIR.
-if (NES_ENABLE_UDFS)
-    message(STATUS "Enabling UDF feature for the VPCKG install")
-    list(APPEND VCPKG_MANIFEST_FEATURES "udf")
+if (NES_ENABLE_PYTHON_UDFS)
+    message(STATUS "Enabling Python UDF feature for the VPCKG install")
+    list(APPEND VCPKG_MANIFEST_FEATURES "python-udf")
 endif ()
 
 if (NOT ${USE_LOCAL_MLIR})
     message(STATUS "Enabling MLIR feature for the VPCKG install")
     list(APPEND VCPKG_MANIFEST_FEATURES "mlir")
-    if (NES_ENABLE_UDFS)
-        list(APPEND VCPKG_MANIFEST_FEATURES "udf-mlir")
+    if (NES_ENABLE_PYTHON_UDFS)
+        list(APPEND VCPKG_MANIFEST_FEATURES "python-udf-mlir")
     endif ()
 else ()
     message(STATUS "Using locally installed MLIR")

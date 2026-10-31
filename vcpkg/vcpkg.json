@@ -35,8 +35,8 @@
         }
       ]
     },
-    "udf": {
-      "description": "enables user-defined functions: Codon with its OpenBLAS and OpenCV plugins",
+    "python-udf": {
+      "description": "enables Python user-defined functions: Codon with its OpenBLAS and OpenCV plugins",
       "dependencies": [
         "codon-compiler",
         {
@@ -57,7 +57,7 @@
         }
       ]
     },
-    "udf-mlir": {
+    "python-udf-mlir": {
       "description": "builds Codon against the vcpkg LLVM used by the nautilus mlir backend",
       "dependencies": [
         {

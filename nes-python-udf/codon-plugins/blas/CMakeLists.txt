@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include("${PROJECT_SOURCE_DIR}/nes-codon-plugin/cmake/NESCodonPlugin.cmake")
+include("${PROJECT_SOURCE_DIR}/nes-python-udf/codon-sdk/cmake/NESCodonPlugin.cmake")
 find_package(OpenBLAS CONFIG REQUIRED)
 
 add_codon_extension_plugin(nes-codon-blas-plugin

@@ -24,6 +24,11 @@ create_runtime_registry(PhysicalFunction nes-physical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}PhysicalFunction::create\${KEY}"
         HEADER_TEMPLATE "\${PLUGIN_NAME}PhysicalFunction.hpp")
 
+# Keyed by UDF backend; the Python backends are entries of nes-python-udf.
+create_runtime_registry(UdfLowering nes-physical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}UdfLowering::create\${KEY}"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}UdfLowering.hpp")
+
 create_runtime_registry(AggregationPhysicalFunction nes-physical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}AggregationPhysicalFunction::create"
         HEADER_TEMPLATE "\${PLUGIN_NAME}AggregationPhysicalFunction.hpp")
@@ -32,16 +37,7 @@ add_subdirectory(src)
 get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 target_sources(nes-physical-operators PRIVATE ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
 find_package(OpenSSL REQUIRED)
-target_link_libraries(nes-physical-operators PUBLIC nes-schema nes-sources nes-sinks nes-nautilus nes-logical-operators nes-input-formatter-provider PRIVATE nes-input-formatters nes-inference-runtime OpenSSL::Crypto)
-if (NES_ENABLE_UDFS)
-    find_package(codon-compiler CONFIG REQUIRED)
-    target_link_libraries(nes-physical-operators PRIVATE nes-codon-plugin nes-udf-runtime codon::compiler)
-    add_dependencies(nes-physical-operators nes-codon-blas-plugin nes-codon-opencv-plugin)
-    target_compile_definitions(nes-physical-operators PRIVATE
-            NES_ENABLE_UDFS
-            NES_CODON_BLAS_PLUGIN_PATH="$<TARGET_FILE:nes-codon-blas-plugin>"
-            NES_CODON_OPENCV_PLUGIN_PATH="$<TARGET_FILE:nes-codon-opencv-plugin>")
-endif ()
+target_link_libraries(nes-physical-operators PUBLIC nes-schema nes-sources nes-sinks nes-nautilus nes-logical-operators nes-input-formatter-provider nes-udf PRIVATE nes-input-formatters nes-inference-runtime nes-udf-runtime OpenSSL::Crypto)
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

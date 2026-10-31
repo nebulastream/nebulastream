@@ -30,9 +30,10 @@ option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 option(ALL_HASHMAP_TESTS "Run all hashmap test combinations." OFF)
 option(ALL_SLICE_CACHE_TESTS "Run system tests with and without slice cache." OFF)
-# Without UDF support neither Codon (with its OpenCV/BLAS plugins) nor CPython/PyPy is required: the UDF statements and
-# logical functions still parse and bind, but lowering a query that calls a UDF fails with UdfsNotEnabled.
-option(NES_ENABLE_UDFS "Build support for user-defined functions (Codon, CPython and PyPy)" ON)
+# Builds nes-python-udf. Without it neither Codon (with its OpenCV/BLAS plugins) nor CPython/PyPy is required: Python UDF
+# statements and functions still parse and bind, but binding a BRIDGE or running a query that calls a Python UDF fails with
+# PythonUdfsNotEnabled. UDFs from C-ABI libraries (CREATE FUNCTION ... FROM '<lib>') work either way.
+option(NES_ENABLE_PYTHON_UDFS "Build support for Python user-defined functions (Codon, CPython and PyPy)" ON)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Benchmark")
     add_compile_definitions(NO_ASSERT)
@@ -258,7 +259,7 @@ add_custom_target(nes-codegen)
 file(GLOB NES_DIRECTORIES_ALL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
 set(NES_DIRECTORIES)
 foreach (NES_DIR ${NES_DIRECTORIES_ALL})
-    if (NOT NES_ENABLE_UDFS AND NES_DIR MATCHES "^nes-codon")
+    if (NOT NES_ENABLE_PYTHON_UDFS AND NES_DIR STREQUAL "nes-python-udf")
         continue()
     endif ()
     if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR} AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR}/CMakeLists.txt)

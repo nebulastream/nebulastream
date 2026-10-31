@@ -332,7 +332,7 @@ OQ5: Interpreter choice per UDF — resolved. Both a CPython bridge and a PyPy b
 
 # Extension — Alternative Interpreter Backend (PyPy)
 
-**Status: implemented and shipped.** Both bridges are built when their respective interpreter is available (`Python3 Development.Embed` / `pypy3`, both `find_program`/`find_package`-detected, no build flag), and `nes-systests/udf/PyPyUdf.test` (`PyPyUdf` systest group) exercises the PyPy path end to end. Verified working both in the project's Docker image and in a local nix-toolchain build against a system-installed (apt) `pypy3` — the latter needed three narrow fixes in `cmake/FindNesPyPy.cmake` / `nes-udf/bridge-pypy/CMakeLists.txt` for nix-devshell-environment and Debian-multiarch-packaging quirks (stale `sysconfig` env vars shadowing PyPy's own config, a runtime-lib search path miss, and `DT_RUNPATH` not applying transitively to the PyPy `.so`'s own further dependencies) — none of which reflect a problem with the design itself.
+**Status: implemented and shipped.** Both bridges are built when their respective interpreter is available (`Python3 Development.Embed` / `pypy3`, both `find_program`/`find_package`-detected, no build flag), and `nes-systests/udf/PyPyUdf.test` (`PyPyUdf` systest group) exercises the PyPy path end to end. Verified working both in the project's Docker image and in a local nix-toolchain build against a system-installed (apt) `pypy3` — the latter needed three narrow fixes in `cmake/FindNesPyPy.cmake` / `nes-python-udf/bridges/pypy/CMakeLists.txt` for nix-devshell-environment and Debian-multiarch-packaging quirks (stale `sysconfig` env vars shadowing PyPy's own config, a runtime-lib search path miss, and `DT_RUNPATH` not applying transitively to the PyPy `.so`'s own further dependencies) — none of which reflect a problem with the design itself.
 
 CPython is a pure bytecode interpreter: `execute_udf_row` re-interprets the UDF's bytecode on every call (see the per-tuple trace in `CPythonUdfBridge.cpp`). That's fine for a short query — it's already at steady-state cost on call one. For a long-running continuous query calling the same UDF once per tuple, it's exactly what a *tracing* JIT wants: a hot function, called many times, with stable argument types (fixed by the SQL schema). PyPy's JIT does this — interpret until a function crosses a hotness threshold, then compile that path to native code, with guards that fall back to interpretation if an assumption breaks.
 
@@ -342,7 +342,7 @@ CPython is a pure bytecode interpreter: `execute_udf_row` re-interprets the UDF'
 
 `UdfBackend` and the bridge-`.so` boundary are already language-agnostic (`G2`) — a PyPy bridge is a second sibling `.so`, not a new engine component:
 - `UdfCatalog`, `UDFResolutionRule`, `UDFCallLogicalFunction`, `UDFPhysicalFunction`, `InProcessBackend` — **unchanged**. They only ever see a `.so` path and the fixed three-symbol ABI (`UdfAbi.h`); which interpreter lives behind it is invisible to all of them.
-- The only new wiring is a `UdfBridgeRegistry::kBuiltinBridges` entry (`nes-udf/src/UdfBridgeRegistry.cpp`) mapping `BRIDGE 'pypy'` to a second shipped path, `libnes-pypy-udf-bridge.so`.
+- The only new wiring is a `UdfBridge` registry entry (`PythonUdfBridges::createPyPy` in `nes-python-udf/bridges`) mapping `BRIDGE 'pypy'` to a second shipped path, `libnes-pypy-udf-bridge.so`.
 - Selection is per-`CREATE FUNCTION` via `BRIDGE`, so the same logical UDF can be registered twice (once per bridge) and benchmarked side by side with no engine changes.
 
 ## Embedding mechanism differs from CPython
@@ -381,6 +381,7 @@ Component split mirrors `nes-inference` / `nes-inference/runtime`:
 - `nes-udf/` (light): `UdfAbi.h`, `UdfDescriptor` (reflectable), `UdfCatalog`.
 - `nes-udf/runtime/` (`nes-udf-runtime`, does `dlopen`): `UdfBackend` interface + `InProcessBackend`; linked `PRIVATE` into `nes-physical-operators` next to `nes-inference-runtime`.
 - v2 adds `nes-udf/sidecar/` (executable), `UdfWireProtocol.hpp`, `SidecarBackend`.
+- `nes-python-udf/` (built with `NES_ENABLE_PYTHON_UDFS`, the default): everything that needs Codon, CPython or PyPy. It plugs into two runtime registries: `UdfBridge` (in `nes-udf`, BRIDGE name -> execution and shipped library) and `UdfLowering` (in `nes-physical-operators`, UDF backend -> physical function). It holds the Codon-compiled `PythonPhysicalFunction` and the `Codon`/`CPython`/`PyPy` lowerings (`functions/`), the bridge libraries and their BRIDGE names (`bridges/`), and the Codon plugin SDK with the OpenBLAS/OpenCV plugins (`codon-sdk/`, `codon-plugins/`). Without it both registries lack the Python entries, so binding a BRIDGE or lowering a Python UDF fails with `PythonUdfsNotEnabled`, while `InProcess` UDFs (`CREATE FUNCTION ... FROM '<lib>'`) keep working.
 
 Ordered build sequence:
 1. ABI header + `nes-udf` skeleton + `UdfCatalog`/`UdfDescriptor` (+ reflection) + `UdfCatalogTest`.

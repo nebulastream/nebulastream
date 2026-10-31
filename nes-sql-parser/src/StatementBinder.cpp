@@ -305,17 +305,25 @@ public:
         {
             throw InvalidStatement("CREATE FUNCTION requires FROM, BRIDGE, or both");
         }
-        const auto isCodon = functionDefAST->bridge != nullptr && bindStringLiteral(functionDefAST->bridge) == CodonUdfBridge;
-        if (isCodon && functionDefAST->functionPath != nullptr)
+        if (functionDefAST->bridge != nullptr && functionDefAST->functionPath != nullptr
+            && bindStringLiteral(functionDefAST->bridge) == CodonUdfBridge)
         {
             throw InvalidStatement("CREATE FUNCTION ... BRIDGE '{}' compiles the ENTRYPOINT module and does not take FROM", CodonUdfBridge);
         }
         std::string path;
-        if (not isCodon)
+        auto execution = UdfExecution::InProcess;
+        if (functionDefAST->functionPath != nullptr)
         {
-            path = functionDefAST->functionPath != nullptr
-                ? bindStringLiteral(functionDefAST->functionPath)
-                : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->bridge)).string();
+            path = bindStringLiteral(functionDefAST->functionPath);
+        }
+        else
+        {
+            const auto bridge = resolveUdfBridge(bindStringLiteral(functionDefAST->bridge));
+            execution = bridge.execution;
+            if (execution != UdfExecution::Codon)
+            {
+                path = resolveUdfBridgeLibraryPath(bridge).string();
+            }
         }
         const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
 
@@ -334,7 +342,7 @@ public:
             .entrypoint = entrypoint,
             .argTypes = std::move(argTypes),
             .returnType = returnType,
-            .execution = isCodon ? UdfExecution::Codon : UdfExecution::InProcess};
+            .execution = execution};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

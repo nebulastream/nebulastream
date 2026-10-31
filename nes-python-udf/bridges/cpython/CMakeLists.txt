@@ -13,24 +13,15 @@
 # The CPython UDF bridge is an optional runtime artifact (a .so users dlopen via CREATE FUNCTION),
 # not linked into the engine. It embeds CPython, so it only builds where the Python "embed"
 # development files are available.
-find_package(Python3 COMPONENTS Development.Embed QUIET)
 if (TARGET Python3::Python)
     add_library(nes-cpython-udf-bridge SHARED CPythonUdfBridge.cpp)
-    target_include_directories(nes-cpython-udf-bridge PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+    target_include_directories(nes-cpython-udf-bridge PRIVATE ${PROJECT_SOURCE_DIR}/nes-udf/include)
     target_link_libraries(nes-cpython-udf-bridge PRIVATE Python3::Python)
     # Sanitizer runtimes are linked into executables only; the worker that dlopens the bridge provides them.
     if (NOT SANITIZER_OPTION STREQUAL "none")
         target_link_options(nes-cpython-udf-bridge PRIVATE "LINKER:-z,undefs")
     endif ()
-    # The systest binary (configured before this dir) dlopens the bridge; ensure it is built alongside.
-    if (TARGET systest)
-        add_dependencies(systest nes-cpython-udf-bridge)
-    endif ()
-    # Staged via symlink in nes-single-node-worker/CMakeLists.txt instead of here: add_custom_command(TARGET ...)
-    # only works from the directory that created the target.
-    if (TARGET nes-single-node-worker)
-        add_dependencies(nes-single-node-worker nes-cpython-udf-bridge)
-    endif ()
+    # nes-single-node-worker and nes-systests/systest stage the bridge next to their executables.
     install(TARGETS nes-cpython-udf-bridge
             RUNTIME DESTINATION bin/nes-udf-bridges
             LIBRARY DESTINATION bin/nes-udf-bridges)

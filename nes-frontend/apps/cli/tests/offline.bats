@@ -61,8 +61,20 @@ teardown() {
 }
 
 @test "nebucli dump with catalog function topology" {
+  if [ "$NES_ENABLE_PYTHON_UDFS" != "ON" ]; then
+    skip "built without Python UDFs"
+  fi
   run $NES_CLI -t tests/good/udf-function.yaml dump
   [ "$status" -eq 0 ]
+}
+
+@test "nebucli rejects a Python function in a build without Python UDFs" {
+  if [ "$NES_ENABLE_PYTHON_UDFS" = "ON" ]; then
+    skip "built with Python UDFs"
+  fi
+  run $NES_CLI -t tests/good/udf-function.yaml dump
+  [ "$status" -eq 1 ]
+  assert_output --partial "this build has no support for Python UDFs"
 }
 
 @test "nebucli rejects a function without bridge or path" {

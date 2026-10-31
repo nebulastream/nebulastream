@@ -15,23 +15,19 @@
 #include <UdfBridgeRegistry.hpp>
 
 #include <filesystem>
+#include <string>
 #include <string_view>
-#include <unordered_map>
-
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-namespace
+UdfBridgeRegistry& UdfBridgeRegistry::instance()
 {
-/// Bridge name -> shipped bridge filename, relative to <currentExecutableDirectory()>/nes-udf-bridges/.
-/// Whether it was actually built is a file-existence check left to UdfCatalog::registerUdf.
-/// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) built once at load time
-const std::unordered_map<std::string_view, std::string_view> kBuiltinBridges{
-    {"cpython", "libnes-cpython-udf-bridge.so"},
-    {"pypy", "libnes-pypy-udf-bridge.so"},
-};
+    static UdfBridgeRegistry inst;
+    return inst;
 }
 
 std::filesystem::path currentExecutableDirectory()
@@ -39,14 +35,26 @@ std::filesystem::path currentExecutableDirectory()
     return std::filesystem::read_symlink("/proc/self/exe").parent_path();
 }
 
-std::filesystem::path resolveBuiltinUdfBridgePath(const std::string_view bridge)
+UdfBridge resolveUdfBridge(const std::string_view bridge)
 {
-    const auto it = kBuiltinBridges.find(bridge);
-    if (it == kBuiltinBridges.end())
+    const auto& registry = UdfBridgeRegistry::instance();
+    if (const auto create = registry.find(std::string{bridge}))
     {
-        throw NES::UnsupportedUdfLanguage("'{}' is not a built-in UDF bridge", bridge);
+        return (*create)();
     }
-    return currentExecutableDirectory() / "nes-udf-bridges" / it->second;
+    const auto shipped = registry.getRegisteredNames();
+    if (shipped.empty())
+    {
+        throw PythonUdfsNotEnabled(
+            "BRIDGE '{}' is not available: this build has no support for Python UDFs (configure with -DNES_ENABLE_PYTHON_UDFS=ON)", bridge);
+    }
+    throw UnsupportedUdfLanguage("'{}' is not a UDF bridge of this build (available: {})", bridge, fmt::join(shipped, ", "));
+}
+
+std::filesystem::path resolveUdfBridgeLibraryPath(const UdfBridge& bridge)
+{
+    INVARIANT(!bridge.libraryFileName.empty(), "A bridge compiled into the query pipeline has no library");
+    return currentExecutableDirectory() / "nes-udf-bridges" / bridge.libraryFileName;
 }
 
 }

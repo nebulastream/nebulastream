@@ -13,8 +13,6 @@
 # The PyPy UDF bridge is an optional runtime artifact (a .so users dlopen via CREATE FUNCTION), not
 # linked into the engine. It embeds PyPy via cffi, so it only builds where pypy3 is installed, same
 # as the CPython bridge next door.
-include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
-nes_find_pypy()
 if (NES_PYPY_FOUND)
     set(NES_PYPY_BRIDGE_GLUE ${CMAKE_CURRENT_SOURCE_DIR}/pypy_udf_bridge.py)
     # Under _generated_src/ so that clang-tidy (scripts/tidy.sh) skips the cffi-generated code.
@@ -37,15 +35,7 @@ if (NES_PYPY_FOUND)
         target_link_options(nes-pypy-udf-bridge PRIVATE "LINKER:-z,undefs")
     endif ()
 
-    # The systest binary (configured before this dir) dlopens the bridge; ensure it is built alongside.
-    if (TARGET systest)
-        add_dependencies(systest nes-pypy-udf-bridge)
-    endif ()
-    # See nes-udf/bridge-cpython/CMakeLists.txt for why the worker-side staging step lives in
-    # nes-single-node-worker/CMakeLists.txt instead of here.
-    if (TARGET nes-single-node-worker)
-        add_dependencies(nes-single-node-worker nes-pypy-udf-bridge)
-    endif ()
+    # nes-single-node-worker and nes-systests/systest stage the bridge next to their executables.
 
     install(TARGETS nes-pypy-udf-bridge
             RUNTIME DESTINATION bin/nes-udf-bridges

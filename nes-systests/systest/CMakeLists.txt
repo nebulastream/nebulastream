@@ -104,18 +104,13 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
-# The CPython UDF bridge (built by nes-udf/bridge-cpython only where Python's embed dev files exist) is
+# The CPython UDF bridge (built by nes-python-udf/bridges/cpython only where Python's embed dev files exist) is
 # dlopen'd by the `PythonUdf` systest group. `.test` files reference it via the PY_BRIDGE_DIR
 # substitution keyword; the binder puts nes-systests/udf/pyudfs on NES_UDF_PATH so `import`s resolve.
 # PY_UDF_VENV_DIR resolves to nes-systests/udf/small_venv -- an in-tree venv (see PythonUdfVenv.test)
 # demonstrating worker.python_udf.venv (A7 in docs/design/20260708_Scalar_UDF_Support.md) with no
 # machine-specific path needed in the .test file itself.
-if (NES_ENABLE_UDFS)
-    find_package(Python3 COMPONENTS Development.Embed QUIET)
-    include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
-    nes_find_pypy()
-endif ()
-if (Python3_FOUND)
+if (TARGET nes-cpython-udf-bridge)
     target_compile_definitions(nes-systest-lib PUBLIC
             SYSTEST_PY_BRIDGE_DIR="$<TARGET_FILE_DIR:nes-cpython-udf-bridge>"
             SYSTEST_PY_UDF_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../udf/pyudfs"
@@ -132,21 +127,16 @@ target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastr
 target_include_directories(systest PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # `BRIDGE`-based CREATE FUNCTION statements resolve the path relative to the running executable (see
-# UdfBridgeRegistry), not through the PY_BRIDGE_DIR substitution above. Stage the built bridge next to
-# `systest` at that same location so these tests exercise the real resolution path.
-if (Python3_FOUND)
-    add_custom_command(TARGET systest POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
-            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
-endif ()
-
-# Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for
-# the same reason as the Python3 check above.
-if (NES_PYPY_FOUND)
-    add_custom_command(TARGET systest POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
-            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-pypy-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-pypy-udf-bridge>")
-endif ()
+# UdfBridgeRegistry), not through the PY_BRIDGE_DIR substitution above. Stage the bridges built by nes-python-udf
+# (configured before this dir) next to `systest` at that same location so these tests exercise the real resolution path.
+foreach (bridge IN ITEMS nes-cpython-udf-bridge nes-pypy-udf-bridge)
+    if (TARGET ${bridge})
+        add_dependencies(systest ${bridge})
+        add_custom_command(TARGET systest POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
+                COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:${bridge}>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:${bridge}>")
+    endif ()
+endforeach ()
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
 if (ALL_SLICE_CACHE_TESTS)
@@ -171,22 +161,22 @@ if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
 endif ()
-# Without UDF support every query calling a UDF fails to lower, so skip all UDF groups. UdfsDisabled checks that error
-# and only runs in such builds.
-if (NES_ENABLE_UDFS)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS UdfsDisabled)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER UdfsDisabled)
+# Without nes-python-udf every Python UDF fails to bind or run, so skip all Python UDF groups. PythonUdfsDisabled checks
+# that error and only runs in such builds.
+if (NES_ENABLE_PYTHON_UDFS)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdfsDisabled)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdfsDisabled)
 else ()
     list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUDF)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUDF)
 endif ()
-# The PythonUdf group needs the Python bridge; skip it where Python's embed dev files are absent.
-if (NOT Python3_FOUND)
+# The PythonUdf group needs the CPython bridge; skip it where Python's embed dev files are absent.
+if (NOT TARGET nes-cpython-udf-bridge)
     list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdf)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdf)
 endif ()
 # The PyPyUdf group needs the PyPy bridge; skip it where pypy3 is absent.
-if (NOT NES_PYPY_FOUND)
+if (NOT TARGET nes-pypy-udf-bridge)
     list(APPEND SYSTEST_EXCLUDE_GROUPS PyPyUdf)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PyPyUdf)
 endif ()

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/PythonUDF/PythonUdfFilesystem.hpp>
+#include <PythonUdfFilesystem.hpp>
 
 #include <chrono>
 #include <filesystem>

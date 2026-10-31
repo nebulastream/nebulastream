@@ -37,27 +37,16 @@ set_property(TARGET nes-single-node-worker PROPERTY ENABLE_EXPORTS ON)
 find_package(argparse CONFIG REQUIRED)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib argparse::argparse)
 
-# UdfBridgeRegistry resolves BRIDGE clauses relative to the worker's executable dir, so stage the built
-# bridge there via symlink. nes-udf/bridge-cpython is configured after this dir, so re-check for
-# Python's embed dev files instead of `if (TARGET nes-cpython-udf-bridge)`.
-if (NES_ENABLE_UDFS)
-    find_package(Python3 COMPONENTS Development.Embed QUIET)
-    include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
-    nes_find_pypy()
-endif ()
-if (Python3_FOUND)
-    add_custom_command(TARGET nes-single-node-worker POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
-            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
-endif ()
-
-# Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for
-# the same reason as the Python3 check above.
-if (NES_PYPY_FOUND)
-    add_custom_command(TARGET nes-single-node-worker POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
-            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-pypy-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-pypy-udf-bridge>")
-endif ()
+# UdfBridgeRegistry resolves BRIDGE clauses relative to the worker's executable dir, so stage the bridges built by
+# nes-python-udf (configured before this dir) there via symlink.
+foreach (bridge IN ITEMS nes-cpython-udf-bridge nes-pypy-udf-bridge)
+    if (TARGET ${bridge})
+        add_dependencies(nes-single-node-worker ${bridge})
+        add_custom_command(TARGET nes-single-node-worker POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
+                COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:${bridge}>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:${bridge}>")
+    endif ()
+endforeach ()
 
 if (ENABLE_BATS_TESTS)
     add_test(

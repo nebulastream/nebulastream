@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/PythonPhysicalFunction.hpp>
+#include <PythonPhysicalFunction.hpp>
 
 #include <algorithm>
 #include <array>
@@ -40,8 +40,6 @@
 #include <unistd.h>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
-#include <Functions/PythonUDF/PythonUdfFilesystem.hpp>
-#include <Functions/PythonUDF/PythonUdfRuntime.hpp>
 #include <Interface/Record.hpp>
 #include <NESCodonPlugin/Registry.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -68,6 +66,8 @@
 #include <Arena.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <PythonUdfFilesystem.hpp>
+#include <PythonUdfRuntime.hpp>
 #include <UdfBridgeRegistry.hpp>
 #include <function.hpp>
 
