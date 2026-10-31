@@ -37,7 +37,8 @@ services:
     image: busybox:1.38.0
     working_dir: /workdir
     entrypoint: ["/bin/sh", "-c"]
-    command: ["exec nc -l -p 9000 >> /workdir/results.csv"]
+    # -v logs each accepted connection with the peer's port, which matches the endpoint the sink logs on (re)connect.
+    command: ["exec nc -v -l -p 9000 >> /workdir/results.csv"]
     stop_grace_period: 0s
     # Bounded socket buffers make the amount of data a non-reading peer absorbs independent of host autotuning.
     sysctls:
