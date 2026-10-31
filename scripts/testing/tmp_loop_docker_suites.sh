@@ -33,10 +33,13 @@ report_disk() {
   } | tee -a "$disk_log"
 }
 
-# Every bats suite builds its images from a fresh context, which leaves a build cache layer the size of the copied
-# NES binary behind. Removes only those layers, as self-hosted runners share the docker daemon between jobs.
+# Every bats suite builds its images from a fresh context, which leaves build cache the size of the copied NES binaries
+# behind. GitHub-hosted runners get a fresh machine per job, so all of it can go. Self-hosted runners share the docker
+# daemon between jobs, so only the COPY layers of the test images are removed there.
 prune_test_image_cache() {
-  docker builder prune -af --filter 'description~=COPY.nes-' | tail -1 || echo "=== build cache prune failed"
+  local filter=()
+  [ "${RUNNER_ENVIRONMENT:-}" = github-hosted ] || filter=(--filter 'description~=COPY.nes-')
+  docker builder prune -af "${filter[@]}" | tail -1 || echo "=== build cache prune failed"
 }
 
 report_disk "before first pass"
