@@ -14,6 +14,9 @@
 
 #pragma once
 
+/// C ABI shared with the UDF bridges: plain C enums and the C integer types the bridges declare.
+/// NOLINTBEGIN(cppcoreguidelines-use-enum-class,google-runtime-int)
+
 /// The NebulaStream scalar-UDF C ABI: a registered UDF `.so` exposes exactly the three symbols below,
 /// implemented by a language bridge (e.g. an embedded Python interpreter). Any `.so` exporting them can serve scalar UDFs.
 ///
@@ -24,8 +27,7 @@
 ///     fault (segfault/abort) is NOT contained here -- that's the job of the future out-of-process backend.
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /// Wire type codes for UDF argument and return values. Stable integer values —
@@ -51,15 +53,14 @@ enum UdfTypeCode
 enum UdfStatus
 {
     UDF_ERROR = 0, /// the UDF failed recoverably; *errormessage is set (caller frees it)
-    UDF_OK = 1     /// success; the result_* out-params (and result_null) are written
+    UDF_OK = 1 /// success; the result_* out-params (and result_null) are written
 };
 
 /// Prepare a UDF for execution. `entrypoint` identifies the function inside the
 /// `.so` (for the Python bridge, a "module.function" string). `arg_type_codes`
 /// has `argc` entries; `return_type_code` is a single UdfTypeCode. Returns a
 /// non-negative handle on success, or a negative value with *errormessage set.
-int initialize_udf(
-    const char* entrypoint, int argc, const int* arg_type_codes, int return_type_code, char** errormessage);
+int initialize_udf(const char* entrypoint, int argc, const int* arg_type_codes, int return_type_code, char** errormessage);
 
 /// Prepare a UDF for execution from literal source rather than an importable module. `source` is
 /// executed in a fresh, anonymous namespace (private to this one handle); `function_name` names the
@@ -99,3 +100,4 @@ void cleanup_udf(int handle);
 #ifdef __cplusplus
 }
 #endif
+/// NOLINTEND(cppcoreguidelines-use-enum-class,google-runtime-int)

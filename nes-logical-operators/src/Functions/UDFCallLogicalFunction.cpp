@@ -112,8 +112,9 @@ std::string_view UDFCallLogicalFunction::getType() const
 
 Reflected Reflector<UDFCallLogicalFunction>::operator()(const UDFCallLogicalFunction& function, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedUDFCallLogicalFunction{
-        .udfName = function.udfName, .descriptor = function.descriptor, .arguments = function.arguments});
+    return context.reflect(
+        detail::ReflectedUDFCallLogicalFunction{
+            .udfName = function.udfName, .descriptor = function.descriptor, .arguments = function.arguments});
 }
 
 UDFCallLogicalFunction Unreflector<UDFCallLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

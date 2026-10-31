@@ -24,6 +24,9 @@
 #include <UdfBackend.hpp>
 #include <UdfDescriptor.hpp>
 
+/// Mirrors the C ABI of UdfAbi.h.
+/// NOLINTBEGIN(google-runtime-int)
+
 namespace NES
 {
 
@@ -98,3 +101,5 @@ private:
 };
 
 }
+
+/// NOLINTEND(google-runtime-int)

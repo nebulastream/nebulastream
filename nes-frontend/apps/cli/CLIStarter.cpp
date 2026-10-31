@@ -680,17 +680,23 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         const auto isCodon = bridge.has_value() && *bridge == NES::CodonUdfBridge;
         if (isCodon && path.has_value())
         {
-            throw NES::InvalidConfigParameter("Function '{}': `bridge: {}` compiles the entrypoint module and takes no `path`", name, *bridge);
+            throw NES::InvalidConfigParameter(
+                "Function '{}': `bridge: {}` compiles the entrypoint module and takes no `path`", name, *bridge);
         }
-        const auto libraryPath = isCodon ? std::string{} : path.has_value() ? *path : NES::resolveBuiltinUdfBridgePath(*bridge).string();
-        statements.emplace_back(NES::CreateFunctionStatement{
-            .name = fmt::format("{}", bindIdentifierName(name)),
-            .path = libraryPath,
-            .entrypoint = entrypoint,
-            .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
-                | std::ranges::to<std::vector<NES::DataType>>(),
-            .returnType = returns,
-            .execution = isCodon ? NES::UdfExecution::Codon : NES::UdfExecution::InProcess});
+        std::string libraryPath;
+        if (not isCodon)
+        {
+            libraryPath = path.has_value() ? *path : NES::resolveBuiltinUdfBridgePath(*bridge).string();
+        }
+        statements.emplace_back(
+            NES::CreateFunctionStatement{
+                .name = fmt::format("{}", bindIdentifierName(name)),
+                .path = libraryPath,
+                .entrypoint = entrypoint,
+                .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
+                    | std::ranges::to<std::vector<NES::DataType>>(),
+                .returnType = returns,
+                .execution = isCodon ? NES::UdfExecution::Codon : NES::UdfExecution::InProcess});
     }
     return statements;
 }
