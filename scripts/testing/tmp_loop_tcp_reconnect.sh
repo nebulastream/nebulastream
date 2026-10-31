@@ -16,11 +16,27 @@
 # Usage: tmp_loop_tcp_reconnect.sh <build-dir> <iterations>
 set -euo pipefail
 
-build_dir=$1
+build_dir=$(realpath "$1")
 iterations=$2
+disk_log="$build_dir/disk-usage.log"
+
+# Logs free disk space and what docker and the test directories occupy, to find what fills the runner's disk.
+# The build directory lives on the runner's root filesystem, which also holds /var/lib/docker.
+report_disk() {
+  local label=$1
+  {
+    echo "=== disk $label ($(date -u +%H:%M:%S)): $(df -h --output=avail,used,pcent "$build_dir" | tail -1 | xargs)" \
+      "free/used/use%, test-tmp $(du -sh "$build_dir/test-tmp" 2>/dev/null | cut -f1)"
+    docker system df --format '    docker {{.Type}}: {{.Size}} ({{.Reclaimable}} reclaimable)'
+  } | tee -a "$disk_log"
+}
+
+report_disk "before first run"
 
 # The first regular run also sets up the ctest fixtures (binaries and runtime image) the bats suite depends on.
 [ -n "${SKIP_FIRST_RUN:-}" ] || ctest --test-dir "$build_dir" --no-tests=error -j 1 -R '^tcp-sink-test$' --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS:-}
+
+report_disk "after first run"
 
 # Reuses the exact ctest command (env and bats flags) and restricts bats to the reconnect test.
 ctest --test-dir "$build_dir" -R '^tcp-sink-test$' --show-only=json-v1 > "$build_dir/tcp-sink-test.json"
@@ -40,7 +56,9 @@ for iteration in $(seq 1 "$iterations"); do
   echo "=== reconnect iteration $iteration/$iterations ($(date -u +%H:%M:%S))"
   if ! "${command[@]}"; then
     echo "=== reconnect test FAILED in iteration $iteration"
+    report_disk "after failed iteration $iteration"
     exit 1
   fi
+  report_disk "after iteration $iteration"
 done
 echo "=== reconnect test passed $iterations iterations"
