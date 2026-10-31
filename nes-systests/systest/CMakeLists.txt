@@ -110,7 +110,11 @@ target_compile_definitions(nes-systest-lib PUBLIC
 # PY_UDF_VENV_DIR resolves to nes-systests/udf/small_venv -- an in-tree venv (see PythonUdfVenv.test)
 # demonstrating worker.python_udf.venv (A7 in docs/design/20260708_Scalar_UDF_Support.md) with no
 # machine-specific path needed in the .test file itself.
-find_package(Python3 COMPONENTS Development.Embed QUIET)
+if (NES_ENABLE_UDFS)
+    find_package(Python3 COMPONENTS Development.Embed QUIET)
+    include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
+    nes_find_pypy()
+endif ()
 if (Python3_FOUND)
     target_compile_definitions(nes-systest-lib PUBLIC
             SYSTEST_PY_BRIDGE_DIR="$<TARGET_FILE_DIR:nes-cpython-udf-bridge>"
@@ -138,8 +142,6 @@ endif ()
 
 # Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for
 # the same reason as the Python3 check above.
-include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
-nes_find_pypy()
 if (NES_PYPY_FOUND)
     add_custom_command(TARGET systest POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
@@ -168,6 +170,15 @@ set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv Pyt
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
+endif ()
+# Without UDF support every query calling a UDF fails to lower, so skip all UDF groups. UdfsDisabled checks that error
+# and only runs in such builds.
+if (NES_ENABLE_UDFS)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS UdfsDisabled)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER UdfsDisabled)
+else ()
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUDF)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUDF)
 endif ()
 # The PythonUdf group needs the Python bridge; skip it where Python's embed dev files are absent.
 if (NOT Python3_FOUND)

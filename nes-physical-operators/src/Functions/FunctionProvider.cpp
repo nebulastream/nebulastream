@@ -32,21 +32,24 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Functions/PythonLogicalFunction.hpp>
-#include <Functions/PythonPhysicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
-#include <Functions/UDFPhysicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <UdfBackend.hpp>
-#include <UdfBridgeRegistry.hpp>
-#include <UdfDescriptor.hpp>
+#ifdef NES_ENABLE_UDFS
+    #include <Functions/PythonPhysicalFunction.hpp>
+    #include <Functions/UDFPhysicalFunction.hpp>
+    #include <UdfBackend.hpp>
+    #include <UdfBridgeRegistry.hpp>
+    #include <UdfDescriptor.hpp>
+#endif
 
 namespace NES::QueryCompilation
 {
+#ifdef NES_ENABLE_UDFS
 namespace
 {
 /// Wraps an inline PYTHON(...) body as a plain, top-level Python function so it can be handed to
@@ -139,6 +142,7 @@ std::string_view interpreterBridgeName(const PythonUdfBackend backend)
     std::unreachable();
 }
 }
+#endif
 
 PhysicalFunction FunctionProvider::lowerFunction(
     LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait, const std::vector<std::string>& pythonUdfImportPaths)
@@ -169,6 +173,11 @@ PhysicalFunction FunctionProvider::lowerFunction(
     /// and load the backend directly here — the same treatment as FieldAccess/ConstantValue above.
     if (const auto udfCallFunction = logicalFunction.tryGetAs<UDFCallLogicalFunction>())
     {
+#ifndef NES_ENABLE_UDFS
+        throw UdfsNotEnabled(
+            "Cannot execute UDF '{}': this build has no support for user-defined functions (configure with -DNES_ENABLE_UDFS=ON)",
+            udfCallFunction.value()->getUdfName());
+#else
         const auto& descriptor = udfCallFunction.value()->getDescriptor();
         INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
         if (descriptor->getExecution() == UdfExecution::Codon)
@@ -187,6 +196,7 @@ PhysicalFunction FunctionProvider::lowerFunction(
         return PhysicalFunction{
             UDFPhysicalFunction(childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor))}
             .withSetupChildren(std::move(childFunctions));
+#endif
     }
     /// Inline Python UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query
     /// text rather than a catalog descriptor, so they bypass the registry the same way. BRIDGE selects
@@ -194,6 +204,11 @@ PhysicalFunction FunctionProvider::lowerFunction(
     /// through the same interpreter bridges file-based UDFs use, with no catalog entry.
     if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
     {
+#ifndef NES_ENABLE_UDFS
+        throw UdfsNotEnabled(
+            "Cannot execute an inline PYTHON(...) function: this build has no support for Python UDFs (configure with "
+            "-DNES_ENABLE_UDFS=ON)");
+#else
         if (pythonFunction.value()->getBackend() == PythonUdfBackend::Codon)
         {
             return PhysicalFunction{PythonPhysicalFunction(
@@ -216,6 +231,7 @@ PhysicalFunction FunctionProvider::lowerFunction(
                                     UdfBackend::createFromSource(
                                         bridgePath, source, std::string(InlineFunctionName), inputTypes, logicalFunction.getDataType()))}
             .withSetupChildren(std::move(childFunctions));
+#endif
     }
 
     /// 3. Calling the registry to create an executable function.

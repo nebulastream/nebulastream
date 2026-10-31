@@ -19,8 +19,11 @@ target_include_directories(nes-udf PUBLIC
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(nes-udf PUBLIC nes-data-types PRIVATE nes-common)
 
-add_subdirectory(runtime)
-add_subdirectory(bridge-cpython)
-add_subdirectory(bridge-pypy)
+# The catalog above is all the frontend needs to bind UDF statements; executing UDFs needs the runtime and the bridges.
+if (NES_ENABLE_UDFS)
+    add_subdirectory(runtime)
+    add_subdirectory(bridge-cpython)
+    add_subdirectory(bridge-pypy)
+endif ()
 
 add_tests_if_enabled(tests)

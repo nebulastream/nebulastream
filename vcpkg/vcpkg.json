@@ -32,7 +32,34 @@
           "features": [
             "mlir"
           ]
+        }
+      ]
+    },
+    "udf": {
+      "description": "enables user-defined functions: Codon with its OpenBLAS and OpenCV plugins",
+      "dependencies": [
+        "codon-compiler",
+        {
+          "name": "openblas",
+          "default-features": false,
+          "features": [
+            "dynamic-arch"
+          ]
         },
+        {
+          "name": "opencv4",
+          "default-features": false,
+          "features": [
+            "calib3d",
+            "jpeg",
+            "png"
+          ]
+        }
+      ]
+    },
+    "udf-mlir": {
+      "description": "builds Codon against the vcpkg LLVM used by the nautilus mlir backend",
+      "dependencies": [
         {
           "name": "codon-compiler",
           "features": [
@@ -53,7 +80,6 @@
     "boost-system",
     "boost-url",
     "c-ares",
-    "codon-compiler",
     "cpptrace",
     "date",
     "fmt",
@@ -67,22 +93,6 @@
     "nameof",
     "nautilus",
     "nlohmann-json",
-    {
-      "name": "openblas",
-      "default-features": false,
-      "features": [
-        "dynamic-arch"
-      ]
-    },
-    {
-      "name": "opencv4",
-      "default-features": false,
-      "features": [
-        "calib3d",
-        "jpeg",
-        "png"
-      ]
-    },
     {
       "name": "openvino",
       "default-features": false,
