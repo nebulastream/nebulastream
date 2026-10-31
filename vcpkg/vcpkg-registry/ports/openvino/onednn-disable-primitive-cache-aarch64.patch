@@ -1,0 +1,25 @@
+diff --git a/src/common/primitive_cache.cpp b/src/common/primitive_cache.cpp
+index 5264b12..1374d84 100644
+--- a/src/common/primitive_cache.cpp
++++ b/src/common/primitive_cache.cpp
+@@ -69,11 +69,17 @@ private:
+ };
+ 
+ primitive_cache_t &global_primitive_cache() {
+-#ifndef DNNL_DISABLE_PRIMITIVE_CACHE
++// On AArch64 the convolution primitives are implemented by the Arm Compute
++// Library, whose tensor infos are not resizable once a kernel has been
++// configured. Serving such a primitive from the cache for a shape that needs
++// different padding aborts with "!_is_resizable" in TensorInfo::extend_padding,
++// so keep the cache empty here instead of handing out primitives that cannot be
++// reconfigured.
++#if defined(DNNL_DISABLE_PRIMITIVE_CACHE) || defined(__aarch64__)
++    static const int capacity = 0;
++#else
+     static const int capacity
+             = getenv_int_user("PRIMITIVE_CACHE_CAPACITY", 1024);
+-#else
+-    static const int capacity = 0;
+ #endif
+     static primitive_cache_t cache(capacity);
+     return cache;

@@ -73,6 +73,7 @@ if(ENABLE_INTEL_CPU)
         PATCHES
             disable-onednn-jit-traces.patch
             onednn-multimap-first-entry.patch
+            onednn-disable-primitive-cache-aarch64.patch
     )
 
     # Ironically, we have to keep intel's own xbyak when building for arm. We remove it for x86 as this could actually
