@@ -173,11 +173,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR NOT SANITIZER_OPTION STREQUAL "none" OR
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER MemoryBudget)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_INTERPRETER MemoryBudget)
 endif ()
-# SlowUnderSanitizers tests do not finish within the query timeout when instrumented.
-if (NOT SANITIZER_OPTION STREQUAL "none")
-    list(APPEND SYSTEST_EXCLUDE_GROUPS SlowUnderSanitizers)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER SlowUnderSanitizers)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS_INTERPRETER SlowUnderSanitizers)
+# SlowWhenInstrumented tests take minutes each once every allocation is tracked, which pushes the whole suite
+# past its ctest timeout and the individual queries past theirs.
+if (NOT SANITIZER_OPTION STREQUAL "none" OR NES_DEBUG_TUPLE_BUFFER_LEAKS)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS SlowWhenInstrumented)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER SlowWhenInstrumented)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_INTERPRETER SlowWhenInstrumented)
 endif ()
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)

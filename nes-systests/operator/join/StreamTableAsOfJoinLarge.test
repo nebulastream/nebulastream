@@ -1,6 +1,6 @@
 # name: join/StreamTableAsOfJoinLarge.test
 # description: 10k-row-per-side ASOF join checked through the checksum sink
-# groups: [Join, StreamTableJoin, LongRunning]
+# groups: [Join, StreamTableJoin, LongRunning, SlowWhenInstrumented]
 
 CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR events TYPE File;

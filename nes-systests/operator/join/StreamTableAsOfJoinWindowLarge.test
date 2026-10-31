@@ -1,6 +1,6 @@
 # name: join/StreamTableAsOfJoinWindowLarge.test
 # description: Filtered 10k-row ASOF join followed by a keyed tumbling aggregation
-# groups: [Join, StreamTableJoin, WindowOperators, Concurrency, LongRunning]
+# groups: [Join, StreamTableJoin, WindowOperators, Concurrency, LongRunning, SlowWhenInstrumented]
 
 CREATE LOGICAL SOURCE window_events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR window_events TYPE File;

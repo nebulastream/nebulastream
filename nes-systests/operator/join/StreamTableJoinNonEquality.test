@@ -1,6 +1,6 @@
 # name: join/StreamTableJoinNonEquality.test
 # description: Non-equality and expression predicates for the nested-loop stream-table join
-# groups: [Join, StreamTableJoin]
+# groups: [Join, StreamTableJoin, SlowWhenInstrumented]
 
 
 CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL);

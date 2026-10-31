@@ -1,6 +1,6 @@
 # name: join/StreamTableAsOfJoinFiltersLarge.test
 # description: 10k-row ASOF join with input and post-join filters checked through the checksum sink
-# groups: [Join, StreamTableJoin, LongRunning]
+# groups: [Join, StreamTableJoin, LongRunning, SlowWhenInstrumented]
 
 CREATE LOGICAL SOURCE filtered_events(
     event_id UINT64 NOT NULL,
