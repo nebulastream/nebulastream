@@ -50,7 +50,7 @@ sinks:
     host: worker-3:8080
     schema: *joined_schema
     type: Checksum
-    config: { file_path: result-checksum.csv, output_order: ENFORCE_ORDER }
+    config: { file_path: result-checksum.csv, output_format: CSV, output_order: ENFORCE_ORDER }
   - name: INNER_FILE
     host: worker-3:8080
     schema: *joined_schema
@@ -60,7 +60,7 @@ sinks:
     host: worker-3:8080
     schema: *joined_schema
     type: Checksum
-    config: { file_path: inner-checksum.csv, output_order: ENFORCE_ORDER }
+    config: { file_path: inner-checksum.csv, output_format: CSV, output_order: ENFORCE_ORDER }
 
 logical:
   - name: events
