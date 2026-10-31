@@ -110,8 +110,8 @@ jobs:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
-            # TEMPORARY: repeats the TCP sink reconnect test until it fails instead of running all docker tests.
-            bash scripts/testing/tmp_loop_tcp_reconnect.sh build 100
+            # TEMPORARY: repeats the docker tests in CI order until one fails.
+            bash scripts/testing/tmp_loop_docker_suites.sh build 15
 
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v5
