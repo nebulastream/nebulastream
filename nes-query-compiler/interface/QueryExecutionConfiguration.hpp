@@ -15,6 +15,9 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
@@ -39,7 +42,8 @@ struct QueryExecutionConfiguration
         uint64_t numberOfRecordsPerKey,
         uint64_t operatorBufferSize,
         SliceCacheConfiguration sliceCacheConfiguration,
-        BloomFilterConfiguration bloomFilterConfiguration)
+        BloomFilterConfiguration bloomFilterConfiguration,
+        std::vector<std::string> pythonUdfImportPaths)
         : executionMode(executionMode)
         , numberOfPartitions(numberOfPartitions)
         , pageSize(pageSize)
@@ -47,6 +51,7 @@ struct QueryExecutionConfiguration
         , operatorBufferSize(operatorBufferSize)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
+        , pythonUdfImportPaths(std::move(pythonUdfImportPaths))
     {
     }
 
@@ -57,6 +62,10 @@ struct QueryExecutionConfiguration
     uint64_t operatorBufferSize;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
+    /// Directories from which inline Python UDFs may import user-provided modules.
+    std::vector<std::string> pythonUdfImportPaths;
+
+    [[nodiscard]] const std::vector<std::string>& getPythonUdfImportPaths() const { return pythonUdfImportPaths; }
 
     static QueryExecutionConfiguration fromConfig(const InstantiatedConfig& config);
 };

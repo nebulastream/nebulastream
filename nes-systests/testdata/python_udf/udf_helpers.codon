@@ -1,0 +1,2 @@
+def add_bonus(value: int):
+    return value + 41
