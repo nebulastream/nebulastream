@@ -283,6 +283,7 @@ The sink name (`csv_sink`) must match the name used in the query's `INTO` clause
 
 Available sink types include:
 - `File`: Writes results to a file, either overwriting or appending.
+- `unix_socket`: Writes formatted results to an existing Unix-domain socket (`PATH`).
 - `Print`: Writes results to standard output (stdout).
 - `Void` — Sink Void documentation coming soon.
 - `MQTT` — Sink MQTT documentation coming soon.
@@ -290,6 +291,17 @@ Available sink types include:
 
 The `SET` clause specifies the output details.
 For a `File` sink, this includes the file path and the data format for the output.
+A `unix_socket` sink instead uses `SINK.PATH`, for example:
+```sql
+CREATE SINK unix_socket_sink(value UINT64) TYPE unix_socket SET(
+  'localhost:8080' AS "SINK"."HOST",
+  '/tmp/results.sock' AS "SINK".PATH,
+  'JSON' AS OUTPUT_FORMATTER."TYPE"
+);
+```
+The peer must already be listening on this Unix-domain stream socket.
+The sink sends the formatter's schema header (if any) once per connection, followed by the formatted records.
+`APPEND` is a file-only option and is not supported by `unix_socket`.
 
 The `HOST` configuration parameter specifies the worker node, identified by its gRPC address, which hosts the physical source/sink.
 
