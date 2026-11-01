@@ -157,6 +157,18 @@ jobs:
       NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
     tests: [systest, docker]
 
+  # Builds without nes-python-udf: no Codon/CPython/PyPy at configure or link
+  # time, and Python UDF queries must fail with PythonUdfsNotEnabled.
+  - name: "{arch} {stdlib} {build_type} without python udfs (unit+systest)"
+    arch: x64
+    stdlib: libstdcxx
+    build_type: Debug
+    sanitizer: none
+    runner: github-{arch}
+    cmake_flags:
+      NES_ENABLE_PYTHON_UDFS: "OFF"
+    tests: [unit, systest]
+
   # Validates a full build without compiler-cache assistance. Keep this on the
   # self-hosted runner because every translation unit must be compiled locally.
   - name: "{arch} {stdlib} {build_type} clean build (unit+systest+docker)"
