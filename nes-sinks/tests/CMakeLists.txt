@@ -12,3 +12,8 @@
 
 add_nes_test(backpressure-handler-test BackpressureHandlerTest.cpp)
 target_link_libraries(backpressure-handler-test nes-sinks)
+
+add_e2e_test(
+    NAME file-sink-socket-test
+    BATS_FILE file-sink-socket.bats
+)

@@ -18,7 +18,9 @@
 #include <filesystem>
 #include <fstream>
 #include <ostream>
+#include <string>
 #include <string_view>
+#include <variant>
 
 #include <folly/Synchronized.h>
 
@@ -48,7 +50,7 @@ struct FileSinkConfig
     static std::expected<FileSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
-/// A sink that writes formatted TupleBuffers to arbitrary files.
+/// A sink that writes formatted TupleBuffers to files or existing Unix-domain sockets.
 class FileSink final : public Sink
 {
 public:
@@ -74,8 +76,25 @@ protected:
 private:
     std::string outputFilePath;
     bool isAppend;
-    bool isOpen;
-    folly::Synchronized<std::ofstream> outputFileStream;
+
+    struct SocketOutput
+    {
+        explicit SocketOutput(const std::string& path);
+        ~SocketOutput();
+
+        SocketOutput(const SocketOutput&) = delete;
+        SocketOutput& operator=(const SocketOutput&) = delete;
+        SocketOutput(SocketOutput&&) = delete;
+        SocketOutput& operator=(SocketOutput&&) = delete;
+
+        int descriptor = -1;
+    };
+
+    /// Exactly one output is active; monostate represents an unopened/stopped sink.
+    using Output = std::variant<std::monostate, std::ofstream, SocketOutput>;
+    void write(Output& destination, std::string_view contents);
+
+    folly::Synchronized<Output> output;
     SchemaFormatter schemaFormatter;
 };
 
