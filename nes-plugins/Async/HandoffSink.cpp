@@ -14,24 +14,73 @@
 
 #include <HandoffSink.hpp>
 
-#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <expected>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/SinkDescriptor.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
-HandoffSink::HandoffSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+
+namespace
+{
+
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::string> CHANNEL{
+    Identifier::parse("CHANNEL"),
+    "UUID of the channel the Async source of the same stage takes the buffers from",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<std::string, Exception>
+                {
+                    if (!stringToUUID(value))
+                    {
+                        return std::unexpected{InvalidConfigParameter("HandoffSink: channel must be a valid UUID, got: {}", value)};
+                    }
+                    return value;
+                });
+    }};
+
+const ConfigField<size_t> CHANNEL_CAPACITY{
+    Identifier::parse("CHANNEL_CAPACITY"),
+    "Buffers the channel holds, if this sink creates it",
+    [](const ConfigLiteral& literal)
+    { return NES::tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
+    HandoffChannel::DEFAULT_CAPACITY};
+
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> HandoffSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("HANDOFF_SINK"), CHANNEL, CHANNEL_CAPACITY);
+}
+
+std::expected<HandoffSinkConfig, Exception> HandoffSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return HandoffSinkConfig{.channel = config.get(CHANNEL), .channelCapacity = config.get(CHANNEL_CAPACITY)};
+}
+
+HandoffSink::HandoffSink(BackpressureController backpressureController, const HandoffSinkConfig& config)
     : Sink(std::move(backpressureController))
-    , channelId(sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL))
-    , channel(channelId, sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL_CAPACITY), HandoffChannel::Role::SINK)
+    , channelId(config.channel)
+    , channel(channelId, config.channelCapacity, HandoffChannel::Role::SINK)
 {
 }
 
@@ -87,11 +136,6 @@ void HandoffSink::dropRemaining(const TupleBuffer& buffer)
     for (auto next = std::optional(buffer); next; next = backpressureHandler.onSuccess(*next, backpressureController))
     {
     }
-}
-
-DescriptorConfig::Config HandoffSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersHandoff>(std::move(config), NAME);
 }
 
 }

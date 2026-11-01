@@ -17,24 +17,35 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
-#include <memory>
-#include <optional>
+#include <expected>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/UUID.hpp>
+#include <ErrorHandling.hpp>
 #include <HandoffChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+struct HandoffSinkConfig
+{
+    /// UUID of the channel the `Async` source of the same stage takes the buffers from.
+    std::string channel;
+    /// Only used if the sink is created before the Async source, which then finds the channel this sink created.
+    size_t channelCapacity;
+
+    static std::expected<HandoffSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// Producer half of an asynchronously executed operator: hands buffers to the `AsyncSource` with the
 /// same channel on the same worker. When the channel is full, buffers are stashed and the producer's sources are
@@ -44,12 +55,12 @@ class HandoffSink final : public Sink
 public:
     static constexpr std::string_view NAME = "Handoff";
     static constexpr auto RETRY_INTERVAL = std::chrono::milliseconds(10);
-    explicit HandoffSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    HandoffSink(BackpressureController backpressureController, const HandoffSinkConfig& config);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "HandoffSink(" << channelId << ")"; }
@@ -65,34 +76,6 @@ private:
     /// Applies pressure as soon as the channel rejects a buffer: the channel itself is the buffer that absorbs bursts.
     BackpressureHandler backpressureHandler;
 };
-
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
-struct ConfigParametersHandoff
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "CHANNEL",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        {
-            auto value = DescriptorConfig::tryGet(CHANNEL, config);
-            if (value && !stringToUUID(*value))
-            {
-                return std::nullopt;
-            }
-            return value;
-        }};
-
-    /// Only used if the sink is created before the Async source, which then finds the channel this sink created.
-    static inline const DescriptorConfig::ConfigParameter<size_t> CHANNEL_CAPACITY{
-        "CHANNEL_CAPACITY",
-        HandoffChannel::DEFAULT_CAPACITY,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL_CAPACITY, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CHANNEL, CHANNEL_CAPACITY);
-};
-
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
 

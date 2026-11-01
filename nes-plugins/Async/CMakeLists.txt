@@ -31,7 +31,8 @@ add_library(handoff_sink_plugin_library STATIC HandoffSink.cpp)
 target_link_libraries(handoff_sink_plugin_library PRIVATE nes-sinks PUBLIC async_handoff_channel)
 link_plugin_library(nes-sinks handoff_sink_plugin_library)
 add_registry_entry(Sink Handoff)
-add_registry_entry(SinkValidation Handoff)
+add_registry_entry(SinkConfigSchema Handoff)
+add_registry_entry(SinkConfig Handoff)
 
 add_tests_if_enabled(tests)
 
