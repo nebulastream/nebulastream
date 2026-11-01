@@ -17,6 +17,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 # add plugin directories to the build (adding all dependencies of each plugin)
 add_plugin("Sources/TCPSource")
+add_plugin("Sources/UnixSocketSource")
 add_plugin("Sources/MQTTSource")
 add_plugin("Sources/GeneratorSource")
 add_plugin("Sinks/VoidSink")

@@ -214,7 +214,8 @@ A physical source specifies **how** and **where** to ingest data for a logical s
 Each logical source can have multiple physical sources, allowing a single stream to aggregate data from heterogeneous endpoints.
 
 Supported physical source types:
-- `File`
+- `File` — Reads from a regular file.
+- `unix_socket` — Reads a byte stream from an existing Unix-domain socket (`PATH`).
 - `TCP`
 - `MQTT` — Source MQTT documentation coming soon.
 - `Generator` — Source Generator documentation coming soon.
@@ -256,6 +257,17 @@ Each physical source requires configuration for:
 
 The query itself remains completely decoupled from these physical details.
 You can add, remove, or change physical sources without touching the query logic.
+
+For a Unix-domain stream socket, use the separate `unix_socket` connector rather than `File`:
+```sql
+CREATE PHYSICAL SOURCE FOR lrb TYPE unix_socket SET(
+  'localhost:8080' AS "SOURCE"."HOST",
+  '/tmp/lrb-input.sock' AS "SOURCE".PATH,
+  'JSON' AS INPUT_FORMATTER."TYPE"
+);
+```
+The connector connects to an already listening socket on the worker's filesystem; it does not bind or remove the socket path.
+It reads until the peer closes its write side, or the query is stopped.
 
 ---
 
