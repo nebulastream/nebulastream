@@ -214,7 +214,7 @@ A physical source specifies **how** and **where** to ingest data for a logical s
 Each logical source can have multiple physical sources, allowing a single stream to aggregate data from heterogeneous endpoints.
 
 Supported physical source types:
-- `File`
+- `File` - Can also read from unix sockets
 - `TCP`
 - `MQTT` — Source MQTT documentation coming soon.
 - `Generator` — Source Generator documentation coming soon.
@@ -282,7 +282,7 @@ CREATE SINK csv_sink(
 The sink name (`csv_sink`) must match the name used in the query's `INTO` clause.
 
 Available sink types include:
-- `File`: Writes results to a file, either overwriting or appending.
+- `File`: Writes results to a file, either overwriting or appending, or to a unix socket.
 - `Print`: Writes results to standard output (stdout).
 - `Void` — Sink Void documentation coming soon.
 - `MQTT` — Sink MQTT documentation coming soon.

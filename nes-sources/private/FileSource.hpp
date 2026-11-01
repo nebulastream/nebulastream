@@ -22,6 +22,7 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
+#include <variant>
 
 #include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -51,9 +52,9 @@ public:
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
-    /// Open file socket.
+    /// Open a file or connect to an existing Unix-domain socket.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
-    /// Close file socket.
+    /// Close the active file or socket.
     void close() override;
 
 
@@ -62,9 +63,23 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::ifstream inputFile;
+    struct SocketInput
+    {
+        explicit SocketInput(const std::string& path);
+        ~SocketInput();
+
+        SocketInput(const SocketInput&) = delete;
+        SocketInput& operator=(const SocketInput&) = delete;
+        SocketInput(SocketInput&&) = delete;
+        SocketInput& operator=(SocketInput&&) = delete;
+
+        int descriptor = -1;
+    };
+
+    /// Only the source thread accesses the input; monostate means unopened/closed.
+    std::variant<std::monostate, std::ifstream, SocketInput> input;
     std::string filePath;
-    std::atomic<size_t> totalNumBytesRead;
+    std::atomic<size_t> totalNumBytesRead{0};
 };
 
 }

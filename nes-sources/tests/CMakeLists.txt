@@ -22,3 +22,8 @@ endfunction()
 
 add_nes_source_test(source-thread-test SourceThreadTest.cpp)
 add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)
+
+add_e2e_test(
+    NAME file-source-socket-test
+    BATS_FILE file-source-socket.bats
+)
