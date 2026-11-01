@@ -24,6 +24,7 @@
 #include <typeinfo>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -394,9 +395,15 @@ private:
 LogicalPlan AsyncFunctionLiftingRule::apply(LogicalPlan queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
 {
     Lifter lifter;
-    PlanVisitor<> visitor{
-        [&lifter](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
-        { return lifter.liftAll(op.withChildren(children)); }};
+    /// Takes the full callback signature: wrapping a shorter one makes clang-tidy's analyzer report a leak inside libc++'s
+    /// std::function copy.
+    PlanVisitor<> visitor{PlanVisitor<>::FunctionUp{
+        [&lifter](
+            const LogicalOperator& op,
+            std::vector<LogicalOperator> children,
+            std::monostate,
+            const std::unordered_map<LogicalOperator, std::monostate>&) -> PlanVisitor<>::UpResult
+        { return lifter.liftAll(op.withChildren(std::move(children))); }}};
     return visitor.apply(std::move(queryPlan));
 }
 
