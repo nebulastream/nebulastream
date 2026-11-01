@@ -117,7 +117,9 @@ private:
     resolveAddresses(const std::string& host, uint32_t port, std::chrono::milliseconds timeout, const std::stop_token& stopToken);
     static ConnectResult tryConnect(const ResolvedAddress& address, std::chrono::milliseconds timeout, const std::stop_token& stopToken);
     std::optional<Socket> connectUntil(std::chrono::milliseconds timeout, const std::stop_token& stopToken) const;
-    static IOResult writeData(std::span<const char> data, Socket& socket, const std::stop_token& stopToken);
+    IOResult writeData(std::span<const char> data, Socket& socket, const std::stop_token& stopToken) const;
+    static std::string describeConnection(const Socket& socket);
+    static std::string describeTcpState(const Socket& socket);
     IOResult writeBuffer(const TupleBuffer& buffer, std::optional<Socket>& socket, const std::stop_token& stopToken) const;
     void stop();
     void storeError(std::exception_ptr exception);
