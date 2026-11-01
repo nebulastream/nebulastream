@@ -112,11 +112,10 @@ public:
 
     explicit PlanVisitor(
         std::variant<FunctionDown, FunctionDownAlt> fnDown, std::variant<FunctionUp, FunctionUpAlt1, FunctionUpAlt2, FunctionUpAlt3> fnUp)
-        : fnDown(normalizeFnDown(std::move(fnDown))), fnUp(normalizeFnUp(std::move(fnUp))) { };
+        : fnDown(normalizeFnDown(fnDown)), fnUp(normalizeFnUp(fnUp)) { };
 
-    explicit PlanVisitor(std::variant<FunctionDown, FunctionDownAlt> fnDown) : PlanVisitor(std::move(fnDown), noOpUp) { };
-    explicit PlanVisitor(std::variant<FunctionUp, FunctionUpAlt1, FunctionUpAlt2, FunctionUpAlt3> fnUp)
-        : PlanVisitor(noOpDown, std::move(fnUp)) { };
+    explicit PlanVisitor(std::variant<FunctionDown, FunctionDownAlt> fnDown) : PlanVisitor(fnDown, noOpUp) { };
+    explicit PlanVisitor(std::variant<FunctionUp, FunctionUpAlt1, FunctionUpAlt2, FunctionUpAlt3> fnUp) : PlanVisitor(noOpDown, fnUp) { };
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan plan)
     {
@@ -290,10 +289,8 @@ private:
             Overloaded{
                 [](FunctionDown fnDown) -> FunctionDown { return fnDown; },
                 [](FunctionDownAlt fnDown) -> FunctionDown
-                {
-                    return [fnDown = std::move(fnDown)](LogicalOperator op, std::vector<DownContext>) -> DownResult { return fnDown(op); };
-                }},
-            std::move(function));
+                { return [fnDown](LogicalOperator op, std::vector<DownContext>) -> DownResult { return fnDown(op); }; }},
+            function);
     }
 
     FunctionUp normalizeFnUp(std::variant<FunctionUp, FunctionUpAlt1, FunctionUpAlt2, FunctionUpAlt3> function)
@@ -303,7 +300,7 @@ private:
                 [](FunctionUp fnUp) -> FunctionUp { return fnUp; },
                 [](FunctionUpAlt1 fnUp) -> FunctionUp
                 {
-                    return [fnUp = std::move(fnUp)](
+                    return [fnUp](
                                LogicalOperator op,
                                std::vector<LogicalOperator> children,
                                OperatorContext operatorContext,
@@ -311,7 +308,7 @@ private:
                 },
                 [](FunctionUpAlt2 fnUp) -> FunctionUp
                 {
-                    return [fnUp = std::move(fnUp)](
+                    return [fnUp](
                                LogicalOperator op,
                                std::vector<LogicalOperator> children,
                                OperatorContext,
@@ -320,14 +317,14 @@ private:
                 },
                 [](FunctionUpAlt3 fnUp) -> FunctionUp
                 {
-                    return [fnUp = std::move(fnUp)](
+                    return [fnUp](
                                LogicalOperator op,
                                std::vector<LogicalOperator> children,
                                OperatorContext,
                                std::unordered_map<LogicalOperator, UpContext>) { return fnUp(op, std::move(children)); };
                 },
             },
-            std::move(function));
+            function);
     }
 
     static DownResult noOpDown(const LogicalOperator&, const std::vector<DownContext>&) { return {}; }
