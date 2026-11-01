@@ -20,6 +20,7 @@ add_source_files(nes-query-optimizer
         SemanticMapResolutionRule.cpp
         SemanticFusionRule.cpp
         SemanticCallTranslationRule.cpp
+        UnnestTranslationRule.cpp
         CalcTargetOrderRule.cpp
 )
 
@@ -32,5 +33,6 @@ add_registry_entry(PlanRule InferModelResolutionRule KEY InferModelResolution)
 add_registry_entry(PlanRule SemanticMapResolutionRule KEY SemanticMapResolution)
 add_registry_entry(PlanRule SemanticFusionRule KEY SemanticFusion)
 add_registry_entry(PlanRule SemanticCallTranslationRule KEY SemanticCallTranslation)
+add_registry_entry(PlanRule UnnestTranslationRule KEY UnnestTranslation)
 add_registry_entry(PlanRule CalcTargetOrderRule KEY CalcTargetOrder)
 

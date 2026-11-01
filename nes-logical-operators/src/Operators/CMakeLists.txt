@@ -24,6 +24,7 @@ add_source_files(nes-logical-operators
         SemanticMapNameLogicalOperator.cpp
         SemanticFilterLogicalOperator.cpp
         SemanticFilterNameLogicalOperator.cpp
+        UnnestLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)
@@ -42,3 +43,4 @@ add_unreflection_entry(LogicalOperator SemanticMap)
 add_unreflection_entry(LogicalOperator SemanticMapName)
 add_unreflection_entry(LogicalOperator SemanticFilter)
 add_unreflection_entry(LogicalOperator SemanticFilterName)
+add_unreflection_entry(LogicalOperator Unnest)

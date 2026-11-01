@@ -37,3 +37,4 @@ add_nes_physical_operator_test(StreamJoinProbePhysicalOperatorTest StreamJoinPro
 add_nes_physical_operator_test(JsonAggEncodingTest JsonAggEncodingTest.cpp)
 find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(JsonAggEncodingTest nlohmann_json::nlohmann_json)
+add_nes_physical_operator_test(UnnestDecodingTest UnnestDecodingTest.cpp)

@@ -1,0 +1,20 @@
+# name: explain/UnnestTranslation.test
+# description: UNNEST(arr) AS item in a SELECT list becomes an UNNEST operator below the projection, which writes each
+#              element into a helper field that the projection renames.
+# groups: [explain, Unnest]
+
+CREATE LOGICAL SOURCE arrays(id UINT64 NOT NULL, arr VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR arrays TYPE File SET('|' AS INPUT_FORMATTER.FIELD_DELIMITER);
+ATTACH INLINE
+1|["a","b"]
+
+CREATE SINK items(id UINT64 NOT NULL, item VARSIZED NOT NULL) TYPE File;
+
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, UNNEST(arr) AS item FROM arrays INTO items;
+----
+== Optimized Global Plan ==
+SINK(ITEMS)
+  PROJECTION(fields: [ID, __UNNEST_0 as ITEM])
+    UNNEST(ARR as __UNNEST_0)
+      SOURCE(ARRAYS)
