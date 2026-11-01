@@ -30,7 +30,11 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
     /// We copy the value into the data vector owned by the function
     /// since the value might be destroyed during the lifetime of the function.
     /// In the constructor, we have allocated the memory for the value via the std::vector ctor.
-    std::memcpy(data.data(), value, size);
+    /// An empty value may come with a null pointer, which memcpy must not be given even for a size of zero.
+    if (size > 0)
+    {
+        std::memcpy(data.data(), value, size);
+    }
 }
 
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const

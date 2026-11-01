@@ -1,0 +1,49 @@
+---
+name: 🔒🗺️ EPIC (Maintainers only)
+description: A template about issues of EPIC proportion.
+title: "[EPIC] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > - Set **Type** to EPIC.
+        > - Set **Start date** and **Target date**.
+        > - Set **Priority**.
+        > - Add at least two **sub-issues** (FEATURE or TASK) using GitHub's *sub-issue feature* ("Create sub-issue" / "Add existing issue"), **not as a link or checklist in this description**.
+  - type: textarea
+    attributes:
+      label: Description
+      description: What is this epic about?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Roadmap context
+      description: How does this fit into the bigger picture?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Goals
+      description: What do we want to achieve with this EPIC?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Out of scope
+      description: What is explicitly not part of this epic?
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Done when
+      description: How will we know this epic is complete? When should it close?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Open questions / risks
+      description: Unknowns, dependencies, things that might change the plan.
+    validations:
+      required: false

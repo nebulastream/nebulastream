@@ -1,0 +1,241 @@
+name: Assign reviewers
+on:
+  # pull_request_target so the token can edit PRs from forks; no PR code is checked out
+  pull_request_target:
+    types: [opened, ready_for_review]
+
+concurrency:
+  group: assign-reviewers-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  assign-reviewers:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      # The default token cannot read team members, so the NES-Reviewer-Assignment app is used
+      - name: Create app token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.REVIEWER_ASSIGNMENT_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_ASSIGNMENT_APP_PRIVATE_KEY }}
+
+      - name: Request two reviewers
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HISTORY_DAYS: 30
+          REVIEWER_TEAMS_PARENT: maintainer
+        shell: python3 {0}
+        run: |
+          import json, os, random, re, subprocess, sys
+          from concurrent.futures import ThreadPoolExecutor
+          from datetime import datetime, timedelta, timezone
+          from itertools import combinations
+
+          REPO, PR = os.environ["REPO"], int(os.environ["PR"])
+          ORG, NAME = REPO.split("/")
+          PARENT = os.environ["REVIEWER_TEAMS_PARENT"]
+          SUMMARY = os.environ.get("GITHUB_STEP_SUMMARY", os.devnull)
+
+          def gh(*args, body=None, fatal=True):
+              result = subprocess.run(["gh", "api", *args], input=json.dumps(body) if body else None,
+                                      capture_output=True, text=True)
+              if result.returncode:
+                  if fatal:
+                      sys.exit(f"gh api {args[0]} failed: {result.stderr.strip()}")
+                  print(f"::warning::gh api {args[0]} failed: {result.stderr.strip()}")
+              return json.loads(result.stdout) if result.stdout.strip() else None
+
+          def rest_list(endpoint):
+              items, page = [], 1
+              separator = "&" if "?" in endpoint else "?"
+              while True:
+                  batch = gh(f"{endpoint}{separator}per_page=100&page={page}")
+                  items += batch
+                  if len(batch) < 100:
+                      return items
+                  page += 1
+
+          def graphql(query, **variables):
+              response = gh("graphql", "--input", "-", body={"query": query, "variables": variables})
+              if response.get("errors"):
+                  sys.exit(f"GraphQL failed: {response['errors']}")
+              return response["data"]
+
+          def write(*lines):
+              print(*lines, sep="\n")
+              with open(SUMMARY, "a") as summary:
+                  summary.write("\n".join(lines) + "\n")
+
+          PRS = """pullRequests(first: 100, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {
+            pageInfo { hasNextPage endCursor }
+            nodes { number createdAt state
+              timelineItems(first: 100, itemTypes: [REVIEW_REQUESTED_EVENT]) {
+                nodes { ... on ReviewRequestedEvent { createdAt requestedReviewer { ... on User { login } } } } }
+              reviewRequests(first: 100) { nodes { requestedReviewer { ... on User { login } } } } } }"""
+          MEMBERS = "members(first: 100, membership: ALL) { pageInfo { hasNextPage } nodes { login status { indicatesLimitedAvailability } } }"
+
+          # One query for the PR, CODEOWNERS of the base branch, the sub-teams and the latest PRs; files and write access in parallel
+          query = f"""query($org: String!, $name: String!, $pr: Int!, $parent: String!, $cursor: String) {{
+            organization(login: $org) {{ team(slug: $parent) {{ childTeams(first: 100) {{ nodes {{ slug {MEMBERS} }} }} }} }}
+            repository(owner: $org, name: $name) {{
+              pullRequest(number: $pr) {{
+                author {{ login }}
+                baseRef {{ target {{ ... on Commit {{ file(path: ".github/CODEOWNERS") {{ object {{ ... on Blob {{ text }} }} }} }} }} }}
+                reviews(first: 100) {{ nodes {{ author {{ __typename login }} }} }}
+                reviewRequests(first: 100) {{ nodes {{ requestedReviewer {{ __typename ... on User {{ login }} ... on Team {{ slug }} }} }} }}
+                commits(first: 100) {{ nodes {{ commit {{ authors(first: 10) {{ nodes {{ user {{ login }} }} }} committer {{ user {{ login }} }} }} }} }}
+              }}
+              {PRS}
+            }}
+          }}"""
+          with ThreadPoolExecutor(3) as pool:
+              data = pool.submit(graphql, query, org=ORG, name=NAME, pr=PR, parent=PARENT, cursor=None)
+              files = pool.submit(rest_list, f"repos/{REPO}/pulls/{PR}/files")
+              collaborators = pool.submit(rest_list, f"repos/{REPO}/collaborators?affiliation=all")
+              data, files, collaborators = data.result(), files.result(), collaborators.result()
+          pull = data["repository"]["pullRequest"]
+          author = (pull["author"] or {}).get("login", "").lower()
+
+          # CODEOWNERS, last matching rule wins
+          codeowners = ((pull["baseRef"]["target"].get("file") or {}).get("object") or {}).get("text")
+          if codeowners is None:
+              sys.exit("Cannot read .github/CODEOWNERS of the base branch")
+          rules = []
+          for line in codeowners.splitlines():
+              pattern, *owners = line.split("#", 1)[0].split() or [None]
+              if pattern:
+                  body = re.escape(pattern.strip("/")).replace(r"\*\*", ".*").replace(r"\*", "[^/]*").replace(r"\?", "[^/]")
+                  anchored = "/" in pattern.rstrip("/")
+                  rules.append((pattern, owners, re.compile(("" if anchored else "(?:.*/)?") + body + "(?:/.*)?")))
+
+          paths = {f["filename"] for f in files} | {f["previous_filename"] for f in files if f.get("previous_filename")}
+          areas = {}
+          for path in sorted(paths):
+              rule = next((rule for rule in reversed(rules) if rule[2].fullmatch(path)), None)
+              if rule and rule[1]:
+                  areas.setdefault(rule[0], (rule[1], []))[1].append(path)
+
+          # Users named in CODEOWNERS are always requested, on top of the pair. GitHub requests them itself on open.
+          named = {o[1:].lower() for owners, _ in areas.values() for o in owners if "/" not in o} - {author}
+
+          # Only the initial assignment: once anyone else is requested or has reviewed, reviewers are managed manually
+          requests = [node["requestedReviewer"] for node in pull["reviewRequests"]["nodes"] if node["requestedReviewer"]]
+          requested_users = {r["login"].lower() for r in requests if r["__typename"] == "User"}
+          requested_teams = [r["slug"] for r in requests if r["__typename"] == "Team"]
+          reviewed = {r["author"]["login"].lower() for r in pull["reviews"]["nodes"]
+                      if r["author"] and r["author"]["__typename"] == "User"} - {author}
+          if (requested_users | reviewed) - named:
+              write("Reviewers are already assigned, nothing to do")
+              sys.exit(0)
+
+          # Only sub-team members review, members of the parent team alone are never picked
+          if data["organization"]["team"] is None:
+              sys.exit(f"Cannot read the sub-teams of {ORG}/{PARENT}")
+          sub_teams, busy = {}, set()
+          for team in data["organization"]["team"]["childTeams"]["nodes"]:
+              if team["members"]["pageInfo"]["hasNextPage"]:
+                  sys.exit(f"Cannot read all members of {ORG}/{team['slug']}")
+              sub_teams[team["slug"]] = {m["login"].lower() for m in team["members"]["nodes"]}
+              busy |= {m["login"].lower() for m in team["members"]["nodes"] if (m["status"] or {}).get("indicatesLimitedAvailability")}
+
+          def owner_members(owner):
+              if "/" not in owner:
+                  return {owner[1:].lower()}
+              org, slug = owner[1:].lower().split("/")
+              if org == ORG.lower() and slug == PARENT:
+                  return set().union(*sub_teams.values())
+              if org != ORG.lower() or slug not in sub_teams:
+                  sys.exit(f"CODEOWNERS team {owner} is not a sub-team of {ORG}/{PARENT}")
+              return sub_teams[slug]
+
+          area_members = {pattern: set().union(*map(owner_members, owners)) for pattern, (owners, _) in areas.items()}
+          area_owners = {owner.lower() for owners, _ in areas.values() for owner in owners}
+          owners_pool = set().union(*area_members.values())
+
+          contributors = {author}
+          for node in pull["commits"]["nodes"]:
+              commit = node["commit"]
+              users = [a["user"] for a in commit["authors"]["nodes"]] + [(commit["committer"] or {}).get("user")]
+              contributors |= {user["login"].lower() for user in users if user}
+
+          writers = {c["login"].lower() for c in collaborators if c["permissions"]["push"]}
+          eligible = sorted(c for c in set().union(*sub_teams.values()) - contributors - busy if c in writers)
+          if len(eligible) < 2:
+              sys.exit(f"Only {len(eligible)} eligible reviewers: {eligible}")
+
+          # Load: review requests on PRs created in the last HISTORY_DAYS days, plus pending requests on open ones
+          now = datetime.now(timezone.utc)
+          cutoff = now - timedelta(days=int(os.environ["HISTORY_DAYS"]))
+          parse = lambda value: datetime.fromisoformat(value.replace("Z", "+00:00"))
+          prs, window = data["repository"]["pullRequests"], []
+          while True:
+              in_window = [node for node in prs["nodes"] if parse(node["createdAt"]) >= cutoff]
+              window += in_window
+              if len(in_window) < len(prs["nodes"]) or not prs["pageInfo"]["hasNextPage"]:
+                  break
+              prs = graphql(f"query($org: String!, $name: String!, $cursor: String) {{ repository(owner: $org, name: $name) {{ {PRS} }} }}",
+                            org=ORG, name=NAME, cursor=prs["pageInfo"]["endCursor"])["repository"]["pullRequests"]
+          recent = {c: set() for c in eligible}
+          pending = {c: set() for c in eligible}
+          last = {}
+          for node in window:
+              if node["number"] == PR:
+                  continue
+              for event in node["timelineItems"]["nodes"]:
+                  login = (event.get("requestedReviewer") or {}).get("login", "").lower()
+                  if login in recent:
+                      recent[login].add(node["number"])
+                      last[login] = max(last.get(login, ""), event["createdAt"])
+              if node["state"] == "OPEN":
+                  for request in node["reviewRequests"]["nodes"]:
+                      login = (request["requestedReviewer"] or {}).get("login", "").lower()
+                      if login in pending:
+                          pending[login].add(node["number"])
+          load = {c: len(recent[c]) + len(pending[c]) for c in eligible}
+
+          # Most covered areas, then lowest combined load, then lowest single load, then least recently requested
+          owners_eligible = [c for c in eligible if c in owners_pool]
+          rank = lambda c: (load[c], last.get(c, ""), c)
+          fallback = None
+          if len(area_owners) > 1 and len(owners_eligible) >= 2:
+              coverage = {c: {p for p, m in area_members.items() if c in m} for c in owners_eligible}
+              pair = min(combinations(owners_eligible, 2), key=lambda p: (
+                  -len(coverage[p[0]] | coverage[p[1]]), load[p[0]] + load[p[1]], max(load[p[0]], load[p[1]]),
+                  sorted(last.get(c, "") for c in p), p))
+          else:
+              # Single owner or fewer than two eligible owners: least loaded owner plus the least loaded member of a random sub-team.
+              # Seeded with the PR number so reruns pick the same team. Prefers non-owners, e.g. Maintainer owns everyone.
+              if not owners_eligible:
+                  sys.exit(f"No eligible reviewer among the owners {sorted(area_owners)}")
+              first = min(owners_eligible, key=rank)
+              teams = sorted(sub_teams)
+              random.Random(PR).shuffle(teams)
+              options = ((team, [c for c in eligible if c in sub_teams[team] and c not in excluded])
+                         for excluded in (owners_pool, {first}) for team in teams)
+              fallback, others = next(((team, others) for team, others in options if others), (None, None))
+              if not others:
+                  sys.exit(f"No eligible reviewer besides @{first}")
+              pair = (first, min(others, key=rank))
+
+          extra = sorted(named - set(pair))
+          write(f"Requesting @{pair[0]} and @{pair[1]}", "",
+                *([f"@{pair[1]} is from the random team {fallback}, the changed files are owned by {', '.join(sorted(area_owners))}", ""]
+                  if fallback else []),
+                *([f"Also requesting the named code owners {', '.join('@' + c for c in extra)}", ""] if extra else []),
+                "| Reviewer | Recent requests | Pending requests | Load |", "|---|---:|---:|---:|",
+                *(f"| @{c} | {len(recent[c])} | {len(pending[c])} | {load[c]} |" for c in pair), "",
+                "| CODEOWNERS area | Files | Covered by |", "|---|---:|---|",
+                *(f"| `{p}` | {len(areas[p][1])} | {', '.join('@' + c for c in pair if c in area_members[p]) or 'uncovered'} |"
+                  for p in areas))
+          gh(f"repos/{REPO}/pulls/{PR}/requested_reviewers", "--method", "POST", "--input", "-",
+             body={"reviewers": list(pair)})
+          if set(extra) - requested_users:
+              gh(f"repos/{REPO}/pulls/{PR}/requested_reviewers", "--method", "POST", "--input", "-",
+                 body={"reviewers": sorted(set(extra) - requested_users)}, fatal=False)
+          if requested_teams:
+              gh(f"repos/{REPO}/pulls/{PR}/requested_reviewers", "--method", "DELETE", "--input", "-",
+                 body={"reviewers": [], "team_reviewers": requested_teams})

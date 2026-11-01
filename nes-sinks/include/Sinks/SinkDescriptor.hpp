@@ -15,9 +15,9 @@
 #pragma once
 
 
-#include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -25,27 +25,51 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <variant>
-#include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/Any.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
+#include <Util/Variant.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
-class OperatorSerializationUtil;
+class SinkCatalog;
+struct GeneralSinkConfig;
 }
 
 namespace NES
 {
-class NamedSinkDescriptor final : public Descriptor
+
+/// The sink-defined config struct (e.g. FileSinkConfig), type-erased, together with the sink type
+/// that identifies the SinkConfigRegistry entry that produced it (and can serialize it).
+class PluginSinkConfiguration
 {
-    friend OperatorSerializationUtil;
+public:
+    PluginSinkConfiguration(Identifier type, ExplicitAny pluginData) : type(std::move(type)), pluginData(std::move(pluginData)) { }
+
+    [[nodiscard]] const Identifier& getType() const { return type; }
+
+    [[nodiscard]] const ExplicitAny& getPluginData() const { return pluginData; }
+
+private:
+    Identifier type;
+    ExplicitAny pluginData;
+};
+
+class NamedSinkDescriptor final
+{
+    friend SinkCatalog;
     friend class SinkDescriptor;
 
 public:
@@ -54,41 +78,54 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const NamedSinkDescriptor& sinkDescriptor);
     friend bool operator==(const NamedSinkDescriptor& lhs, const NamedSinkDescriptor& rhs);
 
-    [[nodiscard]] std::optional<std::string> getFormatType() const;
-
-    [[nodiscard]] SinkId getSinkId() const;
+    [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> getSchema() const;
     [[nodiscard]] Identifier getSinkName() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
+    [[nodiscard]] SinkId getSinkId() const;
+    [[nodiscard]] bool getAddTimestamp() const;
+    [[nodiscard]] size_t getBackpressureUpperThreshold() const;
+    [[nodiscard]] size_t getBackpressureLowerThreshold() const;
+    [[nodiscard]] const PluginSinkConfiguration& getPluginSinkConfiguration() const;
+    [[nodiscard]] const OutputFormatterDescriptor& getOutputFormatterDescriptor() const;
 
 private:
     explicit NamedSinkDescriptor(
-        SinkId id,
+        SinkId sinkId,
         Identifier name,
         Schema<UnqualifiedUnboundField, Ordered> nameWithSchema,
-        std::string_view sinkType,
         Host host,
-        std::unordered_map<Identifier, std::string> formatConfig,
-        DescriptorConfig::Config config);
+        bool addTimestamp,
+        size_t backpressureUpperThreshold,
+        size_t backpressureLowerThreshold,
+        PluginSinkConfiguration pluginSinkConfig,
+        OutputFormatterDescriptor outputFormatterDescriptor);
 
-    SinkId id;
+    SinkId sinkId;
     Identifier name;
     std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> schema;
-    std::string sinkType;
     Host host;
-    std::unordered_map<Identifier, std::string> formatConfig;
+    bool addTimestamp;
+    size_t backpressureUpperThreshold;
+    size_t backpressureLowerThreshold;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 
     friend Unreflector<NamedSinkDescriptor>;
 };
 
-class AnonymousSinkDescriptor final : public Descriptor
+using AnonymousSinkSchema = std::variant<
+    std::monostate,
+    std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
+    std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>;
+
+class AnonymousSinkDescriptor final
 {
-    friend OperatorSerializationUtil;
+    friend SinkCatalog;
+    friend class SinkDescriptor;
     friend struct SinkLogicalOperator;
     friend class CalcTargetOrderRule;
-    friend class SinkDescriptor;
 
 public:
     ~AnonymousSinkDescriptor() = default;
@@ -99,66 +136,103 @@ public:
 
     [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::variant<
-        std::monostate,
-        std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-        std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-    getSchema() const;
-
+    [[nodiscard]] AnonymousSinkSchema getSchema() const;
     [[nodiscard]] SinkId getSinkId() const;
-
     [[nodiscard]] Host getHost() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
+    [[nodiscard]] bool getAddTimestamp() const;
+    [[nodiscard]] size_t getBackpressureUpperThreshold() const;
+    [[nodiscard]] size_t getBackpressureLowerThreshold() const;
+    [[nodiscard]] const PluginSinkConfiguration& getPluginSinkConfiguration() const;
+    [[nodiscard]] const OutputFormatterDescriptor& getOutputFormatterDescriptor() const;
 
 private:
     explicit AnonymousSinkDescriptor(
-        SinkId id,
-        std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema,
-        std::string_view sinkType,
+        SinkId sinkId,
+        AnonymousSinkSchema schema,
         Host host,
-        std::unordered_map<Identifier, std::string> formatConfig,
-        DescriptorConfig::Config config);
+        bool addTimestamp,
+        size_t backpressureUpperThreshold,
+        size_t backpressureLowerThreshold,
+        PluginSinkConfiguration pluginSinkConfig,
+        OutputFormatterDescriptor outputFormatterDescriptor);
 
     [[nodiscard]] AnonymousSinkDescriptor withSchemaOrder(const Schema<UnqualifiedUnboundField, Ordered>& newSchema) const;
 
-    SinkId id;
-    std::variant<
-        std::monostate,
-        std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-        std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-        schema;
-    std::string sinkType;
+    SinkId sinkId;
+    AnonymousSinkSchema schema;
     Host host;
-    std::unordered_map<Identifier, std::string> formatConfig;
+    bool addTimestamp;
+    size_t backpressureUpperThreshold;
+    size_t backpressureLowerThreshold;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 
     friend Unreflector<AnonymousSinkDescriptor>;
 };
 
-class SinkDescriptor final : public Descriptor
+class SinkDescriptor final
 {
-    friend OperatorSerializationUtil;
+    friend SinkCatalog;
     friend Unreflector<SinkDescriptor>;
     friend class CalcTargetOrderRule;
 
 public:
+    /// Construct a descriptor from resolved configs without a catalog. The caller owns ID allocation.
+    static SinkDescriptor createNamed(
+        SinkId id,
+        Identifier name,
+        const Schema<UnqualifiedUnboundField, Ordered>& schema,
+        GeneralSinkConfig generalConfig,
+        PluginSinkConfiguration pluginConfig,
+        OutputFormatterDescriptor formatter);
+
+    static SinkDescriptor createAnonymous(
+        SinkId id,
+        AnonymousSinkSchema schema,
+        GeneralSinkConfig generalConfig,
+        PluginSinkConfiguration pluginConfig,
+        OutputFormatterDescriptor formatter);
+
+    /// Compatibility adapters for callers that still supply string config maps.
+    static std::optional<SinkDescriptor> createNamed(
+        SinkId id,
+        Identifier name,
+        const Identifier& sinkType,
+        const Schema<UnqualifiedUnboundField, Ordered>& schema,
+        const Host& host,
+        const std::unordered_map<Identifier, std::string>& descriptorConfig,
+        const std::unordered_map<Identifier, std::string>& formatConfig);
+
+    static std::optional<SinkDescriptor> createAnonymous(
+        SinkId id,
+        const Identifier& sinkType,
+        const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
+        const Host& host,
+        const std::unordered_map<Identifier, std::string>& descriptorConfig,
+        const std::unordered_map<Identifier, std::string>& formatConfig);
+
+
     ~SinkDescriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
-    /// Will return "Native" as fallback, if the sink config does not use the OUTPUT_FORMAT parameter.
+    /// The output formatter type; "Native" if the sink forwards buffers without formatting.
     [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]]
-    std::variant<
-        std::monostate,
-        std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-        std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>> getSchema() const;
+    [[nodiscard]] AnonymousSinkSchema getSchema() const;
     [[nodiscard]] Identifier getSinkName() const;
     [[nodiscard]] SinkId getSinkId() const;
     [[nodiscard]] bool isAnonymous() const;
     [[nodiscard]] Host getHost() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
+    [[nodiscard]] bool getAddTimestamp() const;
+    [[nodiscard]] size_t getBackpressureUpperThreshold() const;
+    [[nodiscard]] size_t getBackpressureLowerThreshold() const;
+    /// The sink-defined config struct (e.g. FileSinkConfig), type-erased. Produced by the sink's
+    /// SinkConfigRegistry entry, so the sink factory can safely any_cast it back.
+    [[nodiscard]] const ExplicitAny& getPluginData() const;
+    [[nodiscard]] const PluginSinkConfiguration& getPluginSinkConfiguration() const;
+    [[nodiscard]] const OutputFormatterDescriptor& getOutputFormatterDescriptor() const;
     [[nodiscard]] const std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor>& getUnderlying() const;
 
 private:
@@ -168,41 +242,50 @@ private:
     friend Reflector<SinkDescriptor>;
 
 public:
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "OUTPUT_FORMAT",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
+    /// General sink config fields, shared by all sink types. Host determines worker placement;
+    /// the (optional) schema types the sink's input for anonymous sinks declared inside a query.
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    static inline const ConfigField<Host> HOST{
+        Identifier::parse("HOST"),
+        "Where to place the sink, in the form of host:port . Must be a NES node that is part of the topology.",
+        [](const ConfigLiteral& literal) -> std::expected<Host, Exception>
+        {
+            return tryGetOr<std::string>(literal, expectedType<std::string>())
+                .transform([](std::string&& value) -> Host { return Host{std::move(value)}; });
+        },
+        Host{Host::INVALID}};
 
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
-        "ADD_TIMESTAMP",
-        false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{
+        Identifier::parse("SCHEMA"),
+        "The schema of the sink, only specifiable as an option in anonymous sources.",
+        [](const ConfigLiteral& literal)
+        { return tryGetOr<Schema<UnqualifiedUnboundField, Ordered>>(literal, expectedType<Schema<UnqualifiedUnboundField, Ordered>>()); },
+        std::nullopt};
 
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    static inline const ConfigField<bool> ADD_TIMESTAMP{
+        Identifier::parse("ADD_TIMESTAMP"), "A boolean indicating whether to add a timestamp to tuples", false};
 
-    static std::optional<DescriptorConfig::Config>
-    validateAndFormatConfig(std::string_view sinkType, std::unordered_map<Identifier, std::string> configPairs);
+    /// Shared declarations used only by sinks with backpressure support.
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    static inline const ConfigField<size_t> BACKPRESSURE_UPPER_THRESHOLD{
+        Identifier::parse("BACKPRESSURE_UPPER_THRESHOLD"),
+        "The number of buffers a sink is not able to emit, that needs to be reached before it starts applying backpressure.",
+        [](const ConfigLiteral& literal)
+        { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
+        size_t{1000}};
 
-    static std::optional<SinkDescriptor> createNamed(
-        SinkId id,
-        Identifier name,
-        const Identifier& sinkType,
-        const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        Host host,
-        std::unordered_map<Identifier, std::string> descriptorConfig,
-        std::unordered_map<Identifier, std::string> formatConfig);
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    static inline const ConfigField<size_t> BACKPRESSURE_LOWER_THRESHOLD{
+        Identifier::parse("BACKPRESSURE_LOWER_THRESHOLD"),
+        "The number of buffers a sink a sink is not able to emit, that needs to be reached so that the sink stops applying backpressure.",
+        [](const ConfigLiteral& literal)
+        { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
+        size_t{200}};
 
-    static std::optional<SinkDescriptor> createAnonymous(
-        SinkId id,
-        const Identifier& sinkType,
-        const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
-        Host host,
-        std::unordered_map<Identifier, std::string> descriptorConfig,
-        std::unordered_map<Identifier, std::string> formatConfig);
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SINK"), HOST, SCHEMA, ADD_TIMESTAMP);
 
     friend struct SinkLogicalOperator;
 };
@@ -219,27 +302,43 @@ struct Unreflector<SinkDescriptor>
     SinkDescriptor operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
+template <>
+struct Reflector<PluginSinkConfiguration>
+{
+    Reflected operator()(const PluginSinkConfiguration& config, const ReflectionContext& context) const;
+};
+
+template <>
+struct Unreflector<PluginSinkConfiguration>
+{
+    PluginSinkConfiguration operator()(const Reflected& rfl, const ReflectionContext& context) const;
+};
+
 namespace detail
 {
 struct ReflectedAnonymousSinkDescriptor
 {
-    int64_t id;
+    SinkId sinkId;
     std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema;
-    std::string sinkType;
     Host host;
-    Reflected formatConfig;
-    Reflected config;
+    bool addTimestamp;
+    size_t backpressureUpperThreshold;
+    size_t backpressureLowerThreshold;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 };
 
 struct ReflectedNamedSinkDescriptor
 {
-    int64_t id;
+    SinkId sinkId;
     Identifier name;
     Schema<UnqualifiedUnboundField, Ordered> schema;
-    std::string sinkType;
     Host host;
-    Reflected formatConfig;
-    Reflected config;
+    bool addTimestamp;
+    size_t backpressureUpperThreshold;
+    size_t backpressureLowerThreshold;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 };
 }
 

@@ -1,0 +1,48 @@
+---
+name: 🔒🧩 FEATURE (Maintainers only)
+description: A template about issues that consist of more than one PR.
+title: "[FEATURE] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > - Set **Type** to FEATURE.
+  - type: textarea
+    attributes:
+      label: Description
+      description: What is this feature about?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Contribution to EPIC/Roadmap
+      description: >-
+        Which goal(s) of the parent EPIC does this feature address? OR
+        how does this fit into the bigger picture if it is an orphan feature?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Scope
+      description: What is included in this feature?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Out of scope
+      description: What is explicitly not part of this feature?
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Done when
+      description: How will we know this feature is complete? When should it close?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Open questions / risks
+      description: Unknowns, dependencies, things that might change the plan.
+    validations:
+      required: false

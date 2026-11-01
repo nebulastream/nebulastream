@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <SinkValidationRegistry.hpp>
+#include <OutputFormatterConfigSchemaRegistry.hpp>
 
 namespace NES
 {
 
-SinkValidationRegistry& SinkValidationRegistry::instance()
+OutputFormatterConfigSchemaRegistry& OutputFormatterConfigSchemaRegistry::instance()
 {
-    static SinkValidationRegistry inst;
+    static OutputFormatterConfigSchemaRegistry inst;
     return inst;
 }
 

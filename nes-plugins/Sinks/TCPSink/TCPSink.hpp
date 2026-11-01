@@ -17,24 +17,37 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
-#include <optional>
+#include <expected>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <TCPChannel.hpp>
 
 namespace NES
 {
+
+struct TCPSinkConfig
+{
+    std::string socketHost;
+    uint32_t socketPort{};
+    uint32_t connectTimeoutMs{};
+    uint32_t closeTimeoutMs{};
+    size_t maxQueuedBuffers{};
+
+    static std::expected<TCPSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// Streams the bytes produced by the configured output formatter to a TCP server.
 /// Delivery is best-effort across reconnects: data sent before a disconnect may be lost, and the buffer being written
@@ -45,7 +58,7 @@ public:
     static constexpr std::string_view NAME = "TCP";
     static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
 
-    explicit TCPSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit TCPSink(BackpressureController backpressureController, const TCPSinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~TCPSink() override = default;
 
     TCPSink(const TCPSink&) = delete;
@@ -57,7 +70,7 @@ public:
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& os) const override;
@@ -65,94 +78,6 @@ protected:
 private:
     TCPChannel channel;
     BackpressureHandler backpressureHandler;
-};
-
-struct ConfigParametersTCPSink
-{
-    ///NOLINTBEGIN(cert-err58-cpp,bugprone-throwing-static-initialization)
-    static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "SOCKET_HOST",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
-        "SOCKET_PORT",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto port = DescriptorConfig::tryGet(PORT, config);
-            if (!port || port.value() == 0 || port.value() > std::numeric_limits<uint16_t>::max())
-            {
-                return std::nullopt;
-            }
-            return port;
-        }};
-
-    /// Maximum time spent establishing or reestablishing a connection before failing the query.
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT_MS{
-        "CONNECT_TIMEOUT_MS",
-        10000,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto timeout = DescriptorConfig::tryGet(CONNECT_TIMEOUT_MS, config);
-            if (!timeout || timeout.value() == 0)
-            {
-                return std::nullopt;
-            }
-            return timeout;
-        }};
-
-    /// Maximum time stop waits without an accepted buffer being written before aborting the writer thread.
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> CLOSE_TIMEOUT_MS{
-        "CLOSE_TIMEOUT_MS",
-        10000,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
-        {
-            const auto timeout = DescriptorConfig::tryGet(CLOSE_TIMEOUT_MS, config);
-            if (!timeout || timeout.value() == 0)
-            {
-                return std::nullopt;
-            }
-            return timeout;
-        }};
-
-    /// Maximum number of buffers owned by the TCP channel's asynchronous writer.
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_QUEUED_BUFFERS{
-        "MAX_QUEUED_BUFFERS",
-        16,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
-        {
-            const auto maximum = DescriptorConfig::tryGet(MAX_QUEUED_BUFFERS, config);
-            if (!maximum || maximum.value() == 0)
-            {
-                return std::nullopt;
-            }
-            return maximum;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
-        "BACKPRESSURE_UPPER_THRESHOLD",
-        1000,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
-        "BACKPRESSURE_LOWER_THRESHOLD",
-        200,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SinkDescriptor::parameterMap,
-            HOST,
-            PORT,
-            CONNECT_TIMEOUT_MS,
-            CLOSE_TIMEOUT_MS,
-            MAX_QUEUED_BUFFERS,
-            BACKPRESSURE_UPPER_THRESHOLD,
-            BACKPRESSURE_LOWER_THRESHOLD);
-    ///NOLINTEND(cert-err58-cpp,bugprone-throwing-static-initialization)
 };
 
 }
