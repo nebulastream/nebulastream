@@ -15,6 +15,7 @@
 #include <SystestBinder.hpp>
 
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <span>
@@ -50,6 +51,7 @@
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <UdfCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -94,13 +96,16 @@ void throwOnError(std::expected<T, Exception> result)
 struct SystestBinder::Impl
 {
     explicit Impl(const SystestConfiguration& config)
-        : sourceCatalog{std::make_shared<SourceCatalog>()}
+        : testDataDir{config.testDataDir}
+        , sourceCatalog{std::make_shared<SourceCatalog>()}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
+        , udfCatalog{std::make_shared<UdfCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
+        , udfHandler{udfCatalog}
         , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
         , queryOptimizer{
               config.queryOptimizerConfig,
@@ -119,6 +124,11 @@ struct SystestBinder::Impl
     [[nodiscard]] BoundTestFile
     bind(const std::span<const std::string> setupSql, const std::span<const RewrittenTestCase> testCases, const std::string& partitionKey)
     {
+        /// UDF names are not prefixed per test file, so each file starts from an empty UDF catalog.
+        for (const auto& udfName : udfCatalog->getUdfNames())
+        {
+            udfCatalog->removeUdf(udfName);
+        }
         BoundTestFile bound;
         for (const auto& sql : setupSql)
         {
@@ -156,8 +166,19 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
+                [&](const CreateFunctionStatement& statement) { createFunction(statement); },
                 [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
             binding);
+    }
+
+    /// Resolves a relative `.so` path against the test data directory before the handler registers the function.
+    void createFunction(CreateFunctionStatement statement)
+    {
+        if (const std::filesystem::path path{statement.path}; !path.empty() && path.is_relative())
+        {
+            statement.path = (testDataDir / path).string();
+        }
+        throwOnError(udfHandler(statement));
     }
 
     [[nodiscard]] Statement bindStatement(const std::string& sql) const
@@ -221,14 +242,17 @@ private:
     }
 
     /// One catalog set for the whole run, which the rewriter's prefixing keeps collision-free.
+    std::filesystem::path testDataDir;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
+    std::shared_ptr<UdfCatalog> udfCatalog;
     SharedPtr<WorkerCatalog> workerCatalog;
 
     SourceStatementHandler sourceHandler;
     SinkStatementHandler sinkHandler;
     ModelStatementHandler modelHandler;
+    UdfStatementHandler udfHandler;
     StatementBinder statementBinder;
     QueryOptimizer queryOptimizer;
 };
