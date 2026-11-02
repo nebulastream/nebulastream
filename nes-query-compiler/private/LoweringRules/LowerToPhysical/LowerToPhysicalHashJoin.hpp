@@ -14,21 +14,28 @@
 
 #pragma once
 
+#include <unordered_set>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <LoweringRuleRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 struct LowerToPhysicalHashJoin : AbstractLoweringRule
 {
-    explicit LowerToPhysicalHashJoin(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+    explicit LowerToPhysicalHashJoin(LoweringRuleRegistryArguments arguments)
+        : conf(std::move(arguments.conf)), windowsWithoutThrottling(std::move(arguments.windowsWithoutThrottling))
+    {
+    }
 
     LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
     QueryExecutionConfiguration conf;
+    std::unordered_set<OperatorId> windowsWithoutThrottling;
 };
 
 }

@@ -37,11 +37,12 @@
 namespace NES
 {
 NLJOperatorHandler::NLJOperatorHandler(
-    const std::vector<OriginId>& inputOrigins,
+    SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     JoinTriggerStrategy triggerStrategy)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
+    : StreamJoinOperatorHandler(
+          std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
 {
 }
 

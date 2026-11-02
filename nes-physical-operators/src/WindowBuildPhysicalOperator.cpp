@@ -56,16 +56,22 @@ void checkWindowsTriggerProxy(
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
+/// Operators whose handler is not a WindowBasedOperatorHandler (e.g. the interval join) take no part in
+/// watermark-gap throttling: their lower bound is 0 and finishing a buffer is a no-op.
 uint64_t startBuildBufferProxy(OperatorHandler* ptrOpHandler, const OriginId originId)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    return dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler)->startBuildBuffer(originId).getRawValue();
+    auto* const windowHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    return windowHandler != nullptr ? windowHandler->startBuildBuffer(originId).getRawValue() : 0;
 }
 
 void finishBuildBufferProxy(OperatorHandler* ptrOpHandler, const Timestamp lowerBound)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler)->finishBuildBuffer(lowerBound);
+    if (auto* const windowHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler))
+    {
+        windowHandler->finishBuildBuffer(lowerBound);
+    }
 }
 
 void WindowBuildPhysicalOperator::failIfOutOfOrder(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& timestamp) const

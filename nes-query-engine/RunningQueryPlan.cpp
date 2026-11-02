@@ -19,6 +19,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <tuple>
 #include <unordered_map>
@@ -156,6 +157,7 @@ std::
             unregisterWithError,
             terminationCallbackRef,
             pipelineSetupCallbackRef);
+        node->watermarkBackpressure = std::exchange(pipeline->watermarkBackpressure, std::nullopt);
         pipelines.emplace_back(node);
         cache[pipeline] = std::move(node);
         return cache[pipeline];
