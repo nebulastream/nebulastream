@@ -62,6 +62,10 @@ std::string_view udfBackendKey(const PythonUdfBackend backend)
     {
         case PythonUdfBackend::Codon:
             return "Codon";
+        case PythonUdfBackend::CPython:
+            return "CPython";
+        case PythonUdfBackend::PyPy:
+            return "PyPy";
     }
     std::unreachable();
 }
@@ -123,7 +127,8 @@ PhysicalFunction FunctionProvider::lowerFunction(
                 .importPaths = pythonUdfImportPaths});
     }
     /// Inline UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query text rather than a
-    /// catalog descriptor. BRIDGE selects the backend: Codon (the default) AOT-compiles the body into the pipeline itself.
+    /// catalog descriptor. BRIDGE selects the backend: Codon (default) AOT-compiles the body into the pipeline itself,
+    /// cpython/pypy run it through the interpreter bridges catalog UDFs use.
     if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
     {
         return lowerUdf(

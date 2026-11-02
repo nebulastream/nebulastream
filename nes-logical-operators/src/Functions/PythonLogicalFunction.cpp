@@ -47,7 +47,15 @@ PythonUdfBackend parsePythonUdfBackend(const std::string_view bridge)
     {
         return PythonUdfBackend::Codon;
     }
-    throw UnsupportedUdfLanguage("'{}' is not a valid Python UDF BRIDGE (expected codon)", bridge);
+    if (bridge == "cpython" || bridge == "CPYTHON")
+    {
+        return PythonUdfBackend::CPython;
+    }
+    if (bridge == "pypy" || bridge == "PYPY")
+    {
+        return PythonUdfBackend::PyPy;
+    }
+    throw UnsupportedUdfLanguage("'{}' is not a valid Python UDF BRIDGE (expected codon, cpython, or pypy)", bridge);
 }
 
 PythonLogicalFunction::PythonLogicalFunction(
@@ -122,6 +130,10 @@ std::string_view bridgeName(const PythonUdfBackend backend)
     {
         case PythonUdfBackend::Codon:
             return "codon";
+        case PythonUdfBackend::CPython:
+            return "cpython";
+        case PythonUdfBackend::PyPy:
+            return "pypy";
     }
     std::unreachable();
 }

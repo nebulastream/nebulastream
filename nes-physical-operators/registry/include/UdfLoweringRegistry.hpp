@@ -49,7 +49,7 @@ struct UdfLoweringRegistryArguments
 using UdfLoweringFn = std::function<UdfLoweringRegistryReturnType(UdfLoweringRegistryArguments)>;
 
 /// Lowers UDF calls and inline UDFs to physical functions, keyed by the backend that executes them: InProcess (a C-ABI
-/// library loaded into the worker) is built in, while Codon comes with nes-python-udf. A backend that
+/// library loaded into the worker) is built in, while Codon, CPython and PyPy come with nes-python-udf. A backend that
 /// is missing from the registry was not part of this build.
 class UdfLoweringRegistry : public RuntimeRegistry<UdfLoweringRegistry, std::string, UdfLoweringFn, /*CaseSensitive*/ false>
 {

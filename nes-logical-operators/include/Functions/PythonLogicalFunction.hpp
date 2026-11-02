@@ -31,13 +31,17 @@ namespace NES
 {
 
 /// Selects how an inline PYTHON(...) UDF is executed. Codon (the default) AOT-compiles the body to
-/// native code linked into the query's own compiled pipeline; it accepts a statically-typeable subset of Python.
+/// native code linked into the query's own compiled pipeline -- fastest, but only a statically-typeable
+/// subset of Python. CPython/PyPy instead run it through the same interpreter bridges file-based
+/// CREATE FUNCTION UDFs use, trading per-row call overhead for full Python semantics.
 enum class PythonUdfBackend : std::uint8_t
 {
-    Codon
+    Codon,
+    CPython,
+    PyPy
 };
 
-/// Parses a SQL BRIDGE clause value ("codon", case-insensitive). Throws
+/// Parses a SQL BRIDGE clause value ("codon"/"cpython"/"pypy", case-insensitive). Throws
 /// NES::UnsupportedUdfLanguage if `bridge` names none of them.
 [[nodiscard]] PythonUdfBackend parsePythonUdfBackend(std::string_view bridge);
 

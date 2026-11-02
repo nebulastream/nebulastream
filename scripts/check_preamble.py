@@ -114,6 +114,11 @@ VENDORED_FILES = {
     "vcpkg/vcpkg-registry/ports/libuuid/unofficial-libuuid-config.cmake.in",
 }
 
+VENDORED_DIRECTORIES = (
+    # A virtual environment with a third-party package, the fixture of the PythonUdfVenv systest.
+    "nes-systests/udf/small_venv/",
+)
+
 if __name__ == "__main__":
 
     git_ls_files = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True)
@@ -126,7 +131,7 @@ if __name__ == "__main__":
 
         suffix = filename.split(".")[-1]
 
-        if filename in VENDORED_FILES:
+        if filename in VENDORED_FILES or filename.startswith(VENDORED_DIRECTORIES):
             pass
         elif suffix in {"cpp", "proto", "java", "g4", "inc", "rs"} or filename.endswith(".cpp.in") or filename.endswith(".hpp.in"):
             with open(filename, "r", encoding="utf-8") as fp:
