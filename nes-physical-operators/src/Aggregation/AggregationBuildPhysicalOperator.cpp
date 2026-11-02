@@ -46,6 +46,14 @@ namespace NES
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     WindowBuildPhysicalOperator::setup(executionCtx, compilationContext);
+    for (const auto& keyFunction : keyFunctions)
+    {
+        keyFunction.setup(compilationContext);
+    }
+    for (const auto& aggregationFunction : aggregationPhysicalFunctions)
+    {
+        aggregationFunction->setup(compilationContext);
+    }
 }
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const

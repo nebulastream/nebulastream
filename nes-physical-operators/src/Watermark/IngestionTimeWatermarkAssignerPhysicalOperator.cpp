@@ -21,6 +21,7 @@
 #include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -29,6 +30,11 @@ namespace NES
 
 IngestionTimeWatermarkAssignerPhysicalOperator::IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction)
     : timeFunction(std::move(timeFunction)) { };
+
+void IngestionTimeWatermarkAssignerPhysicalOperator::setup(ExecutionContext&, CompilationContext& compilationContext) const
+{
+    timeFunction.setup(compilationContext);
+}
 
 void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

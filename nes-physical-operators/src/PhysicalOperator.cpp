@@ -46,9 +46,8 @@ PhysicalOperatorConcept::PhysicalOperatorConcept(const OperatorId existingId) : 
 {
 }
 
-void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void PhysicalOperatorConcept::setup(ExecutionContext&, CompilationContext&) const
 {
-    setupChild(executionCtx, compilationContext);
 }
 
 void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -69,12 +68,6 @@ void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const
 void PhysicalOperatorConcept::execute(ExecutionContext& executionCtx, Record& record) const
 {
     executeChild(executionCtx, record);
-}
-
-void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
-{
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().setup(executionCtx, compilationContext);
 }
 
 void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -131,6 +124,10 @@ PhysicalOperator PhysicalOperator::withChild(PhysicalOperator child) const
 void PhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     self->setup(executionCtx, compilationContext);
+    if (const auto child = self->getChild())
+    {
+        child->setup(executionCtx, compilationContext);
+    }
 }
 
 void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

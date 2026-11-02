@@ -47,6 +47,9 @@ public:
     AggregationPhysicalFunction(
         DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
 
+    /// Sets up the input function. Both the build and the probe pipeline call this, as lower() may evaluate the input function too.
+    void setup(CompilationContext& compilationContext) const;
+
     /// Adds the incoming record to the existing aggregation state
     virtual void lift(
         const nautilus::val<AggregationState*>& aggregationState,

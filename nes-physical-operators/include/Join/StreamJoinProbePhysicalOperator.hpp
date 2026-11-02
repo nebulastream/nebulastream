@@ -42,6 +42,9 @@ public:
     StreamJoinProbePhysicalOperator(
         OperatorHandlerId operatorHandlerId, PhysicalFunction joinFunction, WindowMetaData windowMetaData, JoinSchema joinSchema);
 
+    /// Registers resources required by the join predicate before tracing the probe pipeline.
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+
 protected:
     /// Creates a joined record out of the outer and inner record
     Record createJoinedRecord(

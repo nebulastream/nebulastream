@@ -107,8 +107,9 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
     invoke(finishBuildBufferProxy, operatorHandlerMemRef, localState->getLowerBound());
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
+void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
+    timeFunction->setup(compilationContext);
     sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
 }
 

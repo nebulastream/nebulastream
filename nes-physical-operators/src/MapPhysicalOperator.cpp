@@ -28,6 +28,11 @@ MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWr
 {
 }
 
+void MapPhysicalOperator::setup(ExecutionContext&, CompilationContext& compilationContext) const
+{
+    mapFunction.setup(compilationContext);
+}
+
 void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// execute map function

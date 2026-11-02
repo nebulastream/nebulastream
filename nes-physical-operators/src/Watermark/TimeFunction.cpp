@@ -47,6 +47,11 @@ std::unique_ptr<TimeFunction> TimeFunction::create(const Windowing::BoundTimeCha
         timeCharacteristic);
 }
 
+void EventTimeFunction::setup(CompilationContext& compilationContext) const
+{
+    timestampFunction.setup(compilationContext);
+}
+
 void EventTimeFunction::open(ExecutionContext&, RecordBuffer&) const
 {
     /// nop

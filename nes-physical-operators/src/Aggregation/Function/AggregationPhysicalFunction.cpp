@@ -35,6 +35,11 @@ AggregationPhysicalFunction::AggregationPhysicalFunction(
 {
 }
 
+void AggregationPhysicalFunction::setup(CompilationContext& compilationContext) const
+{
+    inputFunction.setup(compilationContext);
+}
+
 void AggregationPhysicalFunction::storeNull(const nautilus::val<AggregationState*>& aggregationState, const nautilus::val<bool>& isNull)
 {
     const auto memAreaNull = static_cast<nautilus::val<int8_t*>>(aggregationState);
