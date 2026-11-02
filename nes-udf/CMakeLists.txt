@@ -12,13 +12,20 @@
 
 add_library(nes-udf
         src/UdfCatalog.cpp
-        src/UdfDescriptor.cpp)
+        src/UdfDescriptor.cpp
+        src/UdfBridgeRegistry.cpp)
 target_include_directories(nes-udf PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(nes-udf PUBLIC nes-data-types nes-common)
 
-# Runs C-ABI UDF libraries in the worker.
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+# Keyed by BRIDGE name; filled by nes-python-udf.
+create_runtime_registry(UdfBridge nes-udf
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}UdfBridges::create\${KEY}"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}UdfBridges.hpp")
+
+# Runs C-ABI UDF libraries in the worker. The Python bridges are such libraries; they live in nes-python-udf.
 add_subdirectory(runtime)
 
 add_tests_if_enabled(tests)

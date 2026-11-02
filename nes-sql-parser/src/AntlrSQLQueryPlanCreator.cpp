@@ -23,6 +23,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -54,6 +55,7 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/PythonLogicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -1040,6 +1042,34 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     AntlrSQLBaseListener::enterFunctionCall(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitPythonFunction(AntlrSQLParser::PythonFunctionContext* context)
+{
+    std::vector<std::string> parameterNames;
+    std::vector<LogicalFunction> arguments;
+    for (auto* parameter : context->parameters->ident)
+    {
+        const auto identifier = bindIdentifier(parameter->identifier());
+        parameterNames.emplace_back(identifier.getOriginalString());
+        arguments.emplace_back(UnboundFieldAccessLogicalFunction(identifier));
+    }
+
+    auto body = context->body->getText();
+    constexpr std::string_view delimiter = "$python$";
+    PRECONDITION(body.size() >= delimiter.size() * 2, "Malformed Python UDF body");
+    body = body.substr(delimiter.size(), body.size() - (delimiter.size() * 2));
+
+    const auto backend = context->bridge != nullptr ? parsePythonUdfBackend(bindStringLiteral(context->bridge)) : PythonUdfBackend::Codon;
+
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    functions.emplace_back(PythonLogicalFunction(
+        std::move(parameterNames),
+        std::move(body),
+        bindDataType(
+            context->returnType, context->returnNullable == nullptr ? DataType::NULLABLE::NOT_NULLABLE : DataType::NULLABLE::IS_NULLABLE),
+        std::move(arguments),
+        backend));
 }
 
 void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpressionContext* context)

@@ -36,7 +36,18 @@ void UdfCatalog::registerUdf(
     const UdfExecution execution)
 {
     /// The library path of an InProcess UDF is not checked here: the worker loads it, possibly on another machine, and
-    /// reports a missing library when it loads it.
+    /// reports a missing library when it loads the bridge.
+    if (execution == UdfExecution::Codon)
+    {
+        if (!splitEntrypoint(entrypoint).has_value())
+        {
+            throw NES::InvalidStatement("Codon UDF '{}' needs ENTRYPOINT 'module.function', got '{}'", name, entrypoint);
+        }
+        if (argTypes.empty())
+        {
+            throw NES::InvalidStatement("Codon UDF '{}' needs at least one argument", name);
+        }
+    }
 
     /// Reject ABI-incompatible types up front so descriptor/signature compatibility is an invariant downstream code can trust.
     const auto validateType = [&](const DataType& type, const std::string_view role)

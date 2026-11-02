@@ -97,6 +97,8 @@ VENDORED_FILES = {
     # `.data-00000-of-00001`); they are binary fixtures for ModelLoaderTest.
     "nes-inference/tests/testdata/tiny_savedmodel/variables/variables.index",
     "nes-inference/tests/testdata/tiny_savedmodel/variables/variables.data-00000-of-00001",
+    # Input read by the PythonUDFFileIO systest; its exact content is the expected result.
+    "nes-systests/testdata/python_udf/file_input.txt",
     "cmake/CodeCoverage.cmake",
     "cmake/corrosion/CMakeLists.txt",
     "cmake/corrosion/cmake/Corrosion.cmake",
@@ -140,13 +142,13 @@ if __name__ == "__main__":
                 if not re.match(pattern, content, re.DOTALL):
                     print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble followed by #pragma once: {filename}:1')
                     result = False
-        elif filename.endswith("CMakeLists.txt") or suffix == "cmake":
+        elif filename.endswith("CMakeLists.txt") or suffix == "cmake" or filename.endswith(".cmake.in"):
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text_cmake):
                     print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}:1')
                     result = False
-        elif suffix in {"sh", "py", "bats", "toml", "bash"}:
+        elif suffix in {"sh", "py", "bats", "toml", "bash", "codon"}:
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if license_text_cmake not in content:

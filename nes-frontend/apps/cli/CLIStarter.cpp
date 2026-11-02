@@ -74,6 +74,7 @@
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
+#include <UdfBridgeRegistry.hpp>
 #include <UdfCatalog.hpp>
 #include <UdfDescriptor.hpp>
 #include <Version.hpp>
@@ -160,12 +161,14 @@ struct Model
     std::vector<SchemaField> output;
 };
 
-/// A catalog scalar UDF, the YAML counterpart of CREATE FUNCTION: `path` names the `.so` implementing the UDF C ABI.
+/// A catalog scalar UDF, the YAML counterpart of CREATE FUNCTION. Exactly one of `bridge` and `path` selects how it executes
+/// (`bridge: codon` compiles the entrypoint module into the query pipeline; `path` loads a C-ABI `.so`).
 /// NOLINTNEXTLINE(misc-use-internal-linkage)
 struct Function
 {
     std::string name;
-    std::string path;
+    std::optional<std::string> bridge;
+    std::optional<std::string> path;
     std::string entrypoint;
     std::vector<SchemaField> args;
     DataType returns;
@@ -431,9 +434,10 @@ struct convert<NES::CLI::Function>
 {
     static bool decode(const Node& node, NES::CLI::Function& rhs)
     {
-        acceptKeys({"name", "path", "entrypoint", "args", "returns"}, node);
+        acceptKeys({"name", "bridge", "path", "entrypoint", "args", "returns"}, node);
         rhs.name = getValue<std::string>(node, "name");
-        rhs.path = getValue<std::string>(node, "path");
+        rhs.bridge = getOptional<std::string>(node, "bridge");
+        rhs.path = getOptional<std::string>(node, "path");
         rhs.entrypoint = getValue<std::string>(node, "entrypoint");
         rhs.args = getListOrDefault<NES::CLI::SchemaField>(node, "args");
         rhs.returns = stringToFieldType(getValue<std::string>(node, "returns"));
@@ -667,16 +671,44 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(
             NES::CreateModelStatement{.name = name, .path = path, .inputs = toModelFields(input), .outputs = toModelFields(output)});
     }
-    for (const auto& [name, path, entrypoint, args, returns] : functions)
+    for (const auto& [name, bridge, path, entrypoint, args, returns] : functions)
     {
+        /// Mirrors StatementBinder::bindCreateFunctionStatement: BRIDGE 'codon' has no `.so` and takes no path, any other bridge
+        /// resolves to its shipped `.so`, and a path wins over a bridge name.
+        if (!bridge.has_value() && !path.has_value())
+        {
+            throw NES::InvalidConfigParameter("Function '{}' needs a `bridge` or a `path`", name);
+        }
+        if (bridge.has_value() && path.has_value() && *bridge == NES::CodonUdfBridge)
+        {
+            throw NES::InvalidConfigParameter(
+                "Function '{}': `bridge: {}` compiles the entrypoint module and takes no `path`", name, *bridge);
+        }
+        std::string libraryPath;
+        auto execution = NES::UdfExecution::InProcess;
+        if (path.has_value())
+        {
+            libraryPath = *path;
+        }
+        else
+        {
+            /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+            const auto resolved = NES::resolveUdfBridge(*bridge);
+            execution = resolved.execution;
+            if (execution != NES::UdfExecution::Codon)
+            {
+                libraryPath = NES::resolveUdfBridgeLibraryPath(resolved).string();
+            }
+        }
         statements.emplace_back(
             NES::CreateFunctionStatement{
                 .name = fmt::format("{}", bindIdentifierName(name)),
-                .path = path,
+                .path = libraryPath,
                 .entrypoint = entrypoint,
                 .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
                     | std::ranges::to<std::vector<NES::DataType>>(),
-                .returnType = returns});
+                .returnType = returns,
+                .execution = execution});
     }
     return statements;
 }

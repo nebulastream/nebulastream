@@ -34,7 +34,8 @@ class UdfCatalog
     NamedCatalog<UdfDescriptor> catalog;
 
 public:
-    /// `path` is the `.so` implementing the UDF C ABI; `entrypoint` names the function inside it.
+    /// `path` is the bridge `.so` for InProcess UDFs and unused (empty) for Codon UDFs, whose `entrypoint` names an
+    /// importable "module.function" that the Codon compiler resolves at lowering time.
     void registerUdf(
         std::string name,
         std::filesystem::path path,

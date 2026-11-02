@@ -74,6 +74,8 @@ EXCEPTION(UnknownValueDeserializerType, 2045, "unknown value deserializer type")
 EXCEPTION(UnknownUdf, 2046, "unknown udf name")
 EXCEPTION(CannotLoadUdf, 2047, "cannot load udf")
 EXCEPTION(UdfAlreadyExists, 2048, "udf already exists")
+EXCEPTION(UnsupportedUdfLanguage, 2049, "unsupported udf language")
+EXCEPTION(PythonUdfsNotEnabled, 2050, "python udfs are not enabled in this build")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")

@@ -14,12 +14,14 @@
 
 #include <SystestBinder.hpp>
 
+#include <cstdlib> /// NOLINT(misc-include-cleaner) getenv
 #include <expected>
 #include <filesystem>
 #include <memory>
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -129,6 +131,12 @@ struct SystestBinder::Impl
         for (const auto& udfName : udfCatalog->getUdfNames())
         {
             udfCatalog->removeUdf(udfName);
+        }
+        /// Make the Python UDF modules (nes-systests/udf/pyudfs) importable by the Python bridge.
+        if (!std::string_view{SYSTEST_PY_UDF_PATH}.empty())
+        {
+            /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
+            setenv("NES_UDF_PATH", SYSTEST_PY_UDF_PATH, /*overwrite=*/1);
         }
         BoundTestFile bound;
         for (const auto& sql : setupSql)

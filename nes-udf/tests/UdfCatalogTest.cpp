@@ -164,6 +164,17 @@ TEST_F(UdfCatalogTest, DescriptorSurvivesReflectionRoundTrip)
     EXPECT_EQ(original, roundTripped);
 }
 
+TEST_F(UdfCatalogTest, RegistersCodonUdfWithoutLibraryPath)
+{
+    UdfCatalog catalog;
+    ASSERT_NO_THROW(catalog.registerUdf(
+        "discount", {}, "discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Codon));
+    const auto descriptor = catalog.load("discount");
+    EXPECT_EQ(descriptor.getExecution(), UdfExecution::Codon);
+    EXPECT_EQ(descriptor.getEntrypoint(), "discount.apply_discount");
+    EXPECT_TRUE(descriptor.getPath().empty());
+}
+
 TEST_F(UdfCatalogTest, InProcessUdfKeepsInProcessExecution)
 {
     UdfCatalog catalog;
@@ -171,4 +182,56 @@ TEST_F(UdfCatalogTest, InProcessUdfKeepsInProcessExecution)
     EXPECT_EQ(catalog.load("to_euro").getExecution(), UdfExecution::InProcess);
 }
 
+TEST_F(UdfCatalogTest, RejectsCodonEntrypointWithoutModule)
+{
+    UdfCatalog catalog;
+    for (const auto* entrypoint : {"apply_discount", ".apply_discount", "discount.", ""})
+    {
+        ASSERT_EXCEPTION_ERRORCODE(
+            catalog.registerUdf("bad", {}, entrypoint, {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Codon),
+            NES::ErrorCode::InvalidStatement);
+    }
+}
+
+TEST_F(UdfCatalogTest, RejectsCodonUdfWithoutArguments)
+{
+    UdfCatalog catalog;
+    ASSERT_EXCEPTION_ERRORCODE(
+        catalog.registerUdf("bad", {}, "m.f", {}, dt(DataType::Type::FLOAT64), UdfExecution::Codon), NES::ErrorCode::InvalidStatement);
+}
+
+TEST_F(UdfCatalogTest, CodonDescriptorSurvivesReflectionRoundTrip)
+{
+    UdfCatalog catalog;
+    catalog.registerUdf(
+        "discount", {}, "pkg.discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Codon);
+    const auto original = catalog.load("discount");
+
+    const ReflectionContext context;
+    const auto roundTripped = context.unreflect<UdfDescriptor>(context.reflect(original));
+
+    EXPECT_EQ(original, roundTripped);
+    EXPECT_EQ(roundTripped.getExecution(), UdfExecution::Codon);
+}
+
+TEST(UdfEntrypointTest, SplitsAtTheLastDot)
+{
+    const auto simple = splitEntrypoint("currency.to_euro");
+    ASSERT_TRUE(simple.has_value());
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(simple->first, "currency");
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(simple->second, "to_euro");
+
+    const auto package = splitEntrypoint("pkg.sub.fn");
+    ASSERT_TRUE(package.has_value());
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(package->first, "pkg.sub");
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(package->second, "fn");
+
+    EXPECT_FALSE(splitEntrypoint("nodot").has_value());
+    EXPECT_FALSE(splitEntrypoint(".fn").has_value());
+    EXPECT_FALSE(splitEntrypoint("module.").has_value());
+}
 }

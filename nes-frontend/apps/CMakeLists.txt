@@ -49,9 +49,16 @@ add_e2e_test(
     BATS_FILE repl/tests/embedded.bats
 )
 
+# The catalog function topology uses a Python UDF bridge.
+if (NES_ENABLE_PYTHON_UDFS)
+    set(OFFLINE_CLI_PYTHON_UDFS ON)
+else ()
+    set(OFFLINE_CLI_PYTHON_UDFS OFF)
+endif ()
 add_e2e_test(
     NAME offline-cli-test
     BATS_FILE cli/tests/offline.bats
+    EXTRA_ENV NES_ENABLE_PYTHON_UDFS=${OFFLINE_CLI_PYTHON_UDFS}
 )
 
 # These tests use docker CLI to run docker-compose from within the development container.
