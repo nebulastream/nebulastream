@@ -10,7 +10,7 @@ ARG JEMALLOC_VERSION=5.3.0
 FROM ubuntu:24.04 AS jemalloc-build
 ARG JEMALLOC_VERSION
 RUN apt-get update && apt-get install -y build-essential wget bzip2 \
-    && wget -qO- https://github.com/jemalloc/jemalloc/releases/download/${JEMALLOC_VERSION}/jemalloc-${JEMALLOC_VERSION}.tar.bz2 | tar -xj -C /tmp \
+    && wget -qO- https://github.com/jemalloc/jemalloc/releases/download/${JEMALLOC_VERSION}/jemalloc-${JEMALLOC_VERSION}.tar.bz2 | tar -xj --no-same-owner -C /tmp \
     && cd /tmp/jemalloc-${JEMALLOC_VERSION} \
     && ./configure --prefix=/opt/jemalloc --enable-prof --with-lg-page=16 \
     && make -j"$(nproc)" \
