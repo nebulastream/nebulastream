@@ -203,6 +203,7 @@ using Queue = folly::MPMCQueue<Task>;
 struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
+    const std::optional<WatermarkBackpressure>* watermarkBackpressure = nullptr;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
     std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
@@ -274,6 +275,17 @@ struct DefaultPEC final : PipelineExecutionContext
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return pipelineId;
+    }
+
+    [[nodiscard]] std::optional<WatermarkBackpressure> getWatermarkBackpressure() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        if (watermarkBackpressure == nullptr || !watermarkBackpressure->has_value())
+        {
+            return std::nullopt;
+        }
+        const auto& [controller, maxWatermarkGap] = **watermarkBackpressure;
+        return WatermarkBackpressure{.controller = controller.newHolder(), .maxWatermarkGap = maxWatermarkGap};
     }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
@@ -577,6 +589,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "Repeat pipeline setup is currently not supported. Although there is no inherit reason this wouldn't work, but its not "
                     "tested");
             });
+        pec.watermarkBackpressure = std::addressof(pipeline->watermarkBackpressure);
         pipeline->stage->start(pec);
         pool.statistic->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
         return true;

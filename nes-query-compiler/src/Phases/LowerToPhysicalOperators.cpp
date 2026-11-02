@@ -20,11 +20,13 @@
 #include <utility>
 #include <vector>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <LoweringRules/LowerToPhysical/TraceSourcesOfInputOrigins.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
@@ -123,7 +125,13 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
 
 PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
 {
-    const auto registryArgument = LoweringRuleRegistryArguments{conf};
+    auto windowsWithoutThrottling = findWindowsSharingSourcesWithSiblings(queryPlan);
+    for (const auto window : windowsWithoutThrottling)
+    {
+        NES_WARNING("Disabling watermark gap backpressure for window operator {}, as it shares a source with a sibling window", window);
+    }
+    const auto registryArgument
+        = LoweringRuleRegistryArguments{.conf = conf, .windowsWithoutThrottling = std::move(windowsWithoutThrottling)};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
     for (const auto& logicalRoot : queryPlan.getRootOperators())
