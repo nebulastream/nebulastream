@@ -16,3 +16,12 @@ INTO file();
 ----
 ERROR PythonUdfsNotEnabled "has no support for Python UDFs"
 
+# Inline Python, run by the CPython bridge
+SELECT PYTHON((a, b): $python$
+    return a + b
+$python$) AS INT64 BRIDGE 'cpython' AS result
+FROM numbers
+INTO file();
+----
+ERROR PythonUdfsNotEnabled "has no support for Python UDFs"
+

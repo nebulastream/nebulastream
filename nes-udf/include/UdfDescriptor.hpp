@@ -34,7 +34,7 @@ class UdfCatalog;
 /// widths, BOOLEAN, and VARSIZED; CHAR and UNDEFINED are rejected at registration (see docs/design/20260708_Scalar_UDF_Support.md, NG4).
 [[nodiscard]] bool isSupportedUdfType(DataType::Type type);
 
-/// How a registered UDF executes. InProcess loads a `.so` that implements the UDF C ABI into the worker.
+/// How a registered UDF executes. InProcess loads a bridge `.so` (CPython, PyPy, ...) that implements the UDF C ABI.
 /// Codon compiles the entry point's module ahead of time into the query pipeline (no `.so`, no ABI call per row).
 enum class UdfExecution : std::uint8_t
 {

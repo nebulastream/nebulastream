@@ -67,7 +67,7 @@ InlineUdfSource buildCodonUdfCall(const UdfDescriptor& descriptor, const std::ve
 }
 
 /// Where Codon looks for the ENTRYPOINT module: the configured python_udf_import_paths plus NES_UDF_PATH, the module
-/// search path of the UDF modules.
+/// search path the CPython and PyPy bridges use, so a single directory of UDF modules serves every backend.
 std::vector<std::string> codonImportPaths(const std::vector<std::string>& configured)
 {
     auto paths = configured;

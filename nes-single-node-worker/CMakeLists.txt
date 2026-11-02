@@ -33,8 +33,21 @@ target_link_libraries(nes-single-node-worker-lib
 )
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
+set_property(TARGET nes-single-node-worker PROPERTY ENABLE_EXPORTS ON)
 find_package(argparse CONFIG REQUIRED)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib argparse::argparse)
+
+# UdfBridgeRegistry resolves BRIDGE clauses relative to the worker's executable dir, so stage the bridges built by
+# nes-python-udf (configured before this dir) there via symlink.
+foreach (bridge IN ITEMS nes-cpython-udf-bridge nes-pypy-udf-bridge)
+    if (TARGET ${bridge})
+        add_dependencies(nes-single-node-worker ${bridge})
+        add_custom_command(TARGET nes-single-node-worker POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
+                COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:${bridge}>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:${bridge}>")
+    endif ()
+endforeach ()
+
 if (ENABLE_BATS_TESTS)
     add_test(
             NAME worker-offline-test
