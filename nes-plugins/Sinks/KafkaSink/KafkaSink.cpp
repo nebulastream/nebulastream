@@ -14,13 +14,17 @@
 
 #include <KafkaSink.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <expected>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
@@ -42,6 +46,38 @@
 namespace NES
 {
 
+namespace
+{
+/// librdkafka frees a RK_MSG_FREE payload with free(3), so such a payload must come from malloc(3).
+struct MallocDeleter
+{
+    void operator()(void* pointer) const noexcept
+    {
+        std::free(pointer); /// NOLINT(cppcoreguidelines-no-malloc,cppcoreguidelines-owning-memory)
+    }
+};
+
+using OwnedPayload = std::unique_ptr<void, MallocDeleter>;
+
+/// Serializes a buffer and all of its child buffers into one malloc'd block
+std::pair<OwnedPayload, size_t> serializePayload(const TupleBuffer& buffer)
+{
+    const size_t payloadSize = getTotalContentLength(buffer);
+
+    /// malloc(0) may return nullptr, which librdkafka would produce as a *null* message rather than an
+    /// empty one; always allocate at least one byte so an empty buffer keeps producing an empty message.
+    OwnedPayload payload{std::malloc(std::max<size_t>(payloadSize, 1))}; /// NOLINT(cppcoreguidelines-no-malloc)
+    if (not payload)
+    {
+        throw CannotWriteToSink("KafkaSink failed to allocate {} bytes for the outgoing message", payloadSize);
+    }
+
+    const auto written = copyInto(buffer, {static_cast<std::byte*>(payload.get()), payloadSize});
+    INVARIANT(written == payloadSize, "KafkaSink serialized {} bytes but reserved {}", written, payloadSize);
+    return {std::move(payload), payloadSize};
+}
+}
+
 void KafkaSink::DeliveryReportCallback::dr_cb(RdKafka::Message& message)
 {
     if (message.err() != RdKafka::ERR_NO_ERROR)
@@ -60,9 +96,10 @@ const ConfigField<std::string> TOPIC{Identifier::parse("TOPIC"), "The Kafka topi
 /// Maximum number of messages librdkafka may hold in its outbound queue (queue.buffering.max.messages).
 /// Once reached, produce() fails with ERR__QUEUE_FULL and the sink retries via the BackpressureHandler.
 /// Must be positive: librdkafka treats 0 as "unlimited", which would disable backpressure.
+/// Must fit into an int32_t: a wrapped value would make the sink report a full queue forever.
 const ConfigField<int64_t> MAX_OUTSTANDING_MESSAGES{
     Identifier::parse("MAX_OUTSTANDING_MESSAGES"),
-    "Maximum number of messages in librdkafka's outbound queue; must be positive",
+    "Maximum number of messages in librdkafka's outbound queue; must be in [1, 2147483647]",
     [](const ConfigLiteral& literal) -> std::expected<int64_t, Exception>
     {
         auto value = tryGetOr<int64_t>(literal, expectedType<int64_t>());
@@ -70,9 +107,9 @@ const ConfigField<int64_t> MAX_OUTSTANDING_MESSAGES{
         {
             return std::unexpected{value.error()};
         }
-        if (*value <= 0)
+        if (*value <= 0 || *value > std::numeric_limits<int32_t>::max())
         {
-            return std::unexpected{InvalidConfigParameter("KafkaSink: MAX_OUTSTANDING_MESSAGES must be positive")};
+            return std::unexpected{InvalidConfigParameter("KafkaSink: MAX_OUTSTANDING_MESSAGES must be in [1, 2147483647]")};
         }
         return value;
     },
@@ -80,9 +117,10 @@ const ConfigField<int64_t> MAX_OUTSTANDING_MESSAGES{
 
 /// How long librdkafka retries a produced message before reporting it failed (message.timeout.ms).
 /// Must be positive: librdkafka treats 0 as "infinite", which could block a query forever.
+/// Must fit into an int32_t, the type librdkafka's setting is read with.
 const ConfigField<int64_t> DELIVERY_TIMEOUT_MS{
     Identifier::parse("DELIVERY_TIMEOUT_MS"),
-    "How long librdkafka retries a produced message before reporting it failed; must be positive",
+    "How long librdkafka retries a produced message before reporting it failed; must be in [1, 2147483647]",
     [](const ConfigLiteral& literal) -> std::expected<int64_t, Exception>
     {
         auto value = tryGetOr<int64_t>(literal, expectedType<int64_t>());
@@ -90,9 +128,9 @@ const ConfigField<int64_t> DELIVERY_TIMEOUT_MS{
         {
             return std::unexpected{value.error()};
         }
-        if (*value <= 0)
+        if (*value <= 0 || *value > std::numeric_limits<int32_t>::max())
         {
-            return std::unexpected{InvalidConfigParameter("KafkaSink: DELIVERY_TIMEOUT_MS must be positive")};
+            return std::unexpected{InvalidConfigParameter("KafkaSink: DELIVERY_TIMEOUT_MS must be in [1, 2147483647]")};
         }
         return value;
     },
@@ -174,41 +212,41 @@ void KafkaSink::start(PipelineExecutionContext&)
     }
 }
 
-SendResult KafkaSink::tryProduce(const TupleBuffer& buffer)
+KafkaSink::PublishResult KafkaSink::tryProduce(const TupleBuffer& buffer)
 {
     /// librdkafka only releases a produce()'d message's queue slot once its delivery report has
     /// been popped via poll() se we need to poll on every try (repeat or new one)
     producer->poll(0);
 
-    std::string payload;
-    BufferIterator iterator{buffer};
-    for (auto element = iterator.getNextElement(); element.has_value(); element = iterator.getNextElement())
+    /// A full queue would reject the message anyway; report it before paying for the serialization.
+    /// Other threads may fill the queue after this check, so ERR__QUEUE_FULL is still handled below.
+    if (std::cmp_greater_equal(producer->outq_len(), maxOutstandingMessages))
     {
-        const auto data = element->buffer.getAvailableMemoryArea<char>().first(element->contentLength);
-        payload.append(data.begin(), data.end());
+        return PublishResult::Full;
     }
 
+    auto [payload, payloadSize] = serializePayload(buffer);
+
+    /// RK_MSG_FREE hands the serialized block to librdkafka instead of letting it copy the payload a
+    /// second time; librdkafka takes ownership only if produce() succeeds.
+    /// Ordering: buffers may be published out of order, because execute() runs concurrently and a buffer can
+    /// overtake one that is waiting for its retry. An unassigned partition and a null key additionally spread
+    /// messages over the topic's partitions (Kafka's unit of ordering), so consumers must not rely on stream order.
     const auto err = producer->produce(
-        topic,
-        RdKafka::Topic::PARTITION_UA,
-        RdKafka::Producer::RK_MSG_COPY,
-        payload.data(),
-        payload.size(),
-        nullptr,
-        0,
-        0,
-        nullptr,
-        nullptr);
+        topic, RdKafka::Topic::PARTITION_UA, RdKafka::Producer::RK_MSG_FREE, payload.get(), payloadSize, nullptr, 0, 0, nullptr, nullptr);
 
     if (err == RdKafka::ERR__QUEUE_FULL)
     {
-        return SendResult::Full;
+        /// produce() failed, so the payload is still ours and is freed on return.
+        return PublishResult::Full;
     }
     if (err != RdKafka::ERR_NO_ERROR)
     {
         throw CannotWriteToSink("KafkaSink produce to topic {} failed: {}", topic, RdKafka::err2str(err));
     }
-    return SendResult::Ok;
+    /// Accepted: librdkafka owns the block now and frees it once the message is delivered.
+    std::ignore = payload.release();
+    return PublishResult::Ok;
 }
 
 void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
@@ -226,20 +264,16 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
     {
         switch (tryProduce(*currentBuffer))
         {
-            case SendResult::Ok: {
+            case PublishResult::Ok: {
                 currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
                 continue;
             }
-            case SendResult::Full: {
+            case PublishResult::Full: {
                 if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
                 return;
-            }
-            case SendResult::Closed: {
-                /// tryProduce() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
-                INVARIANT(false, "tryProduce unexpectedly returned SendResult::Closed");
             }
         }
     }
