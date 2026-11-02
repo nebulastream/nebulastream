@@ -22,8 +22,52 @@ teardown_file() {
   nes_distributed_teardown_file
 }
 
-setup()         { nes_distributed_setup; }
-teardown()      { nes_distributed_teardown; }
+setup() {
+  nes_distributed_setup
+  TCP_SINK_TEST_START=$(date +%s)
+}
+
+teardown() {
+  if [ -z "${BATS_TEST_COMPLETED:-}" ]; then
+    dump_failure_diagnostics
+  fi
+  nes_distributed_teardown
+}
+
+# Writes the state of the TCP peer and both connection endpoints to *.log files, which CI uploads, and to the test output.
+# Everything is collected after the failure, as watching the containers during the test hid the reconnect stall.
+dump_failure_diagnostics() {
+  # Compose names the project after the test directory, lowercased and without characters other than [a-z0-9_-].
+  local project
+  project=$(basename "$TEST_DIR" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9_-')
+  {
+    echo "Containers:"
+    docker compose ps -a 2>&1
+    echo "tcp-client state:"
+    docker inspect --format 'id {{.Id}} restarts {{.RestartCount}} status {{.State.Status}} pid {{.State.Pid}} exit {{.State.ExitCode}} started {{.State.StartedAt}} finished {{.State.FinishedAt}} ips {{range $name, $net := .NetworkSettings.Networks}}{{$name}}={{$net.IPAddress}} {{end}}' \
+      $(docker compose ps -aq tcp-client 2>/dev/null) 2>&1
+    echo "Network ${project}_default:"
+    docker network inspect --format '{{range .Containers}}{{.Name}} {{.IPv4Address}} {{.MacAddress}}{{println}}{{end}}' "${project}_default" 2>&1
+    # The daemon keeps recent events, so they can be queried after the fact without a listener during the test.
+    echo "Container events since the test started:"
+    docker events --since "$TCP_SINK_TEST_START" --until "$(date +%s)" --filter "label=com.docker.compose.project=$project" \
+      --filter type=container --format '{{.TimeNano}} {{index .Actor.Attributes "com.docker.compose.service"}} {{.Action}} {{.Actor.ID}} {{index .Actor.Attributes "exitCode"}}{{index .Actor.Attributes "signal"}}' 2>&1 |
+      while read -r nanoseconds rest; do
+        echo "$(date -u -d "@${nanoseconds:0:-9}.${nanoseconds: -9}" +%H:%M:%S.%N 2>/dev/null || echo "$nanoseconds") $rest"
+      done
+    local service container
+    for service in worker-1 tcp-client; do
+      container=$(docker compose ps -q "$service" 2>/dev/null)
+      echo "Sockets of $service:"
+      if [ -n "$container" ]; then
+        # Only the sink connection on port 9000; the worker also holds many gRPC health-check sockets.
+        docker run --rm --network "container:$container" busybox:1.38.0 netstat -tn 2>&1 | grep -E 'Proto|:9000 '
+      else
+        echo "not running"
+      fi
+    done
+  } | tee "$TEST_DIR/failure-diagnostics.log" | sed 's/^/# /' >&3
+}
 
 @test "streams formatted output to nc" {
   setup_distributed tests/good/example.yaml
