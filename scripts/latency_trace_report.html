@@ -199,9 +199,11 @@ function nodeTimes(list) {
 
 function renderGraph(list) {
   const queryName = state.query < 0 ? null : DATA.queries[state.query];
-  // The query's chains also pass through the queries that write the pipes it reads.
+  // The query's chains also pass through the queries that write the pipes it reads; those are shown whole, with the inputs
+  // of a join that the chains (which follow the triggering buffer) did not take.
   const passed = new Set(chains.filter(c => c.query === state.query).flatMap(c => c.segments.map(s => DATA.nodes[s[1]])));
-  const nodes = DATA.graph.nodes.filter(n => !queryName || n.query === queryName || passed.has(n.id));
+  const passedQueries = new Set(DATA.graph.nodes.filter(n => passed.has(n.id)).map(n => n.query));
+  const nodes = DATA.graph.nodes.filter(n => !queryName || n.query === queryName || passedQueries.has(n.query));
   const ids = new Set(nodes.map(n => n.id));
   const edges = DATA.graph.edges.filter(e => ids.has(e.from) && ids.has(e.to));
   const depth = new Map(nodes.map(n => [n.id, 0]));
