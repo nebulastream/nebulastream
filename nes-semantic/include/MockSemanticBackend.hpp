@@ -37,6 +37,13 @@ namespace NES
 ///   match         SEM_JOIN: affirms a {left, right} pair whose two texts are equal ignoring case, with a boolean
 ///   count         SEM_AGG: answers with the number of records in the window, as plain text
 ///   concat        SEM_AGG: answers with the window's values joined by '|', in order, as plain text
+///   batchinfo     answers every row with its position in the prompt and the prompt's row count, as in "2/4"
+///   echo-missing  echo, but leaves the last row out of a prompt with several rows
+///   echo-extra    echo, plus an answer for a row the prompt does not have
+///   fail-batch    fails a prompt with several rows like `fail`, answers a single row like `echo`
+///   scan          SEM_SCAN: a key's first row's state is its text, later rows append '|' and their text
+///   window        SEM_WINDOW: a row fits a window (0.95, else 0.05) if the text before its first ':' equals the window's
+///                 description, or the same part of the window's last example; descriptions are that part of the text
 ///
 /// Any of them may be followed by `@<ms>`, as in `echo@200`, which makes one request take that
 /// long. Waiting is what a model actually does, and nothing else in a hermetic test can stand in
@@ -65,6 +72,12 @@ public:
         MATCH,
         COUNT,
         CONCAT,
+        BATCH_INFO,
+        ECHO_MISSING,
+        ECHO_EXTRA,
+        FAIL_BATCH,
+        SCAN,
+        WINDOW,
     };
 
     /// Throws InvalidSemanticModel for an unknown behaviour.

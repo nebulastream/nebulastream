@@ -166,10 +166,11 @@ LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const Logica
     return promoteOperatorToRoot(childPlan, TypedLogicalOperator<InferModelNameLogicalOperator>{modelName.asCanonicalString()});
 }
 
-LogicalPlan LogicalPlanBuilder::addSemanticMap(Identifier modelName, const LogicalPlan& childPlan)
+LogicalPlan LogicalPlanBuilder::addSemanticMap(Identifier modelName, const LogicalPlan& childPlan, std::string operation)
 {
     NES_TRACE("LogicalPlanBuilder: add semantic map operator to query plan for model {}", modelName);
-    return promoteOperatorToRoot(childPlan, TypedLogicalOperator<SemanticMapNameLogicalOperator>{modelName.asCanonicalString()});
+    return promoteOperatorToRoot(
+        childPlan, TypedLogicalOperator<SemanticMapNameLogicalOperator>{modelName.asCanonicalString(), std::move(operation)});
 }
 
 LogicalPlan LogicalPlanBuilder::addSemanticFilter(Identifier modelName, const LogicalPlan& childPlan)

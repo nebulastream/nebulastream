@@ -24,6 +24,7 @@
 #include <MockSemanticBackend.hpp>
 #include <SemanticAggCodec.hpp>
 #include <SemanticCallPayload.hpp>
+#include <SemanticKeyedCodec.hpp>
 #include <SemanticFilterCodec.hpp>
 #include <SemanticHttpClient.hpp>
 #include <SemanticJoinCodec.hpp>
@@ -54,12 +55,27 @@ public:
 
     boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments) override;
 
+    /// SEM_MAP, SEM_FILTER, fused steps and SEM_JOIN: the rows (pairs) in one prompt, as `row1`..`rowN`. A row the answer
+    /// does not mention has no result, so the Async source asks for it on its own.
+    boost::asio::awaitable<AsyncBatchResult> callBatch(std::vector<std::vector<std::string>> rows) override;
+
     /// The model's `LLM.MAX_CONCURRENCY`.
     [[nodiscard]] std::optional<size_t> maxConcurrency() const override { return payload.config.maxConcurrency; }
 
+    /// The model's `LLM.BATCH_SIZE`. SEM_AGG sends one prompt per window and SEM_SCAN and SEM_WINDOW one per row, so theirs
+    /// is 1.
+    [[nodiscard]] size_t maxBatchSize() const override;
+
+    /// SEM_SCAN and SEM_WINDOW: the key, their first argument.
+    [[nodiscard]] std::optional<size_t> orderingKey() const override;
+
 private:
     boost::asio::awaitable<std::string> complete(const std::string& prompt);
-    [[nodiscard]] AsyncCallResult decode(const std::string& answer, const std::vector<RowPayload>& rows) const;
+    [[nodiscard]] std::vector<AsyncCallResult> decode(const std::string& answer, const std::vector<RowPayload>& rows) const;
+    /// The key's state folded with the row: (state, confidence).
+    boost::asio::awaitable<AsyncCallResult> callScan(std::vector<std::string> arguments);
+    /// The row assigned to a window of its key: (window id, description, start, continuity score, opened a window).
+    boost::asio::awaitable<AsyncCallResult> callWindow(std::vector<std::string> arguments);
 
     SemanticCallPayload payload;
     /// Exactly one of the two codecs: the filter codec handles every step list with a FILTER step.
@@ -67,6 +83,10 @@ private:
     std::optional<SemanticFilterCodec> filterCodec;
     std::optional<SemanticJoinCodec> joinCodec;
     std::optional<SemanticAggCodec> aggCodec;
+    std::optional<SemanticScanCodec> scanCodec;
+    std::optional<SemanticWindowCodec> windowCodec;
+    /// SEM_SCAN and SEM_WINDOW: shared with the other instances of the stage.
+    std::shared_ptr<SemanticKeyedState> keyedState;
     /// Exactly one of the two transports.
     std::optional<MockSemanticBackend> mock;
     std::optional<SemanticHttpClient> http;

@@ -14,6 +14,8 @@
 
 #include <SemanticCallPayload.hpp>
 
+#include <algorithm>
+
 #include <chrono>
 #include <cstdint>
 #include <optional>
@@ -30,6 +32,25 @@
 namespace NES
 {
 
+/// Outside the anonymous namespace: reflect-cpp counts its fields through a conversion it needs to link against.
+namespace detail
+{
+struct EncodedKeyed
+{
+    int64_t kind;
+    std::string keyBy;
+    std::string initPrompt;
+    std::string initialState;
+    std::string strategy;
+    double threshold;
+    int64_t maxActiveWindows;
+    int64_t maxExamples;
+    std::string timestampField;
+    int64_t windowsPerCall;
+};
+}
+using detail::EncodedKeyed;
+
 namespace
 {
 
@@ -44,6 +65,7 @@ struct EncodedStep
     std::vector<std::string> outputValues;
     std::string defaultValue;
 };
+
 
 struct EncodedPayload
 {
@@ -68,6 +90,9 @@ struct EncodedPayload
     std::optional<bool> join;
     /// Only written for SEM_AGG, for the same reason.
     std::optional<bool> agg;
+    /// Only written for SEM_SCAN and SEM_WINDOW, for the same reason.
+    std::optional<EncodedKeyed> keyed;
+    std::optional<std::string> stateId;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -82,6 +107,51 @@ Enum readEnum(const int64_t raw, const Enum last, const std::string_view what)
     return static_cast<Enum>(raw);
 }
 
+EncodedKeyed encodeKeyed(const SemanticKeyedConfig& keyed)
+{
+    return EncodedKeyed{
+        .kind = static_cast<int64_t>(keyed.kind),
+        .keyBy = keyed.keyBy,
+        .initPrompt = keyed.initPrompt,
+        .initialState = keyed.initialState,
+        .strategy = keyed.strategy,
+        .threshold = keyed.threshold,
+        .maxActiveWindows = static_cast<int64_t>(keyed.maxActiveWindows),
+        .maxExamples = static_cast<int64_t>(keyed.maxExamples),
+        .timestampField = keyed.timestampField,
+        .windowsPerCall = static_cast<int64_t>(keyed.windowsPerCall)};
+}
+
+SemanticKeyedConfig decodeKeyed(EncodedKeyed encoded)
+{
+    return SemanticKeyedConfig{
+        .kind = readEnum(encoded.kind, SemanticKeyedConfig::Kind::WINDOW, "SemanticKeyedConfig::Kind"),
+        .keyBy = std::move(encoded.keyBy),
+        .initPrompt = std::move(encoded.initPrompt),
+        .initialState = std::move(encoded.initialState),
+        .strategy = std::move(encoded.strategy),
+        .threshold = encoded.threshold,
+        .maxActiveWindows = static_cast<size_t>(std::max<int64_t>(0, encoded.maxActiveWindows)),
+        .maxExamples = static_cast<size_t>(std::max<int64_t>(0, encoded.maxExamples)),
+        .timestampField = std::move(encoded.timestampField),
+        .windowsPerCall = static_cast<size_t>(std::max<int64_t>(0, encoded.windowsPerCall))};
+}
+
+}
+
+std::string encodeSemanticKeyedConfig(const SemanticKeyedConfig& config)
+{
+    return rfl::json::write(encodeKeyed(config));
+}
+
+SemanticKeyedConfig decodeSemanticKeyedConfig(const std::string_view encoded)
+{
+    const auto parsed = rfl::json::read<EncodedKeyed>(std::string{encoded});
+    if (!parsed)
+    {
+        throw CannotDeserialize("Cannot read the keyed semantic configuration: {}", parsed.error().what());
+    }
+    return decodeKeyed(parsed.value());
 }
 
 std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
@@ -121,7 +191,9 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .inputFields = payload.inputFields,
             .outputFields = payload.outputFields,
             .join = payload.join ? std::optional{true} : std::nullopt,
-            .agg = payload.agg ? std::optional{true} : std::nullopt});
+            .agg = payload.agg ? std::optional{true} : std::nullopt,
+            .keyed = config.keyed ? std::optional{encodeKeyed(*config.keyed)} : std::nullopt,
+            .stateId = payload.stateId.empty() ? std::nullopt : std::optional{payload.stateId}});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -164,11 +236,13 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .backend = std::move(value.backend),
             /// SEM_CALL runs on the async framework whatever the model declares.
             .execution = SemanticExecution::ASYNCHRONOUS,
-            .fusion = value.fusion},
+            .fusion = value.fusion,
+            .keyed = value.keyed ? std::optional{decodeKeyed(std::move(*value.keyed))} : std::nullopt},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),
-        .agg = value.agg.value_or(false)};
+        .agg = value.agg.value_or(false),
+        .stateId = std::move(value.stateId).value_or("")};
 }
 
 }

@@ -1,0 +1,68 @@
+# name: semantic/SemanticWindow.test
+# description: SEM_WINDOW, semantic windows after llm_operator's sem_window.py, on the async framework. A row joins the
+#              active window it fits best, or opens a new one when no score reaches the threshold. The mock's 'window'
+#              behaviour scores 0.95 when the text before a row's first ':' equals the window's description (or, for a
+#              window without one, the same part of its last row), and 0.05 otherwise. The whole stream, or each value of
+#              KEY_BY, is one sequence of windows, run one row at a time and in stream order.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE posts(id UINT64 NOT NULL, author VARSIZED NOT NULL, ts VARSIZED NOT NULL, text VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR posts TYPE File;
+ATTACH INLINE
+1,ann,t1,sports: kickoff
+2,bob,t2,sports: goal
+3,ann,t3,cooking: pasta
+4,bob,t4,cooking: sauce
+5,ann,t5,sports: final
+
+# OUTPUT: window id, its description, its start, the row's continuity score, whether the row opened the window.
+CREATE SEM_MODEL topics
+INPUT (text VARSIZED)
+OUTPUT (window_id VARSIZED, window_description VARSIZED, window_start VARSIZED, continuity_score VARSIZED, is_boundary VARSIZED)
+SET ('Group posts by topic' AS LLM.PROMPT, 'WINDOW' AS LLM.KIND, 'ts' AS LLM.TIMESTAMP_FIELD, 'window' AS LLM.ENDPOINT,
+     'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 4 AS LLM.MAX_CONCURRENCY);
+
+# One active window at a time: change-point detection.
+CREATE SEM_MODEL changePoints
+INPUT (text VARSIZED)
+OUTPUT (window_id VARSIZED, window_description VARSIZED, window_start VARSIZED, continuity_score VARSIZED, is_boundary VARSIZED)
+SET ('Group posts by topic' AS LLM.PROMPT, 'WINDOW' AS LLM.KIND, 'ts' AS LLM.TIMESTAMP_FIELD, 1 AS LLM.MAX_ACTIVE_WINDOWS,
+     'window' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# Windows per author, both active windows scored in one request, the pairwise context.
+CREATE SEM_MODEL authorTopics
+INPUT (text VARSIZED)
+OUTPUT (window_id VARSIZED, window_description VARSIZED, window_start VARSIZED, continuity_score VARSIZED, is_boundary VARSIZED)
+SET ('Group posts by topic' AS LLM.PROMPT, 'WINDOW' AS LLM.KIND, 'ts' AS LLM.TIMESTAMP_FIELD, 'author' AS LLM.KEY_BY,
+     2 AS LLM.WINDOWS_PER_CALL, 'pairwise' AS LLM.STRATEGY, 'window' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 4 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK windows(id UINT64 NOT NULL, author VARSIZED NOT NULL, ts VARSIZED NOT NULL, text VARSIZED NOT NULL, window_id VARSIZED NOT NULL, window_description VARSIZED NOT NULL, window_start VARSIZED NOT NULL, continuity_score VARSIZED NOT NULL, is_boundary VARSIZED NOT NULL) TYPE File;
+
+# Query 1: the first row opens w1 without a call; cooking opens w2; sports goes back to w1.
+SELECT * FROM SEM_WINDOW(topics, posts) INTO windows;
+----
+1,ann,t1,sports: kickoff,w1,,t1,1.0,true
+2,bob,t2,sports: goal,w1,sports,t1,0.95,false
+3,ann,t3,cooking: pasta,w2,cooking,t3,0.05,true
+4,bob,t4,cooking: sauce,w2,cooking,t3,0.95,false
+5,ann,t5,sports: final,w1,sports,t1,0.95,false
+
+# Query 2: with one active window, sports cannot go back: w1 was closed when w2 opened.
+SELECT * FROM SEM_WINDOW(changePoints, posts) INTO windows;
+----
+1,ann,t1,sports: kickoff,w1,,t1,1.0,true
+2,bob,t2,sports: goal,w1,sports,t1,0.95,false
+3,ann,t3,cooking: pasta,w2,cooking,t3,0.05,true
+4,bob,t4,cooking: sauce,w2,cooking,t3,0.95,false
+5,ann,t5,sports: final,w3,sports,t5,0.05,true
+
+# Query 3: per author. ann: sports, cooking, sports; bob: sports, cooking.
+SELECT * FROM SEM_WINDOW(authorTopics, posts) INTO windows;
+----
+1,ann,t1,sports: kickoff,w1,,t1,1.0,true
+2,bob,t2,sports: goal,w1,,t2,1.0,true
+3,ann,t3,cooking: pasta,w2,cooking,t3,0.05,true
+4,bob,t4,cooking: sauce,w2,cooking,t4,0.05,true
+5,ann,t5,sports: final,w1,sports,t1,0.95,false
+

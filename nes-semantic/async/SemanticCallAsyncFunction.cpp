@@ -20,7 +20,9 @@
 #include <cstddef>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -35,6 +37,8 @@
 #include <SemanticCallPayload.hpp>
 #include <SemanticCallStats.hpp>
 #include <SemanticModelCatalog.hpp>
+#include <ResponseParsing.hpp>
+#include <SemanticKeyedCodec.hpp>
 #include <SemanticRowPayload.hpp>
 
 namespace NES
@@ -78,6 +82,32 @@ std::vector<std::string> mockColumns(const SemanticModelConfig& config)
         columns.push_back(step.kind == SemanticStep::Kind::MAP ? step.outputColumn : "__filter_" + std::to_string(filters++));
     }
     return columns;
+}
+
+/// The INPUT values of a row as one text, as the reference's `" ".join(str(row.get(c, "")) for c in depends_on)`.
+std::string spaceJoined(const std::span<const std::string> values)
+{
+    std::string text;
+    for (const auto& value : values)
+    {
+        if (!text.empty())
+        {
+            text.push_back(' ');
+        }
+        text += value;
+    }
+    return text;
+}
+
+/// Whether the answer has an entry for `rowId`; an answer that cannot be parsed has none.
+bool mentions(const nlohmann::json& parsed, const std::string& rowId)
+{
+    return findMember(parsed, rowId) != nullptr;
+}
+
+std::string batchRowId(const size_t position)
+{
+    return "row" + std::to_string(position + 1);
 }
 
 /// Instances alive in this process. Each Async source slot owns one, so the last one to go marks the end of a run, which
@@ -129,13 +159,25 @@ std::optional<std::string> messageContent(const std::string& body)
 SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded) : payload(std::move(decoded))
 {
     const auto& config = payload.config;
-    if (config.batchSize != 1)
-    {
-        throw CannotOpenSource("SEM_CALL sends one row per prompt, but model '{}' sets BATCH_SIZE {}", payload.model, config.batchSize);
-    }
     const bool hasFilter
         = std::ranges::any_of(config.steps, [](const SemanticStep& step) { return step.kind == SemanticStep::Kind::FILTER; });
-    if (payload.agg)
+    if (config.keyed)
+    {
+        if (payload.stateId.empty())
+        {
+            throw CannotOpenSource("SEM_CALL of model '{}' keeps state per key, but its configuration names no state", payload.model);
+        }
+        keyedState = SemanticKeyedState::acquire(payload.stateId);
+        if (config.keyed->kind == SemanticKeyedConfig::Kind::SCAN)
+        {
+            scanCodec.emplace(config);
+        }
+        else
+        {
+            windowCodec.emplace(config);
+        }
+    }
+    else if (payload.agg)
     {
         if (payload.inputFields.size() != 1 || config.steps.size() != 1 || hasFilter)
         {
@@ -188,14 +230,34 @@ AsyncFunctionRegistryReturnType SemanticCallAsyncFunction::create(AsyncFunctionR
     return std::make_unique<SemanticCallAsyncFunction>(decodeSemanticCallPayload(arguments.configuration));
 }
 
+size_t SemanticCallAsyncFunction::maxBatchSize() const
+{
+    return payload.config.keyed || payload.agg ? 1 : std::max<size_t>(1, payload.config.batchSize);
+}
+
+std::optional<size_t> SemanticCallAsyncFunction::orderingKey() const
+{
+    return payload.config.keyed ? std::optional<size_t>{0} : std::nullopt;
+}
+
 boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(std::vector<std::string> arguments)
 {
+    /// SEM_SCAN's key and SEM_WINDOW's key and timestamp come before the INPUT fields.
+    const size_t leading = !payload.config.keyed ? 0 : payload.config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? 1 : 2;
     PRECONDITION(
-        arguments.size() == payload.inputFields.size(),
-        "SEM_CALL of model '{}' takes {} inputs, got {}",
+        arguments.size() == payload.inputFields.size() + leading,
+        "SEM_CALL of model '{}' takes {} arguments, got {}",
         payload.model,
-        payload.inputFields.size(),
+        payload.inputFields.size() + leading,
         arguments.size());
+    if (scanCodec)
+    {
+        co_return co_await callScan(std::move(arguments));
+    }
+    if (windowCodec)
+    {
+        co_return co_await callWindow(std::move(arguments));
+    }
     if (aggCodec)
     {
         /// One prompt per window: the argument is the window's JSON_AGG array.
@@ -217,7 +279,127 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
     const std::vector rows{std::move(row)};
     const auto prompt = mapCodec ? mapCodec->buildPrompt(rows) : filterCodec->buildPrompt(rows);
     const auto answer = co_await complete(prompt);
-    co_return decode(answer, rows);
+    co_return decode(answer, rows).front();
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(std::vector<std::vector<std::string>> rows)
+{
+    INVARIANT(!scanCodec && !windowCodec && !aggCodec, "SEM_CALL of model '{}' takes one row at a time", payload.model);
+    AsyncBatchResult results;
+    results.reserve(rows.size());
+    if (joinCodec)
+    {
+        std::vector<JoinPairPayload> pairs;
+        pairs.reserve(rows.size());
+        for (size_t position = 0; position < rows.size(); ++position)
+        {
+            pairs.push_back(
+                JoinPairPayload{.pairId = batchRowId(position), .left = std::move(rows[position][0]), .right = std::move(rows[position][1])});
+        }
+        const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
+        const auto parsed = parseLlmJson(answer);
+        const auto verdicts = joinCodec->parse(answer, pairs);
+        for (size_t position = 0; position < pairs.size(); ++position)
+        {
+            results.push_back(
+                mentions(parsed, pairs[position].pairId) ? std::optional{AsyncCallResult{verdicts[position] ? "true" : "false"}}
+                                                         : std::nullopt);
+        }
+        co_return results;
+    }
+    std::vector<RowPayload> payloads;
+    payloads.reserve(rows.size());
+    for (size_t position = 0; position < rows.size(); ++position)
+    {
+        RowPayload row{.rowId = batchRowId(position), .fields = {}};
+        for (size_t field = 0; field < rows[position].size(); ++field)
+        {
+            row.fields.emplace_back(payload.inputFields[field], std::move(rows[position][field]));
+        }
+        payloads.push_back(std::move(row));
+    }
+    const auto prompt = mapCodec ? mapCodec->buildPrompt(payloads) : filterCodec->buildPrompt(payloads);
+    const auto answer = co_await complete(prompt);
+    const auto parsed = parseLlmJson(answer);
+    auto decoded = decode(answer, payloads);
+    for (size_t position = 0; position < payloads.size(); ++position)
+    {
+        results.push_back(mentions(parsed, payloads[position].rowId) ? std::optional{std::move(decoded[position])} : std::nullopt);
+    }
+    co_return results;
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callScan(std::vector<std::string> arguments)
+{
+    const auto& keyed = *payload.config.keyed;
+    const auto& key = arguments.front();
+    const auto text = spaceJoined(std::span{arguments}.subspan(1));
+    std::optional<std::string> prior;
+    {
+        const std::scoped_lock lock(keyedState->mutex);
+        if (const auto state = keyedState->scans.find(key); state != keyedState->scans.end())
+        {
+            prior = state->second;
+        }
+    }
+    /// Without an INIT_PROMPT, a key's first row starts from INITIAL_STATE without a call.
+    if (!prior && keyed.initPrompt.empty())
+    {
+        const std::scoped_lock lock(keyedState->mutex);
+        keyedState->scans[key] = keyed.initialState;
+        co_return AsyncCallResult{keyed.initialState, ""};
+    }
+    const auto answer = scanCodec->parse(co_await complete(scanCodec->buildPrompt(text, prior)));
+    if (!answer)
+    {
+        /// The reference keeps the key's state rather than fold every later row into a default.
+        NES_WARNING("SEM_SCAN of model '{}' could not read the answer for key '{}'; its state stays as it was", payload.model, key);
+        co_return AsyncCallResult{payload.config.steps.front().defaultValue, ""};
+    }
+    {
+        const std::scoped_lock lock(keyedState->mutex);
+        keyedState->scans[key] = answer->state;
+    }
+    co_return AsyncCallResult{answer->state, answer->confidence};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callWindow(std::vector<std::string> arguments)
+{
+    const auto& keyed = *payload.config.keyed;
+    const auto& key = arguments[0];
+    const auto& start = arguments[1];
+    const auto text = spaceJoined(std::span{arguments}.subspan(2));
+    SemanticWindowState* state = nullptr;
+    {
+        /// Elements of an unordered_map stay where they are when other keys are added.
+        const std::scoped_lock lock(keyedState->mutex);
+        state = &keyedState->windows[key];
+    }
+    std::vector<const SemanticWindow*> active;
+    active.reserve(state->active.size());
+    for (const auto& id : state->active)
+    {
+        active.push_back(&state->windows.at(id));
+    }
+    /// One request per `WINDOWS_PER_CALL` windows, one after the other: the instance has one connection, where the
+    /// reference sends them in parallel. The state only changes once all scores are in, so a retry starts over cleanly.
+    const auto perCall = std::max<size_t>(1, keyed.windowsPerCall);
+    std::vector<SemanticWindowCodec::Score> scores;
+    for (size_t begin = 0; begin < active.size(); begin += perCall)
+    {
+        const std::vector chunk(
+            active.begin() + static_cast<std::ptrdiff_t>(begin),
+            active.begin() + static_cast<std::ptrdiff_t>(std::min(active.size(), begin + perCall)));
+        const auto answer = co_await complete(windowCodec->buildPrompt(text, chunk));
+        for (auto& score : windowCodec->parse(answer, text, chunk))
+        {
+            scores.push_back(std::move(score));
+        }
+    }
+    co_return windowCodec->assign(*state, text, start, scores);
 }
 
 boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const std::string& prompt)
@@ -272,22 +454,26 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const st
     co_return std::string{};
 }
 
-AsyncCallResult SemanticCallAsyncFunction::decode(const std::string& answer, const std::vector<RowPayload>& rows) const
+std::vector<AsyncCallResult> SemanticCallAsyncFunction::decode(const std::string& answer, const std::vector<RowPayload>& rows) const
 {
     if (mapCodec)
     {
-        return mapCodec->parse(answer, rows).front();
+        return mapCodec->parse(answer, rows);
     }
-    const auto result = filterCodec->parse(answer, rows).front();
-    AsyncCallResult values;
-    values.reserve(payload.config.steps.size());
-    size_t mapStep = 0;
-    for (const auto& step : payload.config.steps)
+    std::vector<AsyncCallResult> decoded;
+    for (const auto& result : filterCodec->parse(answer, rows))
     {
-        /// Fused FILTER steps share one verdict: the codec only reports whether the row passed all of them.
-        values.push_back(step.kind == SemanticStep::Kind::MAP ? result.mapAnswers.at(mapStep++) : (result.passed ? "true" : "false"));
+        AsyncCallResult values;
+        values.reserve(payload.config.steps.size());
+        size_t mapStep = 0;
+        for (const auto& step : payload.config.steps)
+        {
+            /// Fused FILTER steps share one verdict: the codec only reports whether the row passed all of them.
+            values.push_back(step.kind == SemanticStep::Kind::MAP ? result.mapAnswers.at(mapStep++) : (result.passed ? "true" : "false"));
+        }
+        decoded.push_back(std::move(values));
     }
-    return values;
+    return decoded;
 }
 
 }

@@ -21,6 +21,7 @@ add_library(nes-semantic
         src/SemanticFilterCodec.cpp
         src/SemanticJoinCodec.cpp
         src/SemanticAggCodec.cpp
+        src/SemanticKeyedCodec.cpp
         src/MockSemanticBackend.cpp
         src/SemanticCallPayload.cpp
         src/SemanticCallStats.cpp)

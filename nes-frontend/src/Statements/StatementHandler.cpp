@@ -24,6 +24,7 @@
 #include <optional>
 #include <ranges>
 #include <sstream>
+#include <exception>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -322,7 +323,9 @@ namespace
 SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
 {
     const auto& config = model.getConfig();
-    const auto kind = config.steps.empty() || config.steps.front().kind == SemanticStep::Kind::MAP ? "MAP" : "FILTER";
+    const auto* const kind = config.keyed ? (config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? "SCAN" : "WINDOW")
+        : config.steps.empty() || config.steps.front().kind == SemanticStep::Kind::MAP ? "MAP"
+                                                                                         : "FILTER";
     return SemanticModelInfo{
         .name = model.getName(),
         .kind = kind,
@@ -398,6 +401,29 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"EXECUTION"},
     std::string_view{"PRESERVE_ORDER"},
     std::string_view{"FUSION"},
+    std::string_view{"KIND"},
+    std::string_view{"KEY_BY"},
+    std::string_view{"INIT_PROMPT"},
+    std::string_view{"INITIAL_STATE"},
+    std::string_view{"STRATEGY"},
+    std::string_view{"THRESHOLD"},
+    std::string_view{"MAX_ACTIVE_WINDOWS"},
+    std::string_view{"MAX_EXAMPLES"},
+    std::string_view{"TIMESTAMP_FIELD"},
+    std::string_view{"WINDOWS_PER_CALL"},
+};
+
+/// Options only a SEM_SCAN or SEM_WINDOW model reads.
+constexpr std::array KeyedOnlyOptions{
+    std::string_view{"KEY_BY"},
+    std::string_view{"INIT_PROMPT"},
+    std::string_view{"INITIAL_STATE"},
+    std::string_view{"STRATEGY"},
+    std::string_view{"THRESHOLD"},
+    std::string_view{"MAX_ACTIVE_WINDOWS"},
+    std::string_view{"MAX_EXAMPLES"},
+    std::string_view{"TIMESTAMP_FIELD"},
+    std::string_view{"WINDOWS_PER_CALL"},
 };
 
 void rejectUnknownOptions(const std::unordered_map<Identifier, std::string>& config)
@@ -480,10 +506,98 @@ constexpr size_t MaxTimeoutSeconds = 86'400;
 /// Answers that only make sense for a column; a filter model has none.
 constexpr std::array MapOnlyOptions{std::string_view{"OUTPUT_VALUES"}, std::string_view{"DEFAULT_VALUE"}};
 
+/// `LLM.KIND`: MAP (the default, also for filter models), SCAN or WINDOW.
+std::optional<SemanticKeyedConfig::Kind> bindKind(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "KIND", "MAP");
+    if (raw == "MAP")
+    {
+        return std::nullopt;
+    }
+    if (raw == "SCAN")
+    {
+        return SemanticKeyedConfig::Kind::SCAN;
+    }
+    if (raw == "WINDOW")
+    {
+        return SemanticKeyedConfig::Kind::WINDOW;
+    }
+    throw InvalidSemanticModel("Option LLM.KIND must be MAP, SCAN or WINDOW, but was '{}'", raw);
+}
+
+double fractionOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key, const double fallback)
+{
+    const auto* const value = findOption(config, key);
+    if (value == nullptr)
+    {
+        return fallback;
+    }
+    size_t parsed = 0;
+    double number = 0;
+    try
+    {
+        number = std::stod(*value, &parsed);
+    }
+    catch (const std::exception&)
+    {
+        parsed = 0;
+    }
+    if (parsed == 0 || parsed != value->size())
+    {
+        throw InvalidSemanticModel("Option LLM.{} must be a number, but was '{}'", key, *value);
+    }
+    return number;
+}
+
+constexpr size_t MaxActiveWindows = 1024;
+constexpr size_t MaxExamples = 1024;
+
+std::optional<SemanticKeyedConfig> bindKeyed(const CreateSemanticModelStatement& statement)
+{
+    const auto kind = bindKind(statement.config);
+    if (!kind)
+    {
+        for (const auto option : KeyedOnlyOptions)
+        {
+            if (findOption(statement.config, option) != nullptr)
+            {
+                throw InvalidSemanticModel(
+                    "Semantic model '{}': LLM.{} is an option of SEM_SCAN or SEM_WINDOW models; set LLM.KIND", statement.name, option);
+            }
+        }
+        return std::nullopt;
+    }
+    return SemanticKeyedConfig{
+        .kind = *kind,
+        .keyBy = optionalOption(statement.config, "KEY_BY", ""),
+        .initPrompt = optionalOption(statement.config, "INIT_PROMPT", ""),
+        .initialState = optionalOption(statement.config, "INITIAL_STATE", ""),
+        .strategy = optionalOption(statement.config, "STRATEGY", "summary"),
+        .threshold = fractionOption(statement.config, "THRESHOLD", 0.7),
+        .maxActiveWindows = numericOption(statement.config, "MAX_ACTIVE_WINDOWS", 0, MaxActiveWindows),
+        .maxExamples = numericOption(statement.config, "MAX_EXAMPLES", 5, MaxExamples),
+        .timestampField = optionalOption(statement.config, "TIMESTAMP_FIELD", ""),
+        .windowsPerCall = numericOption(statement.config, "WINDOWS_PER_CALL", 0, MaxActiveWindows)};
+}
+
 /// The one step a CREATE registers. With an OUTPUT clause it is a MAP step writing exactly that one
 /// field; without, a FILTER step. Longer step lists only arise from operator fusion in the optimizer.
-SemanticStep bindStep(const CreateSemanticModelStatement& statement)
+/// A SEM_SCAN or SEM_WINDOW model has one MAP step, too, writing several fields that the catalog checks.
+SemanticStep bindStep(const CreateSemanticModelStatement& statement, const bool keyed)
 {
+    if (keyed)
+    {
+        if (statement.outputs.size() == 0)
+        {
+            throw InvalidSemanticModel("Semantic model '{}': SEM_SCAN and SEM_WINDOW models need an OUTPUT clause", statement.name);
+        }
+        return SemanticStep{
+            .kind = SemanticStep::Kind::MAP,
+            .prompt = requireOption(statement.config, "PROMPT"),
+            .outputColumn = static_cast<const Identifier&>(statement.outputs.begin()->getFullyQualifiedName()).asCanonicalString(),
+            .outputValues = {},
+            .defaultValue = optionalOption(statement.config, "DEFAULT_VALUE", "")};
+    }
     if (statement.outputs.size() == 0)
     {
         for (const auto option : MapOnlyOptions)
@@ -523,7 +637,8 @@ SemanticStep bindStep(const CreateSemanticModelStatement& statement)
 SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& statement)
 {
     rejectUnknownOptions(statement.config);
-    auto step = bindStep(statement);
+    auto keyed = bindKeyed(statement);
+    auto step = bindStep(statement, keyed.has_value());
 
     const auto* const apiKeyEnv = findOption(statement.config, "API_KEY_ENV");
 
@@ -543,7 +658,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .backend = optionalOption(statement.config, "BACKEND", "http"),
         .execution = bindExecution(statement.config),
         .preserveOrder = bindBooleanOption(statement.config, "PRESERVE_ORDER", true),
-        .fusion = bindBooleanOption(statement.config, "FUSION", false)};
+        .fusion = bindBooleanOption(statement.config, "FUSION", false),
+        .keyed = std::move(keyed)};
 }
 
 }

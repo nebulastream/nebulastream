@@ -25,6 +25,7 @@
 #include <string_view>
 #include <system_error>
 #include <thread>
+#include <initializer_list>
 #include <utility>
 #include <vector>
 
@@ -100,6 +101,19 @@ std::optional<Behaviour> parseBehaviour(std::string_view behaviour)
     {
         return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::MATCH, .label = {}});
     }
+    for (const auto& [name, mode] : std::initializer_list<std::pair<std::string_view, MockSemanticBackend::Mode>>{
+             {"batchinfo", MockSemanticBackend::Mode::BATCH_INFO},
+             {"echo-missing", MockSemanticBackend::Mode::ECHO_MISSING},
+             {"echo-extra", MockSemanticBackend::Mode::ECHO_EXTRA},
+             {"fail-batch", MockSemanticBackend::Mode::FAIL_BATCH},
+             {"scan", MockSemanticBackend::Mode::SCAN},
+             {"window", MockSemanticBackend::Mode::WINDOW}})
+    {
+        if (behaviour == name)
+        {
+            return withDelay(Behaviour{.mode = mode, .label = {}});
+        }
+    }
     if (behaviour == "fail")
     {
         return withDelay(Behaviour{.mode = MockSemanticBackend::Mode::FAIL, .label = {}});
@@ -138,6 +152,25 @@ nlohmann::ordered_json dataBlock(const std::string& prompt)
     return parsed.is_object() ? parsed : nlohmann::ordered_json::object();
 }
 
+/// The JSON value on the line after `marker`, or null.
+nlohmann::ordered_json jsonAfter(const std::string& prompt, const std::string_view marker)
+{
+    const auto position = prompt.rfind(marker);
+    if (position == std::string::npos)
+    {
+        return nullptr;
+    }
+    const auto begin = position + marker.size();
+    const auto end = prompt.find('\n', begin);
+    return nlohmann::ordered_json::parse(prompt.substr(begin, end == std::string::npos ? std::string::npos : end - begin), nullptr, false);
+}
+
+/// The window mock's topic of a text: what comes before its first ':', or all of it.
+std::string topicOf(const std::string_view text)
+{
+    return std::string{text.substr(0, text.find(':'))};
+}
+
 /// The row's text: a SPACE_JOINED payload is already a string, a JSON_OBJECT payload has its
 /// values joined the same way.
 std::string rowText(const nlohmann::ordered_json& payload)
@@ -167,8 +200,8 @@ MockSemanticBackend::MockSemanticBackend(const std::string_view behaviour, std::
     if (!parsed.has_value())
     {
         throw InvalidSemanticModel(
-            "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable, fail, match, count or concat, each optionally "
-            "followed by @<ms>)",
+            "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable, fail, match, count, concat, batchinfo, "
+            "echo-missing, echo-extra, fail-batch, scan or window, each optionally followed by @<ms>)",
             behaviour);
     }
     mode = parsed->mode;
@@ -239,12 +272,67 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
             }
             return response.dump();
         }
+        case Mode::SCAN: {
+            const auto data = jsonAfter(prompt, "\nData: ");
+            const auto prior = jsonAfter(prompt, "\nPrior state for this key: ");
+            if (!data.is_object() || data.empty())
+            {
+                return std::string{"no row"};
+            }
+            const auto text = rowText(data.begin().value());
+            const auto state = prior.is_string() ? prior.get<std::string>() + "|" + text : text;
+            return nlohmann::json{{data.begin().key(), {{"answer", state}, {"confidence", 0.9}}}}.dump();
+        }
+        case Mode::WINDOW: {
+            const auto windows = jsonAfter(prompt, "Windows to score:\n");
+            constexpr std::string_view TupleMarker = "\n\nNew tuple: ";
+            const auto tuple = prompt.rfind(TupleMarker);
+            const auto topic = topicOf(tuple == std::string::npos ? std::string_view{} : std::string_view{prompt}.substr(tuple + TupleMarker.size()));
+            auto response = nlohmann::json::object();
+            if (windows.is_object())
+            {
+                for (const auto& [id, context] : windows.items())
+                {
+                    std::string windowTopic = context.value("description", "");
+                    if (windowTopic.empty() && context.contains("recent_examples") && !context["recent_examples"].empty())
+                    {
+                        windowTopic = topicOf(context["recent_examples"].back().get<std::string>());
+                    }
+                    if (windowTopic.empty() && context.contains("most_recent_tuple"))
+                    {
+                        windowTopic = topicOf(context["most_recent_tuple"].get<std::string>());
+                    }
+                    const bool fits = windowTopic == topic;
+                    response[id] = {
+                        {"continuity_score", fits ? 0.95 : 0.05}, {"window_description", windowTopic}, {"new_window_description", topic}};
+                }
+            }
+            return response.dump();
+        }
+        case Mode::FAIL_BATCH:
+            if (dataBlock(prompt).size() > 1)
+            {
+                return std::unexpected{BackendError{.kind = BackendError::Kind::UNREACHABLE, .message = "mock endpoint rejects batches"}};
+            }
+            [[fallthrough]];
+        case Mode::BATCH_INFO:
+        case Mode::ECHO_MISSING:
+        case Mode::ECHO_EXTRA:
         case Mode::ECHO:
         case Mode::LABEL: {
             auto response = nlohmann::json::object();
-            for (const auto& [rowId, payload] : dataBlock(prompt).items())
+            const auto rows = dataBlock(prompt);
+            size_t position = 0;
+            for (const auto& [rowId, payload] : rows.items())
             {
-                const auto answer = mode == Mode::ECHO ? toUpper(rowText(payload)) : label;
+                ++position;
+                if (mode == Mode::ECHO_MISSING && rows.size() > 1 && position == rows.size())
+                {
+                    continue;
+                }
+                const auto answer = mode == Mode::LABEL ? label
+                    : mode == Mode::BATCH_INFO          ? std::to_string(position) + "/" + std::to_string(rows.size())
+                                                        : toUpper(rowText(payload));
                 if (outputColumns.empty())
                 {
                     /// A filter-only prompt asks for one verdict per row, without field names.
@@ -257,6 +345,11 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
                     fields[toLower(column)] = {{"answer", answer}, {"confidence", 1.0}};
                 }
                 response[rowId] = std::move(fields);
+            }
+            if (mode == Mode::ECHO_EXTRA)
+            {
+                response["row999"] = outputColumns.empty() ? nlohmann::json{{"answer", "EXTRA"}, {"confidence", 1.0}}
+                                                           : nlohmann::json{{toLower(outputColumns.front()), {{"answer", "EXTRA"}, {"confidence", 1.0}}}};
             }
             return response.dump();
         }

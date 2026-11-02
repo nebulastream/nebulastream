@@ -79,6 +79,16 @@ LogicalPlan SemanticMapResolutionRule::apply(const LogicalPlan& queryPlan) const
                         "Semantic model '{}' declares an OUTPUT clause and is a SEM_MAP model; SEM_FILTER needs a model without OUTPUT",
                         modelName);
                 }
+                if (!isFilter)
+                {
+                    const auto& keyed = model.getConfig().keyed;
+                    const std::string kind = !keyed ? "SEM_MAP" : keyed->kind == SemanticKeyedConfig::Kind::SCAN ? "SEM_SCAN" : "SEM_WINDOW";
+                    const auto& operation = semanticMapName->get().getOperation();
+                    if (!model.hasFilterStep() && operation != kind)
+                    {
+                        throw InvalidSemanticModel("Semantic model '{}' is a {} model, but the query uses it in {}", modelName, kind, operation);
+                    }
+                }
                 if (!isFilter && model.hasFilterStep())
                 {
                     throw InvalidSemanticModel(

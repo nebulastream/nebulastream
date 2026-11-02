@@ -195,8 +195,9 @@ modelInferenceInput
     | modelInferenceSource                    #modelInferenceNested
     ;
 
+/// SEM_SCAN and SEM_WINDOW take the same form; the model's LLM.KIND says which of the three it is.
 semanticMapSource
-    : SEM_MAP '(' modelName=identifier ',' semanticInput ')'
+    : operation=(SEM_MAP | SEM_SCAN | SEM_WINDOW) '(' modelName=identifier ',' semanticInput ')'
     ;
 
 semanticFilterSource
@@ -592,6 +593,8 @@ SEMANTIC: 'SEMANTIC';
 SEM_MAP: 'SEM_MAP';
 SEM_MODEL: 'SEM_MODEL';
 SEM_FILTER: 'SEM_FILTER';
+SEM_SCAN: 'SEM_SCAN';
+SEM_WINDOW: 'SEM_WINDOW';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

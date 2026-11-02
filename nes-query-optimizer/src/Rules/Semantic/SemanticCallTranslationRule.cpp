@@ -54,6 +54,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
+#include <Util/UUID.hpp>
 #include <Rules/Semantic/SemanticFusionRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Util/Variant.hpp>
@@ -138,16 +139,53 @@ SemanticCallPayload payloadOf(const RegisteredSemanticModel& model)
     return payload;
 }
 
+/// SEM_SCAN and SEM_WINDOW: one SEM_CALL per row whose first argument is the key, which the async framework orders the
+/// calls by; WINDOW's second is the timestamp. Each OUTPUT field gets one of the call's values.
+LogicalOperator translateKeyed(const RegisteredSemanticModel& model, const LogicalOperator& child)
+{
+    const auto& keyed = *model.getConfig().keyed;
+    auto payload = payloadOf(model);
+    /// The state is per translated operator: two queries over the same model must not share it.
+    payload.stateId = UUIDToString(generateUUID());
+    const auto varsized = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+    const auto fieldOrNothing = [&](const std::string& name) -> LogicalFunction
+    {
+        if (name.empty())
+        {
+            return ConstantValueLogicalFunction{varsized, ""};
+        }
+        return inputField(child, UnqualifiedUnboundField{Identifier::parse(name), DataType::Type::VARSIZED}, model);
+    };
+    std::vector<LogicalFunction> callArguments{ConstantValueLogicalFunction{varsized, encodeSemanticCallPayload(payload)}};
+    callArguments.push_back(fieldOrNothing(keyed.keyBy));
+    if (keyed.kind == SemanticKeyedConfig::Kind::WINDOW)
+    {
+        callArguments.push_back(fieldOrNothing(keyed.timestampField));
+    }
+    for (const auto& input : model.getSchema().inputs)
+    {
+        callArguments.emplace_back(inputField(child, input, model));
+    }
+    const auto call = LogicalFunctionProvider::provide("SEM_CALL", std::move(callArguments));
+    std::vector<ProjectionLogicalOperator::UnboundProjection> evaluation;
+    size_t index = 0;
+    for (const auto& output : model.getSchema().outputs)
+    {
+        evaluation.emplace_back(nameOf(output), index == 0 ? call : LogicalFunction{AsyncOutputLogicalFunction{call, index}});
+        ++index;
+    }
+    return ProjectionLogicalOperator::create(child, evaluation, ProjectionLogicalOperator::Asterisk{true});
+}
+
 /// The operators a semantic operator over `child` turns into. They produce the semantic operator's output schema: the
 /// child's fields followed by the model's OUTPUT fields.
 LogicalOperator translate(const RegisteredSemanticModel& model, const LogicalOperator& child)
 {
-    /// Batching several rows into one prompt is left to the SQL interface (see the async framework's design doc).
-    if (model.getConfig().batchSize != 1)
+    if (model.getConfig().keyed)
     {
-        throw InvalidSemanticModel(
-            "Semantic model '{}' sets BATCH_SIZE {}, but SEM_CALL sends one row per prompt", model.getName(), model.getConfig().batchSize);
+        return translateKeyed(model, child);
     }
+    /// BATCH_SIZE rows per prompt are formed by the async framework (`AsyncFunction::maxBatchSize`).
     const auto& steps = model.getConfig().steps;
     const auto& outputs = model.getSchema().outputs;
 
@@ -275,11 +313,6 @@ LogicalOperator translateJoin(const JoinLogicalOperator& join, std::vector<Logic
                 std::ranges::size(model.getSchema().inputs),
                 std::ranges::size(model.getSchema().outputs));
         }
-        if (config.batchSize != 1)
-        {
-            throw InvalidSemanticModel(
-                "Semantic model '{}' sets BATCH_SIZE {}, but SEM_CALL sends one pair per prompt", model.getName(), config.batchSize);
-        }
         auto payload = payloadOf(model);
         payload.join = true;
         std::vector<LogicalFunction> callArguments{
@@ -345,13 +378,6 @@ LogicalOperator translateAggregation(
                 std::ranges::size(model.getSchema().inputs),
                 std::ranges::size(model.getSchema().outputs),
                 model.hasFilterStep() ? " and no OUTPUT clause" : "");
-        }
-        if (model.getConfig().batchSize != 1)
-        {
-            throw InvalidSemanticModel(
-                "Semantic model '{}' sets BATCH_SIZE {}, but SEM_AGG sends one prompt per window",
-                model.getName(),
-                model.getConfig().batchSize);
         }
         auto payload = payloadOf(model);
         payload.agg = true;

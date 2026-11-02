@@ -64,6 +64,9 @@ public:
     /// One value per step: map outputs and filter verdicts, in step order.
     [[nodiscard]] size_t getNumberOfAsyncOutputs() const override { return numberOfSteps; }
 
+    /// SEM_SCAN and SEM_WINDOW keep state per key.
+    [[nodiscard]] bool dependsOnEarlierRows() const override { return keyed; }
+
     [[nodiscard]] const std::string& getPayload() const { return payload; }
 
     static LogicalFunctionRegistryReturnType createSEM_CALL(LogicalFunctionRegistryArguments arguments);
@@ -75,6 +78,7 @@ private:
     /// Decoded from the payload once, for explain and the number of outputs.
     std::string model;
     size_t numberOfSteps;
+    bool keyed = false;
 };
 
 namespace detail

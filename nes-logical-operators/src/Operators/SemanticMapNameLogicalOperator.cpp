@@ -44,9 +44,25 @@ SemanticMapNameLogicalOperator::SemanticMapNameLogicalOperator(WeakLogicalOperat
 {
 }
 
+SemanticMapNameLogicalOperator::SemanticMapNameLogicalOperator(WeakLogicalOperator self, std::string modelName, std::string operation)
+    : ManagedByOperator(std::move(self)), modelName(std::move(modelName)), operation(std::move(operation))
+{
+}
+
 SemanticMapNameLogicalOperator::SemanticMapNameLogicalOperator(WeakLogicalOperator self, std::string modelName, LogicalOperator child)
     : ManagedByOperator(std::move(self)), modelName(std::move(modelName)), child(std::move(child))
 {
+}
+
+SemanticMapNameLogicalOperator::SemanticMapNameLogicalOperator(
+    WeakLogicalOperator self, std::string modelName, std::string operation, LogicalOperator child)
+    : ManagedByOperator(std::move(self)), modelName(std::move(modelName)), operation(std::move(operation)), child(std::move(child))
+{
+}
+
+const std::string& SemanticMapNameLogicalOperator::getOperation() const
+{
+    return operation;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
@@ -62,7 +78,7 @@ std::string SemanticMapNameLogicalOperator::getModelName() const
 
 bool SemanticMapNameLogicalOperator::operator==(const SemanticMapNameLogicalOperator& rhs) const
 {
-    return modelName == rhs.modelName && getTraitSet() == rhs.getTraitSet();
+    return modelName == rhs.modelName && operation == rhs.operation && getTraitSet() == rhs.getTraitSet();
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
@@ -70,9 +86,9 @@ std::string SemanticMapNameLogicalOperator::explain(ExplainVerbosity verbosity, 
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SEM_MAP_NAME(opId: {}, model: {}, traitSet: {})", opId, modelName, traitSet.explain(verbosity));
+        return fmt::format("{}_NAME(opId: {}, model: {}, traitSet: {})", operation, opId, modelName, traitSet.explain(verbosity));
     }
-    return fmt::format("SEM_MAP_NAME(model: {})", modelName);
+    return fmt::format("{}_NAME(model: {})", operation, modelName);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
@@ -145,7 +161,8 @@ Reflected Reflector<TypedLogicalOperator<SemanticMapNameLogicalOperator>>::opera
     const TypedLogicalOperator<SemanticMapNameLogicalOperator>& op, const ReflectionContext& context) const
 {
     return context.reflect(
-        detail::ReflectedSemanticMapNameLogicalOperator{.operatorId = op.getId(), .modelName = std::make_optional(op->getModelName())});
+        detail::ReflectedSemanticMapNameLogicalOperator{
+            .operatorId = op.getId(), .modelName = std::make_optional(op->getModelName()), .operation = std::make_optional(op->getOperation())});
 }
 
 Unreflector<TypedLogicalOperator<SemanticMapNameLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
@@ -155,7 +172,7 @@ Unreflector<TypedLogicalOperator<SemanticMapNameLogicalOperator>>::Unreflector(C
 TypedLogicalOperator<SemanticMapNameLogicalOperator>
 Unreflector<TypedLogicalOperator<SemanticMapNameLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [operatorId, modelName] = context.unreflect<detail::ReflectedSemanticMapNameLogicalOperator>(rfl);
+    auto [operatorId, modelName, operation] = context.unreflect<detail::ReflectedSemanticMapNameLogicalOperator>(rfl);
 
     if (!modelName.has_value())
     {
@@ -168,12 +185,13 @@ Unreflector<TypedLogicalOperator<SemanticMapNameLogicalOperator>>::operator()(co
         throw CannotDeserialize("SemanticMapNameLogicalOperator requires exactly one child, but got {}", children.size());
     }
 
-    return TypedLogicalOperator<SemanticMapNameLogicalOperator>{modelName.value(), std::move(children.at(0))};
+    return TypedLogicalOperator<SemanticMapNameLogicalOperator>{
+        modelName.value(), operation.value_or("SEM_MAP"), std::move(children.at(0))};
 }
 
 }
 
 std::size_t std::hash<NES::SemanticMapNameLogicalOperator>::operator()(const NES::SemanticMapNameLogicalOperator& op) const noexcept
 {
-    return std::hash<std::string>{}(op.getModelName());
+    return std::hash<std::string>{}(op.getModelName() + "/" + op.getOperation());
 }

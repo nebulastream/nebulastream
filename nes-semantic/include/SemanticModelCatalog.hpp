@@ -80,6 +80,41 @@ struct SemanticStep
     bool operator==(const SemanticStep&) const = default;
 };
 
+/// SEM_SCAN and SEM_WINDOW: operators that keep state from row to row, per key (after llm_operator's `sem_scan.py` and
+/// `sem_window.py`). The async framework runs the calls of one key one at a time and in stream order
+/// (`AsyncFunction::orderingKey`); the state lives in `SemanticKeyedState`, shared by the stage's function instances.
+struct SemanticKeyedConfig
+{
+    enum class Kind : uint8_t
+    {
+        /// A running accumulator per key: OUTPUT (state, confidence).
+        SCAN,
+        /// Semantic windows per key: OUTPUT (window_id, window_description, window_start, continuity_score, is_boundary).
+        WINDOW,
+    };
+
+    Kind kind = Kind::SCAN;
+    /// The field whose value is the key. Required for SCAN; empty makes the whole stream one key, WINDOW only.
+    std::string keyBy;
+    /// SCAN: the instruction for a key's first row. Without it, the first row's state is `initialState`, without a call.
+    std::string initPrompt;
+    std::string initialState;
+    /// WINDOW: "summary" shows each window's recent examples, "pairwise" only its most recent row.
+    std::string strategy = "summary";
+    /// WINDOW: the continuity score a row needs to join its best window rather than open a new one.
+    double threshold = 0.7;
+    /// WINDOW: opening a window beyond this many active ones closes the oldest. 0 is unlimited, 1 change-point detection.
+    size_t maxActiveWindows = 0;
+    /// WINDOW: recent rows a window keeps as examples.
+    size_t maxExamples = 5;
+    /// WINDOW: the field written as a window's start; empty writes ''.
+    std::string timestampField;
+    /// WINDOW: windows scored per request; 0 or 1 is one request per active window, as llm_operator's batch_size 0.
+    size_t windowsPerCall = 0;
+
+    bool operator==(const SemanticKeyedConfig&) const = default;
+};
+
 /// Everything needed to talk to the remote model. Catalog-side metadata declared
 /// alongside the model in `CREATE SEM_MODEL`; none of it is derived from the
 /// endpoint itself.
@@ -121,6 +156,8 @@ struct SemanticModelConfig
     /// single prompt (`SemanticFusionRule`). Opt-in, like the reference's per-query `fusion=False`,
     /// so the measured unfused baselines stay reproducible.
     bool fusion = false;
+    /// Set for SEM_SCAN and SEM_WINDOW models.
+    std::optional<SemanticKeyedConfig> keyed = std::nullopt;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

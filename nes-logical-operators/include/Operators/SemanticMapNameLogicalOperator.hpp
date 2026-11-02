@@ -46,9 +46,13 @@ class SemanticMapNameLogicalOperator : public Reorderer, public ManagedByOperato
 {
 public:
     explicit SemanticMapNameLogicalOperator(WeakLogicalOperator self, std::string modelName);
+    /// `operation` is the keyword of the query, SEM_MAP, SEM_SCAN or SEM_WINDOW, which the model's kind has to match.
+    SemanticMapNameLogicalOperator(WeakLogicalOperator self, std::string modelName, std::string operation);
     SemanticMapNameLogicalOperator(WeakLogicalOperator self, std::string modelName, LogicalOperator child);
+    SemanticMapNameLogicalOperator(WeakLogicalOperator self, std::string modelName, std::string operation, LogicalOperator child);
 
     [[nodiscard]] std::string getModelName() const;
+    [[nodiscard]] const std::string& getOperation() const;
 
     [[nodiscard]] bool operator==(const SemanticMapNameLogicalOperator& rhs) const;
 
@@ -75,6 +79,7 @@ public:
 private:
     static constexpr std::string_view NAME = "SemanticMapName";
     std::string modelName;
+    std::string operation = "SEM_MAP";
 
     std::optional<LogicalOperator> child;
     TraitSet traitSet;
@@ -107,6 +112,8 @@ struct ReflectedSemanticMapNameLogicalOperator
 {
     OperatorId operatorId{OperatorId::INVALID};
     std::optional<std::string> modelName;
+    /// Absent in plans written before SEM_SCAN and SEM_WINDOW existed, which means SEM_MAP.
+    std::optional<std::string> operation;
 };
 }
 

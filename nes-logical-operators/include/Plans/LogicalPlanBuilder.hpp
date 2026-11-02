@@ -97,7 +97,8 @@ public:
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
-    static LogicalPlan addSemanticMap(Identifier modelName, const LogicalPlan& childPlan);
+    /// `operation` is the keyword the query used: SEM_MAP, SEM_SCAN or SEM_WINDOW.
+    static LogicalPlan addSemanticMap(Identifier modelName, const LogicalPlan& childPlan, std::string operation = "SEM_MAP");
 
     static LogicalPlan addSemanticFilter(Identifier modelName, const LogicalPlan& childPlan);
 

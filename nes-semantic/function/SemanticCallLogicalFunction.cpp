@@ -60,7 +60,9 @@ SemanticCallLogicalFunction::SemanticCallLogicalFunction(std::string payload, st
 {
     const auto decoded = decodeSemanticCallPayload(this->payload);
     model = decoded.model;
-    numberOfSteps = decoded.config.steps.size();
+    /// A SEM_SCAN or SEM_WINDOW call has one value per OUTPUT field; the other calls one per step.
+    numberOfSteps = decoded.config.keyed ? decoded.outputFields.size() : decoded.config.steps.size();
+    keyed = decoded.config.keyed.has_value();
     if (numberOfSteps == 0)
     {
         throw InvalidSemanticModel("SEM_CALL of model '{}' has no steps", model);

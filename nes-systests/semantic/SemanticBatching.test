@@ -1,0 +1,156 @@
+# name: semantic/SemanticBatching.test
+# description: BATCH_SIZE rows per prompt, formed by the async framework (AsyncFunction::maxBatchSize and callBatch).
+#              A slot takes whatever rows are ready, up to a full batch; rows the answer leaves out are asked for on
+#              their own, and a batch that fails is retried, then split into single rows. The results must be those of
+#              one row per prompt, whatever the batches looked like.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,POSITIVE
+2,negative
+3,POSITIVE(unsure)
+4,clearly-negative
+5,pozitive
+6,zzzz
+
+CREATE LOGICAL SOURCE verdicts(id UINT64 NOT NULL, verdict VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR verdicts TYPE File;
+ATTACH INLINE
+1,yes
+2,no
+3,true
+4,false
+5,yes
+6,maybe
+7,true
+
+CREATE LOGICAL SOURCE items(id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR items TYPE File;
+ATTACH INLINE
+1,Apple,100
+2,banana,200
+3,Cherry,300
+4,apple,1200
+
+CREATE LOGICAL SOURCE labels(id2 UINT64 NOT NULL, label VARSIZED NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR labels TYPE File;
+ATTACH INLINE
+10,APPLE,150
+11,cherry,250
+12,Banana!,350
+13,apple,1100
+
+# Each row is answered with its position in its prompt and the prompt's row count: one slot, batches of four, so the
+# six rows go out as 4 + 2, the partial last batch included.
+CREATE SEM_MODEL batchShape
+INPUT (description VARSIZED)
+OUTPUT (shape VARSIZED)
+SET ('Report the batch' AS LLM.PROMPT, 'batchinfo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     4 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL batchedEcho
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     4 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 2 AS LLM.MAX_CONCURRENCY);
+
+# The answer leaves out the last row of every prompt with several rows.
+CREATE SEM_MODEL batchedMissing
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo-missing' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 3 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.MAX_CONCURRENCY);
+
+# The answer has an entry for a row that is not in the prompt.
+CREATE SEM_MODEL batchedExtra
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo-extra' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 3 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.MAX_CONCURRENCY);
+
+# Every prompt with several rows fails; its rows then go out one by one.
+CREATE SEM_MODEL batchesFail
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'fail-batch' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 3 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 2 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL batchedFilter
+INPUT (verdict VARSIZED)
+SET ('Keep the affirmative ones' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     3 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 2 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL batchedMatch
+INPUT (lhs VARSIZED, rhs VARSIZED)
+SET ('Both name the same fruit' AS LLM.PROMPT, 'match' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     4 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK shapes(id UINT64 NOT NULL, description VARSIZED NOT NULL, shape VARSIZED NOT NULL) TYPE File;
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
+CREATE SINK kept(id UINT64 NOT NULL, verdict VARSIZED NOT NULL) TYPE File;
+CREATE SINK pairs(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64 NOT NULL, label VARSIZED NOT NULL, ts2 UINT64 NOT NULL) TYPE File;
+
+# Query 1: the batches themselves.
+SELECT * FROM SEM_MAP(batchShape, reviews) INTO shapes;
+----
+1,POSITIVE,1/4
+2,negative,2/4
+3,POSITIVE(unsure),3/4
+4,clearly-negative,4/4
+5,pozitive,1/2
+6,zzzz,2/2
+
+# Queries 2-5: what one row per prompt gives (semantic/SemanticMapAsync.test), whatever the batches looked like.
+SELECT * FROM SEM_MAP(batchedEcho, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+SELECT * FROM SEM_MAP(batchedMissing, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+SELECT * FROM SEM_MAP(batchedExtra, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+SELECT * FROM SEM_MAP(batchesFail, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+# Query 6: SEM_FILTER in batches of three; the mock passes "yes" and "true".
+SELECT * FROM SEM_FILTER(batchedFilter, verdicts) INTO kept;
+----
+1,yes
+3,true
+5,yes
+7,true
+
+# Query 7: SEM_JOIN with the candidate pairs of a window in batches of four (semantic/SemanticJoin.test, query 1).
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(batchedMatch, items.name, labels.label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+0,1000,1,Apple,100,10,APPLE,150
+0,1000,3,Cherry,300,11,cherry,250
+1000,2000,4,apple,1200,13,apple,1100

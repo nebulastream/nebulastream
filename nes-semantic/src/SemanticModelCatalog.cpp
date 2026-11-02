@@ -31,6 +31,7 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <MockSemanticBackend.hpp>
+#include <SemanticCallPayload.hpp>
 
 namespace NES::detail
 {
@@ -65,6 +66,8 @@ struct
     std::optional<int64_t> execution;
     std::optional<bool> preserveOrder;
     std::optional<bool> fusion;
+    /// SEM_SCAN and SEM_WINDOW only, as `encodeSemanticKeyedConfig` writes it.
+    std::optional<std::string> keyed;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -114,6 +117,60 @@ SemanticStep unreflectStep(const Reflected& rfl, const ReflectionContext& contex
         .outputColumn = std::move(reflected.outputColumn).value(),
         .outputValues = std::move(reflected.outputValues).value(),
         .defaultValue = std::move(reflected.defaultValue).value()};
+}
+
+/// SEM_SCAN and SEM_WINDOW: one MAP step carrying the prompt, and a fixed set of OUTPUT fields.
+void validateKeyed(const std::string& name, const SemanticModelConfig& config, const SemanticModelSchema& schema)
+{
+    const auto& keyed = *config.keyed;
+    const auto outputs = schema.outputs.size();
+    if (config.steps.size() != 1 || config.steps.front().kind != SemanticStep::Kind::MAP)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': SEM_SCAN and SEM_WINDOW models have exactly one prompt", name);
+    }
+    if (keyed.kind == SemanticKeyedConfig::Kind::SCAN)
+    {
+        if (outputs != 2)
+        {
+            throw InvalidSemanticModel(
+                "Semantic model '{}': SEM_SCAN declares two OUTPUT fields, the state and its confidence, but got {}", name, outputs);
+        }
+        if (keyed.keyBy.empty())
+        {
+            throw InvalidSemanticModel("Semantic model '{}': SEM_SCAN needs LLM.KEY_BY, the field it folds rows by", name);
+        }
+    }
+    else
+    {
+        if (outputs != 5)
+        {
+            throw InvalidSemanticModel(
+                "Semantic model '{}': SEM_WINDOW declares five OUTPUT fields: the window id, its description, its start, the row's "
+                "continuity score and whether the row opened the window; but got {}",
+                name,
+                outputs);
+        }
+        if (keyed.strategy != "summary" && keyed.strategy != "pairwise")
+        {
+            throw InvalidSemanticModel("Semantic model '{}': LLM.STRATEGY must be 'summary' or 'pairwise', but was '{}'", name, keyed.strategy);
+        }
+        if (!(keyed.threshold >= 0.0 && keyed.threshold <= 1.0))
+        {
+            throw InvalidSemanticModel("Semantic model '{}': LLM.THRESHOLD must be between 0 and 1, but was {}", name, keyed.threshold);
+        }
+    }
+    for (const auto& output : schema.outputs)
+    {
+        if (!output.getDataType().isType(DataType::Type::VARSIZED))
+        {
+            throw InvalidSemanticModel("Semantic model '{}': the OUTPUT fields of SEM_SCAN and SEM_WINDOW are VARSIZED", name);
+        }
+    }
+    /// One row per prompt, as in llm_operator; a batch of keys would need a prompt with one prior state per row.
+    if (config.batchSize != 1)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': SEM_SCAN and SEM_WINDOW send one row per prompt; BATCH_SIZE must be 1", name);
+    }
 }
 
 }
@@ -182,7 +239,11 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     {
         throw InvalidSemanticModel("Semantic model '{}': at least one OUTPUT field is required", name);
     }
-    if (mapSteps != schema.outputs.size())
+    if (config.keyed)
+    {
+        validateKeyed(name, config, schema);
+    }
+    else if (mapSteps != schema.outputs.size())
     {
         throw InvalidSemanticModel("Semantic model '{}': {} OUTPUT field(s) but {} map step(s)", name, schema.outputs.size(), mapSteps);
     }
@@ -360,6 +421,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .execution = std::make_optional(static_cast<int64_t>(config.execution)),
             .preserveOrder = std::make_optional(config.preserveOrder),
             .fusion = std::make_optional(config.fusion),
+            .keyed = config.keyed ? std::optional{encodeSemanticKeyedConfig(*config.keyed)} : std::nullopt,
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -400,7 +462,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .backend = std::move(reflected.backend).value(),
         .execution = unreflectEnum(reflected.execution.value(), SemanticExecution::ASYNCHRONOUS, "SemanticExecution"),
         .preserveOrder = reflected.preserveOrder.value(),
-        .fusion = reflected.fusion.value()};
+        .fusion = reflected.fusion.value(),
+        .keyed = reflected.keyed ? std::optional{decodeSemanticKeyedConfig(*reflected.keyed)} : std::nullopt};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

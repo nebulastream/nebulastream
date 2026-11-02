@@ -45,7 +45,14 @@ struct SemanticCallPayload
     /// SEM_AGG: the call's single input is the JSON array JSON_AGG wrote for a window; `SemanticAggCodec` turns it into one
     /// prompt. The model is a map model with one INPUT and one OUTPUT field; the value is its answer.
     bool agg = false;
+    /// SEM_SCAN and SEM_WINDOW (`config.keyed`): the id of the state the stage's function instances share, unique per
+    /// translated operator. The call's arguments are the key, then for WINDOW the timestamp, then the INPUT fields.
+    std::string stateId = {};
 };
+
+/// The keyed configuration as JSON, for the catalog's reflection, which keeps it as one string.
+[[nodiscard]] std::string encodeSemanticKeyedConfig(const SemanticKeyedConfig& config);
+[[nodiscard]] SemanticKeyedConfig decodeSemanticKeyedConfig(std::string_view encoded);
 
 [[nodiscard]] std::string encodeSemanticCallPayload(const SemanticCallPayload& payload);
 

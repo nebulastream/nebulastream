@@ -1,0 +1,94 @@
+# name: semantic/SemanticScan.test
+# description: SEM_SCAN, a running semantic state per key after llm_operator's sem_scan.py, on the async framework.
+#              The mock's 'scan' behaviour makes a key's first row's state its text and appends '|' and the text of
+#              every later row, so each state spells out exactly which rows of its key were folded, and in which order.
+#              The framework runs one call per key at a time and in stream order (AsyncFunction::orderingKey).
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, movie VARSIZED NOT NULL, review VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,alien,scary
+2,heat,tense
+3,alien,dark
+4,alien,classic
+5,heat,long
+6,up,sweet
+
+CREATE LOGICAL SOURCE many(id UINT64 NOT NULL, k VARSIZED NOT NULL, v VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR many TYPE File;
+ATTACH FILE small/semantic/scan_ordered.csv
+
+# INIT_PROMPT for a key's first row, PROMPT for the folds; OUTPUT is the state and its confidence.
+CREATE SEM_MODEL movieDigest
+INPUT (review VARSIZED)
+OUTPUT (digest VARSIZED, confidence VARSIZED)
+SET ('Fold the review into the digest' AS LLM.PROMPT, 'Start a digest from the review' AS LLM.INIT_PROMPT, 'SCAN' AS LLM.KIND,
+     'movie' AS LLM.KEY_BY, 'scan' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 4 AS LLM.MAX_CONCURRENCY);
+
+# Without INIT_PROMPT, a key's first row starts from INITIAL_STATE without a call and without a confidence.
+CREATE SEM_MODEL movieTally
+INPUT (review VARSIZED)
+OUTPUT (digest VARSIZED, confidence VARSIZED)
+SET ('Fold the review into the digest' AS LLM.PROMPT, 'start' AS LLM.INITIAL_STATE, 'SCAN' AS LLM.KIND, 'movie' AS LLM.KEY_BY,
+     'scan' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# Slow calls, eight in flight: three keys run side by side, the rows of one key one after the other.
+CREATE SEM_MODEL manyDigest
+INPUT (v VARSIZED)
+OUTPUT (digest VARSIZED, confidence VARSIZED)
+SET ('Fold' AS LLM.PROMPT, 'Start' AS LLM.INIT_PROMPT, 'SCAN' AS LLM.KIND, 'k' AS LLM.KEY_BY, 'scan@1' AS LLM.ENDPOINT,
+     'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 8 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL unparseableDigest
+INPUT (review VARSIZED)
+OUTPUT (digest VARSIZED, confidence VARSIZED)
+SET ('Fold' AS LLM.PROMPT, 'Start' AS LLM.INIT_PROMPT, 'SCAN' AS LLM.KIND, 'movie' AS LLM.KEY_BY, 'unparseable' AS LLM.ENDPOINT,
+     'n/a' AS LLM.DEFAULT_VALUE, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SINK digests(id UINT64 NOT NULL, movie VARSIZED NOT NULL, review VARSIZED NOT NULL, digest VARSIZED NOT NULL, confidence VARSIZED NOT NULL) TYPE File;
+CREATE SINK lastDigests(id UINT64 NOT NULL, k VARSIZED NOT NULL, digest VARSIZED NOT NULL) TYPE File;
+
+# Query 1: each state holds the earlier rows of its own key, in order.
+SELECT * FROM SEM_SCAN(movieDigest, reviews) INTO digests;
+----
+1,alien,scary,scary,0.9
+2,heat,tense,tense,0.9
+3,alien,dark,scary|dark,0.9
+4,alien,classic,scary|dark|classic,0.9
+5,heat,long,tense|long,0.9
+6,up,sweet,sweet,0.9
+
+# Query 2: the initial state instead of an INIT_PROMPT.
+SELECT * FROM SEM_SCAN(movieTally, reviews) INTO digests;
+----
+1,alien,scary,start,
+2,heat,tense,start,
+3,alien,dark,start|dark,0.9
+4,alien,classic,start|dark|classic,0.9
+5,heat,long,start|long,0.9
+6,up,sweet,start,
+
+# Query 3: 1200 rows over several buffers and worker threads, three keys. The last row of each key carries its whole
+# fold, which is only right if every row of the key was folded once and in stream order. The selection reads no output
+# of the scan, but it must not be pushed below it: the scan would then see only the selected rows.
+SELECT id, k, digest FROM SEM_SCAN(manyDigest, many) WHERE id > UINT64(1197) INTO lastDigests;
+----
+1198,k1,v1|v4|v7|v10|v13|v16|v19|v22|v25|v28|v31|v34|v37|v40|v43|v46|v49|v52|v55|v58|v61|v64|v67|v70|v73|v76|v79|v82|v85|v88|v91|v94|v97|v100|v103|v106|v109|v112|v115|v118|v121|v124|v127|v130|v133|v136|v139|v142|v145|v148|v151|v154|v157|v160|v163|v166|v169|v172|v175|v178|v181|v184|v187|v190|v193|v196|v199|v202|v205|v208|v211|v214|v217|v220|v223|v226|v229|v232|v235|v238|v241|v244|v247|v250|v253|v256|v259|v262|v265|v268|v271|v274|v277|v280|v283|v286|v289|v292|v295|v298|v301|v304|v307|v310|v313|v316|v319|v322|v325|v328|v331|v334|v337|v340|v343|v346|v349|v352|v355|v358|v361|v364|v367|v370|v373|v376|v379|v382|v385|v388|v391|v394|v397|v400|v403|v406|v409|v412|v415|v418|v421|v424|v427|v430|v433|v436|v439|v442|v445|v448|v451|v454|v457|v460|v463|v466|v469|v472|v475|v478|v481|v484|v487|v490|v493|v496|v499|v502|v505|v508|v511|v514|v517|v520|v523|v526|v529|v532|v535|v538|v541|v544|v547|v550|v553|v556|v559|v562|v565|v568|v571|v574|v577|v580|v583|v586|v589|v592|v595|v598|v601|v604|v607|v610|v613|v616|v619|v622|v625|v628|v631|v634|v637|v640|v643|v646|v649|v652|v655|v658|v661|v664|v667|v670|v673|v676|v679|v682|v685|v688|v691|v694|v697|v700|v703|v706|v709|v712|v715|v718|v721|v724|v727|v730|v733|v736|v739|v742|v745|v748|v751|v754|v757|v760|v763|v766|v769|v772|v775|v778|v781|v784|v787|v790|v793|v796|v799|v802|v805|v808|v811|v814|v817|v820|v823|v826|v829|v832|v835|v838|v841|v844|v847|v850|v853|v856|v859|v862|v865|v868|v871|v874|v877|v880|v883|v886|v889|v892|v895|v898|v901|v904|v907|v910|v913|v916|v919|v922|v925|v928|v931|v934|v937|v940|v943|v946|v949|v952|v955|v958|v961|v964|v967|v970|v973|v976|v979|v982|v985|v988|v991|v994|v997|v1000|v1003|v1006|v1009|v1012|v1015|v1018|v1021|v1024|v1027|v1030|v1033|v1036|v1039|v1042|v1045|v1048|v1051|v1054|v1057|v1060|v1063|v1066|v1069|v1072|v1075|v1078|v1081|v1084|v1087|v1090|v1093|v1096|v1099|v1102|v1105|v1108|v1111|v1114|v1117|v1120|v1123|v1126|v1129|v1132|v1135|v1138|v1141|v1144|v1147|v1150|v1153|v1156|v1159|v1162|v1165|v1168|v1171|v1174|v1177|v1180|v1183|v1186|v1189|v1192|v1195|v1198
+1199,k2,v2|v5|v8|v11|v14|v17|v20|v23|v26|v29|v32|v35|v38|v41|v44|v47|v50|v53|v56|v59|v62|v65|v68|v71|v74|v77|v80|v83|v86|v89|v92|v95|v98|v101|v104|v107|v110|v113|v116|v119|v122|v125|v128|v131|v134|v137|v140|v143|v146|v149|v152|v155|v158|v161|v164|v167|v170|v173|v176|v179|v182|v185|v188|v191|v194|v197|v200|v203|v206|v209|v212|v215|v218|v221|v224|v227|v230|v233|v236|v239|v242|v245|v248|v251|v254|v257|v260|v263|v266|v269|v272|v275|v278|v281|v284|v287|v290|v293|v296|v299|v302|v305|v308|v311|v314|v317|v320|v323|v326|v329|v332|v335|v338|v341|v344|v347|v350|v353|v356|v359|v362|v365|v368|v371|v374|v377|v380|v383|v386|v389|v392|v395|v398|v401|v404|v407|v410|v413|v416|v419|v422|v425|v428|v431|v434|v437|v440|v443|v446|v449|v452|v455|v458|v461|v464|v467|v470|v473|v476|v479|v482|v485|v488|v491|v494|v497|v500|v503|v506|v509|v512|v515|v518|v521|v524|v527|v530|v533|v536|v539|v542|v545|v548|v551|v554|v557|v560|v563|v566|v569|v572|v575|v578|v581|v584|v587|v590|v593|v596|v599|v602|v605|v608|v611|v614|v617|v620|v623|v626|v629|v632|v635|v638|v641|v644|v647|v650|v653|v656|v659|v662|v665|v668|v671|v674|v677|v680|v683|v686|v689|v692|v695|v698|v701|v704|v707|v710|v713|v716|v719|v722|v725|v728|v731|v734|v737|v740|v743|v746|v749|v752|v755|v758|v761|v764|v767|v770|v773|v776|v779|v782|v785|v788|v791|v794|v797|v800|v803|v806|v809|v812|v815|v818|v821|v824|v827|v830|v833|v836|v839|v842|v845|v848|v851|v854|v857|v860|v863|v866|v869|v872|v875|v878|v881|v884|v887|v890|v893|v896|v899|v902|v905|v908|v911|v914|v917|v920|v923|v926|v929|v932|v935|v938|v941|v944|v947|v950|v953|v956|v959|v962|v965|v968|v971|v974|v977|v980|v983|v986|v989|v992|v995|v998|v1001|v1004|v1007|v1010|v1013|v1016|v1019|v1022|v1025|v1028|v1031|v1034|v1037|v1040|v1043|v1046|v1049|v1052|v1055|v1058|v1061|v1064|v1067|v1070|v1073|v1076|v1079|v1082|v1085|v1088|v1091|v1094|v1097|v1100|v1103|v1106|v1109|v1112|v1115|v1118|v1121|v1124|v1127|v1130|v1133|v1136|v1139|v1142|v1145|v1148|v1151|v1154|v1157|v1160|v1163|v1166|v1169|v1172|v1175|v1178|v1181|v1184|v1187|v1190|v1193|v1196|v1199
+1200,k0,v3|v6|v9|v12|v15|v18|v21|v24|v27|v30|v33|v36|v39|v42|v45|v48|v51|v54|v57|v60|v63|v66|v69|v72|v75|v78|v81|v84|v87|v90|v93|v96|v99|v102|v105|v108|v111|v114|v117|v120|v123|v126|v129|v132|v135|v138|v141|v144|v147|v150|v153|v156|v159|v162|v165|v168|v171|v174|v177|v180|v183|v186|v189|v192|v195|v198|v201|v204|v207|v210|v213|v216|v219|v222|v225|v228|v231|v234|v237|v240|v243|v246|v249|v252|v255|v258|v261|v264|v267|v270|v273|v276|v279|v282|v285|v288|v291|v294|v297|v300|v303|v306|v309|v312|v315|v318|v321|v324|v327|v330|v333|v336|v339|v342|v345|v348|v351|v354|v357|v360|v363|v366|v369|v372|v375|v378|v381|v384|v387|v390|v393|v396|v399|v402|v405|v408|v411|v414|v417|v420|v423|v426|v429|v432|v435|v438|v441|v444|v447|v450|v453|v456|v459|v462|v465|v468|v471|v474|v477|v480|v483|v486|v489|v492|v495|v498|v501|v504|v507|v510|v513|v516|v519|v522|v525|v528|v531|v534|v537|v540|v543|v546|v549|v552|v555|v558|v561|v564|v567|v570|v573|v576|v579|v582|v585|v588|v591|v594|v597|v600|v603|v606|v609|v612|v615|v618|v621|v624|v627|v630|v633|v636|v639|v642|v645|v648|v651|v654|v657|v660|v663|v666|v669|v672|v675|v678|v681|v684|v687|v690|v693|v696|v699|v702|v705|v708|v711|v714|v717|v720|v723|v726|v729|v732|v735|v738|v741|v744|v747|v750|v753|v756|v759|v762|v765|v768|v771|v774|v777|v780|v783|v786|v789|v792|v795|v798|v801|v804|v807|v810|v813|v816|v819|v822|v825|v828|v831|v834|v837|v840|v843|v846|v849|v852|v855|v858|v861|v864|v867|v870|v873|v876|v879|v882|v885|v888|v891|v894|v897|v900|v903|v906|v909|v912|v915|v918|v921|v924|v927|v930|v933|v936|v939|v942|v945|v948|v951|v954|v957|v960|v963|v966|v969|v972|v975|v978|v981|v984|v987|v990|v993|v996|v999|v1002|v1005|v1008|v1011|v1014|v1017|v1020|v1023|v1026|v1029|v1032|v1035|v1038|v1041|v1044|v1047|v1050|v1053|v1056|v1059|v1062|v1065|v1068|v1071|v1074|v1077|v1080|v1083|v1086|v1089|v1092|v1095|v1098|v1101|v1104|v1107|v1110|v1113|v1116|v1119|v1122|v1125|v1128|v1131|v1134|v1137|v1140|v1143|v1146|v1149|v1152|v1155|v1158|v1161|v1164|v1167|v1170|v1173|v1176|v1179|v1182|v1185|v1188|v1191|v1194|v1197|v1200
+
+# Query 4: an answer that cannot be read gives the default and leaves the key's state as it was.
+SELECT * FROM SEM_SCAN(unparseableDigest, reviews) INTO digests;
+----
+1,alien,scary,n/a,
+2,heat,tense,n/a,
+3,alien,dark,n/a,
+4,alien,classic,n/a,
+5,heat,long,n/a,
+6,up,sweet,n/a,
+
+# Query 5: a SEM_SCAN model in SEM_MAP, and a map model in SEM_SCAN, are mistakes in the query.
+SELECT * FROM SEM_MAP(movieDigest, reviews) INTO digests;
+----
+ERROR 2048 "SEM_SCAN model"

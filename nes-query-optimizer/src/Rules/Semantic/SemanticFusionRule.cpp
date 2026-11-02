@@ -100,6 +100,11 @@ struct FusionUp
 
 bool SemanticFusionRule::canFuse(const RegisteredSemanticModel& child, const RegisteredSemanticModel& parent)
 {
+    /// SEM_SCAN and SEM_WINDOW keep state per key and answer in their own envelope; they are never fused.
+    if (child.getConfig().keyed || parent.getConfig().keyed)
+    {
+        return false;
+    }
     if (!child.getConfig().fusion || !parent.getConfig().fusion)
     {
         return false;

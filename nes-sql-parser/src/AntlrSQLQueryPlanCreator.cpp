@@ -1646,7 +1646,7 @@ LogicalPlan buildSemanticPlan(antlr4::ParserRuleContext* source, std::vector<Log
     {
         auto modelName = bindIdentifier(map->modelName);
         const auto childPlan = buildSemanticInputPlan(map->semanticInput(), queryPlans);
-        return LogicalPlanBuilder::addSemanticMap(std::move(modelName), childPlan);
+        return LogicalPlanBuilder::addSemanticMap(std::move(modelName), childPlan, map->operation->getText());
     }
     if (auto* filter = dynamic_cast<AntlrSQLParser::SemanticFilterSourceContext*>(source))
     {
