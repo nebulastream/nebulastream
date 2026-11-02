@@ -330,8 +330,8 @@ int main(int argc, char** argv)
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
         NES::UdfStatementHandler udfStatementHandler{udfCatalog};
-        auto queryOptimizer
-            = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+            queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, udfCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),

@@ -60,6 +60,11 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli dump with catalog function from a library" {
+  run $NES_CLI -t tests/good/udf-function-path.yaml dump
+  [ "$status" -eq 0 ]
+}
+
 @test "nebucli dump using environment" {
 
   NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump

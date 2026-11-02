@@ -54,6 +54,7 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/UDFCallLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -1398,21 +1399,16 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 }
                 auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
                 std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
-                if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
+                auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, funcArgs);
+                if (!logicalFunction)
                 {
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.push_back(*logicalFunction);
+                    /// Not a built-in function: treat the call as a user-defined function. The name is
+                    /// resolved against the UDF catalog later by the UDFResolutionRule, keeping the parser
+                    /// catalog-free (an unregistered name fails there with UnknownUdf, not here).
+                    logicalFunction = LogicalFunction{UDFCallLogicalFunction{funcName, std::move(funcArgs)}};
                 }
-                else
-                {
-                    auto registeredNamesAggregation
-                        = AggregationLogicalFunctionRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
-                    std::ranges::sort(registeredNamesAggregation);
-                    throw InvalidQuerySyntax(
-                        "Unknown function: {}. Supported aggregation functions are {}.",
-                        funcName,
-                        fmt::join(registeredNamesAggregation, ", "));
-                }
+                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                helpers.top().functionBuilder.push_back(*logicalFunction);
             }
     }
 
