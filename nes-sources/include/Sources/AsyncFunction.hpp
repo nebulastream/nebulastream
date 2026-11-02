@@ -27,11 +27,19 @@ namespace NES
 /// The values one row's call produced: the first is what the call evaluates to, `ASYNC_OUTPUT(call, i)` reads the i-th.
 using AsyncCallResult = std::vector<std::string>;
 
+/// The results of one batch, one entry per row in the batch's order. A row without a result, e.g. one the service left
+/// out of its answer, is called again on its own.
+using AsyncBatchResult = std::vector<std::optional<AsyncCallResult>>;
+
 /// The implementation of an `AsyncLogicalFunction`, run by the `Async` source on its event loop.
 /// An instance serves one call at a time, so it may keep per-connection state between calls.
 ///
 /// Most functions only implement `call`. One that produces several values per row, e.g. one per OUTPUT field of a model,
 /// overrides `callValues` instead.
+///
+/// A function whose service takes several rows in one request sets `maxBatchSize` and implements `callBatch`. A function
+/// whose calls must not overlap or reorder for rows that share a value, e.g. one that keeps state per key, names that
+/// argument in `orderingKey`. Both are off by default, and the source then runs the function exactly as before.
 class AsyncFunction
 {
 public:
@@ -43,8 +51,19 @@ public:
     /// One row: its arguments in, all of its values out. By default the single value of `call`.
     virtual boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments);
 
+    /// Several rows in one go: per row its arguments in, its values out (see `AsyncBatchResult`). The source hands at
+    /// most `maxBatchSize` rows. By default `callValues` for one row after the other.
+    virtual boost::asio::awaitable<AsyncBatchResult> callBatch(std::vector<std::vector<std::string>> rows);
+
     /// Rows whose calls of this function may be in flight at once, if the function itself sets a bound.
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const { return std::nullopt; }
+
+    /// Rows `callBatch` takes at once. 1, the default, means the source never calls `callBatch`.
+    [[nodiscard]] virtual size_t maxBatchSize() const { return 1; }
+
+    /// The argument whose value orders the calls: rows with equal values are called one at a time, in stream order, and
+    /// rows with different values in parallel. Must be a handed-off field or a constant, not the value of another call.
+    [[nodiscard]] virtual std::optional<size_t> orderingKey() const { return std::nullopt; }
 };
 
 /// Where one argument of an async call comes from: a handed-off field, a constant, or the result of an

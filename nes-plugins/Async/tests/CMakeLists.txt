@@ -12,3 +12,7 @@
 
 add_nes_test(handoff-channel-test HandoffChannelTest.cpp)
 target_link_libraries(handoff-channel-test async_handoff_channel nes-memory nes-common)
+
+# Order, batches and keys of the Async source, against test functions registered at runtime.
+add_nes_test(async-scheduling-test AsyncSchedulingTest.cpp)
+target_link_libraries(async-scheduling-test nes-sources async_handoff_channel nes-nautilus nes-memory nes-common)

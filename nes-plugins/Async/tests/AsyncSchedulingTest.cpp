@@ -1,0 +1,636 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <random>
+#include <set>
+#include <span>
+#include <stop_token>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/VariableSizedAccess.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/AsyncFunction.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Util/UUID.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/this_coro.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <fmt/format.h>
+#include <gtest/gtest.h>
+#include <AsyncFunctionRegistry.hpp>
+#include <AsyncScheduling.hpp>
+#include <AsyncSource.hpp>
+#include <ErrorHandling.hpp>
+#include <HandoffChannel.hpp>
+
+namespace NES
+{
+namespace
+{
+
+/// --- StreamReorderer ---
+
+StreamPosition at(const uint64_t origin, const uint64_t sequence, const uint64_t chunk = 1, const bool last = true)
+{
+    return {.origin = origin, .sequence = sequence, .chunk = chunk, .lastChunk = last};
+}
+
+TEST(StreamReordererTest, PassesBuffersThatArriveInOrder)
+{
+    StreamReorderer<int> reorderer;
+    EXPECT_EQ(reorderer.push(at(1, 1), 1), std::vector{1});
+    EXPECT_EQ(reorderer.push(at(1, 2), 2), std::vector{2});
+    EXPECT_EQ(reorderer.size(), 0);
+}
+
+TEST(StreamReordererTest, HoldsABufferUntilItsPredecessorArrives)
+{
+    StreamReorderer<int> reorderer;
+    EXPECT_TRUE(reorderer.push(at(1, 3), 3).empty());
+    EXPECT_TRUE(reorderer.push(at(1, 2), 2).empty());
+    EXPECT_EQ(reorderer.size(), 2);
+    EXPECT_EQ(reorderer.push(at(1, 1), 1), (std::vector{1, 2, 3}));
+    EXPECT_EQ(reorderer.size(), 0);
+}
+
+TEST(StreamReordererTest, OrdersChunksAndMovesOnAfterTheLastChunk)
+{
+    StreamReorderer<std::string> reorderer;
+    EXPECT_TRUE(reorderer.push(at(1, 2, 1, true), "2.1").empty());
+    EXPECT_TRUE(reorderer.push(at(1, 1, 3, true), "1.3").empty());
+    EXPECT_EQ(reorderer.push(at(1, 1, 1, false), "1.1"), std::vector<std::string>{"1.1"});
+    EXPECT_EQ(reorderer.push(at(1, 1, 2, false), "1.2"), (std::vector<std::string>{"1.2", "1.3", "2.1"}));
+}
+
+TEST(StreamReordererTest, OriginsDoNotWaitForEachOther)
+{
+    StreamReorderer<std::string> reorderer;
+    EXPECT_TRUE(reorderer.push(at(1, 2), "a2").empty());
+    EXPECT_EQ(reorderer.push(at(2, 1), "b1"), std::vector<std::string>{"b1"});
+    EXPECT_EQ(reorderer.push(at(1, 1), "a1"), (std::vector<std::string>{"a1", "a2"}));
+}
+
+TEST(StreamReordererTest, ReleasesAPositionThatIsAlreadyBehind)
+{
+    StreamReorderer<int> reorderer;
+    EXPECT_EQ(reorderer.push(at(1, 1), 1), std::vector{1});
+    EXPECT_EQ(reorderer.push(at(1, 1), 10), std::vector{10});
+}
+
+TEST(StreamReordererTest, DrainsWhatIsLeftInStreamOrder)
+{
+    StreamReorderer<int> reorderer;
+    EXPECT_TRUE(reorderer.push(at(2, 5), 25).empty());
+    EXPECT_TRUE(reorderer.push(at(1, 4), 14).empty());
+    EXPECT_TRUE(reorderer.push(at(1, 3), 13).empty());
+    EXPECT_EQ(reorderer.drain(), (std::vector{13, 14, 25}));
+    EXPECT_EQ(reorderer.size(), 0);
+}
+
+TEST(StreamReordererTest, RestoresAShuffledStreamOfManyChunkedSequences)
+{
+    std::mt19937 random{42};
+    std::vector<std::pair<StreamPosition, std::string>> stream;
+    for (uint64_t origin = 1; origin <= 3; ++origin)
+    {
+        for (uint64_t sequence = 1; sequence <= 50; ++sequence)
+        {
+            const auto chunks = 1 + (random() % 4);
+            for (uint64_t chunk = 1; chunk <= chunks; ++chunk)
+            {
+                stream.emplace_back(at(origin, sequence, chunk, chunk == chunks), fmt::format("{}/{}/{}", origin, sequence, chunk));
+            }
+        }
+    }
+    auto shuffled = stream;
+    std::ranges::shuffle(shuffled, random);
+    StreamReorderer<std::string> reorderer;
+    std::map<uint64_t, std::vector<std::string>> released;
+    for (auto& [position, item] : shuffled)
+    {
+        for (auto& next : reorderer.push(position, item))
+        {
+            released[std::stoull(next.substr(0, next.find('/')))].push_back(next);
+        }
+    }
+    EXPECT_EQ(reorderer.size(), 0);
+    for (uint64_t origin = 1; origin <= 3; ++origin)
+    {
+        std::vector<std::string> expected;
+        for (const auto& [position, item] : stream)
+        {
+            if (position.origin == origin)
+            {
+                expected.push_back(item);
+            }
+        }
+        EXPECT_EQ(released[origin], expected);
+    }
+}
+
+/// --- KeyedRowQueue ---
+
+std::vector<int> rowsOf(const std::vector<std::pair<int, std::vector<std::string>>>& taken)
+{
+    std::vector<int> rows;
+    for (const auto& [row, keys] : taken)
+    {
+        rows.push_back(row);
+    }
+    return rows;
+}
+
+TEST(KeyedRowQueueTest, FormsBatchesOfReadyRowsInStreamOrder)
+{
+    KeyedRowQueue<int> queue;
+    for (int row = 0; row < 6; ++row)
+    {
+        queue.push(row, {});
+    }
+    EXPECT_EQ(queue.startableRows(), 6);
+    EXPECT_EQ(rowsOf(queue.take(4)), (std::vector{0, 1, 2, 3}));
+    /// The partial last batch: whatever is left.
+    EXPECT_EQ(rowsOf(queue.take(4)), (std::vector{4, 5}));
+    EXPECT_TRUE(queue.take(4).empty());
+}
+
+TEST(KeyedRowQueueTest, RunsOneRowPerKeyAtATimeInStreamOrder)
+{
+    KeyedRowQueue<int> queue;
+    queue.push(1, {"a"});
+    queue.push(2, {"a"});
+    queue.push(3, {"b"});
+    queue.push(4, {"a"});
+    /// One per key, however large the batch may be.
+    const auto first = queue.take(10);
+    EXPECT_EQ(rowsOf(first), (std::vector{1, 3}));
+    EXPECT_EQ(queue.startableRows(), 0);
+    EXPECT_TRUE(queue.take(10).empty());
+    queue.finish({"a"});
+    EXPECT_EQ(rowsOf(queue.take(10)), std::vector{2});
+    queue.finish({"b"});
+    EXPECT_TRUE(queue.take(10).empty());
+    queue.finish({"a"});
+    EXPECT_EQ(rowsOf(queue.take(10)), std::vector{4});
+}
+
+TEST(KeyedRowQueueTest, WaitingRowsHoldNoSlot)
+{
+    /// Two slots, one row each: while key a is busy, the second slot takes the next key rather than idling.
+    KeyedRowQueue<int> queue;
+    queue.push(1, {"a"});
+    queue.push(2, {"a"});
+    queue.push(3, {"a"});
+    queue.push(4, {"b"});
+    EXPECT_EQ(rowsOf(queue.take(1)), std::vector{1});
+    EXPECT_EQ(rowsOf(queue.take(1)), std::vector{4});
+    EXPECT_EQ(queue.size(), 2);
+    EXPECT_EQ(queue.runningKeys(), 2);
+}
+
+TEST(KeyedRowQueueTest, ARowNeverOvertakesAnEarlierRowOfOneOfItsKeys)
+{
+    KeyedRowQueue<int> queue;
+    queue.push(1, {"a"});
+    queue.push(2, {"a", "b"});
+    queue.push(3, {"b"});
+    queue.push(4, {});
+    /// Row 3's key b is free, but row 2 is waiting with b ahead of it. Rows without keys are never held back.
+    EXPECT_EQ(rowsOf(queue.take(10)), (std::vector{1, 4}));
+    queue.finish({"a"});
+    EXPECT_EQ(rowsOf(queue.take(10)), std::vector{2});
+    queue.finish({"a", "b"});
+    EXPECT_EQ(rowsOf(queue.take(10)), std::vector{3});
+}
+
+/// --- AsyncSource with test functions ---
+
+/// What the test functions saw, shared by all instances of a test.
+struct Observations
+{
+    std::mutex mutex;
+    /// Rows per request, in the order the requests were made.
+    std::vector<size_t> requests;
+    /// Per key, the values in the order their calls started.
+    std::map<std::string, std::vector<std::string>> startedPerKey;
+    std::set<std::string> keysInFlight;
+    size_t overlapsOfOneKey = 0;
+    size_t inFlight = 0;
+    size_t mostInFlight = 0;
+    /// Batches that still fail before the function answers; see `ScriptedFunction`.
+    size_t failingBatches = 0;
+    size_t failingRows = 0;
+};
+
+Observations observed; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables) shared with the registered factories
+
+/// Configured with "<batch>,<keyed>,<delay ms>,<omit>": requests take `batch` rows, the first argument orders the calls
+/// if `keyed` is 1, each request waits `delay` ms (plus a bit per value, so that requests finish out of order), and a
+/// batch leaves out its last row's result if `omit` is 1. Its value is the second argument followed by '!'.
+class ScriptedFunction final : public AsyncFunction
+{
+public:
+    explicit ScriptedFunction(const std::string& configuration)
+    {
+        std::sscanf(configuration.c_str(), "%zu,%d,%d,%d", &batch, &keyed, &delayMs, &omit); /// NOLINT(cert-err34-c)
+    }
+
+    boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments) override
+    {
+        auto results = co_await run({std::move(arguments)}, false);
+        co_return std::move(*results.front());
+    }
+
+    boost::asio::awaitable<AsyncBatchResult> callBatch(std::vector<std::vector<std::string>> rows) override
+    {
+        co_return co_await run(std::move(rows), true);
+    }
+
+    [[nodiscard]] size_t maxBatchSize() const override { return batch; }
+
+    [[nodiscard]] std::optional<size_t> orderingKey() const override { return keyed == 1 ? std::optional<size_t>{0} : std::nullopt; }
+
+private:
+    boost::asio::awaitable<AsyncBatchResult> run(std::vector<std::vector<std::string>> rows, const bool asBatch)
+    {
+        bool fail = false;
+        {
+            const std::scoped_lock lock(observed.mutex);
+            observed.requests.push_back(rows.size());
+            observed.mostInFlight = std::max(observed.mostInFlight, ++observed.inFlight);
+            for (const auto& row : rows)
+            {
+                if (keyed == 1)
+                {
+                    observed.overlapsOfOneKey += observed.keysInFlight.contains(row[0]) ? 1 : 0;
+                    observed.keysInFlight.insert(row[0]);
+                    observed.startedPerKey[row[0]].push_back(row[1]);
+                }
+            }
+            auto& failing = asBatch ? observed.failingBatches : observed.failingRows;
+            if (failing > 0)
+            {
+                --failing;
+                fail = true;
+            }
+        }
+        const auto jitter = std::hash<std::string>{}(rows.front()[1]) % 3;
+        boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, std::chrono::milliseconds(delayMs + jitter)};
+        co_await timer.async_wait(boost::asio::use_awaitable);
+        {
+            const std::scoped_lock lock(observed.mutex);
+            --observed.inFlight;
+            for (const auto& row : rows)
+            {
+                observed.keysInFlight.erase(row[0]);
+            }
+        }
+        if (fail)
+        {
+            throw CannotReadFromSource("scripted failure");
+        }
+        AsyncBatchResult results;
+        for (const auto& row : rows)
+        {
+            results.emplace_back(AsyncCallResult{row[1] + "!"});
+        }
+        if (asBatch && omit == 1)
+        {
+            results.back().reset();
+        }
+        co_return results;
+    }
+
+    size_t batch = 1;
+    int keyed = 0;
+    int delayMs = 0;
+    int omit = 0;
+};
+
+/// An Async source over rows (key, value, result slot), fed through its channel like a Handoff sink would.
+class AsyncSourceTest : public testing::Test
+{
+protected:
+    static void SetUpTestSuite()
+    {
+        std::ignore = AsyncFunctionRegistry::instance().addEntry(
+            "ScriptedTest",
+            [](AsyncFunctionRegistryArguments arguments) -> AsyncFunctionRegistryReturnType
+            { return std::make_unique<ScriptedFunction>(arguments.configuration); });
+    }
+
+    void SetUp() override
+    {
+        observed.requests.clear();
+        observed.startedPerKey.clear();
+        observed.keysInFlight.clear();
+        observed.overlapsOfOneKey = 0;
+        observed.inFlight = 0;
+        observed.mostInFlight = 0;
+        observed.failingBatches = 0;
+        observed.failingRows = 0;
+
+        const auto schema = Schema<UnqualifiedUnboundField, Ordered>{
+            UnqualifiedUnboundField{Identifier::parse("key"), DataType::Type::VARSIZED},
+            UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::VARSIZED},
+            UnqualifiedUnboundField{Identifier::parse("result"), DataType::Type::VARSIZED}};
+        const auto logical = catalog.addLogicalSource(Identifier::parse("handedOff"), schema);
+        ASSERT_TRUE(logical.has_value());
+        auto physical = catalog.addPhysicalSource(
+            *logical, Identifier::parse("FILE"), Host{"localhost:8080"}, {{Identifier::parse("FILE_PATH"), "'unused'"}}, {{Identifier::parse("TYPE"), "CSV"}});
+        ASSERT_TRUE(physical.has_value()) << physical.error();
+        descriptor.emplace(std::move(*physical));
+        for (const auto& field : descriptor->getSchema())
+        {
+            names.push_back(fmt::format("{}", field.getFullyQualifiedName()));
+        }
+    }
+
+    void startSource(const std::string& functionConfiguration, const size_t concurrency, const size_t retries)
+    {
+        const auto calls = fmt::format(
+            R"([{{"outputs":[{{"index":0,"field":"{}"}}],"function":"ScriptedTest","configuration":"{}","arguments":[{{"field":"{}","output":0}},{{"field":"{}","output":0}}]}}])",
+            names[2],
+            functionConfiguration,
+            names[0],
+            names[1]);
+        const AsyncSourceConfig config{
+            .channel = channelId,
+            .calls = calls,
+            .inputFields = fmt::format("{},{},{}", names[0], names[1], names[2]),
+            .maxConcurrency = concurrency,
+            .channelCapacity = 1024,
+            .maxRetries = retries};
+        source = std::make_unique<AsyncSource>(config, *descriptor);
+        sink.emplace(channelId, 1024, HandoffChannel::Role::SINK);
+        source->open(bufferManager);
+    }
+
+    /// One handed-off buffer of (key, value) rows at the given stream position.
+    TupleBuffer handedOff(const StreamPosition& position, const std::vector<std::pair<std::string, std::string>>& rows)
+    {
+        auto buffer = bufferManager->getBufferBlocking();
+        constexpr auto fieldSize = sizeof(VariableSizedAccess);
+        const auto memory = buffer.getAvailableMemoryArea();
+        for (size_t row = 0; row < rows.size(); ++row)
+        {
+            for (size_t field = 0; field < 3; ++field)
+            {
+                const std::string value = field == 0 ? rows[row].first : field == 1 ? rows[row].second : "";
+                const auto access = TupleBufferRef::writeVarSized(buffer, *bufferManager, std::as_bytes(std::span{value}));
+                std::memcpy(memory.subspan(((row * 3) + field) * fieldSize).data(), &access, fieldSize);
+            }
+        }
+        buffer.setNumberOfTuples(rows.size());
+        buffer.setOriginId(OriginId(position.origin));
+        buffer.setSequenceNumber(SequenceNumber(position.sequence));
+        buffer.setChunkNumber(ChunkNumber(position.chunk));
+        buffer.setLastChunk(position.lastChunk);
+        return buffer;
+    }
+
+    void handOff(const TupleBuffer& buffer)
+    {
+        while ((*sink)->tryPush(buffer) != HandoffChannel::PushResult::PUSHED)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+
+    /// Per emitted row its origin, value and result, until the end of the stream.
+    std::vector<std::tuple<uint64_t, std::string, std::string>> drain()
+    {
+        std::vector<std::tuple<uint64_t, std::string, std::string>> rows;
+        while (true)
+        {
+            auto output = bufferManager->getBufferBlocking();
+            const auto result = source->fillTupleBuffer(output, std::stop_token{});
+            if (result.isEoS())
+            {
+                break;
+            }
+            constexpr auto fieldSize = sizeof(VariableSizedAccess);
+            const auto memory = output.getAvailableMemoryArea();
+            for (size_t row = 0; row < result.getNumberOfBytes(); ++row)
+            {
+                std::vector<std::string> values;
+                for (size_t field = 1; field < 3; ++field)
+                {
+                    VariableSizedAccess access;
+                    std::memcpy(&access, memory.subspan(((row * 3) + field) * fieldSize).data(), fieldSize);
+                    const auto bytes = TupleBufferRef::loadAssociatedVarSizedValue(output, access);
+                    values.emplace_back(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+                }
+                rows.emplace_back(output.getOriginId().getRawValue(), values[0], values[1]);
+            }
+        }
+        source->close();
+        return rows;
+    }
+
+    std::shared_ptr<BufferManager> bufferManager
+        = BufferManager::create(64 * 1024 * 1024, 0.5, BufferAlignment{64}, 4096, std::make_shared<NesDefaultMemoryAllocator>());
+    SourceCatalog catalog;
+    std::optional<SourceDescriptor> descriptor;
+    std::vector<std::string> names;
+    std::string channelId = UUIDToString(generateUUID());
+    std::unique_ptr<AsyncSource> source;
+    std::optional<HandoffChannel::Lease> sink;
+};
+
+/// Four producer threads hand off the buffers of two origins out of order, as the Handoff sink's worker threads do.
+TEST_F(AsyncSourceTest, EmitsInStreamOrderWhatSeveralThreadsHandedOffOutOfOrder)
+{
+    startSource("1,0,1,0", 8, 0);
+    std::vector<TupleBuffer> buffers;
+    std::map<uint64_t, std::vector<std::string>> expected;
+    for (uint64_t origin = 1; origin <= 2; ++origin)
+    {
+        for (uint64_t sequence = 1; sequence <= 40; ++sequence)
+        {
+            for (uint64_t chunk = 1; chunk <= 2; ++chunk)
+            {
+                const auto value = fmt::format("{}-{}-{}", origin, sequence, chunk);
+                buffers.push_back(handedOff(at(origin, sequence, chunk, chunk == 2), {{"k", value + "a"}, {"k", value + "b"}}));
+                expected[origin].push_back(value + "a");
+                expected[origin].push_back(value + "b");
+            }
+        }
+    }
+    std::mt19937 random{7};
+    std::ranges::shuffle(buffers, random);
+    std::vector<std::jthread> producers;
+    for (size_t thread = 0; thread < 4; ++thread)
+    {
+        producers.emplace_back(
+            [&, thread]
+            {
+                for (size_t index = thread; index < buffers.size(); index += 4)
+                {
+                    handOff(buffers[index]);
+                }
+            });
+    }
+    std::jthread closer{[&]
+                        {
+                            for (auto& producer : producers)
+                            {
+                                producer.join();
+                            }
+                            (*sink)->close();
+                        }};
+    const auto rows = drain();
+    std::map<uint64_t, std::vector<std::string>> emitted;
+    for (const auto& [origin, value, result] : rows)
+    {
+        emitted[origin].push_back(value);
+        EXPECT_EQ(result, value + "!");
+    }
+    EXPECT_EQ(emitted, expected);
+    EXPECT_GT(observed.mostInFlight, 1);
+}
+
+TEST_F(AsyncSourceTest, BatchesReadyRowsAndSendsThePartialLastBatch)
+{
+    /// One slot: the 10 rows of one buffer go out as 4 + 4 + 2.
+    startSource("4,0,1,0", 1, 0);
+    std::vector<std::pair<std::string, std::string>> rows;
+    for (int row = 0; row < 10; ++row)
+    {
+        rows.emplace_back("k", fmt::format("v{}", row));
+    }
+    handOff(handedOff(at(1, 1), rows));
+    (*sink)->close();
+    const auto emitted = drain();
+    ASSERT_EQ(emitted.size(), 10);
+    for (int row = 0; row < 10; ++row)
+    {
+        EXPECT_EQ(std::get<2>(emitted[row]), fmt::format("v{}!", row));
+    }
+    EXPECT_EQ(observed.requests, (std::vector<size_t>{4, 4, 2}));
+}
+
+TEST_F(AsyncSourceTest, BatchesAcrossBufferBoundaries)
+{
+    /// The calls are slow enough that all buffers are in the window before the single slot frees up again.
+    startSource("8,0,20,0", 1, 0);
+    for (uint64_t sequence = 1; sequence <= 5; ++sequence)
+    {
+        handOff(handedOff(at(1, sequence), {{"k", fmt::format("{}a", sequence)}, {"k", fmt::format("{}b", sequence)}}));
+    }
+    (*sink)->close();
+    const auto emitted = drain();
+    ASSERT_EQ(emitted.size(), 10);
+    EXPECT_EQ(std::get<1>(emitted.back()), "5b");
+    size_t total = 0;
+    for (const auto rows : observed.requests)
+    {
+        total += rows;
+    }
+    EXPECT_EQ(total, 10);
+    EXPECT_LT(observed.requests.size(), 5) << "rows of several buffers should share a request";
+}
+
+TEST_F(AsyncSourceTest, RetriesAFailedBatchThenCallsItsRowsOneByOne)
+{
+    startSource("3,0,1,0", 1, 1);
+    /// The batch fails twice, once more than the one retry: its rows are then called on their own, and the first of
+    /// those fails once and is retried.
+    observed.failingBatches = 2;
+    observed.failingRows = 1;
+    handOff(handedOff(at(1, 1), {{"k", "a"}, {"k", "b"}, {"k", "c"}}));
+    (*sink)->close();
+    const auto emitted = drain();
+    ASSERT_EQ(emitted.size(), 3);
+    EXPECT_EQ(std::get<2>(emitted[0]), "a!");
+    EXPECT_EQ(std::get<2>(emitted[2]), "c!");
+    EXPECT_EQ(observed.requests, (std::vector<size_t>{3, 3, 1, 1, 1, 1}));
+}
+
+TEST_F(AsyncSourceTest, CallsARowTheBatchLeftOutOnItsOwn)
+{
+    startSource("3,0,1,1", 1, 0);
+    handOff(handedOff(at(1, 1), {{"k", "a"}, {"k", "b"}, {"k", "c"}}));
+    (*sink)->close();
+    const auto emitted = drain();
+    ASSERT_EQ(emitted.size(), 3);
+    EXPECT_EQ(std::get<2>(emitted[2]), "c!");
+    EXPECT_EQ(observed.requests, (std::vector<size_t>{3, 1}));
+}
+
+TEST_F(AsyncSourceTest, RunsOneCallPerKeyAtATimeInStreamOrderAndKeysInParallel)
+{
+    startSource("1,1,3,0", 4, 0);
+    std::map<std::string, std::vector<std::string>> expected;
+    std::vector<TupleBuffer> buffers;
+    for (uint64_t sequence = 1; sequence <= 20; ++sequence)
+    {
+        std::vector<std::pair<std::string, std::string>> rows;
+        for (const auto* key : {"hot", "hot", "a", "b"})
+        {
+            const auto value = fmt::format("{}{}-{}", key, sequence, rows.size());
+            rows.emplace_back(key, value);
+            expected[key].push_back(value);
+        }
+        buffers.push_back(handedOff(at(1, sequence), rows));
+    }
+    std::mt19937 random{3};
+    std::ranges::shuffle(buffers, random);
+    for (const auto& buffer : buffers)
+    {
+        handOff(buffer);
+    }
+    (*sink)->close();
+    const auto emitted = drain();
+    EXPECT_EQ(emitted.size(), 80);
+    EXPECT_EQ(observed.overlapsOfOneKey, 0);
+    EXPECT_EQ(observed.startedPerKey, expected);
+    /// The hot key does not hold the slots: the other keys ran next to it.
+    EXPECT_GT(observed.mostInFlight, 1);
+}
+
+TEST_F(AsyncSourceTest, BatchesHoldAtMostOneRowPerKey)
+{
+    startSource("4,1,1,0", 1, 0);
+    handOff(handedOff(at(1, 1), {{"a", "a1"}, {"a", "a2"}, {"b", "b1"}, {"c", "c1"}, {"b", "b2"}}));
+    (*sink)->close();
+    const auto emitted = drain();
+    ASSERT_EQ(emitted.size(), 5);
+    EXPECT_EQ(observed.overlapsOfOneKey, 0);
+    EXPECT_EQ(observed.requests, (std::vector<size_t>{3, 2}));
+    EXPECT_EQ(observed.startedPerKey["a"], (std::vector<std::string>{"a1", "a2"}));
+    EXPECT_EQ(observed.startedPerKey["b"], (std::vector<std::string>{"b1", "b2"}));
+}
+
+}
+}

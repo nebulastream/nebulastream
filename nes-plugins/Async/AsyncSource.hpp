@@ -40,6 +40,7 @@
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
+#include <AsyncScheduling.hpp>
 #include <HandoffChannel.hpp>
 
 namespace NES
@@ -70,8 +71,19 @@ struct AsyncSourceConfig
 /// same channel handed off, evaluates the async calls and fills in their result slots.
 ///
 /// The calls run on one event loop shared by all Async sources; the source thread only waits for them.
-/// They run across buffer boundaries: up to `MAX_CONCURRENCY` rows are in flight at once, whichever handed-off
-/// buffers they belong to, and the buffers are emitted in the order they were handed off.
+/// They run across buffer boundaries: up to `MAX_CONCURRENCY` requests are in flight at once, whichever handed-off
+/// buffers their rows belong to.
+///
+/// Order: the Handoff sink runs on several worker threads, so buffers arrive out of order. The source takes them in
+/// stream order again, per origin by sequence and chunk number (`StreamReorderer`), starts their rows in that order and
+/// emits the buffers in that order.
+///
+/// Batches: a slot runs up to `maxBatchSize` rows of the stage's functions in one request, whatever rows are ready when
+/// the slot is free. Rows queue up while every slot is busy, so batches fill under load and stay small when the
+/// service keeps up; the end of the stream needs no flush.
+///
+/// Keys: rows that share the value of a function's `orderingKey` argument run one at a time and in stream order; rows
+/// waiting for their key hold no slot (`KeyedRowQueue`).
 ///
 /// The lifting rule reserves a slot per call in the handed-off rows, so input and output rows have
 /// the same fields and one input buffer becomes exactly one output buffer. Everything that is not a
@@ -123,6 +135,10 @@ private:
         size_t requiredValues = 1;
         /// 0 for calls that read no other call; otherwise one more than the highest level they read.
         size_t level = 0;
+        /// The argument whose value is the call's ordering key, if the function names one.
+        std::optional<size_t> orderingKey;
+        /// Rows one request of this call takes.
+        size_t maxBatchSize = 1;
         /// One per slot, so an instance serves one call at a time.
         std::vector<std::unique_ptr<AsyncFunction>> instances;
     };
@@ -141,7 +157,6 @@ private:
         TupleBuffer input;
         size_t rows;
         /// Guarded by `Window::mutex`.
-        size_t nextRow = 0;
         size_t unfinishedRows;
         /// Per row, the values that go into output fields, in the order of `outputValues`. Each row's coroutine writes its own
         /// rows on the strand; the source thread reads them once `done` is set.
@@ -150,14 +165,24 @@ private:
         bool done = false;
     };
 
+    /// One row of a buffer in the window.
+    struct RowRef
+    {
+        std::shared_ptr<InFlightBuffer> buffer;
+        size_t row;
+    };
+
     /// What the source thread and the strand share; everything here is guarded by `mutex`.
     struct Window
     {
         std::mutex mutex;
         std::condition_variable_any changed;
-        /// In the order they were handed off, which is the order they are emitted in.
+        /// In stream order, which is the order they are emitted in.
         std::deque<std::shared_ptr<InFlightBuffer>> buffers;
-        size_t unstartedRows = 0;
+        /// The rows that wait to start, with their ordering keys.
+        KeyedRowQueue<RowRef> queue;
+        /// What `queue.startableRows()` was after its last change.
+        size_t startableRows = 0;
         size_t runningRows = 0;
         std::exception_ptr failure;
         /// Set by the channel when a buffer arrives or it closes; reset by the source thread before it looks.
@@ -167,13 +192,21 @@ private:
     /// `results` holds the values of this row's earlier calls, one result per call.
     std::vector<std::string>
     readArguments(const BoundCall& call, const TupleBuffer& input, size_t row, const std::vector<AsyncCallResult>& results) const;
+    /// The ordering keys of one handed-off row, one per call that names one.
+    std::vector<std::string> readKeys(const TupleBuffer& input, size_t row) const;
     /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops, and checks that the
     /// function produced the values the stage reads.
     boost::asio::awaitable<AsyncCallResult> callWithRetries(size_t callIndex, size_t slot, std::vector<std::string> arguments) const;
-    /// Runs the calls of one row with the function instances of `slot`.
-    boost::asio::awaitable<void> processRow(size_t slot, std::shared_ptr<InFlightBuffer> buffer, size_t row);
+    /// One request for several rows, retried as a whole up to `maxRetries` times. Rows it leaves without a result, or all
+    /// of them once the retries are used up, are called one by one (`callWithRetries`).
+    boost::asio::awaitable<std::vector<AsyncCallResult>>
+    callBatchWithRetries(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows) const;
+    /// One call for the rows of a batch, in requests of at most the call's `maxBatchSize` rows.
+    boost::asio::awaitable<std::vector<AsyncCallResult>> callRows(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows) const;
+    /// Runs the calls of a batch of rows with the function instances of `slot`.
+    boost::asio::awaitable<void> processBatch(size_t slot, std::vector<RowRef> rows);
 
-    /// Source thread.
+    /// Source thread: hands a buffer that is next in its origin to the window.
     void admit(TupleBuffer input);
     void writeOutput(const InFlightBuffer& buffer, TupleBuffer& output) const;
     /// Cancels every row in flight and returns once none is running and no handler of this source is left on the strand.
@@ -181,7 +214,7 @@ private:
 
     /// Strand only: starts rows while a slot is free.
     void startRows();
-    void finishRow(const std::shared_ptr<InFlightBuffer>& buffer, size_t slot, const std::exception_ptr& error);
+    void finishBatch(const std::vector<RowRef>& rows, const std::vector<std::string>& keys, size_t slot, const std::exception_ptr& error);
 
     std::string channelId;
     /// The configured bound, lowered to what the stage's functions allow.
@@ -194,6 +227,10 @@ private:
     std::vector<BoundCall> calls;
     std::vector<OutputValue> outputValues;
     size_t levels = 0;
+    /// The largest `maxBatchSize` of the stage's calls: the rows a slot takes at once.
+    size_t batchSize = 1;
+    /// Whether any call names an ordering key.
+    bool keyed = false;
 
     /// Taken when the source is created, so that a source that fails afterwards still releases the channel.
     HandoffChannel::Lease channel;
@@ -203,8 +240,11 @@ private:
 
     /// Source thread only: the channel is closed and drained.
     bool inputExhausted = false;
+    /// Source thread only: buffers that arrived before an earlier one of their origin.
+    StreamReorderer<TupleBuffer> reorderer;
+    size_t mostReordered = 0;
     Window window;
-    /// Strand only. A row in flight holds one slot: its function instances and its cancellation signal.
+    /// Strand only. A batch in flight holds one slot: its function instances and its cancellation signal.
     std::vector<size_t> freeSlots;
     std::vector<boost::asio::cancellation_signal> cancelSignals;
     bool stopping = false;

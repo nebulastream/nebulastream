@@ -14,6 +14,7 @@
 
 #include <Sources/AsyncFunction.hpp>
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -33,6 +34,17 @@ boost::asio::awaitable<AsyncCallResult> AsyncFunction::callValues(std::vector<st
 {
     /// The analyzer follows Asio's awaitable frame into a path that the coroutine machinery never takes.
     co_return AsyncCallResult{co_await call(std::move(arguments))}; /// NOLINT(clang-analyzer-core.CallAndMessage)
+}
+
+boost::asio::awaitable<AsyncBatchResult> AsyncFunction::callBatch(std::vector<std::vector<std::string>> rows)
+{
+    AsyncBatchResult results;
+    results.reserve(rows.size());
+    for (auto& arguments : rows)
+    {
+        results.emplace_back(co_await callValues(std::move(arguments))); /// NOLINT(clang-analyzer-core.CallAndMessage)
+    }
+    co_return results;
 }
 
 }

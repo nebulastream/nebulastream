@@ -208,7 +208,14 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
     for (const auto& [outputs, function, configuration, arguments] : descriptions.value())
     {
         BoundCall call{
-            .function = function, .configuration = configuration, .arguments = {}, .requiredValues = 1, .level = 0, .instances = {}};
+            .function = function,
+            .configuration = configuration,
+            .arguments = {},
+            .requiredValues = 1,
+            .level = 0,
+            .orderingKey = std::nullopt,
+            .maxBatchSize = 1,
+            .instances = {}};
         for (const auto& [index, field] : outputs)
         {
             const auto& [outputOffset, outputType] = outputFields.at(field);
@@ -246,7 +253,20 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
         }
         /// The first instance tells what the function allows; the stage runs within the strictest bounds of its functions.
         call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.configuration = configuration}));
-        maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, call.instances.front()->maxConcurrency().value_or(maxConcurrency)));
+        const auto& first = *call.instances.front();
+        maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, first.maxConcurrency().value_or(maxConcurrency)));
+        call.maxBatchSize = std::max<size_t>(1, first.maxBatchSize());
+        batchSize = std::max(batchSize, call.maxBatchSize);
+        if (const auto key = first.orderingKey())
+        {
+            if (*key >= call.arguments.size() || call.arguments[*key].call.has_value())
+            {
+                throw CannotOpenSource(
+                    "async function {} orders its calls by argument {}, which is not a handed-off field or a constant", function, *key);
+            }
+            call.orderingKey = key;
+            keyed = true;
+        }
         levels = std::max(levels, call.level + 1);
         calls.push_back(std::move(call));
     }
@@ -293,6 +313,7 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 
 void AsyncSource::close()
 {
+    NES_DEBUG("Async source {}: at most {} buffers waited for an earlier one of their origin", channelId, mostReordered);
     /// Also after a failure or a stop request, which already drained: rows of this source must not outlive it.
     cancelAndDrain();
     channel.release();
@@ -321,6 +342,46 @@ std::vector<std::string> AsyncSource::readArguments(
         arguments.emplace_back(reinterpret_cast<const char*>(value.data()), value.size());
     }
     return arguments;
+}
+
+std::vector<std::string> AsyncSource::readKeys(const TupleBuffer& input, const size_t row) const
+{
+    std::vector<std::string> keys;
+    const auto rowBytes = input.getAvailableMemoryArea().subspan(row * inputRowSize, inputRowSize);
+    for (size_t index = 0; index < calls.size(); ++index)
+    {
+        if (!calls[index].orderingKey)
+        {
+            continue;
+        }
+        const auto& argument = calls[index].arguments[*calls[index].orderingKey];
+        std::string value = argument.constant;
+        if (argument.inputOffset)
+        {
+            VariableSizedAccess access;
+            std::memcpy(&access, rowBytes.subspan(*argument.inputOffset).data(), sizeof(access));
+            const auto bytes = TupleBufferRef::loadAssociatedVarSizedValue(input, access);
+            value.assign(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+        }
+        /// Keys of different calls never collide: each call orders only its own rows.
+        keys.push_back(fmt::format("{}:{}", index, value));
+    }
+    return keys;
+}
+
+namespace
+{
+boost::asio::awaitable<void> waitBeforeRetry(const size_t attempt)
+{
+    const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
+    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
+    co_await timer.async_wait(boost::asio::use_awaitable);
+}
+
+boost::asio::awaitable<bool> cancelled()
+{
+    co_return (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none;
+}
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
@@ -352,26 +413,111 @@ AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vec
             }
             co_return std::move(*result);
         }
-        if (attempt >= maxRetries
-            || (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+        if (attempt >= maxRetries || co_await cancelled())
         {
             std::rethrow_exception(failure);
         }
-        const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
-        NES_WARNING(
-            "Async call of {} failed, attempt {} of {} follows in {} ms", call.function, attempt + 2, maxRetries + 1, backoff.count());
-        boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
-        co_await timer.async_wait(boost::asio::use_awaitable);
+        NES_WARNING("Async call of {} failed, attempt {} of {} follows", call.function, attempt + 2, maxRetries + 1);
+        co_await waitBeforeRetry(attempt);
     }
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const std::shared_ptr<InFlightBuffer> buffer, const size_t row)
+boost::asio::awaitable<std::vector<AsyncCallResult>>
+AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std::vector<std::vector<std::string>> rows) const
 {
-    using CallOperation
-        = decltype(boost::asio::co_spawn(strand, std::declval<boost::asio::awaitable<AsyncCallResult>>(), boost::asio::deferred));
-    /// One result per call. Level by level: the calls of one level run in parallel and only read results of lower levels.
-    std::vector<AsyncCallResult> results(calls.size());
+    const auto& call = calls[callIndex];
+    auto& function = *call.instances[slot];
+    std::optional<AsyncBatchResult> batch;
+    for (size_t attempt = 0;; ++attempt)
+    {
+        std::exception_ptr failure;
+        try
+        {
+            batch = co_await function.callBatch(rows);
+        }
+        /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
+        catch (...) /// NOLINT(no-raw-catch-all)
+        {
+            failure = std::current_exception();
+        }
+        if (batch)
+        {
+            break;
+        }
+        if (co_await cancelled())
+        {
+            std::rethrow_exception(failure);
+        }
+        if (attempt >= maxRetries)
+        {
+            NES_WARNING("Async batch of {} rows of {} failed {} times; calling its rows one by one", rows.size(), call.function, attempt + 1);
+            break;
+        }
+        NES_WARNING("Async batch of {} rows of {} failed, attempt {} of {} follows", rows.size(), call.function, attempt + 2, maxRetries + 1);
+        co_await waitBeforeRetry(attempt);
+    }
+    if (batch && batch->size() != rows.size())
+    {
+        throw CannotReadFromSource("async function {} answered a batch of {} rows with {} results", call.function, rows.size(), batch->size());
+    }
+    std::vector<AsyncCallResult> results;
+    results.reserve(rows.size());
+    for (size_t row = 0; row < rows.size(); ++row)
+    {
+        if (batch && (*batch)[row])
+        {
+            if ((*batch)[row]->size() < call.requiredValues)
+            {
+                throw CannotReadFromSource(
+                    "async function {} produced {} values, but the query reads {}", call.function, (*batch)[row]->size(), call.requiredValues);
+            }
+            results.push_back(std::move(*(*batch)[row]));
+            continue;
+        }
+        results.push_back(co_await callWithRetries(callIndex, slot, std::move(rows[row])));
+    }
+    co_return results;
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<std::vector<AsyncCallResult>>
+AsyncSource::callRows(const size_t callIndex, const size_t slot, std::vector<std::vector<std::string>> rows) const
+{
+    const auto requestSize = calls[callIndex].maxBatchSize;
+    std::vector<AsyncCallResult> results;
+    results.reserve(rows.size());
+    if (requestSize == 1 || rows.size() == 1)
+    {
+        /// One request per row; with a slot's single instance, one after the other.
+        for (auto& arguments : rows)
+        {
+            results.push_back(co_await callWithRetries(callIndex, slot, std::move(arguments)));
+        }
+        co_return results;
+    }
+    for (size_t begin = 0; begin < rows.size(); begin += requestSize)
+    {
+        const auto end = std::min(rows.size(), begin + requestSize);
+        std::vector<std::vector<std::string>> request(
+            std::make_move_iterator(rows.begin() + static_cast<std::ptrdiff_t>(begin)),
+            std::make_move_iterator(rows.begin() + static_cast<std::ptrdiff_t>(end)));
+        for (auto& values : co_await callBatchWithRetries(callIndex, slot, std::move(request)))
+        {
+            results.push_back(std::move(values));
+        }
+    }
+    co_return results;
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<void> AsyncSource::processBatch(const size_t slot, const std::vector<RowRef> rows)
+{
+    using CallOperation = decltype(boost::asio::co_spawn(
+        strand, std::declval<boost::asio::awaitable<std::vector<AsyncCallResult>>>(), boost::asio::deferred));
+    /// Per row one result per call. Level by level: the calls of one level run in parallel and only read results of lower
+    /// levels; each call takes all rows of the batch.
+    std::vector<std::vector<AsyncCallResult>> results(rows.size(), std::vector<AsyncCallResult>(calls.size()));
     for (size_t level = 0; level < levels; ++level)
     {
         std::vector<size_t> started;
@@ -380,12 +526,14 @@ boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const st
         {
             if (calls[index].level == level)
             {
+                std::vector<std::vector<std::string>> arguments;
+                arguments.reserve(rows.size());
+                for (size_t position = 0; position < rows.size(); ++position)
+                {
+                    arguments.push_back(readArguments(calls[index], rows[position].buffer->input, rows[position].row, results[position]));
+                }
                 started.push_back(index);
-                operations.push_back(
-                    boost::asio::co_spawn(
-                        strand,
-                        callWithRetries(index, slot, readArguments(calls[index], buffer->input, row, results)),
-                        boost::asio::deferred));
+                operations.push_back(boost::asio::co_spawn(strand, callRows(index, slot, std::move(arguments)), boost::asio::deferred));
             }
         }
         auto [order, failures, values] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
@@ -396,14 +544,20 @@ boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const st
             {
                 std::rethrow_exception(failures[position]);
             }
-            results[started[position]] = std::move(values[position]);
+            for (size_t row = 0; row < rows.size(); ++row)
+            {
+                results[row][started[position]] = std::move(values[position][row]);
+            }
         }
     }
-    auto& outputs = buffer->results[row];
-    outputs.reserve(outputValues.size());
-    for (const auto& [call, index, outputOffset] : outputValues)
+    for (size_t position = 0; position < rows.size(); ++position)
     {
-        outputs.push_back(results[call][index]);
+        auto& outputs = rows[position].buffer->results[rows[position].row];
+        outputs.reserve(outputValues.size());
+        for (const auto& [call, index, outputOffset] : outputValues)
+        {
+            outputs.push_back(results[position][call][index]);
+        }
     }
 }
 
@@ -412,29 +566,38 @@ void AsyncSource::startRows()
     bool started = false;
     while (!stopping && !freeSlots.empty())
     {
-        std::shared_ptr<InFlightBuffer> buffer;
-        size_t row = 0;
+        std::vector<std::pair<RowRef, std::vector<std::string>>> taken;
         {
             const std::scoped_lock lock(window.mutex);
-            const auto next
-                = std::ranges::find_if(window.buffers, [](const auto& candidate) { return candidate->nextRow < candidate->rows; });
-            if (window.failure || next == window.buffers.end())
+            if (window.failure)
             {
                 break;
             }
-            buffer = *next;
-            row = buffer->nextRow++;
-            --window.unstartedRows;
-            ++window.runningRows;
+            /// Whatever is ready, up to a full batch: rows only pile up while every slot is busy.
+            taken = window.queue.take(batchSize);
+            if (taken.empty())
+            {
+                break;
+            }
+            window.runningRows += taken.size();
+            window.startableRows = keyed ? window.queue.startableRows() : window.queue.size();
         }
         started = true;
+        std::vector<RowRef> rows;
+        std::vector<std::string> keys;
+        for (auto& [row, rowKeys] : taken)
+        {
+            rows.push_back(std::move(row));
+            keys.insert(keys.end(), std::make_move_iterator(rowKeys.begin()), std::make_move_iterator(rowKeys.end()));
+        }
         const auto slot = freeSlots.back();
         freeSlots.pop_back();
         boost::asio::co_spawn(
             strand,
-            processRow(slot, buffer, row),
+            processBatch(slot, rows),
             boost::asio::bind_cancellation_slot(
-                cancelSignals[slot].slot(), [this, buffer, slot](const std::exception_ptr& error) { finishRow(buffer, slot, error); }));
+                cancelSignals[slot].slot(),
+                [this, rows, keys = std::move(keys), slot](const std::exception_ptr& error) { finishBatch(rows, keys, slot, error); }));
     }
     if (started)
     {
@@ -443,20 +606,29 @@ void AsyncSource::startRows()
     }
 }
 
-void AsyncSource::finishRow(const std::shared_ptr<InFlightBuffer>& buffer, const size_t slot, const std::exception_ptr& error)
+void AsyncSource::finishBatch(
+    const std::vector<RowRef>& rows, const std::vector<std::string>& keys, const size_t slot, const std::exception_ptr& error)
 {
     freeSlots.push_back(slot);
     {
         const std::scoped_lock lock(window.mutex);
-        --window.runningRows;
+        window.runningRows -= rows.size();
         /// A row cancelled because the query stops did not fail.
         if (error && !stopping && !window.failure)
         {
             window.failure = error;
         }
-        if (--buffer->unfinishedRows == 0)
+        window.queue.finish(keys);
+        if (keyed)
         {
-            buffer->done = true;
+            window.startableRows = window.queue.startableRows();
+        }
+        for (const auto& [buffer, row] : rows)
+        {
+            if (--buffer->unfinishedRows == 0)
+            {
+                buffer->done = true;
+            }
         }
     }
     window.changed.notify_all();
@@ -466,17 +638,28 @@ void AsyncSource::finishRow(const std::shared_ptr<InFlightBuffer>& buffer, const
 void AsyncSource::admit(TupleBuffer input)
 {
     const auto rows = input.getNumberOfTuples();
+    std::vector<std::vector<std::string>> keys(rows);
+    if (keyed)
+    {
+        for (size_t row = 0; row < rows; ++row)
+        {
+            keys[row] = readKeys(input, row);
+        }
+    }
     auto buffer = std::make_shared<InFlightBuffer>(InFlightBuffer{
         .input = std::move(input),
         .rows = rows,
-        .nextRow = 0,
         .unfinishedRows = rows,
         .results = std::vector<std::vector<std::string>>(rows),
         .done = rows == 0});
     {
         const std::scoped_lock lock(window.mutex);
+        for (size_t row = 0; row < rows; ++row)
+        {
+            window.queue.push(RowRef{.buffer = buffer, .row = row}, std::move(keys[row]));
+        }
         window.buffers.push_back(std::move(buffer));
-        window.unstartedRows += rows;
+        window.startableRows = keyed ? window.queue.startableRows() : window.queue.size();
     }
     boost::asio::post(strand, [this] { startRows(); });
 }
@@ -532,7 +715,8 @@ void AsyncSource::cancelAndDrain()
         std::unique_lock lock(window.mutex);
         window.changed.wait(lock, [this] { return window.runningRows == 0; });
         window.buffers.clear();
-        window.unstartedRows = 0;
+        window.queue.clear();
+        window.startableRows = 0;
     }
     /// The strand runs handlers in the order they were posted: once this one ran, no handler of this source is left.
     std::promise<void> drained;
@@ -565,9 +749,11 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
             return FillTupleBufferResult::eos();
         }
 
-        /// The next buffer is taken once the rows waiting to start would no longer keep every slot busy, so the calls
-        /// run across buffer boundaries while the channel, not this source, holds what the calls cannot keep up with.
-        const bool wantsInput = !inputExhausted && window.buffers.size() < maxConcurrency && window.unstartedRows < maxConcurrency;
+        /// The next buffer is taken once the rows ready to start would no longer fill every slot with a full batch, so the
+        /// calls run across buffer boundaries while the channel, not this source, holds what the calls cannot keep up with.
+        /// Rows that wait for their key do not count as ready, so a busy key does not keep other keys from starting.
+        const auto rowsInFlight = maxConcurrency * batchSize;
+        const bool wantsInput = !inputExhausted && window.buffers.size() < rowsInFlight && window.startableRows < rowsInFlight;
         if (wantsInput)
         {
             const bool idle = window.buffers.empty();
@@ -582,11 +768,29 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
             }
             if (input)
             {
-                admit(std::move(*input));
+                const StreamPosition position{
+                    .origin = input->getOriginId().getRawValue(),
+                    .sequence = input->getSequenceNumber().getRawValue(),
+                    .chunk = input->getChunkNumber().getRawValue(),
+                    .lastChunk = input->isLastChunk()};
+                for (auto& next : reorderer.push(position, std::move(*input)))
+                {
+                    admit(std::move(next));
+                }
+                mostReordered = std::max(mostReordered, reorderer.size());
             }
             else
             {
                 inputExhausted = channel->exhausted();
+                if (inputExhausted && reorderer.size() > 0)
+                {
+                    /// Only a producer that skips sequence numbers gets here; what it sent still goes out, in order.
+                    NES_WARNING("Async source {}: {} buffers never got their predecessor; emitting them in order", channelId, reorderer.size());
+                    for (auto& next : reorderer.drain())
+                    {
+                        admit(std::move(next));
+                    }
+                }
             }
             lock.lock();
             if (input || inputExhausted)
