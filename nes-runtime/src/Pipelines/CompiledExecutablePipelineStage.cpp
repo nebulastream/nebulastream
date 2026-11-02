@@ -28,6 +28,7 @@
 #include <cpptrace/from_current.hpp>
 #include <cpptrace/from_current_macros.hpp>
 #include <fmt/format.h>
+#include <nautilus/inline.hpp> /// NOLINT(misc-include-cleaner) anchors the inlining plugin, whose LLVM hook links in registered bitcode
 #include <nautilus/val_ptr.hpp>
 #include <CompilationContext.hpp>
 #include <Engine.hpp>
@@ -121,7 +122,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     CPPTRACE_TRY
     {
         auto module = engine.createModule();
-        CompilationContext compilationCtx{module};
+        CompilationContext compilationCtx{module, engine};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
         registerPipelineFunction(module);
         compiledModule = module.compile();
