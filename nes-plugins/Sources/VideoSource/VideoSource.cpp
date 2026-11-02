@@ -15,6 +15,7 @@
 #include <VideoSource.hpp>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -24,6 +25,7 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <arv.h>
 #include <glib.h>
@@ -50,6 +52,11 @@ namespace NES
 {
 namespace
 {
+/// A camera stream without a complete frame for this long is connected again.
+constexpr auto STALL_TIMEOUT = std::chrono::seconds{5};
+/// How often a camera that cannot be reached is tried again.
+constexpr auto RECONNECT_INTERVAL = std::chrono::seconds{1};
+
 struct VideoTuple
 {
     uint64_t timestamp;
@@ -186,6 +193,12 @@ VideoSource::~VideoSource()
 void VideoSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     bufferProvider = std::move(provider);
+    connectCamera();
+}
+
+void VideoSource::connectCamera()
+{
+    lastProgress = std::chrono::steady_clock::now();
     GError* error = nullptr;
     camera.reset(arv_camera_new(nullptr, &error));
     checkError("finding camera", error);
@@ -225,11 +238,32 @@ void VideoSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 Source::FillTupleBufferResult VideoSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     PRECONDITION(bufferProvider, "Video source was not opened");
-    PRECONDITION(stream, "Video source has no camera stream");
     PRECONDITION(tupleBuffer.getBufferSize() >= sizeof(VideoTuple), "Video tuple does not fit into tuple buffer");
 
     while (!stopToken.stop_requested())
     {
+        if (std::chrono::steady_clock::now() - lastProgress > STALL_TIMEOUT)
+        {
+            NES_ERROR(
+                "Video source received no complete frame for {}s, connecting to the camera again",
+                std::chrono::duration_cast<std::chrono::seconds>(STALL_TIMEOUT).count());
+            disconnectCamera();
+            try
+            {
+                connectCamera();
+            }
+            catch (const Exception& exception)
+            {
+                NES_ERROR("Video source could not connect to the camera, retrying: {}", exception.what());
+                lastProgress = std::chrono::steady_clock::now() - STALL_TIMEOUT + RECONNECT_INTERVAL;
+            }
+        }
+        if (!stream)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
         const StreamBuffer image{stream.get()};
         if (image.status() == ARV_BUFFER_STATUS_TIMEOUT)
         {
@@ -255,6 +289,7 @@ Source::FillTupleBufferResult VideoSource::fillTupleBuffer(TupleBuffer& tupleBuf
             continue;
         }
 
+        lastProgress = std::chrono::steady_clock::now();
         NES_EVENT_FIRST_DATA();
         NES_EVENT_DATA_ARRIVED(EventTrace::fromSystemTime(image.systemTimestamp()));
         const auto bytes = image.data();
@@ -275,13 +310,18 @@ Source::FillTupleBufferResult VideoSource::fillTupleBuffer(TupleBuffer& tupleBuf
 
 void VideoSource::close()
 {
+    disconnectCamera();
+    bufferProvider.reset();
+}
+
+void VideoSource::disconnectCamera()
+{
     if (camera)
     {
         arv_camera_stop_acquisition(camera.get(), nullptr);
     }
     stream.reset();
     camera.reset();
-    bufferProvider.reset();
 }
 
 std::ostream& VideoSource::toString(std::ostream& stream) const

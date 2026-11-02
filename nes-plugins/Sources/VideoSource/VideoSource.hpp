@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <expected>
 #include <memory>
@@ -63,6 +64,10 @@ protected:
     [[nodiscard]] std::ostream& toString(std::ostream& stream) const override;
 
 private:
+    /// Connects to the camera and starts the acquisition; throws CannotOpenSource when that fails.
+    void connectCamera();
+    void disconnectCamera();
+
     struct GObjectDeleter
     {
         template <typename T>
@@ -79,6 +84,9 @@ private:
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::unique_ptr<ArvCamera, GObjectDeleter> camera;
     std::unique_ptr<ArvStream, GObjectDeleter> stream;
+    /// The last complete frame, or the last (re)connect: the camera ends a stream without telling its receiver (e.g. when
+    /// it misses the controller's heartbeat), so a stream that delivers nothing for a while is connected again.
+    std::chrono::steady_clock::time_point lastProgress;
 };
 
 }
