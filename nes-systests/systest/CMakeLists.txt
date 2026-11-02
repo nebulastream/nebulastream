@@ -192,11 +192,12 @@ if (ENABLE_LARGE_TESTS)
 
     # Memory budget for the in-process large systests, split into a pooled and an unpooled share.
     # The unpooled pool (hash maps, paged vectors, var-sized data) is bounded so a runaway query fails cleanly instead of
-    # OOM-killing the worker. Sized so the pooled share keeps ~2,000,000 operator buffers (the previous setting) while
-    # leaving 64 GiB for unpooled state; raise it if a future large test legitimately needs more memory.
-    set(LARGE_TEST_TOTAL_MEMORY_BYTES 76911476736 CACHE STRING
-            "Memory budget (bytes) for the in-process large systests: 8 GiB pooled (2,000,000 * 4096) + 64 GiB unpooled")
-    set(LARGE_TEST_UNPOOLED_FRACTION 0.8935) # 68719476736 / 76911476736
+    # OOM-killing the worker. Watermark backpressure, which the join-heavy test files enable themselves, keeps the join
+    # state bounded by the watermark gap rather than by the input size, so the budget does not grow with the data sets;
+    # raise it if a future large test legitimately needs more.
+    set(LARGE_TEST_TOTAL_MEMORY_BYTES 4294967296 CACHE STRING
+            "Memory budget (bytes) for the in-process large systests: 1 GiB pooled + 3 GiB unpooled")
+    set(LARGE_TEST_UNPOOLED_FRACTION 0.75)
 
     set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
     ExternalData_Add_Test(test-data
