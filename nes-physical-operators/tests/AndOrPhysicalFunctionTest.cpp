@@ -77,9 +77,9 @@ public:
             {Identifier::parse("false"), VarVal{nautilus::val<bool>{false}, isNullable, isNotNull}},
             {Identifier::parse("null"), VarVal{nautilus::val<bool>{true}, isNullable, isNull}}}};
 
-        const nautilus::engine::NautilusEngine engine{nautilus::engine::Options{}};
+        nautilus::engine::NautilusEngine engine{nautilus::engine::Options{}};
         auto module = engine.createModule();
-        CompilationContext compilationContext{module};
+        CompilationContext compilationContext{module, engine};
         for (const auto& function : {readTrue, readFalse, readNull})
         {
             function.setup(compilationContext);

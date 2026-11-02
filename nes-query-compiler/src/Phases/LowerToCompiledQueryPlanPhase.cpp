@@ -94,6 +94,12 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// to its tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), whose tier-0 backends are
     /// intentionally not built into our nautilus package and which would also conflict with the thread model above.
     options.setOption("engine.backend", std::string("mlir"));
+    /// LLVM bitcode registered through CompilationContext::registerUDF is linked in by the inlining plugin's
+    /// pre-optimization LLVM hook, which only runs when invoke calls are inlined.
+    options.setOption("mlir.inline_invoke_calls", true);
+    /// Keep source locations in dumped compilation results and register generated code with GDB. This is also what
+    /// prevents the inlining plugin from stripping the debug metadata carried by registered bitcode modules.
+    options.setOption("mlir.debug.enable", dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {
