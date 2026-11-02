@@ -125,6 +125,18 @@ neither a call nor a source costs a thread.
   One input buffer becomes exactly one output buffer with the same sequence and chunk number, origin and watermark. All
   fields that are not call results are copied byte for byte, and variable-sized data stays valid, because the child
   buffers are carried over in the same order.
+- **Stream order.** The Handoff sink runs on several worker threads, so buffers arrive out of order. The source takes
+  them in stream order again before it starts their rows: per origin by sequence number, and within a sequence by chunk
+  number up to the chunk marked last (`StreamReorderer` in `AsyncScheduling.hpp`). Origins do not wait for each other.
+- **Batches.** A function whose service takes several rows per request returns more than 1 from `maxBatchSize` and
+  implements `callBatch`. A free slot then takes up to that many ready rows, from any buffers: batches fill while every
+  slot is busy and stay small when the service keeps up, and the last, partial batch needs no flush. A failed batch is
+  retried `max_retries` times and then called row by row; a row the batch answer leaves without a result (`nullopt`) is
+  called on its own. `max_concurrency` still counts requests in flight.
+- **Keys.** A function whose calls must not overlap or reorder for rows that share a value names that argument in
+  `orderingKey`. Rows with equal values run one at a time and in stream order, others in parallel; a batch holds at most
+  one row per key, and rows waiting for their key hold no slot (`KeyedRowQueue`). Its logical function returns true
+  from `AsyncLogicalFunction::dependsOnEarlierRows`, so that no selection is pushed below the call.
 - **Function instances.** Each slot has its own instance of every function in the stage, created through the
   `AsyncFunctionRegistry`, so an instance serves one call at a time and may keep state between calls, such as an open
   connection.
@@ -174,7 +186,8 @@ public:
 ```
 
 `create` receives the configuration from `getAsyncConfiguration`. A function that produces several values overrides
-`callValues` instead of `call`. Inside the coroutine, wait only with `co_await` on Asio operations; anything that blocks
+`callValues` instead of `call`. A function that takes several rows per request overrides `maxBatchSize` and
+`callBatch`; one that keeps state per key overrides `orderingKey` (see the Async source above). Inside the coroutine, wait only with `co_await` on Asio operations; anything that blocks
 stalls every async source on the worker.
 
 Both parts are registered in the plugin's `CMakeLists.txt`, the logical function under the SQL name and the
@@ -204,4 +217,6 @@ add_registry_entry(AsyncFunction MyFunction)
   It covers results, chaining, selections, concurrency within and across buffers, backpressure, failures, retries,
   timeouts and dropping queries.
 - `nes-plugins/Async/tests/HandoffChannelTest.cpp` covers the channel's leases.
+- `nes-plugins/Async/tests/AsyncSchedulingTest.cpp` covers stream order, batches and keys, on the building blocks and on
+  the Async source with test functions registered at runtime.
 - `nes-systests/explain/AsyncFunctionLifting.test` checks the lifted and the decomposed plans.
