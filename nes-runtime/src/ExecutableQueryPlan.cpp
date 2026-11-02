@@ -20,6 +20,7 @@
 #include <iterator>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -69,7 +70,9 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
 
     std::unordered_map<OperatorId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
 
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListeners] = createBackpressureChannels(
+        compiledQueryPlan.sources | std::views::transform([](const auto& source) { return source.originId; })
+        | std::ranges::to<std::vector>());
 
     if (compiledQueryPlan.sinks.size() != 1)
     {
@@ -94,7 +97,8 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[operatorId], std::back_inserter(successors));
-        instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor), std::move(successors));
+        instantiatedSources.emplace_back(
+            sourceProvider.lower(originId, std::move(backpressureListeners.at(originId)), descriptor), std::move(successors));
     }
 
 
