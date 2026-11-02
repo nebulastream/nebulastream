@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <string>
@@ -59,6 +60,13 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     NES_INFO("Starting SingleNodeWorker {}", host.getRawValue());
+    /// Opt-in venv for third-party Python packages (e.g. onnxruntime) a Python UDF bridge's embedded
+    /// interpreter can't otherwise see. Unset (the default) leaves system-local Python untouched.
+    if (const auto& venv = configuration.workerConfiguration.pythonUdfVenv; !venv.empty())
+    {
+        setenv("NES_UDF_VENV", venv.c_str(), /*overwrite=*/1);
+    }
+
     if (configuration.enableGoogleEventTrace)
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(

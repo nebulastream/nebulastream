@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <expected>
 #include <string>
+#include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -25,6 +26,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Strings.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <BloomFilterConfiguration.hpp>
@@ -97,6 +99,17 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{4096}};
+
+const ConfigField<std::vector<std::string>> PYTHON_UDF_IMPORT_PATHS{
+    Identifier::parse("python_udf_import_paths"),
+    "Comma-separated directories from which inline Python UDFs may import user-provided modules",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .transform([](const std::string& value) { return splitWithStringDelimiter<std::string>(value, ","); });
+    },
+    std::vector<std::string>{},
+    ""};
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
@@ -110,6 +123,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
+        PYTHON_UDF_IMPORT_PATHS,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -123,7 +137,8 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
         SliceCacheConfiguration::fromConfig(config),
-        BloomFilterConfiguration::fromConfig(config)};
+        BloomFilterConfiguration::fromConfig(config),
+        config.get(PYTHON_UDF_IMPORT_PATHS)};
 }
 
 }

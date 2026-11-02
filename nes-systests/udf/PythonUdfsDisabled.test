@@ -1,0 +1,27 @@
+# name: udf/PythonUdfsDisabled.test
+# description: In a build configured with NES_ENABLE_PYTHON_UDFS=OFF, inline PYTHON(...) functions still parse and bind, but running them fails
+# groups: [PythonUdfsDisabled]
+
+CREATE LOGICAL SOURCE numbers(a INT64 NOT NULL, b INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1,2
+
+# Inline Python, compiled by Codon (the default bridge)
+SELECT PYTHON((a, b): $python$
+    return a + b
+$python$) AS INT64 AS result
+FROM numbers
+INTO file();
+----
+ERROR PythonUdfsNotEnabled "has no support for Python UDFs"
+
+# Inline Python, run by the CPython bridge
+SELECT PYTHON((a, b): $python$
+    return a + b
+$python$) AS INT64 BRIDGE 'cpython' AS result
+FROM numbers
+INTO file();
+----
+ERROR PythonUdfsNotEnabled "has no support for Python UDFs"
+

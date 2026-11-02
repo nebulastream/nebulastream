@@ -13,7 +13,10 @@
 */
 #include <Functions/FunctionProvider.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -28,22 +31,72 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Functions/PythonLogicalFunction.hpp>
+#include <Functions/UDFCallLogicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <UdfDescriptor.hpp>
+#include <UdfLoweringRegistry.hpp>
 
 namespace NES::QueryCompilation
 {
-PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait)
+namespace
+{
+/// The UdfLoweringRegistry key of the backend that executes a UDF.
+std::string_view udfBackendKey(const UdfExecution execution)
+{
+    switch (execution)
+    {
+        case UdfExecution::InProcess:
+            return "InProcess";
+        case UdfExecution::Codon:
+            return "Codon";
+    }
+    std::unreachable();
+}
+
+std::string_view udfBackendKey(const PythonUdfBackend backend)
+{
+    switch (backend)
+    {
+        case PythonUdfBackend::Codon:
+            return "Codon";
+        case PythonUdfBackend::CPython:
+            return "CPython";
+        case PythonUdfBackend::PyPy:
+            return "PyPy";
+    }
+    std::unreachable();
+}
+
+PhysicalFunction lowerUdf(std::string_view backend, std::string_view udfName, UdfLoweringRegistryArguments arguments)
+{
+    const auto lower = UdfLoweringRegistry::instance().find(std::string{backend});
+    if (!lower)
+    {
+        throw PythonUdfsNotEnabled(
+            "Cannot execute {}: its {} backend is not part of this build, which has no support for Python UDFs (configure with "
+            "-DNES_ENABLE_PYTHON_UDFS=ON)",
+            udfName,
+            backend);
+    }
+    return (*lower)(std::move(arguments));
+}
+}
+
+PhysicalFunction FunctionProvider::lowerFunction(
+    LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait, const std::vector<std::string>& pythonUdfImportPaths)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunctions;
     std::vector<DataType> inputTypes;
     for (const auto& child : logicalFunction.getChildren())
     {
-        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait));
+        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait, pythonUdfImportPaths));
         inputTypes.emplace_back(child.getDataType());
     }
 
@@ -59,12 +112,46 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     {
         return lowerConstantFunction(constantValueFunction->get());
     }
+    /// UDF calls also bypass the registry: they carry the resolved catalog descriptor (path, entry
+    /// point, signature) that the registry arguments cannot express, so we build the physical function
+    /// and load the backend directly here — the same treatment as FieldAccess/ConstantValue above.
+    if (const auto udfCallFunction = logicalFunction.tryGetAs<UDFCallLogicalFunction>())
+    {
+        const auto& descriptor = udfCallFunction.value()->getDescriptor();
+        INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
+        return lowerUdf(
+            udfBackendKey(descriptor->getExecution()),
+            fmt::format("UDF '{}'", udfCallFunction.value()->getUdfName()),
+            UdfLoweringRegistryArguments{
+                .udf = *descriptor,
+                .childFunctions = std::move(childFunctions),
+                .inputTypes = std::move(inputTypes),
+                .outputType = logicalFunction.getDataType(),
+                .importPaths = pythonUdfImportPaths});
+    }
+    /// Inline UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query text rather than a
+    /// catalog descriptor. BRIDGE selects the backend: Codon (default) AOT-compiles the body into the pipeline itself,
+    /// cpython/pypy run it through the interpreter bridges catalog UDFs use.
+    if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
+    {
+        return lowerUdf(
+            udfBackendKey(pythonFunction.value()->getBackend()),
+            "an inline PYTHON(...) function",
+            UdfLoweringRegistryArguments{
+                .udf
+                = InlineUdfSource{.parameterNames = pythonFunction.value()->getParameterNames(), .body = pythonFunction.value()->getBody()},
+                .childFunctions = std::move(childFunctions),
+                .inputTypes = std::move(inputTypes),
+                .outputType = logicalFunction.getDataType(),
+                .importPaths = pythonUdfImportPaths});
+    }
 
     /// 3. Calling the registry to create an executable function.
     if (const auto factory = PhysicalFunctionRegistry::instance().find(std::string(logicalFunction.getType())))
     {
         return (*factory)(PhysicalFunctionRegistryArguments{
-            .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
+                              .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()})
+            .withSetupChildren(std::move(childFunctions));
     }
     throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }

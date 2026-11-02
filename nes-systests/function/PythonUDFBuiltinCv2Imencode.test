@@ -1,0 +1,24 @@
+# name: function/PythonUDFBuiltinCv2Imencode.test
+# description: Calls the native OpenCV imencode fallback through the embedded Codon cv2 facade
+# groups: [Function, PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE images(data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR images TYPE File;
+ATTACH INLINE
+ABCD
+
+CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((data): $python$
+    import cv2
+    import numpy as np
+    image = np.frombuffer(data, dtype=np.uint8).reshape((2, 2))
+    success, encoded = cv2.imencode(".jpg", image)
+    if not success:
+        return 0
+    return int(encoded[0]) * 256 + int(encoded[1])
+$python$) AS UINT64 AS result
+FROM images
+INTO file();
+----
+65496

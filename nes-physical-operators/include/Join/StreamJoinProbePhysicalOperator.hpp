@@ -42,6 +42,9 @@ public:
     StreamJoinProbePhysicalOperator(
         OperatorHandlerId operatorHandlerId, PhysicalFunction joinFunction, WindowMetaData windowMetaData, JoinSchema joinSchema);
 
+    /// Registers resources required by the join predicate before tracing the probe pipeline.
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+
     /// Shared open() for all probe operators: copies the record-buffer metadata into the execution
     /// context (this operator acts as a scan) and opens the child pipeline. Concrete probe operators
     /// override open(), call this base version first, then run their probe-specific logic.

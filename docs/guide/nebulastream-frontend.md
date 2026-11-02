@@ -580,6 +580,34 @@ Each model entry requires:
 
 For the equivalent SQL syntax and full usage examples, see `guide/query_api.md`.
 
+### Function Registration
+
+The topology file supports an optional `functions` section for registering scalar UDFs, the YAML counterpart of
+`CREATE FUNCTION`. Functions are registered before queries are submitted, so queries can call them by name.
+
+```yaml
+functions:
+  - name: yuyv_to_jpg
+    bridge: codon
+    entrypoint: demo_udfs.yuyv_to_jpg
+    args:
+      - { name: image, type: VARSIZED }
+      - { name: width, type: UINT64 }
+      - { name: height, type: UINT64 }
+    returns: VARSIZED
+```
+
+Each function entry requires:
+- `name` - Identifier used to call the function in queries
+- `entrypoint` - `module.function`; the module is looked up on the worker's `python_udf_import_paths` and `NES_UDF_PATH`
+- `args` - Ordered list of arguments with name and type (names are documentation only; arguments match by position)
+- `returns` - Return type (a UDF result is always nullable)
+- `bridge` or `path` - How the function executes. `bridge: codon` compiles the entrypoint module into the query
+  pipeline and takes no `path`. `bridge: cpython` or `bridge: pypy` selects a shipped bridge library, and `path` points
+  at a bridge library explicitly (`path` wins if both are given).
+
+See `design/20260708_Scalar_UDF_Support.md` for the UDF model.
+
 **Example: Complete Topology with Model Inference**
 
 ```yaml

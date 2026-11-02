@@ -1,0 +1,31 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+include("${PROJECT_SOURCE_DIR}/nes-python-udf/codon-sdk/cmake/NESCodonPlugin.cmake")
+find_package(OpenCV CONFIG REQUIRED)
+
+add_codon_extension_plugin(nes-codon-opencv-plugin
+    PLUGIN_NAME opencv
+    CODON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/codon"
+    ADDITIONAL_SOURCES src/OpenCv.cpp
+    NATIVE_SYMBOLS
+        nes_cv_imencode
+        nes_cv_cvt_color
+        nes_cv_apply_color_map
+        nes_cv_resize
+        nes_cv_imdecode
+        nes_cv_warp_affine
+        nes_cv_normalize
+        nes_cv_rectangle
+    NATIVE_SYMBOL_HEADERS OpenCv.hpp
+    LINK_LIBRARIES opencv_core opencv_imgcodecs opencv_imgproc)
+target_include_directories(nes-codon-opencv-plugin PRIVATE src)
