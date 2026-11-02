@@ -78,6 +78,8 @@ class Worker:
     source_fed: set = field(default_factory=set)  # pipelines fed directly by a source
     network_fed: set = field(default_factory=set)  # pipelines fed directly by a network source
     queries: dict = field(default_factory=dict)  # pipeline -> query name
+    # pipeline -> number of its query in the plan file, which lists every query the worker ran, also earlier ones of the same name
+    instances: dict = field(default_factory=dict)
     plan_sources: list = field(default_factory=list)  # (successors, description, query)
     siblings: dict = field(default_factory=dict)  # first successor of a source -> all its successors
     execs: dict = field(default_factory=lambda: defaultdict(list))  # (key, pipeline) -> [(t0, t1, tuples)]
@@ -204,11 +206,11 @@ def load_files(paths, corrections):
         worker = Worker(f"{host.rstrip(b'\0').decode()}:{pid}")
         plan = path.with_suffix(".plan")
         if plan.exists():
-            query = "?"
+            query, instance = "?", -1
             for line in plan.read_text().splitlines():
                 kind, _, rest = line.partition(" ")
                 if kind == "query":
-                    query = query_name(rest)
+                    query, instance = query_name(rest), instance + 1
                 if kind == "counter":
                     identifier, name = rest.split(" ", 1)
                     worker.counter_names[int(identifier)] = name
@@ -237,6 +239,7 @@ def load_files(paths, corrections):
                 if pipe := re.match(r"PipeSink\(pipe_name=([^)]+)\)", description):
                     worker.pipe_sinks[pipe.group(1)] = int(pipeline)
                 worker.queries[int(pipeline)] = query
+                worker.instances[int(pipeline)] = instance
                 for successor in successors:
                     worker.predecessors[successor].add(int(pipeline))
         types, offset = read_schemas(data, HEADER.size)
@@ -692,26 +695,29 @@ def short_description(description):
     return name.group(0)
 
 
-def chain_queries(chains, workers):
-    """The queries the chains passed through, including those that wrote the chains' buffers into a pipe."""
+def chain_instances(chains, workers):
+    """The query instances, (worker, number in its plan file), that the chains passed through, including those that wrote
+    the chains' buffers into a pipe."""
     by_name = {worker.name: worker for worker in workers}
-    return {by_name[name].queries.get(pipeline, "?") for chain in chains for name, _, pipeline in chain["tasks"]}
+    return {(name, by_name[name].instances.get(pipeline)) for chain in chains for name, _, pipeline in chain["tasks"]}
 
 
-def graph(workers, queries):
-    """Sources, pipelines and sinks of `queries`, with network edges between query fragments. The plan file lists every
-    query, because tracing can be turned on while a query runs."""
+def graph(workers, instances):
+    """Sources, pipelines and sinks of the query `instances` (all of their pipelines, also the inputs of a join that the
+    chains, which follow the triggering buffer, did not take), with network edges between query fragments. The plan file
+    lists every query the worker ran, because tracing can be turned on while a query runs."""
     nodes, edges, channels, pipes = [], [], {}, defaultdict(list)
     for worker in workers:
+        shown = {pipeline for pipeline in worker.pipelines if (worker.name, worker.instances[pipeline]) in instances}
         for pipeline, (successors, description) in worker.pipelines.items():
-            if worker.queries[pipeline] not in queries:
+            if pipeline not in shown:
                 continue
             kind = "network sink" if worker.is_network_sink(pipeline) else "sink" if not successors else "pipeline"
             nodes.append({"id": pipeline_node(worker, pipeline), "label": f"P{pipeline}", "what": short_description(description),
                           "detail": "\n".join(f"{name}: {what}" if what else name for name, what in operators(description)) or description, "query": worker.queries[pipeline], "kind": kind, "worker": worker.name})
             edges += [{"from": pipeline_node(worker, pipeline), "to": pipeline_node(worker, successor)} for successor in successors]
         for successors, description, query in worker.plan_sources:
-            if query not in queries:
+            if not set(successors) & shown:
                 continue
             network = re.search(r"NetworkSource\(([^)]+)\)", description)
             for successor in successors:
@@ -724,15 +730,16 @@ def graph(workers, queries):
                 if pipe := re.search(r"PipeSource\(pipe_name=([^)]+)\)", description):
                     pipes[worker.name, pipe.group(1)].append(node)
     for worker in workers:
+        shown = {pipeline for pipeline in worker.pipelines if (worker.name, worker.instances[pipeline]) in instances}
         for pipeline, (_, description) in worker.pipelines.items():
-            if worker.queries[pipeline] not in queries:
+            if pipeline not in shown:
                 continue
             channel = re.search(r"channelId: ([\w-]+)", description)
             if worker.is_network_sink(pipeline) and channel and channel.group(1) in channels:
                 sink, source = pipeline_node(worker, pipeline), channels[channel.group(1)]
                 edges.append({"from": sink, "to": source, "id": f"{sink}>{source}", "network": True})
         for name, sink in worker.pipe_sinks.items():
-            if worker.queries.get(sink) in queries:
+            if sink in shown:
                 edges += [{"from": pipeline_node(worker, sink), "to": source} for source in pipes[worker.name, name]]
     return {"nodes": nodes, "edges": edges}
 
@@ -836,7 +843,7 @@ def interactive_report(workers, chains, out):
     detail = set(by_total[-ACTIVITY_SLOWEST:]) | set(rest[:: max(1, len(rest) // ACTIVITY_SAMPLED)])
     span_names = {}
     activity = {i: thread_activity(chains[i], workers, span_names) for i in sorted(detail)}
-    data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, chain_queries(chains, workers)),
+    data = {"stages": list(stages), "nodes": list(nodes), "queries": list(queries), "chains": rows, "graph": graph(workers, chain_instances(chains, workers)),
             "workers": [worker.name for worker in workers],
             "pipelineLabels": [{pipeline: f"{worker.label(pipeline)} · {worker.queries[pipeline]}" for pipeline in worker.pipelines
                                 if worker.queries[pipeline] in traced} for worker in workers], "spanNames": list(span_names), "activity": activity, "cpuStates": CPU_STATES,
