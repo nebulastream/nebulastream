@@ -24,3 +24,11 @@ target_link_libraries(video_source_plugin_library PUBLIC PkgConfig::ARAVIS)
 
 add_executable(video_source_smoke_test VideoSourceSmokeTest.c)
 target_link_libraries(video_source_smoke_test PRIVATE PkgConfig::ARAVIS)
+
+# These tests use docker CLI to run docker-compose from within the development container.
+add_e2e_test(
+    NAME video-source-test
+    BATS_FILE tests/distributed.bats
+    DOCKER_COMPOSE
+    JOBS 2
+)

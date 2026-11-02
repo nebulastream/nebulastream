@@ -1,0 +1,67 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Topology:
+#
+#   ┌──────────────┐  GigE Vision  ┌─────────────────────────┐
+#   │ fake-camera  │  ──────────▶  │  worker-1               │
+#   │ 512x512 Mono8│               │  S: Video (selector 2)  │
+#   │ 25 frames/s  │               │  K: File → results.csv  │
+#   └──────────────┘               └─────────────────────────┘
+#
+#   The worker finds the camera by GigE Vision discovery and writes one line per frame (without the image).
+
+query: |
+  SELECT TIMESTAMP, WIDTH, HEIGHT, PIXEL_FORMAT FROM video INTO FRAMES
+sinks:
+  - name: FRAMES
+    host: worker-1:8080
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: PIXEL_FORMAT
+        type: UINT64
+    type: File
+    config:
+      file_path: results.csv
+      output_format: CSV
+
+logical:
+  - name: video
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: PIXEL_FORMAT
+        type: UINT64
+      - name: IMAGE
+        type: VARSIZED
+
+physical:
+  - logical: video
+    host: worker-1:8080
+    type: Video
+    parser_config:
+      type: NATIVE
+    source_config:
+      SOURCE_SELECTOR: 2
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
