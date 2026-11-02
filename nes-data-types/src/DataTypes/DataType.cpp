@@ -29,10 +29,13 @@
 #include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
 
-namespace
+//namespace
+//{
+
+namespace NES
 {
 
-std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, const NES::DataType& right)
+std::optional<NES::DataType> DataType::inferNumericDataType(const NES::DataType& left, const NES::DataType& right) const
 {
     /// We infer the data types between two numerics by following the c++ rules. For example, anything below i32 will be casted to a i32.
     /// Unsigned and signed of the same data type will be casted to the unsigned data type.
@@ -118,10 +121,10 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
 
     return {};
 }
-}
+//}
 
-namespace NES
-{
+//namespace NES
+//{
 
 DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nullable(nullable == NULLABLE::IS_NULLABLE)
 {

@@ -56,6 +56,8 @@ struct DataType final
     DataType(Type type, NULLABLE nullable);
     DataType();
 
+    [[nodiscard]] std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, const NES::DataType& right) const;
+
     template <class T>
     [[nodiscard]] bool isSameDataType() const
     {

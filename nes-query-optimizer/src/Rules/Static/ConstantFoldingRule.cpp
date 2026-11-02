@@ -43,6 +43,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <PlanRuleRegistry.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 
 
 namespace NES
@@ -58,22 +61,6 @@ struct OperatorContext
 using Visitor = PlanVisitor<OperatorContext>;
 //[[nodiscard]] PlanVisitor<>::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/);
 
-DataType chooseDataType(DataType left, DataType right)
-{
-    // todo: handle diff sizes
-    //auto dataType = DataType::inferNumericDataType(left, right);
-    // <32 get upped to 32 else use larger, except with float then take float -> DataType.cpp l.38
-    if (!(left.isFloat() && right.isFloat())) // if we dont have a float, we use the unsigned data type (see DataType.cpp l.38)
-    {
-        return (left.isSignedInteger() and right.isInteger()) ? right : left;
-    }
-
-    if (left.isFloat() || right.isFloat())
-    {
-        return left.isFloat() ? left : right;
-    }
-    return {}; // std::expected? string can be constant value
-}
 
 LogicalFunction handleAddition(const std::string left, const std::string right, const DataType dataType)
 {
@@ -85,6 +72,47 @@ LogicalFunction handleAddition(const std::string left, const std::string right, 
     // if not INT or UINT it must be a float
     // warning: if we get more datatypes, this needs to be adjusted!
     return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) + std::stof(right)));
+
+}
+
+LogicalFunction handleMultiplication(const std::string left, const std::string right, const DataType dataType)
+{
+    if (!dataType.isFloat())
+    {
+        return (dataType.isInteger() ? ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) * std::stoul(right)))
+            : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) * std::stoi(right))));
+    }
+    // if not INT or UINT it must be a float
+    // warning: if we get more datatypes, this needs to be adjusted!
+    return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) * std::stof(right)));
+}
+
+LogicalFunction handleDivision(const std::string left, const std::string right, const DataType dataType)
+{
+    if (left == "0" || right == "0")
+    {
+        throw InvalidQuerySyntax("Division by null!");
+    }
+    if (!dataType.isFloat())
+    {
+        return (dataType.isInteger() ? ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) / std::stoul(right)))
+            : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) / std::stoi(right))));
+    }
+    // if not INT or UINT it must be a float
+    // warning: if we get more datatypes, this needs to be adjusted!
+    return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) / std::stof(right)));
+}
+
+LogicalFunction handleSubtraction(const std::string left, const std::string right, const DataType dataType)
+{
+    if (!dataType.isFloat())
+    {
+        return (dataType.isInteger() ? ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) - std::stoul(right)))
+            : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) - std::stoi(right))));
+    }
+    // if not INT or UINT it must be a float
+    // warning: if we get more datatypes, this needs to be adjusted!
+    return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) - std::stof(right)));
 
 }
 
@@ -105,9 +133,49 @@ LogicalFunction calculateExpression(const LogicalFunction& function)
             const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             const auto& leftDataType = left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
             const auto& rightDataType = right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
-
-            const auto dataType = chooseDataType(leftDataType, rightDataType);
-            return handleAddition(leftConstant, rightConstant, dataType);
+            DataType dataType;
+            auto newDataType = dataType.inferNumericDataType(leftDataType, rightDataType);
+            return handleAddition(leftConstant, rightConstant, newDataType.value());
+        }
+    }
+    if (function.tryGetAs<MulLogicalFunction>())
+    {
+        const auto& left = newChildren.at(0);
+        const auto& right = newChildren.at(1);
+        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        {
+            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            DataType dataType;
+            auto newDataType = dataType.inferNumericDataType(
+            left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
+            return handleMultiplication(leftConstant, rightConstant, newDataType.value());
+        }
+    }
+    if (function.tryGetAs<DivLogicalFunction>())
+    {
+        const auto& left = newChildren.at(0);
+        const auto& right = newChildren.at(1);
+        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        {
+            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            DataType dataType;
+            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
+            return handleDivision(leftConstant, rightConstant, newDataType.value());
+        }
+    }
+    if (function.tryGetAs<SubLogicalFunction>())
+    {
+        const auto& left = newChildren.at(0);
+        const auto& right = newChildren.at(1);
+        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        {
+            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            DataType dataType;
+            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
+            return handleSubtraction(leftConstant, rightConstant, newDataType.value());
         }
     }
     return function.withChildren(newChildren);
