@@ -14,6 +14,7 @@
 #pragma once
 #include <optional>
 #include <Watermark/TimeFunction.hpp>
+#include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -24,6 +25,7 @@ class IngestionTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorCo
 {
 public:
     explicit IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction);
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;

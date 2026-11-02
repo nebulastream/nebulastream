@@ -37,6 +37,7 @@ namespace NES
 class TimeFunction
 {
 public:
+    virtual void setup(CompilationContext& compilationContext) const = 0;
     virtual void open(ExecutionContext& ctx, RecordBuffer& buffer) const = 0;
     virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const = 0;
     virtual ~TimeFunction() = default;
@@ -49,6 +50,7 @@ class EventTimeFunction final : public TimeFunction
 {
 public:
     explicit EventTimeFunction(PhysicalFunction timestampFunction, const Windowing::TimeUnit& unit);
+    void setup(CompilationContext& compilationContext) const override;
     void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 
@@ -65,6 +67,8 @@ private:
 class IngestionTimeFunction final : public TimeFunction
 {
 public:
+    void setup(CompilationContext&) const override { }
+
     void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 

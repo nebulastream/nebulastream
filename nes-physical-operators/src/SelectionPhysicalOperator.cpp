@@ -17,11 +17,17 @@
 #include <optional>
 #include <utility>
 #include <Interface/Record.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
 {
+
+void SelectionPhysicalOperator::setup(ExecutionContext&, CompilationContext& compilationContext) const
+{
+    function.setup(compilationContext);
+}
 
 void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {

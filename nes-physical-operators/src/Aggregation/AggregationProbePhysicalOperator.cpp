@@ -34,6 +34,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <WindowProbePhysicalOperator.hpp>
@@ -45,6 +46,15 @@
 
 namespace NES
 {
+
+void AggregationProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    for (const auto& aggregationFunction : aggregationPhysicalFunctions)
+    {
+        aggregationFunction->setup(compilationContext);
+    }
+    WindowProbePhysicalOperator::setup(executionCtx, compilationContext);
+}
 
 void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

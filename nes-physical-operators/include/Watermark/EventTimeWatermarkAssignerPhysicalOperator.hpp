@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <Watermark/TimeFunction.hpp>
+#include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -27,6 +28,7 @@ class EventTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorConcep
 {
 public:
     explicit EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction);
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

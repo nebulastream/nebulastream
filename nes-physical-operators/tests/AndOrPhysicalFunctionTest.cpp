@@ -22,6 +22,7 @@
 #include <Functions/BooleanFunctions/AndPhysicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrPhysicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -31,8 +32,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
+#include <nautilus/Engine.hpp>
 #include <Arena.hpp>
 #include <BaseUnitTest.hpp>
+#include <CompilationContext.hpp>
 #include <val_bool.hpp>
 
 namespace NES
@@ -73,12 +76,20 @@ public:
             {Identifier::parse("true"), VarVal{nautilus::val<bool>{true}, isNullable, isNotNull}},
             {Identifier::parse("false"), VarVal{nautilus::val<bool>{false}, isNullable, isNotNull}},
             {Identifier::parse("null"), VarVal{nautilus::val<bool>{true}, isNullable, isNull}}}};
+
+        const nautilus::engine::NautilusEngine engine{nautilus::engine::Options{}};
+        auto module = engine.createModule();
+        CompilationContext compilationContext{module};
+        for (const auto& function : {readTrue, readFalse, readNull})
+        {
+            function.setup(compilationContext);
+        }
     }
 
     Record record;
-    FieldAccessPhysicalFunction readTrue{Identifier::parse("true")};
-    FieldAccessPhysicalFunction readFalse{Identifier::parse("false")};
-    FieldAccessPhysicalFunction readNull{Identifier::parse("null")};
+    PhysicalFunction readTrue{FieldAccessPhysicalFunction{Identifier::parse("true")}};
+    PhysicalFunction readFalse{FieldAccessPhysicalFunction{Identifier::parse("false")}};
+    PhysicalFunction readNull{FieldAccessPhysicalFunction{Identifier::parse("null")}};
     std::shared_ptr<AbstractBufferProvider> bufferManager;
 };
 

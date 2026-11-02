@@ -51,6 +51,15 @@
 namespace NES
 {
 
+void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    for (const auto& keyFunction : keyFunctions)
+    {
+        keyFunction.setup(compilationContext);
+    }
+    StreamJoinBuildPhysicalOperator::setup(executionCtx, compilationContext);
+}
+
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// Getting the operator handler from the local state

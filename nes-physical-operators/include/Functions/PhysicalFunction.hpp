@@ -12,11 +12,13 @@
     limitations under the License.
 */
 #pragma once
+#include <atomic>
 #include <concepts>
 #include <memory>
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <vector>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Util/DynamicBase.hpp>
@@ -27,6 +29,8 @@
 
 namespace NES
 {
+
+class CompilationContext;
 
 namespace detail
 {
@@ -59,10 +63,13 @@ struct ErasedPhysicalFunction
     virtual ~ErasedPhysicalFunction() = default;
 
     [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
+    virtual void setupSelf(CompilationContext& compilationContext) const = 0;
 
 private:
     template <typename T>
     friend struct NES::TypedPhysicalFunction;
+    /// Set by setup(). It lives on the shared implementation, so all copies of a function agree on it.
+    mutable std::atomic<bool> isSetUp{false};
     ///If the function inherits from DynamicBase (over Castable), then returns a pointer to the wrapped operator as DynamicBase,
     ///so that we can then safely try to dyncast the DynamicBase* to Castable<T>*
     [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
@@ -206,13 +213,38 @@ struct TypedPhysicalFunction
         std::unreachable();
     }
 
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const { return self->execute(record, arena); }
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const
+    {
+        INVARIANT(
+            self->isSetUp.load(std::memory_order::relaxed),
+            "Physical function executed without being set up: the operator holding it must call setup() on it, and a function holding "
+            "other functions must record them via withSetupChildren()");
+        return self->execute(record, arena);
+    }
+
+    void setup(CompilationContext& compilationContext) const
+    {
+        for (const auto& child : setupChildren)
+        {
+            child.setup(compilationContext);
+        }
+        self->setupSelf(compilationContext);
+        self->isSetUp.store(true, std::memory_order::relaxed);
+    }
+
+    [[nodiscard]] PhysicalFunction withSetupChildren(std::vector<PhysicalFunction> children) const
+    {
+        auto copy = *this;
+        copy.setupChildren = std::move(children);
+        return copy;
+    }
 
 private:
     template <typename FriendChecked>
     friend struct TypedPhysicalFunction;
 
     std::shared_ptr<const NES::detail::ErasedPhysicalFunction> self;
+    std::vector<PhysicalFunction> setupChildren;
 };
 
 namespace detail
@@ -227,6 +259,14 @@ struct PhysicalFunctionModel : ErasedPhysicalFunction
     explicit PhysicalFunctionModel(PhysicalFunctionType impl) : impl(std::move(impl)) { }
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override { return impl.execute(record, arena); }
+
+    void setupSelf(CompilationContext& compilationContext) const override
+    {
+        if constexpr (requires { impl.setupSelf(compilationContext); })
+        {
+            impl.setupSelf(compilationContext);
+        }
+    }
 
     [[nodiscard]] PhysicalFunctionType get() const { return impl; }
 

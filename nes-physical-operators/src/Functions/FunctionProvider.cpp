@@ -64,7 +64,8 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     if (const auto factory = PhysicalFunctionRegistry::instance().find(std::string(logicalFunction.getType())))
     {
         return (*factory)(PhysicalFunctionRegistryArguments{
-            .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
+                              .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()})
+            .withSetupChildren(std::move(childFunctions));
     }
     throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }
