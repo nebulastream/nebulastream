@@ -24,7 +24,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <fmt/format.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -39,6 +38,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -101,7 +101,8 @@ void UnnestLogicalOperator::inferLocalSchema()
     }
     if (!field->getDataType().isType(DataType::Type::VARSIZED))
     {
-        throw DifferentFieldTypeExpected("UNNEST expects a VARSIZED field holding a JSON array, but '{}' is {}", input, field->getDataType());
+        throw DifferentFieldTypeExpected(
+            "UNNEST expects a VARSIZED field holding a JSON array, but '{}' is {}", input, field->getDataType());
     }
     if (field->getDataType().nullable)
     {

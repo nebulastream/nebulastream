@@ -174,8 +174,9 @@ TEST_F(SemanticMapStatementTest, MockBackendTakesItsBehaviourFromTheEndpoint)
 
 TEST_F(SemanticMapStatementTest, OptionNamesAreCaseInsensitive)
 {
-    const auto result = create("CREATE SEM_MODEL m INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
-                               "SET ('Classify' AS llm.prompt, 'http://x' AS llm.endpoint, 'm' AS llm.model_name)");
+    const auto result = create(
+        "CREATE SEM_MODEL m INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
+        "SET ('Classify' AS llm.prompt, 'http://x' AS llm.endpoint, 'm' AS llm.model_name)");
     ASSERT_TRUE(result.has_value()) << result.error().what();
 }
 
@@ -295,9 +296,9 @@ TEST_F(SemanticMapStatementTest, BinderRejectsDuplicateOptionKeys)
 {
     /// Neither value may silently win; option names are case-insensitive identifiers, so the
     /// second spelling is the same key.
-    const auto duplicate
-        = binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) "
-                                     "SET ('a' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'b' AS llm.prompt)");
+    const auto duplicate = binder->parseAndBindSingle(
+        "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) "
+        "SET ('a' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'b' AS llm.prompt)");
     ASSERT_FALSE(duplicate.has_value());
     EXPECT_EQ(duplicate.error().code(), ErrorCode::InvalidConfigParameter);
     EXPECT_NE(std::string{duplicate.error().what()}.find("Duplicate option"), std::string::npos) << duplicate.error().what();
@@ -364,9 +365,10 @@ TEST_F(SemanticMapStatementTest, SemMapDoesNotCaptureModelNameAsSource)
 /// No OUTPUT clause: a filter model, one FILTER step and no column.
 TEST_F(SemanticMapStatementTest, CreateWithoutOutputRegistersAFilterModel)
 {
-    const auto result = create("CREATE SEM_MODEL is_positive INPUT (reviewText VARSIZED) "
-                               "SET ('The review is positive' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, "
-                               "'ASYNC' AS LLM.EXECUTION, 8 AS LLM.BATCH_SIZE, 'TRUE' AS LLM.FUSION)");
+    const auto result = create(
+        "CREATE SEM_MODEL is_positive INPUT (reviewText VARSIZED) "
+        "SET ('The review is positive' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, "
+        "'ASYNC' AS LLM.EXECUTION, 8 AS LLM.BATCH_SIZE, 'TRUE' AS LLM.FUSION)");
     ASSERT_TRUE(result.has_value()) << result.error().what();
     EXPECT_EQ(result->kind, "FILTER");
     EXPECT_EQ(result->outputSchema.size(), 0);
@@ -403,8 +405,9 @@ TEST_F(SemanticMapStatementTest, FilterModelRejectsColumnOptions)
         EXPECT_EQ(result.error().code(), ErrorCode::InvalidSemanticModel) << option;
     }
     /// The batching rule is the same as SEM_MAP's.
-    const auto batched = create("CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
-                                "'m' AS LLM.MODEL_NAME, 8 AS LLM.BATCH_SIZE)");
+    const auto batched = create(
+        "CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+        "'m' AS LLM.MODEL_NAME, 8 AS LLM.BATCH_SIZE)");
     ASSERT_FALSE(batched.has_value());
     EXPECT_EQ(batched.error().code(), ErrorCode::InvalidSemanticModel);
 }

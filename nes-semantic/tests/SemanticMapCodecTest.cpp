@@ -90,8 +90,9 @@ TEST(SemanticMapCodecTest, SpaceJoinedPromptMatchesPythonReference)
 TEST(SemanticMapCodecTest, FusedMapStepsPromptMatchesPythonReference)
 {
     auto config = sentimentConfig();
-    config.steps.push_back(SemanticStep{
-        .kind = SemanticStep::Kind::MAP, .prompt = "Summarize", .outputColumn = "SUMMARY", .outputValues = {}, .defaultValue = {}});
+    config.steps.push_back(
+        SemanticStep{
+            .kind = SemanticStep::Kind::MAP, .prompt = "Summarize", .outputColumn = "SUMMARY", .outputValues = {}, .defaultValue = {}});
     const SemanticMapCodec codec{config};
 
     const std::vector rows{
@@ -208,27 +209,28 @@ class ParseLlmJsonTest : public ::testing::TestWithParam<ParseCase>
 INSTANTIATE_TEST_SUITE_P(
     Cascade,
     ParseLlmJsonTest,
-    ::testing::ValuesIn(std::vector<ParseCase>{
-        {.name = "RawJson",
-         .input = R"({"row1": {"s": {"answer": "POSITIVE", "confidence": 0.9}}})",
-         .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE", "confidence": 0.9}}})")},
-        {.name = "CodeFenceWithLanguageTag",
-         .input = "```json\n{\"row1\": {\"s\": {\"answer\": \"NEGATIVE\"}}}\n```",
-         .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "NEGATIVE"}}})")},
-        {.name = "BareCodeFence",
-         .input = "Here you go:\n```\n{\"row1\": {\"s\": {\"answer\": \"NEGATIVE\"}}}\n```\nanything else?",
-         .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "NEGATIVE"}}})")},
-        {.name = "OutermostObjectInProse",
-         .input = R"(Sure: {"row1": {"s": {"answer": "POSITIVE"}}} Hope that helps!)",
-         .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE"}}})")},
-        {.name = "RepairsStrayLlmCallIdKey",
-         .input = R"({"_llm_call_id": "row1", {"s": {"answer": "POSITIVE"}}})",
-         .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE"}}})")},
-        {.name = "RepairsCommaInsteadOfColon",
-         .input = R"({"row1", {"s": {"answer": "POSITIVE"}}})",
-         .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE"}}})")},
-        {.name = "TotalFailure", .input = "no json here", .expected = nlohmann::json::object()},
-    }),
+    ::testing::ValuesIn(
+        std::vector<ParseCase>{
+            {.name = "RawJson",
+             .input = R"({"row1": {"s": {"answer": "POSITIVE", "confidence": 0.9}}})",
+             .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE", "confidence": 0.9}}})")},
+            {.name = "CodeFenceWithLanguageTag",
+             .input = "```json\n{\"row1\": {\"s\": {\"answer\": \"NEGATIVE\"}}}\n```",
+             .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "NEGATIVE"}}})")},
+            {.name = "BareCodeFence",
+             .input = "Here you go:\n```\n{\"row1\": {\"s\": {\"answer\": \"NEGATIVE\"}}}\n```\nanything else?",
+             .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "NEGATIVE"}}})")},
+            {.name = "OutermostObjectInProse",
+             .input = R"(Sure: {"row1": {"s": {"answer": "POSITIVE"}}} Hope that helps!)",
+             .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE"}}})")},
+            {.name = "RepairsStrayLlmCallIdKey",
+             .input = R"({"_llm_call_id": "row1", {"s": {"answer": "POSITIVE"}}})",
+             .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE"}}})")},
+            {.name = "RepairsCommaInsteadOfColon",
+             .input = R"({"row1", {"s": {"answer": "POSITIVE"}}})",
+             .expected = nlohmann::json::parse(R"({"row1": {"s": {"answer": "POSITIVE"}}})")},
+            {.name = "TotalFailure", .input = "no json here", .expected = nlohmann::json::object()},
+        }),
     [](const ::testing::TestParamInfo<ParseCase>& info) { return info.param.name; });
 
 TEST_P(ParseLlmJsonTest, FollowsCascade)
@@ -264,22 +266,23 @@ class NormalizeAnswerTest : public ::testing::TestWithParam<NormalizeCase>
 INSTANTIATE_TEST_SUITE_P(
     Cascade,
     NormalizeAnswerTest,
-    ::testing::ValuesIn(std::vector<NormalizeCase>{
-        {.name = "FreeText", .answer = " kept verbatim ", .outputValues = {}, .expected = " kept verbatim "},
-        {.name = "CaseInsensitiveExact", .answer = " positive ", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "POSITIVE"},
-        {.name = "KeepsDeclaredSpelling", .answer = "POSITIVE", .outputValues = {"Positive", "Negative"}, .expected = "Positive"},
-        {.name = "StripsParenthetical",
-         .answer = "NEGATIVE (fairly sure)",
-         .outputValues = {"POSITIVE", "NEGATIVE"},
-         .expected = "NEGATIVE"},
-        {.name = "Containment", .answer = "clearly negative overall", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "NEGATIVE"},
-        {.name = "ContainmentTieBreaksInDeclarationOrder",
-         .answer = "NEGATIVE OR POSITIVE",
-         .outputValues = {"POSITIVE", "NEGATIVE"},
-         .expected = "POSITIVE"},
-        {.name = "NoFuzzyMatch", .answer = "POSITVE", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "DEFAULT"},
-        {.name = "Default", .answer = "no idea", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "DEFAULT"},
-    }),
+    ::testing::ValuesIn(
+        std::vector<NormalizeCase>{
+            {.name = "FreeText", .answer = " kept verbatim ", .outputValues = {}, .expected = " kept verbatim "},
+            {.name = "CaseInsensitiveExact", .answer = " positive ", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "POSITIVE"},
+            {.name = "KeepsDeclaredSpelling", .answer = "POSITIVE", .outputValues = {"Positive", "Negative"}, .expected = "Positive"},
+            {.name = "StripsParenthetical",
+             .answer = "NEGATIVE (fairly sure)",
+             .outputValues = {"POSITIVE", "NEGATIVE"},
+             .expected = "NEGATIVE"},
+            {.name = "Containment", .answer = "clearly negative overall", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "NEGATIVE"},
+            {.name = "ContainmentTieBreaksInDeclarationOrder",
+             .answer = "NEGATIVE OR POSITIVE",
+             .outputValues = {"POSITIVE", "NEGATIVE"},
+             .expected = "POSITIVE"},
+            {.name = "NoFuzzyMatch", .answer = "POSITVE", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "DEFAULT"},
+            {.name = "Default", .answer = "no idea", .outputValues = {"POSITIVE", "NEGATIVE"}, .expected = "DEFAULT"},
+        }),
     [](const ::testing::TestParamInfo<NormalizeCase>& info) { return info.param.name; });
 
 TEST_P(NormalizeAnswerTest, FollowsCascade)

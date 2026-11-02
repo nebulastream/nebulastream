@@ -67,7 +67,8 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
         const double mean = std::accumulate(sorted.begin(), sorted.end(), 0.0) / static_cast<double>(sorted.size());
         const double span = std::chrono::duration<double>(*lastEnd - *firstStart).count();
         const auto line = fmt::format(
-            "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, p99 {:.0f} ms, max {:.0f} ms, "
+            "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, p99 {:.0f} ms, max {:.0f} "
+            "ms, "
             "{:.1f} calls/s, span {:.1f} s, prompt tokens {}, completion tokens {} ({} responses, {} without usage, {} cut off at "
             "max_tokens)",
             context,

@@ -75,12 +75,13 @@ RegisteredSemanticModel loadModel(const std::string& name, const std::vector<std
     std::vector<UnqualifiedUnboundField> outputFields;
     for (const auto& output : outputs)
     {
-        config.steps.push_back(SemanticStep{
-            .kind = SemanticStep::Kind::MAP,
-            .prompt = "classify",
-            .outputColumn = output,
-            .outputValues = {"A", "B"},
-            .defaultValue = "A"});
+        config.steps.push_back(
+            SemanticStep{
+                .kind = SemanticStep::Kind::MAP,
+                .prompt = "classify",
+                .outputColumn = output,
+                .outputValues = {"A", "B"},
+                .defaultValue = "A"});
         outputFields.push_back(field(output, DataType::Type::VARSIZED));
     }
     SemanticModelCatalog catalog;

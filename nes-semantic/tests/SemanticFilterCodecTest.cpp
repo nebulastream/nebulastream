@@ -121,9 +121,10 @@ TEST(SemanticFilterCodecTest, DatasetContextSitsBetweenOperatorPromptAndData)
     config.datasetPrompt = "Movie reviews";
     const SemanticFilterCodec codec{config};
     const auto prompt = codec.buildPrompt(referenceRows());
-    EXPECT_TRUE(prompt.ends_with("Filter rows: The review is positive\n"
-                                 "Dataset context: Movie reviews\n"
-                                 "Data: {\"row1\": \"Great movie\", \"row2\": \"Terrible \\\"plot\\\" \\u00fc\"}"))
+    EXPECT_TRUE(prompt.ends_with(
+        "Filter rows: The review is positive\n"
+        "Dataset context: Movie reviews\n"
+        "Data: {\"row1\": \"Great movie\", \"row2\": \"Terrible \\\"plot\\\" \\u00fc\"}"))
         << prompt;
 }
 

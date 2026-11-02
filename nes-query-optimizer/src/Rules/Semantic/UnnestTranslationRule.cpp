@@ -141,19 +141,21 @@ LogicalPlan UnnestTranslationRule::apply(const LogicalPlan& queryPlan) const ///
 {
     using TranslationVisitor = PlanVisitor<std::monostate, std::monostate, bool>;
     TranslationVisitor visitor{
-        [](const LogicalOperator& op, std::vector<LogicalOperator> children, std::unordered_map<LogicalOperator, bool> upContexts)
-            -> TranslationVisitor::UpResult
+        [](const LogicalOperator& op,
+           std::vector<LogicalOperator> children,
+           std::unordered_map<LogicalOperator, bool> upContexts) -> TranslationVisitor::UpResult
         {
             if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>(); projection
-                && std::ranges::any_of(
-                    projection->get().getProjections(), [](const auto& entry) { return containsUnnest(entry.second); }))
+                && std::ranges::any_of(projection->get().getProjections(), [](const auto& entry) { return containsUnnest(entry.second); }))
             {
                 PRECONDITION(children.size() == 1, "Expected a projection to have one child, but has {}", children.size());
                 return {translate(projection->get(), children.front()), true};
             }
-            if (const auto selection = op.tryGetAs<SelectionLogicalOperator>(); selection && containsUnnest(selection->get().getPredicate()))
+            if (const auto selection = op.tryGetAs<SelectionLogicalOperator>();
+                selection && containsUnnest(selection->get().getPredicate()))
             {
-                throw UnsupportedQuery("UNNEST is supported in the SELECT list only, but the WHERE clause has {}", selection->get().getPredicate());
+                throw UnsupportedQuery(
+                    "UNNEST is supported in the SELECT list only, but the WHERE clause has {}", selection->get().getPredicate());
             }
             if (std::ranges::none_of(upContexts, [](const auto& entry) { return entry.second; }))
             {

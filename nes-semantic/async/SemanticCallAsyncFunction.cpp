@@ -251,7 +251,8 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const st
     {
         exchanged = co_await http->post(request.dump());
     }
-    catch (...)
+    /// Records the failed call and rethrows it unchanged; CPPTRACE_TRY cannot wrap a co_await.
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         SemanticCallStats::instance().recordCall(start, std::chrono::steady_clock::now(), true);
         throw;
