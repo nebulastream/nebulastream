@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+#include <Functions/AsyncLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -208,7 +209,24 @@ Visitor::DownResult pushBeyondProjection(
 
     std::unordered_set<Field> pushableFields;
 
-    if (op->hasAsterisk())
+    /// A call whose result depends on earlier rows must see every row it saw before; nothing passes below it.
+    const bool dependsOnEarlierRows = std::ranges::any_of(
+        op->getProjections(),
+        [](const auto& projection)
+        {
+            return std::ranges::any_of(
+                BFSRange{projection.second},
+                [](const LogicalFunction& node)
+                {
+                    const auto async = node.tryGetAs<AsyncLogicalFunction>();
+                    return async.has_value() && async.value()->get().dependsOnEarlierRows();
+                });
+        });
+
+    if (dependsOnEarlierRows)
+    {
+    }
+    else if (op->hasAsterisk())
     {
         for (const auto& childField : op->getChild().getOutputSchema())
         {
@@ -220,6 +238,10 @@ Visitor::DownResult pushBeyondProjection(
 
     for (const auto& [field, function] : op->getProjections())
     {
+        if (dependsOnEarlierRows)
+        {
+            break;
+        }
         if (auto fieldAccess = function.tryGetAs<FieldAccessLogicalFunction>(); fieldAccess.has_value())
         {
             if (field.getLastName() == fieldAccess.value()->getField().getLastName())

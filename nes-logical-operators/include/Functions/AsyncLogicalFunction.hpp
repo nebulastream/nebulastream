@@ -37,6 +37,11 @@ struct AsyncLogicalFunction : Castable<AsyncLogicalFunction>
 
     /// Values one call produces. The call evaluates to the first; `ASYNC_OUTPUT(call, i)` reads the i-th.
     [[nodiscard]] virtual size_t getNumberOfAsyncOutputs() const { return 1; }
+
+    /// Whether a row's result depends on the rows before it, as for a function that keeps state per key
+    /// (`AsyncFunction::orderingKey`). A selection must then stay above the call: moved below, it would change which rows
+    /// the state is built from (`PredicatePushdownRule`).
+    [[nodiscard]] virtual bool dependsOnEarlierRows() const { return false; }
 };
 
 }
