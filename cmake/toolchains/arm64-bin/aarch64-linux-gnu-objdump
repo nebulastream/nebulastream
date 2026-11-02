@@ -1,3 +1,3 @@
 #!/bin/sh
 # Prefixed binutils name for build systems that derive tools from the compiler prefix (scons, autotools).
-exec llvm-objdump-19 "$@"
+exec llvm-objdump-22 "$@"

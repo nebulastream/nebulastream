@@ -19,8 +19,8 @@ list(GET _NES_GCC_DIRS -1 NES_ARM64_GCC_DIR)
 
 # libc++'s wrapper headers (limits.h, ...) break glibc feature macros in C compilations, so C does not get its include path.
 set(NES_ARM64_C_COMPILE_FLAGS "--target=${NES_ARM64_TRIPLE} --sysroot=${NES_ARM64_SYSROOT} -isystem ${NES_ARM64_SYSROOT}/usr/include/${NES_ARM64_TRIPLE} -isystem ${NES_ARM64_SYSROOT}/usr/include")
-set(NES_ARM64_COMPILE_FLAGS "--target=${NES_ARM64_TRIPLE} --sysroot=${NES_ARM64_SYSROOT} -isystem ${NES_ARM64_SYSROOT}/usr/lib/llvm-19/include/c++/v1 -isystem ${NES_ARM64_SYSROOT}/usr/include/${NES_ARM64_TRIPLE} -isystem ${NES_ARM64_SYSROOT}/usr/include")
-set(NES_ARM64_LINK_FLAGS "--target=${NES_ARM64_TRIPLE} --sysroot=${NES_ARM64_SYSROOT} -B${NES_ARM64_GCC_DIR} -L${NES_ARM64_GCC_DIR} -L${NES_ARM64_SYSROOT}/usr/lib/${NES_ARM64_TRIPLE} -L${NES_ARM64_SYSROOT}/usr/lib/llvm-19/lib -Wl,-rpath-link,${NES_ARM64_SYSROOT}/usr/lib/${NES_ARM64_TRIPLE} -Wl,-rpath-link,${NES_ARM64_SYSROOT}/usr/lib/llvm-19/lib")
+set(NES_ARM64_COMPILE_FLAGS "--target=${NES_ARM64_TRIPLE} --sysroot=${NES_ARM64_SYSROOT} -isystem ${NES_ARM64_SYSROOT}/usr/lib/llvm-22/include/c++/v1 -isystem ${NES_ARM64_SYSROOT}/usr/include/${NES_ARM64_TRIPLE} -isystem ${NES_ARM64_SYSROOT}/usr/include")
+set(NES_ARM64_LINK_FLAGS "--target=${NES_ARM64_TRIPLE} --sysroot=${NES_ARM64_SYSROOT} -B${NES_ARM64_GCC_DIR} -L${NES_ARM64_GCC_DIR} -L${NES_ARM64_SYSROOT}/usr/lib/${NES_ARM64_TRIPLE} -L${NES_ARM64_SYSROOT}/usr/lib/llvm-22/lib -Wl,-rpath-link,${NES_ARM64_SYSROOT}/usr/lib/${NES_ARM64_TRIPLE} -Wl,-rpath-link,${NES_ARM64_SYSROOT}/usr/lib/llvm-22/lib")
 
 # Never pick up host libraries/headers, but do run host programs (protoc, ...).
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)

@@ -1,7 +1,7 @@
 # Chainloaded by vcpkg for the main NES project: -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=<this> -DNES_TARGET_ARCH=arm64
 include(${CMAKE_CURRENT_LIST_DIR}/arm64-cross-flags.cmake)
-find_program(NES_CLANG NAMES clang-19 clang REQUIRED)
-find_program(NES_CLANGXX NAMES clang++-19 clang++ REQUIRED)
+find_program(NES_CLANG NAMES clang-22 clang REQUIRED)
+find_program(NES_CLANGXX NAMES clang++-22 clang++ REQUIRED)
 # Corrosion derives the cargo target triple from these, without them it builds the Rust crates for the host.
 set(CMAKE_C_COMPILER_TARGET ${NES_ARM64_TRIPLE})
 set(CMAKE_CXX_COMPILER_TARGET ${NES_ARM64_TRIPLE})
