@@ -29,6 +29,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
@@ -91,9 +92,10 @@ std::string_view CastToTypeLogicalFunction::getType() const
     return NAME;
 }
 
-std::string CastToTypeLogicalFunction::explain(ExplainVerbosity) const
+std::string CastToTypeLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("Cast to {})", castToType);
+    return fmt::format(
+        "CAST({} AS {}{})", child.explain(verbosity), magic_enum::enum_name(castToType.type), castToType.nullable ? " NULLABLE" : "");
 }
 
 LogicalFunctionRegistryReturnType CastToTypeLogicalFunction::createCastToType(const LogicalFunctionRegistryArguments& arguments)
