@@ -129,16 +129,19 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 {
-    /// Operators are separated by tabs, because their descriptions can contain any other separator.
+    /// Operators are separated by tabs, because their descriptions can contain any other separator. The physical operators
+    /// that one logical operator lowers to (e.g. the maps of a projection) carry its description, which is printed once.
     os << "CompiledExecutablePipelineStage(";
     std::string_view separator;
+    std::string previousDescription;
     for (std::optional<PhysicalOperator> op = rootOperator; op.has_value(); op = op->getChild())
     {
         os << separator << *op;
-        if (!op->getDescription().empty())
+        if (!op->getDescription().empty() && op->getDescription() != previousDescription)
         {
             os << ": " << op->getDescription();
         }
+        previousDescription = op->getDescription();
         separator = "\t";
     }
     return os << ")";
