@@ -61,6 +61,8 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <CommonParserFunctions.hpp>
+#include <UdfBridgeRegistry.hpp>
+#include <UdfDescriptor.hpp>
 
 namespace NES
 {
@@ -296,8 +298,34 @@ public:
     {
         const auto functionName = bindIdentifier(functionDefAST->udfName->strictIdentifier());
 
-        /// FROM names the `.so` implementing the UDF C ABI; it is loaded by the worker, not here.
-        const auto path = bindStringLiteral(functionDefAST->functionPath);
+        /// FROM (a literal .so path) and BRIDGE (a name resolved to a shipped bridge) are both optional;
+        /// at least one is required, FROM wins if both given. Resolving BRIDGE here keeps
+        /// CreateFunctionStatement.path a plain string -- downstream code never needs to know BRIDGE exists.
+        /// BRIDGE 'codon' is the exception: it has no `.so`, so it selects UdfExecution::Codon and takes no FROM.
+        if (functionDefAST->functionPath == nullptr && functionDefAST->bridge == nullptr)
+        {
+            throw InvalidStatement("CREATE FUNCTION requires FROM, BRIDGE, or both");
+        }
+        if (functionDefAST->bridge != nullptr && functionDefAST->functionPath != nullptr
+            && bindStringLiteral(functionDefAST->bridge) == CodonUdfBridge)
+        {
+            throw InvalidStatement("CREATE FUNCTION ... BRIDGE '{}' compiles the ENTRYPOINT module and does not take FROM", CodonUdfBridge);
+        }
+        std::string path;
+        auto execution = UdfExecution::InProcess;
+        if (functionDefAST->functionPath != nullptr)
+        {
+            path = bindStringLiteral(functionDefAST->functionPath);
+        }
+        else
+        {
+            const auto bridge = resolveUdfBridge(bindStringLiteral(functionDefAST->bridge));
+            execution = bridge.execution;
+            if (execution != UdfExecution::Codon)
+            {
+                path = resolveUdfBridgeLibraryPath(bridge).string();
+            }
+        }
         const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
 
         /// Argument names in the DDL are documentation only — a scalar UDF matches
@@ -314,7 +342,8 @@ public:
             .path = path,
             .entrypoint = entrypoint,
             .argTypes = std::move(argTypes),
-            .returnType = returnType};
+            .returnType = returnType,
+            .execution = execution};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -49,6 +50,16 @@ bool isSupportedUdfType(const DataType::Type type)
             return false;
     }
     return false;
+}
+
+std::optional<std::pair<std::string, std::string>> splitEntrypoint(const std::string_view entrypoint)
+{
+    const auto lastDot = entrypoint.rfind('.');
+    if (lastDot == std::string_view::npos || lastDot == 0 || lastDot + 1 == entrypoint.size())
+    {
+        return std::nullopt;
+    }
+    return std::make_pair(std::string{entrypoint.substr(0, lastDot)}, std::string{entrypoint.substr(lastDot + 1)});
 }
 
 namespace detail

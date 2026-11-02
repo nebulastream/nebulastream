@@ -1,0 +1,33 @@
+# name: udf/CodonUdfInOperators.test
+# description: Codon UDFs in a selection predicate, and as aggregation arguments, which the parser moves into a map below the
+# aggregation. MEDIAN also evaluates its input function, a read of that map's field, in the probe pipeline.
+# groups: [PythonUDF]
+
+CREATE LOGICAL SOURCE numbers(a INT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+10,1000
+20,1100
+30,1200
+
+CREATE FUNCTION add_codon (a INT64, b INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.add';
+
+SELECT a FROM numbers WHERE add_codon(a, a) > 30
+INTO file();
+----
+20
+30
+
+SELECT start, end, SUM(add_codon(a, a)) AS total
+FROM numbers
+WINDOW TUMBLING(ts, SIZE 1 SEC)
+INTO file();
+----
+1000 2000 120
+
+SELECT start, end, MEDIAN(add_codon(a, a)) AS middle
+FROM numbers
+WINDOW TUMBLING(ts, SIZE 1 SEC)
+INTO file();
+----
+1000 2000 40.0

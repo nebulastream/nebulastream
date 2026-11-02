@@ -28,10 +28,12 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Functions/PythonLogicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <UdfDescriptor.hpp>
@@ -48,26 +50,46 @@ std::string_view udfBackendKey(const UdfExecution execution)
     {
         case UdfExecution::InProcess:
             return "InProcess";
+        case UdfExecution::Codon:
+            return "Codon";
     }
     std::unreachable();
 }
 
-PhysicalFunction lowerUdf(std::string_view backend, UdfLoweringRegistryArguments arguments)
+std::string_view udfBackendKey(const PythonUdfBackend backend)
+{
+    switch (backend)
+    {
+        case PythonUdfBackend::Codon:
+            return "Codon";
+    }
+    std::unreachable();
+}
+
+PhysicalFunction lowerUdf(std::string_view backend, std::string_view udfName, UdfLoweringRegistryArguments arguments)
 {
     const auto lower = UdfLoweringRegistry::instance().find(std::string{backend});
-    INVARIANT(lower.has_value(), "UDF backend '{}' is not registered", backend);
+    if (!lower)
+    {
+        throw PythonUdfsNotEnabled(
+            "Cannot execute {}: its {} backend is not part of this build, which has no support for Python UDFs (configure with "
+            "-DNES_ENABLE_PYTHON_UDFS=ON)",
+            udfName,
+            backend);
+    }
     return (*lower)(std::move(arguments));
 }
 }
 
-PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait)
+PhysicalFunction FunctionProvider::lowerFunction(
+    LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait, const std::vector<std::string>& pythonUdfImportPaths)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunctions;
     std::vector<DataType> inputTypes;
     for (const auto& child : logicalFunction.getChildren())
     {
-        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait));
+        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait, pythonUdfImportPaths));
         inputTypes.emplace_back(child.getDataType());
     }
 
@@ -92,11 +114,28 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
         INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
         return lowerUdf(
             udfBackendKey(descriptor->getExecution()),
+            fmt::format("UDF '{}'", udfCallFunction.value()->getUdfName()),
             UdfLoweringRegistryArguments{
                 .udf = *descriptor,
                 .childFunctions = std::move(childFunctions),
                 .inputTypes = std::move(inputTypes),
-                .outputType = logicalFunction.getDataType()});
+                .outputType = logicalFunction.getDataType(),
+                .importPaths = pythonUdfImportPaths});
+    }
+    /// Inline UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query text rather than a
+    /// catalog descriptor. BRIDGE selects the backend: Codon (the default) AOT-compiles the body into the pipeline itself.
+    if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
+    {
+        return lowerUdf(
+            udfBackendKey(pythonFunction.value()->getBackend()),
+            "an inline PYTHON(...) function",
+            UdfLoweringRegistryArguments{
+                .udf
+                = InlineUdfSource{.parameterNames = pythonFunction.value()->getParameterNames(), .body = pythonFunction.value()->getBody()},
+                .childFunctions = std::move(childFunctions),
+                .inputTypes = std::move(inputTypes),
+                .outputType = logicalFunction.getDataType(),
+                .importPaths = pythonUdfImportPaths});
     }
 
     /// 3. Calling the registry to create an executable function.

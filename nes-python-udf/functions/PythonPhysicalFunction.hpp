@@ -1,0 +1,56 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <memory>
+#include <string>
+#include <vector>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Interface/Record.hpp>
+#include <Arena.hpp>
+
+namespace NES
+{
+class CompilationContext;
+struct PythonUdfInterpreterExecutable;
+
+class PythonPhysicalFunction final
+{
+public:
+    PythonPhysicalFunction(
+        const std::vector<std::string>& parameterNames,
+        const std::string& body,
+        std::vector<PhysicalFunction> arguments,
+        std::vector<DataType> argumentTypes,
+        DataType returnType,
+        const std::vector<std::string>& importPaths);
+
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    void setupSelf(CompilationContext& compilationContext) const;
+
+private:
+    std::vector<PhysicalFunction> arguments;
+    std::vector<DataType> argumentTypes;
+    DataType returnType;
+    std::string symbolName;
+    std::string llvmBitcode;
+    std::string interpreterLlvmBitcode;
+    mutable std::shared_ptr<PythonUdfInterpreterExecutable> interpreterExecutable;
+};
+
+static_assert(PhysicalFunctionConcept<PythonPhysicalFunction>);
+}

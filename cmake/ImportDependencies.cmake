@@ -99,9 +99,17 @@ endif ()
 
 # By default we build MLIR via VCPKG. However the USE_LOCAL_MLIR options allows to supply a locally installed version
 # of MLIR.
+if (NES_ENABLE_PYTHON_UDFS)
+    message(STATUS "Enabling Python UDF feature for the VPCKG install")
+    list(APPEND VCPKG_MANIFEST_FEATURES "python-udf")
+endif ()
+
 if (NOT ${USE_LOCAL_MLIR})
     message(STATUS "Enabling MLIR feature for the VPCKG install")
     list(APPEND VCPKG_MANIFEST_FEATURES "mlir")
+    if (NES_ENABLE_PYTHON_UDFS)
+        list(APPEND VCPKG_MANIFEST_FEATURES "python-udf-mlir")
+    endif ()
 else ()
     message(STATUS "Using locally installed MLIR")
     # This code is called before VCPKG and before project() has been called. This means many configuration have not
@@ -113,7 +121,9 @@ else ()
     # The nautilus vcpkg port script will pick up the MLIR_DIR environment variable during build, which allows the
     # nautilus cmake configuration to find the locally installed version of MLIR.
     SET(ENV{MLIR_DIR} "${MLIR_DIR}")
+    SET(ENV{LLVM_DIR} "${LLVM_DIR}")
     list(APPEND VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
+    list(APPEND VCPKG_ENV_PASSTHROUGH "LLVM_DIR")
 endif ()
 
 if (NOT NES_SKIP_VCPKG)

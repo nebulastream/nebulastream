@@ -1,0 +1,50 @@
+# name: udf/CodonNestedUdfsLarge.test
+# description: CodonNestedUdfs.test on Nexmark bids: nested Codon catalog UDFs over datetime; each filters on the UDF output,
+# so it is evaluated for every row. Run with -b to compare the cost of nesting depth.
+# groups: [PythonUDF, CompilerOnly, large]
+
+CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+
+CREATE FUNCTION double_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.double';
+CREATE FUNCTION increment_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.increment';
+CREATE FUNCTION square_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.square';
+CREATE FUNCTION negate_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.negate';
+
+# Two nested UDFs: datetime * 2 + 1
+SELECT * FROM (
+    SELECT auctionId, bidder, increment_codon(double_codon(datetime)) AS result FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND result = 4000181) OR (auctionId = 999994 AND bidder = 23774 AND result = 4000007)
+INTO FILE();
+----
+999994,126934,4000181
+999994,23774,4000007
+
+# Three nested UDFs: (datetime * 2 + 1)^2
+SELECT * FROM (
+    SELECT auctionId, bidder, square_codon(increment_codon(double_codon(datetime))) AS result FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND result = 16001448032761) OR (auctionId = 999994 AND bidder = 23774 AND result = 16000056000049)
+INTO FILE();
+----
+999994,126934,16001448032761
+999994,23774,16000056000049
+
+# Two different nested pairs side by side: datetime * 2 + 1 and -(datetime^2)
+SELECT * FROM (
+    SELECT auctionId, bidder, increment_codon(double_codon(datetime)) AS first, negate_codon(square_codon(datetime)) AS second FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND first = 4000181 AND second = -4000360008100)
+     OR (auctionId = 999994 AND bidder = 23774 AND first = 4000007 AND second = -4000012000009)
+INTO FILE();
+----
+999994,126934,4000181,-4000360008100
+999994,23774,4000007,-4000012000009
+
+# One pair nested inside the other: -(datetime^2) * 2 + 1
+SELECT * FROM (
+    SELECT auctionId, bidder, increment_codon(double_codon(negate_codon(square_codon(datetime)))) AS result FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND result = -8000720016199) OR (auctionId = 999994 AND bidder = 23774 AND result = -8000024000017)
+INTO FILE();
+----
+999994,126934,-8000720016199
+999994,23774,-8000024000017

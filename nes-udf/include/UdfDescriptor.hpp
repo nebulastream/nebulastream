@@ -16,7 +16,9 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -33,13 +35,19 @@ class UdfCatalog;
 [[nodiscard]] bool isSupportedUdfType(DataType::Type type);
 
 /// How a registered UDF executes. InProcess loads a `.so` that implements the UDF C ABI into the worker.
+/// Codon compiles the entry point's module ahead of time into the query pipeline (no `.so`, no ABI call per row).
 enum class UdfExecution : std::uint8_t
 {
-    InProcess
+    InProcess,
+    Codon
 };
 
-/// A registered scalar UDF: name, how it executes, path to the `.so` exposing the UDF C ABI, entry point inside it
-/// (e.g. "module.function"), and the declared signature. No public constructor --
+/// Splits an entry point "module.function" (the module may be a dotted package path) at its last dot.
+/// Returns nullopt unless both parts are non-empty.
+[[nodiscard]] std::optional<std::pair<std::string, std::string>> splitEntrypoint(std::string_view entrypoint);
+
+/// A registered scalar UDF: name, how it executes, path to the `.so` exposing the UDF C ABI (InProcess only; empty
+/// for Codon), entry point inside it (e.g. "module.function"), and the declared signature. No public constructor --
 /// only reachable through `UdfCatalog::registerUdf` (which validates) or reflection (which trusts prior validation).
 class UdfDescriptor
 {

@@ -86,7 +86,8 @@ modelOutputField: identifier typeDefinition;
 
 createFunctionDefinition: FUNCTION udfName=identifier '(' (functionArgField (',' functionArgField)*)? ')'
                           RETURNS returnType=typeDefinition
-                          FROM functionPath=STRING
+                          (FROM functionPath=STRING)?
+                          (BRIDGE bridge=STRING)?
                           ENTRYPOINT entrypoint=STRING;
 functionArgField: identifier typeDefinition;
 
@@ -396,7 +397,8 @@ booleanComparison
 
 
 valueExpression
-    : CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
+    : PYTHON '(' '(' parameters=identifierSeq ')' ':' body=PYTHON_BODY ')' AS returnType=typeDefinition returnNullable=NULLTOKEN? (BRIDGE bridge=STRING)? #pythonFunction
+    | CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
     | (functionName | typeDefinition) '(' (starArg=ASTERISK | argument+=expression (',' argument+=expression)*)? ')'  #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
@@ -569,6 +571,7 @@ FUNCTION: 'FUNCTION';
 FUNCTIONS: 'FUNCTIONS';
 RETURNS: 'RETURNS';
 ENTRYPOINT: 'ENTRYPOINT';
+BRIDGE: 'BRIDGE';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
@@ -600,6 +603,10 @@ HAT: '^';
 
 STRING
     : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
+    ;
+
+PYTHON_BODY
+    : '$python$' .*? '$python$'
     ;
 
 INTEGER_VALUE
@@ -666,6 +673,7 @@ PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
 VERSION : 'VERSION' | 'version';
+PYTHON: 'PYTHON' | 'python';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work

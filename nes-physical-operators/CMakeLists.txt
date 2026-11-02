@@ -24,7 +24,7 @@ create_runtime_registry(PhysicalFunction nes-physical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}PhysicalFunction::create\${KEY}"
         HEADER_TEMPLATE "\${PLUGIN_NAME}PhysicalFunction.hpp")
 
-# Keyed by the backend that executes a UDF call.
+# Keyed by UDF backend; the Python backends are entries of nes-python-udf.
 create_runtime_registry(UdfLowering nes-physical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}UdfLowering::create\${KEY}"
         HEADER_TEMPLATE "\${PLUGIN_NAME}UdfLowering.hpp")

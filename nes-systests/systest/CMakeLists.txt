@@ -104,6 +104,13 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
+# The binder puts nes-systests/udf/pyudfs on NES_UDF_PATH, where Codon looks up the ENTRYPOINT modules of catalog UDFs.
+if (NES_ENABLE_PYTHON_UDFS)
+    target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_UDF_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../udf/pyudfs")
+else ()
+    target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_UDF_PATH="")
+endif ()
+
 # Add the systest executable
 add_executable(systest src/SystestStarter.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
@@ -121,12 +128,23 @@ endif ()
 # Group exclude lists for systest invocations. The Inference group requires the OpenVINO converter;
 # when ENABLE_INFERENCE_TESTS is OFF (e.g. `ovc` not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
-set(SYSTEST_EXCLUDE_GROUPS large)
+# CompilerOnly tests run only in the compiler invocations.
+set(SYSTEST_EXCLUDE_GROUPS large CompilerOnly)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
 endif ()
+# Without nes-python-udf every Python UDF fails to bind or run, so skip all Python UDF groups. PythonUdfsDisabled checks
+# that error and only runs in such builds.
+if (NES_ENABLE_PYTHON_UDFS)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdfsDisabled)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdfsDisabled)
+else ()
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUDF)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUDF)
+endif ()
+
 # The NestedLoopIntensive group holds tests whose input is large enough that the O(n^2) nested loop join takes over an
 # hour per query, in the compiler just as much as in the interpreter. So exclude them from both NLJ invocations.
 # They still run for every other join strategy.
