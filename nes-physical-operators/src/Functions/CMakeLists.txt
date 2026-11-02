@@ -16,6 +16,9 @@ add_source_files(nes-physical-operators
         FieldAccessPhysicalFunction.cpp
         ConstantValueVariableSizePhysicalFunction.cpp
         CastToPhysicalFunction.cpp
+        UDFPhysicalFunction.cpp
+        UdfLoweringRegistry.cpp
+        InProcessUdfLowering.cpp
         )
 
 
@@ -35,6 +38,9 @@ add_source_files(nes-physical-operators
         CastVarSizedToNumericPhysicalFunction.cpp
         ExtractFromTimestampPhysicalFunction.cpp
 )
+
+
+add_registry_entry(UdfLowering InProcess)
 
 add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
 add_registry_entry(PhysicalFunction CastTo KEY CastToType)

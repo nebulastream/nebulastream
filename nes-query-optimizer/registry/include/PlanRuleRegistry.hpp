@@ -24,6 +24,7 @@
 #include <Util/RuntimeRegistry.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <UdfCatalog.hpp>
 
 namespace NES
 {
@@ -36,6 +37,7 @@ struct PlanRuleRegistryArguments
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
     std::shared_ptr<const ModelCatalog> modelCatalog;
+    std::shared_ptr<const UdfCatalog> udfCatalog;
 };
 
 using PlanRuleFn = std::function<PlanRuleRegistryReturnType(PlanRuleRegistryArguments)>;

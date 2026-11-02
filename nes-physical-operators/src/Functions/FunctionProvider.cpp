@@ -28,14 +28,38 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Functions/UDFCallLogicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <UdfDescriptor.hpp>
+#include <UdfLoweringRegistry.hpp>
 
 namespace NES::QueryCompilation
 {
+namespace
+{
+/// The UdfLoweringRegistry key of the backend that executes a UDF.
+std::string_view udfBackendKey(const UdfExecution execution)
+{
+    switch (execution)
+    {
+        case UdfExecution::InProcess:
+            return "InProcess";
+    }
+    std::unreachable();
+}
+
+PhysicalFunction lowerUdf(std::string_view backend, UdfLoweringRegistryArguments arguments)
+{
+    const auto lower = UdfLoweringRegistry::instance().find(std::string{backend});
+    INVARIANT(lower.has_value(), "UDF backend '{}' is not registered", backend);
+    return (*lower)(std::move(arguments));
+}
+}
+
 PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait)
 {
     /// 1. Recursively lower the children of the function node.
@@ -58,6 +82,21 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     if (const auto constantValueFunction = logicalFunction.tryGetAs<ConstantValueLogicalFunction>())
     {
         return lowerConstantFunction(constantValueFunction->get());
+    }
+    /// UDF calls also bypass the registry: they carry the resolved catalog descriptor (path, entry
+    /// point, signature) that the registry arguments cannot express, so we build the physical function
+    /// and load the backend directly here — the same treatment as FieldAccess/ConstantValue above.
+    if (const auto udfCallFunction = logicalFunction.tryGetAs<UDFCallLogicalFunction>())
+    {
+        const auto& descriptor = udfCallFunction.value()->getDescriptor();
+        INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
+        return lowerUdf(
+            udfBackendKey(descriptor->getExecution()),
+            UdfLoweringRegistryArguments{
+                .udf = *descriptor,
+                .childFunctions = std::move(childFunctions),
+                .inputTypes = std::move(inputTypes),
+                .outputType = logicalFunction.getDataType()});
     }
 
     /// 3. Calling the registry to create an executable function.

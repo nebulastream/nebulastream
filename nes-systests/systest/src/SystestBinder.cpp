@@ -112,7 +112,8 @@ struct SystestBinder::Impl
               sourceCatalog,
               sinkCatalog,
               copyPtr(workerCatalog),
-              modelCatalog}
+              modelCatalog,
+              udfCatalog}
     {
         for (const auto& [host, data, maxOperators, downstream, workerConfig] : config.clusterConfig.workers)
         {

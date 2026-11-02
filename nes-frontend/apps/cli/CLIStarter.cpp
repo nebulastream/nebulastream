@@ -160,6 +160,17 @@ struct Model
     std::vector<SchemaField> output;
 };
 
+/// A catalog scalar UDF, the YAML counterpart of CREATE FUNCTION: `path` names the `.so` implementing the UDF C ABI.
+/// NOLINTNEXTLINE(misc-use-internal-linkage)
+struct Function
+{
+    std::string name;
+    std::string path;
+    std::string entrypoint;
+    std::vector<SchemaField> args;
+    DataType returns;
+};
+
 struct QueryConfig
 {
     std::vector<std::string> query;
@@ -169,6 +180,7 @@ struct QueryConfig
     YAML::Node optimizer;
     std::vector<WorkerConfig> workers;
     std::vector<Model> models;
+    std::vector<Function> functions;
 };
 }
 
@@ -415,11 +427,26 @@ struct convert<NES::CLI::Model>
 };
 
 template <>
+struct convert<NES::CLI::Function>
+{
+    static bool decode(const Node& node, NES::CLI::Function& rhs)
+    {
+        acceptKeys({"name", "path", "entrypoint", "args", "returns"}, node);
+        rhs.name = getValue<std::string>(node, "name");
+        rhs.path = getValue<std::string>(node, "path");
+        rhs.entrypoint = getValue<std::string>(node, "entrypoint");
+        rhs.args = getListOrDefault<NES::CLI::SchemaField>(node, "args");
+        rhs.returns = stringToFieldType(getValue<std::string>(node, "returns"));
+        return true;
+    }
+};
+
+template <>
 struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
-        acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers", "models"}, node);
+        acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers", "models", "functions"}, node);
         rhs.sinks = getListOrDefault<NES::CLI::Sink>(node, "sinks");
         rhs.logical = getList<NES::CLI::LogicalSource>(node, "logical");
         rhs.physical = getListOrDefault<NES::CLI::PhysicalSource>(node, "physical");
@@ -433,6 +460,7 @@ struct convert<NES::CLI::QueryConfig>
         {
             rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
         }
+        rhs.functions = getListOrDefault<NES::CLI::Function>(node, "functions");
         rhs.query = {};
         if (node["query"].IsDefined())
         {
@@ -584,7 +612,7 @@ NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::ve
 
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
-    const auto& [query, sinks, logical, physical, optimizer, workers, models] = topologyConfig;
+    const auto& [query, sinks, logical, physical, optimizer, workers, models, functions] = topologyConfig;
     std::vector<NES::Statement> statements;
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, maxOperators, downstream, config] : workers)
@@ -638,6 +666,17 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         };
         statements.emplace_back(
             NES::CreateModelStatement{.name = name, .path = path, .inputs = toModelFields(input), .outputs = toModelFields(output)});
+    }
+    for (const auto& [name, path, entrypoint, args, returns] : functions)
+    {
+        statements.emplace_back(
+            NES::CreateFunctionStatement{
+                .name = fmt::format("{}", bindIdentifierName(name)),
+                .path = path,
+                .entrypoint = entrypoint,
+                .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
+                    | std::ranges::to<std::vector<NES::DataType>>(),
+                .returnType = returns});
     }
     return statements;
 }
@@ -755,8 +794,8 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     NES::UdfStatementHandler udfHandler{udfCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, udfCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler, udfHandler);
@@ -798,8 +837,8 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     NES::UdfStatementHandler udfHandler{udfCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, udfCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler, udfHandler);
 
     if (program.is_subcommand_used("start"))
