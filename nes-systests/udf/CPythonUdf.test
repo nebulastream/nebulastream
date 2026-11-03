@@ -61,21 +61,21 @@ SELECT boom_py(x) AS y FROM ints INTO FILE();
 ----
 ERROR 3007
 
-# --- STRICT NULL input (scalar): NULL short-circuits without invoking the UDF; strict_probe always returns 42, so NULL (not 42) proves it was skipped ---
+# --- NULL input (scalar): the UDF is called with None; always_42 ignores its argument, so 42 (not NULL) proves it ran ---
 CREATE LOGICAL SOURCE probe(id INT64 NOT NULL, x INT64);
 CREATE PHYSICAL SOURCE FOR probe TYPE File;
 ATTACH INLINE
 1,10
 2,
 
-CREATE FUNCTION strict_probe_py (x INT64) RETURNS INT64 FROM 'PY_BRIDGE_DIR/libnes-cpython-udf-bridge.so' ENTRYPOINT 'currency.strict_probe';
+CREATE FUNCTION always_42_py (x INT64) RETURNS INT64 FROM 'PY_BRIDGE_DIR/libnes-cpython-udf-bridge.so' ENTRYPOINT 'currency.always_42';
 
-SELECT id, strict_probe_py(x) AS y FROM probe INTO FILE();
+SELECT id, always_42_py(x) AS y FROM probe INTO FILE();
 ----
 1,42
-2,NULL
+2,42
 
-# --- STRICT NULL input (VARSIZED): same short-circuit; shout would raise on None, so NULL (not an error) confirms it was skipped ---
+# --- NULL input (VARSIZED): the UDF is called with None; shout does not guard against it, so the query fails with the UDF error code ---
 CREATE LOGICAL SOURCE greets(id INT64 NOT NULL, w VARSIZED);
 CREATE PHYSICAL SOURCE FOR greets TYPE File;
 ATTACH INLINE
@@ -86,8 +86,7 @@ CREATE FUNCTION shout_nullable_py (w VARSIZED) RETURNS VARSIZED FROM 'PY_BRIDGE_
 
 SELECT id, shout_nullable_py(w) AS u FROM greets INTO FILE();
 ----
-1,HI
-2,NULL
+ERROR 3007
 
 # --- UDF-produced NULL: all inputs non-NULL; half_if_even returns None for odd n, exercising the result-null path ---
 CREATE LOGICAL SOURCE evens(n INT64 NOT NULL);

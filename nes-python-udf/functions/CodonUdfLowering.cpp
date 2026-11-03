@@ -20,7 +20,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -35,10 +34,8 @@ namespace NES
 {
 namespace
 {
-/// A catalog UDF that executes through Codon (CREATE FUNCTION ... BRIDGE 'codon'), expressed as the inline function
-/// the Codon path already compiles: the ENTRYPOINT module is imported and called from a generated body.
-/// Reproduces the strict-UDF semantics of the interpreter bridges (a NULL argument yields NULL without calling the UDF)
-/// in the generated body, so the imported function only ever sees plain values, never Optional[T].
+/// A UDF named by its entry point, expressed as the inline function the Codon path compiles: the ENTRYPOINT module is
+/// imported and called from a generated body. A nullable argument reaches the entry point as Optional[T], like any body.
 InlineUdfSource buildCodonUdfCall(const UdfDescriptor& descriptor, const std::vector<DataType>& inputTypes)
 {
     const auto entrypoint = splitEntrypoint(descriptor.getEntrypoint());
@@ -47,27 +44,20 @@ InlineUdfSource buildCodonUdfCall(const UdfDescriptor& descriptor, const std::ve
         inputTypes.size() == descriptor.getArgTypes().size(), "UDF '{}' called with a wrong number of arguments", descriptor.getName());
 
     InlineUdfSource call;
-    std::vector<std::string> arguments;
-    call.body = fmt::format("from {} import {} as _nes_udf_entry\n", entrypoint->first, entrypoint->second);
     for (size_t index = 0; index < inputTypes.size(); ++index)
     {
         call.parameterNames.emplace_back(fmt::format("_p{}", index));
-        if (inputTypes.at(index).nullable)
-        {
-            call.body += fmt::format("if _p{} is None:\n    return None\n", index);
-            arguments.emplace_back(fmt::format("_p{}.__val__()", index));
-        }
-        else
-        {
-            arguments.emplace_back(fmt::format("_p{}", index));
-        }
     }
-    call.body += fmt::format("return _nes_udf_entry({})", fmt::join(arguments, ", "));
+    call.body = fmt::format(
+        "from {} import {} as _nes_udf_entry\nreturn _nes_udf_entry({})",
+        entrypoint->first,
+        entrypoint->second,
+        fmt::join(call.parameterNames, ", "));
     return call;
 }
 
 /// Where Codon looks for the ENTRYPOINT module: the configured python_udf_import_paths plus NES_UDF_PATH, the module
-/// search path the CPython and PyPy bridges use, so a single directory of UDF modules serves every backend.
+/// search path the CPython bridge uses, so a single directory of UDF modules serves every backend.
 std::vector<std::string> codonImportPaths(const std::vector<std::string>& configured)
 {
     auto paths = configured;
@@ -98,18 +88,10 @@ std::vector<std::string> codonImportPaths(const std::vector<std::string>& config
 
 PhysicalFunction CodonUdfLowering::createCodon(UdfLoweringRegistryArguments arguments)
 {
-    auto importPaths = std::move(arguments.importPaths);
-    InlineUdfSource source;
-    if (const auto* descriptor = std::get_if<UdfDescriptor>(&arguments.udf))
-    {
-        INVARIANT(arguments.outputType.nullable, "UDF call results are nullable");
-        source = buildCodonUdfCall(*descriptor, arguments.inputTypes);
-        importPaths = codonImportPaths(importPaths);
-    }
-    else
-    {
-        source = std::get<InlineUdfSource>(std::move(arguments.udf));
-    }
+    INVARIANT(arguments.outputType.nullable, "UDF call results are nullable");
+    const auto importPaths = codonImportPaths(arguments.importPaths);
+    const auto source
+        = arguments.udf.getSource().has_value() ? *arguments.udf.getSource() : buildCodonUdfCall(arguments.udf, arguments.inputTypes);
     return PhysicalFunction{
         PythonPhysicalFunction(
             source.parameterNames, source.body, arguments.childFunctions, arguments.inputTypes, arguments.outputType, importPaths)}

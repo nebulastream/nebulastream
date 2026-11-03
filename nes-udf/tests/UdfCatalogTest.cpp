@@ -214,6 +214,56 @@ TEST_F(UdfCatalogTest, CodonDescriptorSurvivesReflectionRoundTrip)
     EXPECT_EQ(roundTripped.getExecution(), UdfExecution::Codon);
 }
 
+TEST_F(UdfCatalogTest, InlineSourceSurvivesReflectionRoundTrip)
+{
+    UdfCatalog catalog;
+    catalog.registerUdf(
+        "twice",
+        {},
+        {},
+        {dt(DataType::Type::INT64)},
+        dt(DataType::Type::INT64),
+        UdfExecution::Codon,
+        InlineUdfSource{.parameterNames = {"x"}, .body = "return x * 2"});
+    const auto original = catalog.load("twice");
+    ASSERT_TRUE(original.getSource().has_value());
+
+    const ReflectionContext context;
+    const auto roundTripped = context.unreflect<UdfDescriptor>(context.reflect(original));
+
+    EXPECT_EQ(original, roundTripped);
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(roundTripped.getSource()->body, "return x * 2");
+}
+
+TEST_F(UdfCatalogTest, InlineSourceWithWrongParameterCountIsRejected)
+{
+    UdfCatalog catalog;
+    ASSERT_EXCEPTION_ERRORCODE(
+        catalog.registerUdf(
+            "bad",
+            {},
+            {},
+            {dt(DataType::Type::INT64)},
+            dt(DataType::Type::INT64),
+            UdfExecution::Codon,
+            InlineUdfSource{.parameterNames = {"x", "y"}, .body = "return x"}),
+        NES::ErrorCode::InvalidStatement);
+}
+
+TEST_F(UdfCatalogTest, FromSourceBuildsADescriptorWithoutTheCatalog)
+{
+    const auto descriptor = UdfDescriptor::fromSource(
+        "internal",
+        {},
+        InlineUdfSource{.parameterNames = {"x"}, .body = "return x"},
+        {dt(DataType::Type::INT64)},
+        dt(DataType::Type::INT64),
+        UdfExecution::Codon);
+    EXPECT_TRUE(descriptor.getEntrypoint().empty());
+    EXPECT_TRUE(descriptor.getSource().has_value());
+}
+
 TEST(UdfEntrypointTest, SplitsAtTheLastDot)
 {
     const auto simple = splitEntrypoint("currency.to_euro");

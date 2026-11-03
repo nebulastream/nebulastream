@@ -9,13 +9,15 @@ AZ
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-SELECT PYTHON((data): $python$
+CREATE FUNCTION udf_1 (data VARSIZED) RETURNS UINT64 BRIDGE 'codon' AS $python$
     import cv2
     import numpy as np
     pixels = np.frombuffer(data, dtype=np.uint8).reshape((1, 2))
     normalized = cv2.normalize(pixels, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
     return int(normalized.sum())
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_1(data) AS result
 FROM images
 INTO file();
 ----

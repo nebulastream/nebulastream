@@ -1,10 +1,10 @@
 # name: udf/PythonUdfVenv.test
 # description: a Python UDF importing `inflection`, installed only in the in-tree venv at
-# nes-systests/udf/small_venv, never system-wide, through both bridges (each has its own process-wide
-# interpreter, so no collision here -- unlike two DIFFERENT venvs, see PythonUdfOnnx/PythonUdfIree).
+# nes-systests/udf/small_venv, never system-wide, through the CPython bridge (its interpreter is process-wide, so two
+# DIFFERENT venvs would collide, see PythonUdfOnnx/PythonUdfIree).
 # GLOBALCONFIGURATION sets worker.python_udf.venv, so this needs no external flag. Bridge scans for
-# small_venv's pythonX.Y/pypyX.Y dir instead of assuming a version match, so this is portable across
-# CPython/PyPy versions (inflection is pure Python).
+# small_venv's pythonX.Y dir instead of assuming a version match, so this is portable across
+# CPython versions (inflection is pure Python).
 # groups: [PythonUdfVenv]
 
 GLOBALCONFIGURATION worker.python_udf.venv: PY_UDF_VENV_DIR
@@ -17,15 +17,8 @@ ATTACH INLINE
 3,order_item
 
 CREATE FUNCTION camelize_cpython (name VARSIZED) RETURNS VARSIZED BRIDGE 'cpython' ENTRYPOINT 'venv_probe.camelize';
-CREATE FUNCTION camelize_pypy (name VARSIZED) RETURNS VARSIZED BRIDGE 'pypy' ENTRYPOINT 'venv_probe.camelize';
 
 SELECT id, camelize_cpython(name) AS camel FROM names INTO FILE();
-----
-1,DeviceType
-2,ActiveRecord
-3,OrderItem
-
-SELECT id, camelize_pypy(name) AS camel FROM names INTO FILE();
 ----
 1,DeviceType
 2,ActiveRecord

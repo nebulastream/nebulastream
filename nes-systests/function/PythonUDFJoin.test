@@ -19,12 +19,14 @@ ATTACH INLINE
 
 CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, left_value UINT64 NOT NULL, left_timestamp UINT64 NOT NULL, right_value UINT64 NOT NULL, right_timestamp UINT64 NOT NULL) TYPE File;
 
+CREATE FUNCTION udf_1 (left_value UINT64, right_value UINT64) RETURNS BOOLEAN BRIDGE 'codon' AS $python$
+    return left_value < right_value and (left_value + right_value) % 3 == 0
+$python$;
+
 SELECT *
 FROM (SELECT * FROM left_numbers)
 INNER JOIN (SELECT * FROM right_numbers)
-ON PYTHON((left_value, right_value): $python$
-    return left_value < right_value and (left_value + right_value) % 3 == 0
-$python$) AS BOOLEAN
+ON udf_1(left_value, right_value)
 WINDOW TUMBLING(left_timestamp, right_timestamp, SIZE 1 SEC)
 INTO sink;
 ----

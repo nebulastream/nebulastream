@@ -9,12 +9,14 @@ CREATE PHYSICAL SOURCE FOR numbers TYPE File;
 ATTACH INLINE
 10000
 
-SELECT PYTHON((n): $python$
+CREATE FUNCTION udf_1 (n UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
     values = []
     for value in range(n):
         values.append(value)
     return len(values)
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_1(n) AS result
 FROM numbers
 INTO file();
 ----
@@ -25,12 +27,14 @@ CREATE PHYSICAL SOURCE FOR rejected_numbers TYPE File;
 ATTACH INLINE
 1
 
-SELECT PYTHON((n): $python$
+CREATE FUNCTION udf_2 (n UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
     from internal.gc import add_roots, alloc_uncollectable
     allocation = alloc_uncollectable(8)
     add_roots(allocation, allocation)
     return n
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_2(n) AS result
 FROM rejected_numbers
 INTO file();
 ----
@@ -41,11 +45,13 @@ CREATE PHYSICAL SOURCE FOR unsupported_runtime TYPE File;
 ATTACH INLINE
 1
 
-SELECT PYTHON((n): $python$
+CREATE FUNCTION udf_3 (n UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
 from time import sleep
 sleep(0.0)
 return n
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_3(n) AS result
 FROM unsupported_runtime
 INTO file();
 ----

@@ -1,7 +1,7 @@
 # name: udf/PythonUdfIrisClassificationNumpy.test
 # description: PythonUdfIrisClassification.test with the iris.onnx model re-implemented in plain numpy
 # (pyudfs/iris_udf_numpy.py), through the CPython bridge and Codon. Uses nes-toolchain/python-venvs/udf-cpython
-# (Codon ignores it). The PyPy variant is PythonUdfIrisClassificationNumpyPyPy.test: one venv per process.
+# (Codon ignores it).
 # groups: [PythonUdf, PythonUDF, CompilerOnly, PythonUdfNumpy]
 
 GLOBALCONFIGURATION worker.python_udf.venv: /home/thanasis/Documents/nes-toolchain/python-venvs/udf-cpython

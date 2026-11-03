@@ -11,19 +11,23 @@ ATTACH INLINE
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-SELECT PYTHON((a): $python$
+CREATE FUNCTION udf_1 (a UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
     from udf_helpers import add_bonus
     return add_bonus(a)
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_1(a) AS result
 FROM numbers
 INTO file();
 ----
 42
 
-SELECT PYTHON((a): $python$
+CREATE FUNCTION udf_2 (a UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
     from currency import add_bonus
     return add_bonus(a)
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_2(a) AS result
 FROM numbers
 INTO file();
 ----

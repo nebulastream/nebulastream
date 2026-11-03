@@ -9,7 +9,7 @@ ABCDEFGHIJKLMNOP
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-SELECT PYTHON((data): $python$
+CREATE FUNCTION udf_1 (data VARSIZED) RETURNS UINT64 BRIDGE 'codon' AS $python$
     import cv2
     import numpy as np
 
@@ -34,7 +34,9 @@ SELECT PYTHON((data): $python$
     if not success or not png_success:
         return 0
     return color.size + smaller.size + decoded_jpeg.size + decoded_gray.size + bgr.size + direct_gray.size + yuyv.size + gray.size + decoded_png.size
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_1(data) AS result
 FROM images
 INTO file();
 ----

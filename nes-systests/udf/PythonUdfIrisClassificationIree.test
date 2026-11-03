@@ -2,7 +2,6 @@
 # description: same as PythonUdfIrisClassification.test, but via IREE instead of onnxruntime -- the
 # same execution engine MODEL_INFERENCE itself uses (import -> compile -> run at UDF-import time).
 # Needs iree-base-compiler + iree-base-runtime + onnx in a CPython venv (nes-toolchain/python-venvs/iris-iree-udf, set below).
-# No PyPy wheels exist for either onnxruntime or IREE's Python packages -- CPython only.
 # Do not combine with PythonUdfVenv/PythonUdfOnnx in one invocation -- one interpreter per process.
 # groups: [PythonUdfIree]
 

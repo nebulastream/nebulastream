@@ -1,5 +1,5 @@
 # name: function/PythonUDFError.test
-# description: Reports exceptions raised by an inline Python UDF as query errors without terminating the worker
+# description: Reports exceptions raised by a Python UDF as query errors without terminating the worker
 # groups: [Function, PythonUDF, CompilerOnly]
 
 GlobalConfiguration worker.dump_compilation_result: [FILE]
@@ -11,9 +11,11 @@ ATTACH INLINE
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-SELECT PYTHON((value): $python$
+CREATE FUNCTION udf_1 (value VARSIZED) RETURNS UINT64 BRIDGE 'codon' AS $python$
     return int(value)
-$python$) AS UINT64 AS result
+$python$;
+
+SELECT udf_1(value) AS result
 FROM numbers
 INTO file();
 ----

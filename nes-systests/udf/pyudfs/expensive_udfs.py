@@ -12,9 +12,9 @@
 
 
 """Scalar UDFs that cost more per call than a single arithmetic operation, written in the subset of Python that
-CPython, PyPy and Codon all accept (see PythonUdfLogisticScoreLarge.test).
+CPython and Codon both accept (see PythonUdfLogisticScoreLarge.test).
 
-The CPython/PyPy bridges need numpy in the venv passed via --worker.python_udf.venv; Codon uses its own numpy.
+The CPython bridge needs numpy in the venv passed via --worker.python_udf.venv; Codon uses its own numpy.
 """
 
 import numpy as np

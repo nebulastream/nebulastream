@@ -16,7 +16,6 @@
 
 #include <functional>
 #include <string>
-#include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -26,19 +25,12 @@
 namespace NES
 {
 
-/// The body of an inline UDF (SQL's PYTHON((...): $python$ ... $python$)), which carries its source instead of a catalog entry.
-struct InlineUdfSource
-{
-    std::vector<std::string> parameterNames;
-    std::string body;
-};
-
 using UdfLoweringRegistryReturnType = PhysicalFunction;
 
 struct UdfLoweringRegistryArguments
 {
-    /// The catalog entry a UDF call was resolved to, or the source of an inline UDF.
-    std::variant<UdfDescriptor, InlineUdfSource> udf;
+    /// The UDF a call was resolved to.
+    UdfDescriptor udf;
     std::vector<PhysicalFunction> childFunctions;
     std::vector<DataType> inputTypes;
     DataType outputType;
@@ -48,9 +40,9 @@ struct UdfLoweringRegistryArguments
 
 using UdfLoweringFn = std::function<UdfLoweringRegistryReturnType(UdfLoweringRegistryArguments)>;
 
-/// Lowers UDF calls and inline UDFs to physical functions, keyed by the backend that executes them: InProcess (a C-ABI
-/// library loaded into the worker) is built in, while Codon, CPython and PyPy come with nes-python-udf. A backend that
-/// is missing from the registry was not part of this build.
+/// Lowers UDF calls to physical functions, keyed by the backend that executes them: InProcess (a C-ABI library loaded
+/// into the worker) is built in, while Codon comes with nes-python-udf. A backend that is missing from the registry was
+/// not part of this build.
 class UdfLoweringRegistry : public RuntimeRegistry<UdfLoweringRegistry, std::string, UdfLoweringFn, /*CaseSensitive*/ false>
 {
 public:

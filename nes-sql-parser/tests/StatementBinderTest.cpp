@@ -528,6 +528,52 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithBridgeWithoutPythonUdfsThrows)
     ASSERT_EQ(statement.error().code(), ErrorCode::PythonUdfsNotEnabled);
 }
 
+TEST_F(StatementBinderTest, BindCreateFunctionWithBodyKeepsParameterNamesAndBody)
+{
+    if (!UdfBridgeRegistry::instance().find(std::string{CodonUdfBridge}))
+    {
+        GTEST_SKIP() << "This build ships no Python UDF bridges";
+    }
+    const std::string statementString = R"(CREATE FUNCTION f (leftValue INT64, b INT64) RETURNS INT64 BRIDGE 'codon' AS $python$
+    return leftValue + b
+$python$)";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    EXPECT_EQ(create.execution, UdfExecution::Codon);
+    EXPECT_TRUE(create.entrypoint.empty());
+    ASSERT_TRUE(create.source.has_value());
+    EXPECT_EQ(create.source->parameterNames, (std::vector<std::string>{"leftValue", "b"}));
+    EXPECT_EQ(create.source->body, "\n    return leftValue + b\n");
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithBodyWithoutBridgesThrows)
+{
+    if (!UdfBridgeRegistry::instance().getRegisteredNames().empty())
+    {
+        GTEST_SKIP() << "This build ships Python UDF bridges";
+    }
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'codon' AS $python$ return a $python$";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::PythonUdfsNotEnabled);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithBodyAndFromThrows)
+{
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 FROM '/opt/x.so' AS $python$ return a $python$";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithBodyAndEntrypointDoesNotParse)
+{
+    const std::string statementString
+        = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'm.f' AS $python$ return a $python$";
+    EXPECT_FALSE(binder->parseAndBindSingle(statementString).has_value());
+}
+
 TEST_F(StatementBinderTest, BindCreateFunctionWithNeitherFromNorLanguageThrows)
 {
     const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 ENTRYPOINT 'm.f'";
@@ -1231,12 +1277,10 @@ TEST_F(StatementBinderTest, InnerJoinParsesToInnerJoinType)
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
 }
 
-TEST_F(StatementBinderTest, PythonFunctionParsesInJoinPredicate)
+TEST_F(StatementBinderTest, UdfCallParsesInJoinPredicate)
 {
     const std::string query = R"(SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2)
-ON PYTHON((leftValue, rightValue): $python$
-    return leftValue < rightValue
-$python$) AS BOOLEAN WINDOW TUMBLING(SIZE 1000 MS) INTO sink)";
+ON is_match(leftValue, rightValue) WINDOW TUMBLING(SIZE 1000 MS) INTO sink)";
     const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());

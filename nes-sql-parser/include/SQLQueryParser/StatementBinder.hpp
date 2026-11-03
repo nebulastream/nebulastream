@@ -192,6 +192,8 @@ struct CreateFunctionStatement
     std::vector<DataType> argTypes;
     DataType returnType;
     UdfExecution execution = UdfExecution::InProcess;
+    /// Set if the UDF is defined by AS $python$...$python$; `entrypoint` is empty then.
+    std::optional<InlineUdfSource> source = std::nullopt;
 };
 
 struct ShowFunctionsStatement

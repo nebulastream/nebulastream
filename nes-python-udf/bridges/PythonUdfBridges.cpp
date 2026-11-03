@@ -30,9 +30,4 @@ UdfBridge PythonUdfBridges::createCPython()
     return {.execution = UdfExecution::InProcess, .libraryFileName = "libnes-cpython-udf-bridge.so"};
 }
 
-UdfBridge PythonUdfBridges::createPyPy()
-{
-    return {.execution = UdfExecution::InProcess, .libraryFileName = "libnes-pypy-udf-bridge.so"};
-}
-
 }

@@ -14,6 +14,7 @@
 
 #include <Rules/Semantic/UDFResolutionRule.hpp>
 
+#include <array>
 #include <ranges>
 #include <set>
 #include <typeindex>
@@ -26,6 +27,7 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/InferModelResolutionRule.hpp>
@@ -84,6 +86,18 @@ LogicalOperator recur(const LogicalOperator& op, const UdfCatalog& udfCatalog)
                    newChildren.front(), std::move(newProjections), ProjectionLogicalOperator::Asterisk{projection->get().hasAsterisk()})
             .get()
             .withTraitSet(projection->get().getTraitSet());
+    }
+    if (const auto join = op.tryGetAs<JoinLogicalOperator>(); join.has_value() && newChildren.size() == 2)
+    {
+        auto predicate = resolveUdfCalls(join->get().getJoinFunction(), udfCatalog);
+        return JoinLogicalOperator::create(
+                   std::array{newChildren.front(), newChildren.back()},
+                   std::move(predicate),
+                   join->get().getWindowType(),
+                   join->get().getJoinType(),
+                   join->get().getJoinTimeCharacteristics())
+            .get()
+            .withTraitSet(join->get().getTraitSet());
     }
     return op.withChildren(std::move(newChildren));
 }

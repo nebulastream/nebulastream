@@ -9,12 +9,14 @@ CREATE PHYSICAL SOURCE FOR trigger TYPE File;
 ATTACH INLINE
 1
 
-SELECT PYTHON((id): $python$
+CREATE FUNCTION udf_1 (id UINT64) RETURNS VARSIZED BRIDGE 'codon' AS $python$
     file = open("TESTDATA/python_udf/file_input.txt", "r")
     contents = file.read()
     file.close()
     return contents
-$python$) AS VARSIZED AS contents
+$python$;
+
+SELECT udf_1(id) AS contents
 FROM trigger
 INTO file();
 ----
@@ -22,11 +24,13 @@ ERROR QueryCompilerError
 
 # Codon currently has no urllib/HTTP implementation in its bundled standard library, so this
 # characterizes the import-time rejection rather than an external-symbol rejection.
-SELECT PYTHON((id): $python$
+CREATE FUNCTION udf_2 (id UINT64) RETURNS VARSIZED BRIDGE 'codon' AS $python$
     from urllib.request import urlopen
     response = urlopen("http://127.0.0.1:8080/")
     return response.read()
-$python$) AS VARSIZED AS contents
+$python$;
+
+SELECT udf_2(id) AS contents
 FROM trigger
 INTO file();
 ----

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -43,7 +44,10 @@ public:
         std::vector<DataType> argTypes,
         DataType returnType,
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-        UdfExecution execution = UdfExecution::InProcess);
+        UdfExecution execution = UdfExecution::InProcess,
+        /// The UDF's code if it carries it, in which case `entrypoint` is empty.
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        std::optional<InlineUdfSource> source = std::nullopt);
     void removeUdf(const std::string& udfName);
     [[nodiscard]] bool hasUdf(const std::string& udfName) const;
     [[nodiscard]] std::vector<std::string> getUdfNames() const;

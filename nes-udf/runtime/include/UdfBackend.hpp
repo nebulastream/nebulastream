@@ -61,13 +61,13 @@ public:
         std::uint64_t maxResultLen,
         int* resultNull) = 0;
 
-    /// Load and prepare the UDF described by `descriptor`. v1 always returns an in-process backend.
+    /// Load and prepare the UDF described by `descriptor`, from its entry point or its inline source. v1 always returns
+    /// an in-process backend.
     [[nodiscard]] static std::shared_ptr<UdfBackend> create(const UdfDescriptor& descriptor);
 
     /// Load and prepare a UDF from literal source rather than a catalog descriptor: `bridgePath` is a
     /// shipped bridge `.so` (resolved via resolveUdfBridgeLibraryPath), `source` is the UDF body's
-    /// Python source, and `functionName` names the callable it defines. Used for inline UDFs (e.g. SQL's
-    /// PYTHON(...) expression with BRIDGE 'cpython'/'pypy'), which carry no catalog entry.
+    /// Python source, and `functionName` names the callable it defines.
     [[nodiscard]] static std::shared_ptr<UdfBackend> createFromSource(
         const std::filesystem::path& bridgePath,
         const std::string& source,

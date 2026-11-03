@@ -128,7 +128,7 @@ const ConfigField<bool> DUMP_GRAPH{Identifier::parse("dump_graph"), "If to dump 
 
 const ConfigField<std::string> PYTHON_UDF_VENV{
     Identifier::parse("venv"),
-    "Path to a `python -m venv` directory (created from the same CPython/PyPy build the Python UDF bridge "
+    "Path to a `python -m venv` directory (created from the same CPython build the Python UDF bridge "
     "links against) whose site-packages is added to the embedded interpreter. Default: system-local Python only",
     [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
     std::string{}};

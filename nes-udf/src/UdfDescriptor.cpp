@@ -62,6 +62,17 @@ std::optional<std::pair<std::string, std::string>> splitEntrypoint(const std::st
     return std::make_pair(std::string{entrypoint.substr(0, lastDot)}, std::string{entrypoint.substr(lastDot + 1)});
 }
 
+UdfDescriptor UdfDescriptor::fromSource(
+    std::string name,
+    std::filesystem::path path,
+    InlineUdfSource source,
+    std::vector<DataType> argTypes,
+    DataType returnType,
+    const UdfExecution execution)
+{
+    return UdfDescriptor{std::move(name), std::move(path), std::string{}, std::move(source), std::move(argTypes), returnType, execution};
+}
+
 namespace detail
 {
 /// NOLINTNEXTLINE(misc-use-internal-linkage)
@@ -70,6 +81,8 @@ struct ReflectedUdfDescriptor
     std::optional<std::string> name;
     std::optional<std::string> path;
     std::optional<std::string> entrypoint;
+    std::optional<std::vector<std::string>> sourceParameterNames;
+    std::optional<std::string> sourceBody;
     std::optional<std::vector<DataType>> argTypes;
     std::optional<DataType> returnType;
     std::optional<UdfExecution> execution;
@@ -78,11 +91,14 @@ struct ReflectedUdfDescriptor
 
 Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, const ReflectionContext& context) const
 {
+    const auto& source = descriptor.getSource();
     return context.reflect(
         detail::ReflectedUdfDescriptor{
             .name = std::make_optional(descriptor.getName()),
             .path = std::make_optional(descriptor.getPath().string()),
             .entrypoint = std::make_optional(descriptor.getEntrypoint()),
+            .sourceParameterNames = source.has_value() ? std::make_optional(source->parameterNames) : std::nullopt,
+            .sourceBody = source.has_value() ? std::make_optional(source->body) : std::nullopt,
             .argTypes = std::make_optional(descriptor.getArgTypes()),
             .returnType = std::make_optional(descriptor.getReturnType()),
             .execution = std::make_optional(descriptor.getExecution())});
@@ -96,11 +112,19 @@ UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const
     {
         throw NES::CannotDeserialize("Failed to deserialize UdfDescriptor");
     }
+    std::optional<InlineUdfSource> source;
+    if (reflected.sourceBody.has_value())
+    {
+        source = InlineUdfSource{
+            .parameterNames = std::move(reflected.sourceParameterNames).value_or(std::vector<std::string>{}),
+            .body = std::move(reflected.sourceBody).value()};
+    }
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the reflected form.
     return UdfDescriptor{
         std::move(reflected.name).value(),
         std::filesystem::path(std::move(reflected.path).value()),
         std::move(reflected.entrypoint).value(),
+        std::move(source),
         std::move(reflected.argTypes).value(),
         std::move(reflected.returnType).value(),
         reflected.execution.value_or(UdfExecution::InProcess)};

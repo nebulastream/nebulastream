@@ -11,10 +11,10 @@
 # limitations under the License.
 
 
-"""Scalar UDFs written in the subset of Python that CPython, PyPy and Codon all accept, so a single module can back
-`CREATE FUNCTION ... BRIDGE 'cpython' | 'pypy' | 'codon'` (see PythonUdfBridgeComparison.test and CodonUdf.test).
+"""Scalar UDFs written in the subset of Python that CPython and Codon both accept, so a single module can back
+`CREATE FUNCTION ... BRIDGE 'cpython' | 'codon'` (see PythonUdfBridgeComparison.test and CodonUdf.test).
 
-A NULL argument never reaches these functions: UDF calls are strict, so the result is NULL without a call.
+A NULL argument arrives as None.
 """
 
 
@@ -25,11 +25,15 @@ def apply_discount(price):
 
 def add(a, b):
     """Add two integers."""
+    if a is None or b is None:
+        return None
     return a + b
 
 
 def shout(text):
     """Uppercase a VARSIZED value."""
+    if text is None:
+        return None
     return text.upper()
 
 

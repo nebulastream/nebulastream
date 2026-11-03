@@ -13,14 +13,16 @@ ATTACH INLINE
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-SELECT PYTHON((a, b, c): $python$
+CREATE FUNCTION udf_1 (a UINT64, b UINT64, c VARSIZED) RETURNS VARSIZED BRIDGE 'codon' AS $python$
     import numpy as np
     rng = np.random.default_rng(seed=0)
     x = rng.random(500_000)
     y = rng.random(500_000)
     c = ((x-1)**2 + (y-1)**2 < 1).sum() * (4 / len(x))
     return f'Haha{a} {b} {c}'
-$python$) AS VARSIZED AS result
+$python$;
+
+SELECT udf_1(a, b, c) AS result
 FROM numbers
 INTO file();
 ----

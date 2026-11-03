@@ -132,16 +132,14 @@ target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastr
 target_include_directories(systest PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # `BRIDGE`-based CREATE FUNCTION statements resolve the path relative to the running executable (see
-# UdfBridgeRegistry), not through the PY_BRIDGE_DIR substitution above. Stage the bridges built by nes-python-udf
+# UdfBridgeRegistry), not through the PY_BRIDGE_DIR substitution above. Stage the bridge built by nes-python-udf
 # (configured before this dir) next to `systest` at that same location so these tests exercise the real resolution path.
-foreach (bridge IN ITEMS nes-cpython-udf-bridge nes-pypy-udf-bridge)
-    if (TARGET ${bridge})
-        add_dependencies(systest ${bridge})
-        add_custom_command(TARGET systest POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
-                COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:${bridge}>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:${bridge}>")
-    endif ()
-endforeach ()
+if (TARGET nes-cpython-udf-bridge)
+    add_dependencies(systest nes-cpython-udf-bridge)
+    add_custom_command(TARGET systest POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
+endif ()
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
 if (ALL_SLICE_CACHE_TESTS)
@@ -158,7 +156,7 @@ endif ()
 # PythonUdfOnnx/PythonUdfIree need the same, but pointed at a venv with onnxruntime or IREE's Python
 # packages installed (too large/platform-specific to ship in-tree, unlike small_venv -- see
 # PythonUdfIrisClassification.test / PythonUdfIrisClassificationIree.test).
-# PythonUdfNumpy needs numpy in a machine-local venv (nes-toolchain/python-venvs/udf-cpython or udf-pypy).
+# PythonUdfNumpy needs numpy in a machine-local venv (nes-toolchain/python-venvs/udf-cpython).
 # All four are permanently opt-in, like `large`, and never run as part of the default invocations below.
 set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy CompilerOnly)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy)
@@ -166,12 +164,8 @@ if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
 endif ()
-# Without nes-python-udf every Python UDF fails to bind or run, so skip all Python UDF groups. PythonUdfsDisabled checks
-# that error and only runs in such builds.
-if (NES_ENABLE_PYTHON_UDFS)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdfsDisabled)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdfsDisabled)
-else ()
+# Without nes-python-udf every CREATE FUNCTION with a Python bridge fails to bind, so skip all Python UDF groups.
+if (NOT NES_ENABLE_PYTHON_UDFS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUDF)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUDF)
 endif ()
@@ -179,11 +173,6 @@ endif ()
 if (NOT TARGET nes-cpython-udf-bridge)
     list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdf)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdf)
-endif ()
-# The PyPyUdf group needs the PyPy bridge; skip it where pypy3 is absent.
-if (NOT TARGET nes-pypy-udf-bridge)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS PyPyUdf)
-    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PyPyUdf)
 endif ()
 
 # The NestedLoopIntensive group holds tests whose input is large enough that the O(n^2) nested loop join takes over an

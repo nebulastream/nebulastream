@@ -21,11 +21,15 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <dlfcn.h>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <UdfAbi.h>
 #include <DataTypes/DataType.hpp>
@@ -92,10 +96,8 @@ int toUdfTypeCode(const DataType::Type type)
 
 void* InProcessBackend::loadBridge(const std::filesystem::path& bridgePath)
 {
-    /// RTLD_LOCAL, not RTLD_GLOBAL: the CPython and PyPy bridges each embed a Python runtime that defines the
-    /// same CPython API symbols (PyPy through cpyext). Loaded globally, whichever bridge comes first serves those
-    /// symbols to the other, which then initializes one runtime and calls into the other -- a segfault in the
-    /// worker. Kept local, each bridge resolves its own; the entry points are found through dlsym on the handle.
+    /// RTLD_LOCAL: a bridge embeds a whole language runtime, whose symbols must not serve anything else in the worker.
+    /// The entry points are found through dlsym on the handle.
     void* handle = dlopen(bridgePath.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (handle == nullptr)
     {
@@ -293,6 +295,18 @@ std::shared_ptr<UdfBackend> UdfBackend::create(const UdfDescriptor& descriptor)
     if (descriptor.getExecution() != UdfExecution::InProcess)
     {
         throw CannotLoadUdf("UDF '{}' does not run through an in-process bridge", descriptor.getName());
+    }
+    if (const auto& source = descriptor.getSource())
+    {
+        static constexpr std::string_view InlineFunctionName = "nes_inline_udf";
+        auto pythonSource = fmt::format("def {}({}):\n", InlineFunctionName, fmt::join(source->parameterNames, ", "));
+        /// One level deeper than the body's own indentation, whichever that is. Lines in a multi-line string literal shift too.
+        for (const auto line : std::views::split(std::string_view{source->body}, '\n'))
+        {
+            pythonSource += fmt::format("    {}\n", std::string_view{line});
+        }
+        return createFromSource(
+            descriptor.getPath(), pythonSource, std::string{InlineFunctionName}, descriptor.getArgTypes(), descriptor.getReturnType());
     }
     return std::make_shared<InProcessBackend>(descriptor);
 }

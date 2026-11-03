@@ -1,5 +1,5 @@
 # name: udf/CodonNestedInUdf.test
-# description: an inline Codon PYTHON(...) nested as the argument of a CPython catalog UDF;
+# description: a Codon UDF nested as the argument of a CPython catalog UDF;
 # the outer UDF must forward setup to its children so the nested Codon function gets compiled.
 # groups: [PythonUdf, PythonUDF, CompilerOnly]
 
@@ -11,9 +11,11 @@ ATTACH INLINE
 
 CREATE FUNCTION discount_cpython (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'portable_udfs.apply_discount';
 
-SELECT discount_cpython(PYTHON((price): $python$
+CREATE FUNCTION udf_1 (price FLOAT64) RETURNS FLOAT64 BRIDGE 'codon' AS $python$
         return price * 2.0
-    $python$) AS FLOAT64 BRIDGE 'codon') AS discounted FROM prices
+    $python$;
+
+SELECT discount_cpython(udf_1(price)) AS discounted FROM prices
 INTO file();
 ----
 180.0

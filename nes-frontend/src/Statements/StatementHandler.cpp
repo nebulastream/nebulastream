@@ -317,7 +317,7 @@ UdfInfo toUdfInfo(const UdfDescriptor& descriptor)
     return UdfInfo{
         .name = descriptor.getName(),
         .path = descriptor.getExecution() == UdfExecution::Codon ? std::string{CodonUdfBridge} : descriptor.getPath().string(),
-        .entrypoint = descriptor.getEntrypoint(),
+        .entrypoint = descriptor.getSource().has_value() ? std::string{"<inline>"} : descriptor.getEntrypoint(),
         .argTypes = descriptor.getArgTypes(),
         .returnType = descriptor.getReturnType(),
     };
@@ -336,7 +336,13 @@ std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::ope
     try
     {
         udfCatalog->registerUdf(
-            statement.name, statement.path, statement.entrypoint, statement.argTypes, statement.returnType, statement.execution);
+            statement.name,
+            statement.path,
+            statement.entrypoint,
+            statement.argTypes,
+            statement.returnType,
+            statement.execution,
+            statement.source);
     }
     catch (const Exception& e)
     {

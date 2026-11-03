@@ -16,7 +16,6 @@
 #include <Functions/InProcessUdfLowering.hpp>
 
 #include <utility>
-#include <variant>
 #include <Functions/PhysicalFunction.hpp>
 #include <Functions/UDFPhysicalFunction.hpp>
 #include <ErrorHandling.hpp>
@@ -29,10 +28,8 @@ namespace NES
 
 PhysicalFunction InProcessUdfLowering::createInProcess(UdfLoweringRegistryArguments arguments)
 {
-    const auto* descriptor = std::get_if<UdfDescriptor>(&arguments.udf);
-    INVARIANT(descriptor != nullptr, "An InProcess UDF is always a catalog UDF");
     return PhysicalFunction{
-        UDFPhysicalFunction(arguments.childFunctions, descriptor->getArgTypes(), arguments.outputType, UdfBackend::create(*descriptor))}
+        UDFPhysicalFunction(arguments.childFunctions, arguments.udf.getArgTypes(), arguments.outputType, UdfBackend::create(arguments.udf))}
         .withSetupChildren(std::move(arguments.childFunctions));
 }
 

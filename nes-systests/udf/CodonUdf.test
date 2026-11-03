@@ -1,6 +1,6 @@
 # name: udf/CodonUdf.test
 # description: catalog UDFs executed by Codon (CREATE FUNCTION ... BRIDGE 'codon'): the ENTRYPOINT module is compiled
-# ahead of time into the query pipeline. Same portable module as the CPython/PyPy bridges; NULL arguments give NULL.
+# ahead of time into the query pipeline. Same portable module as the CPython bridge; a NULL argument arrives as None.
 # groups: [PythonUDF, CompilerOnly]
 
 CREATE LOGICAL SOURCE numbers(a INT64, b INT64, name VARSIZED);
@@ -13,7 +13,7 @@ ATTACH INLINE
 CREATE FUNCTION add_codon (a INT64, b INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.add';
 CREATE FUNCTION shout_codon (text VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'portable_udfs.shout';
 
-# A NULL in either argument yields NULL without calling the function
+# The functions turn a None argument into NULL themselves
 SELECT add_codon(a, b) AS result FROM numbers
 INTO file();
 ----

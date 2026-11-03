@@ -306,6 +306,10 @@ public:
         {
             throw InvalidStatement("CREATE FUNCTION requires FROM, BRIDGE, or both");
         }
+        if (functionDefAST->body != nullptr && functionDefAST->functionPath != nullptr)
+        {
+            throw InvalidStatement("CREATE FUNCTION ... AS carries its code and does not take FROM");
+        }
         if (functionDefAST->bridge != nullptr && functionDefAST->functionPath != nullptr
             && bindStringLiteral(functionDefAST->bridge) == CodonUdfBridge)
         {
@@ -326,14 +330,24 @@ public:
                 path = resolveUdfBridgeLibraryPath(bridge).string();
             }
         }
-        const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
+        const auto entrypoint = functionDefAST->entrypoint != nullptr ? bindStringLiteral(functionDefAST->entrypoint) : std::string{};
 
-        /// Argument names in the DDL are documentation only — a scalar UDF matches
-        /// its arguments positionally, so we keep just the ordered types.
+        /// A scalar UDF matches its arguments positionally. Their names only matter inside an AS body.
         std::vector<DataType> argTypes;
+        std::vector<std::string> parameterNames;
         for (auto* const argField : functionDefAST->functionArgField())
         {
             argTypes.push_back(bindDataType(argField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+            parameterNames.emplace_back(bindIdentifier(argField->identifier()->strictIdentifier()).getOriginalString());
+        }
+        std::optional<InlineUdfSource> source;
+        if (functionDefAST->body != nullptr)
+        {
+            constexpr std::string_view delimiter = "$python$";
+            auto body = functionDefAST->body->getText();
+            PRECONDITION(body.size() >= delimiter.size() * 2, "Malformed Python UDF body");
+            source = InlineUdfSource{
+                .parameterNames = std::move(parameterNames), .body = body.substr(delimiter.size(), body.size() - (delimiter.size() * 2))};
         }
         const auto returnType = bindDataType(functionDefAST->returnType, DataType::NULLABLE::NOT_NULLABLE);
 
@@ -343,7 +357,8 @@ public:
             .entrypoint = entrypoint,
             .argTypes = std::move(argTypes),
             .returnType = returnType,
-            .execution = execution};
+            .execution = execution,
+            .source = std::move(source)};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

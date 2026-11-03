@@ -11,9 +11,11 @@ hello,-,world
 Nebula,/,Stream
 pointer,+,size
 
-SELECT PYTHON((lhs, separator, rhs): $python$
+CREATE FUNCTION udf_1 (lhs VARSIZED, separator VARSIZED, rhs VARSIZED) RETURNS VARSIZED BRIDGE 'codon' AS $python$
 return lhs + separator + rhs
-$python$) AS VARSIZED AS result
+$python$;
+
+SELECT udf_1(lhs, separator, rhs) AS result
 FROM words
 INTO file();
 ----
@@ -26,9 +28,11 @@ CREATE PHYSICAL SOURCE FOR conversions TYPE File;
 ATTACH INLINE
 42,2.5
 
-SELECT PYTHON((number, text): $python$
+CREATE FUNCTION udf_2 (number UINT64, text VARSIZED) RETURNS VARSIZED BRIDGE 'codon' AS $python$
 return str(number) + ":" + str(float(text))
-$python$) AS VARSIZED AS result
+$python$;
+
+SELECT udf_2(number, text) AS result
 FROM conversions
 INTO file();
 ----

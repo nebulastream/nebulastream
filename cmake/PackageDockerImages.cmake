@@ -37,10 +37,10 @@ function(nes_add_docker_image IMAGE TARGET)
     endif ()
 
     # UdfBridgeRegistry resolves BRIDGE clauses to <executable dir>/nes-udf-bridges/<file>. Best-effort:
-    # each bridge is only built when its toolchain is present; a single COPY covers both, sharing that dir.
+    # the bridge is only built when its toolchain is present.
     set(BRIDGE_COPY "")
     set(BRIDGE_DOCKERIGNORE "")
-    if (TARGET nes-cpython-udf-bridge OR TARGET nes-pypy-udf-bridge)
+    if (TARGET nes-cpython-udf-bridge)
         if (${TARGET} STREQUAL "nes-single-node-worker")
             set(BRIDGE_COPY "COPY nes-udf-bridges/ /usr/bin/nes-udf-bridges/\n")
             set(BRIDGE_DOCKERIGNORE "!nes-udf-bridges/**\n")

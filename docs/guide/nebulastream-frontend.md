@@ -603,7 +603,7 @@ Each function entry requires:
 - `args` - Ordered list of arguments with name and type (names are documentation only; arguments match by position)
 - `returns` - Return type (a UDF result is always nullable)
 - `bridge` or `path` - How the function executes. `bridge: codon` compiles the entrypoint module into the query
-  pipeline and takes no `path`. `bridge: cpython` or `bridge: pypy` selects a shipped bridge library, and `path` points
+  pipeline and takes no `path`. `bridge: cpython` selects the shipped bridge library, and `path` points
   at a bridge library explicitly (`path` wins if both are given).
 
 See `design/20260708_Scalar_UDF_Support.md` for the UDF model.

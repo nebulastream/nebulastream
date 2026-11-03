@@ -95,13 +95,11 @@ VarVal UDFPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
     const auto argLens = arena.allocateMemory(nautilus::val<size_t>(argCount * SLOT_BYTES));
     const auto argNulls = arena.allocateMemory(nautilus::val<size_t>(argCount));
 
-    auto anyArgNull = nautilus::val<bool>(false);
     for (nautilus::static_val<size_t> i = 0; i < argCount; ++i)
     {
         const auto value = arguments.at(nautilus::static_val<int>(i)).execute(record, arena);
         const auto isNull = value.isNullable() ? value.isNull() : nautilus::val<bool>(false);
         VarVal{isNull}.writeToMemory(argNulls + nautilus::val<uint64_t>(i));
-        anyArgNull = anyArgNull or isNull;
 
         const auto valueSlot = argValues + nautilus::val<uint64_t>(i * SLOT_BYTES);
         const auto lenSlot = argLens + nautilus::val<uint64_t>(i * SLOT_BYTES);
@@ -116,18 +114,6 @@ VarVal UDFPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
             value.writeToMemory(valueSlot);
             VarVal{nautilus::val<uint64_t>(0)}.writeToMemory(lenSlot);
         }
-    }
-
-    /// Strict-UDF semantics: any NULL argument short-circuits to a NULL result without invoking the UDF
-    /// (spares UDF authors from handling None). Per-argument null plumbing stays wired for a future non-strict mode.
-    if (anyArgNull)
-    {
-        if (returnType.type == DataType::Type::VARSIZED)
-        {
-            return VarVal{VariableSizedData{nullptr, 0}, true, true};
-        }
-        const auto nullResult = arena.allocateMemory(nautilus::val<size_t>(SLOT_BYTES));
-        return VarVal::readVarValFromMemory(nullResult, returnType, nautilus::val<bool>(true));
     }
 
     const auto backendPtr = nautilus::val<UdfBackend*>(backend.get());

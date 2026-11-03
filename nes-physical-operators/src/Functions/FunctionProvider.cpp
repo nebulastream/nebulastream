@@ -28,7 +28,6 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Functions/PythonLogicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
@@ -52,20 +51,6 @@ std::string_view udfBackendKey(const UdfExecution execution)
             return "InProcess";
         case UdfExecution::Codon:
             return "Codon";
-    }
-    std::unreachable();
-}
-
-std::string_view udfBackendKey(const PythonUdfBackend backend)
-{
-    switch (backend)
-    {
-        case PythonUdfBackend::Codon:
-            return "Codon";
-        case PythonUdfBackend::CPython:
-            return "CPython";
-        case PythonUdfBackend::PyPy:
-            return "PyPy";
     }
     std::unreachable();
 }
@@ -126,23 +111,6 @@ PhysicalFunction FunctionProvider::lowerFunction(
                 .outputType = logicalFunction.getDataType(),
                 .importPaths = pythonUdfImportPaths});
     }
-    /// Inline UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query text rather than a
-    /// catalog descriptor. BRIDGE selects the backend: Codon (default) AOT-compiles the body into the pipeline itself,
-    /// cpython/pypy run it through the interpreter bridges catalog UDFs use.
-    if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
-    {
-        return lowerUdf(
-            udfBackendKey(pythonFunction.value()->getBackend()),
-            "an inline PYTHON(...) function",
-            UdfLoweringRegistryArguments{
-                .udf
-                = InlineUdfSource{.parameterNames = pythonFunction.value()->getParameterNames(), .body = pythonFunction.value()->getBody()},
-                .childFunctions = std::move(childFunctions),
-                .inputTypes = std::move(inputTypes),
-                .outputType = logicalFunction.getDataType(),
-                .importPaths = pythonUdfImportPaths});
-    }
-
     /// 3. Calling the registry to create an executable function.
     if (const auto factory = PhysicalFunctionRegistry::instance().find(std::string(logicalFunction.getType())))
     {

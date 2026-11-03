@@ -162,7 +162,7 @@ struct Model
 };
 
 /// A catalog scalar UDF, the YAML counterpart of CREATE FUNCTION. Exactly one of `bridge` and `path` selects how it executes
-/// (`bridge: codon` compiles the entrypoint module into the query pipeline; `bridge: cpython|pypy` or `path` load a bridge `.so`).
+/// (`bridge: codon` compiles the entrypoint module into the query pipeline; `bridge: cpython` or `path` load a bridge `.so`).
 /// NOLINTNEXTLINE(misc-use-internal-linkage)
 struct Function
 {

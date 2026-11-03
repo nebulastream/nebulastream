@@ -88,7 +88,7 @@ createFunctionDefinition: FUNCTION udfName=identifier '(' (functionArgField (','
                           RETURNS returnType=typeDefinition
                           (FROM functionPath=STRING)?
                           (BRIDGE bridge=STRING)?
-                          ENTRYPOINT entrypoint=STRING;
+                          (ENTRYPOINT entrypoint=STRING | AS body=PYTHON_BODY);
 functionArgField: identifier typeDefinition;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
@@ -397,8 +397,7 @@ booleanComparison
 
 
 valueExpression
-    : PYTHON '(' '(' parameters=identifierSeq ')' ':' body=PYTHON_BODY ')' AS returnType=typeDefinition returnNullable=NULLTOKEN? (BRIDGE bridge=STRING)? #pythonFunction
-    | CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
+    : CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
     | (functionName | typeDefinition) '(' (starArg=ASTERISK | argument+=expression (',' argument+=expression)*)? ')'  #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
@@ -673,7 +672,6 @@ PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
 VERSION : 'VERSION' | 'version';
-PYTHON: 'PYTHON' | 'python';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work

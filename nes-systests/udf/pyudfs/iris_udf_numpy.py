@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""testdata/model/iris.onnx (4 -> 8 -> ReLU 16 -> softmax 3) in plain numpy, runnable on CPython, PyPy and Codon.
+"""testdata/model/iris.onnx (4 -> 8 -> ReLU 16 -> softmax 3) in plain numpy, runnable on CPython and Codon.
 Weights stay inside _predict and matmuls are multiply + sum: Codon cannot use module state or BLAS gemm.
 """
 

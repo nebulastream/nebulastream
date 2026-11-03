@@ -7,9 +7,9 @@ CREATE PHYSICAL SOURCE FOR frames TYPE File;
 ATTACH INLINE
 AABLAZYC4QMsBXcGwgcNCVgKowvuDDkOhA/PEBoSZROwFPsVRheRGNwZJxtyHL0dCB9TIJ4h6SI0JH8lyiYVKGApqyr2K0EtjC7XLyIxbTK4MwM1TjaZN+Q4Lzp6O8U8ED5bP6ZA8UE8Q4dE0kUdR2hIs0n+SklMlE3fTipQdVHAUgtUVlWhVuxXN1mCWs1bGF1jXq5f+WBEYo9j2mQlZnBnu2gGalFrnGznbTJvfXDIcRNzXnSpdfR2P3iKedV6IHxrfbZ+AYBMgZeC4oMthXiGw4cOiVmKpIvvjDqOhY/QkBuSZpOxlPyVR5eSmN2ZKJtznL6dCZ9UoJ+h6qI1pICly6YWqGGprKr3q0Ktja7YryOxbrK5swS1T7aat+W4MLp7u8a8Eb5cv6fA8sE9w4jE08Uex2nItMn/ykrMlc3gzivQdtHB0gzUV9Wi1u3XONmD2s7bGd1k3q/f+uBF4pDj2+Qm5nHnvOgH6lLrnezo7TPvfvDJ8RTzX/Sq9fX2,16,12
 
-CREATE SINK sink(aligned VARSIZED NOT NULL) TYPE File;
+CREATE SINK sink(aligned VARSIZED) TYPE File;
 
-SELECT TO_BASE64(PYTHON((image, width, height): $python$
+CREATE FUNCTION udf_1 (image VARSIZED, width UINT64, height UINT64) RETURNS VARSIZED BRIDGE 'codon' AS $python$
     import cv2
     import numpy as np
 
@@ -17,7 +17,9 @@ SELECT TO_BASE64(PYTHON((image, width, height): $python$
     m = np.array([[1.0, 0.0, -3.0], [0.0, 1.0, -6.0]])
     aligned = cv2.warpAffine(mono16, m, (int(width), int(height)), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
     return str(aligned.data.as_byte(), int(aligned.nbytes))
-$python$) AS VARSIZED) AS aligned
+$python$;
+
+SELECT TO_BASE64(udf_1(image, width, height)) AS aligned
 FROM (SELECT FROM_BASE64(encoded) AS image, width, height FROM frames)
 INTO sink;
 ----

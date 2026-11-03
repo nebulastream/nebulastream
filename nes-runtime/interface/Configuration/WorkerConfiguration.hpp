@@ -82,7 +82,7 @@ struct WorkerConfiguration
 
     bool dumpGraph;
 
-    /// Path to a `python -m venv` directory (created from the same CPython/PyPy build the Python UDF bridge links against)
+    /// Path to a `python -m venv` directory (created from the same CPython build the Python UDF bridge links against)
     /// whose site-packages is added to the embedded interpreter. Empty (the default) leaves the Python UDF bridges'
     /// embedded interpreters on system-local Python only. See docs/design/20260708_Scalar_UDF_Support.md, A7.
     std::string pythonUdfVenv;

@@ -55,7 +55,6 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
-#include <Functions/PythonLogicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -1044,34 +1043,6 @@ void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallCon
     AntlrSQLBaseListener::enterFunctionCall(context);
 }
 
-void AntlrSQLQueryPlanCreator::exitPythonFunction(AntlrSQLParser::PythonFunctionContext* context)
-{
-    std::vector<std::string> parameterNames;
-    std::vector<LogicalFunction> arguments;
-    for (auto* parameter : context->parameters->ident)
-    {
-        const auto identifier = bindIdentifier(parameter->identifier());
-        parameterNames.emplace_back(identifier.getOriginalString());
-        arguments.emplace_back(UnboundFieldAccessLogicalFunction(identifier));
-    }
-
-    auto body = context->body->getText();
-    constexpr std::string_view delimiter = "$python$";
-    PRECONDITION(body.size() >= delimiter.size() * 2, "Malformed Python UDF body");
-    body = body.substr(delimiter.size(), body.size() - (delimiter.size() * 2));
-
-    const auto backend = context->bridge != nullptr ? parsePythonUdfBackend(bindStringLiteral(context->bridge)) : PythonUdfBackend::Codon;
-
-    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
-    functions.emplace_back(PythonLogicalFunction(
-        std::move(parameterNames),
-        std::move(body),
-        bindDataType(
-            context->returnType, context->returnNullable == nullptr ? DataType::NULLABLE::NOT_NULLABLE : DataType::NULLABLE::IS_NULLABLE),
-        std::move(arguments),
-        backend));
-}
-
 void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpressionContext* context)
 {
     const auto targetDataType = bindDataType(context->targetType, DataType::NULLABLE::NOT_NULLABLE);
@@ -1418,17 +1389,15 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             }
             else
             {
+                auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
                 const auto numArgs = context->argument.size();
-                if (numArgs > helpers.top().functionBuilder.size())
+                if (numArgs > functions.size())
                 {
                     throw InvalidQuerySyntax(
-                        "Function '{}' expects {} arguments but only {} are available",
-                        funcName,
-                        numArgs,
-                        helpers.top().functionBuilder.size());
+                        "Function '{}' expects {} arguments but only {} are available", funcName, numArgs, functions.size());
                 }
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
+                auto argsBegin = functions.end() - static_cast<std::ptrdiff_t>(numArgs);
+                std::vector<LogicalFunction> funcArgs(argsBegin, functions.end());
                 auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, funcArgs);
                 if (!logicalFunction)
                 {
@@ -1437,8 +1406,8 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                     /// catalog-free (an unregistered name fails there with UnknownUdf, not here).
                     logicalFunction = LogicalFunction{UDFCallLogicalFunction{funcName, std::move(funcArgs)}};
                 }
-                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                helpers.top().functionBuilder.push_back(*logicalFunction);
+                functions.resize(functions.size() - numArgs);
+                functions.push_back(*logicalFunction);
             }
     }
 

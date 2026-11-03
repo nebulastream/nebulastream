@@ -10,13 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Python UDFs: inline PYTHON(...) functions and catalog UDFs (CREATE FUNCTION ... BRIDGE '<bridge>') that Codon compiles into
-# the query pipeline or the CPython/PyPy bridges interpret. Only part of the build with NES_ENABLE_PYTHON_UDFS; the generic
+# Python UDFs: catalog UDFs (CREATE FUNCTION ... BRIDGE '<bridge>') that Codon compiles into
+# the query pipeline or the CPython bridge interprets. Only part of the build with NES_ENABLE_PYTHON_UDFS; the generic
 # UDF support (catalog, C-ABI runtime, UDF logical and physical functions) lives in nes-udf and the operator components.
 find_package(codon-compiler CONFIG REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed QUIET)
-include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
-nes_find_pypy()
 
 add_subdirectory(codon-sdk)
 add_subdirectory(codon-plugins/blas)

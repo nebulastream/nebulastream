@@ -157,8 +157,8 @@ jobs:
       NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
     tests: [systest, docker]
 
-  # Builds without nes-python-udf: no Codon/CPython/PyPy at configure or link
-  # time, and Python UDF queries must fail with PythonUdfsNotEnabled.
+  # Builds without nes-python-udf: no Codon/CPython at configure or link
+  # time, and CREATE FUNCTION with a Python bridge must fail with PythonUdfsNotEnabled.
   - name: "{arch} {stdlib} {build_type} without python udfs (unit+systest)"
     arch: x64
     stdlib: libstdcxx

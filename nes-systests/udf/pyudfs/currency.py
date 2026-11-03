@@ -28,8 +28,8 @@ def add(a, b):
     return a + b
 
 
-def strict_probe(x):
-    """Always returns 42 and ignores x; a NULL input must short-circuit to SQL NULL without calling this."""
+def always_42(x):
+    """Always returns 42 and ignores x, so a NULL input still gives 42."""
     return 42
 
 
