@@ -140,7 +140,9 @@ EOF
   query_id=$output
 
   wait_until awk 'NF { count++ } END { exit(count < 10) }' results.csv
-  docker compose restart tcp-client
+  # stop_grace_period 0s makes Docker force-kill nc while it is already exiting on SIGTERM. That race can leave a stale
+  # cleanup which removes the network of the restarted container, so the sink's packets are silently dropped.
+  docker compose restart -t 1 tcp-client
 
   wait_until grep -q "TCPChannel disconnected" worker-1/singleNodeWorker.log
   wait_until grep -q "Reconnected TCPChannel" worker-1/singleNodeWorker.log
