@@ -19,6 +19,7 @@ add_source_files(nes-physical-operators
         PhysicalOperator.cpp
         EmitPhysicalOperator.cpp
         EmitOperatorHandler.cpp
+        ArrowTransformPipelineStage.cpp
         ScanPhysicalOperator.cpp
         HashMapSlice.cpp
         SourceDescriptorPhysicalOperator.cpp
