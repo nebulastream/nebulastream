@@ -89,6 +89,10 @@ jobs:
         name: Disk Usage After Build
         if: ${{ !cancelled() }}
 
+      - uses: ./.github/steps/disk-watchdog
+        name: Start Disk Watchdog
+        if: ${{ runner.environment == 'github-hosted' }}
+
       - uses: ./.github/steps/run-in-container
         name: Run Unit Tests
         if: ${{ matrix.run_unit }}

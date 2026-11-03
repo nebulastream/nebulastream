@@ -1,0 +1,10 @@
+name: Disk Watchdog
+description: |
+  Starts watch.sh in the background for the rest of the job. The log is in build/, so that the upload of the test logs
+  on failure includes it. Kills every container when it fires, so only use this on GitHub-hosted runners.
+
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: nohup bash "$GITHUB_ACTION_PATH/watch.sh" build/disk-watch.log 15 > /dev/null 2>&1 &
