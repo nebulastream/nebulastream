@@ -12,25 +12,24 @@
     limitations under the License.
 */
 
-
-#include <Functions/InProcessUdfLowering.hpp>
+#pragma once
 
 #include <utility>
-#include <Functions/PhysicalFunction.hpp>
-#include <Functions/UDFPhysicalFunction.hpp>
-#include <ErrorHandling.hpp>
-#include <UdfBackend.hpp>
-#include <UdfDescriptor.hpp>
-#include <UdfLoweringRegistry.hpp>
+#include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-PhysicalFunction InProcessUdfLowering::createInProcess(UdfLoweringRegistryArguments arguments)
+struct LowerToPhysicalUDF : AbstractLoweringRule
 {
-    return PhysicalFunction{
-        UDFPhysicalFunction(arguments.childFunctions, arguments.udf.getArgTypes(), arguments.outputType, UdfBackend::create(arguments.udf))}
-        .withSetupChildren(std::move(arguments.childFunctions));
-}
+    explicit LowerToPhysicalUDF(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
+    LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+
+private:
+    QueryExecutionConfiguration conf;
+};
 
 }

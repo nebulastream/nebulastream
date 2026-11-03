@@ -42,21 +42,6 @@ namespace NES::QueryCompilation
 {
 namespace
 {
-/// The UdfLoweringRegistry key of the backend that executes a UDF.
-std::string_view udfBackendKey(const UdfExecution execution)
-{
-    switch (execution)
-    {
-        case UdfExecution::InProcess:
-            return "InProcess";
-        case UdfExecution::Inline:
-            return "Codon";
-        case UdfExecution::OutOfProcess:
-            throw NotImplemented("Out-of-process UDF execution");
-    }
-    std::unreachable();
-}
-
 PhysicalFunction lowerUdf(std::string_view backend, std::string_view udfName, UdfLoweringRegistryArguments arguments)
 {
     const auto lower = UdfLoweringRegistry::instance().find(std::string{backend});
@@ -103,8 +88,12 @@ PhysicalFunction FunctionProvider::lowerFunction(
     {
         const auto& descriptor = udfCallFunction.value()->getDescriptor();
         INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
+        INVARIANT(
+            descriptor->getExecution() == UdfExecution::Inline,
+            "UDF '{}' must have been lifted into a UDF operator",
+            udfCallFunction.value()->getUdfName());
         return lowerUdf(
-            udfBackendKey(descriptor->getExecution()),
+            "Codon",
             fmt::format("UDF '{}'", udfCallFunction.value()->getUdfName()),
             UdfLoweringRegistryArguments{
                 .udf = *descriptor,

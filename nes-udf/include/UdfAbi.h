@@ -17,7 +17,7 @@
 /// C ABI shared with the UDF bridges: plain C enums and the C integer types the bridges declare.
 /// NOLINTBEGIN(cppcoreguidelines-use-enum-class,google-runtime-int)
 
-/// The NebulaStream scalar-UDF C ABI: a registered UDF `.so` exposes exactly the three symbols below,
+/// The NebulaStream scalar-UDF C ABI: a registered UDF `.so` exposes the symbols below, some of which are optional,
 /// implemented by a language bridge (e.g. an embedded Python interpreter). Any `.so` exporting them can serve scalar UDFs.
 ///
 /// Contract highlights (see docs/design/20260708_Scalar_UDF_Support.md):
@@ -67,8 +67,8 @@ int initialize_udf(const char* entrypoint, int argc, const int* arg_type_codes, 
 
 /// Prepare a UDF for execution from literal source rather than an importable module. `source` is
 /// executed in a fresh, anonymous namespace (private to this one handle); `function_name` names the
-/// callable it defines. Used for inline UDFs (e.g. SQL's PYTHON(...) expression), which carry their
-/// body as query text instead of a file reachable via the bridge's module search path. Same argument,
+/// callable it defines. Used for UDFs defined with AS in CREATE FUNCTION, which carry their
+/// body as text instead of a file reachable via the bridge's module search path. Same argument,
 /// return, and handle contract as initialize_udf. Optional: a bridge that never serves inline UDFs may
 /// omit it.
 int initialize_udf_from_source(
@@ -96,6 +96,12 @@ int execute_udf_row(
     long long* result_string_len,
     int* result_null,
     char** errormessage);
+
+/// Optional. Brackets the execute_udf_row calls of the UDFs that a stage runs for one row, so that the bridge can take
+/// what it serializes on (the GIL for CPython) once instead of per UDF. Only valid after initializing a UDF of this `.so`.
+/// exit_udf_row takes the value that enter_udf_row returned, on the same thread.
+int enter_udf_row(void);
+void exit_udf_row(int state);
 
 /// Release all resources associated with a handle returned by initialize_udf.
 void cleanup_udf(int handle);

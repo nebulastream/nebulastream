@@ -68,6 +68,9 @@ public:
         std::uint64_t maxResultLen,
         int* resultNull) override;
 
+    [[nodiscard]] int enterRow() override;
+    void exitRow(int state) override;
+
 private:
     /// dlopen's `bridgePath` and resolves execute_udf_row/cleanup_udf into executeFn/cleanupFn. Throws
     /// CannotLoadUdf on failure. Shared by both constructors; each then resolves and calls its own
@@ -87,6 +90,8 @@ private:
 
     void* libHandle = nullptr;
     void* executeFn = nullptr; /// execute_udf_row
+    void* enterRowFn = nullptr;
+    void* exitRowFn = nullptr;
     void* cleanupFn = nullptr; /// cleanup_udf
     int udfHandle = -1;
     std::size_t argCount = 0;

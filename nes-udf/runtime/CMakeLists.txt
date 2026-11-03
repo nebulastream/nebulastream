@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-udf-runtime src/InProcessBackend.cpp)
+add_library(nes-udf-runtime src/InProcessBackend.cpp src/UdfStage.cpp)
 target_include_directories(nes-udf-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(nes-udf-runtime
         PUBLIC nes-udf

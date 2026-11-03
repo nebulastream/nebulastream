@@ -1,0 +1,82 @@
+# name: explain/UdfLifting.test
+# description: UDFs with EXECUTION IN_PROCESS are lifted into UDF operators; those that can run together are fused.
+# groups: [explain, PythonUdf]
+
+CREATE LOGICAL SOURCE nums(a INT64 NOT NULL, b INT64 NOT NULL, unused INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR nums TYPE File;
+ATTACH INLINE
+1,2,3
+
+CREATE FUNCTION inc (x INT64) RETURNS INT64 AS $python$
+    return x + 1
+$python$;
+CREATE FUNCTION positive (x INT64) RETURNS BOOLEAN AS $python$
+    return x > 5
+$python$;
+CREATE FUNCTION inc_inline (x INT64) RETURNS INT64 EXECUTION INLINE AS $python$
+    return x + 1
+$python$;
+
+# Two calls are fused into one operator
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT inc(a) AS x, inc(b) AS y FROM nums INTO FILE();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [__UDF_CALL_0 as X, __UDF_CALL_1 as Y])
+    UDF(execution: InProcess, calls: [__UDF_CALL_0 = INC(A), __UDF_CALL_1 = INC(B)])
+      PROJECTION(fields: [A, B])
+        SOURCE(NUMS)
+==END==
+
+# A computed argument moves to the pre-projection, and work on the result stays above the operator
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT inc(a + b) * 2 AS x FROM nums INTO FILE();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [__UDF_CALL_1 * 2 as X])
+    UDF(execution: InProcess, calls: [__UDF_CALL_1 = INC(__UDF_ARG_0)])
+      PROJECTION(fields: [A, B, A + B as __UDF_ARG_0])
+        PROJECTION(fields: [A, B])
+          SOURCE(NUMS)
+==END==
+
+# A call reading another call gets its own operator
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT inc(inc(a)) AS x FROM nums INTO FILE();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [__UDF_CALL_1 as X])
+    UDF(execution: InProcess, calls: [__UDF_CALL_1 = INC(__UDF_CALL_0)])
+      PROJECTION(fields: [__UDF_CALL_0])
+        UDF(execution: InProcess, calls: [__UDF_CALL_0 = INC(A)])
+          PROJECTION(fields: [A])
+            SOURCE(NUMS)
+==END==
+
+# Inline UDFs stay in their expressions
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT inc_inline(a) AS x FROM nums INTO FILE();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [INC_INLINE(A) as X])
+    PROJECTION(fields: [A])
+      SOURCE(NUMS)
+==END==
+
+# A selection filters on a field that the projection above it drops
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT a FROM nums WHERE positive(a) INTO FILE();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [A])
+    SELECTION(__UDF_PRED_0)
+      PROJECTION(fields: [A, __UDF_CALL_1 as __UDF_PRED_0])
+        UDF(execution: InProcess, calls: [__UDF_CALL_1 = POSITIVE(A)])
+          PROJECTION(fields: [A])
+            SOURCE(NUMS)
+==END==

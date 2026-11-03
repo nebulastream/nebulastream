@@ -64,7 +64,7 @@ Disadvantage: an operator cannot be nested inside an arbitrary expression.
 `SELECT to_euro(amount, ccy) * 1.1 FROM ... WHERE to_euro(amount, ccy) > 100` needs the UDF to be a *function* in the expression tree, not a plan node.
 Modeling it as an operator would fail G1 (call the UDF in *any* scalar expression).
 
-Chosen: model the UDF as a `PhysicalFunction` (`UDFPhysicalFunction`), applied automatically by the existing `MapPhysicalOperator`, and usable anywhere a scalar function is.
+Chosen: model the UDF as a function in the logical plan, usable anywhere a scalar function is. Only Inline UDFs stay physical functions: an optimizer rule pulls all others out of their expressions into a UDF operator, see [Extension — The UDF operator](#extension--the-udf-operator).
 We still borrow inference's *catalog + name→resolved + deferred-load + `nautilus::invoke`* patterns; we just attach them to the function machinery instead of the operator machinery.
 
 ## A2 — In-process execution vs. sidecar process isolation
@@ -82,7 +82,7 @@ Disadvantage: a whole extra subsystem — a new interpreter-hosting executable, 
 
 Chosen: A2a for v1, behind a `UdfBackend` interface, with A2b as a documented v2.
 A2a already satisfies G3 for every *recoverable* failure, which is the common case; only fatal native crashes remain, and those are NG1 for v1.
-The `UdfBackend` seam makes v2 a localized change: `SidecarBackend` satisfies the same interface, so the catalog, DDL, logical function, resolution rule, lowering, `UDFPhysicalFunction`, exception code, and systests are all untouched when isolation is added.
+The `UdfBackend` seam makes v2 a localized change: `SidecarBackend` satisfies the same interface, so the catalog, DDL, logical function, resolution rule, lowering, `UDFPhysicalOperator`, exception code, and systests are all untouched when isolation is added.
 This keeps the reversible-decision cost near zero while shipping a much smaller v1.
 
 ## A3 — Resolve the UDF name at parse time vs. a two-phase resolution rule
@@ -107,7 +107,7 @@ A4a (registry): extend `PhysicalFunctionRegistryArguments` with a generic config
 Disadvantage: pollutes a shared, widely-used struct with a UDF-specific payload, for a single consumer.
 
 A4b (special-case): `FunctionProvider::lowerFunction` already special-cases `FieldAccessLogicalFunction` and `ConstantValueLogicalFunction` before consulting the registry.
-Add a third branch that reads the descriptor off the resolved `UDFCallLogicalFunction` and constructs the `UDFPhysicalFunction` directly.
+Add a third branch that reads the descriptor off the resolved `UDFCallLogicalFunction` and lowers the UDF directly. This is what Inline UDFs do; others reach lowering as a UDF operator.
 
 Chosen: A4b.
 It follows existing precedent, needs no change to shared registry types, and is the natural home for carrying non-generic metadata (a `.so` path) from logical to physical.
@@ -188,13 +188,14 @@ flowchart TD
       Q["SELECT myUdf(a,b) ..."] --> P["parse: generic functionCall<br/>-> UDFCallLogicalFunction (name-only)"]
       P --> R["UDFResolutionRule (holds UdfCatalog*)<br/>-> attaches UdfDescriptor"]
       R --> T["withInferredDataType<br/>validate arg types, set result type + nullability"]
-      T --> L["FunctionProvider::lowerFunction (special-case)<br/>-> UDFPhysicalFunction(backend, argFns, types)"]
+      T --> LI["UDFLiftingRule<br/>-> pre-projection, UDFLogicalOperator, post-projection"]
+      LI --> L["LowerToPhysicalUDF<br/>-> UDFPhysicalOperator(argFns, results, UdfStage)"]
     end
 
     subgraph Execution
-      L --> M["MapPhysicalOperator::execute -> UDFPhysicalFunction::execute(record, arena)"]
-      M --> IV["nautilus::invoke(trampoline, backend*, argBuf, nulls, resultSlot)"]
-      IV --> BE["UdfBackend.executeRow -> execute_udf_row(...)"]
+      L --> M["UDFPhysicalOperator::execute(ctx, record)"]
+      M --> IV["nautilus::invoke(trampoline, stage*, argBuf, nulls, resultSlots)"]
+      IV --> BE["UdfStage::executeRow -> enter_udf_row, execute_udf_row per UDF, exit_udf_row"]
       BE -->|UDF_ERROR| EX["throw UdfExecutionError(3007)"]
       BE -->|UDF_OK| OUT["result slot -> VarVal -> record.write(outField)"]
     end
@@ -217,16 +218,20 @@ classDiagram
     class SidecarBackend {
       <<v2, deferred>>
     }
-    class UDFPhysicalFunction {
-      -shared_ptr~UdfBackend~ backend
-      -vector~PhysicalFunction~ args
-      -vector~DataType~ argTypes
-      -DataType returnType
-      +execute(Record, ArenaRef) VarVal
+    class UdfStage {
+      -vector~UdfBackend~ backends
+      +executeRow(argValues, argLens, argNulls, results, resultLens, resultNulls) void
+    }
+    class UDFPhysicalOperator {
+      -shared_ptr~UdfStage~ stage
+      -vector~Argument~ arguments
+      -vector~Result~ results
+      +execute(ExecutionContext, Record) void
     }
     UdfBackend <|.. InProcessBackend
     UdfBackend <|.. SidecarBackend
-    UDFPhysicalFunction o-- UdfBackend
+    UDFPhysicalOperator o-- UdfStage
+    UdfStage o-- UdfBackend
 ```
 
 ## The C ABI (the language-agnostic boundary — G2)
@@ -265,13 +270,13 @@ The catalog is instantiated at the app entry points and threaded into the `Query
 Calling `myUdf(a, b)` needs no grammar change: it parses through the generic `functionCall` rule, and `LogicalFunctionProvider` returns a name-only `UDFCallLogicalFunction` placeholder when the built-in registry misses.
 `UDFResolutionRule` attaches the `UdfDescriptor` from the catalog before type inference.
 `UDFCallLogicalFunction::withInferredDataType` validates argument types/arity against the signature and sets the result type and nullability.
-`FunctionProvider::lowerFunction` special-cases the resolved logical function and builds the `UDFPhysicalFunction`, calling `UdfBackend::create(descriptor)` (which, in v1, `dlopen`s the `.so` and calls `initialize_udf`).
+`UDFLiftingRule` then moves every call that is not Inline into a `UDFLogicalOperator`. `LowerToPhysicalUDF` builds its `UDFPhysicalOperator`, whose `UdfStage` calls `UdfBackend::create(descriptor)` per UDF (which, in v1, `dlopen`s the `.so` and calls `initialize_udf`).
 
 ## Execution (G1)
 
-`UDFPhysicalFunction::execute(record, arena)` mirrors `InferModelPhysicalOperator`'s raw-buffer marshalling, with a single boundary in v1:
-it evaluates each argument function into a scratch buffer (scalars inline, VARSIZED as pointer+length, plus a null-flag byte per argument), then makes one fixed-signature `nautilus::invoke` call regardless of arity.
-The trampoline calls `backend->executeRow(...)`, which in `InProcessBackend` calls `execute_udf_row` directly.
+`UDFPhysicalOperator::execute(ctx, record)` mirrors `InferModelPhysicalOperator`'s raw-buffer marshalling, with a single boundary in v1:
+it evaluates the arguments of all its UDFs into one scratch buffer (scalars inline, VARSIZED as pointer+length, plus a null-flag byte per argument), then makes one fixed-signature `nautilus::invoke` call regardless of arity.
+The trampoline calls `UdfStage::executeRow(...)`, which calls each UDF's `execute_udf_row` through `InProcessBackend`.
 A scalar result is read back into a `VarVal`; a VARSIZED result is copied out of the reply into arena-allocated memory (the "return size, then allocate, then copy" two-step used by `InferModel`/`ToBase64`, because the arena cannot be allocated from inside the trampoline).
 A NULL result is honored via the result null flag.
 
@@ -345,6 +350,33 @@ Instead of `ENTRYPOINT`, a function can carry its code: `CREATE FUNCTION f (a IN
 
 Code cannot be written inside a query expression: every UDF has a name in the catalog. Internally, a function or operator can be implemented as a UDF without the catalog, by building a `UDFCallLogicalFunction` from `UdfDescriptor::fromSource`.
 
+# Extension — The UDF operator
+
+A UDF has one of three executions, set by `EXECUTION` in `CREATE FUNCTION`:
+
+- **`INLINE`** compiles it into the query pipeline, with Codon for Python. It stays in its expression, like a built-in function.
+- **`IN_PROCESS`**, the default, runs it through a bridge `.so` loaded into the worker, such as embedded CPython.
+- **`OUT_OF_PROCESS`** is reserved for a separate process. It is rejected at bind time for now.
+
+`UDFLiftingRule` runs after the pushdown rules and rewrites selections and projections that call non-Inline UDFs:
+
+```
+SELECT inc(a + b) * 2 AS x FROM nums
+
+PROJECTION(__UDF_CALL_1 * 2 as X)                 the original expressions, reading the results
+  UDF(calls: [__UDF_CALL_1 = INC(__UDF_ARG_0)])   the calls, on fields and constants only
+    PROJECTION(A, B, A + B as __UDF_ARG_0)        the arguments that have to be computed
+      ...
+```
+
+A selection evaluates its predicate into a field the same way, filters on that field, and drops the helper fields with a projection above it.
+
+**What ends up in one operator.** Calls run together in one operator if they share an execution, a language and a bridge library, and if none reads the result of another. A call that reads another call gets its own operator above it, as does a call that cannot be fused with the others. The same call on the same fields runs once per row, so a non-deterministic UDF used twice in a projection returns one value. A selection and a projection above it do not share calls.
+
+**Fusing.** A `UDFPhysicalOperator` makes one call into its `UdfStage` per record. The stage brackets the `execute_udf_row` calls of all its UDFs with `enter_udf_row` and `exit_udf_row`, so CPython takes the GIL once per row rather than once per UDF. The stage has its own mutex, taken before the GIL: a thread holding the GIL could otherwise wait for a backend's mutex held by a thread waiting for the GIL. Each UDF still gets its own call across the ABI. Running a whole buffer in one call is a later step.
+
+**Joins.** A join predicate needs both sides of the join, so it cannot read from an operator below the join. A non-Inline UDF in a join predicate fails the query with `QueryInvalid`.
+
 # Appendix — implementation outline
 
 Component split mirrors `nes-inference` / `nes-inference/runtime`:
@@ -357,7 +389,7 @@ Ordered build sequence:
 1. ABI header + `nes-udf` skeleton + `UdfCatalog`/`UdfDescriptor` (+ reflection) + `UdfCatalogTest`.
 2. `CREATE FUNCTION` grammar + `StatementBinder` + `UdfStatementHandler` + entry-point wiring + binder test.
 3. `UDFCallLogicalFunction` + `LogicalFunctionProvider` fallback + `UDFResolutionRule` + `SemanticAnalyzer` wiring + logical test.
-4. `UdfBackend`/`InProcessBackend` + `UDFPhysicalFunction` + trampoline + `FunctionProvider` special-case + physical test.
+4. `UdfBackend`/`InProcessBackend` + `UDFLogicalOperator` + `UDFLiftingRule` + `UdfStage` + `UDFPhysicalOperator` + trampoline.
 5. `EXCEPTION(UdfExecutionError, 3007, ...)` in `ExceptionDefinitions.inc` + type-mapping table.
 6. `nes-systests/udf/` positive + negative (`ERROR 3007`) systests + build-gating.
 

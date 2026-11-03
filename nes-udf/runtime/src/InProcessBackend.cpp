@@ -55,6 +55,8 @@ using InitializeUdfFn = int (*)(const char*, int, const int*, int, char**);
 using InitializeUdfFromSourceFn = int (*)(const char*, const char*, int, const int*, int, char**);
 using ExecuteUdfRowFn = int (*)(int, const void* const*, const long long*, const int*, void*, char**, long long*, int*, char**);
 using CleanupUdfFn = void (*)(int);
+using EnterUdfRowFn = int (*)();
+using ExitUdfRowFn = void (*)(int);
 
 /// Maps a NES type to its UDF ABI type code. CHAR/UNDEFINED are rejected at UDF registration, so
 /// reaching them here is a bug.
@@ -105,6 +107,8 @@ void* InProcessBackend::loadBridge(const std::filesystem::path& bridgePath)
     }
     executeFn = dlsym(handle, "execute_udf_row");
     cleanupFn = dlsym(handle, "cleanup_udf");
+    enterRowFn = dlsym(handle, "enter_udf_row");
+    exitRowFn = dlsym(handle, "exit_udf_row");
     if (executeFn == nullptr || cleanupFn == nullptr)
     {
         dlclose(handle);
@@ -200,6 +204,19 @@ InProcessBackend::~InProcessBackend()
     /// Never dlclose(libHandle): a bridge may init an embedded runtime once per process and never
     /// finalize it (e.g. Py_InitializeEx). Unmapping the .so while that runtime's state is still live
     /// crashes at exit. The OS reclaims the mapping when the process exits.
+}
+
+int InProcessBackend::enterRow()
+{
+    return enterRowFn != nullptr ? reinterpret_cast<EnterUdfRowFn>(enterRowFn)() : 0;
+}
+
+void InProcessBackend::exitRow(const int state)
+{
+    if (exitRowFn != nullptr)
+    {
+        reinterpret_cast<ExitUdfRowFn>(exitRowFn)(state);
+    }
 }
 
 void InProcessBackend::invokeUdf(

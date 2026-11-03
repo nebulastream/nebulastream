@@ -60,6 +60,15 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli dump with in-process function, lifted into a UDF operator" {
+  if [ "$NES_ENABLE_PYTHON_UDFS" != "ON" ]; then
+    skip "built without Python UDFs"
+  fi
+  run $NES_CLI -t tests/good/udf-function-in-process.yaml dump
+  [ "$status" -eq 0 ]
+  assert_output --partial "UDF(execution: InProcess"
+}
+
 @test "nebucli dump with catalog function topology" {
   if [ "$NES_ENABLE_PYTHON_UDFS" != "ON" ]; then
     skip "built without Python UDFs"

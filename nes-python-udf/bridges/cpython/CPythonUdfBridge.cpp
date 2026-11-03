@@ -66,10 +66,10 @@ char* dupString(const std::string& text)
 
 void initPythonOnce()
 {
-    /* A UDF naming this bridge by an explicit path and one resolved through the registry load two copies of this
-     * library into the worker, each with its own g_pyInit, but both share the one embedded interpreter. Only
-     * the copy that actually starts it up holds the GIL afterwards; on an already running interpreter
-     * Py_InitializeEx returns without one, so take the GIL explicitly below rather than assume we hold it. */
+    /* The catalog API can name this bridge by a path other than the shipped one, which loads a second copy of this
+     * library into the worker, with its own g_pyInit, but sharing the one embedded interpreter. Only the copy that
+     * actually starts it up holds the GIL afterwards; on an already running interpreter Py_InitializeEx returns
+     * without one, so take the GIL explicitly below rather than assume we hold it. */
     if (Py_IsInitialized() == 0)
     {
         Py_InitializeEx(0);
@@ -534,6 +534,16 @@ extern "C" int execute_udf_row(
         }
     }
     return status;
+}
+
+extern "C" int enter_udf_row()
+{
+    return static_cast<int>(PyGILState_Ensure());
+}
+
+extern "C" void exit_udf_row(int state)
+{
+    PyGILState_Release(static_cast<PyGILState_STATE>(state));
 }
 
 extern "C" void cleanup_udf(int handle)

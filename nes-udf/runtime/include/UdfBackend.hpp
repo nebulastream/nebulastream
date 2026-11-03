@@ -61,6 +61,11 @@ public:
         std::uint64_t maxResultLen,
         int* resultNull) = 0;
 
+    /// Bracket the calls that a UdfStage makes for one row, see enter_udf_row in UdfAbi.h.
+    [[nodiscard]] virtual int enterRow() { return 0; }
+
+    virtual void exitRow(int /*state*/) { }
+
     /// Load and prepare the UDF described by `descriptor`, from its entry point or its inline source. v1 always returns
     /// an in-process backend.
     [[nodiscard]] static std::shared_ptr<UdfBackend> create(const UdfDescriptor& descriptor);
