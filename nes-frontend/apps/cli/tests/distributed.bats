@@ -475,6 +475,19 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "oversized last buffer fails the query" {
+  setup_distributed tests/good/oversized-buffer.yaml
+
+  run docker_nes_cli -t tests/good/oversized-buffer.yaml start
+  [ "$status" -eq 0 ]
+  query_id=$output
+
+  wait_until_status tests/good/oversized-buffer.yaml Failed "$query_id"
+
+  grep "cannot be sent" worker-2/singleNodeWorker.log
+  grep "NetworkSink channel failed permanently" worker-2/singleNodeWorker.log
+}
+
 @test "placement fails with reversed downstream edges" {
   setup_distributed tests/bad/3-nodes-reversed-edges.yaml
   run docker_nes_cli start

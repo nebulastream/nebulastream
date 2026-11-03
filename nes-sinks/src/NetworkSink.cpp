@@ -143,12 +143,21 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
     {
         INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
 
-        /// Check if the sender network service has pending buffers to send
-        /// If yes, keep the pipeline alive by emitting an empty buffer
-        if (!flush_sender_channel(*this->channel.value()))
+        switch (flush_sender_channel(*this->channel.value()))
         {
-            pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
-            return;
+            case FlushResult::Flushed: {
+                break;
+            }
+            case FlushResult::Pending: {
+                /// The sender network service has pending buffers to send, keep the pipeline alive by emitting an empty buffer
+                pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
+                return;
+            }
+            case FlushResult::Failed: {
+                /// Already sent buffers are lost. Stopping regularly would silently drop them.
+                this->closed = true;
+                throw CannotWriteToSink("NetworkSink channel failed permanently");
+            }
         }
     }
 

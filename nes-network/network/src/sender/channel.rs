@@ -17,6 +17,8 @@ use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
 use std::io;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -42,7 +44,7 @@ enum ChannelHandlerStatus {
     /// The channel was cancelled via the cancellation token.
     Cancelled,
     /// A buffer can never be sent (e.g. it exceeds the maximum frame size). Retrying would block the channel
-    /// forever, so the channel is terminated and its command queue closed, which fails the sending sink.
+    /// forever, so the channel is terminated and marked as failed, which fails the sending sink.
     Failed(Error),
 }
 
@@ -106,6 +108,15 @@ pub(super) enum ChannelCommand {
 }
 pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
 pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
+/// Set once the channel failed permanently. Distinguishes a failure from a regularly closed channel.
+pub(super) type ChannelFailed = Arc<AtomicBool>;
+
+/// Closes the queue and drops all commands the terminated handler will never process.
+/// Closing alone keeps them alive, so a queued `Flush` would never be answered and its caller would wait forever.
+fn close_and_drain(queue: &ChannelCommandQueueListener) {
+    queue.close();
+    while queue.try_recv().is_ok() {}
+}
 
 /// Core event loop handler for a sender-side data channel.
 ///
@@ -431,12 +442,6 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             ErrorOrStatus::Status(status) => status,
         };
 
-        if let ChannelHandlerStatus::Failed(_) = status {
-            // Makes `try_send_data` return `Closed`, which fails the query.
-            self.queue.close();
-            return Ok(status);
-        }
-
         // Fixup the ClosedBySoftwareButFailedToPropagate created in read_from_software
         if let ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(_) = status {
             let Some(result) = self
@@ -561,6 +566,13 @@ pub(super) fn create_channel_handler(
                         .await;
                     return;
                 };
+
+                // Has to be set before the queue is closed: Whoever observes the closed queue must also see the failure.
+                if let ChannelHandlerStatus::Failed(_) = status {
+                    pending_channel.failed.store(true, Ordering::Release);
+                }
+                // The channel will not be restarted. This makes `try_send_data` return `Closed` and `flush` return an error.
+                close_and_drain(&pending_channel.queue);
 
                 match status {
                     ChannelHandlerStatus::ClosedByOtherSide => {
