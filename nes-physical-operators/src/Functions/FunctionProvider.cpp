@@ -49,8 +49,10 @@ std::string_view udfBackendKey(const UdfExecution execution)
     {
         case UdfExecution::InProcess:
             return "InProcess";
-        case UdfExecution::Codon:
+        case UdfExecution::Inline:
             return "Codon";
+        case UdfExecution::OutOfProcess:
+            throw NotImplemented("Out-of-process UDF execution");
     }
     std::unreachable();
 }

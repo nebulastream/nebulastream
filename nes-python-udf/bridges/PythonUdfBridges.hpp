@@ -19,12 +19,12 @@
 namespace NES
 {
 
-/// The BRIDGE values of Python UDFs: Codon compiles the ENTRYPOINT module into the query pipeline, CPython runs it in the
+/// How Python UDFs execute: Inline compiles them with Codon into the query pipeline, InProcess runs them in the CPython
 /// interpreter embedded by its bridge library.
 struct PythonUdfBridges
 {
-    static UdfBridge createCodon();
-    static UdfBridge createCPython();
+    static UdfBridge createPythonInline();
+    static UdfBridge createPythonInProcess();
 };
 
 }

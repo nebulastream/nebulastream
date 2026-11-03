@@ -18,7 +18,7 @@ query: |
 functions:
   # Codon compiles the entrypoint module into the query pipeline on the worker, so `dump` needs neither a bridge library nor the module.
   - name: plus_one
-    bridge: codon
+    execution: INLINE
     entrypoint: portable_udfs.add_one
     args:
       - name: x

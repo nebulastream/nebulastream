@@ -15,7 +15,7 @@ ATTACH INLINE
 CREATE SINK nullable_sink(result INT64) TYPE File;
 
 # Both nullable scalar and VARSIZED arguments arrive as None. The UDF can also return None.
-CREATE FUNCTION udf_1 (number INT64, text VARSIZED) RETURNS INT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (number INT64, text VARSIZED) RETURNS INT64 EXECUTION INLINE AS $python$
     if number is None and text is None:
         return None
     result = 0 if number is None else number
@@ -34,7 +34,7 @@ NULL
 7
 
 # The UDF can turn None into a value.
-CREATE FUNCTION udf_2 (number INT64) RETURNS INT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_2 (number INT64) RETURNS INT64 EXECUTION INLINE AS $python$
 return 100 if number is None else number
 $python$;
 

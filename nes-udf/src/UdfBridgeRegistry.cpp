@@ -16,8 +16,9 @@
 
 #include <filesystem>
 #include <string>
-#include <string_view>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -34,26 +35,29 @@ std::filesystem::path currentExecutableDirectory()
     return std::filesystem::read_symlink("/proc/self/exe").parent_path();
 }
 
-UdfBridge resolveUdfBridge(const std::string_view bridge)
+std::filesystem::path resolveUdfBridgeLibraryPath(const UdfLanguage language, const UdfExecution execution)
 {
     const auto& registry = UdfBridgeRegistry::instance();
-    if (const auto create = registry.find(std::string{bridge}))
+    if (const auto create = registry.find(fmt::format("{}{}", magic_enum::enum_name(language), magic_enum::enum_name(execution))))
     {
-        return (*create)();
+        const auto bridge = (*create)();
+        return bridge.libraryFileName.empty() ? std::filesystem::path{}
+                                              : currentExecutableDirectory() / "nes-udf-bridges" / bridge.libraryFileName;
     }
     const auto shipped = registry.getRegisteredNames();
     if (shipped.empty())
     {
         throw PythonUdfsNotEnabled(
-            "BRIDGE '{}' is not available: this build has no support for Python UDFs (configure with -DNES_ENABLE_PYTHON_UDFS=ON)", bridge);
+            "{} execution of {} UDFs is not available: this build has no support for Python UDFs (configure with "
+            "-DNES_ENABLE_PYTHON_UDFS=ON)",
+            magic_enum::enum_name(execution),
+            magic_enum::enum_name(language));
     }
-    throw UnsupportedUdfLanguage("'{}' is not a UDF bridge of this build (available: {})", bridge, fmt::join(shipped, ", "));
-}
-
-std::filesystem::path resolveUdfBridgeLibraryPath(const UdfBridge& bridge)
-{
-    INVARIANT(!bridge.libraryFileName.empty(), "A bridge compiled into the query pipeline has no library");
-    return currentExecutableDirectory() / "nes-udf-bridges" / bridge.libraryFileName;
+    throw UnsupportedUdfLanguage(
+        "{} execution of {} UDFs is not available in this build (available: {})",
+        magic_enum::enum_name(execution),
+        magic_enum::enum_name(language),
+        fmt::join(shipped, ", "));
 }
 
 }

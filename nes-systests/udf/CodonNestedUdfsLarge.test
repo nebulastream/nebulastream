@@ -7,10 +7,10 @@ CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NU
 CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
 ATTACH FILE large/nexmark/bid_653M.csv
 
-CREATE FUNCTION double_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.double';
-CREATE FUNCTION increment_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.increment';
-CREATE FUNCTION square_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.square';
-CREATE FUNCTION negate_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.negate';
+CREATE FUNCTION double_codon (x INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.double';
+CREATE FUNCTION increment_codon (x INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.increment';
+CREATE FUNCTION square_codon (x INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.square';
+CREATE FUNCTION negate_codon (x INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.negate';
 
 # Two nested UDFs: datetime * 2 + 1
 SELECT * FROM (

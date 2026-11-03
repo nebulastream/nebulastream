@@ -9,7 +9,7 @@ AACAPwAAAAA=,AAAAAAAAgD8=
 
 CREATE SINK sink(similarity FLOAT64) TYPE File;
 
-CREATE FUNCTION udf_1 (left_embedding VARSIZED, right_embedding VARSIZED) RETURNS FLOAT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (left_embedding VARSIZED, right_embedding VARSIZED) RETURNS FLOAT64 EXECUTION INLINE AS $python$
     import numpy as np
 
     left = np.frombuffer(left_embedding, dtype=np.float32)

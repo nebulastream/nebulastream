@@ -9,7 +9,7 @@ CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
 ATTACH FILE large/nexmark/bid_653M.csv
 
 # CPython bridge, inline UDF, filter on OUTPUT
-CREATE FUNCTION udf_1 (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' AS $python$
+CREATE FUNCTION udf_1 (price FLOAT64) RETURNS FLOAT64 EXECUTION IN_PROCESS AS $python$
         return price * 0.9
     $python$;
 
@@ -22,7 +22,7 @@ INTO FILE();
 999994,23774,36.0
 
 # Codon, inline UDF (AOT-compiled into the pipeline), filter on OUTPUT
-CREATE FUNCTION udf_2 (price FLOAT64) RETURNS FLOAT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_2 (price FLOAT64) RETURNS FLOAT64 EXECUTION INLINE AS $python$
         return price * 0.9
     $python$;
 

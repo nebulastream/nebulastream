@@ -1,5 +1,5 @@
 # name: udf/CodonUdf.test
-# description: catalog UDFs executed by Codon (CREATE FUNCTION ... BRIDGE 'codon'): the ENTRYPOINT module is compiled
+# description: catalog UDFs executed by Codon (CREATE FUNCTION ... EXECUTION INLINE): the ENTRYPOINT module is compiled
 # ahead of time into the query pipeline. Same portable module as the CPython bridge; a NULL argument arrives as None.
 # groups: [PythonUDF, CompilerOnly]
 
@@ -10,8 +10,8 @@ ATTACH INLINE
 10,,xyz
 ,5,
 
-CREATE FUNCTION add_codon (a INT64, b INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.add';
-CREATE FUNCTION shout_codon (text VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'portable_udfs.shout';
+CREATE FUNCTION add_codon (a INT64, b INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.add';
+CREATE FUNCTION shout_codon (text VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'portable_udfs.shout';
 
 # The functions turn a None argument into NULL themselves
 SELECT add_codon(a, b) AS result FROM numbers
@@ -34,7 +34,7 @@ ATTACH INLINE
 100.0
 40.0
 
-CREATE FUNCTION discount_codon (price FLOAT64) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.apply_discount';
+CREATE FUNCTION discount_codon (price FLOAT64) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.apply_discount';
 
 SELECT discount_codon(price) AS discounted FROM prices
 INTO file();

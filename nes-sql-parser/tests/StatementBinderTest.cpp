@@ -394,25 +394,6 @@ TEST_F(StatementBinderTest, AnonymousSinkQuery)
     ASSERT_EQ(schema, anonymousSinkOperator->getTargetSchema());
 }
 
-TEST_F(StatementBinderTest, BindCreateFunction)
-{
-    const std::string statementString = "CREATE FUNCTION to_euro (amount FLOAT64, ccy VARSIZED) RETURNS FLOAT64 "
-                                        "FROM '/opt/udfs/libcurrency.so' ENTRYPOINT 'currency.to_euro'";
-    const auto statement = binder->parseAndBindSingle(statementString);
-    ASSERT_TRUE(statement.has_value());
-    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
-
-    const auto& create = std::get<CreateFunctionStatement>(*statement);
-    /// Unquoted identifiers are upper-folded by the parser (as is the call site), so the name is normalized.
-    EXPECT_EQ(create.name, "TO_EURO");
-    EXPECT_EQ(create.path, "/opt/udfs/libcurrency.so");
-    EXPECT_EQ(create.entrypoint, "currency.to_euro");
-    ASSERT_EQ(create.argTypes.size(), 2U);
-    EXPECT_EQ(create.argTypes.at(0).type, DataType::Type::FLOAT64);
-    EXPECT_EQ(create.argTypes.at(1).type, DataType::Type::VARSIZED);
-    EXPECT_EQ(create.returnType.type, DataType::Type::FLOAT64);
-}
-
 TEST_F(StatementBinderTest, BindDropFunction)
 {
     const auto statement = binder->parseAndBindSingle("DROP FUNCTION WHERE name = 'to_euro'");
@@ -431,98 +412,106 @@ TEST_F(StatementBinderTest, BindShowFunctions)
 /// The Python bridges are registered by nes-python-udf, so tests that bind them only run in builds that ship them.
 namespace
 {
+constexpr auto InlineBridge = "PythonInline";
+constexpr auto InProcessBridge = "PythonInProcess";
+
 bool isUdfBridgeShipped(const std::string& bridge)
 {
     return UdfBridgeRegistry::instance().contains(bridge);
 }
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithBridge)
+TEST_F(StatementBinderTest, BindCreateFunction)
 {
-    if (!isUdfBridgeShipped("cpython"))
+    if (!isUdfBridgeShipped(InProcessBridge))
     {
-        GTEST_SKIP() << "UDF bridge 'cpython' is not part of this build";
+        GTEST_SKIP() << "UDF bridge " << InProcessBridge << " is not part of this build";
     }
-    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
-                                        "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
+    const std::string statementString = "CREATE FUNCTION to_euro (amount FLOAT64, ccy VARSIZED) RETURNS FLOAT64 "
+                                        "ENTRYPOINT 'currency.to_euro'";
     const auto statement = binder->parseAndBindSingle(statementString);
-    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
     ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
 
     const auto& create = std::get<CreateFunctionStatement>(*statement);
-    EXPECT_EQ(create.path, resolveUdfBridgeLibraryPath(resolveUdfBridge("cpython")).string());
-    EXPECT_EQ(create.entrypoint, "currency.add");
+    /// Unquoted identifiers are upper-folded by the parser (as is the call site), so the name is normalized.
+    EXPECT_EQ(create.name, "TO_EURO");
+    EXPECT_EQ(create.language, UdfLanguage::Python);
+    EXPECT_EQ(create.execution, UdfExecution::InProcess);
+    EXPECT_EQ(create.path, resolveUdfBridgeLibraryPath(UdfLanguage::Python, UdfExecution::InProcess).string());
+    EXPECT_EQ(create.entrypoint, "currency.to_euro");
+    ASSERT_EQ(create.argTypes.size(), 2U);
+    EXPECT_EQ(create.argTypes.at(0).type, DataType::Type::FLOAT64);
+    EXPECT_EQ(create.argTypes.at(1).type, DataType::Type::VARSIZED);
+    EXPECT_EQ(create.returnType.type, DataType::Type::FLOAT64);
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithFromAndBridgePrefersFrom)
+TEST_F(StatementBinderTest, BindCreateFunctionWithExplicitLanguageAndExecution)
 {
-    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
-                                        "FROM '/opt/udfs/libcurrency.so' BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
-    const auto statement = binder->parseAndBindSingle(statementString);
-    ASSERT_TRUE(statement.has_value());
-    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
-    EXPECT_EQ(std::get<CreateFunctionStatement>(*statement).path, "/opt/udfs/libcurrency.so");
-}
-
-TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridge)
-{
-    if (!isUdfBridgeShipped("codon"))
+    if (!isUdfBridgeShipped(InProcessBridge))
     {
-        GTEST_SKIP() << "UDF bridge 'codon' is not part of this build";
+        GTEST_SKIP() << "UDF bridge " << InProcessBridge << " is not part of this build";
+    }
+    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
+                                        "LANGUAGE python EXECUTION in_process ENTRYPOINT 'currency.add'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    EXPECT_EQ(create.language, UdfLanguage::Python);
+    EXPECT_EQ(create.execution, UdfExecution::InProcess);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionInline)
+{
+    if (!isUdfBridgeShipped(InlineBridge))
+    {
+        GTEST_SKIP() << "UDF bridge " << InlineBridge << " is not part of this build";
     }
     const std::string statementString = "CREATE FUNCTION discount (price FLOAT64) RETURNS FLOAT64 "
-                                        "BRIDGE 'codon' ENTRYPOINT 'discount.apply_discount'";
+                                        "EXECUTION INLINE ENTRYPOINT 'discount.apply_discount'";
     const auto statement = binder->parseAndBindSingle(statementString);
-    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
     ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
 
     const auto& create = std::get<CreateFunctionStatement>(*statement);
-    EXPECT_EQ(create.execution, UdfExecution::Codon);
+    EXPECT_EQ(create.execution, UdfExecution::Inline);
     EXPECT_TRUE(create.path.empty());
     EXPECT_EQ(create.entrypoint, "discount.apply_discount");
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithInterpreterBridgeIsInProcess)
+TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownExecutionThrows)
 {
-    if (!isUdfBridgeShipped("cpython"))
-    {
-        GTEST_SKIP() << "UDF bridge 'cpython' is not part of this build";
-    }
-    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
-                                        "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
-    const auto statement = binder->parseAndBindSingle(statementString);
-    ASSERT_TRUE(statement.has_value());
-    EXPECT_EQ(std::get<CreateFunctionStatement>(*statement).execution, UdfExecution::InProcess);
-}
-
-TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridgeAndFromThrows)
-{
-    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 "
-                                        "FROM '/opt/udfs/libcurrency.so' BRIDGE 'codon' ENTRYPOINT 'm.f'";
-    const auto statement = binder->parseAndBindSingle(statementString);
+    const auto statement = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION sidecar ENTRYPOINT 'm.f'");
     ASSERT_FALSE(statement.has_value());
     ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownBridgeThrows)
+TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownLanguageThrows)
+{
+    const auto statement = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 LANGUAGE cobol ENTRYPOINT 'm.f'");
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedUdfLanguage);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionOutOfProcessIsNotAvailableYet)
 {
     if (UdfBridgeRegistry::instance().getRegisteredNames().empty())
     {
         GTEST_SKIP() << "This build ships no UDF bridge";
     }
-    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'cobol' ENTRYPOINT 'm.f'";
-    const auto statement = binder->parseAndBindSingle(statementString);
+    const auto statement
+        = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'm.f'");
     ASSERT_FALSE(statement.has_value());
     ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedUdfLanguage);
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithBridgeWithoutPythonUdfsThrows)
+TEST_F(StatementBinderTest, BindCreateFunctionWithoutPythonUdfsThrows)
 {
     if (!UdfBridgeRegistry::instance().getRegisteredNames().empty())
     {
         GTEST_SKIP() << "This build ships Python UDF bridges";
     }
-    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'cpython' ENTRYPOINT 'm.f'";
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 ENTRYPOINT 'm.f'";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_FALSE(statement.has_value());
     ASSERT_EQ(statement.error().code(), ErrorCode::PythonUdfsNotEnabled);
@@ -530,56 +519,45 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithBridgeWithoutPythonUdfsThrows)
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithBodyKeepsParameterNamesAndBody)
 {
-    if (!UdfBridgeRegistry::instance().find(std::string{CodonUdfBridge}))
+    if (!isUdfBridgeShipped(InlineBridge))
     {
-        GTEST_SKIP() << "This build ships no Python UDF bridges";
+        GTEST_SKIP() << "UDF bridge " << InlineBridge << " is not part of this build";
     }
-    const std::string statementString = R"(CREATE FUNCTION f (leftValue INT64, b INT64) RETURNS INT64 BRIDGE 'codon' AS $python$
+    const std::string statementString = R"(CREATE FUNCTION f (leftValue INT64, b INT64) RETURNS INT64 EXECUTION INLINE AS $python$
     return leftValue + b
 $python$)";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_TRUE(statement.has_value()) << statement.error().what();
     const auto& create = std::get<CreateFunctionStatement>(*statement);
-    EXPECT_EQ(create.execution, UdfExecution::Codon);
+    EXPECT_EQ(create.execution, UdfExecution::Inline);
     EXPECT_TRUE(create.entrypoint.empty());
     ASSERT_TRUE(create.source.has_value());
     EXPECT_EQ(create.source->parameterNames, (std::vector<std::string>{"leftValue", "b"}));
     EXPECT_EQ(create.source->body, "\n    return leftValue + b\n");
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithBodyWithoutBridgesThrows)
+TEST_F(StatementBinderTest, BindCreateFunctionWithBodyWithoutPythonUdfsThrows)
 {
     if (!UdfBridgeRegistry::instance().getRegisteredNames().empty())
     {
         GTEST_SKIP() << "This build ships Python UDF bridges";
     }
-    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'codon' AS $python$ return a $python$";
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE AS $python$ return a $python$";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_FALSE(statement.has_value());
     ASSERT_EQ(statement.error().code(), ErrorCode::PythonUdfsNotEnabled);
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithBodyAndFromThrows)
+TEST_F(StatementBinderTest, BindCreateFunctionWithFromDoesNotParse)
 {
-    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 FROM '/opt/x.so' AS $python$ return a $python$";
-    const auto statement = binder->parseAndBindSingle(statementString);
-    ASSERT_FALSE(statement.has_value());
-    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
+    EXPECT_FALSE(binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 FROM '/opt/x.so' ENTRYPOINT 'm.f'").has_value());
 }
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithBodyAndEntrypointDoesNotParse)
 {
     const std::string statementString
-        = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'm.f' AS $python$ return a $python$";
+        = "CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'm.f' AS $python$ return a $python$";
     EXPECT_FALSE(binder->parseAndBindSingle(statementString).has_value());
-}
-
-TEST_F(StatementBinderTest, BindCreateFunctionWithNeitherFromNorLanguageThrows)
-{
-    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 ENTRYPOINT 'm.f'";
-    const auto statement = binder->parseAndBindSingle(statementString);
-    ASSERT_FALSE(statement.has_value());
-    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
 }
 
 TEST_F(StatementBinderTest, AnonymousSourceQuery)

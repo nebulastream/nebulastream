@@ -156,6 +156,8 @@ struct DropModelStatementResult
 struct UdfInfo
 {
     std::string name;
+    UdfLanguage language;
+    UdfExecution execution;
     std::string path;
     std::string entrypoint;
     std::vector<DataType> argTypes;

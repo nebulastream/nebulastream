@@ -9,7 +9,7 @@ CREATE PHYSICAL SOURCE FOR numbers TYPE File;
 ATTACH INLINE
 10000
 
-CREATE FUNCTION udf_1 (n UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (n UINT64) RETURNS UINT64 EXECUTION INLINE AS $python$
     values = []
     for value in range(n):
         values.append(value)
@@ -27,7 +27,7 @@ CREATE PHYSICAL SOURCE FOR rejected_numbers TYPE File;
 ATTACH INLINE
 1
 
-CREATE FUNCTION udf_2 (n UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_2 (n UINT64) RETURNS UINT64 EXECUTION INLINE AS $python$
     from internal.gc import add_roots, alloc_uncollectable
     allocation = alloc_uncollectable(8)
     add_roots(allocation, allocation)
@@ -45,7 +45,7 @@ CREATE PHYSICAL SOURCE FOR unsupported_runtime TYPE File;
 ATTACH INLINE
 1
 
-CREATE FUNCTION udf_3 (n UINT64) RETURNS UINT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_3 (n UINT64) RETURNS UINT64 EXECUTION INLINE AS $python$
 from time import sleep
 sleep(0.0)
 return n

@@ -17,6 +17,7 @@ query: |
 
 functions:
   - name: plus_one
+    execution: SIDECAR
     entrypoint: portable_udfs.add_one
     args:
       - name: x

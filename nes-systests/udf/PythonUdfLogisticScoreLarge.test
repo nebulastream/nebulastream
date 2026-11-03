@@ -11,8 +11,8 @@ CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NU
 CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
 ATTACH FILE large/nexmark/bid_653M.csv
 
-CREATE FUNCTION logistic_score_cpython (price FLOAT64, datetime INT64, auctionId INT32, bidder INT32) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'expensive_udfs.logistic_score';
-CREATE FUNCTION logistic_score_codon (price FLOAT64, datetime INT64, auctionId INT32, bidder INT32) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'expensive_udfs.logistic_score';
+CREATE FUNCTION logistic_score_cpython (price FLOAT64, datetime INT64, auctionId INT32, bidder INT32) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'expensive_udfs.logistic_score';
+CREATE FUNCTION logistic_score_codon (price FLOAT64, datetime INT64, auctionId INT32, bidder INT32) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'expensive_udfs.logistic_score';
 
 # CPython bridge, filter on UDF OUTPUT
 SELECT auctionId, bidder FROM (

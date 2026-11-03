@@ -194,6 +194,7 @@ struct CreateFunctionStatement
     UdfExecution execution = UdfExecution::InProcess;
     /// Set if the UDF is defined by AS $python$...$python$; `entrypoint` is empty then.
     std::optional<InlineUdfSource> source = std::nullopt;
+    UdfLanguage language = UdfLanguage::Python;
 };
 
 struct ShowFunctionsStatement

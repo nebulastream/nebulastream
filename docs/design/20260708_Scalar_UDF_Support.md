@@ -20,7 +20,7 @@ The engine must surface recoverable failures as query errors — with a diagnost
 # Goals
 
 G1 (addresses P1, P2): A user registers a precompiled `.so` bridge to a scalar UDF through SQL DDL and calls it by name in any scalar expression, with no engine recompilation.
-Registration declares the UDF's signature (argument types + return type), the path to the `.so` bridge, and the entry point (method) inside it.
+Registration declares the UDF's signature (argument types + return type), how it executes, and its entry point. The frontend resolves the `.so` bridge from the language and execution. A `.so` can no longer be named in SQL; the catalog API still takes a path.
 Calling the UDF requires *no* query-side grammar change — `myUdf(a, b)` rides the existing generic function-call path.
 
 G2 (addresses P2): The engine boundary is a language-agnostic C ABI.
@@ -332,16 +332,16 @@ OQ5: Interpreter choice per UDF — resolved. CPython is the only embedded inter
 
 # Extension — Codon as a catalog UDF backend
 
-`CREATE FUNCTION f (...) RETURNS T BRIDGE 'codon' ENTRYPOINT 'module.function'` registers a UDF that Codon compiles ahead of time into the query pipeline, instead of calling a bridge `.so` through the C ABI once per row.
+`CREATE FUNCTION f (...) RETURNS T EXECUTION INLINE ENTRYPOINT 'module.function'` registers a UDF that Codon compiles ahead of time into the query pipeline, instead of calling a bridge `.so` through the C ABI once per row.
 
-- **Descriptor.** `UdfDescriptor` carries an `UdfExecution` (`InProcess` or `Codon`). A Codon UDF has no `.so`: `path` stays empty, `FROM` is rejected, and it needs at least one argument. `UdfBackend::create` refuses Codon descriptors.
-- **Lowering.** `FunctionProvider` turns a Codon `UDFCall` into a `PythonPhysicalFunction`, whose body is the UDF's `AS` body or, for an entry point, a generated import and call. Modules are found on `python_udf_import_paths` plus `NES_UDF_PATH`, the search path the CPython bridge uses, so one directory of UDF modules serves every backend.
+- **Descriptor.** `UdfDescriptor` carries a `UdfLanguage` (`Python`) and a `UdfExecution` (`Inline`, `InProcess` or `OutOfProcess`, which is not available yet). An Inline UDF has no `.so`: `path` stays empty, and it needs at least one argument. `UdfBackend::create` refuses anything but InProcess descriptors.
+- **Lowering.** `FunctionProvider` turns an Inline `UDFCall` into a `PythonPhysicalFunction`, whose body is the UDF's `AS` body or, for an entry point, a generated import and call. Modules are found on `python_udf_import_paths` plus `NES_UDF_PATH`, the search path the CPython bridge uses, so one directory of UDF modules serves every backend.
 - **NULL semantics.** A nullable argument arrives as `Optional[T]`, which is `None` for NULL. The result is nullable.
 - **Language subset.** The code is compiled by Codon, not run by an interpreter. It must stay within Codon's statically typed Python, and a `VARSIZED` value is a `str` (the CPython bridge passes `bytes`). `nes-systests/udf/pyudfs/portable_udfs.py` is written to be valid under CPython and Codon, which is what lets `PythonUdfBridgeComparison.test` compare both backends on one source.
 
 # Extension — Function bodies in CREATE FUNCTION
 
-Instead of `ENTRYPOINT`, a function can carry its code: `CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'cpython' AS $python$ ... $python$`. The body runs as a function whose parameters have the declared argument names. `UdfDescriptor` holds it as an `InlineUdfSource`, so it travels with the plan and needs no file on the worker.
+Instead of `ENTRYPOINT`, a function can carry its code: `CREATE FUNCTION f (a INT64) RETURNS INT64 AS $python$ ... $python$`. The body runs as a function whose parameters have the declared argument names. `UdfDescriptor` holds it as an `InlineUdfSource`, so it travels with the plan and needs no file on the worker.
 
 Code cannot be written inside a query expression: every UDF has a name in the catalog. Internally, a function or operator can be implemented as a UDF without the catalog, by building a `UDFCallLogicalFunction` from `UdfDescriptor::fromSource`.
 
@@ -351,7 +351,7 @@ Component split mirrors `nes-inference` / `nes-inference/runtime`:
 - `nes-udf/` (light): `UdfAbi.h`, `UdfDescriptor` (reflectable), `UdfCatalog`.
 - `nes-udf/runtime/` (`nes-udf-runtime`, does `dlopen`): `UdfBackend` interface + `InProcessBackend`; linked `PRIVATE` into `nes-physical-operators` next to `nes-inference-runtime`.
 - v2 adds `nes-udf/sidecar/` (executable), `UdfWireProtocol.hpp`, `SidecarBackend`.
-- `nes-python-udf/` (built with `NES_ENABLE_PYTHON_UDFS`, the default): everything that needs Codon or CPython. It plugs into two runtime registries: `UdfBridge` (in `nes-udf`, BRIDGE name -> execution and shipped library) and `UdfLowering` (in `nes-physical-operators`, UDF backend -> physical function). It holds the Codon-compiled `PythonPhysicalFunction` and the `Codon` lowering (`functions/`), the bridge libraries and their BRIDGE names (`bridges/`), and the Codon plugin SDK with the OpenBLAS/OpenCV plugins (`codon-sdk/`, `codon-plugins/`). Without it both registries lack the Python entries, so binding a BRIDGE or lowering a Python UDF fails with `PythonUdfsNotEnabled`, while `InProcess` UDFs (`CREATE FUNCTION ... FROM '<lib>'`) keep working.
+- `nes-python-udf/` (built with `NES_ENABLE_PYTHON_UDFS`, the default): everything that needs Codon or CPython. It plugs into two runtime registries: `UdfBridge` (in `nes-udf`, language and execution -> shipped library) and `UdfLowering` (in `nes-physical-operators`, UDF backend -> physical function). It holds the Codon-compiled `PythonPhysicalFunction` and the `Codon` lowering (`functions/`), the bridge libraries and their BRIDGE names (`bridges/`), and the Codon plugin SDK with the OpenBLAS/OpenCV plugins (`codon-sdk/`, `codon-plugins/`). Without it both registries lack the Python entries, so binding a BRIDGE or lowering a Python UDF fails with `PythonUdfsNotEnabled`, while `InProcess` UDFs (`CREATE FUNCTION ... FROM '<lib>'`) keep working.
 
 Ordered build sequence:
 1. ABI header + `nes-udf` skeleton + `UdfCatalog`/`UdfDescriptor` (+ reflection) + `UdfCatalogTest`.

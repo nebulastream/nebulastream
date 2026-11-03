@@ -9,7 +9,7 @@ AZ
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-CREATE FUNCTION udf_1 (data VARSIZED) RETURNS UINT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (data VARSIZED) RETURNS UINT64 EXECUTION INLINE AS $python$
     import cv2
     import numpy as np
     pixels = np.frombuffer(data, dtype=np.uint8).reshape((1, 2))

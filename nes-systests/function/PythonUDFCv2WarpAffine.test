@@ -9,7 +9,7 @@ AABLAZYC4QMsBXcGwgcNCVgKowvuDDkOhA/PEBoSZROwFPsVRheRGNwZJxtyHL0dCB9TIJ4h6SI0JH8l
 
 CREATE SINK sink(aligned VARSIZED) TYPE File;
 
-CREATE FUNCTION udf_1 (image VARSIZED, width UINT64, height UINT64) RETURNS VARSIZED BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (image VARSIZED, width UINT64, height UINT64) RETURNS VARSIZED EXECUTION INLINE AS $python$
     import cv2
     import numpy as np
 

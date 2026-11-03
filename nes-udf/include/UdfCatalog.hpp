@@ -35,8 +35,8 @@ class UdfCatalog
     NamedCatalog<UdfDescriptor> catalog;
 
 public:
-    /// `path` is the bridge `.so` for InProcess UDFs and unused (empty) for Codon UDFs, whose `entrypoint` names an
-    /// importable "module.function" that the Codon compiler resolves at lowering time.
+    /// `path` is the bridge `.so` for InProcess UDFs and unused (empty) for Inline UDFs, whose `entrypoint` names an
+    /// importable "module.function" that the compiler resolves at lowering time.
     void registerUdf(
         std::string name,
         std::filesystem::path path,
@@ -47,7 +47,9 @@ public:
         UdfExecution execution = UdfExecution::InProcess,
         /// The UDF's code if it carries it, in which case `entrypoint` is empty.
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-        std::optional<InlineUdfSource> source = std::nullopt);
+        std::optional<InlineUdfSource> source = std::nullopt,
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        UdfLanguage language = UdfLanguage::Python);
     void removeUdf(const std::string& udfName);
     [[nodiscard]] bool hasUdf(const std::string& udfName) const;
     [[nodiscard]] std::vector<std::string> getUdfNames() const;

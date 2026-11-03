@@ -168,9 +168,9 @@ TEST_F(UdfCatalogTest, RegistersCodonUdfWithoutLibraryPath)
 {
     UdfCatalog catalog;
     ASSERT_NO_THROW(catalog.registerUdf(
-        "discount", {}, "discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Codon));
+        "discount", {}, "discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Inline));
     const auto descriptor = catalog.load("discount");
-    EXPECT_EQ(descriptor.getExecution(), UdfExecution::Codon);
+    EXPECT_EQ(descriptor.getExecution(), UdfExecution::Inline);
     EXPECT_EQ(descriptor.getEntrypoint(), "discount.apply_discount");
     EXPECT_TRUE(descriptor.getPath().empty());
 }
@@ -188,7 +188,7 @@ TEST_F(UdfCatalogTest, RejectsCodonEntrypointWithoutModule)
     for (const auto* entrypoint : {"apply_discount", ".apply_discount", "discount.", ""})
     {
         ASSERT_EXCEPTION_ERRORCODE(
-            catalog.registerUdf("bad", {}, entrypoint, {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Codon),
+            catalog.registerUdf("bad", {}, entrypoint, {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Inline),
             NES::ErrorCode::InvalidStatement);
     }
 }
@@ -197,21 +197,21 @@ TEST_F(UdfCatalogTest, RejectsCodonUdfWithoutArguments)
 {
     UdfCatalog catalog;
     ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerUdf("bad", {}, "m.f", {}, dt(DataType::Type::FLOAT64), UdfExecution::Codon), NES::ErrorCode::InvalidStatement);
+        catalog.registerUdf("bad", {}, "m.f", {}, dt(DataType::Type::FLOAT64), UdfExecution::Inline), NES::ErrorCode::InvalidStatement);
 }
 
 TEST_F(UdfCatalogTest, CodonDescriptorSurvivesReflectionRoundTrip)
 {
     UdfCatalog catalog;
     catalog.registerUdf(
-        "discount", {}, "pkg.discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Codon);
+        "discount", {}, "pkg.discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Inline);
     const auto original = catalog.load("discount");
 
     const ReflectionContext context;
     const auto roundTripped = context.unreflect<UdfDescriptor>(context.reflect(original));
 
     EXPECT_EQ(original, roundTripped);
-    EXPECT_EQ(roundTripped.getExecution(), UdfExecution::Codon);
+    EXPECT_EQ(roundTripped.getExecution(), UdfExecution::Inline);
 }
 
 TEST_F(UdfCatalogTest, InlineSourceSurvivesReflectionRoundTrip)
@@ -223,7 +223,7 @@ TEST_F(UdfCatalogTest, InlineSourceSurvivesReflectionRoundTrip)
         {},
         {dt(DataType::Type::INT64)},
         dt(DataType::Type::INT64),
-        UdfExecution::Codon,
+        UdfExecution::Inline,
         InlineUdfSource{.parameterNames = {"x"}, .body = "return x * 2"});
     const auto original = catalog.load("twice");
     ASSERT_TRUE(original.getSource().has_value());
@@ -246,7 +246,7 @@ TEST_F(UdfCatalogTest, InlineSourceWithWrongParameterCountIsRejected)
             {},
             {dt(DataType::Type::INT64)},
             dt(DataType::Type::INT64),
-            UdfExecution::Codon,
+            UdfExecution::Inline,
             InlineUdfSource{.parameterNames = {"x", "y"}, .body = "return x"}),
         NES::ErrorCode::InvalidStatement);
 }
@@ -259,7 +259,7 @@ TEST_F(UdfCatalogTest, FromSourceBuildsADescriptorWithoutTheCatalog)
         InlineUdfSource{.parameterNames = {"x"}, .body = "return x"},
         {dt(DataType::Type::INT64)},
         dt(DataType::Type::INT64),
-        UdfExecution::Codon);
+        UdfExecution::Inline);
     EXPECT_TRUE(descriptor.getEntrypoint().empty());
     EXPECT_TRUE(descriptor.getSource().has_value());
 }

@@ -10,7 +10,7 @@ ATTACH INLINE
 20,1100
 30,1200
 
-CREATE FUNCTION add_codon (a INT64, b INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.add';
+CREATE FUNCTION add_codon (a INT64, b INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.add';
 
 SELECT a FROM numbers WHERE add_codon(a, a) > 30
 INTO file();

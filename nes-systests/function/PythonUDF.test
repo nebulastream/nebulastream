@@ -13,7 +13,7 @@ ATTACH INLINE
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-CREATE FUNCTION udf_1 (a UINT64, b UINT64, c VARSIZED) RETURNS VARSIZED BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (a UINT64, b UINT64, c VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
     import numpy as np
     rng = np.random.default_rng(seed=0)
     x = rng.random(500_000)

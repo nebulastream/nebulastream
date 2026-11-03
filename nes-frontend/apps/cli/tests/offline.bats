@@ -60,11 +60,6 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
-@test "nebucli dump with catalog function from a library" {
-  run $NES_CLI -t tests/good/udf-function-path.yaml dump
-  [ "$status" -eq 0 ]
-}
-
 @test "nebucli dump with catalog function topology" {
   if [ "$NES_ENABLE_PYTHON_UDFS" != "ON" ]; then
     skip "built without Python UDFs"
@@ -82,10 +77,10 @@ teardown() {
   assert_output --partial "this build has no support for Python UDFs"
 }
 
-@test "nebucli rejects a function without bridge or path" {
-  run $NES_CLI -t tests/bad/function-without-bridge-or-path.yaml dump
+@test "nebucli rejects a function with an unknown execution" {
+  run $NES_CLI -t tests/bad/function-with-unknown-execution.yaml dump
   [ "$status" -eq 1 ]
-  assert_output --partial "needs a \`bridge\` or a \`path\`"
+  assert_output --partial "unknown \`execution\`"
 }
 
 @test "nebucli dump using environment" {

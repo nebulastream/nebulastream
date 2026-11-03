@@ -37,7 +37,7 @@ set_property(TARGET nes-single-node-worker PROPERTY ENABLE_EXPORTS ON)
 find_package(argparse CONFIG REQUIRED)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib argparse::argparse)
 
-# UdfBridgeRegistry resolves BRIDGE clauses relative to the worker's executable dir, so stage the bridge built by
+# UdfBridgeRegistry resolves bridge libraries relative to the worker's executable dir, so stage the bridge built by
 # nes-python-udf (configured before this dir) there via symlink.
 if (TARGET nes-cpython-udf-bridge)
     add_dependencies(nes-single-node-worker nes-cpython-udf-bridge)

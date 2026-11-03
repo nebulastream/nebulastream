@@ -161,14 +161,13 @@ struct Model
     std::vector<SchemaField> output;
 };
 
-/// A catalog scalar UDF, the YAML counterpart of CREATE FUNCTION. Exactly one of `bridge` and `path` selects how it executes
-/// (`bridge: codon` compiles the entrypoint module into the query pipeline; `bridge: cpython` or `path` load a bridge `.so`).
+/// A catalog scalar UDF, the YAML counterpart of CREATE FUNCTION. `language` defaults to PYTHON and `execution` to IN_PROCESS.
 /// NOLINTNEXTLINE(misc-use-internal-linkage)
 struct Function
 {
     std::string name;
-    std::optional<std::string> bridge;
-    std::optional<std::string> path;
+    std::optional<std::string> language;
+    std::optional<std::string> execution;
     std::string entrypoint;
     std::vector<SchemaField> args;
     DataType returns;
@@ -434,10 +433,10 @@ struct convert<NES::CLI::Function>
 {
     static bool decode(const Node& node, NES::CLI::Function& rhs)
     {
-        acceptKeys({"name", "bridge", "path", "entrypoint", "args", "returns"}, node);
+        acceptKeys({"name", "language", "execution", "entrypoint", "args", "returns"}, node);
         rhs.name = getValue<std::string>(node, "name");
-        rhs.bridge = getOptional<std::string>(node, "bridge");
-        rhs.path = getOptional<std::string>(node, "path");
+        rhs.language = getOptional<std::string>(node, "language");
+        rhs.execution = getOptional<std::string>(node, "execution");
         rhs.entrypoint = getValue<std::string>(node, "entrypoint");
         rhs.args = getListOrDefault<NES::CLI::SchemaField>(node, "args");
         rhs.returns = stringToFieldType(getValue<std::string>(node, "returns"));
@@ -671,44 +670,29 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(
             NES::CreateModelStatement{.name = name, .path = path, .inputs = toModelFields(input), .outputs = toModelFields(output)});
     }
-    for (const auto& [name, bridge, path, entrypoint, args, returns] : functions)
+    for (const auto& [name, languageName, executionName, entrypoint, args, returns] : functions)
     {
-        /// Mirrors StatementBinder::bindCreateFunctionStatement: BRIDGE 'codon' has no `.so` and takes no path, any other bridge
-        /// resolves to its shipped `.so`, and a path wins over a bridge name.
-        if (!bridge.has_value() && !path.has_value())
+        /// Mirrors StatementBinder::bindCreateFunctionStatement.
+        const auto language = languageName.has_value() ? NES::parseUdfLanguage(*languageName) : NES::UdfLanguage::Python;
+        if (!language.has_value())
         {
-            throw NES::InvalidConfigParameter("Function '{}' needs a `bridge` or a `path`", name);
+            throw NES::InvalidConfigParameter("Function '{}': unknown `language`, expected PYTHON", name);
         }
-        if (bridge.has_value() && path.has_value() && *bridge == NES::CodonUdfBridge)
+        const auto execution = executionName.has_value() ? NES::parseUdfExecution(*executionName) : NES::UdfExecution::InProcess;
+        if (!execution.has_value())
         {
-            throw NES::InvalidConfigParameter(
-                "Function '{}': `bridge: {}` compiles the entrypoint module and takes no `path`", name, *bridge);
-        }
-        std::string libraryPath;
-        auto execution = NES::UdfExecution::InProcess;
-        if (path.has_value())
-        {
-            libraryPath = *path;
-        }
-        else
-        {
-            /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-            const auto resolved = NES::resolveUdfBridge(*bridge);
-            execution = resolved.execution;
-            if (execution != NES::UdfExecution::Codon)
-            {
-                libraryPath = NES::resolveUdfBridgeLibraryPath(resolved).string();
-            }
+            throw NES::InvalidConfigParameter("Function '{}': unknown `execution`, expected INLINE, IN_PROCESS or OUT_OF_PROCESS", name);
         }
         statements.emplace_back(
             NES::CreateFunctionStatement{
                 .name = fmt::format("{}", bindIdentifierName(name)),
-                .path = libraryPath,
+                .path = NES::resolveUdfBridgeLibraryPath(*language, *execution).string(),
                 .entrypoint = entrypoint,
                 .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
                     | std::ranges::to<std::vector<NES::DataType>>(),
                 .returnType = returns,
-                .execution = execution});
+                .execution = *execution,
+                .language = *language});
     }
     return statements;
 }

@@ -35,7 +35,8 @@ void UdfCatalog::registerUdf(
     std::vector<DataType> argTypes,
     DataType returnType,
     const UdfExecution execution,
-    std::optional<InlineUdfSource> source)
+    std::optional<InlineUdfSource> source,
+    const UdfLanguage language)
 {
     if (source.has_value() && source->parameterNames.size() != argTypes.size())
     {
@@ -44,15 +45,15 @@ void UdfCatalog::registerUdf(
     }
     /// The library path of an InProcess UDF is not checked here: the worker loads it, possibly on another machine, and
     /// reports a missing library when it loads the bridge.
-    if (execution == UdfExecution::Codon)
+    if (execution == UdfExecution::Inline)
     {
         if (!source.has_value() && !splitEntrypoint(entrypoint).has_value())
         {
-            throw NES::InvalidStatement("Codon UDF '{}' needs ENTRYPOINT 'module.function', got '{}'", name, entrypoint);
+            throw NES::InvalidStatement("Inline UDF '{}' needs ENTRYPOINT 'module.function', got '{}'", name, entrypoint);
         }
         if (argTypes.empty())
         {
-            throw NES::InvalidStatement("Codon UDF '{}' needs at least one argument", name);
+            throw NES::InvalidStatement("Inline UDF '{}' needs at least one argument", name);
         }
     }
 
@@ -70,8 +71,8 @@ void UdfCatalog::registerUdf(
     }
     validateType(returnType, "return");
 
-    auto descriptor
-        = UdfDescriptor{name, std::move(path), std::move(entrypoint), std::move(source), std::move(argTypes), returnType, execution};
+    auto descriptor = UdfDescriptor{
+        name, std::move(path), std::move(entrypoint), std::move(source), std::move(argTypes), returnType, execution, language};
     catalog.registerEntry(std::move(name), std::move(descriptor));
 }
 

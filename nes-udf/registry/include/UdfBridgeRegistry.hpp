@@ -17,31 +17,25 @@
 #include <filesystem>
 #include <functional>
 #include <string>
-#include <string_view>
 #include <Util/RuntimeRegistry.hpp>
 #include <UdfDescriptor.hpp>
 
 namespace NES
 {
 
-/// BRIDGE value selecting Codon (ahead-of-time compiled into the query pipeline). Unlike the interpreter bridges it has
-/// no shipped `.so`.
-inline constexpr std::string_view CodonUdfBridge = "codon";
-
-/// What a `BRIDGE` clause value selects.
+/// A way to execute UDFs of one language that this build ships.
 struct UdfBridge
 {
-    UdfExecution execution;
-    /// File name of the bridge library shipped in <executable dir>/nes-udf-bridges/. Empty for a bridge that is compiled
-    /// into the query pipeline (Codon).
+    /// File name of the bridge library shipped in <executable dir>/nes-udf-bridges/. Empty if the UDF is compiled into
+    /// the query pipeline (Inline).
     std::string libraryFileName;
 };
 
 using UdfBridgeRegistryReturnType = UdfBridge;
 using UdfBridgeFn = std::function<UdfBridgeRegistryReturnType()>;
 
-/// The bridges this build ships, keyed by their BRIDGE name. All of them are Python bridges registered by nes-python-udf,
-/// so the registry is empty in a build without Python UDFs.
+/// The bridges this build ships, keyed by language and execution, e.g. "PythonInProcess". All of them are registered by
+/// nes-python-udf, so the registry is empty in a build without Python UDFs.
 class UdfBridgeRegistry : public RuntimeRegistry<UdfBridgeRegistry, std::string, UdfBridgeFn, /*CaseSensitive*/ false>
 {
 public:
@@ -52,12 +46,9 @@ public:
 /// locating shipped UDF bridge `.so` files at a fixed, deployment-relative path.
 [[nodiscard]] std::filesystem::path currentExecutableDirectory();
 
-/// Resolves a `BRIDGE` clause value. Throws NES::PythonUdfsNotEnabled if this build ships no bridge at all and
-/// NES::UnsupportedUdfLanguage if `bridge` names none of the shipped ones.
-[[nodiscard]] UdfBridge resolveUdfBridge(std::string_view bridge);
-
-/// Where the shipped library of an interpreter bridge lives. Doesn't check the file exists: the worker reports a missing
-/// bridge when it loads it, the same way as a bad FROM path.
-[[nodiscard]] std::filesystem::path resolveUdfBridgeLibraryPath(const UdfBridge& bridge);
+/// Where the shipped library that runs UDFs of this language and execution lives; empty if the UDF is compiled into the
+/// query pipeline. Throws NES::PythonUdfsNotEnabled if this build ships no bridge at all and NES::UnsupportedUdfLanguage if
+/// it ships none for this combination. Doesn't check the file exists: the worker reports a missing bridge when it loads it.
+[[nodiscard]] std::filesystem::path resolveUdfBridgeLibraryPath(UdfLanguage language, UdfExecution execution);
 
 }

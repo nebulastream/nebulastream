@@ -12,7 +12,7 @@
 
 
 """Scalar UDFs written in the subset of Python that CPython and Codon both accept, so a single module can back
-`CREATE FUNCTION ... BRIDGE 'cpython' | 'codon'` (see PythonUdfBridgeComparison.test and CodonUdf.test).
+`CREATE FUNCTION ... EXECUTION IN_PROCESS | INLINE` (see PythonUdfBridgeComparison.test and CodonUdf.test).
 
 A NULL argument arrives as None.
 """

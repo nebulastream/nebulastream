@@ -9,7 +9,7 @@ ATTACH INLINE
 2,,20
 3,-7,30
 
-CREATE FUNCTION udf_1 (id UINT64, number INT64, text VARSIZED) RETURNS INT64 BRIDGE 'cpython' AS $python$
+CREATE FUNCTION udf_1 (id UINT64, number INT64, text VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS AS $python$
     if number is None:
         return None
     return int(id) + number + int(text)

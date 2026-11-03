@@ -9,8 +9,8 @@ CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NU
 CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
 ATTACH FILE large/nexmark/bid_653M.csv
 
-CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'portable_udfs.apply_discount';
-CREATE FUNCTION discount_price_codon (price FLOAT64) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.apply_discount';
+CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'portable_udfs.apply_discount';
+CREATE FUNCTION discount_price_codon (price FLOAT64) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'portable_udfs.apply_discount';
 
 # CPython bridge, filter on simple scalar UDF OUTPUT
 SELECT * FROM (
@@ -21,7 +21,7 @@ INTO FILE();
 999994,126934,131.4
 999994,23774,36.0
 
-# Codon as a catalog UDF (CREATE FUNCTION ... BRIDGE 'codon'), same portable module, filter on OUTPUT
+# Codon as a catalog UDF (CREATE FUNCTION ... EXECUTION INLINE), same portable module, filter on OUTPUT
 SELECT * FROM (
     SELECT auctionId, bidder, discount_price_codon(price) AS discountedPrice FROM bidLarge
 ) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)

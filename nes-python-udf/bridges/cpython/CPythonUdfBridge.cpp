@@ -66,7 +66,7 @@ char* dupString(const std::string& text)
 
 void initPythonOnce()
 {
-    /* A UDF naming this bridge by an explicit path and one resolved through BRIDGE load two copies of this
+    /* A UDF naming this bridge by an explicit path and one resolved through the registry load two copies of this
      * library into the worker, each with its own g_pyInit, but both share the one embedded interpreter. Only
      * the copy that actually starts it up holds the GIL afterwards; on an already running interpreter
      * Py_InitializeEx returns without one, so take the GIL explicitly below rather than assume we hold it. */

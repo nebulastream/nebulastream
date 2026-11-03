@@ -15,19 +15,18 @@
 #include <PythonUdfBridges.hpp>
 
 #include <UdfBridgeRegistry.hpp>
-#include <UdfDescriptor.hpp>
 
 namespace NES
 {
 
-UdfBridge PythonUdfBridges::createCodon()
+UdfBridge PythonUdfBridges::createPythonInline()
 {
-    return {.execution = UdfExecution::Codon, .libraryFileName = {}};
+    return {.libraryFileName = {}};
 }
 
-UdfBridge PythonUdfBridges::createCPython()
+UdfBridge PythonUdfBridges::createPythonInProcess()
 {
-    return {.execution = UdfExecution::InProcess, .libraryFileName = "libnes-cpython-udf-bridge.so"};
+    return {.libraryFileName = "libnes-cpython-udf-bridge.so"};
 }
 
 }

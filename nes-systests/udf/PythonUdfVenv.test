@@ -16,7 +16,7 @@ ATTACH INLINE
 2,active_record
 3,order_item
 
-CREATE FUNCTION camelize_cpython (name VARSIZED) RETURNS VARSIZED BRIDGE 'cpython' ENTRYPOINT 'venv_probe.camelize';
+CREATE FUNCTION camelize_cpython (name VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'venv_probe.camelize';
 
 SELECT id, camelize_cpython(name) AS camel FROM names INTO FILE();
 ----

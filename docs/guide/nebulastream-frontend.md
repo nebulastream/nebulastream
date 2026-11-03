@@ -588,7 +588,7 @@ The topology file supports an optional `functions` section for registering scala
 ```yaml
 functions:
   - name: yuyv_to_jpg
-    bridge: codon
+    execution: INLINE
     entrypoint: demo_udfs.yuyv_to_jpg
     args:
       - { name: image, type: VARSIZED }
@@ -602,9 +602,12 @@ Each function entry requires:
 - `entrypoint` - `module.function`; the module is looked up on the worker's `python_udf_import_paths` and `NES_UDF_PATH`
 - `args` - Ordered list of arguments with name and type (names are documentation only; arguments match by position)
 - `returns` - Return type (a UDF result is always nullable)
-- `bridge` or `path` - How the function executes. `bridge: codon` compiles the entrypoint module into the query
-  pipeline and takes no `path`. `bridge: cpython` selects the shipped bridge library, and `path` points
-  at a bridge library explicitly (`path` wins if both are given).
+
+Each entry may also set:
+- `execution` - Where the function runs. `INLINE` compiles the entrypoint module into the query pipeline with Codon.
+  `IN_PROCESS`, the default, runs it in the CPython interpreter embedded in the worker. `OUT_OF_PROCESS` is reserved
+  and not available yet.
+- `language` - The language of the function. `PYTHON`, the default, is the only one.
 
 See `design/20260708_Scalar_UDF_Support.md` for the UDF model.
 

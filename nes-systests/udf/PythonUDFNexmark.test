@@ -9,7 +9,7 @@ CREATE PHYSICAL SOURCE FOR bidModified100K TYPE File;
 ATTACH FILE small/nexmark/bid_modified_100K.csv
 
 # CPython bridge small scale
-CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'currency.apply_discount';
+CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'currency.apply_discount';
 
 SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice FROM bidModified100K
 WHERE (auctionId = 0 AND bidder = 0 AND price = 117.0) OR (auctionId = 1 AND bidder = 0 AND price = 208.0)
@@ -32,7 +32,7 @@ INTO FILE();
 999994,23774,36.0
 
 # Two independent UDFs (no chaining) on separate columns; WHERE filters on both UDFs' outputs, so both run on every row
-CREATE FUNCTION name_from_id_cpython (id INT32) RETURNS VARSIZED BRIDGE 'cpython' ENTRYPOINT 'currency.id_to_name';
+CREATE FUNCTION name_from_id_cpython (id INT32) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'currency.id_to_name';
 
 # CPython bridge, two independent UDFs, filter on both UDFs' OUTPUTs
 SELECT * FROM (

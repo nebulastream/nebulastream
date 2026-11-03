@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Python UDFs: catalog UDFs (CREATE FUNCTION ... BRIDGE '<bridge>') that Codon compiles into
+# Python UDFs: catalog UDFs (CREATE FUNCTION ... EXECUTION <mode>) that Codon compiles into
 # the query pipeline or the CPython bridge interprets. Only part of the build with NES_ENABLE_PYTHON_UDFS; the generic
 # UDF support (catalog, C-ABI runtime, UDF logical and physical functions) lives in nes-udf and the operator components.
 find_package(codon-compiler CONFIG REQUIRED)

@@ -316,7 +316,9 @@ UdfInfo toUdfInfo(const UdfDescriptor& descriptor)
 {
     return UdfInfo{
         .name = descriptor.getName(),
-        .path = descriptor.getExecution() == UdfExecution::Codon ? std::string{CodonUdfBridge} : descriptor.getPath().string(),
+        .language = descriptor.getLanguage(),
+        .execution = descriptor.getExecution(),
+        .path = descriptor.getPath().string(),
         .entrypoint = descriptor.getSource().has_value() ? std::string{"<inline>"} : descriptor.getEntrypoint(),
         .argTypes = descriptor.getArgTypes(),
         .returnType = descriptor.getReturnType(),
@@ -342,7 +344,8 @@ std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::ope
             statement.argTypes,
             statement.returnType,
             statement.execution,
-            statement.source);
+            statement.source,
+            statement.language);
     }
     catch (const Exception& e)
     {

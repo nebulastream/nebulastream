@@ -298,38 +298,29 @@ public:
     {
         const auto functionName = bindIdentifier(functionDefAST->udfName->strictIdentifier());
 
-        /// FROM (a literal .so path) and BRIDGE (a name resolved to a shipped bridge) are both optional;
-        /// at least one is required, FROM wins if both given. Resolving BRIDGE here keeps
-        /// CreateFunctionStatement.path a plain string -- downstream code never needs to know BRIDGE exists.
-        /// BRIDGE 'codon' is the exception: it has no `.so`, so it selects UdfExecution::Codon and takes no FROM.
-        if (functionDefAST->functionPath == nullptr && functionDefAST->bridge == nullptr)
+        auto language = UdfLanguage::Python;
+        if (functionDefAST->language != nullptr)
         {
-            throw InvalidStatement("CREATE FUNCTION requires FROM, BRIDGE, or both");
-        }
-        if (functionDefAST->body != nullptr && functionDefAST->functionPath != nullptr)
-        {
-            throw InvalidStatement("CREATE FUNCTION ... AS carries its code and does not take FROM");
-        }
-        if (functionDefAST->bridge != nullptr && functionDefAST->functionPath != nullptr
-            && bindStringLiteral(functionDefAST->bridge) == CodonUdfBridge)
-        {
-            throw InvalidStatement("CREATE FUNCTION ... BRIDGE '{}' compiles the ENTRYPOINT module and does not take FROM", CodonUdfBridge);
-        }
-        std::string path;
-        auto execution = UdfExecution::InProcess;
-        if (functionDefAST->functionPath != nullptr)
-        {
-            path = bindStringLiteral(functionDefAST->functionPath);
-        }
-        else
-        {
-            const auto bridge = resolveUdfBridge(bindStringLiteral(functionDefAST->bridge));
-            execution = bridge.execution;
-            if (execution != UdfExecution::Codon)
+            const auto languageName = bindIdentifier(functionDefAST->language->strictIdentifier()).getOriginalString();
+            const auto parsed = parseUdfLanguage(languageName);
+            if (!parsed.has_value())
             {
-                path = resolveUdfBridgeLibraryPath(bridge).string();
+                throw UnsupportedUdfLanguage("CREATE FUNCTION ... LANGUAGE {}: expected PYTHON", languageName);
             }
+            language = *parsed;
         }
+        auto execution = UdfExecution::InProcess;
+        if (functionDefAST->execution != nullptr)
+        {
+            const auto executionName = bindIdentifier(functionDefAST->execution->strictIdentifier()).getOriginalString();
+            const auto parsed = parseUdfExecution(executionName);
+            if (!parsed.has_value())
+            {
+                throw InvalidStatement("CREATE FUNCTION ... EXECUTION {}: expected INLINE, IN_PROCESS or OUT_OF_PROCESS", executionName);
+            }
+            execution = *parsed;
+        }
+        const auto path = resolveUdfBridgeLibraryPath(language, execution).string();
         const auto entrypoint = functionDefAST->entrypoint != nullptr ? bindStringLiteral(functionDefAST->entrypoint) : std::string{};
 
         /// A scalar UDF matches its arguments positionally. Their names only matter inside an AS body.
@@ -358,7 +349,8 @@ public:
             .argTypes = std::move(argTypes),
             .returnType = returnType,
             .execution = execution,
-            .source = std::move(source)};
+            .source = std::move(source),
+            .language = language};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

@@ -20,7 +20,7 @@
 namespace NES
 {
 
-/// Lowers inline Python and catalog UDFs with BRIDGE 'codon' to a PythonPhysicalFunction, which Codon compiles ahead of time
+/// Lowers inline Python and catalog UDFs with EXECUTION INLINE to a PythonPhysicalFunction, which Codon compiles ahead of time
 /// into the query pipeline.
 struct CodonUdfLowering
 {

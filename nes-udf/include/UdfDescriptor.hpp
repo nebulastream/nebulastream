@@ -34,13 +34,25 @@ class UdfCatalog;
 /// widths, BOOLEAN, and VARSIZED; CHAR and UNDEFINED are rejected at registration (see docs/design/20260708_Scalar_UDF_Support.md, NG4).
 [[nodiscard]] bool isSupportedUdfType(DataType::Type type);
 
-/// How a registered UDF executes. InProcess loads a bridge `.so` (e.g. CPython) that implements the UDF C ABI.
-/// Codon compiles the entry point's module ahead of time into the query pipeline (no `.so`, no ABI call per row).
+/// The language a UDF is written in.
+enum class UdfLanguage : std::uint8_t
+{
+    Python
+};
+
+/// Where a registered UDF runs. Inline compiles it ahead of time into the query pipeline (Codon for Python; no `.so`, no
+/// ABI call per row). InProcess loads a bridge `.so` (e.g. CPython) that implements the UDF C ABI. OutOfProcess runs it
+/// in a separate process.
 enum class UdfExecution : std::uint8_t
 {
+    Inline,
     InProcess,
-    Codon
+    OutOfProcess
 };
+
+/// The LANGUAGE and EXECUTION values of CREATE FUNCTION, in any case. Return nullopt for an unknown value.
+[[nodiscard]] std::optional<UdfLanguage> parseUdfLanguage(std::string_view language);
+[[nodiscard]] std::optional<UdfExecution> parseUdfExecution(std::string_view execution);
 
 /// Splits an entry point "module.function" (the module may be a dotted package path) at its last dot.
 /// Returns nullopt unless both parts are non-empty.
@@ -56,8 +68,8 @@ struct InlineUdfSource
     bool operator==(const InlineUdfSource&) const = default;
 };
 
-/// A registered scalar UDF: name, how it executes, path to the `.so` exposing the UDF C ABI (InProcess only; empty
-/// for Codon), the code to run (an entry point inside the `.so`, e.g. "module.function", or an inline source), and the
+/// A registered scalar UDF: name, language, where it executes, path to the `.so` exposing the UDF C ABI (InProcess only;
+/// empty otherwise), the code to run (an entry point inside the `.so`, e.g. "module.function", or an inline source), and the
 /// declared signature. No public constructor -- only reachable through `UdfCatalog::registerUdf` (which validates),
 /// `fromSource`, or reflection (which trusts prior validation).
 class UdfDescriptor
@@ -69,6 +81,7 @@ class UdfDescriptor
     std::vector<DataType> argTypes;
     DataType returnType;
     UdfExecution execution;
+    UdfLanguage language;
 
     UdfDescriptor(
         std::string name,
@@ -77,7 +90,8 @@ class UdfDescriptor
         std::optional<InlineUdfSource> source,
         std::vector<DataType> argTypes,
         DataType returnType,
-        UdfExecution execution)
+        UdfExecution execution,
+        UdfLanguage language)
         : name(std::move(name))
         , path(std::move(path))
         , entrypoint(std::move(entrypoint))
@@ -85,6 +99,7 @@ class UdfDescriptor
         , argTypes(std::move(argTypes))
         , returnType(returnType)
         , execution(execution)
+        , language(language)
     {
     }
 
@@ -94,14 +109,16 @@ class UdfDescriptor
 
 public:
     /// A UDF defined in code rather than through the catalog, e.g. by a function or operator that is implemented as a
-    /// UDF. `path` is the bridge `.so` of an InProcess UDF and empty for Codon. The caller vouches for the signature.
+    /// UDF. `path` is the bridge `.so` of an InProcess UDF and empty otherwise. The caller vouches for the signature.
     [[nodiscard]] static UdfDescriptor fromSource(
         std::string name,
         std::filesystem::path path,
         InlineUdfSource source,
         std::vector<DataType> argTypes,
         DataType returnType,
-        UdfExecution execution);
+        UdfExecution execution,
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        UdfLanguage language = UdfLanguage::Python);
 
     [[nodiscard]] const std::string& getName() const { return name; }
 
@@ -117,6 +134,8 @@ public:
     [[nodiscard]] const DataType& getReturnType() const { return returnType; }
 
     [[nodiscard]] UdfExecution getExecution() const { return execution; }
+
+    [[nodiscard]] UdfLanguage getLanguage() const { return language; }
 
     bool operator==(const UdfDescriptor&) const = default;
 };

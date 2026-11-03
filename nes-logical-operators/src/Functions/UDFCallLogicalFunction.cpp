@@ -32,6 +32,7 @@
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <UdfDescriptor.hpp>
@@ -60,6 +61,15 @@ bool UDFCallLogicalFunction::operator==(const UDFCallLogicalFunction& rhs) const
 std::string UDFCallLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     auto args = arguments | std::views::transform([&](const auto& arg) { return arg.explain(verbosity); });
+    if (verbosity == ExplainVerbosity::Debug && descriptor.has_value())
+    {
+        return fmt::format(
+            "{}[{}, {}]({})",
+            udfName,
+            magic_enum::enum_name(descriptor->getLanguage()),
+            magic_enum::enum_name(descriptor->getExecution()),
+            fmt::join(args, ", "));
+    }
     return fmt::format("{}({})", udfName, fmt::join(args, ", "));
 }
 
@@ -84,6 +94,20 @@ LogicalFunction UDFCallLogicalFunction::withInferredDataType(const Schema<Field,
     {
         throw TypeInferenceException(
             "UDF '{}' expects {} argument(s) but was called with {}", udfName, descriptor->getArgTypes().size(), copy.arguments.size());
+    }
+    /// The UDF is built for its declared types (a Codon signature, the 8-byte argument slots of the C ABI), so an argument
+    /// of another type would be misread. Nullability may differ: a UDF receives NULL as None.
+    for (const auto& [position, argument, declared] : std::views::zip(std::views::iota(1U), copy.arguments, descriptor->getArgTypes()))
+    {
+        if (argument.getDataType().type != declared.type)
+        {
+            throw TypeInferenceException(
+                "UDF '{}' declares argument {} as {} but was called with {}",
+                udfName,
+                position,
+                magic_enum::enum_name(declared.type),
+                magic_enum::enum_name(argument.getDataType().type));
+        }
     }
     copy.dataType = descriptor->getReturnType();
     /// A scalar UDF may return NULL (e.g. Python `None`) regardless of its argument nullability, so the

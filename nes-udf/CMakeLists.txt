@@ -20,7 +20,7 @@ target_include_directories(nes-udf PUBLIC
 target_link_libraries(nes-udf PUBLIC nes-data-types nes-common)
 
 include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
-# Keyed by BRIDGE name; filled by nes-python-udf.
+# Keyed by language and execution; filled by nes-python-udf.
 create_runtime_registry(UdfBridge nes-udf
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}UdfBridges::create\${KEY}"
         HEADER_TEMPLATE "\${PLUGIN_NAME}UdfBridges.hpp")

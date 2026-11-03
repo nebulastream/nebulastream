@@ -545,8 +545,8 @@ struct StatementOutputAssembler<DropModelStatementResult>
     }
 };
 
-using UdfInfoOutputRowType = std::tuple<std::string, std::string, std::string, std::string>;
-constexpr std::array<std::string_view, 4> udfInfoOutputColumns{"udf_name", "path", "entrypoint", "signature"};
+using UdfInfoOutputRowType = std::tuple<std::string, std::string, std::string, std::string, std::string, std::string>;
+constexpr std::array<std::string_view, 6> udfInfoOutputColumns{"udf_name", "language", "execution", "path", "entrypoint", "signature"};
 
 using UdfNameOutputRowType = std::tuple<std::string>;
 constexpr std::array<std::string_view, 1> udfNameOutputColumns{"udf_name"};
@@ -574,7 +574,14 @@ struct StatementOutputAssembler<CreateFunctionStatementResult>
     auto convert(const CreateFunctionStatementResult& result)
     {
         return std::make_pair(
-            udfInfoOutputColumns, std::vector{std::make_tuple(result.name, result.path, result.entrypoint, toUdfSignature(result))});
+            udfInfoOutputColumns,
+            std::vector{std::make_tuple(
+                result.name,
+                std::string{magic_enum::enum_name(result.language)},
+                std::string{magic_enum::enum_name(result.execution)},
+                result.path,
+                result.entrypoint,
+                toUdfSignature(result))});
     }
 };
 
@@ -589,7 +596,13 @@ struct StatementOutputAssembler<ShowFunctionsStatementResult>
         output.reserve(result.functions.size());
         for (const auto& udf : result.functions)
         {
-            output.emplace_back(udf.name, udf.path, udf.entrypoint, toUdfSignature(udf));
+            output.emplace_back(
+                udf.name,
+                std::string{magic_enum::enum_name(udf.language)},
+                std::string{magic_enum::enum_name(udf.execution)},
+                udf.path,
+                udf.entrypoint,
+                toUdfSignature(udf));
         }
         return std::make_pair(udfInfoOutputColumns, output);
     }

@@ -11,7 +11,7 @@ ATTACH INLINE
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-CREATE FUNCTION udf_1 (value VARSIZED) RETURNS UINT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (value VARSIZED) RETURNS UINT64 EXECUTION INLINE AS $python$
     return int(value)
 $python$;
 
@@ -20,3 +20,15 @@ FROM numbers
 INTO file();
 ----
 ERROR UnknownException "Python UDF failed: invalid literal for int() with base 10: '24.4'"
+
+
+# The argument type has to match the declared one: a VARSIZED column is no UINT64 argument
+CREATE FUNCTION udf_2 (value UINT64) RETURNS UINT64 EXECUTION INLINE AS $python$
+    return value
+$python$;
+
+SELECT udf_2(value) AS result
+FROM numbers
+INTO file();
+----
+ERROR 2028

@@ -9,7 +9,7 @@ ABCDEFGHIJKLMNOP
 
 CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
 
-CREATE FUNCTION udf_1 (data VARSIZED) RETURNS UINT64 BRIDGE 'codon' AS $python$
+CREATE FUNCTION udf_1 (data VARSIZED) RETURNS UINT64 EXECUTION INLINE AS $python$
     import cv2
     import numpy as np
 

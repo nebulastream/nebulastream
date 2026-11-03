@@ -86,8 +86,8 @@ modelOutputField: identifier typeDefinition;
 
 createFunctionDefinition: FUNCTION udfName=identifier '(' (functionArgField (',' functionArgField)*)? ')'
                           RETURNS returnType=typeDefinition
-                          (FROM functionPath=STRING)?
-                          (BRIDGE bridge=STRING)?
+                          (LANGUAGE language=identifier)?
+                          (EXECUTION execution=identifier)?
                           (ENTRYPOINT entrypoint=STRING | AS body=PYTHON_BODY);
 functionArgField: identifier typeDefinition;
 
@@ -570,7 +570,8 @@ FUNCTION: 'FUNCTION';
 FUNCTIONS: 'FUNCTIONS';
 RETURNS: 'RETURNS';
 ENTRYPOINT: 'ENTRYPOINT';
-BRIDGE: 'BRIDGE';
+LANGUAGE: 'LANGUAGE';
+EXECUTION: 'EXECUTION';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
