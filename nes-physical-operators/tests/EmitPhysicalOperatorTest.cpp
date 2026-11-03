@@ -302,8 +302,6 @@ public:
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlers;
-
-    std::random_device rd;
 };
 
 TEST_F(EmitPhysicalOperatorTest, BasicTest)
@@ -415,27 +413,38 @@ TEST_F(EmitPhysicalOperatorTest, SequenceChunkNumberTest)
     };
 }
 
+/// Concurrent inputs of sequences with one or more chunks, some of which spill over several output buffers, keep the chunk numbering of
+/// every sequence and all their records.
 TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
 {
+    /// Spills up to two full buffers of 128 records.
+    constexpr uint32_t maxRecordsPerInput = 300;
+    const auto seed = std::random_device{}();
+    SCOPED_TRACE(fmt::format("seed {}", seed));
+    std::mt19937 random{seed};
+    std::uniform_int_distribution<uint32_t> recordsPerInput(0, maxRecordsPerInput);
     for (auto [numberOfSequences, maxChunksPerSequence, numberOfThreads] :
          std::initializer_list<std::tuple<size_t, size_t, size_t>>{{2, 10, 2}, {1000, 2, 4}, {10, 100, 4}, {1000, 20, 10}})
     {
         reset();
-        std::vector<TupleBuffer> inputBuffers;
+        std::vector<std::pair<TupleBuffer, uint32_t>> inputBuffers;
+        uint64_t numberOfRecords = 0;
         for (size_t seq = 0; seq < numberOfSequences; seq++)
         {
-            std::uniform_int_distribution chunkNumbers(ChunkNumber::INITIAL + 1, maxChunksPerSequence);
-            auto maxChunkForThisSequence = chunkNumbers(rd);
-            for (size_t chunk = 0; chunk < maxChunkForThisSequence - 1; chunk++)
+            std::uniform_int_distribution chunkNumbers(ChunkNumber::INITIAL, maxChunksPerSequence);
+            auto maxChunkForThisSequence = chunkNumbers(random);
+            for (size_t chunk = 0; chunk < maxChunkForThisSequence; chunk++)
             {
-                inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL + seq, ChunkNumber::INITIAL + chunk, false));
+                const auto records = recordsPerInput(random);
+                numberOfRecords += records;
+                inputBuffers.emplace_back(
+                    createBuffer(SequenceNumber::INITIAL + seq, ChunkNumber::INITIAL + chunk, chunk + 1 == maxChunkForThisSequence),
+                    records);
             }
-            inputBuffers.emplace_back(
-                createBuffer(SequenceNumber::INITIAL + seq, ChunkNumber::INITIAL + maxChunkForThisSequence - 1, true));
         }
 
         EmitPhysicalOperator emit = createUUT();
-        std::ranges::shuffle(inputBuffers, rd);
+        std::ranges::shuffle(inputBuffers, random);
         std::barrier<> barrier(static_cast<int>(numberOfThreads) + 1);
         std::vector<std::jthread> threads;
         threads.reserve(numberOfThreads);
@@ -447,28 +456,36 @@ TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
                     barrier.arrive_and_wait();
                     for (size_t index = threadId; index < inputBuffers.size(); index += numberOfThreads)
                     {
-                        run(
-                            [&](auto& executionContext, auto& recordBuffer)
-                            {
-                                emit.open(executionContext, recordBuffer);
-                                emit.close(executionContext, recordBuffer);
-                            },
-                            inputBuffers.at(index));
+                        runTask(emit, inputBuffers.at(index).first, inputBuffers.at(index).second);
                     }
                 });
         }
         barrier.arrive_and_wait();
         threads.clear();
 
-        checkNumberOfBuffers(inputBuffers.size());
         checkForDups();
         checkLastChunks();
+        uint64_t emittedRecords = 0;
+        for (const auto& output : *buffers.rlock())
+        {
+            emittedRecords += output.getNumberOfTuples();
+        }
+        EXPECT_EQ(emittedRecords, numberOfRecords);
     }
 }
 
 TEST_F(EmitPhysicalOperatorTest, SpilledOutputIsChunkedAndKeepsRange)
 {
     expectSpilledOutputKeepsRange(createUUT());
+}
+
+/// A sequence that is closed twice as complete fails debug builds.
+TEST_F(EmitPhysicalOperatorTest, CompletingASequenceTwiceFails)
+{
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    const auto emit = createUUT();
+    runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true), 1);
+    EXPECT_DEATH_DEBUG(runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true), 1), "");
 }
 
 }

@@ -26,9 +26,40 @@
 namespace NES
 {
 
+void EmitOperatorHandler::emitSpilled(TupleBuffer& buffer, const ChunkNumber incomingChunkNumber, PipelineExecutionContext& pec)
+{
+    setChunkNumber(false, incomingChunkNumber, false, buffer);
+    pec.emitBuffer(buffer);
+}
+
+void EmitOperatorHandler::emitClosing(
+    TupleBuffer& buffer,
+    const bool spilled,
+    const ChunkNumber incomingChunkNumber,
+    const bool isIncomingBufferTheLastChunk,
+    PipelineExecutionContext& pec)
+{
+    if (!spilled && incomingChunkNumber == INITIAL_CHUNK_NUMBER && isIncomingBufferTheLastChunk)
+    {
+#ifndef NO_ASSERT
+        const SequenceNumberForOriginId seqNumberOriginId(buffer.getSequenceNumber(), buffer.getOriginId());
+        const bool firstCompletion = completedSequences.wlock()->emplace(seqNumberOriginId).second;
+        INVARIANT(firstCompletion, "Received chunk for sequence {} that was already completed", seqNumberOriginId);
+#endif
+        buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
+        buffer.setLastChunk(true);
+        pec.emitBuffer(buffer);
+        return;
+    }
+    setChunkNumber(true, incomingChunkNumber, isIncomingBufferTheLastChunk, buffer);
+    pec.emitBuffer(buffer);
+}
+
 void EmitOperatorHandler::setChunkNumber(
     bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer)
 {
+    PRECONDITION(incomingChunkNumber != INVALID<ChunkNumber>, "Expects a valid chunkNumber");
+
     /// The SequenceState tracks how many chunks have been seen per Sequence/OriginId pair.
     /// This allows to reason about completeness of a SequenceNumber and assign unique ChunkNumbers to every produced buffer aswell
     /// as assigning exactly one LastChunk flag once we have seen all chunks.

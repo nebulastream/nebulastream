@@ -25,16 +25,13 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
-#include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <inline.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 
@@ -92,22 +89,6 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
 }
 
-NAUTILUS_INLINE void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
-{
-    NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
-
-    /* We have to emit all buffer, regardless of their number of tuples. This is due to the fact, that we expect all
-     * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
-     * fusion, this should only happen occasionally.
-     */
-    pipelineCtx->emitBuffer(*tb);
-}
-
-void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
-{
-    nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
-}
-
 void ExecutionContext::setOpenReturnState(const OpenReturnState openReturnState)
 {
     this->openReturnState = openReturnState;
@@ -132,8 +113,9 @@ void ExecutionContext::setLocalOperatorState(const OperatorId operatorId, std::u
 
 static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
 {
-    auto handlers = pipelineCtx->getOperatorHandlers();
-    return handlers[index].get();
+    const auto& handlers = pipelineCtx->getOperatorHandlers();
+    const auto handler = handlers.find(index);
+    return handler != handlers.end() ? handler->second.get() : nullptr;
 }
 
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const

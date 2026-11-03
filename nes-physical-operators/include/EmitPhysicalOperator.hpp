@@ -21,7 +21,6 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <nautilus/val.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -43,11 +42,6 @@ public:
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void emitRecordBuffer(
-        ExecutionContext& ctx,
-        RecordBuffer& recordBuffer,
-        const nautilus::val<uint64_t>& numRecords,
-        const nautilus::val<bool>& potentialLastChunk) const;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
