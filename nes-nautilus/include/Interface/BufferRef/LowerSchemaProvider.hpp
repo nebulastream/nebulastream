@@ -44,6 +44,9 @@ public:
 
     static std::shared_ptr<TupleBufferRef>
     lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);
+
+    /// Lowers the schema to the Apache Arrow compatible memory layout, see ArrowBufferRef.
+    static std::shared_ptr<TupleBufferRef> lowerSchemaToArrow(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema);
 };
 
 }
