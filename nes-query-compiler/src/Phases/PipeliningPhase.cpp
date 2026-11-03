@@ -33,6 +33,7 @@
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -191,8 +192,7 @@ void addOutputFormattingEmit(
     const std::shared_ptr<Pipeline>& pipeline,
     const PhysicalOperatorWrapper& wrappedOp,
     const uint64_t configuredBufferSize,
-    const std::string& outputFormat,
-    const std::unordered_map<Identifier, std::string>& config)
+    const OutputFormatterDescriptor& outputFormatterDescriptor)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
     INVARIANT(
@@ -200,7 +200,8 @@ void addOutputFormattingEmit(
     const auto& schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    const auto bufferRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormat, config);
+    const auto bufferRef
+        = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormatterDescriptor);
 
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
@@ -218,18 +219,16 @@ std::shared_ptr<Pipeline> makeSinkPredecessorAfterFanOut(
     OperatorPipelineMap& pipelineMap,
     const uint64_t configuredBufferSize)
 {
-    const auto sinkFormat = sink.getDescriptor().getFormatType();
-    if (toUpperCase(sinkFormat) == "NATIVE")
+    /// getDescriptor() returns by value: copy the formatter descriptor, do not bind a reference into the temporary
+    const auto outputFormatterDescriptor = sink.getDescriptor().getOutputFormatterDescriptor();
+    if (outputFormatterDescriptor.isNative())
     {
         return currentPipeline;
     }
     const auto formattingPipeline = std::make_shared<Pipeline>(
         createScanOperator(*currentPipeline, sinkWrapper.getInputSchema(), sinkWrapper.getInputMemoryLayoutType(), configuredBufferSize));
     currentPipeline->addSuccessor(formattingPipeline, currentPipeline);
-    /// The output format is treated in a case sensitive manner, since it serves as a key to the output formatter registry.
-    /// That's why we cannot pass the upper case sinkFormat.
-    addOutputFormattingEmit(
-        formattingPipeline, sinkWrapper, configuredBufferSize, std::string(sinkFormat), sink.getDescriptor().getOutputFormatterConfig());
+    addOutputFormattingEmit(formattingPipeline, sinkWrapper, configuredBufferSize, outputFormatterDescriptor);
     const auto emitOperator = formattingPipeline->getRootOperator().getChild();
     INVARIANT(
         emitOperator.has_value() and emitOperator->tryGet<EmitPhysicalOperator>().has_value(), "Scan operator requires an emit as child");
@@ -330,15 +329,11 @@ void buildPipelineRecursively(
             /// If the operator is a sink we might have to create an output formatter
             if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
             {
-                auto outputFormat = sink->getDescriptor().getFormatType();
-                if (toUpperCase(outputFormat) != "NATIVE")
+                /// getDescriptor() returns by value: copy the formatter descriptor, do not bind a reference into the temporary
+                if (const auto outputFormatterDescriptor = sink->getDescriptor().getOutputFormatterDescriptor();
+                    not outputFormatterDescriptor.isNative())
                 {
-                    addOutputFormattingEmit(
-                        currentPipeline,
-                        *prevOpWrapper,
-                        configuredBufferSize,
-                        std::string(outputFormat),
-                        sink->getDescriptor().getOutputFormatterConfig());
+                    addOutputFormattingEmit(currentPipeline, *prevOpWrapper, configuredBufferSize, outputFormatterDescriptor);
                 }
                 else
                 {
@@ -417,7 +412,8 @@ void buildPipelineRecursively(
     /// Case 3: Sink Operator – treat sinks as pipeline breakers
     if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
     {
-        const auto sinkFormat = sink->getDescriptor().getFormatType();
+        /// getDescriptor() returns by value: copy the formatter descriptor, do not bind a reference into the temporary
+        const auto sinkOutputFormatterDescriptor = sink->getDescriptor().getOutputFormatterDescriptor();
         if (currentPipeline->isSourcePipeline())
         {
             const auto sourceFormat = currentPipeline->getRootOperator()
@@ -430,7 +426,7 @@ void buildPipelineRecursively(
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers
             /// may start and end with a cut-off tuples (rows in the CSV case)
             /// The sink would output these buffers (out of order if the engine uses multiple threads), producing malformed data
-            if (not(sourceFormat == Identifier::parse("NATIVE") and toUpperCase(sinkFormat) == "NATIVE"))
+            if (not(sourceFormat == Identifier::parse("NATIVE") and sinkOutputFormatterDescriptor.isNative()))
             {
                 const auto sourcePipeline = std::make_shared<Pipeline>(createScanOperator(
                     *currentPipeline,
@@ -439,20 +435,13 @@ void buildPipelineRecursively(
                     configuredBufferSize));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
-                if (toUpperCase(sinkFormat) == "NATIVE")
+                if (sinkOutputFormatterDescriptor.isNative())
                 {
                     addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
                 }
                 else
                 {
-                    /// The output format is treated in a case sensitive manner, since it serves as a key to the output formatter registry.
-                    /// That's why we cannot pass the upper case sinkFormat.
-                    addOutputFormattingEmit(
-                        sourcePipeline,
-                        *opWrapper,
-                        configuredBufferSize,
-                        std::string(sinkFormat),
-                        sink->getDescriptor().getOutputFormatterConfig());
+                    addOutputFormattingEmit(sourcePipeline, *opWrapper, configuredBufferSize, sinkOutputFormatterDescriptor);
                 }
 
                 const auto emitOperator = sourcePipeline->getRootOperator().getChild();
@@ -480,18 +469,13 @@ void buildPipelineRecursively(
         /// Add emit first if there is one needed
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
-            if (toUpperCase(sinkFormat) == "NATIVE")
+            if (sinkOutputFormatterDescriptor.isNative())
             {
                 addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
             }
             else
             {
-                addOutputFormattingEmit(
-                    currentPipeline,
-                    *prevOpWrapper,
-                    configuredBufferSize,
-                    std::string(sinkFormat),
-                    sink->getDescriptor().getOutputFormatterConfig());
+                addOutputFormattingEmit(currentPipeline, *prevOpWrapper, configuredBufferSize, sinkOutputFormatterDescriptor);
             }
         }
         const auto newPipeline = std::make_shared<Pipeline>(*sink);

@@ -31,7 +31,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<bool> ENABLE_SLICE_CACHE{
     Identifier::parse("enable_slice_cache"),
     "Enabling Slice Cache for increased performance by caching the data structure access per thread. Unless weird behavior happens, "
@@ -56,7 +56,7 @@ const ConfigField<uint64_t> NUMBER_OF_ENTRIES{
                 });
     },
     uint64_t{10}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

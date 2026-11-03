@@ -52,6 +52,7 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
+#include <TCPSink.hpp>
 
 namespace NES
 {
@@ -586,8 +587,8 @@ TEST_F(StatementBinderTest, BindCreateSink)
     const auto actualSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());
     ASSERT_EQ(*actualSchema, expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "FILE");
-    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
+    ASSERT_EQ(actualSink.getPluginSinkConfiguration().getPluginData().getAs<const FileSinkConfig&>().filePath, "/dev/null");
+    ASSERT_EQ(actualSink.getOutputFormatterDescriptor().getOutputFormatterType(), Identifier::parse("CSV"));
 
     const std::string dropSinkStatement = "DROP SINK WHERE NAME = 'TESTSINK'";
     const auto statement2 = binder->parseAndBindSingle(dropSinkStatement);
@@ -620,8 +621,8 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     const auto actualSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());
     ASSERT_EQ(*actualSchema, expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "FILE");
-    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
+    ASSERT_EQ(actualSink.getPluginSinkConfiguration().getPluginData().getAs<const FileSinkConfig&>().filePath, "/dev/null");
+    ASSERT_EQ(actualSink.getOutputFormatterDescriptor().getOutputFormatterType(), Identifier::parse("CSV"));
 }
 
 TEST_F(StatementBinderTest, BindDropQuery)
@@ -1173,6 +1174,34 @@ TEST_F(StatementBinderTest, BindQueryWithUnsupportedPredicateNamesEveryKeywordOf
         EXPECT_EQ(statement.error().code(), ErrorCode::UnsupportedQuery);
         EXPECT_TRUE(std::string{statement.error().what()}.contains(expectedMessage));
     }
+}
+
+TEST_F(StatementBinderTest, BindCreateTCPSink)
+{
+    const auto statement = binder->parseAndBindSingle(R"(
+        CREATE SINK tcpOutput(id UINT64) TYPE TCP SET (
+            'worker-1:8080' AS "SINK".HOST,
+            'tcp-client' AS "SINK".SOCKET_HOST,
+            9000 AS "SINK".SOCKET_PORT,
+            'CSV' AS "SINK".OUTPUT_FORMAT,
+            4 AS "SINK".MAX_QUEUED_BUFFERS,
+            1000 AS "SINK".CONNECT_TIMEOUT_MS,
+            2000 AS "SINK".CLOSE_TIMEOUT_MS,
+            2 AS "SINK".BACKPRESSURE_LOWER_THRESHOLD,
+            4 AS "SINK".BACKPRESSURE_UPPER_THRESHOLD))");
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
+    const auto created = sinkStatementHandler->apply(std::get<CreateSinkStatement>(*statement));
+    ASSERT_TRUE(created.has_value()) << created.error().what();
+    const auto& [sink] = *created;
+    const auto config = sink.getPluginData().getAs<TCPSinkConfig>();
+    EXPECT_EQ(config.socketHost, "tcp-client");
+    EXPECT_EQ(config.socketPort, 9000U);
+    EXPECT_EQ(config.maxQueuedBuffers, 4U);
+    EXPECT_EQ(config.connectTimeoutMs, 1000U);
+    EXPECT_EQ(config.closeTimeoutMs, 2000U);
+    EXPECT_EQ(sink.getBackpressureLowerThreshold(), 2U);
+    EXPECT_EQ(sink.getBackpressureUpperThreshold(), 4U);
+    EXPECT_EQ(sink.getFormatType(), "CSV");
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

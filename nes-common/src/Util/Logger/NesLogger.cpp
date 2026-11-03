@@ -48,7 +48,7 @@ class ThreadNameFlag final : public spdlog::custom_flag_formatter
 public:
     void format(const spdlog::details::log_msg&, const std::tm&, spdlog::memory_buf_t& dest) override
     {
-        const auto id = NES::Thread::getThisThreadName();
+        const auto& id = NES::Thread::getThisThreadName();
         dest.append(id.data(), id.data() + id.size());
     }
 

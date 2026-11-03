@@ -32,7 +32,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<bool> ENABLE_BLOOM_FILTER{
     Identifier::parse("enable_bloom_filter"),
     "Enabling the in-map BloomFilter of a hash join's hash maps, which skips walking a chain for keys the map cannot contain. "
@@ -72,7 +72,7 @@ const ConfigField<uint64_t> EXPECTED_ENTRIES{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{10'000}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

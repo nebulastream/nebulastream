@@ -261,7 +261,12 @@ public:
             auto expectedResultHelper = std::make_unique<uint64_t>(i);
             /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): SliceCacheEntry::DataStructure is an opaque void* alias used as a test token.
             const auto* expectedResult = reinterpret_cast<SliceCacheEntry::DataStructure>(expectedResultHelper.get());
-            operations.push_back({Timestamp{timestamp}, sliceStart, sliceEnd, expectedResult, std::move(expectedResultHelper)});
+            operations.push_back(
+                {.timestamp = Timestamp{timestamp},
+                 .sliceStart = sliceStart,
+                 .sliceEnd = sliceEnd,
+                 .expectedResult = expectedResult,
+                 .expectedResultHelper = std::move(expectedResultHelper)});
         }
 
         /// Shuffle operations to simulate random access patterns

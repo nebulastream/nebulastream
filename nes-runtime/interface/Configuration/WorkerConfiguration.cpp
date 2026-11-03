@@ -39,7 +39,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<uint64_t> TOTAL_MEMORY_IN_BYTES{
     Identifier::parse("total_memory_in_bytes"),
     "Total memory budget in bytes for the global buffer pool (pooled + unpooled).",
@@ -125,7 +125,7 @@ const ConfigField<DumpMode::Options> DUMP_COMPILATION_RESULT{
     "NONE"};
 
 const ConfigField<bool> DUMP_GRAPH{Identifier::parse("dump_graph"), "If to dump graph of the compilation results", false};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

@@ -29,7 +29,6 @@
 #include <vector>
 
 /// NOLINTNEXTLINE(misc-include-cleaner)
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -133,7 +132,7 @@ void WindowedAggregationLogicalOperator::inferLocalSchema()
             using VectorType = std::vector<std::pair<TypedLogicalFunction<FieldAccessLogicalFunction>, std::optional<Identifier>>>;
             return visitingGroupingKey
                 | std::views::transform(
-                       [&](const auto& key) -> typename VectorType::value_type
+                       [&](const auto& key) -> VectorType::value_type
                        {
                            return std::make_pair(
                                key.first.withInferredDataType(inputSchema).template getAs<FieldAccessLogicalFunction>(), key.second);

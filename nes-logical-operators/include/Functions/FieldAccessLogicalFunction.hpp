@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>

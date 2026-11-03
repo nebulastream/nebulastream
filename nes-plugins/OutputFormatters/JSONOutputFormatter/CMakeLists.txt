@@ -22,4 +22,5 @@ target_link_libraries(json_output_formatter_plugin PRIVATE simdjson::simdjson)
 
 link_plugin_library(nes-output-formatters json_output_formatter_plugin)
 add_registry_entry(OutputFormatter JSON)
-add_registry_entry(OutputFormatterValidation JSON)
+add_registry_entry(OutputFormatterConfigSchema JSON)
+add_registry_entry(OutputFormatterConfig JSON)

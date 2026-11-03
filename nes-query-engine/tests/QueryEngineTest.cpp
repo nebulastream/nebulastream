@@ -172,6 +172,8 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
         EXPECT_FALSE(ctrl->wasClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        /// Worker threads may reorder buffers, so wait for the identifiable buffer before injecting more. The sink order is then fixed.
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -223,6 +225,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
         ASSERT_TRUE(ctrl->waitUntilOpened());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -278,12 +281,12 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
         EXPECT_FALSE(ctrl->wasClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
         /// Race between Source Data and System Stop
-        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         test.stopQuery(test.queryId(0));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -323,11 +326,11 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
         EXPECT_FALSE(ctrl->waitUntilClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
-        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectError("Source Failed");
         ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
@@ -970,10 +973,6 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
 
     test.start();
     {
-        /// instruct DataGenerator to emit failure for source 0 after 3 tuple buffer
-        DataGenerator<FailAfter<3, 0>> dataGenerator;
-        dataGenerator.start(sourcesCtrls);
-
         /// start all queries
         for (auto& query : queryPlans)
         {
@@ -981,6 +980,11 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
             test.startQuery(std::move(query));
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
+
+        /// Source activity can precede the Running notification, so a query could fail before reporting Running.
+        /// Only generate data once every query has reported Running.
+        DataGenerator<FailAfter<3, 0>> dataGenerator;
+        dataGenerator.start(sourcesCtrls);
 
         /// Expect Query 1 to be terminated by the failure.
         ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -1118,7 +1122,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
 template <typename T>
 auto IsInInclusiveRange(T lo, T hi)
 {
-    return ::testing::AllOf(::testing::Ge((lo)), ::testing::Le((hi)));
+    return ::testing::AllOf(::testing::Ge(lo), ::testing::Le(hi));
 }
 
 TEST_F(QueryEngineTest, singleQueryWithPipelineFailure)
@@ -1452,10 +1456,6 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
 
     test.start();
     {
-        /// instruct DataGenerator to emit failure for source 0 after 3 tuple buffer
-        DataGenerator dataGenerator;
-        dataGenerator.start(sourcesCtrls);
-
         /// start all queries
         for (auto& query : queryPlans)
         {
@@ -1463,6 +1463,11 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
             test.startQuery(std::move(query));
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
+
+        /// Source activity can precede the Running notification, so a query could fail before reporting Running.
+        /// Only generate data once every query has reported Running.
+        DataGenerator dataGenerator;
+        dataGenerator.start(sourcesCtrls);
 
         /// Expect all other queries to have failed
         for (size_t idx = 1; auto& query : queryPlans | std::ranges::views::drop(1))

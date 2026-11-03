@@ -1,0 +1,35 @@
+# description: ABS(INT8) must return its declared INT16 type when consumed by MIN/MAX.
+# Negating a negative input multiplied two INT16 values and promoted the result to INT32,
+# causing "select with different types" when MIN/MAX compared it with their INT16 state.
+# groups: [regression, Function, FunctionAbs, Aggregation, WindowOperators]
+
+CREATE LOGICAL SOURCE aggregateStream(i8 INT8 NOT NULL, nullableI8 INT8, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR aggregateStream TYPE File;
+ATTACH INLINE
+-128,-128,0
+-7,-7,1
+0,0,2
+7,7,3
+42,,4
+-7,,10
+7,,11
+
+# Consume ABS directly: an intermediate emit/scan could narrow the value and hide the bug.
+# Include INT8_MIN to verify that the widened result still represents 128.
+SELECT start, MIN(ABS(i8)) AS minimum, MAX(ABS(i8)) AS maximum
+FROM aggregateStream
+WINDOW TUMBLING(timestamp, size 10 ms)
+INTO File();
+----
+0,0,128
+10,7,7
+
+# The first window mixes NULL and non-NULL inputs; the second contains only NULLs.
+# MIN/MAX must ignore NULLs in the first and preserve NULL results in the second.
+SELECT start, MIN(ABS(nullableI8)) AS minimum, MAX(ABS(nullableI8)) AS maximum
+FROM aggregateStream
+WINDOW TUMBLING(timestamp, size 10 ms)
+INTO File();
+----
+0,0,128
+10,NULL,NULL

@@ -61,7 +61,7 @@ std::string describe(const boost::system::error_code& error)
     return error.message() + " [" + error.category().name() + ":" + std::to_string(error.value()) + "]";
 }
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::optional<std::string>> SOCKET_HOST{
     Identifier::parse("SOCKET_HOST"),
     "The host from which to read.",
@@ -107,7 +107,7 @@ const ConfigField<uint32_t> CONNECT_TIMEOUT_MS{
 /// Additional safety marker to prevent people from not setting host and port by accident outside of the systests
 const ConfigField<bool> OVERWRITEABLE_HOST_AND_PORT{
     Identifier::parse("OVERWRITEABLE_HOST_AND_PORT"), "Internal marker, do NOT overwrite this", false};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

@@ -88,8 +88,7 @@ Verdict checkFailed(const Failure& actual, const Expectation& expectation)
         [&](const Exception& error)
         {
             return error.code() == expectedError->code
-                and (not expectedError->message.has_value()
-                     or std::string_view{error.what()}.find(*expectedError->message) != std::string_view::npos);
+                and (not expectedError->message.has_value() or std::string_view{error.what()}.contains(*expectedError->message));
         });
     if (not occurred)
     {

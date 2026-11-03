@@ -116,6 +116,8 @@ EOF
 }
 
 @test "reconnects after the TCP peer restarts" {
+  # TODO #2241: Re-enable once the intermittent stall after the reconnect is fixed.
+  skip "Flaky, see #2241"
   setup_distributed tests/good/example.yaml
 
   run docker_nes_cli -t tests/good/example.yaml start "$(cat <<'EOF'

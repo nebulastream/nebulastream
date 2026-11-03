@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <OutputFormatterValidationRegistry.hpp>
+#include <OutputFormatterConfigRegistry.hpp>
 
 namespace NES
 {
 
-OutputFormatterValidationRegistry& OutputFormatterValidationRegistry::instance()
+OutputFormatterConfigRegistry& OutputFormatterConfigRegistry::instance()
 {
-    static OutputFormatterValidationRegistry inst;
+    static OutputFormatterConfigRegistry inst;
     return inst;
 }
 

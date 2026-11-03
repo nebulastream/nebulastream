@@ -30,7 +30,6 @@
 
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -144,7 +143,7 @@ private:
         std::optional<Identifier> logicalSourceName);
 
 public:
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{
         Identifier::parse("SCHEMA"),
         "The schema of the source, only specifiable as an option in anonymous sources.",
@@ -153,7 +152,7 @@ public:
         std::nullopt,
         "Not set"};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<std::optional<size_t>> MAX_INFLIGHT_BUFFERS{
         Identifier::parse("MAX_INFLIGHT_BUFFERS"),
         "The maximal number of inflight buffers, i.e. the buffers that have not been picked up by any operator yet. 0 or NULL indicates no "
@@ -178,7 +177,7 @@ public:
         },
         std::nullopt};
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<Host> HOST{
         Identifier::parse("HOST"),
         "Where to place the source, in the form of host:port . Must be a NES node that is part of the topology.",
@@ -189,7 +188,7 @@ public:
         }};
     /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
 
-    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp) - process aborts anyway if config schema setup throws at startup
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization) - process aborts anyway if config schema setup throws at startup
     static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA);
 };
 
