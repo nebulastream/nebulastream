@@ -24,6 +24,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <folly/Synchronized.h>
+#include <PipelineExecutionContext.hpp>
 
 #ifndef NO_ASSERT
     #include <set>
@@ -55,13 +56,27 @@ struct SequenceState
     size_t seenChunks = 0;
 };
 
+/// Assigns the chunk numbers of the buffers an `EmitPhysicalOperator` emits, such that the outputs of every sequence number carry the
+/// chunk numbers 1 to n and only chunk n is marked last.
 class EmitOperatorHandler final : public OperatorHandler
 {
 public:
-    void setChunkNumber(bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer);
-
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
+
+    /// Emits a full buffer that the input with `incomingChunkNumber` filled before it ended.
+    void emitSpilled(TupleBuffer& buffer, ChunkNumber incomingChunkNumber, PipelineExecutionContext& pec);
+
+    /// Emits the last output of the input with `incomingChunkNumber`. `spilled` tells whether the input emitted full buffers before.
+    void emitClosing(
+        TupleBuffer& buffer,
+        bool spilled,
+        ChunkNumber incomingChunkNumber,
+        bool isIncomingBufferTheLastChunk,
+        PipelineExecutionContext& pec);
+
+private:
+    void setChunkNumber(bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer);
 
     folly::Synchronized<std::map<SequenceNumberForOriginId, SequenceState>> sequenceStates;
 

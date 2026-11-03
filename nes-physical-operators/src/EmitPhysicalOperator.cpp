@@ -20,32 +20,71 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <nautilus/val.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <function.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
 
-class EmitState : public OperatorState
+namespace
+{
+class EmitState final : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer) { }
 
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
-    nautilus::val<int8_t*> bufferMemoryArea;
+    /// Whether `execute` emitted a full buffer, which splits the output of the input into chunks.
+    nautilus::val<bool> spilled = false;
 };
+
+EmitOperatorHandler& asEmitHandler(OperatorHandler* handler)
+{
+    PRECONDITION(handler != nullptr, "Expects a valid handler");
+    return dynamic_cast<EmitOperatorHandler&>(*handler);
+}
+
+void emitSpilledProxy(OperatorHandler* handler, PipelineExecutionContext* pec, TupleBuffer* buffer, const ChunkNumber incomingChunkNumber)
+{
+    PRECONDITION(buffer != nullptr, "Expects a valid buffer");
+    asEmitHandler(handler).emitSpilled(*buffer, incomingChunkNumber, *pec);
+}
+
+void emitClosingProxy(
+    OperatorHandler* handler,
+    PipelineExecutionContext* pec,
+    TupleBuffer* buffer,
+    const bool spilled,
+    const ChunkNumber incomingChunkNumber,
+    const bool isIncomingBufferTheLastChunk)
+{
+    PRECONDITION(buffer != nullptr, "Expects a valid buffer");
+    asEmitHandler(handler).emitClosing(*buffer, spilled, incomingChunkNumber, isIncomingBufferTheLastChunk, *pec);
+}
+
+/// Writes the tuple count and the metadata of the current input into `recordBuffer`.
+void setMetadata(const ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords)
+{
+    recordBuffer.setNumRecords(numRecords);
+    recordBuffer.setWatermarkTs(ctx.watermarkTs);
+    recordBuffer.setOriginId(ctx.originId);
+    recordBuffer.setSequenceRange(ctx.sequenceNumber, ctx.sequenceRangeOffset);
+    recordBuffer.setCreationTs(ctx.currentTs);
+}
+}
 
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
@@ -68,9 +107,15 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We emit and create a new record buffer
     if (!writeResult.successful)
     {
-        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+        setMetadata(ctx, emitState->resultBuffer, emitState->outputIndex);
+        nautilus::invoke(
+            emitSpilledProxy,
+            ctx.getGlobalOperatorHandler(operatorHandlerId),
+            ctx.pipelineContext,
+            emitState->resultBuffer.getReference(),
+            ctx.chunkNumber);
+        emitState->spilled = true;
         emitState->resultBuffer = RecordBuffer{ctx.allocateBuffer()};
-        emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = uint64_t{0};
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
@@ -84,56 +129,15 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
-}
-
-namespace
-{
-void setChunkNumber(
-    const ExecutionContext& context,
-    OperatorHandlerId operatorHandlerId,
-    const nautilus::val<bool>& closesChunk,
-    const nautilus::val<ChunkNumber>& currentChunkNumber,
-    const nautilus::val<bool>& isCurrentBufferTheLastChunk,
-    const nautilus::val<TupleBuffer*>& newBuffer)
-{
+    setMetadata(ctx, emitState->resultBuffer, emitState->outputIndex);
     nautilus::invoke(
-        +[](OperatorHandler* handler,
-            bool closesChunk,
-            ChunkNumber currentChunkNumber,
-            bool isCurrentBufferTheLastChunk,
-            TupleBuffer* newBuffer)
-        {
-            PRECONDITION(handler != nullptr, "Expects a valid handler");
-            PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");
-            PRECONDITION(currentChunkNumber != INVALID<ChunkNumber>, "Expects a valid chunkNumber");
-
-            dynamic_cast<EmitOperatorHandler&>(*handler).setChunkNumber(
-                closesChunk, currentChunkNumber, isCurrentBufferTheLastChunk, *newBuffer);
-        },
-        context.getGlobalOperatorHandler(operatorHandlerId),
-        closesChunk,
-        currentChunkNumber,
-        isCurrentBufferTheLastChunk,
-        newBuffer);
-}
-}
-
-void EmitPhysicalOperator::emitRecordBuffer(
-    ExecutionContext& ctx,
-    RecordBuffer& recordBuffer,
-    const nautilus::val<uint64_t>& numRecords,
-    const nautilus::val<bool>& potentialLastChunk) const
-{
-    recordBuffer.setNumRecords(numRecords);
-    recordBuffer.setWatermarkTs(ctx.watermarkTs);
-    recordBuffer.setOriginId(ctx.originId);
-    recordBuffer.setSequenceRange(ctx.sequenceNumber, ctx.sequenceRangeOffset);
-    recordBuffer.setCreationTs(ctx.currentTs);
-
-    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
-
-    ctx.emitBuffer(recordBuffer);
+        emitClosingProxy,
+        ctx.getGlobalOperatorHandler(operatorHandlerId),
+        ctx.pipelineContext,
+        emitState->resultBuffer.getReference(),
+        emitState->spilled,
+        ctx.chunkNumber,
+        ctx.lastChunk);
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
