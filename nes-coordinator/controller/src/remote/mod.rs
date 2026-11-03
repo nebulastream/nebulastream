@@ -16,11 +16,7 @@
 
 mod client;
 
-use crate::config::{
-    CONNECT_MAX_DELAY, CONNECT_MAX_RETRIES, CONNECT_TIMEOUT, ENDPOINT_KEEP_ALIVE_INTERVAL,
-    ENDPOINT_KEEP_ALIVE_TIMEOUT, HEALTH_CHECK_INTERVAL, PROBE_TIMEOUT, RETRY_BACKOFF_BASE,
-    RETRY_BACKOFF_FACTOR_MS,
-};
+use crate::config::{CONNECT_MAX_ATTEMPTS, CONNECT_MAX_DELAY, CONNECT_MAX_RETRIES, CONNECT_TIMEOUT, ENDPOINT_KEEP_ALIVE_INTERVAL, ENDPOINT_KEEP_ALIVE_TIMEOUT, HEALTH_CHECK_INTERVAL, PROBE_TIMEOUT, RETRY_BACKOFF_BASE, RETRY_BACKOFF_FACTOR_MS};
 use crate::error::WorkerTaskError;
 use crate::worker_task::Backend;
 use client::RemoteTransport;
@@ -56,6 +52,7 @@ pub mod health_proto {
 }
 
 use health_proto::health_client::HealthClient;
+use health_proto::health_check_response::ServingStatus;
 pub use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
 
 fn connect_retry_strategy() -> impl Iterator<Item = Duration> {
@@ -94,10 +91,30 @@ async fn connect(addr: &NetworkAddr) -> Result<Channel, WorkerTaskError> {
 async fn health_check(client: &HealthClient<Channel>) -> bool {
     let mut client = client.clone();
     let req = tonic::Request::new(health_proto::HealthCheckRequest::default());
-    matches!(
-        tokio::time::timeout(PROBE_TIMEOUT, client.check(req)).await,
-        Ok(Ok(_))
-    )
+    match tokio::time::timeout(PROBE_TIMEOUT, client.check(req)).await {
+        Ok(Ok(resp)) => {
+            let raw_status = resp.into_iner().status;
+            match ServingStatus::try_from(raw_status) {
+                Ok(ServingStatus::Serving) => true,
+                Ok(status) => {
+                    warn!("worker reported non-serving status: {status:?}");
+                    false
+                }
+                Err(_) => {
+                    warn!("worker reported unknown serving status (raw value {raw_status})");
+                    false
+                }
+            }
+        }
+        Ok(Err(err)) => {
+            warn!("health check RPC failed: {err}");
+            false
+        }
+        Err(_) => {
+            warn!("health check timed out after {PROBE_TIMEOUT:?}");
+            false
+        }
+    }
 }
 
 pub(crate) struct RemoteBackend;
@@ -108,7 +125,7 @@ impl Backend for RemoteBackend {
 
     async fn connect(&self, addr: &NetworkAddr) -> anyhow::Result<Channel> {
         connect(addr).await.map_err(|err| {
-            anyhow::anyhow!("failed to connect after {CONNECT_MAX_RETRIES} attempts: {err}")
+            anyhow::anyhow!("failed to connect after {CONNECT_MAX_ATTEMPTS} attempts: {err}")
         })
     }
 

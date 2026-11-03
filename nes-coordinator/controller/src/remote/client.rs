@@ -14,7 +14,7 @@
 
 use crate::config::{
     REMOTE_FRAGMENT_POLL_INTERVAL, RETRY_BACKOFF_BASE, RETRY_BACKOFF_FACTOR_MS,
-    RPC_ATTEMPT_TIMEOUT, RPC_MAX_RETRIES, RPC_TOTAL_TIMEOUT,
+    RPC_ATTEMPT_TIMEOUT, RPC_MAX_RETRIES, RPC_TOTAL_TIMEOUT, RPC_MAX_ATTEMPTS
 };
 use crate::error::{Retryable, WorkerTaskError};
 use crate::query_fragment::{CallError, RawStatus, Transport};

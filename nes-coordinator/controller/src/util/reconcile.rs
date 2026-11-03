@@ -20,6 +20,7 @@ use std::hash::Hash;
 use std::time::Duration;
 use tokio::select;
 use tokio::sync::watch;
+use tokio::time::MissedTickBehavior;
 use tracing::{debug, warn};
 
 /// One level of the reconciliation hierarchy.
@@ -40,15 +41,21 @@ pub(crate) enum Exit {
     LinkLost,
 }
 
+fn timer_with_delay(period: Duration) -> tokio::time::Interval {
+    let mut timer = tokio::time::interval(period);
+    timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
+    timer
+}
+
 pub(crate) async fn reconcile_loop(
     reconciler: &mut impl Reconciler,
     intent_rx: &mut watch::Receiver<()>,
     poll_interval: Duration,
     heartbeat: Option<Duration>,
 ) -> Exit {
-    let mut poll = tokio::time::interval(poll_interval);
+    let mut poll = timer_with_delay(poll_interval);
     poll.tick().await;
-    let mut heartbeat = heartbeat.map(tokio::time::interval);
+    let mut heartbeat = heartbeat.map(timer_with_delay);
     reconciler.reconcile().await;
     loop {
         let mut probe = false;

@@ -46,8 +46,11 @@ pub(crate) const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 /// Deadline for asking a worker for its version.
 pub(crate) const VERSION_TIMEOUT: Duration = Duration::from_secs(3);
 
-/// Connection attempts before a worker is marked unreachable.
+/// Retries after the initial connection attempt before a worker is marked unreachable.
 pub(crate) const CONNECT_MAX_RETRIES: usize = 8;
+
+/// Total connection attempts, derived: the immediate attempt CONNECT_MAX_RETRIES retries.
+pub(crate) const CONNECT_MAX_ATTEMPTS: usize = CONNECT_MAX_RETRIES + 1;
 
 /// Upper bound on the backoff between connection attempts.
 pub(crate) const CONNECT_MAX_DELAY: Duration = Duration::from_secs(5);
@@ -74,5 +77,8 @@ pub(crate) const RETRY_BACKOFF_BASE: u64 = 2;
 /// With the base above the delays are 50, 100, 200, 400, ... ms.
 pub(crate) const RETRY_BACKOFF_FACTOR_MS: u64 = 25;
 
-/// Retry attempts for a single RPC.
+/// Retry attempts for a single RPC after the initial attempt
 pub(crate) const RPC_MAX_RETRIES: usize = 5;
+
+/// Total attempts for RPC, derived: the initial attempt plus RPC_MAX_RETRIES retries.
+pub(crate) const RPC_MAX_ATTEMPTS: usize = RPC_MAX_RETRIES + 1;
