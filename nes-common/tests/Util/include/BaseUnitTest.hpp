@@ -20,6 +20,7 @@
 #include <thread>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <sys/prctl.h>
 
 namespace NES::Testing
 {
@@ -65,8 +66,22 @@ namespace NES::Testing
         } while (0)
 #else
     /// In Debug-Modus: Use regular EXPECT_DEATH
-    #define EXPECT_DEATH_DEBUG(statement, regex) EXPECT_DEATH(statement, regex)
-    #define ASSERT_DEATH_DEBUG(statement, regex) ASSERT_DEATH(statement, regex)
+    /// The expected crash must not write a core dump, as each one can be very large. This only applies to the statement,
+    /// which gtest runs in a child process, so an unexpected crash anywhere else still writes one.
+    #define EXPECT_DEATH_DEBUG(statement, regex) \
+        EXPECT_DEATH( \
+            { \
+                prctl(PR_SET_DUMPABLE, 0); \
+                statement; \
+            }, \
+            regex)
+    #define ASSERT_DEATH_DEBUG(statement, regex) \
+        ASSERT_DEATH( \
+            { \
+                prctl(PR_SET_DUMPABLE, 0); \
+                statement; \
+            }, \
+            regex)
 #endif
 
 #define ASSERT_EXCEPTION_ERRORCODE(statement, errorCode) \
