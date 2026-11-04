@@ -19,6 +19,7 @@
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -33,6 +34,7 @@
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <SourceDescriptorPhysicalOperator.hpp>
 
 namespace NES
@@ -69,6 +71,25 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+    /// The process returns Arrow buffers, which do not leave this pipeline: everything after the scan reads the records.
+    static const auto PythonProcessType = Identifier::parse("PythonProcess");
+    if (source->getSourceDescriptor().getSourceType() == PythonProcessType)
+    {
+        auto scan = std::make_shared<PhysicalOperatorWrapper>(
+            ScanPhysicalOperator(
+                LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, outputSchema, MemoryLayoutType::ARROW_LAYOUT),
+                outputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+                    | std::ranges::to<std::vector>()),
+            outputSchema,
+            outputSchema,
+            MemoryLayoutType::ARROW_LAYOUT,
+            memoryLayoutType,
+            std::nullopt,
+            std::nullopt,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN,
+            std::vector{wrapper});
+        return {.root = scan, .leaves = {}};
+    }
     return {.root = wrapper, .leaves = {}};
 }
 }

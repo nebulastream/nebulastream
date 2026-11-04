@@ -23,6 +23,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/UDFCallLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -30,6 +33,7 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UDFLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -40,12 +44,15 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <NetworkTopology.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
+#include <UdfDescriptor.hpp>
+#include <UdfProcessCall.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -206,6 +213,90 @@ LogicalOperator assignOperator(DecompositionContext& context, const LogicalOpera
     return createNetworkChannel(context, assignedChild, childNode, opNode);
 }
 
+/// Position of a field among the fields of the batches.
+uint64_t fieldPosition(const Schema<UnqualifiedUnboundField, Ordered>& fields, const Identifier& name)
+{
+    const auto found = std::ranges::find_if(fields, [&](const auto& field) { return *field.getFullyQualifiedName().begin() == name; });
+    INVARIANT(found != std::ranges::end(fields), "UDF operator reads or writes field {}, which its batches do not hold", name);
+    return static_cast<uint64_t>(std::ranges::distance(std::ranges::begin(fields), found));
+}
+
+/// Replaces an out-of-process UDF operator by a sink and a source on its node, which exchange the batches with the process. The sink
+/// becomes a plan of its own; the source takes the operator's place in the current plan.
+LogicalOperator splitOutOfProcessUdfOperator(DecompositionContext& context, const TypedLogicalOperator<UDFLogicalOperator>& udf)
+{
+    const auto child = udf->getChild();
+    const auto node = getPlacementFor(udf);
+    /// A batch holds the fields of the child and the results, so its rows fit into one buffer on the way back from the process.
+    const auto fields = udf.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
+
+    std::vector<UdfProcessCall> calls;
+    for (const auto& [name, function] : udf->getCalls())
+    {
+        const auto call = function.tryGetAs<UDFCallLogicalFunction>();
+        INVARIANT(call.has_value() && call.value()->getDescriptor().has_value(), "A UDF operator only holds resolved UDF calls");
+        const auto& descriptor = *call.value()->getDescriptor();
+        UdfProcessCall description{
+            .resultField = fieldPosition(fields, name),
+            .name = descriptor.getName(),
+            .entrypoint = descriptor.getEntrypoint(),
+            .body = std::nullopt,
+            .parameterNames = {},
+            .arguments = {}};
+        if (const auto& source = descriptor.getSource())
+        {
+            description.body = source->body;
+            description.parameterNames = source->parameterNames;
+        }
+        for (const auto& argument : function.getChildren())
+        {
+            if (const auto access = argument.tryGetAs<FieldAccessLogicalFunction>())
+            {
+                description.arguments.push_back(
+                    {.field = fieldPosition(fields, access.value()->getField().getLastName()),
+                     .constant = std::nullopt,
+                     .constantType = {}});
+            }
+            else
+            {
+                const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>();
+                INVARIANT(constant.has_value(), "UDF argument {} is neither a field nor a constant", argument);
+                description.arguments.push_back(
+                    {.field = std::nullopt,
+                     .constant = constant.value()->getConstantValue(),
+                     .constantType = std::string{magic_enum::enum_name(constant.value()->getDataType().type)}});
+            }
+        }
+        calls.push_back(std::move(description));
+    }
+
+    static const auto ProcessType = Identifier::parse("PythonProcess");
+    const auto channel = ChannelId(generateUUID()).getRawValue();
+    const auto sinkDescriptor = context.sinkCatalog->getAnonymousSink(
+        child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(),
+        ProcessType,
+        Host(node.getRawValue()),
+        {{Identifier::parse("channel"), channel}, {Identifier::parse("output_format"), "NATIVE"}},
+        {});
+    INVARIANT(sinkDescriptor.has_value(), "Invalid sink descriptor config for a UDF process");
+    /// The sink takes the fields of its child. Its field ordering is the one of the batches, which also hold the columns of the results.
+    auto sinkTraitSet = child.getTraitSet()
+        | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(FieldOrderingTrait); })
+        | std::ranges::to<TraitSet>();
+    sinkTraitSet.insert(FieldOrderingTrait{fields});
+    context.addPlanToNode(
+        SinkLogicalOperator::create(child, sinkDescriptor.value())->withTraitSet(std::move(sinkTraitSet)).withInferredSchema(), node);
+
+    const auto sourceDescriptor = context.sourceCatalog->getAnonymousSource(
+        ProcessType,
+        fields,
+        Host(node.getRawValue()),
+        {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
+        {{Identifier::parse("channel"), channel}, {Identifier::parse("calls"), serializeUdfProcessCalls(calls)}});
+    INVARIANT(sourceDescriptor.has_value(), "Invalid source descriptor config for a UDF process");
+    return SourceDescriptorLogicalOperator::create(sourceDescriptor.value())->withTraitSet(udf.getTraitSet());
+}
+
 LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op)
 {
     std::vector<LogicalOperator> assignedChildren;
@@ -216,7 +307,13 @@ LogicalOperator decomposePlanRecursive(DecompositionContext& context, const Logi
         assignedChildren.emplace_back(assignOperator(context, op, child));
     }
 
-    return op.withChildren({std::move(assignedChildren)});
+    auto assigned = op.withChildren({std::move(assignedChildren)});
+    if (const auto udf = assigned.tryGetAs<UDFLogicalOperator>();
+        udf.has_value() && udf.value()->getExecution() == UdfExecution::OutOfProcess)
+    {
+        return splitOutOfProcessUdfOperator(context, udf.value());
+    }
+    return assigned;
 }
 }
 

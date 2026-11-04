@@ -70,6 +70,8 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
     switch (layoutType)
     {
+        case MemoryLayoutType::ARROW_LAYOUT:
+            return lowerSchemaToArrow(bufferSize, schema);
         case MemoryLayoutType::ROW_LAYOUT: {
             std::vector<RowTupleBufferRef::Field> fields;
             fields.reserve(std::ranges::size(schema));

@@ -30,7 +30,8 @@ namespace NES
 enum class MemoryLayoutType : uint8_t
 {
     ROW_LAYOUT = 0,
-    COLUMNAR_LAYOUT = 1
+    COLUMNAR_LAYOUT = 1,
+    ARROW_LAYOUT = 2
 };
 
 /// Lowers a schema and its memory layout type to a specific TupleBufferRef

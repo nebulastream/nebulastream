@@ -20,11 +20,12 @@ namespace NES
 {
 
 /// How Python UDFs execute: Inline compiles them with Codon into the query pipeline, InProcess runs them in the CPython
-/// interpreter embedded by its bridge library.
+/// interpreter embedded by its bridge library, and OutOfProcess runs them in a separate Python process.
 struct PythonUdfBridges
 {
     static UdfBridge createPythonInline();
     static UdfBridge createPythonInProcess();
+    static UdfBridge createPythonOutOfProcess();
 };
 
 }

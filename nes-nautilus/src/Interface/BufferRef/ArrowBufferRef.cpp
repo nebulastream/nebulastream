@@ -43,14 +43,19 @@ namespace NES
 {
 
 ArrowBufferRef::ArrowBufferRef(
-    std::vector<Field> fields, const uint32_t numVarSizedColumns, const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
+    std::vector<Field> fields,
+    const uint32_t numVarSizedColumns,
+    const uint64_t capacity,
+    const uint64_t bufferSize,
+    const uint64_t tupleSize)
     : TupleBufferRef(capacity, bufferSize, tupleSize), fields(std::move(fields)), numVarSizedColumns(numVarSizedColumns)
 {
 }
 
 namespace
 {
-nautilus::val<int8_t*> bitByteAddress(const nautilus::val<int8_t*>& bufferAddress, const uint64_t regionOffset, const nautilus::val<uint64_t>& index)
+nautilus::val<int8_t*>
+bitByteAddress(const nautilus::val<int8_t*>& bufferAddress, const uint64_t regionOffset, const nautilus::val<uint64_t>& index)
 {
     return bufferAddress + (nautilus::val<uint64_t>{regionOffset} + (index / nautilus::val<uint64_t>{8}));
 }
@@ -63,14 +68,18 @@ nautilus::val<bool> readBit(const nautilus::val<int8_t*>& bufferAddress, const u
 }
 
 void writeBit(
-    const nautilus::val<int8_t*>& bufferAddress, const uint64_t regionOffset, const nautilus::val<uint64_t>& index, const nautilus::val<bool>& bit)
+    const nautilus::val<int8_t*>& bufferAddress,
+    const uint64_t regionOffset,
+    const nautilus::val<uint64_t>& index,
+    const nautilus::val<bool>& bit)
 {
     const auto byteAddress = bitByteAddress(bufferAddress, regionOffset, index);
     const auto byte = readValueFromMemRef<uint8_t>(byteAddress);
     const auto bitPos = static_cast<nautilus::val<uint8_t>>(index % nautilus::val<uint64_t>{8});
     const auto mask = static_cast<nautilus::val<uint8_t>>(nautilus::val<uint8_t>{1} << bitPos);
     const auto withBitSet = static_cast<nautilus::val<uint8_t>>(byte | mask);
-    const auto withBitCleared = static_cast<nautilus::val<uint8_t>>(byte & static_cast<nautilus::val<uint8_t>>(mask ^ nautilus::val<uint8_t>{0xFF}));
+    const auto withBitCleared
+        = static_cast<nautilus::val<uint8_t>>(byte & static_cast<nautilus::val<uint8_t>>(mask ^ nautilus::val<uint8_t>{0xFF}));
     VarVal{nautilus::select(bit, withBitSet, withBitCleared)}.writeToMemory(byteAddress);
 }
 
@@ -190,14 +199,18 @@ Record ArrowBufferRef::readRecord(
             /// Empty values have no payload and may start at the end of the column, so they must not be looked up.
             const auto payload = invoke(
                 {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-                +[](const TupleBuffer* buffer, const uint32_t childSlot, const uint32_t numVarSizedColumns, const int32_t startOffset, const uint64_t size)
-                { return size == 0 ? nullptr : findVarSized(buffer, childSlot, numVarSizedColumns, startOffset); },
+                +[](const TupleBuffer* buffer,
+                    const uint32_t childSlot,
+                    const uint32_t numVarSizedColumns,
+                    const int32_t startOffset,
+                    const uint64_t size) { return size == 0 ? nullptr : findVarSized(buffer, childSlot, numVarSizedColumns, startOffset); },
                 recordBuffer.getReference(),
                 nautilus::val<uint32_t>{field.childBufferSlot},
                 nautilus::val<uint32_t>{numVarSizedColumns},
                 start,
                 length);
-            record.write(field.name, VarVal{VariableSizedData{static_cast<nautilus::val<int8_t*>>(payload), length}, field.type.nullable, isNull});
+            record.write(
+                field.name, VarVal{VariableSizedData{static_cast<nautilus::val<int8_t*>>(payload), length}, field.type.nullable, isNull});
             continue;
         }
         record.write(field.name, VarVal::readVarValFromMemory(slot, field.type, isNull));

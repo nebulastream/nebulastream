@@ -105,7 +105,10 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     /// Create a scan if this projection was placed directly after the source.
     /// Any other projection does not receive a scan here, otherwise we might create an unnecessary pipeline.
     /// Scans needed for UNION are inserted in the Pipelining-Phase already.
-    if (projection->getChild().tryGetAs<SourceDescriptorLogicalOperator>())
+    /// The source of a UDF process brings its own scan, which reads the Arrow buffers of the process.
+    static const auto PythonProcessType = Identifier::parse("PythonProcess");
+    const auto sourceChild = projection->getChild().tryGetAs<SourceDescriptorLogicalOperator>();
+    if (sourceChild.has_value() && sourceChild.value()->getSourceDescriptor().getSourceType() != PythonProcessType)
     {
         auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
         auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(

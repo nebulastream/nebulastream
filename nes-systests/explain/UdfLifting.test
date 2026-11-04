@@ -80,3 +80,19 @@ SINK(FILE)
           PROJECTION(fields: [A])
             SOURCE(NUMS)
 ==END==
+
+# An out-of-process operator has the same plan as an in-process one, Arrow only appears when it is lowered
+CREATE FUNCTION inc_process (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return x + 1
+$python$;
+
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT inc_process(a) AS x FROM nums INTO FILE();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [__UDF_CALL_0 as X])
+    UDF(execution: OutOfProcess, calls: [__UDF_CALL_0 = INC_PROCESS(A)])
+      PROJECTION(fields: [A])
+        SOURCE(NUMS)
+==END==

@@ -20,6 +20,7 @@ target_include_directories(nes-python-udf-bridges PUBLIC ${CMAKE_CURRENT_SOURCE_
 target_link_libraries(nes-python-udf-bridges PRIVATE nes-udf)
 link_plugin_library(nes-udf nes-python-udf-bridges)
 add_registry_entry(UdfBridge Python KEY PythonInline)
+add_registry_entry(UdfBridge Python KEY PythonOutOfProcess)
 if (TARGET nes-cpython-udf-bridge)
     add_registry_entry(UdfBridge Python KEY PythonInProcess)
 endif ()

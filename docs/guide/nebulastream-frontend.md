@@ -605,8 +605,9 @@ Each function entry requires:
 
 Each entry may also set:
 - `execution` - Where the function runs. `INLINE` compiles the entrypoint module into the query pipeline with Codon.
-  `IN_PROCESS`, the default, runs it in the CPython interpreter embedded in the worker. `OUT_OF_PROCESS` is reserved
-  and not available yet.
+  `IN_PROCESS`, the default, runs it in the CPython interpreter embedded in the worker. `OUT_OF_PROCESS` runs it
+  in a separate Python process: `$NES_UDF_VENV/bin/python` if `NES_UDF_VENV` is set, `python3` otherwise. Modules are imported
+  from the directories in `NES_UDF_PATH`.
 - `language` - The language of the function. `PYTHON`, the default, is the only one.
 
 See `design/20260708_Scalar_UDF_Support.md` for the UDF model.

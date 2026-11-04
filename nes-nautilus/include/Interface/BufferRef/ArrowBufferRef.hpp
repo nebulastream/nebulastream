@@ -74,7 +74,11 @@ public:
 
     /// Appends @param value to the child buffers of the VARSIZED column stored at @param childSlot.
     static void appendVarSized(
-        TupleBuffer& buffer, AbstractBufferProvider& bufferProvider, uint32_t childSlot, uint32_t numVarSizedColumns, std::span<const std::byte> value);
+        TupleBuffer& buffer,
+        AbstractBufferProvider& bufferProvider,
+        uint32_t childSlot,
+        uint32_t numVarSizedColumns,
+        std::span<const std::byte> value);
 
     /// Returns the child buffers holding the payload of the VARSIZED @param field, in offset order.
     [[nodiscard]] std::vector<TupleBuffer> loadVarSizedChildBuffers(const TupleBuffer& buffer, const Field& field) const;

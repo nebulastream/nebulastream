@@ -356,7 +356,16 @@ A UDF has one of three executions, set by `EXECUTION` in `CREATE FUNCTION`:
 
 - **`INLINE`** compiles it into the query pipeline, with Codon for Python. It stays in its expression, like a built-in function.
 - **`IN_PROCESS`**, the default, runs it through a bridge `.so` loaded into the worker, such as embedded CPython.
-- **`OUT_OF_PROCESS`** is reserved for a separate process. It is rejected at bind time for now.
+- **`OUT_OF_PROCESS`** runs it in a separate Python process, the interpreter of `$NES_UDF_VENV` if set and `python3` otherwise. A crash of the process fails the query, not the worker.
+
+An out-of-process operator exchanges whole batches with its process. `QueryDecomposition` splits it into a sink and a source on its node, connected by a bounded in-memory channel. The Arrow layout only exists in lowering, on the operator's node, so it never appears in the logical plan or crosses the network:
+
+```
+input (row) -> Emit (ARROW, with columns for the results) -> PythonProcess sink -> channel -> PythonProcess source -> Scan (ARROW) -> output (row)
+```
+
+Worker threads only queue buffers. The source thread owns the process and does one synchronous round trip per batch over a socket, and it keeps the metadata of the input buffer, so only the buffer and its VARSIZED payloads cross the socket. On `open`, it generates a Python wrapper with the column offsets of the Arrow layout baked in and sends it to the process. The wrapper calls each UDF once per row and writes the results into their columns of the same buffer, using only the standard library. Arguments that are NULL reach the UDF as `None`, and VARSIZED arguments are `bytes`. A VARSIZED result may be `bytes` or `str`. `NES_UDF_PATH` lists further directories for importing an `ENTRYPOINT` module.
+
 
 `UDFLiftingRule` runs after the pushdown rules and rewrites selections and projections that call non-Inline UDFs:
 

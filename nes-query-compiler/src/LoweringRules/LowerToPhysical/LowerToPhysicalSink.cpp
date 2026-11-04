@@ -21,14 +21,18 @@
 #include <vector>
 
 #include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Util/Variant.hpp>
+#include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
@@ -127,14 +131,36 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
+    /// The process exchanges Arrow buffers that also hold the columns of the UDF results, so the buffers of the input are converted here.
+    /// The results are not in the records, thus the emit leaves their columns for the process to fill in.
+    static const auto PythonProcessType = Identifier::parse("PythonProcess");
+    auto parent = wrapper;
+    if (Identifier::parse(sinkDescriptorOpt->getSinkType()) == PythonProcessType)
+    {
+        const auto batchSchema = Schema<QualifiedUnboundField, Ordered>{traitSet.get<FieldOrderingTrait>()->getOrderedFields()};
+        const auto handlerId = getNextOperatorHandlerId();
+        auto emit = std::make_shared<PhysicalOperatorWrapper>(
+            EmitPhysicalOperator(
+                handlerId, LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, batchSchema, MemoryLayoutType::ARROW_LAYOUT)),
+            inputSchemaWithRedirections,
+            batchSchema,
+            memoryLayoutType,
+            MemoryLayoutType::ARROW_LAYOUT,
+            handlerId,
+            std::make_shared<EmitOperatorHandler>(),
+            PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        wrapper->setChildren({emit});
+        parent = emit;
+    }
+
     auto leaves = [&]
     {
         if (childWithLeaf.has_value())
         {
-            wrapper->setChildren({childWithLeaf.value().first});
+            parent->setChildren({childWithLeaf.value().first});
             return std::vector{childWithLeaf.value().second};
         }
-        return std::vector{wrapper};
+        return std::vector{parent};
     }();
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

@@ -493,16 +493,18 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownLanguageThrows)
     ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedUdfLanguage);
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionOutOfProcessIsNotAvailableYet)
+TEST_F(StatementBinderTest, BindCreateFunctionOutOfProcess)
 {
-    if (UdfBridgeRegistry::instance().getRegisteredNames().empty())
+    if (!isUdfBridgeShipped("PythonOutOfProcess"))
     {
         GTEST_SKIP() << "This build ships no UDF bridge";
     }
     const auto statement
         = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'm.f'");
-    ASSERT_FALSE(statement.has_value());
-    ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedUdfLanguage);
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    EXPECT_EQ(create.execution, UdfExecution::OutOfProcess);
+    EXPECT_TRUE(create.path.empty());
 }
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithoutPythonUdfsThrows)
