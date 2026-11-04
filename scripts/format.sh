@@ -51,9 +51,9 @@ fi
 if [ -x "$(command -v rustfmt)" ]
 then
     RUSTFMT="rustfmt"
-    if ! rustfmt --edition 2024 --help > /dev/null 2>&1
+    if ! RUSTFMT_ERROR=$("$RUSTFMT" --edition 2024 --help 2>&1)
     then
-        log_fatal rustfmt does not support 2024 edition, please update rustfmt.
+        log_fatal "Could not run rustfmt with edition 2024. Install rustfmt for the active toolchain, or update it to support edition 2024.\n${RUSTFMT_ERROR}"
     fi
 else
     log_fatal could not find rustfmt in PATH, please install.
