@@ -26,10 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: default core limit
+          - name: core dumps disabled
             before_tests: "true"
-          - name: core limit 0
-            before_tests: "ulimit -c 0"
     env:
       IMAGE: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
     steps:
@@ -63,6 +61,8 @@ jobs:
           ulimit -c
           grep -v '^#' /etc/systemd/coredump.conf || true
           sudo du -sm /var/lib/systemd/coredump || true
+      - name: Disable Core Dumps
+        run: sudo sysctl -w 'kernel.core_pattern=|/bin/false'
       - uses: ./.github/steps/run-in-container
         name: Run Unit Tests
         with:
