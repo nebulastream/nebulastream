@@ -1,0 +1,110 @@
+name: Disk Experiments (final combination)
+description: |
+  Temporary, only exists on this branch. Fills the disk of a 145G VM until it has the free space of a 72G VM, to test
+  the commits of the PR together. A 72G VM has 45G free after the cleanup with no images pulled, and the images take
+  about 7G more of the disk, which gives the 38G target. The 28G job shows how much margin there is.
+
+on:
+  push:
+    branches: [ ls/disk-exp-final ]
+
+jobs:
+  get-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.hash.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: hash
+        run: echo "tag=$(scripts/hash_dependencies.sh)" >> "$GITHUB_OUTPUT"
+
+  simulated-small-vm:
+    name: "Small VM ${{ matrix.stdlib }} ${{ matrix.build_type }} ${{ matrix.free_gb }}G"
+    needs: [ get-tag ]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { stdlib: libcxx, build_type: Debug, free_gb: 38 }
+          - { stdlib: libstdcxx, build_type: Debug, free_gb: 38 }
+          - { stdlib: libstdcxx, build_type: Benchmark, free_gb: 38 }
+          - { stdlib: libcxx, build_type: RelWithDebInfo, free_gb: 38 }
+          - { stdlib: libcxx, build_type: Debug, free_gb: 28 }
+    env:
+      IMAGE: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-${{ matrix.stdlib }}-none
+      NES_PRUNE_DOCKER_BUILD_CACHE: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          images: |
+            ${{ env.IMAGE }}
+            nebulastream/nes-runtime-base:${{ needs.get-tag.outputs.tag }}
+            eclipse-mosquitto:2
+            apache/kafka:3.8.0
+            busybox:1.38.0
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - name: Simulate Small VM
+        run: |
+          df -h /
+          free_gb=$(df --output=avail -BG / | tail -n 1 | tr -dc '0-9')
+          sudo fallocate -l "$((free_gb - ${{ matrix.free_gb }}))G" /simulated-small-vm
+          df -h /
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            sccache --start-server
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
+            cmake --build build -j -- -k 0
+            sccache --stop-server
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Build
+        if: ${{ !cancelled() }}
+      # Samples free space during the tests, because the report steps only see it between steps.
+      - name: Start Free Space Log
+        run: nohup bash -c 'while true; do df --output=avail -BM / | tail -n 1 >> free-space.log; sleep 5; done' > /dev/null 2>&1 &
+      - uses: ./.github/steps/run-in-container
+        name: Run Unit Tests
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j -LE "Systest|DockerCompose" --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Unit Tests
+        if: ${{ !cancelled() }}
+      - uses: ./.github/steps/run-in-container
+        name: Run System Tests
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j -L Systest --output-on-failure --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After System Tests
+        if: ${{ !cancelled() }}
+      - uses: ./.github/steps/run-in-container
+        name: Run Docker Tests
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j 1 -L DockerCompose --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Docker Tests
+        if: ${{ !cancelled() }}
+      - name: Lowest Free Space
+        if: ${{ !cancelled() }}
+        run: echo "LOWEST $(tr -dc '0-9\n' < free-space.log | sort -n | head -n 1)M of $(wc -l < free-space.log) samples"
