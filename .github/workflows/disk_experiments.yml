@@ -1,0 +1,144 @@
+name: Disk Experiments
+description: |
+  Temporary, only exists on this branch. Each job measures one idea for reducing disk use in CI.
+
+on:
+  push:
+    branches: [ ls/disk-experiments ]
+
+jobs:
+  get-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.hash.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: hash
+        run: echo "tag=$(scripts/hash_dependencies.sh)" >> "$GITHUB_OUTPUT"
+
+  # How much can more cleanup free, what else is on the VMs, and how often do jobs get the small VMs?
+  # No build, so this is quick and can run many times to sample the VM types.
+  fleet-probe:
+    name: "Probe ${{ matrix.n }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        n: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+    steps:
+      - name: Survey
+        run: |
+          nproc; free -h; df -h; lsblk -o NAME,SIZE,TYPE,MOUNTPOINT || true
+          timeout 240 sudo du -xh --max-depth=3 / 2>/dev/null | sort -h | tail -n 60 || true
+      - name: Current Cleanup
+        run: |
+          time sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - name: Additional Cleanup
+        run: |
+          for dir in /usr/share/swift /usr/local/.ghcup /usr/local/julia* /opt/google/chrome /opt/microsoft/msedge \
+            /usr/local/share/chromium /opt/iree /opt/hostedtoolcache; do
+            echo "EXTRA $(sudo du -xsh "$dir" 2>/dev/null)"
+          done
+          time sudo rm -rf /usr/share/swift /usr/local/.ghcup /usr/local/julia* /opt/google/chrome /opt/microsoft/msedge \
+            /usr/local/share/chromium /opt/iree /opt/hostedtoolcache
+          df -h /
+
+  # How much do debug info settings shrink a Debug build?
+  debug-info:
+    name: "Debug info ${{ matrix.variant }}"
+    needs: [ get-tag ]
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: baseline
+            flags: ""
+          - variant: link-zstd
+            flags: "-DCMAKE_EXE_LINKER_FLAGS=-Wl,--compress-debug-sections=zstd"
+          - variant: compile-and-link-zstd
+            flags: "-DCMAKE_CXX_FLAGS=-gz=zstd -DCMAKE_EXE_LINKER_FLAGS=-Wl,--compress-debug-sections=zstd"
+          - variant: g1
+            flags: "-DCMAKE_CXX_FLAGS_DEBUG=-g1 -DCMAKE_C_FLAGS_DEBUG=-g1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          images: |
+            nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
+          run: |
+            source .github/.env/test-none.env
+            sccache --start-server
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Debug -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON ${{ matrix.flags }}
+            cmake --build build -j -- -k 0
+            sccache --stop-server
+            ctest --test-dir build --no-tests=error -j --output-on-failure --timeout 600 -R testLogLevel
+      - name: Sizes
+        if: ${{ !cancelled() }}
+        run: |
+          echo "SIZE total $(du -sh build | cut -f1)"
+          find build -type f -size +100M -printf 'SIZE %s %p\n' | sort -k2 -n
+
+  # Does pruning the build cache after each image build keep the Docker tests small?
+  # scripts/testing/distributed_bats_lib.bash prunes on this branch.
+  docker-prune:
+    name: "Docker tests with pruned build cache"
+    needs: [ get-tag ]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          images: |
+            nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
+            nebulastream/nes-runtime-base:${{ needs.get-tag.outputs.tag }}
+            eclipse-mosquitto:2
+            apache/kafka:3.8.0
+            busybox:1.38.0
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
+          run: |
+            source .github/.env/test-none.env
+            sccache --start-server
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Debug -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
+            cmake --build build -j -- -k 0
+            sccache --stop-server
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Build
+        if: ${{ !cancelled() }}
+      - uses: ./.github/steps/run-in-container
+        name: Run Docker Tests
+        with:
+          image_name: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j 1 -L DockerCompose --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Docker Tests
+        if: ${{ !cancelled() }}

@@ -160,6 +160,7 @@ nes_build_runtime_image() {
     ENTRYPOINT ["$container_bin"]
 EOF
   rm -rf "$ctx"
+  docker builder prune -af > /dev/null
   export "$image_var=$image_tag"
 }
 
@@ -180,6 +181,7 @@ nes_build_app_image() {
     COPY $container_bin /usr/bin
 EOF
   rm -rf "$ctx"
+  docker builder prune -af > /dev/null
   export "$image_var=$image_tag"
 }
 
