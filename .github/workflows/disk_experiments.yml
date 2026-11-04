@@ -1,0 +1,86 @@
+name: Disk Experiments (core dumps)
+description: |
+  Temporary, only exists on this branch. Finds which unit tests write core dumps, how much disk they take, and whether
+  setting the core limit to 0 stops them.
+
+on:
+  push:
+    branches: [ ls/disk-exp-coredumps ]
+
+jobs:
+  get-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.hash.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: hash
+        run: echo "tag=$(scripts/hash_dependencies.sh)" >> "$GITHUB_OUTPUT"
+
+  unit-tests:
+    name: "Unit tests, ${{ matrix.name }}"
+    needs: [ get-tag ]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default core limit
+            before_tests: "true"
+          - name: core limit 0
+            before_tests: "ulimit -c 0"
+    env:
+      IMAGE: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          images: |
+            ${{ env.IMAGE }}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            sccache --start-server
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Debug -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
+            cmake --build build -j -- -k 0
+            sccache --stop-server
+      - name: Before Unit Tests
+        run: |
+          df -BM /
+          cat /proc/sys/kernel/core_pattern
+          ulimit -c
+          grep -v '^#' /etc/systemd/coredump.conf || true
+          sudo du -sm /var/lib/systemd/coredump || true
+      - uses: ./.github/steps/run-in-container
+        name: Run Unit Tests
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ${{ matrix.before_tests }}
+            ulimit -c
+            ctest --test-dir build --no-tests=error -j -LE "Systest|DockerCompose" --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - name: Core Dumps
+        if: ${{ !cancelled() }}
+        run: |
+          df -BM /
+          sudo du -sm /var/lib/systemd/coredump || true
+          sudo ls -l /var/lib/systemd/coredump | tail -n 40
+          echo "CORE count $(sudo ls /var/lib/systemd/coredump | wc -l)"
+          sudo coredumpctl --no-pager list || true
+          for pid in $(sudo coredumpctl --no-pager --no-legend list | awk '{print $5}' | head -n 40); do
+            sudo coredumpctl --no-pager info "$pid" | grep -E 'Signal:|Command Line:|Disk Size:|Storage:' | sed "s/^/CORE $pid /" || true
+          done
+          timeout 60 journalctl --no-pager -t systemd-coredump | grep -vE 'Stack trace|#[0-9]+ ' | tail -n 20 | cut -c1-220 || true
