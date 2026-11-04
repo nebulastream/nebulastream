@@ -1,7 +1,7 @@
-name: Disk Experiments (core dumps)
+name: Disk Experiments (selective core dumps)
 description: |
-  Temporary, only exists on this branch. Finds which unit tests write core dumps, how much disk they take, and whether
-  setting the core limit to 0 stops them.
+  Temporary, only exists on this branch. Checks that death tests no longer write core dumps, and that an unexpected
+  crash still does.
 
 on:
   push:
@@ -26,8 +26,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: core dumps disabled
-            before_tests: "true"
+          - name: Debug
+            build_type: Debug
+          - name: RelWithDebInfo
+            build_type: RelWithDebInfo
     env:
       IMAGE: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-libcxx-none
     steps:
@@ -51,7 +53,7 @@ jobs:
           run: |
             source .github/.env/test-none.env
             sccache --start-server
-            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Debug -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
             cmake --build build -j -- -k 0
             sccache --stop-server
       - name: Before Unit Tests
@@ -61,17 +63,26 @@ jobs:
           ulimit -c
           grep -v '^#' /etc/systemd/coredump.conf || true
           sudo du -sm /var/lib/systemd/coredump || true
-      - name: Disable Core Dumps
-        run: sudo sysctl -w 'kernel.core_pattern=|/bin/false'
       - uses: ./.github/steps/run-in-container
         name: Run Unit Tests
         with:
           image_name: ${{ env.IMAGE }}
           run: |
             source .github/.env/test-none.env
-            ${{ matrix.before_tests }}
-            ulimit -c
             ctest --test-dir build --no-tests=error -j -LE "Systest|DockerCompose" --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - name: Core Dumps From Tests
+        if: ${{ !cancelled() }}
+        run: |
+          echo "CORE from tests $(sudo ls /var/lib/systemd/coredump | wc -l)"
+          sudo du -sm /var/lib/systemd/coredump
+      # An unexpected crash must still write a core dump.
+      - uses: ./.github/steps/run-in-container
+        name: Crash On Purpose
+        if: ${{ !cancelled() }}
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            timeout -s ABRT 2 build/nes-common/tests/UnitTests/Util/nes-unit-tests || true
       - name: Core Dumps
         if: ${{ !cancelled() }}
         run: |
