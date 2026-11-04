@@ -118,6 +118,9 @@ jobs:
       - uses: ./.github/steps/run-in-container
         name: Run Docker Tests
         if: ${{ matrix.run_docker }}
+        env:
+          # Self-hosted machines share their Docker daemon between jobs, and have the disk for the build cache.
+          NES_PRUNE_DOCKER_BUILD_CACHE: ${{ runner.environment == 'github-hosted' }}
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           run: |

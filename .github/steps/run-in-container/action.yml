@@ -36,5 +36,6 @@ runs:
              -e SCCACHE_BUCKET -e SCCACHE_ENDPOINT -e SCCACHE_REGION -e SCCACHE_S3_USE_SSL \
              -e SCCACHE_STARTUP_TIMEOUT -e SCCACHE_IDLE_TIMEOUT \
              -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+             -e NES_PRUNE_DOCKER_BUILD_CACHE \
              ${{inputs.image_name}} \
               /usr/bin/bash -e -c '${{inputs.run}}'
