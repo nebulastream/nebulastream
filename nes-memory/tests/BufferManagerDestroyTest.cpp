@@ -19,6 +19,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 
 namespace NES
 {
@@ -70,7 +71,7 @@ TEST_F(BufferManagerDestroyTest, DestroyWithoutAcquiringBuffers)
 /// Leak detection: get a buffer, do NOT release it, call destroy() -> INVARIANT fires (terminate).
 TEST_F(BufferManagerDestroyTest, DestroyDetectsSingleLeak)
 {
-    ASSERT_DEATH(
+    ASSERT_DEATH_DEBUG(
         {
             auto bm = BufferManager::create(
                 TOTAL_MEMORY_IN_BYTES,
@@ -87,7 +88,7 @@ TEST_F(BufferManagerDestroyTest, DestroyDetectsSingleLeak)
 /// Multiple leaks: acquire multiple buffers, release none, call destroy() -> INVARIANT fires.
 TEST_F(BufferManagerDestroyTest, DestroyDetectsMultipleLeaks)
 {
-    ASSERT_DEATH(
+    ASSERT_DEATH_DEBUG(
         {
             auto bm = BufferManager::create(
                 TOTAL_MEMORY_IN_BYTES,
