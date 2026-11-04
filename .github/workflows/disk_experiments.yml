@@ -1,0 +1,97 @@
+name: Disk Experiments (release-only vcpkg)
+description: |
+  Temporary, only exists on this branch. Runs Debug builds against the release-only dependency images. Debug is the
+  only build type that used the debug libraries. Uses the x64 tags, because the multi-architecture tags do not exist:
+  two arm64 image builds failed.
+
+on:
+  push:
+    branches: [ ls/disk-exp-release-vcpkg ]
+
+jobs:
+  get-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.hash.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: hash
+        run: echo "tag=$(scripts/hash_dependencies.sh)" >> "$GITHUB_OUTPUT"
+
+  debug-release-deps:
+    name: "Debug with release-only vcpkg, ${{ matrix.stdlib }}"
+    needs: [ get-tag ]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        stdlib: [ libcxx, libstdcxx ]
+    env:
+      IMAGE: nebulastream/nes-ci:${{ needs.get-tag.outputs.tag }}-x64-${{ matrix.stdlib }}-none
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          images: |
+            ${{ env.IMAGE }}
+            nebulastream/nes-runtime-base:${{ needs.get-tag.outputs.tag }}-x64
+            eclipse-mosquitto:2
+            apache/kafka:3.8.0
+            busybox:1.38.0
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - name: Tag Runtime Base Image
+        run: docker tag "nebulastream/nes-runtime-base:${{ needs.get-tag.outputs.tag }}-x64" "nebulastream/nes-runtime-base:${{ needs.get-tag.outputs.tag }}"
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage Before Build
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            sccache --start-server
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Debug -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
+            cmake --build build -j -- -k 0
+            sccache --stop-server
+      - name: Sizes
+        if: ${{ !cancelled() }}
+        run: |
+          echo "SIZE total $(du -sh build | cut -f1)"
+          find build -type f -size +100M -printf 'SIZE %s %p\n' | sort -k2 -n
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Build
+        if: ${{ !cancelled() }}
+      - uses: ./.github/steps/run-in-container
+        name: Run Unit Tests
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j -LE "Systest|DockerCompose" --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/run-in-container
+        name: Run System Tests
+        if: ${{ !cancelled() }}
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j -L Systest --output-on-failure --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/run-in-container
+        name: Run Docker Tests
+        if: ${{ !cancelled() }}
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j 1 -L DockerCompose --output-on-failure --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Tests
+        if: ${{ !cancelled() }}
