@@ -53,6 +53,17 @@ Where:
   the plugin's type, e.g. `TCPSource`).
 - `Source`/`SourceValidation` are the registries the plugin contributes to.
 
+Importantly, the plugin system expects the symbols that the registry expects to be declared in a header whose name follows the string template defined in the registry.
+For example, the Source needs to access the constructor of a type with the name "${PLUGIN_NAME}Source" to be available in a header "${PLUGIN_NAME}Source.hpp".
+So for the TCP entry in the Source registry, there must be constructor for a type "TCPSource" in the header "TCPSource.hpp".
+You can overwrite this by setting the HEADER option
+
+```cmake
+add_registry_entry(Source Network HEADER Sources/NetworkSource.hpp)
+```
+
+See the MQTTSource as a further example.
+
 Plugins may declare additional dependencies, which will be exclusive to the plugin library.
 These can be added, for example, using `FetchContent` in the plugin's root `CMakeLists.txt`.
 
