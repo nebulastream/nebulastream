@@ -24,6 +24,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <fmt/format.h>
 #include <QueryEngine.hpp>
 
 namespace NES
@@ -43,6 +44,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
         NES::BufferAlignment{static_cast<uint32_t>(workerConfiguration.bufferAlignmentInBytes)},
         static_cast<uint32_t>(workerConfiguration.defaultQueryExecution.operatorBufferSize),
         std::make_shared<NesDefaultMemoryAllocator>());
+    bufferManager->setName(fmt::format("worker {}", host.view()));
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);

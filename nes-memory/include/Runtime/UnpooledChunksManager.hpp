@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/BufferRequestStatistics.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/RollingAverage.hpp>
@@ -54,6 +55,8 @@ class UnpooledChunksManager
     /// Total bytes currently allocated across all unpooled chunks. Held via shared_ptr so the per-segment recycle
     /// callback can decrement it even if this manager has been destroyed in the meantime.
     std::shared_ptr<std::atomic<size_t>> currentlyAllocatedUnpooledBytes = std::make_shared<std::atomic<size_t>>(0);
+
+    std::shared_ptr<BufferMemoryInUse> memoryInUse;
 
     /// Helper struct that stores necessary information for accessing unpooled chunks
     /// Instead of allocating the exact needed space, we allocate a chunk of a space calculated by a rolling average of the last n sizes.
@@ -98,7 +101,10 @@ class UnpooledChunksManager
     std::shared_ptr<folly::Synchronized<UnpooledChunk>> getChunk(std::thread::id threadId);
 
 public:
-    explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t unpooledMemoryBudgetInBytes);
+    explicit UnpooledChunksManager(
+        std::shared_ptr<std::pmr::memory_resource> memoryResource,
+        size_t unpooledMemoryBudgetInBytes,
+        std::shared_ptr<BufferMemoryInUse> memoryInUse);
     size_t getNumberOfUnpooledBuffers() const;
 
     /// Returns std::nullopt if the unpooled memory budget would be exceeded or the underlying allocation fails.

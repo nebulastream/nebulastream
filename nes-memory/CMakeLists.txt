@@ -12,6 +12,7 @@
 
 add_library(nes-memory
         BufferManager.cpp
+        BufferRequestStatistics.cpp
         TupleBufferImpl.cpp
         TupleBuffer.cpp
         NesDefaultMemoryAllocator.cpp

@@ -28,13 +28,16 @@
 #include <mutex>
 #include <optional>
 #include <span>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/BufferRequestStatistics.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <sanitizer/asan_interface.h>
 #include <ErrorHandling.hpp>
@@ -51,7 +54,7 @@ BufferManager::BufferManager(
     const size_t unpooledMemoryLimitInBytes,
     const uint32_t alignment)
     : availableBuffers(numOfBuffers)
-    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes))
+    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes, memoryInUse))
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , alignment(alignment)
@@ -96,6 +99,7 @@ void BufferManager::destroy()
     NES_DEBUG("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
+        printRequestStatistics();
         /// All buffers should be idle now, so their control blocks (and data regions) are poisoned. Clear all
         /// poison up front: the availability checks and the MemorySegment destructors in allBuffers.clear()
         /// below read the control blocks, and the arena is about to be returned to the allocator anyway.
@@ -236,10 +240,13 @@ TupleBuffer BufferManager::getBufferBlocking()
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 {
     detail::MemorySegment* memSegment = nullptr;
-    if (!availableBuffers.read(memSegment))
+    const bool served = availableBuffers.read(memSegment);
+    requestStatistics.recordPooledRequest(served);
+    if (!served)
     {
         return std::nullopt;
     }
+    memoryInUse->addPooled(bufferSize);
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
@@ -253,10 +260,13 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 {
     detail::MemorySegment* memSegment = nullptr;
     const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
-    if (!availableBuffers.tryReadUntil(deadline, memSegment))
+    const bool served = availableBuffers.tryReadUntil(deadline, memSegment);
+    requestStatistics.recordPooledRequest(served);
+    if (!served)
     {
         return std::nullopt;
     }
+    memoryInUse->addPooled(bufferSize);
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
@@ -268,7 +278,94 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    return unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
+    auto buffer = unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
+    requestStatistics.recordUnpooledRequest(bufferSize, buffer.has_value());
+    return buffer;
+}
+
+BufferRequestStatistics::Snapshot BufferManager::getRequestStatistics() const
+{
+    return requestStatistics.snapshot();
+}
+
+namespace
+{
+std::string withThousandsSeparators(const uint64_t value)
+{
+    auto digits = std::to_string(value);
+    for (auto pos = static_cast<int64_t>(digits.size()) - 3; pos > 0; pos -= 3)
+    {
+        digits.insert(static_cast<size_t>(pos), ",");
+    }
+    return digits;
+}
+}
+
+void BufferManager::printRequestStatistics() const
+{
+    const auto stats = requestStatistics.snapshot();
+    uint64_t unpooledBytes = 0;
+    for (const auto& [size, count] : stats.unpooledRequestedSizeCounts)
+    {
+        unpooledBytes += size * count;
+    }
+    auto out = fmt::format(
+        "\n[BufferRequestStatistics] {}\n"
+        "  - pool: {} buffers of {} B ({} B)\n"
+        "  - pooled buffers requested:   {} (failed: {}), {} B\n"
+        "  - unpooled buffers requested: {} (failed: {}), {} B\n",
+        name,
+        withThousandsSeparators(numOfBuffers),
+        withThousandsSeparators(bufferSize),
+        withThousandsSeparators(numOfBuffers * bufferSize),
+        withThousandsSeparators(stats.pooledRequests),
+        withThousandsSeparators(stats.pooledFailed),
+        withThousandsSeparators(stats.pooledRequests * bufferSize),
+        withThousandsSeparators(stats.unpooledRequests),
+        withThousandsSeparators(stats.unpooledFailed),
+        withThousandsSeparators(unpooledBytes));
+    if (const auto& sizes = stats.unpooledRequestedSize)
+    {
+        out += fmt::format(
+            "  - unpooled requested size:\n"
+            "      - min:    {} B\n"
+            "      - max:    {} B\n"
+            "      - avg:    {:.1f} B\n"
+            "      - median: {:.1f} B\n",
+            withThousandsSeparators(sizes->min),
+            withThousandsSeparators(sizes->max),
+            sizes->avg,
+            sizes->median);
+        out += "  - unpooled requested size breakdown:\n";
+        for (const auto& [size, count] : stats.unpooledRequestedSizeCounts)
+        {
+            out += fmt::format(
+                "      - {:>10} B: {:>12} times ({:5.2f}%), {:>17} B ({:5.2f}%)\n",
+                withThousandsSeparators(size),
+                withThousandsSeparators(count),
+                100.0 * static_cast<double>(count) / static_cast<double>(stats.unpooledRequests),
+                withThousandsSeparators(size * count),
+                100.0 * static_cast<double>(size * count) / static_cast<double>(unpooledBytes));
+        }
+    }
+    const auto peaks = memoryInUse->peaks();
+    out += fmt::format(
+        "  - peak in use:\n"
+        "      - pooled:        {} buffers, {} B\n"
+        "      - unpooled:      {} B in chunks, {} B in live buffers\n"
+        "      - combined:      {} B (pooled + unpooled chunks)\n",
+        withThousandsSeparators(peaks.pooledBytes / bufferSize),
+        withThousandsSeparators(peaks.pooledBytes),
+        withThousandsSeparators(peaks.unpooledChunkBytes),
+        withThousandsSeparators(peaks.unpooledLiveBytes),
+        withThousandsSeparators(peaks.combinedBytes));
+    /// One write per block so blocks of concurrently destroyed BufferManagers do not interleave.
+    fmt::print(stderr, "{}", out);
+}
+
+void BufferManager::setName(std::string name)
+{
+    this->name = std::move(name);
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
@@ -282,6 +379,7 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     /// happens-before that unpoison via the availableBuffers queue, so there is no shadow-memory race.
     ASAN_POISON_MEMORY_REGION(segment->ptr, segment->size);
     ASAN_POISON_MEMORY_REGION(segment->controlBlock.get(), sizeof(detail::BufferControlBlock));
+    memoryInUse->removePooled(bufferSize);
     USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
     INVARIANT(couldRecycleBuffer, "should always succeed");
 }

@@ -23,10 +23,12 @@
 #include <memory_resource>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <vector>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/BufferRequestStatistics.hpp>
 #include <Runtime/UnpooledChunksManager.hpp>
 #include <folly/MPMCQueue.h>
 
@@ -134,6 +136,12 @@ public:
     size_t getNumOfUnpooledBuffers() const override;
     size_t getNumberOfAvailableBuffers() const;
 
+    /// Counts are cumulative over the lifetime of this BufferManager, i.e., across all queries.
+    [[nodiscard]] BufferRequestStatistics::Snapshot getRequestStatistics() const;
+    void printRequestStatistics() const;
+    /// Identifies this BufferManager (e.g., the worker host) in the printed statistics. Set before handing out buffers.
+    void setName(std::string name);
+
     /// Explicitly shuts down the buffer manager: checks for leaked buffers (fires INVARIANT on leaks),
     /// deallocates all memory, and marks the manager as destroyed. The destructor calls this automatically
     /// if it has not already been called.
@@ -156,6 +164,7 @@ private:
 
     folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
 
+    std::shared_ptr<BufferMemoryInUse> memoryInUse = std::make_shared<BufferMemoryInUse>();
     std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
 
     size_t bufferSize;
@@ -167,6 +176,8 @@ private:
 
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};
+    BufferRequestStatistics requestStatistics;
+    std::string name = "unnamed";
 };
 
 

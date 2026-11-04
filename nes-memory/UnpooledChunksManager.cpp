@@ -38,8 +38,12 @@
 namespace NES
 {
 UnpooledChunksManager::UnpooledChunksManager(
-    std::shared_ptr<std::pmr::memory_resource> memoryResource, const size_t unpooledMemoryBudgetInBytes)
-    : memoryResource(std::move(memoryResource)), unpooledMemoryBudgetInBytes(unpooledMemoryBudgetInBytes)
+    std::shared_ptr<std::pmr::memory_resource> memoryResource,
+    const size_t unpooledMemoryBudgetInBytes,
+    std::shared_ptr<BufferMemoryInUse> memoryInUse)
+    : memoryResource(std::move(memoryResource))
+    , unpooledMemoryBudgetInBytes(unpooledMemoryBudgetInBytes)
+    , memoryInUse(std::move(memoryInUse))
 {
 }
 
@@ -151,6 +155,7 @@ std::pair<uint8_t*, uint8_t*> UnpooledChunksManager::allocateSpace(
     /// poisoned. The control blocks themselves are heap-allocated (wrapped) and thus protected by ASan's own
     /// heap redzones. ASAN_* are no-ops without ASan.
     ASAN_POISON_MEMORY_REGION(newlyAllocatedMemory, newAllocationSize);
+    memoryInUse->addUnpooledChunk(newAllocationSize);
 
     /// Updating the local last allocate chunk key and adding the new chunk to the local chunk storage
     localLastAllocatedChunkKey = newlyAllocatedMemory;
@@ -202,8 +207,10 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
          copyOfChunk = chunk,
          copyOfBufferSize = alignedBufferSize,
          copyOfAlignment = alignment,
-         copyOfAllocatedBytes = currentlyAllocatedUnpooledBytes](detail::MemorySegment* memorySegment, BufferRecycler*)
+         copyOfAllocatedBytes = currentlyAllocatedUnpooledBytes,
+         copyOfMemoryInUse = memoryInUse](detail::MemorySegment* memorySegment, BufferRecycler*)
         {
+            copyOfMemoryInUse->removeUnpooledLive(copyOfBufferSize);
             /// The buffer has been released: re-poison its data region to trap use-after-free until the chunk is freed.
             ASAN_POISON_MEMORY_REGION(memorySegment->ptr, copyOfBufferSize);
             auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
@@ -226,6 +233,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
                 copyOfMemoryResource->deallocate(
                     extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, copyOfAlignment);
                 copyOfAllocatedBytes->fetch_sub(extractedChunkControlBlock.budgetedSize, std::memory_order_relaxed);
+                copyOfMemoryInUse->removeUnpooledChunk(extractedChunkControlBlock.totalSize);
             }
         });
 
@@ -240,6 +248,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
     {
         /// Hand the data region to the caller: unpoison it. The leading redzone before it stays poisoned.
         ASAN_UNPOISON_MEMORY_REGION(leakedMemSegment->ptr, leakedMemSegment->size);
+        memoryInUse->addUnpooledLive(alignedBufferSize);
         return TupleBuffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
