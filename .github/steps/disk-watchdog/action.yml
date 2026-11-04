@@ -7,4 +7,4 @@ runs:
   using: 'composite'
   steps:
     - shell: bash
-      run: nohup bash "$GITHUB_ACTION_PATH/watch.sh" build/disk-watch.log 15 > /dev/null 2>&1 &
+      run: nohup bash "$GITHUB_ACTION_PATH/watch.sh" build/disk-watch.log 3 > /dev/null 2>&1 &

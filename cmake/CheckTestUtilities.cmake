@@ -83,7 +83,8 @@ if (ENABLE_DOCKER_TESTS)
             "  For dev container: Mount docker socket with -v /var/run/docker.sock:/var/run/docker.sock\n"
             "  For host system: Ensure docker is installed and running"
         )
-    elseif (EXISTS "/.dockerenv")
+    elseif (EXISTS "/.dockerenv" AND NOT NES_SKIP_DOCKER_HOST_PATH_CHECK)
+        # NES_SKIP_DOCKER_HOST_PATH_CHECK is for builds whose tests run on another machine.
         # Docker commands use the host daemon through its socket. Prove that
         # the build directory is mounted at the same absolute path on the host
         # before registering tests that use it as a Compose bind source.

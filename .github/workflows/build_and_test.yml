@@ -236,7 +236,7 @@ jobs:
               source .github/.env/test-none.env
               sccache --start-server
               cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Debug -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG \
-                -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
+                -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON -DNES_SKIP_DOCKER_HOST_PATH_CHECK=ON
               cmake --build build -j -- -k 0
               sccache --stop-server'
       - name: Package Test Files
