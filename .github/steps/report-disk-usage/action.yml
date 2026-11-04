@@ -1,0 +1,14 @@
+name: Report Disk Usage
+description: |
+  Logs free space and the largest disk consumers. Never fails the job, and is time-limited so that it cannot stall it.
+
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: |
+        df -h / || true
+        df -i / || true
+        timeout 60 sudo -n du -xsh /var/lib/docker /tmp "$PWD/build" 2>/dev/null || true
+        timeout 30 docker system df || true
+        timeout 60 du -xh --max-depth=2 build 2>/dev/null | sort -h | tail -n 15 || true
