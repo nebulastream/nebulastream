@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Logs free disk space every 5 seconds. Below the limit, it records what is using the disk and kills all containers,
 # so that the job fails while the runner can still upload this log. A job log does not survive the runner dying.
 # Kills every container on the Docker daemon, so only use this on a VM that is dedicated to the job.
