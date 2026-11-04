@@ -75,6 +75,13 @@ The CI will create a development image based on the latest set of dependencies a
 Lastly, the dependency image is used to build the development image, which contains additional tools we use in our CI or
 during daily development (e.g., clang-format, clang-tidy, gdb, ...).
 
+By default, the `dependency` image includes debug and release builds of all dependencies. The CI skips the debug builds
+by setting the `RELEASE_ONLY_DEPENDENCIES=true` build argument, because some GitHub-hosted runners do not have the disk
+for them. All images on Docker Hub, which `scripts/install-local-docker-environment.sh` uses by default, are therefore
+release-only, and Debug builds of NebulaStream link the release builds of the dependencies. To get the debug builds,
+build the images locally with `scripts/install-local-docker-environment.sh -l`, or build the dependencies without Docker.
+The image tag only depends on the dependency hash, so it does not show which of the two an image is.
+
 ## Continuous Integration
 
 The CI is aware of NebulaStreams dependency management. The PR CI Job detects changes to folders relevant to dependency
