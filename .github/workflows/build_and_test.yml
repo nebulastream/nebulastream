@@ -196,6 +196,127 @@ jobs:
             sccache --show-stats
             sccache --stop-server
 
+  # Prototype, not part of the Done gate: builds on a self-hosted machine and tests the result on a GitHub-hosted runner,
+  # to measure the artifact size and test whether this works. The tests use absolute paths from the build, so the build
+  # mounts the checkout at the workspace path of the GitHub-hosted runner.
+  split-prototype-build:
+    name: "Split prototype: build x64 libcxx Debug"
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    env:
+      IMAGE: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
+      WORKSPACE: /home/runner/work/nebulastream/nebulastream
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          images: |
+            ${{ env.IMAGE }}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - name: CMake Build
+        run: |
+          docker run \
+            --pull=never \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --group-add "$(stat -c '%g' /var/run/docker.sock)" \
+            -v "$PWD:$WORKSPACE" -e "HOME=$WORKSPACE" --workdir "$WORKSPACE" -u "$(id -u):$(id -g)" \
+            -e SCCACHE_BUCKET -e SCCACHE_ENDPOINT -e SCCACHE_REGION -e SCCACHE_S3_USE_SSL \
+            -e SCCACHE_STARTUP_TIMEOUT -e SCCACHE_IDLE_TIMEOUT \
+            -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+            "$IMAGE" \
+            /usr/bin/bash -e -c '
+              source .github/.env/test-none.env
+              sccache --start-server
+              cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Debug -DALL_HASHMAP_TESTS=1 -DNES_LOG_LEVEL=DEBUG \
+                -DNES_SPLIT_TEST_BINARIES=OFF -DENABLE_DOCKER_TESTS=ON
+              cmake --build build -j -- -k 0
+              sccache --stop-server'
+      - name: Package Test Files
+        run: |
+          # A tar keeps the executable bits and symlinks, which an artifact does not.
+          find build ! -type d ! -name '*.o' ! -name '*.a' ! -name '*.rlib' ! -name '*.rmeta' ! -name '*.d' \
+            ! -path '*/CMakeFiles/*' -print0 \
+            | tar --null -T - -I 'gzip -1' -cf build-output.tar.gz
+          du -sh build
+          ls -lh build-output.tar.gz
+          tar -tvzf build-output.tar.gz | sort -k3 -n | tail -n 25
+      - uses: actions/upload-artifact@v5
+        with:
+          name: split-prototype-build
+          path: build-output.tar.gz
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
+  split-prototype-test:
+    name: "Split prototype: test x64 libcxx Debug"
+    needs: [ split-prototype-build ]
+    runs-on: ubuntu-24.04
+    env:
+      IMAGE: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          images: |
+            ${{ env.IMAGE }}
+            nebulastream/nes-runtime-base:${{ inputs.dev_image_tag }}
+            eclipse-mosquitto:2
+            apache/kafka:3.8.0
+            busybox:1.38.0
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: split-prototype-build
+      - name: Unpack Test Files
+        run: |
+          df -h /
+          tar -xzf build-output.tar.gz
+          rm build-output.tar.gz
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Unpacking
+      - uses: ./.github/steps/disk-watchdog
+        name: Start Disk Watchdog
+      - uses: ./.github/steps/run-in-container
+        name: Run System Tests
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After System Tests
+        if: ${{ !cancelled() }}
+      - uses: ./.github/steps/run-in-container
+        name: Run Docker Tests
+        with:
+          image_name: ${{ env.IMAGE }}
+          run: |
+            source .github/.env/test-none.env
+            ctest --test-dir build --no-tests=error -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/report-disk-usage
+        name: Disk Usage After Docker Tests
+        if: ${{ !cancelled() }}
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v5
+        if: ${{ failure() && !cancelled() }}
+        with:
+          name: logs-split-prototype
+          path: |
+            build/**/*.log
+            build/**/*.stats
+
   # Aggregate gate: if any matrix entry or the log-level job fails/cancels/skips, this
   # fails too, so callers only have to look at this one job.
   done:
