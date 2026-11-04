@@ -24,6 +24,10 @@ ARG ARCH
 ARG SANITIZER="none"
 # Public URL for read-only S3-compatible cache (no credentials needed)
 ARG VCPKG_CACHE_PUBLIC_URL=""
+# Set to true to skip the debug builds of all dependencies, which saves about 6G in the image and shrinks Debug binaries.
+# Debug builds of NebulaStream then link the release builds of the dependencies.
+# This changes the triplet instead of using an environment variable, to give these builds their own key in the binary cache.
+ARG RELEASE_ONLY_DEPENDENCIES="false"
 
 # Install AWS CLI (only needed for authenticated S3 access)
 RUN ARCH=$(uname -m) && \
@@ -83,6 +87,9 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     if [ "$STDLIB" = "libcxx" ]; then VCPKG_STDLIB="libcxx"; else VCPKG_STDLIB="local"; fi; \
     \
     cd /vcpkg_input; \
+    if [ "$RELEASE_ONLY_DEPENDENCIES" = "true" ]; then \
+        echo "set(VCPKG_BUILD_TYPE release)" >> "custom-triplets/bits/arch/${ARCH}.cmake"; \
+    fi; \
     git clone https://github.com/microsoft/vcpkg.git vcpkg_repository; \
     git -C vcpkg_repository checkout "$(grep -o "\"builtin-baseline\": \"[0-9a-f]*\"" vcpkg.json | cut -d\" -f4)"; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
