@@ -26,7 +26,7 @@ The framework ships two functions:
 
 | Function                                   | Result                                                                                                              |
 |--------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `HTTP_CALL(body, url[, timeout_ms])`       | POSTs `body` to `url` and returns the response body. Plain `http://` only. The timeout defaults to 30 s.           |
+| `HTTP_CALL(body, url[, timeout_ms])`       | POSTs `body` to `url` and returns the response body. The timeout defaults to 30 s.                                 |
 | `ASYNC_DELAY(value, millis[, concurrency])` | Returns `value` after waiting `millis`. Its second value is the delay it waited. A test and benchmark aid.          |
 
 `ASYNC_OUTPUT(call, i)` reads the i-th value of a call that produces several (`ASYNC_OUTPUT(call, 0)` is the call
@@ -193,15 +193,22 @@ add_registry_entry(AsyncFunction MyFunction)
 ## Limitations
 
 - Arguments and results are non-nullable `VARSIZED` values.
-- `HTTP_CALL` speaks plain HTTP/1.1 without TLS.
 - The shared event loop runs on one thread per worker. The per-source strands would allow more threads if completing
   calls ever becomes the bottleneck.
 
 ## Tests
 
-- `nes-plugins/Async/tests/async.bats` runs end-to-end queries in the embedded REPL against
-  `tests/http_path_server.py`, once compiled and once interpreted (`async-repl-test`, `async-repl-test-interpreter`).
-  It covers results, chaining, selections, concurrency within and across buffers, backpressure, failures, retries,
-  timeouts and dropping queries.
-- `nes-plugins/Async/tests/HandoffChannelTest.cpp` covers the channel's leases.
-- `nes-systests/explain/AsyncFunctionLifting.test` checks the lifted and the decomposed plans.
+Whether an async stage works depends on how it behaves against the service it calls: how many calls are in flight,
+what happens when the service is slow or fails, and whether the producer is held back meanwhile. Systests cannot show
+this, as they run queries on fixed inputs against expected results, without a service to call.
+
+The async functions are therefore tested end to end against a real service. `nes-plugins/Async/tests/async.bats` starts
+a small HTTP service (`tests/http_path_server.py`) for every test, runs queries against it in the embedded REPL and
+checks what they write to their sinks. The service answers each request with its path and body, so a test can tell
+which call produced which result. Parameters in the URL make it slow or let it fail on purpose, which drives a query
+into the situation the test is about, such as backpressure, a retry or a timeout. The suite runs once compiled and
+once interpreted. A function that calls a different kind of service is best tested the same way, against a small local
+stand-in for that service.
+
+What needs no service is tested as usual: `nes-systests/explain/AsyncFunctionLifting.test` checks the plans the lifting
+rule and the decomposition produce, and `HandoffChannelTest.cpp` the leases of the Handoff channel.

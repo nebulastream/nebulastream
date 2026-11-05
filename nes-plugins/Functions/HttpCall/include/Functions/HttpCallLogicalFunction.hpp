@@ -34,6 +34,7 @@ namespace NES
 
 /// `HTTP_CALL(body, url[, timeout_ms])`: POSTs `body` to `url` and evaluates to the response body. The optional
 /// integer constant bounds the connect and, separately, the exchange; it defaults to 30 seconds.
+/// Speaks plain HTTP/1.1 only, so `url` has to be an http:// url; there is no TLS.
 /// Asynchronous only; there is no Nautilus implementation.
 class HttpCallLogicalFunction final : public AsyncLogicalFunction
 {
