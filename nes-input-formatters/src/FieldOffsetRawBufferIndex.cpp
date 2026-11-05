@@ -18,11 +18,13 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <function.hpp>
 #include <static.hpp>
 
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/LazyValueData.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
@@ -96,13 +98,18 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
 
-        /// Retrieve value deserializer for the field and deserialize the value.
-        /// These are the temporary defaults for our CSV format. Later, these arguments will be set by the user in the source definition.
-        const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = false, .hasTrailingSpaces = false};
-        const std::unique_ptr<ValueDeserializer> deserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal deserializedVal = deserializer->deserializeToVarVal(fieldAddress, fieldSize, indexer.getNullValues(), arena);
-        record.write(fieldName, deserializedVal);
+        /// Create a lazy value representation of the value to enable on-demand deserialization.
+        const LazyValueData lazyVal{
+            fieldAddress,
+            fieldSize,
+            indexer.getDeserializerType(fieldName, fieldDataType.type),
+            false, /// CSV Strings are not quoted
+            false, /// The raw CSV values do not have trailing spaces
+            fieldDataType,
+            indexer.getNullValues(),
+            arena.getArena()};
+        /// Is Null is also evaluated on-demand. Act like the value is not null for now.
+        record.write(fieldName, VarVal{lazyVal, fieldDataType.nullable, nautilus::val<bool>{false}});
     }
     return record;
 }

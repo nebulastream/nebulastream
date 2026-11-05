@@ -22,6 +22,7 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/LazyValueData.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/select.hpp>
@@ -74,6 +75,12 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
             {
                 throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData"));
             }
+            else if constexpr (std::is_same_v<ValType, LazyValueData>)
+            {
+                /// If we want to write the value to memory, we need to deserialize it first
+                const VarVal deserializedVal = val.deserializeValue();
+                deserializedVal.writeToMemory(memRef);
+            }
             else
             {
                 *static_cast<nautilus::val<typename ValType::raw_type*>>(memRef) = val;
@@ -84,6 +91,13 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
 
 nautilus::val<bool> VarVal::isNull() const
 {
+    /// If this varval holds a lazy representation of the value, we do not know if it is null yet and null holds false as placeholder.
+    /// If the value is nullable, deserialize it and find out this way.
+    if (isLazyValue() && nullable)
+    {
+        const VarVal deserializedVal = getAsDeserializedUnderlyingValue();
+        return deserializedVal.null;
+    }
     return null;
 }
 
@@ -94,10 +108,16 @@ bool VarVal::isNullable() const
 
 VarVal::operator bool() const
 {
+    /// Deserialize value if lazy
+    if (isLazyValue())
+    {
+        const VarVal deserializedVal = getAsDeserializedUnderlyingValue();
+        return deserializedVal.operator bool();
+    }
     const nautilus::val<int> valueInt = std::visit(
         []<typename T>(T& val) -> nautilus::val<int>
         {
-            if constexpr (requires(T t) { t == nautilus::val<bool>(true); })
+            if constexpr (!std::is_same_v<std::remove_cvref_t<T>, LazyValueData> && requires(T t) { t == nautilus::val<bool>(true); })
             {
                 /// We have to do it like this. The reason is that during the comparison of the two values, @val is NOT converted to a bool
                 /// but rather the val<bool>(false) is converted to std::common_type<T, bool>. This is a problem for any val that is not set to 1.
@@ -117,46 +137,49 @@ VarVal::operator bool() const
 
 VarVal VarVal::castToType(const DataType::Type type) const
 {
+    /// Deserialize lazy values.
+    /// Doing this in here is necessary, as the null attribute is not determined until the value was deserialized.
+    const VarVal deserializedValue = getAsDeserializedUnderlyingValue();
     switch (type)
     {
         case DataType::Type::CHAR: {
-            return {getRawValueAs<nautilus::val<char>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<char>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::BOOLEAN: {
-            return {getRawValueAs<nautilus::val<bool>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<bool>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::INT8: {
-            return {getRawValueAs<nautilus::val<int8_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<int8_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::INT16: {
-            return {getRawValueAs<nautilus::val<int16_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<int16_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::INT32: {
-            return {getRawValueAs<nautilus::val<int32_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<int32_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::INT64: {
-            return {getRawValueAs<nautilus::val<int64_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<int64_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::UINT8: {
-            return {getRawValueAs<nautilus::val<uint8_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<uint8_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::UINT16: {
-            return {getRawValueAs<nautilus::val<uint16_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<uint16_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::UINT32: {
-            return {getRawValueAs<nautilus::val<uint32_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<uint32_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::UINT64: {
-            return {getRawValueAs<nautilus::val<uint64_t>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<uint64_t>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::FLOAT32: {
-            return {getRawValueAs<nautilus::val<float>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<float>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::FLOAT64: {
-            return {getRawValueAs<nautilus::val<double>>(), nullable, null};
+            return {deserializedValue.getRawValueAs<nautilus::val<double>>(), nullable, deserializedValue.null};
         }
         case DataType::Type::VARSIZED: {
-            return {getRawValueAs<VariableSizedData>(), nullable, null};
+            return {deserializedValue.getRawValueAs<VariableSizedData>(), nullable, deserializedValue.null};
         }
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
@@ -222,15 +245,20 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
 
 VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueValue, const VarVal& falseValue)
 {
+    /// Deserialize both trueValue and falseValue, if they are lazy values. A lazy VarVal carries a placeholder null flag,
+    /// so the null flags must be taken from the deserialized values below as well.
+    const VarVal deserializedTrue = trueValue.getAsDeserializedUnderlyingValue();
+    const VarVal deserializedFalse = falseValue.getAsDeserializedUnderlyingValue();
+
     return std::visit(
         [&]<typename LHS, typename RHS>(const LHS& trueUnderlying, const RHS& falseUnderlying) -> VarVal
         {
-            if constexpr (std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData>)
+            if constexpr (std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData> && !std::same_as<LHS, LazyValueData>)
             {
                 return VarVal{
                     nautilus::select(condition, trueUnderlying, falseUnderlying),
-                    trueValue.nullable or falseValue.nullable,
-                    nautilus::select(condition, trueValue.null, falseValue.null)};
+                    deserializedTrue.nullable or deserializedFalse.nullable,
+                    nautilus::select(condition, deserializedTrue.null, deserializedFalse.null)};
             }
 
             if constexpr (std::same_as<LHS, RHS> && std::same_as<LHS, VariableSizedData>)
@@ -239,16 +267,16 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
                     VariableSizedData{
                         nautilus::select(condition, trueUnderlying.getContent(), falseUnderlying.getContent()),
                         nautilus::select(condition, trueUnderlying.getSize(), falseUnderlying.getSize())},
-                    trueValue.nullable or falseValue.nullable,
-                    nautilus::select(condition, trueValue.null, falseValue.null)};
+                    deserializedTrue.nullable or deserializedFalse.nullable,
+                    nautilus::select(condition, deserializedTrue.null, deserializedFalse.null)};
             }
             throw UnknownOperation("select with different types! True: {} vs. False: {}", NAMEOF_TYPE(LHS), NAMEOF_TYPE(RHS));
             std::unreachable();
         }
 
         ,
-        trueValue.value,
-        falseValue.value);
+        deserializedTrue.value,
+        deserializedFalse.value);
 }
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal)
@@ -295,7 +323,15 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
              leftIsNull = this->isNull(), \
              rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
             { \
-                if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
+                if constexpr (std::is_same_v<LHS, LazyValueData>) \
+                { \
+                    return lhsVal.operatorName(VarVal{rhsVal, rightIsNullable, rightIsNull}); \
+                } \
+                else if constexpr (std::is_same_v<RHS, LazyValueData>) \
+                { \
+                    return VarVal{lhsVal, leftIsNullable, leftIsNull} op rhsVal; \
+                } \
+                else if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
                 { \
                     if (leftIsNullable or rightIsNullable) \
                     { \
@@ -320,7 +356,11 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
         return std::visit( \
             [isNullable = isNullable(), isNull = isNull()]<typename RHS>(const RHS& rhsVal) \
             { \
-                if constexpr (!requires(RHS rhs) { op rhs; }) \
+                if constexpr (std::is_same_v<RHS, LazyValueData>) \
+                { \
+                    return VarVal{rhsVal.operatorName()}; \
+                } \
+                else if constexpr (!requires(RHS rhs) { op rhs; }) \
                 { \
                     throw UnknownOperation("VarVal operation not implemented: " #op "{}", NAMEOF_TYPE(RHS)); \
                     return VarVal{detail::var_val_t(rhsVal), true, false}; \
@@ -349,7 +389,15 @@ VarVal VarVal::operator/(const VarVal& other) const
          leftIsNull = this->isNull(),
          rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal)
         {
-            if constexpr (requires(LHS l, RHS r) { l / r; })
+            if constexpr (std::is_same_v<LHS, LazyValueData>)
+            {
+                return lhsVal.operator/(VarVal{rhsVal, rightIsNullable, rightIsNull});
+            }
+            else if constexpr (std::is_same_v<RHS, LazyValueData>)
+            {
+                return VarVal{lhsVal, leftIsNullable, leftIsNull} / rhsVal;
+            }
+            else if constexpr (requires(LHS l, RHS r) { l / r; })
             {
                 if (leftIsNullable or rightIsNullable)
                 {
@@ -387,7 +435,15 @@ VarVal VarVal::operator%(const VarVal& other) const
          leftIsNull = this->isNull(),
          rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal)
         {
-            if constexpr (requires(LHS l, RHS r) { l % r; })
+            if constexpr (std::is_same_v<LHS, LazyValueData>)
+            {
+                return lhsVal.operator%(VarVal{rhsVal, rightIsNullable, rightIsNull});
+            }
+            else if constexpr (std::is_same_v<RHS, LazyValueData>)
+            {
+                return VarVal{lhsVal, leftIsNullable, leftIsNull} % rhsVal;
+            }
+            else if constexpr (requires(LHS l, RHS r) { l % r; })
             {
                 if (leftIsNullable or rightIsNullable)
                 {
