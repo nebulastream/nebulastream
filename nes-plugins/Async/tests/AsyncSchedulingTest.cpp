@@ -561,6 +561,30 @@ TEST_F(AsyncSourceTest, BatchesAcrossBufferBoundaries)
     EXPECT_LT(observed.requests.size(), 5) << "rows of several buffers should share a request";
 }
 
+TEST_F(AsyncSourceTest, TakesTheNextBufferAsSoonAsTheSlotsCouldRunOutOfRows)
+{
+    /// Four slots and buffers of five rows: after the first round only one row of a buffer is left, so the next buffer
+    /// has to be taken right then, not once the whole buffer is done. 15 rows are then 4 rounds of 100 ms; waiting for
+    /// each buffer to finish first takes 2 rounds per buffer, 6 in all.
+    startSource("1,0,100,0", 4, 0);
+    const auto start = std::chrono::steady_clock::now();
+    for (uint64_t sequence = 1; sequence <= 3; ++sequence)
+    {
+        std::vector<std::pair<std::string, std::string>> rows;
+        for (int row = 0; row < 5; ++row)
+        {
+            rows.emplace_back("k", fmt::format("{}-{}", sequence, row));
+        }
+        handOff(handedOff(at(1, sequence), rows));
+    }
+    (*sink)->close();
+    const auto emitted = drain();
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    ASSERT_EQ(emitted.size(), 15);
+    EXPECT_EQ(std::get<1>(emitted.back()), "3-4");
+    EXPECT_LT(elapsed, std::chrono::milliseconds(520)) << "slots idled while the next buffer waited in the channel";
+}
+
 TEST_F(AsyncSourceTest, RetriesAFailedBatchThenCallsItsRowsOneByOne)
 {
     startSource("3,0,1,0", 1, 1);

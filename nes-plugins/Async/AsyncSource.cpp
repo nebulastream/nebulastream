@@ -798,8 +798,16 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
                 continue;
             }
         }
+        /// Wakes for the next buffer once the slots took enough rows that the input is wanted again (`startRows`
+        /// notifies), not only once the front buffer is done: a buffer holds more rows than one round of calls, and
+        /// waiting for all of them left the slots idle for about one call per buffer.
         const auto progressed = [&]
-        { return window.failure || (!window.buffers.empty() && window.buffers.front()->done) || (wantsInput && window.channelChanged); };
+        {
+            const bool wantsInputNow
+                = !inputExhausted && window.buffers.size() < rowsInFlight && window.startableRows < rowsInFlight;
+            return window.failure || (!window.buffers.empty() && window.buffers.front()->done)
+                || (wantsInputNow && (!wantsInput || window.channelChanged));
+        };
         if (!window.changed.wait(lock, stopToken, progressed))
         {
             lock.unlock();
