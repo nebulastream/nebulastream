@@ -30,6 +30,7 @@ struct CSVOutputFormatterConfig
     std::string fieldDelimiter;
     std::string tupleDelimiter;
     std::string valueSerializers;
+    std::string headerFormat;
 
     static std::expected<CSVOutputFormatterConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };

@@ -21,6 +21,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -35,13 +36,14 @@
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Interface/Record.hpp>
+#include <OutputFormatters/OutputFormatterProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
-#include <SinksParsing/SchemaFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
@@ -81,13 +83,33 @@ std::expected<FileSinkConfig, Exception> FileSinkConfig::fromConfig(const Instan
     return FileSinkConfig{.filePath = config.get(FILE_PATH), .append = config.get(APPEND)};
 }
 
+namespace
+{
+std::optional<std::string> createHeader(const SinkDescriptor& sinkDescriptor)
+{
+    const auto& outputFormatterDescriptor = sinkDescriptor.getOutputFormatterDescriptor();
+    /// Native output is not formatted, so there is no output formatter that could provide a header.
+    if (outputFormatterDescriptor.isNative())
+    {
+        return std::nullopt;
+    }
+
+    const auto& schema = *NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema());
+    const auto fieldNames = schema
+        | std::views::transform([](const auto& field) -> Record::RecordFieldIdentifier { return field.getFullyQualifiedName(); })
+        | std::ranges::to<std::vector>();
+    const auto outputFormatter = OutputFormatterProvider::provideOutputFormatter(
+        outputFormatterDescriptor.getOutputFormatterType().asCanonicalString(), fieldNames, outputFormatterDescriptor);
+    return outputFormatter->getHeader(schema);
+}
+}
+
 FileSink::FileSink(BackpressureController backpressureController, const FileSinkConfig& config, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , outputFilePath(config.filePath)
     , isAppend(config.append)
     , isOpen(false)
-    , schemaFormatter(
-          SchemaFormatter(NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
+    , header(createHeader(sinkDescriptor))
 {
 }
 
@@ -126,11 +148,10 @@ void FileSink::start(PipelineExecutionContext&)
             "Could not open output file; filePathOutput={}, is_open()={}, good={}", outputFilePath, stream->is_open(), stream->good());
     }
 
-    /// Write the schema to the file, if it is empty.
-    if (stream->tellp() == 0)
+    /// Write the header to the file, if it is empty.
+    if (header.has_value() && stream->tellp() == 0)
     {
-        const auto schemaStr = schemaFormatter.getFormattedSchema();
-        stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
+        stream->write(header->c_str(), static_cast<int64_t>(header->length()));
     }
 }
 

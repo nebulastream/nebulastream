@@ -224,4 +224,9 @@ std::unique_ptr<OutputFormatter> JSONOutputFormatter::provideFormatter(OutputFor
     const auto& config = arguments.descriptor.getConfig().getAs<JSONOutputFormatterConfig>();
     return std::make_unique<JSONOutputFormatter>(std::move(arguments.fieldNames), config);
 }
+
+std::optional<std::string> JSONOutputFormatter::getHeader(const Schema<UnqualifiedUnboundField, Ordered>&) const
+{
+    return std::nullopt;
+}
 }
