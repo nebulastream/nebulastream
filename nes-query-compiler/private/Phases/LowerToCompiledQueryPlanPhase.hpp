@@ -29,8 +29,8 @@ namespace NES
 class LowerToCompiledQueryPlanPhase
 {
 public:
-    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
-        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations)
+    LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations, bool nautilusPerf)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), nautilusPerf(nautilusPerf)
     {
     }
 
@@ -56,5 +56,6 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIR;
+    bool nautilusPerf;
 };
 }

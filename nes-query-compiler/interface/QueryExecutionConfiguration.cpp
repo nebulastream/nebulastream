@@ -97,6 +97,13 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{4096}};
+
+const ConfigField<bool> NAUTILUS_PERF{
+    Identifier::parse("nautilus_perf"),
+    "Sets nautilus' perf option: compiled pipelines keep frame pointers, so `perf record -g` can walk through them, and write perf "
+    "jitdump records with their symbols, line tables and unwinding information, so that `perf inject --jit` attributes samples to "
+    "them. Keeps the optimization level, so the profile shows production code.",
+    false};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -110,6 +117,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
+        NAUTILUS_PERF,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -123,7 +131,8 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
         SliceCacheConfiguration::fromConfig(config),
-        BloomFilterConfiguration::fromConfig(config)};
+        BloomFilterConfiguration::fromConfig(config),
+        config.get(NAUTILUS_PERF)};
 }
 
 }
