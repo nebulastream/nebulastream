@@ -26,8 +26,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES
 {
 /** @brief Calculates and replaces arithmetic expressions in SELECT operators with their expected result
- * TODO
- *
+ * BEFORE: Sink < Selection(a = 2+2) < Source
+ * AFTER: Sink < Selection(a = 4) < Source
+ * We perform a recursive search for foldable predicates in the selection operator and calculate
+ * and replace the original arithmetic expression with the result. We work the expression bottom-up the query tree to ensure we do not
+ * lose expression in the case of nested predicates.
  */
 
 class ConstantFoldingRule

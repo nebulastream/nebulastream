@@ -31,4 +31,4 @@ add_registry_entry(PlanRule WatermarkAssignerPushdownRule KEY WatermarkAssignerP
 add_registry_entry(PlanRule DecideFieldMappings)
 add_registry_entry(PlanRule DecideFieldOrder)
 add_registry_entry(PlanRule OriginIdInferenceRule KEY OriginIdInference)
-add_registry_entry(PlanRule ConstantFoldingRule KEY ConstantFolding)
+# add_registry_entry(PlanRule ConstantFoldingRule KEY ConstantFolding)

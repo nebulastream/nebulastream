@@ -46,6 +46,12 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
+#include <cmath>
+
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 
 
 namespace NES
@@ -116,6 +122,48 @@ LogicalFunction handleSubtraction(const std::string left, const std::string righ
 
 }
 
+LogicalFunction handleModulo(const std::string left, const std::string right, const DataType dataType)
+{
+    if (dataType.isFloat())
+    {
+        throw InvalidQuerySyntax("Modulo cant be applied to floats!");
+    }
+    if (dataType.isInteger())
+    {
+        return ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) % std::stoul(right)));
+    }
+    return ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) % std::stoi(right)));
+}
+
+LogicalFunction handlePow(const std::string left, const std::string right, const DataType dataType)
+{
+    if (!dataType.isFloat())
+    {
+        if (dataType.isSignedInteger())
+        {
+            auto res = 1;
+            for (auto i = 0; i < std::stoi(right); i++)
+            {
+                res = res*std::stoi(left);
+            }
+            return ConstantValueLogicalFunction(dataType, std::to_string(res));
+        }
+        if (dataType.isInteger())
+        {
+            unsigned long res = 1;
+            auto exp = std::stoul(right);
+            for (unsigned long i = 0; i < exp; i++)
+            {
+                res = res*std::stoul(left);
+            }
+            return ConstantValueLogicalFunction(dataType, std::to_string(res));
+        }
+    }
+    //todo: reusable?
+    auto res = std::pow(std::stof(left), std::stof(right));
+    return ConstantValueLogicalFunction(dataType, std::to_string(res));
+}
+
 LogicalFunction calculateExpression(const LogicalFunction& function)
 {
     std::vector<LogicalFunction> newChildren;
@@ -178,6 +226,32 @@ LogicalFunction calculateExpression(const LogicalFunction& function)
             return handleSubtraction(leftConstant, rightConstant, newDataType.value());
         }
     }
+    if (function.tryGetAs<ModuloLogicalFunction>())
+    {
+        const auto& left = newChildren.at(0);
+        const auto& right = newChildren.at(1);
+        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        {
+            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            DataType dataType;
+            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
+            return handleModulo(leftConstant, rightConstant, newDataType.value());
+        }
+    }
+    if (function.tryGetAs<PowLogicalFunction>())
+    {
+        const auto& left = newChildren.at(0);
+        const auto& right = newChildren.at(1);
+        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        {
+            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+            DataType dataType;
+            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
+            return handlePow(leftConstant, rightConstant, newDataType.value());
+        }
+    }
     return function.withChildren(newChildren);
 }
 
@@ -193,7 +267,13 @@ Visitor::UpResult rebuildPlan(LogicalOperator op, std::vector<LogicalOperator> c
         LogicalOperator newSelection = SelectionLogicalOperator::create(children.at(0), context.foldedPredicate.value());
         return newSelection;
     }
-    return op.withChildren(std::move(children));
+
+    /*if (op.tryGetAs<SinkLogicalOperator>() || op.tryGetAs<AnonymousSinkLogicalOperator>())
+    {
+        return op;
+    }*/
+    return op.withChildren(children);
+    //return op;
 }
 
 Visitor::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/) // todo: should this be a downResult?
@@ -230,4 +310,3 @@ PlanRuleRegistryReturnType ConstantFoldingRule::create(PlanRuleRegistryArguments
 }
 
 }
-

@@ -29,6 +29,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -275,6 +277,102 @@ TEST_F(ConstantFoldingRuleTest, integerSubResultsInUnderflow)
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
+TEST_F(ConstantFoldingRuleTest, moduloWithFloat)
+{
+    auto source = utils.createSource("moduloWithFloat", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        ModuloLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "1.0"},
+            ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "1.0"}}
+    });
+
+    auto sink = utils.createSink(select, "sink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    EXPECT_ANY_THROW(auto cleaned = ConstantFoldingRule{}.apply(plan));
+}
+
+TEST_F(ConstantFoldingRuleTest, integerModulo)
+{
+    auto source = utils.createSource("moduloWithFloat", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        ModuloLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "6"},
+            ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
+    });
+
+    auto sink = utils.createSink(select, "sink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "0");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, intPow)
+{
+    auto source = utils.createSource("pow", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        PowLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "6"},
+            ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
+    });
+
+    auto sink = utils.createSink(select, "sink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "36");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, floatPow)
+{
+    auto source = utils.createSource("pow", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        PowLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "4.0"},
+            ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
+    });
+
+    auto sink = utils.createSink(select, "sink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "16.000000");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+/*
+ // already throws error when creating the select operator in the original query
 TEST_F(ConstantFoldingRuleTest, noneNumericValue)
 {
     auto source = utils.createSource("noneNumericValue", {"a"});
@@ -287,9 +385,8 @@ TEST_F(ConstantFoldingRuleTest, noneNumericValue)
     });
     auto sink = utils.createSink(select, "Sink", {"a"});
     auto plan = utils.createPlan(sink);
-    auto cleaned = ConstantFoldingRule{}.apply(plan);
-    
-}
+    EXPECT_ANY_THROW(auto cleaned = ConstantFoldingRule{}.apply(plan));
+}*/
 
 /// NOLINTEND(bugprone-unchecked-optional-access)
 }
