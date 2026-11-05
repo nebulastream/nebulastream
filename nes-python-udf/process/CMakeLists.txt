@@ -20,8 +20,19 @@ add_library(nes-python-process-channel STATIC PythonProcessChannel.cpp)
 target_link_libraries(nes-python-process-channel PUBLIC nes-memory)
 target_include_directories(nes-python-process-channel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(python_process_source_plugin_library STATIC PythonProcessSource.cpp PythonBatchWrapper.cpp)
-target_link_libraries(python_process_source_plugin_library PRIVATE nes-sources nes-nautilus nes-udf PUBLIC nes-python-process-channel)
+# Batches cross the socket as Arrow IPC streams, which nanoarrow encodes and decodes on the worker's side.
+find_package(nanoarrow CONFIG REQUIRED)
+# nanoarrow's IPC target names its flatbuffers runtime only as `flatccrt`, which every executable linking this static library has to
+# resolve, so it becomes a global target.
+if (NOT TARGET flatccrt)
+    find_library(NES_FLATCCRT_LIBRARY flatccrt REQUIRED)
+    add_library(flatccrt UNKNOWN IMPORTED GLOBAL)
+    set_target_properties(flatccrt PROPERTIES IMPORTED_LOCATION "${NES_FLATCCRT_LIBRARY}")
+endif ()
+add_library(python_process_source_plugin_library STATIC PythonProcessSource.cpp PythonBatchWrapper.cpp ArrowBatches.cpp)
+target_link_libraries(python_process_source_plugin_library
+        PRIVATE nes-sources nes-nautilus nes-udf nanoarrow::nanoarrow_ipc_static nanoarrow::nanoarrow_static
+        PUBLIC nes-python-process-channel)
 link_plugin_library(nes-sources python_process_source_plugin_library)
 add_registry_entry(Source PythonProcess)
 add_registry_entry(SourceConfigSchema PythonProcess)

@@ -16,7 +16,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <span>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -31,30 +30,53 @@
 namespace NES
 {
 
-/// TupleBufferRef with the Apache Arrow columnar memory layout. It only produces Arrow-compatible memory and has no
-/// dependency on the Arrow library.
-/// Buffer layout: [validity_col0][validity_col1]...[data_col0][data_col1]..., each region is 8-byte aligned.
-///  - Validity bitmaps use 1 bit per record, 1 = valid. They are only maintained for nullable fields.
+/// TupleBufferRef whose buffers hold an Apache Arrow record batch: once finalized, every column consists of standard Arrow buffers
+/// that the Arrow C Data Interface and IPC can hand over without conversion. VARSIZED is Arrow `binary`.
+///
+/// The buffer starts with a header that gives, for each field, where its validity bitmap, its data (offsets for `binary`) and its
+/// `binary` values are: in the buffer itself or in one of its child buffers, at a byte offset. A scan reads the columns through the
+/// header, so a buffer can also hold a record batch that was laid out by someone else, such as the body of an IPC message.
+///
+/// Buffers this layout writes keep their columns behind the header, each region 8-byte aligned and sized for the capacity:
+///  - Validity bitmaps, 1 bit per record and 1 = valid, exist only for nullable fields.
 ///  - BOOLEAN data is bit-packed.
-///  - VARSIZED columns store capacity + 1 int32 offsets. The payload lives in child buffers, a column with slot S owns
-///    the child buffers S, S + numVarSizedColumns, S + 2 * numVarSizedColumns, ... Offsets span all buffers of a column
-///    and a single value is never split across child buffers. A child buffer's numberOfTuples is its number of used bytes.
+///  - While records are written, a VARSIZED field holds a pointer and a size per record, 16 bytes. `finalize` copies the values into
+///    one contiguous child buffer and replaces the pointers by the capacity + 1 int32 offsets of Arrow `binary`.
 class ArrowBufferRef final : public TupleBufferRef
 {
 public:
+    /// Where a region of a field is: `buffer` is MAIN_BUFFER for the buffer itself, the child buffer index + 1 for a child buffer,
+    /// or NO_BUFFER if the region does not exist, like the bitmap of a column without NULLs.
+    struct Location
+    {
+        static constexpr uint32_t MAIN_BUFFER = 0;
+        static constexpr uint32_t NO_BUFFER = UINT32_MAX;
+
+        uint32_t buffer;
+        uint32_t offset;
+    };
+
+    enum class Region : uint8_t
+    {
+        VALIDITY = 0,
+        DATA = 1,
+        VALUES = 2,
+    };
+
     struct Field
     {
-        static constexpr uint32_t NO_CHILD_BUFFER = UINT32_MAX;
+        static constexpr uint64_t NO_BITMAP = UINT64_MAX;
 
         Record::RecordFieldIdentifier name;
         DataType type;
-        uint32_t dataTypeSize; /// Bytes per record in the data region, sizeof(int32_t) for VARSIZED, 0 for bit-packed BOOLEAN
+        /// Bytes per record in the data region while records are written: 16 for VARSIZED, 0 for bit-packed BOOLEAN.
+        uint32_t dataTypeSize;
+        /// Where this layout writes the bitmap, NO_BITMAP for a field that is not nullable.
         uint64_t bitmapOffset;
         uint64_t dataOffset;
-        uint32_t childBufferSlot;
     };
 
-    ArrowBufferRef(std::vector<Field> fields, uint32_t numVarSizedColumns, uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
+    ArrowBufferRef(std::vector<Field> fields, uint64_t headerSize, uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
@@ -70,22 +92,30 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
+    void finalize(
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<uint64_t>& numberOfRecords,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
     [[nodiscard]] const std::vector<Field>& getFields() const { return fields; }
 
-    /// Appends @param value to the child buffers of the VARSIZED column stored at @param childSlot.
-    static void appendVarSized(
-        TupleBuffer& buffer,
-        AbstractBufferProvider& bufferProvider,
-        uint32_t childSlot,
-        uint32_t numVarSizedColumns,
-        std::span<const std::byte> value);
+    /// Bytes at the start of a buffer that the header takes, 8-byte aligned.
+    [[nodiscard]] uint64_t getHeaderSize() const { return headerSize; }
 
-    /// Returns the child buffers holding the payload of the VARSIZED @param field, in offset order.
-    [[nodiscard]] std::vector<TupleBuffer> loadVarSizedChildBuffers(const TupleBuffer& buffer, const Field& field) const;
+    [[nodiscard]] Location getLocation(const TupleBuffer& buffer, size_t field, Region region) const;
+    void setLocation(TupleBuffer& buffer, size_t field, Region region, Location location) const;
+
+    /// The start of a region, nullptr if the buffer has none. Child buffers stay alive as long as the buffer does.
+    [[nodiscard]] static const std::byte* resolve(const TupleBuffer& buffer, Location location);
+
+    /// Copies the VARSIZED values of the first `numberOfRecords` records into Arrow `binary` columns and writes the header.
+    void finalizeBuffer(TupleBuffer& buffer, AbstractBufferProvider& bufferProvider, uint64_t numberOfRecords) const;
 
 private:
+    [[nodiscard]] uint64_t headerPosition(size_t field, Region region) const;
+
     std::vector<Field> fields;
-    uint32_t numVarSizedColumns;
+    uint64_t headerSize;
 };
 
 }

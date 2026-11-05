@@ -20,10 +20,13 @@ add_library(nes-python-udf STATIC
         PythonUdfRuntime.cpp)
 target_include_directories(nes-python-udf PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(nes-python-udf PRIVATE nes-physical-operators nes-udf-runtime nes-codon-plugin codon::compiler)
-add_dependencies(nes-python-udf nes-codon-blas-plugin nes-codon-opencv-plugin)
+add_dependencies(nes-python-udf nes-codon-blas-plugin nes-codon-opencv-plugin nes-codon-compat-plugin nes-codon-json-plugin nes-codon-re-plugin)
 target_compile_definitions(nes-python-udf PRIVATE
         NES_CODON_BLAS_PLUGIN_PATH="$<TARGET_FILE:nes-codon-blas-plugin>"
-        NES_CODON_OPENCV_PLUGIN_PATH="$<TARGET_FILE:nes-codon-opencv-plugin>")
+        NES_CODON_OPENCV_PLUGIN_PATH="$<TARGET_FILE:nes-codon-opencv-plugin>"
+        NES_CODON_COMPAT_PLUGIN_PATH="$<TARGET_FILE:nes-codon-compat-plugin>"
+        NES_CODON_JSON_PLUGIN_PATH="$<TARGET_FILE:nes-codon-json-plugin>"
+        NES_CODON_RE_PLUGIN_PATH="$<TARGET_FILE:nes-codon-re-plugin>")
 
 # Codon is built with the same RTTI mode as LLVM. Keep its filesystem adapter consistent because polymorphic
 # shared_ptr objects cross this boundary.

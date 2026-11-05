@@ -33,6 +33,8 @@ function(add_codon_extension_plugin TARGET)
     set(NES_CODON_PLUGIN_MODULE_ENTRIES "")
     set(_module_index 0)
     foreach (_module_path IN LISTS _codon_resources)
+        # The source is embedded while configuring, so editing it has to configure again.
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${ARG_CODON_PATH}/${_module_path}")
         file(READ "${ARG_CODON_PATH}/${_module_path}" _module_source)
         string(APPEND NES_CODON_PLUGIN_MODULE_DECLARATIONS
             "static constexpr char module_${_module_index}[] = R\"NES_CODON_MODULE(${_module_source})NES_CODON_MODULE\";\n")

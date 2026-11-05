@@ -1,0 +1,164 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Python builtins that Codon's stdlib does not define. NES imports this module into every Codon UDF
+module (`from nes_compat import *`), so UDF code that names these builtins compiles.
+
+NES passes VARSIZED values to Codon UDFs as str. A parameter annotated bytes or Optional[bytes] receives a bytes object
+instead, see _nes_argument. Codon's str holds raw bytes as well, so bytes wraps one and does no copying.
+"""
+
+
+class bytes:
+    _value: str
+
+    def __init__(self, value: str):
+        self._value = value
+
+    def __init__(self, data: Ptr[byte], size: int):
+        self._value = str(data, size)
+
+    def __len__(self) -> int:
+        return len(self._value)
+
+    def __bool__(self) -> bool:
+        return len(self._value) > 0
+
+    def __getitem__(self, index: int) -> int:
+        size = len(self._value)
+        position = index + size if index < 0 else index
+        if position < 0 or position >= size:
+            raise IndexError("index out of range")
+        return int(self._value.ptr[position])
+
+    def __getitem__(self, indices: Slice) -> bytes:
+        return bytes(self._value[indices])
+
+    def __iter__(self) -> Generator[int]:
+        for position in range(len(self._value)):
+            yield int(self._value.ptr[position])
+
+    def __contains__(self, value: bytes) -> bool:
+        return value._value in self._value
+
+    def __contains__(self, value: int) -> bool:
+        return any(element == value for element in self)
+
+    def __eq__(self, other: bytes) -> bool:
+        return self._value == other._value
+
+    def __ne__(self, other: bytes) -> bool:
+        return self._value != other._value
+
+    def __hash__(self) -> int:
+        return hash(self._value)
+
+    def __add__(self, other: bytes) -> bytes:
+        return bytes(self._value + other._value)
+
+    def __repr__(self) -> str:
+        return "b" + repr(self._value)
+
+    def __str__(self) -> str:
+        return repr(self)
+
+    def startswith(self, prefix: bytes) -> bool:
+        return self._value.startswith(prefix._value)
+
+    def endswith(self, suffix: bytes) -> bool:
+        return self._value.endswith(suffix._value)
+
+    def find(self, value: bytes) -> int:
+        return self._value.find(value._value)
+
+    def split(self, separator: bytes) -> List[bytes]:
+        return [bytes(part) for part in self._value.split(separator._value)]
+
+    def strip(self) -> bytes:
+        return bytes(self._value.strip())
+
+    def lower(self) -> bytes:
+        return bytes(self._value.lower())
+
+    def upper(self) -> bytes:
+        return bytes(self._value.upper())
+
+    def replace(self, old: bytes, new: bytes) -> bytes:
+        return bytes(self._value.replace(old._value, new._value))
+
+    def decode(self, encoding: str = "utf-8", errors: str = "strict") -> str:
+        if encoding.lower() not in ("utf-8", "utf8") or errors != "strict":
+            raise ValueError("bytes.decode only supports strict UTF-8")
+        position = 0
+        size = len(self._value)
+        while position < size:
+            lead = int(self._value.ptr[position])
+            if lead < 0x80:
+                length, minimum = 1, 0
+            elif lead >> 5 == 0b110:
+                length, minimum = 2, 0x80
+            elif lead >> 4 == 0b1110:
+                length, minimum = 3, 0x800
+            elif lead >> 3 == 0b11110:
+                length, minimum = 4, 0x10000
+            else:
+                raise ValueError("invalid UTF-8")
+            if position + length > size:
+                raise ValueError("invalid UTF-8")
+            codepoint = lead if length == 1 else lead & (0xFF >> (length + 1))
+            for offset in range(1, length):
+                continuation = int(self._value.ptr[position + offset])
+                if continuation >> 6 != 0b10:
+                    raise ValueError("invalid UTF-8")
+                codepoint = (codepoint << 6) | (continuation & 0x3F)
+            if codepoint < minimum or codepoint > 0x10FFFF or 0xD800 <= codepoint <= 0xDFFF:
+                raise ValueError("invalid UTF-8")
+            position += length
+        return self._value
+
+
+@extend
+class str:
+    def encode(self, encoding: str = "utf-8", errors: str = "strict") -> bytes:
+        return bytes(self)
+
+
+class bytearray:
+    pass
+
+
+# ponytail: a mutable set, immutability is not enforced; a real frozenset class when a UDF needs to hash one.
+def frozenset(iterable = List[int]()):
+    return set(iterable)
+
+
+def _nes_argument(function, index: Static[int], value):
+    """Converts the value NES passes for a VARSIZED argument to the type that parameter of the UDF is annotated with."""
+    if static.function.has_type(function, index):
+        if static.function.get_type(function, index).__name__ == "bytes":
+            return bytes(value)
+        elif static.function.get_type(function, index).__name__ == "Optional[bytes]":
+            return None if value is None else Optional[bytes](bytes(value))
+        else:
+            return value
+    else:
+        return value
+
+
+def _nes_result(value):
+    """Converts the result of a UDF to what NES expects for a VARSIZED result, a str holding the raw bytes."""
+    if type(value).__name__ == "bytes":
+        return value._value
+    elif type(value).__name__ == "Optional[bytes]":
+        return None if value is None else Optional[str](value._value)
+    else:
+        return value

@@ -14,6 +14,7 @@
 
 #include <PythonUdfFilesystem.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
@@ -33,6 +34,11 @@
 #include <codon/parser/common.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/IR/GlobalVariable.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/InstIterator.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/raw_ostream.h>
 
@@ -44,6 +50,16 @@ std::string_view pluginModuleSource(const std::filesystem::path& path)
 {
     const auto normalizedPath = path.lexically_normal();
     return findCodonPluginModule(normalizedPath.generic_string());
+}
+
+/// nes-codon-compat-plugin provides Python builtins Codon lacks (bytes, a stand-in for bytearray). While it is loaded,
+/// every UDF module imports them, so UDF code that names those builtins compiles unchanged.
+constexpr std::string_view compatModulePath = "nes_compat.codon";
+constexpr std::string_view compatImport = "from nes_compat import *";
+
+bool isCompatPluginLoaded()
+{
+    return !findCodonPluginModule(compatModulePath).empty();
 }
 
 std::vector<std::string> splitIntoLines(const std::string_view source)
@@ -66,9 +82,14 @@ std::vector<std::string> splitIntoLines(const std::string_view source)
 class PythonUdfFilesystem final : public codon::ast::ResourceFilesystem
 {
 public:
-    PythonUdfFilesystem(const std::string& argv0, const std::string& module0, const bool allowExternal)
-        : ResourceFilesystem(argv0, module0, allowExternal)
+    PythonUdfFilesystem(const std::string& argv0, const std::string& module0, const std::vector<std::string>& importPaths)
+        : ResourceFilesystem(argv0, module0, !importPaths.empty())
     {
+        for (const auto& importPath : importPaths)
+        {
+            add_search_path(importPath);
+            udfDirectories.push_back(std::filesystem::absolute(importPath).lexically_normal());
+        }
     }
 
     [[nodiscard]] std::vector<std::string> read_lines(const path_t& path) const override
@@ -77,7 +98,13 @@ public:
         {
             return splitIntoLines(source);
         }
-        return ResourceFilesystem::read_lines(path);
+        auto lines = ResourceFilesystem::read_lines(path);
+        if (isUdfModule(path) && isCompatPluginLoaded())
+        {
+            /// Prepended rather than merged into the first line, so compile errors in the module are one line off.
+            lines.insert(lines.begin(), std::string{compatImport});
+        }
+        return lines;
     }
 
     [[nodiscard]] bool exists(const path_t& path) const override
@@ -87,12 +114,30 @@ public:
 
     [[nodiscard]] path_t canonical(const path_t& path) const override
     {
-        if (!pluginModuleSource(path).empty())
+        /// One path per plugin module. Codon would otherwise load a module once per importing directory, and the classes
+        /// of those copies would be different types.
+        if (const auto modulePath = findCodonPluginModulePath(path.lexically_normal().generic_string()); !modulePath.empty())
         {
-            return path.lexically_normal();
+            return std::filesystem::path{"/nes-codon-plugins"} / modulePath;
         }
         return ResourceFilesystem::canonical(path);
     }
+
+private:
+    /// A module loaded from a configured UDF import path, as opposed to Codon's stdlib or a plugin module.
+    [[nodiscard]] bool isUdfModule(const path_t& path) const
+    {
+        const auto file = std::filesystem::absolute(path).lexically_normal();
+        return std::ranges::any_of(
+            udfDirectories,
+            [&](const auto& directory)
+            {
+                const auto relative = file.lexically_relative(directory);
+                return !relative.empty() && *relative.begin() != "..";
+            });
+    }
+
+    std::vector<std::filesystem::path> udfDirectories;
 };
 
 /// codon::ast::Cache allocates the vector that owns every AST node with `new` and has no destructor, so destroying a
@@ -117,16 +162,59 @@ void deleteCodonCompiler(codon::Compiler* compiler)
     delete nodes; /// NOLINT(cppcoreguidelines-owning-memory)
 }
 
+/// Codon runs top-level code, including the stdlib's module globals (e.g. the module cache of `from python import`), in
+/// the initializer its `main` invokes, which NES never calls. The entry point calls it once per module instead. This runs
+/// before Codon's LLVM optimization, which would otherwise inline the initializer into the discarded `main`.
+void addModuleInitializationPrologue(llvm::Module& module, const std::string& symbol)
+{
+    auto* proxyMain = module.getFunction("codon.proxy_main");
+    auto* entryPoint = module.getFunction(symbol);
+    if (proxyMain == nullptr || proxyMain->isDeclaration() || entryPoint == nullptr || entryPoint->isDeclaration())
+    {
+        return;
+    }
+    llvm::Function* initializer = nullptr;
+    for (auto& instruction : llvm::instructions(*proxyMain))
+    {
+        if (const auto* call = llvm::dyn_cast<llvm::CallBase>(&instruction))
+        {
+            if (auto* callee = call->getCalledFunction(); callee != nullptr && !callee->isDeclaration())
+            {
+                initializer = callee;
+            }
+        }
+    }
+    if (initializer == nullptr)
+    {
+        return;
+    }
+
+    auto& context = module.getContext();
+    auto* int8Type = llvm::Type::getInt8Ty(context);
+    auto* pointerType = llvm::PointerType::getUnqual(context);
+    auto* initialized = new llvm::GlobalVariable(
+        module, int8Type, false, llvm::GlobalValue::InternalLinkage, llvm::ConstantInt::get(int8Type, 0), symbol + ".initialized");
+    const auto ensureInitialized = module.getOrInsertFunction(
+        "nes_codon_ensure_module_initialized", llvm::FunctionType::get(llvm::Type::getVoidTy(context), {pointerType, pointerType}, false));
+    llvm::IRBuilder<> builder(&*entryPoint->getEntryBlock().getFirstInsertionPt());
+    builder.CreateCall(ensureInitialized, {initializer, initialized});
+}
+
 double elapsedMilliseconds(const std::chrono::steady_clock::time_point start, const std::chrono::steady_clock::time_point end)
 {
     return std::chrono::duration<double, std::milli>{end - start}.count();
 }
 }
 
-CodonCompilationResult
-compileWithCodon(const std::string& sourcePath, const std::string& source, const std::vector<std::string>& importPaths)
+CodonCompilationResult compileWithCodon(
+    const std::string& sourcePath,
+    const std::string& generatedSource,
+    const std::string& entrySymbol,
+    const std::vector<std::string>& importPaths)
 {
     codon::ir::setNativeOptimizationEnabled(false);
+    /// Inline UDF bodies are part of the generated source, so it imports the compat stand-ins like UDF modules do.
+    const auto source = isCompatPluginLoaded() ? std::string{compatImport} + "\n" + generatedSource : generatedSource;
     std::ofstream sourceFile{sourcePath, std::ios::binary | std::ios::trunc};
     if (!sourceFile)
     {
@@ -139,11 +227,7 @@ compileWithCodon(const std::string& sourcePath, const std::string& source, const
     }
     sourceFile.close();
 
-    auto filesystem = std::make_shared<PythonUdfFilesystem>("nes-worker", sourcePath, !importPaths.empty());
-    for (const auto& importPath : importPaths)
-    {
-        filesystem->add_search_path(importPath);
-    }
+    auto filesystem = std::make_shared<PythonUdfFilesystem>("nes-worker", sourcePath, importPaths);
 
     const std::unique_ptr<codon::Compiler, decltype(&deleteCodonCompiler)> compilerOwner{
         new codon::Compiler( /// NOLINT(cppcoreguidelines-owning-memory)
@@ -167,6 +251,7 @@ compileWithCodon(const std::string& sourcePath, const std::string& source, const
     {
         throw std::runtime_error("Could not compile Python UDF: " + llvm::toString(std::move(error)));
     }
+    addModuleInitializationPrologue(*compiler.getLLVMVisitor()->getModule(), entrySymbol);
     const auto optimizeStart = std::chrono::steady_clock::now();
     auto optimizationOptions = codon::ir::LLVMOptimizationOptions::release();
     optimizationOptions.preserveDebugInfo = true;

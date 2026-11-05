@@ -45,7 +45,8 @@ enum UdfTypeCode /// NOLINT(performance-enum-size) C has no fixed underlying enu
     UDF_UINT64 = 8,
     UDF_FLOAT32 = 9,
     UDF_FLOAT64 = 10,
-    UDF_VARSIZED = 11
+    UDF_VARSIZED = 11,
+    UDF_CHAR = 12 /// a single byte; a bridge offers it like a one-byte VARSIZED value
 };
 
 /// Return status of execute_udf_row. NULL-ness is a separate out-parameter flag,
@@ -79,7 +80,7 @@ int initialize_udf_from_source(
 ///                         the raw bytes (see arg_lens[i]).
 ///   arg_lens[i]        -> byte length of a UDF_VARSIZED argument; ignored (0) for scalars.
 ///   arg_nulls[i]       -> non-zero => the i-th argument is SQL NULL (value ignored).
-///   result_scalar      -> 8-byte slot; the result is written here for numeric/bool
+///   result_scalar      -> 8-byte slot; the result is written here for numeric/bool/char
 ///                         returns, reinterpreted per return_type_code.
 ///   result_string      -> for a VARSIZED return, set to a malloc'd buffer (caller frees);
 ///   result_string_len  -> its byte length.

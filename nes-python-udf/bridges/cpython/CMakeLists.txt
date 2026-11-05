@@ -26,6 +26,8 @@ if (TARGET Python3::Python)
             RUNTIME DESTINATION bin/nes-udf-bridges
             LIBRARY DESTINATION bin/nes-udf-bridges)
     message(STATUS "CPython UDF bridge enabled (Python ${Python3_VERSION})")
+    # The systests build a venv for the UDF process with this Python, so the bridge can share it.
+    set(NES_CPYTHON_UDF_BRIDGE_PYTHON_VERSION "${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}" CACHE INTERNAL "")
 else ()
     message(STATUS "CPython UDF bridge disabled (Python Development.Embed not found)")
 endif ()

@@ -23,5 +23,8 @@ namespace NES
 {
 void loadCodonPlugin(const std::filesystem::path& path);
 std::string_view findCodonPluginModule(std::string_view path);
+
+/// The path a plugin module is registered under, whichever path reaches it. Empty if there is no such module.
+std::string findCodonPluginModulePath(std::string_view path);
 std::unordered_map<std::string, void*> getCodonPluginNativeSymbols();
 }

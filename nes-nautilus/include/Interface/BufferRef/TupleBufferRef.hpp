@@ -87,6 +87,15 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
 
+    /// Completes a buffer after its last record was written and before it is passed on. Layouts that need a pass over all records,
+    /// such as the contiguous VARSIZED values of Arrow, do it here; the values written into the records are still valid.
+    virtual void finalize(
+        const RecordBuffer& /*recordBuffer*/,
+        const nautilus::val<uint64_t>& /*numberOfRecords*/,
+        const nautilus::val<AbstractBufferProvider*>& /*bufferProvider*/) const
+    {
+    }
+
     [[nodiscard]] uint64_t getCapacity() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     [[nodiscard]] uint64_t getTupleSize() const;

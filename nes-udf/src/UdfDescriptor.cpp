@@ -45,8 +45,8 @@ bool isSupportedUdfType(const DataType::Type type)
         case DataType::Type::FLOAT32:
         case DataType::Type::FLOAT64:
         case DataType::Type::VARSIZED:
-            return true;
         case DataType::Type::CHAR:
+            return true;
         case DataType::Type::UNDEFINED:
             return false;
     }

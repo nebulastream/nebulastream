@@ -125,6 +125,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
     const nautilus::val<uint64_t>& numRecords,
     const nautilus::val<bool>& potentialLastChunk) const
 {
+    bufferRef->finalize(recordBuffer, numRecords, ctx.pipelineMemoryProvider.bufferProvider);
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);

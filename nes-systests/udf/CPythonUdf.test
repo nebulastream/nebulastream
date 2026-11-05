@@ -18,7 +18,7 @@ SELECT a, b, add_py(a, b) AS c FROM nums INTO FILE();
 10,20,30
 100,200,300
 
-# --- Python UDF: currency conversion (currency.to_euro), VARSIZED argument arrives as Python bytes ---
+# --- Python UDF: currency conversion (currency.to_euro), VARSIZED argument arrives as Python str ---
 CREATE LOGICAL SOURCE bids(amount FLOAT64 NOT NULL, ccy VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR bids TYPE File;
 ATTACH INLINE
@@ -47,6 +47,16 @@ SELECT shout_py(w) AS u FROM words INTO FILE();
 ----
 HELLO
 WORLD
+
+# A VARSIZED value that is not UTF-8 fails the query
+CREATE LOGICAL SOURCE encoded(b VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR encoded TYPE File;
+ATTACH INLINE
+/w==
+
+SELECT shout_py(FROM_BASE64(b)) AS u FROM encoded INTO FILE();
+----
+ERROR 3007
 
 # --- Python UDF that raises: the query fails with the UDF error code; the worker survives ---
 CREATE LOGICAL SOURCE ints(x INT64 NOT NULL);

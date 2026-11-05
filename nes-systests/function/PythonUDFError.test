@@ -19,7 +19,7 @@ SELECT udf_1(value) AS result
 FROM numbers
 INTO file();
 ----
-ERROR UnknownException "Python UDF failed: invalid literal for int() with base 10: '24.4'"
+ERROR UdfExecutionError "Python UDF failed: invalid literal for int() with base 10: '24.4'"
 
 
 # The argument type has to match the declared one: a VARSIZED column is no UINT64 argument

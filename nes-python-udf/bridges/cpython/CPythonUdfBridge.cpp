@@ -33,6 +33,7 @@
 #include <vector>
 
 #include <UdfAbi.h>
+#include <PythonBytesParameters.hpp>
 
 /// Implements the C ABI of UdfAbi.h on top of the CPython C API: C types and malloc'ed strings owned by the caller.
 /// NOLINTBEGIN(google-runtime-int,cppcoreguidelines-owning-memory,cppcoreguidelines-no-malloc,misc-include-cleaner,cppcoreguidelines-pro-type-reinterpret-cast,cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-const-cast,cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,readability-identifier-naming,concurrency-mt-unsafe)
@@ -44,6 +45,7 @@ struct UdfCtx
 {
     PyObject* callable = nullptr; /* owned reference to the Python function */
     std::vector<int> argTypes;
+    std::vector<char> bytesParameters; /* for each argument, if a VARSIZED value stays raw bytes instead of a str */
     int returnType = 0;
 };
 
@@ -164,6 +166,29 @@ char* fetchPythonError()
     return dupString(out);
 }
 
+/* Runs PythonBytesParametersSource on `function`. If that fails every parameter is a str. GIL held. */
+std::vector<char> findBytesParameters(PyObject* function, const int argc)
+{
+    std::vector<char> flags(static_cast<size_t>(argc), 0);
+    PyObject* globals = PyDict_New();
+    PyObject* definition = PyRun_String(NES::PythonBytesParametersSource, Py_file_input, globals, globals);
+    PyObject* result = (definition != nullptr)
+        ? PyObject_CallFunction(PyDict_GetItemString(globals, "_bytes_parameters"), "Oi", function, argc)
+        : nullptr;
+    if (result != nullptr)
+    {
+        for (int i = 0; i < argc; ++i)
+        {
+            flags[static_cast<size_t>(i)] = static_cast<char>(PyObject_IsTrue(PyList_GET_ITEM(result, i)) == 1);
+        }
+    }
+    PyErr_Clear();
+    Py_XDECREF(result);
+    Py_XDECREF(definition);
+    Py_DECREF(globals);
+    return flags;
+}
+
 /* Takes ownership of `function` (may be nullptr / non-callable). On success, registers it under a fresh
  * handle and returns that handle; on failure returns -1 with *errormessage set (or leaves any existing
  * Python error to be formatted by the caller). GIL held. */
@@ -182,6 +207,7 @@ int registerCallable(PyObject* function, int argc, const int* arg_type_codes, in
     auto* ctx = new UdfCtx();
     ctx->callable = function; /* transfer ownership */
     ctx->argTypes.assign(arg_type_codes, arg_type_codes + argc);
+    ctx->bytesParameters = findBytesParameters(function, argc);
     ctx->returnType = return_type_code;
 
     const std::scoped_lock lock(g_mutex);
@@ -190,7 +216,7 @@ int registerCallable(PyObject* function, int argc, const int* arg_type_codes, in
     return handle;
 }
 
-PyObject* toPyArg(const void* value, long long length, int isNull, int typeCode)
+PyObject* toPyArg(const void* value, long long length, int isNull, int typeCode, bool asBytes)
 {
     if (isNull != 0)
     {
@@ -221,7 +247,19 @@ PyObject* toPyArg(const void* value, long long length, int isNull, int typeCode)
         case UDF_FLOAT64:
             return PyFloat_FromDouble(*reinterpret_cast<const double*>(value));
         case UDF_VARSIZED:
-            return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(value), static_cast<Py_ssize_t>(length));
+            if (asBytes)
+            {
+                return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(value), static_cast<Py_ssize_t>(length));
+            }
+            /// Decoding raises for anything that is not UTF-8.
+            return PyUnicode_DecodeUTF8(reinterpret_cast<const char*>(value), static_cast<Py_ssize_t>(length), nullptr);
+        case UDF_CHAR:
+            /// One byte, as one-byte bytes or, failing for anything but ASCII, a one-character str.
+            if (asBytes)
+            {
+                return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(value), 1);
+            }
+            return PyUnicode_DecodeUTF8(reinterpret_cast<const char*>(value), 1, nullptr);
         default:
             return nullptr;
     }
@@ -326,6 +364,11 @@ int writeResult(
             else if (PyUnicode_Check(result))
             {
                 bytes = const_cast<char*>(PyUnicode_AsUTF8AndSize(result, &length));
+                if (bytes == nullptr)
+                {
+                    *err = fetchPythonError();
+                    return UDF_ERROR;
+                }
             }
             else
             {
@@ -339,6 +382,31 @@ int writeResult(
             }
             *resultString = out;
             *resultStringLen = static_cast<long long>(length);
+            return UDF_OK;
+        }
+        case UDF_CHAR: {
+            const char* bytes = nullptr;
+            Py_ssize_t length = 0;
+            if (PyBytes_Check(result))
+            {
+                bytes = PyBytes_AsString(result);
+                length = PyBytes_Size(result);
+            }
+            else if (PyUnicode_Check(result))
+            {
+                bytes = PyUnicode_AsUTF8AndSize(result, &length);
+                if (bytes == nullptr)
+                {
+                    *err = fetchPythonError();
+                    return UDF_ERROR;
+                }
+            }
+            if (bytes == nullptr || length != 1)
+            {
+                *err = dupString("CHAR-returning UDF must return one byte, as bytes or str");
+                return UDF_ERROR;
+            }
+            *reinterpret_cast<char*>(resultScalar) = bytes[0];
             return UDF_OK;
         }
         default:
@@ -490,14 +558,16 @@ extern "C" int execute_udf_row(
     PyObject* args = PyTuple_New(argc);
     for (int i = 0; i < argc; ++i)
     {
-        PyObject* arg = toPyArg(arg_values[i], arg_lens[i], arg_nulls[i], ctx->argTypes[i]);
+        PyObject* arg
+            = toPyArg(arg_values[i], arg_lens[i], arg_nulls[i], ctx->argTypes[i], ctx->bytesParameters[static_cast<size_t>(i)] != 0);
         if (arg == nullptr)
         {
             Py_DECREF(args);
             if (errormessage != nullptr)
             {
-                *errormessage = dupString("unsupported argument type code");
+                *errormessage = (PyErr_Occurred() != nullptr) ? fetchPythonError() : dupString("unsupported argument type code");
             }
+            PyErr_Clear();
             PyGILState_Release(gil);
             return UDF_ERROR;
         }

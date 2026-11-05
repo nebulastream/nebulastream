@@ -122,6 +122,9 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
 
     const auto align8 = [](const uint64_t value) { return (value + 7) & ~uint64_t{7}; };
     const auto bitmapSize = [&](const uint64_t capacity) { return align8((capacity + 7) / 8); };
+    /// Bytes per record in the data region while records are written: a VARSIZED value is a pointer and a size until the buffer is
+    /// finalized, which leaves room for the capacity + 1 int32 offsets of Arrow binary.
+    constexpr uint64_t pendingVarSizedSize = 16;
     /// Bytes the data region of a field occupies for the given capacity.
     const auto dataSize = [&](const DataType& type, const uint64_t capacity) -> uint64_t
     {
@@ -130,17 +133,19 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
             case DataType::Type::BOOLEAN:
                 return bitmapSize(capacity);
             case DataType::Type::VARSIZED:
-                return align8((capacity + 1) * sizeof(int32_t));
+                return align8(std::max(capacity * pendingVarSizedSize, (capacity + 1) * sizeof(int32_t)));
             default:
                 return align8(capacity * type.getSizeInBytesWithoutNull());
         }
     };
+    /// Three locations per field: validity, data and values.
+    const uint64_t headerSize = align8(std::ranges::size(schema) * 3 * sizeof(ArrowBufferRef::Location));
     const auto layoutSize = [&](const uint64_t capacity)
     {
-        uint64_t size = 0;
+        uint64_t size = headerSize;
         for (const auto& field : schema)
         {
-            size += bitmapSize(capacity) + dataSize(field.getDataType(), capacity);
+            size += (field.getDataType().nullable ? bitmapSize(capacity) : 0) + dataSize(field.getDataType(), capacity);
         }
         return size;
     };
@@ -150,12 +155,13 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
     for (const auto& field : schema)
     {
         const auto& type = field.getDataType();
-        bitsPerRecord += 1 /* validity */
+        bitsPerRecord += (type.nullable ? 1 : 0)
             + (type.type == DataType::Type::BOOLEAN        ? 1
-                   : type.type == DataType::Type::VARSIZED ? sizeof(int32_t) * 8
+                   : type.type == DataType::Type::VARSIZED ? pendingVarSizedSize * 8
                                                            : uint64_t{type.getSizeInBytesWithoutNull()} * 8);
     }
-    uint64_t capacity = bufferSize * 8 / bitsPerRecord;
+    INVARIANT(bufferSize > headerSize, "The header of the Arrow layout does not fit into a buffer of {} bytes", bufferSize);
+    uint64_t capacity = (bufferSize - headerSize) * 8 / bitsPerRecord;
     while (capacity > 0 && layoutSize(capacity) > bufferSize)
     {
         --capacity;
@@ -164,26 +170,35 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
 
     std::vector<ArrowBufferRef::Field> fields;
     fields.reserve(std::ranges::size(schema));
-    uint64_t dataOffset = std::ranges::size(schema) * bitmapSize(capacity);
-    uint64_t bitmapOffset = 0;
-    uint32_t numVarSizedColumns = 0;
+    uint64_t offset = headerSize;
     for (const auto& field : schema)
     {
         const auto& type = field.getDataType();
-        const auto isVarSized = type.type == DataType::Type::VARSIZED;
-        const uint32_t dataTypeSize
-            = isVarSized ? sizeof(int32_t) : (type.type == DataType::Type::BOOLEAN ? 0 : type.getSizeInBytesWithoutNull());
-        fields.emplace_back(
-            field.getFullyQualifiedName(),
-            type,
-            dataTypeSize,
-            bitmapOffset,
-            dataOffset,
-            isVarSized ? numVarSizedColumns++ : ArrowBufferRef::Field::NO_CHILD_BUFFER);
-        bitmapOffset += bitmapSize(capacity);
-        dataOffset += dataSize(type, capacity);
+        if (type.nullable)
+        {
+            fields.push_back(
+                {.name = field.getFullyQualifiedName(), .type = type, .dataTypeSize = 0, .bitmapOffset = offset, .dataOffset = 0});
+            offset += bitmapSize(capacity);
+        }
+        else
+        {
+            fields.push_back(
+                {.name = field.getFullyQualifiedName(),
+                 .type = type,
+                 .dataTypeSize = 0,
+                 .bitmapOffset = ArrowBufferRef::Field::NO_BITMAP,
+                 .dataOffset = 0});
+        }
     }
-    /// bufferSize / capacity is the effective size of one record including bitmaps and padding.
-    return std::make_shared<ArrowBufferRef>(std::move(fields), numVarSizedColumns, capacity, bufferSize, bufferSize / capacity);
+    for (auto& field : fields)
+    {
+        field.dataTypeSize = field.type.type == DataType::Type::VARSIZED
+            ? pendingVarSizedSize
+            : (field.type.type == DataType::Type::BOOLEAN ? 0 : field.type.getSizeInBytesWithoutNull());
+        field.dataOffset = offset;
+        offset += dataSize(field.type, capacity);
+    }
+    /// bufferSize / capacity is the effective size of one record including the header, bitmaps and padding.
+    return std::make_shared<ArrowBufferRef>(std::move(fields), headerSize, capacity, bufferSize, bufferSize / capacity);
 }
 }

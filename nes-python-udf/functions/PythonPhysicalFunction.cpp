@@ -157,6 +157,7 @@ std::string codonTypeName(const DataType& type)
         case DataType::Type::VARSIZED:
             return "str";
         case DataType::Type::CHAR:
+            return "u8";
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Unsupported Python UDF type {}", type);
     }
@@ -182,8 +183,8 @@ std::string pythonTypeName(const DataType& type)
         case DataType::Type::BOOLEAN:
             return "bool";
         case DataType::Type::VARSIZED:
-            return "str";
         case DataType::Type::CHAR:
+            return "str";
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Unsupported Python UDF type {}", type);
     }
@@ -222,6 +223,28 @@ std::string indentPythonBody(const std::string_view body)
         position = lineEnd + 1;
     }
     return indented;
+}
+
+/// Splits the body's leading import statements off so they run at module scope. Codon then executes the imported modules'
+/// top-level code once in the module initializer (see addModuleInitializationPrologue in PythonUdfFilesystem.cpp) rather than lazily during the
+/// first invocation, whose arena does not outlive it.
+std::pair<std::string, std::string> splitLeadingImports(const std::string_view body)
+{
+    std::string imports;
+    size_t position = 0;
+    while (position < body.size())
+    {
+        const auto lineEnd = body.find('\n', position);
+        const auto line = body.substr(position, lineEnd == std::string_view::npos ? std::string_view::npos : lineEnd - position);
+        if (!line.starts_with("import ") && !line.starts_with("from "))
+        {
+            break;
+        }
+        imports.append(line).append("\n");
+        position = lineEnd == std::string_view::npos ? body.size() : lineEnd + 1;
+    }
+    auto remaining = std::string{body.substr(position)};
+    return {std::move(imports), remaining.empty() ? std::string{"pass"} : std::move(remaining)};
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -272,6 +295,8 @@ std::string createPythonUdfSource(
         else
         {
             abiParameters.emplace_back(fmt::format("_arg{}: {}", index, codonTypeName(argumentTypes[index])));
+            /// A CHAR crosses the ABI as its byte and reaches the body as a one-character str.
+            const auto converter = argumentTypes[index].type == DataType::Type::CHAR ? std::string{"_nes_char_str"} : pythonType;
             if (argumentTypes[index].nullable)
             {
                 abiParameters.emplace_back(fmt::format("_arg{}_is_null: u8", index));
@@ -281,30 +306,40 @@ std::string createPythonUdfSource(
                         pythonType,
                         index,
                         pythonType,
-                        pythonType,
+                        converter,
                         index));
             }
             else
             {
-                bodyArguments.emplace_back(fmt::format("{}(_arg{})", pythonType, index));
+                bodyArguments.emplace_back(fmt::format("{}(_arg{})", converter, index));
             }
         }
     }
 
     const auto bodySymbol = symbol + "_body";
     const auto pythonResultType = pythonTypeName(returnType);
-    auto source = fmt::format(
+    const auto [imports, functionBody] = splitLeadingImports(body);
+    auto source = imports;
+    source += fmt::format(
         "@tuple\n"
         "class UdfErrorHolder:\n"
         "    error_ptr: Ptr[byte]\n"
         "    error_size: i64\n\n"
+        "def _nes_char_str(value: u8) -> str:\n"
+        "    _data = Ptr[byte](1)\n"
+        "    _data[0] = byte(int(value))\n"
+        "    return str(_data, 1)\n\n"
+        "def _nes_char_byte(value: str) -> u8:\n"
+        "    if len(value) != 1:\n"
+        "        raise ValueError(f\"a CHAR UDF must return one byte, not {{len(value)}}\")\n"
+        "    return u8(int(value.ptr[0]))\n\n"
         "def {}({}) -> {}{}{}:\n{}\n@export\n",
         bodySymbol,
         join(parameters),
         returnType.nullable ? "Optional[" : "",
         pythonResultType,
         returnType.nullable ? "]" : "",
-        indentPythonBody(body));
+        indentPythonBody(functionBody));
 
     const auto abiResultType = returnType.type == DataType::Type::BOOLEAN ? std::string{"u8"} : codonTypeName(returnType);
     if (returnType.type == DataType::Type::VARSIZED)
@@ -344,6 +379,12 @@ std::string createPythonUdfSource(
             source += "            _result_is_null[0] = u8(0)\n";
             source += "            _result[0] = u8(1) if _result_value else u8(0)\n";
         }
+        else if (returnType.type == DataType::Type::CHAR)
+        {
+            source += "        else:\n";
+            source += "            _result_is_null[0] = u8(0)\n";
+            source += "            _result[0] = _nes_char_byte(str(_result_value))\n";
+        }
         else
         {
             source += "        else:\n";
@@ -360,6 +401,10 @@ std::string createPythonUdfSource(
     else if (returnType.type == DataType::Type::BOOLEAN)
     {
         source += fmt::format("        _result[0] = u8(1) if {}({}) else u8(0)\n", bodySymbol, join(bodyArguments));
+    }
+    else if (returnType.type == DataType::Type::CHAR)
+    {
+        source += fmt::format("        _result[0] = _nes_char_byte(str({}({})))\n", bodySymbol, join(bodyArguments));
     }
     else
     {
@@ -677,6 +722,9 @@ CompiledPythonUdf compilePythonUdf(
     {
         loadCodonPlugin(codonPluginPath(NES_CODON_BLAS_PLUGIN_PATH));
         loadCodonPlugin(codonPluginPath(NES_CODON_OPENCV_PLUGIN_PATH));
+        loadCodonPlugin(codonPluginPath(NES_CODON_COMPAT_PLUGIN_PATH));
+        loadCodonPlugin(codonPluginPath(NES_CODON_JSON_PLUGIN_PATH));
+        loadCodonPlugin(codonPluginPath(NES_CODON_RE_PLUGIN_PATH));
         const auto source = createPythonUdfSource(std::string{CachedPythonUdfSymbol}, parameterNames, body, argumentTypes, returnType);
         const auto cacheKey = codonCacheKey(source, importPaths);
         const auto cacheDirectory = codonCacheDirectory();
@@ -692,7 +740,7 @@ CompiledPythonUdf compilePythonUdf(
         auto codonBitcode = readFile(keyPath) == cacheKey ? readFile(bitcodePath) : std::nullopt;
         if (!codonBitcode)
         {
-            codonResult = compileWithCodon(sourcePath, source, importPaths);
+            codonResult = compileWithCodon(sourcePath, source, std::string{CachedPythonUdfSymbol}, importPaths);
             codonBitcode = codonResult->llvmBitcode;
             try
             {
@@ -842,6 +890,8 @@ void appendPythonArgument(std::vector<PythonAbiValue>& arguments, const VarVal& 
             break;
         }
         case DataType::Type::CHAR:
+            arguments.emplace_back(argument.castToType(DataType::Type::UINT8).getRawValueAs<nautilus::val<uint8_t>>());
+            break;
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Unsupported Python UDF argument type {}", type);
     }
@@ -857,7 +907,7 @@ void appendPythonArgument(std::vector<PythonAbiValue>& arguments, const VarVal& 
 {
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     const auto* characters = reinterpret_cast<const char*>(error->errorPtr);
-    throw UnknownException("Python UDF failed: {}", std::string_view{characters, error->errorSize});
+    throw UdfExecutionError("Python UDF failed: {}", std::string_view{characters, error->errorSize});
 }
 
 void checkPythonUdfStatus(const uint8_t status, UdfErrorHolder* error)
@@ -950,7 +1000,11 @@ VarVal invokePython(const std::string& symbol, const DataType& returnType, Arena
             result.emplace(copiedResult, returnType.nullable, *resultIsNull != nautilus::val<uint8_t>{0});
             break;
         }
-        case DataType::Type::CHAR:
+        case DataType::Type::CHAR: {
+            const auto [value, isNull] = invokePythonScalar<uint8_t>(symbol, returnType.nullable, arena, arguments);
+            result.emplace(VarVal{value, returnType.nullable, isNull}.castToType(DataType::Type::CHAR));
+            break;
+        }
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Unsupported Python UDF return type {}", returnType);
     }
@@ -1055,6 +1109,9 @@ void appendInterpreterArgument(
             break;
         }
         case DataType::Type::CHAR:
+            storeInterpreterArgument(
+                destination, storage, argument.castToType(DataType::Type::UINT8).getRawValueAs<nautilus::val<uint8_t>>());
+            break;
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Unsupported Python UDF argument type {}", type);
     }
@@ -1124,6 +1181,8 @@ VarVal invokePythonInterpreter(
             return VarVal{copiedResult, returnType.nullable, isNull};
         }
         case DataType::Type::CHAR:
+            return VarVal{loadInterpreterScalarResult<uint8_t>(resultStorage), returnType.nullable, isNull}.castToType(
+                DataType::Type::CHAR);
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Unsupported Python UDF return type {}", returnType);
     }

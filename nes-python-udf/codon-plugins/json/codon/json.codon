@@ -1,0 +1,618 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Python's json module for Codon UDFs. Parsing is backed by simdjson; no CPython is involved.
+
+`loads` returns a `Value`, one type for any JSON value. It implements Python's protocols (indexing, len, iteration,
+`in`, comparison, hashing, truthiness, str/int/float conversion) plus the str and dict methods UDFs commonly call, so
+code written against Python's json mostly compiles unchanged. String methods return plain `str`, which keeps their
+results usable wherever Codon expects a `str`.
+
+`dumps` accepts Values and Codon values (str, int, float, bool, lists, dicts) and writes CPython's default format:
+", " and ": " separators and non-ASCII characters escaped as \\uXXXX.
+
+Codon decides `type(x) == list` and `isinstance(x, list)` at compile time, so they cannot inspect a Value; use
+`x.is_list()`, `x.is_dict()` and friends instead.
+"""
+
+KIND_NULL: Literal[int] = 0
+KIND_BOOL: Literal[int] = 1
+KIND_INT: Literal[int] = 2
+KIND_FLOAT: Literal[int] = 3
+KIND_STRING: Literal[int] = 4
+KIND_ARRAY: Literal[int] = 5
+KIND_OBJECT: Literal[int] = 6
+
+
+class Value:
+    kind: int
+    integer: int
+    real: float
+    text: str
+    elements: List[Value]
+    names: List[str]
+
+    def __init__(self, kind: int):
+        self.kind = kind
+        self.integer = 0
+        self.real = 0.0
+        self.text = ""
+        self.elements = []
+        self.names = []
+
+    # ---- type checks: the runtime counterpart of isinstance(x, list) etc.
+
+    def is_null(self) -> bool:
+        return self.kind == KIND_NULL
+
+    def is_bool(self) -> bool:
+        return self.kind == KIND_BOOL
+
+    def is_int(self) -> bool:
+        return self.kind == KIND_INT
+
+    def is_float(self) -> bool:
+        return self.kind == KIND_FLOAT
+
+    def is_number(self) -> bool:
+        return self.kind == KIND_INT or self.kind == KIND_FLOAT
+
+    def is_str(self) -> bool:
+        return self.kind == KIND_STRING
+
+    def is_list(self) -> bool:
+        return self.kind == KIND_ARRAY
+
+    def is_dict(self) -> bool:
+        return self.kind == KIND_OBJECT
+
+    def _type_name(self) -> str:
+        if self.kind == KIND_NULL:
+            return "NoneType"
+        if self.kind == KIND_BOOL:
+            return "bool"
+        if self.kind == KIND_INT:
+            return "int"
+        if self.kind == KIND_FLOAT:
+            return "float"
+        if self.kind == KIND_STRING:
+            return "str"
+        if self.kind == KIND_ARRAY:
+            return "list"
+        return "dict"
+
+    def _as_text(self, method: str) -> str:
+        if self.kind != KIND_STRING:
+            raise AttributeError("'" + self._type_name() + "' object has no attribute '" + method + "'")
+        return self.text
+
+    # ---- container protocol
+
+    def __len__(self) -> int:
+        if self.kind == KIND_STRING:
+            return _code_point_count(self.text)
+        if self.kind == KIND_ARRAY or self.kind == KIND_OBJECT:
+            return len(self.elements)
+        raise TypeError("object of type '" + self._type_name() + "' has no len()")
+
+    def __getitem__(self, index: int) -> Value:
+        if self.kind == KIND_ARRAY:
+            return self.elements[index]
+        if self.kind == KIND_STRING:
+            return _string_value(_code_points(self.text)[index])
+        raise TypeError("'" + self._type_name() + "' object is not subscriptable by int")
+
+    def __getitem__(self, key: str) -> Value:
+        if self.kind != KIND_OBJECT:
+            raise TypeError("'" + self._type_name() + "' object is not subscriptable by str")
+        for i in range(len(self.names)):
+            if self.names[i] == key:
+                return self.elements[i]
+        raise KeyError(key)
+
+    def __getitem__(self, key: Value) -> Value:
+        if key.kind == KIND_STRING:
+            return self[key.text]
+        if key.kind == KIND_INT or key.kind == KIND_BOOL:
+            return self[key.integer]
+        raise TypeError("indices must be integers or strings, not " + key._type_name())
+
+    def __contains__(self, item) -> bool:
+        """Keys of an object, elements of an array, substrings of a string."""
+        if self.kind == KIND_ARRAY:
+            for element in self.elements:
+                if element == item:
+                    return True
+            return False
+        if isinstance(item, Value):
+            return item.kind == KIND_STRING and item.text in self
+        elif isinstance(item, str):
+            if self.kind == KIND_OBJECT:
+                return item in self.names
+            if self.kind == KIND_STRING:
+                return item in self.text
+        if self.kind == KIND_OBJECT or self.kind == KIND_STRING:
+            return False
+        raise TypeError("argument of type '" + self._type_name() + "' is not iterable")
+
+    def __iter__(self) -> Generator[Value]:
+        if self.kind == KIND_ARRAY:
+            for item in self.elements:
+                yield item
+        elif self.kind == KIND_OBJECT:
+            for name in self.names:
+                yield _string_value(name)
+        elif self.kind == KIND_STRING:
+            for character in _code_points(self.text):
+                yield _string_value(character)
+        else:
+            raise TypeError("'" + self._type_name() + "' object is not iterable")
+
+    # ---- dict methods
+
+    def get(self, key: str) -> Optional[Value]:
+        """Like dict.get: None for a missing key, and for a JSON null (which Python parses to None)."""
+        if self.kind != KIND_OBJECT:
+            raise AttributeError("'" + self._type_name() + "' object has no attribute 'get'")
+        for i in range(len(self.names)):
+            if self.names[i] == key:
+                element = self.elements[i]
+                return None if element.kind == KIND_NULL else element
+        return None
+
+    def get(self, key: str, default: Value) -> Optional[Value]:
+        if self.kind != KIND_OBJECT:
+            raise AttributeError("'" + self._type_name() + "' object has no attribute 'get'")
+        for i in range(len(self.names)):
+            if self.names[i] == key:
+                element = self.elements[i]
+                return None if element.kind == KIND_NULL else element
+        return default
+
+    def keys(self) -> List[str]:
+        self._require_dict("keys")
+        return list(self.names)
+
+    def values(self) -> List[Value]:
+        self._require_dict("values")
+        return list(self.elements)
+
+    def items(self) -> List[Tuple[str, Value]]:
+        self._require_dict("items")
+        return [(self.names[i], self.elements[i]) for i in range(len(self.names))]
+
+    def _require_dict(self, method: str):
+        if self.kind != KIND_OBJECT:
+            raise AttributeError("'" + self._type_name() + "' object has no attribute '" + method + "'")
+
+    # ---- str methods (string values only; they return plain str)
+
+    def lower(self) -> str:
+        return self._as_text("lower").lower()
+
+    def upper(self) -> str:
+        return self._as_text("upper").upper()
+
+    def strip(self, chars: Optional[str] = None) -> str:
+        return self._as_text("strip").strip(chars)
+
+    def lstrip(self, chars: Optional[str] = None) -> str:
+        return self._as_text("lstrip").lstrip(chars)
+
+    def rstrip(self, chars: Optional[str] = None) -> str:
+        return self._as_text("rstrip").rstrip(chars)
+
+    def split(self, sep: Optional[str] = None, maxsplit: int = -1) -> List[str]:
+        return self._as_text("split").split(sep, maxsplit)
+
+    def startswith(self, prefix: str) -> bool:
+        return self._as_text("startswith").startswith(prefix)
+
+    def endswith(self, suffix: str) -> bool:
+        return self._as_text("endswith").endswith(suffix)
+
+    def replace(self, old: str, new: str) -> str:
+        return self._as_text("replace").replace(old, new)
+
+    def find(self, sub: str) -> int:
+        return self._as_text("find").find(sub)
+
+    # ---- comparison and hashing
+
+    def __eq__(self, other) -> bool:
+        """Python equality against Values and Codon values; dispatch happens on the static type of other."""
+        if isinstance(other, Value):
+            return _equal(self, other)
+        elif isinstance(other, str):
+            return self.kind == KIND_STRING and self.text == other
+        elif isinstance(other, bool) or isinstance(other, int):
+            # Python: True == 1 == 1.0
+            if self.kind == KIND_INT or self.kind == KIND_BOOL:
+                return self.integer == int(other)
+            return self.kind == KIND_FLOAT and self.real == float(int(other))
+        elif isinstance(other, float):
+            return self.is_number() and float(self) == other
+        elif isinstance(other, NoneType):
+            return self.kind == KIND_NULL
+        else:
+            return False
+
+    def __ne__(self, other) -> bool:
+        return not (self == other)
+
+    def __lt__(self, other: Value) -> bool:
+        return _compare(self, other) < 0
+
+    def __le__(self, other: Value) -> bool:
+        return _compare(self, other) <= 0
+
+    def __gt__(self, other: Value) -> bool:
+        return _compare(self, other) > 0
+
+    def __ge__(self, other: Value) -> bool:
+        return _compare(self, other) >= 0
+
+    def __hash__(self) -> int:
+        if self.kind == KIND_STRING:
+            return hash(self.text)
+        if self.kind == KIND_INT or self.kind == KIND_BOOL:
+            return hash(self.integer)
+        if self.kind == KIND_FLOAT:
+            if self.real == float(int(self.real)):
+                return hash(int(self.real))
+            return hash(self.real)
+        if self.kind == KIND_NULL:
+            return 0
+        if self.kind == KIND_ARRAY:
+            # Unlike a Python list, an array is hashable: it stands in for the tuple(x) that Python code builds to put a
+            # parsed list into a set (see StreamUDFBench's jaccard).
+            combined = 0x345678
+            for element in self.elements:
+                combined = (combined ^ hash(element)) * 1000003
+            return combined
+        raise TypeError("unhashable type: '" + self._type_name() + "'")
+
+    # ---- conversions
+
+    def __bool__(self) -> bool:
+        if self.kind == KIND_NULL:
+            return False
+        if self.kind == KIND_BOOL or self.kind == KIND_INT:
+            return self.integer != 0
+        if self.kind == KIND_FLOAT:
+            return self.real != 0.0
+        if self.kind == KIND_STRING:
+            return len(self.text) > 0
+        return len(self.elements) > 0
+
+    def __int__(self) -> int:
+        if self.kind == KIND_INT or self.kind == KIND_BOOL:
+            return self.integer
+        if self.kind == KIND_FLOAT:
+            return int(self.real)
+        if self.kind == KIND_STRING:
+            return int(self.text)
+        raise TypeError("int() argument must be a string or a number, not '" + self._type_name() + "'")
+
+    def __float__(self) -> float:
+        if self.kind == KIND_FLOAT:
+            return self.real
+        if self.kind == KIND_INT or self.kind == KIND_BOOL:
+            return float(self.integer)
+        if self.kind == KIND_STRING:
+            return float(self.text)
+        raise TypeError("float() argument must be a string or a number, not '" + self._type_name() + "'")
+
+    def __str__(self) -> str:
+        """Like Python's str(): the text of a string, the repr of anything else."""
+        if self.kind == KIND_STRING:
+            return self.text
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        if self.kind == KIND_NULL:
+            return "None"
+        if self.kind == KIND_BOOL:
+            return "True" if self.integer != 0 else "False"
+        if self.kind == KIND_INT:
+            return str(self.integer)
+        if self.kind == KIND_FLOAT:
+            return str(self.real)
+        if self.kind == KIND_STRING:
+            return _python_string_repr(self.text)
+        if self.kind == KIND_ARRAY:
+            return "[" + ", ".join([item.__repr__() for item in self.elements]) + "]"
+        parts = [_python_string_repr(self.names[i]) + ": " + self.elements[i].__repr__() for i in range(len(self.names))]
+        return "{" + ", ".join(parts) + "}"
+
+
+def _string_value(text: str) -> Value:
+    value = Value(KIND_STRING)
+    value.text = text
+    return value
+
+
+def _equal(left: Value, right: Value) -> bool:
+    if left.is_number() and right.is_number():
+        if left.kind == KIND_FLOAT or right.kind == KIND_FLOAT:
+            return float(left) == float(right)
+        return left.integer == right.integer
+    if (left.kind == KIND_BOOL) != (right.kind == KIND_BOOL):
+        # Python: True == 1, but a JSON bool never equals a string or container.
+        if left.kind == KIND_BOOL and right.kind == KIND_INT or left.kind == KIND_INT and right.kind == KIND_BOOL:
+            return left.integer == right.integer
+        return False
+    if left.kind != right.kind:
+        return False
+    if left.kind == KIND_NULL:
+        return True
+    if left.kind == KIND_BOOL:
+        return left.integer == right.integer
+    if left.kind == KIND_STRING:
+        return left.text == right.text
+    if len(left.elements) != len(right.elements):
+        return False
+    if left.kind == KIND_ARRAY:
+        for i in range(len(left.elements)):
+            if not _equal(left.elements[i], right.elements[i]):
+                return False
+        return True
+    for i in range(len(left.names)):
+        found = False
+        for j in range(len(right.names)):
+            if left.names[i] == right.names[j]:
+                if not _equal(left.elements[i], right.elements[j]):
+                    return False
+                found = True
+                break
+        if not found:
+            return False
+    return True
+
+
+def _compare(left: Value, right: Value) -> int:
+    """Three-way comparison with Python's ordering rules; unorderable pairs raise TypeError."""
+    if (left.is_number() or left.kind == KIND_BOOL) and (right.is_number() or right.kind == KIND_BOOL):
+        a = float(left)
+        b = float(right)
+        return -1 if a < b else (1 if a > b else 0)
+    if left.kind == KIND_STRING and right.kind == KIND_STRING:
+        return -1 if left.text < right.text else (1 if left.text > right.text else 0)
+    if left.kind == KIND_ARRAY and right.kind == KIND_ARRAY:
+        for i in range(min(len(left.elements), len(right.elements))):
+            if not _equal(left.elements[i], right.elements[i]):
+                return _compare(left.elements[i], right.elements[i])
+        return -1 if len(left.elements) < len(right.elements) else (1 if len(left.elements) > len(right.elements) else 0)
+    raise TypeError("'<' not supported between instances of '" + left._type_name() + "' and '" + right._type_name() + "'")
+
+
+def _utf8_width(lead: int) -> int:
+    if lead < 0x80:
+        return 1
+    if lead >> 5 == 0x6:
+        return 2
+    if lead >> 4 == 0xE:
+        return 3
+    if lead >> 3 == 0x1E:
+        return 4
+    return 1
+
+
+def _code_point_count(text: str) -> int:
+    """Python measures strings in code points; Codon's len(str) counts UTF-8 bytes."""
+    count = 0
+    for i in range(len(text)):
+        if (int(text.ptr[i]) & 0xC0) != 0x80:
+            count += 1
+    return count
+
+
+def _code_points(text: str) -> List[str]:
+    result = List[str]()
+    i = 0
+    while i < len(text):
+        width = min(_utf8_width(int(text.ptr[i])), len(text) - i)
+        result.append(text[i:i + width])
+        i += width
+    return result
+
+
+def _python_string_repr(text: str) -> str:
+    quote = '"' if ("'" in text and '"' not in text) else "'"
+    out = [quote]
+    for character in _code_points(text):
+        if character == quote or character == "\\":
+            out.append("\\" + character)
+        elif character == "\n":
+            out.append("\\n")
+        elif character == "\r":
+            out.append("\\r")
+        elif character == "\t":
+            out.append("\\t")
+        else:
+            out.append(character)
+    out.append(quote)
+    return "".join(out)
+
+
+def _raise_native_error(status, error_pointer, error_size):
+    if status != i8(0):
+        raise ValueError(str(error_pointer, int(error_size)))
+
+
+class _Reader:
+    """Walks the flat pre-order node list produced by nes_json_parse."""
+    ints: Ptr[int]
+    reals: Ptr[float]
+    text: Ptr[byte]
+    cursor: int
+
+    def __init__(self, ints: Ptr[int], reals: Ptr[float], text: Ptr[byte]):
+        self.ints = ints
+        self.reals = reals
+        self.text = text
+        self.cursor = 0
+
+    def _string_at(self, index: int) -> str:
+        offset = self.ints[index * 5 + 3]
+        size = self.ints[index * 5 + 4]
+        return str(self.text + offset, size)
+
+    def read(self) -> Value:
+        index = self.cursor
+        self.cursor += 1
+        kind = self.ints[index * 5]
+        count = self.ints[index * 5 + 1]
+        value = Value(kind)
+        if kind == KIND_BOOL or kind == KIND_INT:
+            value.integer = self.ints[index * 5 + 2]
+        elif kind == KIND_FLOAT:
+            value.real = self.reals[index]
+        elif kind == KIND_STRING:
+            value.text = self._string_at(index)
+        elif kind == KIND_ARRAY:
+            for _ in range(count):
+                value.elements.append(self.read())
+        elif kind == KIND_OBJECT:
+            for _ in range(count):
+                key_index = self.cursor
+                self.cursor += 1
+                value.names.append(self._string_at(key_index))
+                value.elements.append(self.read())
+        return value
+
+
+def loads(source: str) -> Value:
+    """Parses a JSON document. Raises ValueError with the simdjson message on malformed input."""
+    from C import nes_json_parse(
+        Ptr[byte], i64, Ptr[Ptr[i64]], Ptr[Ptr[f64]], Ptr[i64], Ptr[Ptr[byte]], Ptr[i64], Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    ints_pointer = Ptr[i64]()
+    reals_pointer = Ptr[f64]()
+    node_count = i64(0)
+    text_pointer = Ptr[byte]()
+    text_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    status = nes_json_parse(
+        source.ptr, i64(len(source)),
+        __ptr__(ints_pointer), __ptr__(reals_pointer), __ptr__(node_count),
+        __ptr__(text_pointer), __ptr__(text_size),
+        __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+    return _Reader(ints_pointer, reals_pointer, text_pointer).read()
+
+
+# ---- dumps: CPython's json.dumps defaults (ensure_ascii=True, separators (", ", ": "), allow_nan=True)
+
+def _unicode_escape(code: int) -> str:
+    digits = "0123456789abcdef"
+    return "\\u" + digits[(code >> 12) & 15] + digits[(code >> 8) & 15] + digits[(code >> 4) & 15] + digits[code & 15]
+
+
+def _quote(text: str) -> str:
+    out = ['"']
+    i = 0
+    while i < len(text):
+        lead = int(text.ptr[i])
+        if lead < 0x80:
+            if lead == 34:
+                out.append('\\"')
+            elif lead == 92:
+                out.append("\\\\")
+            elif lead == 10:
+                out.append("\\n")
+            elif lead == 13:
+                out.append("\\r")
+            elif lead == 9:
+                out.append("\\t")
+            elif lead == 8:
+                out.append("\\b")
+            elif lead == 12:
+                out.append("\\f")
+            elif lead < 0x20 or lead == 0x7F:
+                out.append(_unicode_escape(lead))
+            else:
+                out.append(text[i:i + 1])
+            i += 1
+            continue
+        width = min(_utf8_width(lead), len(text) - i)
+        code = lead & (0x1F if width == 2 else (0x0F if width == 3 else 0x07))
+        for j in range(1, width):
+            code = (code << 6) | (int(text.ptr[i + j]) & 0x3F)
+        if code >= 0x10000:
+            # Above the BMP: a UTF-16 surrogate pair, as CPython writes it.
+            code -= 0x10000
+            out.append(_unicode_escape(0xD800 + (code >> 10)))
+            out.append(_unicode_escape(0xDC00 + (code & 0x3FF)))
+        else:
+            out.append(_unicode_escape(code))
+        i += width
+    out.append('"')
+    return "".join(out)
+
+
+def _float_text(value: float) -> str:
+    if value != value:
+        return "NaN"
+    if value == float("inf"):
+        return "Infinity"
+    if value == -float("inf"):
+        return "-Infinity"
+    return str(value)
+
+
+def _key_text(key) -> str:
+    """JSON object keys are strings; Python converts bool, int and float keys."""
+    if isinstance(key, bool):
+        return "true" if key else "false"
+    return str(key)
+
+
+def _dump_value(value: Value) -> str:
+    if value.kind == KIND_NULL:
+        return "null"
+    if value.kind == KIND_BOOL:
+        return "true" if value.integer != 0 else "false"
+    if value.kind == KIND_INT:
+        return str(value.integer)
+    if value.kind == KIND_FLOAT:
+        return _float_text(value.real)
+    if value.kind == KIND_STRING:
+        return _quote(value.text)
+    if value.kind == KIND_ARRAY:
+        return "[" + ", ".join([_dump_value(item) for item in value.elements]) + "]"
+    parts = [_quote(value.names[i]) + ": " + _dump_value(value.elements[i]) for i in range(len(value.names))]
+    return "{" + ", ".join(parts) + "}"
+
+
+def dumps(value) -> str:
+    """Serializes Values and Codon values. Dispatch happens on the static type; Codon drops the other branches."""
+    if isinstance(value, Value):
+        return _dump_value(value)
+    elif isinstance(value, Optional):
+        return "null" if value is None else dumps(value.__val__())
+    elif isinstance(value, NoneType):
+        return "null"
+    elif isinstance(value, bool):
+        return "true" if value else "false"
+    elif isinstance(value, int):
+        return str(value)
+    elif isinstance(value, float):
+        return _float_text(value)
+    elif isinstance(value, str):
+        return _quote(value)
+    elif isinstance(value, List) or isinstance(value, Tuple):
+        return "[" + ", ".join([dumps(item) for item in value]) + "]"
+    elif isinstance(value, Dict):
+        return "{" + ", ".join([_quote(_key_text(key)) + ": " + dumps(item) for key, item in value.items()]) + "}"
+    else:
+        raise TypeError("Object of type " + type(value).__name__ + " is not JSON serializable")

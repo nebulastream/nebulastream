@@ -52,6 +52,12 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <fmt/format.h>
+#include <nanoarrow/nanoarrow.h>
+#include <nanoarrow/nanoarrow.hpp>
+#include <nanoarrow/nanoarrow_ipc.h>
+#include <nanoarrow/nanoarrow_ipc.hpp>
+#include <ArrowBatches.hpp>
 #include <ErrorHandling.hpp>
 #include <PythonBatchWrapper.hpp>
 #include <PythonProcessChannel.hpp>
@@ -146,13 +152,7 @@ void PythonProcessSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     layout = std::dynamic_pointer_cast<ArrowBufferRef>(
         LowerSchemaProvider::lowerSchemaToArrow(bufferProvider->getBufferSize(), Schema<QualifiedUnboundField, Ordered>{schema}));
     INVARIANT(layout != nullptr, "lowerSchemaToArrow must return an ArrowBufferRef");
-    for (const auto& field : layout->getFields())
-    {
-        if (field.childBufferSlot != ArrowBufferRef::Field::NO_CHILD_BUFFER)
-        {
-            varSizedFields.push_back(field);
-        }
-    }
+    arrowSchema = makeArrowSchema(*layout);
     startProcess();
 
     const auto program = generatePythonBatchWrapper(*layout, calls);
@@ -168,6 +168,17 @@ void PythonProcessSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     {
         throw CannotLoadUdf("Failed to initialize the UDF process: {}", exception.what());
     }
+
+    /// The IPC stream to the process starts with the schema of the batches.
+    ArrowError error{};
+    nanoarrow::UniqueBuffer message;
+    if (ArrowIpcEncoderInit(encoder.get()) != NANOARROW_OK || ArrowIpcDecoderInit(decoder.get()) != NANOARROW_OK
+        || ArrowIpcEncoderEncodeSchema(encoder.get(), arrowSchema.get(), &error) != NANOARROW_OK
+        || ArrowIpcEncoderFinalizeBuffer(encoder.get(), 1, message.get()) != NANOARROW_OK)
+    {
+        throw CannotLoadUdf("Failed to encode the Arrow schema of a UDF process: {}", error.message);
+    }
+    sendAll(std::as_bytes(std::span{message->data, static_cast<size_t>(message->size_bytes)}), noStop);
 }
 
 void PythonProcessSource::startProcess()
@@ -310,73 +321,145 @@ bool PythonProcessSource::receiveStatus(const std::stop_token& stopToken) const
     throw UdfExecutionError("Python UDF failed: {}", message);
 }
 
-bool PythonProcessSource::sendBatch(const TupleBuffer& input, const std::stop_token& stopToken) const
+bool PythonProcessSource::sendBatch(const TupleBuffer& input, const std::stop_token& stopToken)
 {
-    std::vector<std::vector<TupleBuffer>> children;
-    std::vector<uint64_t> header{input.getNumberOfTuples()};
-    for (const auto& field : varSizedFields)
+    /// The array points into `input`, so only the encoder copies the batch, into the body of the message.
+    const auto array = exportArrowArray(input, *layout, *arrowSchema.get());
+    ArrowError error{};
+    nanoarrow::UniqueArrayView view;
+    nanoarrow::UniqueBuffer body;
+    nanoarrow::UniqueBuffer header;
+    if (ArrowArrayViewInitFromSchema(view.get(), arrowSchema.get(), &error) != NANOARROW_OK
+        || ArrowArrayViewSetArray(view.get(), array.get(), &error) != NANOARROW_OK
+        || ArrowIpcEncoderEncodeSimpleRecordBatch(encoder.get(), view.get(), body.get(), &error) != NANOARROW_OK
+        || ArrowIpcEncoderFinalizeBuffer(encoder.get(), 1, header.get()) != NANOARROW_OK)
     {
-        auto& columnChildren = children.emplace_back(layout->loadVarSizedChildBuffers(input, field));
-        uint64_t length = 0;
-        for (const auto& child : columnChildren)
-        {
-            length += child.getNumberOfTuples();
-        }
-        header.push_back(length);
+        throw UdfExecutionError("Failed to encode a batch for the UDF process: {}", error.message);
     }
-    if (!sendAll(std::as_bytes(std::span{header}), stopToken)
-        || !sendAll(std::as_bytes(input.getAvailableMemoryArea<std::byte>().first(layout->getBufferSize())), stopToken))
+    return sendAll(std::as_bytes(std::span{header->data, static_cast<size_t>(header->size_bytes)}), stopToken)
+        && sendAll(std::as_bytes(std::span{body->data, static_cast<size_t>(body->size_bytes)}), stopToken);
+}
+
+bool PythonProcessSource::receiveMessage(std::vector<std::byte>& message, const std::stop_token& stopToken)
+{
+    /// An encapsulated IPC message starts with 0xFFFFFFFF and the size of the metadata that follows.
+    std::array<int32_t, 2> prefix{};
+    if (!receiveAll(std::as_writable_bytes(std::span{prefix}), stopToken))
     {
         return false;
     }
-    for (const auto& columnChildren : children)
+    if (prefix[0] != -1 || prefix[1] <= 0)
     {
-        for (const auto& child : columnChildren)
-        {
-            if (!sendAll(child.getAvailableMemoryArea<std::byte>().first(child.getNumberOfTuples()), stopToken))
-            {
-                return false;
-            }
-        }
+        throw UdfExecutionError("The UDF process sent no Arrow IPC message, but continuation {} and size {}", prefix[0], prefix[1]);
     }
-    return true;
+    message.resize(sizeof(prefix) + static_cast<size_t>(prefix[1]));
+    std::memcpy(message.data(), prefix.data(), sizeof(prefix));
+    return receiveAll(std::span{message}.subspan(sizeof(prefix)), stopToken);
 }
 
-bool PythonProcessSource::receiveBatch(TupleBuffer& output, const std::stop_token& stopToken) const
+void PythonProcessSource::setDecoderSchema(const ArrowSchema& received)
+{
+    /// The process answers with the schema it received, so anything else is a bug in the wrapper or the UDF.
+    bool matches = received.n_children == arrowSchema->n_children;
+    for (int64_t index = 0; matches && index < received.n_children; ++index)
+    {
+        matches = std::string_view{received.children[index]->format} == std::string_view{arrowSchema->children[index]->format};
+    }
+    if (!matches)
+    {
+        throw UdfExecutionError("The UDF process answered with a schema other than the one of its batches");
+    }
+    ArrowError error{};
+    nanoarrow::UniqueSchema expected;
+    if (ArrowSchemaDeepCopy(arrowSchema.get(), expected.get()) != NANOARROW_OK
+        || ArrowIpcDecoderSetEndianness(decoder.get(), decoder->endianness) != NANOARROW_OK
+        || ArrowIpcDecoderSetSchema(decoder.get(), expected.get(), &error) != NANOARROW_OK)
+    {
+        throw UdfExecutionError("Failed to read the schema of the UDF process: {}", error.message);
+    }
+}
+
+bool PythonProcessSource::receiveBatch(TupleBuffer& output, const uint64_t rows, const std::stop_token& stopToken)
 {
     if (!receiveStatus(stopToken))
     {
         return false;
     }
-    std::vector<uint64_t> lengths(varSizedFields.size());
-    if (!receiveAll(std::as_writable_bytes(std::span{lengths}), stopToken)
-        || !receiveAll(output.getAvailableMemoryArea<std::byte>().first(layout->getBufferSize()), stopToken))
+    ArrowError error{};
+    std::vector<std::byte> message;
+    while (true)
     {
-        return false;
-    }
-    /// Every column gets one child buffer, stored in slot order, which is what ArrowBufferRef expects.
-    for (const auto length : lengths)
-    {
-        auto child = [&]
-        {
-            if (length <= bufferProvider->getBufferSize())
-            {
-                return bufferProvider->getBufferBlocking();
-            }
-            auto unpooled = bufferProvider->getUnpooledBuffer(length);
-            if (!unpooled.has_value())
-            {
-                throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size {}", length);
-            }
-            return *unpooled;
-        }();
-        if (!receiveAll(child.getAvailableMemoryArea<std::byte>().first(length), stopToken))
+        if (!receiveMessage(message, stopToken))
         {
             return false;
         }
-        child.setNumberOfTuples(length);
-        [[maybe_unused]] const auto index = output.storeChildBuffer(child);
+        const ArrowBufferView metadata{.data = {.data = message.data()}, .size_bytes = static_cast<int64_t>(message.size())};
+        if (ArrowIpcDecoderVerifyHeader(decoder.get(), metadata, &error) != NANOARROW_OK
+            || ArrowIpcDecoderDecodeHeader(decoder.get(), metadata, &error) != NANOARROW_OK)
+        {
+            throw UdfExecutionError("Failed to read a message of the UDF process: {}", error.message);
+        }
+        if (decoder->message_type == NANOARROW_IPC_MESSAGE_TYPE_SCHEMA)
+        {
+            nanoarrow::UniqueSchema received;
+            if (ArrowIpcDecoderDecodeSchema(decoder.get(), received.get(), &error) != NANOARROW_OK)
+            {
+                throw UdfExecutionError("Failed to read the schema of the UDF process: {}", error.message);
+            }
+            setDecoderSchema(*received.get());
+            continue;
+        }
+        if (decoder->message_type != NANOARROW_IPC_MESSAGE_TYPE_RECORD_BATCH)
+        {
+            throw UdfExecutionError(
+                "The UDF process sent an Arrow IPC message of type {}, not a record batch", fmt::underlying(decoder->message_type));
+        }
+        break;
     }
+
+    /// The body goes behind the header of `output` if it fits, and into a child buffer otherwise. Either way it is read straight from
+    /// the socket and the header points at its columns, so the batch is not copied again.
+    const auto bodySize = static_cast<uint64_t>(decoder->body_size_bytes);
+    const auto headerSize = layout->getHeaderSize();
+    ArrowBufferRef::Location bodyLocation{.buffer = ArrowBufferRef::Location::MAIN_BUFFER, .offset = static_cast<uint32_t>(headerSize)};
+    if (headerSize + bodySize > output.getBufferSize())
+    {
+        auto child = [&]
+        {
+            if (bodySize <= bufferProvider->getBufferSize())
+            {
+                return bufferProvider->getBufferBlocking();
+            }
+            auto unpooled = bufferProvider->getUnpooledBuffer(bodySize);
+            if (!unpooled.has_value())
+            {
+                throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size {}", bodySize);
+            }
+            return *unpooled;
+        }();
+        child.setNumberOfTuples(bodySize);
+        bodyLocation = {.buffer = output.storeChildBuffer(child).getRawValue() + 1, .offset = 0};
+    }
+    auto* const body
+        = const_cast<std::byte*>(ArrowBufferRef::resolve(output, bodyLocation)); /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+    if (!receiveAll(std::span{body, bodySize}, stopToken))
+    {
+        return false;
+    }
+
+    ArrowArrayView* batch = nullptr;
+    if (ArrowIpcDecoderDecodeArrayView(
+            decoder.get(), {.data = {.data = body}, .size_bytes = static_cast<int64_t>(bodySize)}, -1, &batch, &error)
+            != NANOARROW_OK
+        || ArrowArrayViewValidate(batch, NANOARROW_VALIDATION_LEVEL_FULL, &error) != NANOARROW_OK)
+    {
+        throw UdfExecutionError("The UDF process returned an invalid batch: {}", error.message);
+    }
+    if (std::cmp_not_equal(batch->length, rows))
+    {
+        throw UdfExecutionError("The UDF process returned {} rows for a batch of {}", batch->length, rows);
+    }
+    importArrowArrayView(*batch, body, bodyLocation, output, *layout);
     return true;
 }
 
@@ -389,7 +472,7 @@ Source::FillTupleBufferResult PythonProcessSource::fillTupleBuffer(TupleBuffer& 
     }
     const auto rows = input->getNumberOfTuples();
     /// An empty buffer still carries its sequence and chunk number and the watermark.
-    if (rows > 0 && (!sendBatch(*input, stopToken) || !receiveBatch(tupleBuffer, stopToken)))
+    if (rows > 0 && (!sendBatch(*input, stopToken) || !receiveBatch(tupleBuffer, rows, stopToken)))
     {
         return FillTupleBufferResult::eos();
     }

@@ -16,7 +16,7 @@ CREATE FUNCTION add_two (x INT64, y INT64) RETURNS INT64 AS $python$
     return x + y
 $python$;
 CREATE FUNCTION shout (w VARSIZED) RETURNS VARSIZED AS $python$
-    return w.upper() + b"!"
+    return w.upper() + "!"
 $python$;
 CREATE FUNCTION positive (x INT64) RETURNS BOOLEAN AS $python$
     return x > 5

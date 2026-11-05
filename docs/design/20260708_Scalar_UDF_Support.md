@@ -46,8 +46,9 @@ The per-row GIL and per-row call-overhead ceilings, and the column-batch ABI tha
 NG3: Aggregate, table, and window UDFs are out of scope — only scalar UDFs for v1.
 
 NG4: Full NES type coverage is out of scope for v1.
-v1 supports `BOOLEAN`, the integer widths (`INT8..INT64`, `UINT8..UINT64`), the float widths (`FLOAT32/64`), and `VARSIZED`.
-`TIMESTAMP`, decimal, and `CHAR` are deferred and rejected at registration.
+v1 supports `BOOLEAN`, the integer widths (`INT8..INT64`, `UINT8..UINT64`), the float widths (`FLOAT32/64`), `VARSIZED` and `CHAR`.
+A `CHAR` is one byte, which a Python UDF gets like a one-byte `VARSIZED` value: a one-character `str` (ASCII only outside of Codon) or, annotated as such, `bytes`; a `CHAR` result is a `str` or `bytes` of exactly one byte.
+`TIMESTAMP` and decimal are deferred and rejected at registration.
 
 NG5: Sandboxing untrusted UDF code and privacy rules beyond process isolation (resource limits, seccomp, filesystem/network confinement) is out of scope.
 
@@ -257,7 +258,7 @@ void cleanup_udf(int handle);
 ```
 
 Explicit `arg_nulls`/`result_null` replace the PoC's NaN sentinel (A5).
-`arg_lens` + `result_string_len` make VARSIZED binary-safe (mapped to Python `bytes`).
+`arg_lens` + `result_string_len` carry the length of a VARSIZED value. In the Python modes, a parameter annotated `bytes` (also `Optional[bytes]`) receives the raw bytes. Any other parameter receives a `str` and the query fails if the value is not valid UTF-8. A UDF may return `str` or `bytes`.
 
 ## Registration (G1, A6)
 
@@ -342,7 +343,7 @@ OQ5: Interpreter choice per UDF — resolved. CPython is the only embedded inter
 - **Descriptor.** `UdfDescriptor` carries a `UdfLanguage` (`Python`) and a `UdfExecution` (`Inline`, `InProcess` or `OutOfProcess`, which is not available yet). An Inline UDF has no `.so`: `path` stays empty, and it needs at least one argument. `UdfBackend::create` refuses anything but InProcess descriptors.
 - **Lowering.** `FunctionProvider` turns an Inline `UDFCall` into a `PythonPhysicalFunction`, whose body is the UDF's `AS` body or, for an entry point, a generated import and call. Modules are found on `python_udf_import_paths` plus `NES_UDF_PATH`, the search path the CPython bridge uses, so one directory of UDF modules serves every backend.
 - **NULL semantics.** A nullable argument arrives as `Optional[T]`, which is `None` for NULL. The result is nullable.
-- **Language subset.** The code is compiled by Codon, not run by an interpreter. It must stay within Codon's statically typed Python, and a `VARSIZED` value is a `str` (the CPython bridge passes `bytes`). `nes-systests/udf/pyudfs/portable_udfs.py` is written to be valid under CPython and Codon, which is what lets `PythonUdfBridgeComparison.test` compare both backends on one source.
+- **Language subset.** The code is compiled by Codon, not run by an interpreter. It must stay within Codon's statically typed Python, and a `VARSIZED` value is a `str` that Codon does not validate, so it can also hold binary data and its length counts bytes. An `ENTRYPOINT` function can annotate a parameter as `bytes` or `Optional[bytes]`, and can return `bytes`. `nes-systests/udf/pyudfs/portable_udfs.py` is written to be valid under CPython and Codon, which is what lets `PythonUdfBridgeComparison.test` compare both backends on one source.
 
 # Extension — Function bodies in CREATE FUNCTION
 
@@ -356,7 +357,7 @@ A UDF has one of three executions, set by `EXECUTION` in `CREATE FUNCTION`:
 
 - **`INLINE`** compiles it into the query pipeline, with Codon for Python. It stays in its expression, like a built-in function.
 - **`IN_PROCESS`**, the default, runs it through a bridge `.so` loaded into the worker, such as embedded CPython.
-- **`OUT_OF_PROCESS`** runs it in a separate Python process, the interpreter of `$NES_UDF_VENV` if set and `python3` otherwise. A crash of the process fails the query, not the worker.
+- **`OUT_OF_PROCESS`** runs it in a separate Python process, the interpreter of `$NES_UDF_VENV` if set and `python3` otherwise, which needs `pyarrow`. A crash of the process fails the query, not the worker.
 
 An out-of-process operator exchanges whole batches with its process. `QueryDecomposition` splits it into a sink and a source on its node, connected by a bounded in-memory channel. The Arrow layout only exists in lowering, on the operator's node, so it never appears in the logical plan or crosses the network:
 
@@ -364,7 +365,9 @@ An out-of-process operator exchanges whole batches with its process. `QueryDecom
 input (row) -> Emit (ARROW, with columns for the results) -> PythonProcess sink -> channel -> PythonProcess source -> Scan (ARROW) -> output (row)
 ```
 
-Worker threads only queue buffers. The source thread owns the process and does one synchronous round trip per batch over a socket, and it keeps the metadata of the input buffer, so only the buffer and its VARSIZED payloads cross the socket. On `open`, it generates a Python wrapper with the column offsets of the Arrow layout baked in and sends it to the process. The wrapper calls each UDF once per row and writes the results into their columns of the same buffer, using only the standard library. Arguments that are NULL reach the UDF as `None`, and VARSIZED arguments are `bytes`. A VARSIZED result may be `bytes` or `str`. `NES_UDF_PATH` lists further directories for importing an `ENTRYPOINT` module.
+A buffer of the Arrow layout (`ArrowBufferRef`) holds a standard Arrow record batch, VARSIZED as Arrow `binary`, behind a header that says for each column where its validity bitmap, data and `binary` values are: in the buffer itself or in a child buffer, at an offset. The emit writes a pointer and a size per VARSIZED value and, when the buffer is full or closed, `TupleBufferRef::finalize` copies the values into one contiguous child buffer and replaces the pointers by Arrow offsets. The scan reads through the header, so a buffer can also hold a batch laid out by someone else.
+
+Worker threads only queue buffers. The source thread owns the process and does one synchronous round trip per batch over a socket, and it keeps the metadata of the input buffer. Batches cross the socket as Arrow IPC streams in both directions: the source exports its input through the Arrow C Data Interface without copying, and nanoarrow encodes it. The process reads the stream with pyarrow and answers with the input columns plus the results. The source reads the body of the answer straight from the socket, behind the header of its output buffer or into a child buffer if it does not fit, validates it with nanoarrow and points the header at its columns. On `open`, the source generates a Python wrapper and sends it to the process. The wrapper converts the argument columns to Python values, calls each UDF once per row and builds the result columns as Arrow arrays. Arguments that are NULL reach the UDF as `None`. A VARSIZED argument is `bytes` if its parameter is annotated `bytes` (also inside a union such as `Optional[bytes]`), and a `str` otherwise, which fails the batch on invalid UTF-8. A VARSIZED result may be `bytes` or `str`. `NES_UDF_PATH` lists further directories for importing an `ENTRYPOINT` module.
 
 
 `UDFLiftingRule` runs after the pushdown rules and rewrites selections and projections that call non-Inline UDFs:

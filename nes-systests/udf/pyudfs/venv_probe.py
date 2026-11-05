@@ -19,4 +19,4 @@ def camelize(name):
     """snake_case -> CamelCase (VARSIZED -> VARSIZED), via a package only the venv provides."""
     if name is None:
         return None
-    return inflection.camelize(name.decode("utf-8"))
+    return inflection.camelize(name)

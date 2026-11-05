@@ -105,7 +105,8 @@ TEST_F(UdfCatalogTest, AcceptsAllSupportedTypes)
          dt(DataType::Type::INT64),
          dt(DataType::Type::UINT32),
          dt(DataType::Type::FLOAT32),
-         dt(DataType::Type::VARSIZED)},
+         dt(DataType::Type::VARSIZED),
+         dt(DataType::Type::CHAR)},
         dt(DataType::Type::INT32)));
     EXPECT_TRUE(catalog.hasUdf("wide"));
 }
@@ -114,7 +115,8 @@ TEST_F(UdfCatalogTest, RejectsUnsupportedArgumentType)
 {
     UdfCatalog catalog;
     ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerUdf("bad", libPath, "m.f", {dt(DataType::Type::CHAR)}, dt(DataType::Type::FLOAT64)), NES::ErrorCode::CannotLoadUdf);
+        catalog.registerUdf("bad", libPath, "m.f", {dt(DataType::Type::UNDEFINED)}, dt(DataType::Type::FLOAT64)),
+        NES::ErrorCode::CannotLoadUdf);
 }
 
 TEST_F(UdfCatalogTest, RejectsUnsupportedReturnType)

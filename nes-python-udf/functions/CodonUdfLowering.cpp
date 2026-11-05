@@ -44,15 +44,20 @@ InlineUdfSource buildCodonUdfCall(const UdfDescriptor& descriptor, const std::ve
         inputTypes.size() == descriptor.getArgTypes().size(), "UDF '{}' called with a wrong number of arguments", descriptor.getName());
 
     InlineUdfSource call;
+    std::vector<std::string> entryArguments;
     for (size_t index = 0; index < inputTypes.size(); ++index)
     {
         call.parameterNames.emplace_back(fmt::format("_p{}", index));
+        /// Only the entry point's annotations can tell if a VARSIZED or CHAR value is meant as str or as bytes.
+        const auto isText = inputTypes[index].type == DataType::Type::VARSIZED || inputTypes[index].type == DataType::Type::CHAR;
+        entryArguments.emplace_back(isText ? fmt::format("_nes_argument(_nes_udf_entry, {0}, _p{0})", index) : fmt::format("_p{}", index));
     }
     call.body = fmt::format(
-        "from {} import {} as _nes_udf_entry\nreturn _nes_udf_entry({})",
+        "from {} import {} as _nes_udf_entry\nfrom nes_compat import _nes_argument, _nes_result\n"
+        "return _nes_result(_nes_udf_entry({}))",
         entrypoint->first,
         entrypoint->second,
-        fmt::join(call.parameterNames, ", "));
+        fmt::join(entryArguments, ", "));
     return call;
 }
 

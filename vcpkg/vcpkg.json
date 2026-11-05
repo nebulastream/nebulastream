@@ -36,7 +36,7 @@
       ]
     },
     "python-udf": {
-      "description": "enables Python user-defined functions: Codon with its OpenBLAS and OpenCV plugins",
+      "description": "enables Python user-defined functions: Codon with its OpenBLAS, OpenCV, json and re plugins, and nanoarrow for the batches of UDF processes",
       "dependencies": [
         "codon-compiler",
         {
@@ -53,6 +53,14 @@
             "calib3d",
             "jpeg",
             "png"
+          ]
+        },
+        "pcre2",
+        "re2",
+        {
+          "name": "nanoarrow",
+          "features": [
+            "ipc"
           ]
         }
       ]

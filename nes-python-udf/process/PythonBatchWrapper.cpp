@@ -25,6 +25,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include <PythonBytesParameters.hpp>
 #include <UdfProcessCall.hpp>
 
 namespace NES
@@ -32,40 +33,6 @@ namespace NES
 
 namespace
 {
-/// `struct`-style format of a fixed-size column, as memoryview.cast takes it.
-std::string_view memoryviewFormat(const DataType& type)
-{
-    switch (type.type)
-    {
-        case DataType::Type::INT8:
-            return "b";
-        case DataType::Type::UINT8:
-            return "B";
-        case DataType::Type::INT16:
-            return "h";
-        case DataType::Type::UINT16:
-            return "H";
-        case DataType::Type::INT32:
-            return "i";
-        case DataType::Type::UINT32:
-            return "I";
-        case DataType::Type::INT64:
-            return "q";
-        case DataType::Type::UINT64:
-            return "Q";
-        case DataType::Type::FLOAT32:
-            return "f";
-        case DataType::Type::FLOAT64:
-            return "d";
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::VARSIZED:
-        case DataType::Type::CHAR:
-        case DataType::Type::UNDEFINED:
-            break;
-    }
-    throw CannotLoadUdf("UDF type {} is no fixed-size column of a UDF process", type);
-}
-
 /// A Python expression for arbitrary text, safe to splice into the generated code.
 std::string pythonString(const std::string_view text)
 {
@@ -78,12 +45,12 @@ std::string pythonString(const std::string_view text)
     return fmt::format("bytes.fromhex(\"{}\").decode()", hex);
 }
 
-std::string pythonConstant(const UdfProcessArgument& argument)
+std::string pythonConstant(const UdfProcessArgument& argument, const std::string_view asBytes)
 {
     const auto text = pythonString(argument.constant.value());
-    if (argument.constantType == "VARSIZED")
+    if (argument.constantType == "VARSIZED" || argument.constantType == "CHAR")
     {
-        return fmt::format("{}.encode()", text);
+        return fmt::format("{0}.encode() if {1} else {0}", text, asBytes);
     }
     if (argument.constantType == "BOOLEAN")
     {
@@ -120,63 +87,68 @@ std::string defineUdf(const size_t index, const UdfProcessCall& call)
         pythonString(std::string_view{call.entrypoint}.substr(lastDot + 1)));
 }
 
-/// Definitions at the start of the batch function, giving access to a column of `n` rows.
-std::string bindColumn(const size_t index, const ArrowBufferRef::Field& field)
+/// The Python values of column `index` of `batch`, as a list. A VARSIZED column becomes bytes or, failing on invalid UTF-8, str.
+std::string readColumn(const size_t index, const ArrowBufferRef::Field& field, const std::string_view asBytes)
 {
-    const auto offset = field.dataOffset;
     if (field.type.type == DataType::Type::VARSIZED)
     {
-        return fmt::format(
-            "    o{0} = m[{1}:{1} + 4 * (n + 1)].cast(\"i\")\n    p{0} = payloads[{2}]\n", index, offset, field.childBufferSlot);
+        return fmt::format("_binary_column(batch, {}, {})", index, asBytes);
     }
-    if (field.type.type == DataType::Type::BOOLEAN)
+    if (field.type.type == DataType::Type::CHAR)
     {
-        return "";
+        return fmt::format("_char_column(batch, {}, {})", index, asBytes);
     }
-    return fmt::format("    c{0} = m[{1}:{1} + {2} * n].cast(\"{3}\")\n", index, offset, field.dataTypeSize, memoryviewFormat(field.type));
+    return fmt::format("batch.column({}).to_pylist()", index);
 }
 
-std::string readValue(const size_t index, const ArrowBufferRef::Field& field)
+/// A Python expression turning the list `r` of results into the Arrow array of column `index`.
+std::string resultArray(const size_t index, const ArrowBufferRef::Field& field)
 {
-    const auto value = [&]
+    switch (field.type.type)
     {
-        switch (field.type.type)
-        {
-            case DataType::Type::VARSIZED:
-                return fmt::format("bytes(p{0}[o{0}[i]:o{0}[i + 1]])", index);
-            case DataType::Type::BOOLEAN:
-                return fmt::format("bool((buf[{} + (i >> 3)] >> (i & 7)) & 1)", field.dataOffset);
-            default:
-                return fmt::format("c{}[i]", index);
-        }
-    }();
-    /// The bitmap of a non-nullable column is never written.
-    if (field.type.nullable)
-    {
-        return fmt::format("{} if (buf[{} + (i >> 3)] >> (i & 7)) & 1 else None", value, field.bitmapOffset);
+        case DataType::Type::VARSIZED:
+            return "pa.array([None if v is None else _binary(v) for v in r], type=pa.binary())";
+        case DataType::Type::CHAR:
+            return "pa.array([None if v is None else _char(v) for v in r], type=pa.binary(1))";
+        case DataType::Type::BOOLEAN:
+            return "pa.array([None if v is None else bool(v) for v in r], type=pa.bool_())";
+        default:
+            return fmt::format("pa.array(r, type=batch.schema.field({}).type)", index);
     }
-    return value;
 }
 
-std::string setBit(const uint64_t region, const bool value)
-{
-    if (value)
-    {
-        return fmt::format("buf[{} + (i >> 3)] |= 1 << (i & 7)", region);
-    }
-    return fmt::format("buf[{} + (i >> 3)] &= ~(1 << (i & 7)) & 255", region);
-}
+constexpr std::string_view HELPERS = R"(
+
+def _binary_column(batch, index, as_bytes):
+    column = batch.column(index)
+    # Casting to string validates UTF-8.
+    return column.to_pylist() if as_bytes else column.cast(pa.string()).to_pylist()
+
+
+def _char_column(batch, index, as_bytes):
+    # Decoding a single byte as UTF-8 fails for anything but ASCII.
+    values = batch.column(index).to_pylist()
+    return values if as_bytes else [None if v is None else v.decode() for v in values]
+
+
+def _char(value):
+    value = _binary(value)
+    if len(value) != 1:
+        raise ValueError("a CHAR UDF must return one byte, not " + str(len(value)))
+    return value
+
+
+def _binary(value):
+    if isinstance(value, str):
+        return value.encode()
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return bytes(value)
+    raise TypeError("a VARSIZED UDF must return bytes or str, not " + type(value).__name__)
+
+
+)";
 
 constexpr std::string_view RUNTIME = R"(
-
-def _read_exactly(target):
-    view = memoryview(target)
-    while view:
-        received = sock.recv_into(view)
-        if received == 0:
-            raise EOFError
-        view = view[received:]
-
 
 def _failure(error):
     message = "".join(traceback.format_exception_only(type(error), error)).strip().encode()
@@ -184,31 +156,28 @@ def _failure(error):
 
 
 def _main():
-    lengths = struct.Struct("<{0}Q".format(VARSIZED_COLUMNS))
-    header = bytearray(8 + lengths.size)
-    buf = bytearray(BUFFER_SIZE)
+    reader = pa.ipc.open_stream(sock.makefile("rb"))
+    output = sock.makefile("wb")
+    writer = None
     while True:
         try:
-            _read_exactly(header)
-        except EOFError:
+            batch = reader.read_next_batch()
+        except StopIteration:
             return
-        n = struct.unpack_from("<Q", header)[0]
-        payloads = [bytearray(length) for length in lengths.unpack_from(header, 8)]
-        _read_exactly(buf)
-        for payload in payloads:
-            _read_exactly(payload)
         try:
-            _process_batch(buf, payloads, n)
+            result = _process_batch(batch)
         except Exception as error:
             _failure(error)
             continue
-        sock.sendall(struct.pack("<Q", 1) + lengths.pack(*map(len, payloads)))
-        sock.sendall(buf)
-        for payload in payloads:
-            sock.sendall(payload)
+        sock.sendall(struct.pack("<Q", 1))
+        if writer is None:
+            writer = pa.ipc.new_stream(output, result.schema)
+        writer.write_batch(result)
+        output.flush()
 
 
 try:
+    import pyarrow as pa
     _define_udfs()
 except BaseException as error:
     _failure(error)
@@ -221,108 +190,54 @@ _main()
 std::string generatePythonBatchWrapper(const ArrowBufferRef& layout, const std::vector<UdfProcessCall>& calls)
 {
     const auto& fields = layout.getFields();
-    const auto varSizedColumns = std::ranges::count_if(
-        fields, [](const ArrowBufferRef::Field& field) { return field.childBufferSlot != ArrowBufferRef::Field::NO_CHILD_BUFFER; });
 
-    std::string program = fmt::format(
-        "import importlib, os, struct, sys, traceback\n\n"
-        "BUFFER_SIZE = {}\n"
-        "VARSIZED_COLUMNS = {}\n"
-        "sys.path[:0] = [path for path in os.environ.get(\"NES_UDF_PATH\", \"\").split(\":\") if path]\n\n\n"
-        "def _define_udfs():\n"
-        "    namespace = globals()\n"
-        "    exec(_UDF_SOURCE, namespace)\n\n\n",
-        layout.getBufferSize(),
-        varSizedColumns);
+    std::string program = "import importlib, os, struct, sys, traceback\n\n"
+                          "sys.path[:0] = [path for path in os.environ.get(\"NES_UDF_PATH\", \"\").split(\":\") if path]\n\n\n"
+                          "def _define_udfs():\n"
+                          "    namespace = globals()\n"
+                          "    exec(_UDF_SOURCE, namespace)\n\n\n";
+    program += PythonBytesParametersSource;
+    program += HELPERS;
 
     std::string udfs;
-    std::string columns;
-    std::string results;
-    std::string loop;
-    std::string finish;
-    std::vector<bool> bound(fields.size(), false);
-    const auto bind = [&](const size_t index)
-    {
-        if (!bound[index])
-        {
-            columns += bindColumn(index, fields.at(index));
-            bound[index] = true;
-        }
-    };
-
+    std::string body = "def _process_batch(batch):\n    n = batch.num_rows\n    columns = batch.columns\n";
     for (const auto& [callIndex, call] : std::views::enumerate(calls))
     {
         udfs += defineUdf(callIndex, call);
+        udfs += fmt::format("_udf_{0}_bytes = _bytes_parameters(_udf_{0}, {1})\n", callIndex, call.arguments.size());
 
         std::vector<std::string> arguments;
         for (const auto& [argumentIndex, argument] : std::views::enumerate(call.arguments))
         {
+            const auto asBytes = fmt::format("_udf_{}_bytes[{}]", callIndex, argumentIndex);
             if (argument.field.has_value())
             {
-                bind(*argument.field);
-                arguments.push_back(readValue(*argument.field, fields.at(*argument.field)));
+                arguments.push_back(readColumn(*argument.field, fields.at(*argument.field), asBytes));
             }
             else
             {
                 const auto name = fmt::format("_constant_{}_{}", callIndex, argumentIndex);
-                udfs += fmt::format("{} = {}\n", name, pythonConstant(argument));
-                arguments.push_back(name);
+                udfs += fmt::format("{} = {}\n", name, pythonConstant(argument, asBytes));
+                arguments.push_back(fmt::format("[{}] * n", name));
             }
         }
 
-        const auto resultIndex = call.resultField;
-        const auto& result = fields.at(resultIndex);
+        const auto& result = fields.at(call.resultField);
         INVARIANT(result.type.nullable, "The result column of UDF '{}' must be nullable", call.name);
-        const auto valid = setBit(result.bitmapOffset, true);
-        const auto null = setBit(result.bitmapOffset, false);
-        loop += fmt::format("        r = _udf_{}({})\n", callIndex, fmt::join(arguments, ", "));
-        if (result.type.type == DataType::Type::VARSIZED)
+        if (arguments.empty())
         {
-            results += fmt::format(
-                "    w{0} = m[{1}:{1} + 4 * (n + 1)].cast(\"i\")\n    w{0}[0] = 0\n    t{0} = 0\n    j{0} = []\n",
-                resultIndex,
-                result.dataOffset);
-            loop += fmt::format(
-                "        if r is None:\n            {1}\n        else:\n            {2}\n"
-                "            r = r.encode() if isinstance(r, str) else r\n"
-                "            if not isinstance(r, (bytes, bytearray, memoryview)):\n"
-                "                raise TypeError(\"a VARSIZED UDF must return bytes or str, not \" + type(r).__name__)\n"
-                "            j{0}.append(r)\n            t{0} += len(r)\n"
-                "        w{0}[i + 1] = t{0}\n",
-                resultIndex,
-                null,
-                valid);
-            finish += fmt::format("    payloads[{}] = b\"\".join(j{})\n", result.childBufferSlot, resultIndex);
-        }
-        else if (result.type.type == DataType::Type::BOOLEAN)
-        {
-            loop += fmt::format(
-                "        if r is None:\n            {}\n        else:\n            {}\n"
-                "            if r:\n                {}\n            else:\n                {}\n",
-                null,
-                valid,
-                setBit(result.dataOffset, true),
-                setBit(result.dataOffset, false));
+            body += fmt::format("    r = [_udf_{}() for _ in range(n)]\n", callIndex);
         }
         else
         {
-            results += fmt::format(
-                "    w{0} = m[{1}:{1} + {2} * n].cast(\"{3}\")\n",
-                resultIndex,
-                result.dataOffset,
-                result.dataTypeSize,
-                memoryviewFormat(result.type));
-            loop += fmt::format(
-                "        if r is None:\n            {1}\n        else:\n            {2}\n            w{0}[i] = r\n",
-                resultIndex,
-                null,
-                valid);
+            body += fmt::format("    r = [_udf_{}(*row) for row in zip({})]\n", callIndex, fmt::join(arguments, ", "));
         }
+        body += fmt::format("    columns[{}] = {}\n", call.resultField, resultArray(call.resultField, result));
     }
+    body += "    return pa.RecordBatch.from_arrays(columns, schema=batch.schema)\n";
 
     program += fmt::format("_UDF_SOURCE = {}\n\n\n", pythonString(udfs));
-    program += fmt::format(
-        "def _process_batch(buf, payloads, n):\n    m = memoryview(buf)\n{}{}    for i in range(n):\n{}{}", columns, results, loop, finish);
+    program += body;
     program += RUNTIME;
     return program;
 }

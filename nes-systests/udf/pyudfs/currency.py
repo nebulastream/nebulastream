@@ -13,11 +13,11 @@
 """Example scalar UDFs, registered via CREATE FUNCTION ... ENTRYPOINT 'currency.<fn>'; a `None` return maps to SQL NULL."""
 
 # Test rates chosen to be exactly representable so results format cleanly.
-_RATES = {b"EUR": 1.0, b"USD": 1.25, b"GBP": 0.5}
+_RATES = {"EUR": 1.0, "USD": 1.25, "GBP": 0.5}
 
 
 def to_euro(amount, ccy):
-    """Convert an amount in a currency (VARSIZED, as bytes) to euros (FLOAT64)."""
+    """Convert an amount in a currency (VARSIZED, as str) to euros (FLOAT64)."""
     if amount is None or ccy is None:
         return None
     return amount / _RATES.get(ccy, 1.0)
@@ -39,7 +39,7 @@ def half_if_even(n):
 
 
 def shout(text):
-    """Uppercase a VARSIZED value (bytes in, bytes out)."""
+    """Uppercase a VARSIZED value (str in, str out)."""
     return text.upper()
 
 

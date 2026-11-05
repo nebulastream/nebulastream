@@ -1,6 +1,6 @@
 # name: udf/PythonUdfOutOfProcess.test
-# description: UDFs with EXECUTION OUT_OF_PROCESS run in a separate Python process, which exchanges Arrow buffers with the worker
-# groups: [PythonUdf]
+# description: UDFs with EXECUTION OUT_OF_PROCESS run in a separate Python process, which exchanges Arrow IPC streams with the worker
+# groups: [PythonUdf, PythonUdfProcess]
 
 CREATE LOGICAL SOURCE nums(a INT64 NOT NULL, b INT64 NOT NULL, s VARSIZED NOT NULL, unused INT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR nums TYPE File;
@@ -16,7 +16,7 @@ CREATE FUNCTION add_two (x INT64, y INT64) RETURNS INT64 EXECUTION OUT_OF_PROCES
     return x + y
 $python$;
 CREATE FUNCTION shout (w VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
-    return w.upper() + b"!"
+    return w.upper() + "!"
 $python$;
 CREATE FUNCTION positive (x INT64) RETURNS BOOLEAN EXECUTION OUT_OF_PROCESS AS $python$
     return x > 5
@@ -136,8 +136,33 @@ $python$;
 
 SELECT describe(v, w, f) AS d, is_null(v) AS n FROM nullable INTO FILE();
 ----
-[1/b'a'/True],false
+[1/'a'/True],false
 NULL,true
+
+# Values larger than a buffer: their column gets an unpooled buffer, and the answer of the process, which then does not fit behind
+# the header of a buffer, is read into a child buffer
+CREATE FUNCTION widen (w VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
+    return w * 20000
+$python$;
+CREATE FUNCTION measure (w VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return len(w)
+$python$;
+
+SELECT a, measure(widen(s)) AS m FROM nums INTO FILE();
+----
+1,20000
+10,40000
+100,60000
+
+# A VARSIZED value that is not UTF-8 fails the query
+CREATE LOGICAL SOURCE encoded(b VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR encoded TYPE File;
+ATTACH INLINE
+/w==
+
+SELECT shout(FROM_BASE64(b)) AS u FROM encoded INTO FILE();
+----
+ERROR 3007
 
 # Mixed with in-process UDFs, on either side
 CREATE FUNCTION inc_in_process (x INT64) RETURNS INT64 AS $python$

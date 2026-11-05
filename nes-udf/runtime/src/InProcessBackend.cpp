@@ -58,8 +58,7 @@ using CleanupUdfFn = void (*)(int);
 using EnterUdfRowFn = int (*)();
 using ExitUdfRowFn = void (*)(int);
 
-/// Maps a NES type to its UDF ABI type code. CHAR/UNDEFINED are rejected at UDF registration, so
-/// reaching them here is a bug.
+/// Maps a NES type to its UDF ABI type code. UNDEFINED is rejected at UDF registration, so reaching it here is a bug.
 int toUdfTypeCode(const DataType::Type type)
 {
     switch (type)
@@ -89,6 +88,7 @@ int toUdfTypeCode(const DataType::Type type)
         case DataType::Type::VARSIZED:
             return UDF_VARSIZED;
         case DataType::Type::CHAR:
+            return UDF_CHAR;
         case DataType::Type::UNDEFINED:
             break;
     }

@@ -23,15 +23,14 @@
 namespace NES
 {
 
-/// Generates the Python program that a UDF process runs. The Arrow layout of the batches is baked into its code as offsets, so that
-/// only buffers cross the socket. For every batch, it loops over the rows, reads the arguments out of the buffer, calls the UDFs
-/// and writes the results into the columns the batch holds for them. It only needs the standard library.
+/// Generates the Python program that a UDF process runs, on pyarrow. For every record batch, it converts the argument columns to
+/// Python values, calls each UDF once per row, and builds the result columns as Arrow arrays, which replace the columns the batch
+/// holds for them. The columns are addressed by their position in the layout.
 ///
-/// All integers are little-endian uint64. With V the number of VARSIZED columns of the layout, in the order of their child slots:
+/// The worker sends an Arrow IPC stream: the schema, then one record batch per buffer. The process answers each with a status, a
+/// little-endian uint64 that is 1 on success and 0 on a failure, followed on a success by the next message of its own IPC stream,
+/// whose first batch is preceded by the same schema, and on a failure by a uint64 length and an error message.
 ///   start-up, process to worker: [status], then on a failure [message length][message]
-///   batch, worker to process:    [number of rows][payload length of each of the V columns][buffer][the V payloads]
-///   batch, process to worker:    [status], then either [message length][message] or [payload lengths][buffer][payloads]
-/// Status is 1 on success and 0 on a failure.
 [[nodiscard]] std::string generatePythonBatchWrapper(const ArrowBufferRef& layout, const std::vector<UdfProcessCall>& calls);
 
 }

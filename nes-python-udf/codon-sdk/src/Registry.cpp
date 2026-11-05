@@ -152,6 +152,21 @@ std::string_view findCodonPluginModule(const std::string_view path)
     return {};
 }
 
+std::string findCodonPluginModulePath(const std::string_view path)
+{
+    auto& state = registry();
+    const std::scoped_lock lock{state.mutex};
+    for (const auto& [modulePath, source] : state.modules)
+    {
+        if (path == modulePath
+            || (path.size() > modulePath.size() && path.ends_with(modulePath) && path[path.size() - modulePath.size() - 1] == '/'))
+        {
+            return modulePath;
+        }
+    }
+    return {};
+}
+
 std::unordered_map<std::string, void*> getCodonPluginNativeSymbols()
 {
     auto& state = registry();

@@ -35,6 +35,8 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <nanoarrow/nanoarrow.hpp>
+#include <nanoarrow/nanoarrow_ipc.hpp>
 #include <ErrorHandling.hpp>
 #include <PythonProcessChannel.hpp>
 #include <UdfProcessCall.hpp>
@@ -53,8 +55,10 @@ struct PythonProcessSourceConfig
 };
 
 /// Starts the pipeline behind an out-of-process UDF operator, and owns its process: the worker's venv's python if one is configured,
-/// otherwise python3 on the PATH. The source thread sends one batch at a time and waits for it, so no worker thread ever waits for
-/// Python. The process answers with a batch of the same layout, which the source passes on with the metadata of the input.
+/// otherwise python3 on the PATH, which needs pyarrow. The source thread sends one batch at a time and waits for it, so no worker
+/// thread ever waits for Python. Batches travel as Arrow IPC streams in both directions: the source encodes its input with nanoarrow,
+/// the process reads and writes them with pyarrow and answers with the input columns plus the results, and the source points the
+/// header of its output buffer at the body of the answer and passes it on with the metadata of the input.
 class PythonProcessSource final : public Source
 {
 public:
@@ -85,15 +89,20 @@ private:
     bool sendAll(std::span<const std::byte> bytes, const std::stop_token& stopToken) const;
     bool receiveAll(std::span<std::byte> bytes, const std::stop_token& stopToken) const;
     bool receiveStatus(const std::stop_token& stopToken) const;
-    bool sendBatch(const TupleBuffer& input, const std::stop_token& stopToken) const;
-    bool receiveBatch(TupleBuffer& output, const std::stop_token& stopToken) const;
+    bool sendBatch(const TupleBuffer& input, const std::stop_token& stopToken);
+    bool receiveBatch(TupleBuffer& output, uint64_t rows, const std::stop_token& stopToken);
+    /// Reads the next IPC message into `message`; false on a stop request.
+    bool receiveMessage(std::vector<std::byte>& message, const std::stop_token& stopToken);
+    void setDecoderSchema(const ArrowSchema& received);
 
     PythonProcessChannel::Lease channel;
     std::vector<UdfProcessCall> calls;
     Schema<UnqualifiedUnboundField, Ordered> schema;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<ArrowBufferRef> layout;
-    std::vector<ArrowBufferRef::Field> varSizedFields;
+    nanoarrow::UniqueSchema arrowSchema;
+    nanoarrow::ipc::UniqueEncoder encoder;
+    nanoarrow::ipc::UniqueDecoder decoder;
     int processSocket = -1;
     pid_t process = -1;
 };
