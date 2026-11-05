@@ -37,6 +37,8 @@ public:
     void recordCall(std::chrono::steady_clock::time_point start, std::chrono::steady_clock::time_point end, bool failed);
     /// `hasUsage` is false when the envelope carried no `usage` block; `cutOff` is `finish_reason == "length"`.
     void recordUsage(bool hasUsage, uint64_t promptTokens, uint64_t completionTokens, bool cutOff);
+    /// A batched request of `rows` rows whose answer left out `missing` of them.
+    void recordBatch(size_t rows, size_t missing);
 
     /// Writes the line if anything was recorded, then starts over. `context` names the path, e.g. "SEM_CALL".
     void reportAndReset(std::string_view context);
@@ -54,6 +56,8 @@ private:
     uint64_t promptTokens = 0;
     uint64_t completionTokens = 0;
     size_t cutOff = 0;
+    size_t batchedRows = 0;
+    size_t missingRows = 0;
 };
 
 }

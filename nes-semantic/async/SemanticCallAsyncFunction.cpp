@@ -300,12 +300,16 @@ boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(st
         const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
         const auto parsed = parseLlmJson(answer);
         const auto verdicts = joinCodec->parse(answer, pairs);
+        size_t missing = 0;
         for (size_t position = 0; position < pairs.size(); ++position)
         {
+            const bool mentioned = mentions(parsed, pairs[position].pairId);
+            missing += mentioned ? 0 : 1;
             results.push_back(
-                mentions(parsed, pairs[position].pairId) ? std::optional{AsyncCallResult{verdicts[position] ? "true" : "false"}}
-                                                         : std::nullopt);
+                mentioned || !payload.config.retryMissingRows ? std::optional{AsyncCallResult{verdicts[position] ? "true" : "false"}}
+                                                              : std::nullopt);
         }
+        SemanticCallStats::instance().recordBatch(pairs.size(), missing);
         co_return results;
     }
     std::vector<RowPayload> payloads;
@@ -323,10 +327,16 @@ boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(st
     const auto answer = co_await complete(prompt);
     const auto parsed = parseLlmJson(answer);
     auto decoded = decode(answer, payloads);
+    size_t missing = 0;
     for (size_t position = 0; position < payloads.size(); ++position)
     {
-        results.push_back(mentions(parsed, payloads[position].rowId) ? std::optional{std::move(decoded[position])} : std::nullopt);
+        /// The codec already gave a row the answer leaves out its default value (a filter's 'false').
+        const bool mentioned = mentions(parsed, payloads[position].rowId);
+        missing += mentioned ? 0 : 1;
+        results.push_back(
+            mentioned || !payload.config.retryMissingRows ? std::optional{std::move(decoded[position])} : std::nullopt);
     }
+    SemanticCallStats::instance().recordBatch(payloads.size(), missing);
     co_return results;
 }
 

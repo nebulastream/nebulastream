@@ -55,6 +55,13 @@ void SemanticCallStats::recordUsage(const bool hasUsage, const uint64_t prompt, 
     cutOff += wasCutOff ? 1 : 0;
 }
 
+void SemanticCallStats::recordBatch(const size_t rows, const size_t missing)
+{
+    const std::scoped_lock lock{mutex};
+    batchedRows += rows;
+    missingRows += missing;
+}
+
 void SemanticCallStats::reportAndReset(const std::string_view context)
 {
     const std::scoped_lock lock{mutex};
@@ -70,7 +77,7 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
             "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, p99 {:.0f} ms, max {:.0f} "
             "ms, "
             "{:.1f} calls/s, span {:.1f} s, prompt tokens {}, completion tokens {} ({} responses, {} without usage, {} cut off at "
-            "max_tokens)",
+            "max_tokens), {} missing of {} batched rows",
             context,
             sorted.size(),
             failures,
@@ -85,7 +92,9 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
             completionTokens,
             responses,
             responsesWithoutUsage,
-            cutOff);
+            cutOff,
+            missingRows,
+            batchedRows);
         /// A measurement, not a diagnostic: it must not depend on the compiled log level.
         if (std::getenv("NES_SEMANTIC_LATENCY_REPORT") != nullptr) /// NOLINT(concurrency-mt-unsafe)
         {
@@ -97,7 +106,7 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
     failures = 0;
     firstStart.reset();
     lastEnd.reset();
-    responses = responsesWithoutUsage = cutOff = 0;
+    responses = responsesWithoutUsage = cutOff = batchedRows = missingRows = 0;
     promptTokens = completionTokens = 0;
 }
 

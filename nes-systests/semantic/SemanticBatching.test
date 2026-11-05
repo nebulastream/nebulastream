@@ -1,7 +1,8 @@
 # name: semantic/SemanticBatching.test
 # description: BATCH_SIZE rows per prompt, formed by the async framework (AsyncFunction::maxBatchSize and callBatch).
-#              A slot takes whatever rows are ready, up to a full batch; rows the answer leaves out are asked for on
-#              their own, and a batch that fails is retried, then split into single rows. The results must be those of
+#              A slot takes whatever rows are ready, up to a full batch; rows the answer leaves out get the default
+#              value, as in llm_operator, or with RETRY_MISSING_ROWS are asked for on their own; a batch that fails is
+#              retried, then split into single rows. The results must be those of
 #              one row per prompt, whatever the batches looked like.
 # groups: [Semantic]
 
@@ -61,7 +62,15 @@ CREATE SEM_MODEL batchedMissing
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo-missing' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
-     'mock' AS LLM.BACKEND, 3 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.MAX_CONCURRENCY);
+     'mock' AS LLM.BACKEND, 3 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.MAX_CONCURRENCY, 'UNKNOWN' AS LLM.DEFAULT_VALUE);
+
+# The same, but a row the answer leaves out is asked for again on its own.
+CREATE SEM_MODEL batchedMissingRetried
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo-missing' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 3 AS LLM.BATCH_SIZE, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.MAX_CONCURRENCY, 'UNKNOWN' AS LLM.DEFAULT_VALUE,
+     'TRUE' AS LLM.RETRY_MISSING_ROWS);
 
 # The answer has an entry for a row that is not in the prompt.
 CREATE SEM_MODEL batchedExtra
@@ -112,7 +121,7 @@ SELECT * FROM SEM_MAP(batchedEcho, reviews) INTO out;
 5,pozitive,POZITIVE
 6,zzzz,ZZZZ
 
-SELECT * FROM SEM_MAP(batchedMissing, reviews) INTO out;
+SELECT * FROM SEM_MAP(batchedMissingRetried, reviews) INTO out;
 ----
 1,POSITIVE,POSITIVE
 2,negative,NEGATIVE
@@ -139,7 +148,17 @@ SELECT * FROM SEM_MAP(batchesFail, reviews) INTO out;
 5,pozitive,POZITIVE
 6,zzzz,ZZZZ
 
-# Query 6: SEM_FILTER in batches of three; the mock passes "yes" and "true".
+# Query 6: one slot, batches of three: the answers leave out rows 3 and 6, which get the default value.
+SELECT * FROM SEM_MAP(batchedMissing, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),UNKNOWN
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,UNKNOWN
+
+# Query 7: SEM_FILTER in batches of three; the mock passes "yes" and "true".
 SELECT * FROM SEM_FILTER(batchedFilter, verdicts) INTO kept;
 ----
 1,yes
@@ -147,7 +166,7 @@ SELECT * FROM SEM_FILTER(batchedFilter, verdicts) INTO kept;
 5,yes
 7,true
 
-# Query 7: SEM_JOIN with the candidate pairs of a window in batches of four (semantic/SemanticJoin.test, query 1).
+# Query 8: SEM_JOIN with the candidate pairs of a window in batches of four (semantic/SemanticJoin.test, query 1).
 SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(batchedMatch, items.name, labels.label)
   WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
 ----

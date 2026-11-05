@@ -66,6 +66,8 @@ struct
     std::optional<int64_t> execution;
     std::optional<bool> preserveOrder;
     std::optional<bool> fusion;
+    /// Optional on read: catalogs reflected before RETRY_MISSING_ROWS existed carry none, which means false.
+    std::optional<bool> retryMissingRows;
     /// SEM_SCAN and SEM_WINDOW only, as `encodeSemanticKeyedConfig` writes it.
     std::optional<std::string> keyed;
     std::optional<SemanticFieldList> inputs;
@@ -421,6 +423,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .execution = std::make_optional(static_cast<int64_t>(config.execution)),
             .preserveOrder = std::make_optional(config.preserveOrder),
             .fusion = std::make_optional(config.fusion),
+            .retryMissingRows = std::make_optional(config.retryMissingRows),
             .keyed = config.keyed ? std::optional{encodeSemanticKeyedConfig(*config.keyed)} : std::nullopt,
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
@@ -463,6 +466,7 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .execution = unreflectEnum(reflected.execution.value(), SemanticExecution::ASYNCHRONOUS, "SemanticExecution"),
         .preserveOrder = reflected.preserveOrder.value(),
         .fusion = reflected.fusion.value(),
+        .retryMissingRows = reflected.retryMissingRows.value_or(false),
         .keyed = reflected.keyed ? std::optional{decodeSemanticKeyedConfig(*reflected.keyed)} : std::nullopt};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the

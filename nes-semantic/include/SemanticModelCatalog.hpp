@@ -156,6 +156,9 @@ struct SemanticModelConfig
     /// single prompt (`SemanticFusionRule`). Opt-in, like the reference's per-query `fusion=False`,
     /// so the measured unfused baselines stay reproducible.
     bool fusion = false;
+    /// A row that a batched answer leaves out gets the step's default value, as in llm_operator. True asks the model again
+    /// for that row on its own instead, one more request per missing row.
+    bool retryMissingRows = false;
     /// Set for SEM_SCAN and SEM_WINDOW models.
     std::optional<SemanticKeyedConfig> keyed = std::nullopt;
 

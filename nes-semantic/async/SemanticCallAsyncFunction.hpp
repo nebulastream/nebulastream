@@ -56,7 +56,8 @@ public:
     boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments) override;
 
     /// SEM_MAP, SEM_FILTER, fused steps and SEM_JOIN: the rows (pairs) in one prompt, as `row1`..`rowN`. A row the answer
-    /// does not mention has no result, so the Async source asks for it on its own.
+    /// does not mention gets the step's default value, as in llm_operator; with `LLM.RETRY_MISSING_ROWS` it has no result,
+    /// so the Async source asks for it on its own.
     boost::asio::awaitable<AsyncBatchResult> callBatch(std::vector<std::vector<std::string>> rows) override;
 
     /// The model's `LLM.MAX_CONCURRENCY`.

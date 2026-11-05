@@ -93,6 +93,8 @@ struct EncodedPayload
     /// Only written for SEM_SCAN and SEM_WINDOW, for the same reason.
     std::optional<EncodedKeyed> keyed;
     std::optional<std::string> stateId;
+    /// Only written when set, for the same reason.
+    std::optional<bool> retryMissingRows;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -193,7 +195,8 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .join = payload.join ? std::optional{true} : std::nullopt,
             .agg = payload.agg ? std::optional{true} : std::nullopt,
             .keyed = config.keyed ? std::optional{encodeKeyed(*config.keyed)} : std::nullopt,
-            .stateId = payload.stateId.empty() ? std::nullopt : std::optional{payload.stateId}});
+            .stateId = payload.stateId.empty() ? std::nullopt : std::optional{payload.stateId},
+            .retryMissingRows = config.retryMissingRows ? std::optional{true} : std::nullopt});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -237,6 +240,7 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             /// SEM_CALL runs on the async framework whatever the model declares.
             .execution = SemanticExecution::ASYNCHRONOUS,
             .fusion = value.fusion,
+            .retryMissingRows = value.retryMissingRows.value_or(false),
             .keyed = value.keyed ? std::optional{decodeKeyed(std::move(*value.keyed))} : std::nullopt},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
