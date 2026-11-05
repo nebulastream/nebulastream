@@ -95,7 +95,8 @@ public:
     [[nodiscard]] Timestamp getWatermark() const noexcept;
     void setWatermark(Timestamp watermark);
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
-    void setSequenceNumber(SequenceNumber sequenceNumber);
+    [[nodiscard]] uint32_t getSequenceRangeOffset() const noexcept;
+    void setSequenceRange(SequenceNumber last, uint32_t offset);
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
     void setChunkNumber(ChunkNumber chunkNumber);
     [[nodiscard]] bool isLastChunk() const noexcept;
@@ -119,6 +120,7 @@ private:
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
+    uint32_t sequenceRangeOffset = 0;
     Timestamp creationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;

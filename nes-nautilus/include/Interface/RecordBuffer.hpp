@@ -51,9 +51,10 @@ public:
     void setOriginId(const nautilus::val<OriginId>& originId);
 
     /// Get the sequence number of the underlying tuple buffer. The sequence number is a monotonically increasing identifier for tuple buffers
-    /// from the same origin.
+    /// from the same origin (@see TupleBuffer::setSequenceRange).
     nautilus::val<SequenceNumber> getSequenceNumber();
-    void setSequenceNumber(const nautilus::val<SequenceNumber>& seqNumber);
+    nautilus::val<uint32_t> getSequenceRangeOffset();
+    void setSequenceRange(const nautilus::val<SequenceNumber>& last, const nautilus::val<uint32_t>& offset);
 
     /// Sets the chunk number of the underlying tuple buffer. The chunk number is a monotonically increasing identifier for chunks of a sequence number.
     void setChunkNumber(const nautilus::val<ChunkNumber>& chunkNumber);

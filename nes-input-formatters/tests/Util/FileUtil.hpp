@@ -194,8 +194,8 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
         buffers.end(),
         [](const TupleBuffer& left, const TupleBuffer& right)
         {
-            return SequenceData{left.getSequenceNumber(), left.getChunkNumber(), left.isLastChunk()}
-            < SequenceData{right.getSequenceNumber(), right.getChunkNumber(), right.isLastChunk()};
+            return SequenceData{left.getSequenceNumber(), left.getSequenceRangeOffset(), left.getChunkNumber(), left.isLastChunk()}
+            < SequenceData{right.getSequenceNumber(), right.getSequenceRangeOffset(), right.getChunkNumber(), right.isLastChunk()};
         });
 }
 

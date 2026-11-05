@@ -38,6 +38,7 @@ struct QueryExecutionConfiguration
         uint64_t pageSize,
         uint64_t numberOfRecordsPerKey,
         uint64_t operatorBufferSize,
+        uint64_t emitCoalescingDelay,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration)
         : executionMode(executionMode)
@@ -45,6 +46,7 @@ struct QueryExecutionConfiguration
         , pageSize(pageSize)
         , numberOfRecordsPerKey(numberOfRecordsPerKey)
         , operatorBufferSize(operatorBufferSize)
+        , emitCoalescingDelay(emitCoalescingDelay)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
     {
@@ -55,6 +57,7 @@ struct QueryExecutionConfiguration
     uint64_t pageSize;
     uint64_t numberOfRecordsPerKey;
     uint64_t operatorBufferSize;
+    uint64_t emitCoalescingDelay;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
 

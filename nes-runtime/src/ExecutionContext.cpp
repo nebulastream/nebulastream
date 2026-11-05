@@ -66,6 +66,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , watermarkTs(uint64_t{0})
     , currentTs(uint64_t{0})
     , sequenceNumber(INVALID<SequenceNumber>)
+    , sequenceRangeOffset(uint32_t{0})
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
 {
@@ -130,8 +131,9 @@ void ExecutionContext::setLocalOperatorState(const OperatorId operatorId, std::u
 
 static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
 {
-    auto handlers = pipelineCtx->getOperatorHandlers();
-    return handlers[index].get();
+    const auto& handlers = pipelineCtx->getOperatorHandlers();
+    const auto handler = handlers.find(index);
+    return handler != handlers.end() ? handler->second.get() : nullptr;
 }
 
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const

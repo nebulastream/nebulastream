@@ -525,6 +525,8 @@ This turns out to be problematic because tasks do not keep pipelines alive, and 
 To resolve this issue, we introduce a `PendingPipelineStopTask` and an extra reference counter for each `RunningQueryPlanNode`, which counts the number of pending tasks referencing a pipeline.
 Whenever a predecessor task or a source emits a new task, it also increases the reference counter of the newly created task's target pipeline. 
 The worker thread processing the tasks decreases the reference counter.
+Pipeline callbacks (`PipelineExecutionContext::scheduleCallback`) are not counted.
+A pending callback holds only a `weak_ptr` and never delays the stop, while a running one holds the pipeline, so the stop waits for it.
 
 Since each source produces data in order, this guarantees that the successor pipeline's reference counter will only be zero once it has processed all previously received data.
 
