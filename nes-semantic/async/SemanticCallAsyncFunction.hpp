@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -71,12 +72,16 @@ public:
     [[nodiscard]] std::optional<size_t> orderingKey() const override;
 
 private:
-    boost::asio::awaitable<std::string> complete(const std::string& prompt);
+    /// Sends on `client`, or on the instance's own connection.
+    boost::asio::awaitable<std::string> complete(const std::string& prompt, SemanticHttpClient* client = nullptr);
     [[nodiscard]] std::vector<AsyncCallResult> decode(const std::string& answer, const std::vector<RowPayload>& rows) const;
     /// The key's state folded with the row: (state, confidence).
     boost::asio::awaitable<AsyncCallResult> callScan(std::vector<std::string> arguments);
     /// The row assigned to a window of its key: (window id, description, start, continuity score, opened a window).
     boost::asio::awaitable<AsyncCallResult> callWindow(std::vector<std::string> arguments);
+    struct WindowScoring;
+    /// Scores the next unscored chunk of windows until none is left, on `client`.
+    boost::asio::awaitable<void> scoreWindows(std::shared_ptr<WindowScoring> scoring, SemanticHttpClient* client);
 
     SemanticCallPayload payload;
     /// Exactly one of the two codecs: the filter codec handles every step list with a FILTER step.
@@ -91,6 +96,9 @@ private:
     /// Exactly one of the two transports.
     std::optional<MockSemanticBackend> mock;
     std::optional<SemanticHttpClient> http;
+    /// SEM_WINDOW: the further connections a row's window requests go out on in parallel, as llm_operator's gather.
+    std::vector<std::unique_ptr<SemanticHttpClient>> windowClients;
+    std::optional<std::string> apiKey;
 };
 
 }

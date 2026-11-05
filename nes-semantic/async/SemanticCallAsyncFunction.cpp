@@ -27,6 +27,9 @@
 #include <utility>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/deferred.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -207,7 +210,8 @@ SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded
     }
     else if (config.backend == "http")
     {
-        http.emplace(config.endpoint + "/chat/completions", resolveApiKey(payload), std::chrono::milliseconds{config.requestTimeout});
+        apiKey = resolveApiKey(payload);
+        http.emplace(config.endpoint + "/chat/completions", apiKey, std::chrono::milliseconds{config.requestTimeout});
     }
     else
     {
@@ -375,6 +379,16 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callScan(std:
     co_return AsyncCallResult{answer->state, answer->confidence};
 }
 
+struct SemanticCallAsyncFunction::WindowScoring
+{
+    std::string text;
+    size_t perCall = 1;
+    std::vector<const SemanticWindow*> active;
+    /// The scores of each chunk, in window order.
+    std::vector<std::vector<SemanticWindowCodec::Score>> scores;
+    size_t next = 0;
+};
+
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callWindow(std::vector<std::string> arguments)
 {
@@ -394,17 +408,46 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callWindow(st
     {
         active.push_back(&state->windows.at(id));
     }
-    /// One request per `WINDOWS_PER_CALL` windows, one after the other: the instance has one connection, where the
-    /// reference sends them in parallel. The state only changes once all scores are in, so a retry starts over cleanly.
-    const auto perCall = std::max<size_t>(1, keyed.windowsPerCall);
-    std::vector<SemanticWindowCodec::Score> scores;
-    for (size_t begin = 0; begin < active.size(); begin += perCall)
+    /// One request per `WINDOWS_PER_CALL` windows, all in parallel as in the reference's `asyncio.gather`, on up to
+    /// `MAX_CONCURRENCY` connections. The state only changes once all scores are in, so a retry starts over cleanly.
+    auto scoring = std::make_shared<WindowScoring>();
+    scoring->text = text;
+    scoring->perCall = std::max<size_t>(1, keyed.windowsPerCall);
+    scoring->active = std::move(active);
+    const size_t chunks = (scoring->active.size() + scoring->perCall - 1) / scoring->perCall;
+    scoring->scores.resize(chunks);
+    const size_t connections = std::min(chunks, std::max<size_t>(1, payload.config.maxConcurrency));
+    while (http && windowClients.size() + 1 < connections)
     {
-        const std::vector chunk(
-            active.begin() + static_cast<std::ptrdiff_t>(begin),
-            active.begin() + static_cast<std::ptrdiff_t>(std::min(active.size(), begin + perCall)));
-        const auto answer = co_await complete(windowCodec->buildPrompt(text, chunk));
-        for (auto& score : windowCodec->parse(answer, text, chunk))
+        windowClients.push_back(std::make_unique<SemanticHttpClient>(
+            payload.config.endpoint + "/chat/completions", apiKey, std::chrono::milliseconds{payload.config.requestTimeout}));
+    }
+    if (connections > 0)
+    {
+        /// The workers run on this coroutine's executor, the Async source's strand, so they never touch `scoring` at once.
+        const auto executor = co_await boost::asio::this_coro::executor;
+        using Operation = decltype(boost::asio::co_spawn(executor, scoreWindows(scoring, nullptr), boost::asio::deferred));
+        std::vector<Operation> operations;
+        operations.reserve(connections);
+        for (size_t connection = 0; connection < connections; ++connection)
+        {
+            SemanticHttpClient* const client = connection == 0 || !http ? nullptr : windowClients[connection - 1].get();
+            operations.push_back(boost::asio::co_spawn(executor, scoreWindows(scoring, client), boost::asio::deferred));
+        }
+        auto [order, failures] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
+                                     .async_wait(boost::asio::experimental::wait_for_all(), boost::asio::use_awaitable);
+        for (const auto& failure : failures)
+        {
+            if (failure)
+            {
+                std::rethrow_exception(failure);
+            }
+        }
+    }
+    std::vector<SemanticWindowCodec::Score> scores;
+    for (auto& chunk : scoring->scores)
+    {
+        for (auto& score : chunk)
         {
             scores.push_back(std::move(score));
         }
@@ -412,7 +455,22 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callWindow(st
     co_return windowCodec->assign(*state, text, start, scores);
 }
 
-boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const std::string& prompt)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<void> SemanticCallAsyncFunction::scoreWindows(std::shared_ptr<WindowScoring> scoring, SemanticHttpClient* client)
+{
+    while (scoring->next < scoring->scores.size())
+    {
+        const size_t chunk = scoring->next++;
+        const size_t begin = chunk * scoring->perCall;
+        const std::vector windows(
+            scoring->active.begin() + static_cast<std::ptrdiff_t>(begin),
+            scoring->active.begin() + static_cast<std::ptrdiff_t>(std::min(scoring->active.size(), begin + scoring->perCall)));
+        const auto answer = co_await complete(windowCodec->buildPrompt(scoring->text, windows), client);
+        scoring->scores[chunk] = windowCodec->parse(answer, scoring->text, windows);
+    }
+}
+
+boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const std::string& prompt, SemanticHttpClient* const client)
 {
     if (mock)
     {
@@ -441,7 +499,7 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const st
     std::optional<SemanticHttpResponse> exchanged;
     try
     {
-        exchanged = co_await http->post(request.dump());
+        exchanged = co_await (client != nullptr ? *client : *http).post(request.dump());
     }
     /// Records the failed call and rethrows it unchanged; CPPTRACE_TRY cannot wrap a co_await.
     catch (...) /// NOLINT(no-raw-catch-all)
