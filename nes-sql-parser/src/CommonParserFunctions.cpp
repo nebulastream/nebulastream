@@ -266,9 +266,15 @@ std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap 
 
 namespace
 {
+/// The quotes go; an escaped quote (the grammar's `\'`) is an apostrophe.
 std::string bindString(std::string_view view)
 {
-    return std::string(view.substr(1, view.size() - 2));
+    std::string value{view.substr(1, view.size() - 2)};
+    for (size_t position = value.find("\\'"); position != std::string::npos; position = value.find("\\'", position + 1))
+    {
+        value.erase(position, 1);
+    }
+    return value;
 }
 }
 
