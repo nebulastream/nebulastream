@@ -10,8 +10,8 @@ As a result there are at least three major simplifications that the PoC makes us
 Adding a new logical type means editing core code at every switch site: parsers, schema printer, sinks, JSON/CSV formatters, Nautilus runtime, generator source, etc.
 There is no way to register a new type from `nes-plugins/`, as reflected in the DataType runtime registry definition, although sources, sinks, and input/output formatters already follow that pattern.
 
-In particular, real-world ingest scenarios need *composite* types and / or array types, whose layout is fixed but bigger than a scalar, e.g. a thermal-camera reading `Image{timestamp, cameraId, ThermalFrame{pixels: UINT16[N]}}` or a trajectory `Trajectory{points: TemporalPoint{lon: FLOAT64, lat: FLOAT64, ts: INT64}[N]}`
-Today the only way to model this is to flatten everything into top-level columns, which loses the type identity that makes domain-specific functions (`to_celsius`, `is_fever`, `to_rgb`) safe to register. Such flattened approach also quickly blows up the schema and does not really work with containers such as arrays and vectors.
+In particular, real-world ingest scenarios need *composite* types and / or array types, whose layout is fixed but bigger than a scalar, e.g. a thermal-camera reading `Image{timestamp, cameraId, ThermalFrame{pixels: UINT16[N]}}`, and in some cases even variable-sized, non-scalar types, e.g. a trajectory `Trajectory{points: TemporalPoint{lon: FLOAT64, lat: FLOAT64, ts: INT64}[]}`.
+Today the only way to model composite types is to flatten everything into top-level columns, which loses the type identity that makes domain-specific functions (`to_celsius`, `is_fever`, `to_rgb`) safe to register. Such flattened approach also quickly blows up the schema and does not really work with containers such as arrays and vectors.
 Many formats like JSON, XML, and Avro support composite and array values, so we are currently unable to fully support these formats.
 
 - P1: `DataType` cannot be extended without modifying core code paths spread across ~20 files.
@@ -23,22 +23,20 @@ Many formats like JSON, XML, and Avro support composite and array values, so we 
 - G1: A new `DataType` can be added from `nes-plugins/` using the same registration pattern that sources, sinks, and formatters already use, addressing P1.
 - G2: Support a composite `STRUCT` variant with a name and a field list that participates in schemas, parsers, formatters, and Nautilus values, addressing P2.
 - G3: Provide a generic SQL constructor syntax `T(arg1, arg2, ...)` for any registered type, dispatched in the parser without per-type code, addressing P3.
-- G4: Support the definition of format-independent default Serde for each individual DataType plugin (in contrast to only offering format-dependent default Serde for the "Struct" type), addressing P1.
+- G4: Support the definition of format-independent default Serde for each individual DataType plugin (in contrast to only offering format-dependent default Serde for the "Struct" type), addressing P1. E.g. representing a textual `Decimal{integer: INT64, fraction: INT64}` type like a textual float, instead of representing it like `{"integer": 1, "fraction": 25}` in JSON and not offering CSV support for it at all.
 - G5: Demonstrate G1–G4 end-to-end with example plugins that fit on top of the core without modifying it (`Image/ThermalFrame`, `Reading`, `(Temporal)Point(Sequence)`, `(Temporal)Polygon`, `SpatioTemporalBox`,  `Date`, `Time`, `Timestamp`).
 - G6: Create a fixed-sized (is an array, but name contrasts 'varsized') datatype that is type-specific, i.e., represents an array of type T with a fixed number of elements.
 - G7: Create a vector datatype, which functions similar to the fixed-sized / array type but does not declare the number of elements per value in the schema definition, making it variable-sized.
 - G8: Provide a generic SQL constructor syntax for Arrays and Vectors `Array(args1, arg2, ...)`.
 
 # Non-Goals
-- NG1: Refactoring `DataType` into a polymorphic class hierarchy or `std::variant`.
-  `DataType` stays a flat struct with optional members per variant; this is a deliberate PoC scope decision (smaller blast radius, follows the existing `FIXEDSIZED` precedent).
-- NG2: Structural typing.
+- NG1: Structural typing.
   Two structs with the same physical layout but different `structName` are distinct types and do not `join()`; this preserves the safety of name-keyed domain functions.
-- NG3: Full coverage of every downstream switch site.
+- NG2: Full coverage of every downstream switch site.
   Nautilus, codegen, serializer, and a handful of other switch sites currently throw `NotImplemented` for `STRUCT`, `FIXEDSIZED`, and `VECTOR`; wiring those is follow-up work.
-- NG4: Create a dedicated string datatype. Varsized could become the dedicated string datatype after we introduced arrays and vectors, representing a contiguous sequence of bytes.
-- NG5: Dynamic resizing of vector values. In this PoC, the number of elements of a vector value is set as soon as the value arrives into the system. However, the addition of this feature should be possible without any conflicts.
-- NG6: Nesting of variable-sized types. A vector is not allowed to contain any values that are variable-sized as well. We avoid storing child buffer addresses within child buffers via this constraint.
+- NG3: Create a dedicated string datatype. Varsized could become the dedicated string datatype after we introduced arrays and vectors, representing a contiguous sequence of bytes.
+- NG4: Dynamic resizing of vector values. In this PoC, the number of elements of a vector value is set as soon as the value arrives into the system. However, the addition of this feature should be possible without any conflicts.
+- NG5: Nesting of variable-sized types. A vector is not allowed to contain any values that are variable-sized as well. We avoid storing child buffer addresses within child buffers via this constraint.
 
 # Alternatives
 - A1: Polymorphic `DataType` hierarchy (each variant a subclass).
