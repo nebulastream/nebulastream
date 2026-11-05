@@ -17,7 +17,9 @@
 #include <expected>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <ostream>
+#include <string>
 #include <string_view>
 
 #include <folly/Synchronized.h>
@@ -29,7 +31,6 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/SchemaFormatter.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -76,7 +77,8 @@ private:
     bool isAppend;
     bool isOpen;
     folly::Synchronized<std::ofstream> outputFileStream;
-    SchemaFormatter schemaFormatter;
+    /// Written once at the beginning of an empty file. Provided by the sink's output formatter, if the format has a header.
+    std::optional<std::string> header;
 };
 
 }
