@@ -1,0 +1,67 @@
+# name: function/varsized/SplitIndex.test
+# description: Tests SPLIT_INDEX(str, delimiter, index), which returns the 0-based index-th part (Flink semantics, NULL if out of range)
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE urls(id UINT64 NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR urls TYPE File;
+ATTACH INLINE
+1,https://www.nexmark.com/foo/bar/item.htm?query=1
+2,https://www.nexmark.com/foo
+3,a//b
+4,
+5,no-delimiter
+
+CREATE LOGICAL SOURCE nullableUrls(id UINT64 NOT NULL, url VARSIZED, delimiter VARSIZED, idx INT32);
+CREATE PHYSICAL SOURCE FOR nullableUrls TYPE File;
+ATTACH INLINE
+1,a.b.c,.,1
+2,,.,1
+3,a.b.c,,1
+4,a.b.c,.,
+5,a::b::c,::,2
+6,a.b.c,.,-1
+
+CREATE LOGICAL SOURCE WrongDataType(id UINT64 NOT NULL, url VARSIZED NOT NULL, number FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1,a/b,1.0
+
+# Nexmark q22: empty parts are kept, out-of-range indices and empty inputs give NULL
+SELECT id, SPLIT_INDEX(url, '/', 3) AS dir1, SPLIT_INDEX(url, '/', 4) AS dir2, SPLIT_INDEX(url, '/', 5) AS dir3 FROM urls INTO FILE();
+----
+1,foo,bar,item.htm?query=1
+2,foo,NULL,NULL
+3,NULL,NULL,NULL
+4,NULL,NULL,NULL
+5,NULL,NULL,NULL
+
+SELECT id, SPLIT_INDEX(url, '/', 0) AS first, SPLIT_INDEX(url, '/', 1) AS second FROM urls INTO FILE();
+----
+1,https:,
+2,https:,
+3,a,
+4,NULL,NULL
+5,no-delimiter,NULL
+
+# Non-constant arguments, NULL inputs, multi-character and empty delimiters and negative indices
+SELECT id, SPLIT_INDEX(url, delimiter, idx) AS part FROM nullableUrls INTO FILE();
+----
+1,b
+2,NULL
+3,NULL
+4,NULL
+5,c
+6,NULL
+
+# An empty delimiter does not split
+SELECT id, SPLIT_INDEX(url, '', 0) AS part FROM urls WHERE id = UINT64(5) INTO FILE();
+----
+5,no-delimiter
+
+SELECT id, SPLIT_INDEX(url, '/', number) AS part FROM WrongDataType INTO FILE();
+----
+ERROR 2006
+
+SELECT id, SPLIT_INDEX(url, '/') AS part FROM urls INTO FILE();
+----
+ERROR 2002

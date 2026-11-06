@@ -37,6 +37,7 @@ add_source_files(nes-physical-operators
         DateFormatPhysicalFunction.cpp
         ReplacePhysicalFunction.cpp
         LowerPhysicalFunction.cpp
+        SplitIndexPhysicalFunction.cpp
 )
 
 add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
@@ -54,4 +55,5 @@ add_registry_entry(PhysicalFunction FromBase64 KEY FROM_BASE64)
 add_registry_entry(PhysicalFunction Lower KEY LOWER)
 add_registry_entry(PhysicalFunction OctetLength KEY OCTET_LENGTH)
 add_registry_entry(PhysicalFunction Replace KEY REPLACE)
+add_registry_entry(PhysicalFunction SplitIndex KEY SPLIT_INDEX)
 add_registry_entry(PhysicalFunction ToBase64 KEY TO_BASE64)

@@ -33,6 +33,7 @@ add_source_files(nes-logical-operators
         DateFormatLogicalFunction.cpp
         ReplaceLogicalFunction.cpp
         LowerLogicalFunction.cpp
+        SplitIndexLogicalFunction.cpp
 )
 
 
@@ -54,6 +55,7 @@ add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Hour_Of)
 add_unreflection_entry(LogicalFunction DateFormat KEY DATE_FORMAT)
 add_unreflection_entry(LogicalFunction Replace KEY REPLACE)
 add_unreflection_entry(LogicalFunction Lower KEY LOWER)
+add_unreflection_entry(LogicalFunction SplitIndex KEY SPLIT_INDEX)
 
 add_registry_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
 add_registry_entry(LogicalFunction CastToType)
@@ -72,6 +74,7 @@ add_registry_entry(LogicalFunction FromBase64 KEY FROM_BASE64)
 add_registry_entry(LogicalFunction Lower KEY LOWER)
 add_registry_entry(LogicalFunction OctetLength KEY OCTET_LENGTH)
 add_registry_entry(LogicalFunction Replace KEY REPLACE)
+add_registry_entry(LogicalFunction SplitIndex KEY SPLIT_INDEX)
 add_registry_entry(LogicalFunction ToBase64 KEY TO_BASE64)
 add_registry_entry(LogicalFunction UnboundFieldAccess)
 add_registry_entry(LogicalFunction VarSizedToNumeric)
