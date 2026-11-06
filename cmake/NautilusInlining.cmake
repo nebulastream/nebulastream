@@ -10,68 +10,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(is_inlining_supported result_var verbose)
-    if (NOT TARGET nautilus::InliningPass)
-        if (${verbose})
-            message(WARNING "Nautilus function inlining pass was not built with nautilus. Inlining can't be applied. You can safely ignore this warning.")
-        endif ()
-        set(${result_var} FALSE PARENT_SCOPE)
-        return()
-    endif ()
-
-    if (NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-        if (${verbose})
-            message(WARNING "Nautilus function inlining requires clang and will not be applied. You can safely ignore this warning.")
-        endif ()
-        set(${result_var} FALSE PARENT_SCOPE)
-        return()
-    endif ()
-
-    # Check clang version
-    if (NOT (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "19.0.0"
-            AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "20"))
-        set(${result_var} FALSE PARENT_SCOPE)
-        if (${verbose})
-            message(WARNING "Nautilus function inlining requires clang 19 during compilation. Probably also works with other clang versions. Adjust the version-check in CMake and find out. You can safely ignore this warning.")
-        endif ()
-        return()
-    endif ()
-
-    # Disable inlining for ARM
-    string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSTEM_PROCESSOR)
-    if (SYSTEM_PROCESSOR MATCHES "arm" OR SYSTEM_PROCESSOR MATCHES "aarch64")
-        if (${verbose})
-            message(WARNING "Nautilus function inlining is not supported on ARM and will not be applied. You can safely ignore this warning.")
-        endif ()
-        set(${result_var} FALSE PARENT_SCOPE)
-        return()
-    endif ()
-
+# NES_ENABLE_NAUTILUS_INLINING is a tristate:
+#   unset: inline when possible, otherwise silently fall back to plain proxy calls
+#   ON:    inline, and fail configuration if the pass cannot be applied
+#   OFF:   never apply the pass
+# Returns via result_var the reason inlining cannot be applied, or an empty string.
+function(nautilus_inlining_unsupported_reason result_var)
+    set(reason "")
     if (NOT SANITIZER_OPTION STREQUAL "none")
-        if (${verbose})
-            message(WARNING "Nautilus function inlining is not supported with sanitizers and will not be applied. You can safely ignore this warning.")
-        endif ()
-        set(${result_var} FALSE PARENT_SCOPE)
-        return()
+        set(reason "Nautilus function inlining is not supported with sanitizers.")
+    elseif (NOT TARGET nautilus::InliningPass)
+        set(reason "Nautilus function inlining pass was not built with nautilus.")
+    elseif (NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+            AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "19.0.0"
+            AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "23"))
+        set(reason "Nautilus function inlining requires clang 19-22 during compilation.")
     endif ()
-
-    set(${result_var} TRUE PARENT_SCOPE)
+    set(${result_var} "${reason}" PARENT_SCOPE)
 endfunction()
 
 find_package(nautilus REQUIRED CONFIG)
 find_package(fmt REQUIRED CONFIG)
 find_package(spdlog REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
-is_inlining_supported(NAUTILUS_INLINE_SUPPORTED TRUE)
+
+if (DEFINED NES_ENABLE_NAUTILUS_INLINING AND NOT NES_ENABLE_NAUTILUS_INLINING)
+    set(NES_NAUTILUS_INLINING_ACTIVE FALSE)
+    message(STATUS "Nautilus function inlining disabled (NES_ENABLE_NAUTILUS_INLINING=${NES_ENABLE_NAUTILUS_INLINING})")
+else ()
+    nautilus_inlining_unsupported_reason(NAUTILUS_INLINING_UNSUPPORTED_REASON)
+    if (NAUTILUS_INLINING_UNSUPPORTED_REASON STREQUAL "")
+        set(NES_NAUTILUS_INLINING_ACTIVE TRUE)
+    elseif (DEFINED NES_ENABLE_NAUTILUS_INLINING)
+        message(FATAL_ERROR "${NAUTILUS_INLINING_UNSUPPORTED_REASON} NES_ENABLE_NAUTILUS_INLINING is ${NES_ENABLE_NAUTILUS_INLINING}; unset it to fall back silently or set it to OFF.")
+    else ()
+        set(NES_NAUTILUS_INLINING_ACTIVE FALSE)
+        message(STATUS "Nautilus function inlining not applied: ${NAUTILUS_INLINING_UNSUPPORTED_REASON}")
+    endif ()
+endif ()
 
 function(nautilus_inline target)
     # Targets using the inline header need the inlining runtime even when the pass is disabled.
     target_link_libraries(${target} PUBLIC nautilus::nautilus-inlining)
 
-    is_inlining_supported(NAUTILUS_INLINE_SUPPORTED FALSE)
-    if (NAUTILUS_INLINE_SUPPORTED)
+    if (NES_NAUTILUS_INLINING_ACTIVE)
         target_compile_options(${target} PRIVATE "-fpass-plugin=$<TARGET_FILE:nautilus::InliningPass>")
-
         message(STATUS "Applying nautilus inlining pass to target ${target}")
     endif ()
 endfunction()

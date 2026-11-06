@@ -44,6 +44,7 @@ default_cmake_flags:
   NES_LOG_LEVEL: DEBUG
   NES_SPLIT_TEST_BINARIES: "OFF"
   ENABLE_DOCKER_TESTS: "ON"
+  NES_ENABLE_NAUTILUS_INLINING: "ON"
 
 profile_cmake_flags:
   nightly:
@@ -65,6 +66,8 @@ jobs:
     build_type: RelWithDebInfo
     sanitizer: address
     runner: self-hosted-{arch}
+    cmake_flags:
+      NES_ENABLE_NAUTILUS_INLINING: "OFF"
     tests: [unit, systest, docker]
 
   - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest)"
@@ -73,6 +76,8 @@ jobs:
     build_type: RelWithDebInfo
     sanitizer: thread
     runner: self-hosted-{arch}
+    cmake_flags:
+      NES_ENABLE_NAUTILUS_INLINING: "OFF"
     tests: [unit, systest]
 
   - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+docker)"
@@ -81,6 +86,8 @@ jobs:
     build_type: RelWithDebInfo
     sanitizer: undefined
     runner: self-hosted-{arch}
+    cmake_flags:
+      NES_ENABLE_NAUTILUS_INLINING: "OFF"
     tests: [unit, systest, docker]
 
   # === Debug builds (no sanitizer, split across jobs for parallelism) ===
@@ -212,6 +219,7 @@ jobs:
     sanitizer: [address, undefined, thread]
     runner: self-hosted-x64
     cmake_flags:
+      NES_ENABLE_NAUTILUS_INLINING: "OFF"
       NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
     tests: [unit, systest, docker]
     exclude:

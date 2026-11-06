@@ -51,6 +51,7 @@ let
       patches = [
         ../../vcpkg/vcpkg-registry/ports/nautilus/0001-fmt-fix.patch
         ../../vcpkg/vcpkg-registry/ports/nautilus/0002-move-function-wrapper.patch
+        ../../vcpkg/vcpkg-registry/ports/nautilus/0003-inlining-clang-22-arm64.patch
       ];
 
       nativeBuildInputs = [

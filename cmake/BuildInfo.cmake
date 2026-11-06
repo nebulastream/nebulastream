@@ -52,6 +52,14 @@ function(generate_build_info TARGET OUTPUT_DIR)
     # SANITIZER_OPTION is set in cmake/Sanitizers.cmake (one of none/thread/address/undefined).
     set(NES_BUILD_SANITIZER "${SANITIZER_OPTION}")
 
+    # --- nautilus inlining ---------------------------------------------------
+    # NES_NAUTILUS_INLINING_ACTIVE is set in cmake/NautilusInlining.cmake.
+    if (NES_NAUTILUS_INLINING_ACTIVE)
+        set(NES_BUILD_NAUTILUS_INLINING "enabled")
+    else ()
+        set(NES_BUILD_NAUTILUS_INLINING "disabled")
+    endif ()
+
     # --- compiler ------------------------------------------------------------
     set(NES_BUILD_COMPILER "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
