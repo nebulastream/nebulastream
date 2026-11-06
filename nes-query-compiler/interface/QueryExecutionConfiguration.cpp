@@ -25,6 +25,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <BloomFilterConfiguration.hpp>
@@ -59,8 +60,9 @@ const ConfigField<ExecutionMode> EXECUTION_MODE{
 
 const ConfigField<bool> NAUTILUS_INLINING{
     Identifier::parse("nautilus_inlining"),
-    "Enables proxy function inlining in nautilus. (only relevant with COMPILER execution mode)",
-    true};
+    "Enables proxy function inlining in nautilus. (only relevant with COMPILER execution mode). Defaults to whether this build "
+    "applied the inlining pass (NES_ENABLE_NAUTILUS_INLINING); enabling it without the pass has no effect.",
+    NES_NAUTILUS_INLINING_ACTIVE};
 
 const ConfigField<uint64_t> NUMBER_OF_PARTITIONS{
     Identifier::parse("number_of_partitions"),
@@ -122,9 +124,16 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
 
 QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const InstantiatedConfig& config)
 {
+    const bool nautilusInlining = config.get(NAUTILUS_INLINING);
+    if (nautilusInlining && !NES_NAUTILUS_INLINING_ACTIVE)
+    {
+        NES_WARNING(
+            "nautilus_inlining is enabled, but this build did not apply the nautilus inlining pass "
+            "(NES_ENABLE_NAUTILUS_INLINING). Proxy functions will not be inlined.");
+    }
     return {
         config.get(EXECUTION_MODE),
-        config.get(NAUTILUS_INLINING),
+        nautilusInlining,
         config.get(NUMBER_OF_PARTITIONS),
         config.get(PAGE_SIZE),
         config.get(NUMBER_OF_RECORDS_PER_KEY),

@@ -1,0 +1,154 @@
+Allow the Nautilus inlining pass with clang/LLVM 22 and on arm64.
+LLVM 22 moved PassPlugin.h to llvm/Plugins and bumped the plugin API to version 2;
+the old include silently resolved to a stale API-v1 header and clang rejected the plugin.
+On arm64, inlined bitcode carried +outline-atomics, so the JIT emitted calls to hidden
+libgcc helpers (__aarch64_ldadd8_acq_rel) it cannot resolve; strip that feature before linking.
+
+diff --git a/example/CMakeLists.txt b/example/CMakeLists.txt
+index b526bc0b..4f437a9e 100644
+--- a/example/CMakeLists.txt
++++ b/example/CMakeLists.txt
+@@ -88,7 +88,7 @@ target_link_libraries(demo_specialization_plugin PRIVATE
+ # Inlining plugin demo — needs both the plugin library AND the Clang pass
+ # plugin attached to this TU so NAUTILUS_INLINE-annotated helpers get their
+ # bitcode extracted at compile time. `is_inlining_supported()` gates builds
+-# on compiler/host support (Clang 19-21 on non-ARM, non-AppleClang); on
++# on compiler/host support (Clang 19-22, non-AppleClang); on
+ # unsupported toolchains the demo is silently skipped. Unlike the other
+ # plugin demos, `nautilus-inlining` does not need `--whole-archive` because
+ # `<nautilus/inline.hpp>` uses an anchor trick to force its init TU to be
+diff --git a/plugins/inlining/cmake/NautilusInline.cmake b/plugins/inlining/cmake/NautilusInline.cmake
+index c7eb98a8..593113d8 100644
+--- a/plugins/inlining/cmake/NautilusInline.cmake
++++ b/plugins/inlining/cmake/NautilusInline.cmake
+@@ -25,25 +25,16 @@ function(_detect_inlining_support result_var)
+     endif ()
+ 
+     # Check clang version
+-    # Inlining is supported for clang 19 through 21.
++    # Inlining is supported for clang 19 through 22.
+     # The LLVM pass API can change between major versions, so new versions should be validated before adding them here.
+     if (NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+             AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "19.0.0"
+-            AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "22"))
++            AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "23"))
+         message(WARNING "Nautilus function inlining is not supported for the active compiler version and will not be applied. You can safely ignore this warning.")
+         set(${result_var} FALSE PARENT_SCOPE)
+         return()
+     endif ()
+ 
+-    # Disable inlining for ARM
+-    # There are unfixed issues where either LLVM or the JIT compiler introduces additional, unhandled components to the IR on ARM
+-    string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSTEM_PROCESSOR)
+-    if (SYSTEM_PROCESSOR MATCHES "arm" OR SYSTEM_PROCESSOR MATCHES "aarch64")
+-        message(WARNING "Nautilus function inlining is not supported on ARM and will not be applied. You can safely ignore this warning.")
+-        set(${result_var} FALSE PARENT_SCOPE)
+-        return()
+-    endif ()
+-
+     set(${result_var} TRUE PARENT_SCOPE)
+ endfunction()
+ 
+@@ -82,6 +73,6 @@ function(nautilus_inline target)
+             message(WARNING "nautilus_inline(${target}) called but the InliningPass target is not available. Enable both ENABLE_INLINING_PLUGIN (top-level) and ENABLE_INLINING_PASS (plugin-local) to build it. Skipping.")
+         endif ()
+     else ()
+-        message(WARNING "Function inlining requires clang 19-21 during compilation.")
++        message(WARNING "Function inlining requires clang 19-22 during compilation.")
+     endif ()
+ endfunction()
+diff --git a/plugins/inlining/pass/FunctionInliningPass.cpp b/plugins/inlining/pass/FunctionInliningPass.cpp
+index 47578b07..f13f66c8 100644
+--- a/plugins/inlining/pass/FunctionInliningPass.cpp
++++ b/plugins/inlining/pass/FunctionInliningPass.cpp
+@@ -6,7 +6,13 @@
+ #include "llvm/IR/PassManager.h"
+ #include "llvm/IR/Type.h"
+ #include "llvm/Passes/PassBuilder.h"
++#include "llvm/Config/llvm-config.h"
++// LLVM 22 moved PassPlugin.h from llvm/Passes to llvm/Plugins (plugin API version 2).
++#if LLVM_VERSION_MAJOR >= 22
++#include "llvm/Plugins/PassPlugin.h"
++#else
+ #include "llvm/Passes/PassPlugin.h"
++#endif
+ #include "llvm/Support/CrashRecoveryContext.h"
+ #include "llvm/Transforms/Utils/Cloning.h"
+ #include "llvm/Transforms/Utils/ModuleUtils.h"
+diff --git a/plugins/inlining/src/LLVMInliningUtils.cpp b/plugins/inlining/src/LLVMInliningUtils.cpp
+index 5474a792..c522ae15 100644
+--- a/plugins/inlining/src/LLVMInliningUtils.cpp
++++ b/plugins/inlining/src/LLVMInliningUtils.cpp
+@@ -12,6 +12,23 @@
+ #include <llvm/Support/FileCollector.h>
+ #include <llvm/Transforms/Utils/Cloning.h>
+ 
++namespace {
++void dropTargetFeature(llvm::Function& func, llvm::StringRef feature) {
++	if (!func.hasFnAttribute("target-features")) {
++		return;
++	}
++	llvm::SmallVector<llvm::StringRef> features;
++	func.getFnAttribute("target-features").getValueAsString().split(features, ',', -1, false);
++	std::string kept;
++	for (auto f : features) {
++		if (f != feature) {
++			kept += (kept.empty() ? "" : ",") + f.str();
++		}
++	}
++	func.addFnAttr("target-features", kept);
++}
++} // namespace
++
+ namespace nautilus::compiler::mlir {
+ 
+ void* hexToPtr(const llvm::StringRef& hexString) {
+@@ -194,6 +211,13 @@ void inlineFunctions(llvm::Module& moduleToOptimize) {
+ 			inlineModule->setTargetTriple(moduleToOptimize.getTargetTriple());
+ 			inlineModule->setDataLayout(moduleToOptimize.getDataLayout().getStringRepresentation());
+ 
++			// On aarch64 Linux clang compiles with -moutline-atomics, which makes the backend lower atomics to calls
++			// into libgcc helpers (e.g. __aarch64_ldadd8_acq_rel). Those are hidden symbols the JIT cannot resolve,
++			// and the extra feature also blocks inlining into JIT functions. Let the JIT target emit inline atomics.
++			for (auto& func : *inlineModule) {
++				dropTargetFeature(func, "+outline-atomics");
++			}
++
+ 			if (moduleToOptimize.getFunction(inlinableFunctionFName) != nullptr) {
+ 				// Should not happen if fixFunctionNameConflicts did its job,
+ 				// but if it does we prefer to skip this candidate (falling
+diff --git a/plugins/inlining/test/InliningExecutionTest.cpp b/plugins/inlining/test/InliningExecutionTest.cpp
+index 854beed9..a23d0e76 100644
+--- a/plugins/inlining/test/InliningExecutionTest.cpp
++++ b/plugins/inlining/test/InliningExecutionTest.cpp
+@@ -18,15 +18,14 @@ TEST_CASE("Inlining plugin: linkable", "[inlining][smoke]") {
+ #if defined(ENABLE_TRACING) && defined(ENABLE_MLIR_BACKEND)
+ 
+ // A host is expected to actually exercise the inlining pass when:
+-//   1. the compiler is Clang in the supported 19-21 range, AND
+-//   2. the host is not ARM/aarch64.
++//   the compiler is Clang in the supported 19-22 range.
+ // On such hosts the pass plugin is always loaded via `nautilus_inline()`
+ // in the test CMakeLists, so the registry MUST be populated by the time
+ // the test binary starts running. On any other host we expect the
+ // registry to be empty. Historically we conditionally asserted "sub is
+ // registered IFF add is registered", which allowed a silent-skip failure
+ // mode where the pass ran but added nothing.
+-#if defined(__clang__) && __clang_major__ >= 19 && __clang_major__ < 22 && !defined(__aarch64__) && !defined(__arm__)
++#if defined(__clang__) && __clang_major__ >= 19 && __clang_major__ < 23
+ #define NAUTILUS_INLINING_EXPECTED_ACTIVE 1
+ #else
+ #define NAUTILUS_INLINING_EXPECTED_ACTIVE 0
+diff --git a/plugins/inlining/test/LLVMIRInliningTest.cpp b/plugins/inlining/test/LLVMIRInliningTest.cpp
+index 43b207b0..caa12888 100644
+--- a/plugins/inlining/test/LLVMIRInliningTest.cpp
++++ b/plugins/inlining/test/LLVMIRInliningTest.cpp
+@@ -34,7 +34,7 @@ using nautilus::engine::sub;
+ // Returns true if the Clang inlining pass plugin actually ran over the test
+ // binary at compile time and populated the registry with bitcode for the
+ // annotated helpers. On hosts where the pass is unsupported (e.g. non-Clang,
+-// Clang version outside the supported range, ARM), this returns false and
++// Clang version outside the supported range), this returns false and
+ // the LLVM-IR-based tests skip gracefully so the reference files are never
+ // bootstrapped from non-inlined IR.
+ static bool inliningPassActive() {
