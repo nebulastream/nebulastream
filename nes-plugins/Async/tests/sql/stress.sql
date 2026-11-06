@@ -1,0 +1,50 @@
+-- 20 queries, each sending 50 requests per second for ten seconds to its own path, all at the same time.
+-- HTTP_SERVER is replaced with the url of tests/http_path_server.py, which answers with "<path>:<body>".
+CREATE LOGICAL SOURCE ids(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR ids TYPE Generator SET(
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' as INPUT_FORMATTER."TYPE",
+       60000 AS "SOURCE".MAX_RUNTIME_MS,
+       'emit_rate 50' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 500 1' AS "SOURCE".GENERATOR_SCHEMA);
+CREATE SINK stress0(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_0.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress1(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_1.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress2(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_2.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress3(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_3.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress4(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_4.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress5(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_5.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress6(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_6.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress7(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_7.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress8(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_8.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress9(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_9.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress10(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_10.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress11(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_11.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress12(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_12.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress13(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_13.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress14(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_14.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress15(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_15.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress16(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_16.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress17(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_17.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress18(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_18.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK stress19(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('stress_19.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q0') AS response FROM ids INTO stress0;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q1') AS response FROM ids INTO stress1;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q2') AS response FROM ids INTO stress2;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q3') AS response FROM ids INTO stress3;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q4') AS response FROM ids INTO stress4;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q5') AS response FROM ids INTO stress5;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q6') AS response FROM ids INTO stress6;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q7') AS response FROM ids INTO stress7;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q8') AS response FROM ids INTO stress8;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q9') AS response FROM ids INTO stress9;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q10') AS response FROM ids INTO stress10;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q11') AS response FROM ids INTO stress11;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q12') AS response FROM ids INTO stress12;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q13') AS response FROM ids INTO stress13;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q14') AS response FROM ids INTO stress14;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q15') AS response FROM ids INTO stress15;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q16') AS response FROM ids INTO stress16;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q17') AS response FROM ids INTO stress17;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q18') AS response FROM ids INTO stress18;
+SELECT id, HTTP_CALL('ping', 'HTTP_SERVER/q19') AS response FROM ids INTO stress19;
