@@ -16,6 +16,7 @@
 #include <chrono>
 #include <cstddef>
 #include <optional>
+#include <source_location>
 #include <vector>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -51,7 +52,8 @@ public:
     virtual std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) = 0;
 
     /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
-    virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
+    virtual std::optional<TupleBuffer>
+    getUnpooledBuffer(size_t bufferSize, std::source_location caller = std::source_location::current()) = 0;
 };
 
 }

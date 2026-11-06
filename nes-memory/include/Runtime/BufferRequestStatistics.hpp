@@ -21,6 +21,9 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <source_location>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace NES
@@ -39,6 +42,30 @@ public:
         double median;
     };
 
+    /// Unpooled buffers handed out at one call site and not released yet. Shared with their recycle callbacks.
+    struct LiveBuffers
+    {
+        std::atomic<uint64_t> buffers{0};
+        std::atomic<uint64_t> peakBuffers{0};
+        std::atomic<size_t> bytes{0};
+        std::atomic<size_t> peakBytes{0};
+        void add(size_t bufferBytes);
+        void remove(size_t bufferBytes);
+    };
+
+    struct CallSite
+    {
+        /// file:line of the getUnpooledBuffer call
+        std::string location;
+        uint64_t requests = 0;
+        uint64_t failed = 0;
+        /// requested size -> number of requests
+        std::map<size_t, uint64_t> requestedSizeCounts;
+        uint64_t peakLiveBuffers = 0;
+        /// aligned bytes
+        size_t peakLiveBytes = 0;
+    };
+
     struct Snapshot
     {
         uint64_t pooledRequests = 0;
@@ -50,10 +77,14 @@ public:
         std::map<size_t, uint64_t> unpooledRequestedSizeCounts;
         /// bytes written into a pooled buffer when it was recycled -> number of buffers, ascending by bytes
         std::map<size_t, uint64_t> pooledWrittenBytesCounts;
+        /// descending by number of requests
+        std::vector<CallSite> unpooledCallSites;
     };
 
     void recordPooledRequest(bool served);
-    void recordUnpooledRequest(size_t requestedSize, bool served);
+    /// Returns the live buffers of the call site, which the unpooled buffer updates when it is handed out and released.
+    std::shared_ptr<LiveBuffers> liveUnpooledBuffers(const std::source_location& caller);
+    void recordUnpooledRequest(size_t requestedSize, bool served, const std::source_location& caller);
     void recordPooledFill(size_t writtenBytes);
     [[nodiscard]] Snapshot snapshot() const;
 
@@ -68,6 +99,15 @@ private:
         /// requested size -> number of requests; exact median without storing every request
         std::map<size_t, uint64_t> unpooledSizeCounts;
         std::map<size_t, uint64_t> pooledWrittenBytesCounts;
+        struct CallSiteCounts
+        {
+            std::string location;
+            std::shared_ptr<LiveBuffers> live;
+            uint64_t failed = 0;
+            std::map<size_t, uint64_t> requestedSizeCounts;
+        };
+        /// keyed by the source_location's file name pointer and line, which are cheap to compare
+        std::map<std::pair<const char*, uint_least32_t>, CallSiteCounts> unpooledCallSites;
     };
 
     Shard& localShard();
@@ -77,6 +117,9 @@ private:
     const uint64_t instanceId = nextInstanceId.fetch_add(1);
     mutable std::mutex shardsMutex;
     std::vector<std::unique_ptr<Shard>> shards;
+    /// Live buffers are shared across shards, as a buffer can be released on another thread than the one requesting it.
+    std::mutex liveMutex;
+    std::map<std::string, std::shared_ptr<LiveBuffers>> liveUnpooledBuffersPerLocation;
 };
 
 /// Bytes in use by one BufferManager and their peaks. Shared with the recycle callbacks of unpooled buffers, which can outlive it.

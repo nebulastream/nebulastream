@@ -15,17 +15,19 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <source_location>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {
 /// Deep-copies a TupleBuffer: copies the raw bytes, replicates all metadata, and recursively copies every child buffer into freshly allocated buffers obtained from `provider`.
-TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider);
+TupleBuffer deepCopyBuffer(
+    const TupleBuffer& buffer, AbstractBufferProvider& provider, std::source_location caller = std::source_location::current());
 
 /// Returns a buffer for the specified size and optimizes internally for either pooled or unpooled.
 /// TODO #1582: This logic will be refactored into the Buffer Provider
-TupleBuffer getBuffer(uint64_t size, AbstractBufferProvider& provider);
+TupleBuffer getBuffer(uint64_t size, AbstractBufferProvider& provider, std::source_location caller = std::source_location::current());
 }
 
 /**

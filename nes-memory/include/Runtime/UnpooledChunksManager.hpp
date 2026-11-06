@@ -108,8 +108,11 @@ public:
     size_t getNumberOfUnpooledBuffers() const;
 
     /// Returns std::nullopt if the unpooled memory budget would be exceeded or the underlying allocation fails.
-    std::optional<TupleBuffer>
-    getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler);
+    std::optional<TupleBuffer> getUnpooledBuffer(
+        size_t neededSize,
+        size_t alignment,
+        const std::shared_ptr<BufferRecycler>& bufferRecycler,
+        std::shared_ptr<BufferRequestStatistics::LiveBuffers> liveAtCallSite);
 };
 
 }

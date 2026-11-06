@@ -28,9 +28,11 @@
 #include <mutex>
 #include <optional>
 #include <ranges>
+#include <source_location>
 #include <span>
 #include <string>
 #include <utility>
+#include <vector>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -281,10 +283,11 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
-std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
+std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize, const std::source_location caller)
 {
-    auto buffer = unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
-    requestStatistics.recordUnpooledRequest(bufferSize, buffer.has_value());
+    auto buffer = unpooledChunksManager->getUnpooledBuffer(
+        bufferSize, alignment, shared_from_this(), requestStatistics.liveUnpooledBuffers(caller));
+    requestStatistics.recordUnpooledRequest(bufferSize, buffer.has_value(), caller);
     return buffer;
 }
 
@@ -351,6 +354,42 @@ void BufferManager::printRequestStatistics() const
                 100.0 * static_cast<double>(count) / static_cast<double>(stats.unpooledRequests),
                 withThousandsSeparators(size * count),
                 100.0 * static_cast<double>(size * count) / static_cast<double>(unpooledBytes));
+        }
+        out += "  - unpooled requests per call site:\n";
+        for (const auto& callSite : stats.unpooledCallSites)
+        {
+            uint64_t callSiteBytes = 0;
+            std::vector<std::pair<size_t, uint64_t>> sizesByCount(callSite.requestedSizeCounts.begin(), callSite.requestedSizeCounts.end());
+            for (const auto& [size, count] : sizesByCount)
+            {
+                callSiteBytes += size * count;
+            }
+            std::ranges::sort(sizesByCount, std::ranges::greater{}, &std::pair<size_t, uint64_t>::second);
+            out += fmt::format(
+                "      - {}\n"
+                "          - {} times ({:5.2f}%, failed: {}), {} B ({:5.2f}%)\n"
+                "          - peak live: {} buffers, {} B\n"
+                "          - sizes:",
+                callSite.location,
+                withThousandsSeparators(callSite.requests),
+                100.0 * static_cast<double>(callSite.requests) / static_cast<double>(stats.unpooledRequests),
+                withThousandsSeparators(callSite.failed),
+                withThousandsSeparators(callSiteBytes),
+                100.0 * static_cast<double>(callSiteBytes) / static_cast<double>(unpooledBytes),
+                withThousandsSeparators(callSite.peakLiveBuffers),
+                withThousandsSeparators(callSite.peakLiveBytes));
+            /// Varsized call sites request many distinct sizes, so only the most frequent ones are printed.
+            constexpr size_t printedSizes = 5;
+            for (const auto& [size, count] : sizesByCount | std::views::take(printedSizes))
+            {
+                out += fmt::format(" {} B x {},", withThousandsSeparators(size), withThousandsSeparators(count));
+            }
+            out.pop_back();
+            if (sizesByCount.size() > printedSizes)
+            {
+                out += fmt::format(" ... {} more sizes", sizesByCount.size() - printedSizes);
+            }
+            out += "\n";
         }
     }
     const auto peaks = memoryInUse->peaks();

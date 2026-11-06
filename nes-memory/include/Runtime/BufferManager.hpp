@@ -23,6 +23,7 @@
 #include <memory_resource>
 #include <mutex>
 #include <optional>
+#include <source_location>
 #include <string>
 #include <vector>
 #include <Identifiers/NESStrongType.hpp>
@@ -128,7 +129,8 @@ public:
      */
     std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
 
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
+    std::optional<TupleBuffer>
+    getUnpooledBuffer(size_t bufferSize, std::source_location caller = std::source_location::current()) override;
 
 
     size_t getBufferSize() const override;

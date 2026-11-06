@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <source_location>
 #include <span>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -25,14 +26,14 @@
 namespace NES
 {
 
-TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
+TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider, const std::source_location caller)
 {
     if (size == provider.getBufferSize())
     {
         return provider.getBufferBlocking();
     }
 
-    auto bufferOpt = provider.getUnpooledBuffer(size);
+    auto bufferOpt = provider.getUnpooledBuffer(size, caller);
     if (bufferOpt.has_value())
     {
         return bufferOpt.value();
@@ -40,10 +41,10 @@ TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
     throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", size);
 }
 
-TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
+TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider, const std::source_location caller)
 {
     /// TODO #1582: you may need different size for the copy buffer, not always the default
-    auto copiedBuffer = getBuffer(buffer.getBufferSize(), provider);
+    auto copiedBuffer = getBuffer(buffer.getBufferSize(), provider, caller);
     PRECONDITION(
         copiedBuffer.getBufferSize() >= buffer.getBufferSize(),
         "Attempt to copy buffer of size: {} into smaller buffer of size: {}",
@@ -63,7 +64,7 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
     {
         const ChildBufferIndex varSizedIndex{static_cast<uint32_t>(childIdx)};
         auto childBuffer = buffer.loadChildBuffer(varSizedIndex);
-        auto copiedChildBuffer = deepCopyBuffer(childBuffer, provider);
+        auto copiedChildBuffer = deepCopyBuffer(childBuffer, provider, caller);
         auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
         INVARIANT(ret == varSizedIndex, "Child buffer index: {}, does not match index: {}", childIdx, ret);
     }

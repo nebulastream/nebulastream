@@ -172,7 +172,11 @@ std::pair<uint8_t*, uint8_t*> UnpooledChunksManager::allocateSpace(
 }
 
 std::optional<TupleBuffer>
-UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler)
+UnpooledChunksManager::getUnpooledBuffer(
+    const size_t neededSize,
+    size_t alignment,
+    const std::shared_ptr<BufferRecycler>& bufferRecycler,
+    std::shared_ptr<BufferRequestStatistics::LiveBuffers> liveAtCallSite)
 {
     const auto threadId = std::this_thread::get_id();
 
@@ -208,9 +212,11 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
          copyOfBufferSize = alignedBufferSize,
          copyOfAlignment = alignment,
          copyOfAllocatedBytes = currentlyAllocatedUnpooledBytes,
-         copyOfMemoryInUse = memoryInUse](detail::MemorySegment* memorySegment, BufferRecycler*)
+         copyOfMemoryInUse = memoryInUse,
+         copyOfLiveAtCallSite = liveAtCallSite](detail::MemorySegment* memorySegment, BufferRecycler*)
         {
             copyOfMemoryInUse->removeUnpooledLive(copyOfBufferSize);
+            copyOfLiveAtCallSite->remove(copyOfBufferSize);
             /// The buffer has been released: re-poison its data region to trap use-after-free until the chunk is freed.
             ASAN_POISON_MEMORY_REGION(memorySegment->ptr, copyOfBufferSize);
             auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
@@ -249,6 +255,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
         /// Hand the data region to the caller: unpoison it. The leading redzone before it stays poisoned.
         ASAN_UNPOISON_MEMORY_REGION(leakedMemSegment->ptr, leakedMemSegment->size);
         memoryInUse->addUnpooledLive(alignedBufferSize);
+        liveAtCallSite->add(alignedBufferSize);
         return TupleBuffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");

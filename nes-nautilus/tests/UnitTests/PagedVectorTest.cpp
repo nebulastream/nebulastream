@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <ranges>
 #include <span>
 #include <string>
@@ -138,9 +139,9 @@ struct DirtyBufferProvider : AbstractBufferProvider
         return buffer;
     }
 
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize, std::source_location caller) override
     {
-        auto buffer = bm->getUnpooledBuffer(bufferSize);
+        auto buffer = bm->getUnpooledBuffer(bufferSize, caller);
         if (buffer)
         {
             for (uint32_t& availableMemoryArea : buffer->getAvailableMemoryArea<uint32_t>())
@@ -180,13 +181,13 @@ struct NoOversizedUnpooledBufferProvider : AbstractBufferProvider
         return bm->getBufferWithTimeout(timeoutMs);
     }
 
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize, std::source_location caller) override
     {
         if (bufferSize > bm->getBufferSize())
         {
             return std::nullopt;
         }
-        return bm->getUnpooledBuffer(bufferSize);
+        return bm->getUnpooledBuffer(bufferSize, caller);
     }
 
     std::shared_ptr<BufferManager> bm;

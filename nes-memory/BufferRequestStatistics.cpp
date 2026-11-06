@@ -14,6 +14,7 @@
 
 #include <Runtime/BufferRequestStatistics.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -21,8 +22,13 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <source_location>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <vector>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -50,7 +56,31 @@ void BufferRequestStatistics::recordPooledRequest(const bool served)
     }
 }
 
-void BufferRequestStatistics::recordUnpooledRequest(const size_t requestedSize, const bool served)
+std::shared_ptr<BufferRequestStatistics::LiveBuffers> BufferRequestStatistics::liveUnpooledBuffers(const std::source_location& caller)
+{
+    auto& shard = localShard();
+    const std::scoped_lock lock(shard.sizesMutex);
+    auto& callSite = shard.unpooledCallSites[{caller.file_name(), caller.line()}];
+    if (not callSite.live)
+    {
+        std::string_view file = caller.file_name();
+        if (const auto repoPath = file.find("/nes-"); repoPath != std::string_view::npos)
+        {
+            file.remove_prefix(repoPath + 1);
+        }
+        callSite.location = fmt::format("{}:{}", file, caller.line());
+        const std::scoped_lock liveLock(liveMutex);
+        auto& live = liveUnpooledBuffersPerLocation[callSite.location];
+        if (not live)
+        {
+            live = std::make_shared<LiveBuffers>();
+        }
+        callSite.live = live;
+    }
+    return callSite.live;
+}
+
+void BufferRequestStatistics::recordUnpooledRequest(const size_t requestedSize, const bool served, const std::source_location& caller)
 {
     auto& shard = localShard();
     shard.unpooledRequests.fetch_add(1, std::memory_order_relaxed);
@@ -60,6 +90,12 @@ void BufferRequestStatistics::recordUnpooledRequest(const size_t requestedSize, 
     }
     const std::scoped_lock lock(shard.sizesMutex);
     ++shard.unpooledSizeCounts[requestedSize];
+    auto& callSite = shard.unpooledCallSites[{caller.file_name(), caller.line()}];
+    ++callSite.requestedSizeCounts[requestedSize];
+    if (not served)
+    {
+        ++callSite.failed;
+    }
 }
 
 void BufferRequestStatistics::recordPooledFill(const size_t writtenBytes)
@@ -73,6 +109,7 @@ BufferRequestStatistics::Snapshot BufferRequestStatistics::snapshot() const
 {
     Snapshot result;
     std::map<size_t, uint64_t> sizeCounts;
+    std::map<std::string, CallSite> callSites;
     {
         const std::scoped_lock lock(shardsMutex);
         for (const auto& shard : shards)
@@ -90,8 +127,26 @@ BufferRequestStatistics::Snapshot BufferRequestStatistics::snapshot() const
             {
                 result.pooledWrittenBytesCounts[bytes] += count;
             }
+            for (const auto& [key, counts] : shard->unpooledCallSites)
+            {
+                auto& callSite = callSites[counts.location];
+                callSite.location = counts.location;
+                callSite.failed += counts.failed;
+                for (const auto& [size, count] : counts.requestedSizeCounts)
+                {
+                    callSite.requests += count;
+                    callSite.requestedSizeCounts[size] += count;
+                }
+                callSite.peakLiveBuffers = counts.live->peakBuffers.load(std::memory_order_relaxed);
+                callSite.peakLiveBytes = counts.live->peakBytes.load(std::memory_order_relaxed);
+            }
         }
     }
+    for (auto& [location, callSite] : callSites)
+    {
+        result.unpooledCallSites.push_back(std::move(callSite));
+    }
+    std::ranges::sort(result.unpooledCallSites, std::ranges::greater{}, &CallSite::requests);
     if (sizeCounts.empty())
     {
         return result;
@@ -132,6 +187,26 @@ BufferRequestStatistics::Snapshot BufferRequestStatistics::snapshot() const
         .median = (static_cast<double>(*lower) + static_cast<double>(*upper)) / 2.0};
     result.unpooledRequestedSizeCounts = std::move(sizeCounts);
     return result;
+}
+
+void BufferRequestStatistics::LiveBuffers::add(const size_t bufferBytes)
+{
+    const auto nowBuffers = buffers.fetch_add(1, std::memory_order_relaxed) + 1;
+    auto previousPeakBuffers = peakBuffers.load(std::memory_order_relaxed);
+    while (nowBuffers > previousPeakBuffers && not peakBuffers.compare_exchange_weak(previousPeakBuffers, nowBuffers, std::memory_order_relaxed))
+    {
+    }
+    const auto nowBytes = bytes.fetch_add(bufferBytes, std::memory_order_relaxed) + bufferBytes;
+    auto previousPeakBytes = peakBytes.load(std::memory_order_relaxed);
+    while (nowBytes > previousPeakBytes && not peakBytes.compare_exchange_weak(previousPeakBytes, nowBytes, std::memory_order_relaxed))
+    {
+    }
+}
+
+void BufferRequestStatistics::LiveBuffers::remove(const size_t bufferBytes)
+{
+    buffers.fetch_sub(1, std::memory_order_relaxed);
+    bytes.fetch_sub(bufferBytes, std::memory_order_relaxed);
 }
 
 void BufferMemoryInUse::Counter::add(const size_t bytes)
