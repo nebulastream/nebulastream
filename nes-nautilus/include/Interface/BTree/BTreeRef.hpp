@@ -83,7 +83,10 @@ private:
     [[nodiscard]] bool compareInternalWithExternal(TupleBuffer* treeBuffer, int8_t* internal, int8_t* external, bool externalFirst) const;
 
     std::function<bool(TupleBuffer*, int8_t*, int8_t*)> internalComparator;
-    std::function<bool(TupleBuffer*, int8_t*, int8_t*, bool)> externalComparator;
+    /// Evaluates recordComparator(external, internal).
+    std::function<bool(TupleBuffer*, int8_t*, int8_t*)> externalFirstComparator;
+    /// Evaluates recordComparator(internal, external).
+    std::function<bool(TupleBuffer*, int8_t*, int8_t*)> internalFirstComparator;
 };
 
 /// Record-facing Nautilus interface for BTree. The comparator must define a strict weak ordering.

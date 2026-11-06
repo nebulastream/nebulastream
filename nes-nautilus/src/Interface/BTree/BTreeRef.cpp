@@ -159,28 +159,36 @@ BTreeComparator::BTreeComparator(
     internalComparator = [compiledComparator = std::move(compiledInternalComparator)](TupleBuffer* buffer, int8_t* lhs, int8_t* rhs)
     { return compiledComparator(buffer, lhs, rhs); };
 
-    auto compiledExternalComparator = context.registerFunction(
-        std::function(
-            [tupleLayout = std::move(tupleLayout), recordComparator = std::move(recordComparator)](
-                nautilus::val<TupleBuffer*> buffer,
-                nautilus::val<int8_t*> internal,
-                nautilus::val<int8_t*> external,
-                nautilus::val<bool> externalFirst) /// NOLINT(performance-unnecessary-value-param): required by CompilationContext
-            -> nautilus::val<bool>
-            {
-                const auto internalRecord
-                    = tupleLayout->readRecord(internal, makeBTreeVarSizedLoadFunction(BorrowedNautilusBuffer::from(buffer)));
-                const auto externalRecord = tupleLayout->readRecord(external, makeExternalVarSizedLoadFunction());
-                if (externalFirst)
+    /// Two separately compiled functions instead of one function that branches on a traced `externalFirst` flag:
+    /// both arms of such a branch would be `return recordComparator(x, y)` with swapped arguments, which an
+    /// optimizing C++ compiler may tail-merge into a single call site. Nautilus identifies trace points by their
+    /// call-stack tags, so it would treat the second arm as a repetition of the first and reuse its block, making
+    /// both arms evaluate the comparison in the order of whichever arm was traced first.
+    const auto registerExternalComparator = [&context, &tupleLayout, &recordComparator, &comparatorKey](const bool externalFirst)
+    {
+        return context.registerFunction(
+            std::function(
+                [tupleLayout, recordComparator, externalFirst](
+                    nautilus::val<TupleBuffer*> buffer,
+                    nautilus::val<int8_t*> internal,
+                    nautilus::val<int8_t*> external) /// NOLINT(performance-unnecessary-value-param): required by CompilationContext
+                -> nautilus::val<bool>
                 {
-                    return recordComparator(externalRecord, internalRecord);
-                }
-                return recordComparator(internalRecord, externalRecord);
-            }),
-        std::string{"btreeExternalComparatorFunction:"}.append(comparatorKey));
-    externalComparator = [compiledComparator = std::move(compiledExternalComparator)](
-                             TupleBuffer* buffer, int8_t* internal, int8_t* external, const bool externalFirst)
-    { return compiledComparator(buffer, internal, external, externalFirst); };
+                    const auto internalRecord
+                        = tupleLayout->readRecord(internal, makeBTreeVarSizedLoadFunction(BorrowedNautilusBuffer::from(buffer)));
+                    const auto externalRecord = tupleLayout->readRecord(external, makeExternalVarSizedLoadFunction());
+                    return externalFirst ? recordComparator(externalRecord, internalRecord)
+                                         : recordComparator(internalRecord, externalRecord);
+                }),
+            std::string{externalFirst ? "btreeExternalFirstComparatorFunction:" : "btreeInternalFirstComparatorFunction:"}.append(
+                comparatorKey));
+    };
+    externalFirstComparator
+        = [compiledComparator = registerExternalComparator(true)](TupleBuffer* buffer, int8_t* internal, int8_t* external)
+    { return compiledComparator(buffer, internal, external); };
+    internalFirstComparator
+        = [compiledComparator = registerExternalComparator(false)](TupleBuffer* buffer, int8_t* internal, int8_t* external)
+    { return compiledComparator(buffer, internal, external); };
 }
 
 bool BTreeComparator::compareInternal(TupleBuffer* treeBuffer, int8_t* lhs, int8_t* rhs) const
@@ -191,7 +199,8 @@ bool BTreeComparator::compareInternal(TupleBuffer* treeBuffer, int8_t* lhs, int8
 bool BTreeComparator::compareInternalWithExternal(
     TupleBuffer* treeBuffer, int8_t* internal, int8_t* external, const bool externalFirst) const
 {
-    return externalComparator(treeBuffer, internal, external, externalFirst);
+    return externalFirst ? externalFirstComparator(treeBuffer, internal, external)
+                         : internalFirstComparator(treeBuffer, internal, external);
 }
 
 Record DefaultBTreeTupleLayout::readRecord(const nautilus::val<int8_t*> recordMemAddress, LoadVarSized loadVarSized) const
