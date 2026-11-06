@@ -184,7 +184,7 @@ ATTACH INLINE
 3,3.5
 
 # A file source with a non-standard field delimiter and inline data
-CREATE PHYSICAL SOURCE FOR input TYPE File SET('|' AS INPUT_FORMATTER.FIELD_DELIMITER);
+CREATE PHYSICAL SOURCE FOR input TYPE File SET('|' AS CSV_INPUT_FORMATTER.FIELD_DELIMITER);
 ATTACH INLINE
 1|1.5
 2|2.5
@@ -196,12 +196,12 @@ ATTACH FILE testdata.csv
 
 # A generator source with no additional input data because it generates its data automatically.
 CREATE PHYSICAL SOURCE FOR input TYPE Generator SET(
-       'ONE' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS "SOURCE".SEED,
+       'ONE' as GENERATOR_SOURCE.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS GENERATOR_SOURCE.SEED,
 # Avoid using timeouts for the generator sources, it can cause flakey tests. 
-#      1000000 AS "SOURCE".MAX_RUNTIME_MS,
+#      1000000 AS GENERATOR_SOURCE.MAX_RUNTIME_MS,
 # Instead rely on self-terminating sequences
-       'SEQUENCE UINT64 0 100 1, SEQUENCE FLOAT64 0 200 1' AS "SOURCE".GENERATOR_SCHEMA
+       'SEQUENCE UINT64 0 100 1, SEQUENCE FLOAT64 0 200 1' AS GENERATOR_SOURCE.GENERATOR_SCHEMA
 );
 ```
 
@@ -213,14 +213,14 @@ The accepted options are mostly the same as when creating a source via a `CREATE
 The only difference is that a schema must be given via the options `SOURCE.SCHEMA` using the `SCHEMA` function.
 
 You cannot use the `ATTACH` statement to pipe a file or inline data into the source.
-To use a file input, use the `SOURCE.FILE_PATH` option. If no absolute path is given, the systest framework assumes
+To use a file input, use the `FILE_SOURCE.FILE_PATH` option. If no absolute path is given, the systest framework assumes
 the test data directory of the systest as the root directory.
 
 Example:
 ```sql
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
+	'small/stream8.csv' AS FILE_SOURCE.FILE_PATH,
 	'CSV' AS INPUT_FORMATTER."TYPE",
 	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS "SOURCE"."SCHEMA")
 INTO output;
@@ -245,7 +245,7 @@ Instead of naming the sink, you can create the anonymous sink by writing `[TYPE]
 The accepted options are mostly the same as when creating a sink via a `CREATE SINK` statement.
 The only difference is that a schema CAN OPTIONALLY be given via the options `SINK.SCHEMA` using the `SCHEMA` function.
 If no schema is given, the schema is inferred automatically.
-Anonymous sinks are also able to configure the output formatter via `OUTPUT_FORMATTER.*` parameters.
+Anonymous sinks select the output format via `OUTPUT_FORMATTER."TYPE"` and configure formatter-specific options via namespaces such as `CSV_OUTPUT_FORMATTER.*`.
 
 Because the systest framework automatically sets the sink file paths, `File` and `Generator` sinks can be created
 without any options.
@@ -259,7 +259,7 @@ INTO File();
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
-INTO File(SCHEMA(ID UINT64, VALUE VARSIZED, TIMESTAMP UINT64) AS "SINK"."SCHEMA", FALSE AS "OUTPUT_FORMATTER".QUOTE_STRINGS);
+INTO File(SCHEMA(ID UINT64, VALUE VARSIZED, TIMESTAMP UINT64) AS "SINK"."SCHEMA", FALSE AS CSV_OUTPUT_FORMATTER.QUOTE_STRINGS);
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
@@ -453,12 +453,12 @@ BobJones
 ```sql
 SELECT id, value, timestamp
 FROM File(
-    'small/stream8.csv' AS "SOURCE".FILE_PATH,
+    'small/stream8.csv' AS FILE_SOURCE.FILE_PATH,
     'source-node:8080' AS "SOURCE"."HOST",
     'CSV' AS INPUT_FORMATTER."TYPE",
     SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS "SOURCE"."SCHEMA")
 INTO File(
-    'CSV' AS "SINK".OUTPUT_FORMAT);
+    'CSV' AS OUTPUT_FORMATTER."TYPE");
 ----
 1,1,12
 1,2,23

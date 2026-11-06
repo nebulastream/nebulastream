@@ -9,7 +9,7 @@ ATTACH INLINE;
 2,nan,nan
 3,inf,-inf
 
-SELECT * FROM floatSource INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+SELECT * FROM floatSource INTO FILE('JSON' as OUTPUT_FORMATTER."TYPE");
 ----
 {"ID":1,"F32":1.5,"F64":2.25}
 {"ID":2,"F32":null,"F64":null}

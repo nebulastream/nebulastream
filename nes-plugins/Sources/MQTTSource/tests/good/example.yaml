@@ -36,8 +36,9 @@ sinks:
       - name: DOUBLE
         type: FLOAT64
     type: Checksum
+    parser_config:
+      type: CSV
     config:
-      output_format: CSV
       file_path: results.csv
 
 logical:

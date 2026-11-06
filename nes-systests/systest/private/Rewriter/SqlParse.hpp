@@ -164,7 +164,7 @@ void insertSetClause(antlr4::TokenStreamRewriter& rewriter, Definition* definiti
     }
 }
 
-/// Returns whether a config option has exactly the given group and key.
+/// Matches a canonical qualified config name or its unqualified suffix.
 /// The comparison canonicalizes both names as the binder does, so a quoted and an unquoted spelling of one name match.
 /// Comparing the parsed name rather than the statement text also stops a value that reads like the name from matching.
 [[nodiscard]] bool isOption(const AntlrSQLParser::NamedConfigExpressionContext* option, std::string_view group, std::string_view key);
