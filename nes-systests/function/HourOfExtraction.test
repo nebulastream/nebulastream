@@ -1,0 +1,68 @@
+# name: function/HourOfExtraction.test
+# description: Checks the extraction of the hour of day (UTC) from unix timestamps (ms) via HOUR and HOUR_OF
+# groups: [Function]
+
+CREATE LOGICAL SOURCE milliSecondsStream(id UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR milliSecondsStream TYPE File;
+ATTACH INLINE
+1,0
+2,3599999
+3,3600000
+4,1639494303000
+5,1771243200000
+6,253402300799999
+7,86399999
+8,
+
+# different data type than a uint64_t
+CREATE LOGICAL SOURCE WrongDataType(timestamp VARSIZED);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1970-01-01T00:00:00.000Z
+
+# Error, wrong data type
+SELECT HOUR(timestamp) AS HOUR_IN_STREAM FROM WrongDataType INTO FILE();
+----
+Error 2006
+
+SELECT id, HOUR(timestamp) AS HOUR_IN_STREAM FROM milliSecondsStream INTO FILE();
+----
+1,0
+2,0
+3,1
+4,15
+5,12
+6,23
+7,23
+8,NULL
+
+# HOUR_OF is an alias of HOUR, consistent with DAY_OF, MONTH_OF and YEAR_OF
+SELECT id, HOUR_OF(timestamp) AS HOUR_IN_STREAM FROM milliSecondsStream INTO FILE();
+----
+1,0
+2,0
+3,1
+4,15
+5,12
+6,23
+7,23
+8,NULL
+
+# Nexmark q14 style bucketing of the hour of day
+SELECT id,
+       CASE
+           WHEN HOUR(timestamp) >= UINT64(8) AND HOUR(timestamp) <= UINT64(18) THEN 'dayTime'
+           WHEN HOUR(timestamp) <= UINT64(6) OR HOUR(timestamp) >= UINT64(20) THEN 'nightTime'
+           ELSE 'otherTime'
+       END AS bucket
+FROM milliSecondsStream
+WHERE id < UINT64(8)
+INTO FILE();
+----
+1,nightTime
+2,nightTime
+3,nightTime
+4,dayTime
+5,dayTime
+6,nightTime
+7,nightTime

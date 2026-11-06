@@ -39,6 +39,8 @@ public:
     static PhysicalFunctionRegistryReturnType createMonth_Of(PhysicalFunctionRegistryArguments arguments);
     /// NOLINTNEXTLINE(readability-identifier-naming)
     static PhysicalFunctionRegistryReturnType createYear_Of(PhysicalFunctionRegistryArguments arguments);
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static PhysicalFunctionRegistryReturnType createHour_Of(PhysicalFunctionRegistryArguments arguments);
 
 private:
     TimestampUnit unit;

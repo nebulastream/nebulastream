@@ -36,10 +36,11 @@ enum class TimestampUnit : uint8_t
 {
     Day,
     Month,
-    Year
+    Year,
+    Hour
 };
 
-/// Extracts a calendar component (day-of-month, month, or year) from a unix timestamp in
+/// Extracts a calendar component (day-of-month, month, year, or hour-of-day) from a unix timestamp in
 /// milliseconds (UINT64) and returns it as UINT64. The component is selected via `unit`.
 class ExtractFromTimestampLogicalFunction final
 {
@@ -67,6 +68,11 @@ public:
     static LogicalFunctionRegistryReturnType createMonth_Of(LogicalFunctionRegistryArguments arguments);
     /// NOLINTNEXTLINE(readability-identifier-naming)
     static LogicalFunctionRegistryReturnType createYear_Of(LogicalFunctionRegistryArguments arguments);
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static LogicalFunctionRegistryReturnType createHour_Of(LogicalFunctionRegistryArguments arguments);
+    /// SQL alias `HOUR(ts)` for `HOUR_OF(ts)`, matching Flink's HOUR function.
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static LogicalFunctionRegistryReturnType createHour(LogicalFunctionRegistryArguments arguments);
 
 private:
     TimestampUnit unit;

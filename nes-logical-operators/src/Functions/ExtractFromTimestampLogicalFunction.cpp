@@ -40,6 +40,7 @@ namespace
 constexpr std::string_view DAY_OF_NAME = "Day_Of";
 constexpr std::string_view MONTH_OF_NAME = "Month_Of";
 constexpr std::string_view YEAR_OF_NAME = "Year_Of";
+constexpr std::string_view HOUR_OF_NAME = "Hour_Of";
 }
 
 ExtractFromTimestampLogicalFunction::ExtractFromTimestampLogicalFunction(TimestampUnit unit, LogicalFunction child)
@@ -111,6 +112,8 @@ std::string_view ExtractFromTimestampLogicalFunction::getType() const
             return MONTH_OF_NAME;
         case TimestampUnit::Year:
             return YEAR_OF_NAME;
+        case TimestampUnit::Hour:
+            return HOUR_OF_NAME;
     }
     INVARIANT(false, "Unknown TimestampUnit value: {}", static_cast<int>(unit));
     std::unreachable();
@@ -162,6 +165,21 @@ LogicalFunctionRegistryReturnType ExtractFromTimestampLogicalFunction::createYea
             "ExtractFromTimestampLogicalFunction (Year_Of) requires exactly one child, but got {}", arguments.children.size());
     }
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Year, arguments.children[0]};
+}
+
+LogicalFunctionRegistryReturnType ExtractFromTimestampLogicalFunction::createHour_Of(LogicalFunctionRegistryArguments arguments)
+{
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize(
+            "ExtractFromTimestampLogicalFunction (Hour_Of) requires exactly one child, but got {}", arguments.children.size());
+    }
+    return ExtractFromTimestampLogicalFunction{TimestampUnit::Hour, arguments.children[0]};
+}
+
+LogicalFunctionRegistryReturnType ExtractFromTimestampLogicalFunction::createHour(LogicalFunctionRegistryArguments arguments)
+{
+    return createHour_Of(std::move(arguments));
 }
 
 }
