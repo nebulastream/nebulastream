@@ -30,6 +30,7 @@ add_source_files(nes-logical-operators
         CastFromUnixTimestampLogicalFunction.cpp
         VarSizedToNumericLogicalFunction.cpp
         ExtractFromTimestampLogicalFunction.cpp
+        DateFormatLogicalFunction.cpp
 )
 
 
@@ -48,6 +49,7 @@ add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Hour_Of)
+add_unreflection_entry(LogicalFunction DateFormat KEY DATE_FORMAT)
 
 add_registry_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
 add_registry_entry(LogicalFunction CastToType)
@@ -55,6 +57,7 @@ add_registry_entry(LogicalFunction CastToUnixTimestamp KEY CastToUnixTs)
 add_registry_entry(LogicalFunction CharLength KEY CHAR_LENGTH)
 add_registry_entry(LogicalFunction Concat)
 add_registry_entry(LogicalFunction ConstantValue)
+add_registry_entry(LogicalFunction DateFormat KEY DATE_FORMAT)
 add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
 add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Hour)
 add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Hour_Of)

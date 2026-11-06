@@ -34,6 +34,7 @@ add_source_files(nes-physical-operators
         CastFromUnixTimestampPhysicalFunction.cpp
         CastVarSizedToNumericPhysicalFunction.cpp
         ExtractFromTimestampPhysicalFunction.cpp
+        DateFormatPhysicalFunction.cpp
 )
 
 add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
@@ -42,6 +43,7 @@ add_registry_entry(PhysicalFunction CastToUnixTimestamp KEY CastToUnixTs)
 add_registry_entry(PhysicalFunction CastVarSizedToNumeric KEY VarSizedToNumeric)
 add_registry_entry(PhysicalFunction CharLength KEY CHAR_LENGTH)
 add_registry_entry(PhysicalFunction Concat)
+add_registry_entry(PhysicalFunction DateFormat KEY DATE_FORMAT)
 add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Day_Of)
 add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Hour_Of)
 add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Month_Of)
