@@ -160,7 +160,8 @@ struct SemanticModelConfig
     /// for that row on its own instead, one more request per missing row.
     bool retryMissingRows = false;
     /// Requests in flight that every SEM_CALL to the same endpoint and model shares, across all stages and queries of the
-    /// worker, as llm_operator's one semaphore per model. 0 shares nothing; MAX_CONCURRENCY still caps each stage.
+    /// worker, as llm_operator's one semaphore per model. CREATE SEM_MODEL defaults it to MAX_CONCURRENCY. 0 shares
+    /// nothing; MAX_CONCURRENCY still caps each stage.
     size_t sharedConcurrency = 0;
     /// Set for SEM_SCAN and SEM_WINDOW models.
     std::optional<SemanticKeyedConfig> keyed = std::nullopt;

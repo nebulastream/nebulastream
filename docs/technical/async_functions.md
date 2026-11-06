@@ -247,7 +247,7 @@ functions would need it too, and is then designed for any function, not for one.
   anything SEM_CALL-specific. The registry is process-wide, so it holds for the whole worker. Permits are taken per
   request, not per slot: a slot that waits for a permit keeps its rows but takes nothing from other stages, which is
   what lets a free permit go to whichever stage has work. SEM_CALL names its endpoint and model
-  (`LLM.SHARED_CONCURRENCY`); the further parallel requests of one SEM_WINDOW row take a permit only if one is free at
+  (`LLM.SHARED_CONCURRENCY`, on by default at the model's `MAX_CONCURRENCY` as in llm_operator, 0 turns it off); the further parallel requests of one SEM_WINDOW row take a permit only if one is free at
   once, since waiting for one inside a call could wait on calls that wait for this one. The first stage to name a
   resource sets its limit; a different limit later is logged and ignored, since a running limit cannot shrink safely.
 
@@ -263,6 +263,14 @@ functions would need it too, and is then designed for any function, not for one.
   starting the oldest ready row first left the keys whose rows come late with a serial tail (at 64 slots, one key ran 10
   rows alone after the rest were done). Starting the longest chain first is free to choose, since only order within a
   key is guaranteed.
+
+## Future work
+
+- **Adaptive concurrency after 429s.** The shared limit is fixed when the first stage names a resource, so it only
+  avoids 429s if it is set at or below what the service takes. A limit that halves on a 429 and grows by one after a run
+  of successes (AIMD) would find it on its own, also for services whose limit changes. It would sit in
+  `AsyncResourceLimiter` next to the fixed limit and serve any function that names a resource. Not built yet: the fixed
+  limit was enough for the benchmarks, and AIMD needs care with retries that arrive after the limit has already shrunk.
 
 ## Limitations
 

@@ -24,7 +24,7 @@ SELECT start, end, movie, SEM_AGG(summarizer, review) AS summary, COUNT(id) AS n
 == Optimized Global Plan ==
 SINK(SUMMARIES)
   PROJECTION(fields: [END, MOVIE, N, START, __ASYNC_CALL_0 as SUMMARY])
-    ASYNC_PROJECTION(fields: [END, MOVIE, N, START, SEM_CALL(SUMMARIZER:b3d8053f, __SEM_AGG_0) as __ASYNC_CALL_0, __SEM_AGG_0])
+    ASYNC_PROJECTION(fields: [END, MOVIE, N, START, SEM_CALL(SUMMARIZER:8cfe2548, __SEM_AGG_0) as __ASYNC_CALL_0, __SEM_AGG_0])
       PROJECTION(fields: [END, MOVIE, N, START, __SEM_AGG_0,  as __ASYNC_CALL_0])
         WINDOW AGG(__SEM_AGG_0 as JsonAgg(), N as Count())
           WATERMARK_ASSIGNER(Event time)

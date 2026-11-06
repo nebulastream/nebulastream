@@ -391,6 +391,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"PROMPT"},
     std::string_view{"ENDPOINT"},
     std::string_view{"MODEL_NAME"},
+    std::string_view{"MODEL"},
     std::string_view{"DATASET_PROMPT"},
     std::string_view{"OUTPUT_VALUES"},
     std::string_view{"DEFAULT_VALUE"},
@@ -640,6 +641,22 @@ SemanticStep bindStep(const CreateSemanticModelStatement& statement, const bool 
         .defaultValue = optionalOption(statement.config, "DEFAULT_VALUE", "")};
 }
 
+/// `LLM.MODEL` is an alias of `LLM.MODEL_NAME`. Both may be given if they name the same model.
+std::string bindModelName(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto* const modelName = findOption(config, "MODEL_NAME");
+    const auto* const model = findOption(config, "MODEL");
+    if (modelName != nullptr && model != nullptr && *modelName != *model)
+    {
+        throw InvalidSemanticModel("LLM.MODEL is an alias of LLM.MODEL_NAME, but they differ: '{}' and '{}'", *model, *modelName);
+    }
+    if (modelName == nullptr && model != nullptr)
+    {
+        return requireOption(config, "MODEL");
+    }
+    return requireOption(config, "MODEL_NAME");
+}
+
 /// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
 SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& statement)
 {
@@ -648,15 +665,16 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
     auto step = bindStep(statement, keyed.has_value());
 
     const auto* const apiKeyEnv = findOption(statement.config, "API_KEY_ENV");
+    const auto maxConcurrency = numericOption(statement.config, "MAX_CONCURRENCY", 10, MaxConcurrency);
 
     return SemanticModelConfig{
         .endpoint = requireOption(statement.config, "ENDPOINT"),
-        .modelName = requireOption(statement.config, "MODEL_NAME"),
+        .modelName = bindModelName(statement.config),
         .datasetPrompt = optionalOption(statement.config, "DATASET_PROMPT", ""),
         .steps = {std::move(step)},
         .payloadFormat = bindPayloadFormat(statement.config),
         .batchSize = numericOption(statement.config, "BATCH_SIZE", 1, MaxBatchSize),
-        .maxConcurrency = numericOption(statement.config, "MAX_CONCURRENCY", 10, MaxConcurrency),
+        .maxConcurrency = maxConcurrency,
         .maxRetries = numericOption(statement.config, "MAX_RETRIES", 2, MaxRetries),
         .maxWaitTime = std::chrono::milliseconds{numericOption(statement.config, "MAX_WAIT_MS", 1000, MaxWaitMs)},
         .requestTimeout = std::chrono::seconds{numericOption(statement.config, "TIMEOUT_SECONDS", 600, MaxTimeoutSeconds)},
@@ -667,7 +685,9 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .preserveOrder = bindBooleanOption(statement.config, "PRESERVE_ORDER", true),
         .fusion = bindBooleanOption(statement.config, "FUSION", false),
         .retryMissingRows = bindBooleanOption(statement.config, "RETRY_MISSING_ROWS", false),
-        .sharedConcurrency = numericOption(statement.config, "SHARED_CONCURRENCY", 0, MaxConcurrency),
+        /// On by default, like llm_operator's limit per model and host: every stage that calls this model on this
+        /// endpoint shares MAX_CONCURRENCY requests. 0 turns it off; then each stage has its own MAX_CONCURRENCY.
+        .sharedConcurrency = numericOption(statement.config, "SHARED_CONCURRENCY", maxConcurrency, MaxConcurrency),
         .keyed = std::move(keyed)};
 }
 

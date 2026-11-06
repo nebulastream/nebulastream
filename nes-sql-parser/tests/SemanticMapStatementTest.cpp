@@ -153,6 +153,8 @@ TEST_F(SemanticMapStatementTest, CreateAppliesPythonReferenceDefaults)
     EXPECT_EQ(config.payloadFormat, PayloadFormat::SPACE_JOINED);
     EXPECT_EQ(config.batchSize, 1);
     EXPECT_EQ(config.maxConcurrency, 10);
+    /// Shared by default, as llm_operator's semaphore per model and host.
+    EXPECT_EQ(config.sharedConcurrency, 10);
     EXPECT_EQ(config.maxRetries, 2);
     EXPECT_EQ(config.maxWaitTime, std::chrono::milliseconds{1000});
     EXPECT_EQ(config.requestTimeout, std::chrono::seconds{600});
@@ -283,9 +285,41 @@ TEST_F(SemanticMapStatementTest, BinderRejectsMalformedOptionKeys)
     /// Wrong namespace.
     EXPECT_FALSE(
         binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS SOURCE.PROMPT)").has_value());
-    /// MODEL is a keyword, which a name after LLM. may be, but it is no option (the option is MODEL_NAME).
-    const auto keyword = create(withOptions("sentiment VARSIZED", ", 'x' AS LLM.MODEL"));
-    EXPECT_FALSE(keyword.has_value());
+}
+
+TEST_F(SemanticMapStatementTest, SharedConcurrencyFollowsMaxConcurrencyUnlessSetOrTurnedOff)
+{
+    ASSERT_TRUE(create(withOptions("o VARSIZED", ", 4 AS LLM.MAX_CONCURRENCY")).has_value());
+    EXPECT_EQ(semanticModelCatalog->load("M").getConfig().sharedConcurrency, 4);
+    semanticModelCatalog->removeModel("M");
+
+    ASSERT_TRUE(create(withOptions("o VARSIZED", ", 4 AS LLM.MAX_CONCURRENCY, 0 AS LLM.SHARED_CONCURRENCY")).has_value());
+    EXPECT_EQ(semanticModelCatalog->load("M").getConfig().sharedConcurrency, 0);
+    semanticModelCatalog->removeModel("M");
+
+    ASSERT_TRUE(create(withOptions("o VARSIZED", ", 4 AS LLM.MAX_CONCURRENCY, 2 AS LLM.SHARED_CONCURRENCY")).has_value());
+    EXPECT_EQ(semanticModelCatalog->load("M").getConfig().sharedConcurrency, 2);
+}
+
+TEST_F(SemanticMapStatementTest, ModelIsAnAliasOfModelName)
+{
+    const auto alias = create(
+        "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+        "'gemma4' AS LLM.MODEL)");
+    ASSERT_TRUE(alias.has_value()) << alias.error().what();
+    EXPECT_EQ(semanticModelCatalog->load("M").getConfig().modelName, "gemma4");
+    semanticModelCatalog->removeModel("M");
+
+    /// Both may be given if they agree.
+    const auto both = create(withOptions("o VARSIZED", ", 'm' AS LLM.MODEL"));
+    ASSERT_TRUE(both.has_value()) << both.error().what();
+    EXPECT_EQ(semanticModelCatalog->load("M").getConfig().modelName, "m");
+    semanticModelCatalog->removeModel("M");
+
+    const auto conflicting = create(withOptions("o VARSIZED", ", 'other' AS LLM.MODEL"));
+    ASSERT_FALSE(conflicting.has_value());
+    EXPECT_EQ(conflicting.error().code(), ErrorCode::InvalidSemanticModel);
+    EXPECT_TRUE(semanticModelCatalog->getModelNames().empty());
 }
 
 TEST_F(SemanticMapStatementTest, KeywordsAreOptionNamesAfterTheNamespace)
