@@ -1,0 +1,32 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The conntest CLI merges this file on top of a connector's conn-test/compose.yaml, if it has one, and sets its variables.
+# The runner container is on the project network, so the harness reaches the connector's service as `<service>:<port>`.
+
+services:
+  runner:
+    image: ${CONNTEST_DEV_IMAGE}
+    # Files written under the mount belong to the caller.
+    user: "${CONNTEST_HOST_UID}:${CONNTEST_HOST_GID}"
+    volumes:
+      # The repo is mounted at the path that the build was configured against, so the harness's compiled-in paths resolve.
+      - ${HOST_NEBULASTREAM_ROOT}:${CONNTEST_CONTAINER_REPO}
+    working_dir: ${CONNTEST_CONTAINER_REPO}/nes-conn-test/runner
+    environment:
+      # uv keeps its cache inside the container, apart from the mounted repo.
+      HOME: /tmp
+      # CI's sanitizer options (.github/.env/test-<sanitizer>.env) reach the harness unchanged.
+      ASAN_OPTIONS: ${ASAN_OPTIONS:-}
+      LSAN_OPTIONS: ${LSAN_OPTIONS:-}
+      TSAN_OPTIONS: ${TSAN_OPTIONS:-}
+      UBSAN_OPTIONS: ${UBSAN_OPTIONS:-}
