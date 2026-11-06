@@ -1,0 +1,71 @@
+# name: function/varsized/DateFormat.test
+# description: Tests DATE_FORMAT(ts, pattern), which formats a unix timestamp in milliseconds (UTC) as VARSIZED text
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE timestamps(id UINT64 NOT NULL, ts UINT64);
+CREATE PHYSICAL SOURCE FOR timestamps TYPE File;
+ATTACH INLINE
+1,0
+2,1234
+3,1639494303000
+4,1771243200000
+5,253402300799999
+6,951782400000
+7,
+
+CREATE LOGICAL SOURCE patterns(id UINT64 NOT NULL, pattern VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR patterns TYPE File;
+ATTACH INLINE
+1,yyyy
+2,HH:mm
+3,
+4,'at' HH 'o''clock'
+
+CREATE LOGICAL SOURCE WrongDataType(ts VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1970-01-01T00:00:00.000Z
+
+# Nexmark q10 patterns
+SELECT id, DATE_FORMAT(ts, 'yyyy-MM-dd') AS dayStr, DATE_FORMAT(ts, 'HH:mm') AS hm FROM timestamps INTO FILE();
+----
+1,1970-01-01,00:00
+2,1970-01-01,00:00
+3,2021-12-14,15:05
+4,2026-02-16,12:00
+5,9999-12-31,23:59
+6,2000-02-29,00:00
+7,NULL,NULL
+
+# Seconds, milliseconds, two-digit years and unpadded fields
+SELECT id, DATE_FORMAT(ts, 'yyyy/MM/dd-HH:mm:ss.SSS') AS fullStr, DATE_FORMAT(ts, 'yy/M/d') AS shortStr FROM timestamps INTO FILE();
+----
+1,1970/01/01-00:00:00.000,70/1/1
+2,1970/01/01-00:00:01.234,70/1/1
+3,2021/12/14-15:05:03.000,21/12/14
+4,2026/02/16-12:00:00.000,26/2/16
+5,9999/12/31-23:59:59.999,99/12/31
+6,2000/02/29-00:00:00.000,00/2/29
+7,NULL,NULL
+
+# Non-constant patterns, including an empty pattern and quoted text
+SELECT id, DATE_FORMAT(UINT64(1639494303000), pattern) AS formatted FROM patterns INTO FILE();
+----
+1,2021
+2,15:05
+3,
+4,at 15 o'clock
+
+# An empty constant pattern yields an empty string
+SELECT id, DATE_FORMAT(ts, '') AS formatted FROM timestamps WHERE id < UINT64(3) INTO FILE();
+----
+1,
+2,
+
+SELECT DATE_FORMAT(ts, 'yyyy') AS formatted FROM WrongDataType INTO FILE();
+----
+ERROR 2006
+
+SELECT DATE_FORMAT(ts) AS formatted FROM timestamps INTO FILE();
+----
+ERROR 2002
