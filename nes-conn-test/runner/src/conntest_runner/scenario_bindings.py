@@ -60,6 +60,19 @@ def partial_buffer_held(config: str, *, flush_interval_ms: int) -> Scenario:
     return Scenario("partial_buffer_held", config=config, args={"flush_interval_ms": flush_interval_ms})
 
 
+def slow_link(*globs: str) -> Scenario:
+    return Scenario("slow_link", configs=list(globs))
+
+
+def silent_link(*globs: str) -> Scenario:
+    return Scenario("silent_link", configs=list(globs))
+
+
+def connection_lost(config: str, *, error: int | str | None = None) -> Scenario:
+    """Pass ``error`` for a connector that reports the lost connection as that error instead of ending its stream."""
+    return Scenario("connection_lost", config=config, outcome=_error(error))
+
+
 def crash_recovery(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that cannot resume after the process dies."""
     return Scenario("crash_recovery", config=config, outcome=_error(error))
