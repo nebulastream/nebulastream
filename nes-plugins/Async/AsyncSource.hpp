@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <deque>
@@ -243,6 +244,13 @@ private:
     /// Source thread only: buffers that arrived before an earlier one of their origin.
     StreamReorderer<TupleBuffer> reorderer;
     size_t mostReordered = 0;
+    /// Source thread only, for the debug line at close: what the window held, and how long the read-ahead bound kept the
+    /// source from taking input although fewer rows were ready than the slots take.
+    size_t admittedBuffers = 0;
+    size_t admittedRows = 0;
+    size_t mostBuffersHeld = 0;
+    std::chrono::steady_clock::duration boundedWhileShort{0};
+    std::optional<std::chrono::steady_clock::time_point> boundedSince;
     Window window;
     /// Strand only. A batch in flight holds one slot: its function instances and its cancellation signal.
     std::vector<size_t> freeSlots;

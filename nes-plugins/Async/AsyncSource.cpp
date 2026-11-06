@@ -314,6 +314,14 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 void AsyncSource::close()
 {
     NES_DEBUG("Async source {}: at most {} buffers waited for an earlier one of their origin", channelId, mostReordered);
+    NES_DEBUG(
+        "Async source {}: {} buffers of {} rows on average, at most {} held at once; the read-ahead bound held back input for {} ms "
+        "while fewer rows were ready than the slots take",
+        channelId,
+        admittedBuffers,
+        admittedBuffers == 0 ? 0.0 : static_cast<double>(admittedRows) / static_cast<double>(admittedBuffers),
+        mostBuffersHeld,
+        std::chrono::duration_cast<std::chrono::milliseconds>(boundedWhileShort).count());
     /// Also after a failure or a stop request, which already drained: rows of this source must not outlive it.
     cancelAndDrain();
     channel.release();
@@ -646,6 +654,8 @@ void AsyncSource::admit(TupleBuffer input)
             keys[row] = readKeys(input, row);
         }
     }
+    ++admittedBuffers;
+    admittedRows += rows;
     auto buffer = std::make_shared<InFlightBuffer>(InFlightBuffer{
         .input = std::move(input),
         .rows = rows,
@@ -659,6 +669,7 @@ void AsyncSource::admit(TupleBuffer input)
             window.queue.push(RowRef{.buffer = buffer, .row = row}, std::move(keys[row]));
         }
         window.buffers.push_back(std::move(buffer));
+        mostBuffersHeld = std::max(mostBuffersHeld, window.buffers.size());
         window.startableRows = keyed ? window.queue.startableRows() : window.queue.size();
     }
     boost::asio::post(strand, [this] { startRows(); });
@@ -754,6 +765,16 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
         /// Rows that wait for their key do not count as ready, so a busy key does not keep other keys from starting.
         const auto rowsInFlight = maxConcurrency * batchSize;
         const bool wantsInput = !inputExhausted && window.buffers.size() < rowsInFlight && window.startableRows < rowsInFlight;
+        const bool boundedWhileShortNow = !inputExhausted && window.buffers.size() >= rowsInFlight && window.startableRows < rowsInFlight;
+        if (boundedWhileShortNow && !boundedSince)
+        {
+            boundedSince = std::chrono::steady_clock::now();
+        }
+        else if (!boundedWhileShortNow && boundedSince)
+        {
+            boundedWhileShort += std::chrono::steady_clock::now() - *boundedSince;
+            boundedSince.reset();
+        }
         if (wantsInput)
         {
             const bool idle = window.buffers.empty();
