@@ -14,10 +14,13 @@
 
 #pragma once
 
+#include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -214,6 +217,83 @@ private:
 
     std::list<Entry> waiting;
     std::unordered_map<std::string, size_t> running;
+};
+
+/// How often and how soon a failed async call is tried again.
+struct RetryPolicy
+{
+    /// Further attempts after a failure that is not transient, the n-th after `baseBackoff` * 2^n.
+    size_t maxRetries = 0;
+    /// Further attempts after transient failures (`AsyncTransientFailure`), and the time from the call's first attempt
+    /// within which they have to be made.
+    size_t maxTransientRetries = 8;
+    std::chrono::milliseconds transientTimeLimit{std::chrono::seconds{120}};
+    std::chrono::milliseconds baseBackoff{100};
+    /// Caps the backoff after transient failures; the one after other failures is capped at `baseBackoff` * 2^10.
+    std::chrono::milliseconds maxBackoff{std::chrono::seconds{30}};
+};
+
+/// The retries of one call (one row, or one batch) under a `RetryPolicy`. Transient failures and other failures count
+/// separately, so a service that is briefly overloaded does not use up the retries meant for real failures.
+///
+/// After the k-th transient failure the call waits d/2 plus a random part of d/2, with d = min(maxBackoff,
+/// baseBackoff * 2^k): growing, but spread out so that calls that failed together do not come back together. A
+/// service's own estimate (`Retry-After`) is the least it waits. The call gives up when the next attempt would come
+/// later than `transientTimeLimit` after its first one.
+class RetryBudget
+{
+public:
+    RetryBudget(const RetryPolicy& policy, const std::chrono::steady_clock::time_point start) : policy(policy), start(start) { }
+
+    /// How long to wait before the next attempt, or nothing if the call has to fail. `random` in [0, 1) picks the jitter.
+    std::optional<std::chrono::milliseconds> next(
+        const bool transient,
+        const std::optional<std::chrono::milliseconds> retryAfter,
+        const std::chrono::steady_clock::time_point now,
+        const double random)
+    {
+        if (!transient)
+        {
+            if (retries >= policy.maxRetries)
+            {
+                return std::nullopt;
+            }
+            return doubled(retries++);
+        }
+        if (transientRetries >= policy.maxTransientRetries)
+        {
+            return std::nullopt;
+        }
+        const auto span = std::min(policy.maxBackoff, doubled(transientRetries));
+        auto wait = (span / 2)
+            + std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::duration<double, std::milli>(static_cast<double>(span.count()) / 2.0 * std::clamp(random, 0.0, 1.0)));
+        if (retryAfter)
+        {
+            wait = std::max(wait, *retryAfter);
+        }
+        if (now + wait - start > policy.transientTimeLimit)
+        {
+            return std::nullopt;
+        }
+        ++transientRetries;
+        return wait;
+    }
+
+    [[nodiscard]] size_t transientRetriesMade() const { return transientRetries; }
+
+private:
+    /// `baseBackoff` * 2^n, with n capped at 10.
+    [[nodiscard]] std::chrono::milliseconds doubled(const size_t times) const
+    {
+        constexpr size_t maxDoublings = 10;
+        return policy.baseBackoff * (int64_t{1} << std::min(times, maxDoublings));
+    }
+
+    RetryPolicy policy;
+    std::chrono::steady_clock::time_point start;
+    size_t retries = 0;
+    size_t transientRetries = 0;
 };
 
 }

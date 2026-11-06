@@ -140,8 +140,16 @@ neither a call nor a source costs a thread.
 - **Function instances.** Each slot has its own instance of every function in the stage, created through the
   `AsyncFunctionRegistry`, so an instance serves one call at a time and may keep state between calls, such as an open
   connection.
-- **Failures.** A failed call is retried up to `max_retries` times, the n-th after 100 ms · 2ⁿ, unless the query is
-  stopping. A call that still fails fails the query: the source cancels every call in flight and rethrows the error.
+- **Failures.** A function throws `AsyncTransientFailure` for a failure that may pass when the call is repeated a little
+  later, e.g. a service answering 429 or 503, optionally with the wait the service asked for (`Retry-After`). The source
+  retries such a call up to `transient_retries` times within `transient_retry_seconds` of its first attempt
+  (`RetryBudget` in `AsyncScheduling.hpp`): after the k-th failure it waits d/2 plus a random part of d/2, with d = 100 ms
+  · 2ᵏ capped at 30 s, and at least the service's wait; a wait that would end beyond the time limit fails the call at
+  once. A transiently failed batch is retried as a batch, never row by row. Every other failure is retried up to
+  `max_retries` times, the n-th after 100 ms · 2ⁿ; the two kinds have separate budgets. Nothing is retried while the
+  query is stopping. A call that still fails fails the query with the function's error: the source cancels every call in
+  flight and rethrows it. The source tells the function about each retry (`AsyncFunction::retryScheduled`) and logs its
+  retries and backoff at close.
 - **Stop.** On a stop request, the source cancels its calls and waits until none of them is running before it returns.
 
 ### Configuration
@@ -154,6 +162,8 @@ The decomposition passes these optimizer options to every async stage, e.g.
 | `optimizer.async.max_concurrency`  | 16      | Rows whose calls are in flight at once, per async stage.                   |
 | `optimizer.async.channel_capacity` | 64      | Buffers the Handoff channel holds before the producer is held back.        |
 | `optimizer.async.max_retries`      | 0       | Further attempts of a failed call, with exponential backoff.               |
+| `optimizer.async.transient_retries` | 8      | Further attempts after transient failures (429, 5xx), backoff with jitter. |
+| `optimizer.async.transient_retry_seconds` | 120 | Time from a call's first attempt within which those retries happen.   |
 
 A function can lower the concurrency of its stage through `AsyncFunction::maxConcurrency`, e.g. for a service with a
 rate limit; the stage uses the smallest bound.
@@ -202,6 +212,20 @@ target_link_libraries(my_async_function_plugin_library PRIVATE nes-sources)
 link_plugin_library(nes-sources my_async_function_plugin_library)
 add_registry_entry(AsyncFunction MyFunction)
 ```
+
+## Placement decisions
+
+What goes into the framework and what stays with a function: a piece goes into the framework only if other async
+functions would need it too, and is then designed for any function, not for one.
+
+- **Retry with backoff after transient failures: framework, with the function classifying.** Any function that calls a
+  remote service meets overload and brief outages (HTTP_CALL as much as SEM_CALL), and the retry loop already lives in the
+  source. Only the function knows what a failure means, so it marks transient failures by throwing
+  `AsyncTransientFailure` and passes on the service's own estimate of the wait; the source owns the policy (budget,
+  backoff, jitter, time limit) and its configuration. SEM_CALL marks 429 and every 5xx but 501 and 505 transient and reads
+  `Retry-After` as seconds or HTTP-date. Retries only absorb sporadic failures: a client that keeps more calls in flight
+  than the service takes will starve some row however it backs off, since its other slots take every place that frees
+  up. That needs a lower concurrency, see the shared limit below.
 
 ## Limitations
 

@@ -334,6 +334,14 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     {
         sourceConfig.emplace(Identifier::parse("max_retries"), std::to_string(*context.asyncConfig.maxRetries));
     }
+    if (context.asyncConfig.transientRetries.has_value())
+    {
+        sourceConfig.emplace(Identifier::parse("transient_retries"), std::to_string(*context.asyncConfig.transientRetries));
+    }
+    if (context.asyncConfig.transientRetrySeconds.has_value())
+    {
+        sourceConfig.emplace(Identifier::parse("transient_retry_seconds"), std::to_string(*context.asyncConfig.transientRetrySeconds));
+    }
 
     const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     const auto handoffSinkDescriptor

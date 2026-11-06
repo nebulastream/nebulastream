@@ -34,8 +34,16 @@ struct QueryOptimizerAsyncConfiguration
     QueryOptimizerAsyncConfiguration() = delete;
 
     QueryOptimizerAsyncConfiguration(
-        std::optional<uint64_t> maxConcurrency, std::optional<uint64_t> channelCapacity, std::optional<uint64_t> maxRetries)
-        : maxConcurrency(maxConcurrency), channelCapacity(channelCapacity), maxRetries(maxRetries)
+        std::optional<uint64_t> maxConcurrency,
+        std::optional<uint64_t> channelCapacity,
+        std::optional<uint64_t> maxRetries,
+        std::optional<uint64_t> transientRetries,
+        std::optional<uint64_t> transientRetrySeconds)
+        : maxConcurrency(maxConcurrency)
+        , channelCapacity(channelCapacity)
+        , maxRetries(maxRetries)
+        , transientRetries(transientRetries)
+        , transientRetrySeconds(transientRetrySeconds)
     {
     }
 
@@ -45,6 +53,10 @@ struct QueryOptimizerAsyncConfiguration
     std::optional<uint64_t> channelCapacity;
     /// Further attempts of a failed async call, the n-th after 100 ms * 2^n.
     std::optional<uint64_t> maxRetries;
+    /// Further attempts of an async call after transient failures, e.g. a service answering 429, with backoff and jitter.
+    std::optional<uint64_t> transientRetries;
+    /// Seconds from a call's first attempt within which its retries after transient failures have to be made.
+    std::optional<uint64_t> transientRetrySeconds;
 
     static QueryOptimizerAsyncConfiguration fromConfig(const InstantiatedConfig& config);
 };

@@ -14,12 +14,16 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstddef>
+#include <exception>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <boost/asio/awaitable.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -30,6 +34,32 @@ using AsyncCallResult = std::vector<std::string>;
 /// The results of one batch, one entry per row in the batch's order. A row without a result, e.g. one the service left
 /// out of its answer, is called again on its own.
 using AsyncBatchResult = std::vector<std::optional<AsyncCallResult>>;
+
+/// Thrown by an async function for a failure that may pass when the same call is repeated a little later, e.g. a service
+/// that is overloaded or briefly unavailable (HTTP 429, 503). The Async source retries such a call with exponential
+/// backoff and jitter, at least `retryAfter` later if the service said when, within the stage's `transient_retries` and
+/// `transient_retry_seconds`; after that the query fails with `failure`, as with any other failure. Every other failure
+/// is retried `max_retries` times, as before.
+class AsyncTransientFailure final : public std::exception
+{
+public:
+    AsyncTransientFailure(Exception failure, std::optional<std::chrono::milliseconds> retryAfter)
+        : failure_(std::move(failure)), retryAfter_(retryAfter)
+    {
+    }
+
+    [[nodiscard]] const char* what() const noexcept override { return failure_.what(); }
+
+    /// What the query fails with once the retries are used up.
+    [[nodiscard]] const Exception& failure() const { return failure_; }
+
+    /// How long the service asked to wait, e.g. its `Retry-After`.
+    [[nodiscard]] std::optional<std::chrono::milliseconds> retryAfter() const { return retryAfter_; }
+
+private:
+    Exception failure_;
+    std::optional<std::chrono::milliseconds> retryAfter_;
+};
 
 /// The implementation of an `AsyncLogicalFunction`, run by the `Async` source on its event loop.
 /// An instance serves one call at a time, so it may keep per-connection state between calls.
@@ -60,6 +90,10 @@ public:
 
     /// Rows `callBatch` takes at once. 1, the default, means the source never calls `callBatch`.
     [[nodiscard]] virtual size_t maxBatchSize() const { return 1; }
+
+    /// Called on the instance whose call failed, before the source waits `delay` and calls again; `transient` says whether
+    /// the failure was an `AsyncTransientFailure`. For statistics: nothing has to be done here.
+    virtual void retryScheduled(std::chrono::milliseconds /*delay*/, bool /*transient*/) { }
 
     /// The argument whose value orders the calls: rows with equal values are called one at a time, in stream order, and
     /// rows with different values in parallel. Must be a handed-off field or a constant, not the value of another call.

@@ -24,6 +24,7 @@
 #include <mutex>
 #include <optional>
 #include <ostream>
+#include <random>
 #include <stop_token>
 #include <string>
 #include <string_view>
@@ -64,6 +65,10 @@ struct AsyncSourceConfig
     size_t channelCapacity;
     /// Further attempts of a failed call, the n-th after 100 ms * 2^n.
     size_t maxRetries;
+    /// Further attempts after transient failures (`AsyncTransientFailure`), with backoff and jitter, and the seconds from
+    /// a call's first attempt within which they have to be made.
+    size_t transientRetries = RetryPolicy{}.maxTransientRetries;
+    size_t transientRetrySeconds = std::chrono::duration_cast<std::chrono::seconds>(RetryPolicy{}.transientTimeLimit).count();
 
     static std::expected<AsyncSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
@@ -197,13 +202,16 @@ private:
     std::vector<std::string> readKeys(const TupleBuffer& input, size_t row) const;
     /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops, and checks that the
     /// function produced the values the stage reads.
-    boost::asio::awaitable<AsyncCallResult> callWithRetries(size_t callIndex, size_t slot, std::vector<std::string> arguments) const;
+    boost::asio::awaitable<AsyncCallResult> callWithRetries(size_t callIndex, size_t slot, std::vector<std::string> arguments);
     /// One request for several rows, retried as a whole up to `maxRetries` times. Rows it leaves without a result, or all
     /// of them once the retries are used up, are called one by one (`callWithRetries`).
     boost::asio::awaitable<std::vector<AsyncCallResult>>
-    callBatchWithRetries(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows) const;
+    callBatchWithRetries(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows);
     /// One call for the rows of a batch, in requests of at most the call's `maxBatchSize` rows.
-    boost::asio::awaitable<std::vector<AsyncCallResult>> callRows(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows) const;
+    boost::asio::awaitable<std::vector<AsyncCallResult>> callRows(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows);
+    /// Strand only: tells the function, counts the retry and waits `delay`.
+    boost::asio::awaitable<void>
+    backOff(const BoundCall& call, AsyncFunction& function, std::chrono::milliseconds delay, bool transient, size_t rows);
     /// Runs the calls of a batch of rows with the function instances of `slot`.
     boost::asio::awaitable<void> processBatch(size_t slot, std::vector<RowRef> rows);
 
@@ -220,7 +228,7 @@ private:
     std::string channelId;
     /// The configured bound, lowered to what the stage's functions allow.
     size_t maxConcurrency;
-    size_t maxRetries;
+    RetryPolicy retryPolicy;
     size_t inputRowSize = 0;
     size_t outputRowSize = 0;
     std::vector<CopiedField> copiedFields;
@@ -245,7 +253,7 @@ private:
     StreamReorderer<TupleBuffer> reorderer;
     size_t mostReordered = 0;
     /// Source thread only, for the debug line at close: what the window held, and how long the read-ahead bound kept the
-    /// source from taking input although fewer rows were ready than the slots take.
+    /// source from taking input although fewer rows were ready than the slots could take.
     size_t admittedBuffers = 0;
     size_t admittedRows = 0;
     size_t mostBuffersHeld = 0;
@@ -256,6 +264,12 @@ private:
     std::vector<size_t> freeSlots;
     std::vector<boost::asio::cancellation_signal> cancelSignals;
     bool stopping = false;
+    /// Strand only: picks the jitter of the backoff after transient failures.
+    std::mt19937_64 jitter{std::random_device{}()};
+    /// Strand only; read at close, once nothing runs any more.
+    size_t transientRetriesMade = 0;
+    size_t otherRetriesMade = 0;
+    std::chrono::milliseconds backedOff{0};
 };
 
 }

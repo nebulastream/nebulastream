@@ -27,6 +27,7 @@
 #include <span>
 #include <stop_token>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -236,6 +237,61 @@ TEST(KeyedRowQueueTest, ARowNeverOvertakesAnEarlierRowOfOneOfItsKeys)
 /// --- AsyncSource with test functions ---
 
 /// What the test functions saw, shared by all instances of a test.
+TEST(RetryBudgetTest, RetriesOtherFailuresMaxRetriesTimesWithDoublingBackoff)
+{
+    const auto now = std::chrono::steady_clock::now();
+    RetryBudget budget{RetryPolicy{.maxRetries = 2}, now};
+    EXPECT_EQ(budget.next(false, std::nullopt, now, 0.5), std::chrono::milliseconds{100});
+    EXPECT_EQ(budget.next(false, std::nullopt, now, 0.5), std::chrono::milliseconds{200});
+    EXPECT_EQ(budget.next(false, std::nullopt, now, 0.5), std::nullopt);
+}
+
+TEST(RetryBudgetTest, BacksOffTransientFailuresExponentiallyWithJitterUpToTheCap)
+{
+    const auto now = std::chrono::steady_clock::now();
+    const RetryPolicy policy{.maxRetries = 0, .maxTransientRetries = 6, .maxBackoff = std::chrono::milliseconds{1000}};
+    RetryBudget low{policy, now};
+    RetryBudget high{policy, now};
+    /// d = 100, 200, 400, 800, then capped at 1000: the wait lies in [d/2, d].
+    for (const auto span : {100, 200, 400, 800, 1000, 1000})
+    {
+        EXPECT_EQ(low.next(true, std::nullopt, now, 0.0), std::chrono::milliseconds{span / 2});
+        EXPECT_EQ(high.next(true, std::nullopt, now, 1.0), std::chrono::milliseconds{span});
+    }
+    EXPECT_EQ(low.next(true, std::nullopt, now, 0.0), std::nullopt) << "only maxTransientRetries retries";
+}
+
+TEST(RetryBudgetTest, WaitsAtLeastWhatTheServiceAskedFor)
+{
+    const auto now = std::chrono::steady_clock::now();
+    RetryBudget budget{RetryPolicy{}, now};
+    EXPECT_EQ(budget.next(true, std::chrono::milliseconds{2500}, now, 0.0), std::chrono::milliseconds{2500});
+    EXPECT_EQ(budget.next(true, std::chrono::milliseconds{10}, now, 0.0), std::chrono::milliseconds{100}) << "the backoff, if longer";
+}
+
+TEST(RetryBudgetTest, GivesUpWhenTheNextAttemptWouldComeAfterTheTimeLimit)
+{
+    const auto start = std::chrono::steady_clock::now();
+    RetryBudget budget{RetryPolicy{.transientTimeLimit = std::chrono::seconds{10}}, start};
+    EXPECT_TRUE(budget.next(true, std::chrono::seconds{9}, start, 0.0).has_value());
+    EXPECT_EQ(budget.next(true, std::chrono::seconds{2}, start + std::chrono::seconds{9}, 0.0), std::nullopt);
+    RetryBudget asked{RetryPolicy{.transientTimeLimit = std::chrono::seconds{10}}, start};
+    EXPECT_EQ(asked.next(true, std::chrono::seconds{11}, start, 0.0), std::nullopt) << "a Retry-After beyond the limit fails at once";
+}
+
+TEST(RetryBudgetTest, TransientFailuresDoNotUseUpTheRetriesOfOtherFailures)
+{
+    const auto now = std::chrono::steady_clock::now();
+    RetryBudget budget{RetryPolicy{.maxRetries = 1, .maxTransientRetries = 3}, now};
+    for (int retry = 0; retry < 3; ++retry)
+    {
+        EXPECT_TRUE(budget.next(true, std::nullopt, now, 0.0).has_value());
+    }
+    EXPECT_TRUE(budget.next(false, std::nullopt, now, 0.0).has_value());
+    EXPECT_EQ(budget.next(false, std::nullopt, now, 0.0), std::nullopt);
+    EXPECT_EQ(budget.next(true, std::nullopt, now, 0.0), std::nullopt);
+}
+
 struct Observations
 {
     std::mutex mutex;
@@ -250,6 +306,12 @@ struct Observations
     /// Batches that still fail before the function answers; see `ScriptedFunction`.
     size_t failingBatches = 0;
     size_t failingRows = 0;
+    /// Requests that still fail transiently (`AsyncTransientFailure`), with this `retryAfter`.
+    size_t transientFailures = 0;
+    std::optional<std::chrono::milliseconds> retryAfter;
+    /// When each request started, and the retries the source announced (delay, transient).
+    std::vector<std::chrono::steady_clock::time_point> requestStarts;
+    std::vector<std::pair<std::chrono::milliseconds, bool>> retries;
 };
 
 Observations observed; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables) shared with the registered factories
@@ -278,15 +340,28 @@ public:
 
     [[nodiscard]] size_t maxBatchSize() const override { return batch; }
 
+    void retryScheduled(const std::chrono::milliseconds delay, const bool transient) override
+    {
+        const std::scoped_lock lock(observed.mutex);
+        observed.retries.emplace_back(delay, transient);
+    }
+
     [[nodiscard]] std::optional<size_t> orderingKey() const override { return keyed == 1 ? std::optional<size_t>{0} : std::nullopt; }
 
 private:
     boost::asio::awaitable<AsyncBatchResult> run(std::vector<std::vector<std::string>> rows, const bool asBatch)
     {
         bool fail = false;
+        bool failTransiently = false;
         {
             const std::scoped_lock lock(observed.mutex);
             observed.requests.push_back(rows.size());
+            observed.requestStarts.push_back(std::chrono::steady_clock::now());
+            if (observed.transientFailures > 0)
+            {
+                --observed.transientFailures;
+                failTransiently = true;
+            }
             observed.mostInFlight = std::max(observed.mostInFlight, ++observed.inFlight);
             for (const auto& row : rows)
             {
@@ -314,6 +389,10 @@ private:
             {
                 observed.keysInFlight.erase(row[0]);
             }
+        }
+        if (failTransiently)
+        {
+            throw AsyncTransientFailure(CannotReadFromSource("scripted transient failure"), observed.retryAfter);
         }
         if (fail)
         {
@@ -359,6 +438,10 @@ protected:
         observed.mostInFlight = 0;
         observed.failingBatches = 0;
         observed.failingRows = 0;
+        observed.transientFailures = 0;
+        observed.retryAfter.reset();
+        observed.requestStarts.clear();
+        observed.retries.clear();
 
         const auto schema = Schema<UnqualifiedUnboundField, Ordered>{
             UnqualifiedUnboundField{Identifier::parse("key"), DataType::Type::VARSIZED},
@@ -376,7 +459,12 @@ protected:
         }
     }
 
-    void startSource(const std::string& functionConfiguration, const size_t concurrency, const size_t retries)
+    void startSource(
+        const std::string& functionConfiguration,
+        const size_t concurrency,
+        const size_t retries,
+        const size_t transientRetries = AsyncSourceConfig{}.transientRetries,
+        const size_t transientRetrySeconds = AsyncSourceConfig{}.transientRetrySeconds)
     {
         const auto calls = fmt::format(
             R"([{{"outputs":[{{"index":0,"field":"{}"}}],"function":"ScriptedTest","configuration":"{}","arguments":[{{"field":"{}","output":0}},{{"field":"{}","output":0}}]}}])",
@@ -390,7 +478,9 @@ protected:
             .inputFields = fmt::format("{},{},{}", names[0], names[1], names[2]),
             .maxConcurrency = concurrency,
             .channelCapacity = 1024,
-            .maxRetries = retries};
+            .maxRetries = retries,
+            .transientRetries = transientRetries,
+            .transientRetrySeconds = transientRetrySeconds};
         source = std::make_unique<AsyncSource>(config, *descriptor);
         sink.emplace(channelId, 1024, HandoffChannel::Role::SINK);
         source->open(bufferManager);
@@ -654,6 +744,69 @@ TEST_F(AsyncSourceTest, BatchesHoldAtMostOneRowPerKey)
     EXPECT_EQ(observed.requests, (std::vector<size_t>{3, 2}));
     EXPECT_EQ(observed.startedPerKey["a"], (std::vector<std::string>{"a1", "a2"}));
     EXPECT_EQ(observed.startedPerKey["b"], (std::vector<std::string>{"b1", "b2"}));
+}
+
+TEST_F(AsyncSourceTest, RetriesTransientFailuresAfterTheServicesRetryAfterWithoutMaxRetries)
+{
+    /// No retries for other failures: a service that answers "too many requests" twice still does not fail the query.
+    startSource("1,0,1,0", 1, 0);
+    observed.transientFailures = 2;
+    observed.retryAfter = std::chrono::milliseconds{150};
+    handOff(handedOff(at(1, 1), {{"k", "a"}}));
+    (*sink)->close();
+    const auto emitted = drain();
+    ASSERT_EQ(emitted.size(), 1);
+    EXPECT_EQ(std::get<2>(emitted[0]), "a!");
+    ASSERT_EQ(observed.requestStarts.size(), 3);
+    EXPECT_GE(observed.requestStarts[1] - observed.requestStarts[0], std::chrono::milliseconds{150});
+    EXPECT_GE(observed.requestStarts[2] - observed.requestStarts[1], std::chrono::milliseconds{150});
+    ASSERT_EQ(observed.retries.size(), 2);
+    EXPECT_TRUE(observed.retries[0].second);
+    EXPECT_GE(observed.retries[0].first, std::chrono::milliseconds{150});
+}
+
+TEST_F(AsyncSourceTest, RetriesATransientlyFailedBatchAsABatch)
+{
+    startSource("3,0,1,0", 1, 0);
+    observed.transientFailures = 1;
+    handOff(handedOff(at(1, 1), {{"k", "a"}, {"k", "b"}, {"k", "c"}}));
+    (*sink)->close();
+    const auto emitted = drain();
+    ASSERT_EQ(emitted.size(), 3);
+    EXPECT_EQ(observed.requests, (std::vector<size_t>{3, 3})) << "not row by row, which would only load the service more";
+}
+
+TEST_F(AsyncSourceTest, FailsTheQueryWithTheFunctionsErrorOnceTransientRetriesAreUsedUp)
+{
+    startSource("1,0,1,0", 1, 0, 2);
+    observed.transientFailures = 10;
+    handOff(handedOff(at(1, 1), {{"k", "a"}}));
+    (*sink)->close();
+    try
+    {
+        drain();
+        FAIL() << "the query should fail";
+    }
+    catch (const Exception& error)
+    {
+        EXPECT_NE(std::string_view{error.what()}.find("scripted transient failure"), std::string_view::npos) << error.what();
+    }
+    source->close();
+    EXPECT_EQ(observed.requests.size(), 3) << "the first attempt and 2 retries";
+}
+
+TEST_F(AsyncSourceTest, FailsAtOnceWhenTheServiceAsksForAWaitBeyondTheTimeLimit)
+{
+    startSource("1,0,1,0", 1, 0, 8, 1);
+    observed.transientFailures = 1;
+    observed.retryAfter = std::chrono::seconds{5};
+    handOff(handedOff(at(1, 1), {{"k", "a"}}));
+    (*sink)->close();
+    const auto start = std::chrono::steady_clock::now();
+    EXPECT_THROW(drain(), Exception);
+    source->close();
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds{2});
+    EXPECT_EQ(observed.requests.size(), 1);
 }
 
 }

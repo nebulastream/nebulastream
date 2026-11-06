@@ -62,18 +62,38 @@ const ConfigField<std::optional<uint64_t>> MAX_RETRIES{
     optionalUInt,
     std::nullopt,
     "Not set"};
+
+const ConfigField<std::optional<uint64_t>> TRANSIENT_RETRIES{
+    Identifier::parse("transient_retries"),
+    "Further attempts of an async call after transient failures, e.g. a service answering 429, with backoff and jitter",
+    optionalUInt,
+    std::nullopt,
+    "Not set"};
+
+const ConfigField<std::optional<uint64_t>> TRANSIENT_RETRY_SECONDS{
+    Identifier::parse("transient_retry_seconds"),
+    "Seconds from an async call's first attempt within which its retries after transient failures have to be made",
+    optionalUInt,
+    std::nullopt,
+    "Not set"};
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerAsyncConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("async"), MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
+    return createConfigSchema(
+        Identifier::parse("async"), MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES, TRANSIENT_RETRIES, TRANSIENT_RETRY_SECONDS);
 }
 
 QueryOptimizerAsyncConfiguration QueryOptimizerAsyncConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(MAX_CONCURRENCY), config.get(CHANNEL_CAPACITY), config.get(MAX_RETRIES)};
+    return {
+        config.get(MAX_CONCURRENCY),
+        config.get(CHANNEL_CAPACITY),
+        config.get(MAX_RETRIES),
+        config.get(TRANSIENT_RETRIES),
+        config.get(TRANSIENT_RETRY_SECONDS)};
 }
 
 }

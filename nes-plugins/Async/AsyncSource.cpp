@@ -108,6 +108,18 @@ const ConfigField<size_t> CHANNEL_CAPACITY{
 const ConfigField<size_t> MAX_RETRIES{
     Identifier::parse("MAX_RETRIES"), "Further attempts of a failed call, the n-th after 100 ms * 2^n", sizeFromLiteral, size_t{0}};
 
+const ConfigField<size_t> TRANSIENT_RETRIES{
+    Identifier::parse("TRANSIENT_RETRIES"),
+    "Further attempts of a call after transient failures, such as a service answering 429, with backoff and jitter",
+    sizeFromLiteral,
+    AsyncSourceConfig{}.transientRetries};
+
+const ConfigField<size_t> TRANSIENT_RETRY_SECONDS{
+    Identifier::parse("TRANSIENT_RETRY_SECONDS"),
+    "Seconds from a call's first attempt within which retries after transient failures have to be made",
+    sizeFromLiteral,
+    AsyncSourceConfig{}.transientRetrySeconds};
+
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 /// One event loop for all Async sources, so concurrent calls cost neither a thread per call nor a thread per source.
@@ -141,10 +153,6 @@ private:
     std::jthread thread;
 };
 
-constexpr std::chrono::milliseconds RETRY_BACKOFF{100};
-/// Caps the backoff at 100 ms * 2^10, about 100 s.
-constexpr size_t MAX_BACKOFF_DOUBLINGS = 10;
-
 /// Arguments and results are non-nullable VARSIZED only, which is what HTTP_CALL needs
 void requireVarSized(const DataType& type, std::string_view what)
 {
@@ -158,7 +166,15 @@ void requireVarSized(const DataType& type, std::string_view what)
 Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
 {
     return createConfigSchema(
-        Identifier::parse("ASYNC_SOURCE"), CHANNEL, CALLS, INPUT_FIELDS, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
+        Identifier::parse("ASYNC_SOURCE"),
+        CHANNEL,
+        CALLS,
+        INPUT_FIELDS,
+        MAX_CONCURRENCY,
+        CHANNEL_CAPACITY,
+        MAX_RETRIES,
+        TRANSIENT_RETRIES,
+        TRANSIENT_RETRY_SECONDS);
 }
 
 std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig& config)
@@ -169,13 +185,18 @@ std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const 
         .inputFields = config.get(INPUT_FIELDS),
         .maxConcurrency = config.get(MAX_CONCURRENCY),
         .channelCapacity = config.get(CHANNEL_CAPACITY),
-        .maxRetries = config.get(MAX_RETRIES)};
+        .maxRetries = config.get(MAX_RETRIES),
+        .transientRetries = config.get(TRANSIENT_RETRIES),
+        .transientRetrySeconds = config.get(TRANSIENT_RETRY_SECONDS)};
 }
 
 AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor)
     : channelId(config.channel)
     , maxConcurrency(std::max<size_t>(1, config.maxConcurrency))
-    , maxRetries(config.maxRetries)
+    , retryPolicy{
+          .maxRetries = config.maxRetries,
+          .maxTransientRetries = config.transientRetries,
+          .transientTimeLimit = std::chrono::seconds{config.transientRetrySeconds}}
     , channel(config.channel, config.channelCapacity, HandoffChannel::Role::SOURCE)
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
@@ -324,6 +345,15 @@ void AsyncSource::close()
         std::chrono::duration_cast<std::chrono::milliseconds>(boundedWhileShort).count());
     /// Also after a failure or a stop request, which already drained: rows of this source must not outlive it.
     cancelAndDrain();
+    if (transientRetriesMade + otherRetriesMade > 0)
+    {
+        NES_INFO(
+            "Async source {}: {} retries after transient failures, {} after other failures, {} ms backed off",
+            channelId,
+            transientRetriesMade,
+            otherRetriesMade,
+            backedOff.count());
+    }
     channel.release();
 }
 
@@ -379,29 +409,59 @@ std::vector<std::string> AsyncSource::readKeys(const TupleBuffer& input, const s
 
 namespace
 {
-boost::asio::awaitable<void> waitBeforeRetry(const size_t attempt)
-{
-    const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
-    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
-    co_await timer.async_wait(boost::asio::use_awaitable);
-}
-
 boost::asio::awaitable<bool> cancelled()
 {
     co_return (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none;
 }
+
+/// A failed attempt: what the query fails with if it is not retried, and whether the function marked it transient.
+struct Failure
+{
+    std::exception_ptr error;
+    bool transient = false;
+    std::optional<std::chrono::milliseconds> retryAfter;
+};
+
+Failure classify(const std::exception_ptr& error)
+{
+    try
+    {
+        std::rethrow_exception(error);
+    }
+    catch (const AsyncTransientFailure& transient)
+    {
+        return {.error = std::make_exception_ptr(transient.failure()), .transient = true, .retryAfter = transient.retryAfter()};
+    }
+    /// Only classifies; the failure itself is kept unchanged.
+    catch (...) /// NOLINT(no-raw-catch-all)
+    {
+        return {.error = error, .transient = false, .retryAfter = std::nullopt};
+    }
+}
+}
+
+boost::asio::awaitable<void> AsyncSource::backOff(
+    const BoundCall& call, AsyncFunction& function, const std::chrono::milliseconds delay, const bool transient, const size_t rows)
+{
+    NES_WARNING(
+        "Async call of {} for {} row(s) failed{}; trying again in {} ms", call.function, rows, transient ? " transiently" : "", delay.count());
+    function.retryScheduled(delay, transient);
+    ++(transient ? transientRetriesMade : otherRetriesMade);
+    backedOff += delay;
+    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, delay};
+    co_await timer.async_wait(boost::asio::use_awaitable);
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<AsyncCallResult>
-AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vector<std::string> arguments) const
+boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vector<std::string> arguments)
 {
     const auto& call = calls[callIndex];
     auto& function = *call.instances[slot];
-    for (size_t attempt = 0;; ++attempt)
+    RetryBudget budget{retryPolicy, std::chrono::steady_clock::now()};
+    while (true)
     {
         std::optional<AsyncCallResult> result;
-        std::exception_ptr failure;
+        std::exception_ptr error;
         try
         {
             result = co_await function.callValues(arguments);
@@ -409,7 +469,7 @@ AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vec
         /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
         catch (...) /// NOLINT(no-raw-catch-all)
         {
-            failure = std::current_exception();
+            error = std::current_exception();
         }
         if (result)
         {
@@ -421,25 +481,32 @@ AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vec
             }
             co_return std::move(*result);
         }
-        if (attempt >= maxRetries || co_await cancelled())
+        const auto failure = classify(error);
+        if (co_await cancelled())
         {
-            std::rethrow_exception(failure);
+            std::rethrow_exception(failure.error);
         }
-        NES_WARNING("Async call of {} failed, attempt {} of {} follows", call.function, attempt + 2, maxRetries + 1);
-        co_await waitBeforeRetry(attempt);
+        const auto delay = budget.next(
+            failure.transient, failure.retryAfter, std::chrono::steady_clock::now(), std::uniform_real_distribution<double>{0.0, 1.0}(jitter));
+        if (!delay)
+        {
+            std::rethrow_exception(failure.error);
+        }
+        co_await backOff(call, function, *delay, failure.transient, 1);
     }
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<std::vector<AsyncCallResult>>
-AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std::vector<std::vector<std::string>> rows) const
+AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std::vector<std::vector<std::string>> rows)
 {
     const auto& call = calls[callIndex];
     auto& function = *call.instances[slot];
     std::optional<AsyncBatchResult> batch;
-    for (size_t attempt = 0;; ++attempt)
+    RetryBudget budget{retryPolicy, std::chrono::steady_clock::now()};
+    while (true)
     {
-        std::exception_ptr failure;
+        std::exception_ptr error;
         try
         {
             batch = co_await function.callBatch(rows);
@@ -447,23 +514,30 @@ AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std
         /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
         catch (...) /// NOLINT(no-raw-catch-all)
         {
-            failure = std::current_exception();
+            error = std::current_exception();
         }
         if (batch)
         {
             break;
         }
+        const auto failure = classify(error);
         if (co_await cancelled())
         {
-            std::rethrow_exception(failure);
+            std::rethrow_exception(failure.error);
         }
-        if (attempt >= maxRetries)
+        const auto delay = budget.next(
+            failure.transient, failure.retryAfter, std::chrono::steady_clock::now(), std::uniform_real_distribution<double>{0.0, 1.0}(jitter));
+        if (!delay)
         {
-            NES_WARNING("Async batch of {} rows of {} failed {} times; calling its rows one by one", rows.size(), call.function, attempt + 1);
+            /// A service that stays overloaded would only get more requests from calling the rows one by one.
+            if (failure.transient)
+            {
+                std::rethrow_exception(failure.error);
+            }
+            NES_WARNING("Async batch of {} rows of {} failed; calling its rows one by one", rows.size(), call.function);
             break;
         }
-        NES_WARNING("Async batch of {} rows of {} failed, attempt {} of {} follows", rows.size(), call.function, attempt + 2, maxRetries + 1);
-        co_await waitBeforeRetry(attempt);
+        co_await backOff(call, function, *delay, failure.transient, rows.size());
     }
     if (batch && batch->size() != rows.size())
     {
@@ -490,7 +564,7 @@ AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<std::vector<AsyncCallResult>>
-AsyncSource::callRows(const size_t callIndex, const size_t slot, std::vector<std::vector<std::string>> rows) const
+AsyncSource::callRows(const size_t callIndex, const size_t slot, std::vector<std::vector<std::string>> rows)
 {
     const auto requestSize = calls[callIndex].maxBatchSize;
     std::vector<AsyncCallResult> results;
