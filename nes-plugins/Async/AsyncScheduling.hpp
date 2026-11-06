@@ -128,9 +128,13 @@ private:
 /// of its keys. So rows of one key start one at a time and in stream order, rows of different keys run side by side, and
 /// rows without keys start in stream order whenever a slot is free. Waiting rows hold nothing but their place here.
 ///
-/// Kept incrementally: per key the waiting rows in stream order, and the set of rows that may start, so pushing, taking
-/// and finishing cost O(log n) however many rows wait. A deep queue of rows that wait for their key is what lets a keyed
-/// stage over input sorted by key keep every key busy.
+/// Among rows of different keys that may start, the one whose key has the most rows waiting goes first, then stream
+/// order: the longest chain first, so no key is left with a long serial tail after the others are done. Rows without keys
+/// all have the same priority and start in stream order.
+///
+/// Kept incrementally: per key the waiting rows in stream order, and the rows that may start ordered by priority, so
+/// pushing, taking and finishing cost O(log n) however many rows wait. A deep queue of rows that wait for their key is
+/// what lets a keyed stage keep every key busy.
 template <typename Row>
 class KeyedRowQueue
 {
@@ -148,7 +152,15 @@ public:
         waiting.emplace(position, Entry{std::move(row), std::move(keys)});
         if (ready)
         {
-            startable.insert(position);
+            makeStartable(position);
+        }
+        /// The heads of this row's keys now head longer chains.
+        for (const auto& key : waiting.at(position).keys)
+        {
+            if (const auto head = waitingByKey.at(key).front(); head != position)
+            {
+                reprioritize(head);
+            }
         }
     }
 
@@ -159,8 +171,9 @@ public:
         std::vector<std::pair<Row, std::vector<std::string>>> taken;
         while (!startable.empty() && taken.size() < limit)
         {
-            const auto position = *startable.begin();
+            const auto position = startable.begin()->second;
             startable.erase(startable.begin());
+            priorities.erase(position);
             auto entry = waiting.extract(position);
             for (const auto& key : entry.mapped().keys)
             {
@@ -204,6 +217,7 @@ public:
     {
         waiting.clear();
         startable.clear();
+        priorities.clear();
         waitingByKey.clear();
         running.clear();
     }
@@ -222,14 +236,54 @@ private:
         if (std::ranges::all_of(
                 keys, [&](const std::string& key) { return !running.contains(key) && waitingByKey.at(key).front() == position; }))
         {
-            startable.insert(position);
+            makeStartable(position);
+        }
+    }
+
+    /// Rows waiting in the longest chain the row heads: its key's with the most rows, the row itself included.
+    [[nodiscard]] size_t chainLength(const uint64_t position) const
+    {
+        size_t length = 0;
+        for (const auto& key : waiting.at(position).keys)
+        {
+            length = std::max(length, waitingByKey.at(key).size());
+        }
+        return length;
+    }
+
+    void makeStartable(const uint64_t position)
+    {
+        const auto length = chainLength(position);
+        startable.emplace(length, position);
+        priorities[position] = length;
+    }
+
+    void reprioritize(const uint64_t position)
+    {
+        if (const auto entry = priorities.find(position); entry != priorities.end())
+        {
+            startable.erase({entry->second, position});
+            priorities.erase(entry);
+            makeStartable(position);
         }
     }
 
     uint64_t nextPosition = 0;
     /// By stream position.
     std::map<uint64_t, Entry> waiting;
-    std::set<uint64_t> startable;
+
+    /// Rows that may start, by chain length descending, then stream position.
+    struct ByPriority
+    {
+        bool operator()(const std::pair<size_t, uint64_t>& lhs, const std::pair<size_t, uint64_t>& rhs) const
+        {
+            return lhs.first != rhs.first ? lhs.first > rhs.first : lhs.second < rhs.second;
+        }
+    };
+
+    std::set<std::pair<size_t, uint64_t>, ByPriority> startable;
+    /// The chain length each startable row is filed under in `startable`.
+    std::unordered_map<uint64_t, size_t> priorities;
     std::unordered_map<std::string, std::deque<uint64_t>> waitingByKey;
     std::unordered_map<std::string, size_t> running;
 };

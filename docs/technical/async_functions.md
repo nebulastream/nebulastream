@@ -139,7 +139,9 @@ neither a call nor a source costs a thread.
   one row per key, and rows waiting for their key hold no slot (`KeyedRowQueue`, which keeps per key its waiting rows
   and the set of rows that may start, so each step costs O(log n)). Rows that wait for their key do not count as ready,
   so the source reads past them, up to `read_ahead_rows`: over input sorted by key, every key in flight needs all its
-  rows in the window before the next key's rows arrive. Its logical function returns true
+  rows in the window before the next key's rows arrive.
+  Among rows of different keys that may start, the one whose key has the most rows waiting goes first, then stream
+  order: the longest chain first, so no key is left with a long serial tail after the others are done. Its logical function returns true
   from `AsyncLogicalFunction::dependsOnEarlierRows`, so that no selection is pushed below the call.
 - **Shared limits.** A function may name a resource and a limit in `sharedLimit`, e.g. one model on one endpoint. Every
   request of every stage on the worker that names the same resource then holds a permit of one `AsyncResourceLimiter`
@@ -257,6 +259,10 @@ functions would need it too, and is then designed for any function, not for one.
   fewer rows are ready than the slots take. Emitting finished buffers out of order was the other option; it would
   break the stream order the stage guarantees, so it was not taken. The default, 64 rows per row the slots take,
   covers keys of up to 64 consecutive rows with every slot busy; `read_ahead_rows` raises or lowers it.
+  Order across keys was the second half of the gap: SEM_SCAN's input is in creation-date order, keys interleaved, and
+  starting the oldest ready row first left the keys whose rows come late with a serial tail (at 64 slots, one key ran 10
+  rows alone after the rest were done). Starting the longest chain first is free to choose, since only order within a
+  key is guaranteed.
 
 ## Limitations
 

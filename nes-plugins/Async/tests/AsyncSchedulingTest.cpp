@@ -1000,6 +1000,22 @@ TEST_F(AsyncSourceTest, ReadAheadStaysWithinItsBoundInRows)
     EXPECT_LE(observed.mostInFlight, 3);
 }
 
+TEST(KeyedRowQueueTest, TheKeyWithTheLongestChainStartsFirst)
+{
+    /// Key b comes later in the stream but has three rows waiting, a and c one each: one slot takes b's head first, so b
+    /// is not left with a serial tail once the others are done. Within a key, stream order holds.
+    KeyedRowQueue<int> queue;
+    queue.push(1, {"a"});
+    queue.push(2, {"c"});
+    queue.push(3, {"b"});
+    queue.push(4, {"b"});
+    queue.push(5, {"b"});
+    EXPECT_EQ(rowsOf(queue.take(1)), std::vector{3});
+    EXPECT_EQ(rowsOf(queue.take(10)), (std::vector{1, 2})) << "equal chains in stream order";
+    queue.finish({"b"});
+    EXPECT_EQ(rowsOf(queue.take(1)), std::vector{4});
+}
+
 TEST(KeyedRowQueueTest, StaysCheapWithManyRowsWaitingForTheirKeys)
 {
     /// 256 keys of 64 rows, sorted by key, then every row run: quadratic work per take or finish would take seconds.
