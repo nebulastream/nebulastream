@@ -199,13 +199,13 @@ LoweringRuleResultSubgraph LowerToPhysicalINLJoin::apply(LogicalOperator logical
         switch (currentJoinType)
         {
             case JT::OUTER_LEFT_JOIN:
-                return OuterJoinTriggerStrategy<true, false>{};
+                return JoinTriggerStrategy{.emitLeftNullFill = true, .emitRightNullFill = false};
             case JT::OUTER_RIGHT_JOIN:
-                return OuterJoinTriggerStrategy<false, true>{};
+                return JoinTriggerStrategy{.emitLeftNullFill = false, .emitRightNullFill = true};
             case JT::OUTER_FULL_JOIN:
-                return OuterJoinTriggerStrategy<true, true>{};
+                return JoinTriggerStrategy{.emitLeftNullFill = true, .emitRightNullFill = true};
             case JT::INNER_JOIN:
-                return InnerJoinTriggerStrategy{};
+                return JoinTriggerStrategy{};
             case JT::CARTESIAN_PRODUCT:
                 break;
         }
@@ -263,8 +263,6 @@ LoweringRuleResultSubgraph LowerToPhysicalINLJoin::apply(LogicalOperator logical
             std::vector{leftBuildWrapper, rightBuildWrapper});
     };
 
-    static_assert(JoinProbeOperator<INLJInnerProbePhysicalOperator>);
-    static_assert(JoinProbeOperator<INLJOuterProbePhysicalOperator>);
     std::shared_ptr<PhysicalOperatorWrapper> probeWrapper;
     if (isOuterJoin(currentJoinType))
     {
