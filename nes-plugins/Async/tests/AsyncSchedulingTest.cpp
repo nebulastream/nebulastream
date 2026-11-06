@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <charconv>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -24,6 +25,7 @@
 #include <mutex>
 #include <optional>
 #include <random>
+#include <ranges>
 #include <set>
 #include <span>
 #include <stop_token>
@@ -122,7 +124,8 @@ TEST(StreamReordererTest, DrainsWhatIsLeftInStreamOrder)
 
 TEST(StreamReordererTest, RestoresAShuffledStreamOfManyChunkedSequences)
 {
-    std::mt19937 random{42};
+    /// A fixed seed keeps the test reproducible.
+    std::mt19937 random{42}; /// NOLINT(bugprone-random-generator-seed,cert-msc51-cpp)
     std::vector<std::pair<StreamPosition, std::string>> stream;
     for (uint64_t origin = 1; origin <= 3; ++origin)
     {
@@ -166,6 +169,7 @@ TEST(StreamReordererTest, RestoresAShuffledStreamOfManyChunkedSequences)
 std::vector<int> rowsOf(const std::vector<std::pair<int, std::vector<std::string>>>& taken)
 {
     std::vector<int> rows;
+    rows.reserve(taken.size());
     for (const auto& [row, keys] : taken)
     {
         rows.push_back(row);
@@ -326,13 +330,21 @@ class ScriptedFunction final : public AsyncFunction
 public:
     explicit ScriptedFunction(const std::string& configuration)
     {
-        std::array<char, 64> resourceName{};
-        /// NOLINTNEXTLINE(cert-err34-c)
-        if (std::sscanf(
-                configuration.c_str(), "%zu,%d,%d,%d,%63[^,],%zu", &batch, &keyed, &delayMs, &omit, resourceName.data(), &sharedBound)
-            == 6)
+        const auto fields = configuration | std::views::split(',') | std::ranges::to<std::vector<std::string>>();
+        const auto number = [&](const size_t index)
         {
-            resource = resourceName.data();
+            size_t value = 0;
+            std::from_chars(fields.at(index).data(), fields.at(index).data() + fields.at(index).size(), value);
+            return value;
+        };
+        batch = number(0);
+        keyed = number(1) == 1;
+        delayMs = static_cast<int>(number(2));
+        omit = number(3) == 1;
+        if (fields.size() == 6)
+        {
+            resource = fields[4];
+            sharedBound = number(5);
         }
     }
 
@@ -360,7 +372,7 @@ public:
         observed.retries.emplace_back(delay, transient);
     }
 
-    [[nodiscard]] std::optional<size_t> orderingKey() const override { return keyed == 1 ? std::optional<size_t>{0} : std::nullopt; }
+    [[nodiscard]] std::optional<size_t> orderingKey() const override { return keyed ? std::optional<size_t>{0} : std::nullopt; }
 
 private:
     boost::asio::awaitable<AsyncBatchResult> run(std::vector<std::vector<std::string>> rows, const bool asBatch)
@@ -379,7 +391,7 @@ private:
             observed.mostInFlight = std::max(observed.mostInFlight, ++observed.inFlight);
             for (const auto& row : rows)
             {
-                if (keyed == 1)
+                if (keyed)
                 {
                     observed.overlapsOfOneKey += observed.keysInFlight.contains(row[0]) ? 1 : 0;
                     observed.keysInFlight.insert(row[0]);
@@ -417,7 +429,7 @@ private:
         {
             results.emplace_back(AsyncCallResult{row[1] + "!"});
         }
-        if (asBatch && omit == 1)
+        if (asBatch && omit)
         {
             results.back().reset();
         }
@@ -425,9 +437,9 @@ private:
     }
 
     size_t batch = 1;
-    int keyed = 0;
+    bool keyed = false;
     int delayMs = 0;
-    int omit = 0;
+    bool omit = false;
     /// "<batch>,<keyed>,<delay ms>,<omit>,<resource>,<limit>": calls share a limit of `limit` with all calls to `resource`.
     std::string resource;
     size_t sharedBound = 0;
@@ -531,7 +543,8 @@ protected:
         {
             for (size_t field = 0; field < 3; ++field)
             {
-                const std::string value = field == 0 ? rows[row].first : field == 1 ? rows[row].second : "";
+                const std::array<std::string, 3> values{rows[row].first, rows[row].second, ""};
+                const auto& value = values.at(field);
                 const auto access = TupleBufferRef::writeVarSized(buffer, *bufferManager, std::as_bytes(std::span{value}));
                 std::memcpy(memory.subspan(((row * 3) + field) * fieldSize).data(), &access, fieldSize);
             }
@@ -622,9 +635,11 @@ TEST_F(AsyncSourceTest, EmitsInStreamOrderWhatSeveralThreadsHandedOffOutOfOrder)
             }
         }
     }
-    std::mt19937 random{7};
+    /// A fixed seed keeps the test reproducible.
+    std::mt19937 random{7}; /// NOLINT(bugprone-random-generator-seed,cert-msc51-cpp)
     std::ranges::shuffle(buffers, random);
     std::vector<std::jthread> producers;
+    producers.reserve(4);
     for (size_t thread = 0; thread < 4; ++thread)
     {
         producers.emplace_back(
@@ -660,6 +675,7 @@ TEST_F(AsyncSourceTest, BatchesReadyRowsAndSendsThePartialLastBatch)
     /// One slot: the 10 rows of one buffer go out as 4 + 4 + 2.
     startSource("4,0,1,0", 1, 0);
     std::vector<std::pair<std::string, std::string>> rows;
+    rows.reserve(10);
     for (int row = 0; row < 10; ++row)
     {
         rows.emplace_back("k", fmt::format("v{}", row));
@@ -706,6 +722,7 @@ TEST_F(AsyncSourceTest, TakesTheNextBufferAsSoonAsTheSlotsCouldRunOutOfRows)
     for (uint64_t sequence = 1; sequence <= 3; ++sequence)
     {
         std::vector<std::pair<std::string, std::string>> rows;
+        rows.reserve(5);
         for (int row = 0; row < 5; ++row)
         {
             rows.emplace_back("k", fmt::format("{}-{}", sequence, row));
@@ -763,7 +780,8 @@ TEST_F(AsyncSourceTest, RunsOneCallPerKeyAtATimeInStreamOrderAndKeysInParallel)
         }
         buffers.push_back(handedOff(at(1, sequence), rows));
     }
-    std::mt19937 random{3};
+    /// A fixed seed keeps the test reproducible.
+    std::mt19937 random{3}; /// NOLINT(bugprone-random-generator-seed,cert-msc51-cpp)
     std::ranges::shuffle(buffers, random);
     for (const auto& buffer : buffers)
     {
@@ -868,6 +886,7 @@ TEST_F(AsyncSourceTest, StagesThatShareAResourceStayWithinItsLimitTogetherAndSha
     other->open(bufferManager);
 
     std::vector<std::pair<std::string, std::string>> big;
+    big.reserve(80);
     for (int row = 0; row < 80; ++row)
     {
         big.emplace_back("k", fmt::format("big{}", row));
@@ -989,7 +1008,7 @@ TEST(KeyedRowQueueTest, StaysCheapWithManyRowsWaitingForTheirKeys)
     {
         for (int row = 0; row < 64; ++row)
         {
-            queue.push(key * 64 + row, {std::to_string(key)});
+            queue.push((key * 64) + row, {std::to_string(key)});
         }
     }
     EXPECT_EQ(queue.startableRows(), 256);

@@ -186,7 +186,7 @@ normalizeAnswer(const std::string_view answer, const std::vector<std::string>& o
 
     for (const auto& [key, value] : lookup)
     {
-        if (upper.find(key) != std::string::npos)
+        if (upper.contains(key))
         {
             return value;
         }

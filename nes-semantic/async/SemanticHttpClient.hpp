@@ -44,10 +44,10 @@ public:
     SemanticHttpClient(const std::string& url, std::optional<std::string> bearerToken, std::chrono::milliseconds timeout);
 
     /// POSTs `body` as `application/json`. Throws `CannotReadFromSource` when no exchange happens.
-    boost::asio::awaitable<SemanticHttpResponse> post(const std::string& body);
+    boost::asio::awaitable<SemanticHttpResponse> post(std::string body);
 
 private:
-    boost::asio::awaitable<SemanticHttpResponse> exchange(const std::string& body);
+    boost::asio::awaitable<SemanticHttpResponse> exchange(std::string body);
 
     std::string host;
     std::string port;

@@ -79,6 +79,7 @@ std::vector<std::string> mockColumns(const SemanticModelConfig& config)
         return {};
     }
     std::vector<std::string> columns;
+    columns.reserve(config.steps.size());
     size_t filters = 0;
     for (const auto& step : config.steps)
     {
@@ -266,7 +267,11 @@ std::optional<size_t> SemanticCallAsyncFunction::orderingKey() const
 boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(std::vector<std::string> arguments)
 {
     /// SEM_SCAN's key and SEM_WINDOW's key and timestamp come before the INPUT fields.
-    const size_t leading = !payload.config.keyed ? 0 : payload.config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? 1 : 2;
+    size_t leading = 0;
+    if (payload.config.keyed)
+    {
+        leading = payload.config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? 1 : 2;
+    }
     PRECONDITION(
         arguments.size() == payload.inputFields.size() + leading,
         "SEM_CALL of model '{}' takes {} arguments, got {}",
@@ -503,7 +508,8 @@ SemanticCallAsyncFunction::scoreWindows(std::shared_ptr<WindowScoring> scoring, 
     }
 }
 
-boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const std::string& prompt, SemanticHttpClient* const client)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(std::string prompt, SemanticHttpClient* const client)
 {
     if (mock)
     {
@@ -544,13 +550,14 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const st
     SemanticCallStats::instance().recordCall(start, std::chrono::steady_clock::now(), response.status < 200 || response.status >= 300);
     if (response.status < 200 || response.status >= 300)
     {
-        auto failure = CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body);
         if (isTransientStatus(response.status))
         {
             SemanticCallStats::instance().recordTransientStatus(response.status);
-            throw AsyncTransientFailure(std::move(failure), response.retryAfter ? parseRetryAfter(*response.retryAfter) : std::nullopt);
+            throw AsyncTransientFailure(
+                CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body),
+                response.retryAfter ? parseRetryAfter(*response.retryAfter) : std::nullopt);
         }
-        throw failure;
+        throw CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body);
     }
     if (auto content = messageContent(response.body))
     {
@@ -581,7 +588,14 @@ std::vector<AsyncCallResult> SemanticCallAsyncFunction::decode(const std::string
         for (const auto& step : payload.config.steps)
         {
             /// Fused FILTER steps share one verdict: the codec only reports whether the row passed all of them.
-            values.push_back(step.kind == SemanticStep::Kind::MAP ? result.mapAnswers.at(mapStep++) : (result.passed ? "true" : "false"));
+            if (step.kind == SemanticStep::Kind::MAP)
+            {
+                values.push_back(result.mapAnswers.at(mapStep++));
+            }
+            else
+            {
+                values.emplace_back(result.passed ? "true" : "false");
+            }
         }
         decoded.push_back(std::move(values));
     }

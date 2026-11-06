@@ -46,7 +46,8 @@ SemanticHttpClient::SemanticHttpClient(
     target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
 }
 
-boost::asio::awaitable<SemanticHttpResponse> SemanticHttpClient::post(const std::string& body)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<SemanticHttpResponse> SemanticHttpClient::post(std::string body)
 {
     /// A kept-alive connection may have been closed by the server in the meantime; that only shows on use.
     const bool reused = stream.has_value();
@@ -73,7 +74,8 @@ boost::asio::awaitable<SemanticHttpResponse> SemanticHttpClient::post(const std:
     }
 }
 
-boost::asio::awaitable<SemanticHttpResponse> SemanticHttpClient::exchange(const std::string& body)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<SemanticHttpResponse> SemanticHttpClient::exchange(std::string body)
 {
     using boost::asio::use_awaitable;
     if (!stream)

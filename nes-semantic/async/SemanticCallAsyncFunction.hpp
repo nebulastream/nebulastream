@@ -81,7 +81,7 @@ public:
 
 private:
     /// Sends on `client`, or on the instance's own connection.
-    boost::asio::awaitable<std::string> complete(const std::string& prompt, SemanticHttpClient* client = nullptr);
+    boost::asio::awaitable<std::string> complete(std::string prompt, SemanticHttpClient* client = nullptr);
     [[nodiscard]] std::vector<AsyncCallResult> decode(const std::string& answer, const std::vector<RowPayload>& rows) const;
     /// The key's state folded with the row: (state, confidence).
     boost::asio::awaitable<AsyncCallResult> callScan(std::vector<std::string> arguments);

@@ -323,9 +323,14 @@ namespace
 SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
 {
     const auto& config = model.getConfig();
-    const auto* const kind = config.keyed ? (config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? "SCAN" : "WINDOW")
-        : config.steps.empty() || config.steps.front().kind == SemanticStep::Kind::MAP ? "MAP"
-                                                                                       : "FILTER";
+    const auto* const kind = [&]
+    {
+        if (config.keyed)
+        {
+            return config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? "SCAN" : "WINDOW";
+        }
+        return config.steps.empty() || config.steps.front().kind == SemanticStep::Kind::MAP ? "MAP" : "FILTER";
+    }();
     return SemanticModelInfo{
         .name = model.getName(),
         .kind = kind,

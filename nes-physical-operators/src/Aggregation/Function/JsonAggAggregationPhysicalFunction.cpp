@@ -198,7 +198,8 @@ Record JsonAggAggregationPhysicalFunction::lower(
         +[](JsonArrayBuilder* json, int8_t* out)
         {
             const auto& text = json->finish();
-            std::memcpy(out, text.data(), text.size());
+            /// A VARSIZED value carries its size, not a terminator.
+            std::memcpy(out, text.data(), text.size()); /// NOLINT(bugprone-not-null-terminated-result)
             delete json; /// NOLINT(cppcoreguidelines-owning-memory)
         },
         builder,

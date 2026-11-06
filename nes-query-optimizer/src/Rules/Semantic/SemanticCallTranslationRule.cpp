@@ -117,6 +117,7 @@ selectOnVerdicts(const LogicalOperator& evaluated, const std::vector<Identifier>
     const LogicalOperator filtered = SelectionLogicalOperator::create(evaluated, *predicate);
 
     std::vector<ProjectionLogicalOperator::UnboundProjection> restored;
+    restored.reserve(kept.size());
     for (const auto& field : kept)
     {
         restored.emplace_back(field, FieldAccessLogicalFunction{*filtered.getOutputSchema()[field]});
@@ -220,7 +221,7 @@ LogicalOperator translate(const RegisteredSemanticModel& model, const LogicalOpe
         verdicts.push_back(Identifier::parse(fmt::format("__SEM_VERDICT_{}", verdicts.size())));
         evaluation.emplace_back(verdicts.back(), value(step));
     }
-    const LogicalOperator evaluated = ProjectionLogicalOperator::create(child, evaluation, ProjectionLogicalOperator::Asterisk{true});
+    LogicalOperator evaluated = ProjectionLogicalOperator::create(child, evaluation, ProjectionLogicalOperator::Asterisk{true});
     if (verdicts.empty())
     {
         return evaluated;
@@ -391,6 +392,7 @@ LogicalOperator translateAggregation(
         children.at(0), window.getGroupingKeysWithName(), aggregations, window.getWindowType(), window.getCharacteristic());
 
     std::vector<ProjectionLogicalOperator::UnboundProjection> evaluation;
+    evaluation.reserve(helpers.size());
     for (const auto& helper : helpers)
     {
         evaluation.emplace_back(

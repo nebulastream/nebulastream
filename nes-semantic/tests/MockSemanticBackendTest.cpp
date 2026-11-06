@@ -49,6 +49,7 @@ SemanticModelConfig configFor(std::string backend, std::string endpoint)
 std::unique_ptr<SemanticBackend> mockFor(const SemanticModelConfig& config)
 {
     std::vector<std::string> columns;
+    columns.reserve(config.steps.size());
     for (const auto& step : config.steps)
     {
         columns.push_back(step.outputColumn);

@@ -31,6 +31,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <OptimizerTestUtils.hpp>
@@ -135,10 +136,13 @@ TEST_F(SemanticFusionRuleTest, FusesEveryPairKind)
         bool expectFilter;
     };
 
-    for (const auto& [lowerOutput, upperOutput, expectFilter] :
-         std::vector<Case>{{"a", "b", false}, {"", "", true}, {"a", "", true}, {"", "b", true}})
+    for (const auto& [lowerOutput, upperOutput, expectFilter] : std::vector<Case>{
+             {.lower = "a", .upper = "b", .expectFilter = false},
+             {.lower = "", .upper = "", .expectFilter = true},
+             {.lower = "a", .upper = "", .expectFilter = true},
+             {.lower = "", .upper = "b", .expectFilter = true}})
     {
-        SCOPED_TRACE(lowerOutput + "/" + upperOutput);
+        SCOPED_TRACE(fmt::format("{}/{}", lowerOutput, upperOutput));
         const auto suffix = std::to_string(sources);
         const auto lower = model("lower" + suffix, lowerOutput);
         const auto upper = model("upper" + suffix, upperOutput);
@@ -146,7 +150,7 @@ TEST_F(SemanticFusionRuleTest, FusesEveryPairKind)
 
         const auto root = fuse(resolved(upper, resolved(lower, src)));
 
-        EXPECT_EQ(modelNameOf(root), "lower" + suffix + "+upper" + suffix);
+        EXPECT_EQ(modelNameOf(root), fmt::format("lower{}+upper{}", suffix, suffix));
         EXPECT_EQ(root.tryGetAs<SemanticFilterLogicalOperator>().has_value(), expectFilter);
         EXPECT_EQ(root.tryGetAs<SemanticMapLogicalOperator>().has_value(), !expectFilter);
         ASSERT_EQ(root.getChildren().size(), 1);

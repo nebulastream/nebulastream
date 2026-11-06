@@ -83,7 +83,7 @@ size_t packedElementsSize(const std::vector<std::string>& elements)
     {
         data += element.size();
     }
-    return sizeof(uint64_t) * (elements.size() + 2) + data;
+    return (sizeof(uint64_t) * (elements.size() + 2)) + data;
 }
 
 void packElements(const std::vector<std::string>& elements, const std::span<std::byte> block)

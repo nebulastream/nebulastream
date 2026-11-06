@@ -459,8 +459,10 @@ Failure classify(const std::exception_ptr& error)
 }
 
 boost::asio::awaitable<void> AsyncSource::backOff(
-    const BoundCall& call, AsyncFunction& function, const std::chrono::milliseconds delay, const bool transient, const size_t rows)
+    const size_t callIndex, const size_t slot, const std::chrono::milliseconds delay, const bool transient, const size_t rows)
 {
+    const auto& call = calls[callIndex];
+    auto& function = *call.instances[slot];
     NES_WARNING(
         "Async call of {} for {} row(s) failed{}; trying again in {} ms",
         call.function,
@@ -520,7 +522,7 @@ AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vec
         {
             std::rethrow_exception(failure.error);
         }
-        co_await backOff(call, function, *delay, failure.transient, 1);
+        co_await backOff(callIndex, slot, *delay, failure.transient, 1);
     }
 }
 
@@ -569,7 +571,7 @@ AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std
             NES_WARNING("Async batch of {} rows of {} failed; calling its rows one by one", rows.size(), call.function);
             break;
         }
-        co_await backOff(call, function, *delay, failure.transient, rows.size());
+        co_await backOff(callIndex, slot, *delay, failure.transient, rows.size());
     }
     if (batch && batch->size() != rows.size())
     {

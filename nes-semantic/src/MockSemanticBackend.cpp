@@ -31,6 +31,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <SemanticBackend.hpp>
 
@@ -65,7 +66,8 @@ std::optional<Behaviour> parseBehaviour(std::string_view behaviour)
         const auto digits = behaviour.substr(separator + 1);
         int64_t milliseconds = 0;
         const auto* const end = digits.data() + digits.size();
-        const auto parsed = std::from_chars(digits.data(), end, milliseconds);
+        /// from_chars reads the range [data, end), no terminator needed.
+        const auto parsed = std::from_chars(digits.data(), end, milliseconds); /// NOLINT(bugprone-suspicious-stringview-data-usage)
         /// Only a suffix that is entirely digits is a delay. Anything else belongs to the
         /// behaviour itself — a label is free text and may well contain an '@'.
         if (!digits.empty() && parsed.ec == std::errc{} && parsed.ptr == end)
@@ -331,9 +333,14 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
                 {
                     continue;
                 }
-                const auto answer = mode == Mode::LABEL ? label
-                    : mode == Mode::BATCH_INFO          ? std::to_string(position) + "/" + std::to_string(rows.size())
-                                                        : toUpper(rowText(payload));
+                const auto answer = [&]
+                {
+                    if (mode == Mode::LABEL)
+                    {
+                        return label;
+                    }
+                    return mode == Mode::BATCH_INFO ? fmt::format("{}/{}", position, rows.size()) : toUpper(rowText(payload));
+                }();
                 if (outputColumns.empty())
                 {
                     /// A filter-only prompt asks for one verdict per row, without field names.

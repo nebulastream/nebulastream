@@ -82,9 +82,11 @@ LogicalPlan SemanticMapResolutionRule::apply(const LogicalPlan& queryPlan) const
                 if (!isFilter)
                 {
                     const auto& keyed = model.getConfig().keyed;
-                    const std::string kind = !keyed                      ? "SEM_MAP"
-                        : keyed->kind == SemanticKeyedConfig::Kind::SCAN ? "SEM_SCAN"
-                                                                         : "SEM_WINDOW";
+                    std::string kind = "SEM_MAP";
+                    if (keyed)
+                    {
+                        kind = keyed->kind == SemanticKeyedConfig::Kind::SCAN ? "SEM_SCAN" : "SEM_WINDOW";
+                    }
                     const auto& operation = semanticMapName->get().getOperation();
                     if (!model.hasFilterStep() && operation != kind)
                     {
