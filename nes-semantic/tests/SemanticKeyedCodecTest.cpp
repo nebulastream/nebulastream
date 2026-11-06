@@ -40,7 +40,13 @@ SemanticModelConfig keyedConfig(const SemanticKeyedConfig::Kind kind, std::strin
 
 SemanticWindow window(std::string id, std::string description, std::vector<std::string> examples)
 {
-    SemanticWindow result{.id = std::move(id), .description = std::move(description), .start = "", .rows = examples.size(), .lastRow = examples.back(), .recentExamples = {}};
+    SemanticWindow result{
+        .id = std::move(id),
+        .description = std::move(description),
+        .start = "",
+        .rows = examples.size(),
+        .lastRow = examples.back(),
+        .recentExamples = {}};
     result.recentExamples.assign(examples.begin(), examples.end());
     return result;
 }
@@ -54,28 +60,35 @@ TEST(SemanticKeyedCodecTest, ScanPromptsMatchPythonReference)
 {
     auto config = keyedConfig(SemanticKeyedConfig::Kind::SCAN, "Fold the review", "");
     config.keyed->initPrompt = "Start a digest";
-    EXPECT_EQ(SemanticScanCodec{config}.buildPrompt("Great \"movie\" \xc3\xbc", std::nullopt),
-      "You are a semantic scan assistant computing a running per-key accumulator.\n"
-      "This is the FIRST tuple seen for this key -- there is no prior state, so establish the initial accumulator from this tuple alone.\n"
-      "Always respond in JSON format.\n"
-      "The response must have one key for the input row (_llm_call_id), and the value must be a JSON object with 'answer' (the computed accumulator/result, as a string -- encode structured content as a JSON string if needed) and 'confidence' (a float between 0 and 1).\n"
-      "Example output: {\"row1\": {\"answer\": \"...\", \"confidence\": 0.9}}\n"
-      "Do not add explanations.\n"
-      "Instruction: Start a digest\n"
-      "Data: {\"row1\": \"Great \\\"movie\\\" \\u00fc\"}");
+    EXPECT_EQ(
+        SemanticScanCodec{config}.buildPrompt("Great \"movie\" \xc3\xbc", std::nullopt),
+        "You are a semantic scan assistant computing a running per-key accumulator.\n"
+        "This is the FIRST tuple seen for this key -- there is no prior state, so establish the initial accumulator from this tuple "
+        "alone.\n"
+        "Always respond in JSON format.\n"
+        "The response must have one key for the input row (_llm_call_id), and the value must be a JSON object with 'answer' (the computed "
+        "accumulator/result, as a string -- encode structured content as a JSON string if needed) and 'confidence' (a float between 0 and "
+        "1).\n"
+        "Example output: {\"row1\": {\"answer\": \"...\", \"confidence\": 0.9}}\n"
+        "Do not add explanations.\n"
+        "Instruction: Start a digest\n"
+        "Data: {\"row1\": \"Great \\\"movie\\\" \\u00fc\"}");
     config.datasetPrompt = "Movie reviews";
-    EXPECT_EQ(SemanticScanCodec{config}.buildPrompt("classic", std::string{"scary|dark"}),
-      "You are a semantic scan assistant computing a running per-key accumulator.\n"
-      "A prior accumulator for this key is provided below -- fold the new tuple into it to produce the updated accumulator.\n"
-      "Always respond in JSON format.\n"
-      "The response must have one key for the input row (_llm_call_id), and the value must be a JSON object with 'answer' (the updated accumulator/result, as a string -- encode structured content as a JSON string if needed) and 'confidence' (a float between 0 and 1).\n"
-      "Example output: {\"row1\": {\"answer\": \"...\", \"confidence\": 0.9}}\n"
-      "Do not add explanations.\n"
-      "Instruction: Fold the review\n"
-      "Dataset context: Movie reviews\n"
-      "\n"
-      "Prior state for this key: \"scary|dark\"\n"
-      "Data: {\"row1\": \"classic\"}");
+    EXPECT_EQ(
+        SemanticScanCodec{config}.buildPrompt("classic", std::string{"scary|dark"}),
+        "You are a semantic scan assistant computing a running per-key accumulator.\n"
+        "A prior accumulator for this key is provided below -- fold the new tuple into it to produce the updated accumulator.\n"
+        "Always respond in JSON format.\n"
+        "The response must have one key for the input row (_llm_call_id), and the value must be a JSON object with 'answer' (the updated "
+        "accumulator/result, as a string -- encode structured content as a JSON string if needed) and 'confidence' (a float between 0 and "
+        "1).\n"
+        "Example output: {\"row1\": {\"answer\": \"...\", \"confidence\": 0.9}}\n"
+        "Do not add explanations.\n"
+        "Instruction: Fold the review\n"
+        "Dataset context: Movie reviews\n"
+        "\n"
+        "Prior state for this key: \"scary|dark\"\n"
+        "Data: {\"row1\": \"classic\"}");
 }
 
 TEST(SemanticKeyedCodecTest, ScanAnswerFallsBackToTheOnlyEntryAndFailsOnNone)
@@ -97,43 +110,50 @@ TEST(SemanticKeyedCodecTest, WindowPromptsMatchPythonReference)
     auto config = keyedConfig(SemanticKeyedConfig::Kind::WINDOW, "Group posts by topic", "Posts");
     const auto w1 = window("w1", "sports", {"sports: a", "sports: b"});
     const auto w2 = window("w2", "", {"cooking: \xc3\xbc"});
-    EXPECT_EQ(SemanticWindowCodec{config}.buildPrompt("sports: final", {&w1, &w2}),
-      "You are a semantic stream windowing assistant.\n"
-      "Given a new tuple and the contexts of several active semantic windows, score how well the tuple fits each window.\n"
-      "Respond only in JSON keyed by window_id. Each value must have these three keys:\n"
-      "  continuity_score: float 0-1 \xe2\x80\x94"" how well this tuple belongs to that window (1 = perfect fit, 0 = completely unrelated).\n"
-      "  window_description: updated concise description of that window's semantic theme assuming this tuple were added to it.\n"
-      "  new_window_description: concise description of a brand-new window that would start with this tuple (used only if the tuple does not fit that window).\n"
-      "Do not add explanations outside the JSON.\n"
-      "\n"
-      "Threshold: 0.7\n"
-      "Group posts by topic\n"
-      "\n"
-      "Dataset context: Posts\n"
-      "Windows to score:\n"
-      "{\"w1\": {\"description\": \"sports\", \"recent_examples\": [\"sports: a\", \"sports: b\"]}, \"w2\": {\"description\": \"\", \"recent_examples\": [\"cooking: \\u00fc\"]}}\n"
-      "\n"
-      "New tuple: sports: final");
+    EXPECT_EQ(
+        SemanticWindowCodec{config}.buildPrompt("sports: final", {&w1, &w2}),
+        "You are a semantic stream windowing assistant.\n"
+        "Given a new tuple and the contexts of several active semantic windows, score how well the tuple fits each window.\n"
+        "Respond only in JSON keyed by window_id. Each value must have these three keys:\n"
+        "  continuity_score: float 0-1 \xe2\x80\x94"
+        " how well this tuple belongs to that window (1 = perfect fit, 0 = completely unrelated).\n"
+        "  window_description: updated concise description of that window's semantic theme assuming this tuple were added to it.\n"
+        "  new_window_description: concise description of a brand-new window that would start with this tuple (used only if the tuple does "
+        "not fit that window).\n"
+        "Do not add explanations outside the JSON.\n"
+        "\n"
+        "Threshold: 0.7\n"
+        "Group posts by topic\n"
+        "\n"
+        "Dataset context: Posts\n"
+        "Windows to score:\n"
+        "{\"w1\": {\"description\": \"sports\", \"recent_examples\": [\"sports: a\", \"sports: b\"]}, \"w2\": {\"description\": \"\", "
+        "\"recent_examples\": [\"cooking: \\u00fc\"]}}\n"
+        "\n"
+        "New tuple: sports: final");
     auto pairwise = keyedConfig(SemanticKeyedConfig::Kind::WINDOW, "Group", "");
     pairwise.keyed->strategy = "pairwise";
     pairwise.keyed->threshold = 1.0;
     const auto only = window("w1", "", {"x: y"});
-    EXPECT_EQ(SemanticWindowCodec{pairwise}.buildPrompt("z", {&only}),
-      "You are a semantic stream windowing assistant.\n"
-      "Given a new tuple and the contexts of several active semantic windows, score how well the tuple fits each window.\n"
-      "Respond only in JSON keyed by window_id. Each value must have these three keys:\n"
-      "  continuity_score: float 0-1 \xe2\x80\x94"" how well this tuple belongs to that window (1 = perfect fit, 0 = completely unrelated).\n"
-      "  window_description: updated concise description of that window's semantic theme assuming this tuple were added to it.\n"
-      "  new_window_description: concise description of a brand-new window that would start with this tuple (used only if the tuple does not fit that window).\n"
-      "Do not add explanations outside the JSON.\n"
-      "\n"
-      "Threshold: 1.0\n"
-      "Group\n"
-      "\n"
-      "Windows to score:\n"
-      "{\"w1\": {\"description\": \"\", \"most_recent_tuple\": \"x: y\"}}\n"
-      "\n"
-      "New tuple: z");
+    EXPECT_EQ(
+        SemanticWindowCodec{pairwise}.buildPrompt("z", {&only}),
+        "You are a semantic stream windowing assistant.\n"
+        "Given a new tuple and the contexts of several active semantic windows, score how well the tuple fits each window.\n"
+        "Respond only in JSON keyed by window_id. Each value must have these three keys:\n"
+        "  continuity_score: float 0-1 \xe2\x80\x94"
+        " how well this tuple belongs to that window (1 = perfect fit, 0 = completely unrelated).\n"
+        "  window_description: updated concise description of that window's semantic theme assuming this tuple were added to it.\n"
+        "  new_window_description: concise description of a brand-new window that would start with this tuple (used only if the tuple does "
+        "not fit that window).\n"
+        "Do not add explanations outside the JSON.\n"
+        "\n"
+        "Threshold: 1.0\n"
+        "Group\n"
+        "\n"
+        "Windows to score:\n"
+        "{\"w1\": {\"description\": \"\", \"most_recent_tuple\": \"x: y\"}}\n"
+        "\n"
+        "New tuple: z");
 }
 
 TEST(SemanticKeyedCodecTest, WindowAssignmentFollowsTheReference)

@@ -37,11 +37,11 @@
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <MockSemanticBackend.hpp>
+#include <ResponseParsing.hpp>
 #include <SemanticCallPayload.hpp>
 #include <SemanticCallStats.hpp>
-#include <SemanticModelCatalog.hpp>
-#include <ResponseParsing.hpp>
 #include <SemanticKeyedCodec.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <SemanticRowPayload.hpp>
 
 namespace NES
@@ -318,7 +318,8 @@ boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(st
         for (size_t position = 0; position < rows.size(); ++position)
         {
             pairs.push_back(
-                JoinPairPayload{.pairId = batchRowId(position), .left = std::move(rows[position][0]), .right = std::move(rows[position][1])});
+                JoinPairPayload{
+                    .pairId = batchRowId(position), .left = std::move(rows[position][0]), .right = std::move(rows[position][1])});
         }
         const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
         const auto parsed = parseLlmJson(answer);
@@ -356,8 +357,7 @@ boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(st
         /// The codec already gave a row the answer leaves out its default value (a filter's 'false').
         const bool mentioned = mentions(parsed, payloads[position].rowId);
         missing += mentioned ? 0 : 1;
-        results.push_back(
-            mentioned || !payload.config.retryMissingRows ? std::optional{std::move(decoded[position])} : std::nullopt);
+        results.push_back(mentioned || !payload.config.retryMissingRows ? std::optional{std::move(decoded[position])} : std::nullopt);
     }
     SemanticCallStats::instance().recordBatch(payloads.size(), missing);
     co_return results;
@@ -438,8 +438,9 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callWindow(st
     const size_t connections = std::min(chunks, std::max<size_t>(1, payload.config.maxConcurrency));
     while (http && windowClients.size() + 1 < connections)
     {
-        windowClients.push_back(std::make_unique<SemanticHttpClient>(
-            payload.config.endpoint + "/chat/completions", apiKey, std::chrono::milliseconds{payload.config.requestTimeout}));
+        windowClients.push_back(
+            std::make_unique<SemanticHttpClient>(
+                payload.config.endpoint + "/chat/completions", apiKey, std::chrono::milliseconds{payload.config.requestTimeout}));
     }
     if (connections > 0)
     {

@@ -220,7 +220,8 @@ private:
     boost::asio::awaitable<std::vector<AsyncCallResult>>
     callBatchWithRetries(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows);
     /// One call for the rows of a batch, in requests of at most the call's `maxBatchSize` rows.
-    boost::asio::awaitable<std::vector<AsyncCallResult>> callRows(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows);
+    boost::asio::awaitable<std::vector<AsyncCallResult>>
+    callRows(size_t callIndex, size_t slot, std::vector<std::vector<std::string>> rows);
     /// Strand only: tells the function, counts the retry and waits `delay`.
     boost::asio::awaitable<void>
     backOff(const BoundCall& call, AsyncFunction& function, std::chrono::milliseconds delay, bool transient, size_t rows);

@@ -49,6 +49,7 @@ struct EncodedKeyed
     int64_t windowsPerCall;
 };
 }
+
 using detail::EncodedKeyed;
 
 namespace
@@ -65,7 +66,6 @@ struct EncodedStep
     std::vector<std::string> outputValues;
     std::string defaultValue;
 };
-
 
 struct EncodedPayload
 {
@@ -198,7 +198,8 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .keyed = config.keyed ? std::optional{encodeKeyed(*config.keyed)} : std::nullopt,
             .stateId = payload.stateId.empty() ? std::nullopt : std::optional{payload.stateId},
             .retryMissingRows = config.retryMissingRows ? std::optional{true} : std::nullopt,
-            .sharedConcurrency = config.sharedConcurrency > 0 ? std::optional{static_cast<int64_t>(config.sharedConcurrency)} : std::nullopt});
+            .sharedConcurrency
+            = config.sharedConcurrency > 0 ? std::optional{static_cast<int64_t>(config.sharedConcurrency)} : std::nullopt});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)

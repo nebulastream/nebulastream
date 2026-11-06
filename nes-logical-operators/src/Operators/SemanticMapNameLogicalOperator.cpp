@@ -162,7 +162,9 @@ Reflected Reflector<TypedLogicalOperator<SemanticMapNameLogicalOperator>>::opera
 {
     return context.reflect(
         detail::ReflectedSemanticMapNameLogicalOperator{
-            .operatorId = op.getId(), .modelName = std::make_optional(op->getModelName()), .operation = std::make_optional(op->getOperation())});
+            .operatorId = op.getId(),
+            .modelName = std::make_optional(op->getModelName()),
+            .operation = std::make_optional(op->getOperation())});
 }
 
 Unreflector<TypedLogicalOperator<SemanticMapNameLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))

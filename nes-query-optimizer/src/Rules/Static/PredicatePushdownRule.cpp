@@ -26,8 +26,8 @@
 #include <utility>
 #include <vector>
 
-#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/AsyncLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>

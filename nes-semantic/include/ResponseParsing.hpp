@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <optional>
 #include <chrono>
 #include <optional>
 #include <string>

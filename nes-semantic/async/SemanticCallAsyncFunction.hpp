@@ -27,10 +27,10 @@
 #include <MockSemanticBackend.hpp>
 #include <SemanticAggCodec.hpp>
 #include <SemanticCallPayload.hpp>
-#include <SemanticKeyedCodec.hpp>
 #include <SemanticFilterCodec.hpp>
 #include <SemanticHttpClient.hpp>
 #include <SemanticJoinCodec.hpp>
+#include <SemanticKeyedCodec.hpp>
 #include <SemanticMapCodec.hpp>
 
 namespace NES

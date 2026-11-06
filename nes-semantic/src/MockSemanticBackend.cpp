@@ -20,12 +20,12 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <initializer_list>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <system_error>
 #include <thread>
-#include <initializer_list>
 #include <utility>
 #include <vector>
 
@@ -287,7 +287,8 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
             const auto windows = jsonAfter(prompt, "Windows to score:\n");
             constexpr std::string_view TupleMarker = "\n\nNew tuple: ";
             const auto tuple = prompt.rfind(TupleMarker);
-            const auto topic = topicOf(tuple == std::string::npos ? std::string_view{} : std::string_view{prompt}.substr(tuple + TupleMarker.size()));
+            const auto topic
+                = topicOf(tuple == std::string::npos ? std::string_view{} : std::string_view{prompt}.substr(tuple + TupleMarker.size()));
             auto response = nlohmann::json::object();
             if (windows.is_object())
             {
@@ -348,8 +349,9 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
             }
             if (mode == Mode::ECHO_EXTRA)
             {
-                response["row999"] = outputColumns.empty() ? nlohmann::json{{"answer", "EXTRA"}, {"confidence", 1.0}}
-                                                           : nlohmann::json{{toLower(outputColumns.front()), {{"answer", "EXTRA"}, {"confidence", 1.0}}}};
+                response["row999"] = outputColumns.empty()
+                    ? nlohmann::json{{"answer", "EXTRA"}, {"confidence", 1.0}}
+                    : nlohmann::json{{toLower(outputColumns.front()), {{"answer", "EXTRA"}, {"confidence", 1.0}}}};
             }
             return response.dump();
         }

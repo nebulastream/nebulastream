@@ -462,7 +462,11 @@ boost::asio::awaitable<void> AsyncSource::backOff(
     const BoundCall& call, AsyncFunction& function, const std::chrono::milliseconds delay, const bool transient, const size_t rows)
 {
     NES_WARNING(
-        "Async call of {} for {} row(s) failed{}; trying again in {} ms", call.function, rows, transient ? " transiently" : "", delay.count());
+        "Async call of {} for {} row(s) failed{}; trying again in {} ms",
+        call.function,
+        rows,
+        transient ? " transiently" : "",
+        delay.count());
     function.retryScheduled(delay, transient);
     ++(transient ? transientRetriesMade : otherRetriesMade);
     backedOff += delay;
@@ -471,7 +475,8 @@ boost::asio::awaitable<void> AsyncSource::backOff(
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vector<std::string> arguments)
+boost::asio::awaitable<AsyncCallResult>
+AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, std::vector<std::string> arguments)
 {
     const auto& call = calls[callIndex];
     auto& function = *call.instances[slot];
@@ -507,7 +512,10 @@ boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_
             std::rethrow_exception(failure.error);
         }
         const auto delay = budget.next(
-            failure.transient, failure.retryAfter, std::chrono::steady_clock::now(), std::uniform_real_distribution<double>{0.0, 1.0}(jitter));
+            failure.transient,
+            failure.retryAfter,
+            std::chrono::steady_clock::now(),
+            std::uniform_real_distribution<double>{0.0, 1.0}(jitter));
         if (!delay)
         {
             std::rethrow_exception(failure.error);
@@ -547,7 +555,10 @@ AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std
             std::rethrow_exception(failure.error);
         }
         const auto delay = budget.next(
-            failure.transient, failure.retryAfter, std::chrono::steady_clock::now(), std::uniform_real_distribution<double>{0.0, 1.0}(jitter));
+            failure.transient,
+            failure.retryAfter,
+            std::chrono::steady_clock::now(),
+            std::uniform_real_distribution<double>{0.0, 1.0}(jitter));
         if (!delay)
         {
             /// A service that stays overloaded would only get more requests from calling the rows one by one.
@@ -562,7 +573,8 @@ AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std
     }
     if (batch && batch->size() != rows.size())
     {
-        throw CannotReadFromSource("async function {} answered a batch of {} rows with {} results", call.function, rows.size(), batch->size());
+        throw CannotReadFromSource(
+            "async function {} answered a batch of {} rows with {} results", call.function, rows.size(), batch->size());
     }
     std::vector<AsyncCallResult> results;
     results.reserve(rows.size());
@@ -573,7 +585,10 @@ AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std
             if ((*batch)[row]->size() < call.requiredValues)
             {
                 throw CannotReadFromSource(
-                    "async function {} produced {} values, but the query reads {}", call.function, (*batch)[row]->size(), call.requiredValues);
+                    "async function {} produced {} values, but the query reads {}",
+                    call.function,
+                    (*batch)[row]->size(),
+                    call.requiredValues);
             }
             results.push_back(std::move(*(*batch)[row]));
             continue;
@@ -906,7 +921,8 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
                 if (inputExhausted && reorderer.size() > 0)
                 {
                     /// Only a producer that skips sequence numbers gets here; what it sent still goes out, in order.
-                    NES_WARNING("Async source {}: {} buffers never got their predecessor; emitting them in order", channelId, reorderer.size());
+                    NES_WARNING(
+                        "Async source {}: {} buffers never got their predecessor; emitting them in order", channelId, reorderer.size());
                     for (auto& next : reorderer.drain())
                     {
                         admit(std::move(next));

@@ -13,8 +13,8 @@
 */
 
 #include <algorithm>
-#include <atomic>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -328,7 +328,8 @@ public:
     {
         std::array<char, 64> resourceName{};
         /// NOLINTNEXTLINE(cert-err34-c)
-        if (std::sscanf(configuration.c_str(), "%zu,%d,%d,%d,%63[^,],%zu", &batch, &keyed, &delayMs, &omit, resourceName.data(), &sharedBound)
+        if (std::sscanf(
+                configuration.c_str(), "%zu,%d,%d,%d,%63[^,],%zu", &batch, &keyed, &delayMs, &omit, resourceName.data(), &sharedBound)
             == 6)
         {
             resource = resourceName.data();
@@ -466,7 +467,11 @@ protected:
         const auto logical = catalog.addLogicalSource(Identifier::parse("handedOff"), schema);
         ASSERT_TRUE(logical.has_value());
         auto physical = catalog.addPhysicalSource(
-            *logical, Identifier::parse("FILE"), Host{"localhost:8080"}, {{Identifier::parse("FILE_PATH"), "'unused'"}}, {{Identifier::parse("TYPE"), "CSV"}});
+            *logical,
+            Identifier::parse("FILE"),
+            Host{"localhost:8080"},
+            {{Identifier::parse("FILE_PATH"), "'unused'"}},
+            {{Identifier::parse("TYPE"), "CSV"}});
         ASSERT_TRUE(physical.has_value()) << physical.error();
         descriptor.emplace(std::move(*physical));
         for (const auto& field : descriptor->getSchema())
@@ -942,7 +947,8 @@ TEST_F(AsyncSourceTest, ReadsAheadPastRowsThatWaitForTheirKeyToKeepEveryKeyBusy)
         {
             handOff(handedOff(
                 at(1, ++sequence),
-                {{fmt::format("k{}", key), fmt::format("k{}-{}", key, row)}, {fmt::format("k{}", key), fmt::format("k{}-{}", key, row + 1)}}));
+                {{fmt::format("k{}", key), fmt::format("k{}-{}", key, row)},
+                 {fmt::format("k{}", key), fmt::format("k{}-{}", key, row + 1)}}));
         }
     }
     (*sink)->close();

@@ -90,7 +90,13 @@ const ConfigField<std::optional<uint64_t>> READ_AHEAD_ROWS{
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerAsyncConfiguration::getConfigSchema()
 {
     return createConfigSchema(
-        Identifier::parse("async"), MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES, TRANSIENT_RETRIES, TRANSIENT_RETRY_SECONDS, READ_AHEAD_ROWS);
+        Identifier::parse("async"),
+        MAX_CONCURRENCY,
+        CHANNEL_CAPACITY,
+        MAX_RETRIES,
+        TRANSIENT_RETRIES,
+        TRANSIENT_RETRY_SECONDS,
+        READ_AHEAD_ROWS);
 }
 
 QueryOptimizerAsyncConfiguration QueryOptimizerAsyncConfiguration::fromConfig(const InstantiatedConfig& config)

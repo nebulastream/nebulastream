@@ -18,13 +18,13 @@
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <exception>
 #include <expected>
 #include <filesystem>
 #include <memory>
 #include <optional>
 #include <ranges>
 #include <sstream>
-#include <exception>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -325,7 +325,7 @@ SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
     const auto& config = model.getConfig();
     const auto* const kind = config.keyed ? (config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? "SCAN" : "WINDOW")
         : config.steps.empty() || config.steps.front().kind == SemanticStep::Kind::MAP ? "MAP"
-                                                                                         : "FILTER";
+                                                                                       : "FILTER";
     return SemanticModelInfo{
         .name = model.getName(),
         .kind = kind,

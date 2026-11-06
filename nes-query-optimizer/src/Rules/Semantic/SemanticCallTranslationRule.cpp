@@ -54,9 +54,9 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
-#include <Util/UUID.hpp>
 #include <Rules/Semantic/SemanticFusionRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Util/UUID.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>

@@ -22,11 +22,11 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/system_executor.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/system/error_code.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -57,7 +57,10 @@ std::shared_ptr<AsyncResourceLimiter> AsyncResourceLimiter::of(const std::string
         if (limiter->limit() != limit)
         {
             NES_WARNING(
-                "Shared limit of {} is already {} calls in flight; a call that asks for {} shares that limit", resource, limiter->limit(), limit);
+                "Shared limit of {} is already {} calls in flight; a call that asks for {} shares that limit",
+                resource,
+                limiter->limit(),
+                limit);
         }
         return limiter;
     }
@@ -73,7 +76,8 @@ AsyncResourceLimiter::AsyncResourceLimiter(std::string resource, const size_t li
 
 AsyncResourceLimiter::~AsyncResourceLimiter()
 {
-    NES_DEBUG("Shared limit of {}: at most {} of {} calls in flight; {} calls waited for a permit", name, mostHeld.load(), bound, waits.load());
+    NES_DEBUG(
+        "Shared limit of {}: at most {} of {} calls in flight; {} calls waited for a permit", name, mostHeld.load(), bound, waits.load());
 }
 
 boost::asio::awaitable<AsyncResourceLimiter::Permit> AsyncResourceLimiter::acquire()

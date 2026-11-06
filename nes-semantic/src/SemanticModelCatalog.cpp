@@ -156,7 +156,8 @@ void validateKeyed(const std::string& name, const SemanticModelConfig& config, c
         }
         if (keyed.strategy != "summary" && keyed.strategy != "pairwise")
         {
-            throw InvalidSemanticModel("Semantic model '{}': LLM.STRATEGY must be 'summary' or 'pairwise', but was '{}'", name, keyed.strategy);
+            throw InvalidSemanticModel(
+                "Semantic model '{}': LLM.STRATEGY must be 'summary' or 'pairwise', but was '{}'", name, keyed.strategy);
         }
         if (!(keyed.threshold >= 0.0 && keyed.threshold <= 1.0))
         {

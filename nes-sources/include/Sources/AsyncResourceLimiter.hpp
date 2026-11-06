@@ -40,7 +40,9 @@ public:
     {
     public:
         Permit() = default;
+
         explicit Permit(std::shared_ptr<AsyncResourceLimiter> limiter) : limiter(std::move(limiter)) { }
+
         Permit(const Permit&) = delete;
         Permit& operator=(const Permit&) = delete;
         Permit(Permit&& other) noexcept = default;
@@ -69,7 +71,9 @@ public:
     std::optional<Permit> tryAcquire();
 
     [[nodiscard]] const std::string& resource() const { return name; }
+
     [[nodiscard]] size_t limit() const { return bound; }
+
     /// The most permits held at once so far.
     [[nodiscard]] size_t mostInUse() const { return mostHeld.load(); }
 
