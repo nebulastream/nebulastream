@@ -147,7 +147,9 @@ TEST_F(SemanticMapStatementTest, CreateAppliesPythonReferenceDefaults)
     const auto result = create(withOptions("summary VARSIZED", ""));
     ASSERT_TRUE(result.has_value()) << result.error().what();
 
-    const auto& config = semanticModelCatalog->load("M").getConfig();
+    /// load returns the model by value: the config reference has to point into a model that lives on.
+    const auto model = semanticModelCatalog->load("M");
+    const auto& config = model.getConfig();
     EXPECT_EQ(config.payloadFormat, PayloadFormat::SPACE_JOINED);
     EXPECT_EQ(config.batchSize, 1);
     EXPECT_EQ(config.maxConcurrency, 10);
