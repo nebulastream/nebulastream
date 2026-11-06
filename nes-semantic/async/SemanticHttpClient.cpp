@@ -108,7 +108,12 @@ boost::asio::awaitable<SemanticHttpResponse> SemanticHttpClient::exchange(const 
     {
         stream.reset();
     }
-    co_return SemanticHttpResponse{.status = response.result_int(), .body = std::move(response.body())};
+    std::optional<std::string> retryAfter;
+    if (const auto header = response.find(http::field::retry_after); header != response.end())
+    {
+        retryAfter = std::string{header->value()};
+    }
+    co_return SemanticHttpResponse{.status = response.result_int(), .body = std::move(response.body()), .retryAfter = std::move(retryAfter)};
 }
 
 }

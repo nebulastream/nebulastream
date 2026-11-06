@@ -16,10 +16,15 @@
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
+#include <chrono>
+#include <cstdint>
+#include <ctime>
 #include <optional>
 #include <regex>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -225,6 +230,49 @@ bool isAffirmative(const nlohmann::json& verdict)
         return equalsIgnoreCase(text, "true") || equalsIgnoreCase(text, "yes");
     }
     return false;
+}
+
+bool isTransientStatus(const unsigned status)
+{
+    constexpr unsigned tooManyRequests = 429;
+    constexpr unsigned notImplemented = 501;
+    constexpr unsigned versionNotSupported = 505;
+    return status == tooManyRequests || (status >= 500 && status < 600 && status != notImplemented && status != versionNotSupported);
+}
+
+std::optional<std::chrono::milliseconds> parseRetryAfter(std::string_view value, const std::chrono::system_clock::time_point now)
+{
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0)
+    {
+        value.remove_prefix(1);
+    }
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())) != 0)
+    {
+        value.remove_suffix(1);
+    }
+    if (value.empty())
+    {
+        return std::nullopt;
+    }
+    if (std::ranges::all_of(value, [](const char character) { return std::isdigit(static_cast<unsigned char>(character)) != 0; }))
+    {
+        uint64_t seconds = 0;
+        const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), seconds);
+        if (error != std::errc{} || end != value.data() + value.size() || seconds > std::chrono::hours{24} / std::chrono::seconds{1})
+        {
+            return std::nullopt;
+        }
+        return std::chrono::seconds{seconds};
+    }
+    std::tm date{};
+    const std::string text{value};
+    const char* end = strptime(text.c_str(), "%a, %d %b %Y %H:%M:%S GMT", &date);
+    if (end == nullptr || *end != '\0')
+    {
+        return std::nullopt;
+    }
+    const auto at = std::chrono::system_clock::from_time_t(timegm(&date));
+    return std::max(std::chrono::milliseconds{0}, std::chrono::duration_cast<std::chrono::milliseconds>(at - now));
 }
 
 }

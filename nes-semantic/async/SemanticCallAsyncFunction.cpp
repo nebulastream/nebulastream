@@ -511,7 +511,13 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const st
     SemanticCallStats::instance().recordCall(start, std::chrono::steady_clock::now(), response.status < 200 || response.status >= 300);
     if (response.status < 200 || response.status >= 300)
     {
-        throw CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body);
+        auto failure = CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body);
+        if (isTransientStatus(response.status))
+        {
+            SemanticCallStats::instance().recordTransientStatus(response.status);
+            throw AsyncTransientFailure(std::move(failure), response.retryAfter ? parseRetryAfter(*response.retryAfter) : std::nullopt);
+        }
+        throw failure;
     }
     if (auto content = messageContent(response.body))
     {
@@ -520,6 +526,11 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(const st
     /// An answer without content is unusable, not a transport failure: the codec fills in the defaults.
     NES_WARNING("SEM_CALL of model '{}' got a response without chat-completion content: {}", payload.model, response.body);
     co_return std::string{};
+}
+
+void SemanticCallAsyncFunction::retryScheduled(const std::chrono::milliseconds delay, bool /*transient*/)
+{
+    SemanticCallStats::instance().recordRetry(delay);
 }
 
 std::vector<AsyncCallResult> SemanticCallAsyncFunction::decode(const std::string& answer, const std::vector<RowPayload>& rows) const

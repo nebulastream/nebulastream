@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -67,6 +68,9 @@ public:
     /// The model's `LLM.BATCH_SIZE`. SEM_AGG sends one prompt per window and SEM_SCAN and SEM_WINDOW one per row, so theirs
     /// is 1.
     [[nodiscard]] size_t maxBatchSize() const override;
+
+    /// Counts the Async source's retries for the latency line.
+    void retryScheduled(std::chrono::milliseconds delay, bool transient) override;
 
     /// SEM_SCAN and SEM_WINDOW: the key, their first argument.
     [[nodiscard]] std::optional<size_t> orderingKey() const override;

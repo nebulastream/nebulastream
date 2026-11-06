@@ -29,6 +29,8 @@ struct SemanticHttpResponse
 {
     unsigned status;
     std::string body;
+    /// The `Retry-After` header, if the response has one.
+    std::optional<std::string> retryAfter;
 };
 
 /// A minimal awaitable HTTP/1.1 client for one OpenAI-compatible endpoint, following `HttpCallAsyncFunction`: it keeps

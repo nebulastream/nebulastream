@@ -15,6 +15,8 @@
 #pragma once
 
 #include <optional>
+#include <chrono>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -57,5 +59,16 @@ normalizeAnswer(std::string_view answer, const std::vector<std::string>& outputV
 /// Follows the reference's `if passed:` except for one deliberate deviation: Python's truthiness
 /// passes every non-empty string, so a model answering "false" as a string would keep the row.
 [[nodiscard]] bool isAffirmative(const nlohmann::json& verdict);
+
+/// Whether an HTTP status says the request may succeed if it is sent again later: 429 (too many requests) and the 5xx
+/// statuses of an overloaded, failing or unreachable server, i.e. every 5xx but 501 (not implemented) and 505 (HTTP
+/// version not supported). SEM_CALL marks these failures transient (`AsyncTransientFailure`), so the Async source
+/// backs off and retries instead of failing the query.
+[[nodiscard]] bool isTransientStatus(unsigned status);
+
+/// The wait a `Retry-After` header asks for: delay-seconds, or an HTTP-date (IMF-fixdate, e.g. "Wed, 21 Oct 2015
+/// 07:28:00 GMT") taken relative to `now`, and nothing for anything else. A date in the past is no wait.
+[[nodiscard]] std::optional<std::chrono::milliseconds>
+parseRetryAfter(std::string_view value, std::chrono::system_clock::time_point now = std::chrono::system_clock::now());
 
 }

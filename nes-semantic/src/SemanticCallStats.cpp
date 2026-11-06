@@ -62,6 +62,20 @@ void SemanticCallStats::recordBatch(const size_t rows, const size_t missing)
     missingRows += missing;
 }
 
+void SemanticCallStats::recordTransientStatus(const unsigned status)
+{
+    constexpr unsigned tooManyRequestsStatus = 429;
+    const std::scoped_lock lock{mutex};
+    ++(status == tooManyRequestsStatus ? tooManyRequests : serverErrors);
+}
+
+void SemanticCallStats::recordRetry(const std::chrono::milliseconds delay)
+{
+    const std::scoped_lock lock{mutex};
+    ++retries;
+    backedOff += delay;
+}
+
 void SemanticCallStats::reportAndReset(const std::string_view context)
 {
     const std::scoped_lock lock{mutex};
@@ -77,7 +91,7 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
             "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, p99 {:.0f} ms, max {:.0f} "
             "ms, "
             "{:.1f} calls/s, span {:.1f} s, prompt tokens {}, completion tokens {} ({} responses, {} without usage, {} cut off at "
-            "max_tokens), {} missing of {} batched rows",
+            "max_tokens), {} missing of {} batched rows, {} answered 429, {} answered 5xx, {} retries after {:.1f} s of backoff",
             context,
             sorted.size(),
             failures,
@@ -94,7 +108,11 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
             responsesWithoutUsage,
             cutOff,
             missingRows,
-            batchedRows);
+            batchedRows,
+            tooManyRequests,
+            serverErrors,
+            retries,
+            std::chrono::duration<double>(backedOff).count());
         /// A measurement, not a diagnostic: it must not depend on the compiled log level.
         if (std::getenv("NES_SEMANTIC_LATENCY_REPORT") != nullptr) /// NOLINT(concurrency-mt-unsafe)
         {
@@ -106,7 +124,8 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
     failures = 0;
     firstStart.reset();
     lastEnd.reset();
-    responses = responsesWithoutUsage = cutOff = batchedRows = missingRows = 0;
+    responses = responsesWithoutUsage = cutOff = batchedRows = missingRows = tooManyRequests = serverErrors = retries = 0;
+    backedOff = std::chrono::milliseconds{0};
     promptTokens = completionTokens = 0;
 }
 

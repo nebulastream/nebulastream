@@ -39,6 +39,10 @@ public:
     void recordUsage(bool hasUsage, uint64_t promptTokens, uint64_t completionTokens, bool cutOff);
     /// A batched request of `rows` rows whose answer left out `missing` of them.
     void recordBatch(size_t rows, size_t missing);
+    /// A response with a status that `isTransientStatus` lets the Async source retry.
+    void recordTransientStatus(unsigned status);
+    /// The Async source waits `delay` before it repeats a failed call.
+    void recordRetry(std::chrono::milliseconds delay);
 
     /// Writes the line if anything was recorded, then starts over. `context` names the path, e.g. "SEM_CALL".
     void reportAndReset(std::string_view context);
@@ -58,6 +62,10 @@ private:
     size_t cutOff = 0;
     size_t batchedRows = 0;
     size_t missingRows = 0;
+    size_t tooManyRequests = 0;
+    size_t serverErrors = 0;
+    size_t retries = 0;
+    std::chrono::milliseconds backedOff{0};
 };
 
 }
