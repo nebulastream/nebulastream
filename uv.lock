@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "conntest-mqttsource",
     "conntest-tcpsource",
     "nebulastream",
 ]
@@ -20,6 +21,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
 ]
+
+[[package]]
+name = "conntest-mqttsource"
+version = "0"
+source = { virtual = "nes-plugins/Sources/MQTTSource/conn-test" }
+dependencies = [
+    { name = "paho-mqtt" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "paho-mqtt", specifier = ">=2.1" }]
 
 [[package]]
 name = "conntest-tcpsource"
@@ -53,6 +65,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz", hash = "sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79", size = 313412, upload-time = "2026-08-04T18:15:28.737Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl", hash = "sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c", size = 129956, upload-time = "2026-08-04T18:15:27.159Z" },
+]
+
+[[package]]
+name = "paho-mqtt"
+version = "2.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/da/66/bba39edaac853235385c59e1e30600cd104b8779164c181780742d8095fc/paho_mqtt-2.2.0.tar.gz", hash = "sha256:bcf706f03f1f49e0fc3ae166dc7b67ee35463496f8bdfd7c9c36181f6ba635c9", size = 133751, upload-time = "2026-11-04T20:10:51.405Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/af/fea4b0ee14cee6149f18d180430a14be0963b9a4fbc7875421a7de75f831/paho_mqtt-2.2.0-py3-none-any.whl", hash = "sha256:3243630f7c2b05f71d1de8c6f59865eb04d3a59ae8c866e92377faed6753db4d", size = 77202, upload-time = "2026-11-04T20:10:50.148Z" },
 ]
 
 [[package]]
