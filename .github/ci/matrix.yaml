@@ -119,21 +119,31 @@ jobs:
 
   # === Optimized builds (no sanitizer, combined — all fast enough) ===
 
-  # pr also covers Benchmark here; nightly drops it from this entry (it is
-  # still covered by nightly's wider build-only matrix below).
   - name: "{arch} {stdlib} {build_type} (unit+systest+docker)"
     arch: [x64, arm64]
     stdlib: [libcxx, libstdcxx]
-    build_type: [RelWithDebInfo, Release, Benchmark]
+    build_type: [RelWithDebInfo, Release]
     sanitizer: none
     runner: github-{arch}
     tests: [unit, systest, docker]
     exclude:
       - arch: arm64
         stdlib: libstdcxx
-    overrides:
-      nightly:
-        build_type: [RelWithDebInfo, Release]
+
+  # Benchmark builds run on self-hosted: they frequently miss the build cache,
+  # which makes them the slowest build on GitHub-hosted runners.
+  # pr only; nightly covers Benchmark in its wider build-only matrix below.
+  - name: "{arch} {stdlib} {build_type} (unit+systest+docker)"
+    profiles: [pr]
+    arch: [x64, arm64]
+    stdlib: [libcxx, libstdcxx]
+    build_type: Benchmark
+    sanitizer: none
+    runner: self-hosted-{arch}
+    tests: [unit, systest, docker]
+    exclude:
+      - arch: arm64
+        stdlib: libstdcxx
 
   # === Special flag builds ===
 
