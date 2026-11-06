@@ -59,7 +59,7 @@ public:
     INLJOperatorHandler(
         SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>

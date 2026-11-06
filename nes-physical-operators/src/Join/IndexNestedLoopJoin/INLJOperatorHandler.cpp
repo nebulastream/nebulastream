@@ -34,7 +34,7 @@ namespace NES
 INLJOperatorHandler::INLJOperatorHandler(
     SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
     JoinTriggerStrategy triggerStrategy)
     : StreamJoinOperatorHandler(std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
 {

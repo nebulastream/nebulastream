@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 

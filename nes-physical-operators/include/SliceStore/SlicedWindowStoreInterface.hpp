@@ -68,10 +68,10 @@ struct TriggerableWindows
 
 /// This is the interface for storing windows and slices in a window-based operator
 /// It provides an interface to operate on slices and windows for a time-based window operator, e.g., join or aggregation
-class WindowSlicesStoreInterface
+class SlicedWindowStoreInterface
 {
 public:
-    virtual ~WindowSlicesStoreInterface() = default;
+    virtual ~SlicedWindowStoreInterface() = default;
     /// Retrieves the slices that corresponds to the timestamp. If no slices exist for the timestamp, they are created by calling the method createNewSlice
     virtual std::vector<std::shared_ptr<Slice>>
     getSlicesOrCreate(Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)

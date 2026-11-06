@@ -24,7 +24,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <ErrorHandling.hpp>
@@ -36,7 +36,7 @@ namespace NES
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
     , watermarkProcessorBuild(
           std::make_unique<MultiOriginWatermarkProcessor>(sourcesOfInputOrigins | std::views::keys | std::ranges::to<std::vector>()))
@@ -58,7 +58,7 @@ void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionCon
     watermarkGapThrottle.stop();
 }
 
-WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
+SlicedWindowStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
 {
     return *sliceAndWindowStore;
 }

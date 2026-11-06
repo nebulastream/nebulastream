@@ -23,7 +23,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -46,7 +46,7 @@ public:
     StreamJoinOperatorHandler(
         SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);
 
 protected:
