@@ -18,7 +18,7 @@
 #include <vector>
 #include <Join/StreamJoinUtil.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 
 namespace NES
 {

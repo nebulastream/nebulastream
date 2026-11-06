@@ -31,7 +31,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -44,7 +44,7 @@ namespace NES
 AggregationOperatorHandler::AggregationOperatorHandler(
     SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore)
     : WindowBasedOperatorHandler(std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore))
     , setupAlreadyCalled(false)
 {
