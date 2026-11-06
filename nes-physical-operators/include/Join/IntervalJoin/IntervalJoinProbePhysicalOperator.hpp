@@ -62,13 +62,12 @@ public:
     ~IntervalJoinProbePhysicalOperator() override = default;
 
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
 protected:
-    /// Propagate buffer metadata onto the execution context and open the per-side time functions.
-    void prepareOpen(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    /// Opens the per-side time functions and runs the join pass for one anchor trigger.
+    void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
     /// Scans the anchor slice against its partner slices, emitting each matched (anchor, partner) pair.
     void runJoinPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;

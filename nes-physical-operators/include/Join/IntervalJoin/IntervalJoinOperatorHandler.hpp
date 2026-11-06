@@ -79,7 +79,7 @@ public:
         IntervalBound upperBound,
         SliceCacheConfiguration sliceCacheConfiguration);
 
-    void start(PipelineExecutionContext& ctx, std::uint32_t localStateVariableId) override;
+    void start(PipelineExecutionContext& ctx) override;
     void stop(QueryTerminationType type, PipelineExecutionContext& ctx) override;
 
     /// Advances the given side's build watermark and re-runs the anchor-trigger loop (either side's

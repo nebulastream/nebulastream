@@ -55,17 +55,17 @@ namespace NES
 namespace
 {
 
-SliceEnd getAnchorSliceEndFromTriggerProxy(const EmittedIntervalJoinWindowTrigger* trigger)
+SliceEnd::Underlying getAnchorSliceEndFromTriggerProxy(const EmittedIntervalJoinWindowTrigger* trigger)
 {
     PRECONDITION(trigger != nullptr, "trigger should not be null");
-    return trigger->anchorSliceEnd;
+    return (trigger->anchorSliceEnd).getRawValue();
 }
 
-SliceEnd getPartnerSliceEndProxy(const EmittedIntervalJoinWindowTrigger* trigger, const std::uint64_t partnerIndex)
+SliceEnd::Underlying getPartnerSliceEndProxy(const EmittedIntervalJoinWindowTrigger* trigger, const std::uint64_t partnerIndex)
 {
     PRECONDITION(trigger != nullptr, "trigger should not be null");
     PRECONDITION(partnerIndex < EmittedIntervalJoinWindowTrigger::MAX_PARTNERS, "partnerIndex {} out of range", partnerIndex);
-    return trigger->partnerSliceEnds.at(partnerIndex);
+    return (trigger->partnerSliceEnds.at(partnerIndex)).getRawValue();
 }
 
 std::uint64_t getPartnerCountProxy(const EmittedIntervalJoinWindowTrigger* trigger)
@@ -74,16 +74,16 @@ std::uint64_t getPartnerCountProxy(const EmittedIntervalJoinWindowTrigger* trigg
     return static_cast<std::uint64_t>(trigger->partnerCount);
 }
 
-Timestamp getWindowStartFromTriggerProxy(const EmittedIntervalJoinWindowTrigger* trigger)
+Timestamp::Underlying getWindowStartFromTriggerProxy(const EmittedIntervalJoinWindowTrigger* trigger)
 {
     PRECONDITION(trigger != nullptr, "trigger should not be null");
-    return trigger->windowInfo.windowStart;
+    return (trigger->windowInfo.windowStart).getRawValue();
 }
 
-Timestamp getWindowEndFromTriggerProxy(const EmittedIntervalJoinWindowTrigger* trigger)
+Timestamp::Underlying getWindowEndFromTriggerProxy(const EmittedIntervalJoinWindowTrigger* trigger)
 {
     PRECONDITION(trigger != nullptr, "trigger should not be null");
-    return trigger->windowInfo.windowEnd;
+    return (trigger->windowInfo.windowEnd).getRawValue();
 }
 
 IntervalJoinSlice* getAnchorSliceByEndProxy(OperatorHandler* ptrOpHandler, const SliceEnd sliceEnd)
@@ -181,7 +181,7 @@ void IntervalJoinProbePhysicalOperator::setup(ExecutionContext& executionCtx, Co
             PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
             auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
             PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
-            handler->start(*pipelineCtx, 0);
+            handler->start(*pipelineCtx);
         },
         executionCtx.getGlobalOperatorHandler(operatorHandlerId),
         executionCtx.pipelineContext);
@@ -221,24 +221,11 @@ void IntervalJoinProbePhysicalOperator::close(ExecutionContext& executionCtx, Re
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
-void IntervalJoinProbePhysicalOperator::prepareOpen(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IntervalJoinProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    /// Propagate buffer metadata onto the execution context.
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.currentTs = recordBuffer.getCreatingTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.originId = recordBuffer.getOriginId();
-    openChild(executionCtx, recordBuffer);
-
+    /// WindowProbePhysicalOperator::open has already copied the buffer metadata into the execution context and opened the child.
     anchorTimeFunction->open(executionCtx, recordBuffer);
     partnerTimeFunction->open(executionCtx, recordBuffer);
-}
-
-void IntervalJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    prepareOpen(executionCtx, recordBuffer);
     runJoinPass(executionCtx, recordBuffer);
 }
 
@@ -272,9 +259,9 @@ IntervalJoinProbePhysicalOperator::intervalPredicateHolds(ExecutionContext& exec
 void IntervalJoinProbePhysicalOperator::runJoinPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     const auto triggerRef = static_cast<nautilus::val<EmittedIntervalJoinWindowTrigger*>>(recordBuffer.getMemArea());
-    const auto anchorSliceEnd = invoke(getAnchorSliceEndFromTriggerProxy, triggerRef);
-    const auto windowStart = invoke(getWindowStartFromTriggerProxy, triggerRef);
-    const auto windowEnd = invoke(getWindowEndFromTriggerProxy, triggerRef);
+    const auto anchorSliceEnd = nautilus::val<SliceEnd>{invoke(getAnchorSliceEndFromTriggerProxy, triggerRef)};
+    const auto windowStart = nautilus::val<Timestamp>{invoke(getWindowStartFromTriggerProxy, triggerRef)};
+    const auto windowEnd = nautilus::val<Timestamp>{invoke(getWindowEndFromTriggerProxy, triggerRef)};
     const auto partnerCount = invoke(getPartnerCountProxy, triggerRef);
 
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
@@ -292,7 +279,7 @@ void IntervalJoinProbePhysicalOperator::runJoinPass(ExecutionContext& executionC
         for (nautilus::val<std::uint64_t> partnerIdx{0}; partnerIdx < partnerCount;
              partnerIdx = partnerIdx + nautilus::val<std::uint64_t>{1})
         {
-            const auto partnerSliceEnd = invoke(getPartnerSliceEndProxy, triggerRef, partnerIdx);
+            const auto partnerSliceEnd = nautilus::val<SliceEnd>{invoke(getPartnerSliceEndProxy, triggerRef, partnerIdx)};
             const auto partnerSliceRef = invoke(getPartnerSliceByEndProxy, operatorHandlerMemRef, partnerSliceEnd);
             const auto partnerPagedVectorPtr = invoke(getMergedPagedVectorProxy, partnerSliceRef);
             const PagedVectorRef partnerPagedVector{BorrowedNautilusBuffer::from(partnerPagedVectorPtr), partnerTupleLayout};

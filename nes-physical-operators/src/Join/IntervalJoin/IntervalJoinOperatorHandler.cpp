@@ -128,7 +128,7 @@ IntervalJoinOperatorHandler::IntervalJoinOperatorHandler(
     watermarkProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
 }
 
-void IntervalJoinOperatorHandler::start(PipelineExecutionContext& pipelineCtx, std::uint32_t)
+void IntervalJoinOperatorHandler::start(PipelineExecutionContext& pipelineCtx)
 {
     /// All three pipelines call start. The worker count is stable across calls (shared worker pool).
     numberOfWorkerThreads.store(pipelineCtx.getNumberOfWorkerThreads(), std::memory_order_release);
@@ -270,12 +270,22 @@ void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pi
 void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext* pipelineCtx)
 {
     auto anchors = anchorStore->claimAllNonTriggered();
-    if (anchors.empty())
+    if (!anchors.empty())
     {
-        return;
+        assembleAndEmitTriggers(anchors, pipelineCtx);
     }
 
-    assembleAndEmitTriggers(anchors, pipelineCtx);
+    /// Downstream windows close only through watermarks (there is no termination-time window flush), so forward
+    /// the end of stream as a zero-record buffer with the infinite watermark after the last trigger.
+    auto watermarkBuffer = pipelineCtx->allocateTupleBuffer();
+    watermarkBuffer.setNumberOfTuples(0);
+    watermarkBuffer.setOriginId(outputOriginId);
+    watermarkBuffer.setSequenceNumber(SequenceNumber{nextProbeSequence.fetch_add(1, std::memory_order_relaxed)});
+    watermarkBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
+    watermarkBuffer.setLastChunk(true);
+    watermarkBuffer.setWatermark(Timestamp(Timestamp::INFINITE_VALUE));
+    watermarkBuffer.setCreationTimestampInMS(Timestamp::nowInMilliseconds());
+    pipelineCtx->emitBuffer(watermarkBuffer);
 }
 
 void IntervalJoinOperatorHandler::assembleAndEmitTriggers(
