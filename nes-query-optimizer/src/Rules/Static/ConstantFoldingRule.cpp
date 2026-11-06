@@ -50,9 +50,10 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <cmath>
 
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
-
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 
 namespace NES
 {
@@ -301,6 +302,16 @@ LogicalPlan ConstantFoldingRule::apply(const LogicalPlan& queryPlan) const
 {
     Visitor visitor{constantFolding, rebuildPlan};
     return visitor.apply(queryPlan);
+}
+
+std::set<std::type_index> ConstantFoldingRule::needs() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+std::set<std::type_index> ConstantFoldingRule::neededBy() const
+{
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

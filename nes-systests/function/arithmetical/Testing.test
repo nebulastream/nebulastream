@@ -17,6 +17,15 @@ INTO FILE();
 10,5,5,4294967291
 5,10,4294967291,5
 
+
+SELECT var1
+FROM stream
+WHERE var1 = (4 + 1)
+INTO File();
+----
+5
+
+
 SELECT var3, var4, var3 % var4 AS res3, var4 % var3 AS res4
 FROM stream
 INTO FILE();
