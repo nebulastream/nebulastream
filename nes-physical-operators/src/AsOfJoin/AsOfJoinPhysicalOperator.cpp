@@ -639,7 +639,7 @@ void AsOfJoinPhysicalOperator<PredicateFree>::terminate(ExecutionContext& execut
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(lockHandler, handler);
 
-    executionCtx.watermarkTs = nautilus::val<Timestamp>{Timestamp{Timestamp::INVALID_VALUE}};
+    executionCtx.watermarkTs = nautilus::val<Timestamp>{Timestamp{Timestamp::INFINITE_VALUE}};
     executionCtx.originId = outputOriginId;
     executionCtx.currentTs = nautilus::val<Timestamp>{Timestamp{Timestamp::INITIAL_VALUE}};
     executionCtx.sequenceNumber = nautilus::val<SequenceNumber>{invoke(
