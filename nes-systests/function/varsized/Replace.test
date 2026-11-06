@@ -1,0 +1,89 @@
+# name: function/varsized/Replace.test
+# description: Tests REPLACE(str, search, replacement), which replaces all non-overlapping occurrences of search
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE textStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR textStream TYPE File;
+ATTACH INLINE
+1,
+2,abc
+3,cccc
+4,accbcc
+5,xyz
+6,aaa
+
+CREATE LOGICAL SOURCE nullableTextStream(id UINT64 NOT NULL, data VARSIZED, search VARSIZED, replacement VARSIZED);
+CREATE PHYSICAL SOURCE FOR nullableTextStream TYPE File;
+ATTACH INLINE
+1,banana,an,AN
+2,,an,AN
+3,banana,,AN
+4,banana,an,
+
+# Empty fields of NOT NULL VARSIZED columns are empty strings
+CREATE LOGICAL SOURCE argumentStream(id UINT64 NOT NULL, data VARSIZED NOT NULL, search VARSIZED NOT NULL, replacement VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR argumentStream TYPE File;
+ATTACH INLINE
+1,banana,a,
+2,banana,,x
+3,,a,x
+4,aaaa,aa,b
+
+CREATE LOGICAL SOURCE WrongDataType(id UINT64 NOT NULL, number UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1,42
+
+# Removing all occurrences with an empty replacement
+SELECT id, REPLACE(data, 'c', '') AS replaced FROM textStream INTO FILE();
+----
+1,
+2,ab
+3,
+4,ab
+5,xyz
+6,aaa
+
+# Nexmark q14: count the 'c' characters
+SELECT id, CHAR_LENGTH(data) - CHAR_LENGTH(REPLACE(data, 'c', '')) AS c_counts FROM textStream INTO FILE();
+----
+1,0
+2,1
+3,4
+4,4
+5,0
+6,0
+
+# Growing replacements and non-overlapping, left-to-right matching
+SELECT id, REPLACE(data, 'aa', '<aa>') AS replaced FROM textStream INTO FILE();
+----
+1,
+2,abc
+3,cccc
+4,accbcc
+5,xyz
+6,<aa>a
+
+# Non-constant arguments: the result is NULL if any argument is NULL
+SELECT id, REPLACE(data, search, replacement) AS replaced FROM nullableTextStream INTO FILE();
+----
+1,bANANa
+2,NULL
+3,NULL
+4,NULL
+
+# Non-constant arguments: an empty replacement removes, an empty search string leaves the input unchanged
+SELECT id, REPLACE(data, search, replacement) AS replaced FROM argumentStream INTO FILE();
+----
+1,bnn
+2,banana
+3,
+4,bb
+
+SELECT id, REPLACE(number, 'a', 'b') AS replaced FROM WrongDataType INTO FILE();
+----
+ERROR 2006
+
+SELECT id, REPLACE(data, 'a') AS replaced FROM textStream INTO FILE();
+----
+ERROR 2002
