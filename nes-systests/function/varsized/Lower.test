@@ -1,0 +1,67 @@
+# name: function/varsized/Lower.test
+# description: Tests LOWER(str), which lower-cases the ASCII letters of a VARSIZED value
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE channels(id UINT64 NOT NULL, channel VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR channels TYPE File;
+ATTACH INLINE
+1,Apple
+2,GOOGLE
+3,facebook
+4,Baidu
+5,
+6,Other-Channel_42
+7,ÄÖÜ
+
+CREATE LOGICAL SOURCE nullableChannels(id UINT64 NOT NULL, channel VARSIZED);
+CREATE PHYSICAL SOURCE FOR nullableChannels TYPE File;
+ATTACH INLINE
+1,MiXeD
+2,
+
+CREATE LOGICAL SOURCE WrongDataType(id UINT64 NOT NULL, number UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1,42
+
+# Only ASCII letters are lower-cased, all other bytes are kept
+SELECT id, LOWER(channel) AS lowered FROM channels INTO FILE();
+----
+1,apple
+2,google
+3,facebook
+4,baidu
+5,
+6,other-channel_42
+7,ÄÖÜ
+
+SELECT id, LOWER(channel) AS lowered FROM nullableChannels INTO FILE();
+----
+1,mixed
+2,NULL
+
+# Nexmark q21 style filter and CASE on the lower-cased channel
+SELECT id,
+       CASE
+           WHEN LOWER(channel) = 'apple' THEN '0'
+           WHEN LOWER(channel) = 'google' THEN '1'
+           WHEN LOWER(channel) = 'facebook' THEN '2'
+           WHEN LOWER(channel) = 'baidu' THEN '3'
+           ELSE '-1'
+       END AS channel_id
+FROM channels
+WHERE LOWER(channel) IN ('apple', 'google', 'facebook', 'baidu')
+INTO FILE();
+----
+1,0
+2,1
+3,2
+4,3
+
+SELECT id, LOWER(number) AS lowered FROM WrongDataType INTO FILE();
+----
+ERROR 2006
+
+SELECT id, LOWER(channel, channel) AS lowered FROM channels INTO FILE();
+----
+ERROR 2002
