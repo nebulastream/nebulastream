@@ -41,7 +41,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         ChainedHashMapConfig leftHashMapBasedOptions,
-        ChainedHashMapConfig rightHashMapBasedOptions);
+        ChainedHashMapConfig rightHashMapBasedOptions,
+        std::optional<HJResidual> residual);
 
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
