@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -40,6 +41,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncResourceLimiter.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/UUID.hpp>
 #include <boost/asio/awaitable.hpp>
@@ -324,7 +326,18 @@ class ScriptedFunction final : public AsyncFunction
 public:
     explicit ScriptedFunction(const std::string& configuration)
     {
-        std::sscanf(configuration.c_str(), "%zu,%d,%d,%d", &batch, &keyed, &delayMs, &omit); /// NOLINT(cert-err34-c)
+        std::array<char, 64> resourceName{};
+        /// NOLINTNEXTLINE(cert-err34-c)
+        if (std::sscanf(configuration.c_str(), "%zu,%d,%d,%d,%63[^,],%zu", &batch, &keyed, &delayMs, &omit, resourceName.data(), &sharedBound)
+            == 6)
+        {
+            resource = resourceName.data();
+        }
+    }
+
+    [[nodiscard]] std::optional<AsyncSharedLimit> sharedLimit() const override
+    {
+        return resource.empty() ? std::nullopt : std::optional{AsyncSharedLimit{.resource = resource, .limit = sharedBound}};
     }
 
     boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments) override
@@ -414,6 +427,9 @@ private:
     int keyed = 0;
     int delayMs = 0;
     int omit = 0;
+    /// "<batch>,<keyed>,<delay ms>,<omit>,<resource>,<limit>": calls share a limit of `limit` with all calls to `resource`.
+    std::string resource;
+    size_t sharedBound = 0;
 };
 
 /// An Async source over rows (key, value, result slot), fed through its channel like a Handoff sink would.
@@ -466,6 +482,19 @@ protected:
         const size_t transientRetries = AsyncSourceConfig{}.transientRetries,
         const size_t transientRetrySeconds = AsyncSourceConfig{}.transientRetrySeconds)
     {
+        source = makeSource(channelId, functionConfiguration, concurrency, retries, transientRetries, transientRetrySeconds);
+        sink.emplace(channelId, 1024, HandoffChannel::Role::SINK);
+        source->open(bufferManager);
+    }
+
+    std::unique_ptr<AsyncSource> makeSource(
+        const std::string& channel,
+        const std::string& functionConfiguration,
+        const size_t concurrency,
+        const size_t retries = 0,
+        const size_t transientRetries = AsyncSourceConfig{}.transientRetries,
+        const size_t transientRetrySeconds = AsyncSourceConfig{}.transientRetrySeconds)
+    {
         const auto calls = fmt::format(
             R"([{{"outputs":[{{"index":0,"field":"{}"}}],"function":"ScriptedTest","configuration":"{}","arguments":[{{"field":"{}","output":0}},{{"field":"{}","output":0}}]}}])",
             names[2],
@@ -473,7 +502,7 @@ protected:
             names[0],
             names[1]);
         const AsyncSourceConfig config{
-            .channel = channelId,
+            .channel = channel,
             .calls = calls,
             .inputFields = fmt::format("{},{},{}", names[0], names[1], names[2]),
             .maxConcurrency = concurrency,
@@ -481,9 +510,7 @@ protected:
             .maxRetries = retries,
             .transientRetries = transientRetries,
             .transientRetrySeconds = transientRetrySeconds};
-        source = std::make_unique<AsyncSource>(config, *descriptor);
-        sink.emplace(channelId, 1024, HandoffChannel::Role::SINK);
-        source->open(bufferManager);
+        return std::make_unique<AsyncSource>(config, *descriptor);
     }
 
     /// One handed-off buffer of (key, value) rows at the given stream position.
@@ -518,13 +545,15 @@ protected:
     }
 
     /// Per emitted row its origin, value and result, until the end of the stream.
-    std::vector<std::tuple<uint64_t, std::string, std::string>> drain()
+    std::vector<std::tuple<uint64_t, std::string, std::string>> drain() { return drain(*source); }
+
+    std::vector<std::tuple<uint64_t, std::string, std::string>> drain(AsyncSource& from)
     {
         std::vector<std::tuple<uint64_t, std::string, std::string>> rows;
         while (true)
         {
             auto output = bufferManager->getBufferBlocking();
-            const auto result = source->fillTupleBuffer(output, std::stop_token{});
+            const auto result = from.fillTupleBuffer(output, std::stop_token{});
             if (result.isEoS())
             {
                 break;
@@ -544,8 +573,16 @@ protected:
                 rows.emplace_back(output.getOriginId().getRawValue(), values[0], values[1]);
             }
         }
-        source->close();
+        from.close();
         return rows;
+    }
+
+    void handOff(HandoffChannel::Lease& to, const TupleBuffer& buffer)
+    {
+        while (to->tryPush(buffer) != HandoffChannel::PushResult::PUSHED)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
 
     std::shared_ptr<BufferManager> bufferManager
@@ -807,6 +844,86 @@ TEST_F(AsyncSourceTest, FailsAtOnceWhenTheServiceAsksForAWaitBeyondTheTimeLimit)
     source->close();
     EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds{2});
     EXPECT_EQ(observed.requests.size(), 1);
+}
+
+/// Two stages, e.g. the two steps of a pipeline, share a limit of 4 calls to one resource although each may run 8: the
+/// limit holds across them, and a free permit goes to whichever stage has a call ready, so the small stage is not held
+/// back until the big one is done.
+TEST_F(AsyncSourceTest, StagesThatShareAResourceStayWithinItsLimitTogetherAndShareItFairly)
+{
+    const auto resource = fmt::format("shared-{}", channelId);
+    const auto configuration = fmt::format("1,0,20,0,{},4", resource);
+    startSource(configuration, 8, 0);
+    const auto otherChannel = UUIDToString(generateUUID());
+    auto other = makeSource(otherChannel, configuration, 8);
+    HandoffChannel::Lease otherSink{otherChannel, 1024, HandoffChannel::Role::SINK};
+    other->open(bufferManager);
+
+    std::vector<std::pair<std::string, std::string>> big;
+    for (int row = 0; row < 80; ++row)
+    {
+        big.emplace_back("k", fmt::format("big{}", row));
+    }
+    handOff(handedOff(at(1, 1), big));
+    (*sink)->close();
+    const auto start = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::duration bigTook{};
+    std::chrono::steady_clock::duration smallTook{};
+    std::jthread bigStage{[&]
+                          {
+                              EXPECT_EQ(drain().size(), 80);
+                              bigTook = std::chrono::steady_clock::now() - start;
+                          }};
+    /// The small stage asks once the big one holds every permit.
+    std::this_thread::sleep_for(std::chrono::milliseconds{30});
+    handOff(otherSink, handedOff(at(1, 1), {{"k", "s1"}, {"k", "s2"}, {"k", "s3"}, {"k", "s4"}}));
+    otherSink->close();
+    EXPECT_EQ(drain(*other).size(), 4);
+    smallTook = std::chrono::steady_clock::now() - start;
+    bigStage.join();
+
+    EXPECT_EQ(observed.mostInFlight, 4) << "the shared limit, not the 2 x 8 slots";
+    EXPECT_LT(smallTook, bigTook / 2) << "the small stage waited for the big one to finish";
+}
+
+TEST(AsyncResourceLimiterTest, OneLimiterPerResourceWhileItIsHeld)
+{
+    const auto first = AsyncResourceLimiter::of("limiter-test-a", 3);
+    const auto again = AsyncResourceLimiter::of("limiter-test-a", 5);
+    EXPECT_EQ(first, again);
+    EXPECT_EQ(again->limit(), 3) << "the first sets the limit";
+    EXPECT_NE(AsyncResourceLimiter::of("limiter-test-b", 3), first);
+
+    std::vector<AsyncResourceLimiter::Permit> permits;
+    for (int permit = 0; permit < 3; ++permit)
+    {
+        auto taken = first->tryAcquire();
+        ASSERT_TRUE(taken.has_value());
+        permits.push_back(std::move(*taken));
+    }
+    EXPECT_FALSE(first->tryAcquire().has_value());
+    permits.pop_back();
+    EXPECT_TRUE(first->tryAcquire().has_value()) << "a returned permit is free again";
+    EXPECT_EQ(first->mostInUse(), 3);
+}
+
+TEST_F(AsyncSourceTest, AStageThatStopsDoesNotWaitForAPermitOfTheSharedLimit)
+{
+    const auto configuration = fmt::format("1,0,600,0,stopping-{},1", channelId);
+    startSource(configuration, 1, 0);
+    const auto otherChannel = UUIDToString(generateUUID());
+    auto other = makeSource(otherChannel, configuration, 1);
+    HandoffChannel::Lease otherSink{otherChannel, 1024, HandoffChannel::Role::SINK};
+    other->open(bufferManager);
+    handOff(handedOff(at(1, 1), {{"k", "holds the permit"}}));
+    (*sink)->close();
+    std::jthread holder{[&] { EXPECT_EQ(drain().size(), 1); }};
+    std::this_thread::sleep_for(std::chrono::milliseconds{50});
+    handOff(otherSink, handedOff(at(1, 1), {{"k", "waits for it"}}));
+    std::this_thread::sleep_for(std::chrono::milliseconds{50});
+    const auto start = std::chrono::steady_clock::now();
+    other->close();
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds{300}) << "the stop waited for the permit";
 }
 
 }

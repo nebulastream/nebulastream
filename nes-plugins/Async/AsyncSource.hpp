@@ -36,6 +36,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncResourceLimiter.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <boost/asio/awaitable.hpp>
@@ -147,6 +148,8 @@ private:
         size_t maxBatchSize = 1;
         /// One per slot, so an instance serves one call at a time.
         std::vector<std::unique_ptr<AsyncFunction>> instances;
+        /// The limit the function shares with other calls to its resource, if it names one.
+        std::shared_ptr<AsyncResourceLimiter> limiter;
     };
 
     /// A field of the output that holds one value of a call.

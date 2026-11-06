@@ -42,6 +42,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncResourceLimiter.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
@@ -236,7 +237,8 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
             .level = 0,
             .orderingKey = std::nullopt,
             .maxBatchSize = 1,
-            .instances = {}};
+            .instances = {},
+            .limiter = nullptr};
         for (const auto& [index, field] : outputs)
         {
             const auto& [outputOffset, outputType] = outputFields.at(field);
@@ -278,6 +280,10 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
         maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, first.maxConcurrency().value_or(maxConcurrency)));
         call.maxBatchSize = std::max<size_t>(1, first.maxBatchSize());
         batchSize = std::max(batchSize, call.maxBatchSize);
+        if (const auto shared = first.sharedLimit())
+        {
+            call.limiter = AsyncResourceLimiter::of(shared->resource, shared->limit);
+        }
         if (const auto key = first.orderingKey())
         {
             if (*key >= call.arguments.size() || call.arguments[*key].call.has_value())
@@ -464,6 +470,8 @@ boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_
         std::exception_ptr error;
         try
         {
+            /// Held only while the request is out, not during the backoff.
+            const auto permit = call.limiter ? co_await call.limiter->acquire() : AsyncResourceLimiter::Permit{};
             result = co_await function.callValues(arguments);
         }
         /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
@@ -509,6 +517,7 @@ AsyncSource::callBatchWithRetries(const size_t callIndex, const size_t slot, std
         std::exception_ptr error;
         try
         {
+            const auto permit = call.limiter ? co_await call.limiter->acquire() : AsyncResourceLimiter::Permit{};
             batch = co_await function.callBatch(rows);
         }
         /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.

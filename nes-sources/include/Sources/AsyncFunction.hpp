@@ -61,6 +61,15 @@ private:
     std::optional<std::chrono::milliseconds> retryAfter_;
 };
 
+/// A limit on calls in flight that a function shares with every async call in the process that names the same
+/// `resource`, whichever stage or query it belongs to (`AsyncResourceLimiter`).
+struct AsyncSharedLimit
+{
+    /// Names what the calls go to, e.g. a service endpoint and model; the function decides what is shared.
+    std::string resource;
+    size_t limit;
+};
+
 /// The implementation of an `AsyncLogicalFunction`, run by the `Async` source on its event loop.
 /// An instance serves one call at a time, so it may keep per-connection state between calls.
 ///
@@ -87,6 +96,10 @@ public:
 
     /// Rows whose calls of this function may be in flight at once, if the function itself sets a bound.
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const { return std::nullopt; }
+
+    /// A limit this function's calls share with other async calls to the same resource, if it sets one. Each request
+    /// the source makes holds a permit of that limit while it is in flight; `maxConcurrency` still caps the stage.
+    [[nodiscard]] virtual std::optional<AsyncSharedLimit> sharedLimit() const { return std::nullopt; }
 
     /// Rows `callBatch` takes at once. 1, the default, means the source never calls `callBatch`.
     [[nodiscard]] virtual size_t maxBatchSize() const { return 1; }

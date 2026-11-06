@@ -137,6 +137,10 @@ neither a call nor a source costs a thread.
   `orderingKey`. Rows with equal values run one at a time and in stream order, others in parallel; a batch holds at most
   one row per key, and rows waiting for their key hold no slot (`KeyedRowQueue`). Its logical function returns true
   from `AsyncLogicalFunction::dependsOnEarlierRows`, so that no selection is pushed below the call.
+- **Shared limits.** A function may name a resource and a limit in `sharedLimit`, e.g. one model on one endpoint. Every
+  request of every stage on the worker that names the same resource then holds a permit of one `AsyncResourceLimiter`
+  while it is in flight, and a free permit goes to the stage that asked first; requests in backoff hold none. A stage's
+  `max_concurrency` still caps that stage alone. A stage that stops cancels its waits for permits.
 - **Function instances.** Each slot has its own instance of every function in the stage, created through the
   `AsyncFunctionRegistry`, so an instance serves one call at a time and may keep state between calls, such as an open
   connection.
@@ -166,7 +170,8 @@ The decomposition passes these optimizer options to every async stage, e.g.
 | `optimizer.async.transient_retry_seconds` | 120 | Time from a call's first attempt within which those retries happen.   |
 
 A function can lower the concurrency of its stage through `AsyncFunction::maxConcurrency`, e.g. for a service with a
-rate limit; the stage uses the smallest bound.
+rate limit; the stage uses the smallest bound. A limit that several stages share, e.g. every call to one service, comes
+from `AsyncFunction::sharedLimit` (see the Async source above).
 
 ## Adding an asynchronous function
 
@@ -197,7 +202,9 @@ public:
 
 `create` receives the configuration from `getAsyncConfiguration`. A function that produces several values overrides
 `callValues` instead of `call`. A function that takes several rows per request overrides `maxBatchSize` and
-`callBatch`; one that keeps state per key overrides `orderingKey` (see the Async source above). Inside the coroutine, wait only with `co_await` on Asio operations; anything that blocks
+`callBatch`; one that keeps state per key overrides `orderingKey`; one whose calls share a service's capacity with
+other calls overrides `sharedLimit`; one that can tell transient failures throws `AsyncTransientFailure` (see the Async
+source above). Inside the coroutine, wait only with `co_await` on Asio operations; anything that blocks
 stalls every async source on the worker.
 
 Both parts are registered in the plugin's `CMakeLists.txt`, the logical function under the SQL name and the
@@ -226,6 +233,16 @@ functions would need it too, and is then designed for any function, not for one.
   `Retry-After` as seconds or HTTP-date. Retries only absorb sporadic failures: a client that keeps more calls in flight
   than the service takes will starve some row however it backs off, since its other slots take every place that frees
   up. That needs a lower concurrency, see the shared limit below.
+
+- **Concurrency limit shared across stages: framework, with the function naming the resource.** Two stages of one
+  query, or two queries, that call the same service compete for its capacity whatever function they run, so the
+  limit belongs to the framework and is keyed by a resource name the function gives (`AsyncSharedLimit`), not by
+  anything SEM_CALL-specific. The registry is process-wide, so it holds for the whole worker. Permits are taken per
+  request, not per slot: a slot that waits for a permit keeps its rows but takes nothing from other stages, which is
+  what lets a free permit go to whichever stage has work. SEM_CALL names its endpoint and model
+  (`LLM.SHARED_CONCURRENCY`); the further parallel requests of one SEM_WINDOW row take a permit only if one is free at
+  once, since waiting for one inside a call could wait on calls that wait for this one. The first stage to name a
+  resource sets its limit; a different limit later is logged and ignored, since a running limit cannot shrink safely.
 
 ## Limitations
 
