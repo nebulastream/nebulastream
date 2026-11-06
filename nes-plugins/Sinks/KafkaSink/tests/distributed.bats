@@ -27,6 +27,11 @@ docker_kafka_consume() {
   sleep 1
 }
 
+backpressure_is_held() {
+  local log=worker-1/singleNodeWorker.log
+  (( $(grep -c "Backpressure acquired:" "$log") > $(grep -c "Backpressure released:" "$log") ))
+}
+
 @test "example test with small data" {
   setup_distributed tests/good/example.yaml
 
@@ -93,15 +98,24 @@ EOF
         -- provoke backpressure
         4 AS "SINK"."MAX_OUTSTANDING_MESSAGES",
         '2' AS "SINK"."BACKPRESSURE_LOWER_THRESHOLD",
-        '4' AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD"
+        '4' AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD",
+        -- must outlast the broker pause below
+        60000 AS "SINK"."DELIVERY_TIMEOUT_MS"
     )
 EOF
 )"
   assert_success
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Stopped" $output
+  query_id=$output
 
+  # A paused broker acknowledges nothing, so backpressure cannot be released while it is paused. Requiring it to be
+  # held rather than merely logged rules out backpressure that came and went before the pause.
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id"
+  docker compose pause kafka-broker
+  wait_until backpressure_is_held
+  docker compose unpause kafka-broker
+
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Stopped" "$query_id"
   wait_until assert_file_line_count results.csv 400000 --ignore-empty-lines
-  grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
 }
 
 @test "fails query when broker stops during processing" {
