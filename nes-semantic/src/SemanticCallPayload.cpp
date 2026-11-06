@@ -95,6 +95,7 @@ struct EncodedPayload
     std::optional<std::string> stateId;
     /// Only written when set, for the same reason.
     std::optional<bool> retryMissingRows;
+    std::optional<int64_t> sharedConcurrency;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -196,7 +197,8 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .agg = payload.agg ? std::optional{true} : std::nullopt,
             .keyed = config.keyed ? std::optional{encodeKeyed(*config.keyed)} : std::nullopt,
             .stateId = payload.stateId.empty() ? std::nullopt : std::optional{payload.stateId},
-            .retryMissingRows = config.retryMissingRows ? std::optional{true} : std::nullopt});
+            .retryMissingRows = config.retryMissingRows ? std::optional{true} : std::nullopt,
+            .sharedConcurrency = config.sharedConcurrency > 0 ? std::optional{static_cast<int64_t>(config.sharedConcurrency)} : std::nullopt});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -241,6 +243,7 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .execution = SemanticExecution::ASYNCHRONOUS,
             .fusion = value.fusion,
             .retryMissingRows = value.retryMissingRows.value_or(false),
+            .sharedConcurrency = static_cast<size_t>(value.sharedConcurrency.value_or(0)),
             .keyed = value.keyed ? std::optional{decodeKeyed(std::move(*value.keyed))} : std::nullopt},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),

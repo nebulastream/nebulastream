@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncResourceLimiter.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <MockSemanticBackend.hpp>
@@ -65,6 +66,9 @@ public:
     /// The model's `LLM.MAX_CONCURRENCY`.
     [[nodiscard]] std::optional<size_t> maxConcurrency() const override { return payload.config.maxConcurrency; }
 
+    /// The model's `LLM.SHARED_CONCURRENCY`, shared by every SEM_CALL to the same endpoint and model.
+    [[nodiscard]] std::optional<AsyncSharedLimit> sharedLimit() const override;
+
     /// The model's `LLM.BATCH_SIZE`. SEM_AGG sends one prompt per window and SEM_SCAN and SEM_WINDOW one per row, so theirs
     /// is 1.
     [[nodiscard]] size_t maxBatchSize() const override;
@@ -85,7 +89,8 @@ private:
     boost::asio::awaitable<AsyncCallResult> callWindow(std::vector<std::string> arguments);
     struct WindowScoring;
     /// Scores the next unscored chunk of windows until none is left, on `client`.
-    boost::asio::awaitable<void> scoreWindows(std::shared_ptr<WindowScoring> scoring, SemanticHttpClient* client);
+    /// An `extra` worker only sends while it gets a permit of the shared limit at once.
+    boost::asio::awaitable<void> scoreWindows(std::shared_ptr<WindowScoring> scoring, SemanticHttpClient* client, bool extra);
 
     SemanticCallPayload payload;
     /// Exactly one of the two codecs: the filter codec handles every step list with a FILTER step.
@@ -103,6 +108,8 @@ private:
     /// SEM_WINDOW: the further connections a row's window requests go out on in parallel, as llm_operator's gather.
     std::vector<std::unique_ptr<SemanticHttpClient>> windowClients;
     std::optional<std::string> apiKey;
+    /// The limit of `LLM.SHARED_CONCURRENCY`, the same object the Async source takes its permits from.
+    std::shared_ptr<AsyncResourceLimiter> sharedLimiter;
 };
 
 }

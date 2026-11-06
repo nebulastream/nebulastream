@@ -108,6 +108,12 @@ bool mentions(const nlohmann::json& parsed, const std::string& rowId)
     return findMember(parsed, rowId) != nullptr;
 }
 
+/// What SEM_CALL's shared limit is shared by: one model on one endpoint.
+std::string sharedResource(const SemanticModelConfig& config)
+{
+    return fmt::format("SEM_CALL {} {}", config.backend == "mock" ? "mock" : config.endpoint, config.modelName);
+}
+
 std::string batchRowId(const size_t position)
 {
     return "row" + std::to_string(position + 1);
@@ -217,8 +223,21 @@ SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded
     {
         throw CannotOpenSource("Semantic model '{}' has unknown backend '{}'", payload.model, config.backend);
     }
+    if (config.sharedConcurrency > 0)
+    {
+        sharedLimiter = AsyncResourceLimiter::of(sharedResource(config), config.sharedConcurrency);
+    }
     /// Counted last, so that an instance whose construction threw is not counted.
     ++liveInstances;
+}
+
+std::optional<AsyncSharedLimit> SemanticCallAsyncFunction::sharedLimit() const
+{
+    if (payload.config.sharedConcurrency == 0)
+    {
+        return std::nullopt;
+    }
+    return AsyncSharedLimit{.resource = sharedResource(payload.config), .limit = payload.config.sharedConcurrency};
 }
 
 SemanticCallAsyncFunction::~SemanticCallAsyncFunction()
@@ -426,13 +445,13 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callWindow(st
     {
         /// The workers run on this coroutine's executor, the Async source's strand, so they never touch `scoring` at once.
         const auto executor = co_await boost::asio::this_coro::executor;
-        using Operation = decltype(boost::asio::co_spawn(executor, scoreWindows(scoring, nullptr), boost::asio::deferred));
+        using Operation = decltype(boost::asio::co_spawn(executor, scoreWindows(scoring, nullptr, false), boost::asio::deferred));
         std::vector<Operation> operations;
         operations.reserve(connections);
         for (size_t connection = 0; connection < connections; ++connection)
         {
             SemanticHttpClient* const client = connection == 0 || !http ? nullptr : windowClients[connection - 1].get();
-            operations.push_back(boost::asio::co_spawn(executor, scoreWindows(scoring, client), boost::asio::deferred));
+            operations.push_back(boost::asio::co_spawn(executor, scoreWindows(scoring, client, connection > 0), boost::asio::deferred));
         }
         auto [order, failures] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
                                      .async_wait(boost::asio::experimental::wait_for_all(), boost::asio::use_awaitable);
@@ -456,10 +475,23 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callWindow(st
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<void> SemanticCallAsyncFunction::scoreWindows(std::shared_ptr<WindowScoring> scoring, SemanticHttpClient* client)
+boost::asio::awaitable<void>
+SemanticCallAsyncFunction::scoreWindows(std::shared_ptr<WindowScoring> scoring, SemanticHttpClient* client, const bool extra)
 {
     while (scoring->next < scoring->scores.size())
     {
+        /// The call itself holds one permit of the shared limit, which the first worker uses. A further one only works
+        /// while a permit is free; waiting for one could wait on calls that wait for this one, so it stops instead and
+        /// leaves the chunks to the others.
+        std::optional<AsyncResourceLimiter::Permit> permit;
+        if (extra && sharedLimiter)
+        {
+            permit = sharedLimiter->tryAcquire();
+            if (!permit)
+            {
+                co_return;
+            }
+        }
         const size_t chunk = scoring->next++;
         const size_t begin = chunk * scoring->perCall;
         const std::vector windows(

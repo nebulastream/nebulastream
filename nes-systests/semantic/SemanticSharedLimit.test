@@ -1,0 +1,35 @@
+# name: semantic/SemanticSharedLimit.test
+# description: LLM.SHARED_CONCURRENCY: SEM_CALL stages that call the same model on the same endpoint share one limit of
+#              requests in flight (AsyncSharedLimit), as llm_operator's one semaphore per model. Two chained stages with
+#              a shared limit of one request give the results they give without it; the limit itself is checked by
+#              AsyncSourceTest.StagesThatShareAResourceStayWithinItsLimitTogetherAndShareItFairly.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,positive
+2,negative
+3,mixed(unsure)
+4,clearly-negative
+
+CREATE SEM_MODEL firstStep
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 4 AS LLM.MAX_CONCURRENCY, 1 AS LLM.SHARED_CONCURRENCY);
+
+CREATE SEM_MODEL secondStep
+INPUT (sentiment VARSIZED)
+OUTPUT (loud VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 4 AS LLM.MAX_CONCURRENCY, 1 AS LLM.SHARED_CONCURRENCY, 2 AS LLM.BATCH_SIZE);
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL, loud VARSIZED NOT NULL) TYPE File;
+
+SELECT * FROM SEM_MAP(secondStep, SEM_MAP(firstStep, reviews)) INTO out;
+----
+1,positive,POSITIVE,POSITIVE
+2,negative,NEGATIVE,NEGATIVE
+3,mixed(unsure),MIXED(UNSURE),MIXED(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE,CLEARLY-NEGATIVE

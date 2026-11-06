@@ -402,6 +402,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"PRESERVE_ORDER"},
     std::string_view{"FUSION"},
     std::string_view{"RETRY_MISSING_ROWS"},
+    std::string_view{"SHARED_CONCURRENCY"},
     std::string_view{"KIND"},
     std::string_view{"KEY_BY"},
     std::string_view{"INIT_PROMPT"},
@@ -661,6 +662,7 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .preserveOrder = bindBooleanOption(statement.config, "PRESERVE_ORDER", true),
         .fusion = bindBooleanOption(statement.config, "FUSION", false),
         .retryMissingRows = bindBooleanOption(statement.config, "RETRY_MISSING_ROWS", false),
+        .sharedConcurrency = numericOption(statement.config, "SHARED_CONCURRENCY", 0, MaxConcurrency),
         .keyed = std::move(keyed)};
 }
 

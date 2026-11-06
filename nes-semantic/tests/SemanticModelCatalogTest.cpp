@@ -237,11 +237,14 @@ TEST_F(SemanticModelCatalogTest, ReflectionRoundTrip)
     config.payloadFormat = PayloadFormat::JSON_OBJECT;
     config.datasetPrompt = "Movie reviews from Rotten Tomatoes";
     config.apiKeyEnvVar = "OPENAI_API_KEY";
+    config.sharedConcurrency = 8;
     catalog.registerModel("sentiment", config, validSchema());
     const auto model = catalog.load("sentiment");
 
     const ReflectionContext context;
-    EXPECT_EQ(context.unreflect<RegisteredSemanticModel>(context.reflect(model)), model);
+    const auto roundTripped = context.unreflect<RegisteredSemanticModel>(context.reflect(model));
+    EXPECT_EQ(roundTripped, model);
+    EXPECT_EQ(roundTripped.getConfig().sharedConcurrency, 8);
 }
 
 TEST_F(SemanticModelCatalogTest, ReflectionRoundTripKeepsFilterStepsAndFusion)

@@ -159,6 +159,9 @@ struct SemanticModelConfig
     /// A row that a batched answer leaves out gets the step's default value, as in llm_operator. True asks the model again
     /// for that row on its own instead, one more request per missing row.
     bool retryMissingRows = false;
+    /// Requests in flight that every SEM_CALL to the same endpoint and model shares, across all stages and queries of the
+    /// worker, as llm_operator's one semaphore per model. 0 shares nothing; MAX_CONCURRENCY still caps each stage.
+    size_t sharedConcurrency = 0;
     /// Set for SEM_SCAN and SEM_WINDOW models.
     std::optional<SemanticKeyedConfig> keyed = std::nullopt;
 

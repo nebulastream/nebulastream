@@ -68,6 +68,8 @@ struct
     std::optional<bool> fusion;
     /// Optional on read: catalogs reflected before RETRY_MISSING_ROWS existed carry none, which means false.
     std::optional<bool> retryMissingRows;
+    /// Optional on read: catalogs reflected before SHARED_CONCURRENCY existed carry none, which means 0.
+    std::optional<int64_t> sharedConcurrency;
     /// SEM_SCAN and SEM_WINDOW only, as `encodeSemanticKeyedConfig` writes it.
     std::optional<std::string> keyed;
     std::optional<SemanticFieldList> inputs;
@@ -424,6 +426,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .preserveOrder = std::make_optional(config.preserveOrder),
             .fusion = std::make_optional(config.fusion),
             .retryMissingRows = std::make_optional(config.retryMissingRows),
+            .sharedConcurrency = std::make_optional(static_cast<int64_t>(config.sharedConcurrency)),
             .keyed = config.keyed ? std::optional{encodeSemanticKeyedConfig(*config.keyed)} : std::nullopt,
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
@@ -467,6 +470,7 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .preserveOrder = reflected.preserveOrder.value(),
         .fusion = reflected.fusion.value(),
         .retryMissingRows = reflected.retryMissingRows.value_or(false),
+        .sharedConcurrency = static_cast<size_t>(reflected.sharedConcurrency.value_or(0)),
         .keyed = reflected.keyed ? std::optional{decodeSemanticKeyedConfig(*reflected.keyed)} : std::nullopt};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
