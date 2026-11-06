@@ -1,0 +1,38 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The broker that the MQTT source subscribes to and the loader publishes to.
+# The framework derives the connector endpoint, broker:1883, from the service name and its expose port.
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    configs:
+      - source: mosquitto_conf
+        target: /mosquitto/config/mosquitto.conf
+    expose: ["1883"]
+    stop_grace_period: 0s
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "test", "-q", "1"]
+      interval: 1s
+      start_interval: 100ms
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+configs:
+  mosquitto_conf:
+    # No persistence: every run starts from an empty broker.
+    # No queue limit: the source is held back until the first FILL, so a large batch waits on the broker.
+    content: |
+      listener 1883
+      allow_anonymous true
+      max_queued_messages 0
