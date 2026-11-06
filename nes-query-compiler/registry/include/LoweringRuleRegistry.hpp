@@ -17,6 +17,10 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <type_traits>
+#include <unordered_set>
+#include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Util/RuntimeRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -29,17 +33,28 @@ using LoweringRuleRegistryReturnType = std::unique_ptr<AbstractLoweringRule>;
 struct LoweringRuleRegistryArguments
 {
     QueryExecutionConfiguration conf;
+    /// Windows whose watermark gap throttle must stay disabled, as they share a source with a sibling window.
+    std::unordered_set<OperatorId> windowsWithoutThrottling;
 };
 
 using LoweringRuleFn = std::function<LoweringRuleRegistryReturnType(LoweringRuleRegistryArguments)>;
 
-/// Creates the registry entry for a lowering rule: rules are constructed from the query
-/// execution configuration.
+/// Creates the registry entry for a lowering rule: rules are constructed from the registry arguments if they take them, and from
+/// the query execution configuration otherwise.
 template <typename LoweringRuleImpl>
 LoweringRuleFn makeLoweringRule()
 {
     return [](LoweringRuleRegistryArguments arguments) -> LoweringRuleRegistryReturnType
-    { return std::make_unique<LoweringRuleImpl>(arguments.conf); };
+    {
+        if constexpr (std::is_constructible_v<LoweringRuleImpl, LoweringRuleRegistryArguments>)
+        {
+            return std::make_unique<LoweringRuleImpl>(std::move(arguments));
+        }
+        else
+        {
+            return std::make_unique<LoweringRuleImpl>(arguments.conf);
+        }
+    };
 }
 
 class LoweringRuleRegistry : public RuntimeRegistry<LoweringRuleRegistry, std::string, LoweringRuleFn, /*CaseSensitive*/ false>
