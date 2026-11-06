@@ -73,7 +73,8 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
     ChainedHashMapConfig leftHashMapBasedOptions,
-    ChainedHashMapConfig rightHashMapBasedOptions)
+    ChainedHashMapConfig rightHashMapBasedOptions,
+    std::optional<HJResidual> residual)
     : HJProbePhysicalOperatorBase(
           operatorHandlerId,
           std::move(joinFunction),
@@ -82,7 +83,8 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
           std::move(leftTupleLayout),
           std::move(rightTupleLayout),
           std::move(leftHashMapBasedOptions),
-          std::move(rightHashMapBasedOptions))
+          std::move(rightHashMapBasedOptions),
+          std::move(residual))
 {
 }
 
@@ -95,6 +97,8 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     const ChainedHashMapConfig& outerHashMapConfig,
     const ChainedHashMapConfig& innerHashMapConfig,
     const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
+    const std::shared_ptr<PagedVectorTupleLayout>& innerTupleLayout,
+    const bool outerIsLeft,
     const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,
@@ -114,23 +118,65 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
                 outerEntry, outerHashMapBuffer, outerHashMapConfig.fieldKeys, outerHashMapConfig.fieldValues};
             const PagedVectorRef outerPagedVector = loadEntryPagedVector(outerEntryRef, outerTupleLayout);
 
-            /// Check all inner hash maps for a matching key
-            nautilus::val<bool> matched{false};
-            for (nautilus::val<uint64_t> innerIdx = 0; innerIdx < innerNumberOfHashMaps; ++innerIdx)
+            if (not residual.has_value())
             {
-                auto innerHashMapBuffer = recordBufferRef.getChild(innerOffset + innerIdx);
-                ChainedHashMapRef innerHashMap{innerHashMapBuffer, innerHashMapConfig};
+                /// Without a residual, every tuple of an entry whose key exists on the inner side is matched
+                nautilus::val<bool> matched{false};
+                for (nautilus::val<uint64_t> innerIdx = 0; innerIdx < innerNumberOfHashMaps; ++innerIdx)
+                {
+                    auto innerHashMapBuffer = recordBufferRef.getChild(innerOffset + innerIdx);
+                    ChainedHashMapRef innerHashMap{innerHashMapBuffer, innerHashMapConfig};
 
-                matched = matched or (innerHashMap.findEntry(outerEntryRef.entryRef) != nullptr);
+                    matched = matched or (innerHashMap.findEntry(outerEntryRef.entryRef) != nullptr);
+                }
+                if (!matched)
+                {
+                    /// Emit unmatched outer tuples with NULL-filled inner fields
+                    for (auto outerIt = outerPagedVector.begin(); outerIt != outerPagedVector.end(); ++outerIt)
+                    {
+                        const auto outerRecord = *outerIt;
+                        auto nullRecord = createNullFilledJoinedRecord(outerRecord, windowStart, windowEnd, outerFields, nullSideSchema);
+                        executeChild(executionCtx, nullRecord);
+                    }
+                }
             }
-            if (!matched)
+            else
             {
-                /// Emit unmatched outer tuples with NULL-filled inner fields
+                /// With a residual, an outer tuple is matched only if an inner tuple with the same key also satisfies the residual,
+                /// so the decision is per tuple instead of per key.
                 for (auto outerIt = outerPagedVector.begin(); outerIt != outerPagedVector.end(); ++outerIt)
                 {
                     const auto outerRecord = *outerIt;
-                    auto nullRecord = createNullFilledJoinedRecord(outerRecord, windowStart, windowEnd, outerFields, nullSideSchema);
-                    executeChild(executionCtx, nullRecord);
+                    /// Stops at the first partner for which the residual holds. The early exit is part of the loop conditions instead of a
+                    /// `break`: the loop body owns a child buffer, whose destructor is a traced call. A `break` shares that cleanup with the
+                    /// fall-through path, so nautilus sees the same trace tag on both paths, merges them, and the fall-through path then
+                    /// leaves the loop after the first inner hash map.
+                    nautilus::val<bool> matched{false};
+                    for (nautilus::val<uint64_t> innerIdx = 0; innerIdx < innerNumberOfHashMaps and not matched; ++innerIdx)
+                    {
+                        auto innerHashMapBuffer = recordBufferRef.getChild(innerOffset + innerIdx);
+                        ChainedHashMapRef innerHashMap{innerHashMapBuffer, innerHashMapConfig};
+                        if (const auto innerEntry = innerHashMap.findEntry(outerEntryRef.entryRef); innerEntry != nullptr)
+                        {
+                            const ChainedHashMapRef::ChainedEntryRef innerEntryRef{
+                                static_cast<nautilus::val<ChainedHashMapEntry*>>(innerEntry),
+                                innerHashMapBuffer,
+                                innerHashMapConfig.fieldKeys,
+                                innerHashMapConfig.fieldValues};
+                            const PagedVectorRef innerPagedVector = loadEntryPagedVector(innerEntryRef, innerTupleLayout);
+                            for (auto innerIt = innerPagedVector.begin(); innerIt != innerPagedVector.end() and not matched; ++innerIt)
+                            {
+                                const auto innerRecord = *innerIt;
+                                matched = outerIsLeft ? residualHolds(outerRecord, innerRecord, executionCtx, windowStart, windowEnd)
+                                                      : residualHolds(innerRecord, outerRecord, executionCtx, windowStart, windowEnd);
+                            }
+                        }
+                    }
+                    if (!matched)
+                    {
+                        auto nullRecord = createNullFilledJoinedRecord(outerRecord, windowStart, windowEnd, outerFields, nullSideSchema);
+                        executeChild(executionCtx, nullRecord);
+                    }
                 }
             }
         }
@@ -173,6 +219,8 @@ void HJOuterProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, R
                 leftHashMapConfig,
                 rightHashMapConfig,
                 leftTupleLayout,
+                rightTupleLayout,
+                true,
                 joinSchema.rightSchema,
                 executionCtx,
                 windowStart,
@@ -192,6 +240,8 @@ void HJOuterProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, R
                 rightHashMapConfig,
                 leftHashMapConfig,
                 rightTupleLayout,
+                leftTupleLayout,
+                false,
                 joinSchema.leftSchema,
                 executionCtx,
                 windowStart,

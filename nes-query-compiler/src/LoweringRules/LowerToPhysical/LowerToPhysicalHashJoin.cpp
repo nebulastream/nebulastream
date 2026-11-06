@@ -461,7 +461,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             leftTupleLayout,
             rightTupleLayout,
             leftHashMapConfig,
-            rightHashMapConfig));
+            rightHashMapConfig,
+            std::nullopt));
     }
     else
     {
@@ -475,7 +476,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             leftTupleLayout,
             rightTupleLayout,
             leftHashMapConfig,
-            rightHashMapConfig));
+            rightHashMapConfig,
+            std::nullopt));
     }
 
     std::shared_ptr<PhysicalOperatorWrapper> leftLeaf = leftBuildWrapper;
