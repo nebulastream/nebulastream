@@ -70,6 +70,13 @@ struct AsyncSourceConfig
     /// a call's first attempt within which they have to be made.
     size_t transientRetries = RetryPolicy{}.maxTransientRetries;
     size_t transientRetrySeconds = std::chrono::duration_cast<std::chrono::seconds>(RetryPolicy{}.transientTimeLimit).count();
+    /// Rows the source holds at most, waiting, running or done but not yet emitted, before it stops taking input. 0
+    /// means `DEFAULT_READ_AHEAD_FACTOR` rows per row the slots take at once.
+    size_t readAheadRows = 0;
+
+    /// Rows held per row the slots take at once, by default: enough for a keyed stage over input sorted by key to keep
+    /// every slot busy with keys of up to that many rows.
+    static constexpr size_t DEFAULT_READ_AHEAD_FACTOR = 64;
 
     static std::expected<AsyncSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
@@ -188,6 +195,8 @@ private:
         std::condition_variable_any changed;
         /// In stream order, which is the order they are emitted in.
         std::deque<std::shared_ptr<InFlightBuffer>> buffers;
+        /// Rows of the buffers in the window.
+        size_t heldRows = 0;
         /// The rows that wait to start, with their ordering keys.
         KeyedRowQueue<RowRef> queue;
         /// What `queue.startableRows()` was after its last change.
@@ -241,6 +250,8 @@ private:
     size_t levels = 0;
     /// The largest `maxBatchSize` of the stage's calls: the rows a slot takes at once.
     size_t batchSize = 1;
+    /// Set from `AsyncSourceConfig::readAheadRows` once the batch size is known.
+    size_t readAheadRows = 0;
     /// Whether any call names an ordering key.
     bool keyed = false;
 

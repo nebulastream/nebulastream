@@ -120,7 +120,8 @@ neither a call nor a source costs a thread.
 - **Concurrency across buffers.** The source keeps a window of handed-off buffers and starts their rows as long as a
   slot is free, up to `max_concurrency` rows at once, regardless of which buffer they belong to. It takes the next buffer
   from the channel only when the rows waiting to start would no longer keep every slot busy, so the channel, not the
-  source, holds what the calls cannot keep up with.
+  source, holds what the calls cannot keep up with. The rows it holds, waiting, running or done but not yet emitted,
+  are bounded by `read_ahead_rows`.
 - **Order and metadata.** Buffers are emitted in the order they were handed off, each once all of its rows are done.
   One input buffer becomes exactly one output buffer with the same sequence and chunk number, origin and watermark. All
   fields that are not call results are copied byte for byte, and variable-sized data stays valid, because the child
@@ -135,7 +136,10 @@ neither a call nor a source costs a thread.
   called on its own. `max_concurrency` still counts requests in flight.
 - **Keys.** A function whose calls must not overlap or reorder for rows that share a value names that argument in
   `orderingKey`. Rows with equal values run one at a time and in stream order, others in parallel; a batch holds at most
-  one row per key, and rows waiting for their key hold no slot (`KeyedRowQueue`). Its logical function returns true
+  one row per key, and rows waiting for their key hold no slot (`KeyedRowQueue`, which keeps per key its waiting rows
+  and the set of rows that may start, so each step costs O(log n)). Rows that wait for their key do not count as ready,
+  so the source reads past them, up to `read_ahead_rows`: over input sorted by key, every key in flight needs all its
+  rows in the window before the next key's rows arrive. Its logical function returns true
   from `AsyncLogicalFunction::dependsOnEarlierRows`, so that no selection is pushed below the call.
 - **Shared limits.** A function may name a resource and a limit in `sharedLimit`, e.g. one model on one endpoint. Every
   request of every stage on the worker that names the same resource then holds a permit of one `AsyncResourceLimiter`
@@ -168,6 +172,7 @@ The decomposition passes these optimizer options to every async stage, e.g.
 | `optimizer.async.max_retries`      | 0       | Further attempts of a failed call, with exponential backoff.               |
 | `optimizer.async.transient_retries` | 8      | Further attempts after transient failures (429, 5xx), backoff with jitter. |
 | `optimizer.async.transient_retry_seconds` | 120 | Time from a call's first attempt within which those retries happen.   |
+| `optimizer.async.read_ahead_rows` | 64 · slots · batch | Rows a stage holds at most before it stops taking input.    |
 
 A function can lower the concurrency of its stage through `AsyncFunction::maxConcurrency`, e.g. for a service with a
 rate limit; the stage uses the smallest bound. A limit that several stages share, e.g. every call to one service, comes
@@ -243,6 +248,15 @@ functions would need it too, and is then designed for any function, not for one.
   (`LLM.SHARED_CONCURRENCY`); the further parallel requests of one SEM_WINDOW row take a permit only if one is free at
   once, since waiting for one inside a call could wait on calls that wait for this one. The first stage to name a
   resource sets its limit; a different limit later is logged and ignored, since a running limit cannot shrink safely.
+
+- **Read-ahead bounded in rows: framework.** Any keyed function (SEM_SCAN, SEM_WINDOW, or a function keeping state per
+  device) meets input sorted by key, and the window is the framework's. The bound used to be `max_concurrency` ·
+  batch size buffers, which over key-major input held the rows of fewer keys than there were slots: SEM_SCAN at 256
+  slots, 256 movies of 25 reviews in buffers of about 25 rows, waited 25 s of 50 s on it (the debug line at close showed
+  the bound held back input while slots were idle). Now the source bounds the rows it holds and reads ahead while
+  fewer rows are ready than the slots take. Emitting finished buffers out of order was the other option; it would
+  break the stream order the stage guarantees, so it was not taken. The default, 64 rows per row the slots take,
+  covers keys of up to 64 consecutive rows with every slot busy; `read_ahead_rows` raises or lowers it.
 
 ## Limitations
 

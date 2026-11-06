@@ -480,9 +480,10 @@ protected:
         const size_t concurrency,
         const size_t retries,
         const size_t transientRetries = AsyncSourceConfig{}.transientRetries,
-        const size_t transientRetrySeconds = AsyncSourceConfig{}.transientRetrySeconds)
+        const size_t transientRetrySeconds = AsyncSourceConfig{}.transientRetrySeconds,
+        const size_t readAheadRows = 0)
     {
-        source = makeSource(channelId, functionConfiguration, concurrency, retries, transientRetries, transientRetrySeconds);
+        source = makeSource(channelId, functionConfiguration, concurrency, retries, transientRetries, transientRetrySeconds, readAheadRows);
         sink.emplace(channelId, 1024, HandoffChannel::Role::SINK);
         source->open(bufferManager);
     }
@@ -493,7 +494,8 @@ protected:
         const size_t concurrency,
         const size_t retries = 0,
         const size_t transientRetries = AsyncSourceConfig{}.transientRetries,
-        const size_t transientRetrySeconds = AsyncSourceConfig{}.transientRetrySeconds)
+        const size_t transientRetrySeconds = AsyncSourceConfig{}.transientRetrySeconds,
+        const size_t readAheadRows = 0)
     {
         const auto calls = fmt::format(
             R"([{{"outputs":[{{"index":0,"field":"{}"}}],"function":"ScriptedTest","configuration":"{}","arguments":[{{"field":"{}","output":0}},{{"field":"{}","output":0}}]}}])",
@@ -509,7 +511,8 @@ protected:
             .channelCapacity = 1024,
             .maxRetries = retries,
             .transientRetries = transientRetries,
-            .transientRetrySeconds = transientRetrySeconds};
+            .transientRetrySeconds = transientRetrySeconds,
+            .readAheadRows = readAheadRows};
         return std::make_unique<AsyncSource>(config, *descriptor);
     }
 
@@ -924,6 +927,78 @@ TEST_F(AsyncSourceTest, AStageThatStopsDoesNotWaitForAPermitOfTheSharedLimit)
     const auto start = std::chrono::steady_clock::now();
     other->close();
     EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds{300}) << "the stop waited for the permit";
+}
+
+/// Input sorted by key, as SEM_SCAN's over a movie's reviews: 8 keys of 6 rows in buffers of 2. Every key in flight needs
+/// its rows in the window before the next key's, so 8 slots stay busy only if the source reads ahead 48 rows, 24 buffers.
+/// Bounding the read-ahead by 8 buffers, as before, kept 4 keys in flight and took twice as long; bounded by rows, all 8 run.
+TEST_F(AsyncSourceTest, ReadsAheadPastRowsThatWaitForTheirKeyToKeepEveryKeyBusy)
+{
+    startSource("1,1,20,0", 8, 0);
+    uint64_t sequence = 0;
+    for (int key = 0; key < 8; ++key)
+    {
+        for (int row = 0; row < 6; row += 2)
+        {
+            handOff(handedOff(
+                at(1, ++sequence),
+                {{fmt::format("k{}", key), fmt::format("k{}-{}", key, row)}, {fmt::format("k{}", key), fmt::format("k{}-{}", key, row + 1)}}));
+        }
+    }
+    (*sink)->close();
+    const auto start = std::chrono::steady_clock::now();
+    const auto emitted = drain();
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    ASSERT_EQ(emitted.size(), 48);
+    EXPECT_EQ(std::get<1>(emitted.back()), "k7-5") << "still emitted in stream order";
+    EXPECT_EQ(observed.overlapsOfOneKey, 0);
+    EXPECT_EQ(observed.mostInFlight, 8);
+    /// 6 rounds of a row per key; 8 keys three at a time take 18.
+    EXPECT_LT(elapsed, std::chrono::milliseconds{300});
+}
+
+TEST_F(AsyncSourceTest, ReadAheadStaysWithinItsBoundInRows)
+{
+    /// 12 rows held at most: two keys' rows, and the next key's first row as the front of the window moves on, so at most
+    /// three keys in flight however many slots are free.
+    startSource("1,1,10,0", 8, 0, AsyncSourceConfig{}.transientRetries, AsyncSourceConfig{}.transientRetrySeconds, 12);
+    uint64_t sequence = 0;
+    for (int key = 0; key < 4; ++key)
+    {
+        for (int row = 0; row < 6; ++row)
+        {
+            handOff(handedOff(at(1, ++sequence), {{fmt::format("k{}", key), fmt::format("k{}-{}", key, row)}}));
+        }
+    }
+    (*sink)->close();
+    EXPECT_EQ(drain().size(), 24);
+    EXPECT_LE(observed.mostInFlight, 3);
+}
+
+TEST(KeyedRowQueueTest, StaysCheapWithManyRowsWaitingForTheirKeys)
+{
+    /// 256 keys of 64 rows, sorted by key, then every row run: quadratic work per take or finish would take seconds.
+    KeyedRowQueue<int> queue;
+    for (int key = 0; key < 256; ++key)
+    {
+        for (int row = 0; row < 64; ++row)
+        {
+            queue.push(key * 64 + row, {std::to_string(key)});
+        }
+    }
+    EXPECT_EQ(queue.startableRows(), 256);
+    const auto start = std::chrono::steady_clock::now();
+    size_t ran = 0;
+    while (queue.size() > 0)
+    {
+        for (auto& [row, keys] : queue.take(256))
+        {
+            queue.finish(keys);
+            ++ran;
+        }
+    }
+    EXPECT_EQ(ran, 256 * 64);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds{500});
 }
 
 }

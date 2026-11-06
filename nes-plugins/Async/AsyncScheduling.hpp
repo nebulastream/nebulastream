@@ -18,13 +18,13 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <list>
+#include <deque>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <tuple>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -127,33 +127,52 @@ private:
 /// A row may start once none of its keys is held by a running row and no row before it that is still waiting has one
 /// of its keys. So rows of one key start one at a time and in stream order, rows of different keys run side by side, and
 /// rows without keys start in stream order whenever a slot is free. Waiting rows hold nothing but their place here.
+///
+/// Kept incrementally: per key the waiting rows in stream order, and the set of rows that may start, so pushing, taking
+/// and finishing cost O(log n) however many rows wait. A deep queue of rows that wait for their key is what lets a keyed
+/// stage over input sorted by key keep every key busy.
 template <typename Row>
 class KeyedRowQueue
 {
 public:
-    void push(Row row, std::vector<std::string> keys) { waiting.push_back({std::move(row), std::move(keys)}); }
+    void push(Row row, std::vector<std::string> keys)
+    {
+        const auto position = nextPosition++;
+        bool ready = true;
+        for (const auto& key : keys)
+        {
+            auto& ofKey = waitingByKey[key];
+            ready = ready && ofKey.empty() && !running.contains(key);
+            ofKey.push_back(position);
+        }
+        waiting.emplace(position, Entry{std::move(row), std::move(keys)});
+        if (ready)
+        {
+            startable.insert(position);
+        }
+    }
 
     /// Up to `limit` rows that may start, in stream order, at most one per key. Their keys count as running until
     /// `finish` releases them.
     std::vector<std::pair<Row, std::vector<std::string>>> take(const size_t limit)
     {
         std::vector<std::pair<Row, std::vector<std::string>>> taken;
-        std::unordered_set<std::string> blocked;
-        for (auto entry = waiting.begin(); entry != waiting.end() && taken.size() < limit;)
+        while (!startable.empty() && taken.size() < limit)
         {
-            if (startable(entry->keys, blocked))
+            const auto position = *startable.begin();
+            startable.erase(startable.begin());
+            auto entry = waiting.extract(position);
+            for (const auto& key : entry.mapped().keys)
             {
-                for (const auto& key : entry->keys)
+                ++running[key];
+                const auto ofKey = waitingByKey.find(key);
+                ofKey->second.pop_front();
+                if (ofKey->second.empty())
                 {
-                    ++running[key];
-                    blocked.insert(key);
+                    waitingByKey.erase(ofKey);
                 }
-                taken.emplace_back(std::move(entry->row), std::move(entry->keys));
-                entry = waiting.erase(entry);
-                continue;
             }
-            blocked.insert(entry->keys.begin(), entry->keys.end());
-            ++entry;
+            taken.emplace_back(std::move(entry.mapped().row), std::move(entry.mapped().keys));
         }
         return taken;
     }
@@ -166,25 +185,16 @@ public:
             if (const auto entry = running.find(key); entry != running.end() && --entry->second == 0)
             {
                 running.erase(entry);
+                if (const auto ofKey = waitingByKey.find(key); ofKey != waitingByKey.end())
+                {
+                    startIfReady(ofKey->second.front());
+                }
             }
         }
     }
 
     /// Rows that `take` would hand out now, without a limit.
-    [[nodiscard]] size_t startableRows() const
-    {
-        size_t count = 0;
-        std::unordered_set<std::string> blocked;
-        for (const auto& entry : waiting)
-        {
-            if (startable(entry.keys, blocked))
-            {
-                ++count;
-            }
-            blocked.insert(entry.keys.begin(), entry.keys.end());
-        }
-        return count;
-    }
+    [[nodiscard]] size_t startableRows() const { return startable.size(); }
 
     [[nodiscard]] size_t size() const { return waiting.size(); }
 
@@ -193,6 +203,8 @@ public:
     void clear()
     {
         waiting.clear();
+        startable.clear();
+        waitingByKey.clear();
         running.clear();
     }
 
@@ -203,19 +215,22 @@ private:
         std::vector<std::string> keys;
     };
 
-    [[nodiscard]] bool startable(const std::vector<std::string>& keys, const std::unordered_set<std::string>& blocked) const
+    /// The row at `position` heads every one of its keys' waiting rows; it may start if none of them runs.
+    void startIfReady(const uint64_t position)
     {
-        for (const auto& key : keys)
+        const auto& keys = waiting.at(position).keys;
+        if (std::ranges::all_of(
+                keys, [&](const std::string& key) { return !running.contains(key) && waitingByKey.at(key).front() == position; }))
         {
-            if (running.contains(key) || blocked.contains(key))
-            {
-                return false;
-            }
+            startable.insert(position);
         }
-        return true;
     }
 
-    std::list<Entry> waiting;
+    uint64_t nextPosition = 0;
+    /// By stream position.
+    std::map<uint64_t, Entry> waiting;
+    std::set<uint64_t> startable;
+    std::unordered_map<std::string, std::deque<uint64_t>> waitingByKey;
     std::unordered_map<std::string, size_t> running;
 };
 

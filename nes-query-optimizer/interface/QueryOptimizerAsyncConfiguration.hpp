@@ -38,12 +38,14 @@ struct QueryOptimizerAsyncConfiguration
         std::optional<uint64_t> channelCapacity,
         std::optional<uint64_t> maxRetries,
         std::optional<uint64_t> transientRetries,
-        std::optional<uint64_t> transientRetrySeconds)
+        std::optional<uint64_t> transientRetrySeconds,
+        std::optional<uint64_t> readAheadRows)
         : maxConcurrency(maxConcurrency)
         , channelCapacity(channelCapacity)
         , maxRetries(maxRetries)
         , transientRetries(transientRetries)
         , transientRetrySeconds(transientRetrySeconds)
+        , readAheadRows(readAheadRows)
     {
     }
 
@@ -57,6 +59,8 @@ struct QueryOptimizerAsyncConfiguration
     std::optional<uint64_t> transientRetries;
     /// Seconds from a call's first attempt within which its retries after transient failures have to be made.
     std::optional<uint64_t> transientRetrySeconds;
+    /// Rows an async stage holds at most before it stops taking input, waiting, running or done.
+    std::optional<uint64_t> readAheadRows;
 
     static QueryOptimizerAsyncConfiguration fromConfig(const InstantiatedConfig& config);
 };

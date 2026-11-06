@@ -115,6 +115,12 @@ const ConfigField<size_t> TRANSIENT_RETRIES{
     sizeFromLiteral,
     AsyncSourceConfig{}.transientRetries};
 
+const ConfigField<size_t> READ_AHEAD_ROWS{
+    Identifier::parse("READ_AHEAD_ROWS"),
+    "Rows the source holds at most before it stops taking input; 0 for 64 per row the slots take at once",
+    sizeFromLiteral,
+    size_t{0}};
+
 const ConfigField<size_t> TRANSIENT_RETRY_SECONDS{
     Identifier::parse("TRANSIENT_RETRY_SECONDS"),
     "Seconds from a call's first attempt within which retries after transient failures have to be made",
@@ -175,7 +181,8 @@ Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
         CHANNEL_CAPACITY,
         MAX_RETRIES,
         TRANSIENT_RETRIES,
-        TRANSIENT_RETRY_SECONDS);
+        TRANSIENT_RETRY_SECONDS,
+        READ_AHEAD_ROWS);
 }
 
 std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig& config)
@@ -188,7 +195,8 @@ std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const 
         .channelCapacity = config.get(CHANNEL_CAPACITY),
         .maxRetries = config.get(MAX_RETRIES),
         .transientRetries = config.get(TRANSIENT_RETRIES),
-        .transientRetrySeconds = config.get(TRANSIENT_RETRY_SECONDS)};
+        .transientRetrySeconds = config.get(TRANSIENT_RETRY_SECONDS),
+        .readAheadRows = config.get(READ_AHEAD_ROWS)};
 }
 
 AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor)
@@ -305,6 +313,9 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
             call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.configuration = call.configuration}));
         }
     }
+    readAheadRows = std::max(
+        maxConcurrency * batchSize,
+        config.readAheadRows != 0 ? config.readAheadRows : maxConcurrency * batchSize * AsyncSourceConfig::DEFAULT_READ_AHEAD_FACTOR);
     cancelSignals = std::vector<boost::asio::cancellation_signal>(maxConcurrency);
     for (size_t slot = maxConcurrency; slot > 0; --slot)
     {
@@ -342,12 +353,13 @@ void AsyncSource::close()
 {
     NES_DEBUG("Async source {}: at most {} buffers waited for an earlier one of their origin", channelId, mostReordered);
     NES_DEBUG(
-        "Async source {}: {} buffers of {} rows on average, at most {} held at once; the read-ahead bound held back input for {} ms "
-        "while fewer rows were ready than the slots take",
+        "Async source {}: {} buffers of {} rows on average, at most {} held at once; the read-ahead bound of {} rows held back input "
+        "for {} ms while fewer rows were ready than the slots take",
         channelId,
         admittedBuffers,
         admittedBuffers == 0 ? 0.0 : static_cast<double>(admittedRows) / static_cast<double>(admittedBuffers),
         mostBuffersHeld,
+        readAheadRows,
         std::chrono::duration_cast<std::chrono::milliseconds>(boundedWhileShort).count());
     /// Also after a failure or a stop request, which already drained: rows of this source must not outlive it.
     cancelAndDrain();
@@ -752,6 +764,7 @@ void AsyncSource::admit(TupleBuffer input)
             window.queue.push(RowRef{.buffer = buffer, .row = row}, std::move(keys[row]));
         }
         window.buffers.push_back(std::move(buffer));
+        window.heldRows += rows;
         mostBuffersHeld = std::max(mostBuffersHeld, window.buffers.size());
         window.startableRows = keyed ? window.queue.startableRows() : window.queue.size();
     }
@@ -809,6 +822,7 @@ void AsyncSource::cancelAndDrain()
         std::unique_lock lock(window.mutex);
         window.changed.wait(lock, [this] { return window.runningRows == 0; });
         window.buffers.clear();
+        window.heldRows = 0;
         window.queue.clear();
         window.startableRows = 0;
     }
@@ -834,6 +848,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
         {
             const auto buffer = std::move(window.buffers.front());
             window.buffers.pop_front();
+            window.heldRows -= buffer->rows;
             lock.unlock();
             writeOutput(*buffer, tupleBuffer);
             return FillTupleBufferResult::withBytes(buffer->rows);
@@ -845,10 +860,12 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
 
         /// The next buffer is taken once the rows ready to start would no longer fill every slot with a full batch, so the
         /// calls run across buffer boundaries while the channel, not this source, holds what the calls cannot keep up with.
-        /// Rows that wait for their key do not count as ready, so a busy key does not keep other keys from starting.
+        /// Rows that wait for their key do not count as ready, so a busy key does not keep other keys from starting; the
+        /// source reads ahead past them up to `readAheadRows` held rows. The bound counts rows, not buffers: over input
+        /// sorted by key, every key in flight needs all its rows before the next key's in the window.
         const auto rowsInFlight = maxConcurrency * batchSize;
-        const bool wantsInput = !inputExhausted && window.buffers.size() < rowsInFlight && window.startableRows < rowsInFlight;
-        const bool boundedWhileShortNow = !inputExhausted && window.buffers.size() >= rowsInFlight && window.startableRows < rowsInFlight;
+        const bool wantsInput = !inputExhausted && window.heldRows < readAheadRows && window.startableRows < rowsInFlight;
+        const bool boundedWhileShortNow = !inputExhausted && window.heldRows >= readAheadRows && window.startableRows < rowsInFlight;
         if (boundedWhileShortNow && !boundedSince)
         {
             boundedSince = std::chrono::steady_clock::now();
@@ -907,8 +924,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
         /// waiting for all of them left the slots idle for about one call per buffer.
         const auto progressed = [&]
         {
-            const bool wantsInputNow
-                = !inputExhausted && window.buffers.size() < rowsInFlight && window.startableRows < rowsInFlight;
+            const bool wantsInputNow = !inputExhausted && window.heldRows < readAheadRows && window.startableRows < rowsInFlight;
             return window.failure || (!window.buffers.empty() && window.buffers.front()->done)
                 || (wantsInputNow && (!wantsInput || window.channelChanged));
         };

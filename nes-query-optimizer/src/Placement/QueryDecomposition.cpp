@@ -338,6 +338,10 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     {
         sourceConfig.emplace(Identifier::parse("transient_retries"), std::to_string(*context.asyncConfig.transientRetries));
     }
+    if (context.asyncConfig.readAheadRows.has_value())
+    {
+        sourceConfig.emplace(Identifier::parse("read_ahead_rows"), std::to_string(*context.asyncConfig.readAheadRows));
+    }
     if (context.asyncConfig.transientRetrySeconds.has_value())
     {
         sourceConfig.emplace(Identifier::parse("transient_retry_seconds"), std::to_string(*context.asyncConfig.transientRetrySeconds));

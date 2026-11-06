@@ -76,6 +76,13 @@ const ConfigField<std::optional<uint64_t>> TRANSIENT_RETRY_SECONDS{
     optionalUInt,
     std::nullopt,
     "Not set"};
+
+const ConfigField<std::optional<uint64_t>> READ_AHEAD_ROWS{
+    Identifier::parse("read_ahead_rows"),
+    "Rows an async stage holds at most before it stops taking input; by default 64 per row its slots take at once",
+    optionalUInt,
+    std::nullopt,
+    "Not set"};
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
@@ -83,7 +90,7 @@ const ConfigField<std::optional<uint64_t>> TRANSIENT_RETRY_SECONDS{
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerAsyncConfiguration::getConfigSchema()
 {
     return createConfigSchema(
-        Identifier::parse("async"), MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES, TRANSIENT_RETRIES, TRANSIENT_RETRY_SECONDS);
+        Identifier::parse("async"), MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES, TRANSIENT_RETRIES, TRANSIENT_RETRY_SECONDS, READ_AHEAD_ROWS);
 }
 
 QueryOptimizerAsyncConfiguration QueryOptimizerAsyncConfiguration::fromConfig(const InstantiatedConfig& config)
@@ -93,7 +100,8 @@ QueryOptimizerAsyncConfiguration QueryOptimizerAsyncConfiguration::fromConfig(co
         config.get(CHANNEL_CAPACITY),
         config.get(MAX_RETRIES),
         config.get(TRANSIENT_RETRIES),
-        config.get(TRANSIENT_RETRY_SECONDS)};
+        config.get(TRANSIENT_RETRY_SECONDS),
+        config.get(READ_AHEAD_ROWS)};
 }
 
 }
