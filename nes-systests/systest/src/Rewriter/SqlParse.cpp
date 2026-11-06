@@ -48,8 +48,9 @@ AntlrSQLParser::SingleStatementContext* SqlParse::parse()
 
 bool isOption(const AntlrSQLParser::NamedConfigExpressionContext* option, const std::string_view group, const std::string_view key)
 {
-    const auto& parts = option->name->strictIdentifier();
-    return parts.size() == 2 and Sql::sameName(parts.at(0)->getText(), group) and Sql::sameName(parts.at(1)->getText(), key);
+    const auto& parts = option->name->configNamePart();
+    return parts.size() == 1 and Sql::sameName(option->name->strictIdentifier()->getText(), group)
+        and Sql::sameName(parts.at(0)->getText(), key);
 }
 
 bool declaresOption(AntlrSQLParser::NamedConfigExpressionSeqContext* options, const std::string_view group, const std::string_view key)

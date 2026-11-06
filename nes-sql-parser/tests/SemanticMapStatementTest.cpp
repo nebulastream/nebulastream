@@ -236,28 +236,30 @@ TEST_F(SemanticMapStatementTest, CreateRejectsInvalidDefinitions)
     };
 
     const std::vector<Case> cases{
-        {"missing PROMPT",
-         "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
-        {"missing ENDPOINT", "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'm' AS LLM.MODEL_NAME)"},
-        {"missing MODEL_NAME",
-         "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT)"},
-        {"no SET clause at all", "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED)"},
-        {"unknown BACKEND", withOptions("o VARSIZED", ", 'onnx' AS LLM.BACKEND")},
-        {"mock BACKEND with an endpoint that is no mock behaviour", withOptions("o VARSIZED", ", 'mock' AS LLM.BACKEND")},
-        {"BATCH_SIZE of zero", withOptions("o VARSIZED", ", 0 AS LLM.BATCH_SIZE")},
-        {"non-numeric BATCH_SIZE", withOptions("o VARSIZED", ", 'ten' AS LLM.BATCH_SIZE")},
-        {"MAX_CONCURRENCY of zero", withOptions("o VARSIZED", ", 0 AS LLM.MAX_CONCURRENCY")},
-        {"BATCH_SIZE above 1 (batching is stage 2)", withOptions("o VARSIZED", ", 2 AS LLM.BATCH_SIZE")},
-        {"MAX_CONCURRENCY above the upper bound", withOptions("o VARSIZED", ", 100000 AS LLM.MAX_CONCURRENCY")},
-        {"MAX_RETRIES above the upper bound", withOptions("o VARSIZED", ", 11 AS LLM.MAX_RETRIES")},
-        {"TIMEOUT_SECONDS above the upper bound", withOptions("o VARSIZED", ", 999999999 AS LLM.TIMEOUT_SECONDS")},
-        {"misspelt option key", withOptions("o VARSIZED", ", 'A,B' AS LLM.OUTPUT_VALUE")},
-        {"unknown PAYLOAD_FORMAT", withOptions("o VARSIZED", ", 'XML' AS LLM.PAYLOAD_FORMAT")},
-        {"non-VARSIZED output", withOptions("o FLOAT32", "")},
-        {"non-VARSIZED input",
-         "CREATE SEM_MODEL m INPUT (t UINT64) OUTPUT (o VARSIZED) "
-         "SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
-        {"two outputs (fusion is not supported yet)", withOptions("o VARSIZED, p VARSIZED", "")},
+        {.description = "missing PROMPT",
+         .sql = "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
+        {.description = "missing ENDPOINT",
+         .sql = "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'm' AS LLM.MODEL_NAME)"},
+        {.description = "missing MODEL_NAME",
+         .sql = "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT)"},
+        {.description = "no SET clause at all", .sql = "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED)"},
+        {.description = "unknown BACKEND", .sql = withOptions("o VARSIZED", ", 'onnx' AS LLM.BACKEND")},
+        {.description = "mock BACKEND with an endpoint that is no mock behaviour",
+         .sql = withOptions("o VARSIZED", ", 'mock' AS LLM.BACKEND")},
+        {.description = "BATCH_SIZE of zero", .sql = withOptions("o VARSIZED", ", 0 AS LLM.BATCH_SIZE")},
+        {.description = "non-numeric BATCH_SIZE", .sql = withOptions("o VARSIZED", ", 'ten' AS LLM.BATCH_SIZE")},
+        {.description = "MAX_CONCURRENCY of zero", .sql = withOptions("o VARSIZED", ", 0 AS LLM.MAX_CONCURRENCY")},
+        {.description = "BATCH_SIZE above 1 (batching is stage 2)", .sql = withOptions("o VARSIZED", ", 2 AS LLM.BATCH_SIZE")},
+        {.description = "MAX_CONCURRENCY above the upper bound", .sql = withOptions("o VARSIZED", ", 100000 AS LLM.MAX_CONCURRENCY")},
+        {.description = "MAX_RETRIES above the upper bound", .sql = withOptions("o VARSIZED", ", 11 AS LLM.MAX_RETRIES")},
+        {.description = "TIMEOUT_SECONDS above the upper bound", .sql = withOptions("o VARSIZED", ", 999999999 AS LLM.TIMEOUT_SECONDS")},
+        {.description = "misspelt option key", .sql = withOptions("o VARSIZED", ", 'A,B' AS LLM.OUTPUT_VALUE")},
+        {.description = "unknown PAYLOAD_FORMAT", .sql = withOptions("o VARSIZED", ", 'XML' AS LLM.PAYLOAD_FORMAT")},
+        {.description = "non-VARSIZED output", .sql = withOptions("o FLOAT32", "")},
+        {.description = "non-VARSIZED input",
+         .sql = "CREATE SEM_MODEL m INPUT (t UINT64) OUTPUT (o VARSIZED) "
+                "SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
+        {.description = "two outputs (fusion is not supported yet)", .sql = withOptions("o VARSIZED, p VARSIZED", "")},
     };
 
     for (const auto& [description, sql] : cases)
@@ -279,9 +281,25 @@ TEST_F(SemanticMapStatementTest, BinderRejectsMalformedOptionKeys)
     /// Wrong namespace.
     EXPECT_FALSE(
         binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS SOURCE.PROMPT)").has_value());
-    /// MODEL is a reserved keyword, which is why the option is called MODEL_NAME.
+    /// MODEL is a keyword, which a name after LLM. may be, but it is no option (the option is MODEL_NAME).
+    const auto keyword = create(withOptions("sentiment VARSIZED", ", 'x' AS LLM.MODEL"));
+    EXPECT_FALSE(keyword.has_value());
+}
+
+TEST_F(SemanticMapStatementTest, KeywordsAreOptionNamesAfterTheNamespace)
+{
+    /// THRESHOLD is the threshold window's keyword and SEM_WINDOW's option.
+    const auto result = create(
+        "CREATE SEM_MODEL themes INPUT (t VARSIZED) OUTPUT (window_id VARSIZED, window_description VARSIZED, window_start VARSIZED, "
+        "continuity_score VARSIZED, is_boundary VARSIZED) SET ('Group' AS LLM.PROMPT, 'window' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, "
+        "'mock' AS LLM.BACKEND, 'WINDOW' AS LLM.KIND, 'ts' AS LLM.TIMESTAMP_FIELD, '0.35' AS LLM.THRESHOLD)");
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    const auto keyed = semanticModelCatalog->load("THEMES").getConfig().keyed;
+    ASSERT_TRUE(keyed.has_value());
+    EXPECT_DOUBLE_EQ(keyed->threshold, 0.35);
+    /// Only after the namespace: the namespace itself stays an identifier.
     EXPECT_FALSE(
-        binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('x' AS LLM.MODEL)").has_value());
+        binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS SET.PROMPT)").has_value());
 }
 
 TEST_F(SemanticMapStatementTest, BinderRejectsTwoWordSemanticModelKeyword)

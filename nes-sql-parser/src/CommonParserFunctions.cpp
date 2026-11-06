@@ -92,18 +92,31 @@ Identifier bindIdentifier(std::string identifier)
     return identifierExpected.value();
 }
 
+namespace
+{
+Identifier bindConfigNamePart(AntlrSQLParser::ConfigNamePartContext* part)
+{
+    if (part->strictIdentifier() != nullptr)
+    {
+        return bindIdentifier(part->strictIdentifier());
+    }
+    /// A keyword, e.g. THRESHOLD: its text is a valid unquoted identifier.
+    return bindIdentifier(part->getText());
+}
+}
+
 /// TODO #764 use identifier lists instead of map of maps
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions)
 {
     ConfigMap boundConfigOptions{};
     for (auto* const configOption : configOptions)
     {
-        if (configOption->name->strictIdentifier().size() != 2)
+        if (configOption->name->configNamePart().size() != 1)
         {
             throw InvalidConfigParameter("Config key needs to be qualified exactly once, but was {}", configOption->name->getText());
         }
-        const auto rootIdentifier = bindIdentifier(configOption->name->strictIdentifier().at(0));
-        auto optionName = bindIdentifier(configOption->name->strictIdentifier().at(1));
+        const auto rootIdentifier = bindIdentifier(configOption->name->strictIdentifier());
+        auto optionName = bindConfigNamePart(configOption->name->configNamePart().at(0));
         boundConfigOptions.try_emplace(
             rootIdentifier, std::unordered_map<Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>{});
 

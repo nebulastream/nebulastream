@@ -237,7 +237,25 @@ multipartIdentifier
     : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
     ;
 
-namedConfigExpression: (constant | schema) AS name=identifierChain;
+namedConfigExpression: (constant | schema) AS name=configName;
+
+/// An option name such as LLM.THRESHOLD: after the first part, a keyword is a name like any other, so that options are not
+/// limited to words the grammar does not reserve.
+configName: strictIdentifier ('.' configNamePart)*;
+configNamePart: strictIdentifier | keywordAsName;
+keywordAsName
+    : ADVANCE | ALL | AND | ANY | AS | ASC | AT | AT_LEAST_ONCE | AT_MOST_ONCE | AVG | BETWEEN | BIG_INT_TYPE
+    | BOOLEAN_TYPE | BY | CAST | CHAR_TYPE | COMMENT | COUNT | CREATE | CSV_FORMAT | CUBE | DELETE | DESC
+    | DISTINCT | DIV | DROP | ELSE | END | ESCAPE | EXISTS | EXPLAIN | FALSE | FIRST | FOR | FORMAT | FROM
+    | FULL | GROUP | GROUPING | HAVING | IF | IN | INNER | INPUT | INSERT | INTO | IS | JOIN | JSON | LAST
+    | LEFT | LIKE | LIMIT | LIST | LOGICAL | MAX | MEDIAN | MERGE | MIN | MODEL | MODELS | MODEL_INFERENCE
+    | MS | NANTOKEN | NATURAL | NULLS | NULLTOKEN | OF | OFFSET | ON | OR | ORDER | OUTER | OUTPUT | PHYSICAL
+    | QUERIES | QUERY | RECOVER | RIGHT | ROLLUP | SCHEMA | SEC | SELECT | SEMANTIC | SEM_FILTER | SEM_MAP
+    | SEM_MODEL | SEM_SCAN | SEM_WINDOW | SET | SETS | SHOW | SINK | SINKS | SIZE | SLIDING | SMALL_INT_TYPE
+    | SOME | SOURCE | SOURCES | START | SUM | TABLE | TEXT | THRESHOLD | TINY_INT_TYPE | TO | TRUE | TUMBLING
+    | TYPE | UNION | UNKNOWN | USE | USING | VALUES | VARSIZED_TYPE | VERSION | WATERMARK | WHEN | WHERE
+    | WINDOW | WITH | WORKER
+    ;
 
 namedExpression
     : expression AS name=identifier
