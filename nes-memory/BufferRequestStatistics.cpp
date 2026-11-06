@@ -62,6 +62,13 @@ void BufferRequestStatistics::recordUnpooledRequest(const size_t requestedSize, 
     ++shard.unpooledSizeCounts[requestedSize];
 }
 
+void BufferRequestStatistics::recordPooledFill(const size_t writtenBytes)
+{
+    auto& shard = localShard();
+    const std::scoped_lock lock(shard.sizesMutex);
+    ++shard.pooledWrittenBytesCounts[writtenBytes];
+}
+
 BufferRequestStatistics::Snapshot BufferRequestStatistics::snapshot() const
 {
     Snapshot result;
@@ -78,6 +85,10 @@ BufferRequestStatistics::Snapshot BufferRequestStatistics::snapshot() const
             for (const auto& [size, count] : shard->unpooledSizeCounts)
             {
                 sizeCounts[size] += count;
+            }
+            for (const auto& [bytes, count] : shard->pooledWrittenBytesCounts)
+            {
+                result.pooledWrittenBytesCounts[bytes] += count;
             }
         }
     }

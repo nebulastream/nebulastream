@@ -27,6 +27,7 @@
 #include <memory_resource>
 #include <mutex>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string>
 #include <utility>
@@ -251,6 +252,8 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
         ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
+        /// Zeroed so that recyclePooledBuffer can find how far the buffer was written.
+        std::memset(memSegment->ptr, 0, memSegment->size);
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
@@ -271,6 +274,8 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     {
         /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
         ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
+        /// Zeroed so that recyclePooledBuffer can find how far the buffer was written.
+        std::memset(memSegment->ptr, 0, memSegment->size);
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
@@ -359,6 +364,83 @@ void BufferManager::printRequestStatistics() const
         withThousandsSeparators(peaks.unpooledChunkBytes),
         withThousandsSeparators(peaks.unpooledLiveBytes),
         withThousandsSeparators(peaks.combinedBytes));
+    if (const auto& fill = stats.pooledWrittenBytesCounts; not fill.empty())
+    {
+        uint64_t buffers = 0;
+        uint64_t writtenBytes = 0;
+        for (const auto& [bytes, count] : fill)
+        {
+            buffers += count;
+            writtenBytes += bytes * count;
+        }
+        const auto capacityBytes = buffers * bufferSize;
+        auto fillPercent = [&](const size_t bytes) { return 100.0 * static_cast<double>(bytes) / static_cast<double>(bufferSize); };
+        /// Fill of the buffer at the given rank, counted from the emptiest buffer.
+        auto fillAtRank = [&](const uint64_t rank)
+        {
+            uint64_t seen = 0;
+            for (const auto& [bytes, count] : fill)
+            {
+                seen += count;
+                if (seen > rank)
+                {
+                    return fillPercent(bytes);
+                }
+            }
+            return fillPercent(fill.rbegin()->first);
+        };
+        /// Buffers per fill percentage, rounded down; 0% only for untouched buffers and 100% only for full ones.
+        std::array<uint64_t, 101> byPercent{};
+        for (const auto& [bytes, count] : fill)
+        {
+            byPercent[bytes == 0 ? 0 : std::max<size_t>(1, bytes * 100 / bufferSize)] += count;
+        }
+        out += fmt::format(
+            "  - pooled buffer fill (bytes up to the last non-zero byte when recycled):\n"
+            "      - buffers:  {} recycled, {} B capacity, {} B written ({:.1f}%), {} B wasted ({:.1f}%)\n"
+            "      - fill per buffer: min {:.1f}%, p10 {:.1f}%, median {:.1f}%, avg {:.1f}%, p90 {:.1f}%, max {:.1f}%\n",
+            withThousandsSeparators(buffers),
+            withThousandsSeparators(capacityBytes),
+            withThousandsSeparators(writtenBytes),
+            100.0 * static_cast<double>(writtenBytes) / static_cast<double>(capacityBytes),
+            withThousandsSeparators(capacityBytes - writtenBytes),
+            100.0 * static_cast<double>(capacityBytes - writtenBytes) / static_cast<double>(capacityBytes),
+            fillPercent(fill.begin()->first),
+            fillAtRank((buffers - 1) / 10),
+            fillAtRank((buffers - 1) / 2),
+            100.0 * static_cast<double>(writtenBytes) / static_cast<double>(capacityBytes),
+            fillAtRank((buffers - 1) * 9 / 10),
+            fillPercent(fill.rbegin()->first));
+        /// [0%, 25%), [25%, 50%), [50%, 75%), [75%, 100%], full buffers in the last group.
+        std::array<uint64_t, 4> byQuarter{};
+        for (size_t percent = 0; percent < byPercent.size(); ++percent)
+        {
+            byQuarter[std::min<size_t>(percent / 25, 3)] += byPercent[percent];
+        }
+        out += "      - buffers per fill quarter:\n";
+        for (size_t quarter = 0; quarter < byQuarter.size(); ++quarter)
+        {
+            out += fmt::format(
+                "      - [{:>2}%, {:>3}%{}: {:>12} buffers ({:5.2f}%)\n",
+                quarter * 25,
+                (quarter + 1) * 25,
+                quarter == 3 ? "]" : ")",
+                withThousandsSeparators(byQuarter[quarter]),
+                100.0 * static_cast<double>(byQuarter[quarter]) / static_cast<double>(buffers));
+        }
+        out += "      - buffers per fill percentage:\n";
+        for (size_t percent = 0; percent < byPercent.size(); ++percent)
+        {
+            if (byPercent[percent] != 0)
+            {
+                out += fmt::format(
+                    "      - {:>3}%: {:>12} buffers ({:5.2f}%)\n",
+                    percent,
+                    withThousandsSeparators(byPercent[percent]),
+                    100.0 * static_cast<double>(byPercent[percent]) / static_cast<double>(buffers));
+            }
+        }
+    }
     /// One write per block so blocks of concurrently destroyed BufferManagers do not interleave.
     fmt::print(stderr, "{}", out);
 }
@@ -377,6 +459,9 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     /// region and its control block. This is the control block's last read on the recycle path (the INVARIANTs
     /// above), and prepare() unpoisons it again on the next hand-out. Poisoning before the enqueue
     /// happens-before that unpoison via the availableBuffers queue, so there is no shadow-memory race.
+    const auto data = std::span{segment->ptr, segment->size} | std::views::reverse;
+    const auto lastWritten = std::ranges::find_if(data, [](const uint8_t byte) { return byte != 0; });
+    requestStatistics.recordPooledFill(static_cast<size_t>(std::ranges::distance(lastWritten, data.end())));
     ASAN_POISON_MEMORY_REGION(segment->ptr, segment->size);
     ASAN_POISON_MEMORY_REGION(segment->controlBlock.get(), sizeof(detail::BufferControlBlock));
     memoryInUse->removePooled(bufferSize);

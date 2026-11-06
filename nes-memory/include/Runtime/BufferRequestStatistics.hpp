@@ -48,10 +48,13 @@ public:
         std::optional<SizeSummary> unpooledRequestedSize;
         /// requested size -> number of requests, ascending by size
         std::map<size_t, uint64_t> unpooledRequestedSizeCounts;
+        /// bytes written into a pooled buffer when it was recycled -> number of buffers, ascending by bytes
+        std::map<size_t, uint64_t> pooledWrittenBytesCounts;
     };
 
     void recordPooledRequest(bool served);
     void recordUnpooledRequest(size_t requestedSize, bool served);
+    void recordPooledFill(size_t writtenBytes);
     [[nodiscard]] Snapshot snapshot() const;
 
 private:
@@ -64,6 +67,7 @@ private:
         std::mutex sizesMutex;
         /// requested size -> number of requests; exact median without storing every request
         std::map<size_t, uint64_t> unpooledSizeCounts;
+        std::map<size_t, uint64_t> pooledWrittenBytesCounts;
     };
 
     Shard& localShard();
