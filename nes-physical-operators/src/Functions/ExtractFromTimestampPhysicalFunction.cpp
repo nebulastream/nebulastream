@@ -84,6 +84,15 @@ VarVal ExtractFromTimestampPhysicalFunction::execute(const Record& record, Arena
                         return static_cast<uint64_t>(static_cast<int>(utcDate.year()));
                     },
                     milliSeconds);
+            case TimestampUnit::Hour:
+                return nautilus::invoke(
+                    +[](const uint64_t millis) -> uint64_t
+                    {
+                        const std::chrono::sys_time utcTimePoint{std::chrono::milliseconds{millis}};
+                        const auto sinceMidnight = utcTimePoint - std::chrono::floor<std::chrono::days>(utcTimePoint);
+                        return static_cast<uint64_t>(std::chrono::floor<std::chrono::hours>(sinceMidnight).count());
+                    },
+                    milliSeconds);
         }
         INVARIANT(false, "Unknown TimestampUnit value: {}", static_cast<int>(unit));
         std::unreachable();
@@ -111,6 +120,13 @@ PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createY
     PRECONDITION(
         arguments.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Year_Of) must have exactly one child function");
     return ExtractFromTimestampPhysicalFunction{TimestampUnit::Year, arguments.childFunctions[0], arguments.outputType};
+}
+
+PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createHour_Of(PhysicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(
+        arguments.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Hour_Of) must have exactly one child function");
+    return ExtractFromTimestampPhysicalFunction{TimestampUnit::Hour, arguments.childFunctions[0], arguments.outputType};
 }
 
 }
