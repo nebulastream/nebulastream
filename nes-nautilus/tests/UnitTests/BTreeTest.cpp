@@ -41,6 +41,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed by rapidcheck/gtest.h
 #include <DataStructureTestUtils.hpp>
+#include <CompilationContext.hpp>
 #include <Engine.hpp>
 #include <TestableBTree.hpp>
 #include <val_bool.hpp>
@@ -340,6 +341,105 @@ RC_GTEST_PROP(BTreePropertyTest, boundsMatchSortedVectorInterpreter, ())
 {
     Logger::setupLogging("BTreePropertyTest.log", LogLevel::LOG_DEBUG);
     boundsMatchSortedVectorProperty(TestUtils::EngineMode::Interpreter);
+}
+
+/// Regression test: lowerBound and upperBound evaluate the record comparator with opposite argument orders. Both orders
+/// must survive tracing and compilation independently, also when the comparator contains no data-dependent control flow.
+class BTreeBoundsTest : public ::testing::TestWithParam<TestUtils::EngineMode>
+{
+};
+
+TEST_P(BTreeBoundsTest, LowerAndUpperBoundAroundDuplicates)
+{
+    constexpr uint64_t bufferSize = 4096;
+    const std::vector<DataType> fieldTypes{DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}};
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestableBTree tree{fieldTypes, *bufferManager, GetParam()};
+    for (const auto value : std::array<int64_t, 5>{5, 1, 3, 3, 7})
+    {
+        tree.append(TestUtils::AnyVec{value});
+    }
+
+    /// Sorted content: 1 3 3 5 7
+    const std::array<std::array<int64_t, 3>, 7> expectations{{
+        /// {probe, lowerBound, upperBound}
+        {0, 0, 0},
+        {1, 0, 1},
+        {2, 1, 1},
+        {3, 1, 3},
+        {4, 3, 3},
+        {7, 4, 5},
+        {8, 5, 5},
+    }};
+    for (const auto& [probe, lower, upper] : expectations)
+    {
+        EXPECT_EQ(tree.lowerBound(TestUtils::AnyVec{probe}), static_cast<uint64_t>(lower)) << "probe " << probe;
+        EXPECT_EQ(tree.upperBound(TestUtils::AnyVec{probe}), static_cast<uint64_t>(upper)) << "probe " << probe;
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    EngineModes, BTreeBoundsTest, ::testing::Values(TestUtils::EngineMode::Compiler, TestUtils::EngineMode::Interpreter));
+
+TEST(BTreeTest, DistinctComparatorsInOneCompilation)
+{
+    constexpr uint64_t bufferSize = 128;
+    const std::vector<DataType> fieldTypes{DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}};
+    const auto schema = TestUtils::createSchemaFromDataTypes(fieldTypes);
+    const auto field = schema[0]->getFullyQualifiedName();
+    const std::vector<Record::RecordFieldIdentifier> projections{field};
+    auto layout = std::make_shared<DefaultBTreeTupleLayout>(schema);
+
+    const BTreeComparator::RecordComparator ascending = [field](const Record& lhs, const Record& rhs)
+    { return (lhs.read(field) < rhs.read(field)).getRawValueAs<nautilus::val<bool>>(); };
+    const BTreeComparator::RecordComparator descending = [field](const Record& lhs, const Record& rhs)
+    { return (lhs.read(field) > rhs.read(field)).getRawValueAs<nautilus::val<bool>>(); };
+
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    auto ascendingTree = bufferManager->getUnpooledBuffer(BTree::getMainBufferSize()).value();
+    auto descendingTree = bufferManager->getUnpooledBuffer(BTree::getMainBufferSize()).value();
+    BTree::init(ascendingTree, bufferSize, getSizeInBytes(schema));
+    BTree::init(descendingTree, bufferSize, getSizeInBytes(schema));
+
+    const nautilus::engine::NautilusEngine engine{TestUtils::makeEngine(TestUtils::EngineMode::Compiler)};
+    CompilationContext compilationContext{engine.createModule()};
+    const BTreeComparator ascendingComparator{compilationContext, layout, "ascending", ascending};
+    const BTreeComparator descendingComparator{compilationContext, layout, "descending", descending};
+    auto append = compilationContext.registerFunction(
+        std::function(
+            [layout, &ascendingComparator, &descendingComparator, projections, fieldTypes](
+                nautilus::val<TupleBuffer*> ascendingTree, /// NOLINT(performance-unnecessary-value-param): required by CompilationContext
+                nautilus::val<TupleBuffer*> descendingTree, /// NOLINT(performance-unnecessary-value-param): required by CompilationContext
+                nautilus::val<AbstractBufferProvider*>
+                    provider, /// NOLINT(performance-unnecessary-value-param): required by CompilationContext
+                nautilus::val<TestUtils::AnyVec*> values) /// NOLINT(performance-unnecessary-value-param): required by CompilationContext
+            {
+                const auto record = TestUtils::buildRecordFromAnyVec(values, projections, fieldTypes);
+                BTreeRef{BorrowedNautilusBuffer::from(ascendingTree), layout}.append(record, provider, ascendingComparator);
+                BTreeRef{BorrowedNautilusBuffer::from(descendingTree), layout}.append(record, provider, descendingComparator);
+            }),
+        "appendToAscendingAndDescendingBTree");
+    compilationContext.compile();
+
+    for (const auto value : std::array<int64_t, 3>{7, -5, 1})
+    {
+        TestUtils::AnyVec record{value};
+        append(&ascendingTree, &descendingTree, bufferManager.get(), &record);
+    }
+
+    const auto readValue = [](const TupleBuffer& tree, const uint64_t index)
+    {
+        int64_t value = 0;
+        const auto entry = BTree::load(tree).at(index);
+        std::memcpy(&value, entry.data(), sizeof(value));
+        return value;
+    };
+    EXPECT_EQ(readValue(ascendingTree, 0), -5);
+    EXPECT_EQ(readValue(ascendingTree, 1), 1);
+    EXPECT_EQ(readValue(ascendingTree, 2), 7);
+    EXPECT_EQ(readValue(descendingTree, 0), 7);
+    EXPECT_EQ(readValue(descendingTree, 1), 1);
+    EXPECT_EQ(readValue(descendingTree, 2), -5);
 }
 
 }
