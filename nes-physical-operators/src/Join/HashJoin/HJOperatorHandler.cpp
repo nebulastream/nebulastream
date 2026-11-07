@@ -16,16 +16,10 @@
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 
 #include <algorithm>
-#include <chrono>
 #include <cstdint>
-#include <cstring>
 #include <functional>
-#include <iterator>
 #include <map>
 #include <memory>
-#include <mutex>
-#include <optional>
-#include <tuple>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -90,119 +84,16 @@ HJOperatorHandler::HJOperatorHandler(
     JoinTriggerStrategy triggerStrategy,
     const bool unboundedWindow)
     : StreamJoinOperatorHandler(
-          std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
+          std::move(sourcesOfInputOrigins),
+          outputOriginId,
+          std::move(sliceAndWindowStore),
+          std::move(triggerStrategy),
+          /// Compaction merges a segment's per-thread and per-slice maps into one map per side, so that a probe looks up a key in
+          /// O(log #slices) maps instead of in one map per slice and worker thread.
+          unboundedWindow ? std::make_unique<UnboundedJoinSegments>(true) : nullptr)
     , setupAlreadyCalledLeft(false)
     , setupAlreadyCalledRight(false)
-    , unboundedWindow(unboundedWindow)
 {
-}
-
-void HJOperatorHandler::triggerSlices(
-    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-    PipelineExecutionContext* pipelineCtx)
-{
-    if (unboundedWindow)
-    {
-        triggerUnboundedSlices(slicesAndWindowInfo, pipelineCtx);
-        return;
-    }
-    StreamJoinOperatorHandler::triggerSlices(slicesAndWindowInfo, pipelineCtx);
-}
-
-/// Each pair of slices is joined by whichever of the two is appended to the segments last, and a slice with itself when it is
-/// appended. Appends are serialized by the mutex, so every pair is joined exactly once, even if concurrent triggers append slices
-/// out of event-time order.
-void HJOperatorHandler::triggerUnboundedSlices(
-    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-    PipelineExecutionContext* pipelineCtx)
-{
-    for (const auto& [windowInfo, slices] : slicesAndWindowInfo)
-    {
-        auto newLeft = getHashMapsFromSlices(slices, JoinBuildSideType::Left);
-        auto newRight = getHashMapsFromSlices(slices, JoinBuildSideType::Right);
-
-        std::vector<TupleBuffer> oldLeft;
-        std::vector<TupleBuffer> oldRight;
-        UnboundedJoinSegment toCompact;
-        {
-            const std::scoped_lock lock(unboundedSegmentsMutex);
-            for (const auto& segment : unboundedSegments)
-            {
-                oldLeft.insert(oldLeft.end(), segment.leftHashMaps.begin(), segment.leftHashMaps.end());
-                oldRight.insert(oldRight.end(), segment.rightHashMaps.begin(), segment.rightHashMaps.end());
-            }
-            unboundedSegments.push_back({.id = nextSegmentId++, .numberOfSlices = 1, .leftHashMaps = newLeft, .rightHashMaps = newRight});
-            while (unboundedSegments.size() >= 2
-                   and unboundedSegments.back().numberOfSlices == unboundedSegments[unboundedSegments.size() - 2].numberOfSlices)
-            {
-                auto last = std::move(unboundedSegments.back());
-                unboundedSegments.pop_back();
-                auto& merged = unboundedSegments.back();
-                merged.id = nextSegmentId++;
-                merged.numberOfSlices += last.numberOfSlices;
-                std::ranges::move(last.leftHashMaps, std::back_inserter(merged.leftHashMaps));
-                std::ranges::move(last.rightHashMaps, std::back_inserter(merged.rightHashMaps));
-            }
-            toCompact = unboundedSegments.back();
-        }
-
-        /// A side that already consists of at most one map needs no compaction
-        if (toCompact.leftHashMaps.size() <= 1)
-        {
-            toCompact.leftHashMaps.clear();
-        }
-        if (toCompact.rightHashMaps.size() <= 1)
-        {
-            toCompact.rightHashMaps.clear();
-        }
-        const bool compact = not toCompact.leftHashMaps.empty() or not toCompact.rightHashMaps.empty();
-        const uint64_t totalChunks = compact ? 3 : 2;
-
-        /// New left tuples against all right tuples including the new ones, then all old left tuples against the new right tuples.
-        /// Both iterate the new maps, which are small, and look up in the large cumulative ones.
-        auto allRight = oldRight;
-        allRight.insert(allRight.end(), newRight.begin(), newRight.end());
-        ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
-        const auto nextSequenceData = [&]
-        {
-            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), chunkNumber == totalChunks};
-            ++chunkNumber;
-            return sequenceData;
-        };
-        emitHashMapsToProbe(
-            newLeft, allRight, ProbeTaskType::MATCH_PAIRS_ITERATE_LEFT, windowInfo.windowInfo, nextSequenceData(), 0, pipelineCtx);
-        emitHashMapsToProbe(oldLeft, newRight, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, nextSequenceData(), 0, pipelineCtx);
-        if (compact)
-        {
-            emitHashMapsToProbe(
-                toCompact.leftHashMaps,
-                toCompact.rightHashMaps,
-                ProbeTaskType::COMPACT,
-                windowInfo.windowInfo,
-                nextSequenceData(),
-                toCompact.id,
-                pipelineCtx);
-        }
-    }
-}
-
-void HJOperatorHandler::publishCompactedSegment(
-    const uint64_t segmentId, std::optional<TupleBuffer> leftHashMap, std::optional<TupleBuffer> rightHashMap)
-{
-    const std::scoped_lock lock(unboundedSegmentsMutex);
-    const auto segment = std::ranges::find(unboundedSegments, segmentId, &UnboundedJoinSegment::id);
-    if (segment == unboundedSegments.end())
-    {
-        return;
-    }
-    if (leftHashMap)
-    {
-        segment->leftHashMaps = {std::move(*leftHashMap)};
-    }
-    if (rightHashMap)
-    {
-        segment->rightHashMaps = {std::move(*rightHashMap)};
-    }
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
@@ -246,7 +137,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     const SequenceData& sequenceData,
     PipelineExecutionContext* pipelineCtx)
 {
-    emitHashMapsToProbe(
+    emitJoinStateToProbe(
         getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left),
         getHashMapsFromSlices(rightSlices, JoinBuildSideType::Right),
         probeTaskType,
@@ -256,59 +147,15 @@ void HJOperatorHandler::emitSlicesToProbe(
         pipelineCtx);
 }
 
-void HJOperatorHandler::emitHashMapsToProbe(
-    const std::vector<TupleBuffer>& leftHashMapBuffers,
-    const std::vector<TupleBuffer>& rightHashMapBuffers,
-    ProbeTaskType probeTaskType,
-    const WindowInfo& windowInfo,
-    const SequenceData& sequenceData,
-    const uint64_t segmentId,
-    PipelineExecutionContext* pipelineCtx) const
+std::vector<TupleBuffer>
+HJOperatorHandler::getJoinStateOfSlices(const std::vector<std::shared_ptr<Slice>>& slices, const JoinBuildSideType side)
 {
-    /// Creating a tuple buffer containing all necessary information for the probe
-    uint64_t totalNumberOfTuples = 0;
-    for (const auto& buffer : leftHashMapBuffers)
-    {
-        totalNumberOfTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-    }
-    for (const auto& buffer : rightHashMapBuffers)
-    {
-        totalNumberOfTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-    }
+    return getHashMapsFromSlices(slices, side);
+}
 
-    /// Hash map buffers are stored as child buffers, not inline in the main buffer.
-    constexpr auto neededBufferSize = sizeof(EmittedHJWindowTrigger);
-    const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
-    if (not tupleBufferVal.has_value())
-    {
-        throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
-    }
-
-    auto tupleBuffer = tupleBufferVal.value();
-    tupleBuffer.setOriginId(outputOriginId);
-    tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
-    tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
-    tupleBuffer.setLastChunk(sequenceData.lastChunk);
-    tupleBuffer.setWatermark(windowInfo.windowStart);
-    tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
-    tupleBuffer.setCreationTimestampInMS(Timestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-
-    /// Writing all necessary information for the probe to the buffer via the placement constructor
-    new (tupleBuffer.getAvailableMemoryArea().data())
-        EmittedHJWindowTrigger{windowInfo, leftHashMapBuffers.size(), rightHashMapBuffers.size(), probeTaskType, segmentId};
-
-    /// Store left hash map buffers as children first (indices 0..left-1), then right (indices left..left+right-1)
-    for (auto leftBuffer : leftHashMapBuffers)
-    {
-        std::ignore = tupleBuffer.storeChildBuffer(leftBuffer);
-    }
-    for (auto rightBuffer : rightHashMapBuffers)
-    {
-        std::ignore = tupleBuffer.storeChildBuffer(rightBuffer);
-    }
-
-    pipelineCtx->emitBuffer(tupleBuffer);
+uint64_t HJOperatorHandler::getNumberOfTuples(const TupleBuffer& joinState) const
+{
+    return ChainedHashMap::load(joinState).getTotalNumberOfRecords();
 }
 
 }

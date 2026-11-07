@@ -27,7 +27,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/TimestampRef.hpp>
-#include <Join/HashJoin/HJOperatorHandler.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
@@ -178,19 +178,6 @@ void appendPagesToMergedEntryProxy(
     merged.copyPagesFrom(*bufferProvider, source);
 }
 
-void publishCompactedSegmentProxy(
-    OperatorHandler* operatorHandler,
-    const uint64_t segmentId,
-    TupleBuffer* leftHashMap,
-    const bool hasLeft,
-    TupleBuffer* rightHashMap,
-    const bool hasRight)
-{
-    auto* handler = dynamic_cast<HJOperatorHandler*>(operatorHandler);
-    INVARIANT(handler != nullptr, "A COMPACT task must belong to a hash join operator handler");
-    handler->publishCompactedSegment(
-        segmentId, hasLeft ? std::optional{*leftHashMap} : std::nullopt, hasRight ? std::optional{*rightHashMap} : std::nullopt);
-}
 }
 
 OwnedNautilusBuffer HJProbePhysicalOperatorBase::mergeHashMaps(
@@ -274,7 +261,7 @@ void HJProbePhysicalOperatorBase::performCompaction(
     auto mergedRight
         = mergeHashMaps(recordBuffer, leftNumberOfHashMaps, rightNumberOfHashMaps, rightHashMapConfig, rightTupleLayout, executionCtx);
     nautilus::invoke(
-        publishCompactedSegmentProxy,
+        publishCompactedJoinStateProxy,
         executionCtx.getGlobalOperatorHandler(operatorHandlerId),
         segmentId,
         mergedLeft.asArg(),

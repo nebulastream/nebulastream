@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Interface/BTree/BTree.hpp>
 #include <Join/IndexNestedLoopJoin/INLJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -35,8 +36,16 @@ INLJOperatorHandler::INLJOperatorHandler(
     SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
-    JoinTriggerStrategy triggerStrategy)
-    : StreamJoinOperatorHandler(std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
+    JoinTriggerStrategy triggerStrategy,
+    const bool unboundedWindow)
+    : StreamJoinOperatorHandler(
+          std::move(sourcesOfInputOrigins),
+          outputOriginId,
+          std::move(sliceAndWindowStore),
+          std::move(triggerStrategy),
+          /// Compaction merges a segment's B-trees into one B-tree per side. Without it, a probe would search one B-tree per slice
+          /// and worker thread, so its cost would grow linearly with the number of slices instead of logarithmically.
+          unboundedWindow ? std::make_unique<UnboundedJoinSegments>(true) : nullptr)
 {
 }
 
@@ -98,6 +107,29 @@ void INLJOperatorHandler::emitSlicesToProbe(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     new (buffer->getAvailableMemoryArea().data()) EmittedINLJWindowTrigger{windowInfo, leftSliceEnds, rightSliceEnds, probeTaskType};
     pipelineCtx->emitBuffer(*buffer);
+}
+
+std::vector<TupleBuffer>
+INLJOperatorHandler::getJoinStateOfSlices(const std::vector<std::shared_ptr<Slice>>& slices, const JoinBuildSideType side)
+{
+    std::vector<TupleBuffer> trees;
+    for (const auto& slice : slices)
+    {
+        const auto& inljSlice = dynamic_cast<const INLJSlice&>(*slice);
+        for (uint64_t index = 0; index < inljSlice.getNumberOfBTrees(side); ++index)
+        {
+            if (const auto* tree = inljSlice.getBTreeBuffer(index, side); BTree::load(*tree).size() > 0)
+            {
+                trees.emplace_back(*tree);
+            }
+        }
+    }
+    return trees;
+}
+
+uint64_t INLJOperatorHandler::getNumberOfTuples(const TupleBuffer& joinState) const
+{
+    return BTree::load(joinState).size();
 }
 
 }

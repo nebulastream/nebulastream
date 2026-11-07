@@ -23,6 +23,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SlicedWindowStoreInterface.hpp>
@@ -66,7 +67,8 @@ public:
         SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
-        JoinTriggerStrategy triggerStrategy);
+        JoinTriggerStrategy triggerStrategy,
+        bool unboundedWindow = false);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const override;
@@ -79,5 +81,10 @@ private:
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
+
+    [[nodiscard]] std::vector<TupleBuffer>
+    getJoinStateOfSlices(const std::vector<std::shared_ptr<Slice>>& slices, JoinBuildSideType side) override;
+
+    [[nodiscard]] uint64_t getNumberOfTuples(const TupleBuffer& joinState) const override;
 };
 }
