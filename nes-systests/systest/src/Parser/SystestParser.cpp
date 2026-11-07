@@ -125,6 +125,8 @@ static constexpr std::string_view CreateToken = "CREATE"sv;
 static constexpr std::string_view QueryToken = "SELECT"sv;
 static constexpr std::string_view ExplainToken = "EXPLAIN"sv;
 static constexpr std::string_view ResultDelimiter = "----"sv;
+/// `---- CHANGELOG` opens a result block that holds the exact changelog of an updating stream instead of its final table.
+static constexpr std::string_view ChangelogResultToken = "CHANGELOG"sv;
 static constexpr std::string_view ErrorToken = "ERROR"sv;
 static constexpr std::string_view DifferentialToken = "===="sv;
 static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
@@ -280,10 +282,13 @@ void SystestParser::parse()
                 }
                 else
                 {
+                    exactChangelogResult = toLowerCase(lines[currentLine]).contains(toLowerCase(ChangelogResultToken));
                     if (onResultTuplesCallback)
                     {
-                        onResultTuplesCallback(expectTuples(false), queryIdAssigner.getNextQueryResultNumber());
+                        /// expectTuples only skips a bare `----` by itself, so a `---- CHANGELOG` line is skipped explicitly.
+                        onResultTuplesCallback(expectTuples(exactChangelogResult), queryIdAssigner.getNextQueryResultNumber());
                     }
+                    exactChangelogResult = false;
                 }
                 break;
             }

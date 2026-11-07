@@ -129,7 +129,11 @@ Verdict checkRows(const StatementOutcome& outcome, const RewrittenQuery& query, 
     }
     INVARIANT(outcome.sinkOutputSchema.has_value(), "a query that ran has a bound plan and so a sink schema");
     return runCheck(
-        QueryResultCheck{.resultFile = *query.resultFile, .expectedSchema = *outcome.sinkOutputSchema, .expectedTuples = expected.rows});
+        QueryResultCheck{
+            .resultFile = *query.resultFile,
+            .expectedSchema = *outcome.sinkOutputSchema,
+            .expectedTuples = expected.rows,
+            .exactChangelog = expected.exactChangelog});
 }
 
 Verdict checkQuery(const StatementOutcome& outcome, const RewrittenQuery& query)
