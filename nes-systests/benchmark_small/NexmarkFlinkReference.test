@@ -313,9 +313,9 @@ INTO q14Sink;
 ----
 2655 27636284
 
-# Queries 15-17: bidding statistics per day (q15), per channel and day (q16) and per auction and day (q17). Flink
-# keeps unbounded GROUP BYs; on bounded input their final result equals a GROUP BY over one window spanning all data,
-# as in q4. `count(*) FILTER (WHERE c)` becomes COUNT(CASE WHEN c THEN 1 END) and
+# Queries 15-17: bidding statistics per day (q15), per channel and day (q16) and per auction and day (q17). Like Flink,
+# they are unbounded GROUP BYs (WINDOW UNBOUNDED) that emit a changelog of every key; the check folds it into the final
+# table, which is what Flink's batch reference contains. `count(*) FILTER (WHERE c)` becomes COUNT(CASE WHEN c THEN 1 END) and
 # `count(DISTINCT x) FILTER (WHERE c)` becomes COUNT(DISTINCT CASE WHEN c THEN x END): a CASE without ELSE is NULL when
 # c does not hold, and both counts skip NULLs. q16's max(DATE_FORMAT(dateTime, 'HH:mm')) is the format of the latest
 # dateTime, since the format is monotonic within a day. AVG over BIGINT truncates in Flink, hence SUM / COUNT in q17.
@@ -336,7 +336,7 @@ FROM (SELECT bidDay,
              COUNT(DISTINCT CASE WHEN price >= 1000000 THEN auction END) AS rank3Auctions
       FROM (SELECT auction, bidder, price, dateTime, DATE_FORMAT(dateTime, 'yyyy-MM-dd') AS bidDay FROM bid)
       GROUP BY bidDay
-      WINDOW TUMBLING(dateTime, SIZE 1000000 HOURS))
+      WINDOW UNBOUNDED(dateTime))
 INTO q15Sink;
 ----
 2023-11-14,9200,3053,3019,3128,194,171,165,171,598,527,530,528
@@ -358,7 +358,7 @@ FROM (SELECT channel, bidDay, MAX(dateTime) AS maxTime,
              COUNT(DISTINCT CASE WHEN price >= 1000000 THEN auction END) AS rank3Auctions
       FROM (SELECT channel, auction, bidder, price, dateTime, DATE_FORMAT(dateTime, 'yyyy-MM-dd') AS bidDay FROM bid)
       GROUP BY channel, bidDay
-      WINDOW TUMBLING(dateTime, SIZE 1000000 HOURS))
+      WINDOW UNBOUNDED(dateTime))
 INTO q16Sink;
 ----
 Apple,2023-11-14,22:14,1138,394,365,379,128,78,71,62,354,172,174,142
@@ -4007,7 +4007,7 @@ FROM (SELECT auction, bidDay,
              MIN(price) AS minPrice, MAX(price) AS maxPrice, SUM(price) AS sumPrice
       FROM (SELECT auction, price, dateTime, DATE_FORMAT(dateTime, 'yyyy-MM-dd') AS bidDay FROM bid)
       GROUP BY auction, bidDay
-      WINDOW TUMBLING(dateTime, SIZE 1000000 HOURS))
+      WINDOW UNBOUNDED(dateTime))
 INTO q17Sink;
 ----
 1000,2023-11-14,758,253,250,255,101,97685160,8007537,6069713507
