@@ -64,6 +64,7 @@
 #include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/CountDistinctAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
@@ -1489,10 +1490,28 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         }
     };
 
+    if (context->distinct != nullptr && tokenType != AntlrSQLLexer::COUNT)
+    {
+        throw InvalidQuerySyntax("DISTINCT is only supported in COUNT(DISTINCT ...), not in {}", context->getText());
+    }
+
     auto isAggregation = false;
     switch (tokenType)
     {
         case AntlrSQLLexer::COUNT: {
+            if (context->distinct != nullptr)
+            {
+                if (context->argument.size() != 1)
+                {
+                    throw InvalidQuerySyntax("COUNT(DISTINCT ...) expects exactly one argument at {}", context->getText());
+                }
+                ensureFieldAccessArgument();
+                helpers.top().windowAggs.emplace_back(
+                    CountDistinctAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                    std::nullopt);
+                isAggregation = true;
+                break;
+            }
             const auto includeNullValues = (context->starArg != nullptr);
             if (includeNullValues)
             {

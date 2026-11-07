@@ -16,6 +16,7 @@ add_source_files(nes-physical-operators
         AggregationPhysicalFunction.cpp
         AvgAggregationPhysicalFunction.cpp
         CountAggregationPhysicalFunction.cpp
+        CountDistinctAggregationPhysicalFunction.cpp
         MaxAggregationPhysicalFunction.cpp
         MinAggregationPhysicalFunction.cpp
         MedianAggregationPhysicalFunction.cpp
@@ -24,6 +25,7 @@ add_source_files(nes-physical-operators
 
 add_registry_entry(AggregationPhysicalFunction Avg)
 add_registry_entry(AggregationPhysicalFunction Count)
+add_registry_entry(AggregationPhysicalFunction CountDistinct)
 add_registry_entry(AggregationPhysicalFunction Max)
 add_registry_entry(AggregationPhysicalFunction Median)
 add_registry_entry(AggregationPhysicalFunction Min)
