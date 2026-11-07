@@ -36,6 +36,7 @@ public:
     [[nodiscard]] bool operator==(const TemporalSequenceAggregationLogicalFunction& other) const;
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
+
 private:
     AggregationFieldAccess inputFunction;
     DataType aggregateType;
