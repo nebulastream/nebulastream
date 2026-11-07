@@ -45,7 +45,7 @@ namespace NES
 namespace
 {
 
-constexpr std::array NonNumericAggregations{std::string_view{"COUNT"}};
+constexpr std::array NonNumericAggregations{std::string_view{"COUNT"}, std::string_view{"COUNTDISTINCT"}};
 
 class AggregationInputTypeTest : public ::testing::Test
 {

@@ -37,6 +37,7 @@ struct QueryExecutionConfiguration
         uint64_t numberOfPartitions,
         uint64_t numberOfRecordsPerKey,
         uint64_t operatorBufferSize,
+        uint64_t countDistinctNumberOfBuckets,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
         bool nautilusPerf = false)
@@ -44,6 +45,7 @@ struct QueryExecutionConfiguration
         , numberOfPartitions(numberOfPartitions)
         , numberOfRecordsPerKey(numberOfRecordsPerKey)
         , operatorBufferSize(operatorBufferSize)
+        , countDistinctNumberOfBuckets(countDistinctNumberOfBuckets)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
         , nautilusPerf(nautilusPerf)
@@ -54,6 +56,7 @@ struct QueryExecutionConfiguration
     uint64_t numberOfPartitions;
     uint64_t numberOfRecordsPerKey;
     uint64_t operatorBufferSize;
+    uint64_t countDistinctNumberOfBuckets;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
     /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can

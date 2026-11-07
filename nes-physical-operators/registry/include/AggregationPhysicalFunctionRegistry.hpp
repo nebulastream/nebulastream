@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include <functional>
 #include <memory>
 #include <optional>
@@ -38,6 +40,12 @@ struct AggregationPhysicalFunctionRegistryArguments
     Record::RecordFieldIdentifier resultFieldIdentifier;
     std::optional<std::shared_ptr<PagedVectorTupleLayout>> tupleLayout;
     bool includeNullValues;
+    /// Number of buckets of the hash set that COUNT(DISTINCT x) keeps per key (count_distinct_number_of_buckets).
+    uint64_t countDistinctNumberOfBuckets = 64;
+    /// Size of the pooled buffers that an aggregation function keeps its state in, e.g. a hash map.
+    uint64_t bufferSize = 4096;
+    /// Number of distinct values that COUNT(DISTINCT x) keeps in its aggregation state before it creates a hash set for them.
+    uint64_t countDistinctInlineValues = 4;
 };
 
 using AggregationPhysicalFunctionFn

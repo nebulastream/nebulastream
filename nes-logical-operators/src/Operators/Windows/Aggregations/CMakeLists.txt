@@ -15,6 +15,7 @@ add_source_files(nes-logical-operators
         WindowAggregationLogicalFunction.cpp
         AvgAggregationLogicalFunction.cpp
         CountAggregationLogicalFunction.cpp
+        CountDistinctAggregationLogicalFunction.cpp
         MaxAggregationLogicalFunction.cpp
         MedianAggregationLogicalFunction.cpp
         MinAggregationLogicalFunction.cpp
@@ -24,6 +25,7 @@ add_source_files(nes-logical-operators
 
 add_unreflection_entry(AggregationLogicalFunction Avg)
 add_unreflection_entry(AggregationLogicalFunction Count)
+add_unreflection_entry(AggregationLogicalFunction CountDistinct)
 add_unreflection_entry(AggregationLogicalFunction Max)
 add_unreflection_entry(AggregationLogicalFunction Median)
 add_unreflection_entry(AggregationLogicalFunction Min)
@@ -31,6 +33,7 @@ add_unreflection_entry(AggregationLogicalFunction Sum)
 
 add_registry_entry(AggregationLogicalFunction Avg)
 add_registry_entry(AggregationLogicalFunction Count)
+add_registry_entry(AggregationLogicalFunction CountDistinct)
 add_registry_entry(AggregationLogicalFunction Max)
 add_registry_entry(AggregationLogicalFunction Median)
 add_registry_entry(AggregationLogicalFunction Min)

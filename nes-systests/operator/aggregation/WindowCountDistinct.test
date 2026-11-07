@@ -1,0 +1,123 @@
+# name: operator/aggregation/WindowCountDistinct.test
+# description: COUNT(DISTINCT x) over numeric, nullable and variable-sized values, keyed and unkeyed, in tumbling
+#   and sliding windows, with keys whose distinct values fit into the aggregation state and keys that need a hash set.
+#   NULL values are not counted; a window without non-null values counts 0.
+# groups: [Aggregation, WindowOperators]
+
+CREATE LOGICAL SOURCE stream(k INT32 NOT NULL, v INT64 NOT NULL, n INT64, s VARSIZED NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,5,,apple,100
+1,5,7,apple,110
+1,6,7,pear,120
+2,5,,apple,130
+2,7,,fig,140
+1,5,8,pear,150
+2,7,9,fig,160
+1,9,9,kiwi,210
+1,9,,kiwi,220
+2,8,,fig,230
+2,9,,apple,240
+1,5,,apple,250
+
+CREATE LOGICAL SOURCE manyValues(k INT32 NOT NULL, v INT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR manyValues TYPE File;
+ATTACH INLINE
+1,1,100
+1,2,101
+1,3,102
+1,1,103
+1,4,104
+1,5,105
+1,2,106
+2,1,110
+2,1,111
+2,2,112
+3,1,120
+3,2,121
+3,3,122
+3,4,123
+1,6,200
+1,5,201
+1,7,202
+2,2,210
+2,3,211
+3,4,220
+3,5,221
+4,9,230
+4,8,231
+4,7,232
+4,6,233
+4,5,234
+4,9,235
+
+CREATE SINK unkeyedSink(start UINT64 NOT NULL, end UINT64 NOT NULL, dv UINT64 NOT NULL, dn UINT64 NOT NULL, ds UINT64 NOT NULL, total UINT64 NOT NULL) TYPE File;
+CREATE SINK keyedSink(start UINT64 NOT NULL, end UINT64 NOT NULL, k INT32 NOT NULL, dv UINT64 NOT NULL, dn UINT64 NOT NULL, ds UINT64 NOT NULL) TYPE File;
+CREATE SINK filteredSink(start UINT64 NOT NULL, end UINT64 NOT NULL, small UINT64 NOT NULL, large UINT64 NOT NULL) TYPE File;
+CREATE SINK manySink(start UINT64 NOT NULL, end UINT64 NOT NULL, k INT32 NOT NULL, dv UINT64 NOT NULL) TYPE File;
+
+# Unkeyed tumbling windows, next to COUNT(*). In [200, 300), n is NULL except for one 9.
+SELECT start, end, COUNT(DISTINCT v) AS dv, COUNT(DISTINCT n) AS dn, COUNT(DISTINCT s) AS ds, COUNT(*) AS total
+FROM stream WINDOW TUMBLING(ts, SIZE 100 ms) INTO unkeyedSink;
+----
+100,200,3,3,3,7
+200,300,3,1,3,5
+
+# Keyed: key 2 in [200, 300) has only NULL values of n, which counts 0.
+SELECT start, end, k, COUNT(DISTINCT v) AS dv, COUNT(DISTINCT n) AS dn, COUNT(DISTINCT s) AS ds
+FROM stream GROUP BY k WINDOW TUMBLING(ts, SIZE 100 ms) INTO keyedSink;
+----
+100,200,1,2,2,2
+100,200,2,2,1,2
+200,300,1,2,1,2
+200,300,2,2,0,2
+
+# Sliding windows combine the states of several slices; duplicates across slices count once.
+SELECT start, end, COUNT(DISTINCT v) AS dv, COUNT(DISTINCT n) AS dn, COUNT(DISTINCT s) AS ds, COUNT(*) AS total
+FROM stream WINDOW SLIDING(ts, SIZE 200 ms, ADVANCE BY 100 ms) INTO unkeyedSink;
+----
+0,200,3,3,3,7
+100,300,5,3,4,12
+200,400,3,1,3,5
+
+# COUNT(DISTINCT x) FILTER (WHERE c) written as COUNT(DISTINCT CASE WHEN c THEN x END): a CASE without ELSE yields NULL otherwise.
+SELECT start, end,
+       COUNT(DISTINCT CASE WHEN v < 7 THEN s END) AS small,
+       COUNT(DISTINCT CASE WHEN v >= 7 THEN s END) AS large
+FROM stream WINDOW TUMBLING(ts, SIZE 100 ms) INTO filteredSink;
+----
+100,200,2,1
+200,300,1,3
+
+# The first four distinct values of a key stay in the aggregation state; the fifth moves them into a hash set. Key 1 overflows in
+# the first slice and sees duplicates before and after, key 3 has exactly four values there, key 4 overflows in the second slice.
+SELECT start, end, k, COUNT(DISTINCT v) AS dv FROM manyValues GROUP BY k WINDOW TUMBLING(ts, SIZE 100 ms) INTO manySink;
+----
+100,200,1,5
+100,200,2,2
+100,200,3,4
+200,300,1,3
+200,300,2,2
+200,300,3,2
+200,300,4,5
+
+# Sliding windows combine the slices: a hash set with inline values (key 1), inline values with inline values (key 2), and inline
+# values that only overflow while being combined (key 3).
+SELECT start, end, k, COUNT(DISTINCT v) AS dv FROM manyValues GROUP BY k WINDOW SLIDING(ts, SIZE 200 ms, ADVANCE BY 100 ms) INTO manySink;
+----
+0,200,1,5
+0,200,2,2
+0,200,3,4
+100,300,1,7
+100,300,2,3
+100,300,3,5
+100,300,4,5
+200,400,1,3
+200,400,2,2
+200,400,3,2
+200,400,4,5
+
+# DISTINCT is only supported in COUNT.
+SELECT start, end, SUM(DISTINCT v) AS dv FROM stream WINDOW TUMBLING(ts, SIZE 100 ms) INTO FILE ();
+----
+ERROR 2000
