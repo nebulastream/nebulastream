@@ -52,6 +52,8 @@
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
+#include <Util/RowKind.hpp>
+
 namespace NES
 {
 
@@ -130,6 +132,14 @@ CSVOutputFormatter::CSVOutputFormatter(const std::vector<Record::RecordFieldIden
 
     /// Override the datatype defaults for the fields that the user configured a serializer for
     fieldSerializerTypes = parseValueSerializerOverrides(config.valueSerializers, this->fieldNames);
+    /// The row kind of an updating stream is written as +I, -U, +U or -D unless the user configured a serializer for it.
+    for (const auto& fieldName : this->fieldNames)
+    {
+        if (fieldName.size() > 0 and *std::ranges::prev(fieldName.end()) == rowKindIdentifier())
+        {
+            fieldSerializerTypes.try_emplace(fieldName, "RowKind");
+        }
+    }
 }
 
 nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(

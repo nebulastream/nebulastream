@@ -14,14 +14,19 @@
 
 #include <Sinks/SinkDescriptor.hpp>
 
+#include <algorithm>
 #include <cstddef>
+#include <functional>
+#include <iterator>
 #include <cstdint>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Overloaded.hpp>
@@ -36,6 +41,8 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Util/Any.hpp>
+#include <Util/RowKind.hpp>
+#include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
 #include <SinkConfigRegistry.hpp>
 
@@ -275,8 +282,44 @@ AnonymousSinkDescriptor AnonymousSinkDescriptor::withSchemaOrder(const Schema<Un
     const auto alreadyOrderSet = std::holds_alternative<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(this->schema);
     PRECONDITION(!alreadyOrderSet, "Ordered schema already set");
 
+    /// The row kind of an updating stream is always the first column, which lets consumers of the output find it without the schema.
+    const auto isRowKind
+        = [](const UnqualifiedUnboundField& field) { return field.getFullyQualifiedName() == QualifiedIdentifierBase<1>{rowKindIdentifier()}; };
+    std::vector<UnqualifiedUnboundField> fields;
+    std::ranges::copy(newSchema | std::views::filter(isRowKind), std::back_inserter(fields));
+    std::ranges::copy(newSchema | std::views::filter(std::not_fn(isRowKind)), std::back_inserter(fields));
+
     auto copy = *this;
-    copy.schema = std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(newSchema);
+    copy.schema = std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(std::move(fields));
+    return copy;
+}
+
+SinkDescriptor SinkDescriptor::withRowKindField() const
+{
+    const auto prependRowKind = [](const Schema<UnqualifiedUnboundField, Ordered>& schema)
+    {
+        if (isUpdatingStream(schema))
+        {
+            return std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(schema);
+        }
+        std::vector<UnqualifiedUnboundField> fields{
+            UnqualifiedUnboundField{rowKindIdentifier(), DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}}};
+        fields.insert(fields.end(), schema.begin(), schema.end());
+        return std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(std::move(fields));
+    };
+
+    auto copy = *this;
+    std::visit(
+        Overloaded{
+            [&](NamedSinkDescriptor& named) { named.schema = prependRowKind(*named.schema); },
+            [&](AnonymousSinkDescriptor& anonymous)
+            {
+                if (const auto* ordered = std::get_if<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(&anonymous.schema))
+                {
+                    anonymous.schema = prependRowKind(**ordered);
+                }
+            }},
+        copy.underlying);
     return copy;
 }
 

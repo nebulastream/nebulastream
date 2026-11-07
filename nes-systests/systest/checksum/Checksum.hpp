@@ -21,7 +21,18 @@
 
 struct Checksum
 {
+    /// Position within the formatted rows of a changelog, which can be split across the chunks passed to addChangelog.
+    struct ChangelogPosition
+    {
+        bool atLineStart = true;
+        bool inKind = false;
+        long sign = 1;
+    };
+
     void add(std::string_view data);
+    /// Adds rows whose first column is the row kind as +I, -U, +U or -D (see RowKind.hpp). The kind column is not part of the checksum, and rows that
+    /// withdraw from the final table (UPDATE_BEFORE, DELETE) subtract themselves, so the result is the checksum of the final table.
+    void addChangelog(std::string_view data, ChangelogPosition& position);
     bool operator==(const Checksum&) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const Checksum& obj);

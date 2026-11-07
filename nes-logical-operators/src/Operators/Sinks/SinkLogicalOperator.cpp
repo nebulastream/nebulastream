@@ -43,6 +43,7 @@
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/RowKind.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
@@ -133,6 +134,11 @@ void SinkLogicalOperator::inferLocalSchema()
 
     auto inputSchema = child->getOutputSchema();
     auto unboundInputSchema = unbind(inputSchema);
+    /// The sink writes the row kind of an updating stream as an extra first column that its declared schema does not list.
+    if (isUpdatingStream(unboundInputSchema))
+    {
+        sinkDescriptor = sinkDescriptor->withRowKindField();
+    }
     /// An anonymous sink without an explicit schema gets the child's fields, and a later stage decides their order.
     if (auto* anonymousSinkDescriptor = std::get_if<AnonymousSinkDescriptor>(&sinkDescriptor->underlying);
         anonymousSinkDescriptor != nullptr and std::holds_alternative<std::monostate>(anonymousSinkDescriptor->getSchema()))

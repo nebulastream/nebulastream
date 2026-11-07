@@ -235,6 +235,10 @@ public:
     [[nodiscard]] const OutputFormatterDescriptor& getOutputFormatterDescriptor() const;
     [[nodiscard]] const std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor>& getUnderlying() const;
 
+    /// Returns a copy whose explicit schema starts with the row kind field (see RowKind.hpp), so the sink writes the kind of every
+    /// row of an updating stream as its first column. A descriptor without an explicit schema or that already has the field is kept.
+    [[nodiscard]] SinkDescriptor withRowKindField() const;
+
 private:
     explicit SinkDescriptor(std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor> underlying);
     std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor> underlying;
