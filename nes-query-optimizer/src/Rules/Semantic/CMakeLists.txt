@@ -18,6 +18,7 @@ add_source_files(nes-query-optimizer
         SinkBindingRule.cpp
         InferModelResolutionRule.cpp
         CalcTargetOrderRule.cpp
+        ChangelogValidationRule.cpp
 )
 
 add_registry_entry(PlanRule AnonymousSinkBindingRule KEY AnonymousSinkBinding)
@@ -27,4 +28,4 @@ add_registry_entry(PlanRule TypeInferenceRule KEY TypeInference)
 add_registry_entry(PlanRule SinkBindingRule KEY SinkBinding)
 add_registry_entry(PlanRule InferModelResolutionRule KEY InferModelResolution)
 add_registry_entry(PlanRule CalcTargetOrderRule KEY CalcTargetOrder)
-
+add_registry_entry(PlanRule ChangelogValidationRule KEY ChangelogValidation)

@@ -22,8 +22,10 @@
 #include <optional>
 #include <string>
 #include <system_error>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
@@ -36,6 +38,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/RowKind.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
@@ -74,8 +77,24 @@ std::expected<ChecksumSinkConfig, Exception> ChecksumSinkConfig::fromConfig(cons
     return ChecksumSinkConfig{.filePath = config.get(FILE_PATH)};
 }
 
-ChecksumSink::ChecksumSink(BackpressureController backpressureController, const ChecksumSinkConfig& config)
-    : Sink(std::move(backpressureController)), isOpen(false), outputFilePath(config.filePath)
+ChecksumSink::ChecksumSink(
+    BackpressureController backpressureController, const ChecksumSinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController))
+    , isOpen(false)
+    , outputFilePath(config.filePath)
+    , changelog(std::visit(
+          [](const auto& schema)
+          {
+              if constexpr (std::is_same_v<std::decay_t<decltype(schema)>, std::monostate>)
+              {
+                  return false;
+              }
+              else
+              {
+                  return isUpdatingStream(*schema);
+              }
+          },
+          sinkDescriptor.getSchema()))
 {
 }
 
@@ -124,12 +143,20 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
     /// Create a buffer iterator to help iterate through the tuplebuffer and its children
     BufferIterator iterator{inputBuffer};
 
+    Checksum::ChangelogPosition changelogPosition;
     std::optional<BufferIterator::BufferElement> element = iterator.getNextElement();
     while (element.has_value())
     {
         /// Create string out of formatted buffer
         const std::string formatted{element.value().buffer.getAvailableMemoryArea<char>().data(), element.value().contentLength};
-        checksum.add(formatted);
+        if (changelog)
+        {
+            checksum.addChangelog(formatted, changelogPosition);
+        }
+        else
+        {
+            checksum.add(formatted);
+        }
         /// Get the next buffer
         element = iterator.getNextElement();
     }

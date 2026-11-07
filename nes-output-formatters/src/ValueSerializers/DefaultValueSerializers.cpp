@@ -32,6 +32,8 @@
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 
+#include <Util/RowKind.hpp>
+
 namespace NES::DefaultValueSerializer
 {
 
@@ -44,6 +46,14 @@ uint64_t serializeNumeric(
     AbstractBufferProvider* bufferProvider)
 {
     const std::string serializedValue = std::to_string(value);
+    return writeValueToBuffer(
+        serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
+uint64_t serializeRowKind(
+    const uint8_t kind, int8_t* bufferStartingAddress, const uint64_t remainingSpace, TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider)
+{
+    const std::string_view serializedValue = rowKindSymbol(kind);
     return writeValueToBuffer(
         serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
@@ -402,6 +412,23 @@ std::unique_ptr<ValueSerializer> DefaultINT64ValueSerializer::provideSerializer(
 std::unique_ptr<ValueSerializer> DefaultBOOLValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
 {
     return std::make_unique<DefaultBOOLValueSerializer>();
+}
+
+nautilus::val<uint64_t> RowKindValueSerializer::serializeAndWrite(
+    const VarVal& value,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<int8_t*>& startingAddress) const
+{
+    const auto castedVal = value.getRawValueAs<nautilus::val<uint8_t>>();
+    return nautilus::invoke(
+        DefaultValueSerializer::serializeRowKind, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+}
+
+std::unique_ptr<ValueSerializer> RowKindValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
+{
+    return std::make_unique<RowKindValueSerializer>();
 }
 
 std::unique_ptr<ValueSerializer> DefaultUINT8ValueSerializer::provideSerializer(ValueSerializerRegistryArguments)

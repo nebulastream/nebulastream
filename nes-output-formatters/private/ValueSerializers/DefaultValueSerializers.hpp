@@ -152,6 +152,21 @@ public:
     static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
 };
 
+/// Writes the row kind of an updating stream (see RowKind.hpp) as Flink prints it: +I, -U, +U or -D.
+class RowKindValueSerializer final : public ValueSerializer
+{
+public:
+    explicit RowKindValueSerializer() noexcept = default;
+    [[nodiscard]] nautilus::val<uint64_t> serializeAndWrite(
+        const VarVal& value,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<int8_t*>& startingAddress) const override;
+
+    static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
+};
+
 class DefaultUINT16ValueSerializer final : public ValueSerializer
 {
 public:

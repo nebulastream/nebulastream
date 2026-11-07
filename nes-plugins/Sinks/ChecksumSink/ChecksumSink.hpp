@@ -50,11 +50,13 @@ struct ChecksumSinkConfig
 /// Example output of the sink:
 /// S$Count:UINT64:NOT_NULLABLE,S$Checksum:UINT64:NOT_NULLABLE
 /// 1042, 12390478290
+/// For an updating stream, the count and checksum are those of the final table that the changelog describes.
 class ChecksumSink : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Checksum";
-    explicit ChecksumSink(BackpressureController backpressureController, const ChecksumSinkConfig& config);
+    explicit ChecksumSink(
+        BackpressureController backpressureController, const ChecksumSinkConfig& config, const SinkDescriptor& sinkDescriptor);
 
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;
@@ -70,6 +72,8 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Checksum checksum;
+    /// The input is an updating stream, so every row starts with its row kind (see RowKind.hpp).
+    bool changelog;
 };
 
 }

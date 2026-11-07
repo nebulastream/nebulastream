@@ -30,6 +30,36 @@ void Checksum::add(std::string_view data)
     numberOfTuples.fetch_add(localNumberOfTuples, std::memory_order::relaxed);
 }
 
+void Checksum::addChangelog(std::string_view data, ChangelogPosition& position)
+{
+    /// Unsigned arithmetic wraps, so adding the two's complement subtracts, independent of the order in which rows arrive.
+    size_t localChecksum = 0;
+    size_t localNumberOfTuples = 0;
+    for (const char character : data)
+    {
+        if (position.atLineStart)
+        {
+            /// -U and -D withdraw a row, +I and +U add one.
+            position.atLineStart = false;
+            position.inKind = true;
+            position.sign = character == '-' ? -1 : 1;
+        }
+        if (position.inKind)
+        {
+            position.inKind = character != ',';
+            continue;
+        }
+        localChecksum += static_cast<size_t>(position.sign) * static_cast<size_t>(character);
+        if (character == '\n')
+        {
+            localNumberOfTuples += static_cast<size_t>(position.sign);
+            position.atLineStart = true;
+        }
+    }
+    checksum.fetch_add(localChecksum, std::memory_order::relaxed);
+    numberOfTuples.fetch_add(localNumberOfTuples, std::memory_order::relaxed);
+}
+
 std::ostream& operator<<(std::ostream& os, const Checksum& obj)
 {
     return os << "checksum: " << obj.checksum << " numberOfTuples: " << obj.numberOfTuples;

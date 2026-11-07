@@ -14,6 +14,7 @@
 
 #include <Operators/ProjectionLogicalOperator.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <functional>
@@ -36,6 +37,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -50,6 +52,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/RowKind.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 
@@ -204,6 +207,12 @@ void ProjectionLogicalOperator::inferLocalSchema()
 {
     PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto inputSchema = child->getOutputSchema();
+    /// An updating stream keeps its row kind through every projection, as its rows would otherwise all read as inserts.
+    if (isUpdatingStream(inputSchema) and not asterisk
+        and std::ranges::none_of(projections, [](const UnboundProjection& projection) { return projection.first == rowKindIdentifier(); }))
+    {
+        projections.emplace_back(rowKindIdentifier(), UnboundFieldAccessLogicalFunction{rowKindIdentifier()});
+    }
     projections = projections
         | std::views::transform(
                       [&inputSchema](const UnboundProjection& projection)
