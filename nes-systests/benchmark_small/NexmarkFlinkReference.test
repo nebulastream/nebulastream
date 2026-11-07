@@ -114,22 +114,23 @@ INTO q3Sink;
 ----
 62 153461
 
-# Query 4: average closing price per category. Flink keeps an unbounded join and two unbounded GROUP BYs that
-# update their results. On bounded input the final result equals a GROUP BY over one tumbling window that spans
-# all data (1,000,000 hours), so both aggregations use one. AVG over BIGINT truncates in Flink, hence SUM / COUNT.
+# Query 4: average closing price per category. Like Flink, an unbounded join feeds two unbounded GROUP BYs: the
+# closing price per auction is updated with every higher bid, and each update withdraws the previous closing price
+# from the sum and count of its category. The outer aggregation batches by the latest bid of an auction; a withdrawn row
+# carries an older one and is clamped to the watermark. AVG over BIGINT truncates in Flink, hence SUM / COUNT.
 # reference: q4
 SELECT category, total / cnt AS avgFinal
 FROM (SELECT category, SUM(final) AS total, COUNT(final) AS cnt
-FROM (SELECT id, category, MAX(price) AS final, start AS aggStart
+FROM (SELECT id, category, MAX(price) AS final, MAX(bTime) AS lastBid
       FROM (SELECT id, category, price, bTime
             FROM (SELECT id, category, dateTime AS aTime, expires FROM auction)
             INNER JOIN (SELECT auction, price, dateTime AS bTime FROM bid)
             ON id = auction AND bTime >= aTime AND bTime <= expires
             WINDOW UNBOUNDED (aTime, bTime))
       GROUP BY id, category
-      WINDOW TUMBLING(bTime, SIZE 1000000 HOURS))
+      WINDOW UNBOUNDED(bTime))
 GROUP BY category
-WINDOW TUMBLING(aggStart, SIZE 1000000 HOURS))
+WINDOW UNBOUNDED(lastBid))
 INTO q4Sink;
 ----
 10,28812731

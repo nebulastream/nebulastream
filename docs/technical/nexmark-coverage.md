@@ -2,7 +2,7 @@
 
 Goal: run all Nexmark queries (q0–q23 from [nexmark/nexmark](https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries), pinned at `6b3646c3`) on NES with the same results as Flink.
 
-Status (branch `claude/nexmark-query-coverage-2d7cfd`): **19 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q17 and q20–q23 (all but q11, q18, q19), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded. q15–q17 run as unbounded GROUP BYs (`WINDOW UNBOUNDED`) that emit a retract changelog like Flink's streaming mode; the check folds it into the final table. q4 and q9 match the final result on bounded input only: their aggregation over an updating stream and their Top-1 are still expressed with one window that spans all data. The other 3 need session windows (q11) or Top-N/deduplication (q18, q19), and streaming semantics for all unbounded queries need the changelog model (§7).
+Status (branch `claude/nexmark-query-coverage-2d7cfd`): **19 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q17 and q20–q23 (all but q11, q18, q19), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded. q4 and q15–q17 run as unbounded GROUP BYs (`WINDOW UNBOUNDED`) that emit a retract changelog like Flink's streaming mode; the check folds it into the final table. q9 matches the final result on bounded input only: its Top-1 is still expressed with MAX and join-back steps over one window that spans all data. The other 3 need session windows (q11) or Top-N/deduplication (q18, q19), and streaming semantics for all unbounded queries need the changelog model (§7).
 
 ---
 
@@ -55,7 +55,7 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q1 | Currency conversion | Calc | ✅ | `price * 0.908` as FLOAT64 (Flink: DECIMAL) |
 | q2 | Selection | Calc | ✅ | |
 | q3 | Local item suggestion | regular join | ✅ | Unbounded inner hash join `auction ⋈ person WINDOW UNBOUNDED`. |
-| q4 | Avg price per category | regular join → unbounded GROUP BY → AVG over retractions | ✅ (bounded) | Unbounded range join `auction ⋈ bid ON id = auction AND bTime BETWEEN aTime AND expires`, then MAX per auction and SUM/COUNT per category, each over one tumbling window spanning all data. Matches Flink's final result; streaming updates need the changelog model. |
+| q4 | Avg price per category | regular join → unbounded GROUP BY → AVG over retractions | ✅ (streaming) | Unbounded range join `auction ⋈ bid ON id = auction AND bTime BETWEEN aTime AND expires`, then MAX per auction (`WINDOW UNBOUNDED(bTime)`) and SUM/COUNT per category over its changelog (`WINDOW UNBOUNDED(lastBid)`, the latest bid of the auction): every -U withdraws the previous closing price. |
 | q5 | Hot items | HOP window, max, window join | ✅ | Rewrite: a 2 s tumbling join over window starts (slide = 2 s) |
 | q6 | Avg selling price by seller | not supported by Flink | — | excluded |
 | q7 | Highest bid | tumble MAX → interval join | ✅ | Real interval join: `INTERVAL (dateTime, maxEnd, 0 ms, 10000 ms)` |
@@ -144,7 +144,7 @@ Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other 
 
 ### Substantially more effort
 - **Changelog model:** a row kind (`+I/-U/+U/-D`) carried through operators and sinks, at least upsert-keyed. Every Flink query with unbounded state needs it for streaming semantics (q4, q9, q15–q19).
-- **Retraction-aware aggregates** for unbounded aggregations over an updating stream (SUM/COUNT/AVG next; MIN/MAX over retractions need multiset state). Needed for streaming q4. Unbounded keyed aggregation over append-only input exists (`WINDOW UNBOUNDED`, q15–q17).
+- **More retraction-aware aggregates.** Unbounded aggregations (`WINDOW UNBOUNDED`) exist over append-only input (q15–q17) and, with SUM/COUNT/AVG, over an updating stream (q4). MIN/MAX/MEDIAN/COUNT(DISTINCT) over an updating stream need multiset state and are rejected.
 - **Top-N / ROW_NUMBER / deduplication** operators (q9, q18, q19).
 - **State TTL for regular joins.** `WINDOW UNBOUNDED` (hash, NLJ, INLJ) covers q3, q4, q9, q20 and q23 but keeps all state forever and supports inner joins only. Equality plus a range still runs as an NLJ until the hash join has a residual predicate.
 - **State beyond memory** (Flink uses RocksDB): spilling for unbounded keyed state and large window state (q7 at 1M already hits the buffer pool).
