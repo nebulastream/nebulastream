@@ -30,7 +30,8 @@
 namespace NES
 {
 
-/// Performs the NLJ probe for inner joins. Only handles MATCH_PAIRS tasks.
+/// Performs the NLJ probe for inner joins. Handles MATCH_PAIRS tasks, and for an unbounded window the MATCH_PAIRS_ITERATE_LEFT
+/// and MATCH_PAIRS_ITERATE_RIGHT tasks, which carry their paged vectors as child buffers.
 class NLJInnerProbePhysicalOperator final : public NLJProbePhysicalOperatorBase
 {
 public:
@@ -42,7 +43,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
-        std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
+        std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames,
+        bool unboundedWindow = false);
 
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
@@ -51,5 +53,11 @@ public:
 
 protected:
     void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
+private:
+    void probeUnboundedWindow(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer) const;
+
+    /// An unbounded window emits other task buffers, so the probe traces the code for one of the two
+    bool unboundedWindow;
 };
 }

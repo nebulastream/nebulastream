@@ -130,17 +130,15 @@ decideJoinTypes(const LogicalOperator& logicalOperator, const std::vector<Logica
     auto traitSet = logicalOperator.getTraitSet();
     if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
     {
-        if (joinOperator.value()->getWindowType().isUnbounded())
+        /// An unbounded join never emits a record for a tuple without a match, since a match may still arrive at any time.
+        if (joinOperator.value()->getWindowType().isUnbounded() and isOuterJoin(joinOperator.value()->getJoinType()))
         {
-            /// Only the hash join keeps its state compactable, so an unbounded join ignores the configured join strategy.
-            if (joinOperator.value()->getJoinType() != JoinLogicalOperator::JoinType::INNER_JOIN
-                or not shallUseHashJoin(joinOperator.value()->getJoinFunction()))
-            {
-                throw UnsupportedQuery("An UNBOUNDED window requires an inner equi-join, but got {}", logicalOperator);
-            }
-            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+            throw UnsupportedQuery(
+                "An UNBOUNDED window only supports inner joins, as an unmatched tuple may find a match at any later time, but got {}",
+                logicalOperator);
         }
-        else if (joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
+
+        if (joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }

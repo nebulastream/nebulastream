@@ -131,8 +131,13 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     const auto& [timeStampFieldLeft, timeStampFieldRight]
         = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
 
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    /// An unbounded window has no size; its slices are tumbling windows of the configured size, each triggered once and then kept
+    /// by the handler for all later slices to join with. Only inner joins can be unbounded, see DecideJoinTypesRule.
+    const bool unboundedWindow = windowType.isUnbounded();
+    PRECONDITION(not unboundedWindow or not isOuterJoin(join->getJoinType()), "An UNBOUNDED window does not support outer joins");
+    const auto sliceSize = unboundedWindow ? conf.unboundedJoinSliceSizeMs : windowType.getSize().getTime();
+    const auto sliceSlide = unboundedWindow ? conf.unboundedJoinSliceSizeMs : windowType.getSlide().getTime();
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceSize, sliceSlide, conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider&)
         {
@@ -182,7 +187,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     };
 
     auto handler = std::make_shared<NLJOperatorHandler>(
-        std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+        std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy(), unboundedWindow);
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};
@@ -253,7 +258,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
             leftTupleLayout,
             rightTupleLayout,
             leftKeyFieldNames,
-            rightKeyFieldNames));
+            rightKeyFieldNames,
+            unboundedWindow));
     }
 
     return {.root = {probeWrapper}, .leaves = {leftBuildWrapper, rightBuildWrapper}};

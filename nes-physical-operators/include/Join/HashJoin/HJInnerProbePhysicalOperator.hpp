@@ -29,8 +29,8 @@
 namespace NES
 {
 
-/// Performs the hash join probe for inner joins. Handles MATCH_PAIRS tasks, and for an unbounded window also
-/// MATCH_PAIRS_ITERATE_LEFT and COMPACT tasks.
+/// Performs the hash join probe for inner joins. Handles MATCH_PAIRS tasks, and for an unbounded window also the
+/// MATCH_PAIRS_ITERATE_LEFT, MATCH_PAIRS_ITERATE_RIGHT and COMPACT tasks.
 class HJInnerProbePhysicalOperator final : public HJProbePhysicalOperatorBase
 {
 public:
