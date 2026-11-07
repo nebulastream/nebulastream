@@ -18,11 +18,15 @@
 #include <memory>
 #include <utility>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <Interface/BTree/BTree.hpp>
 #include <Interface/BTree/BTreeRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Join/IndexNestedLoopJoin/INLJOperatorHandler.hpp>
 #include <Join/IndexNestedLoopJoin/INLJSlice.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <fmt/format.h>
 #include <CompilationContext.hpp>
@@ -263,6 +267,127 @@ void INLJProbePhysicalOperatorBase::performNullFillProbe(
             }
         }
     }
+}
+
+void INLJProbePhysicalOperatorBase::performUnboundedMatchPairsProbe(
+    const BorrowedNautilusBuffer& trees,
+    const nautilus::val<uint64_t>& leftNumberOfTrees,
+    const nautilus::val<uint64_t>& rightNumberOfTrees,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd,
+    const bool iterateLeft) const
+{
+    PRECONDITION(activeLeftComparator != nullptr, "INLJ left comparator must be set up before probing an unbounded window");
+    PRECONDITION(activeRightComparator != nullptr, "INLJ right comparator must be set up before probing");
+
+    /// All choices between the sides are made here, at trace time, and not by a traced branch
+    const auto& iteratedLayout = iterateLeft ? leftTupleLayout : rightTupleLayout;
+    const auto& lookedUpLayout = iterateLeft ? rightTupleLayout : leftTupleLayout;
+    const auto& iteratedField = iterateLeft ? condition.leftField : condition.rightField;
+    const auto& lookedUpField = iterateLeft ? condition.rightField : condition.leftField;
+    const auto& iteratedFields = iterateLeft ? leftFields : rightFields;
+    const auto& lookedUpFields = iterateLeft ? rightFields : leftFields;
+    const auto predicate = iterateLeft ? condition.predicate : invertPredicate(condition.predicate);
+    const auto* comparator = iterateLeft ? activeRightComparator : activeLeftComparator;
+    const auto iteratedNumberOfTrees = iterateLeft ? leftNumberOfTrees : rightNumberOfTrees;
+    const auto lookedUpNumberOfTrees = iterateLeft ? rightNumberOfTrees : leftNumberOfTrees;
+    /// The left trees are the first child buffers, the right trees follow
+    const auto iteratedFirstChild = iterateLeft ? nautilus::val<uint64_t>{0} : leftNumberOfTrees;
+    const auto lookedUpFirstChild = iterateLeft ? leftNumberOfTrees : nautilus::val<uint64_t>{0};
+
+    /// The iterated trees hold the few new records, so they are iterated once per looked-up tree
+    for (nautilus::val<uint64_t> lookedUpIndex = 0; lookedUpIndex < lookedUpNumberOfTrees; ++lookedUpIndex)
+    {
+        const auto lookedUpBuffer = trees.getChild(lookedUpFirstChild + lookedUpIndex);
+        const BorrowedNautilusBuffer lookedUpBufferRef = lookedUpBuffer;
+        const BTreeRef lookedUpTree{lookedUpBufferRef, lookedUpLayout};
+        for (nautilus::val<uint64_t> iteratedIndex = 0; iteratedIndex < iteratedNumberOfTrees; ++iteratedIndex)
+        {
+            const auto iteratedBuffer = trees.getChild(iteratedFirstChild + iteratedIndex);
+            const BorrowedNautilusBuffer iteratedBufferRef = iteratedBuffer;
+            const BTreeRef iteratedTree{iteratedBufferRef, iteratedLayout};
+            for (auto iteratedIterator = iteratedTree.begin(); iteratedIterator != iteratedTree.end(); ++iteratedIterator)
+            {
+                const auto iteratedRecord = *iteratedIterator;
+                Record searchRecord;
+                searchRecord.write(lookedUpField, iteratedRecord.read(iteratedField));
+                const auto [begin, end] = findRange(lookedUpTree, searchRecord, *comparator, predicate);
+                for (auto lookedUpIterator = lookedUpTree.iteratorAt(begin); lookedUpIterator != lookedUpTree.end(end); ++lookedUpIterator)
+                {
+                    const auto lookedUpRecord = *lookedUpIterator;
+                    const auto keyRecord = createJoinedRecord(
+                        iteratedRecord, lookedUpRecord, windowStart, windowEnd, std::vector{iteratedField}, std::vector{lookedUpField});
+                    if (joinFunction.execute(keyRecord, executionCtx.pipelineMemoryProvider.arena))
+                    {
+                        auto joinedRecord
+                            = createJoinedRecord(iteratedRecord, lookedUpRecord, windowStart, windowEnd, iteratedFields, lookedUpFields);
+                        executeChild(executionCtx, joinedRecord);
+                    }
+                }
+            }
+        }
+    }
+}
+
+OwnedNautilusBuffer INLJProbePhysicalOperatorBase::mergeTrees(
+    const BorrowedNautilusBuffer& trees,
+    const nautilus::val<uint64_t>& firstChild,
+    const nautilus::val<uint64_t>& numberOfTrees,
+    const std::shared_ptr<BTreeTupleLayout>& tupleLayout,
+    const BTreeComparator& comparator,
+    ExecutionContext& executionCtx) const
+{
+    OwnedNautilusBuffer mergedTreeBuffer;
+    nautilus::invoke(
+        +[](AbstractBufferProvider* bufferProvider, TupleBuffer* mergedTree, const uint64_t entrySize)
+        {
+            auto buffer = bufferProvider->getBufferBlocking();
+            BTree::init(buffer, bufferProvider->getBufferSize(), entrySize);
+            *mergedTree = buffer;
+        },
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        mergedTreeBuffer.asArg(),
+        nautilus::val<uint64_t>{tupleLayout->getSizeInBytes()});
+
+    /// Re-inserting every record keeps the merged tree balanced. Var-sized data is copied into the merged tree's own pages.
+    const BorrowedNautilusBuffer mergedTreeRef = mergedTreeBuffer;
+    const BTreeRef mergedTree{mergedTreeRef, tupleLayout};
+    for (nautilus::val<uint64_t> index = 0; index < numberOfTrees; ++index)
+    {
+        const auto sourceBuffer = trees.getChild(firstChild + index);
+        const BorrowedNautilusBuffer sourceBufferRef = sourceBuffer;
+        const BTreeRef sourceTree{sourceBufferRef, tupleLayout};
+        for (auto iterator = sourceTree.begin(); iterator != sourceTree.end(); ++iterator)
+        {
+            mergedTree.append(*iterator, executionCtx.pipelineMemoryProvider.bufferProvider, comparator);
+        }
+    }
+    return mergedTreeBuffer;
+}
+
+void INLJProbePhysicalOperatorBase::performUnboundedCompaction(
+    const BorrowedNautilusBuffer& trees,
+    const nautilus::val<uint64_t>& leftNumberOfTrees,
+    const nautilus::val<uint64_t>& rightNumberOfTrees,
+    const nautilus::val<uint64_t>& segmentId,
+    ExecutionContext& executionCtx) const
+{
+    PRECONDITION(activeLeftComparator != nullptr, "INLJ left comparator must be set up before compacting");
+    PRECONDITION(activeRightComparator != nullptr, "INLJ right comparator must be set up before compacting");
+    /// A side with no trees was left out by the handler because it needs no compaction; merging nothing still yields a valid tree,
+    /// which the publish ignores.
+    auto mergedLeft
+        = mergeTrees(trees, nautilus::val<uint64_t>{0}, leftNumberOfTrees, leftTupleLayout, *activeLeftComparator, executionCtx);
+    auto mergedRight = mergeTrees(trees, leftNumberOfTrees, rightNumberOfTrees, rightTupleLayout, *activeRightComparator, executionCtx);
+    nautilus::invoke(
+        publishCompactedJoinStateProxy,
+        executionCtx.getGlobalOperatorHandler(operatorHandlerId),
+        segmentId,
+        mergedLeft.asArg(),
+        leftNumberOfTrees > 0,
+        mergedRight.asArg(),
+        rightNumberOfTrees > 0);
 }
 
 }

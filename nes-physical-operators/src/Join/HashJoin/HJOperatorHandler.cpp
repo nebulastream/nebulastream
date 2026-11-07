@@ -16,13 +16,10 @@
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 
 #include <algorithm>
-#include <chrono>
 #include <cstdint>
-#include <cstring>
 #include <functional>
 #include <map>
 #include <memory>
-#include <tuple>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -31,7 +28,6 @@
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
@@ -85,9 +81,16 @@ HJOperatorHandler::HJOperatorHandler(
     SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
-    JoinTriggerStrategy triggerStrategy)
+    JoinTriggerStrategy triggerStrategy,
+    const bool unboundedWindow)
     : StreamJoinOperatorHandler(
-          std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
+          std::move(sourcesOfInputOrigins),
+          outputOriginId,
+          std::move(sliceAndWindowStore),
+          std::move(triggerStrategy),
+          /// Compaction merges a segment's per-thread and per-slice maps into one map per side, so that a probe looks up a key in
+          /// O(log #slices) maps instead of in one map per slice and worker thread.
+          unboundedWindow ? std::make_unique<UnboundedJoinSegments>(true) : nullptr)
     , setupAlreadyCalledLeft(false)
     , setupAlreadyCalledRight(false)
 {
@@ -134,47 +137,25 @@ void HJOperatorHandler::emitSlicesToProbe(
     const SequenceData& sequenceData,
     PipelineExecutionContext* pipelineCtx)
 {
-    const auto leftHashMapBuffers = getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left);
-    const auto rightHashMapBuffers = getHashMapsFromSlices(rightSlices, JoinBuildSideType::Right);
+    emitJoinStateToProbe(
+        getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left),
+        getHashMapsFromSlices(rightSlices, JoinBuildSideType::Right),
+        probeTaskType,
+        windowInfo,
+        sequenceData,
+        0,
+        pipelineCtx);
+}
 
-    /// Creating a tuple buffer containing all necessary information for the probe
-    uint64_t totalNumberOfTuples = 0;
-    for (const auto& buffer : leftHashMapBuffers)
-    {
-        totalNumberOfTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-    }
-    for (const auto& buffer : rightHashMapBuffers)
-    {
-        totalNumberOfTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-    }
+std::vector<TupleBuffer>
+HJOperatorHandler::getJoinStateOfSlices(const std::vector<std::shared_ptr<Slice>>& slices, const JoinBuildSideType side)
+{
+    return getHashMapsFromSlices(slices, side);
+}
 
-    /// Hash map buffers are stored as child buffers, not inline in the main buffer.
-    auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
-    INVARIANT(sizeof(EmittedHJWindowTrigger) <= tupleBuffer.getBufferSize(), "The trigger has to fit into a buffer");
-    tupleBuffer.setOriginId(outputOriginId);
-    tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
-    tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
-    tupleBuffer.setLastChunk(sequenceData.lastChunk);
-    tupleBuffer.setWatermark(windowInfo.windowStart);
-    tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
-    tupleBuffer.setCreationTimestampInMS(Timestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-
-    /// Writing all necessary information for the probe to the buffer via the placement constructor
-    new (tupleBuffer.getAvailableMemoryArea().data())
-        EmittedHJWindowTrigger{windowInfo, leftHashMapBuffers.size(), rightHashMapBuffers.size(), probeTaskType};
-
-    /// Store left hash map buffers as children first (indices 0..left-1), then right (indices left..left+right-1)
-    for (auto leftBuffer : leftHashMapBuffers)
-    {
-        std::ignore = tupleBuffer.storeChildBuffer(leftBuffer);
-    }
-    for (auto rightBuffer : rightHashMapBuffers)
-    {
-        std::ignore = tupleBuffer.storeChildBuffer(rightBuffer);
-    }
-
-    pipelineCtx->emitBuffer(tupleBuffer);
+uint64_t HJOperatorHandler::getNumberOfTuples(const TupleBuffer& joinState) const
+{
+    return ChainedHashMap::load(joinState).getTotalNumberOfRecords();
 }
 
 }

@@ -26,6 +26,7 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SlicedWindowStoreInterface.hpp>
@@ -34,23 +35,8 @@
 namespace NES
 {
 
-/// This task models the information for a hash join based window trigger
-struct EmittedHJWindowTrigger
-{
-    EmittedHJWindowTrigger(
-        const WindowInfo windowInfo, const uint64_t leftNumberOfHashMaps, const uint64_t rightNumberOfHashMaps, ProbeTaskType probeTaskType)
-        : windowInfo(windowInfo)
-        , leftNumberOfHashMaps(leftNumberOfHashMaps)
-        , rightNumberOfHashMaps(rightNumberOfHashMaps)
-        , probeTaskType(probeTaskType)
-    {
-    }
-
-    WindowInfo windowInfo;
-    uint64_t leftNumberOfHashMaps;
-    uint64_t rightNumberOfHashMaps;
-    ProbeTaskType probeTaskType;
-};
+/// A hash join probe task carries the hash maps of both sides as child buffers
+using EmittedHJWindowTrigger = EmittedJoinStateTrigger;
 
 class HJOperatorHandler final : public StreamJoinOperatorHandler
 {
@@ -59,7 +45,8 @@ public:
         SourcesOfInputOrigins sourcesOfInputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
-        JoinTriggerStrategy triggerStrategy);
+        JoinTriggerStrategy triggerStrategy,
+        bool unboundedWindow = false);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -79,6 +66,11 @@ protected:
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
+
+    [[nodiscard]] std::vector<TupleBuffer>
+    getJoinStateOfSlices(const std::vector<std::shared_ptr<Slice>>& slices, JoinBuildSideType side) override;
+
+    [[nodiscard]] uint64_t getNumberOfTuples(const TupleBuffer& joinState) const override;
 };
 
 }

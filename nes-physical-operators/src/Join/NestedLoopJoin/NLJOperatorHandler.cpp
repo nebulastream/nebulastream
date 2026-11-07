@@ -41,9 +41,16 @@ NLJOperatorHandler::NLJOperatorHandler(
     SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
-    JoinTriggerStrategy triggerStrategy)
+    JoinTriggerStrategy triggerStrategy,
+    const bool unboundedWindow)
     : StreamJoinOperatorHandler(
-          std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
+          std::move(sourcesOfInputOrigins),
+          outputOriginId,
+          std::move(sliceAndWindowStore),
+          std::move(triggerStrategy),
+          /// No compaction: the nested-loop probe compares the new tuples with every old tuple however the old tuples are split
+          /// into paged vectors, so merging the vectors would copy every tuple O(log #slices) times without saving comparisons.
+          unboundedWindow ? std::make_unique<UnboundedJoinSegments>(false) : nullptr)
 {
 }
 
@@ -115,6 +122,29 @@ void NLJOperatorHandler::emitSlicesToProbe(
     new (tupleBuffer.getAvailableMemoryArea().data()) EmittedNLJWindowTrigger{windowInfo, leftSliceEnds, rightSliceEnds, probeTaskType};
 
     pipelineCtx->emitBuffer(tupleBuffer);
+}
+
+std::vector<TupleBuffer>
+NLJOperatorHandler::getJoinStateOfSlices(const std::vector<std::shared_ptr<Slice>>& slices, const JoinBuildSideType side)
+{
+    /// Moving the pages of all worker threads into one paged vector is cheap, and the slice is not shared yet
+    std::vector<TupleBuffer> pagedVectors;
+    for (const auto& slice : slices)
+    {
+        auto& nljSlice = dynamic_cast<NLJSlice&>(*slice);
+        nljSlice.combinePagedVectors();
+        const auto* pagedVector = nljSlice.getPagedVectorTupleBufferRef(WorkerThreadId(0), side);
+        if (PagedVector::load(*pagedVector).getTotalNumberOfRecords() > 0)
+        {
+            pagedVectors.emplace_back(*pagedVector);
+        }
+    }
+    return pagedVectors;
+}
+
+uint64_t NLJOperatorHandler::getNumberOfTuples(const TupleBuffer& joinState) const
+{
+    return PagedVector::load(joinState).getTotalNumberOfRecords();
 }
 
 }

@@ -81,6 +81,7 @@
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
+#include <WindowTypes/Types/UnboundedWindow.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <CommonParserFunctions.hpp>
@@ -1088,6 +1089,16 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
     /// We use the ingestion time if the query does not have a timestamp fieldname specified
     helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::SlidingWindow(timeMeasure, slidingLength)});
     AntlrSQLBaseListener::exitSlidingWindow(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitUnboundedWindow(AntlrSQLParser::UnboundedWindowContext* context)
+{
+    if (!helpers.top().isJoinRelation)
+    {
+        throw InvalidQuerySyntax("UNBOUNDED windows are only supported for joins");
+    }
+    helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::UnboundedWindow{}});
+    AntlrSQLBaseListener::exitUnboundedWindow(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)

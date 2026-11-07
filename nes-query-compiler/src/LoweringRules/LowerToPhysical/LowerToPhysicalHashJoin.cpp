@@ -365,8 +365,12 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    /// An unbounded window has no size; its slices are tumbling windows of the configured size, each triggered once and then kept
+    /// by the handler for all later slices to join with.
+    const bool unboundedWindow = windowType.isUnbounded();
+    const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
+    const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceSize, sliceSlide, conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider)
         {
@@ -410,7 +414,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     };
 
     auto handler = std::make_shared<HJOperatorHandler>(
-        std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+        std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy(), unboundedWindow);
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{
@@ -506,7 +510,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             rightTupleLayout,
             leftHashMapConfig,
             rightHashMapConfig,
-            residual));
+            residual,
+            unboundedWindow));
     }
 
     std::shared_ptr<PhysicalOperatorWrapper> leftLeaf = leftBuildWrapper;

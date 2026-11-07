@@ -27,15 +27,20 @@
 #include <WindowTypes/Types/IntervalWindow.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
+#include <WindowTypes/Types/UnboundedWindow.hpp>
 
 namespace NES::Windowing
 {
 
-/// A wrapper around a variant of tumbling and sliding time-based windows for convenience
+/// A wrapper around a variant of tumbling, sliding, and unbounded time-based windows for convenience
 struct TimeBasedWindowType
 {
-    explicit TimeBasedWindowType(std::variant<TumblingWindow, SlidingWindow, IntervalWindow> underlying);
-    /// @brief method to get the window size
+    using Underlying = std::variant<TumblingWindow, SlidingWindow, IntervalWindow, UnboundedWindow>;
+
+    explicit TimeBasedWindowType(Underlying underlying);
+    [[nodiscard]] bool isUnbounded() const;
+
+    /// @brief method to get the window size; an unbounded window has none
     /// @return size of window
     [[nodiscard]] TimeMeasure getSize() const;
 
@@ -44,10 +49,10 @@ struct TimeBasedWindowType
     [[nodiscard]] TimeMeasure getSlide() const;
     bool operator==(const TimeBasedWindowType& otherWindowType) const;
     friend std::ostream& operator<<(std::ostream& os, const TimeBasedWindowType& windowType);
-    [[nodiscard]] const std::variant<TumblingWindow, SlidingWindow, IntervalWindow>& getUnderlying() const;
+    [[nodiscard]] const Underlying& getUnderlying() const;
 
 private:
-    std::variant<TumblingWindow, SlidingWindow, IntervalWindow> underlying;
+    Underlying underlying;
 };
 }
 

@@ -30,6 +30,7 @@
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperatorBase.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
@@ -39,6 +40,8 @@
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -52,7 +55,8 @@ NLJInnerProbePhysicalOperator::NLJInnerProbePhysicalOperator(
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
-    std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames)
+    std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames,
+    const bool unboundedWindow)
     : NLJProbePhysicalOperatorBase(
           operatorHandlerId,
           std::move(joinFunction),
@@ -62,11 +66,18 @@ NLJInnerProbePhysicalOperator::NLJInnerProbePhysicalOperator(
           std::move(rightTupleLayout),
           std::move(leftKeyFieldNames),
           std::move(rightKeyFieldNames))
+    , unboundedWindow(unboundedWindow)
 {
 }
 
 void NLJInnerProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    if (unboundedWindow)
+    {
+        probeUnboundedWindow(executionCtx, recordBuffer);
+        return;
+    }
+
     /// Parse trigger buffer — for inner join, always 1 left + 1 right slice end
     const auto triggerRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto windowInfoRef = getMemberRef(triggerRef, &EmittedNLJWindowTrigger::windowInfo);
@@ -86,6 +97,36 @@ void NLJInnerProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, 
     const PagedVectorRef leftPagedVector(BorrowedNautilusBuffer::from(leftPagedVectorRef), leftTupleLayout);
     const PagedVectorRef rightPagedVector(BorrowedNautilusBuffer::from(rightPagedVectorRef), rightTupleLayout);
     performNLJSmallerSideOuter(leftPagedVector, rightPagedVector, executionCtx, windowStart, windowEnd);
+}
+
+void NLJInnerProbePhysicalOperator::probeUnboundedWindow(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer) const
+{
+    /// Both match-pairs tasks of an unbounded window join every left paged vector with every right one. The nested loop compares all
+    /// pairs anyway, so it does not matter which side holds the new tuples. The NLJ never compacts its state, see NLJOperatorHandler.
+    const auto triggerRef = static_cast<nautilus::val<EmittedJoinStateTrigger*>>(recordBuffer.getMemArea());
+    const auto leftNumberOfPagedVectors
+        = readValueFromMemRef<uint64_t>(getMemberRef(triggerRef, &EmittedJoinStateTrigger::leftNumberOfBuffers));
+    const auto rightNumberOfPagedVectors
+        = readValueFromMemRef<uint64_t>(getMemberRef(triggerRef, &EmittedJoinStateTrigger::rightNumberOfBuffers));
+    const auto windowInfoRef = getMemberRef(triggerRef, &EmittedJoinStateTrigger::windowInfo);
+    const auto windowStart = nautilus::val<Timestamp>{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
+    const auto windowEnd = nautilus::val<Timestamp>{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
+
+    /// Left paged vectors are the first child buffers, the right ones follow
+    const auto pagedVectors = BorrowedNautilusBuffer::from(recordBuffer.getReference());
+    for (nautilus::val<uint64_t> leftIndex = 0; leftIndex < leftNumberOfPagedVectors; ++leftIndex)
+    {
+        const auto leftPagedVectorBuffer = pagedVectors.getChild(leftIndex);
+        const BorrowedNautilusBuffer leftPagedVectorRef = leftPagedVectorBuffer;
+        const PagedVectorRef leftPagedVector(leftPagedVectorRef, leftTupleLayout);
+        for (nautilus::val<uint64_t> rightIndex = 0; rightIndex < rightNumberOfPagedVectors; ++rightIndex)
+        {
+            const auto rightPagedVectorBuffer = pagedVectors.getChild(leftNumberOfPagedVectors + rightIndex);
+            const BorrowedNautilusBuffer rightPagedVectorRef = rightPagedVectorBuffer;
+            const PagedVectorRef rightPagedVector(rightPagedVectorRef, rightTupleLayout);
+            performNLJSmallerSideOuter(leftPagedVector, rightPagedVector, executionCtx, windowStart, windowEnd);
+        }
+    }
 }
 
 }

@@ -111,6 +111,26 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{4096}};
 
+const ConfigField<uint64_t> UNBOUNDED_SLICE_SIZE_MS{
+    Identifier::parse("unbounded_slice_size_ms"),
+    "Event-time interval at which a join with an UNBOUNDED window emits new results. Smaller values lower the latency but "
+    "create more probe and compaction tasks.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t>)
+            .and_then(
+                [](const uint64_t value) -> std::expected<uint64_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{InvalidConfigParameter("unbounded_slice_size_ms must not be zero")};
+                    }
+                    return value;
+                });
+    },
+    uint64_t{1000}};
+
 const ConfigField<bool> NAUTILUS_PERF{
     Identifier::parse("nautilus_perf"),
     "Sets nautilus' perf option: compiled pipelines keep frame pointers, so `perf record -g` can walk through them, and write perf "
@@ -129,6 +149,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
+        UNBOUNDED_SLICE_SIZE_MS,
         COUNT_DISTINCT_NUMBER_OF_BUCKETS,
         NAUTILUS_PERF,
         SliceCacheConfiguration::getConfigSchema(),
@@ -142,6 +163,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(NUMBER_OF_PARTITIONS),
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
+        config.get(UNBOUNDED_SLICE_SIZE_MS),
         config.get(COUNT_DISTINCT_NUMBER_OF_BUCKETS),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),

@@ -17,6 +17,7 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <utility>
 #include <unordered_map>
 #include <vector>
 
@@ -60,6 +61,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
+#include <WindowTypes/Types/UnboundedWindow.hpp>
 
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Util/UUID.hpp>
@@ -855,6 +857,81 @@ TEST_F(DecideJoinTypesTest, SplitJoinFunctionSeparatesEquiKeysFromResidual)
         | std::ranges::to<std::vector>();
     EXPECT_EQ(residualComparisons.size(), 3);
     EXPECT_TRUE(residual->getDataType().isType(DataType::Type::BOOLEAN));
+}
+
+
+/// An UNBOUNDED window chooses the join implementation like a bounded one, but rejects outer joins.
+TEST_F(DecideJoinTypesTest, UnboundedWindowChoosesJoinByPredicateAndRejectsOuterJoins)
+{
+    using JT = JoinLogicalOperator::JoinType;
+    enum class Predicate : uint8_t
+    {
+        EQUALS,
+        LESS,
+        EQUALS_AND_LESS,
+        LESS_OF_SUM
+    };
+    const auto decide = [&](const Predicate predicate, const JT joinType, const StreamJoinStrategy strategy)
+    {
+        const auto leftSourceOp = SourceDescriptorLogicalOperator::create(
+            createSourceDescriptor(PhysicalSourceId{1}, createLogicalSource(Identifier::parse("LEFT_TEST"), createSchema("left"))));
+        const auto rightSourceOp = SourceDescriptorLogicalOperator::create(
+            createSourceDescriptor(PhysicalSourceId{2}, createLogicalSource(Identifier::parse("RIGHT_TEST"), createSchema("right"))));
+        const auto field = [](const LogicalOperator& source, const std::string& name)
+        { return FieldAccessLogicalFunction{source.getOutputSchema().getFieldByName(Identifier::parse(name)).value()}; };
+        const auto equals = EqualsLogicalFunction{field(leftSourceOp, "left_id"), field(rightSourceOp, "right_id")};
+        const auto less = LessLogicalFunction{field(leftSourceOp, "left_value"), field(rightSourceOp, "right_value")};
+        const auto joinFunction = [&]() -> LogicalFunction
+        {
+            switch (predicate)
+            {
+                case Predicate::EQUALS:
+                    return equals;
+                case Predicate::LESS:
+                    return less;
+                case Predicate::EQUALS_AND_LESS:
+                    return AndLogicalFunction{equals, less};
+                case Predicate::LESS_OF_SUM:
+                    return LessLogicalFunction{
+                        AddLogicalFunction{field(leftSourceOp, "left_value"), field(leftSourceOp, "left_value")},
+                        field(rightSourceOp, "right_value")};
+            }
+            std::unreachable();
+        }();
+        const auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+            {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+             Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+        const auto joinOp = JoinLogicalOperator::create(
+            std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+            joinFunction,
+            Windowing::TimeBasedWindowType{Windowing::UnboundedWindow{}},
+            joinType,
+            characteristics.value());
+        const auto leftNullable = joinType == JT::OUTER_RIGHT_JOIN || joinType == JT::OUTER_FULL_JOIN;
+        const auto rightNullable = joinType == JT::OUTER_LEFT_JOIN || joinType == JT::OUTER_FULL_JOIN;
+        const auto sinkOp = SinkLogicalOperator::create(
+            joinOp, createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(leftNullable, rightNullable)));
+        const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+
+        const auto joins = getOperatorByType<JoinLogicalOperator>(DecideJoinTypesRule(strategy).apply(plan));
+        INVARIANT(joins.size() == 1, "Expected exactly one join");
+        return joins[0]->getTraitSet().get<JoinImplementationTypeTrait>()->implementationType;
+    };
+
+    constexpr auto chooses = StreamJoinStrategy::OPTIMIZER_CHOOSES;
+    EXPECT_EQ(decide(Predicate::EQUALS, JT::INNER_JOIN, chooses), JoinImplementation::HASH_JOIN);
+    EXPECT_EQ(decide(Predicate::LESS, JT::INNER_JOIN, chooses), JoinImplementation::INDEX_NESTED_LOOP_JOIN);
+    EXPECT_EQ(decide(Predicate::EQUALS_AND_LESS, JT::INNER_JOIN, chooses), JoinImplementation::HASH_JOIN);
+    EXPECT_EQ(decide(Predicate::LESS_OF_SUM, JT::INNER_JOIN, chooses), JoinImplementation::NESTED_LOOP_JOIN);
+    EXPECT_EQ(decide(Predicate::EQUALS, JT::INNER_JOIN, StreamJoinStrategy::NESTED_LOOP_JOIN), JoinImplementation::NESTED_LOOP_JOIN);
+    EXPECT_EQ(decide(Predicate::LESS, JT::INNER_JOIN, StreamJoinStrategy::HASH_JOIN), JoinImplementation::INDEX_NESTED_LOOP_JOIN);
+    for (const auto joinType : {JT::OUTER_LEFT_JOIN, JT::OUTER_RIGHT_JOIN, JT::OUTER_FULL_JOIN})
+    {
+        for (const auto predicate : {Predicate::EQUALS, Predicate::LESS, Predicate::EQUALS_AND_LESS})
+        {
+            ASSERT_EXCEPTION_ERRORCODE(decide(predicate, joinType, chooses), ErrorCode::UnsupportedQuery);
+        }
+    }
 }
 
 }

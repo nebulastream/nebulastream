@@ -174,8 +174,13 @@ LoweringRuleResultSubgraph LowerToPhysicalINLJoin::apply(LogicalOperator logical
         = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(timeCharacteristics);
 
     const auto windowType = join->getWindowType();
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    /// An unbounded window has no size; its slices are tumbling windows of the configured size, each triggered once and then kept
+    /// by the handler for all later slices to join with. Only inner joins can be unbounded, see DecideJoinTypesRule.
+    const bool unboundedWindow = windowType.isUnbounded();
+    PRECONDITION(not unboundedWindow or not isOuterJoin(join->getJoinType()), "An UNBOUNDED window does not support outer joins");
+    const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
+    const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceSize, sliceSlide, conf.sliceCacheConfiguration);
     const auto createSliceStoreRef = [&](const JoinBuildSideType side)
     {
         return sliceAndWindowStore->createSliceStoreRef(
@@ -212,7 +217,7 @@ LoweringRuleResultSubgraph LowerToPhysicalINLJoin::apply(LogicalOperator logical
         throw UnknownJoinStrategy("Unsupported INLJ join type");
     };
     auto handler = std::make_shared<INLJOperatorHandler>(
-        std::move(sourcesOfInputOrigins), (*outputOriginIds)[0], std::move(sliceAndWindowStore), createTriggerStrategy());
+        std::move(sourcesOfInputOrigins), (*outputOriginIds)[0], std::move(sliceAndWindowStore), createTriggerStrategy(), unboundedWindow);
 
     const INLJBuildPhysicalOperator leftBuild{
         handlerId,
@@ -288,7 +293,8 @@ LoweringRuleResultSubgraph LowerToPhysicalINLJoin::apply(LogicalOperator logical
             joinSchema,
             leftTupleLayout,
             rightTupleLayout,
-            condition});
+            condition,
+            unboundedWindow});
     }
     return {.root = {probeWrapper}, .leaves = {leftBuildWrapper, rightBuildWrapper}};
 }

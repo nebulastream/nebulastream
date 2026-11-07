@@ -1,0 +1,90 @@
+# name: explain/UnboundedJoinOptimizer.test
+# description: Verifies which join implementation the optimizer selects for an inner join with an UNBOUNDED window. The
+# join_strategy=NESTED_LOOP_JOIN runs choose the nested-loop join for every predicate, hence HashJoinOnly.
+# groups: [explain, Join, HashJoinOnly]
+
+CREATE LOGICAL SOURCE leftStream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR leftStream TYPE File;
+ATTACH INLINE
+1,2,1000
+
+CREATE LOGICAL SOURCE rightStream(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rightStream TYPE File;
+ATTACH INLINE
+2,3,1000
+
+# Equality is a hash join.
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id = id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: HASH_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id = id2 AND value = value2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: HASH_JOIN</REGEX>
+==END==
+# A single range comparison between two numeric, non-nullable fields is an index nested-loop join.
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id < id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id <= id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id > id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id >= id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON timestamp2 >= timestamp
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+# Any other predicate falls back to the nested-loop join.
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id != id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id + 1 < id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id < id2 AND value > value2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: NESTED_LOOP_JOIN</REGEX>
+==END==
+# Equality with a range residual, as in Nexmark q4 and q9, is a hash join on the equality that checks the range on every match.
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id = id2 AND timestamp2 >= timestamp AND timestamp2 <= timestamp + 1000
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: HASH_JOIN</REGEX>
+==END==
+# Outer joins are rejected for an unbounded window, whatever the predicate.
+SELECT * FROM (SELECT * FROM leftStream) LEFT OUTER JOIN (SELECT * FROM rightStream) ON id < id2
+WINDOW UNBOUNDED (timestamp, timestamp2) INTO File();
+----
+ERROR 2008

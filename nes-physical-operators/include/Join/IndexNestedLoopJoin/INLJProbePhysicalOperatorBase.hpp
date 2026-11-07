@@ -19,6 +19,7 @@
 #include <Schema/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/BTree/BTreeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/IndexNestedLoopJoin/INLJJoinCondition.hpp>
@@ -67,6 +68,26 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
+    /// Unbounded window: iterates the trees of one side and looks each record up in all trees of the other side. The trees are
+    /// child buffers of the task buffer, see EmittedJoinStateTrigger. Looking up in the left trees requires the left comparator.
+    void performUnboundedMatchPairsProbe(
+        const BorrowedNautilusBuffer& trees,
+        const nautilus::val<uint64_t>& leftNumberOfTrees,
+        const nautilus::val<uint64_t>& rightNumberOfTrees,
+        ExecutionContext& executionCtx,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd,
+        bool iterateLeft) const;
+
+    /// Unbounded window, COMPACT task: merges the left trees into one tree and the right trees into one tree and publishes both to
+    /// the operator handler. Requires the left comparator.
+    void performUnboundedCompaction(
+        const BorrowedNautilusBuffer& trees,
+        const nautilus::val<uint64_t>& leftNumberOfTrees,
+        const nautilus::val<uint64_t>& rightNumberOfTrees,
+        const nautilus::val<uint64_t>& segmentId,
+        ExecutionContext& executionCtx) const;
+
     std::shared_ptr<BTreeTupleLayout> leftTupleLayout;
     std::shared_ptr<BTreeTupleLayout> rightTupleLayout;
     INLJJoinCondition condition;
@@ -74,6 +95,14 @@ protected:
     std::vector<Record::RecordFieldIdentifier> rightFields;
 
 private:
+    OwnedNautilusBuffer mergeTrees(
+        const BorrowedNautilusBuffer& trees,
+        const nautilus::val<uint64_t>& firstChild,
+        const nautilus::val<uint64_t>& numberOfTrees,
+        const std::shared_ptr<BTreeTupleLayout>& tupleLayout,
+        const BTreeComparator& comparator,
+        ExecutionContext& executionCtx) const;
+
     mutable std::vector<std::shared_ptr<BTreeComparator>> comparators;
     mutable BTreeComparator* activeLeftComparator = nullptr;
     mutable BTreeComparator* activeRightComparator = nullptr;

@@ -18,11 +18,15 @@
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/BTree/BTreeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/IndexNestedLoopJoin/INLJJoinCondition.hpp>
 #include <Join/IndexNestedLoopJoin/INLJProbePhysicalOperatorBase.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Time/Timestamp.hpp>
+#include <ExecutionContext.hpp>
+#include <val.hpp>
 
 namespace NES
 {
@@ -37,8 +41,8 @@ public:
         const JoinSchema& joinSchema,
         std::shared_ptr<BTreeTupleLayout> leftTupleLayout,
         std::shared_ptr<BTreeTupleLayout> rightTupleLayout,
-        INLJJoinCondition condition);
-
+        INLJJoinCondition condition,
+        bool unboundedWindow = false);
 
     static constexpr bool supportsJoinType(const JoinLogicalOperator::JoinType joinType) noexcept
     {
@@ -47,6 +51,30 @@ public:
 
 protected:
     void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
+private:
+    void probeUnboundedWindow(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer) const;
+
+    /// Each task type of an unbounded window gets its own function. Calling one shared function with different arguments from the
+    /// arms of the traced branch on the task type would let the host compiler merge the calls, and nautilus would then trace both
+    /// arms as one in compiled mode.
+    [[gnu::noinline]] void probeUnboundedIteratingLeft(
+        ExecutionContext& executionCtx,
+        const BorrowedNautilusBuffer& trees,
+        const nautilus::val<uint64_t>& leftNumberOfTrees,
+        const nautilus::val<uint64_t>& rightNumberOfTrees,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const;
+    [[gnu::noinline]] void probeUnboundedIteratingRight(
+        ExecutionContext& executionCtx,
+        const BorrowedNautilusBuffer& trees,
+        const nautilus::val<uint64_t>& leftNumberOfTrees,
+        const nautilus::val<uint64_t>& rightNumberOfTrees,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const;
+
+    /// An unbounded window emits other task buffers, so the probe traces the code for one of the two
+    bool unboundedWindow;
 };
 
 }

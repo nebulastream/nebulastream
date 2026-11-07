@@ -37,6 +37,7 @@ struct QueryExecutionConfiguration
         uint64_t numberOfPartitions,
         uint64_t numberOfRecordsPerKey,
         uint64_t operatorBufferSize,
+        uint64_t unboundedSliceSizeMs,
         uint64_t countDistinctNumberOfBuckets,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
@@ -45,6 +46,7 @@ struct QueryExecutionConfiguration
         , numberOfPartitions(numberOfPartitions)
         , numberOfRecordsPerKey(numberOfRecordsPerKey)
         , operatorBufferSize(operatorBufferSize)
+        , unboundedSliceSizeMs(unboundedSliceSizeMs)
         , countDistinctNumberOfBuckets(countDistinctNumberOfBuckets)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
@@ -56,6 +58,7 @@ struct QueryExecutionConfiguration
     uint64_t numberOfPartitions;
     uint64_t numberOfRecordsPerKey;
     uint64_t operatorBufferSize;
+    uint64_t unboundedSliceSizeMs;
     uint64_t countDistinctNumberOfBuckets;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
