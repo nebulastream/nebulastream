@@ -42,6 +42,7 @@
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <Util/RowKind.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
@@ -383,8 +384,10 @@ pushBeyondWindowedAggregation(const TypedLogicalOperator<WindowedAggregationLogi
     {
         auto isStart = field.getLastName() == Identifier::parse("start");
         auto isEnd = field.getLastName() == Identifier::parse("end");
+        /// An unbounded aggregation generates the row kind of its changelog.
+        auto isRowKind = op->getWindowType().isUnbounded() and field.getLastName() == rowKindIdentifier();
 
-        if (isStart || isEnd)
+        if (isStart || isEnd || isRowKind)
         {
             /// If start/end value not available in child, they are generated automatically
             if (auto newField = op->getChild().getOutputSchema()[field.getLastName()])

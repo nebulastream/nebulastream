@@ -1096,10 +1096,7 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
 
 void AntlrSQLQueryPlanCreator::exitUnboundedWindow(AntlrSQLParser::UnboundedWindowContext* context)
 {
-    if (!helpers.top().isJoinRelation)
-    {
-        throw InvalidQuerySyntax("UNBOUNDED windows are only supported for joins");
-    }
+    /// A join keeps all its state and emits every match once; an aggregation keeps one state per key and emits a changelog of it.
     helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::UnboundedWindow{}});
     AntlrSQLBaseListener::exitUnboundedWindow(context);
 }

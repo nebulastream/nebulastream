@@ -97,6 +97,7 @@ void WindowProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
     {
         probeWindow(executionCtx, recordBuffer);
     }
+    afterBuffer(executionCtx, recordBuffer);
 }
 
 void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

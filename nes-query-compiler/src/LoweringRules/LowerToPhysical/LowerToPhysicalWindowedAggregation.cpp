@@ -74,6 +74,9 @@
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <WindowBasedOperatorHandler.hpp>
+#include <Aggregation/UnboundedAggregationOperatorHandler.hpp>
+#include <Aggregation/UnboundedAggregationProbePhysicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {
@@ -148,6 +151,15 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto handlerId = getNextOperatorHandlerId();
     auto timeFunction = TimeFunction::create(std::get<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic()));
     auto windowType = aggregation->getWindowType();
+    /// An unbounded window has no size: its tumbling slices of the configured size only batch the changelog the aggregation emits.
+    /// Late records go to the earliest slice that has not been triggered, as they only change when their update is emitted.
+    const bool unboundedWindow = windowType.isUnbounded();
+    if (unboundedWindow)
+    {
+        timeFunction = std::make_unique<WatermarkClampedTimeFunction>(std::move(timeFunction));
+    }
+    const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
+    const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
 
     const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
@@ -200,8 +212,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         .fieldValues = fieldValues,
         .hashFunction = std::make_shared<MurMur3HashFunction>()};
 
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceSize, sliceSlide, conf.sliceCacheConfiguration);
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider) -> const TupleBuffer*
         {
@@ -217,10 +228,20 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         });
     const AggregationBuildPhysicalOperator build{
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
-    const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
-
-    auto handler = std::make_shared<AggregationOperatorHandler>(
-        traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling), outputOriginId, std::move(sliceAndWindowStore));
+    auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling);
+    const auto [probe, handler] = [&]() -> std::pair<PhysicalOperator, std::shared_ptr<AggregationOperatorHandler>>
+    {
+        if (unboundedWindow)
+        {
+            return {
+                UnboundedAggregationProbePhysicalOperator{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData},
+                std::make_shared<UnboundedAggregationOperatorHandler>(
+                    std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore))};
+        }
+        return {
+            AggregationProbePhysicalOperator{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData},
+            std::make_shared<AggregationOperatorHandler>(std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore))};
+    }();
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

@@ -178,8 +178,8 @@ LoweringRuleResultSubgraph LowerToPhysicalINLJoin::apply(LogicalOperator logical
     /// by the handler for all later slices to join with. Only inner joins can be unbounded, see DecideJoinTypesRule.
     const bool unboundedWindow = windowType.isUnbounded();
     PRECONDITION(not unboundedWindow or not isOuterJoin(join->getJoinType()), "An UNBOUNDED window does not support outer joins");
-    const auto sliceSize = unboundedWindow ? conf.unboundedJoinSliceSizeMs : windowType.getSize().getTime();
-    const auto sliceSlide = unboundedWindow ? conf.unboundedJoinSliceSizeMs : windowType.getSlide().getTime();
+    const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
+    const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceSize, sliceSlide, conf.sliceCacheConfiguration);
     const auto createSliceStoreRef = [&](const JoinBuildSideType side)
     {

@@ -1,0 +1,91 @@
+# name: changelog/UnboundedAggregation.test
+# description: An aggregation with WINDOW UNBOUNDED(ts) keeps the state of every key forever and emits a retract changelog of
+#              it. Its slices (unbounded_slice_size_ms, 1 s by default) batch the updates: per slice, a new key emits +I, and a
+#              known key emits -U with its previous and +U with its new aggregates.
+# groups: [Changelog, Aggregation]
+
+CREATE LOGICAL SOURCE stream(k UINT64 NOT NULL, v UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,100
+2,5,200
+1,3,1500
+1,4,1600
+3,1,2500
+2,2,3500
+
+CREATE SINK sumCount(k UINT64 NOT NULL, total UINT64 NOT NULL, cnt UINT64 NOT NULL) TYPE File;
+CREATE SINK sumOnly(total UINT64 NOT NULL) TYPE File;
+
+# Slice [0 s, 1 s) inserts keys 1 and 2, [1 s, 2 s) updates key 1, [2 s, 3 s) inserts key 3 and [3 s, 4 s) updates key 2.
+SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM stream GROUP BY k WINDOW UNBOUNDED(ts) INTO sumCount;
+---- CHANGELOG
++I,1,10,1
++I,2,5,1
+-U,1,10,1
++U,1,17,3
++I,3,1,1
+-U,2,5,1
++U,2,7,2
+
+# The final table of the same changelog.
+SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM stream GROUP BY k WINDOW UNBOUNDED(ts) INTO sumCount;
+----
+1,17,3
+2,7,2
+3,1,1
+
+# Without a key, the aggregation has a single row that every slice updates.
+# The source has no unused field: a projection below the watermark assigner runs in its own pipeline, whose output buffers carry
+# the watermark of their whole content, so all records of such a buffer would go to the same slice.
+CREATE LOGICAL SOURCE values(v UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR values TYPE File;
+ATTACH INLINE
+10,100
+5,200
+3,1500
+4,1600
+1,2500
+2,3500
+
+SELECT SUM(v) AS total FROM values WINDOW UNBOUNDED(ts) INTO sumOnly;
+---- CHANGELOG
++I,15
+-U,15
++U,22
+-U,22
++U,23
+-U,23
++U,25
+
+# A selection and a projection on the changelog keep the row kind.
+SELECT k, total, cnt FROM (SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM stream GROUP BY k WINDOW UNBOUNDED(ts)) WHERE total > 6 INTO sumCount;
+---- CHANGELOG
++I,1,10,1
+-U,1,10,1
++U,1,17,3
++U,2,7,2
+
+# A record behind the watermark joins the earliest slice that has not been triggered: the record of key 4 at 0.5 s arrives after the
+# watermark reached 1.5 s and is emitted together with the slice [1 s, 2 s).
+CREATE LOGICAL SOURCE late(k UINT64 NOT NULL, v UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR late TYPE File;
+ATTACH INLINE
+1,10,100
+1,3,1500
+4,7,500
+1,1,2500
+
+SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM late GROUP BY k WINDOW UNBOUNDED(ts) INTO sumCount;
+---- CHANGELOG
++I,1,10,1
+-U,1,10,1
++U,1,13,2
++I,4,7,1
+-U,1,13,2
++U,1,14,3
+
+# Windowed operators still reject an updating input, including a second unbounded aggregation (until retractions are supported).
+SELECT total, COUNT(k) AS keys FROM (SELECT k, SUM(v) AS total FROM stream GROUP BY k WINDOW UNBOUNDED(ts)) GROUP BY total WINDOW UNBOUNDED(total) INTO FILE ();
+----
+ERROR 2008

@@ -46,7 +46,7 @@ struct EmittedAggregationWindow
     uint64_t numberOfHashMaps;
 };
 
-class AggregationOperatorHandler final : public WindowBasedOperatorHandler
+class AggregationOperatorHandler : public WindowBasedOperatorHandler
 {
 public:
     AggregationOperatorHandler(

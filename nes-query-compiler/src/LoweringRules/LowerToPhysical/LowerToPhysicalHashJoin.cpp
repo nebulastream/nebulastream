@@ -347,8 +347,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     /// An unbounded window has no size; its slices are tumbling windows of the configured size, each triggered once and then kept
     /// by the handler for all later slices to join with.
     const bool unboundedWindow = windowType.isUnbounded();
-    const auto sliceSize = unboundedWindow ? conf.unboundedJoinSliceSizeMs : windowType.getSize().getTime();
-    const auto sliceSlide = unboundedWindow ? conf.unboundedJoinSliceSizeMs : windowType.getSlide().getTime();
+    const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
+    const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceSize, sliceSlide, conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider)
