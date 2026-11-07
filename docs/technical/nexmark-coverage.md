@@ -54,7 +54,7 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q0 | Pass-through | Calc | ✅ | |
 | q1 | Currency conversion | Calc | ✅ | `price * 0.908` as FLOAT64 (Flink: DECIMAL) |
 | q2 | Selection | Calc | ✅ | |
-| q3 | Local item suggestion | regular join | ✅ | Stream-table join `auction ⋈ TABLE person`. Without `TIME`, stream rows wait for table EOS, which equals a regular join on bounded input. |
+| q3 | Local item suggestion | regular join | ✅ | Unbounded inner hash join `auction ⋈ person WINDOW UNBOUNDED`. |
 | q4 | Avg price per category | regular join → unbounded GROUP BY → AVG over retractions | 🟡 | A 10 s tumbling-window approximation runs (§5). True semantics need the changelog model. |
 | q5 | Hot items | HOP window, max, window join | ✅ | Rewrite: a 2 s tumbling join over window starts (slide = 2 s) |
 | q6 | Avg selling price by seller | not supported by Flink | — | excluded |
@@ -71,10 +71,10 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q17 | Auction statistics | unbounded GROUP BY (auction, day) | 🔴 | FILTER, DATE_FORMAT; unbounded aggregation |
 | q18 | Find last bid | dedup (keep last) | 🔴 | Dedup/Top-N |
 | q19 | Auction Top-10 | Rank | 🔴 | Top-N |
-| q20 | Expand bid with auction | regular join | ✅ | Stream-table join `bid ⋈ TABLE auction` |
+| q20 | Expand bid with auction | regular join | ✅ | Unbounded inner hash join `bid ⋈ auction WINDOW UNBOUNDED` |
 | q21 | Add channel id | Calc, LOWER, REGEXP_EXTRACT, CASE, IN | ✅ | `LOWER`, `REGEXP_EXTRACT` (std::regex), `CASE WHEN`, `IN` |
 | q22 | URL directories | Calc, SPLIT_INDEX | ✅ | `SPLIT_INDEX` |
-| q23 | bid × person × auction | two regular joins | ✅ | Two nested stream-table joins |
+| q23 | bid × person × auction | two regular joins | ✅ | Two nested unbounded joins. The second uses the later of bid and person time as its event time, since the first join's output timestamps lag its watermark. |
 
 Day-level aggregations (q15–q17) produce one final row per day in batch Flink. A 1-day tumbling window would reproduce the final values, but not the per-event updates Flink emits in streaming mode. That only makes sense as a clearly labeled variant.
 
@@ -121,7 +121,8 @@ All picked onto current main as separate commits, with the original authorship k
 | Index nested-loop join + record-aware B-tree (+ keyed compiled-function cache, stack allocation) | `ls/inlj` | registry entries, probe `probeWindow`, schema headers, const buffers. The per-file optimizer systest config was not ported. Includes the lowerBound fix above. |
 | `CASE WHEN … END` | demo `e53d092cf9` | unchanged |
 | Interval join (`INTERVAL (tsL, tsR, lo, hi)`) | PR #1764 (9 commits) | slice-store rename redone over the tree; cache-miss ordering fix carried into the template; probe `probeWindow`; raw-value proxies; EOS watermark |
-| Stream-table and ASOF joins (`JOIN TABLE`, `ASOF JOIN`) | demo `8f1df7a8a2` | grammar merged with INTERVAL; compiled terminate through `CompilationContext` |
+| Stream-table and ASOF joins (`JOIN TABLE`, `ASOF JOIN`) | demo `8f1df7a8a2` | grammar merged with INTERVAL; compiled terminate through `CompilationContext`; end-of-stream flush now carries an infinite watermark |
+| Unbounded inner hash join (`WINDOW UNBOUNDED`) | `claude/nes-inner-join-nexmark-q3-5c6fd7` | window-type variant merged with `IntervalWindow`; slice-store rename and source-origin tracing from PR 2145 |
 | HOUR/HOUR_OF, DATE_FORMAT, REPLACE, LOWER, SPLIT_INDEX, REGEXP_EXTRACT; `''` literal | new | follow Flink except edge cases: REPLACE with an empty search string, SPLIT_INDEX with an empty delimiter, ASCII-only LOWER, no text month names in DATE_FORMAT |
 
 Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other commits.
@@ -132,7 +133,7 @@ Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other 
 
 ### Small (in progress or next)
 - **Hash join with a residual predicate** (in progress separately). It fixes the q4/q9 join form, and joins like q4 no longer need the WHERE rewrite.
-- **Hash index for the stream-table join's equality keys** (q13, and q3/q20/q23 at scale).
+- **Hash index for the stream-table join's equality keys** (q13).
 - **COUNT(DISTINCT)** and **`FILTER (WHERE …)`**. FILTER can be lowered to aggregates over a conditional. These are needed for q15–q17.
 - **Session windows** (q11): a slice assigner with per-key merging.
 - **Systest fixes:** row comparison with spaces; multiple `-t` paths.
@@ -142,7 +143,7 @@ Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other 
 - **Changelog model:** a row kind (`+I/-U/+U/-D`) carried through operators and sinks, at least upsert-keyed. Every Flink query with unbounded state needs it for streaming semantics (q4, q9, q15–q19).
 - **Unbounded keyed aggregation** with retraction-aware aggregates (MIN/MAX over retractions need multiset state). Needed for q4, q15–q17.
 - **Top-N / ROW_NUMBER / deduplication** operators (q9, q18, q19).
-- **Regular stream-stream joins with state TTL.** Stream-table joins cover q3, q13, q20 and q23 on bounded input, but are asymmetric and keep the table forever.
+- **State TTL for regular joins.** `WINDOW UNBOUNDED` covers q3, q20 and q23, but keeps all state forever and supports inner equi-joins only. Outer regular joins and a residual range predicate (q4, q9) are still missing.
 - **State beyond memory** (Flink uses RocksDB): spilling for unbounded keyed state and large window state (q7 at 1M already hits the buffer pool).
 - **An in-process Nexmark generator source and a throughput/cores harness**, for numbers comparable to Flink's.
 - A cheaper alternative for q4/q9 only: an aggregation that closes each key at a data-driven deadline (`expires`), which stays append-only.

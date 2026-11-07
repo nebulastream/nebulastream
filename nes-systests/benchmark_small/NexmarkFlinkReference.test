@@ -97,13 +97,14 @@ SELECT auction, price FROM bid WHERE auction % 123 = 0 INTO q2Sink;
 1476,842
 1599,740
 
-# Query 3: local item suggestion. Flink runs a regular join; a stream-table join without TIME holds the auctions
-# until the person input ends, which yields the same pairs on bounded input.
+# Query 3: local item suggestion. Flink runs a regular join, which is WINDOW UNBOUNDED in NES: every pair over the
+# whole history of both inputs.
 # reference: q3 --checksum
 SELECT name, city, state, aid AS id
-FROM (SELECT id AS aid, seller FROM auction WHERE category = 10)
-INNER JOIN TABLE (SELECT id AS pid, name, city, state FROM person WHERE state = 'OR' OR state = 'ID' OR state = 'CA')
+FROM (SELECT id AS aid, seller, dateTime AS aTime FROM auction WHERE category = 10)
+INNER JOIN (SELECT id AS pid, name, city, state, dateTime AS pTime FROM person WHERE state = 'OR' OR state = 'ID' OR state = 'CA')
 ON seller = pid
+WINDOW UNBOUNDED (aTime, pTime)
 INTO q3Sink;
 ----
 62 153461
@@ -246,9 +247,10 @@ INTO q14Sink;
 # reference: q20 --checksum
 SELECT auction, bidder, price, channel, url, bDateTime, bExtra, itemName, description, initialBid, reserve, aDateTime, expires, seller, category, aExtra
 FROM (SELECT auction, bidder, price, channel, url, dateTime AS bDateTime, extra AS bExtra FROM bid)
-INNER JOIN TABLE (SELECT id, itemName, description, initialBid, reserve, dateTime AS aDateTime, expires, seller, category, extra AS aExtra
-                  FROM auction WHERE category = 10)
+INNER JOIN (SELECT id, itemName, description, initialBid, reserve, dateTime AS aDateTime, expires, seller, category, extra AS aExtra
+            FROM auction WHERE category = 10)
 ON auction = id
+WINDOW UNBOUNDED (bDateTime, aDateTime)
 INTO q20Sink;
 ----
 2603 184644721
@@ -277,17 +279,22 @@ INTO q22Sink;
 ----
 9200 29058608
 
-# Query 23: bid x person x auction (two regular joins in Flink).
+# Query 23: bid x person x auction (two regular joins in Flink). A row of the first unbounded join is emitted when
+# the later of its two inputs arrives, so the second join uses the later timestamp as its event time; bidTime alone
+# would lie behind the first join's watermark.
 # reference: q23 --checksum
 SELECT bidder, price, channel, url, bidExtra, personId, name, emailAddress, creditCard, city, state, personExtra,
        itemName, description, initialBid, reserve, auctionDateTime, expires, seller, category, auctionExtra
-FROM (SELECT *
-      FROM (SELECT bidder, price, channel, url, extra AS bidExtra FROM bid)
-      INNER JOIN TABLE (SELECT id AS personId, name, emailAddress, creditCard, city, state, extra AS personExtra FROM person)
-      ON bidder = personId)
-INNER JOIN TABLE (SELECT itemName, description, initialBid, reserve, dateTime AS auctionDateTime, expires, seller, category, extra AS auctionExtra
-                  FROM auction)
+FROM (SELECT bidder, price, channel, url, bidExtra, personId, name, emailAddress, creditCard, city, state, personExtra,
+             CASE WHEN bidTime > personTime THEN bidTime ELSE personTime END AS joinTime
+      FROM (SELECT bidder, price, channel, url, extra AS bidExtra, dateTime AS bidTime FROM bid)
+      INNER JOIN (SELECT id AS personId, name, emailAddress, creditCard, city, state, extra AS personExtra, dateTime AS personTime FROM person)
+      ON bidder = personId
+      WINDOW UNBOUNDED (bidTime, personTime))
+INNER JOIN (SELECT itemName, description, initialBid, reserve, dateTime AS auctionDateTime, expires, seller, category, extra AS auctionExtra
+            FROM auction)
 ON seller = bidder
+WINDOW UNBOUNDED (joinTime, auctionDateTime)
 INTO q23Sink;
 ----
 33564 2888672196
