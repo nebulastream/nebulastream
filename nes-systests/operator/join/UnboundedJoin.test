@@ -1213,7 +1213,7 @@ INTO sinkFullOuter;
 ----
 ERROR 2008
 
-# An unbounded window is only supported for joins
-SELECT id, COUNT(value) AS cnt FROM leftStream GROUP BY id WINDOW UNBOUNDED (timestamp) INTO sinkJoin;
+# An unbounded join window needs the time fields of both inputs (aggregations: see changelog/UnboundedAggregation.test)
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id = id2 WINDOW UNBOUNDED (timestamp) INTO sinkJoin;
 ----
 ERROR 2000
