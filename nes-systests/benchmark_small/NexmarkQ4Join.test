@@ -1,0 +1,26 @@
+# name: benchmark_small/NexmarkQ4Join.test
+# description: The join of Nexmark q4 and q9: every bid joined with its auction if it arrives between the auction's start and
+#   expiry, over the whole history of both streams. Flink runs it as a regular join, which is WINDOW UNBOUNDED in NES. The
+#   predicate is an equality plus a range residual, so the optimizer chooses the nested-loop join. q4 and q9 then aggregate
+#   the joined rows per auction over the whole stream, which NES does not support yet. Input: the 10k events of
+#   NexmarkFlinkReference.test. The expected count and checksum come from a Python oracle over the input files.
+# groups: [benchmark, benchmark_small, Nexmark, Join]
+
+CREATE LOGICAL SOURCE auction(id INT64 NOT NULL, itemName VARSIZED NOT NULL, description VARSIZED NOT NULL, initialBid INT64 NOT NULL, reserve INT64 NOT NULL, dateTime UINT64 NOT NULL, expires UINT64 NOT NULL, seller INT64 NOT NULL, category INT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE small/nexmark/flink_10k/auction.csv
+
+CREATE LOGICAL SOURCE bid(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE small/nexmark/flink_10k/bid.csv
+
+CREATE SINK q4JoinSink(id INT64 NOT NULL, category INT64 NOT NULL, aTime UINT64 NOT NULL, expires UINT64 NOT NULL, auction INT64 NOT NULL, price INT64 NOT NULL, bTime UINT64 NOT NULL) TYPE Checksum;
+
+SELECT id, category, aTime, expires, auction, price, bTime
+FROM (SELECT id, category, dateTime AS aTime, expires FROM auction)
+INNER JOIN (SELECT auction, price, dateTime AS bTime FROM bid)
+ON id = auction AND bTime >= aTime AND bTime <= expires
+WINDOW UNBOUNDED (aTime, bTime)
+INTO q4JoinSink;
+----
+6816,20499705

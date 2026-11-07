@@ -1,0 +1,21 @@
+# name: benchmark_small/NexmarkQ3.test
+# description: Nexmark Q3 (local item suggestion), an inner join over the whole history of both streams
+# groups: [benchmark, benchmark_small, Join]
+
+CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32, initialbid INT32, reserve INT32, expires UINT64, seller INT32, category INT32);
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE small/nexmark/auction_100K.csv
+
+CREATE LOGICAL SOURCE person(id INT32, name VARSIZED, email_address VARSIZED, credit_card VARSIZED, city VARSIZED, state VARSIZED, timestamp UINT64 NOT NULL, extra VARSIZED);
+CREATE PHYSICAL SOURCE FOR person TYPE File;
+ATTACH FILE small/nexmark/person_100K.csv
+
+CREATE SINK q3Checksum(name VARSIZED, city VARSIZED, state VARSIZED, auction_id INT32) TYPE Checksum;
+
+SELECT name, city, state, auction_id
+FROM (SELECT id AS person_id, name, city, state, timestamp AS person_ts FROM person WHERE state = 'or' OR state = 'id' OR state = 'ca')
+INNER JOIN (SELECT id AS auction_id, seller, timestamp AS auction_ts FROM auction WHERE category = 10)
+ON seller = person_id WINDOW UNBOUNDED (person_ts, auction_ts)
+INTO q3Checksum;
+----
+193 490240
