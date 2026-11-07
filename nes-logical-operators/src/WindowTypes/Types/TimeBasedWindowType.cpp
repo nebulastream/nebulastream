@@ -31,8 +31,7 @@
 
 namespace NES::Windowing
 {
-TimeBasedWindowType::TimeBasedWindowType(std::variant<TumblingWindow, SlidingWindow, IntervalWindow> underlying)
-    : underlying(std::move(underlying))
+TimeBasedWindowType::TimeBasedWindowType(Underlying underlying) : underlying(std::move(underlying))
 {
 }
 
@@ -44,9 +43,18 @@ std::ostream& operator<<(std::ostream& os, const TimeBasedWindowType& windowType
     return os;
 }
 
+bool TimeBasedWindowType::isUnbounded() const
+{
+    return std::holds_alternative<UnboundedWindow>(underlying);
+}
+
 TimeMeasure TimeBasedWindowType::getSize() const
 {
-    return std::visit([](const auto& window) { return window.getSize(); }, underlying);
+    return std::visit(
+        Overloaded{
+            [](const UnboundedWindow&) -> TimeMeasure { throw UnknownWindowType("An unbounded window has no size"); },
+            [](const auto& window) { return window.getSize(); }},
+        underlying);
 }
 
 TimeMeasure TimeBasedWindowType::getSlide() const
@@ -55,11 +63,12 @@ TimeMeasure TimeBasedWindowType::getSlide() const
         Overloaded{
             [](const TumblingWindow& tumblingWindow) { return tumblingWindow.getSize(); },
             [](const SlidingWindow& slidingWindow) { return slidingWindow.getSlide(); },
-            [](const IntervalWindow& intervalWindow) { return intervalWindow.getSize(); }},
+            [](const IntervalWindow& intervalWindow) { return intervalWindow.getSize(); },
+            [](const UnboundedWindow&) -> TimeMeasure { throw UnknownWindowType("An unbounded window has no slide"); }},
         underlying);
 }
 
-const std::variant<TumblingWindow, SlidingWindow, IntervalWindow>& TimeBasedWindowType::getUnderlying() const
+const TimeBasedWindowType::Underlying& TimeBasedWindowType::getUnderlying() const
 {
     return underlying;
 }
@@ -77,13 +86,11 @@ Reflector<Windowing::TimeBasedWindowType>::operator()(const Windowing::TimeBased
 Windowing::TimeBasedWindowType
 Unreflector<Windowing::TimeBasedWindowType>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    return Windowing::TimeBasedWindowType{
-        context.unreflect<std::variant<Windowing::TumblingWindow, Windowing::SlidingWindow, Windowing::IntervalWindow>>(reflected)};
+    return Windowing::TimeBasedWindowType{context.unreflect<Windowing::TimeBasedWindowType::Underlying>(reflected)};
 }
 }
 
 std::size_t std::hash<NES::Windowing::TimeBasedWindowType>::operator()(const NES::Windowing::TimeBasedWindowType& window) const noexcept
 {
-    return std::hash<std::variant<NES::Windowing::TumblingWindow, NES::Windowing::SlidingWindow, NES::Windowing::IntervalWindow>>{}(
-        window.getUnderlying());
+    return std::hash<NES::Windowing::TimeBasedWindowType::Underlying>{}(window.getUnderlying());
 }
