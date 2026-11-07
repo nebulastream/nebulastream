@@ -91,6 +91,26 @@ const ConfigField<uint64_t> NUMBER_OF_RECORDS_PER_KEY{
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{10}};
 
+const ConfigField<uint64_t> COUNT_DISTINCT_NUMBER_OF_BUCKETS{
+    Identifier::parse("count_distinct_number_of_buckets"),
+    "Number of buckets of the hash set that COUNT(DISTINCT x) keeps per key of its aggregation. The set does not grow, so more "
+    "distinct values per key than buckets make its chains longer; more buckets cost memory for every key.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t>)
+            .and_then(
+                [](const uint64_t value) -> std::expected<uint64_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{InvalidConfigParameter("count_distinct_number_of_buckets must not be zero")};
+                    }
+                    return value;
+                });
+    },
+    uint64_t{64}};
+
 const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
     Identifier::parse("operator_buffer_size"),
     "Buffer size of a operator e.g. during scan",
@@ -131,6 +151,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
         UNBOUNDED_JOIN_SLICE_SIZE_MS,
+        COUNT_DISTINCT_NUMBER_OF_BUCKETS,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -144,6 +165,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
         config.get(UNBOUNDED_JOIN_SLICE_SIZE_MS),
+        config.get(COUNT_DISTINCT_NUMBER_OF_BUCKETS),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config)};
 }

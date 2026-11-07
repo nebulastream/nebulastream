@@ -17,24 +17,27 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ranges>
-#include <vector>
 #include <utility>
-
+#include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <DataTypes/UnboundSchema.hpp>
-#include <Identifiers/Identifier.hpp>
-#include <Schema/Schema.hpp>
-#include <Functions/PhysicalFunction.hpp>
-#include <Interface/NautilusBuffer.hpp>
-#include <Interface/PagedVector/PagedVector.hpp>
-#include <Interface/PagedVector/PagedVectorRef.hpp>
-#include <Interface/Record.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Interface/Hash/MurMur3HashFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/HashMap/HashMap.hpp>
+#include <Interface/NautilusBuffer.hpp>
+#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
 #include <nautilus/function.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -42,32 +45,40 @@
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
-#include <select.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
 namespace
 {
-/// The paged vector stores only the counted value, so lowering does not read the other fields of the input records.
+/// The only key of the hash set.
 const Record::RecordFieldIdentifier valueField{Identifier::parse("countDistinctValue")};
 
-std::shared_ptr<PagedVectorTupleLayout> valueLayout(const DataType& valueType)
+ChainedHashMapConfig createValueSetConfig(const DataType& valueType, const uint64_t numberOfBuckets, const uint64_t pageSize)
 {
-    return std::make_shared<DefaultPagedVectorTupleLayout>(
-        std::vector{QualifiedUnboundField{valueField, valueType}} | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>());
+    const auto schema
+        = std::vector{QualifiedUnboundField{valueField, valueType}} | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
+    auto [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(schema, {valueField}, {});
+    return ChainedHashMapConfig{
+        .entrySize = sizeof(ChainedHashMapEntry) + valueType.getSizeInBytesWithNull(),
+        .numberOfBuckets = numberOfBuckets,
+        .pageSize = pageSize,
+        .bloomFilterParams = std::nullopt,
+        .fieldKeys = std::move(fieldKeys),
+        .fieldValues = std::move(fieldValues),
+        .hashFunction = std::make_shared<MurMur3HashFunction>()};
 }
 
-/// The aggregation state holds only the child-buffer index of the paged vector that stores the values.
-OwnedNautilusBuffer loadPagedVectorBuffer(const nautilus::val<AggregationState*>& aggregationState, BorrowedNautilusBuffer parentBuffer)
+/// The aggregation state holds only the child-buffer index of the hash set.
+OwnedNautilusBuffer loadValueSet(const nautilus::val<AggregationState*>& aggregationState, BorrowedNautilusBuffer parentBuffer)
 {
-    OwnedNautilusBuffer pagedVectorBuffer;
+    OwnedNautilusBuffer valueSetBuffer;
     nautilus::invoke(
         +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr) { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
         parentBuffer.asArg(),
-        pagedVectorBuffer.asArg(),
+        valueSetBuffer.asArg(),
         static_cast<nautilus::val<uint32_t*>>(static_cast<nautilus::val<int8_t*>>(aggregationState)));
-    return pagedVectorBuffer;
+    return valueSetBuffer;
 }
 }
 
@@ -76,9 +87,10 @@ CountDistinctAggregationPhysicalFunction::CountDistinctAggregationPhysicalFuncti
     DataType resultType,
     PhysicalFunction inputFunction,
     Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<PagedVectorTupleLayout> /*inputTupleLayout*/)
+    const uint64_t numberOfBuckets,
+    const uint64_t pageSize)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
-    , tupleLayout(valueLayout(this->inputType))
+    , valueSetConfig(createValueSetConfig(this->inputType, numberOfBuckets, pageSize))
 {
 }
 
@@ -92,11 +104,11 @@ void CountDistinctAggregationPhysicalFunction::lift(
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (not value.isNull())
     {
-        auto pagedVectorBuffer = loadPagedVectorBuffer(aggregationState, parentBuffer);
-        PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVectorBuffer.asArg()), tupleLayout);
+        auto valueSetBuffer = loadValueSet(aggregationState, parentBuffer);
+        ChainedHashMapRef valueSet{BorrowedNautilusBuffer::from(valueSetBuffer.asArg()), valueSetConfig};
         Record valueRecord;
         valueRecord.write(valueField, value);
-        pagedVectorRef.pushBack(valueRecord, pipelineMemoryProvider.bufferProvider);
+        valueSet.findOrCreateEntry(valueRecord, [](const nautilus::val<AbstractHashMapEntry*>&) { }, pipelineMemoryProvider.bufferProvider);
     }
 }
 
@@ -107,21 +119,17 @@ void CountDistinctAggregationPhysicalFunction::combine(
     BorrowedNautilusBuffer parentBuffer2,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    /// Duplicates across the two states are resolved when lowering.
-    nautilus::invoke(
-        +[](AbstractBufferProvider* bufferProvider, TupleBuffer* parent1, const uint32_t* indexPtr1, TupleBuffer* parent2, const uint32_t* indexPtr2)
-        {
-            const TupleBuffer vector1Buffer = parent1->loadChildBuffer(ChildBufferIndex{*indexPtr1});
-            const TupleBuffer vector2Buffer = parent2->loadChildBuffer(ChildBufferIndex{*indexPtr2});
-            auto vector1 = PagedVector::load(vector1Buffer);
-            const auto vector2 = PagedVector::load(vector2Buffer);
-            vector1.copyPagesFrom(*bufferProvider, vector2);
-        },
-        pipelineMemoryProvider.bufferProvider,
-        parentBuffer1.asArg(),
-        static_cast<nautilus::val<uint32_t*>>(static_cast<nautilus::val<int8_t*>>(aggregationState1)),
-        parentBuffer2.asArg(),
-        static_cast<nautilus::val<uint32_t*>>(static_cast<nautilus::val<int8_t*>>(aggregationState2)));
+    auto targetBuffer = loadValueSet(aggregationState1, parentBuffer1);
+    ChainedHashMapRef target{BorrowedNautilusBuffer::from(targetBuffer.asArg()), valueSetConfig};
+    auto sourceBuffer = loadValueSet(aggregationState2, parentBuffer2);
+    const auto sourceRef = BorrowedNautilusBuffer::from(sourceBuffer.asArg());
+    const ChainedHashMapRef source{sourceRef, valueSetConfig};
+    for (const auto entry : source)
+    {
+        const ChainedHashMapRef::ChainedEntryRef entryRef{entry, sourceRef, valueSetConfig.fieldKeys, valueSetConfig.fieldValues};
+        /// A value the target has already needs no update, and a new one needs nothing but its key, which the insert copies.
+        target.insertOrUpdateEntry(entryRef.entryRef, {}, {}, pipelineMemoryProvider.bufferProvider);
+    }
 }
 
 Record CountDistinctAggregationPhysicalFunction::lower(
@@ -129,27 +137,9 @@ Record CountDistinctAggregationPhysicalFunction::lower(
     BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& /*pipelineMemoryProvider*/)
 {
-    auto pagedVectorBuffer = loadPagedVectorBuffer(aggregationState, parentBuffer);
-    const PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVectorBuffer.asArg()), tupleLayout);
-    const auto pagedVectorEnd = pagedVectorRef.end();
-
-    /// Counts each value at its first occurrence: a candidate is new unless an earlier record holds an equal value.
-    nautilus::val<uint64_t> distinctValues = 0;
-    nautilus::val<uint64_t> candidatePosition = 0;
-    for (auto candidateIt = pagedVectorRef.begin(); candidateIt != pagedVectorEnd; ++candidateIt)
-    {
-        const auto candidateValue = (*candidateIt).read(valueField);
-        nautilus::val<bool> seenBefore = false;
-        nautilus::val<uint64_t> earlierPosition = 0;
-        for (auto earlierIt = pagedVectorRef.begin(); earlierPosition < candidatePosition and not seenBefore; ++earlierIt)
-        {
-            const auto earlierValue = (*earlierIt).read(valueField);
-            seenBefore = (earlierValue == candidateValue).getRawValueAs<nautilus::val<bool>>();
-            earlierPosition = earlierPosition + 1;
-        }
-        distinctValues = distinctValues + nautilus::select(seenBefore, nautilus::val<uint64_t>{0}, nautilus::val<uint64_t>{1});
-        candidatePosition = candidatePosition + 1;
-    }
+    auto valueSetBuffer = loadValueSet(aggregationState, parentBuffer);
+    const nautilus::val<uint64_t> distinctValues = nautilus::invoke(
+        +[](const TupleBuffer* valueSet) { return ChainedHashMap::load(*valueSet).getTotalNumberOfRecords(); }, valueSetBuffer.asArg());
 
     Record resultRecord;
     resultRecord.write(resultFieldIdentifier, VarVal{distinctValues}.castToType(resultType.type));
@@ -161,26 +151,28 @@ void CountDistinctAggregationPhysicalFunction::reset(
     BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
     const nautilus::val<uint32_t> childBufferIndex = nautilus::invoke(
-        +[](TupleBuffer* parent, AbstractBufferProvider* bufferProvider, const uint64_t tupleSizeInBytes)
+        +[](TupleBuffer* parent,
+            AbstractBufferProvider* bufferProvider IF_PRECONDITION(, const uint64_t entrySize),
+            const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize))
         {
-            if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+            const auto bufferSize = ChainedHashMap::calculateBufferSize(numberOfBuckets, 0);
+            if (auto valueSetBuffer = bufferProvider->getUnpooledBuffer(bufferSize))
             {
-                PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getBufferSize(), tupleSizeInBytes);
-                return parent->storeChildBuffer(pagedVectorBuffer.value()).getRawValue();
+                ChainedHashMap::init(valueSetBuffer.value() IF_PRECONDITION(, entrySize), numberOfBuckets IF_PRECONDITION(, pageSize), 0);
+                return parent->storeChildBuffer(valueSetBuffer.value()).getRawValue();
             }
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for the COUNT(DISTINCT) paged vector");
+            throw BufferAllocationFailure("No unpooled TupleBuffer of {}B available for the COUNT(DISTINCT) hash set", bufferSize);
         },
         parentBuffer.asArg(),
-        pipelineMemoryProvider.bufferProvider,
-        tupleSize);
+        pipelineMemoryProvider.bufferProvider IF_PRECONDITION(, nautilus::val<uint64_t>{valueSetConfig.entrySize}),
+        nautilus::val<uint64_t>{valueSetConfig.numberOfBuckets} IF_PRECONDITION(, nautilus::val<uint64_t>{valueSetConfig.pageSize}));
     *static_cast<nautilus::val<uint32_t*>>(static_cast<nautilus::val<int8_t*>>(aggregationState)) = childBufferIndex;
 }
 
 void CountDistinctAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> /*aggregationState*/)
 {
-    /// The paged vector is a child buffer of the parent hash map buffer and is released with it.
+    /// The hash set is a child buffer of the parent hash map buffer and is released with it.
 }
 
 size_t CountDistinctAggregationPhysicalFunction::getSizeOfStateInBytes() const
@@ -191,13 +183,13 @@ size_t CountDistinctAggregationPhysicalFunction::getSizeOfStateInBytes() const
 AggregationPhysicalFunctionRegistryReturnType
 CountDistinctAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    INVARIANT(arguments.tupleLayout.has_value(), "Tuple layout paged vector not set");
     return std::make_shared<CountDistinctAggregationPhysicalFunction>(
         std::move(arguments.inputType),
         std::move(arguments.resultType),
         arguments.inputFunction,
         arguments.resultFieldIdentifier,
-        arguments.tupleLayout.value());
+        arguments.countDistinctNumberOfBuckets,
+        arguments.pageSize);
 }
 
 }

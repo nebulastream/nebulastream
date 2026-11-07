@@ -15,13 +15,14 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
-#include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
@@ -31,10 +32,9 @@
 namespace NES
 {
 
-/// COUNT(DISTINCT x): stores every non-null value of x in a paged vector and counts the distinct values of x when
-/// the window is lowered. A value is counted at its first occurrence: each value is compared with the values before
-/// it until the first equal one. That is quadratic in the number of values in the worst case (all distinct), and cheap
-/// when values repeat early. A per-group hash set would make it linear.
+/// COUNT(DISTINCT x): keeps every non-null value of x once in a hash set per key, a chained hash map whose only key is the
+/// value. Lowering returns the number of entries of the set. The set has a fixed number of buckets
+/// (count_distinct_number_of_buckets); more distinct values per key make its chains longer.
 class CountDistinctAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
@@ -43,7 +43,8 @@ public:
         DataType resultType,
         PhysicalFunction inputFunction,
         Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<PagedVectorTupleLayout> tupleLayout);
+        uint64_t numberOfBuckets,
+        uint64_t pageSize);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer parentBuffer,
@@ -70,7 +71,8 @@ public:
     static AggregationPhysicalFunctionRegistryReturnType create(AggregationPhysicalFunctionRegistryArguments arguments);
 
 private:
-    std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
+    /// The hash set of a state: a chained hash map with the value as its only key and no values.
+    ChainedHashMapConfig valueSetConfig;
 };
 
 }
