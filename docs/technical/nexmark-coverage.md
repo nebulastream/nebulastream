@@ -2,7 +2,7 @@
 
 Goal: run all Nexmark queries (q0–q23 from [nexmark/nexmark](https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries), pinned at `6b3646c3`) on NES with the same results as Flink.
 
-Status (branch `claude/nexmark-query-coverage-2d7cfd`): **16 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0, q1, q2, q3, q4, q5, q7, q8, q9, q10, q13, q14, q20, q21, q22 and q23, all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded. q4 and q9 match the final result on bounded input only: their unbounded GROUP BY and Top-1 are expressed with one window that spans all data. The other 6 (q11, q15–q19) need session windows, COUNT DISTINCT/FILTER, Top-N or the unbounded/changelog model (§7).
+Status (branch `claude/nexmark-query-coverage-2d7cfd`): **19 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q17 and q20–q23 (all but q11, q18, q19), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded. q4, q9 and q15–q17 match the final result on bounded input only: their unbounded GROUP BY and Top-1 are expressed with one window that spans all data. The other 3 need session windows (q11) or Top-N/deduplication (q18, q19), and streaming semantics for all unbounded queries need the changelog model (§7).
 
 ---
 
@@ -66,9 +66,9 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q12 | Processing-time windows | PROCTIME tumble | — | nondeterministic, excluded from the reference |
 | q13 | Bounded side input join | lookup join on a static file | ✅ | Stream-table join `bid ⋈ TABLE side_input` without `TIME`. 40 s on 10k events (see §4). |
 | q14 | Calculation | Calc, `HOUR`, `CASE`, UDF | ✅ | `CASE WHEN HOUR(...)`; the 'c' count is `CHAR_LENGTH(extra) - CHAR_LENGTH(REPLACE(extra, 'c', ''))` instead of the UDF |
-| q15 | Bidding statistics | unbounded GROUP BY day, COUNT DISTINCT, FILTER | 🔴 | COUNT DISTINCT, FILTER, DATE_FORMAT; unbounded aggregation |
-| q16 | Channel statistics | as q15 by (channel, day) | 🔴 | as q15 |
-| q17 | Auction statistics | unbounded GROUP BY (auction, day) | 🔴 | FILTER, DATE_FORMAT; unbounded aggregation |
+| q15 | Bidding statistics | unbounded GROUP BY day, COUNT DISTINCT, FILTER | ✅ (bounded) | `COUNT(DISTINCT x)`; `agg FILTER (WHERE c)` as `COUNT(CASE WHEN c THEN 1 END)` / `COUNT(DISTINCT CASE WHEN c THEN x END)`; one window spanning all data |
+| q16 | Channel statistics | as q15 by (channel, day) | ✅ (bounded) | as q15; `max(DATE_FORMAT(dateTime, 'HH:mm'))` as `DATE_FORMAT(MAX(dateTime), 'HH:mm')` |
+| q17 | Auction statistics | unbounded GROUP BY (auction, day) | ✅ (bounded) | FILTER as `COUNT(CASE …)`; AVG as SUM / COUNT (Flink truncates) |
 | q18 | Find last bid | dedup (keep last) | 🔴 | Dedup/Top-N |
 | q19 | Auction Top-10 | Rank | 🔴 | Top-N |
 | q20 | Expand bid with auction | regular join | ✅ | Unbounded inner hash join `bid ⋈ auction WINDOW UNBOUNDED` |
@@ -90,6 +90,7 @@ Day-level aggregations (q15–q17) produce one final row per day in batch Flink.
 | **q7 at 1M events runs out of buffers** on the default two-node systest topology, even with PR #2145. It passes with an 8 GiB pool. The window join holds about 92k bids per 10 s window. | buffer pool sizing / spilling | open |
 | Systest row comparison splits fields on spaces when lines differ, so correct results with free-text VARSIZED values (person names) can fail. | `ResultComparison.cpp` | worked around with Checksum sinks |
 | `systest -t a.test b.test` runs only one of the files | systest CLI | open |
+| **Several CASE expressions in one pipeline made tracing exponential.** Each WHEN branch returned from inside the unrolled loop, so the trace continued separately after every exit: 8 CASEs took over 2 minutes before the query ran, 10 about a minute in a plain projection. q15 has 7. | `ConditionalPhysicalFunction` (main) | fixed: one result variable assigned per branch, single exit; 10 CASEs now trace in under 0.5 s |
 | Interval join emitted no end-of-stream watermark, so downstream windows never closed (after the "propagate source EOS" change on main) | ported interval join | fixed in `fix(IntervalJoin): adapt to current main` |
 | Window build proxies `dynamic_cast` to `WindowBasedOperatorHandler` unchecked (PR #2145), which crashed the interval join | `WindowBuildPhysicalOperator.cpp` | fixed |
 
@@ -124,6 +125,7 @@ All picked onto current main as separate commits, with the original authorship k
 | Stream-table and ASOF joins (`JOIN TABLE`, `ASOF JOIN`) | demo `8f1df7a8a2` | grammar merged with INTERVAL; compiled terminate through `CompilationContext`; end-of-stream flush now carries an infinite watermark |
 | Unbounded inner hash join (`WINDOW UNBOUNDED`) | `claude/nes-inner-join-nexmark-q3-5c6fd7` | window-type variant merged with `IntervalWindow`; slice-store rename and source-origin tracing from PR 2145 |
 | Unbounded inner NLJ and INLJ (any predicate) | `ls/unbounded-nlj-inlj` | fast-forward, built on this branch |
+| `COUNT(DISTINCT x)`; CASE without ELSE (NULL default) | new | – |
 | HOUR/HOUR_OF, DATE_FORMAT, REPLACE, LOWER, SPLIT_INDEX, REGEXP_EXTRACT; `''` literal | new | follow Flink except edge cases: REPLACE with an empty search string, SPLIT_INDEX with an empty delimiter, ASCII-only LOWER, no text month names in DATE_FORMAT |
 
 Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other commits.
@@ -135,14 +137,14 @@ Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other 
 ### Small (in progress or next)
 - **Hash join with a residual predicate** (in progress separately). It fixes the q4/q9 join form, and joins like q4 no longer need the WHERE rewrite.
 - **Hash index for the stream-table join's equality keys** (q13).
-- **COUNT(DISTINCT)** and **`FILTER (WHERE …)`**. FILTER can be lowered to aggregates over a conditional. These are needed for q15–q17.
+- **`FILTER (WHERE …)` syntax** as sugar for the CASE rewrite, and a hash-set state for `COUNT(DISTINCT)` (it compares each value with the earlier ones until the first match, quadratic when all values are distinct).
 - **Session windows** (q11): a slice assigner with per-key merging.
 - **Systest fixes:** row comparison with spaces; multiple `-t` paths.
 - **1M-event reference run** of the whole suite (large test data via ExternalData, under `testdata/large/nexmark`).
 
 ### Substantially more effort
 - **Changelog model:** a row kind (`+I/-U/+U/-D`) carried through operators and sinks, at least upsert-keyed. Every Flink query with unbounded state needs it for streaming semantics (q4, q9, q15–q19).
-- **Unbounded keyed aggregation** with retraction-aware aggregates (MIN/MAX over retractions need multiset state). Needed for q4, q15–q17.
+- **Unbounded keyed aggregation** with retraction-aware aggregates (MIN/MAX over retractions need multiset state). Needed for streaming q4, q15–q17; bounded runs use one window spanning all data.
 - **Top-N / ROW_NUMBER / deduplication** operators (q9, q18, q19).
 - **State TTL for regular joins.** `WINDOW UNBOUNDED` (hash, NLJ, INLJ) covers q3, q4, q9, q20 and q23 but keeps all state forever and supports inner joins only. Equality plus a range still runs as an NLJ until the hash join has a residual predicate.
 - **State beyond memory** (Flink uses RocksDB): spilling for unbounded keyed state and large window state (q7 at 1M already hits the buffer pool).
