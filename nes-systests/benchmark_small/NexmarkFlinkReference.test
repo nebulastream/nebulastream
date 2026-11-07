@@ -29,9 +29,11 @@ CREATE SINK q0Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NO
 CREATE SINK q1Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price FLOAT64 NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL) TYPE Checksum;
 CREATE SINK q2Sink(auction INT64 NOT NULL, price INT64 NOT NULL) TYPE File;
 CREATE SINK q3Sink(name VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, id INT64 NOT NULL) TYPE Checksum;
+CREATE SINK q4Sink(category INT64 NOT NULL, avgFinal UINT64 NOT NULL) TYPE File;
 CREATE SINK q5Sink(auction INT64 NOT NULL, num UINT64 NOT NULL) TYPE File;
 CREATE SINK q7Sink(auction INT64 NOT NULL, price INT64 NOT NULL, bidder INT64 NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL) TYPE Checksum;
 CREATE SINK q8Sink(id INT64 NOT NULL, name VARSIZED NOT NULL, stime UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK q9Sink(id INT64 NOT NULL, itemName VARSIZED NOT NULL, description VARSIZED NOT NULL, initialBid INT64 NOT NULL, reserve INT64 NOT NULL, aTime UINT64 NOT NULL, expires UINT64 NOT NULL, seller INT64 NOT NULL, category INT64 NOT NULL, aExtra VARSIZED NOT NULL, auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, bTime UINT64 NOT NULL, bExtra VARSIZED NOT NULL) TYPE Checksum;
 CREATE SINK q10Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL, dt VARSIZED NOT NULL, hm VARSIZED NOT NULL) TYPE Checksum;
 CREATE SINK q14Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price FLOAT64 NOT NULL, bidTimeType VARSIZED NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL, cCounts UINT64 NOT NULL) TYPE Checksum;
 CREATE SINK q21Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, channel VARSIZED NOT NULL, channelId VARSIZED) TYPE Checksum;
@@ -108,6 +110,30 @@ WINDOW UNBOUNDED (aTime, pTime)
 INTO q3Sink;
 ----
 62 153461
+
+# Query 4: average closing price per category. Flink keeps an unbounded join and two unbounded GROUP BYs that
+# update their results. On bounded input the final result equals a GROUP BY over one tumbling window that spans
+# all data (1,000,000 hours), so both aggregations use one. AVG over BIGINT truncates in Flink, hence SUM / COUNT.
+# reference: q4
+SELECT category, total / cnt AS avgFinal
+FROM (SELECT category, SUM(final) AS total, COUNT(final) AS cnt
+FROM (SELECT id, category, MAX(price) AS final, start AS aggStart
+      FROM (SELECT id, category, price, bTime
+            FROM (SELECT id, category, dateTime AS aTime, expires FROM auction)
+            INNER JOIN (SELECT auction, price, dateTime AS bTime FROM bid)
+            ON id = auction AND bTime >= aTime AND bTime <= expires
+            WINDOW UNBOUNDED (aTime, bTime))
+      GROUP BY id, category
+      WINDOW TUMBLING(bTime, SIZE 1000000 HOURS))
+GROUP BY category
+WINDOW TUMBLING(aggStart, SIZE 1000000 HOURS))
+INTO q4Sink;
+----
+10,28812731
+11,31985955
+12,28623495
+13,29399749
+14,30865469
 
 # Query 5: hot items. Flink joins on window_start/window_end and `num >= maxn`; NES expresses the
 # "same hop window" condition as a 2 s tumbling join over the window starts (slide = 2 s).
@@ -209,6 +235,47 @@ WINDOW TUMBLING(personStart, sellerStart, SIZE 10 SEC)
 INTO q8Sink;
 ----
 39 83539
+
+# Query 9: winning bid per auction (ROW_NUMBER Top-1 by price DESC, dateTime ASC in Flink). NES has no Top-N, so
+# the query takes the maximum price per auction, joins back to the bids with that price, takes their earliest time
+# and joins back once more. Aggregations use one window that spans all data, as in q4; each join after an
+# aggregation uses the window end as the aggregate's time, which never lies behind a watermark.
+# reference: q9 --checksum
+SELECT id, itemName, description, initialBid, reserve, aTime, expires, seller, category, aExtra, auction, bidder, price, bTime, bExtra
+FROM (SELECT id, itemName, description, initialBid, reserve, aTime, expires, seller, category, aExtra, auction, bidder, price, bTime, bExtra, mTime
+      FROM (SELECT id, itemName, description, initialBid, reserve, aTime, expires, seller, category, aExtra, auction, bidder, price, bTime, bExtra
+      FROM (SELECT id, itemName, description, initialBid, reserve, dateTime AS aTime, expires, seller, category, extra AS aExtra FROM auction)
+      INNER JOIN (SELECT auction, bidder, price, dateTime AS bTime, extra AS bExtra FROM bid)
+      ON id = auction AND bTime >= aTime AND bTime <= expires
+      WINDOW UNBOUNDED (aTime, bTime))
+      INNER JOIN (SELECT id AS mid, maxPrice, end AS mTime
+      FROM (SELECT id, MAX(price) AS maxPrice, end FROM (SELECT id, auction, price, bTime
+      FROM (SELECT id, dateTime AS aTime, expires FROM auction)
+      INNER JOIN (SELECT auction, price, dateTime AS bTime FROM bid)
+      ON id = auction AND bTime >= aTime AND bTime <= expires
+      WINDOW UNBOUNDED (aTime, bTime)) GROUP BY id WINDOW TUMBLING(bTime, SIZE 1000000 HOURS)))
+      ON id = mid AND price = maxPrice
+      WINDOW UNBOUNDED (bTime, mTime))
+INNER JOIN (SELECT id AS tid, winTime, end AS tTime
+      FROM (SELECT id, MIN(bTime) AS winTime, end FROM (SELECT id, itemName, description, initialBid, reserve, aTime, expires, seller, category, aExtra, auction, bidder, price, bTime, bExtra, mTime
+      FROM (SELECT id, itemName, description, initialBid, reserve, aTime, expires, seller, category, aExtra, auction, bidder, price, bTime, bExtra
+      FROM (SELECT id, itemName, description, initialBid, reserve, dateTime AS aTime, expires, seller, category, extra AS aExtra FROM auction)
+      INNER JOIN (SELECT auction, bidder, price, dateTime AS bTime, extra AS bExtra FROM bid)
+      ON id = auction AND bTime >= aTime AND bTime <= expires
+      WINDOW UNBOUNDED (aTime, bTime))
+      INNER JOIN (SELECT id AS mid, maxPrice, end AS mTime
+      FROM (SELECT id, MAX(price) AS maxPrice, end FROM (SELECT id, auction, price, bTime
+      FROM (SELECT id, dateTime AS aTime, expires FROM auction)
+      INNER JOIN (SELECT auction, price, dateTime AS bTime FROM bid)
+      ON id = auction AND bTime >= aTime AND bTime <= expires
+      WINDOW UNBOUNDED (aTime, bTime)) GROUP BY id WINDOW TUMBLING(bTime, SIZE 1000000 HOURS)))
+      ON id = mid AND price = maxPrice
+      WINDOW UNBOUNDED (bTime, mTime)) GROUP BY id WINDOW TUMBLING(mTime, SIZE 1000000 HOURS)))
+ON id = tid AND bTime = winTime
+WINDOW UNBOUNDED (mTime, tTime)
+INTO q9Sink;
+----
+553 34119481
 
 # Query 10: log to filesystem (the reference uses an unpartitioned sink, see flink/queries/q10.sql).
 # reference: q10 --checksum
