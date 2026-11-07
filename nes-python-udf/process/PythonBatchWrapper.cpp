@@ -25,6 +25,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include <PythonArrowColumns.hpp>
 #include <PythonBytesParameters.hpp>
 #include <UdfProcessCall.hpp>
 
@@ -92,11 +93,11 @@ std::string readColumn(const size_t index, const ArrowBufferRef::Field& field, c
 {
     if (field.type.type == DataType::Type::VARSIZED)
     {
-        return fmt::format("_binary_column(batch, {}, {})", index, asBytes);
+        return fmt::format("_binary_column(batch.column({}), {})", index, asBytes);
     }
     if (field.type.type == DataType::Type::CHAR)
     {
-        return fmt::format("_char_column(batch, {}, {})", index, asBytes);
+        return fmt::format("_char_column(batch.column({}), {})", index, asBytes);
     }
     return fmt::format("batch.column({}).to_pylist()", index);
 }
@@ -116,37 +117,6 @@ std::string resultArray(const size_t index, const ArrowBufferRef::Field& field)
             return fmt::format("pa.array(r, type=batch.schema.field({}).type)", index);
     }
 }
-
-constexpr std::string_view HELPERS = R"(
-
-def _binary_column(batch, index, as_bytes):
-    column = batch.column(index)
-    # Casting to string validates UTF-8.
-    return column.to_pylist() if as_bytes else column.cast(pa.string()).to_pylist()
-
-
-def _char_column(batch, index, as_bytes):
-    # Decoding a single byte as UTF-8 fails for anything but ASCII.
-    values = batch.column(index).to_pylist()
-    return values if as_bytes else [None if v is None else v.decode() for v in values]
-
-
-def _char(value):
-    value = _binary(value)
-    if len(value) != 1:
-        raise ValueError("a CHAR UDF must return one byte, not " + str(len(value)))
-    return value
-
-
-def _binary(value):
-    if isinstance(value, str):
-        return value.encode()
-    if isinstance(value, (bytes, bytearray, memoryview)):
-        return bytes(value)
-    raise TypeError("a VARSIZED UDF must return bytes or str, not " + type(value).__name__)
-
-
-)";
 
 constexpr std::string_view RUNTIME = R"(
 
@@ -197,7 +167,7 @@ std::string generatePythonBatchWrapper(const ArrowBufferRef& layout, const std::
                           "    namespace = globals()\n"
                           "    exec(_UDF_SOURCE, namespace)\n\n\n";
     program += PythonBytesParametersSource;
-    program += HELPERS;
+    program += PythonArrowColumnsSource;
 
     std::string udfs;
     std::string body = "def _process_batch(batch):\n    n = batch.num_rows\n    columns = batch.columns\n";

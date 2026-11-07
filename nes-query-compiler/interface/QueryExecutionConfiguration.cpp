@@ -117,6 +117,50 @@ const ConfigField<bool> NAUTILUS_PERF{
     "jitdump records with their symbols, line tables and unwinding information, so that `perf inject --jit` attributes samples to "
     "them. Keeps the optimization level, so the profile shows production code.",
     false};
+const ConfigField<InProcessUdfCalls> IN_PROCESS_UDF_CALLS{
+    Identifier::parse("in_process_udf_calls"),
+    fmt::format("How IN_PROCESS UDFs are called: per record (ROW), or per batch of records in Arrow format through pyarrow (BATCH): {}", enumPipeList<InProcessUdfCalls>()),
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<InProcessUdfCalls, Exception>
+                {
+                    if (const auto parsed = EnumWrapper{value}.asEnum<InProcessUdfCalls>())
+                    {
+                        return *parsed;
+                    }
+                    return std::unexpected{InvalidConfigParameter("Invalid in_process_udf_calls, must be one of {}: {}", enumPipeList<InProcessUdfCalls>(), value)};
+                });
+    },
+    InProcessUdfCalls::ROW,
+    "ROW"};
+
+const ConfigField<InProcessUdfInterpreter> IN_PROCESS_UDF_INTERPRETER{
+    Identifier::parse("in_process_udf_interpreter"),
+    fmt::format("Which interpreter a worker thread runs IN_PROCESS UDFs in: the shared one with its one GIL (SHARED), a subinterpreter of the thread with its own GIL, for UDFs without extension modules (SUBINTERPRETER), or a copy of the bridge and interpreter in a link namespace of the thread (DLMOPEN): {}", enumPipeList<InProcessUdfInterpreter>()),
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<InProcessUdfInterpreter, Exception>
+                {
+                    if (const auto parsed = EnumWrapper{value}.asEnum<InProcessUdfInterpreter>())
+                    {
+                        return *parsed;
+                    }
+                    return std::unexpected{InvalidConfigParameter("Invalid in_process_udf_interpreter, must be one of {}: {}", enumPipeList<InProcessUdfInterpreter>(), value)};
+                });
+    },
+    InProcessUdfInterpreter::SHARED,
+    "SHARED"};
+
+const ConfigField<bool> IN_PROCESS_UDF_FUSION{
+    Identifier::parse("in_process_udf_fusion"),
+    "Fuses the IN_PROCESS UDFs of an operator, such as both of `SELECT f(a), g(b)`, into one function, so that a record or batch "
+    "needs one call into the language for all of them instead of one per UDF.",
+    false};
+
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -132,6 +176,9 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         OPERATOR_BUFFER_SIZE,
         PYTHON_UDF_IMPORT_PATHS,
         NAUTILUS_PERF,
+        IN_PROCESS_UDF_CALLS,
+        IN_PROCESS_UDF_INTERPRETER,
+        IN_PROCESS_UDF_FUSION,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -147,7 +194,10 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),
         config.get(PYTHON_UDF_IMPORT_PATHS),
-        config.get(NAUTILUS_PERF)};
+        config.get(NAUTILUS_PERF),
+        config.get(IN_PROCESS_UDF_CALLS),
+        config.get(IN_PROCESS_UDF_INTERPRETER),
+        config.get(IN_PROCESS_UDF_FUSION)};
 }
 
 }

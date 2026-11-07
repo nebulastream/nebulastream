@@ -29,6 +29,21 @@
 namespace NES
 {
 
+/// How the operator of IN_PROCESS UDFs calls them: per record, or per batch of records in Arrow format through pyarrow.
+enum class InProcessUdfCalls : uint8_t
+{
+    ROW,
+    BATCH,
+};
+
+/// Which interpreter a worker thread runs IN_PROCESS UDFs in, see UdfInterpreter.
+enum class InProcessUdfInterpreter : uint8_t
+{
+    SHARED,
+    SUBINTERPRETER,
+    DLMOPEN,
+};
+
 struct QueryExecutionConfiguration
 {
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
@@ -44,7 +59,10 @@ struct QueryExecutionConfiguration
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
         std::vector<std::string> pythonUdfImportPaths,
-        bool nautilusPerf = false)
+        bool nautilusPerf = false,
+        InProcessUdfCalls inProcessUdfCalls = InProcessUdfCalls::ROW,
+        InProcessUdfInterpreter inProcessUdfInterpreter = InProcessUdfInterpreter::SHARED,
+        bool inProcessUdfFusion = false)
         : executionMode(executionMode)
         , numberOfPartitions(numberOfPartitions)
         , pageSize(pageSize)
@@ -54,6 +72,9 @@ struct QueryExecutionConfiguration
         , bloomFilterConfiguration(bloomFilterConfiguration)
         , pythonUdfImportPaths(std::move(pythonUdfImportPaths))
         , nautilusPerf(nautilusPerf)
+        , inProcessUdfCalls(inProcessUdfCalls)
+        , inProcessUdfInterpreter(inProcessUdfInterpreter)
+        , inProcessUdfFusion(inProcessUdfFusion)
     {
     }
 
@@ -69,6 +90,10 @@ struct QueryExecutionConfiguration
     /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can
     /// walk through and name their frames.
     bool nautilusPerf;
+    InProcessUdfCalls inProcessUdfCalls;
+    InProcessUdfInterpreter inProcessUdfInterpreter;
+    /// The IN_PROCESS UDFs of an operator run in one call into the language per record or batch instead of one per UDF.
+    bool inProcessUdfFusion;
 
     [[nodiscard]] const std::vector<std::string>& getPythonUdfImportPaths() const { return pythonUdfImportPaths; }
 

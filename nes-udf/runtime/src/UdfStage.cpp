@@ -17,11 +17,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <mutex>
+#include <memory>
+#include <ranges>
+#include <span>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
+#include <InProcessBackend.hpp>
+#include <UdfAbi.h>
 #include <UdfBackend.hpp>
 #include <UdfDescriptor.hpp>
 
@@ -52,7 +56,7 @@ private:
 };
 }
 
-UdfStage::UdfStage(const std::vector<UdfDescriptor>& descriptors)
+UdfStage::UdfStage(const std::vector<UdfDescriptor>& descriptors, const UdfInterpreter interpreter, const bool fuse)
 {
     PRECONDITION(!descriptors.empty(), "A UDF stage needs at least one UDF");
     std::size_t firstArgument = 0;
@@ -60,12 +64,27 @@ UdfStage::UdfStage(const std::vector<UdfDescriptor>& descriptors)
     {
         PRECONDITION(descriptor.getPath() == descriptors.front().getPath(), "The UDFs of a stage must share one bridge library");
         udfs.push_back(
-            Udf{.backend = UdfBackend::create(descriptor),
+            Udf{.backend = UdfBackend::create(descriptor, interpreter),
                 .firstArgument = firstArgument,
                 .varsizedResult = descriptor.getReturnType().type == DataType::Type::VARSIZED});
         firstArgument += descriptor.getArgTypes().size();
     }
+    if (fuse)
+    {
+        fused = std::make_unique<InProcessFusedUdfs>(
+            udfs
+            | std::views::transform(
+                [](const Udf& udf)
+                {
+                    auto backend = std::dynamic_pointer_cast<InProcessBackend>(udf.backend);
+                    INVARIANT(backend != nullptr, "Only in-process UDFs can be fused");
+                    return backend;
+                })
+            | std::ranges::to<std::vector>());
+    }
 }
+
+UdfStage::~UdfStage() = default;
 
 void UdfStage::executeRow(
     const std::int8_t* argValues,
@@ -73,32 +92,71 @@ void UdfStage::executeRow(
     const std::int8_t* argNulls,
     std::int8_t* results,
     std::int8_t* resultLens,
-    std::int8_t* resultNulls)
+    std::int8_t* resultNulls) const
 {
-    const std::scoped_lock lock(mutex);
+    /// Per thread, so that the result bytes need no allocation per row; the caller copies them out before the next row.
+    thread_local std::vector<std::vector<std::int8_t>> varsizedResults;
+    if (varsizedResults.size() < udfs.size())
+    {
+        varsizedResults.resize(udfs.size());
+        /// So that even an empty result has a valid pointer for the caller to copy from.
+        for (auto& result : varsizedResults)
+        {
+            result.reserve(64);
+        }
+    }
+    const std::span stageResults(varsizedResults.data(), udfs.size());
+
     const RowScope scope(*udfs.front().backend);
+    if (fused != nullptr)
+    {
+        fused->executeRow(argValues, argLens, argNulls, results, resultNulls, stageResults);
+    }
+    else
+    {
+        for (std::size_t i = 0; i < udfs.size(); ++i)
+        {
+            const auto& udf = udfs[i];
+            const auto* const values = argValues + (udf.firstArgument * SLOT_BYTES);
+            const auto* const lens = argLens + (udf.firstArgument * SLOT_BYTES);
+            const auto* const nulls = argNulls + udf.firstArgument;
+            int resultNull = 0;
+            if (udf.varsizedResult)
+            {
+                udf.backend->executeVarsizedRow(values, lens, nulls, stageResults[i], &resultNull);
+            }
+            else
+            {
+                udf.backend->executeScalarRow(values, lens, nulls, results + (i * SLOT_BYTES), &resultNull);
+            }
+            resultNulls[i] = static_cast<std::int8_t>(resultNull);
+        }
+    }
+
     for (std::size_t i = 0; i < udfs.size(); ++i)
     {
-        const auto& udf = udfs[i];
-        const auto* const values = argValues + (udf.firstArgument * SLOT_BYTES);
-        const auto* const lens = argLens + (udf.firstArgument * SLOT_BYTES);
-        const auto* const nulls = argNulls + udf.firstArgument;
-        auto* const result = results + (i * SLOT_BYTES);
-        int resultNull = 0;
-        if (udf.varsizedResult)
+        if (udfs[i].varsizedResult)
         {
-            std::int8_t* buffer = nullptr;
-            std::memcpy(static_cast<void*>(&buffer), result, sizeof(buffer));
-            const std::uint64_t length
-                = udf.backend->executeVarsizedRow(values, lens, nulls, buffer, MAX_VARSIZED_RESULT_BYTES, &resultNull);
+            const std::int8_t* const content = stageResults[i].data();
+            const std::uint64_t length = stageResults[i].size();
+            std::memcpy(results + (i * SLOT_BYTES), static_cast<const void*>(&content), sizeof(content));
             std::memcpy(resultLens + (i * SLOT_BYTES), &length, sizeof(length));
         }
-        else
-        {
-            udf.backend->executeScalarRow(values, lens, nulls, result, &resultNull);
-        }
-        resultNulls[i] = static_cast<std::int8_t>(resultNull);
     }
+}
+
+void UdfStage::executeBatch(const std::size_t udf, ArrowArray* arguments, ArrowArray* result) const
+{
+    auto& backend = *udfs.at(udf).backend;
+    const RowScope scope(backend);
+    backend.executeBatch(arguments, result);
+}
+
+void UdfStage::executeFusedBatch(ArrowArray* arguments, ArrowArray* result) const
+{
+    PRECONDITION(fused != nullptr, "Only a fused UDF stage runs all UDFs on a batch at once");
+    const RowScope scope(*udfs.front().backend);
+    fused->executeBatch(arguments, result);
 }
 
 }

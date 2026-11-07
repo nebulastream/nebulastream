@@ -1,0 +1,120 @@
+# name: benchmark/PythonUdf.test
+# description: Queries in which a Python UDF should be the bottleneck: every row goes through a UDF and the result into a Void sink.
+# Each UDF runs INLINE (Codon), IN_PROCESS (CPython) and OUT_OF_PROCESS (Python process over Arrow IPC), next to queries without UDFs
+# that show what scanning the input costs. The inputs in udf/ of the data directory hold 30M, 3M and 1M rows, sized so that
+# no query runs much longer than 30 s on one worker thread. Generate them with nes-systests/benchmark/generate_udf_bench_input.py
+# and keep them on a RAM disk so that reading them does not dominate.
+# groups: [benchmark, large, PythonUdf, PythonUdfProcess]
+
+CREATE LOGICAL SOURCE rows30m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows30m TYPE File;
+ATTACH FILE udf/udf_bench.csv
+
+CREATE LOGICAL SOURCE rows3m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows3m TYPE File;
+ATTACH FILE udf/udf_bench_3m.csv
+
+CREATE LOGICAL SOURCE rows1m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows1m TYPE File;
+ATTACH FILE udf/udf_bench_1m.csv
+
+# Cheap UDFs, so that the cost of calling them dominates
+CREATE FUNCTION inc_inline (x INT64) RETURNS INT64 EXECUTION INLINE AS $python$
+    return x + 1
+$python$;
+CREATE FUNCTION inc_ip (x INT64) RETURNS INT64 EXECUTION IN_PROCESS AS $python$
+    return x + 1
+$python$;
+CREATE FUNCTION inc_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return x + 1
+$python$;
+
+CREATE FUNCTION upper_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return x.upper()
+$python$;
+CREATE FUNCTION upper_ip (x VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS AS $python$
+    return x.upper()
+$python$;
+CREATE FUNCTION upper_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
+    return x.upper()
+$python$;
+
+# A UDF that computes something, 100 steps of a linear congruential generator
+CREATE FUNCTION lcg_inline (x INT64) RETURNS INT64 EXECUTION INLINE AS $python$
+    h = x
+    for _ in range(100):
+        h = (h * 1103515245 + 12345) % 2147483648
+    return h
+$python$;
+CREATE FUNCTION lcg_ip (x INT64) RETURNS INT64 EXECUTION IN_PROCESS AS $python$
+    h = x
+    for _ in range(100):
+        h = (h * 1103515245 + 12345) % 2147483648
+    return h
+$python$;
+CREATE FUNCTION lcg_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    h = x
+    for _ in range(100):
+        h = (h * 1103515245 + 12345) % 2147483648
+    return h
+$python$;
+
+# Baselines without UDFs, on every input size
+SELECT * FROM rows30m INTO Void();
+----
+
+SELECT *, id + INT64(1) AS r FROM rows30m INTO Void();
+----
+
+# NES has no UPPER; CONCAT also builds a new VARSIZED value per row
+SELECT *, CONCAT(s, s) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, id + INT64(1) AS r FROM rows3m INTO Void();
+----
+
+SELECT *, CONCAT(s, s) AS r FROM rows3m INTO Void();
+----
+
+SELECT *, id + INT64(1) AS r FROM rows1m INTO Void();
+----
+
+# INT64 -> INT64
+SELECT *, inc_inline(id) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, inc_ip(id) AS r FROM rows3m INTO Void();
+----
+
+SELECT *, inc_oop(id) AS r FROM rows3m INTO Void();
+----
+
+# VARSIZED -> VARSIZED
+SELECT *, upper_inline(s) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, upper_ip(s) AS r FROM rows3m INTO Void();
+----
+
+SELECT *, upper_oop(s) AS r FROM rows3m INTO Void();
+----
+
+# Compute-bound
+SELECT *, lcg_inline(id) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, lcg_ip(id) AS r FROM rows1m INTO Void();
+----
+
+SELECT *, lcg_oop(id) AS r FROM rows1m INTO Void();
+----
+
+# Several IN_PROCESS UDFs in one operator, which worker.default_query_execution.in_process_udf_fusion runs in one call into Python
+SELECT *, inc_ip(id) AS r1, inc_ip(id + INT64(1)) AS r2, inc_ip(id + INT64(2)) AS r3, inc_ip(id + INT64(3)) AS r4 FROM rows3m INTO Void();
+----
+
+SELECT *, inc_ip(id) AS r1, upper_ip(s) AS r2 FROM rows3m INTO Void();
+----
+
+SELECT *, lcg_ip(id) AS r1, lcg_ip(id + INT64(1)) AS r2 FROM rows1m INTO Void();
+----

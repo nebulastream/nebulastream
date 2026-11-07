@@ -24,6 +24,7 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <UdfDescriptor.hpp>
+#include <UdfInterpreter.hpp>
 
 namespace NES
 {
@@ -47,8 +48,14 @@ public:
         DataType type;
     };
 
-    /// Loads the UDFs. `arguments` holds the arguments of all of them one after the other, and `results` one entry per UDF.
-    UDFPhysicalOperator(std::vector<Argument> arguments, std::vector<Result> results, const std::vector<UdfDescriptor>& udfs);
+    /// Loads the UDFs. `arguments` holds the arguments of all of them one after the other, and `results` one entry per UDF. With
+    /// `fused`, all UDFs of a record run in one call into the language, see UdfStage.
+    UDFPhysicalOperator(
+        std::vector<Argument> arguments,
+        std::vector<Result> results,
+        const std::vector<UdfDescriptor>& udfs,
+        UdfInterpreter interpreter,
+        bool fused = false);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 

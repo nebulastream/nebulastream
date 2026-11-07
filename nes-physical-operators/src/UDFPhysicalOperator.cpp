@@ -17,7 +17,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -26,10 +25,12 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
 #include <nautilus/function.hpp>
+#include <nautilus/std/cstring.h>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <UdfDescriptor.hpp>
+#include <UdfInterpreter.hpp>
 #include <UdfStage.hpp>
 #include <static.hpp>
 #include <val_arith.hpp>
@@ -48,6 +49,13 @@ void storeContentPointer(std::int8_t* slot, std::int8_t* contentPointer)
     *reinterpret_cast<std::int8_t**>(slot) = contentPointer;
 }
 
+/// Runs in the C++ runtime: loads the pointer that an 8-byte result slot holds.
+std::int8_t* loadContentPointer(std::int8_t* slot)
+{
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    return *reinterpret_cast<std::int8_t**>(slot);
+}
+
 /// The stage throws UdfExecutionError on a recoverable failure; the throw unwinds out of nautilus::invoke and fails only the
 /// query (the worker survives).
 void executeStageRow(
@@ -64,8 +72,12 @@ void executeStageRow(
 }
 
 UDFPhysicalOperator::UDFPhysicalOperator(
-    std::vector<Argument> arguments, std::vector<Result> results, const std::vector<UdfDescriptor>& udfs)
-    : arguments(std::move(arguments)), results(std::move(results)), stage(std::make_shared<UdfStage>(udfs))
+    std::vector<Argument> arguments,
+    std::vector<Result> results,
+    const std::vector<UdfDescriptor>& udfs,
+    const UdfInterpreter interpreter,
+    const bool fused)
+    : arguments(std::move(arguments)), results(std::move(results)), stage(std::make_shared<UdfStage>(udfs, interpreter, fused))
 {
 }
 
@@ -111,18 +123,6 @@ void UDFPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         }
     }
 
-    /// One buffer per VARSIZED result, so that the stage needs no callback into the arena.
-    std::vector<std::optional<VariableSizedData>> resultBuffers(resultCount);
-    for (nautilus::static_val<size_t> i = 0; i < resultCount; ++i)
-    {
-        if (results.at(nautilus::static_val<int>(i)).type.type == DataType::Type::VARSIZED)
-        {
-            const auto buffer = arena.allocateVariableSizedData(nautilus::val<uint64_t>(UdfStage::MAX_VARSIZED_RESULT_BYTES));
-            nautilus::invoke(storeContentPointer, resultSlots + nautilus::val<uint64_t>(i * UdfStage::SLOT_BYTES), buffer.getContent());
-            resultBuffers.at(nautilus::static_val<int>(i)) = buffer;
-        }
-    }
-
     nautilus::invoke(
         executeStageRow, nautilus::val<UdfStage*>(stage.get()), argValues, argLens, argNulls, resultSlots, resultLens, resultNulls);
 
@@ -133,12 +133,16 @@ void UDFPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         const auto& result = results.at(nautilus::static_val<int>(i));
         const auto isNull = VarVal::readNonNullableVarValFromMemory(resultNulls + nautilus::val<uint64_t>(i), boolType)
                                 .getRawValueAs<nautilus::val<bool>>();
-        if (const auto& buffer = resultBuffers.at(nautilus::static_val<int>(i)); buffer.has_value())
+        if (result.type.type == DataType::Type::VARSIZED)
         {
+            /// The stage's copy of the result lives only until its next row, so it moves into the arena, at its exact length.
             const auto length
                 = VarVal::readNonNullableVarValFromMemory(resultLens + nautilus::val<uint64_t>(i * UdfStage::SLOT_BYTES), lengthType)
                       .getRawValueAs<nautilus::val<uint64_t>>();
-            record.write(result.field, VarVal{VariableSizedData(buffer->getContent(), length), true, isNull});
+            const auto content = nautilus::invoke(loadContentPointer, resultSlots + nautilus::val<uint64_t>(i * UdfStage::SLOT_BYTES));
+            const auto buffer = arena.allocateVariableSizedData(length);
+            nautilus::memcpy(buffer.getContent(), content, length);
+            record.write(result.field, VarVal{buffer, true, isNull});
         }
         else
         {

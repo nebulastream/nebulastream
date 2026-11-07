@@ -14,26 +14,23 @@
 
 #pragma once
 
-#include <cstdint>
-#include <filesystem>
 #include <memory>
-#include <string>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
+#include <UdfAbi.h>
+#include <UdfInterpreter.hpp>
 
 namespace NES
 {
 
 class UdfDescriptor;
 
-/// The seam between the engine and however a scalar UDF is actually loaded and run. v1 provides
-/// InProcessBackend (dlopen in the worker); a future SidecarBackend can run the UDF in a separate
-/// process to contain fatal crashes, with no change to callers of this interface.
+/// The seam between the engine and however a scalar UDF is actually loaded and run: InProcessBackend dlopens a bridge in the
+/// worker. A UDF runs per row or on batches of rows, whose argument and result columns are Arrow arrays.
 ///
-/// Argument marshalling (both entry points): `argValues` is a flat buffer of `argc` 8-byte slots --
-/// the value itself for a fixed-width argument, or a pointer to raw bytes (length in the matching
-/// `argLens` slot) for VARSIZED. `argNulls` is `argc` bytes; non-zero marks the argument SQL NULL.
+/// Argument marshalling of a row: `argValues` is a flat buffer of `argc` 8-byte slots -- the value itself for a fixed-width
+/// argument, or a pointer to raw bytes (length in the matching `argLens` slot) for VARSIZED. `argNulls` is `argc` bytes; non-zero
+/// marks the argument SQL NULL.
 class UdfBackend
 {
 public:
@@ -50,35 +47,26 @@ public:
         const std::int8_t* argValues, const std::int8_t* argLens, const std::int8_t* argNulls, std::int8_t* resultScalar, int* resultNull)
         = 0;
 
-    /// Execute a UDF with a VARSIZED return. Copies the result bytes into `resultBuffer` (at most
-    /// `maxResultLen`), returns the result length, and sets `*resultNull`. Throws UdfExecutionError on
-    /// a recoverable failure or if the result exceeds `maxResultLen`.
-    virtual std::uint64_t executeVarsizedRow(
+    /// Execute a UDF with a VARSIZED return. Replaces the content of `result` with the result bytes (none for NULL) and sets
+    /// `*resultNull`. Throws UdfExecutionError on a recoverable failure.
+    virtual void executeVarsizedRow(
         const std::int8_t* argValues,
         const std::int8_t* argLens,
         const std::int8_t* argNulls,
-        std::int8_t* resultBuffer,
-        std::uint64_t maxResultLen,
+        std::vector<std::int8_t>& result,
         int* resultNull) = 0;
 
-    /// Bracket the calls that a UdfStage makes for one row, see enter_udf_row in UdfAbi.h.
-    [[nodiscard]] virtual int enterRow() { return 0; }
+    /// Runs the UDF on a batch, see execute_udf_batch in UdfAbi.h: takes ownership of `arguments` and, on success, sets
+    /// `result`, which the caller then owns. Throws UdfExecutionError on a recoverable failure.
+    virtual void executeBatch(ArrowArray* arguments, ArrowArray* result) = 0;
 
-    virtual void exitRow(int /*state*/) { }
+    /// Bracket the calls for one row or batch, see enter_udf_row in UdfAbi.h.
+    [[nodiscard]] virtual int enterRow() = 0;
+    virtual void exitRow(int state) = 0;
 
-    /// Load and prepare the UDF described by `descriptor`, from its entry point or its inline source. v1 always returns
-    /// an in-process backend.
-    [[nodiscard]] static std::shared_ptr<UdfBackend> create(const UdfDescriptor& descriptor);
-
-    /// Load and prepare a UDF from literal source rather than a catalog descriptor: `bridgePath` is a
-    /// shipped bridge `.so` (resolved via resolveUdfBridgeLibraryPath), `source` is the UDF body's
-    /// Python source, and `functionName` names the callable it defines.
-    [[nodiscard]] static std::shared_ptr<UdfBackend> createFromSource(
-        const std::filesystem::path& bridgePath,
-        const std::string& source,
-        const std::string& functionName,
-        const std::vector<DataType>& argTypes,
-        DataType returnType);
+    /// Load and prepare the UDF described by `descriptor`, from its entry point or its inline source, to run in `interpreter`.
+    /// v1 always returns an in-process backend.
+    [[nodiscard]] static std::shared_ptr<UdfBackend> create(const UdfDescriptor& descriptor, UdfInterpreter interpreter);
 };
 
 }
