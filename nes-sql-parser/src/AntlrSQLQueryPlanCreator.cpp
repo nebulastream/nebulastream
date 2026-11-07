@@ -714,7 +714,8 @@ void AntlrSQLQueryPlanCreator::exitCaseExpression(AntlrSQLParser::CaseExpression
         throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
     }
 
-    const auto numberOfChildren = (context->whenClause().size() * 2) + 1;
+    /// Without ELSE, the Conditional function gets no default result and returns NULL when no condition holds.
+    const auto numberOfChildren = (context->whenClause().size() * 2) + (context->elseExpression != nullptr ? 1 : 0);
     if (helpers.top().functionBuilder.size() < numberOfChildren)
     {
         throw InvalidQuerySyntax(

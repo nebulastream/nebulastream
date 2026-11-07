@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -39,15 +40,16 @@ struct WhenThenLogicalFunction
     [[nodiscard]] bool operator==(const WhenThenLogicalFunction& rhs) const = default;
 };
 
-/// Represents a CASE WHEN expression: at least one (when, then) pair followed by the default result
-/// that applies when no condition holds. The generic child list interface flattens the pairs into
-/// [condition1, result1, ..., conditionN, resultN, default] and regroups them on the way back.
+/// Represents a CASE WHEN expression: at least one (when, then) pair followed by an optional default result
+/// that applies when no condition holds; without one, the default is NULL. The generic child list interface
+/// flattens the pairs into [condition1, result1, ..., conditionN, resultN, default?] and regroups them on the way
+/// back: an odd number of children has a default, an even number does not.
 class ConditionalLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Conditional";
 
-    ConditionalLogicalFunction(std::vector<WhenThenLogicalFunction> whenThens, LogicalFunction elseCase);
+    ConditionalLogicalFunction(std::vector<WhenThenLogicalFunction> whenThens, std::optional<LogicalFunction> elseCase);
     explicit ConditionalLogicalFunction(const std::vector<LogicalFunction>& children);
 
     [[nodiscard]] bool operator==(const ConditionalLogicalFunction& rhs) const;
@@ -66,7 +68,7 @@ public:
 private:
     DataType dataType;
     std::vector<WhenThenLogicalFunction> whenThens;
-    LogicalFunction elseCase;
+    std::optional<LogicalFunction> elseCase;
 };
 
 namespace detail

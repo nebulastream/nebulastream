@@ -442,7 +442,7 @@ primaryExpression
     ;
 
 caseExpression
-    : CASE whenClause+ ELSE elseExpression=expression END
+    : CASE whenClause+ (ELSE elseExpression=expression)? END
     ;
 
 whenClause

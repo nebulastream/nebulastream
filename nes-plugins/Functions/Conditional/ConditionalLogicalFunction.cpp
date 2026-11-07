@@ -14,8 +14,9 @@
 
 #include <Functions/ConditionalLogicalFunction.hpp>
 
-#include <iterator>
+#include <cstddef>
 #include <ranges>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -39,34 +40,45 @@ namespace NES
 {
 namespace
 {
+/// A child list is a sequence of (when, then) pairs, optionally followed by the default result.
+bool isValidChildCount(const size_t numberOfChildren)
+{
+    return numberOfChildren >= 2;
+}
+
 /// Groups the leading elements of the flat child list into (when, then) pairs, leaving out the
-/// trailing default result.
+/// trailing default result if there is one.
 std::vector<WhenThenLogicalFunction> groupWhenThens(const std::vector<LogicalFunction>& children)
 {
     INVARIANT(
-        children.size() >= 3 and children.size() % 2 == 1,
-        "ConditionalLogicalFunction requires an odd number of children >= 3 (when/then pairs plus a default), but got {}",
+        isValidChildCount(children.size()),
+        "ConditionalLogicalFunction requires at least one when/then pair, but got {} children",
         children.size());
 
     std::vector<WhenThenLogicalFunction> whenThens;
     whenThens.reserve(children.size() / 2);
-    for (auto when = children.begin(); when != std::prev(children.end()); when += 2)
+    for (size_t index = 0; index + 1 < children.size(); index += 2)
     {
-        whenThens.push_back(WhenThenLogicalFunction{.when = *when, .then = *std::next(when)});
+        whenThens.push_back(WhenThenLogicalFunction{.when = children[index], .then = children[index + 1]});
     }
     return whenThens;
+}
+
+std::optional<LogicalFunction> defaultResult(const std::vector<LogicalFunction>& children)
+{
+    return children.size() % 2 == 1 ? std::optional{children.back()} : std::nullopt;
 }
 }
 
 /// The result type stays untouched here; it is inferred once the input schema is known.
-ConditionalLogicalFunction::ConditionalLogicalFunction(std::vector<WhenThenLogicalFunction> whenThens, LogicalFunction elseCase)
+ConditionalLogicalFunction::ConditionalLogicalFunction(std::vector<WhenThenLogicalFunction> whenThens, std::optional<LogicalFunction> elseCase)
     : whenThens(std::move(whenThens)), elseCase(std::move(elseCase))
 {
     INVARIANT(not this->whenThens.empty(), "ConditionalLogicalFunction requires at least one when/then pair");
 }
 
 ConditionalLogicalFunction::ConditionalLogicalFunction(const std::vector<LogicalFunction>& children)
-    : whenThens(groupWhenThens(children)), elseCase(children.back())
+    : whenThens(groupWhenThens(children)), elseCase(defaultResult(children))
 {
 }
 
@@ -84,7 +96,10 @@ std::vector<LogicalFunction> ConditionalLogicalFunction::getChildren() const
         children.push_back(when);
         children.push_back(then);
     }
-    children.push_back(elseCase);
+    if (elseCase.has_value())
+    {
+        children.push_back(*elseCase);
+    }
     return children;
 }
 
@@ -92,7 +107,7 @@ ConditionalLogicalFunction ConditionalLogicalFunction::withChildren(const std::v
 {
     auto copy = *this;
     copy.whenThens = groupWhenThens(children);
-    copy.elseCase = children.back();
+    copy.elseCase = defaultResult(children);
     return copy;
 }
 
@@ -117,9 +132,13 @@ std::string ConditionalLogicalFunction::explain(ExplainVerbosity verbosity) cons
 
 LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    /// The default result carries the type of the whole expression.
-    const auto inferredElseCase = elseCase.withInferredDataType(schema);
-    auto resultType = inferredElseCase.getDataType();
+    /// The default result carries the type of the whole expression. Without one, the default is NULL, as in SQL: the
+    /// expression takes the type of the first result and is nullable.
+    const auto inferredElseCase
+        = elseCase.transform([&schema](const LogicalFunction& function) { return function.withInferredDataType(schema); });
+    auto resultType = inferredElseCase.has_value()
+        ? inferredElseCase->getDataType()
+        : DataTypeProvider::provideDataType(whenThens.front().then.withInferredDataType(schema).getDataType().type, DataType::NULLABLE::IS_NULLABLE);
 
     std::vector<WhenThenLogicalFunction> inferredWhenThens;
     inferredWhenThens.reserve(whenThens.size());
@@ -134,7 +153,7 @@ LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema<Fi
         if (not inferredThen.getDataType().isType(resultType.type))
         {
             throw DifferentFieldTypeExpected(
-                "CASE WHEN results must all share the default result's type {}, but got {}", resultType, inferredThen.getDataType());
+                "CASE WHEN results must all share one type {}, but got {}", resultType, inferredThen.getDataType());
         }
         /// A branch that can produce a null makes the whole expression nullable, as in SQL.
         resultType = DataTypeProvider::provideDataType(resultType.type, resultType.joinNullable(inferredThen.getDataType()));
@@ -157,9 +176,9 @@ Unreflector<ConditionalLogicalFunction>::operator()(const Reflected& reflected, 
 {
     const auto [children] = context.unreflect<detail::ReflectedConditionalLogicalFunction>(reflected);
     /// The shape of a serialized plan is not trusted, so a bad child count is reported rather than asserted.
-    if (children.size() < 3 or children.size() % 2 == 0)
+    if (not isValidChildCount(children.size()))
     {
-        throw CannotDeserialize("ConditionalLogicalFunction requires an odd number of children >= 3, but got {}", children.size());
+        throw CannotDeserialize("ConditionalLogicalFunction requires at least one when/then pair, but got {} children", children.size());
     }
     return ConditionalLogicalFunction{children};
 }
@@ -167,11 +186,10 @@ Unreflector<ConditionalLogicalFunction>::operator()(const Reflected& reflected, 
 LogicalFunctionRegistryReturnType ConditionalLogicalFunction::createConditional(LogicalFunctionRegistryArguments arguments)
 {
     /// The argument count comes straight from the user's query, so a bad count is reported rather than asserted.
-    if (arguments.children.size() < 3 or arguments.children.size() % 2 == 0)
+    if (not isValidChildCount(arguments.children.size()))
     {
         throw CannotDeserialize(
-            "Conditional requires an odd number of arguments >= 3 (condition/result pairs plus a default), but got {}",
-            arguments.children.size());
+            "Conditional requires condition/result pairs plus an optional default, but got {} arguments", arguments.children.size());
     }
     return ConditionalLogicalFunction{arguments.children};
 }

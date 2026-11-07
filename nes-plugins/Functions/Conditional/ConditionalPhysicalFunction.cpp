@@ -14,8 +14,9 @@
 
 #include <Functions/ConditionalPhysicalFunction.hpp>
 
+#include <cstddef>
 #include <cstdint>
-#include <iterator>
+#include <optional>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -33,19 +34,19 @@ namespace NES
 namespace
 {
 /// Groups the leading elements of the flat child list into (when, then) pairs, leaving out the
-/// trailing default result.
+/// trailing default result if there is one.
 std::vector<WhenThenPhysicalFunction> groupWhenThens(const std::vector<PhysicalFunction>& children)
 {
     std::vector<WhenThenPhysicalFunction> whenThens;
     whenThens.reserve(children.size() / 2);
-    for (auto when = children.begin(); when != std::prev(children.end()); when += 2)
+    for (size_t index = 0; index + 1 < children.size(); index += 2)
     {
-        whenThens.push_back(WhenThenPhysicalFunction{.when = *when, .then = *std::next(when)});
+        whenThens.push_back(WhenThenPhysicalFunction{.when = children[index], .then = children[index + 1]});
     }
     return whenThens;
 }
 
-/// A placeholder of the given type, which every path overwrites before the expression returns.
+/// The NULL that a CASE without ELSE returns when no condition holds.
 VarVal nullOf(const DataType& type)
 {
     const nautilus::val<bool> isNull{true};
@@ -93,7 +94,7 @@ VarVal withDeclaredType(const VarVal& value, const DataType& resultType)
 }
 
 ConditionalPhysicalFunction::ConditionalPhysicalFunction(
-    std::vector<WhenThenPhysicalFunction> whenThens, PhysicalFunction elseCase, DataType resultType)
+    std::vector<WhenThenPhysicalFunction> whenThens, std::optional<PhysicalFunction> elseCase, DataType resultType)
     : whenThens(std::move(whenThens)), elseCase(std::move(elseCase)), resultType(std::move(resultType))
 {
 }
@@ -102,7 +103,7 @@ ConditionalPhysicalFunction::ConditionalPhysicalFunction(
 /// are not evaluated. Returning from inside the unrolled loop instead gives every branch its own exit, and the trace
 /// then continues separately after each of them, so a pipeline with n CASE expressions traced 2^n paths: 10 CASEs in
 /// one projection took about a minute to trace. The placeholder carries the declared type, so every assignment keeps
-/// the same type and nullability on all traced paths; the default overwrites it when no condition holds.
+/// the same type and nullability on all traced paths.
 VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     VarVal result = withDeclaredType(nullOf(resultType), resultType);
@@ -120,9 +121,14 @@ VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& aren
             }
         }
     }
-    if (not matched)
+    /// Whether there is a default is known while tracing, so it is checked on the host side: the overloaded `and` of a
+    /// traced bool does not short-circuit.
+    if (elseCase.has_value())
     {
-        result = withDeclaredType(elseCase.execute(record, arena), resultType);
+        if (not matched)
+        {
+            result = withDeclaredType(elseCase->execute(record, arena), resultType);
+        }
     }
     return result;
 }
@@ -130,10 +136,9 @@ VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& aren
 PhysicalFunctionRegistryReturnType ConditionalPhysicalFunction::createConditional(PhysicalFunctionRegistryArguments arguments)
 {
     /// The logical function already validated the argument shape and types, so a bad shape here is a lowering bug.
-    PRECONDITION(
-        arguments.childFunctions.size() >= 3 and arguments.childFunctions.size() % 2 == 1,
-        "ConditionalPhysicalFunction requires an odd number of child functions >= 3 (when/then pairs plus a default), but got {}",
-        arguments.childFunctions.size());
-    return ConditionalPhysicalFunction{groupWhenThens(arguments.childFunctions), arguments.childFunctions.back(), arguments.outputType};
+    const auto& children = arguments.childFunctions;
+    PRECONDITION(children.size() >= 2, "ConditionalPhysicalFunction requires at least one when/then pair, but got {} children", children.size());
+    const auto elseCase = children.size() % 2 == 1 ? std::optional{children.back()} : std::nullopt;
+    return ConditionalPhysicalFunction{groupWhenThens(children), elseCase, arguments.outputType};
 }
 }

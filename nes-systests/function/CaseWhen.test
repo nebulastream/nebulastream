@@ -43,3 +43,24 @@ INTO traffic_light;
 8,GREEN_STANDARD
 9,FLASHING_YELLOW
 10,ALL_RED_EMERGENCY
+
+# Without ELSE, a CASE yields NULL when no condition holds, so its result is nullable.
+CREATE SINK densityClass(intersection_id INT32, density_class VARSIZED, density_score INT32) TYPE File;
+
+SELECT intersection_id,
+       CASE WHEN traffic_density > FLOAT32(0.8) THEN VARSIZED('high')
+            WHEN traffic_density < FLOAT32(0.2) THEN VARSIZED('low') END AS density_class,
+       CASE WHEN pedestrian_waiting = TRUE THEN intersection_id * INT32(10) END AS density_score
+FROM intersection
+INTO densityClass;
+----
+1,,
+2,low,20
+3,high,
+4,,
+5,,
+6,low,60
+7,high,70
+8,,80
+9,,90
+10,high,
