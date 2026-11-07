@@ -373,6 +373,12 @@ pushBeyondWindowedAggregation(const TypedLogicalOperator<WindowedAggregationLogi
         }
     }
 
+    /// An aggregation over an updating input reads the row kind of every record.
+    if (const auto childRowKind = op->getChild().getOutputSchema()[rowKindIdentifier()])
+    {
+        newRequired.insert(childRowKind.value());
+    }
+
     auto characteristic = std::get<Windowing::BoundTimeCharacteristic>(op->getCharacteristic());
     if (std::holds_alternative<Windowing::BoundEventTimeCharacteristic>(characteristic))
     {

@@ -85,7 +85,7 @@ SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM late GROUP BY k WINDOW UNBOUNDED
 -U,1,13,2
 +U,1,14,3
 
-# Windowed operators still reject an updating input, including a second unbounded aggregation (until retractions are supported).
-SELECT total, COUNT(k) AS keys FROM (SELECT k, SUM(v) AS total FROM stream GROUP BY k WINDOW UNBOUNDED(ts)) GROUP BY total WINDOW UNBOUNDED(total) INTO FILE ();
+# An aggregation over the changelog must be able to withdraw rows; MAX cannot (see RetractingAggregation.test).
+SELECT total, MAX(k) AS maxK FROM (SELECT k, SUM(v) AS total, MAX(ts) AS lastTs FROM stream GROUP BY k WINDOW UNBOUNDED(ts)) GROUP BY total WINDOW UNBOUNDED(lastTs) INTO FILE ();
 ----
 ERROR 2008

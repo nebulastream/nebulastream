@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -92,10 +93,24 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     const ChainedHashMapRef::ChainedEntryRef entryRef{
         hashMapEntry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+    if (rowKindFunction.has_value())
     {
-        aggFunction->lift(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider, record);
-        state = state + aggFunction->getSizeOfStateInBytes();
+        /// INSERT and UPDATE_AFTER add the record, UPDATE_BEFORE and DELETE withdraw it (see rowKindSign).
+        const auto kind = rowKindFunction->execute(record, ctx.pipelineMemoryProvider.arena).getRawValueAs<nautilus::val<uint8_t>>();
+        const auto weight = nautilus::val<int64_t>{1} - (nautilus::val<int64_t>{2} * static_cast<nautilus::val<int64_t>>(kind & nautilus::val<uint8_t>{1}));
+        for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+        {
+            aggFunction->liftWeighted(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider, record, weight);
+            state = state + aggFunction->getSizeOfStateInBytes();
+        }
+    }
+    else
+    {
+        for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+        {
+            aggFunction->lift(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider, record);
+            state = state + aggFunction->getSizeOfStateInBytes();
+        }
     }
 }
 
@@ -105,11 +120,13 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     std::unique_ptr<SliceStoreRef> sliceStoreRef,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
     ChainedHashMapConfig hashMapConfig,
-    std::vector<PhysicalFunction> keyFunctions)
+    std::vector<PhysicalFunction> keyFunctions,
+    std::optional<PhysicalFunction> rowKindFunction)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
+    , rowKindFunction(std::move(rowKindFunction))
 {
 }
 

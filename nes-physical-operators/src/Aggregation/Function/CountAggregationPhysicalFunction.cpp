@@ -66,6 +66,22 @@ void CountAggregationPhysicalFunction::lift(
     newCount.writeToMemory(memAreaCount);
 }
 
+void CountAggregationPhysicalFunction::liftWeighted(
+    const nautilus::val<AggregationState*>& aggregationState,
+    BorrowedNautilusBuffer,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record,
+    const nautilus::val<int64_t>& weight)
+{
+    /// The unsigned count adds -1 in two's complement, see SumAggregationPhysicalFunction::liftWeighted.
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
+    const auto weightedCount = (count + VarVal{weight}.castToType(resultType.type)).castToType(resultType.type);
+    const auto newCount = VarVal::select(inputType.nullable and not includeNullValues and value.isNull(), count, weightedCount);
+    newCount.writeToMemory(memAreaCount);
+}
+
 void CountAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     BorrowedNautilusBuffer,

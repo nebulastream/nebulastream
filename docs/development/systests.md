@@ -191,6 +191,8 @@ update-before or delete row before it compares.
 Below `---- CHANGELOG`, the expected rows are the exact changelog, each starting with its row kind.
 A source can provide a changelog by declaring the field `"$ROWKIND" UINT8 NOT NULL`, whose values are `0` to `3` in the order above
 (see `operator/changelog/ChangelogPassThrough.test`).
+Unbounded aggregations (`GROUP BY ... WINDOW UNBOUNDED(ts)`) produce such streams
+(see `operator/changelog/UnboundedAggregation.test` and `RetractingAggregation.test`).
 
 ```sql
 SELECT k, v FROM changes INTO kv;

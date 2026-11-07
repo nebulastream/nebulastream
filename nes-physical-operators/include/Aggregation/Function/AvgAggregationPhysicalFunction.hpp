@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include <cstddef>
 #include <memory>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -40,6 +42,13 @@ public:
         BorrowedNautilusBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Record& record) override;
+    void liftWeighted(
+        const nautilus::val<AggregationState*>& aggregationState,
+        BorrowedNautilusBuffer parentBuffer,
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        const Record& record,
+        const nautilus::val<int64_t>& weight) override;
+    [[nodiscard]] bool supportsRetraction() const override { return true; }
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         BorrowedNautilusBuffer,

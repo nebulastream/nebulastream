@@ -26,7 +26,8 @@ namespace NES
 
 /// Rejects operators that cannot consume an updating stream, i.e. one whose schema carries the row kind field (see RowKind.hpp).
 /// Selections, projections, unions, watermark assigners and sinks pass rows through and keep their row kind, so they accept updates.
-/// Joins and windowed operators would treat a retraction like a new row, so they are rejected.
+/// An unbounded aggregation accepts updates if all its aggregations are SUM, COUNT or AVG, which can subtract a withdrawn row.
+/// Joins and other windowed operators would treat a retraction like a new row, so they are rejected.
 class ChangelogValidationRule
 {
 public:

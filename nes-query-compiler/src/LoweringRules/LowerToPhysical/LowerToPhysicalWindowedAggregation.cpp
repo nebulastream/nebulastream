@@ -57,6 +57,8 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Functions/ConstantValuePhysicalFunction.hpp>
+#include <Util/RowKind.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -161,6 +163,28 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
     const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
+    /// An unbounded aggregation counts the records of every key in a hidden COUNT, its last function: a key whose records were all
+    /// withdrawn is absent and emits a DELETE.
+    const Record::RecordFieldIdentifier rowCountField{Identifier::parse("$ROWCOUNT")};
+    if (unboundedWindow)
+    {
+        const DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+        const auto countFactory = AggregationPhysicalFunctionRegistry::instance().find("Count");
+        INVARIANT(countFactory.has_value(), "The COUNT aggregation is not registered");
+        aggregationPhysicalFunctions.push_back((*countFactory)(AggregationPhysicalFunctionRegistryArguments(
+            countType, countType, ConstantUInt64ValueFunction{1}, rowCountField, std::nullopt, true)));
+    }
+    /// An updating input lifts every record with the weight of its row kind.
+    const auto rowKindFunction = [&]() -> std::optional<PhysicalFunction>
+    {
+        const auto childRowKind = aggregation->getChild().getOutputSchema()[rowKindIdentifier()];
+        if (not childRowKind.has_value())
+        {
+            return std::nullopt;
+        }
+        return QueryCompilation::FunctionProvider::lowerFunction(
+            FieldAccessLogicalFunction{*childRowKind}, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>());
+    }();
 
     const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
     const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
@@ -227,14 +251,15 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     const AggregationBuildPhysicalOperator build{
-        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
+        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions, rowKindFunction};
     auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling);
     const auto [probe, handler] = [&]() -> std::pair<PhysicalOperator, std::shared_ptr<AggregationOperatorHandler>>
     {
         if (unboundedWindow)
         {
             return {
-                UnboundedAggregationProbePhysicalOperator{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData},
+                UnboundedAggregationProbePhysicalOperator{
+                    hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData, rowCountField},
                 std::make_shared<UnboundedAggregationOperatorHandler>(
                     std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore))};
         }

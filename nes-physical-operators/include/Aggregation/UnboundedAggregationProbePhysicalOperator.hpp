@@ -31,8 +31,9 @@ namespace NES
 
 /// Probe of an aggregation with an UNBOUNDED window (see UnboundedAggregationOperatorHandler). For a triggered slice, it merges the
 /// per-thread hash maps into a delta and parks it. For every buffer, it then applies the parked deltas in slice order, if no other
-/// probe does already. Applying a delta emits, per key of the delta, +I for a new key, or -U with the old and +U with the new
-/// aggregates for a known key, and the row kind in the field $ROWKIND.
+/// probe does already. A hidden COUNT of the key's records, the last aggregation function, tells whether a key is present.
+/// Applying a delta emits, per key of the delta, +I for a key that becomes present, -U with the old and +U with the new
+/// aggregates for a key that stays present, and -D for a key whose last record was withdrawn; the row kind is in $ROWKIND.
 class UnboundedAggregationProbePhysicalOperator final : public WindowProbePhysicalOperator
 {
 public:
@@ -40,7 +41,8 @@ public:
         ChainedHashMapConfig hashMapConfig,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         OperatorHandlerId operatorHandlerId,
-        WindowMetaData windowMetaData);
+        WindowMetaData windowMetaData,
+        Record::RecordFieldIdentifier rowCountField);
 
 protected:
     void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -55,6 +57,8 @@ private:
 
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     ChainedHashMapConfig hashMapConfig;
+    /// Result field of the hidden COUNT of every key's records.
+    Record::RecordFieldIdentifier rowCountField;
 };
 
 }

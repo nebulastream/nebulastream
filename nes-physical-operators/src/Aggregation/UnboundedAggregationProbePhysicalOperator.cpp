@@ -41,6 +41,7 @@
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
+#include <select.hpp>
 
 namespace NES
 {
@@ -93,10 +94,12 @@ UnboundedAggregationProbePhysicalOperator::UnboundedAggregationProbePhysicalOper
     ChainedHashMapConfig hashMapConfig,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
     const OperatorHandlerId operatorHandlerId,
-    WindowMetaData windowMetaData)
+    WindowMetaData windowMetaData,
+    Record::RecordFieldIdentifier rowCountField)
     : WindowProbePhysicalOperator(operatorHandlerId, std::move(windowMetaData))
     , aggregationPhysicalFunctions(std::move(aggregationPhysicalFunctions))
     , hashMapConfig(std::move(hashMapConfig))
+    , rowCountField(std::move(rowCountField))
 {
 }
 
@@ -173,8 +176,7 @@ void UnboundedAggregationProbePhysicalOperator::applyDelta(
         const ChainedHashMapRef::ChainedEntryRef deltaEntryRef{deltaEntry, delta, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
         const auto keys = deltaEntryRef.getKey();
 
-        /// A key the table does not have yet starts from reset states and is reported as an insert.
-        nautilus::val<uint8_t> newKind{static_cast<uint8_t>(RowKind::UPDATE_AFTER)};
+        /// A key the table does not have yet starts from reset states, whose row count of zero makes it absent.
         const auto tableEntry = tableMap.findOrCreateEntry(
             keys,
             [&](const nautilus::val<AbstractHashMapEntry*>& entry)
@@ -186,20 +188,13 @@ void UnboundedAggregationProbePhysicalOperator::applyDelta(
                     aggFunction->reset(state, table, executionCtx.pipelineMemoryProvider);
                     state = state + aggFunction->getSizeOfStateInBytes();
                 }
-                newKind = static_cast<uint8_t>(RowKind::INSERT);
             },
             executionCtx.pipelineMemoryProvider.bufferProvider);
         const ChainedHashMapRef::ChainedEntryRef tableEntryRef{tableEntry, table, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
         const auto tableStates = static_cast<nautilus::val<AggregationState*>>(tableEntryRef.getValueMemArea());
 
-        /// A known key first withdraws the row it emitted last.
-        if (newKind == nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::UPDATE_AFTER)})
-        {
-            auto oldRecord = lowerStates(executionCtx, tableStates, table);
-            oldRecord.reassignFields(keys);
-            oldRecord.write(rowKindField, VarVal{nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::UPDATE_BEFORE)}});
-            executeChild(executionCtx, oldRecord);
-        }
+        auto oldRecord = lowerStates(executionCtx, tableStates, table);
+        const auto wasPresent = oldRecord.read(rowCountField).getRawValueAs<nautilus::val<uint64_t>>() != nautilus::val<uint64_t>{0};
 
         auto tableState = tableStates;
         auto deltaState = static_cast<nautilus::val<AggregationState*>>(deltaEntryRef.getValueMemArea());
@@ -211,9 +206,30 @@ void UnboundedAggregationProbePhysicalOperator::applyDelta(
         }
 
         auto newRecord = lowerStates(executionCtx, tableStates, table);
-        newRecord.reassignFields(keys);
-        newRecord.write(rowKindField, VarVal{newKind});
-        executeChild(executionCtx, newRecord);
+        const auto isPresent = newRecord.read(rowCountField).getRawValueAs<nautilus::val<uint64_t>>() != nautilus::val<uint64_t>{0};
+
+        /// A present key withdraws the row it emitted last: as an update if it stays present, as a delete otherwise.
+        if (wasPresent)
+        {
+            const auto oldKind = nautilus::select(
+                isPresent,
+                nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::UPDATE_BEFORE)},
+                nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::DELETE)});
+            oldRecord.reassignFields(keys);
+            oldRecord.write(rowKindField, VarVal{oldKind});
+            executeChild(executionCtx, oldRecord);
+        }
+        /// A key that is present afterwards emits its new row: as an update if it was present, as an insert otherwise.
+        if (isPresent)
+        {
+            const auto newKind = nautilus::select(
+                wasPresent,
+                nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::UPDATE_AFTER)},
+                nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::INSERT)});
+            newRecord.reassignFields(keys);
+            newRecord.write(rowKindField, VarVal{newKind});
+            executeChild(executionCtx, newRecord);
+        }
     }
 }
 
