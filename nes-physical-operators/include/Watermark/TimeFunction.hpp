@@ -71,4 +71,20 @@ public:
     [[nodiscard]] std::unique_ptr<TimeFunction> clone() const override { return std::make_unique<IngestionTimeFunction>(); }
 };
 
+/// Clamps the timestamp of another time function to the watermark of the record's buffer. An unbounded operator uses its slices
+/// only to batch its output, so a record whose timestamp lies behind the watermark (e.g. an unbounded join emits matches with the
+/// timestamps of its older inputs) goes to the earliest slice that cannot have been triggered yet instead of being out of order.
+/// The watermark of a buffer is at least that of every earlier buffer of its origin, so no slice at or after it has been triggered.
+class WatermarkClampedTimeFunction final : public TimeFunction
+{
+public:
+    explicit WatermarkClampedTimeFunction(std::unique_ptr<TimeFunction> timeFunction);
+    void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
+    nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
+    [[nodiscard]] std::unique_ptr<TimeFunction> clone() const override;
+
+private:
+    std::unique_ptr<TimeFunction> timeFunction;
+};
+
 }

@@ -48,5 +48,12 @@ nautilus::val<bool> AggregationPhysicalFunction::readNull(const nautilus::val<Ag
     return isNull;
 }
 
+void AggregationPhysicalFunction::liftWeighted(
+    const nautilus::val<AggregationState*>&, BorrowedNautilusBuffer, PipelineMemoryProvider&, const Record&, const nautilus::val<int64_t>&)
+{
+    /// The optimizer only lets aggregations that support retraction consume an updating stream.
+    INVARIANT(false, "The aggregation {} cannot withdraw records of an updating stream", resultFieldIdentifier);
+}
+
 AggregationPhysicalFunction::~AggregationPhysicalFunction() = default;
 }

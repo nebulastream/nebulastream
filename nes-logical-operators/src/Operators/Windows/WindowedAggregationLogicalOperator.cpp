@@ -19,6 +19,8 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <algorithm>
+#include <iterator>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -49,6 +51,7 @@
 #include <Util/DynamicBase.hpp>
 #include <Util/Hash.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/RowKind.hpp>
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -153,8 +156,7 @@ void WindowedAggregationLogicalOperator::inferLocalSchema()
 
     std::vector<UnqualifiedUnboundField> outputFields{};
 
-    outputFields.push_back(startEndFields[0]);
-    outputFields.push_back(startEndFields[1]);
+    std::ranges::copy(getWindowOutputFields(), std::back_inserter(outputFields));
 
     for (const auto& [aggFunction, name] : aggregationFunctions)
     {
@@ -271,7 +273,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
 Schema<Field, Ordered> WindowedAggregationLogicalOperator::getOrderedOutputSchema(ChildOutputOrderProvider) const
 {
-    auto boundStartEndFields = startEndFields | RangeBinder{self.lock()} | std::ranges::to<Schema<Field, Ordered>>();
+    auto boundStartEndFields = getWindowOutputFields() | RangeBinder{self.lock()} | std::ranges::to<Schema<Field, Ordered>>();
     auto keyFields
         = std::get<std::vector<std::pair<TypedLogicalFunction<FieldAccessLogicalFunction>, std::optional<Identifier>>>>(groupingKeys)
         | std::views::transform(
@@ -399,6 +401,17 @@ std::unordered_map<Field, std::unordered_set<Field>> WindowedAggregationLogicalO
 const WindowedAggregationLogicalOperator::GroupingKeyType& WindowedAggregationLogicalOperator::getGroupingKeysWithName() const
 {
     return groupingKeys;
+}
+
+std::vector<UnqualifiedUnboundField> WindowedAggregationLogicalOperator::getWindowOutputFields() const
+{
+    /// An unbounded aggregation emits a retract changelog of its keys (see RowKind.hpp). Instead of window bounds, each row carries the
+    /// end of the slice that emitted it, which a downstream unbounded operator can use as its time field.
+    if (windowType.isUnbounded())
+    {
+        return {startEndFields[1], UnqualifiedUnboundField{rowKindIdentifier(), DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}}};
+    }
+    return {startEndFields[0], startEndFields[1]};
 }
 
 const UnqualifiedUnboundField& WindowedAggregationLogicalOperator::getWindowStartField() const

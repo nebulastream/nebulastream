@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -58,6 +59,19 @@ public:
         BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& bufferProvider,
         const Record& record) = 0;
+
+    /// Adds the record with a weight of +1 or -1 to the aggregation state. An aggregation over an updating stream (see RowKind.hpp)
+    /// lifts every UPDATE_BEFORE and DELETE with -1, which withdraws a record that an earlier +1 added. Only aggregations whose
+    /// state can subtract a record support it (see supportsRetraction).
+    virtual void liftWeighted(
+        const nautilus::val<AggregationState*>& aggregationState,
+        BorrowedNautilusBuffer parentBuffer,
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        const Record& record,
+        const nautilus::val<int64_t>& weight);
+
+    /// True if liftWeighted can withdraw records. MIN and MAX would need all values to find the next extreme, so they do not.
+    [[nodiscard]] virtual bool supportsRetraction() const { return false; }
 
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
     virtual void combine(

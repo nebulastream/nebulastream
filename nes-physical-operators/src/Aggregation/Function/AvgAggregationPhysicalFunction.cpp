@@ -93,6 +93,43 @@ void AvgAggregationPhysicalFunction::lift(
     }
 }
 
+void AvgAggregationPhysicalFunction::liftWeighted(
+    const nautilus::val<AggregationState*>& aggregationState,
+    BorrowedNautilusBuffer,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record,
+    const nautilus::val<int64_t>& weight)
+{
+    /// Sum and count add the weighted record; unsigned values subtract in two's complement, see SumAggregationPhysicalFunction.
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto weightedValue = (value.castToType(resultType.type) * VarVal{weight}.castToType(resultType.type)).castToType(resultType.type);
+    const auto countWeight = VarVal{weight}.castToType(countType.type);
+    if (inputType.nullable)
+    {
+        const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
+        const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>{resultType.getSizeInBytesWithoutNull()};
+        const auto isNull = readNull(aggregationState);
+        const auto sum = VarVal::readVarValFromMemory(memAreaSum, resultType, nautilus::val<bool>{false});
+        const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
+        const auto newSum = VarVal::select(value.isNull(), sum, (sum + weightedValue).castToType(resultType.type));
+        const auto newCount = VarVal::select(value.isNull(), count, (count + countWeight).castToType(countType.type));
+        newSum.writeToMemory(memAreaSum);
+        newCount.writeToMemory(memAreaCount);
+        storeNull(aggregationState, isNull and value.isNull());
+    }
+    else
+    {
+        const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
+        const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>{resultType.getSizeInBytesWithoutNull()};
+        const auto sum = VarVal::readVarValFromMemory(memAreaSum, resultType, nautilus::val<bool>{false});
+        const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
+        const auto newSum = (sum + weightedValue).castToType(resultType.type);
+        const auto newCount = (count + countWeight).castToType(countType.type);
+        newSum.writeToMemory(memAreaSum);
+        newCount.writeToMemory(memAreaCount);
+    }
+}
+
 void AvgAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     BorrowedNautilusBuffer,

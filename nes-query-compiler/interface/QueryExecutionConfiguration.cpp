@@ -113,8 +113,8 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
 
 const ConfigField<uint64_t> UNBOUNDED_SLICE_SIZE_MS{
     Identifier::parse("unbounded_slice_size_ms"),
-    "Event-time interval at which a join with an UNBOUNDED window emits new results. Smaller values lower the latency but "
-    "create more probe and compaction tasks.",
+    "Event-time interval at which an operator with an UNBOUNDED window (join or aggregation) emits new results. Smaller values "
+    "lower the latency but create more probe tasks, compaction tasks and updates.",
     [](const ConfigLiteral& literal)
     {
         return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
@@ -130,6 +130,26 @@ const ConfigField<uint64_t> UNBOUNDED_SLICE_SIZE_MS{
                 });
     },
     uint64_t{1000}};
+
+const ConfigField<uint64_t> UNBOUNDED_AGGREGATION_PARTITIONS{
+    Identifier::parse("unbounded_aggregation_partitions"),
+    "Number of partitions of the keys of an aggregation with an UNBOUNDED window. The partitions of a slice are merged and applied "
+    "to the table of all keys in parallel. Rounded down to a power of two and limited to the number of chains of the hash maps.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t>)
+            .and_then(
+                [](const uint64_t value) -> std::expected<uint64_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{InvalidConfigParameter("unbounded_aggregation_partitions must not be zero")};
+                    }
+                    return value;
+                });
+    },
+    uint64_t{16}};
 
 const ConfigField<bool> NAUTILUS_PERF{
     Identifier::parse("nautilus_perf"),
@@ -151,6 +171,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         OPERATOR_BUFFER_SIZE,
         UNBOUNDED_SLICE_SIZE_MS,
         COUNT_DISTINCT_NUMBER_OF_BUCKETS,
+        UNBOUNDED_AGGREGATION_PARTITIONS,
         NAUTILUS_PERF,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
@@ -165,6 +186,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(OPERATOR_BUFFER_SIZE),
         config.get(UNBOUNDED_SLICE_SIZE_MS),
         config.get(COUNT_DISTINCT_NUMBER_OF_BUCKETS),
+        config.get(UNBOUNDED_AGGREGATION_PARTITIONS),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),
         config.get(NAUTILUS_PERF)};

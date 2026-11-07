@@ -76,4 +76,29 @@ nautilus::val<Timestamp> IngestionTimeFunction::getTs(ExecutionContext& ctx, Rec
     return ctx.currentTs;
 }
 
+WatermarkClampedTimeFunction::WatermarkClampedTimeFunction(std::unique_ptr<TimeFunction> timeFunction)
+    : timeFunction(std::move(timeFunction))
+{
+}
+
+void WatermarkClampedTimeFunction::open(ExecutionContext& ctx, RecordBuffer& buffer) const
+{
+    timeFunction->open(ctx, buffer);
+}
+
+nautilus::val<Timestamp> WatermarkClampedTimeFunction::getTs(ExecutionContext& ctx, Record& record) const
+{
+    auto ts = timeFunction->getTs(ctx, record);
+    if (ts < ctx.watermarkTs)
+    {
+        ts = ctx.watermarkTs;
+    }
+    return ts;
+}
+
+std::unique_ptr<TimeFunction> WatermarkClampedTimeFunction::clone() const
+{
+    return std::make_unique<WatermarkClampedTimeFunction>(timeFunction->clone());
+}
+
 }

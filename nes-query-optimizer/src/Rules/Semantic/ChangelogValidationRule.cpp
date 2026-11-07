@@ -29,6 +29,7 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
@@ -42,9 +43,26 @@ namespace NES
 
 namespace
 {
+/// An unbounded aggregation withdraws the records of an updating input, if all its aggregations can subtract a record.
+bool isRetractingAggregation(const LogicalOperator& op)
+{
+    const auto aggregation = op.tryGetAs<WindowedAggregationLogicalOperator>();
+    if (not aggregation.has_value() or not aggregation.value()->getWindowType().isUnbounded())
+    {
+        return false;
+    }
+    return std::ranges::all_of(
+        aggregation.value()->getWindowAggregation(),
+        [](const WindowedAggregationLogicalOperator::ProjectedAggregation& projected)
+        {
+            const auto name = projected.function->getName();
+            return name == "Sum" or name == "Count" or name == "Avg";
+        });
+}
+
 bool acceptsUpdates(const LogicalOperator& op)
 {
-    return op.tryGetAs<SelectionLogicalOperator>().has_value() or op.tryGetAs<ProjectionLogicalOperator>().has_value()
+    return isRetractingAggregation(op) or op.tryGetAs<SelectionLogicalOperator>().has_value() or op.tryGetAs<ProjectionLogicalOperator>().has_value()
         or op.tryGetAs<UnionLogicalOperator>().has_value() or op.tryGetAs<SinkLogicalOperator>().has_value()
         or op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value()
         or op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value();

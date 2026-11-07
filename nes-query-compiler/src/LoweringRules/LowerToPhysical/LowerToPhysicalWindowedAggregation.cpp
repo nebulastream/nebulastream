@@ -16,6 +16,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <algorithm>
+#include <bit>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -57,6 +59,8 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Functions/ConstantValuePhysicalFunction.hpp>
+#include <Util/RowKind.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -75,6 +79,9 @@
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <WindowBasedOperatorHandler.hpp>
+#include <Aggregation/UnboundedAggregationOperatorHandler.hpp>
+#include <Aggregation/UnboundedAggregationProbePhysicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {
@@ -149,7 +156,38 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto handlerId = getNextOperatorHandlerId();
     auto timeFunction = TimeFunction::create(std::get<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic()));
     auto windowType = aggregation->getWindowType();
+    /// An unbounded window has no size: its tumbling slices of the configured size only batch the changelog the aggregation emits.
+    /// Late records go to the earliest slice that has not been triggered, as they only change when their update is emitted.
+    const bool unboundedWindow = windowType.isUnbounded();
+    if (unboundedWindow)
+    {
+        timeFunction = std::make_unique<WatermarkClampedTimeFunction>(std::move(timeFunction));
+    }
+    const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
+    const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
+    /// An unbounded aggregation counts the records of every key in a hidden COUNT, its last function: a key whose records were all
+    /// withdrawn is absent and emits a DELETE.
+    const Record::RecordFieldIdentifier rowCountField{Identifier::parse("$ROWCOUNT")};
+    if (unboundedWindow)
+    {
+        const DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+        const auto countFactory = AggregationPhysicalFunctionRegistry::instance().find("Count");
+        INVARIANT(countFactory.has_value(), "The COUNT aggregation is not registered");
+        aggregationPhysicalFunctions.push_back((*countFactory)(AggregationPhysicalFunctionRegistryArguments(
+            countType, countType, ConstantUInt64ValueFunction{1}, rowCountField, std::nullopt, true)));
+    }
+    /// An updating input lifts every record with the weight of its row kind.
+    const auto rowKindFunction = [&]() -> std::optional<PhysicalFunction>
+    {
+        const auto childRowKind = aggregation->getChild().getOutputSchema()[rowKindIdentifier()];
+        if (not childRowKind.has_value())
+        {
+            return std::nullopt;
+        }
+        return QueryCompilation::FunctionProvider::lowerFunction(
+            FieldAccessLogicalFunction{*childRowKind}, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>());
+    }();
 
     const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
     const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
@@ -217,8 +255,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         .fieldValues = fieldValues,
         .hashFunction = std::make_shared<MurMur3HashFunction>()};
 
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceSize, sliceSlide, conf.sliceCacheConfiguration);
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider) -> const TupleBuffer*
         {
@@ -233,11 +270,25 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     const AggregationBuildPhysicalOperator build{
-        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
-    const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
-
-    auto handler = std::make_shared<AggregationOperatorHandler>(
-        traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling), outputOriginId, std::move(sliceAndWindowStore));
+        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions, rowKindFunction};
+    auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling);
+    const auto [probe, handler] = [&]() -> std::pair<PhysicalOperator, std::shared_ptr<AggregationOperatorHandler>>
+    {
+        if (unboundedWindow)
+        {
+            /// A partition is a range of the chains of the hash maps, so the number of partitions is a power of two that divides them.
+            const auto numberOfChains = ChainedHashMap::calculateNumberOfChains(hashMapConfig.numberOfBuckets);
+            const auto numberOfPartitions = std::min(std::bit_floor(conf.unboundedAggregationPartitions), numberOfChains);
+            return {
+                UnboundedAggregationProbePhysicalOperator{
+                    hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData, rowCountField, numberOfPartitions},
+                std::make_shared<UnboundedAggregationOperatorHandler>(
+                    std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore), numberOfPartitions)};
+        }
+        return {
+            AggregationProbePhysicalOperator{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData},
+            std::make_shared<AggregationOperatorHandler>(std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore))};
+    }();
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

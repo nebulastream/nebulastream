@@ -1,0 +1,67 @@
+# name: changelog/RetractingAggregation.test
+# description: An unbounded aggregation over an updating stream withdraws every -U and -D row from its state. SUM, COUNT and AVG
+#              subtract the withdrawn row; a key whose last row is withdrawn emits -D, and +I when a row arrives for it again.
+#              Other aggregations cannot subtract a row and reject an updating input.
+# groups: [Changelog, Aggregation]
+
+# Key 1 is inserted with 10 and updated to 15, key 2 is inserted with 5, deleted, and inserted again with 7.
+CREATE LOGICAL SOURCE changes("$ROWKIND" UINT8 NOT NULL, k UINT64 NOT NULL, v UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR changes TYPE File;
+ATTACH INLINE
+0,1,10,100
+0,2,5,200
+1,1,10,1100
+2,1,15,1100
+3,2,5,1200
+0,2,7,2100
+
+CREATE SINK sumCount(k UINT64 NOT NULL, total UINT64 NOT NULL, cnt UINT64 NOT NULL) TYPE File;
+CREATE SINK sumCountAvg(k UINT64 NOT NULL, total UINT64 NOT NULL, cnt UINT64 NOT NULL, avgV FLOAT64 NOT NULL) TYPE File;
+CREATE SINK perCount(cnt UINT64 NOT NULL, keys UINT64 NOT NULL) TYPE File;
+CREATE SINK sumEnd(k UINT64 NOT NULL, total UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
+
+SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM changes GROUP BY k WINDOW UNBOUNDED(ts) INTO sumCount;
+---- CHANGELOG
++I,1,10,1
++I,2,5,1
+-U,1,10,1
++U,1,15,1
+-D,2,5,1
++I,2,7,1
+
+SELECT k, SUM(v) AS total, COUNT(v) AS cnt, AVG(v) AS avgV FROM changes GROUP BY k WINDOW UNBOUNDED(ts) INTO sumCountAvg;
+----
+1,15,1,15
+2,7,1,7
+
+# The outer aggregation consumes the changelog of the inner one, which itself consumes a changelog. Its time field is the end
+# of the slice that emitted a row of the inner aggregation. Key 2 moves out of bucket 1 with its -D and back with its +I.
+SELECT cnt, COUNT(k) AS keys
+FROM (SELECT k, COUNT(v) AS cnt, end AS updated FROM changes GROUP BY k WINDOW UNBOUNDED(ts))
+GROUP BY cnt WINDOW UNBOUNDED(updated) INTO perCount;
+---- CHANGELOG
++I,1,2
+-U,1,2
++U,1,1
+-U,1,1
++U,1,2
+
+# The end of the slice that emitted a row is an output field like the window end of a windowed aggregation.
+SELECT k, total, end FROM (SELECT k, SUM(v) AS total, end FROM changes GROUP BY k WINDOW UNBOUNDED(ts)) INTO sumEnd;
+---- CHANGELOG
++I,1,10,1000
++I,2,5,1000
+-U,1,10,2000
++U,1,15,2000
+-D,2,5,2000
++I,2,7,3000
+
+# MIN and MAX would need every value to find the next extreme after a withdrawal.
+SELECT k, MAX(v) AS m FROM changes GROUP BY k WINDOW UNBOUNDED(ts) INTO FILE ();
+----
+ERROR 2008
+
+# A windowed aggregation would treat a withdrawn row like a new one.
+SELECT k, SUM(v) AS total FROM changes GROUP BY k WINDOW TUMBLING(ts, SIZE 1 SEC) INTO FILE ();
+----
+ERROR 2008

@@ -75,6 +75,35 @@ void SumAggregationPhysicalFunction::lift(
     }
 }
 
+void SumAggregationPhysicalFunction::liftWeighted(
+    const nautilus::val<AggregationState*>& aggregationState,
+    BorrowedNautilusBuffer,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record,
+    const nautilus::val<int64_t>& weight)
+{
+    /// Unsigned sums subtract in two's complement: the wrapped intermediate sums return to the right value once the matching +1
+    /// records are added, as every withdrawn record was added before.
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto weightedValue = (value.castToType(resultType.type) * VarVal{weight}.castToType(resultType.type)).castToType(resultType.type);
+    if (inputType.nullable)
+    {
+        const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
+        const auto isNull = readNull(aggregationState);
+        const auto sum = VarVal::readVarValFromMemory(memAreaSum, resultType, nautilus::val<bool>{false});
+        const auto newSum = VarVal::select(value.isNull(), sum, (sum + weightedValue).castToType(resultType.type));
+        newSum.writeToMemory(memAreaSum);
+        storeNull(aggregationState, isNull and value.isNull());
+    }
+    else
+    {
+        const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
+        const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, resultType);
+        const auto newSum = (sum + weightedValue).castToType(resultType.type);
+        newSum.writeToMemory(memAreaSum);
+    }
+}
+
 void SumAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     BorrowedNautilusBuffer,

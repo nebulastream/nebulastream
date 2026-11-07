@@ -39,6 +39,7 @@ struct QueryExecutionConfiguration
         uint64_t operatorBufferSize,
         uint64_t unboundedSliceSizeMs,
         uint64_t countDistinctNumberOfBuckets,
+        uint64_t unboundedAggregationPartitions,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
         bool nautilusPerf = false)
@@ -48,6 +49,7 @@ struct QueryExecutionConfiguration
         , operatorBufferSize(operatorBufferSize)
         , unboundedSliceSizeMs(unboundedSliceSizeMs)
         , countDistinctNumberOfBuckets(countDistinctNumberOfBuckets)
+        , unboundedAggregationPartitions(unboundedAggregationPartitions)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
         , nautilusPerf(nautilusPerf)
@@ -60,6 +62,8 @@ struct QueryExecutionConfiguration
     uint64_t operatorBufferSize;
     uint64_t unboundedSliceSizeMs;
     uint64_t countDistinctNumberOfBuckets;
+    /// Number of partitions of the keys of an unbounded aggregation, whose slices are merged and applied in parallel.
+    uint64_t unboundedAggregationPartitions;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
     /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can

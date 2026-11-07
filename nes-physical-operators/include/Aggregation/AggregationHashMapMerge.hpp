@@ -37,4 +37,14 @@ void combineAggregationHashMap(
     const BorrowedNautilusBuffer& target,
     const BorrowedNautilusBuffer& source);
 
+/// Like combineAggregationHashMap, but only for the keys in the chains [firstChain, endChain) of source, i.e. for a range of hashes.
+void combineAggregationHashMapChains(
+    ExecutionContext& executionCtx,
+    const ChainedHashMapConfig& hashMapConfig,
+    const std::vector<std::shared_ptr<AggregationPhysicalFunction>>& aggregationFunctions,
+    const BorrowedNautilusBuffer& target,
+    const BorrowedNautilusBuffer& source,
+    const nautilus::val<uint64_t>& firstChain,
+    const nautilus::val<uint64_t>& endChain);
+
 }

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -36,7 +37,8 @@ public:
         std::unique_ptr<SliceStoreRef> sliceStoreRef,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         ChainedHashMapConfig hashMapConfig,
-        std::vector<PhysicalFunction> keyFunctions);
+        std::vector<PhysicalFunction> keyFunctions,
+        std::optional<PhysicalFunction> rowKindFunction = std::nullopt);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
@@ -46,6 +48,8 @@ private:
     ChainedHashMapConfig hashMapConfig;
     /// Extracts the key fields out of an incoming record. Operator logic, not hash map metadata, hence not in the config.
     std::vector<PhysicalFunction> keyFunctions;
+    /// Reads the row kind of an updating input (see RowKind.hpp). If set, every record is lifted with the weight of its row kind.
+    std::optional<PhysicalFunction> rowKindFunction;
 };
 
 }
