@@ -1,0 +1,293 @@
+# name: benchmark_small/NexmarkFlinkReference.test
+# description: Nexmark queries over the full Flink Nexmark schema. Expected results come from running the upstream
+#   nexmark-flink queries on Flink 1.20 over the same input files (scripts/benchmarking/nexmark/flink). Each query names
+#   its reference in a `# reference:` line; regenerate the expected results with
+#   `scripts/benchmarking/nexmark/flink/update_expected.py <this file> <reference dir>`.
+#   Input: 10k events (200 persons, 600 auctions, 9200 bids), 100 events/s of event time, generated with
+#   `nexmark-datagen --events 10000 --rate 100`.
+#   Outputs with free-text VARSIZED columns are compared by checksum: the row comparison splits fields on spaces.
+# groups: [benchmark, benchmark_small, Nexmark, Aggregation, Join]
+
+CREATE LOGICAL SOURCE person(id INT64 NOT NULL, name VARSIZED NOT NULL, emailAddress VARSIZED NOT NULL, creditCard VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR person TYPE File;
+ATTACH FILE small/nexmark/flink_10k/person.csv
+
+CREATE LOGICAL SOURCE auction(id INT64 NOT NULL, itemName VARSIZED NOT NULL, description VARSIZED NOT NULL, initialBid INT64 NOT NULL, reserve INT64 NOT NULL, dateTime UINT64 NOT NULL, expires UINT64 NOT NULL, seller INT64 NOT NULL, category INT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE small/nexmark/flink_10k/auction.csv
+
+CREATE LOGICAL SOURCE bid(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE small/nexmark/flink_10k/bid.csv
+
+# The q13 side input (upstream SideInputGenerator: key,value = i,i).
+CREATE LOGICAL SOURCE side_input(sikey INT64 NOT NULL, sivalue VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR side_input TYPE File;
+ATTACH FILE small/nexmark/flink_10k/side_input.csv
+
+CREATE SINK q0Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL) TYPE Checksum;
+CREATE SINK q1Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price FLOAT64 NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL) TYPE Checksum;
+CREATE SINK q2Sink(auction INT64 NOT NULL, price INT64 NOT NULL) TYPE File;
+CREATE SINK q3Sink(name VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, id INT64 NOT NULL) TYPE Checksum;
+CREATE SINK q5Sink(auction INT64 NOT NULL, num UINT64 NOT NULL) TYPE File;
+CREATE SINK q7Sink(auction INT64 NOT NULL, price INT64 NOT NULL, bidder INT64 NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL) TYPE Checksum;
+CREATE SINK q8Sink(id INT64 NOT NULL, name VARSIZED NOT NULL, stime UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK q10Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL, dt VARSIZED NOT NULL, hm VARSIZED NOT NULL) TYPE Checksum;
+CREATE SINK q14Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price FLOAT64 NOT NULL, bidTimeType VARSIZED NOT NULL, dateTime UINT64 NOT NULL, extra VARSIZED NOT NULL, cCounts UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK q21Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, channel VARSIZED NOT NULL, channelId VARSIZED) TYPE Checksum;
+CREATE SINK q22Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, channel VARSIZED NOT NULL, dir1 VARSIZED, dir2 VARSIZED, dir3 VARSIZED) TYPE Checksum;
+CREATE SINK q13Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, dateTime UINT64 NOT NULL, sivalue VARSIZED NOT NULL) TYPE Checksum;
+CREATE SINK q20Sink(auction INT64 NOT NULL, bidder INT64 NOT NULL, price INT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL, bDateTime UINT64 NOT NULL, bExtra VARSIZED NOT NULL, itemName VARSIZED NOT NULL, description VARSIZED NOT NULL, initialBid INT64 NOT NULL, reserve INT64 NOT NULL, aDateTime UINT64 NOT NULL, expires UINT64 NOT NULL, seller INT64 NOT NULL, category INT64 NOT NULL, aExtra VARSIZED NOT NULL) TYPE Checksum;
+CREATE SINK q23Sink(bidder INT64 NOT NULL, price INT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL, bidExtra VARSIZED NOT NULL, personId INT64 NOT NULL, name VARSIZED NOT NULL, emailAddress VARSIZED NOT NULL, creditCard VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, personExtra VARSIZED NOT NULL, itemName VARSIZED NOT NULL, description VARSIZED NOT NULL, initialBid INT64 NOT NULL, reserve INT64 NOT NULL, auctionDateTime UINT64 NOT NULL, expires UINT64 NOT NULL, seller INT64 NOT NULL, category INT64 NOT NULL, auctionExtra VARSIZED NOT NULL) TYPE Checksum;
+
+# Query 0: pass-through
+# reference: q0 --checksum
+SELECT auction, bidder, price, dateTime, extra FROM bid INTO q0Sink;
+----
+9200 82646636
+
+# Query 1: currency conversion
+# reference: q1 --float-columns 2 --checksum
+SELECT auction, bidder, price * 0.908 AS price, dateTime, extra FROM bid INTO q1Sink;
+----
+9200 84387652
+
+# Query 2: selection
+# reference: q2
+SELECT auction, price FROM bid WHERE auction % 123 = 0 INTO q2Sink;
+----
+1107,10281870
+1107,104
+1107,125
+1107,16463
+1107,1788220
+1107,24840846
+1107,361
+1107,36584032
+1107,382356
+1107,4783
+1107,5452631
+1107,6254528
+1230,20410
+1230,29261
+1230,3349
+1230,5431
+1230,6183
+1230,92335616
+1230,941
+1353,116311
+1353,1288
+1353,129110
+1353,221
+1353,227
+1353,4671245
+1353,4839815
+1353,4904
+1353,86376
+1476,1249
+1476,141
+1476,2025630
+1476,2220008
+1476,25270932
+1476,282790
+1476,3468
+1476,57611
+1476,665
+1476,73673616
+1476,842
+1599,740
+
+# Query 3: local item suggestion. Flink runs a regular join; a stream-table join without TIME holds the auctions
+# until the person input ends, which yields the same pairs on bounded input.
+# reference: q3 --checksum
+SELECT name, city, state, aid AS id
+FROM (SELECT id AS aid, seller FROM auction WHERE category = 10)
+INNER JOIN TABLE (SELECT id AS pid, name, city, state FROM person WHERE state = 'OR' OR state = 'ID' OR state = 'CA')
+ON seller = pid
+INTO q3Sink;
+----
+62 153461
+
+# Query 5: hot items. Flink joins on window_start/window_end and `num >= maxn`; NES expresses the
+# "same hop window" condition as a 2 s tumbling join over the window starts (slide = 2 s).
+# reference: q5
+SELECT auction, num
+FROM (SELECT auction, num, start AS auctionStart
+      FROM (SELECT auction, COUNT(auction) AS num, start, end
+            FROM bid
+            GROUP BY auction
+            WINDOW SLIDING(dateTime, SIZE 10 SEC, ADVANCE BY 2 SEC)))
+INNER JOIN (SELECT maxn, start AS maxStart
+            FROM (SELECT MAX(countPerAuction) AS maxn, start, end
+                  FROM (SELECT auction, COUNT(auction) AS countPerAuction, start
+                        FROM bid
+                        GROUP BY auction
+                        WINDOW SLIDING(dateTime, SIZE 10 SEC, ADVANCE BY 2 SEC))
+                  WINDOW TUMBLING(start, SIZE 2 SEC)))
+ON num >= maxn
+WINDOW TUMBLING(auctionStart, maxStart, SIZE 2 SEC)
+INTO q5Sink;
+----
+1000,191
+1000,277
+1000,304
+1000,365
+1000,393
+1000,449
+1000,449
+1000,454
+1000,458
+1000,97
+1100,227
+1100,244
+1100,317
+1100,352
+1100,424
+1100,459
+1100,479
+1100,482
+1100,488
+1200,285
+1200,321
+1200,373
+1200,412
+1200,450
+1200,455
+1200,464
+1200,464
+1300,296
+1300,318
+1300,396
+1300,417
+1300,483
+1300,485
+1300,492
+1300,495
+1400,264
+1400,334
+1400,369
+1400,428
+1400,462
+1400,473
+1400,482
+1400,489
+1500,106
+1500,202
+1500,242
+1500,297
+1500,349
+1500,392
+1500,449
+1500,492
+1500,493
+1500,493
+1500,501
+
+# Query 7: highest bid, as in Flink: an interval join `B.dateTime BETWEEN window_end - 10 s AND window_end`,
+# i.e. maxEnd in [dateTime, dateTime + 10 s].
+# reference: q7 --checksum
+SELECT auction, price, bidder, dateTime, extra
+FROM (SELECT * FROM bid)
+INNER JOIN (SELECT maxprice, end AS maxEnd
+            FROM (SELECT MAX(price) AS maxprice, start, end FROM bid WINDOW TUMBLING(dateTime, SIZE 10 SEC)))
+ON price = maxprice
+INTERVAL (dateTime, maxEnd, 0 ms, 10000 ms)
+INTO q7Sink;
+----
+10 89017
+
+# Query 8: monitor new users. Both sides are deduplicated per 10 s tumbling window before the window join.
+# reference: q8 --checksum
+SELECT id, name, personStart AS stime
+FROM (SELECT id, name, start AS personStart
+      FROM (SELECT id, name, start, end FROM person GROUP BY id, name WINDOW TUMBLING(dateTime, SIZE 10 SEC)))
+INNER JOIN (SELECT seller, start AS sellerStart
+            FROM (SELECT seller, start, end FROM auction GROUP BY seller WINDOW TUMBLING(dateTime, SIZE 10 SEC)))
+ON id = seller
+WINDOW TUMBLING(personStart, sellerStart, SIZE 10 SEC)
+INTO q8Sink;
+----
+39 83539
+
+# Query 10: log to filesystem (the reference uses an unpartitioned sink, see flink/queries/q10.sql).
+# reference: q10 --checksum
+SELECT auction, bidder, price, dateTime, extra, DATE_FORMAT(dateTime, 'yyyy-MM-dd') AS dt, DATE_FORMAT(dateTime, 'HH:mm') AS hm
+FROM bid
+INTO q10Sink;
+----
+9200 91576156
+
+# Query 13: bounded side input join. Upstream joins FOR SYSTEM_TIME AS OF PROCTIME() against a static file, which is
+# a regular join for a static table (see scripts/benchmarking/nexmark/flink/queries/q13.sql).
+# reference: q13 --checksum --string-columns 4
+SELECT auction, bidder, price, dateTime, sivalue
+FROM (SELECT auction, bidder, price, dateTime, auction % 10000 AS sideKey FROM bid)
+INNER JOIN TABLE (SELECT * FROM side_input)
+ON sideKey = sikey
+INTO q13Sink;
+----
+9200 16445617
+
+# Query 14: calculation. Upstream counts 'c' with a Java UDF; CHAR_LENGTH - CHAR_LENGTH(REPLACE(...)) is the same count.
+# reference: q14 --float-columns 2 --checksum
+SELECT auction, bidder, price * 0.908 AS price,
+       CASE WHEN HOUR(dateTime) >= 8 AND HOUR(dateTime) <= 18 THEN 'dayTime'
+            WHEN HOUR(dateTime) <= 6 OR HOUR(dateTime) >= 20 THEN 'nightTime'
+            ELSE 'otherTime' END AS bidTimeType,
+       dateTime, extra,
+       CHAR_LENGTH(extra) - CHAR_LENGTH(REPLACE(extra, 'c', '')) AS cCounts
+FROM bid
+WHERE price * 0.908 > 1000000 AND price * 0.908 < 50000000
+INTO q14Sink;
+----
+2655 27636284
+
+# Query 20: expand bid with auction (category 10).
+# reference: q20 --checksum
+SELECT auction, bidder, price, channel, url, bDateTime, bExtra, itemName, description, initialBid, reserve, aDateTime, expires, seller, category, aExtra
+FROM (SELECT auction, bidder, price, channel, url, dateTime AS bDateTime, extra AS bExtra FROM bid)
+INNER JOIN TABLE (SELECT id, itemName, description, initialBid, reserve, dateTime AS aDateTime, expires, seller, category, extra AS aExtra
+                  FROM auction WHERE category = 10)
+ON auction = id
+INTO q20Sink;
+----
+2603 184644721
+
+# Query 21: add channel id.
+# reference: q21 --checksum --string-columns 4
+SELECT auction, bidder, price, channel,
+       CASE WHEN LOWER(channel) = 'apple' THEN '0'
+            WHEN LOWER(channel) = 'google' THEN '1'
+            WHEN LOWER(channel) = 'facebook' THEN '2'
+            WHEN LOWER(channel) = 'baidu' THEN '3'
+            ELSE REGEXP_EXTRACT(url, '(&|^)channel_id=([^&]*)', 2) END AS channelId
+FROM bid
+WHERE REGEXP_EXTRACT(url, '(&|^)channel_id=([^&]*)', 2) IS NOT NULL
+   OR LOWER(channel) IN ('apple', 'google', 'facebook', 'baidu')
+INTO q21Sink;
+----
+8754 17860652
+
+# Query 22: get URL directories.
+# reference: q22 --checksum
+SELECT auction, bidder, price, channel,
+       SPLIT_INDEX(url, '/', 3) AS dir1, SPLIT_INDEX(url, '/', 4) AS dir2, SPLIT_INDEX(url, '/', 5) AS dir3
+FROM bid
+INTO q22Sink;
+----
+9200 29058608
+
+# Query 23: bid x person x auction (two regular joins in Flink).
+# reference: q23 --checksum
+SELECT bidder, price, channel, url, bidExtra, personId, name, emailAddress, creditCard, city, state, personExtra,
+       itemName, description, initialBid, reserve, auctionDateTime, expires, seller, category, auctionExtra
+FROM (SELECT *
+      FROM (SELECT bidder, price, channel, url, extra AS bidExtra FROM bid)
+      INNER JOIN TABLE (SELECT id AS personId, name, emailAddress, creditCard, city, state, extra AS personExtra FROM person)
+      ON bidder = personId)
+INNER JOIN TABLE (SELECT itemName, description, initialBid, reserve, dateTime AS auctionDateTime, expires, seller, category, extra AS auctionExtra
+                  FROM auction)
+ON seller = bidder
+INTO q23Sink;
+----
+33564 2888672196
