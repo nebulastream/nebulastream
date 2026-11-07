@@ -110,6 +110,13 @@ const ConfigField<std::vector<std::string>> PYTHON_UDF_IMPORT_PATHS{
     },
     std::vector<std::string>{},
     ""};
+
+const ConfigField<bool> NAUTILUS_PERF{
+    Identifier::parse("nautilus_perf"),
+    "Sets nautilus' perf option: compiled pipelines keep frame pointers, so `perf record -g` can walk through them, and write perf "
+    "jitdump records with their symbols, line tables and unwinding information, so that `perf inject --jit` attributes samples to "
+    "them. Keeps the optimization level, so the profile shows production code.",
+    false};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -124,6 +131,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
         PYTHON_UDF_IMPORT_PATHS,
+        NAUTILUS_PERF,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -138,7 +146,8 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(OPERATOR_BUFFER_SIZE),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),
-        config.get(PYTHON_UDF_IMPORT_PATHS)};
+        config.get(PYTHON_UDF_IMPORT_PATHS),
+        config.get(NAUTILUS_PERF)};
 }
 
 }

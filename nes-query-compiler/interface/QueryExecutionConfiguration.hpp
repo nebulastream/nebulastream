@@ -43,7 +43,8 @@ struct QueryExecutionConfiguration
         uint64_t operatorBufferSize,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
-        std::vector<std::string> pythonUdfImportPaths)
+        std::vector<std::string> pythonUdfImportPaths,
+        bool nautilusPerf = false)
         : executionMode(executionMode)
         , numberOfPartitions(numberOfPartitions)
         , pageSize(pageSize)
@@ -52,6 +53,7 @@ struct QueryExecutionConfiguration
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
         , pythonUdfImportPaths(std::move(pythonUdfImportPaths))
+        , nautilusPerf(nautilusPerf)
     {
     }
 
@@ -64,6 +66,9 @@ struct QueryExecutionConfiguration
     BloomFilterConfiguration bloomFilterConfiguration;
     /// Directories from which inline Python UDFs may import user-provided modules.
     std::vector<std::string> pythonUdfImportPaths;
+    /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can
+    /// walk through and name their frames.
+    bool nautilusPerf;
 
     [[nodiscard]] const std::vector<std::string>& getPythonUdfImportPaths() const { return pythonUdfImportPaths; }
 
