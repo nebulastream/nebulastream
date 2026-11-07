@@ -142,6 +142,9 @@ public:
 
     void parse();
 
+    /// True while the result tuples callback runs for a result block opened by `---- CHANGELOG`.
+    [[nodiscard]] bool isExactChangelogResult() const { return exactChangelogResult; }
+
 private:
     /// Parsing utils ///
     [[nodiscard]] static std::optional<TokenType> getTokenIfValid(const std::string& line);
@@ -169,6 +172,7 @@ private:
     QueryCallback onQueryCallback;
     ExplainQueryCallback onExplainQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
+    bool exactChangelogResult = false;
     ErrorExpectationCallback onErrorExpectationCallback;
     CreateCallback onCreateCallback;
     DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;

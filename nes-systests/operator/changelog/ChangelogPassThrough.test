@@ -1,0 +1,62 @@
+# name: changelog/ChangelogPassThrough.test
+# description: An updating stream carries its row kind in the $ROWKIND field (0 +I, 1 -U, 2 +U, 3 -D). Selections and projections
+#              keep it, sinks write it as the first column (+I, -U, +U, -D), and the check folds the changelog into its final table
+#              unless the result block is `---- CHANGELOG`.
+# groups: [Changelog]
+
+# A retract changelog: key 1 is inserted, updated from 10 to 15; key 2 is inserted and deleted; key 3 is inserted.
+# An UPDATE_BEFORE or DELETE repeats the full row it withdraws, including its timestamp.
+CREATE LOGICAL SOURCE changes("$ROWKIND" UINT8 NOT NULL, k UINT64 NOT NULL, v UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR changes TYPE File;
+ATTACH INLINE
+0,1,10,1000
+0,2,20,1001
+1,1,10,1000
+2,1,15,2000
+3,2,20,1001
+0,3,30,3001
+
+CREATE SINK kvts(k UINT64 NOT NULL, v UINT64 NOT NULL, ts UINT64 NOT NULL) TYPE File;
+CREATE SINK kv(k UINT64 NOT NULL, v UINT64 NOT NULL) TYPE File;
+CREATE SINK kvChecksum(k UINT64 NOT NULL, v UINT64 NOT NULL) TYPE Checksum;
+
+# The final table of the changelog.
+SELECT * FROM changes INTO kvts;
+----
+1,15,2000
+3,30,3001
+
+# The changelog itself, with the row kind as the first column.
+SELECT * FROM changes INTO kvts;
+---- CHANGELOG
++I,1,10,1000
++I,2,20,1001
+-U,1,10,1000
++U,1,15,2000
+-D,2,20,1001
++I,3,30,3001
+
+# A projection keeps the row kind without listing it.
+SELECT k, v FROM changes INTO kv;
+---- CHANGELOG
++I,1,10
++I,2,20
+-U,1,10
++U,1,15
+-D,2,20
++I,3,30
+
+# A selection decides every row on its own: the update of key 1 passes, the insert of key 3 does not.
+SELECT k, v FROM changes WHERE v < 25 INTO kv;
+----
+1,15
+
+# The checksum sink counts the final table: 1,15 and 3,30.
+SELECT k, v FROM changes INTO kvChecksum;
+----
+2,409
+
+# Windowed operators would treat a withdrawn row as a new one.
+SELECT k, SUM(v) AS total FROM changes GROUP BY k WINDOW TUMBLING(ts, SIZE 1 SEC) INTO FILE ();
+----
+ERROR 2008

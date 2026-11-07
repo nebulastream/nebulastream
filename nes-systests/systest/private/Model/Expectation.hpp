@@ -27,6 +27,9 @@ namespace NES
 struct ExpectedRows
 {
     std::vector<std::string> rows;
+    /// Set by `---- CHANGELOG`: the rows are the exact changelog of an updating stream, each starting with its row kind.
+    /// Otherwise, the changelog a query writes is folded into its final table before the comparison.
+    bool exactChangelog = false;
 };
 
 struct ExpectedError

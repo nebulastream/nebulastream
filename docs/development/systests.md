@@ -182,6 +182,28 @@ FROM input
 INTO output1; 
 ```
 
+#### Updating Streams
+
+A query whose result is an updating stream writes the row kind of every row (`+I` insert, `-U` update-before, `+U` update-after,
+`-D` delete) as an extra first column `$ROWKIND`.
+Below `----`, the expected rows are the final table: the check adds every insert or update-after row and removes every
+update-before or delete row before it compares.
+Below `---- CHANGELOG`, the expected rows are the exact changelog, each starting with its row kind.
+A source can provide a changelog by declaring the field `"$ROWKIND" UINT8 NOT NULL`, whose values are `0` to `3` in the order above
+(see `operator/changelog/ChangelogPassThrough.test`).
+
+```sql
+SELECT k, v FROM changes INTO kv;
+----
+1,15
+
+SELECT k, v FROM changes INTO kv;
+---- CHANGELOG
++I,1,10
+-U,1,10
++U,1,15
+```
+
 #### EXPLAIN Result Matching
 
 An `EXPLAIN` test can compare the complete normalized plan verbatim:

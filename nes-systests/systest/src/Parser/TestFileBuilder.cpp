@@ -188,7 +188,10 @@ ParsedTestFile buildTestFile(SystestParser& parser, const std::filesystem::path&
                                            { builder.addLocalOverrides(overrides); });
 
     parser.registerOnResultTuplesCallback([&](std::vector<std::string> rows, const SystestQueryId id)
-                                          { builder.completeQuery(id, ExpectedRows{.rows = std::move(rows)}); });
+                                          {
+                                              builder.completeQuery(
+                                                  id, ExpectedRows{.rows = std::move(rows), .exactChangelog = parser.isExactChangelogResult()});
+                                          });
 
     parser.registerOnErrorExpectationCallback([&](const SystestParser::ErrorExpectation& error, const SystestQueryId id)
                                               { builder.completeQuery(id, ExpectedError{.code = error.code, .message = error.message}); });

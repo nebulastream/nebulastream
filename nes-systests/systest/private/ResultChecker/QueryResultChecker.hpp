@@ -31,6 +31,8 @@ struct QueryResultCheck
     std::filesystem::path resultFile;
     Schema<UnqualifiedUnboundField, Ordered> expectedSchema;
     std::vector<std::string> expectedTuples;
+    /// Compare the changelog of an updating stream row by row instead of folding it into its final table (see ExpectedRows).
+    bool exactChangelog = false;
 
     /// Fails when the output file is missing, and otherwise when its schema or its tuples differ from the expected ones.
     [[nodiscard]] Verdict check() const;
