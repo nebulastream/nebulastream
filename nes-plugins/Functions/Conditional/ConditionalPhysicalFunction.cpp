@@ -14,11 +14,13 @@
 
 #include <Functions/ConditionalPhysicalFunction.hpp>
 
+#include <cstdint>
 #include <iterator>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
@@ -43,6 +45,44 @@ std::vector<WhenThenPhysicalFunction> groupWhenThens(const std::vector<PhysicalF
     return whenThens;
 }
 
+/// A placeholder of the given type, which every path overwrites before the expression returns.
+VarVal nullOf(const DataType& type)
+{
+    const nautilus::val<bool> isNull{true};
+    switch (type.type)
+    {
+        case DataType::Type::BOOLEAN:
+            return VarVal{nautilus::val<bool>{false}, true, isNull};
+        case DataType::Type::INT8:
+            return VarVal{nautilus::val<int8_t>{0}, true, isNull};
+        case DataType::Type::INT16:
+            return VarVal{nautilus::val<int16_t>{0}, true, isNull};
+        case DataType::Type::INT32:
+            return VarVal{nautilus::val<int32_t>{0}, true, isNull};
+        case DataType::Type::INT64:
+            return VarVal{nautilus::val<int64_t>{0}, true, isNull};
+        case DataType::Type::CHAR:
+            return VarVal{nautilus::val<char>{0}, true, isNull};
+        case DataType::Type::UINT8:
+            return VarVal{nautilus::val<uint8_t>{0}, true, isNull};
+        case DataType::Type::UINT16:
+            return VarVal{nautilus::val<uint16_t>{0}, true, isNull};
+        case DataType::Type::UINT32:
+            return VarVal{nautilus::val<uint32_t>{0}, true, isNull};
+        case DataType::Type::UINT64:
+            return VarVal{nautilus::val<uint64_t>{0}, true, isNull};
+        case DataType::Type::FLOAT32:
+            return VarVal{nautilus::val<float>{0}, true, isNull};
+        case DataType::Type::FLOAT64:
+            return VarVal{nautilus::val<double>{0}, true, isNull};
+        case DataType::Type::VARSIZED:
+            return VarVal{VariableSizedData{nautilus::val<int8_t*>{nullptr}, nautilus::val<uint64_t>{0}}, true, isNull};
+        case DataType::Type::UNDEFINED:
+            break;
+    }
+    throw UnknownDataType("CASE WHEN cannot produce a NULL of type {}", type);
+}
+
 /// Branches may disagree on whether they can produce a null, while the expression as a whole has
 /// one declared type. Rebuilding the result pins it to that type instead of to the branch that
 /// produced it.
@@ -58,21 +98,33 @@ ConditionalPhysicalFunction::ConditionalPhysicalFunction(
 {
 }
 
-/// Every branch returns from inside the loop, and the loop is unrolled while the query is traced, so every branch adds an exit
-/// to the trace. At 100 branches that is about 2.7 times the IR blocks of a variant with a single exit. That is fine for the
-/// branch counts that queries use in practice, but nesting multiplies them, so this may need optimizing later.
+/// The expression has a single exit: every branch assigns the result, and the conditions after the first one that holds
+/// are not evaluated. Returning from inside the unrolled loop instead gives every branch its own exit, and the trace
+/// then continues separately after each of them, so a pipeline with n CASE expressions traced 2^n paths: 10 CASEs in
+/// one projection took about a minute to trace. The placeholder carries the declared type, so every assignment keeps
+/// the same type and nullability on all traced paths; the default overwrites it when no condition holds.
 VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
+    VarVal result = withDeclaredType(nullOf(resultType), resultType);
+    nautilus::val<bool> matched = false;
     for (const auto& [when, then] : nautilus::static_iterable(whenThens))
     {
-        /// A condition that is null is not true, so it does not select its branch. Converting the
-        /// condition to a bool already accounts for that.
-        if (when.execute(record, arena))
+        if (not matched)
         {
-            return withDeclaredType(then.execute(record, arena), resultType);
+            /// A condition that is null is not true, so it does not select its branch. Converting the
+            /// condition to a bool already accounts for that.
+            if (when.execute(record, arena))
+            {
+                result = withDeclaredType(then.execute(record, arena), resultType);
+                matched = true;
+            }
         }
     }
-    return withDeclaredType(elseCase.execute(record, arena), resultType);
+    if (not matched)
+    {
+        result = withDeclaredType(elseCase.execute(record, arena), resultType);
+    }
+    return result;
 }
 
 PhysicalFunctionRegistryReturnType ConditionalPhysicalFunction::createConditional(PhysicalFunctionRegistryArguments arguments)
