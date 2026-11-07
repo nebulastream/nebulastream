@@ -1,0 +1,94 @@
+# name: join/OuterJoinPredicatePushdown.test
+# description: WHERE above an outer join must only be pushed into the preserved side of the join
+# groups: [WindowOperators, Join, OuterJoin]
+
+# Reproducer: the predicate on the null-supplying (right) side must not be pushed below the LEFT OUTER JOIN.
+# Both left tuples match a right tuple, but no joined row has rv > 100, so the result is empty.
+CREATE LOGICAL SOURCE leftStream(lid UINT64 NOT NULL, lts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR leftStream TYPE File;
+ATTACH INLINE
+1,100
+2,200
+
+CREATE LOGICAL SOURCE rightStream(rid UINT64 NOT NULL, rv UINT64 NOT NULL, rts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rightStream TYPE File;
+ATTACH INLINE
+1,5,150
+2,30,250
+
+CREATE SINK sinkReproducer(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64 NOT NULL, lts UINT64 NOT NULL, rid UINT64, rv UINT64, rts UINT64) TYPE File;
+
+SELECT * FROM (SELECT * FROM (SELECT * FROM leftStream) LEFT OUTER JOIN (SELECT * FROM rightStream) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE rv > UINT64(100) INTO sinkReproducer;
+----
+
+# All tuples fall into the window [0, 1000).
+# l1 and l2 match r1 and r2. l3 has no right partner, r4 has no left partner.
+# LEFT  OUTER JOIN: (1,10,100,1,5,150), (2,20,200,2,50,250), (3,30,300,NULL,NULL,NULL)
+# RIGHT OUTER JOIN: (1,10,100,1,5,150), (2,20,200,2,50,250), (NULL,NULL,NULL,4,40,450)
+# FULL  OUTER JOIN: the union of both.
+CREATE LOGICAL SOURCE l(lid UINT64 NOT NULL, lv UINT64 NOT NULL, lts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR l TYPE File;
+ATTACH INLINE
+1,10,100
+2,20,200
+3,30,300
+
+CREATE LOGICAL SOURCE r(rid UINT64 NOT NULL, rv UINT64 NOT NULL, rts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR r TYPE File;
+ATTACH INLINE
+1,5,150
+2,50,250
+4,40,450
+
+CREATE SINK sinkLeft(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64 NOT NULL, lv UINT64 NOT NULL, lts UINT64 NOT NULL, rid UINT64, rv UINT64, rts UINT64) TYPE File;
+CREATE SINK sinkRight(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64, lv UINT64, lts UINT64, rid UINT64 NOT NULL, rv UINT64 NOT NULL, rts UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkFull(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64, lv UINT64, lts UINT64, rid UINT64, rv UINT64, rts UINT64) TYPE File;
+
+# LEFT, WHERE on the preserved side: keeps l2 (matched) and l3 (unmatched).
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) LEFT OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE lv > UINT64(15) INTO sinkLeft;
+----
+0,1000,2,20,200,2,50,250
+0,1000,3,30,300,NULL,NULL,NULL
+
+# LEFT, WHERE on the null-supplying side: NULL-padded rows fail rv > 10, l1 fails because rv = 5.
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) LEFT OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE rv > UINT64(10) INTO sinkLeft;
+----
+0,1000,2,20,200,2,50,250
+
+# LEFT, WHERE on both sides.
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) LEFT OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE lv > UINT64(15) AND rv > UINT64(10) INTO sinkLeft;
+----
+0,1000,2,20,200,2,50,250
+
+# LEFT, anti-join pattern: IS NULL on the null-supplying side only keeps the unmatched left tuple l3.
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) LEFT OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE rid IS NULL INTO sinkLeft;
+----
+0,1000,3,30,300,NULL,NULL,NULL
+
+# RIGHT, WHERE on the preserved side: keeps r2 (matched) and r4 (unmatched).
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) RIGHT OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE rv > UINT64(10) INTO sinkRight;
+----
+0,1000,2,20,200,2,50,250
+0,1000,NULL,NULL,NULL,4,40,450
+
+# RIGHT, WHERE on the null-supplying side: NULL-padded rows fail lv > 15, r1 fails because lv = 10.
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) RIGHT OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE lv > UINT64(15) INTO sinkRight;
+----
+0,1000,2,20,200,2,50,250
+
+# FULL, WHERE on the left side: keeps the matched row of l2 and the unmatched l3; r4's NULL-padded row fails.
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) FULL OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE lv > UINT64(15) INTO sinkFull;
+----
+0,1000,2,20,200,2,50,250
+0,1000,3,30,300,NULL,NULL,NULL
+
+# FULL, WHERE on the right side: keeps the matched row of r2 and the unmatched r4; l3's NULL-padded row fails.
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) FULL OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE rv > UINT64(10) INTO sinkFull;
+----
+0,1000,2,20,200,2,50,250
+0,1000,NULL,NULL,NULL,4,40,450
+
+# FULL, WHERE on both sides: only the matched row of l2 and r2 passes.
+SELECT * FROM (SELECT * FROM (SELECT * FROM l) FULL OUTER JOIN (SELECT * FROM r) ON (lid = rid) WINDOW TUMBLING (lts, rts, size 1 sec)) WHERE lv > UINT64(15) AND rv > UINT64(10) INTO sinkFull;
+----
+0,1000,2,20,200,2,50,250
