@@ -97,6 +97,26 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{4096}};
+
+const ConfigField<uint64_t> UNBOUNDED_JOIN_SLICE_SIZE_MS{
+    Identifier::parse("unbounded_join_slice_size_ms"),
+    "Event-time interval at which a join with an UNBOUNDED window emits new results. Smaller values lower the latency but "
+    "create more probe and compaction tasks.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t>)
+            .and_then(
+                [](const uint64_t value) -> std::expected<uint64_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{InvalidConfigParameter("unbounded_join_slice_size_ms must not be zero")};
+                    }
+                    return value;
+                });
+    },
+    uint64_t{1000}};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -110,6 +130,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
+        UNBOUNDED_JOIN_SLICE_SIZE_MS,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -122,6 +143,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(PAGE_SIZE),
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
+        config.get(UNBOUNDED_JOIN_SLICE_SIZE_MS),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config)};
 }

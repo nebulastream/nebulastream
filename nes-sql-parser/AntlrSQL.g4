@@ -320,6 +320,7 @@ windowSpec:
 timeWindow
     : TUMBLING '(' (timestampParameter ',')? sizeParameter ')'                       #tumblingWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
+    | UNBOUNDED '(' timestampParameter ')'                                            #unboundedWindow
     ;
 
 timestampParameter: name+=identifier (',' name+=identifier)?;
@@ -530,6 +531,7 @@ WITH: 'WITH';
 SET: 'SET';
 TUMBLING: 'TUMBLING' | 'tumbling';
 SLIDING: 'SLIDING' | 'sliding';
+UNBOUNDED: 'UNBOUNDED' | 'unbounded';
 THRESHOLD : 'THRESHOLD'|'threshold';
 SIZE: 'SIZE' | 'size';
 ADVANCE: 'ADVANCE' | 'advance';

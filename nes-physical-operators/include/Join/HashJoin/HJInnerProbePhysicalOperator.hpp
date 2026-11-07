@@ -29,7 +29,8 @@
 namespace NES
 {
 
-/// Performs the hash join probe for inner joins. Only handles MATCH_PAIRS tasks.
+/// Performs the hash join probe for inner joins. Handles MATCH_PAIRS tasks, and for an unbounded window also
+/// MATCH_PAIRS_ITERATE_LEFT and COMPACT tasks.
 class HJInnerProbePhysicalOperator final : public HJProbePhysicalOperatorBase
 {
 public:
@@ -41,7 +42,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         ChainedHashMapConfig leftHashMapBasedOptions,
-        ChainedHashMapConfig rightHashMapBasedOptions);
+        ChainedHashMapConfig rightHashMapBasedOptions,
+        bool unboundedWindow = false);
 
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
@@ -50,6 +52,10 @@ public:
 
 protected:
     void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
+private:
+    /// Only an unbounded window emits other task types than MATCH_PAIRS, so only then the probe traces their code.
+    bool unboundedWindow;
 };
 
 }

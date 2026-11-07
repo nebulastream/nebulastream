@@ -63,10 +63,28 @@ protected:
         nautilus::val<uint64_t> rightNumberOfHashMaps,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
-        const nautilus::val<Timestamp>& windowEnd) const;
+        const nautilus::val<Timestamp>& windowEnd,
+        bool iterateLeft = false) const;
+
+    /// COMPACT task: merges the left maps into one map and the right maps into one map and publishes both to the handler.
+    void performCompaction(
+        const BorrowedNautilusBuffer& recordBuffer,
+        const nautilus::val<uint64_t>& leftNumberOfHashMaps,
+        const nautilus::val<uint64_t>& rightNumberOfHashMaps,
+        const nautilus::val<uint64_t>& segmentId,
+        ExecutionContext& executionCtx) const;
 
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout, rightTupleLayout;
     ChainedHashMapConfig leftHashMapConfig, rightHashMapConfig;
+
+private:
+    OwnedNautilusBuffer mergeHashMaps(
+        const BorrowedNautilusBuffer& recordBuffer,
+        const nautilus::val<uint64_t>& firstChild,
+        const nautilus::val<uint64_t>& numberOfHashMaps,
+        const ChainedHashMapConfig& config,
+        const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout,
+        ExecutionContext& executionCtx) const;
 };
 
 }

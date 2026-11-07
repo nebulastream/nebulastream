@@ -43,7 +43,9 @@ enum class ProbeTaskType : uint64_t
 {
     MATCH_PAIRS = 0, /// Inner-join-style: emit only matched pairs
     LEFT_NULL_FILL = 1, /// Iterate left (preserved) maps, check all right maps, emit null-fill for unmatched left
-    RIGHT_NULL_FILL = 2 /// Iterate right (preserved) maps, check all left maps, emit null-fill for unmatched right
+    RIGHT_NULL_FILL = 2, /// Iterate right (preserved) maps, check all left maps, emit null-fill for unmatched right
+    MATCH_PAIRS_ITERATE_LEFT = 3, /// Like MATCH_PAIRS, but iterates the left maps and looks up in the right maps
+    COMPACT = 4 /// Merge the left maps into one map and the right maps into one map, emitting no records
 };
 
 class PipelineExecutionContext;
