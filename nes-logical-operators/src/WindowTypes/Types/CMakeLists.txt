@@ -15,4 +15,5 @@ add_source_files(nes-logical-operators
         SlidingWindow.cpp
         TumblingWindow.cpp
         IntervalWindow.cpp
+        SessionWindow.cpp
 )

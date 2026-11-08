@@ -178,6 +178,10 @@ JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const
 void JoinLogicalOperator::inferLocalSchema()
 {
     PRECONDITION(children.has_value(), "Child not set when calling schema inference");
+    if (windowType.isSession())
+    {
+        throw UnsupportedQuery("Session windows are only supported for aggregations, not for joins");
+    }
 
     /// The predicate may still be unbound at first inference (the SQL flow binds field accesses later in this method), so accept either the
     /// bound FieldAccessLogicalFunction or the unbound UnboundFieldAccessLogicalFunction as evidence of an explicit equi-join predicate.

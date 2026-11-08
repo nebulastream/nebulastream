@@ -343,6 +343,7 @@ timeWindow
     : TUMBLING '(' (timestampParameter ',')? sizeParameter ')'                       #tumblingWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
     | UNBOUNDED '(' timestampParameter ')'                                            #unboundedWindow
+    | SESSION '(' (timestampParameter ',')? gapParameter ')'                          #sessionWindow
     ;
 
 timestampParameter: name+=identifier (',' name+=identifier)?;
@@ -361,6 +362,8 @@ thresholdMinSizeParameter: INTEGER_VALUE;
 sizeParameter: SIZE INTEGER_VALUE timeUnit;
 
 advancebyParameter: ADVANCE BY INTEGER_VALUE timeUnit;
+
+gapParameter: GAP INTEGER_VALUE timeUnit;
 
 timeUnit: MS
         | SEC
@@ -567,6 +570,8 @@ SET: 'SET';
 TUMBLING: 'TUMBLING' | 'tumbling';
 SLIDING: 'SLIDING' | 'sliding';
 UNBOUNDED: 'UNBOUNDED' | 'unbounded';
+SESSION: 'SESSION' | 'session';
+GAP: 'GAP' | 'gap';
 THRESHOLD : 'THRESHOLD'|'threshold';
 SIZE: 'SIZE' | 'size';
 ADVANCE: 'ADVANCE' | 'advance';
