@@ -2,7 +2,7 @@
 
 Goal: run all Nexmark queries (q0–q23 from [nexmark/nexmark](https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries), pinned at `6b3646c3`) on NES with the same results as Flink.
 
-Status (branch `claude/nexmark-query-coverage-2d7cfd`): **21 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q23 (all but q11), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded from the comparison; q12 runs as an ingestion-time window (`operator/aggregation/IngestionTimeWindow.test`). Every query with unbounded state streams like Flink's streaming mode and emits a retract changelog, which the check folds into the final table: q4 and q15–q17 as unbounded GROUP BYs (`WINDOW UNBOUNDED`), q9, q18 and q19 as top-k (`ORDER BY ... LIMIT k BY ... WINDOW UNBOUNDED`). q19 omits Flink's rank column. q11 needs session windows.
+Status (branch `claude/nexmark-query-coverage-2d7cfd`): **all 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q11 and q13–q23, all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded from the comparison; q12 runs as an ingestion-time window (`operator/aggregation/IngestionTimeWindow.test`). Every query with unbounded state streams like Flink's streaming mode and emits a retract changelog, which the check folds into the final table: q4 and q15–q17 as unbounded GROUP BYs (`WINDOW UNBOUNDED`), q9, q18 and q19 as top-k (`ORDER BY ... LIMIT k BY ... WINDOW UNBOUNDED`). q19 omits Flink's rank column. q11 uses session windows (`WINDOW SESSION(ts, GAP g)`).
 
 ---
 
@@ -62,7 +62,7 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q8 | Monitor new users | window dedup + window join | ✅ | Keyed windowed dedup on both sides, then a window join |
 | q9 | Winning bids | regular join → Top-1 (retracting) | ✅ (streaming) | The range join, then `ORDER BY price DESC, bTime ASC LIMIT 1 BY id WINDOW UNBOUNDED(bTime)`: the best bid per auction as a changelog. |
 | q10 | Log to filesystem | Calc + DATE_FORMAT | ✅ | `DATE_FORMAT(dateTime, 'yyyy-MM-dd' / 'HH:mm')`. The partitioned sink is out of scope (the reference uses a plain sink). |
-| q11 | User sessions | session window | 🔴 | Session windows |
+| q11 | User sessions | session window | ✅ | `GROUP BY bidder WINDOW SESSION(dateTime, GAP 10 SEC)`; SESSION_START/SESSION_END are the window's `start`/`end`. Like Flink, a bid exactly the gap after the last one continues the session. |
 | q12 | Processing-time windows | PROCTIME tumble | ✅ (runs) | `GROUP BY bidder WINDOW TUMBLING(SIZE 10 SEC)`: a window without a time field uses ingestion time, the wall-clock time at which the source created the buffer. Nondeterministic, so not compared with Flink. Needed the network channel to carry the buffer creation time; before, records arrived on the next node with time 0 and the window failed. |
 | q13 | Bounded side input join | lookup join on a static file | ✅ | Stream-table join `bid ⋈ TABLE side_input` without `TIME`. 40 s on 10k events (see §4). |
 | q14 | Calculation | Calc, `HOUR`, `CASE`, UDF | ✅ | `CASE WHEN HOUR(...)`; the 'c' count is `CHAR_LENGTH(extra) - CHAR_LENGTH(REPLACE(extra, 'c', ''))` instead of the UDF |
@@ -126,9 +126,21 @@ All picked onto current main as separate commits, with the original authorship k
 | Unbounded inner hash join (`WINDOW UNBOUNDED`) | `claude/nes-inner-join-nexmark-q3-5c6fd7` | window-type variant merged with `IntervalWindow`; slice-store rename and source-origin tracing from PR 2145 |
 | Unbounded inner NLJ and INLJ (any predicate) | `ls/unbounded-nlj-inlj` | fast-forward, built on this branch |
 | `COUNT(DISTINCT x)`; CASE without ELSE (NULL default) | new | – |
+| Session windows (`WINDOW SESSION(ts, GAP g)`, aggregations only) | new | see below |
 | HOUR/HOUR_OF, DATE_FORMAT, REPLACE, LOWER, SPLIT_INDEX, REGEXP_EXTRACT; `''` literal | new | follow Flink except edge cases: REPLACE with an empty search string, SPLIT_INDEX with an empty delimiter, ASCII-only LOWER, no text month names in DATE_FORMAT |
 
 Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other commits.
+
+**Session windows.** They run on the unbounded aggregation's pipeline: the build pre-aggregates tumbling slices as wide as the
+gap. All records of a key within such a slice are less than the gap apart, so they belong to one session. The probe merges each
+triggered slice into a delta, and one applier at a time applies the deltas in slice order to a hash map with one open session per
+key. Three hidden aggregates (COUNT, and MIN/MAX of the record timestamps) give each session's state, start and last record.
+Because deltas arrive in event-time order, an out-of-order record that bridges two sessions (within the watermark) needs no
+special merge: its slice is applied before the later one. A session ends at its last record plus the gap, which is less than one
+gap after its slice. Only the keys of the last applied delta can still be open, and the applier emits them once the frontier
+passes their end. The table and the open sessions are TupleBuffer hash maps. Records behind the watermark fail with a `WindowingError`, as for every
+other window. A key keeps its (reset) table entry after its session closes, and so do the old states of `COUNT(DISTINCT)` and
+`MEDIAN`, as in the unbounded aggregation.
 
 ---
 
@@ -138,7 +150,6 @@ Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other 
 - **Hash join with a residual predicate** (in progress separately). It fixes the q4/q9 join form, and joins like q4 no longer need the WHERE rewrite.
 - **Hash index for the stream-table join's equality keys** (q13).
 - **`FILTER (WHERE …)` syntax** as sugar for the CASE rewrite. `COUNT(DISTINCT)` keeps a hash set per key with a fixed number of buckets (`count_distinct_number_of_buckets`, 64); a set that grows would suit keys with very many distinct values.
-- **Session windows** (q11): a slice assigner with per-key merging.
 - **Systest fixes:** row comparison with spaces; multiple `-t` paths.
 - **1M-event reference run** of the whole suite (large test data via ExternalData, under `testdata/large/nexmark`).
 
