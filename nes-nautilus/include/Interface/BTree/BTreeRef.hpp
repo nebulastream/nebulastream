@@ -79,6 +79,7 @@ public:
 
 private:
     friend class BTreeRef;
+    friend class RowHeapRef;
 
     [[nodiscard]] bool compareInternal(TupleBuffer* treeBuffer, int8_t* lhs, int8_t* rhs) const;
     [[nodiscard]] bool compareInternalWithExternal(TupleBuffer* treeBuffer, int8_t* internal, int8_t* external, bool externalFirst) const;

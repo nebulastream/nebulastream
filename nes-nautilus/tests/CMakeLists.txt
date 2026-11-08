@@ -19,6 +19,9 @@ target_link_libraries(paged-vector-unit-tests nes-nautilus-test-util)
 add_nes_unit_test(btree-unit-tests "UnitTests/BTreeTest.cpp")
 target_link_libraries(btree-unit-tests nes-nautilus-test-util)
 
+add_nes_unit_test(row-heap-unit-tests "UnitTests/RowHeapTest.cpp")
+target_link_libraries(row-heap-unit-tests nes-nautilus-test-util)
+
 add_nes_unit_test(nautilus-buffer-unit-tests "UnitTests/NautilusBufferTest.cpp")
 target_link_libraries(nautilus-buffer-unit-tests nes-nautilus-test-util)
 
