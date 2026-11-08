@@ -192,6 +192,22 @@ TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noe
     return childBuffer;
 }
 
+NAUTILUS_INLINE TupleBufferView TupleBuffer::getChildBufferView(const ChildBufferIndex bufferIndex) const noexcept
+{
+    auto* const child = controlBlock->getChildBuffer(bufferIndex);
+    return TupleBufferView{child->controlBlock.get(), child->ptr, child->size};
+}
+
+NAUTILUS_INLINE uint64_t TupleBufferView::getNumberOfTuples() const noexcept
+{
+    return controlBlock->getNumberOfTuples();
+}
+
+NAUTILUS_INLINE void TupleBufferView::setNumberOfTuples(const uint64_t numberOfTuples) const noexcept
+{
+    controlBlock->setNumberOfTuples(numberOfTuples);
+}
+
 NAUTILUS_INLINE void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
 {
     /// Enable ADL to spell out to onlookers how swap should be used.
