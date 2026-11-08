@@ -72,70 +72,79 @@ void AggregationOperatorHandler::triggerSlices(
 {
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
-        /// Getting all hashmaps for each slice that has at least one tuple
-        std::vector<TupleBuffer> allHashMapBuffers;
-        uint64_t totalNumberOfTuples = 0;
-        for (const auto& slice : allSlices)
+        emitWindow(windowInfo.windowInfo, windowInfo.sequenceNumber, allSlices, pipelineCtx);
+    }
+}
+
+void AggregationOperatorHandler::emitWindow(
+    const WindowInfo& windowInfo,
+    const SequenceNumber sequenceNumber,
+    const std::vector<std::shared_ptr<Slice>>& allSlices,
+    PipelineExecutionContext* pipelineCtx)
+{
+    /// Getting all hashmaps for each slice that has at least one tuple
+    std::vector<TupleBuffer> allHashMapBuffers;
+    uint64_t totalNumberOfTuples = 0;
+    for (const auto& slice : allSlices)
+    {
+        const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
+        for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
         {
-            const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
-            for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
+            /// Read-only: a hash map no build worker ever touched for this slice is simply skipped rather than
+            /// lazily created here. Trigger-time must never allocate, since that would race with a build worker
+            /// concurrently first-touching the same slot (see HashMapSlice::getOrCreateHashMapBufferRef).
+            const TupleBuffer* hashMapBuffer = aggregationSlice->getHashMapBufferRefForWorker(WorkerThreadId(hashMapIdx));
+            if (hashMapBuffer == nullptr)
             {
-                /// Read-only: a hash map no build worker ever touched for this slice is simply skipped rather than
-                /// lazily created here. Trigger-time must never allocate, since that would race with a build worker
-                /// concurrently first-touching the same slot (see HashMapSlice::getOrCreateHashMapBufferRef).
-                const TupleBuffer* hashMapBuffer = aggregationSlice->getHashMapBufferRefForWorker(WorkerThreadId(hashMapIdx));
-                if (hashMapBuffer == nullptr)
-                {
-                    continue;
-                }
-                if (const ChainedHashMap hashMap = ChainedHashMap::load(*hashMapBuffer); hashMap.getTotalNumberOfRecords() > 0)
-                {
-                    allHashMapBuffers.emplace_back(*hashMapBuffer);
-                    totalNumberOfTuples += hashMap.getTotalNumberOfRecords();
-                }
+                continue;
+            }
+            if (const ChainedHashMap hashMap = ChainedHashMap::load(*hashMapBuffer); hashMap.getTotalNumberOfRecords() > 0)
+            {
+                allHashMapBuffers.emplace_back(*hashMapBuffer);
+                totalNumberOfTuples += hashMap.getTotalNumberOfRecords();
             }
         }
-
-
-        /// We need a buffer that is large enough to store an EmittedAggregationWindow
-        auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
-        INVARIANT(sizeof(EmittedAggregationWindow) <= tupleBuffer.getBufferSize(), "The trigger has to fit into a buffer");
-        /// Store each hash map buffer as a child so the probe can load them via loadChildBuffer(i)
-        for (auto hashMapBuffer : allHashMapBuffers)
-        {
-            std::ignore = tupleBuffer.storeChildBuffer(hashMapBuffer);
-        }
-
-        /// It might be that the buffer is not zeroed out.
-        std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
-
-        /// As we are here "emitting" a buffer, we have to set the originId, the seq number, the watermark and the "number of tuples".
-        /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
-        tupleBuffer.setOriginId(outputOriginId);
-        tupleBuffer.setSequenceNumber(windowInfo.sequenceNumber);
-        tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
-        tupleBuffer.setLastChunk(true);
-        tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
-        tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
-        tupleBuffer.setCreationTimestampInMS(Timestamp(
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-
-
-        /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
-        auto tmp = tupleBuffer.getAvailableMemoryArea();
-        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, allHashMapBuffers.size()};
-
-
-        /// Dispatching the buffer to the probe operator via the task queue.
-        pipelineCtx->emitBuffer(tupleBuffer);
-        NES_TRACE(
-            "Emitted window {}-{} with watermarkTs {} sequenceNumber {} originId {}",
-            windowInfo.windowInfo.windowStart,
-            windowInfo.windowInfo.windowEnd,
-            tupleBuffer.getWatermark(),
-            tupleBuffer.getSequenceNumber(),
-            tupleBuffer.getOriginId());
     }
+
+
+    /// We need a buffer that is large enough to store an EmittedAggregationWindow
+    auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+    INVARIANT(sizeof(EmittedAggregationWindow) <= tupleBuffer.getBufferSize(), "The trigger has to fit into a buffer");
+    /// Store each hash map buffer as a child so the probe can load them via loadChildBuffer(i)
+    for (auto hashMapBuffer : allHashMapBuffers)
+    {
+        std::ignore = tupleBuffer.storeChildBuffer(hashMapBuffer);
+    }
+
+    /// It might be that the buffer is not zeroed out.
+    std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
+
+    /// As we are here "emitting" a buffer, we have to set the originId, the seq number, the watermark and the "number of tuples".
+    /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
+    tupleBuffer.setOriginId(outputOriginId);
+    tupleBuffer.setSequenceNumber(sequenceNumber);
+    tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
+    tupleBuffer.setLastChunk(true);
+    tupleBuffer.setWatermark(windowInfo.windowStart);
+    tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
+    tupleBuffer.setCreationTimestampInMS(Timestamp(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+
+
+    /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
+    auto tmp = tupleBuffer.getAvailableMemoryArea();
+    new (tmp.data()) EmittedAggregationWindow{windowInfo, allHashMapBuffers.size()};
+
+
+    /// Dispatching the buffer to the probe operator via the task queue.
+    pipelineCtx->emitBuffer(tupleBuffer);
+    NES_TRACE(
+        "Emitted window {}-{} with watermarkTs {} sequenceNumber {} originId {}",
+        windowInfo.windowStart,
+        windowInfo.windowEnd,
+        tupleBuffer.getWatermark(),
+        tupleBuffer.getSequenceNumber(),
+        tupleBuffer.getOriginId());
 }
 
 }

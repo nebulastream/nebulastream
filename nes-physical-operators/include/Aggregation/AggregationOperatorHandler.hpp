@@ -46,7 +46,7 @@ struct EmittedAggregationWindow
     uint64_t numberOfHashMaps;
 };
 
-class AggregationOperatorHandler final : public WindowBasedOperatorHandler
+class AggregationOperatorHandler : public WindowBasedOperatorHandler
 {
 public:
     AggregationOperatorHandler(
@@ -64,6 +64,13 @@ protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
+
+    /// Emits the per-thread hash maps of the slices of one window to the probe, in a buffer with the given sequence number.
+    void emitWindow(
+        const WindowInfo& windowInfo,
+        SequenceNumber sequenceNumber,
+        const std::vector<std::shared_ptr<Slice>>& allSlices,
+        PipelineExecutionContext* pipelineCtx);
 };
 
 }
