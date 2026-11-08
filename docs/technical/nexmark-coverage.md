@@ -2,7 +2,7 @@
 
 Goal: run all Nexmark queries (q0–q23 from [nexmark/nexmark](https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries), pinned at `6b3646c3`) on NES with the same results as Flink.
 
-Status (branch `claude/nexmark-query-coverage-2d7cfd`): **19 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q17 and q20–q23 (all but q11, q18, q19), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded. q4 and q15–q17 run as unbounded GROUP BYs (`WINDOW UNBOUNDED`) that emit a retract changelog like Flink's streaming mode; the check folds it into the final table. q9 matches the final result on bounded input only: its Top-1 is still expressed with MAX and join-back steps over one window that spans all data. The other 3 need session windows (q11) or Top-N/deduplication (q18, q19), and streaming semantics for all unbounded queries need the changelog model (§7).
+Status (branch `claude/nexmark-query-coverage-2d7cfd`): **21 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q23 (all but q11), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded. Every query with unbounded state streams like Flink's streaming mode and emits a retract changelog, which the check folds into the final table: q4 and q15–q17 as unbounded GROUP BYs (`WINDOW UNBOUNDED`), q9, q18 and q19 as top-k (`ORDER BY ... LIMIT k BY ... WINDOW UNBOUNDED`). q19 omits Flink's rank column. q11 needs session windows.
 
 ---
 
@@ -60,7 +60,7 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q6 | Avg selling price by seller | not supported by Flink | — | excluded |
 | q7 | Highest bid | tumble MAX → interval join | ✅ | Real interval join: `INTERVAL (dateTime, maxEnd, 0 ms, 10000 ms)` |
 | q8 | Monitor new users | window dedup + window join | ✅ | Keyed windowed dedup on both sides, then a window join |
-| q9 | Winning bids | regular join → Top-1 (retracting) | ✅ (bounded) | No Top-N: the same range join, MAX(price) per auction, join back, MIN(bid time) among those bids, join back again (3 unbounded joins, 2 aggregations). Matches Flink's final result; a real Top-N and the changelog model are still missing. |
+| q9 | Winning bids | regular join → Top-1 (retracting) | ✅ (streaming) | The range join, then `ORDER BY price DESC, bTime ASC LIMIT 1 BY id WINDOW UNBOUNDED(bTime)`: the best bid per auction as a changelog. |
 | q10 | Log to filesystem | Calc + DATE_FORMAT | ✅ | `DATE_FORMAT(dateTime, 'yyyy-MM-dd' / 'HH:mm')`. The partitioned sink is out of scope (the reference uses a plain sink). |
 | q11 | User sessions | session window | 🔴 | Session windows |
 | q12 | Processing-time windows | PROCTIME tumble | — | nondeterministic, excluded from the reference |
@@ -69,8 +69,8 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q15 | Bidding statistics | unbounded GROUP BY day, COUNT DISTINCT, FILTER | ✅ (streaming) | `GROUP BY … WINDOW UNBOUNDED(dateTime)` emits +I/-U/+U per 1 s slice; `COUNT(DISTINCT x)`; `agg FILTER (WHERE c)` as `COUNT(CASE WHEN c THEN 1 END)` / `COUNT(DISTINCT CASE WHEN c THEN x END)` |
 | q16 | Channel statistics | as q15 by (channel, day) | ✅ (streaming) | as q15; `max(DATE_FORMAT(dateTime, 'HH:mm'))` as `DATE_FORMAT(MAX(dateTime), 'HH:mm')` |
 | q17 | Auction statistics | unbounded GROUP BY (auction, day) | ✅ (streaming) | `WINDOW UNBOUNDED(dateTime)`; FILTER as `COUNT(CASE …)`; AVG as SUM / COUNT (Flink truncates) |
-| q18 | Find last bid | dedup (keep last) | 🔴 | Dedup/Top-N |
-| q19 | Auction Top-10 | Rank | 🔴 | Top-N |
+| q18 | Find last bid | dedup (keep last) | ✅ (streaming) | `ORDER BY dateTime DESC LIMIT 1 BY bidder, auction WINDOW UNBOUNDED(dateTime)` |
+| q19 | Auction Top-10 | Rank | ✅ (streaming) | `ORDER BY price DESC LIMIT 10 BY auction WINDOW UNBOUNDED(dateTime)`; without Flink's `rank_number` column (compared without it) |
 | q20 | Expand bid with auction | regular join | ✅ | Unbounded inner hash join `bid ⋈ auction WINDOW UNBOUNDED` |
 | q21 | Add channel id | Calc, LOWER, REGEXP_EXTRACT, CASE, IN | ✅ | `LOWER`, `REGEXP_EXTRACT` (std::regex), `CASE WHEN`, `IN` |
 | q22 | URL directories | Calc, SPLIT_INDEX | ✅ | `SPLIT_INDEX` |
@@ -143,9 +143,8 @@ Not ported: UDFs (not ready), LAST/ARRAY_AGG (not needed yet), the demo's other 
 - **1M-event reference run** of the whole suite (large test data via ExternalData, under `testdata/large/nexmark`).
 
 ### Substantially more effort
-- **Changelog model:** a row kind (`+I/-U/+U/-D`) carried through operators and sinks, at least upsert-keyed. Every Flink query with unbounded state needs it for streaming semantics (q4, q9, q15–q19).
 - **More retraction-aware aggregates.** Unbounded aggregations (`WINDOW UNBOUNDED`) exist over append-only input (q15–q17) and, with SUM/COUNT/AVG, over an updating stream (q4). MIN/MAX/MEDIAN/COUNT(DISTINCT) over an updating stream need multiset state and are rejected.
-- **Top-N / ROW_NUMBER / deduplication** operators (q9, q18, q19).
+- **Top-k extensions.** `ORDER BY ... LIMIT k BY ...` works over append-only input with an UNBOUNDED window (a changelog, q9, q18, q19) and with tumbling or sliding windows (append-only, per window). Missing: a row number column (q19's `rank_number`) and top-k over an updating input. Every key keeps exactly k rows in a bounded heap, whose variable-sized values are compacted, so the state of an unbounded top-k grows with the number of keys only.
 - **State TTL for regular joins.** `WINDOW UNBOUNDED` (hash, NLJ, INLJ) covers q3, q4, q9, q20 and q23 but keeps all state forever and supports inner joins only. Equality plus a range still runs as an NLJ until the hash join has a residual predicate.
 - **State beyond memory** (Flink uses RocksDB): spilling for unbounded keyed state and large window state (q7 at 1M already hits the buffer pool).
 - **An in-process Nexmark generator source and a throughput/cores harness**, for numbers comparable to Flink's.
