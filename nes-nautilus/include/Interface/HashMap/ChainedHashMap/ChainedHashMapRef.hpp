@@ -146,7 +146,14 @@ public:
     [[nodiscard]] EntryIterator begin() const;
     [[nodiscard]] EntryIterator end() const;
 
+    /// Multimap use: always appends a new entry holding `keys`, even if entries with equal keys exist. The caller fills the values.
+    nautilus::val<ChainedHashMapEntry*> appendEntry(const Record& keys, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
+    /// Multimap use: calls `onMatch` for every entry whose keys equal `keys`. Only the chain of the keys' hash is walked.
+    /// Null keys compare equal to null keys here, so callers that need SQL equality must not look up null keys.
+    void forEachMatch(const Record& keys, const std::function<void(const ChainedEntryRef&)>& onMatch) const;
+
 private:
+    [[nodiscard]] HashFunction::HashValue hashKeys(const Record& keys) const;
     /// Finds the chain for the given hash value. If no chain exists, it returns nullptr.
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findChain(const HashFunction::HashValue& hash) const;
     nautilus::val<ChainedHashMapEntry*>

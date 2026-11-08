@@ -327,6 +327,38 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
     return {buffer, nullptr, nautilus::val<uint64_t>{config.entrySize}, numberOfTuples, -1, -1, -1, -1};
 }
 
+HashFunction::HashValue ChainedHashMapRef::hashKeys(const Record& keys) const
+{
+    std::vector<VarVal> keyValues;
+    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(config.fieldKeys))
+    {
+        keyValues.emplace_back(keys.read(fieldIdentifier));
+    }
+    return config.hashFunction->calculate(keyValues);
+}
+
+nautilus::val<ChainedHashMapEntry*>
+ChainedHashMapRef::appendEntry(const Record& keys, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    const ChainedEntryRef newEntryRef{insert(hashKeys(keys), bufferProvider), buffer, config.fieldKeys, config.fieldValues};
+    newEntryRef.copyKeysToEntry(keys, bufferProvider);
+    return newEntryRef.entryRef;
+}
+
+void ChainedHashMapRef::forEachMatch(const Record& keys, const std::function<void(const ChainedEntryRef&)>& onMatch) const
+{
+    auto entry = findChain(hashKeys(keys));
+    while (entry != nullptr)
+    {
+        const ChainedEntryRef entryRef{entry, buffer, config.fieldKeys, config.fieldValues};
+        if (compareKeys(entryRef, keys))
+        {
+            onMatch(entryRef);
+        }
+        entry = entryRef.getNext();
+    }
+}
+
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
     /// Before dereferencing the cache-cold chain, consult the in-map BloomFilter. Without a filter we go
