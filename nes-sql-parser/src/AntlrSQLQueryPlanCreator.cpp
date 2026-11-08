@@ -71,6 +71,7 @@
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/TopKLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
@@ -898,7 +899,27 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
 
     auto windowTypeOpt = helpers.top().windowType;
-    if (windowTypeOpt.has_value() && helpers.top().joinKeyRelationHelper.empty())
+    if (const auto& topK = helpers.top().topK; topK.has_value())
+    {
+        if (not helpers.top().windowAggs.empty() or not helpers.top().groupByFields.empty())
+        {
+            throw InvalidQuerySyntax("ORDER BY ... LIMIT keeps rows and cannot be combined with GROUP BY or aggregations");
+        }
+        const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+        if (not windowTypeOpt.has_value() or not currentWindowTimestampOpt.has_value()
+            or not std::holds_alternative<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax("ORDER BY ... LIMIT needs a window with exactly one time field");
+        }
+        queryPlan = LogicalPlanBuilder::addTopK(
+            queryPlan,
+            windowTypeOpt.value(),
+            topK->partitionKeys,
+            topK->sortKeys,
+            topK->limit,
+            std::get<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value()));
+    }
+    else if (windowTypeOpt.has_value() && helpers.top().joinKeyRelationHelper.empty())
     {
         const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
         if (!currentWindowTimestampOpt.has_value()
@@ -1681,6 +1702,23 @@ void AntlrSQLQueryPlanCreator::enterGroupByClause(AntlrSQLParser::GroupByClauseC
 {
     helpers.top().isGroupBy = true;
     AntlrSQLBaseListener::enterGroupByClause(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitLimitByClause(AntlrSQLParser::LimitByClauseContext* context)
+{
+    AntlrSQLHelper::TopK topK{.partitionKeys = {}, .sortKeys = {}, .limit = std::stoull(context->limit->getText())};
+    for (auto* sortKey : context->topKOrder)
+    {
+        topK.sortKeys.push_back(TopKLogicalOperator::SortKey{
+            .field = UnboundFieldAccessLogicalFunction{bindIdentifier(sortKey->identifier())},
+            .descending = sortKey->ordering != nullptr and sortKey->ordering->getType() == AntlrSQLLexer::DESC});
+    }
+    for (auto* key : context->limitByKeys)
+    {
+        topK.partitionKeys.emplace_back(UnboundFieldAccessLogicalFunction{bindIdentifier(key)});
+    }
+    helpers.top().topK = std::move(topK);
+    AntlrSQLBaseListener::exitLimitByClause(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitGroupByClause(AntlrSQLParser::GroupByClauseContext* context)

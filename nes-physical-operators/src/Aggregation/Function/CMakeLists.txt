@@ -21,6 +21,7 @@ add_source_files(nes-physical-operators
         MinAggregationPhysicalFunction.cpp
         MedianAggregationPhysicalFunction.cpp
         SumAggregationPhysicalFunction.cpp
+        TopKAggregationPhysicalFunction.cpp
 )
 
 add_registry_entry(AggregationPhysicalFunction Avg)

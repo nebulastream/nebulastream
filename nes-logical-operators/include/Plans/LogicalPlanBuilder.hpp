@@ -31,6 +31,7 @@
 #include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/TopKLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
@@ -74,6 +75,15 @@ public:
         const Windowing::TimeBasedWindowType& windowType,
         std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> windowAggs,
         std::vector<UnboundFieldAccessLogicalFunction> onKeys,
+        Windowing::TimeCharacteristic timeCharacteristic);
+
+    /// Keeps the first \p limit rows per partition key in the order of the sort keys (ORDER BY ... LIMIT ... BY ... WINDOW ...).
+    static LogicalPlan addTopK(
+        LogicalPlan queryPlan,
+        const Windowing::TimeBasedWindowType& windowType,
+        std::vector<LogicalFunction> partitionKeys,
+        std::vector<TopKLogicalOperator::SortKey> sortKeys,
+        uint64_t limit,
         Windowing::TimeCharacteristic timeCharacteristic);
 
     /// @brief UnionOperator to combine two query plans

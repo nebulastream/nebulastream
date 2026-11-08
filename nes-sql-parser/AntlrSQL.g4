@@ -136,7 +136,15 @@ queryPrimary
     | '(' query ')'                                                         #subquery
     ;
 /// new layout to be closer to traditional SQL
-querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
+querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? limitByClause? sinkClause?;
+
+/// Top-k per key: keeps the first `limit` rows of every partition key (all rows form one partition without BY) in the given order.
+limitByClause:
+    ORDER BY topKOrder+=topKSortKey (',' topKOrder+=topKSortKey)*
+    LIMIT limit=INTEGER_VALUE (BY limitByKeys+=identifier (',' limitByKeys+=identifier)*)?
+    windowClause;
+
+topKSortKey: identifier ordering=(ASC | DESC)?;
 
 
 fromClause: FROM relation (',' relation)*;

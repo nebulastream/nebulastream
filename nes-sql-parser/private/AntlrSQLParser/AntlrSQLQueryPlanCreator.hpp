@@ -61,6 +61,7 @@ public:
     void exitIntervalClause(AntlrSQLParser::IntervalClauseContext* context) override;
     void enterGroupByClause(AntlrSQLParser::GroupByClauseContext* context) override;
     void exitGroupByClause(AntlrSQLParser::GroupByClauseContext* context) override;
+    void exitLimitByClause(AntlrSQLParser::LimitByClauseContext* context) override;
     void enterJoinCriteria(AntlrSQLParser::JoinCriteriaContext* context) override;
     void enterJoinType(AntlrSQLParser::JoinTypeContext* context) override;
     void exitJoinType(AntlrSQLParser::JoinTypeContext* context) override;

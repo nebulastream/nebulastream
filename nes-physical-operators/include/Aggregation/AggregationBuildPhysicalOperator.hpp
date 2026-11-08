@@ -38,7 +38,8 @@ public:
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         ChainedHashMapConfig hashMapConfig,
         std::vector<PhysicalFunction> keyFunctions,
-        std::optional<PhysicalFunction> rowKindFunction = std::nullopt);
+        std::optional<PhysicalFunction> rowKindFunction = std::nullopt,
+        bool writeArrivalOrder = false);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
@@ -50,6 +51,8 @@ private:
     std::vector<PhysicalFunction> keyFunctions;
     /// Reads the row kind of an updating input (see RowKind.hpp). If set, every record is lifted with the weight of its row kind.
     std::optional<PhysicalFunction> rowKindFunction;
+    /// Writes the arrival order of every record into the fields TopKAggregationPhysicalFunction::arrivalFields before lifting it.
+    bool writeArrivalOrder;
 };
 
 }

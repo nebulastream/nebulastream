@@ -26,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/TopKLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -90,6 +91,14 @@ public:
     std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;
     std::vector<UnboundFieldAccessLogicalFunction> groupByFields;
+    /// Set by ORDER BY ... LIMIT ... [BY ...]: the query keeps the top rows per key instead of aggregating.
+    struct TopK
+    {
+        std::vector<LogicalFunction> partitionKeys;
+        std::vector<TopKLogicalOperator::SortKey> sortKeys;
+        uint64_t limit;
+    };
+    std::optional<TopK> topK;
     std::vector<Identifier> joinSources;
     std::vector<LogicalFunction> joinKeyRelationHelper;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;

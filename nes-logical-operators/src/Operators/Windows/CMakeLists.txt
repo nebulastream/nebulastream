@@ -16,9 +16,11 @@ add_source_files(nes-logical-operators WindowMetaData.cpp)
 add_unreflection_entry(LogicalOperator WindowedAggregation)
 add_unreflection_entry(LogicalOperator Join)
 add_unreflection_entry(LogicalOperator IntervalJoin)
+add_unreflection_entry(LogicalOperator TopK)
 
 add_source_files(nes-logical-operators
         WindowedAggregationLogicalOperator.cpp
         JoinLogicalOperator.cpp
         IntervalJoinLogicalOperator.cpp
+        TopKLogicalOperator.cpp
 )

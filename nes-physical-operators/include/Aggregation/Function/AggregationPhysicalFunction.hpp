@@ -23,6 +23,7 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -47,6 +48,10 @@ class AggregationPhysicalFunction
 public:
     AggregationPhysicalFunction(
         DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+
+    /// Prepares functions that the aggregation compiles separately, e.g. comparators. The operator that uses the instance calls it in
+    /// its setup, before tracing.
+    virtual void setup(CompilationContext&) { }
 
     /// Adds the incoming record to the existing aggregation state
     virtual void lift(

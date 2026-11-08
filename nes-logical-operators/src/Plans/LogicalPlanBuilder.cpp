@@ -49,6 +49,7 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/TopKLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
@@ -128,6 +129,21 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
         queryPlan,
         WindowedAggregationLogicalOperator::create(
             std::move(keysWithNames), std::move(windowAggs), windowType, std::move(timeCharacteristic)));
+}
+
+LogicalPlan LogicalPlanBuilder::addTopK(
+    LogicalPlan queryPlan,
+    const Windowing::TimeBasedWindowType& windowType,
+    std::vector<LogicalFunction> partitionKeys,
+    std::vector<TopKLogicalOperator::SortKey> sortKeys,
+    const uint64_t limit,
+    Windowing::TimeCharacteristic timeCharacteristic)
+{
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
+    queryPlan = checkAndAddWatermarkAssigner(queryPlan, timeCharacteristic);
+    return promoteOperatorToRoot(
+        queryPlan,
+        TopKLogicalOperator::create(std::move(partitionKeys), std::move(sortKeys), limit, windowType, std::move(timeCharacteristic)));
 }
 
 LogicalPlan LogicalPlanBuilder::addUnion(LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan)

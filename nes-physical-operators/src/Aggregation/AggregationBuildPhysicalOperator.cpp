@@ -29,6 +29,8 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Aggregation/Function/TopKAggregationPhysicalFunction.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
@@ -46,6 +48,10 @@ namespace NES
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
+    for (const auto& aggFunction : aggregationPhysicalFunctions)
+    {
+        aggFunction->setup(compilationContext);
+    }
     WindowBuildPhysicalOperator::setup(executionCtx, compilationContext);
 }
 
@@ -62,6 +68,27 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
     const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBuffer.asArg());
     ChainedHashMapRef hashMap{borrowedHashMapBuffer, hashMapConfig};
+
+    if (writeArrivalOrder)
+    {
+        /// The sequence and chunk number order the buffers of an origin. Within a buffer, a counter of the worker thread, which
+        /// processes the buffer's records in order, orders the records.
+        const auto arrivalFields = TopKAggregationPhysicalFunction::arrivalFields();
+        record.write(
+            arrivalFields[0],
+            VarVal{nautilus::invoke(+[](const SequenceNumber sequenceNumber) { return sequenceNumber.getRawValue(); }, ctx.sequenceNumber)});
+        record.write(
+            arrivalFields[1],
+            VarVal{nautilus::invoke(+[](const ChunkNumber chunkNumber) { return static_cast<uint64_t>(chunkNumber.getRawValue()); }, ctx.chunkNumber)});
+        record.write(
+            arrivalFields[2],
+            VarVal{nautilus::invoke(
+                +[]() -> uint64_t
+                {
+                    thread_local uint64_t position = 0;
+                    return position++;
+                })});
+    }
 
     /// Calling the key functions to add/update the keys to the record
     for (nautilus::static_val<uint64_t> i = 0; i < hashMapConfig.fieldKeys.size(); ++i)
@@ -121,12 +148,14 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
     ChainedHashMapConfig hashMapConfig,
     std::vector<PhysicalFunction> keyFunctions,
-    std::optional<PhysicalFunction> rowKindFunction)
+    std::optional<PhysicalFunction> rowKindFunction,
+    const bool writeArrivalOrder)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
     , rowKindFunction(std::move(rowKindFunction))
+    , writeArrivalOrder(writeArrivalOrder)
 {
 }
 

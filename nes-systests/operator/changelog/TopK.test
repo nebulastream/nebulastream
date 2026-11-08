@@ -1,0 +1,80 @@
+# name: changelog/TopK.test
+# description: ORDER BY ... LIMIT k [BY keys] WINDOW UNBOUNDED(ts) keeps the first k rows of every key in the given order and emits a
+#              changelog: +I for a row that enters the top rows of its key, -D for a row that leaves them. Rows with equal sort keys
+#              keep their arrival order. With a tumbling or sliding window, it emits the top rows of every window instead.
+# groups: [Changelog, TopK]
+
+CREATE LOGICAL SOURCE bids(auction UINT64 NOT NULL, bidder UINT64 NOT NULL, price UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bids TYPE File;
+ATTACH INLINE
+1,10,100,100
+1,11,300,200
+2,10,50,300
+1,12,200,1500
+2,13,50,1600
+1,14,300,2500
+2,15,40,2600
+
+CREATE SINK bidRows(auction UINT64 NOT NULL, bidder UINT64 NOT NULL, price UINT64 NOT NULL, ts UINT64 NOT NULL) TYPE File;
+CREATE SINK bidWindows(auction UINT64 NOT NULL, bidder UINT64 NOT NULL, price UINT64 NOT NULL, ts UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
+
+# Top 2 bids per auction. In the slice [1 s, 2 s), the bid of 200 displaces the bid of 100. In [2 s, 3 s), the second bid of 300 ranks
+# after the earlier one but before 200 and displaces it, and the bid of 40 does not enter auction 2, whose two bids of 50 rank by
+# arrival.
+SELECT auction, bidder, price, ts FROM bids ORDER BY price DESC LIMIT 2 BY auction WINDOW UNBOUNDED(ts) INTO bidRows;
+---- CHANGELOG
++I,1,11,300,200
++I,1,10,100,100
++I,2,10,50,300
+-D,1,10,100,100
++I,1,12,200,1500
++I,2,13,50,1600
+-D,1,12,200,1500
++I,1,14,300,2500
+
+SELECT auction, bidder, price, ts FROM bids ORDER BY price DESC LIMIT 2 BY auction WINDOW UNBOUNDED(ts) INTO bidRows;
+----
+1,11,300,200
+1,14,300,2500
+2,10,50,300
+2,13,50,1600
+
+# Deduplication: the latest bid of every bidder.
+SELECT auction, bidder, price, ts FROM bids ORDER BY ts DESC LIMIT 1 BY bidder WINDOW UNBOUNDED(ts) INTO bidRows;
+----
+1,11,300,200
+1,12,200,1500
+2,13,50,1600
+1,14,300,2500
+2,15,40,2600
+2,10,50,300
+
+# Without BY, all rows form one partition: the highest bid, the earlier one of the two bids of 300.
+SELECT auction, bidder, price, ts FROM bids ORDER BY price DESC LIMIT 1 WINDOW UNBOUNDED(ts) INTO bidRows;
+---- CHANGELOG
++I,1,11,300,200
+
+# With a tumbling window, the top 2 bids of every auction per window, append-only with the window's start and end.
+SELECT auction, bidder, price, ts, start, end FROM bids ORDER BY price DESC LIMIT 2 BY auction WINDOW TUMBLING(ts, SIZE 1 SEC)
+INTO bidWindows;
+----
+1,11,300,200,0,1000
+1,10,100,100,0,1000
+2,10,50,300,0,1000
+1,12,200,1500,1000,2000
+2,13,50,1600,1000,2000
+1,14,300,2500,2000,3000
+2,15,40,2600,2000,3000
+
+# With a sliding window, a row belongs to every window that covers it: the highest bid per 2 s window, advancing by 1 s.
+SELECT auction, bidder, price, ts, start, end FROM bids ORDER BY price DESC LIMIT 1 WINDOW SLIDING(ts, SIZE 2 SEC, ADVANCE BY 1 SEC)
+INTO bidWindows;
+----
+1,11,300,200,0,2000
+1,14,300,2500,1000,3000
+1,14,300,2500,2000,4000
+
+# ORDER BY ... LIMIT keeps rows, an aggregation reduces them.
+SELECT auction, MAX(price) AS m FROM bids GROUP BY auction WINDOW UNBOUNDED(ts) ORDER BY m DESC LIMIT 1 WINDOW UNBOUNDED(ts) INTO FILE ();
+----
+ERROR 2000

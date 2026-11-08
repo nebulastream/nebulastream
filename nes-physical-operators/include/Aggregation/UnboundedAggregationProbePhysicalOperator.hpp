@@ -37,7 +37,7 @@ namespace NES
 /// aggregates for a key that stays present, and -D for a key whose last record was withdrawn; the row kind is in $ROWKIND.
 /// Every row also carries the window end field: the end of the slice whose delta produced it, but not below the watermark of the
 /// output, so that a downstream unbounded operator can use it as its time field (WINDOW UNBOUNDED(end)).
-class UnboundedAggregationProbePhysicalOperator final : public WindowProbePhysicalOperator
+class UnboundedAggregationProbePhysicalOperator : public WindowProbePhysicalOperator
 {
 public:
     UnboundedAggregationProbePhysicalOperator(
@@ -51,19 +51,24 @@ protected:
     void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void afterBuffer(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-private:
+protected:
     /// Combines every key of the delta into the table and emits the changes.
-    void applyDelta(
+    virtual void applyDelta(
         ExecutionContext& executionCtx,
         const BorrowedNautilusBuffer& table,
         const BorrowedNautilusBuffer& delta,
         const nautilus::val<Timestamp>& updateTimestamp) const;
+
+private:
     /// Lowers all aggregation states of one entry into a record.
     [[nodiscard]] Record
     lowerStates(ExecutionContext& executionCtx, nautilus::val<AggregationState*> states, const BorrowedNautilusBuffer& hashMapBuffer) const;
 
+protected:
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     ChainedHashMapConfig hashMapConfig;
+
+private:
     /// Result field of the hidden COUNT of every key's records.
     Record::RecordFieldIdentifier rowCountField;
 };
