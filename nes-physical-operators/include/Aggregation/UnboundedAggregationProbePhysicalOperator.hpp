@@ -59,7 +59,7 @@ protected:
         const BorrowedNautilusBuffer& delta,
         const nautilus::val<Timestamp>& updateTimestamp) const;
 
-private:
+protected:
     /// Lowers all aggregation states of one entry into a record.
     [[nodiscard]] Record
     lowerStates(ExecutionContext& executionCtx, nautilus::val<AggregationState*> states, const BorrowedNautilusBuffer& hashMapBuffer) const;

@@ -21,6 +21,8 @@
 #include <optional>
 #include <ranges>
 #include <span>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -60,6 +62,7 @@
 #include <Functions/ConstantValuePhysicalFunction.hpp>
 #include <Util/RowKind.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Types/SessionWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
 
@@ -76,6 +79,8 @@
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <WindowBasedOperatorHandler.hpp>
+#include <Aggregation/SessionWindowOperatorHandler.hpp>
+#include <Aggregation/SessionWindowProbePhysicalOperator.hpp>
 #include <Aggregation/UnboundedAggregationOperatorHandler.hpp>
 #include <Aggregation/UnboundedAggregationProbePhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -160,19 +165,52 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     {
         timeFunction = std::make_unique<WatermarkClampedTimeFunction>(std::move(timeFunction));
     }
-    const auto sliceSize = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSize().getTime();
-    const auto sliceSlide = unboundedWindow ? conf.unboundedSliceSizeMs : windowType.getSlide().getTime();
+    /// A session window uses tumbling slices as wide as its gap: all records of a key within one slice are less than the gap apart
+    /// and belong to the same session, so the slices pre-aggregate them like those of any other window.
+    const auto sessionGap = windowType.isSession()
+        ? std::optional{std::get<Windowing::SessionWindow>(windowType.getUnderlying()).getGap().getTime()}
+        : std::nullopt;
+    const auto sliceSize = [&]
+    {
+        if (unboundedWindow)
+        {
+            return conf.unboundedSliceSizeMs;
+        }
+        return sessionGap.has_value() ? *sessionGap : windowType.getSize().getTime();
+    }();
+    const auto sliceSlide = [&]
+    {
+        if (unboundedWindow)
+        {
+            return conf.unboundedSliceSizeMs;
+        }
+        return sessionGap.has_value() ? *sessionGap : windowType.getSlide().getTime();
+    }();
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
     /// An unbounded aggregation counts the records of every key in a hidden COUNT, its last function: a key whose records were all
     /// withdrawn is absent and emits a DELETE.
     const Record::RecordFieldIdentifier rowCountField{Identifier::parse("$ROWCOUNT")};
-    if (unboundedWindow)
+    /// A session window counts the records of its open session in the same way, so a key with a count of zero has no open session.
+    /// The hidden MIN and MAX of the records' timestamps, which the build writes into sessionTimestampField, follow the COUNT.
+    const DataType hiddenType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+    const Record::RecordFieldIdentifier sessionTimestampField{Identifier::parse("$SESSION_TS")};
+    const Record::RecordFieldIdentifier sessionFirstField{Identifier::parse("$SESSION_FIRST")};
+    const Record::RecordFieldIdentifier sessionLastField{Identifier::parse("$SESSION_LAST")};
+    const auto addHiddenAggregation = [&](const std::string_view name, PhysicalFunction input, const Record::RecordFieldIdentifier& result)
     {
-        const DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-        const auto countFactory = AggregationPhysicalFunctionRegistry::instance().find("Count");
-        INVARIANT(countFactory.has_value(), "The COUNT aggregation is not registered");
-        aggregationPhysicalFunctions.push_back((*countFactory)(AggregationPhysicalFunctionRegistryArguments(
-            countType, countType, ConstantUInt64ValueFunction{1}, rowCountField, std::nullopt, true)));
+        const auto factory = AggregationPhysicalFunctionRegistry::instance().find(std::string{name});
+        INVARIANT(factory.has_value(), "The {} aggregation is not registered", name);
+        aggregationPhysicalFunctions.push_back(
+            (*factory)(AggregationPhysicalFunctionRegistryArguments(hiddenType, hiddenType, std::move(input), result, std::nullopt, true)));
+    };
+    if (unboundedWindow or sessionGap.has_value())
+    {
+        addHiddenAggregation("Count", ConstantUInt64ValueFunction{1}, rowCountField);
+    }
+    if (sessionGap.has_value())
+    {
+        addHiddenAggregation("Min", FieldAccessPhysicalFunction{sessionTimestampField}, sessionFirstField);
+        addHiddenAggregation("Max", FieldAccessPhysicalFunction{sessionTimestampField}, sessionLastField);
     }
     /// An updating input lifts every record with the weight of its row kind.
     const auto rowKindFunction = [&]() -> std::optional<PhysicalFunction>
@@ -251,10 +289,33 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     const AggregationBuildPhysicalOperator build{
-        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions, rowKindFunction};
+        handlerId,
+        std::move(timeFunction),
+        std::move(sliceStoreRef),
+        aggregationPhysicalFunctions,
+        hashMapConfig,
+        keyFunctions,
+        rowKindFunction,
+        /*writeArrivalOrder=*/false,
+        sessionGap.has_value() ? std::optional{sessionTimestampField} : std::nullopt};
     auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling);
     const auto [probe, handler] = [&]() -> std::pair<PhysicalOperator, std::shared_ptr<AggregationOperatorHandler>>
     {
+        if (sessionGap.has_value())
+        {
+            return {
+                SessionWindowProbePhysicalOperator{
+                    hashMapConfig,
+                    aggregationPhysicalFunctions,
+                    handlerId,
+                    windowMetaData,
+                    rowCountField,
+                    sessionFirstField,
+                    sessionLastField,
+                    *sessionGap},
+                std::make_shared<SessionWindowOperatorHandler>(
+                    std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore))};
+        }
         if (unboundedWindow)
         {
             return {

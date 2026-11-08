@@ -38,10 +38,10 @@ void UnboundedAggregationOperatorHandler::parkDelta(const SequenceNumber sequenc
     INVARIANT(inserted, "A delta was already parked for the sequence number {}", sequenceNumber);
 }
 
-bool UnboundedAggregationOperatorHandler::arriveAndTryToApply(const SequenceNumber sequenceNumber)
+bool UnboundedAggregationOperatorHandler::arriveAndTryToApply(const SequenceNumber sequenceNumber, const Timestamp watermark)
 {
     const auto state = applyState.wlock();
-    const auto [_, inserted] = state->arrived.insert(sequenceNumber);
+    const auto [_, inserted] = state->arrived.emplace(sequenceNumber, watermark);
     INVARIANT(inserted, "The sequence number {} arrived twice at the unbounded aggregation", sequenceNumber);
     if (state->applierActive)
     {
@@ -57,11 +57,14 @@ UnboundedAggregationOperatorHandler::Claimed UnboundedAggregationOperatorHandler
     INVARIANT(state->applierActive, "Only the applier may claim the next sequence number");
     claimed.reset();
     const auto next = state->nextToApply;
-    if (state->arrived.erase(next) == 0)
+    const auto arrived = state->arrived.find(next);
+    if (arrived == state->arrived.end())
     {
         state->applierActive = false;
         return Claimed::NOTHING;
     }
+    claimedBufferWatermark = arrived->second;
+    state->arrived.erase(arrived);
     state->nextToApply = SequenceNumber{next.getRawValue() + 1};
     if (const auto parked = state->parkedDeltas.find(next); parked != state->parkedDeltas.end())
     {
@@ -82,6 +85,11 @@ Timestamp UnboundedAggregationOperatorHandler::claimedSliceEnd() const
 {
     INVARIANT(claimed.has_value(), "No delta was claimed");
     return claimed->sliceEnd;
+}
+
+Timestamp UnboundedAggregationOperatorHandler::claimedWatermark() const
+{
+    return claimedBufferWatermark;
 }
 
 bool UnboundedAggregationOperatorHandler::hasTable() const

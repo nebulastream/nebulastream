@@ -18,7 +18,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <set>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -37,7 +36,7 @@ namespace NES
 /// carries the next sequence number, so the probe sees every sequence number exactly once. A probe parks the delta of its slice
 /// under its sequence number and marks the number as arrived. Whichever probe becomes the applier applies the arrived numbers in
 /// order until the next one has not arrived yet; parking, arriving and claiming share one lock, so no delta is left behind.
-class UnboundedAggregationOperatorHandler final : public AggregationOperatorHandler
+class UnboundedAggregationOperatorHandler : public AggregationOperatorHandler
 {
 public:
     /// What claimNext found for the next sequence number.
@@ -57,8 +56,9 @@ public:
     /// Keeps the merged delta of the slice that was emitted with the given sequence number until it is applied.
     void parkDelta(SequenceNumber sequenceNumber, const TupleBuffer& delta, Timestamp sliceEnd);
 
-    /// Marks the sequence number as arrived at the probe and returns true if the caller became the applier.
-    bool arriveAndTryToApply(SequenceNumber sequenceNumber);
+    /// Marks the sequence number as arrived at the probe, with the watermark of the buffer that carried it, and returns true if the
+    /// caller became the applier.
+    bool arriveAndTryToApply(SequenceNumber sequenceNumber, Timestamp watermark);
 
     /// Only for the applier: advances to the next sequence number if it has arrived. Returns NOTHING and ends the role of the
     /// applier otherwise.
@@ -67,6 +67,8 @@ public:
     /// Only for the applier: the delta of the last DELTA that claimNext returned, and the end of its slice.
     [[nodiscard]] const TupleBuffer& claimedDelta() const;
     [[nodiscard]] Timestamp claimedSliceEnd() const;
+    /// Only for the applier: the watermark of the buffer that carried the sequence number claimNext advanced to last.
+    [[nodiscard]] Timestamp claimedWatermark() const;
 
     /// Only for the applier: the table, a chained hash map that holds the aggregation states of all keys seen so far. The first
     /// applier creates it.
@@ -74,7 +76,7 @@ public:
     void setTable(const TupleBuffer& newTable);
     [[nodiscard]] const TupleBuffer& getTable() const;
 
-private:
+protected:
     struct ParkedDelta
     {
         TupleBuffer delta;
@@ -84,7 +86,8 @@ private:
     struct ApplyState
     {
         std::map<SequenceNumber, ParkedDelta> parkedDeltas;
-        std::set<SequenceNumber> arrived;
+        /// Arrived sequence numbers and the watermarks of their buffers.
+        std::map<SequenceNumber, Timestamp> arrived;
         SequenceNumber nextToApply{SequenceNumber::INITIAL};
         bool applierActive = false;
     };
@@ -92,6 +95,7 @@ private:
     folly::Synchronized<ApplyState> applyState;
     /// Owned by the applier, which is a single thread at a time.
     std::optional<ParkedDelta> claimed;
+    Timestamp claimedBufferWatermark{Timestamp::INITIAL_VALUE};
     std::optional<TupleBuffer> table;
 };
 

@@ -61,9 +61,9 @@ void parkDeltaProxy(OperatorHandler* handler, const SequenceNumber sequenceNumbe
     asHandler(handler).parkDelta(sequenceNumber, *delta, sliceEnd);
 }
 
-bool arriveAndTryToApplyProxy(OperatorHandler* handler, const SequenceNumber sequenceNumber)
+bool arriveAndTryToApplyProxy(OperatorHandler* handler, const SequenceNumber sequenceNumber, const Timestamp watermark)
 {
-    return asHandler(handler).arriveAndTryToApply(sequenceNumber);
+    return asHandler(handler).arriveAndTryToApply(sequenceNumber, watermark);
 }
 
 uint8_t claimNextProxy(OperatorHandler* handler)
@@ -148,7 +148,7 @@ void UnboundedAggregationProbePhysicalOperator::probeWindow(ExecutionContext& ex
 void UnboundedAggregationProbePhysicalOperator::afterBuffer(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    if (nautilus::invoke(arriveAndTryToApplyProxy, handler, executionCtx.sequenceNumber))
+    if (nautilus::invoke(arriveAndTryToApplyProxy, handler, executionCtx.sequenceNumber, executionCtx.watermarkTs))
     {
         if (not nautilus::invoke(hasTableProxy, handler))
         {
