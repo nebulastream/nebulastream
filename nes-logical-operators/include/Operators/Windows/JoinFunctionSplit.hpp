@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <array>
 #include <optional>
 #include <vector>
 
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Schema/Field.hpp>
 
@@ -44,5 +46,8 @@ struct SplitJoinFunction
 /// Splits the join function of `join` at its top-level ANDs (Spark's ExtractEquiJoinKeys, PostgreSQL's Hash Cond / Join Filter).
 /// A top-level OR is a single conjunct and therefore never yields equi-keys. Expects the join function to be bound to the join's children.
 SplitJoinFunction splitJoinFunction(const JoinLogicalOperator& join);
+
+/// Same split for any two-input join: `children` are the left and right join inputs `joinFunction` is bound to.
+SplitJoinFunction splitJoinFunction(const LogicalFunction& joinFunction, const std::array<LogicalOperator, 2>& children);
 
 }

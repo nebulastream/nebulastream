@@ -14,6 +14,7 @@
 
 #include <Operators/Windows/JoinFunctionSplit.hpp>
 
+#include <array>
 #include <optional>
 #include <ranges>
 #include <vector>
@@ -23,6 +24,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -94,12 +96,16 @@ std::optional<EquiJoinKey> tryGetEquiJoinKey(const LogicalFunction& conjunct, co
 
 SplitJoinFunction splitJoinFunction(const JoinLogicalOperator& join)
 {
-    const auto children = join.getBothChildren();
+    return splitJoinFunction(join.getJoinFunction(), join.getBothChildren());
+}
+
+SplitJoinFunction splitJoinFunction(const LogicalFunction& joinFunction, const std::array<LogicalOperator, 2>& children)
+{
     const auto leftId = children[0].getId();
     const auto rightId = children[1].getId();
 
     std::vector<LogicalFunction> conjuncts;
-    collectConjuncts(join.getJoinFunction(), conjuncts);
+    collectConjuncts(joinFunction, conjuncts);
 
     SplitJoinFunction split;
     std::vector<LogicalFunction> residualConjuncts;
