@@ -18,6 +18,7 @@ ATTACH INLINE
 CREATE SINK sumCount(k UINT64 NOT NULL, total UINT64 NOT NULL, cnt UINT64 NOT NULL) TYPE File;
 CREATE SINK sumCountAvg(k UINT64 NOT NULL, total UINT64 NOT NULL, cnt UINT64 NOT NULL, avgV FLOAT64 NOT NULL) TYPE File;
 CREATE SINK perCount(cnt UINT64 NOT NULL, keys UINT64 NOT NULL) TYPE File;
+CREATE SINK sumEnd(k UINT64 NOT NULL, total UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
 
 SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM changes GROUP BY k WINDOW UNBOUNDED(ts) INTO sumCount;
 ---- CHANGELOG
@@ -33,24 +34,27 @@ SELECT k, SUM(v) AS total, COUNT(v) AS cnt, AVG(v) AS avgV FROM changes GROUP BY
 1,15,1,15
 2,7,1,7
 
-# The outer aggregation consumes the changelog of the inner one, which counts the records per key of an append-only stream:
-# when key 1 gets its second record, the -U withdraws it from bucket 1 and the +U adds it to bucket 2. The time field of the
-# outer aggregation, the latest timestamp of a key, only batches the updates; a withdrawn row carries an older one and is
-# clamped to the watermark.
-CREATE LOGICAL SOURCE appendOnly(k UINT64 NOT NULL, v UINT64 NOT NULL, ts UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR appendOnly TYPE File;
-ATTACH INLINE
-1,10,100
-2,5,200
-1,3,1500
-3,1,2500
-
+# The outer aggregation consumes the changelog of the inner one, which itself consumes a changelog. Its time field is the end
+# of the slice that emitted a row of the inner aggregation. Key 2 moves out of bucket 1 with its -D and back with its +I.
 SELECT cnt, COUNT(k) AS keys
-FROM (SELECT k, COUNT(v) AS cnt, MAX(ts) AS lastTs FROM appendOnly GROUP BY k WINDOW UNBOUNDED(ts))
-GROUP BY cnt WINDOW UNBOUNDED(lastTs) INTO perCount;
-----
-1,2
-2,1
+FROM (SELECT k, COUNT(v) AS cnt, end AS updated FROM changes GROUP BY k WINDOW UNBOUNDED(ts))
+GROUP BY cnt WINDOW UNBOUNDED(updated) INTO perCount;
+---- CHANGELOG
++I,1,2
+-U,1,2
++U,1,1
+-U,1,1
++U,1,2
+
+# The end of the slice that emitted a row is an output field like the window end of a windowed aggregation.
+SELECT k, total, end FROM (SELECT k, SUM(v) AS total, end FROM changes GROUP BY k WINDOW UNBOUNDED(ts)) INTO sumEnd;
+---- CHANGELOG
++I,1,10,1000
++I,2,5,1000
+-U,1,10,2000
++U,1,15,2000
+-D,2,5,2000
++I,2,7,3000
 
 # MIN and MAX would need every value to find the next extreme after a withdrawal.
 SELECT k, MAX(v) AS m FROM changes GROUP BY k WINDOW UNBOUNDED(ts) INTO FILE ();

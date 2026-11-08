@@ -114,7 +114,8 @@ public:
     [[nodiscard]] const GroupingKeyType& getGroupingKeysWithName() const;
 
     [[nodiscard]] Windowing::TimeBasedWindowType getWindowType() const;
-    /// The fields the operator adds to its keys and aggregates: start and end of each window, or the row kind of an unbounded window.
+    /// The fields the operator adds to its keys and aggregates: start and end of each window, or, for an unbounded window, the end of
+    /// the slice that emitted a row and its row kind.
     [[nodiscard]] std::vector<UnqualifiedUnboundField> getWindowOutputFields() const;
     [[nodiscard]] const UnqualifiedUnboundField& getWindowStartField() const;
     [[nodiscard]] const UnqualifiedUnboundField& getWindowEndField() const;

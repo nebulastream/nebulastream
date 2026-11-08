@@ -23,6 +23,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/SlicedWindowStoreInterface.hpp>
+#include <Time/Timestamp.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES
@@ -54,7 +55,7 @@ public:
         SourcesOfInputOrigins sourcesOfInputOrigins, OriginId outputOriginId, std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore);
 
     /// Keeps the merged delta of the slice that was emitted with the given sequence number until it is applied.
-    void parkDelta(SequenceNumber sequenceNumber, const TupleBuffer& delta);
+    void parkDelta(SequenceNumber sequenceNumber, const TupleBuffer& delta, Timestamp sliceEnd);
 
     /// Marks the sequence number as arrived at the probe and returns true if the caller became the applier.
     bool arriveAndTryToApply(SequenceNumber sequenceNumber);
@@ -63,8 +64,9 @@ public:
     /// applier otherwise.
     Claimed claimNext();
 
-    /// Only for the applier: the delta of the last DELTA that claimNext returned.
+    /// Only for the applier: the delta of the last DELTA that claimNext returned, and the end of its slice.
     [[nodiscard]] const TupleBuffer& claimedDelta() const;
+    [[nodiscard]] Timestamp claimedSliceEnd() const;
 
     /// Only for the applier: the table, a chained hash map that holds the aggregation states of all keys seen so far. The first
     /// applier creates it.
@@ -73,9 +75,15 @@ public:
     [[nodiscard]] const TupleBuffer& getTable() const;
 
 private:
+    struct ParkedDelta
+    {
+        TupleBuffer delta;
+        Timestamp sliceEnd;
+    };
+
     struct ApplyState
     {
-        std::map<SequenceNumber, TupleBuffer> parkedDeltas;
+        std::map<SequenceNumber, ParkedDelta> parkedDeltas;
         std::set<SequenceNumber> arrived;
         SequenceNumber nextToApply{SequenceNumber::INITIAL};
         bool applierActive = false;
@@ -83,7 +91,7 @@ private:
 
     folly::Synchronized<ApplyState> applyState;
     /// Owned by the applier, which is a single thread at a time.
-    std::optional<TupleBuffer> claimed;
+    std::optional<ParkedDelta> claimed;
     std::optional<TupleBuffer> table;
 };
 

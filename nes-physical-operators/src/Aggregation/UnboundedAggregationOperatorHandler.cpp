@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/SlicedWindowStoreInterface.hpp>
+#include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -31,9 +32,9 @@ UnboundedAggregationOperatorHandler::UnboundedAggregationOperatorHandler(
 {
 }
 
-void UnboundedAggregationOperatorHandler::parkDelta(const SequenceNumber sequenceNumber, const TupleBuffer& delta)
+void UnboundedAggregationOperatorHandler::parkDelta(const SequenceNumber sequenceNumber, const TupleBuffer& delta, const Timestamp sliceEnd)
 {
-    const auto [_, inserted] = applyState.wlock()->parkedDeltas.emplace(sequenceNumber, delta);
+    const auto [_, inserted] = applyState.wlock()->parkedDeltas.emplace(sequenceNumber, ParkedDelta{.delta = delta, .sliceEnd = sliceEnd});
     INVARIANT(inserted, "A delta was already parked for the sequence number {}", sequenceNumber);
 }
 
@@ -74,7 +75,13 @@ UnboundedAggregationOperatorHandler::Claimed UnboundedAggregationOperatorHandler
 const TupleBuffer& UnboundedAggregationOperatorHandler::claimedDelta() const
 {
     INVARIANT(claimed.has_value(), "No delta was claimed");
-    return *claimed;
+    return claimed->delta;
+}
+
+Timestamp UnboundedAggregationOperatorHandler::claimedSliceEnd() const
+{
+    INVARIANT(claimed.has_value(), "No delta was claimed");
+    return claimed->sliceEnd;
 }
 
 bool UnboundedAggregationOperatorHandler::hasTable() const

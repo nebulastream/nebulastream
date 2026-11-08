@@ -86,6 +86,6 @@ SELECT k, SUM(v) AS total, COUNT(v) AS cnt FROM late GROUP BY k WINDOW UNBOUNDED
 +U,1,14,3
 
 # An aggregation over the changelog must be able to withdraw rows; MAX cannot (see RetractingAggregation.test).
-SELECT total, MAX(k) AS maxK FROM (SELECT k, SUM(v) AS total, MAX(ts) AS lastTs FROM stream GROUP BY k WINDOW UNBOUNDED(ts)) GROUP BY total WINDOW UNBOUNDED(lastTs) INTO FILE ();
+SELECT total, MAX(k) AS maxK FROM (SELECT k, SUM(v) AS total, end AS updated FROM stream GROUP BY k WINDOW UNBOUNDED(ts)) GROUP BY total WINDOW UNBOUNDED(updated) INTO FILE ();
 ----
 ERROR 2008

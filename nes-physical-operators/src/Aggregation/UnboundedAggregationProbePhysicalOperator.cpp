@@ -32,6 +32,8 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/RowKind.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -54,9 +56,9 @@ UnboundedAggregationOperatorHandler& asHandler(OperatorHandler* handler)
     return dynamic_cast<UnboundedAggregationOperatorHandler&>(*handler);
 }
 
-void parkDeltaProxy(OperatorHandler* handler, const SequenceNumber sequenceNumber, const TupleBuffer* delta)
+void parkDeltaProxy(OperatorHandler* handler, const SequenceNumber sequenceNumber, const TupleBuffer* delta, const Timestamp sliceEnd)
 {
-    asHandler(handler).parkDelta(sequenceNumber, *delta);
+    asHandler(handler).parkDelta(sequenceNumber, *delta, sliceEnd);
 }
 
 bool arriveAndTryToApplyProxy(OperatorHandler* handler, const SequenceNumber sequenceNumber)
@@ -72,6 +74,11 @@ uint8_t claimNextProxy(OperatorHandler* handler)
 void loadClaimedDeltaProxy(OperatorHandler* handler, TupleBuffer* delta)
 {
     *delta = asHandler(handler).claimedDelta();
+}
+
+uint64_t claimedSliceEndProxy(OperatorHandler* handler)
+{
+    return asHandler(handler).claimedSliceEnd().getRawValue();
 }
 
 bool hasTableProxy(OperatorHandler* handler)
@@ -107,6 +114,8 @@ void UnboundedAggregationProbePhysicalOperator::probeWindow(ExecutionContext& ex
 {
     const auto emittedWindow = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getMemArea());
     const auto numberOfHashMaps = readValueFromMemRef<uint64_t>(getMemberRef(emittedWindow, &EmittedAggregationWindow::numberOfHashMaps));
+    const auto windowInfoRef = getMemberRef(emittedWindow, &EmittedAggregationWindow::windowInfo);
+    const nautilus::val<Timestamp> sliceEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
 
     /// Merge the per-thread hash maps of the slice into its delta.
     OwnedNautilusBuffer delta;
@@ -128,7 +137,7 @@ void UnboundedAggregationProbePhysicalOperator::probeWindow(ExecutionContext& ex
         combineAggregationHashMap(executionCtx, hashMapConfig, aggregationPhysicalFunctions, deltaRef, hashMapRef);
     }
     nautilus::invoke(
-        parkDeltaProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.sequenceNumber, delta.asArg());
+        parkDeltaProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.sequenceNumber, delta.asArg(), sliceEnd);
 
     /// The delta holds everything the probe needs, so the emitted window and the child buffers it holds can go.
     nautilus::invoke(
@@ -159,15 +168,25 @@ void UnboundedAggregationProbePhysicalOperator::afterBuffer(ExecutionContext& ex
             {
                 OwnedNautilusBuffer delta;
                 nautilus::invoke(loadClaimedDeltaProxy, handler, delta.asArg());
-                applyDelta(executionCtx, tableRef, delta);
+                /// The applier may apply the delta of an earlier slice than its own, whose end lies behind the watermark of the output.
+                nautilus::val<Timestamp> updateTimestamp{nautilus::invoke(claimedSliceEndProxy, handler)};
+                if (updateTimestamp < executionCtx.watermarkTs)
+                {
+                    updateTimestamp = executionCtx.watermarkTs;
+                }
+                applyDelta(executionCtx, tableRef, delta, updateTimestamp);
             }
         }
     }
 }
 
 void UnboundedAggregationProbePhysicalOperator::applyDelta(
-    ExecutionContext& executionCtx, const BorrowedNautilusBuffer& table, const BorrowedNautilusBuffer& delta) const
+    ExecutionContext& executionCtx,
+    const BorrowedNautilusBuffer& table,
+    const BorrowedNautilusBuffer& delta,
+    const nautilus::val<Timestamp>& updateTimestamp) const
 {
+    const auto endField = windowMetaData.endField.getFullyQualifiedName();
     const Record::RecordFieldIdentifier rowKindField{rowKindIdentifier()};
     ChainedHashMapRef tableMap{table, hashMapConfig};
     const ChainedHashMapRef deltaMap{delta, hashMapConfig};
@@ -216,6 +235,7 @@ void UnboundedAggregationProbePhysicalOperator::applyDelta(
                 nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::UPDATE_BEFORE)},
                 nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::DELETE)});
             oldRecord.reassignFields(keys);
+            oldRecord.write(endField, updateTimestamp.convertToValue());
             oldRecord.write(rowKindField, VarVal{oldKind});
             executeChild(executionCtx, oldRecord);
         }
@@ -227,6 +247,7 @@ void UnboundedAggregationProbePhysicalOperator::applyDelta(
                 nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::UPDATE_AFTER)},
                 nautilus::val<uint8_t>{static_cast<uint8_t>(RowKind::INSERT)});
             newRecord.reassignFields(keys);
+            newRecord.write(endField, updateTimestamp.convertToValue());
             newRecord.write(rowKindField, VarVal{newKind});
             executeChild(executionCtx, newRecord);
         }

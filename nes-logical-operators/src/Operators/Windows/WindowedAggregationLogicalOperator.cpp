@@ -405,10 +405,11 @@ const WindowedAggregationLogicalOperator::GroupingKeyType& WindowedAggregationLo
 
 std::vector<UnqualifiedUnboundField> WindowedAggregationLogicalOperator::getWindowOutputFields() const
 {
-    /// An unbounded aggregation has no windows to report; it emits a retract changelog of its keys instead (see RowKind.hpp).
+    /// An unbounded aggregation emits a retract changelog of its keys (see RowKind.hpp). Instead of window bounds, each row carries the
+    /// end of the slice that emitted it, which a downstream unbounded operator can use as its time field.
     if (windowType.isUnbounded())
     {
-        return {UnqualifiedUnboundField{rowKindIdentifier(), DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}}};
+        return {startEndFields[1], UnqualifiedUnboundField{rowKindIdentifier(), DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}}};
     }
     return {startEndFields[0], startEndFields[1]};
 }
