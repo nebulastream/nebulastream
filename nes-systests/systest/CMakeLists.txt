@@ -153,7 +153,7 @@ endif ()
 # PythonUdfOnnx/PythonUdfIree need the same, but pointed at a venv with onnxruntime or IREE's Python
 # packages installed (too large/platform-specific to ship in-tree, unlike small_venv -- see
 # PythonUdfIrisClassification.test / PythonUdfIrisClassificationIree.test).
-# PythonUdfNumpy needs numpy in a machine-local venv (nes-toolchain/python-venvs/udf-cpython).
+# PythonUdfNumpy needs numpy in a venv. These three venvs come from nes-systest-udf-test-venvs, see below.
 # All four are permanently opt-in, like `large`, and never run as part of the default invocations below.
 set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy CompilerOnly)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy)
@@ -195,6 +195,35 @@ if (NES_ENABLE_PYTHON_UDFS AND NES_UV_EXECUTABLE)
 else ()
     list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdfProcess)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdfProcess)
+endif ()
+
+# The opt-in groups PythonUdfNumpy, PythonUdfOnnx and PythonUdfIree, and the large PythonUdfLogisticScoreLarge.test, point
+# worker.python_udf.venv at PY_UDF_TEST_VENVS/<name>, venvs with their packages in NES_PY_UDF_TEST_VENVS_DIR. Unlike the venv of the UDF
+# processes, systest does not depend on them, as IREE's compiler alone is a large download: build nes-systest-udf-test-venvs to create
+# them with uv, with the Python of the CPython bridge, or point NES_PY_UDF_TEST_VENVS_DIR at existing ones.
+set(NES_PY_UDF_TEST_VENVS_DIR "${CMAKE_CURRENT_BINARY_DIR}/udf-test-venvs" CACHE PATH "Venvs of the opt-in Python UDF systests")
+target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_UDF_TEST_VENVS_DIR="${NES_PY_UDF_TEST_VENVS_DIR}")
+if (NES_ENABLE_PYTHON_UDFS AND NES_UV_EXECUTABLE)
+    set(udfTestVenvs
+            "udf-cpython|numpy==2.5.4"
+            "iris-onnx-udf|onnxruntime==1.31.1 numpy==2.5.4"
+            "iris-iree-udf|iree-base-compiler==3.13.0 iree-base-runtime==3.13.0 onnx==1.23.2 numpy==2.5.4")
+    set(udfTestVenvMarkers)
+    foreach (udfTestVenv IN LISTS udfTestVenvs)
+        string(REPLACE "|" ";" udfTestVenv "${udfTestVenv}")
+        list(GET udfTestVenv 0 venvName)
+        list(GET udfTestVenv 1 venvPackages)
+        separate_arguments(venvPackages UNIX_COMMAND "${venvPackages}")
+        set(venvDir "${NES_PY_UDF_TEST_VENVS_DIR}/${venvName}")
+        add_custom_command(
+                OUTPUT "${venvDir}/.nes-packages"
+                COMMAND "${NES_UV_EXECUTABLE}" venv --quiet --allow-existing --python "${udfProcessPython}" "${venvDir}"
+                COMMAND "${NES_UV_EXECUTABLE}" pip install --quiet --python "${venvDir}/bin/python" ${venvPackages}
+                COMMAND "${CMAKE_COMMAND}" -E touch "${venvDir}/.nes-packages"
+                COMMENT "Creating the venv ${venvName} of the opt-in Python UDF systests")
+        list(APPEND udfTestVenvMarkers "${venvDir}/.nes-packages")
+    endforeach ()
+    add_custom_target(nes-systest-udf-test-venvs DEPENDS ${udfTestVenvMarkers})
 endif ()
 
 # The NestedLoopIntensive group holds tests whose input is large enough that the O(n^2) nested loop join takes over an

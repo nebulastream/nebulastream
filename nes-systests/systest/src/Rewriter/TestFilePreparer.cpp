@@ -94,6 +94,9 @@ ParsedTestFile TestFilePreparer::parse(const DiscoveredTestFile& testFile) const
         parser.registerSubstitutionRule(
             {.keyword = "PY_UDF_VENV_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_UDF_VENV_DIR; }});
     }
+    /// PY_UDF_TEST_VENVS is the directory of the venvs with the packages of the opt-in Python UDF tests, see nes-systest-udf-test-venvs.
+    parser.registerSubstitutionRule(
+        {.keyword = "PY_UDF_TEST_VENVS", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_UDF_TEST_VENVS_DIR; }});
     parser.loadString(readTestFile(testFile.file));
     try
     {

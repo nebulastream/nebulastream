@@ -1,10 +1,10 @@
 # name: udf/PythonUdfIrisClassificationNumpy.test
 # description: PythonUdfIrisClassification.test with the iris.onnx model re-implemented in plain numpy
-# (pyudfs/iris_udf_numpy.py), through the CPython bridge and Codon. Uses nes-toolchain/python-venvs/udf-cpython
+# (pyudfs/iris_udf_numpy.py), through the CPython bridge and Codon. Uses PY_UDF_TEST_VENVS/udf-cpython from nes-systest-udf-test-venvs
 # (Codon ignores it).
 # groups: [PythonUdf, PythonUDF, CompilerOnly, PythonUdfNumpy]
 
-GLOBALCONFIGURATION worker.python_udf.venv: /home/thanasis/Documents/nes-toolchain/python-venvs/udf-cpython
+GLOBALCONFIGURATION worker.python_udf.venv: PY_UDF_TEST_VENVS/udf-cpython
 
 CREATE LOGICAL SOURCE stream(p1 FLOAT32 NOT NULL, p2 FLOAT32 NOT NULL, p3 FLOAT32 NOT NULL, p4 FLOAT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;

@@ -2,10 +2,10 @@
 # description: numpy logistic-regression score over four Nexmark bid columns, through the CPython bridge and Codon
 # (both catalog UDFs, one portable module) plus a native-SQL baseline; each filters on the score, so it is evaluated
 # for every row. Scores are compared with a tolerance since numpy, Codon and POW round differently.
-# Needs numpy in a CPython venv (nes-toolchain/python-venvs/udf-cpython, set below).
+# Needs numpy in a CPython venv (PY_UDF_TEST_VENVS/udf-cpython, from nes-systest-udf-test-venvs).
 # groups: [PythonUdf, PythonUDF, CompilerOnly, large]
 
-GLOBALCONFIGURATION worker.python_udf.venv: /home/thanasis/Documents/nes-toolchain/python-venvs/udf-cpython
+GLOBALCONFIGURATION worker.python_udf.venv: PY_UDF_TEST_VENVS/udf-cpython
 
 CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
