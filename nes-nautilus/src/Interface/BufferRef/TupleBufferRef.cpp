@@ -147,7 +147,10 @@ TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, cons
 
 VarSizedLoadFn TupleBufferRef::getRecordBufferLoad(const RecordBuffer& recordBuffer)
 {
-    return [recordBuffer](const nautilus::val<int8_t*>& slot) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
+    /// Capturing the RecordBuffer by value would copy an owned buffer, which costs a retain and a release per call at runtime.
+    /// The returned function holds a pointer into the record buffer and must not outlive it.
+    return [tupleBuffer
+            = recordBuffer.getReference()](const nautilus::val<int8_t*>& slot) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
     {
         auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(slot);
         const auto varSizedPtr = invoke(
@@ -158,7 +161,7 @@ VarSizedLoadFn TupleBufferRef::getRecordBufferLoad(const RecordBuffer& recordBuf
                 INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
                 return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
             },
-            recordBuffer.getReference(),
+            tupleBuffer,
             variableSizedAccess);
 
         const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
@@ -185,18 +188,14 @@ NAUTILUS_INLINE void writeVarSizedProxy(
 VarSizedStoreFn
 TupleBufferRef::getRecordBufferStore(const RecordBuffer& recordBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    return [recordBuffer, bufferProvider](const nautilus::val<int8_t*>& slot, const VarVal& value)
+    /// Capturing the RecordBuffer by value would copy an owned buffer, which costs a retain and a release per call at runtime.
+    /// The returned function holds a pointer into the record buffer and must not outlive it.
+    return [tupleBuffer = recordBuffer.getReference(), bufferProvider](const nautilus::val<int8_t*>& slot, const VarVal& value)
     {
         const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
         auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(slot);
 
-        invoke(
-            writeVarSizedProxy,
-            recordBuffer.getReference(),
-            bufferProvider,
-            varSizedValue.getContent(),
-            varSizedValue.getSize(),
-            refToIndex);
+        invoke(writeVarSizedProxy, tupleBuffer, bufferProvider, varSizedValue.getContent(), varSizedValue.getSize(), refToIndex);
     };
 }
 
