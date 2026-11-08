@@ -69,6 +69,11 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBuffer.asArg());
     ChainedHashMapRef hashMap{borrowedHashMapBuffer, hashMapConfig};
 
+    if (timestampField.has_value())
+    {
+        record.write(*timestampField, VarVal{timestamp.convertToValue()});
+    }
+
     if (writeArrivalOrder)
     {
         /// The sequence and chunk number order the buffers of an origin. Within a buffer, a counter of the worker thread, which
@@ -149,13 +154,15 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     ChainedHashMapConfig hashMapConfig,
     std::vector<PhysicalFunction> keyFunctions,
     std::optional<PhysicalFunction> rowKindFunction,
-    const bool writeArrivalOrder)
+    const bool writeArrivalOrder,
+    std::optional<Record::RecordFieldIdentifier> timestampField)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
     , rowKindFunction(std::move(rowKindFunction))
     , writeArrivalOrder(writeArrivalOrder)
+    , timestampField(std::move(timestampField))
 {
 }
 

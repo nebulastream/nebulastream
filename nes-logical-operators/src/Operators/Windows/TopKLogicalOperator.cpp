@@ -159,6 +159,10 @@ void TopKLogicalOperator::inferLocalSchema()
     {
         throw InvalidQuerySyntax("ORDER BY ... LIMIT needs a limit of at least 1");
     }
+    if (windowType.isSession())
+    {
+        throw UnsupportedQuery("ORDER BY ... LIMIT does not support session windows");
+    }
     const auto inputSchema = child->getOutputSchema();
     if (isUpdatingStream(inputSchema))
     {

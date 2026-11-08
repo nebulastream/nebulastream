@@ -25,6 +25,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/IntervalWindow.hpp>
+#include <WindowTypes/Types/SessionWindow.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <ErrorHandling.hpp>
@@ -48,11 +49,17 @@ bool TimeBasedWindowType::isUnbounded() const
     return std::holds_alternative<UnboundedWindow>(underlying);
 }
 
+bool TimeBasedWindowType::isSession() const
+{
+    return std::holds_alternative<SessionWindow>(underlying);
+}
+
 TimeMeasure TimeBasedWindowType::getSize() const
 {
     return std::visit(
         Overloaded{
             [](const UnboundedWindow&) -> TimeMeasure { throw UnknownWindowType("An unbounded window has no size"); },
+            [](const SessionWindow&) -> TimeMeasure { throw UnknownWindowType("A session window has no size"); },
             [](const auto& window) { return window.getSize(); }},
         underlying);
 }
@@ -64,7 +71,8 @@ TimeMeasure TimeBasedWindowType::getSlide() const
             [](const TumblingWindow& tumblingWindow) { return tumblingWindow.getSize(); },
             [](const SlidingWindow& slidingWindow) { return slidingWindow.getSlide(); },
             [](const IntervalWindow& intervalWindow) { return intervalWindow.getSize(); },
-            [](const UnboundedWindow&) -> TimeMeasure { throw UnknownWindowType("An unbounded window has no slide"); }},
+            [](const UnboundedWindow&) -> TimeMeasure { throw UnknownWindowType("An unbounded window has no slide"); },
+            [](const SessionWindow&) -> TimeMeasure { throw UnknownWindowType("A session window has no slide"); }},
         underlying);
 }
 

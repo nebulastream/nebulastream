@@ -81,6 +81,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/IntervalWindow.hpp>
+#include <WindowTypes/Types/SessionWindow.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
@@ -1054,6 +1055,12 @@ void AntlrSQLQueryPlanCreator::exitSizeParameter(AntlrSQLParser::SizeParameterCo
     AntlrSQLBaseListener::exitSizeParameter(context);
 }
 
+void AntlrSQLQueryPlanCreator::exitGapParameter(AntlrSQLParser::GapParameterContext* context)
+{
+    helpers.top().size = std::stoi(context->INTEGER_VALUE()->getText());
+    AntlrSQLBaseListener::exitGapParameter(context);
+}
+
 void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyParameterContext* context)
 {
     if (context->children.size() < 3)
@@ -1120,6 +1127,30 @@ void AntlrSQLQueryPlanCreator::exitUnboundedWindow(AntlrSQLParser::UnboundedWind
     /// A join keeps all its state and emits every match once; an aggregation keeps one state per key and emits a changelog of it.
     helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::UnboundedWindow{}});
     AntlrSQLBaseListener::exitUnboundedWindow(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitSessionWindow(AntlrSQLParser::SessionWindowContext* context)
+{
+    if (helpers.top().size <= 0)
+    {
+        throw InvalidQuerySyntax("A session window needs a gap greater than zero at {}", context->getText());
+    }
+    const auto gap = buildTimeMeasure(helpers.top().size, helpers.top().timeUnit);
+    helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::SessionWindow{gap}});
+    /// Like TUMBLING, a session window without a timestamp parameter uses ingestion time.
+    if (!helpers.top().windowTimestamp.has_value())
+    {
+        if (helpers.top().isJoinRelation)
+        {
+            helpers.top().windowTimestamp = std::array<Windowing::UnboundTimeCharacteristic, 2>{
+                Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}};
+        }
+        else
+        {
+            helpers.top().windowTimestamp = Windowing::IngestionTimeCharacteristic{};
+        }
+    }
+    AntlrSQLBaseListener::exitSessionWindow(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)

@@ -39,7 +39,8 @@ public:
         ChainedHashMapConfig hashMapConfig,
         std::vector<PhysicalFunction> keyFunctions,
         std::optional<PhysicalFunction> rowKindFunction = std::nullopt,
-        bool writeArrivalOrder = false);
+        bool writeArrivalOrder = false,
+        std::optional<Record::RecordFieldIdentifier> timestampField = std::nullopt);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
@@ -53,6 +54,9 @@ private:
     std::optional<PhysicalFunction> rowKindFunction;
     /// Writes the arrival order of every record into the fields TopKAggregationPhysicalFunction::arrivalFields before lifting it.
     bool writeArrivalOrder;
+    /// If set, writes the timestamp of every record in ms into this field before lifting it, e.g. for the hidden MIN and MAX of a
+    /// session window.
+    std::optional<Record::RecordFieldIdentifier> timestampField;
 };
 
 }
