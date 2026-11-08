@@ -29,6 +29,7 @@
 #include <SemanticCallPayload.hpp>
 #include <SemanticFilterCodec.hpp>
 #include <SemanticHttpClient.hpp>
+#include <SemanticImage.hpp>
 #include <SemanticJoinCodec.hpp>
 #include <SemanticKeyedCodec.hpp>
 #include <SemanticMapCodec.hpp>
@@ -80,8 +81,9 @@ public:
     [[nodiscard]] std::optional<size_t> orderingKey() const override;
 
 private:
-    /// Sends on `client`, or on the instance's own connection.
-    boost::asio::awaitable<std::string> complete(std::string prompt, SemanticHttpClient* client = nullptr);
+    /// Sends on `client`, or on the instance's own connection, with `images` attached to the message.
+    boost::asio::awaitable<std::string>
+    complete(std::string prompt, SemanticHttpClient* client = nullptr, std::vector<ImageAttachment> images = {});
     [[nodiscard]] std::vector<AsyncCallResult> decode(const std::string& answer, const std::vector<RowPayload>& rows) const;
     /// The key's state folded with the row: (state, confidence).
     boost::asio::awaitable<AsyncCallResult> callScan(std::vector<std::string> arguments);
@@ -108,6 +110,8 @@ private:
     /// SEM_WINDOW: the further connections a row's window requests go out on in parallel, as llm_operator's gather.
     std::vector<std::unique_ptr<SemanticHttpClient>> windowClients;
     std::optional<std::string> apiKey;
+    /// The positions of `LLM.IMAGE_FIELDS` among the INPUT fields, in the order their images are attached.
+    std::vector<size_t> imageFieldPositions;
     /// The limit of `LLM.SHARED_CONCURRENCY`, the same object the Async source takes its permits from.
     std::shared_ptr<AsyncResourceLimiter> sharedLimiter;
 };

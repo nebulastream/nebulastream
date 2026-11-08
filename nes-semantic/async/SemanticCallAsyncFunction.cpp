@@ -40,6 +40,7 @@
 #include <ResponseParsing.hpp>
 #include <SemanticCallPayload.hpp>
 #include <SemanticCallStats.hpp>
+#include <SemanticImage.hpp>
 #include <SemanticKeyedCodec.hpp>
 #include <SemanticModelCatalog.hpp>
 #include <SemanticRowPayload.hpp>
@@ -228,6 +229,16 @@ SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded
     {
         sharedLimiter = AsyncResourceLimiter::of(sharedResource(config), config.sharedConcurrency);
     }
+    for (const auto& field : config.imageFields)
+    {
+        const auto position = std::ranges::find(payload.inputFields, field);
+        if (position == payload.inputFields.end() || config.keyed || payload.join || payload.agg)
+        {
+            throw CannotOpenSource(
+                "SEM_CALL of model '{}': image field '{}' is not an INPUT field of a SEM_MAP or SEM_FILTER model", payload.model, field);
+        }
+        imageFieldPositions.push_back(static_cast<size_t>(position - payload.inputFields.begin()));
+    }
     /// Counted last, so that an instance whose construction threw is not counted.
     ++liveInstances;
 }
@@ -299,21 +310,47 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
         const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
         co_return AsyncCallResult{joinCodec->parse(answer, pairs).front() ? "true" : "false"};
     }
+    /// LLM.IMAGE_FIELDS: the file is read here, on the event loop. Images of 20-100 KB come from the page cache in tens of
+    /// microseconds; an asynchronous file read would be a framework feature (docs/technical/semantic_images.md).
+    std::vector<ImageAttachment> images;
+    std::optional<std::string> unusable;
+    for (size_t index = 0; index < imageFieldPositions.size(); ++index)
+    {
+        auto& value = arguments[imageFieldPositions[index]];
+        auto image = loadImage(value, payload.config.imageRoot, payload.config.imageMaxBytes);
+        if (!image)
+        {
+            unusable = std::move(image).error();
+            break;
+        }
+        images.push_back(std::move(image).value());
+        value = imagePlaceholder(index);
+    }
     RowPayload row{.rowId = "row1", .fields = {}};
     for (size_t field = 0; field < arguments.size(); ++field)
     {
         row.fields.emplace_back(payload.inputFields[field], std::move(arguments[field]));
     }
     const std::vector rows{std::move(row)};
+    if (unusable)
+    {
+        /// Like an unusable answer: the step's default value, a filter's 'false'; no request is sent.
+        NES_WARNING("SEM_CALL of model '{}' cannot use the row's image, writing the default: {}", payload.model, *unusable);
+        SemanticCallStats::instance().recordUnusableImage();
+        co_return decode(std::string{}, rows).front();
+    }
     const auto prompt = mapCodec ? mapCodec->buildPrompt(rows) : filterCodec->buildPrompt(rows);
-    const auto answer = co_await complete(prompt);
+    const auto answer = co_await complete(prompt, nullptr, std::move(images));
     co_return decode(answer, rows).front();
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(std::vector<std::vector<std::string>> rows)
 {
-    INVARIANT(!scanCodec && !windowCodec && !aggCodec, "SEM_CALL of model '{}' takes one row at a time", payload.model);
+    INVARIANT(
+        !scanCodec && !windowCodec && !aggCodec && imageFieldPositions.empty(),
+        "SEM_CALL of model '{}' takes one row at a time",
+        payload.model);
     AsyncBatchResult results;
     results.reserve(rows.size());
     if (joinCodec)
@@ -509,8 +546,10 @@ SemanticCallAsyncFunction::scoreWindows(std::shared_ptr<WindowScoring> scoring, 
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(std::string prompt, SemanticHttpClient* const client)
+boost::asio::awaitable<std::string>
+SemanticCallAsyncFunction::complete(std::string prompt, SemanticHttpClient* const client, std::vector<ImageAttachment> images)
 {
+    auto request = buildChatRequest(payload.config.modelName, prompt, images, payload.config.maxTokens);
     if (mock)
     {
         if (mock->getDelay() > std::chrono::milliseconds{0})
@@ -518,7 +557,8 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(std::str
             boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, mock->getDelay()};
             co_await timer.async_wait(boost::asio::use_awaitable);
         }
-        auto answer = mock->respond(prompt);
+        /// The images as the request carries them, so a test sees what the HTTP backend would send.
+        auto answer = images.empty() ? mock->respond(prompt) : mock->respond(prompt, imagesOfChatRequest(request));
         if (!answer)
         {
             throw CannotReadFromSource("SEM_CALL of model '{}': {}", payload.model, answer.error().message);
@@ -526,14 +566,6 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(std::str
         co_return std::move(answer).value();
     }
 
-    nlohmann::json request{
-        {"model", payload.config.modelName},
-        {"messages", nlohmann::json::array({{{"role", "user"}, {"content", prompt}}})},
-        {"stream", false}};
-    if (payload.config.maxTokens > 0)
-    {
-        request["max_tokens"] = payload.config.maxTokens;
-    }
     const auto start = std::chrono::steady_clock::now();
     std::optional<SemanticHttpResponse> exchanged;
     try

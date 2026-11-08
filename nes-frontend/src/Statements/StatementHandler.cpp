@@ -57,6 +57,7 @@
 #include <Model.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <SemanticImage.hpp>
 #include <SemanticModelCatalog.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
@@ -419,6 +420,9 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"MAX_EXAMPLES"},
     std::string_view{"TIMESTAMP_FIELD"},
     std::string_view{"WINDOWS_PER_CALL"},
+    std::string_view{"IMAGE_FIELDS"},
+    std::string_view{"IMAGE_ROOT"},
+    std::string_view{"IMAGE_MAX_BYTES"},
 };
 
 /// Options only a SEM_SCAN or SEM_WINDOW model reads.
@@ -510,6 +514,7 @@ constexpr size_t MaxRetries = 10;
 constexpr size_t MaxTokens = 1U << 20U;
 constexpr size_t MaxWaitMs = 3'600'000;
 constexpr size_t MaxTimeoutSeconds = 86'400;
+constexpr size_t MaxImageBytes = size_t{256} * 1024 * 1024;
 
 /// Answers that only make sense for a column; a filter model has none.
 constexpr std::array MapOnlyOptions{std::string_view{"OUTPUT_VALUES"}, std::string_view{"DEFAULT_VALUE"}};
@@ -657,6 +662,28 @@ std::string bindModelName(const std::unordered_map<Identifier, std::string>& con
     return requireOption(config, "MODEL_NAME");
 }
 
+/// `LLM.IMAGE_FIELDS`, e.g. 'image' or 'front, side': INPUT field names, spelled as in the INPUT clause, stored canonical so
+/// the catalog compares them with its INPUT fields. Without the option, IMAGE_ROOT and IMAGE_MAX_BYTES have nothing to apply to.
+std::vector<std::string> bindImageFields(const CreateSemanticModelStatement& statement)
+{
+    std::vector<std::string> fields;
+    for (const auto& name : splitCommaSeparated(optionalOption(statement.config, "IMAGE_FIELDS", "")))
+    {
+        fields.push_back(Identifier::parse(name).asCanonicalString());
+    }
+    if (fields.empty())
+    {
+        for (const auto option : {std::string_view{"IMAGE_ROOT"}, std::string_view{"IMAGE_MAX_BYTES"}})
+        {
+            if (findOption(statement.config, option) != nullptr)
+            {
+                throw InvalidSemanticModel("Semantic model '{}': LLM.{} requires LLM.IMAGE_FIELDS", statement.name, option);
+            }
+        }
+    }
+    return fields;
+}
+
 /// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
 SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& statement)
 {
@@ -688,7 +715,10 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         /// On by default, like llm_operator's limit per model and host: every stage that calls this model on this
         /// endpoint shares MAX_CONCURRENCY requests. 0 turns it off; then each stage has its own MAX_CONCURRENCY.
         .sharedConcurrency = numericOption(statement.config, "SHARED_CONCURRENCY", maxConcurrency, MaxConcurrency),
-        .keyed = std::move(keyed)};
+        .keyed = std::move(keyed),
+        .imageFields = bindImageFields(statement),
+        .imageRoot = optionalOption(statement.config, "IMAGE_ROOT", ""),
+        .imageMaxBytes = numericOption(statement.config, "IMAGE_MAX_BYTES", DefaultImageMaxBytes, MaxImageBytes)};
 }
 
 }

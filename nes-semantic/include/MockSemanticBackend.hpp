@@ -18,11 +18,13 @@
 #include <cstdint>
 #include <expected>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <SemanticBackend.hpp>
+#include <SemanticImage.hpp>
 
 namespace NES
 {
@@ -42,6 +44,8 @@ namespace NES
 ///   echo-extra    echo, plus an answer for a row the prompt does not have
 ///   fail-batch    fails a prompt with several rows like `fail`, answers a single row like `echo`
 ///   scan          SEM_SCAN: a key's first row's state is its text, later rows append '|' and their text
+///   imageinfo     answers every row with the images the request carries, each as "<mime>:<bytes>:<fnv1a64 hex>" of the
+///                 bytes decoded back from its data URL, joined by ';', or "none"
 ///   window        SEM_WINDOW: a row fits a window (0.95, else 0.05) if the text before its first ':' equals the window's
 ///                 description, or the same part of the window's last example; descriptions are that part of the text
 ///
@@ -78,6 +82,7 @@ public:
         FAIL_BATCH,
         SCAN,
         WINDOW,
+        IMAGE_INFO,
     };
 
     /// Throws InvalidSemanticModel for an unknown behaviour.
@@ -91,6 +96,9 @@ public:
     /// The answer to `prompt` without waiting. `SEM_CALL` waits for `getDelay()` on a timer of the event loop
     /// first, so that a waiting request occupies no thread; `complete` sleeps on the calling thread.
     [[nodiscard]] std::expected<std::string, BackendError> respond(const std::string& prompt) const;
+    /// The same for a request with images, which `SEM_CALL` takes from the chat request it built (`imagesOfChatRequest`).
+    [[nodiscard]] std::expected<std::string, BackendError>
+    respond(const std::string& prompt, std::span<const ImageAttachment> images) const;
 
     [[nodiscard]] std::chrono::milliseconds getDelay() const { return delay; }
 

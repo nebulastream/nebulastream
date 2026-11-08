@@ -27,6 +27,7 @@
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
+#include <SemanticImage.hpp>
 #include <SemanticModelCatalog.hpp>
 
 namespace NES
@@ -96,6 +97,10 @@ struct EncodedPayload
     /// Only written when set, for the same reason.
     std::optional<bool> retryMissingRows;
     std::optional<int64_t> sharedConcurrency;
+    /// Only written for a model with LLM.IMAGE_FIELDS, for the same reason.
+    std::optional<std::vector<std::string>> imageFields;
+    std::optional<std::string> imageRoot;
+    std::optional<int64_t> imageMaxBytes;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -199,7 +204,10 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .stateId = payload.stateId.empty() ? std::nullopt : std::optional{payload.stateId},
             .retryMissingRows = config.retryMissingRows ? std::optional{true} : std::nullopt,
             .sharedConcurrency
-            = config.sharedConcurrency > 0 ? std::optional{static_cast<int64_t>(config.sharedConcurrency)} : std::nullopt});
+            = config.sharedConcurrency > 0 ? std::optional{static_cast<int64_t>(config.sharedConcurrency)} : std::nullopt,
+            .imageFields = config.imageFields.empty() ? std::nullopt : std::optional{config.imageFields},
+            .imageRoot = config.imageFields.empty() ? std::nullopt : std::optional{config.imageRoot},
+            .imageMaxBytes = config.imageFields.empty() ? std::nullopt : std::optional{static_cast<int64_t>(config.imageMaxBytes)}});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -245,7 +253,10 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .fusion = value.fusion,
             .retryMissingRows = value.retryMissingRows.value_or(false),
             .sharedConcurrency = static_cast<size_t>(value.sharedConcurrency.value_or(0)),
-            .keyed = value.keyed ? std::optional{decodeKeyed(std::move(*value.keyed))} : std::nullopt},
+            .keyed = value.keyed ? std::optional{decodeKeyed(std::move(*value.keyed))} : std::nullopt,
+            .imageFields = std::move(value.imageFields).value_or(std::vector<std::string>{}),
+            .imageRoot = std::move(value.imageRoot).value_or(""),
+            .imageMaxBytes = static_cast<size_t>(std::max<int64_t>(1, value.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes))))},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),

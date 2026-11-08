@@ -1,0 +1,129 @@
+# name: semantic/SemanticImage.test
+# description: Image inputs of SEM_MAP and SEM_FILTER ('image' AS LLM.IMAGE_FIELDS), end to end under a real worker against
+#              the mock backend. A row carries the image as a file path; SEM_CALL reads the file, attaches it to the chat
+#              request as a base64 data URL and shows "[image 1]" in the prompt text instead of the path. The mock's
+#              'imageinfo' answers with what it decoded back from the request: "<mime>:<bytes>:<fnv1a64>", which the
+#              expected output compares with the committed files (testdata/small/semantic/images: red.jpg 633 bytes,
+#              blue.png 77, grey.webp 44). A missing file or one without an image extension gets the default value
+#              without a request, and a filter drops its row.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE scans(id UINT64 NOT NULL, image VARSIZED NOT NULL, note VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR scans TYPE File;
+ATTACH INLINE
+1,red.jpg,first
+2,blue.png,second
+3,grey.webp,third
+4,missing.jpg,fourth
+5,red.bmp,fifth
+6,TESTDATA/small/semantic/images/red.jpg,absolute
+
+CREATE SEM_MODEL describe
+INPUT (image VARSIZED)
+OUTPUT (seen VARSIZED)
+SET ('Describe the image' AS LLM.PROMPT, 'imageinfo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'image' AS LLM.IMAGE_FIELDS, 'TESTDATA/small/semantic/images' AS LLM.IMAGE_ROOT, 'NO_IMAGE' AS LLM.DEFAULT_VALUE);
+
+# The prompt text: the echo shows the row's text upper-cased, with the placeholder where the path was.
+CREATE SEM_MODEL echoText
+INPUT (image VARSIZED, note VARSIZED)
+OUTPUT (seen VARSIZED)
+SET ('Echo the row' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'image' AS LLM.IMAGE_FIELDS, 'TESTDATA/small/semantic/images' AS LLM.IMAGE_ROOT, 'NO_IMAGE' AS LLM.DEFAULT_VALUE);
+
+# Restricted answers work as for text: the mock's 'label:Malignant' is normalised to MALIGNANT.
+CREATE SEM_MODEL lesion
+INPUT (image VARSIZED)
+OUTPUT (seen VARSIZED)
+SET ('Is the lesion benign or malignant?' AS LLM.PROMPT, 'label:Malignant' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 'BENIGN,MALIGNANT' AS LLM.OUTPUT_VALUES, 'UNKNOWN' AS LLM.DEFAULT_VALUE,
+     'image' AS LLM.IMAGE_FIELDS, 'TESTDATA/small/semantic/images' AS LLM.IMAGE_ROOT);
+
+# A file over LLM.IMAGE_MAX_BYTES is not sent: only blue.png (77 bytes) and grey.webp (44) are small enough.
+CREATE SEM_MODEL small
+INPUT (image VARSIZED)
+OUTPUT (seen VARSIZED)
+SET ('Describe the image' AS LLM.PROMPT, 'imageinfo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'image' AS LLM.IMAGE_FIELDS, 'TESTDATA/small/semantic/images' AS LLM.IMAGE_ROOT, '100' AS LLM.IMAGE_MAX_BYTES,
+     'TOO_LARGE' AS LLM.DEFAULT_VALUE);
+
+CREATE SEM_MODEL keepAll
+INPUT (image VARSIZED)
+SET ('Does the image show a lesion?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'image' AS LLM.IMAGE_FIELDS, 'TESTDATA/small/semantic/images' AS LLM.IMAGE_ROOT);
+
+CREATE SEM_MODEL samePicture
+INPUT (lhs VARSIZED, rhs VARSIZED)
+SET ('Do both show the same?' AS LLM.PROMPT, 'match' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'lhs' AS LLM.IMAGE_FIELDS);
+
+CREATE SEM_MODEL summarizePictures
+INPUT (image VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('Summarize the images' AS LLM.PROMPT, 'concat' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'image' AS LLM.IMAGE_FIELDS);
+
+CREATE LOGICAL SOURCE timed(id UINT64 NOT NULL, image VARSIZED NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timed TYPE File;
+ATTACH INLINE
+1,red.jpg,100
+
+CREATE LOGICAL SOURCE timedToo(id2 UINT64 NOT NULL, image2 VARSIZED NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timedToo TYPE File;
+ATTACH INLINE
+2,blue.png,150
+
+CREATE SINK out(id UINT64 NOT NULL, image VARSIZED NOT NULL, note VARSIZED NOT NULL, seen VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# Query 1: each image arrives as it is on disk; a missing file and an unsupported extension get the default.
+SELECT * FROM SEM_MAP(describe, scans) INTO out;
+----
+1,red.jpg,first,image/jpeg:633:195b1145063529fb
+2,blue.png,second,image/png:77:dbe30a86b1f18f42
+3,grey.webp,third,image/webp:44:0e96e19d39dca88f
+4,missing.jpg,fourth,NO_IMAGE
+5,red.bmp,fifth,NO_IMAGE
+6,TESTDATA/small/semantic/images/red.jpg,absolute,image/jpeg:633:195b1145063529fb
+
+# Query 2: the prompt text carries the placeholder, never the path; other fields stay as they are.
+SELECT * FROM SEM_MAP(echoText, scans) WHERE id <= 2 INTO out;
+----
+1,red.jpg,first,[IMAGE 1] FIRST
+2,blue.png,second,[IMAGE 1] SECOND
+
+# Query 3: a closed answer set over images.
+SELECT * FROM SEM_MAP(lesion, scans) INTO out;
+----
+1,red.jpg,first,MALIGNANT
+2,blue.png,second,MALIGNANT
+3,grey.webp,third,MALIGNANT
+4,missing.jpg,fourth,UNKNOWN
+5,red.bmp,fifth,UNKNOWN
+6,TESTDATA/small/semantic/images/red.jpg,absolute,MALIGNANT
+
+# Query 4: LLM.IMAGE_MAX_BYTES.
+SELECT * FROM SEM_MAP(small, scans) WHERE id <= 3 INTO out;
+----
+1,red.jpg,first,TOO_LARGE
+2,blue.png,second,image/png:77:dbe30a86b1f18f42
+3,grey.webp,third,image/webp:44:0e96e19d39dca88f
+
+# Query 5: SEM_FILTER keeps the rows whose image the model affirms and drops those without a usable image.
+SELECT id FROM SEM_FILTER(keepAll, scans) INTO ids;
+----
+1
+2
+3
+6
+
+# Query 6: SEM_JOIN does not take image inputs.
+SELECT * FROM (SELECT * FROM timed) INNER JOIN (SELECT * FROM timedToo) ON SEM_MATCH(samePicture, image, image2)
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO FILE ();
+----
+ERROR 2048
+
+# Query 7: nor does SEM_AGG.
+SELECT start, end, SEM_AGG(summarizePictures, image) AS summary FROM timed WINDOW TUMBLING(ts, size 1 sec) INTO FILE ();
+----
+ERROR 2048

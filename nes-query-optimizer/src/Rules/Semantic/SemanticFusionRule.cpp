@@ -106,6 +106,11 @@ bool SemanticFusionRule::canFuse(const RegisteredSemanticModel& child, const Reg
     {
         return false;
     }
+    /// A model with image inputs sends one row with its images per prompt; the catalog already rejects FUSION for it.
+    if (!child.getConfig().imageFields.empty() || !parent.getConfig().imageFields.empty())
+    {
+        return false;
+    }
     if (!child.getConfig().fusion || !parent.getConfig().fusion)
     {
         return false;

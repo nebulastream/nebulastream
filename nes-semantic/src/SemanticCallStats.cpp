@@ -76,6 +76,12 @@ void SemanticCallStats::recordRetry(const std::chrono::milliseconds delay)
     backedOff += delay;
 }
 
+void SemanticCallStats::recordUnusableImage()
+{
+    const std::scoped_lock lock{mutex};
+    ++unusableImages;
+}
+
 void SemanticCallStats::reportAndReset(const std::string_view context)
 {
     const std::scoped_lock lock{mutex};
@@ -87,7 +93,7 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
         { return sorted[std::min(sorted.size() - 1, static_cast<size_t>(quantile * static_cast<double>(sorted.size())))]; };
         const double mean = std::accumulate(sorted.begin(), sorted.end(), 0.0) / static_cast<double>(sorted.size());
         const double span = std::chrono::duration<double>(*lastEnd - *firstStart).count();
-        const auto line = fmt::format(
+        auto line = fmt::format(
             "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, p99 {:.0f} ms, max {:.0f} "
             "ms, "
             "{:.1f} calls/s, span {:.1f} s, prompt tokens {}, completion tokens {} ({} responses, {} without usage, {} cut off at "
@@ -113,6 +119,11 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
             serverErrors,
             retries,
             std::chrono::duration<double>(backedOff).count());
+        /// Only with image inputs, so the line of every text run stays as the scripts know it.
+        if (unusableImages > 0)
+        {
+            line += fmt::format(", {} rows with an unusable image", unusableImages);
+        }
         /// A measurement, not a diagnostic: it must not depend on the compiled log level.
         if (std::getenv("NES_SEMANTIC_LATENCY_REPORT") != nullptr) /// NOLINT(concurrency-mt-unsafe)
         {
@@ -126,6 +137,7 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
     lastEnd.reset();
     responses = responsesWithoutUsage = cutOff = batchedRows = missingRows = tooManyRequests = serverErrors = retries = 0;
     backedOff = std::chrono::milliseconds{0};
+    unusableImages = 0;
     promptTokens = completionTokens = 0;
 }
 

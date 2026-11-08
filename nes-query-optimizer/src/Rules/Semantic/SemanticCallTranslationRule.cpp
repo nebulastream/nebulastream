@@ -314,6 +314,13 @@ LogicalOperator translateJoin(const JoinLogicalOperator& join, std::vector<Logic
                 std::ranges::size(model.getSchema().inputs),
                 std::ranges::size(model.getSchema().outputs));
         }
+        if (!config.imageFields.empty())
+        {
+            throw InvalidSemanticModel(
+                "SEM_MATCH does not support image inputs: semantic model '{}' sets LLM.IMAGE_FIELDS, which only SEM_MAP and SEM_FILTER "
+                "support",
+                model.getName());
+        }
         auto payload = payloadOf(model);
         payload.join = true;
         std::vector<LogicalFunction> callArguments{
@@ -379,6 +386,13 @@ LogicalOperator translateAggregation(
                 std::ranges::size(model.getSchema().inputs),
                 std::ranges::size(model.getSchema().outputs),
                 model.hasFilterStep() ? " and no OUTPUT clause" : "");
+        }
+        if (!model.getConfig().imageFields.empty())
+        {
+            throw InvalidSemanticModel(
+                "SEM_AGG does not support image inputs: semantic model '{}' sets LLM.IMAGE_FIELDS, which only SEM_MAP and SEM_FILTER "
+                "support",
+                model.getName());
         }
         auto payload = payloadOf(model);
         payload.agg = true;

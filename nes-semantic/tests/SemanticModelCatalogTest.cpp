@@ -31,6 +31,7 @@
 #include <rfl/json.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SemanticImage.hpp>
 
 namespace NES
 {
@@ -322,6 +323,45 @@ TEST_F(SemanticModelCatalogTest, UnreflectRejectsOutOfRangeEnums)
     ASSERT_EXCEPTION_ERRORCODE(
         (void)context.unreflect<RegisteredSemanticModel>(tampered("payloadFormat", "7")), ErrorCode::CannotDeserialize);
     ASSERT_EXCEPTION_ERRORCODE((void)context.unreflect<RegisteredSemanticModel>(tampered("kind", "-1")), ErrorCode::CannotDeserialize);
+}
+
+/// LLM.IMAGE_FIELDS: INPUT fields holding image paths, for SEM_MAP and SEM_FILTER models with one row per prompt.
+TEST_F(SemanticModelCatalogTest, ImageFieldsAreInputsOfAnUnbatchedMapOrFilterModel)
+{
+    const auto image = Identifier::parse("image").asCanonicalString();
+    const SemanticModelSchema schema{
+        .inputs
+        = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse("image"), DataType::Type::VARSIZED}, UnqualifiedUnboundField{Identifier::parse("note"), DataType::Type::VARSIZED}},
+        .outputs = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse("sentiment"), DataType::Type::VARSIZED}}};
+    auto config = validConfig();
+    config.execution = SemanticExecution::ASYNCHRONOUS;
+    config.imageFields = {image};
+    config.imageRoot = "/data/skin";
+    {
+        SemanticModelCatalog catalog;
+        catalog.registerModel("lesion", config, schema);
+        const ReflectionContext context;
+        const auto model = catalog.load("lesion");
+        const auto roundTripped = context.unreflect<RegisteredSemanticModel>(context.reflect(model));
+        EXPECT_EQ(roundTripped, model);
+        EXPECT_EQ(roundTripped.getConfig().imageFields, std::vector{image});
+        EXPECT_EQ(roundTripped.getConfig().imageRoot, "/data/skin");
+        EXPECT_EQ(roundTripped.getConfig().imageMaxBytes, DefaultImageMaxBytes);
+    }
+
+    const auto rejected = [&](const std::string& description, auto mutate)
+    {
+        SCOPED_TRACE(description);
+        auto changed = config;
+        mutate(changed);
+        SemanticModelCatalog catalog;
+        ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("lesion", changed, schema), ErrorCode::InvalidSemanticModel);
+    };
+    rejected("not an INPUT field", [](SemanticModelConfig& changed) { changed.imageFields = {"SENTIMENT"}; });
+    rejected("named twice", [&](SemanticModelConfig& changed) { changed.imageFields = {image, image}; });
+    rejected("batched", [](SemanticModelConfig& changed) { changed.batchSize = 4; });
+    rejected("fused", [](SemanticModelConfig& changed) { changed.fusion = true; });
+    rejected("no bytes allowed", [](SemanticModelConfig& changed) { changed.imageMaxBytes = 0; });
 }
 
 }

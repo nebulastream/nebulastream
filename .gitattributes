@@ -13,3 +13,5 @@
 *.pdiparams binary
 # TensorFlow SavedModel checkpoint shards have no usable suffix
 nes-inference/tests/testdata/tiny_savedmodel/variables/* binary
+*.jpg binary
+*.webp binary

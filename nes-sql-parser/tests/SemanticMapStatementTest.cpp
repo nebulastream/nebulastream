@@ -517,4 +517,39 @@ TEST_F(SemanticMapStatementTest, SemFilterOverSubqueryDoesNotCaptureModelNameAsS
     EXPECT_NE(rendered.find("SELECTION(REVIEWID > 2)"), std::string::npos) << rendered;
 }
 
+TEST_F(SemanticMapStatementTest, ImageFieldsNameInputFields)
+{
+    const auto result = create(
+        "CREATE SEM_MODEL lesion INPUT (image VARSIZED, note VARSIZED) OUTPUT (label VARSIZED) SET ('Benign or malignant?' AS "
+        "LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'ASYNC' AS LLM.EXECUTION, 'image' AS LLM.IMAGE_FIELDS, "
+        "'/data/skin' AS LLM.IMAGE_ROOT, '1000' AS LLM.IMAGE_MAX_BYTES)");
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    const auto config = semanticModelCatalog->load("LESION").getConfig();
+    EXPECT_EQ(config.imageFields, std::vector<std::string>{"IMAGE"});
+    EXPECT_EQ(config.imageRoot, "/data/skin");
+    EXPECT_EQ(config.imageMaxBytes, 1000);
+    semanticModelCatalog->removeModel("LESION");
+
+    const auto rejectedWith = [this](const std::string& sql, const std::string& message)
+    {
+        SCOPED_TRACE(sql);
+        const auto rejected = create(sql);
+        ASSERT_FALSE(rejected.has_value());
+        EXPECT_EQ(rejected.error().code(), ErrorCode::InvalidSemanticModel);
+        EXPECT_NE(std::string{rejected.error().what()}.find(message), std::string::npos) << rejected.error().what();
+        EXPECT_TRUE(semanticModelCatalog->getModelNames().empty());
+    };
+    rejectedWith(withOptions("o VARSIZED", ", 'picture' AS LLM.IMAGE_FIELDS"), "not one of its INPUT fields");
+    rejectedWith(withOptions("o VARSIZED", ", '/data' AS LLM.IMAGE_ROOT"), "requires LLM.IMAGE_FIELDS");
+    rejectedWith(
+        withOptions("o VARSIZED", ", 'reviewText' AS LLM.IMAGE_FIELDS, 'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE"),
+        "BATCH_SIZE must be 1");
+    rejectedWith(withOptions("o VARSIZED", ", 'reviewText' AS LLM.IMAGE_FIELDS, 'TRUE' AS LLM.FUSION"), "never fused");
+    rejectedWith(
+        "CREATE SEM_MODEL m INPUT (k VARSIZED, image VARSIZED) OUTPUT (state VARSIZED, confidence VARSIZED) SET ('Fold' AS LLM.PROMPT, "
+        "'scan' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 'SCAN' AS LLM.KIND, 'k' AS LLM.KEY_BY, 'image' AS "
+        "LLM.IMAGE_FIELDS)",
+        "SEM_MAP and SEM_FILTER models only");
+}
+
 }

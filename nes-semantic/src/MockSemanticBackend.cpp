@@ -22,6 +22,7 @@
 #include <expected>
 #include <initializer_list>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -34,6 +35,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <SemanticBackend.hpp>
+#include <SemanticImage.hpp>
 
 namespace NES
 {
@@ -109,7 +111,8 @@ std::optional<Behaviour> parseBehaviour(std::string_view behaviour)
              {"echo-extra", MockSemanticBackend::Mode::ECHO_EXTRA},
              {"fail-batch", MockSemanticBackend::Mode::FAIL_BATCH},
              {"scan", MockSemanticBackend::Mode::SCAN},
-             {"window", MockSemanticBackend::Mode::WINDOW}})
+             {"window", MockSemanticBackend::Mode::WINDOW},
+             {"imageinfo", MockSemanticBackend::Mode::IMAGE_INFO}})
     {
         if (behaviour == name)
         {
@@ -195,6 +198,28 @@ std::string rowText(const nlohmann::ordered_json& payload)
 
 }
 
+namespace
+{
+/// "<mime>:<bytes>:<fnv1a64 hex>" per image, joined by ';', or "none".
+std::string describeImages(const std::span<const ImageAttachment> images)
+{
+    if (images.empty())
+    {
+        return "none";
+    }
+    std::string description;
+    for (const auto& image : images)
+    {
+        if (!description.empty())
+        {
+            description.push_back(';');
+        }
+        description += fmt::format("{}:{}:{:016x}", image.mime, image.bytes.size(), fnv1a64(image.bytes));
+    }
+    return description;
+}
+}
+
 MockSemanticBackend::MockSemanticBackend(const std::string_view behaviour, std::vector<std::string> outputColumns)
     : mode(Mode::FAIL), outputColumns(std::move(outputColumns))
 {
@@ -203,7 +228,7 @@ MockSemanticBackend::MockSemanticBackend(const std::string_view behaviour, std::
     {
         throw InvalidSemanticModel(
             "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable, fail, match, count, concat, batchinfo, "
-            "echo-missing, echo-extra, fail-batch, scan or window, each optionally followed by @<ms>)",
+            "echo-missing, echo-extra, fail-batch, scan, window or imageinfo, each optionally followed by @<ms>)",
             behaviour);
     }
     mode = parsed->mode;
@@ -226,6 +251,12 @@ std::expected<std::string, BackendError> MockSemanticBackend::complete(const Com
 }
 
 std::expected<std::string, BackendError> MockSemanticBackend::respond(const std::string& prompt) const
+{
+    return respond(prompt, {});
+}
+
+std::expected<std::string, BackendError>
+MockSemanticBackend::respond(const std::string& prompt, const std::span<const ImageAttachment> images) const
 {
     switch (mode)
     {
@@ -322,6 +353,7 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
         case Mode::ECHO_MISSING:
         case Mode::ECHO_EXTRA:
         case Mode::ECHO:
+        case Mode::IMAGE_INFO:
         case Mode::LABEL: {
             auto response = nlohmann::json::object();
             const auto rows = dataBlock(prompt);
@@ -338,6 +370,10 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
                     if (mode == Mode::LABEL)
                     {
                         return label;
+                    }
+                    if (mode == Mode::IMAGE_INFO)
+                    {
+                        return describeImages(images);
                     }
                     return mode == Mode::BATCH_INFO ? fmt::format("{}/{}", position, rows.size()) : toUpper(rowText(payload));
                 }();

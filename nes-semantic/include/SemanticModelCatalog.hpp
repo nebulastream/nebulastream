@@ -27,6 +27,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Reflection.hpp>
+#include <SemanticImage.hpp>
 
 namespace NES
 {
@@ -165,6 +166,14 @@ struct SemanticModelConfig
     size_t sharedConcurrency = 0;
     /// Set for SEM_SCAN and SEM_WINDOW models.
     std::optional<SemanticKeyedConfig> keyed = std::nullopt;
+    /// `LLM.IMAGE_FIELDS`: the INPUT fields, canonical names, whose values are paths of image files. SEM_CALL reads each
+    /// file and attaches it to the request (`SemanticImage.hpp`); the prompt text shows "[image <n>]" in its place.
+    /// SEM_MAP and SEM_FILTER only, one row per request, never fused.
+    std::vector<std::string> imageFields;
+    /// `LLM.IMAGE_ROOT`: the directory relative image paths are resolved against; empty is the worker's working directory.
+    std::string imageRoot;
+    /// `LLM.IMAGE_MAX_BYTES`: a larger file is not sent; its row gets the default value.
+    size_t imageMaxBytes = DefaultImageMaxBytes;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

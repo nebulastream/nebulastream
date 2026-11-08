@@ -43,6 +43,8 @@ public:
     void recordTransientStatus(unsigned status);
     /// The Async source waits `delay` before it repeats a failed call.
     void recordRetry(std::chrono::milliseconds delay);
+    /// A row whose image (`LLM.IMAGE_FIELDS`) could not be used, so it got the default without a request.
+    void recordUnusableImage();
 
     /// Writes the line if anything was recorded, then starts over. `context` names the path, e.g. "SEM_CALL".
     void reportAndReset(std::string_view context);
@@ -66,6 +68,7 @@ private:
     size_t serverErrors = 0;
     size_t retries = 0;
     std::chrono::milliseconds backedOff{0};
+    size_t unusableImages = 0;
 };
 
 }

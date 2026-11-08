@@ -28,10 +28,12 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <MockSemanticBackend.hpp>
 #include <SemanticCallPayload.hpp>
+#include <SemanticImage.hpp>
 
 namespace NES::detail
 {
@@ -72,6 +74,10 @@ struct
     std::optional<int64_t> sharedConcurrency;
     /// SEM_SCAN and SEM_WINDOW only, as `encodeSemanticKeyedConfig` writes it.
     std::optional<std::string> keyed;
+    /// Optional on read: catalogs reflected before LLM.IMAGE_FIELDS existed carry none, which means no image inputs.
+    std::optional<std::vector<std::string>> imageFields;
+    std::optional<std::string> imageRoot;
+    std::optional<int64_t> imageMaxBytes;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -175,6 +181,53 @@ void validateKeyed(const std::string& name, const SemanticModelConfig& config, c
     if (config.batchSize != 1)
     {
         throw InvalidSemanticModel("Semantic model '{}': SEM_SCAN and SEM_WINDOW send one row per prompt; BATCH_SIZE must be 1", name);
+    }
+}
+
+/// LLM.IMAGE_FIELDS: each one an INPUT field, named once; only SEM_MAP and SEM_FILTER, one row per prompt, never fused.
+void validateImageFields(const std::string& name, const SemanticModelConfig& config, const SemanticModelSchema& schema)
+{
+    if (config.imageFields.empty())
+    {
+        return;
+    }
+    for (const auto& field : config.imageFields)
+    {
+        const bool declared = std::ranges::any_of(
+            schema.inputs,
+            [&field](const auto& input)
+            { return static_cast<const Identifier&>(input.getFullyQualifiedName()).asCanonicalString() == field; });
+        if (!declared)
+        {
+            throw InvalidSemanticModel(
+                "Semantic model '{}': LLM.IMAGE_FIELDS names '{}', which is not one of its INPUT fields", name, field);
+        }
+        if (std::ranges::count(config.imageFields, field) > 1)
+        {
+            throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_FIELDS names '{}' twice", name, field);
+        }
+    }
+    if (config.keyed)
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': LLM.IMAGE_FIELDS is supported for SEM_MAP and SEM_FILTER models only, not for SEM_SCAN or SEM_WINDOW",
+            name);
+    }
+    /// One image request per row: a prompt with several rows would need the model to tell whose image is whose.
+    if (config.batchSize != 1)
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': a model with LLM.IMAGE_FIELDS sends one row per prompt; BATCH_SIZE must be 1", name);
+    }
+    /// Fusion asks several questions in one prompt over one row's text; it is not defined for image parts, so rather
+    /// than ignoring an explicit FUSION TRUE, it is rejected.
+    if (config.fusion)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': a model with LLM.IMAGE_FIELDS is never fused; remove LLM.FUSION", name);
+    }
+    if (config.imageMaxBytes == 0)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_MAX_BYTES must be at least 1", name);
     }
 }
 
@@ -304,6 +357,8 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
         }
     }
 
+    validateImageFields(name, config, schema);
+
     /// Enforced here rather than only in the statement handler, so the optimizer tests and any
     /// embedded caller cannot silently replace an entry either.
     if (entries.contains(name))
@@ -429,6 +484,9 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .retryMissingRows = std::make_optional(config.retryMissingRows),
             .sharedConcurrency = std::make_optional(static_cast<int64_t>(config.sharedConcurrency)),
             .keyed = config.keyed ? std::optional{encodeSemanticKeyedConfig(*config.keyed)} : std::nullopt,
+            .imageFields = std::make_optional(config.imageFields),
+            .imageRoot = std::make_optional(config.imageRoot),
+            .imageMaxBytes = std::make_optional(static_cast<int64_t>(config.imageMaxBytes)),
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -472,7 +530,10 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .fusion = reflected.fusion.value(),
         .retryMissingRows = reflected.retryMissingRows.value_or(false),
         .sharedConcurrency = static_cast<size_t>(reflected.sharedConcurrency.value_or(0)),
-        .keyed = reflected.keyed ? std::optional{decodeSemanticKeyedConfig(*reflected.keyed)} : std::nullopt};
+        .keyed = reflected.keyed ? std::optional{decodeSemanticKeyedConfig(*reflected.keyed)} : std::nullopt,
+        .imageFields = std::move(reflected.imageFields).value_or(std::vector<std::string>{}),
+        .imageRoot = std::move(reflected.imageRoot).value_or(""),
+        .imageMaxBytes = static_cast<size_t>(reflected.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes)))};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,
