@@ -184,6 +184,10 @@ public:
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
 
+    /// Replaces the child buffer at the index with the given buffer, which this buffer now owns, and releases the previous child.
+    /// Lets a data structure that addresses its children by index drop memory it no longer needs, e.g. after compacting it.
+    void replaceChildBuffer(ChildBufferIndex bufferIndex, TupleBuffer& buffer) noexcept;
+
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
 private:

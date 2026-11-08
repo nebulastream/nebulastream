@@ -183,6 +183,15 @@ ChildBufferIndex TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
     return index;
 }
 
+void TupleBuffer::replaceChildBuffer(const ChildBufferIndex bufferIndex, TupleBuffer& buffer) noexcept
+{
+    TupleBuffer empty;
+    auto* control = buffer.controlBlock;
+    INVARIANT(controlBlock != control, "Cannot attach buffer to self");
+    controlBlock->replaceChildBuffer(bufferIndex, control);
+    std::swap(empty, buffer);
+}
+
 TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;

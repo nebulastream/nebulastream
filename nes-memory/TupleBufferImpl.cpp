@@ -316,6 +316,14 @@ ChildBufferIndex BufferControlBlock::storeChildBuffer(BufferControlBlock* contro
     return ChildBufferIndex{static_cast<uint32_t>(children.size() - 1)};
 }
 
+void BufferControlBlock::replaceChildBuffer(const ChildBufferIndex index, BufferControlBlock* control)
+{
+    PRECONDITION(index.getRawValue() < children.size(), "Index={} is out of range={}", index, children.size());
+    control->retain();
+    auto* const previous = std::exchange(children[index.getRawValue()], control->owner);
+    previous->controlBlock->release();
+}
+
 bool BufferControlBlock::loadChildBuffer(const ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
     PRECONDITION(index.getRawValue() < children.size(), "Index={} is out of range={}", index, children.size());
