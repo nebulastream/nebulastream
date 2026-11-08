@@ -20,6 +20,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <span>
 #include <sstream>
@@ -185,6 +186,11 @@ public:
     [[nodiscard]] TupleBuffer loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
+
+    /// @brief Appends `data` to the last child buffer if it has room for it, treating the child's number of tuples as its number of
+    /// used bytes. Unlike loadChildBuffer, it takes no reference to the child, so it costs no atomic operations.
+    /// @return the index of the child and the offset of `data` in it, or nothing if there is no child or no room in the last one
+    [[nodiscard]] std::optional<std::pair<ChildBufferIndex, uint64_t>> appendToLastChildBuffer(std::span<const std::byte> data) noexcept;
 
 private:
     /**

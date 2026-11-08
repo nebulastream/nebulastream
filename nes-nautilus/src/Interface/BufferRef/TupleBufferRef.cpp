@@ -89,34 +89,19 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
 {
     const auto totalVarSizedLength = varSizedValue.size();
 
-
-    /// If there are no child buffers, we get a new buffer and copy the var sized into the newly acquired
-    const auto numberOfChildBuffers = tupleBuffer.getNumberOfChildBuffers();
-    if (numberOfChildBuffers == 0)
+    /// Usually the last child buffer has space, so we copy the var sized into it. We store the number of used bytes in the no. tuples
+    /// field. We plan on getting rid of this "mis"-use in the near future.
+    if (const auto appended = tupleBuffer.appendToLastChildBuffer(varSizedValue))
     {
-        auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
-        copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
-        const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
-        return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
+        return VariableSizedAccess{
+            appended->first, VariableSizedAccess::Offset{appended->second}, VariableSizedAccess::Size{totalVarSizedLength}};
     }
 
-    /// If there is no space in the lastChildBuffer, we get a new buffer and copy the var sized into the newly acquired
-    /// We store the number of used bytes in the no. tuples field.  We plan on getting rid of this "mis"-use in the near future.
-    const ChildBufferIndex childIndex{numberOfChildBuffers - 1};
-    auto lastChildBuffer = tupleBuffer.loadChildBuffer(childIndex);
-    const auto usedMemorySize = lastChildBuffer.getNumberOfTuples();
-    if (usedMemorySize + totalVarSizedLength >= lastChildBuffer.getBufferSize())
-    {
-        auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
-        copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
-        const ChildBufferIndex childBufferIndex{tupleBuffer.storeChildBuffer(newChildBuffer)};
-        return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
-    }
-
-    /// There is enough space in the lastChildBuffer, thus, we copy the var sized into it
-    const VariableSizedAccess::Offset childOffset{usedMemorySize};
-    copyVarSizedAndIncrementMetaData(lastChildBuffer, childOffset, varSizedValue);
-    return VariableSizedAccess{childIndex, childOffset, VariableSizedAccess::Size{totalVarSizedLength}};
+    /// If there is no child buffer or no space in the last one, we get a new buffer and copy the var sized into the newly acquired
+    auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
+    copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
+    const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
+    return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
 }
 
 std::span<std::byte>
