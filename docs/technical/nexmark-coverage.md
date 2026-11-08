@@ -2,7 +2,7 @@
 
 Goal: run all Nexmark queries (q0–q23 from [nexmark/nexmark](https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries), pinned at `6b3646c3`) on NES with the same results as Flink.
 
-Status (branch `claude/nexmark-query-coverage-2d7cfd`): **21 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q23 (all but q11), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded. Every query with unbounded state streams like Flink's streaming mode and emits a retract changelog, which the check folds into the final table: q4 and q15–q17 as unbounded GROUP BYs (`WINDOW UNBOUNDED`), q9, q18 and q19 as top-k (`ORDER BY ... LIMIT k BY ... WINDOW UNBOUNDED`). q19 omits Flink's rank column. q11 needs session windows.
+Status (branch `claude/nexmark-query-coverage-2d7cfd`): **21 of 22 deterministic queries match Flink exactly** on a 10k-event dataset: q0–q5, q7–q10 and q13–q23 (all but q11), all in `NexmarkFlinkReference.test`. q6 (unsupported in Flink) and q12 (processing time) are excluded from the comparison; q12 runs as an ingestion-time window (`operator/aggregation/IngestionTimeWindow.test`). Every query with unbounded state streams like Flink's streaming mode and emits a retract changelog, which the check folds into the final table: q4 and q15–q17 as unbounded GROUP BYs (`WINDOW UNBOUNDED`), q9, q18 and q19 as top-k (`ORDER BY ... LIMIT k BY ... WINDOW UNBOUNDED`). q19 omits Flink's rank column. q11 needs session windows.
 
 ---
 
@@ -63,7 +63,7 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q9 | Winning bids | regular join → Top-1 (retracting) | ✅ (streaming) | The range join, then `ORDER BY price DESC, bTime ASC LIMIT 1 BY id WINDOW UNBOUNDED(bTime)`: the best bid per auction as a changelog. |
 | q10 | Log to filesystem | Calc + DATE_FORMAT | ✅ | `DATE_FORMAT(dateTime, 'yyyy-MM-dd' / 'HH:mm')`. The partitioned sink is out of scope (the reference uses a plain sink). |
 | q11 | User sessions | session window | 🔴 | Session windows |
-| q12 | Processing-time windows | PROCTIME tumble | — | nondeterministic, excluded from the reference |
+| q12 | Processing-time windows | PROCTIME tumble | ✅ (runs) | `GROUP BY bidder WINDOW TUMBLING(SIZE 10 SEC)`: a window without a time field uses ingestion time, the wall-clock time at which the source created the buffer. Nondeterministic, so not compared with Flink. Needed the network channel to carry the buffer creation time; before, records arrived on the next node with time 0 and the window failed. |
 | q13 | Bounded side input join | lookup join on a static file | ✅ | Stream-table join `bid ⋈ TABLE side_input` without `TIME`. 40 s on 10k events (see §4). |
 | q14 | Calculation | Calc, `HOUR`, `CASE`, UDF | ✅ | `CASE WHEN HOUR(...)`; the 'c' count is `CHAR_LENGTH(extra) - CHAR_LENGTH(REPLACE(extra, 'c', ''))` instead of the UDF |
 | q15 | Bidding statistics | unbounded GROUP BY day, COUNT DISTINCT, FILTER | ✅ (streaming) | `GROUP BY … WINDOW UNBOUNDED(dateTime)` emits +I/-U/+U per 1 s slice; `COUNT(DISTINCT x)`; `agg FILTER (WHERE c)` as `COUNT(CASE WHEN c THEN 1 END)` / `COUNT(DISTINCT CASE WHEN c THEN x END)` |
