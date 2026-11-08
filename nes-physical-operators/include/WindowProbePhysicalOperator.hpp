@@ -51,6 +51,8 @@ public:
 protected:
     /// Processes one emitted window. The record buffer contains at least one record.
     virtual void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const = 0;
+    /// Runs for every buffer after probeWindow, including the buffers that only carry a watermark.
+    virtual void afterBuffer(ExecutionContext&, RecordBuffer&) const { }
 
     std::optional<PhysicalOperator> child;
     OperatorHandlerId operatorHandlerId;

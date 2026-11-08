@@ -97,6 +97,9 @@ protected:
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) = 0;
 
+    /// Emits a buffer that carries only a watermark to the probe, with the sequence number the slice store assigned to it.
+    virtual void emitWatermark(Timestamp watermark, SequenceNumber sequenceNumber, PipelineExecutionContext* pipelineCtx);
+
     std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;

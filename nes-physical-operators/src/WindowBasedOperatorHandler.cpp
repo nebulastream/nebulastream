@@ -148,16 +148,22 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
     if (outputWatermarkAndSequenceNumber)
     {
         const auto [outputWatermark, outputSequenceNumber] = *outputWatermarkAndSequenceNumber;
-        auto watermarkBuffer = pipelineCtx->allocateTupleBuffer();
-        watermarkBuffer.setNumberOfTuples(0);
-        watermarkBuffer.setOriginId(outputOriginId);
-        watermarkBuffer.setSequenceNumber(outputSequenceNumber);
-        watermarkBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
-        watermarkBuffer.setLastChunk(true);
-        watermarkBuffer.setWatermark(outputWatermark);
-        watermarkBuffer.setCreationTimestampInMS(Timestamp::nowInMilliseconds());
-        pipelineCtx->emitBuffer(watermarkBuffer);
+        emitWatermark(outputWatermark, outputSequenceNumber, pipelineCtx);
     }
+}
+
+void WindowBasedOperatorHandler::emitWatermark(
+    const Timestamp watermark, const SequenceNumber sequenceNumber, PipelineExecutionContext* pipelineCtx)
+{
+    auto watermarkBuffer = pipelineCtx->allocateTupleBuffer();
+    watermarkBuffer.setNumberOfTuples(0);
+    watermarkBuffer.setOriginId(outputOriginId);
+    watermarkBuffer.setSequenceNumber(sequenceNumber);
+    watermarkBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
+    watermarkBuffer.setLastChunk(true);
+    watermarkBuffer.setWatermark(watermark);
+    watermarkBuffer.setCreationTimestampInMS(Timestamp::nowInMilliseconds());
+    pipelineCtx->emitBuffer(watermarkBuffer);
 }
 
 }
