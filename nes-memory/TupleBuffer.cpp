@@ -16,7 +16,9 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
+#include <span>
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
@@ -189,6 +191,27 @@ TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noe
     const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
     INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
     return childBuffer;
+}
+
+std::optional<std::pair<ChildBufferIndex, uint64_t>> TupleBuffer::appendToLastChildBuffer(const std::span<const std::byte> data) noexcept
+{
+    return controlBlock->appendToLastChildBuffer(data);
+}
+
+TupleBufferView TupleBuffer::getChildBufferView(const ChildBufferIndex bufferIndex) const noexcept
+{
+    auto* const child = controlBlock->getChildBuffer(bufferIndex);
+    return TupleBufferView{child->controlBlock.get(), child->ptr, child->size};
+}
+
+uint64_t TupleBufferView::getNumberOfTuples() const noexcept
+{
+    return controlBlock->getNumberOfTuples();
+}
+
+void TupleBufferView::setNumberOfTuples(const uint64_t numberOfTuples) const noexcept
+{
+    controlBlock->setNumberOfTuples(numberOfTuples);
 }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept

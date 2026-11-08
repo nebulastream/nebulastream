@@ -73,6 +73,10 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                                                                           : workerConfiguration.queryEngine.numberOfWorkerThreads;
     /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
     setenv("NES_UDF_PROCESSES", std::to_string(udfProcesses).c_str(), /*overwrite=*/1);
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
+    setenv("NES_UDF_PROCESS_VENV", workerConfiguration.pythonUdfProcessVenv.c_str(), /*overwrite=*/1);
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
+    setenv("NES_UDF_PROCESS_PROTOCOL", workerConfiguration.pythonUdfProcessProtocol.c_str(), /*overwrite=*/1);
 
     if (configuration.enableGoogleEventTrace)
     {

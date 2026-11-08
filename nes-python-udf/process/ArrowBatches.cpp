@@ -17,8 +17,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <Interface/BufferRef/ArrowBufferRef.hpp>
@@ -210,6 +213,173 @@ void importArrowArrayView(
             field.type.type == DataType::Type::VARSIZED ? locate(column.buffer_views[2])
                                                         : Location{.buffer = Location::NO_BUFFER, .offset = 0});
     }
+}
+
+std::vector<ArrowRegion> arrowRegionsOf(const TupleBuffer& buffer, const ArrowBufferRef& layout)
+{
+    /// Read off the header of `buffer`, sized as exportArrowArray sizes them, without building Arrow structures.
+    const auto& fields = layout.getFields();
+    const auto rows = static_cast<size_t>(buffer.getNumberOfTuples());
+    const auto bitmapBytes = (rows + 7) / 8;
+    std::vector<ArrowRegion> regions;
+    regions.reserve(3 * fields.size());
+    const auto add = [&](const size_t field, const Region which, const size_t size) -> const ArrowRegion&
+    {
+        const auto location = layout.getLocation(buffer, field, which);
+        const auto* const data = ArrowBufferRef::resolve(buffer, location);
+        const auto bytes = data == nullptr || size == 0 ? std::span<const std::byte>{} : std::span{data, size};
+        return regions.emplace_back(ArrowRegion{.field = field, .region = which, .bytes = bytes, .location = location});
+    };
+    for (size_t index = 0; index < fields.size(); ++index)
+    {
+        const auto& field = fields[index];
+        add(index, Region::VALIDITY, bitmapBytes);
+        switch (field.type.type)
+        {
+            case DataType::Type::BOOLEAN:
+                add(index, Region::DATA, bitmapBytes);
+                break;
+            case DataType::Type::VARSIZED: {
+                const auto& offsets = add(index, Region::DATA, (rows + 1) * sizeof(int32_t));
+                int32_t valuesSize = 0;
+                if (!offsets.bytes.empty())
+                {
+                    std::memcpy(&valuesSize, offsets.bytes.data() + (rows * sizeof(int32_t)), sizeof(int32_t));
+                }
+                add(index, Region::VALUES, static_cast<size_t>(valuesSize));
+                break;
+            }
+            default:
+                add(index, Region::DATA, rows * field.type.getSizeInBytesWithoutNull());
+                break;
+        }
+    }
+    return regions;
+}
+
+std::vector<std::span<const std::byte>> arrowBuffersOf(const TupleBuffer& buffer, const ArrowBufferRef& layout)
+{
+    return arrowRegionsOf(buffer, layout) | std::views::transform(&ArrowRegion::bytes) | std::ranges::to<std::vector>();
+}
+
+void validateArrowBuffers(
+    const uint64_t rows, const std::span<const std::span<const std::byte>> buffers, const ArrowBufferRef& layout, const ArrowSchema& schema)
+{
+    ArrowError error{};
+    nanoarrow::UniqueArrayView view;
+    if (ArrowArrayViewInitFromSchema(view.get(), &schema, &error) != NANOARROW_OK)
+    {
+        throw UdfExecutionError("Failed to read a batch of the UDF process: {}", error.message);
+    }
+    view->length = static_cast<int64_t>(rows);
+    view->null_count = 0;
+    size_t next = 0;
+    for (int64_t field = 0; field < view->n_children; ++field)
+    {
+        auto& column = *view->children[field];
+        column.length = static_cast<int64_t>(rows);
+        for (int64_t index = 0; index < NANOARROW_MAX_FIXED_BUFFERS && column.layout.buffer_type[index] != NANOARROW_BUFFER_TYPE_NONE;
+             ++index)
+        {
+            if (next == buffers.size())
+            {
+                throw UdfExecutionError("The UDF process returned a batch with too few buffers");
+            }
+            const auto& buffer = buffers[next++];
+            column.buffer_views[index]
+                = {.data = {.data = buffer.empty() ? nullptr : buffer.data()}, .size_bytes = static_cast<int64_t>(buffer.size())};
+        }
+    }
+    if (next != buffers.size())
+    {
+        throw UdfExecutionError("The UDF process returned a batch with {} buffers instead of {}", buffers.size(), next);
+    }
+    if (ArrowArrayViewValidate(view.get(), NANOARROW_VALIDATION_LEVEL_FULL, &error) != NANOARROW_OK)
+    {
+        throw UdfExecutionError("The UDF process returned an invalid batch: {}", error.message);
+    }
+    for (int64_t field = 0; field < view->n_children; ++field)
+    {
+        const auto& column = *view->children[field];
+        const auto& validity = column.buffer_views[0];
+        if (!layout.getFields()[field].type.nullable && validity.size_bytes != 0
+            && ArrowBitCountSet(static_cast<const uint8_t*>(validity.data.data), 0, column.length) != column.length)
+        {
+            throw UdfExecutionError("The UDF process returned NULL for field {}, which is not nullable", layout.getFields()[field].name);
+        }
+    }
+}
+
+uint64_t rawBodySize(const std::span<const std::span<const std::byte>> buffers)
+{
+    uint64_t size = 0;
+    for (const auto& buffer : buffers)
+    {
+        size += sizeof(uint64_t) + paddedSize(buffer.size());
+    }
+    return size;
+}
+
+void importRawBody(
+    const std::byte* body,
+    const uint64_t bodySize,
+    const uint64_t rows,
+    const Location bodyLocation,
+    TupleBuffer& buffer,
+    const ArrowBufferRef& layout,
+    const ArrowSchema& schema)
+{
+    /// Points a view of the batch at the buffers in the body, and validates it as the IPC decoder would.
+    ArrowError error{};
+    nanoarrow::UniqueArrayView view;
+    if (ArrowArrayViewInitFromSchema(view.get(), &schema, &error) != NANOARROW_OK)
+    {
+        throw UdfExecutionError("Failed to read a batch of the UDF process: {}", error.message);
+    }
+    view->length = static_cast<int64_t>(rows);
+    view->null_count = 0;
+    uint64_t position = 0;
+    for (int64_t field = 0; field < view->n_children; ++field)
+    {
+        auto& column = *view->children[field];
+        column.length = static_cast<int64_t>(rows);
+        for (int64_t index = 0; index < NANOARROW_MAX_FIXED_BUFFERS && column.layout.buffer_type[index] != NANOARROW_BUFFER_TYPE_NONE;
+             ++index)
+        {
+            uint64_t size = 0;
+            if (position + sizeof(size) > bodySize)
+            {
+                throw UdfExecutionError("The UDF process returned a batch with too few buffers");
+            }
+            std::memcpy(&size, body + position, sizeof(size));
+            position += sizeof(size);
+            if (size > bodySize - position)
+            {
+                throw UdfExecutionError("The UDF process returned a buffer of {} bytes beyond its batch", size);
+            }
+            column.buffer_views[index] = {.data = {.data = size == 0 ? nullptr : body + position}, .size_bytes = static_cast<int64_t>(size)};
+            position += paddedSize(size);
+        }
+        column.null_count = column.buffer_views[0].size_bytes == 0 ? 0 : -1;
+    }
+    if (position != bodySize)
+    {
+        throw UdfExecutionError("The UDF process returned a batch with {} bytes after its buffers", bodySize - position);
+    }
+    if (ArrowArrayViewValidate(view.get(), NANOARROW_VALIDATION_LEVEL_FULL, &error) != NANOARROW_OK)
+    {
+        throw UdfExecutionError("The UDF process returned an invalid batch: {}", error.message);
+    }
+    for (int64_t field = 0; field < view->n_children; ++field)
+    {
+        auto& column = *view->children[field];
+        if (column.null_count < 0)
+        {
+            const auto* const validity = static_cast<const uint8_t*>(column.buffer_views[0].data.data);
+            column.null_count = column.length - ArrowBitCountSet(validity, 0, column.length);
+        }
+    }
+    importArrowArrayView(*view.get(), body, bodyLocation, buffer, layout);
 }
 
 }

@@ -14,29 +14,28 @@
 
 #pragma once
 
-#include <condition_variable>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <memory>
-#include <mutex>
 #include <optional>
-#include <stop_token>
 #include <string>
 #include <Runtime/TupleBuffer.hpp>
+#include <folly/MPMCQueue.h>
 
 namespace NES
 {
 
 /// Bounded queue between the `PythonProcess` sink and source of one UDF operator, which are the two halves of a split plan and
-/// run on the same worker. Worker threads only ever queue a buffer here; the source thread waits for the process.
+/// run on the same worker. Worker threads only ever queue a buffer here; the source thread polls it next to the sockets of its processes.
+/// Neither side takes a lock: the queue is a folly::MPMCQueue, which the source creates once it knows how many buffers it takes.
 class PythonProcessChannel
 {
 public:
     enum class PushResult : uint8_t
     {
         PUSHED,
-        /// The channel is full, or no source has attached yet. The caller retries later.
+        /// The channel is full, or no source has opened yet. The caller retries later.
         FULL,
         /// The source has stopped and will never take a buffer again.
         CONSUMER_GONE,
@@ -73,26 +72,49 @@ public:
         std::shared_ptr<PythonProcessChannel> channel;
     };
 
+    PythonProcessChannel();
+    ~PythonProcessChannel();
+    PythonProcessChannel(const PythonProcessChannel&) = delete;
+    PythonProcessChannel& operator=(const PythonProcessChannel&) = delete;
+    PythonProcessChannel(PythonProcessChannel&&) = delete;
+    PythonProcessChannel& operator=(PythonProcessChannel&&) = delete;
+
     [[nodiscard]] PushResult tryPush(const TupleBuffer& buffer);
-    /// Blocks until a buffer arrives. Nullopt once the channel is closed and drained, or on a stop request.
-    std::optional<TupleBuffer> pop(const std::stop_token& stopToken);
+
+    struct Popped
+    {
+        std::optional<TupleBuffer> buffer;
+        /// Closed and drained: no buffer will come any more.
+        bool ended = false;
+    };
+
+    /// Never blocks. If the channel is empty, the next push or `close` makes `notifier` readable.
+    Popped tryPop();
+    /// An eventfd for poll, readable after `tryPop` found the channel empty and a buffer or the end arrived since. Reading it resets it.
+    [[nodiscard]] int notifier() const { return eventFd; }
+
     /// No further buffers will be pushed.
     void close();
 
-    /// Sets how many buffers the channel holds before the sink has to retry. The source sets it to what its processes take in the
-    /// retry interval of the sink, so that they do not run dry while it waits.
+    /// Creates the queue, which holds `buffers` before the sink has to retry; until then, the channel is full. The source calls it
+    /// once, when it opens, with what its processes take in the retry interval of the sink, so that they do not run dry while it waits.
     void setCapacity(size_t buffers);
 
 private:
-    /// Each process handles one batch at a time, so this only absorbs bursts.
-    size_t capacity = 16;
+    void notify() const;
+    /// Drops the buffers in the queue.
+    void drain();
 
-    std::mutex mutex;
-    std::condition_variable_any changed;
-    std::deque<TupleBuffer> buffers;
-    bool closed = false;
+    int eventFd = -1;
+    std::unique_ptr<folly::MPMCQueue<TupleBuffer>> queue;
+    /// `queue` once it exists.
+    std::atomic<folly::MPMCQueue<TupleBuffer>*> openQueue{nullptr};
+    /// The source found the channel empty and waits for `notifier`; only then does a push write to it.
+    std::atomic<bool> sourceWaiting{false};
+    std::atomic<bool> closed{false};
+    /// Changed under the lock of the registry, see Lease.
     bool sourceAttached = false;
-    bool consumerGone = false;
+    std::atomic<bool> consumerGone{false};
 };
 
 }

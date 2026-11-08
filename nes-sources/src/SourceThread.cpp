@@ -114,6 +114,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
     };
 
     const bool requiresMetadata = !source.addsMetadata();
+    const bool providesBuffers = source.providesBuffers();
     while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
@@ -124,6 +125,17 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
+
+        if (providesBuffers)
+        {
+            auto buffer = source.nextBuffer(stopToken);
+            if (!buffer)
+            {
+                return {stopToken.stop_requested() ? SourceImplementationTermination::StopRequested : SourceImplementationTermination::EndOfStream};
+            }
+            emit(std::move(*buffer), requiresMetadata);
+            continue;
+        }
 
         auto emptyBuffer = getBufferUnlessStopped(*bufferProvider, stopToken);
         if (!emptyBuffer)

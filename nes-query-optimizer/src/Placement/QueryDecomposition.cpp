@@ -221,6 +221,10 @@ uint64_t fieldPosition(const Schema<UnqualifiedUnboundField, Ordered>& fields, c
     return static_cast<uint64_t>(std::ranges::distance(std::ranges::begin(fields), found));
 }
 
+/// The batches the source of a UDF process emits are already allocated, as they are the ones its sink got. With the default limit, the
+/// source waits for the worker threads to take them more often than for the processes.
+constexpr size_t UDF_PROCESS_SOURCE_INFLIGHT_BUFFERS = 256;
+
 /// Replaces an out-of-process UDF operator by a sink and a source on its node, which exchange the batches with the process. The sink
 /// becomes a plan of its own; the source takes the operator's place in the current plan.
 LogicalOperator splitOutOfProcessUdfOperator(DecompositionContext& context, const TypedLogicalOperator<UDFLogicalOperator>& udf)
@@ -292,7 +296,9 @@ LogicalOperator splitOutOfProcessUdfOperator(DecompositionContext& context, cons
         fields,
         Host(node.getRawValue()),
         {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
-        {{Identifier::parse("channel"), channel}, {Identifier::parse("calls"), serializeUdfProcessCalls(calls)}});
+        {{Identifier::parse("channel"), channel},
+         {Identifier::parse("calls"), serializeUdfProcessCalls(calls)},
+         {Identifier::parse("max_inflight_buffers"), std::to_string(UDF_PROCESS_SOURCE_INFLIGHT_BUFFERS)}});
     INVARIANT(sourceDescriptor.has_value(), "Invalid source descriptor config for a UDF process");
     return SourceDescriptorLogicalOperator::create(sourceDescriptor.value())->withTraitSet(udf.getTraitSet());
 }

@@ -20,6 +20,9 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
+#include <span>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -108,6 +111,10 @@ public:
     [[nodiscard]] bool loadChildBuffer(ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
+    /// Like loadChildBuffer, but takes no reference to the child.
+    [[nodiscard]] MemorySegment* getChildBuffer(ChildBufferIndex index) const;
+    /// See TupleBuffer::appendToLastChildBuffer.
+    [[nodiscard]] std::optional<std::pair<ChildBufferIndex, uint64_t>> appendToLastChildBuffer(std::span<const std::byte> data) noexcept;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
 #endif

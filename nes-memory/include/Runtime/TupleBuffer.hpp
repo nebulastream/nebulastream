@@ -15,11 +15,13 @@
 #pragma once
 
 #include <atomic>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <span>
 #include <sstream>
@@ -68,6 +70,37 @@ class MemorySegment;
  *
  * Reminder: this class should be header-only to help inlining
  */
+
+/// @brief A view of the memory and metadata of a buffer that, unlike a TupleBuffer, holds no reference to the buffer. It is only valid
+/// while someone else keeps the buffer alive, e.g., a parent that holds it as a child (see TupleBuffer::withChildBuffer).
+class TupleBufferView
+{
+public:
+    template <typename T = std::byte>
+    requires(std::is_trivially_copyable_v<T>)
+    [[nodiscard]] std::span<T> getAvailableMemoryArea() const noexcept
+    {
+        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(T) == 0, "Bad alignment for type: {}", typeid(T).name());
+        return std::span<T>{std::bit_cast<T*>(ptr), size / sizeof(T)};
+    }
+
+    [[nodiscard]] uint64_t getBufferSize() const noexcept { return size; }
+
+    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
+    void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
+
+private:
+    friend class TupleBuffer;
+
+    TupleBufferView(detail::BufferControlBlock* controlBlock, uint8_t* ptr, const uint32_t size) noexcept
+        : controlBlock(controlBlock), ptr(ptr), size(size)
+    {
+    }
+
+    detail::BufferControlBlock* controlBlock;
+    uint8_t* ptr;
+    uint32_t size;
+};
 
 class TupleBuffer
 {
@@ -186,7 +219,22 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
+    /// @brief Appends `data` to the last child buffer if it has room for it, treating the child's number of tuples as its number of
+    /// used bytes. Unlike loadChildBuffer, it takes no reference to the child, so it costs no atomic operations.
+    /// @return the index of the child and the offset of `data` in it, or nothing if there is no child or no room in the last one
+    [[nodiscard]] std::optional<std::pair<ChildBufferIndex, uint64_t>> appendToLastChildBuffer(std::span<const std::byte> data) noexcept;
+
+    /// @brief Calls `function` with a view of the child buffer at `bufferIndex` and returns its result. Unlike loadChildBuffer, it takes no
+    /// reference to the child, so it costs no atomic operations. This buffer keeps the child alive, so the view must not outlive the call.
+    template <std::invocable<TupleBufferView> Function>
+    decltype(auto) withChildBuffer(const ChildBufferIndex bufferIndex, Function&& function) const
+    {
+        return std::invoke(std::forward<Function>(function), getChildBufferView(bufferIndex));
+    }
+
 private:
+    [[nodiscard]] TupleBufferView getChildBufferView(ChildBufferIndex bufferIndex) const noexcept;
+
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      */

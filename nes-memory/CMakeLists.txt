@@ -15,6 +15,7 @@ add_library(nes-memory
         TupleBufferImpl.cpp
         TupleBuffer.cpp
         NesDefaultMemoryAllocator.cpp
+        SharedMemoryAllocator.cpp
         TaggedPointer.cpp
         UnpooledChunksManager.cpp
         MemoryUtils.cpp

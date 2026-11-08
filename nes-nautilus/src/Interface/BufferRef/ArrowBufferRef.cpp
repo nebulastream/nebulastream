@@ -132,9 +132,10 @@ const std::byte* ArrowBufferRef::resolve(const TupleBuffer& buffer, const Locati
         "Arrow region in child buffer {}, but the buffer has {}",
         location.buffer - 1,
         buffer.getNumberOfChildBuffers());
-    /// The parent keeps the child alive, thus the pointer stays valid after child goes out of scope.
-    const auto child = buffer.loadChildBuffer(ChildBufferIndex{location.buffer - 1});
-    return child.getAvailableMemoryArea().subspan(location.offset).data();
+    /// The parent keeps the child alive, thus the pointer stays valid after the call, which takes no reference to the child.
+    return buffer.withChildBuffer(
+        ChildBufferIndex{location.buffer - 1},
+        [&](const TupleBufferView child) { return child.getAvailableMemoryArea().subspan(location.offset).data(); });
 }
 
 void ArrowBufferRef::finalizeBuffer(TupleBuffer& buffer, AbstractBufferProvider& bufferProvider, const uint64_t numberOfRecords) const

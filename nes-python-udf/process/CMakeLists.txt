@@ -29,7 +29,8 @@ if (NOT TARGET flatccrt)
     add_library(flatccrt UNKNOWN IMPORTED GLOBAL)
     set_target_properties(flatccrt PROPERTIES IMPORTED_LOCATION "${NES_FLATCCRT_LIBRARY}")
 endif ()
-add_library(python_process_source_plugin_library STATIC PythonProcessSource.cpp PythonBatchWrapper.cpp ArrowBatches.cpp)
+add_library(python_process_source_plugin_library STATIC
+        PythonProcessSource.cpp PythonProcessSocketSource.cpp PythonProcessShmSource.cpp PythonProcesses.cpp PythonBatchWrapper.cpp ArrowBatches.cpp)
 target_link_libraries(python_process_source_plugin_library
         PRIVATE nes-sources nes-nautilus nes-udf nanoarrow::nanoarrow_ipc_static nanoarrow::nanoarrow_static
         PUBLIC nes-python-process-channel)

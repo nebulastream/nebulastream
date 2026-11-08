@@ -190,15 +190,15 @@ flowchart TD
       P --> R["UDFResolutionRule (holds UdfCatalog*)<br/>-> attaches UdfDescriptor"]
       R --> T["withInferredDataType<br/>validate arg types, set result type + nullability"]
       T --> LI["UDFLiftingRule<br/>-> pre-projection, UDFLogicalOperator, post-projection"]
-      LI --> L["LowerToPhysicalUDF<br/>-> UDFPhysicalOperator(argFns, results, UdfStage)"]
+      LI --> L["LowerToPhysicalUDF<br/>-> UDFPhysicalOperator(argFns, results, UdfStage, Arrow batch layout)"]
     end
 
     subgraph Execution
-      L --> M["UDFPhysicalOperator::execute(ctx, record)"]
-      M --> IV["nautilus::invoke(trampoline, stage*, argBuf, nulls, resultSlots)"]
-      IV --> BE["UdfStage::executeRow -> enter_udf_row, execute_udf_row per UDF, exit_udf_row"]
+      L --> M["UDFPhysicalOperator::execute(ctx, record)<br/>record + arguments -> Arrow batch"]
+      M -->|batch full, or close| IV["nautilus::invoke(runUdfs, batch)"]
+      IV --> BE["UdfStage::executeBatch -> execute_udf_batch per UDF"]
       BE -->|UDF_ERROR| EX["throw UdfExecutionError(3007)"]
-      BE -->|UDF_OK| OUT["result slot -> VarVal -> record.write(outField)"]
+      BE -->|UDF_OK| OUT["result array -> result column -> records of the batch -> child"]
     end
 
     CAT -. "load(name)" .-> R
@@ -208,26 +208,28 @@ flowchart TD
 classDiagram
     class UdfBackend {
       <<interface>>
-      +executeRow(argValues, argLens, argNulls, resultScalar, resultString, resultStringLen, resultNull) void
+      +executeBatch(ArrowArray* arguments, ArrowArray* result) void
       +create(UdfDescriptor)$ shared_ptr~UdfBackend~
     }
     class InProcessBackend {
       -void* dlHandle
       -int udfHandle
-      +executeRow(...) void
+      +executeBatch(...) void
     }
     class SidecarBackend {
       <<v2, deferred>>
     }
     class UdfStage {
       -vector~UdfBackend~ backends
-      +executeRow(argValues, argLens, argNulls, results, resultLens, resultNulls) void
+      +executeBatch(udf, ArrowArray* arguments, ArrowArray* result) void
     }
     class UDFPhysicalOperator {
       -shared_ptr~UdfStage~ stage
       -vector~Argument~ arguments
-      -vector~Result~ results
+      -shared_ptr~ArrowBufferRef~ batchLayout
+      +open(ExecutionContext, RecordBuffer) void
       +execute(ExecutionContext, Record) void
+      +close(ExecutionContext, RecordBuffer) void
     }
     UdfBackend <|.. InProcessBackend
     UdfBackend <|.. SidecarBackend
@@ -249,16 +251,14 @@ enum UdfStatus { UDF_ERROR=0, UDF_OK=1 };   /* NULL is a flag, not a status */
 int  initialize_udf(const char* entrypoint, int argc,
                     const int* arg_type_codes, int return_type_code, char** errormessage);
 
-int  execute_udf_row(int handle,
-                     const void* const* arg_values, const long long* arg_lens, const int* arg_nulls,
-                     void* result_scalar, char** result_string, long long* result_string_len,
-                     int* result_null, char** errormessage);
+/* Arrow C Data Interface: arguments is a struct array of the argument columns, which the bridge takes over;
+   result receives the result column, which the caller takes over. */
+int  execute_udf_batch(int handle, struct ArrowArray* arguments, struct ArrowArray* result, char** errormessage);
 
 void cleanup_udf(int handle);
 ```
 
-Explicit `arg_nulls`/`result_null` replace the PoC's NaN sentinel (A5).
-`arg_lens` + `result_string_len` carry the length of a VARSIZED value. In the Python modes, a parameter annotated `bytes` (also `Optional[bytes]`) receives the raw bytes. Any other parameter receives a `str` and the query fails if the value is not valid UTF-8. A UDF may return `str` or `bytes`.
+UDFs run on batches of rows in Arrow's columnar format: an argument column has the Arrow type of its type code (VARSIZED is `binary`, CHAR `fixed_size_binary(1)`), and so does the result. Validity bitmaps replace the PoC's NaN sentinel (A5), and `binary` carries the length of a VARSIZED value. The CPython bridge hands the batch to pyarrow, which IN_PROCESS UDFs therefore need in the interpreter, from the venv of `worker.python_udf.venv`. In the Python modes, a parameter annotated `bytes` (also `Optional[bytes]`) receives the raw bytes. Any other parameter receives a `str` and the query fails if the value is not valid UTF-8. A UDF may return `str` or `bytes`.
 
 ## Registration (G1, A6)
 
@@ -275,11 +275,9 @@ Calling `myUdf(a, b)` needs no grammar change: it parses through the generic `fu
 
 ## Execution (G1)
 
-`UDFPhysicalOperator::execute(ctx, record)` mirrors `InferModelPhysicalOperator`'s raw-buffer marshalling, with a single boundary in v1:
-it evaluates the arguments of all its UDFs into one scratch buffer (scalars inline, VARSIZED as pointer+length, plus a null-flag byte per argument), then makes one fixed-signature `nautilus::invoke` call regardless of arity.
-The trampoline calls `UdfStage::executeRow(...)`, which calls each UDF's `execute_udf_row` through `InProcessBackend`.
-A scalar result is read back into a `VarVal`; a VARSIZED result is copied out of the reply into arena-allocated memory (the "return size, then allocate, then copy" two-step used by `InferModel`/`ToBase64`, because the arena cannot be allocated from inside the trampoline).
-A NULL result is honored via the result null flag.
+`UDFPhysicalOperator` batches records within the pipeline, like an emit followed by a scan. `open` opens the child and allocates a buffer of an Arrow layout (`ArrowBufferRef`) with a column for each field of the input records, each argument and each result. `execute` evaluates the arguments of all its UDFs and writes them, with the record, into the batch. When the batch is full, and on `close`, the operator finalizes it and makes one `nautilus::invoke` call: for each UDF, it exports the argument columns through the Arrow C Data Interface without copying, calls `execute_udf_batch` through `UdfStage` and `InProcessBackend`, and copies the returned array into the result column. Then it reads the records of the batch, now with the results, and passes them to the child. The child is opened and closed once, with the operator, so a pipeline invocation still emits one chunk. A processed batch stays alive as a child buffer of the next one, because operators downstream may keep pointing into it, like an Arrow emit that copies VARSIZED values only when its buffer is complete.
+
+The CPython bridge imports the batch with pyarrow, converts each column to a list, calls the function once per row, and builds the result array with `pa.array`. A worker thread keeps its Python thread state across calls: `PyGILState_Ensure` on a thread without one creates a thread state, and the matching release destroys it again, which unmaps its frame stack and cost more than the call itself.
 
 NULL semantics are SQL's `CALLED ON NULL INPUT` in every mode: a NULL argument reaches the UDF as Python `None` (`arg_nulls` carries it across the ABI), and the UDF decides what to do with it. Results therefore cannot depend on the mode that runs a UDF. A UDF that does not guard against `None` raises on NULL input, which fails the query. A UDF may also return `None` from any input; the result is always nullable, and the result null flag carries it back.
 
@@ -385,7 +383,7 @@ A selection evaluates its predicate into a field the same way, filters on that f
 
 **What ends up in one operator.** Calls run together in one operator if they share an execution, a language and a bridge library, and if none reads the result of another. A call that reads another call gets its own operator above it, as does a call that cannot be fused with the others. The same call on the same fields runs once per row, so a non-deterministic UDF used twice in a projection returns one value. A selection and a projection above it do not share calls.
 
-**Fusing.** A `UDFPhysicalOperator` makes one call into its `UdfStage` per record. The stage brackets the `execute_udf_row` calls of all its UDFs with `enter_udf_row` and `exit_udf_row`, so CPython takes the GIL once per row rather than once per UDF. The stage has its own mutex, taken before the GIL: a thread holding the GIL could otherwise wait for a backend's mutex held by a thread waiting for the GIL. Each UDF still gets its own call across the ABI. Running a whole buffer in one call is a later step.
+**Fusing.** A `UDFPhysicalOperator` runs all its UDFs on the same batch, one `execute_udf_batch` call per UDF and batch, so CPython takes the GIL once per UDF and batch rather than per row.
 
 **Joins.** A join predicate needs both sides of the join, so it cannot read from an operator below the join. A non-Inline UDF in a join predicate fails the query with `QueryInvalid`.
 

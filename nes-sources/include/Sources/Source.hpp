@@ -16,12 +16,14 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <variant>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -64,6 +66,16 @@ public:
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     /// @return the number of bytes read
     virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+
+    /// Whether the source brings its own buffers, so that 'SourceThread' calls 'nextBuffer' instead of handing it a buffer to fill.
+    /// For sources whose data already is in buffers, like the batches a UDF process answers in place.
+    [[nodiscard]] virtual bool providesBuffers() const { return false; }
+
+    /// The next buffer of a source that 'providesBuffers', with its number of tuples set; nullopt at the end of the stream.
+    virtual std::optional<TupleBuffer> nextBuffer(const std::stop_token&)
+    {
+        throw NotImplemented("The source does not provide buffers of its own");
+    }
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) = 0;

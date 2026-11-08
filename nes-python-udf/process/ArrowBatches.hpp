@@ -15,6 +15,9 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <span>
+#include <vector>
 
 #include <Interface/BufferRef/ArrowBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -40,5 +43,45 @@ void importArrowArrayView(
     ArrowBufferRef::Location bodyLocation,
     TupleBuffer& buffer,
     const ArrowBufferRef& layout);
+
+/// The size of a raw buffer in a body, padded so that the next one starts 8-byte aligned, see UdfProcessProtocol::RAW_BUFFERS.
+[[nodiscard]] constexpr uint64_t paddedSize(const uint64_t size)
+{
+    return (size + 7) & ~uint64_t{7};
+}
+
+/// An Arrow buffer of a record batch: the field and region it belongs to, its bytes, and where the header of its TupleBuffer says it is.
+struct ArrowRegion
+{
+    size_t field;
+    ArrowBufferRef::Region region;
+    std::span<const std::byte> bytes;
+    ArrowBufferRef::Location location;
+};
+
+/// The Arrow buffers of the record batch in a finalized `buffer`, field by field in the order of `layout`, as a raw body lists them,
+/// read off its header. They point into `buffer` and its child buffers; a NULL buffer is empty.
+[[nodiscard]] std::vector<ArrowRegion> arrowRegionsOf(const TupleBuffer& buffer, const ArrowBufferRef& layout);
+[[nodiscard]] std::vector<std::span<const std::byte>> arrowBuffersOf(const TupleBuffer& buffer, const ArrowBufferRef& layout);
+
+/// Validates `rows` rows whose Arrow buffers, as arrowRegionsOf orders them, are `buffers`, as a raw body would be validated.
+/// @throws UdfExecutionError if they are not a valid batch of `layout`'s schema
+void validateArrowBuffers(
+    uint64_t rows, std::span<const std::span<const std::byte>> buffers, const ArrowBufferRef& layout, const ArrowSchema& schema);
+
+/// The size of the raw body of `buffers`, each framed as [size][bytes, padded].
+[[nodiscard]] uint64_t rawBodySize(std::span<const std::span<const std::byte>> buffers);
+
+/// Validates a raw body of `rows` rows, as a process of UdfProcessProtocol::RAW_BUFFERS answers, and points the header of `buffer`
+/// at its columns. The body is stored in `buffer` at `bodyLocation`.
+/// @throws UdfExecutionError if the body is not a valid batch of `layout`'s schema
+void importRawBody(
+    const std::byte* body,
+    uint64_t bodySize,
+    uint64_t rows,
+    ArrowBufferRef::Location bodyLocation,
+    TupleBuffer& buffer,
+    const ArrowBufferRef& layout,
+    const ArrowSchema& schema);
 
 }

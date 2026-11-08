@@ -16,11 +16,13 @@
 
 #include <cstdint>
 #include <memory>
+#include <memory_resource>
 #include <utility>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Allocator/SharedMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -37,12 +39,15 @@ NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfigurat
 
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
+    /// Processes of out-of-process UDFs read and write the buffers of the pool in place, without copying them, if it is shared memory.
+    const bool sharedPool = workerConfiguration.pythonUdfProcessProtocol == "SHARED_MEMORY_ZERO_COPY";
     auto bufferManager = BufferManager::create(
         workerConfiguration.totalMemoryInBytes,
         workerConfiguration.unpooledMemoryFraction,
         NES::BufferAlignment{static_cast<uint32_t>(workerConfiguration.bufferAlignmentInBytes)},
         static_cast<uint32_t>(workerConfiguration.defaultQueryExecution.operatorBufferSize),
-        std::make_shared<NesDefaultMemoryAllocator>());
+        sharedPool ? std::shared_ptr<std::pmr::memory_resource>{std::make_shared<SharedMemoryAllocator>()}
+                   : std::shared_ptr<std::pmr::memory_resource>{std::make_shared<NesDefaultMemoryAllocator>()});
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);

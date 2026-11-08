@@ -140,6 +140,37 @@ const ConfigField<uint64_t> PYTHON_UDF_PROCESSES{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{0}};
+
+const ConfigField<std::string> PYTHON_UDF_PROCESS_VENV{
+    Identifier::parse("process_venv"),
+    "Path to a venv whose python runs OUT_OF_PROCESS UDFs, for example a PyPy one, which needs process_protocol RAW_BUFFERS. Default: "
+    "the python of venv",
+    [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
+    std::string{}};
+
+const ConfigField<std::string> PYTHON_UDF_PROCESS_PROTOCOL{
+    Identifier::parse("process_protocol"),
+    "How the worker and the processes of OUT_OF_PROCESS UDFs exchange batches: over a socket as Arrow IPC streams, read with pyarrow "
+    "(ARROW_IPC), or as the raw Arrow buffers of the columns, read in plain Python on any interpreter, PyPy included (RAW_BUFFERS), or as "
+    "raw buffers in ring buffers in shared memory (SHARED_MEMORY), or without copying them, as the buffer pool then is shared memory the "
+    "processes read and write in place (SHARED_MEMORY_ZERO_COPY): [ARROW_IPC|RAW_BUFFERS|SHARED_MEMORY|SHARED_MEMORY_ZERO_COPY]",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<std::string, Exception>
+                {
+                    if (value == "ARROW_IPC" || value == "RAW_BUFFERS" || value == "SHARED_MEMORY" || value == "SHARED_MEMORY_ZERO_COPY")
+                    {
+                        return value;
+                    }
+                    return std::unexpected{
+                        InvalidConfigParameter(
+                        "Invalid process_protocol, must be ARROW_IPC, RAW_BUFFERS, SHARED_MEMORY or SHARED_MEMORY_ZERO_COPY: {}", value)};
+                });
+    },
+    std::string{"ARROW_IPC"},
+    "ARROW_IPC"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -157,7 +188,7 @@ Schema<QualifiedErasedConfigField, Ordered> WorkerConfiguration::getConfigSchema
         DEFAULT_MAX_INFLIGHT_BUFFERS,
         DUMP_COMPILATION_RESULT,
         DUMP_GRAPH,
-        createConfigSchema(Identifier::parse("python_udf"), PYTHON_UDF_VENV, PYTHON_UDF_PROCESSES));
+        createConfigSchema(Identifier::parse("python_udf"), PYTHON_UDF_VENV, PYTHON_UDF_PROCESSES, PYTHON_UDF_PROCESS_VENV, PYTHON_UDF_PROCESS_PROTOCOL));
 }
 
 WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& config)
@@ -173,6 +204,8 @@ WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& co
         config.get(DUMP_COMPILATION_RESULT),
         config.get(DUMP_GRAPH),
         config.get(PYTHON_UDF_VENV),
-        config.get(PYTHON_UDF_PROCESSES)};
+        config.get(PYTHON_UDF_PROCESSES),
+        config.get(PYTHON_UDF_PROCESS_VENV),
+        config.get(PYTHON_UDF_PROCESS_PROTOCOL)};
 }
 }

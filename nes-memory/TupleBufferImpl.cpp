@@ -14,9 +14,13 @@
 
 #include <TupleBufferImpl.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
+#include <span>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -326,5 +330,29 @@ bool BufferControlBlock::loadChildBuffer(const ChildBufferIndex index, BufferCon
     size = child->size;
 
     return true;
+}
+
+std::optional<std::pair<ChildBufferIndex, uint64_t>> BufferControlBlock::appendToLastChildBuffer(const std::span<const std::byte> data) noexcept
+{
+    if (children.empty())
+    {
+        return std::nullopt;
+    }
+    /// This buffer holds a reference to the child, which keeps it alive for as long as we use it here.
+    auto* const child = children.back();
+    const uint64_t usedBytes = child->controlBlock->getNumberOfTuples();
+    if (usedBytes + data.size() >= child->size)
+    {
+        return std::nullopt;
+    }
+    std::ranges::copy(data, reinterpret_cast<std::byte*>(child->ptr + usedBytes)); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    child->controlBlock->setNumberOfTuples(usedBytes + data.size());
+    return std::pair{ChildBufferIndex{static_cast<uint32_t>(children.size() - 1)}, usedBytes};
+}
+
+MemorySegment* BufferControlBlock::getChildBuffer(const ChildBufferIndex index) const
+{
+    PRECONDITION(index.getRawValue() < children.size(), "Index={} is out of range={}", index, children.size());
+    return children[index.getRawValue()];
 }
 }

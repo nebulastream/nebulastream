@@ -45,7 +45,9 @@ struct WorkerConfiguration
         DumpMode::Options dumpQueryCompilationIR,
         bool dumpGraph,
         std::string pythonUdfVenv,
-        uint64_t pythonUdfProcesses = 0)
+        uint64_t pythonUdfProcesses = 0,
+        std::string pythonUdfProcessVenv = {},
+        std::string pythonUdfProcessProtocol = "ARROW_IPC")
         : queryEngine(queryEngine)
         , defaultQueryExecution(defaultQueryExecution)
         , network(network)
@@ -57,6 +59,8 @@ struct WorkerConfiguration
         , dumpGraph(dumpGraph)
         , pythonUdfVenv(std::move(pythonUdfVenv))
         , pythonUdfProcesses(pythonUdfProcesses)
+        , pythonUdfProcessVenv(std::move(pythonUdfProcessVenv))
+        , pythonUdfProcessProtocol(std::move(pythonUdfProcessProtocol))
     {
     }
 
@@ -91,6 +95,12 @@ struct WorkerConfiguration
 
     /// Number of Python processes that serve each OUT_OF_PROCESS UDF operator; 0 starts one per worker thread.
     uint64_t pythonUdfProcesses;
+
+    /// Venv whose python runs OUT_OF_PROCESS UDFs; empty uses pythonUdfVenv.
+    std::string pythonUdfProcessVenv;
+
+    /// How the worker and the processes of OUT_OF_PROCESS UDFs exchange batches: ARROW_IPC or RAW_BUFFERS.
+    std::string pythonUdfProcessProtocol;
 
     static WorkerConfiguration fromConfig(const InstantiatedConfig& config);
 };
