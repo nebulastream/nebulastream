@@ -21,4 +21,6 @@ add_source_files(nes-physical-operators
         AggregationSlice.cpp
         UnboundedAggregationOperatorHandler.cpp
         UnboundedAggregationProbePhysicalOperator.cpp
+        UnboundedTopKProbePhysicalOperator.cpp
+        WindowedTopKProbePhysicalOperator.cpp
 )
