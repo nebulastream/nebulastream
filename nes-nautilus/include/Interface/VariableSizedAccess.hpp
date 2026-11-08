@@ -39,9 +39,9 @@ struct VariableSizedAccess
         using Underlying = uint32_t;
         static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
 
-        explicit Offset(uint64_t offset);
+        explicit Offset(const uint64_t offset) : offset(offset) { }
 
-        [[nodiscard]] Underlying getRawOffset() const;
+        [[nodiscard]] Underlying getRawOffset() const { return offset; }
 
         friend std::ostream& operator<<(std::ostream& os, const Offset& offset);
 
@@ -57,9 +57,9 @@ struct VariableSizedAccess
         using Underlying = size_t;
         static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
 
-        explicit Size(uint64_t size);
+        explicit Size(const uint64_t size) : size(size) { }
 
-        [[nodiscard]] Underlying getRawSize() const;
+        [[nodiscard]] Underlying getRawSize() const { return size; }
 
         friend std::ostream& operator<<(std::ostream& os, const Size& size);
 
