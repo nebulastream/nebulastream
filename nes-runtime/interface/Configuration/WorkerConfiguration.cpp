@@ -132,6 +132,14 @@ const ConfigField<std::string> PYTHON_UDF_VENV{
     "links against) whose site-packages is added to the embedded interpreter. Default: system-local Python only",
     [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
     std::string{}};
+
+const ConfigField<uint64_t> PYTHON_UDF_PROCESSES{
+    Identifier::parse("processes"),
+    "Number of Python processes that serve each OUT_OF_PROCESS UDF operator, each of them with a GIL of its own. 0 (the default) starts "
+    "one per worker thread",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
+    uint64_t{0}};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -149,7 +157,7 @@ Schema<QualifiedErasedConfigField, Ordered> WorkerConfiguration::getConfigSchema
         DEFAULT_MAX_INFLIGHT_BUFFERS,
         DUMP_COMPILATION_RESULT,
         DUMP_GRAPH,
-        createConfigSchema(Identifier::parse("python_udf"), PYTHON_UDF_VENV));
+        createConfigSchema(Identifier::parse("python_udf"), PYTHON_UDF_VENV, PYTHON_UDF_PROCESSES));
 }
 
 WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& config)
@@ -164,6 +172,7 @@ WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& co
         config.get(DEFAULT_MAX_INFLIGHT_BUFFERS),
         config.get(DUMP_COMPILATION_RESULT),
         config.get(DUMP_GRAPH),
-        config.get(PYTHON_UDF_VENV)};
+        config.get(PYTHON_UDF_VENV),
+        config.get(PYTHON_UDF_PROCESSES)};
 }
 }

@@ -67,6 +67,12 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
         setenv("NES_UDF_VENV", venv.c_str(), /*overwrite=*/1);
     }
+    /// How many processes the source of an OUT_OF_PROCESS UDF operator starts, each with a GIL of its own.
+    const auto& workerConfiguration = configuration.workerConfiguration;
+    const auto udfProcesses = workerConfiguration.pythonUdfProcesses != 0 ? workerConfiguration.pythonUdfProcesses
+                                                                          : workerConfiguration.queryEngine.numberOfWorkerThreads;
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
+    setenv("NES_UDF_PROCESSES", std::to_string(udfProcesses).c_str(), /*overwrite=*/1);
 
     if (configuration.enableGoogleEventTrace)
     {

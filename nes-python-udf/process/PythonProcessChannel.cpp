@@ -101,7 +101,7 @@ PythonProcessChannel::PushResult PythonProcessChannel::tryPush(const TupleBuffer
             return PushResult::CONSUMER_GONE;
         }
         /// Before the source attached, a buffer stays with the sink, whose pending retry also holds back a graceful stop.
-        if (!sourceAttached || buffers.size() >= CAPACITY)
+        if (!sourceAttached || buffers.size() >= capacity)
         {
             return PushResult::FULL;
         }
@@ -121,6 +121,12 @@ std::optional<TupleBuffer> PythonProcessChannel::pop(const std::stop_token& stop
     auto buffer = std::move(buffers.front());
     buffers.pop_front();
     return buffer;
+}
+
+void PythonProcessChannel::setCapacity(const size_t buffers)
+{
+    const std::scoped_lock lock(mutex);
+    capacity = buffers;
 }
 
 void PythonProcessChannel::close()

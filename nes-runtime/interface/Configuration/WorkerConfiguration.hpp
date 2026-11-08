@@ -44,7 +44,8 @@ struct WorkerConfiguration
         uint64_t defaultMaxInflightBuffers,
         DumpMode::Options dumpQueryCompilationIR,
         bool dumpGraph,
-        std::string pythonUdfVenv)
+        std::string pythonUdfVenv,
+        uint64_t pythonUdfProcesses = 0)
         : queryEngine(queryEngine)
         , defaultQueryExecution(defaultQueryExecution)
         , network(network)
@@ -55,6 +56,7 @@ struct WorkerConfiguration
         , dumpQueryCompilationIR(dumpQueryCompilationIR)
         , dumpGraph(dumpGraph)
         , pythonUdfVenv(std::move(pythonUdfVenv))
+        , pythonUdfProcesses(pythonUdfProcesses)
     {
     }
 
@@ -86,6 +88,9 @@ struct WorkerConfiguration
     /// whose site-packages is added to the embedded interpreter. Empty (the default) leaves the Python UDF bridges'
     /// embedded interpreters on system-local Python only. See docs/design/20260708_Scalar_UDF_Support.md, A7.
     std::string pythonUdfVenv;
+
+    /// Number of Python processes that serve each OUT_OF_PROCESS UDF operator; 0 starts one per worker thread.
+    uint64_t pythonUdfProcesses;
 
     static WorkerConfiguration fromConfig(const InstantiatedConfig& config);
 };

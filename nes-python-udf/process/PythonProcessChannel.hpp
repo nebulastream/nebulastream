@@ -79,9 +79,13 @@ public:
     /// No further buffers will be pushed.
     void close();
 
+    /// Sets how many buffers the channel holds before the sink has to retry. The source sets it to what its processes take in the
+    /// retry interval of the sink, so that they do not run dry while it waits.
+    void setCapacity(size_t buffers);
+
 private:
-    /// The process handles one batch at a time, so this only absorbs bursts.
-    static constexpr size_t CAPACITY = 16;
+    /// Each process handles one batch at a time, so this only absorbs bursts.
+    size_t capacity = 16;
 
     std::mutex mutex;
     std::condition_variable_any changed;
