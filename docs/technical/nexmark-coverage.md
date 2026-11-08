@@ -55,7 +55,7 @@ Legend: ✅ matches Flink in `NexmarkFlinkReference.test` · 🟡 runs as an app
 | q1 | Currency conversion | Calc | ✅ | `price * 0.908` as FLOAT64 (Flink: DECIMAL) |
 | q2 | Selection | Calc | ✅ | |
 | q3 | Local item suggestion | regular join | ✅ | Unbounded inner hash join `auction ⋈ person WINDOW UNBOUNDED`. |
-| q4 | Avg price per category | regular join → unbounded GROUP BY → AVG over retractions | ✅ (streaming) | Unbounded range join `auction ⋈ bid ON id = auction AND bTime BETWEEN aTime AND expires`, then MAX per auction (`WINDOW UNBOUNDED(bTime)`) and SUM/COUNT per category over its changelog (`WINDOW UNBOUNDED(lastBid)`, the latest bid of the auction): every -U withdraws the previous closing price. |
+| q4 | Avg price per category | regular join → unbounded GROUP BY → AVG over retractions | ✅ (streaming) | Unbounded range join `auction ⋈ bid ON id = auction AND bTime BETWEEN aTime AND expires`, then MAX per auction (`WINDOW UNBOUNDED(bTime)`) and SUM/COUNT per category over its changelog (`WINDOW UNBOUNDED(updated)`, where `updated` is the inner aggregation's `end`, the end of the slice that emitted the row): every -U withdraws the previous closing price. |
 | q5 | Hot items | HOP window, max, window join | ✅ | Rewrite: a 2 s tumbling join over window starts (slide = 2 s) |
 | q6 | Avg selling price by seller | not supported by Flink | — | excluded |
 | q7 | Highest bid | tumble MAX → interval join | ✅ | Real interval join: `INTERVAL (dateTime, maxEnd, 0 ms, 10000 ms)` |
