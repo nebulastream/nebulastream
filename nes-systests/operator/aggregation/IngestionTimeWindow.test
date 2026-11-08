@@ -1,0 +1,37 @@
+# name: operator/aggregation/IngestionTimeWindow.test
+# description: Windows without a time field use ingestion time: the wall-clock time at which the source created the buffer.
+#   The window boundaries depend on when the test runs, so every query sums the per-window results in an outer window over
+#   the inner window's end, which spans all data and makes the result independent of where the boundaries fall.
+# groups: [Aggregation, WindowOperators]
+
+CREATE LOGICAL SOURCE bid(bidder INT64 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH INLINE
+1,10
+1,20
+2,30
+3,40
+3,50
+3,60
+
+CREATE SINK perBidderSink(bidder INT64 NOT NULL, bid_count UINT64 NOT NULL, total INT64 NOT NULL) TYPE File;
+CREATE SINK windowSink(windowSize UINT64 NOT NULL, bid_count UINT64 NOT NULL) TYPE File;
+
+# Nexmark q12: bids per bidder in 10-second processing-time windows.
+SELECT bidder, SUM(bid_count) AS bid_count, SUM(total) AS total
+FROM (SELECT bidder, COUNT(*) AS bid_count, SUM(price) AS total, end AS windowEnd
+      FROM bid GROUP BY bidder WINDOW TUMBLING(SIZE 10 SEC))
+GROUP BY bidder WINDOW TUMBLING(windowEnd, SIZE 1000000 HOURS) INTO perBidderSink;
+----
+1,2,30
+2,1,30
+3,3,150
+
+# Windows are 10 seconds long and lie at the current wall-clock time, not at 0.
+SELECT windowSize, SUM(bid_count) AS bid_count
+FROM (SELECT end - start AS windowSize, bid_count, windowEnd
+      FROM (SELECT start, end, COUNT(*) AS bid_count, end AS windowEnd FROM bid WINDOW TUMBLING(SIZE 10 SEC))
+      WHERE start > 1700000000000)
+GROUP BY windowSize WINDOW TUMBLING(windowEnd, SIZE 1000000 HOURS) INTO windowSink;
+----
+10000,6
