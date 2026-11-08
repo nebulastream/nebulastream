@@ -13,11 +13,14 @@
 */
 
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <memory>
 #include <random>
+#include <span>
 
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -128,4 +131,64 @@ TEST(ChildBufferTests, StoreAndLoadChildBufferRandomSizes)
         auto loadedBuffer = baseBuffer.loadChildBuffer(bufferIndex);
         EXPECT_EQ(loadedBuffer.getBufferSize(), bufferSizeBeforeStore);
     }
+}
+
+/// The view of a child shows the child's memory and metadata, and writes through it reach the child
+TEST(ChildBufferTests, WithChildBufferViewsTheChild)
+{
+    auto bufferManager = NES::BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NES::NesDefaultMemoryAllocator>());
+    auto baseBuffer = bufferManager->getBufferBlocking();
+    auto firstChild = bufferManager->getBufferBlocking();
+    auto secondChild = bufferManager->getUnpooledBuffer(POOLED_BUFFER_SIZE * 2).value();
+    auto firstChildHandle = firstChild;
+    auto secondChildHandle = secondChild;
+    const auto firstIndex = baseBuffer.storeChildBuffer(firstChild);
+    const auto secondIndex = baseBuffer.storeChildBuffer(secondChild);
+
+    constexpr std::array data{std::byte{1}, std::byte{2}, std::byte{3}};
+    const auto viewedSize = baseBuffer.withChildBuffer(
+        secondIndex,
+        [&](const NES::TupleBufferView child)
+        {
+            EXPECT_EQ(child.getAvailableMemoryArea().data(), secondChildHandle.getAvailableMemoryArea().data());
+            std::ranges::copy(data, child.getAvailableMemoryArea().begin());
+            child.setNumberOfTuples(data.size());
+            return child.getBufferSize();
+        });
+
+    EXPECT_EQ(viewedSize, secondChildHandle.getBufferSize());
+    EXPECT_EQ(secondChildHandle.getNumberOfTuples(), data.size());
+    EXPECT_TRUE(std::ranges::equal(secondChildHandle.getAvailableMemoryArea().first(data.size()), data));
+    EXPECT_EQ(firstChildHandle.getNumberOfTuples(), 0);
+    baseBuffer.withChildBuffer(
+        firstIndex,
+        [&](const NES::TupleBufferView child)
+        { EXPECT_EQ(child.getAvailableMemoryArea().data(), firstChildHandle.getAvailableMemoryArea().data()); });
+}
+
+/// Viewing a child takes no reference to it
+TEST(ChildBufferTests, WithChildBufferKeepsTheReferenceCount)
+{
+    auto bufferManager = NES::BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NES::NesDefaultMemoryAllocator>());
+    auto baseBuffer = bufferManager->getBufferBlocking();
+    auto child = bufferManager->getBufferBlocking();
+    auto childHandle = child;
+    const auto childIndex = baseBuffer.storeChildBuffer(child);
+    const auto referenceCountBefore = childHandle.getReferenceCounter();
+
+    const auto referenceCountDuring
+        = baseBuffer.withChildBuffer(childIndex, [&](NES::TupleBufferView) { return childHandle.getReferenceCounter(); });
+
+    EXPECT_EQ(referenceCountDuring, referenceCountBefore);
+    EXPECT_EQ(childHandle.getReferenceCounter(), referenceCountBefore);
 }

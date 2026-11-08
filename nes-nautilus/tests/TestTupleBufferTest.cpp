@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -19,9 +20,13 @@
 #include <numbers>
 #include <optional>
 #include <string>
+#include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -433,6 +438,48 @@ TEST_F(TestTupleBufferTest, NullableVarsizedRoundTrip)
     ASSERT_EQ(view.getNumberOfTuples(), 2);
     EXPECT_EQ(view[0]["s"].as<std::optional<std::string>>(), std::optional<std::string>{"hello"});
     EXPECT_FALSE(view[1]["s"].as<std::optional<std::string>>().has_value());
+}
+
+/// Repeated writes fill the last child buffer back to back and start a new child buffer once a value no longer fits
+TEST_F(TestTupleBufferTest, WriteVarSizedFillsChildBufferThenStartsNewOne)
+{
+    constexpr size_t valueSize = 100;
+    /// A value fits into a child buffer only if it ends before the end of the buffer
+    constexpr size_t valuesPerChild = (POOLED_BUFFER_SIZE - 1) / valueSize;
+    auto buffer = bufferManager->getBufferBlocking();
+
+    for (size_t i = 0; i <= valuesPerChild; ++i)
+    {
+        const std::vector value(valueSize, static_cast<std::byte>(i));
+        const auto access = TupleBufferRef::writeVarSized(buffer, *bufferManager, value);
+
+        const auto expectedChild = i < valuesPerChild ? 0 : 1;
+        const auto expectedOffset = i < valuesPerChild ? i * valueSize : 0;
+        EXPECT_EQ(access.getIndex().getRawValue(), expectedChild);
+        EXPECT_EQ(access.getOffset().getRawOffset(), expectedOffset);
+        EXPECT_EQ(access.getSize().getRawSize(), valueSize);
+        EXPECT_TRUE(std::ranges::equal(TupleBufferRef::loadAssociatedVarSizedValue(buffer, access), value));
+    }
+    EXPECT_EQ(buffer.getNumberOfChildBuffers(), 2);
+    EXPECT_EQ(buffer.loadChildBuffer(ChildBufferIndex{0}).getNumberOfTuples(), valuesPerChild * valueSize);
+    EXPECT_EQ(buffer.loadChildBuffer(ChildBufferIndex{1}).getNumberOfTuples(), valueSize);
+}
+
+/// A value that would exactly reach the end of the last child buffer goes into a new child buffer
+TEST_F(TestTupleBufferTest, WriteVarSizedStartsNewChildBufferForValueReachingTheEnd)
+{
+    auto buffer = bufferManager->getBufferBlocking();
+    const std::vector almostFull(POOLED_BUFFER_SIZE - 1, std::byte{1});
+    const std::vector oneByte(1, std::byte{2});
+
+    const auto first = TupleBufferRef::writeVarSized(buffer, *bufferManager, almostFull);
+    const auto second = TupleBufferRef::writeVarSized(buffer, *bufferManager, oneByte);
+
+    EXPECT_EQ(first.getIndex().getRawValue(), 0);
+    EXPECT_EQ(second.getIndex().getRawValue(), 1);
+    EXPECT_EQ(second.getOffset().getRawOffset(), 0);
+    EXPECT_EQ(buffer.loadChildBuffer(ChildBufferIndex{0}).getNumberOfTuples(), almostFull.size());
+    EXPECT_TRUE(std::ranges::equal(TupleBufferRef::loadAssociatedVarSizedValue(buffer, second), oneByte));
 }
 
 /// NOLINTEND(readability-magic-numbers)

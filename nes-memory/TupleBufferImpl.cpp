@@ -319,13 +319,17 @@ ChildBufferIndex BufferControlBlock::storeChildBuffer(BufferControlBlock* contro
 
 bool BufferControlBlock::loadChildBuffer(const ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
-    PRECONDITION(index.getRawValue() < children.size(), "Index={} is out of range={}", index, children.size());
-
-    auto* child = children[index.getRawValue()];
+    auto* const child = getChildBuffer(index);
     control = child->controlBlock->retain();
     ptr = child->ptr;
     size = child->size;
 
     return true;
+}
+
+NAUTILUS_INLINE MemorySegment* BufferControlBlock::getChildBuffer(const ChildBufferIndex index) const
+{
+    PRECONDITION(index.getRawValue() < children.size(), "Index={} is out of range={}", index, children.size());
+    return children[index.getRawValue()];
 }
 }
