@@ -38,6 +38,10 @@ namespace NES
 namespace
 {
 
+/// The largest fixed header, of the paged vector (64 bytes), has to fit into a buffer and a page, with room for a few records behind it.
+/// Whether a record or hash map entry of the query fits is checked when lowering it.
+constexpr uint64_t MINIMUM_BUFFER_SIZE = 256;
+
 /// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<ExecutionMode> EXECUTION_MODE{
     Identifier::parse("execution_mode"),
@@ -64,6 +68,12 @@ const ConfigField<bool> NAUTILUS_INLINING{
     "applied the inlining pass (NES_ENABLE_NAUTILUS_INLINING); enabling it without the pass has no effect.",
     NES_NAUTILUS_INLINING_ACTIVE};
 
+const ConfigField<bool> TUPLE_BUFFER_INLINING{
+    Identifier::parse("tuple_buffer_inlining"),
+    "Stores the first records of a paged data structure in its main buffer instead of a separate page, which saves buffers for "
+    "structures holding few records (e.g., the per-key paged vectors of the hash join).",
+    true};
+
 const ConfigField<uint64_t> NUMBER_OF_PARTITIONS{
     Identifier::parse("number_of_partitions"),
     "Number of buckets in a hash table. Fixed at query-compilation time and never grown: the hash maps do not rehash, so too low "
@@ -84,12 +94,28 @@ const ConfigField<uint64_t> NUMBER_OF_PARTITIONS{
     },
     uint64_t{1024}};
 
+/// Pages are pooled only when equal to OPERATOR_BUFFER_SIZE; otherwise they are unpooled
+/// If pages tend to hold only a few elements (wasting space), lower both values together, keeping them equal.
+/// Eventually we will optimize the tuning of these parameters at runtime or query submission based on data stream characteristics.
 const ConfigField<uint64_t> PAGE_SIZE{
     Identifier::parse("page_size"),
     "Page size of any other paged data structure",
     [](const ConfigLiteral& literal)
-    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
-    uint64_t{1024}};
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t>)
+            .and_then(
+                [](const uint64_t value) -> std::expected<uint64_t, Exception>
+                {
+                    if (value < MINIMUM_BUFFER_SIZE)
+                    {
+                        return std::unexpected{
+                            InvalidConfigParameter("page_size must be at least {} bytes, but is {}", MINIMUM_BUFFER_SIZE, value)};
+                    }
+                    return value;
+                });
+    },
+    uint64_t{4096}};
 
 const ConfigField<uint64_t> NUMBER_OF_RECORDS_PER_KEY{
     Identifier::parse("number_of_records_per_key"),
@@ -102,7 +128,20 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
     Identifier::parse("operator_buffer_size"),
     "Buffer size of a operator e.g. during scan",
     [](const ConfigLiteral& literal)
-    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t>)
+            .and_then(
+                [](const uint64_t value) -> std::expected<uint64_t, Exception>
+                {
+                    if (value < MINIMUM_BUFFER_SIZE)
+                    {
+                        return std::unexpected{InvalidConfigParameter(
+                            "operator_buffer_size must be at least {} bytes, but is {}", MINIMUM_BUFFER_SIZE, value)};
+                    }
+                    return value;
+                });
+    },
     uint64_t{4096}};
 
 const ConfigField<bool> NAUTILUS_PERF{
@@ -121,6 +160,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         Identifier::parse("default_query_execution"),
         EXECUTION_MODE,
         NAUTILUS_INLINING,
+        TUPLE_BUFFER_INLINING,
         PAGE_SIZE,
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
@@ -146,6 +186,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(PAGE_SIZE),
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
+        config.get(TUPLE_BUFFER_INLINING),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),
         config.get(NAUTILUS_PERF)};

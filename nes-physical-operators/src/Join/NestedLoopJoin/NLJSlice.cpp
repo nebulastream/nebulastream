@@ -46,7 +46,8 @@ NLJSlice::NLJSlice(
         if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
         {
             /// initialize the paged vector tuple buffer
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeLeft);
+            /// No inline records, as the slices are combined via movePagesFrom.
+            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeLeft, false);
             leftPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
         }
         else
@@ -60,7 +61,8 @@ NLJSlice::NLJSlice(
         if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
         {
             /// initialize the paged vector tuple buffer
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeRight);
+            /// No inline records, as the slices are combined via movePagesFrom.
+            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeRight, false);
             rightPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
         }
         else
