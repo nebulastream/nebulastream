@@ -14,25 +14,42 @@
 
 #include <Sources/AsyncFunction.hpp>
 
-#include <string>
+#include <cstddef>
+#include <initializer_list>
+#include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
-#include <boost/asio/awaitable.hpp>
-#include <ErrorHandling.hpp>
+#include <DataTypes/RuntimeValue.hpp>
 
 namespace NES
 {
 
-boost::asio::awaitable<std::string> AsyncFunction::call(std::vector<std::string>)
+AsyncValues::AsyncValues(std::vector<RuntimeValue> values) : storage(std::make_shared<const std::vector<RuntimeValue>>(std::move(values)))
 {
-    throw NotImplemented("async function implements neither call nor callValues");
-    co_return std::string{};
 }
 
-boost::asio::awaitable<AsyncCallResult> AsyncFunction::callValues(std::vector<std::string> arguments)
+AsyncValues::AsyncValues(const std::initializer_list<RuntimeValue> values) : AsyncValues(std::vector<RuntimeValue>{values})
 {
-    /// The analyzer follows Asio's awaitable frame into a path that the coroutine machinery never takes.
-    co_return AsyncCallResult{co_await call(std::move(arguments))}; /// NOLINT(clang-analyzer-core.CallAndMessage)
+}
+
+size_t AsyncValues::size() const
+{
+    return storage ? storage->size() : 0;
+}
+
+bool AsyncValues::empty() const
+{
+    return size() == 0;
+}
+
+RuntimeValueView AsyncValues::operator[](const size_t index) const&
+{
+    if (!storage)
+    {
+        throw std::out_of_range("Cannot index empty async values");
+    }
+    return storage->at(index).view();
 }
 
 }

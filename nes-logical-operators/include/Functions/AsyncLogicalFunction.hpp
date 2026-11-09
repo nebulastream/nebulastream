@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <cstddef>
-#include <string>
+#include <vector>
+#include <DataTypes/DataType.hpp>
 
 /// Comes first: DynamicBase.hpp uses PRECONDITION without including where it is defined.
 #include <ErrorHandling.hpp>
@@ -28,15 +28,11 @@ namespace NES
 /// Marker for a logical function that has an asynchronous implementation and no Nautilus one.
 /// Detected with `LogicalFunction::tryGetAs<AsyncLogicalFunction>()`; `AsyncFunctionLiftingRule`
 /// moves every such call into an operator that is executed asynchronously.
-/// Its arguments are only ever plain fields or constants by the time it is executed.
+/// Its arguments are fields, constants, or directly nested async calls by the time it is executed.
 struct AsyncLogicalFunction : Castable<AsyncLogicalFunction>
 {
-    /// Handed to the asynchronous implementation when it is created, for what is fixed per query rather than per row,
-    /// e.g. a model from a catalog. It has to follow from what `explain` shows: calls that explain alike are evaluated once.
-    [[nodiscard]] virtual std::string getAsyncConfiguration() const { return {}; }
-
-    /// Values one call produces. The call evaluates to the first; `ASYNC_OUTPUT(call, i)` reads the i-th.
-    [[nodiscard]] virtual size_t getNumberOfAsyncOutputs() const { return 1; }
+    /// Types produced by one asynchronous invocation.
+    [[nodiscard]] virtual std::vector<DataType> getAsyncOutputTypes() const = 0;
 };
 
 }

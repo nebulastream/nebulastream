@@ -36,7 +36,7 @@ class HttpCallAsyncFunction final : public AsyncFunction
 public:
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments);
 
-    boost::asio::awaitable<std::string> call(std::vector<std::string> arguments) override;
+    boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) override;
 
 private:
     /// Takes its arguments by value, as a coroutine has to own what it reads after its first suspension.

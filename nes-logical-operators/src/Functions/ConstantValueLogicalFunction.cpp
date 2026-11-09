@@ -144,7 +144,7 @@ std::string_view ConstantValueLogicalFunction::getType() const
 
 bool ConstantValueLogicalFunction::operator==(const ConstantValueLogicalFunction& rhs) const
 {
-    return constantValue == rhs.constantValue;
+    return dataType == rhs.dataType && constantValue == rhs.constantValue;
 }
 
 std::string ConstantValueLogicalFunction::explain(ExplainVerbosity verbosity) const

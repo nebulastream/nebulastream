@@ -22,7 +22,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -62,20 +61,18 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
     copy.url = url.withInferredDataType(schema);
     for (const auto& argument : {copy.body, copy.url})
     {
-        if (not argument.getDataType().isType(DataType::Type::VARSIZED))
+        if (not argument.getDataType().isType(DataType::Type::VARSIZED) or argument.getDataType().nullable)
         {
-            throw DifferentFieldTypeExpected("HTTP_CALL expects VARSIZED arguments, but got {}", argument);
+            throw DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL, but got {}", argument);
         }
     }
     if (timeoutMillis)
     {
         copy.timeoutMillis = timeoutMillis->withInferredDataType(schema);
-        /// The Async source reads only VARSIZED fields, so the timeout has to be a constant.
-        if (not copy.timeoutMillis->tryGetAs<ConstantValueLogicalFunction>().has_value()
-            or not copy.timeoutMillis->getDataType().isInteger())
+        if (not copy.timeoutMillis->getDataType().isInteger() or copy.timeoutMillis->getDataType().nullable)
         {
             throw DifferentFieldTypeExpected(
-                "HTTP_CALL expects an integer constant timeout in milliseconds, but got {}", *copy.timeoutMillis);
+                "HTTP_CALL expects a non-nullable integer timeout in milliseconds, but got {}", *copy.timeoutMillis);
         }
     }
     return copy;

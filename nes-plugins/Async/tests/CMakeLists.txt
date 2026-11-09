@@ -12,3 +12,6 @@
 
 add_nes_test(handoff-channel-test HandoffChannelTest.cpp)
 target_link_libraries(handoff-channel-test async_handoff_channel nes-memory nes-common)
+
+add_nes_test(async-source-value-test AsyncSourceValueTest.cpp)
+target_link_libraries(async-source-value-test async_source_plugin_library nes-sources nes-nautilus reflectcpp::reflectcpp)

@@ -13,5 +13,6 @@
 
 ### SchemaTest Test ###
 add_nes_unit_test(numeric-type-conversion-text "API/NumericTypeConversionTest.cpp")
+add_nes_unit_test(runtime-value-test "RuntimeValueTest.cpp")
 add_nes_unit_test(unbound-schema-test "UnboundSchemaTest.cpp")
 target_link_libraries(unbound-schema-test nes-schema)

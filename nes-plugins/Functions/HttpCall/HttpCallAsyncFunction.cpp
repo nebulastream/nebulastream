@@ -55,19 +55,20 @@ AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegis
     return std::make_unique<HttpCallAsyncFunction>();
 }
 
-boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std::string> arguments)
+boost::asio::awaitable<AsyncValues> HttpCallAsyncFunction::call(AsyncValues arguments)
 {
     PRECONDITION(arguments.size() == 2 || arguments.size() == 3, "HTTP_CALL takes (body, url[, timeout_ms])");
-    const auto& url = arguments[1];
+    const std::string body{arguments[0].get<std::string_view>()};
+    const std::string url{arguments[1].get<std::string_view>()};
     auto timeout = DEFAULT_TIMEOUT;
     if (arguments.size() == 3)
     {
-        const auto millis = from_chars<uint64_t>(arguments[2]);
-        if (!millis || *millis == 0)
+        const auto millis = arguments[2].getUnsignedInteger();
+        if (millis == 0)
         {
-            throw CannotReadFromSource("HTTP_CALL expects a positive timeout in milliseconds, got {}", arguments[2]);
+            throw CannotReadFromSource("HTTP_CALL expects a positive timeout in milliseconds, got {}", millis);
         }
-        timeout = std::chrono::milliseconds{*millis};
+        timeout = std::chrono::milliseconds{millis};
     }
     const auto parsed = boost::urls::parse_uri(url);
     if (!parsed || parsed->scheme() != "http")
@@ -82,7 +83,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     const bool reused = stream.has_value() && connectedTo == host + ":" + port;
     try
     {
-        co_return co_await exchange(host, port, target, arguments[0], timeout);
+        co_return AsyncValues::make(co_await exchange(host, port, target, body, timeout));
     }
     catch (const boost::system::system_error& error)
     {
@@ -94,7 +95,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::call(std::vector<std:
     }
     try
     {
-        co_return co_await exchange(host, port, target, arguments[0], timeout);
+        co_return AsyncValues::make(co_await exchange(host, port, target, body, timeout));
     }
     catch (const boost::system::system_error& error)
     {

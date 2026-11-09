@@ -41,7 +41,7 @@
 namespace NES
 {
 
-/// Values are VARSIZED, like every argument and result the Async source handles
+/// The selected output type is resolved with the call's arguments during type inference.
 AsyncOutputLogicalFunction::AsyncOutputLogicalFunction(LogicalFunction call, const size_t index)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), call(std::move(call)), index(index)
 {
@@ -66,11 +66,12 @@ LogicalFunction AsyncOutputLogicalFunction::withInferredDataType(const Schema<Fi
     {
         throw InvalidQuerySyntax("ASYNC_OUTPUT reads a value of an async function call, but got {}", copy.call);
     }
-    if (index >= async.value()->get().getNumberOfAsyncOutputs())
+    const auto outputTypes = async.value()->get().getAsyncOutputTypes();
+    if (index >= outputTypes.size())
     {
-        throw InvalidQuerySyntax(
-            "ASYNC_OUTPUT reads value {} of {}, which produces {}", index, copy.call, async.value()->get().getNumberOfAsyncOutputs());
+        throw InvalidQuerySyntax("ASYNC_OUTPUT reads value {} of {}, which produces {}", index, copy.call, outputTypes.size());
     }
+    copy.dataType = outputTypes.at(index);
     return copy;
 }
 

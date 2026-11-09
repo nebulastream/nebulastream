@@ -56,11 +56,8 @@ public:
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
-    /// The concurrency limit, which the implementation needs before the first row arrives.
-    [[nodiscard]] std::string getAsyncConfiguration() const override;
-
-    /// The value, and the delay it waited.
-    [[nodiscard]] size_t getNumberOfAsyncOutputs() const override { return 2; }
+    /// The input value's type (including nullability), and the delay as UINT64.
+    [[nodiscard]] std::vector<DataType> getAsyncOutputTypes() const override;
 
     static LogicalFunctionRegistryReturnType createASYNC_DELAY(LogicalFunctionRegistryArguments arguments);
 

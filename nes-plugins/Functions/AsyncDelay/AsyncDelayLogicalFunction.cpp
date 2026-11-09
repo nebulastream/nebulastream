@@ -39,10 +39,7 @@ namespace NES
 
 AsyncDelayLogicalFunction::AsyncDelayLogicalFunction(
     LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> maxConcurrency)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-    , value(std::move(value))
-    , millis(std::move(millis))
-    , maxConcurrency(std::move(maxConcurrency))
+    : dataType(value.getDataType()), value(std::move(value)), millis(std::move(millis)), maxConcurrency(std::move(maxConcurrency))
 {
 }
 
@@ -61,20 +58,16 @@ LogicalFunction AsyncDelayLogicalFunction::withInferredDataType(const Schema<Fie
     auto copy = *this;
     copy.value = value.withInferredDataType(schema);
     copy.millis = millis.withInferredDataType(schema);
-    if (not copy.value.getDataType().isType(DataType::Type::VARSIZED))
+    copy.dataType = copy.value.getDataType();
+    if (not copy.millis.getDataType().isInteger() or copy.millis.getDataType().nullable)
     {
-        throw DifferentFieldTypeExpected("ASYNC_DELAY expects a VARSIZED value, but got {}", copy.value);
-    }
-    /// The Async source reads only VARSIZED fields, so the delay has to be a constant.
-    if (not copy.millis.tryGetAs<ConstantValueLogicalFunction>().has_value() or not copy.millis.getDataType().isInteger())
-    {
-        throw DifferentFieldTypeExpected("ASYNC_DELAY expects an integer constant delay in milliseconds, but got {}", copy.millis);
+        throw DifferentFieldTypeExpected("ASYNC_DELAY expects a non-nullable integer delay in milliseconds, but got {}", copy.millis);
     }
     if (maxConcurrency)
     {
         copy.maxConcurrency = maxConcurrency->withInferredDataType(schema);
         if (not copy.maxConcurrency->tryGetAs<ConstantValueLogicalFunction>().has_value()
-            or not copy.maxConcurrency->getDataType().isInteger())
+            or not copy.maxConcurrency->getDataType().isInteger() or copy.maxConcurrency->getDataType().nullable)
         {
             throw DifferentFieldTypeExpected("ASYNC_DELAY expects an integer constant concurrency limit, but got {}", *copy.maxConcurrency);
         }
@@ -115,13 +108,9 @@ std::string AsyncDelayLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("ASYNC_DELAY({}, {})", value.explain(verbosity), millis.explain(verbosity));
 }
 
-std::string AsyncDelayLogicalFunction::getAsyncConfiguration() const
+std::vector<DataType> AsyncDelayLogicalFunction::getAsyncOutputTypes() const
 {
-    if (const auto constant = maxConcurrency ? maxConcurrency->tryGetAs<ConstantValueLogicalFunction>() : std::nullopt)
-    {
-        return constant.value()->getConstantValue();
-    }
-    return {};
+    return {dataType, DataTypeProvider::provideDataType(DataType::Type::UINT64)};
 }
 
 Reflected

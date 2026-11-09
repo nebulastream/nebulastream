@@ -48,6 +48,7 @@
 #include <Traits/PlacementTrait.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -261,14 +262,15 @@ private:
         AsyncCall description{
             .outputs = {},
             .function = std::string{call.getType()},
-            .configuration = async.value()->get().getAsyncConfiguration(),
+            .resultTypes = async.value()->get().getAsyncOutputTypes(),
             .arguments = {}};
         for (const auto& argument : call.getChildren())
         {
             if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
             {
                 description.arguments.push_back(
-                    {.field = field.value()->getField().getLastName().asCanonicalString(),
+                    {.type = argument.getDataType(),
+                     .field = field.value()->getField().getLastName().asCanonicalString(),
                      .constant = std::nullopt,
                      .call = std::nullopt,
                      .output = 0});
@@ -276,7 +278,11 @@ private:
             else if (const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>())
             {
                 description.arguments.push_back(
-                    {.field = std::nullopt, .constant = constant.value()->getConstantValue(), .call = std::nullopt, .output = 0});
+                    {.type = argument.getDataType(),
+                     .field = std::nullopt,
+                     .constant = constant.value()->getConstantValue(),
+                     .call = std::nullopt,
+                     .output = 0});
             }
             else
             {
@@ -286,7 +292,12 @@ private:
                     call,
                     argument);
                 const auto [earlierCall, index] = resolve(argument);
-                description.arguments.push_back({.field = std::nullopt, .constant = std::nullopt, .call = earlierCall, .output = index});
+                description.arguments.push_back(
+                    {.type = argument.getDataType(),
+                     .field = std::nullopt,
+                     .constant = std::nullopt,
+                     .call = earlierCall,
+                     .output = index});
             }
         }
         described.push_back(call);
@@ -339,7 +350,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     const auto handoffSinkDescriptor
         = context.sinkCatalog->getAnonymousSink(inputFields, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
     INVARIANT(handoffSinkDescriptor.has_value(), "Invalid sink descriptor config for handoff sink");
-    sourceConfig.emplace(Identifier::parse("calls"), rfl::json::write(calls.get()));
+    sourceConfig.emplace(Identifier::parse("calls"), rfl::json::write(*ReflectionContext{}.reflect(calls.get())));
     sourceConfig.emplace(
         Identifier::parse("input_fields"),
         fmt::format(
