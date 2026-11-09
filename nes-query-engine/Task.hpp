@@ -127,12 +127,26 @@ private:
 
 struct WorkTask : BaseTask
 {
-    WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback);
+    /// Takes only the LocalQueryId, so BaseTask::queryId lacks the distributed part; RunningQueryPlanNode::queryId has the full QueryId.
+    WorkTask(
+        LocalQueryId localQueryId,
+        PipelineId pipelineId,
+        std::weak_ptr<RunningQueryPlanNode> pipeline,
+        TupleBuffer buf,
+        TaskCallback callback);
 
     WorkTask() = default;
+
+    /// Like BaseTask, and if the task counts in the pending tasks of its pipeline, also stops counting it or fails the pipeline.
+    /// This is done here rather than in a wrapping callback, which would cost two allocations per task.
+    void complete();
+    void fail(Exception exception);
+
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
     TupleBuffer buf;
+    /// Set by ThreadPool::emitWork, which counts the task in RunningQueryPlanNode::pendingTasks
+    bool countedInPipeline = false;
 };
 
 struct StartPipelineTask : BaseTask

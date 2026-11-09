@@ -82,6 +82,8 @@ struct RunningQueryPlanNode
     void fail(Exception exception) const;
 
     PipelineId id;
+    /// The query of the pipeline, which its work tasks do not hold themselves, see WorkTask
+    QueryId queryId = INVALID_QUERY_ID;
 
     std::atomic_bool requiresTermination = false;
     std::atomic<ssize_t> pendingTasks = 0;
