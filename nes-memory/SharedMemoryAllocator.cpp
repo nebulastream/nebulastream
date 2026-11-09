@@ -63,11 +63,14 @@ std::optional<SharedMemoryAllocator::Mapping> SharedMemoryAllocator::primary()
     return live.front();
 }
 
-void* SharedMemoryAllocator::do_allocate(const size_t bytes, const size_t alignment)
+void* SharedMemoryAllocator::do_allocate(const size_t bytes, [[maybe_unused]] const size_t alignment)
 {
     INVARIANT(alignment <= static_cast<size_t>(sysconf(_SC_PAGESIZE)), "A shared mapping is only page aligned, not to {}", alignment);
     const int fd = memfd_create("nes-buffers", MFD_CLOEXEC);
-    INVARIANT(fd >= 0, "Failed to create shared memory: {}", std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+    if (fd < 0)
+    {
+        throw BufferAllocationFailure("Failed to create shared memory: {}", std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+    }
     void* memory = MAP_FAILED;
     if (ftruncate(fd, static_cast<off_t>(bytes)) == 0)
     {
@@ -77,7 +80,8 @@ void* SharedMemoryAllocator::do_allocate(const size_t bytes, const size_t alignm
     {
         const auto error = errno;
         ::close(fd);
-        INVARIANT(false, "Failed to map shared memory of {} bytes: {}", bytes, std::strerror(error)); /// NOLINT(concurrency-mt-unsafe)
+        throw BufferAllocationFailure(
+            "Failed to map shared memory of {} bytes: {}", bytes, std::strerror(error)); /// NOLINT(concurrency-mt-unsafe)
     }
     auto& [mutex, live] = mappings();
     const std::scoped_lock lock(mutex);
