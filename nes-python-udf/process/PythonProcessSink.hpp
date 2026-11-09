@@ -51,7 +51,9 @@ class PythonProcessSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "PythonProcess";
-    static constexpr auto RETRY_INTERVAL = std::chrono::milliseconds(10);
+    /// How long a full channel holds back a buffer. The channel must hold more work than the processes do in this time, see
+    /// PythonProcesses::BUFFERS_PER_PROCESS; with 10 ms a single process sat idle about half of the time.
+    static constexpr auto RETRY_INTERVAL = std::chrono::milliseconds(1);
 
     PythonProcessSink(BackpressureController backpressureController, const PythonProcessSinkConfig& config);
 

@@ -342,7 +342,7 @@ _REQUEST_TAIL, _REQUEST_HEAD, _ANSWER_TAIL, _ANSWER_HEAD, _PROCESS_SLEEPS, _WORK
 _WRAP = 0xFFFFFFFFFFFFFFFF
 _SPIN_SECONDS = 50e-6
 # A process spins longer while requests come in short gaps, up to this long, so that it does not need to be woken for each
-_MAX_SPIN_SECONDS = 5e-3
+_MAX_SPIN_SECONDS = 2e-4
 _SLEEP_SECONDS = 1e-3
 _gap = 0.0
 

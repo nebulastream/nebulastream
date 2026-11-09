@@ -31,9 +31,10 @@
 namespace NES::PythonProcesses
 {
 
-/// The buffers the channel holds per process: more than a process takes in the retry interval of the sink. PyPy takes a batch in a
-/// fraction of a millisecond, and 16 per process still left the processes idle three quarters of the time.
-constexpr size_t BUFFERS_PER_PROCESS = 128;
+/// The buffers the channel holds per process: more than a process takes in the retry interval of the sink, or the process runs dry
+/// while the sink waits to retry. One process takes up to ~100k small batches per second, about 100 per millisecond. Covering a
+/// longer interval instead needs ~1000 per process for 10 ms, which with many processes exhausted the buffer pool.
+constexpr size_t BUFFERS_PER_PROCESS = 256;
 
 /// How long a source waits for a buffer before it checks for a stop request.
 constexpr auto BUFFER_WAIT = std::chrono::milliseconds(25);
