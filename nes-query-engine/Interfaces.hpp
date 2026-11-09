@@ -44,7 +44,7 @@ public:
     /// If the `potentiallyProcessTheWorkInPlace` parameter is set, the task may be executed in place if it cannot be submitted to the task queue.
     /// This function may return false if the `potentiallyProcessTheWorkInPlace` parameter is disabled and the task cannot be submitted.
     virtual bool emitWork(
-        QueryId,
+        const QueryId&,
         const std::shared_ptr<RunningQueryPlanNode>& target,
         TupleBuffer,
         TaskCallback,

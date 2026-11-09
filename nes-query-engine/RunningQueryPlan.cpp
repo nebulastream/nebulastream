@@ -93,6 +93,7 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     auto node = std::shared_ptr<RunningQueryPlanNode>(
         new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(unregisterWithError), std::move(planRef)),
         RunningQueryPlanNodeDeleter{.emitter = emitter, .queryId = queryId});
+    node->queryId = queryId;
     emitter.emitPipelineStart(
         queryId,
         node,
