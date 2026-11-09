@@ -43,13 +43,16 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
         ChainedHashMapConfig hashMapConfig,
         std::vector<PhysicalFunction> keyFunctions,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef);
+        std::unique_ptr<SliceStoreRef> sliceStoreRef,
+        bool inlineRecords);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     ChainedHashMapConfig hashMapConfig;
     /// Extracts the key fields out of an incoming record. Operator logic, not hash map metadata, hence not in the config.
     std::vector<PhysicalFunction> keyFunctions;
+    /// Stores the first records of each key's paged vector in its main buffer (see PagedVector::init).
+    bool inlineRecords;
 };
 
 }

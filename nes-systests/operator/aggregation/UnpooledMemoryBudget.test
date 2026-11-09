@@ -4,7 +4,8 @@
 # groups: [Aggregation, WindowOperators]
 
 # Reserve only a tiny fraction (~1 KiB) of the total memory budget for unpooled buffers. Keyed-aggregation state
-# (slice cache / hash-map pages) is allocated from unpooled buffers, so it cannot be allocated within this budget and
+# (slice cache / hash-map pages) is allocated from unpooled buffers if pageSize != bufferSize,
+# so it cannot be allocated within this budget and
 # the query fails cleanly with BufferAllocationFailure (3000) rather than exhausting physical memory and OOM-killing
 # the worker. total * fraction = 102400000 * 0.00001 = ~1024 bytes of unpooled memory.
 GlobalConfiguration worker.total_memory_in_bytes: [102400000]

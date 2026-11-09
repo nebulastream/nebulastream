@@ -91,31 +91,42 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                     entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
-                /// One paged vector exists per distinct key per hash map, so its pages follow the state page-size knob. Sizing them by the
-                /// operator buffer size instead multiplies the join state by bufferSize/pageSize, which exhausts the unpooled budget once
-                /// garbage collection falls behind the build.
+                /// One paged vector exists per distinct key per hash map, so its pages follow the state page-size knob.
+                /// Keeping the bufferSize == pageSize leads to pages coming from the pool.
+                /// When the two values are not equal, the pages resort to the unpooled budget.
                 const nautilus::val<uint64_t> pageSize = hashMapConfig.pageSize;
                 nautilus::invoke(
                     +[](TupleBuffer* hashMapBuf,
                         uint32_t* valueMemArea,
                         AbstractBufferProvider* bufferProvider,
                         const uint64_t tupleSize,
-                        const uint64_t pageSize) -> void
+                        const uint64_t pageSize,
+                        const bool inlineRecords) -> void
                     {
-                        if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+                        TupleBuffer pagedVectorBuffer;
+                        if (inlineRecords)
                         {
-                            PagedVector::init(pagedVectorBuffer.value(), pageSize, tupleSize);
-                            auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer.value());
-                            *valueMemArea = childIndex.getRawValue();
-                            return;
+                            /// A pooled main buffer, whose space behind the header stores the first records of the key.
+                            pagedVectorBuffer = bufferProvider->getBufferBlocking();
                         }
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
+                        else if (auto unpooledBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+                        {
+                            pagedVectorBuffer = unpooledBuffer.value();
+                        }
+                        else
+                        {
+                            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
+                        }
+                        PagedVector::init(pagedVectorBuffer, pageSize, tupleSize, inlineRecords);
+                        auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer);
+                        *valueMemArea = childIndex.getRawValue();
                     },
                     hashMapBuffer.asArg(),
                     static_cast<nautilus::val<uint32_t*>>(state),
                     ctx.pipelineMemoryProvider.bufferProvider,
                     tupleSize,
-                    pageSize);
+                    pageSize,
+                    nautilus::val<bool>(inlineRecords));
             },
             ctx.pipelineMemoryProvider.bufferProvider);
 
@@ -137,11 +148,13 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
     ChainedHashMapConfig hashMapConfig,
     std::vector<PhysicalFunction> keyFunctions,
-    std::unique_ptr<SliceStoreRef> sliceStoreRef)
+    std::unique_ptr<SliceStoreRef> sliceStoreRef,
+    const bool inlineRecords)
     : StreamJoinBuildPhysicalOperator{
           operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
+    , inlineRecords(inlineRecords)
 {
 }
 
