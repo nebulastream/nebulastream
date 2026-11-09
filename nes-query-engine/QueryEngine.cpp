@@ -102,28 +102,6 @@ auto injectQueryFailure(std::weak_ptr<RunningQueryPlanNode> node, TaskCallback::
     };
 }
 
-auto injectReferenceCountReducer(
-    ENGINE_IF_LOG_DEBUG(QueryId qid, ) std::weak_ptr<RunningQueryPlanNode> node, TaskCallback::onComplete innerFunction)
-{
-    return [ENGINE_IF_LOG_DEBUG(qid, ) innerFunction = std::move(innerFunction), node = std::weak_ptr(std::move(node))]() mutable
-    {
-        if (innerFunction)
-        {
-            innerFunction();
-        }
-        if (auto existingNode = node.lock())
-        {
-            auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
-            ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
-            INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
-        }
-        else
-        {
-            ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
-        }
-    };
-}
-
 }
 
 /// The Query has not been started yet. But a slot in the QueryCatalog has been reserved.
@@ -301,7 +279,7 @@ public:
     void addThread(const Host& host);
 
     bool emitWork(
-        QueryId qid,
+        [[maybe_unused]] const QueryId& qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
         TupleBuffer buffer,
         TaskCallback callback,
@@ -309,15 +287,9 @@ public:
     {
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
-        auto [complete, failure, success] = std::move(callback).take();
-        /// Create a new callback that wraps the reference count reducer
-        auto wrappedCallback = TaskCallback{
-            TaskCallback::OnComplete(injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete.callback))),
-            std::move(success),
-            TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure.callback))),
-        };
-
-        auto task = WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
+        /// The task stops counting when it completes and fails the pipeline if it fails, see WorkTask::complete and WorkTask::fail
+        auto task = WorkTask(node->id, node, std::move(buffer), std::move(callback));
+        task.countedInPipeline = true;
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread
@@ -478,7 +450,6 @@ thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadI
 
 bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
-    LogContext logContext("Task", fmt::format("{}-{}", task.queryId, task.pipelineId));
     if (terminating)
     {
         ENGINE_LOG_WARNING("Skipped Task for {}-{} during termination", task.queryId, task.pipelineId);
@@ -488,7 +459,8 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     const auto taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
-        ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
+        LogContext logContext("Task", fmt::format("{}-{}", pipeline->queryId, pipeline->id));
+        ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", pipeline->queryId, pipeline->id, task.buf.getNumberOfTuples());
         std::optional<std::pair<TupleBuffer, std::chrono::milliseconds>> requiresTaskRepetition;
         DefaultPEC pec(
             pool.numberOfThreads(),
@@ -498,14 +470,14 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
                 ENGINE_LOG_DEBUG(
-                    "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                    "Task emitted tuple buffer {}-{}. Tuples: {}", pipeline->queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 return std::ranges::all_of(
                     pipeline->successors,
                     [&](const auto& successor)
                     {
                         pool.statistic->onEvent(
-                            TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
-                        return pool.emitWork(task.queryId, successor, tupleBuffer, TaskCallback{}, continuationPolicy);
+                            TaskEmit{id, pipeline->queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                        return pool.emitWork(pipeline->queryId, successor, tupleBuffer, TaskCallback{}, continuationPolicy);
                     });
             },
             [&](const TupleBuffer& tupleBuffer, std::chrono::milliseconds duration)
@@ -515,14 +487,18 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             }
 
         );
-        pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+        pool.statistic->onEvent(
+            TaskExecutionStart{WorkerThread::id, pipeline->queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
 
         if (requiresTaskRepetition)
         {
             auto [repeatedBuffer, duration] = std::move(requiresTaskRepetition).value();
             const auto numberOfTuples = repeatedBuffer.getNumberOfTuples();
-            Task repeatedTask = WorkTask(task.queryId, pipeline->id, pipeline, std::move(repeatedBuffer), std::move(task.callback));
+            auto repeated = WorkTask(pipeline->id, pipeline, std::move(repeatedBuffer), std::move(task.callback));
+            /// The repeated task completes in place of this one
+            repeated.countedInPipeline = std::exchange(task.countedInPipeline, false);
+            Task repeatedTask = std::move(repeated);
             if (duration.count() > 0)
             {
                 pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatedTask), duration);
@@ -531,10 +507,10 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             {
                 pool.addInternalTask(std::move(repeatedTask));
             }
-            pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, numberOfTuples});
+            pool.statistic->onEvent(TaskEmit{id, pipeline->queryId, pipeline->id, pipeline->id, taskId, numberOfTuples});
         }
 
-        pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
+        pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, pipeline->queryId, pipeline->id, taskId});
         return true;
     }
 
