@@ -15,64 +15,94 @@
 #pragma once
 
 #include <cstddef>
+#include <initializer_list>
+#include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
-
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/RuntimeValue.hpp>
 #include <boost/asio/awaitable.hpp>
 
 namespace NES
 {
 
-/// The values one row's call produced: the first is what the call evaluates to, `ASYNC_OUTPUT(call, i)` reads the i-th.
-using AsyncCallResult = std::vector<std::string>;
+/// Immutable values plus ownership of their backing storage.
+/// Views are borrowed from this handle, not from a temporary coroutine frame.
+/// Initially backed by owned scalar values, in the future this could be backed by tuple buffers owned by the operator handle.
+class AsyncValues
+{
+public:
+    AsyncValues() = default;
+    explicit AsyncValues(std::vector<RuntimeValue> values);
+    AsyncValues(std::initializer_list<RuntimeValue> values);
 
-/// The implementation of an `AsyncLogicalFunction`, run by the `Async` source on its event loop.
-/// An instance serves one call at a time, so it may keep per-connection state between calls.
-///
-/// Most functions only implement `call`. One that produces several values per row, e.g. one per OUTPUT field of a model,
-/// overrides `callValues` instead.
+    template <typename... T>
+    [[nodiscard]] static AsyncValues make(T&&... values)
+    {
+        std::vector<RuntimeValue> owned;
+        owned.reserve(sizeof...(T));
+        (owned.emplace_back(std::forward<T>(values)), ...);
+        return AsyncValues{std::move(owned)};
+    }
+
+    [[nodiscard]] size_t size() const;
+    [[nodiscard]] bool empty() const;
+    [[nodiscard]] RuntimeValueView operator[](size_t index) const&;
+    RuntimeValueView operator[](size_t index) const&& = delete;
+
+private:
+    std::shared_ptr<const std::vector<RuntimeValue>> storage;
+};
+
+using AsyncCallResult = AsyncValues;
+
+/// Given to each instance once. Constant positions are preserved; a missing value means a per-row argument.
+/// A present RuntimeValue may itself be a typed SQL null. Constant arguments remain visible to call().
+struct AsyncFunctionBinding
+{
+    std::vector<DataType> argumentTypes;
+    std::vector<std::optional<RuntimeValue>> constantArguments;
+    std::vector<DataType> resultTypes;
+};
+
+/// Runtime implementation of an AsyncLogicalFunction. An instance serves one row at a time and may retain connections.
+/// Arguments are passed by value to retain their backing storage while suspended. Returned values must own/retain theirs.
 class AsyncFunction
 {
 public:
     virtual ~AsyncFunction() = default;
-
-    /// One row: its arguments in, its value out.
-    virtual boost::asio::awaitable<std::string> call(std::vector<std::string> arguments);
-
-    /// One row: its arguments in, all of its values out. By default the single value of `call`.
-    virtual boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments);
+    virtual boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) = 0;
 
     /// Rows whose calls of this function may be in flight at once, if the function itself sets a bound.
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const { return std::nullopt; }
 };
 
-/// Where one argument of an async call comes from: a handed-off field, a constant, or the result of an
-/// earlier call in the same list.
+/// An argument's type and binding: a handed-off field, a typed literal, or the result of an earlier call.
+/// Text is only the plan-serialization format for constants; the source parses it once, not once per row.
 struct AsyncCallArgument
 {
+    DataType type;
     std::optional<std::string> field;
     std::optional<std::string> constant;
     std::optional<size_t> call;
-    /// Which value of the earlier call.
     size_t output = 0;
 };
 
-/// A field of the source's output that holds one value of a call.
 struct AsyncCallOutput
 {
     size_t index;
     std::string field;
 };
 
-/// One async call as the `Async` source receives it in its `CALLS` config. Calls are listed after every call
-/// they read. Only calls whose values are fields of the source's output have outputs; the others feed calls only.
+/// Calls are listed after every call they read. Only values materialized in the stage's schema have output fields.
+/// Serialize through NES ReflectionContext so nested DataType fields use their existing NES reflection protocol.
 struct AsyncCall
 {
     std::vector<AsyncCallOutput> outputs;
     std::string function;
-    /// Handed to the implementation when the source creates it; see `AsyncLogicalFunction::getAsyncConfiguration`.
-    std::string configuration;
+    std::vector<DataType> resultTypes;
     std::vector<AsyncCallArgument> arguments;
 };
 

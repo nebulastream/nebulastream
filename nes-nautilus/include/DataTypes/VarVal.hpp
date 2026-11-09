@@ -177,6 +177,7 @@ public:
     void writeToMemory(const nautilus::val<int8_t*>& memRef) const;
     [[nodiscard]] nautilus::val<bool> isNull() const;
     [[nodiscard]] bool isNullable() const;
+    [[nodiscard]] DataType getDataType() const;
 
 protected:
     /// ReSharper disable once CppNonExplicitConvertingConstructor

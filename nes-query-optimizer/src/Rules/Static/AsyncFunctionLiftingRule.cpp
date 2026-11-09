@@ -138,11 +138,27 @@ void collectComputedArguments(const LogicalFunction& call, std::vector<LogicalFu
     }
 }
 
-/// Identifies a call by its expression over field names. Fields that are forwarded by name hold the same
-/// data, so two calls with the same key compute the same values.
+/// Identify expressions over forwarded field names without losing node kinds or inferred types. Short EXPLAIN
+/// alone conflates a field DATA with the literal 'DATA', and numeric literals with identically spelled strings.
+/// Length-prefix every component so literal bytes cannot collide with the key's structure. Keep the explanation
+/// as well as children to account for function-specific properties such as ASYNC_OUTPUT's index.
 std::string callKey(const LogicalFunction& call)
 {
-    return call.explain(ExplainVerbosity::Short);
+    std::string key;
+    const auto append = [&](const std::string_view component)
+    {
+        key += std::to_string(component.size());
+        key += ':';
+        key += component;
+    };
+    append(call.getType());
+    append(fmt::format("{}", call.getDataType()));
+    append(call.explain(ExplainVerbosity::Short));
+    for (const auto& child : call.getChildren())
+    {
+        append(callKey(child));
+    }
+    return key;
 }
 
 /// Field accesses that survive are rebound by name when the projection infers its schema.
@@ -331,8 +347,12 @@ private:
         for (const auto& call : calls)
         {
             auto name = freshName("call", child);
-            /// "" or "0" covers VARSIZED and numeric results; BOOLEAN results need their own default
-            const auto emptySlot = call.getDataType().isType(DataType::Type::VARSIZED) ? "" : "0";
+            /// Empty placeholders must match the eventual async result type.
+            const auto type = call.getDataType();
+            const std::string emptySlot = type.isType(DataType::Type::VARSIZED) ? std::string{}
+                : type.isType(DataType::Type::BOOLEAN)                          ? "false"
+                : type.isType(DataType::Type::CHAR)                             ? std::string(1, '\0')
+                                                                                : "0";
             preProjections.emplace_back(name, ConstantValueLogicalFunction{call.getDataType(), emptySlot});
             liftedCalls.emplace_back(callKey(call), name);
             callNames.emplace_back(call, std::move(name));

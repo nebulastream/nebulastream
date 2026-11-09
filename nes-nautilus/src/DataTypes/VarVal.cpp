@@ -22,6 +22,7 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/select.hpp>
@@ -90,6 +91,24 @@ nautilus::val<bool> VarVal::isNull() const
 bool VarVal::isNullable() const
 {
     return nullable;
+}
+
+DataType VarVal::getDataType() const
+{
+    const auto type = std::visit(
+        []<typename T>(const T&) -> DataType::Type
+        {
+            if constexpr (std::is_same_v<T, VariableSizedData>)
+            {
+                return DataType::Type::VARSIZED;
+            }
+            else
+            {
+                return RuntimeTypeTraits<typename T::raw_type>::type;
+            }
+        },
+        value);
+    return DataType{type, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
 }
 
 VarVal::operator bool() const

@@ -29,6 +29,10 @@
 #include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
+#include <DataTypes/RuntimeValue.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
@@ -49,7 +53,7 @@ struct AsyncSourceConfig
 {
     /// UUID of the channel the `Handoff` sink of the same stage hands its buffers to.
     std::string channel;
-    /// JSON list of `AsyncCall`: the fields each call's values go to, the async function's type and configuration, and
+    /// JSON list of `AsyncCall`: the fields each call's values go to, its typed signature and argument bindings, and
     /// per argument the handed-off field it reads ({"field": ...}), a constant ({"constant": ...}) or a value of an
     /// earlier call ({"call": ..., "output": ...}).
     std::string calls;
@@ -105,22 +109,21 @@ private:
         size_t size;
     };
 
-    /// The input offset of a VARSIZED field, a value of an earlier call, or else a constant.
+    /// A typed field, a value of an earlier call, or a constant parsed once during binding.
     struct BoundArgument
     {
-        std::optional<size_t> inputOffset;
+        std::optional<Record::RecordFieldIdentifier> field;
         std::optional<size_t> call;
         size_t output = 0;
-        std::string constant;
+        std::optional<RuntimeValue> constant;
     };
 
     struct BoundCall
     {
         std::string function;
-        std::string configuration;
+        AsyncFunctionBinding binding;
         std::vector<BoundArgument> arguments;
-        /// Values each row's result has to hold: one more than the highest that an output or a later call reads.
-        size_t requiredValues = 1;
+        std::vector<Record::RecordFieldIdentifier> inputFields;
         /// 0 for calls that read no other call; otherwise one more than the highest level they read.
         size_t level = 0;
         /// One per slot, so an instance serves one call at a time.
@@ -132,7 +135,7 @@ private:
     {
         size_t call;
         size_t index;
-        size_t outputOffset;
+        Record::RecordFieldIdentifier field;
     };
 
     /// A handed-off buffer whose rows are called.
@@ -145,7 +148,7 @@ private:
         size_t unfinishedRows;
         /// Per row, the values that go into output fields, in the order of `outputValues`. Each row's coroutine writes its own
         /// rows on the strand; the source thread reads them once `done` is set.
-        std::vector<std::vector<std::string>> results;
+        std::vector<AsyncValues> results;
         /// Guarded by `Window::mutex`.
         bool done = false;
     };
@@ -165,11 +168,11 @@ private:
     };
 
     /// `results` holds the values of this row's earlier calls, one result per call.
-    std::vector<std::string>
+    AsyncValues
     readArguments(const BoundCall& call, const TupleBuffer& input, size_t row, const std::vector<AsyncCallResult>& results) const;
     /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops, and checks that the
     /// function produced the values the stage reads.
-    boost::asio::awaitable<AsyncCallResult> callWithRetries(size_t callIndex, size_t slot, std::vector<std::string> arguments) const;
+    boost::asio::awaitable<AsyncCallResult> callWithRetries(size_t callIndex, size_t slot, AsyncValues arguments) const;
     /// Runs the calls of one row with the function instances of `slot`.
     boost::asio::awaitable<void> processRow(size_t slot, std::shared_ptr<InFlightBuffer> buffer, size_t row);
 
@@ -189,6 +192,10 @@ private:
     size_t maxRetries;
     size_t inputRowSize = 0;
     size_t outputRowSize = 0;
+    Schema<QualifiedUnboundField, Ordered> inputSchema;
+    Schema<QualifiedUnboundField, Ordered> outputSchema;
+    std::shared_ptr<TupleBufferRef> inputBufferRef;
+    std::shared_ptr<TupleBufferRef> outputBufferRef;
     std::vector<CopiedField> copiedFields;
     /// Ordered so that every call comes after the calls it reads.
     std::vector<BoundCall> calls;

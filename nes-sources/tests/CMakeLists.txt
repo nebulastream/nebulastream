@@ -20,5 +20,9 @@ function(add_nes_source_test)
     target_link_libraries(${TARGET_NAME} nes-sources-test-utils)
 endfunction()
 
+find_package(reflectcpp CONFIG REQUIRED)
+add_nes_unit_test(async-values-test AsyncValuesTest.cpp)
+target_link_libraries(async-values-test nes-sources reflectcpp::reflectcpp)
+
 add_nes_source_test(source-thread-test SourceThreadTest.cpp)
 add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)

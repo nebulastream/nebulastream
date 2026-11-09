@@ -15,13 +15,14 @@
 #include <AsyncDelayAsyncFunction.hpp>
 
 #include <chrono>
-#include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
-#include <Util/Strings.hpp>
+#include <Sources/AsyncFunction.hpp>
+#include <boost/asio/awaitable.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -33,29 +34,31 @@ namespace NES
 
 AsyncFunctionRegistryReturnType AsyncDelayAsyncFunction::create(AsyncFunctionRegistryArguments arguments)
 {
-    if (arguments.configuration.empty())
+    const auto& binding = arguments.binding;
+    std::optional<size_t> bound;
+    if (binding.constantArguments.size() > 2 && binding.constantArguments[2])
+    {
+        const auto limit = binding.constantArguments[2]->view().getUnsignedInteger();
+        if (limit == 0 || !std::in_range<size_t>(limit))
+        {
+            throw CannotOpenSource("ASYNC_DELAY expects a positive, representable concurrency limit");
+        }
+        bound = static_cast<size_t>(limit);
+    }
+    if (!bound)
     {
         return std::make_unique<AsyncDelayAsyncFunction>(std::nullopt);
     }
-    const auto limit = from_chars<uint64_t>(arguments.configuration);
-    if (!limit || *limit == 0)
-    {
-        throw CannotOpenSource("ASYNC_DELAY expects a positive concurrency limit, got {}", arguments.configuration);
-    }
-    return std::make_unique<AsyncDelayAsyncFunction>(*limit);
+    return std::make_unique<AsyncDelayAsyncFunction>(*bound);
 }
 
-boost::asio::awaitable<AsyncCallResult> AsyncDelayAsyncFunction::callValues(std::vector<std::string> arguments)
+boost::asio::awaitable<AsyncValues> AsyncDelayAsyncFunction::call(AsyncValues arguments)
 {
     PRECONDITION(arguments.size() >= 2, "ASYNC_DELAY takes (value, millis[, max_concurrency])");
-    const auto millis = from_chars<uint64_t>(arguments[1]);
-    if (!millis)
-    {
-        throw CannotReadFromSource("ASYNC_DELAY expects a non-negative delay in milliseconds, got {}", arguments[1]);
-    }
-    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, std::chrono::milliseconds{*millis}};
+    const auto millis = arguments[1].getUnsignedInteger();
+    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, std::chrono::milliseconds{millis}};
     co_await timer.async_wait(boost::asio::use_awaitable);
-    co_return AsyncCallResult{std::move(arguments[0]), std::to_string(*millis)};
+    co_return AsyncValues{arguments[0].toOwned(), RuntimeValue{millis}};
 }
 
 }

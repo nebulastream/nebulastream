@@ -32,10 +32,10 @@ class AsyncDelayAsyncFunction final : public AsyncFunction
 public:
     explicit AsyncDelayAsyncFunction(std::optional<size_t> concurrencyLimit) : concurrencyLimit(concurrencyLimit) { }
 
-    /// The configuration is the concurrency limit, empty for none.
+    /// Binds the optional constant concurrency limit from the logical call.
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
 
-    boost::asio::awaitable<AsyncCallResult> callValues(std::vector<std::string> arguments) override;
+    boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) override;
 
     [[nodiscard]] std::optional<size_t> maxConcurrency() const override { return concurrencyLimit; }
 

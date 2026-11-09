@@ -47,6 +47,9 @@ public:
     [[nodiscard]] bool operator==(const AsyncOutputLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
+
+    [[nodiscard]] std::vector<DataType> getAsyncOutputTypes() const override { return {dataType}; }
+
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;

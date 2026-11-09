@@ -13,6 +13,9 @@
 
 add_subdirectory(TestUtils)
 
+add_nes_unit_test(runtime-value-nautilus-test "UnitTests/RuntimeValueNautilusTest.cpp")
+target_link_libraries(runtime-value-nautilus-test nes-nautilus)
+
 add_nes_unit_test(paged-vector-unit-tests "UnitTests/PagedVectorTest.cpp")
 target_link_libraries(paged-vector-unit-tests nes-nautilus-test-util)
 

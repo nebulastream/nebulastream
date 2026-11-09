@@ -14,6 +14,7 @@ add_source_files(nes-data-types
         DataType.cpp
         DataTypeProvider.cpp
         DataTypeRegistry.cpp
+        RuntimeValue.cpp
         TimeUnit.cpp
         )
 

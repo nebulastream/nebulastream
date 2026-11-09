@@ -268,6 +268,30 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(sink_rows delayed.csv)" = "$(printf '1,Hello,1000\n2,NebulaStream,1000\n3,äöü,1000')" ]
 }
 
+@test "ASYNC_DELAY: preserves typed results, nullable fields, and integer millisecond expressions" {
+  run_async_sql typed_values.sql
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows typed.csv)" = "$(printf '1,7,true,12,10,11,10\n2,-4,false,-3,20,21,20\n3,0,true,NULL,0,1,0')" ]
+}
+
+@test "ASYNC_DELAY: returns CHAR, floating-point and nullable byte values" {
+  run_async_sql typed_nullable.sql
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows typed_nullable.csv)" = "$(printf '1,a,1.25,hello,false\n2,z,-2.5,NULL,true')" ]
+}
+
+@test "ASYNC_DELAY: preserves type and node identity when deduplicating and reusing calls" {
+  run_async_sql typed_identity.sql
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows typed_identity.csv)" = "1,1,1,DATA" ]
+}
+
+@test "HTTP_CALL: accepts a computed integer timeout from an input field" {
+  run_async_sql typed_http.sql
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows typed_http.csv)" = "$(printf '1,/echo:hello\n2,/echo:world')" ]
+}
+
 @test "ASYNC_DELAY: a function's own concurrency limit bounds the calls in flight" {
   local start=$SECONDS
   run_async_sql function_concurrency.sql
