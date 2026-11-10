@@ -20,8 +20,12 @@ add_library(async_handoff_channel STATIC HandoffChannel.cpp)
 target_link_libraries(async_handoff_channel PUBLIC nes-memory)
 target_include_directories(async_handoff_channel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_library(async_graph_execution STATIC SharedAsyncResult.cpp AsyncGraphExecution.cpp)
+target_include_directories(async_graph_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(async_graph_execution PUBLIC nes-sources)
+
 add_library(async_source_plugin_library STATIC AsyncSource.cpp)
-target_link_libraries(async_source_plugin_library PRIVATE nes-sources nes-nautilus reflectcpp::reflectcpp PUBLIC async_handoff_channel)
+target_link_libraries(async_source_plugin_library PRIVATE nes-sources nes-nautilus reflectcpp::reflectcpp async_graph_execution PUBLIC async_handoff_channel)
 link_plugin_library(nes-sources async_source_plugin_library)
 add_registry_entry(Source Async)
 add_registry_entry(SourceConfigSchema Async)

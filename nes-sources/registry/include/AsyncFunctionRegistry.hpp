@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncFunctionType.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
@@ -34,7 +35,7 @@ struct AsyncFunctionRegistryArguments
 using AsyncFunctionFn = std::function<AsyncFunctionRegistryReturnType(AsyncFunctionRegistryArguments)>;
 
 /// Keyed by the logical function's type, e.g. `HttpCall`.
-class AsyncFunctionRegistry final : public RuntimeRegistry<AsyncFunctionRegistry, std::string, AsyncFunctionFn, /*CaseSensitive*/ false>
+class AsyncFunctionRegistry final : public RuntimeRegistry<AsyncFunctionRegistry, AsyncFunctionType, AsyncFunctionFn, /*CaseSensitive*/ false>
 {
 public:
     static AsyncFunctionRegistry& instance();

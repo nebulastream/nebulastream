@@ -27,7 +27,7 @@ The framework ships two functions:
 | Function                                   | Result                                                                                                              |
 |--------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
 | `HTTP_CALL(body, url[, timeout_ms])`       | POSTs `body` to `url` and returns the response body. Plain `http://` only. The timeout defaults to 30 s.           |
-| `ASYNC_DELAY(value, millis[, concurrency])` | Returns the value with its input type after waiting `millis`; its second output is the elapsed delay as `UINT64`. A test and benchmark aid.          |
+| `ASYNC_DELAY(value, millis[, concurrency])` | Returns the value with its input type after waiting `millis`; its second output is the requested delay as `UINT64`. A test and benchmark aid.          |
 
 `ASYNC_OUTPUT(call, i)` reads the i-th value of a call that produces several (`ASYNC_OUTPUT(call, 0)` is the call
 itself).
@@ -82,13 +82,31 @@ worker it was placed on, by
   own, and
 - an `Async` source (`nes-plugins/Async/AsyncSource.cpp`) in the stage's place.
 
-Both carry the same channel id. The source receives typed calls as JSON (`CALLS`, a list of `AsyncCall` from
-`nes-sources/include/Sources/AsyncFunction.hpp`): function name, declared result types, and typed arguments sourced from
-a handed-off field, a typed constant, or an earlier call output, plus the destination fields. Argument positions are
-preserved: an absent optional constant means that position is supplied dynamically. Constants are parsed once when the
-function binding is created. Argument and result types are `DataType` directly. Calls are reflected/unreflected through
-NES `ReflectionContext`, including the existing `DataType` reflector; `rfl::json` only encodes/decodes the intermediate
-`rfl::Generic` representation. No async-specific type descriptor or reflect-cpp adapter is needed.
+Both carry the same channel id. `CALLS` transports an `AsyncCallGraph` from
+`nes-sources/include/Sources/AsyncCallGraph.hpp`, including the ordered input schema, immutable call nodes, and exported
+outputs. The source uses that bound schema directly; there is no separate comma-separated input-field mapping.
+Each call's `functionType` is an `AsyncFunctionType`, a strong string registry key such as `HttpCall` or `AsyncDelay`,
+not a call-node identity. Registry insertion and lookup use that strong type and retain case-insensitive matching;
+plugin provisioning explicitly converts its transported string key at the registry boundary.
+
+Each argument is a variant of a native `RuntimeValue`, an `InputFieldReference`, or an `AsyncResultReference`:
+
+- Inputs retain a `QualifiedIdentifier` and their graph's immutable input scope. A builder rejects fields from a
+  different scope, even when their names and types happen to match.
+- Results own their producer and are constructed through `producer->output(i)`, which checks the selector. Their type
+  is obtained from the producer's immutable output signature, not from an independent index/type table.
+- Constants are converted to native values during decomposition, rather than reparsed strings for each call.
+
+`AsyncCallGraphBuilder` is single-use. All dependencies refer to already-constructed immutable producers, and foreign
+producer handles are rejected. Logical rewrites must explicitly rebind into a new graph instead of accidentally retaining
+a reference into an old one. Common-subexpression sharing is decided while lowering; runtime caching uses node identity,
+not structural equality. Unreachable calls are removed when the graph is finalized.
+
+The graph is reflected/unreflected through NES `ReflectionContext`, using the existing `DataType` reflection and native
+`RuntimeValue` reflection. `rfl::json` only encodes/decodes the intermediate `rfl::Generic` representation. Local IDs are
+used only in the wire format: deserialization resolves them back to owning handles, preserves sharing, accepts reordered
+definitions, and rejects duplicate/dangling IDs, invalid output selectors and cycles. VARSIZED constants use a byte-array
+payload so invalid UTF-8 remains valid data; floating-point payloads preserve their exact bits, including NaNs and signed zero.
 
 `EXPLAIN (DISTRIBUTED)` shows the pair:
 
@@ -138,6 +156,33 @@ There is no dedicated thread per call. Each async stage still has an ordinary so
   stopping. A call that still fails fails the query: the source cancels every call in flight and rethrows the error.
 - **Stop.** On a stop request, the source cancels its calls and waits until none of them is running before it returns.
 
+### Dependency-driven row execution
+
+A plan graph contains no live coroutine frames. Each admitted row gets its own `AsyncGraphExecution` and one lazy
+`SharedAsyncResult` per requested producer. Multiple consumers of a producer share one invocation (including its retries)
+and receive independent waits on the same immutable value/error. An `asio::awaitable` frame itself is never shared.
+
+The executor starts independent dependencies and exported roots concurrently. A consumer runs as soon as its own
+inputs are ready; it does not wait for unrelated calls at the same depth. There are no dependency levels or level barriers.
+A producer's stateful plugin instance is invoked only when its inputs are available; keeping a row admission slot does
+not reserve a separate call permit, so nested graphs work with `max_concurrency=1`.
+
+The existing Handoff/materialization boundaries remain for synchronous compiled work and worker/network boundaries.
+This change does not fuse synchronous expressions or filters across those boundaries; an async region is not a scheduling level.
+
+### Deadlines, cancellation and ownership
+
+`SharedAsyncResult::get()` creates an independent subscription; `getUntil(steady_clock_deadline)` bounds only that wait.
+Each subscription has its own cancellation registration. Timing out or cancelling one wait does not cancel the producer,
+poison its cached result, or affect another subscriber. A result already available when subscribing is returned immediately;
+for a pending subscription, a completion published after its deadline is still a timeout even if notifications race.
+
+These wait deadlines are a runtime API, not new SQL syntax. `HTTP_CALL`'s timeout is an operation timeout: a final producer
+failure is shared by all its consumers. A row/query stop or a terminal root failure instead cancels the entire owned graph.
+The owner cancels every producer and joins all started work before returning/releasing its input buffer. Cleanup is shielded
+from cancellation without disabling the caller's subsequent cancellation state. A completed value/error remains available
+to existing subscribers. Result shape/type failures are not service retries.
+
 ### Configuration
 
 The decomposition passes these optimizer options to every async stage, e.g.
@@ -179,8 +224,8 @@ public:
 `create` receives `arguments.binding`, an `AsyncFunctionBinding` containing declared argument/result types and
 positional optional constants. There is no separate per-function configuration payload. Constant arguments remain
 visible at their original positions in `call`, just like dynamic arguments; factories may inspect them to initialize
-state or a concurrency limit. Constants are decoded once when binding, with their exact types (no floating-point
-roundtrip for integer literals).
+state or a concurrency limit. Logical constants become native values during decomposition and retain their exact
+scalar types through transport and binding (no floating-point roundtrip for integer literals).
 
 `AsyncValues` is an immutable, cheap-to-copy owning handle, so a coroutine can keep its arguments across suspension and
 the scheduler can retain them for retries. Indexing returns a `RuntimeValueView`, which borrows from that owner and must
@@ -233,7 +278,11 @@ add_registry_entry(AsyncFunction MyFunction)
   It covers typed delay values and outputs, nullable pass-through, computed/field-valued integer delays, chaining, selections, concurrency within and across buffers, backpressure, failures, retries, timeouts and dropping queries.
 - `nes-data-types/tests/UnitTests/RuntimeValueTest.cpp` covers native types, typed nulls, exact integer limits and ownership.
 - `nes-nautilus/tests/UnitTests/RuntimeValueNautilusTest.cpp` covers runtime Nautilus conversions without tuple buffers.
-- `nes-sources/tests/AsyncValuesTest.cpp` covers suspension lifetimes, constant binding and typed plan serialization.
+- `nes-sources/tests/AsyncValuesTest.cpp` covers suspension lifetimes and constant binding.
+- `nes-sources/tests/AsyncCallGraphTest.cpp` covers producer ownership, input scopes, graph identity/serialization,
+  malformed edges/cycles, binary constants and exact floating-point payloads.
+- `nes-plugins/Async/tests/AsyncGraphExecutionTest.cpp` covers diamond sharing, dependency/root concurrency,
+  independent wait timeouts/cancellation, producer failure, row cancellation/draining and per-row memoization.
 - `nes-plugins/Async/tests/AsyncSourceValueTest.cpp` checks result arity, type and nullability errors are not retried.
 - `nes-plugins/Async/tests/HandoffChannelTest.cpp` covers the channel's leases.
 - `nes-systests/explain/AsyncFunctionLifting.test` checks the lifted and the decomposed plans.
