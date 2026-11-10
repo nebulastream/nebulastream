@@ -76,18 +76,37 @@ impl SpdlogLayer {
 }
 
 // Helper to extract the message field
-struct MessageExtractor<'a>(&'a mut String);
+#[derive(Default)]
+struct MessageExtractor {
+    message: String,
+    fields: String,
+}
 
-impl tracing::field::Visit for MessageExtractor<'_> {
+impl MessageExtractor {
+    fn render(event: &Event<'_>) -> String {
+        let mut visitor = Self::default();
+        event.record(&mut visitor);
+        if visitor.message.is_empty() {
+            return visitor.fields.trim_start().to_owned();
+        }
+        visitor.message + &visitor.fields
+    }
+}
+
+impl tracing::field::Visit for MessageExtractor {
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
         if field.name() == "message" {
-            *self.0 = value.to_owned();
+            value.clone_into(&mut self.message);
+        } else {
+            write!(self.fields, " {}={value}", field.name()).unwrap();
         }
     }
 
     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
         if field.name() == "message" {
-            write!(self.0, "{:?}", value).unwrap();
+            write!(self.message, "{value:?}").unwrap();
+        } else {
+            write!(self.fields, " {}={value:?}", field.name()).unwrap();
         }
     }
 }
@@ -122,9 +141,7 @@ where
     }
 
     fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, S>) {
-        let mut message = String::new();
-        let mut visitor = MessageExtractor(&mut message);
-        event.record(&mut visitor);
+        let message = MessageExtractor::render(event);
 
         // Extract metadata
         let metadata = event.metadata();
@@ -185,5 +202,34 @@ fn initialize_logging(logger: SharedPtr<ffi::SpdLogger>) {
     let subscriber = tracing_subscriber::registry().with(spdlog_layer);
     if let Err(e) = tracing::subscriber::set_global_default(subscriber) {
         warn!("Could not initialize rust logger: {e:?}");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+
+    struct Capture(Arc<Mutex<Vec<String>>>);
+
+    impl<S: Subscriber> Layer<S> for Capture {
+        fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, S>) {
+            self.0.lock().unwrap().push(MessageExtractor::render(event));
+        }
+    }
+
+    #[test]
+    fn event_fields_are_appended_to_the_message() {
+        let lines = Arc::new(Mutex::new(Vec::new()));
+        let subscriber = tracing_subscriber::registry().with(Capture(lines.clone()));
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!(from = %"Started", to = 3, name = "w", "transition");
+            tracing::info!("plain {}", 1);
+            tracing::info!(key = 7);
+        });
+        assert_eq!(
+            *lines.lock().unwrap(),
+            ["transition from=Started to=3 name=w", "plain 1", "key=7"]
+        );
     }
 }
