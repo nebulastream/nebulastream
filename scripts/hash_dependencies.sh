@@ -38,7 +38,8 @@ HASH_PATHS=(
   scripts/hash_dependencies.sh
   Cargo.toml
   Cargo.lock
-  # The development image ships the Python dependencies.
+  # The development image ships the Python dependencies. uv.lock records the requirements of the workspace members
+  # (nes-plugins/*/*/conn-test/pyproject.toml), so their manifests are not hashed.
   pyproject.toml
   uv.lock
 )
