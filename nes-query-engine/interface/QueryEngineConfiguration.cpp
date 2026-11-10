@@ -19,6 +19,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
@@ -83,7 +84,10 @@ ConfigField<std::vector<int>> cpuListField(std::string name, std::string descrip
         std::move(description),
         [](const ConfigLiteral& literal)
         {
-            return tryGetOr<std::string>(literal, expectedType<std::string>())
+            /// A list of a single CPU, e.g. 8, arrives as a number
+            const auto list
+                = std::holds_alternative<int64_t>(literal) ? ConfigLiteral{std::to_string(std::get<int64_t>(literal))} : literal;
+            return tryGetOr<std::string>(list, expectedType<std::string>())
                 .and_then(
                     [](const std::string& value) -> std::expected<std::vector<int>, Exception>
                     {

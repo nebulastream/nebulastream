@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <expected>
 #include <string>
+#include <variant>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -179,7 +180,9 @@ const ConfigField<std::string> PYTHON_UDF_PROCESS_CPUS{
     "all CPUs of the worker",
     [](const ConfigLiteral& literal)
     {
-        return tryGetOr<std::string>(literal, expectedType<std::string>())
+        /// A list of a single CPU, e.g. 8, arrives as a number
+        const auto list = std::holds_alternative<int64_t>(literal) ? ConfigLiteral{std::to_string(std::get<int64_t>(literal))} : literal;
+        return tryGetOr<std::string>(list, expectedType<std::string>())
             .and_then(
                 [](std::string value) -> std::expected<std::string, Exception>
                 {
