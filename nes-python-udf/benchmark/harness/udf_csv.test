@@ -1,0 +1,52 @@
+# name: benchmark/harness/udf_csv.test
+# description: UDFs over CSV input for run_experiment.py; queries 1-3 pin the file source to a performance CPU, 4-6 leave it on the misc CPUs
+# groups: [benchmark]
+
+CREATE LOGICAL SOURCE perf120(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR perf120 TYPE File SET('PERFORMANCE' AS "SOURCE".CPUS);
+ATTACH FILE udf/udf_bench_120m.csv
+
+CREATE LOGICAL SOURCE misc120(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR misc120 TYPE File;
+ATTACH FILE udf/udf_bench_120m.csv
+
+CREATE LOGICAL SOURCE perf30(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR perf30 TYPE File SET('PERFORMANCE' AS "SOURCE".CPUS);
+ATTACH FILE udf/udf_bench.csv
+
+CREATE LOGICAL SOURCE misc30(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR misc30 TYPE File;
+ATTACH FILE udf/udf_bench.csv
+
+CREATE FUNCTION inc_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return x + 1
+$python$;
+CREATE FUNCTION upper_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
+    return x.upper()
+$python$;
+CREATE FUNCTION lcg_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    h = x
+    for _ in range(100):
+        h = (h * 1103515245 + 12345) % 2147483648
+    return h
+$python$;
+
+# 1-3: source on a performance CPU
+SELECT *, inc_oop(id) AS r FROM perf120 INTO Void();
+----
+
+SELECT *, upper_oop(s) AS r FROM perf120 INTO Void();
+----
+
+SELECT *, lcg_oop(id) AS r FROM perf30 INTO Void();
+----
+
+# 4-6: source on the misc CPUs
+SELECT *, inc_oop(id) AS r FROM misc120 INTO Void();
+----
+
+SELECT *, upper_oop(s) AS r FROM misc120 INTO Void();
+----
+
+SELECT *, lcg_oop(id) AS r FROM misc30 INTO Void();
+----
