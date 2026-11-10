@@ -52,7 +52,7 @@ SinkRewriter::SinkRewriter(const RewriteContext& context, const PrefixedNames& n
 }
 
 /// Builds the anonymous sink that replaces a declared sink or one written into the query.
-/// A default is added only for an option that the test did not set, and a declared sink sets none.
+/// A default is added only for an option that the test did not set.
 RewrittenSink SinkRewriter::inlined(
     const std::string& type,
     AntlrSQLParser::NamedConfigExpressionSeqContext* declared,
@@ -68,25 +68,24 @@ RewrittenSink SinkRewriter::inlined(
     }
 
     std::vector<std::string> options;
-    if (not declaresOption(declared, Sql::Sink, Sql::Host))
-    {
-        options.push_back(Sql::option(Sql::Sink, Sql::Host, context.sinkHost.view()));
-    }
     const std::optional<std::filesystem::path> resultFile
         = Sql::writesReadableResult(type) ? std::optional{candidateResultFile} : std::nullopt;
     if (resultFile.has_value())
     {
-        options.push_back(Sql::option(Sql::Sink, Sql::FilePath, resultFile->string()));
-        if (not declaresOption(declared, Sql::Sink, Sql::OutputFormat))
-        {
-            options.push_back(Sql::option(Sql::Sink, Sql::OutputFormat, Sql::Csv));
-        }
+        options.push_back(Sql::option(Sql::sinkConfigGroup(type), Sql::FilePath, resultFile->string()));
+    }
+    /// Keep Void's native buffers when the shared systest formatter default is CSV.
+    if (Sql::sameName(type, Sql::Void) and not declaresOption(declared, Sql::OutputFormatter, Sql::Type))
+    {
+        options.push_back(Sql::option(Sql::OutputFormatter, Sql::Type, "NATIVE"));
     }
     /// A sink that writes a checksum instead of the rows quotes its strings, because the expected checksums were
     /// computed over quoted strings.
-    if (Sql::sameName(type, Sql::Checksum) and not declaresOption(declared, Sql::OutputFormatter, Sql::QuoteStrings))
+    if (Sql::sameName(type, Sql::Checksum)
+        and Sql::sameName(declaredOptionValue(declared, Sql::OutputFormatter, Sql::Type).value_or(Sql::Csv), Sql::Csv)
+        and not declaresOption(declared, Sql::CsvOutputFormatter, Sql::QuoteStrings))
     {
-        options.push_back(Sql::option(Sql::OutputFormatter, Sql::QuoteStrings, "true"));
+        options.push_back(Sql::literalOption(Sql::CsvOutputFormatter, Sql::QuoteStrings, "true"));
     }
     if (not trailingOptions.empty())
     {
@@ -105,11 +104,26 @@ SinkRewriter::inlineSink(SqlParse& parse, AntlrSQLParser::SinkContext* sink, con
         {
             throw TestException("Query writes to sink '{}' that no sink declaration in this file names", sinkName->getText());
         }
-        return inlined(declaration->second.type, nullptr, Sql::schemaOption(Sql::Sink, declaration->second.schema), candidateResultFile);
+        const auto& definition = declaration->second;
+        /// Parse the saved raw sql of the sink definition containing all of its options
+        SqlParse declaredParse{definition.sql};
+        auto* declared = declaredOptions(findFirst<AntlrSQLParser::CreateSinkDefinitionContext>(declaredParse.tree()));
+        if (declaresOption(declared, Sql::sinkConfigGroup(definition.type), Sql::FilePath))
+        {
+            throw TestException(
+                "A declared sink must not choose its result file, because the checker reads the file the rewriter chose: {}",
+                sinkName->getText());
+        }
+        std::vector<std::string> options{Sql::schemaOption(Sql::Sink, definition.schema)};
+        if (const auto declaredText = declaredParse.getTextOf(declared); not declaredText.empty())
+        {
+            options.push_back(declaredText);
+        }
+        return inlined(definition.type, declared, Sql::optionList(options), candidateResultFile);
     }
     if (const auto* anonymous = sink->anonymousSink(); anonymous != nullptr)
     {
-        if (declaresOption(anonymous->parameters, Sql::Sink, Sql::FilePath))
+        if (declaresOption(anonymous->parameters, Sql::sinkConfigGroup(anonymous->type->getText()), Sql::FilePath))
         {
             throw TestException(
                 "A sink written into a query must not choose its result file, because the checker reads the file the rewriter chose: {}",
@@ -124,7 +138,7 @@ SinkRewriter::inlineSink(SqlParse& parse, AntlrSQLParser::SinkContext* sink, con
 std::string SinkRewriter::declaredSinkStatement(SqlParse& parse, AntlrSQLParser::CreateSinkDefinitionContext* definition) const
 {
     auto* declared = declaredOptions(definition);
-    if (declaresOption(declared, Sql::Sink, Sql::FilePath))
+    if (declaresOption(declared, Sql::sinkConfigGroup(definition->type->getText()), Sql::FilePath))
     {
         throw TestException(
             "A declared sink must not choose its result file, because the checker reads the file the rewriter chose: {}",
@@ -132,15 +146,11 @@ std::string SinkRewriter::declaredSinkStatement(SqlParse& parse, AntlrSQLParser:
     }
 
     std::vector<std::string> options;
-    if (not declaresOption(declared, Sql::Sink, Sql::Host))
-    {
-        options.push_back(Sql::option(Sql::Sink, Sql::Host, context.sinkHost.view()));
-    }
-    options.push_back(Sql::option(Sql::Sink, Sql::FilePath, context.resultFile(definition->sinkName->getText()).string()));
-    if (not declaresOption(declared, Sql::Sink, Sql::OutputFormat))
-    {
-        options.push_back(Sql::option(Sql::Sink, Sql::OutputFormat, Sql::Csv));
-    }
+    options.push_back(
+        Sql::option(
+            Sql::sinkConfigGroup(definition->type->getText()),
+            Sql::FilePath,
+            context.resultFile(definition->sinkName->getText()).string()));
     /// The options that the test wrote go last, so its own choices read after the defaults that this added.
     if (const auto declaredText = parse.getTextOf(declared); not declaredText.empty())
     {

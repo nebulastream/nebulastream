@@ -19,8 +19,9 @@ sinks:
       - name: number
         type: UINT64
     type: TCP
+    parser_config:
+      type: CSV
     config:
-      output_format: CSV
       socket_host: tcp-client
       socket_port: 9000
 

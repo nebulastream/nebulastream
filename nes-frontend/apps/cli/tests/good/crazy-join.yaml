@@ -85,7 +85,8 @@ sinks:
     type: File
     config:
       FILE_PATH: out.csv
-      OUTPUT_FORMAT: CSV
+    parser_config:
+      type: CSV
   - name: VOID_SINK
     schema:
       - name: timestamp1

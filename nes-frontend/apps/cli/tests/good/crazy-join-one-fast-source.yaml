@@ -86,7 +86,8 @@ sinks:
     type: File
     config:
       file_path: out.csv
-      output_format: CSV
+    parser_config:
+      type: CSV
 
 logical:
   - name: stream

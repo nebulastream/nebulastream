@@ -124,6 +124,9 @@ public:
     SourceCatalog() : SourceCatalog(Private{}) { }
 
     static SharedPtr<SourceCatalog> create();
+
+    PhysicalSourceId allocatePhysicalSourceId() const { return PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)}; }
+
     ~SourceCatalog() = default;
 
     SourceCatalog(const SourceCatalog&) = delete;

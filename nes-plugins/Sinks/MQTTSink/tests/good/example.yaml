@@ -36,8 +36,9 @@ sinks:
       - name: number
         type: UINT64
     type: MQTT
+    parser_config:
+      type: CSV
     config:
-      output_format: CSV
       server_uri: mqtt-broker
       topic: mqtt-sink-test
       client_id: nes-test-client
