@@ -15,8 +15,10 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 
 #include <cstdint>
+#include <exception>
 #include <memory>
 #include <memory_resource>
+#include <thread>
 #include <utility>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -26,6 +28,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <CpuPinning.hpp>
 #include <QueryEngine.hpp>
 
 namespace NES
@@ -41,13 +44,46 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
     /// Processes of out-of-process UDFs read and write the buffers of the pool in place, without copying them, if it is shared memory.
     const bool sharedPool = workerConfiguration.pythonUdfProcessProtocol == "SHARED_MEMORY_ZERO_COPY";
-    auto bufferManager = BufferManager::create(
-        workerConfiguration.totalMemoryInBytes,
-        workerConfiguration.unpooledMemoryFraction,
-        NES::BufferAlignment{static_cast<uint32_t>(workerConfiguration.bufferAlignmentInBytes)},
-        static_cast<uint32_t>(workerConfiguration.defaultQueryExecution.operatorBufferSize),
-        sharedPool ? std::shared_ptr<std::pmr::memory_resource>{std::make_shared<SharedMemoryAllocator>()}
-                   : std::shared_ptr<std::pmr::memory_resource>{std::make_shared<NesDefaultMemoryAllocator>()});
+    const auto createBufferManager = [&]
+    {
+        return BufferManager::create(
+            workerConfiguration.totalMemoryInBytes,
+            workerConfiguration.unpooledMemoryFraction,
+            NES::BufferAlignment{static_cast<uint32_t>(workerConfiguration.bufferAlignmentInBytes)},
+            static_cast<uint32_t>(workerConfiguration.defaultQueryExecution.operatorBufferSize),
+            sharedPool ? std::shared_ptr<std::pmr::memory_resource>{std::make_shared<SharedMemoryAllocator>()}
+                       : std::shared_ptr<std::pmr::memory_resource>{std::make_shared<NesDefaultMemoryAllocator>()});
+    };
+    std::shared_ptr<BufferManager> bufferManager;
+    if (workerConfiguration.queryEngine.cpuPinning)
+    {
+        /// Linux places a page on the NUMA node of the thread that touches it first, and creating the pool touches a page of every
+        /// buffer. So a thread on a performance CPU creates it, or the pool ends up wherever the thread that starts the worker runs.
+        CpuPinning::enable(workerConfiguration.queryEngine.performanceCpus, workerConfiguration.queryEngine.miscCpus);
+        std::exception_ptr failure;
+        std::thread(
+            [&]
+            {
+                CpuPinning::pinThisThread(CpuPinning::Role::Performance);
+                try
+                {
+                    bufferManager = createBufferManager();
+                }
+                catch (...)
+                {
+                    failure = std::current_exception();
+                }
+            })
+            .join();
+        if (failure)
+        {
+            std::rethrow_exception(failure);
+        }
+    }
+    else
+    {
+        bufferManager = createBufferManager();
+    }
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
