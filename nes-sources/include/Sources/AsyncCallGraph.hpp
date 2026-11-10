@@ -15,7 +15,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <string>
 #include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -137,7 +136,8 @@ public:
     AsyncCallGraphBuilder& operator=(AsyncCallGraphBuilder&&) = delete;
 
     [[nodiscard]] InputFieldReference input(QualifiedIdentifier field) const;
-    [[nodiscard]] AsyncCall::Ptr call(AsyncFunctionType functionType, std::vector<AsyncCallArgument> arguments, std::vector<DataType> resultTypes);
+    [[nodiscard]] AsyncCall::Ptr
+    call(AsyncFunctionType functionType, std::vector<AsyncCallArgument> arguments, std::vector<DataType> resultTypes);
     void exportOutput(AsyncResultReference result, QualifiedIdentifier field);
     [[nodiscard]] AsyncCallGraph build();
 
