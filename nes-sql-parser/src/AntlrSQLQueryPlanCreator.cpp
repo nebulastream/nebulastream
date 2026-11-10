@@ -22,6 +22,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <span>
 #include <string>
 #include <utility>
 #include <variant>
@@ -205,32 +206,6 @@ StatisticId parseStatisticId(const LogicalFunction& argument, const std::string_
         throw InvalidQuerySyntax("{} requires a valid statisticId at {}", functionName, queryText);
     }
     return StatisticId(statisticId);
-}
-
-std::vector<StatisticStoreReaderLogicalOperator::PayloadField> parsePayloadFields(
-    const std::vector<LogicalFunction>& arguments,
-    const size_t firstArgumentIdx,
-    const std::string_view functionName,
-    const std::string_view queryText)
-{
-    std::vector<StatisticStoreReaderLogicalOperator::PayloadField> payloadFields;
-    for (size_t argumentIdx = firstArgumentIdx; argumentIdx < arguments.size(); argumentIdx += 2)
-    {
-        const auto fieldAccess = arguments[argumentIdx].tryGetAs<UnboundFieldAccessLogicalFunction>();
-        const auto typeAccess = arguments[argumentIdx + 1].tryGetAs<UnboundFieldAccessLogicalFunction>();
-        if (not fieldAccess or not typeAccess)
-        {
-            throw InvalidQuerySyntax("{} expects (fieldName, typeName) pairs at {}", functionName, queryText);
-        }
-        const auto typeName = toUpperCase(std::string{typeAccess.value()->getFieldName().getOriginalString()});
-        const auto dataType = DataTypeProvider::tryProvideDataType(typeName);
-        if (not dataType.has_value())
-        {
-            throw InvalidQuerySyntax("{} got an unknown data type {} at {}", functionName, typeName, queryText);
-        }
-        payloadFields.emplace_back(fieldAccess.value()->getFieldName(), dataType.value());
-    }
-    return payloadFields;
 }
 
 std::optional<std::pair<std::string, StatisticWindowMatch>> parseProbeFunctionName(const std::string& functionName)
@@ -1327,6 +1302,36 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         return std::pair{std::move(registryArguments), firstInputField};
     };
 
+    /// Turns a probe's (fieldName, typeName) pairs into the columns through which it reads the statistic's payload.
+    /// The payload is only readable through these columns, so a probe names at least one.
+    const auto toPayloadFields = [&](const std::span<const LogicalFunction> pairArguments)
+    {
+        if (pairArguments.empty() or pairArguments.size() % 2 != 0)
+        {
+            throw InvalidQuerySyntax(
+                "{} expects at least one (fieldName, typeName) pair after the statisticId at {}", funcName, context->getText());
+        }
+        std::vector<StatisticStoreReaderLogicalOperator::PayloadField> payloadFields;
+        payloadFields.reserve(pairArguments.size() / 2);
+        for (size_t pairStart = 0; pairStart < pairArguments.size(); pairStart += 2)
+        {
+            const auto fieldAccess = pairArguments[pairStart].tryGetAs<UnboundFieldAccessLogicalFunction>();
+            const auto typeAccess = pairArguments[pairStart + 1].tryGetAs<UnboundFieldAccessLogicalFunction>();
+            if (not fieldAccess or not typeAccess)
+            {
+                throw InvalidQuerySyntax("{} expects (fieldName, typeName) pairs at {}", funcName, context->getText());
+            }
+            const auto typeName = toUpperCase(std::string{typeAccess.value()->getFieldName().getOriginalString()});
+            const auto dataType = DataTypeProvider::tryProvideDataType(typeName);
+            if (not dataType.has_value())
+            {
+                throw InvalidQuerySyntax("{} got an unknown data type {} at {}", funcName, typeName, context->getText());
+            }
+            payloadFields.emplace_back(fieldAccess.value()->getFieldName(), dataType.value());
+        }
+        return payloadFields;
+    };
+
     helpers.top().hasUnnamedAggregation = false;
     /// A type constructor such as UINT64(1) keeps its argument on the constant stack, so it is resolved
     /// before anything is taken off the expression stack.
@@ -1436,11 +1441,9 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 context->getText());
         }
         requireKeywordCase();
-        /// The payload is only readable through the columns named here, so a probe names at least one.
-        if (arguments.size() < 3 or arguments.size() % 2 == 0)
+        if (arguments.empty())
         {
-            throw InvalidQuerySyntax(
-                "{} expects a statisticId followed by at least one (fieldName, typeName) pair at {}", funcName, context->getText());
+            throw InvalidQuerySyntax("{} expects the statisticId as its first argument at {}", funcName, context->getText());
         }
         if (helpers.top().statisticProbe.has_value())
         {
@@ -1449,7 +1452,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         helpers.top().statisticProbe = AntlrSQLHelper::StatisticProbeInfo{
             .statisticId = parseStatisticId(arguments.front(), funcName, context->getText()),
             .blobType = StatisticBlobType{std::string{probed->name}},
-            .payloadFields = parsePayloadFields(arguments, 1, funcName, context->getText()),
+            .payloadFields = toPayloadFields(std::span{arguments}.subspan(1)),
             .windowMatch = windowMatch};
         return;
     }
