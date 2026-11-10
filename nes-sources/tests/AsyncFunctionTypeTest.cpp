@@ -32,8 +32,13 @@ namespace NES
 {
 namespace
 {
-class TypedFunctionRegistry final : public RuntimeRegistry<TypedFunctionRegistry, AsyncFunctionType, int, false> { };
-class StringFunctionRegistry final : public RuntimeRegistry<StringFunctionRegistry, std::string, int, false> { };
+class TypedFunctionRegistry final : public RuntimeRegistry<TypedFunctionRegistry, AsyncFunctionType, int, false>
+{
+};
+
+class StringFunctionRegistry final : public RuntimeRegistry<StringFunctionRegistry, std::string, int, false>
+{
+};
 }
 
 static_assert(std::is_same_v<AsyncFunctionRegistry::KeyType, AsyncFunctionType>);

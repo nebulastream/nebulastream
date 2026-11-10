@@ -16,7 +16,6 @@
 
 #include <functional>
 #include <memory>
-#include <string>
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/AsyncFunctionType.hpp>
 #include <Util/RuntimeRegistry.hpp>
@@ -34,8 +33,9 @@ struct AsyncFunctionRegistryArguments
 
 using AsyncFunctionFn = std::function<AsyncFunctionRegistryReturnType(AsyncFunctionRegistryArguments)>;
 
-/// Keyed by the logical function's type, e.g. `HttpCall`.
-class AsyncFunctionRegistry final : public RuntimeRegistry<AsyncFunctionRegistry, AsyncFunctionType, AsyncFunctionFn, /*CaseSensitive*/ false>
+/// Keyed by the strong implementation type, e.g. AsyncFunctionType{"HttpCall"}.
+class AsyncFunctionRegistry final
+    : public RuntimeRegistry<AsyncFunctionRegistry, AsyncFunctionType, AsyncFunctionFn, /*CaseSensitive*/ false>
 {
 public:
     static AsyncFunctionRegistry& instance();

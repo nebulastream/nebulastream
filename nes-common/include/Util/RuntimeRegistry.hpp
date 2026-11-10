@@ -49,8 +49,9 @@ class RuntimeRegistry
         {
             return KeyTypeT{toUpperCase(static_cast<std::string_view>(externalKey))};
         }
-        else if constexpr (!CaseSensitive && std::constructible_from<KeyTypeT, std::string_view>
-            && requires { { externalKey.view() } -> std::convertible_to<std::string_view>; })
+        else if constexpr (!CaseSensitive && std::constructible_from<KeyTypeT, std::string_view> && requires {
+                               { externalKey.view() } -> std::convertible_to<std::string_view>;
+                           })
         {
             /// Strong string keys deliberately have no implicit string conversion.
             return KeyTypeT{toUpperCase(externalKey.view())};
