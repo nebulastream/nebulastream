@@ -42,13 +42,13 @@ _TOXIPROXY_COMPOSE = _RUNNER_DIR / "toxiproxy.compose.yaml"
 # A user selector that deselects every test of one connector is not a failure.
 _PYTEST_EXIT_NO_TESTS = 5
 
-# uv runs pytest in the venv of the root pyproject.toml, which holds every connector's dependencies.
+# uv runs pytest in the venv of the root pyproject.toml; --all-packages adds every connector's dependencies.
 # The development image names its venv in UV_PROJECT_ENVIRONMENT. The default is resolved in the container, not by compose,
 # because compose would substitute the host's environment. Without the variable, uv would create .venv in the mounted repo.
 _RUN_PYTEST = (
     "bash",
     "-c",
-    'export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-/tmp/nes-venv}"; exec uv run --frozen pytest "$@"',
+    'export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-/tmp/nes-venv}"; exec uv run --frozen --all-packages pytest "$@"',
     "bash",
 )
 

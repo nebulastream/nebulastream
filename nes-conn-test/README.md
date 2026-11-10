@@ -21,10 +21,11 @@ ctest --test-dir <build> -L ConnTest --output-on-failure
 run without Docker. The battery and the runner tests need `uv`, which the development image ships. In CI the battery runs in the Docker lane, with the sanitizer options of
 `.github/.env/test-<sanitizer>.env` forwarded to the harness.
 
-The Python dependencies of the runner and of every loader are in the root `pyproject.toml`.
+The runner's Python dependencies are in the root `pyproject.toml`, and each loader's are in its `conn-test/pyproject.toml`,
+a member of the root's uv workspace. `uv.lock` locks them all.
 The development image ships them in its venv, installed from `uv.lock`,
 so with it the tests run without network, once the data services' images are pulled.
-`pyproject.toml` and `uv.lock` are part of the dependency hash, so changing them needs the development image of the new hash.
+The root `pyproject.toml` and `uv.lock` are part of the dependency hash, so changing a dependency needs the development image of the new hash.
 Outside the development image, uv installs the dependencies, which needs network.
 
 ctest calls the runner's CLI, which can also be used directly, e.g. to pass arguments to pytest:
@@ -85,14 +86,16 @@ not in config files.
 
 ## Adding a connector
 
-A connector's whole test surface is in a `conn-test/` directory next to its `CMakeLists.txt`;
-nothing under `nes-conn-test/` changes, and only a loader with a client library edits a shared file, the root `pyproject.toml`:
+A connector's whole test surface is in a `conn-test/` directory next to its `CMakeLists.txt`,
+in `nes-plugins/<Kind>/<Name>/` (connection tests cover plugins, see `core_design_principles.md`);
+nothing outside it changes, except `uv.lock`, which uv generates:
 
 ```
 conn-test/
   compose.yaml          optional: exactly one service with an `expose:` port, the connector's endpoint
   configs/*.nesql       valid configs (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE); each must bind as committed
   loader.py             a SourceLoader subclass that seeds the service
+  pyproject.toml        the loader's client libraries, if any; required even without them, as a member of the uv workspace
   scenarios.py          SCENARIOS = [...] built from conntest_runner.scenario_bindings
 ```
 
@@ -103,8 +106,8 @@ add_conn_test(PLUGIN <Name>)
 ```
 
 The runner finds a connector only through this call, which records it in `<build>/nes-conn-test/connectors.txt`.
-A loader's client library goes into `dependencies` in the root `pyproject.toml`, followed by `uv lock` at the repo root;
-both files are part of the dependency hash, like a vcpkg change.
+A loader's client library goes into `dependencies` in its `conn-test/pyproject.toml`, followed by `uv lock` at the repo root;
+the new `uv.lock` is part of the dependency hash, like a vcpkg change.
 
 The loader implements three methods (`conntest_runner/contracts.py`):
 
