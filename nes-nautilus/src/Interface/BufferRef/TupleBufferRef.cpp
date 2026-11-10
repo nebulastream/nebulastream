@@ -141,7 +141,9 @@ VarSizedLoadFn TupleBufferRef::getRecordBufferLoad(const RecordBuffer& recordBuf
 VarSizedStoreFn
 TupleBufferRef::getRecordBufferStore(const RecordBuffer& recordBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    return [recordBuffer, bufferProvider](const nautilus::val<int8_t*>& slot, const VarVal& value)
+    /// Only a pointer to the buffer is captured: a copy of the RecordBuffer would retain and release the buffer for every record that
+    /// is written, whether or not it has variable-sized fields. The store is used while the RecordBuffer is alive.
+    return [buffer = recordBuffer.getReference(), bufferProvider](const nautilus::val<int8_t*>& slot, const VarVal& value)
     {
         const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
         auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(slot);
@@ -159,7 +161,7 @@ TupleBufferRef::getRecordBufferStore(const RecordBuffer& recordBuffer, const nau
                 const VariableSizedAccess writtenAccess = writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
                 *refToIndex = writtenAccess;
             },
-            recordBuffer.getReference(),
+            buffer,
             bufferProvider,
             varSizedValue.getContent(),
             varSizedValue.getSize(),
