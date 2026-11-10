@@ -96,8 +96,9 @@ def node(number):
 def layouts():
     out = []
 
-    def add(name, perf, misc, py, src_perf=False):
-        out.append({"name": name, "w": len(perf), "p": len(py), "perf": perf, "misc": misc, "py": py, "src_perf": src_perf})
+    def add(name, perf, misc, py, src_perf=False, workers=None):
+        # File sources on a performance CPU take the performance CPUs the worker threads leave free.
+        out.append({"name": name, "w": workers or len(perf), "p": len(py), "perf": perf, "misc": misc, "py": py, "src_perf": src_perf})
 
     # A: file source on a core of its own, the UDF source and misc threads on another
     for w, p in [(5, 1), (4, 2), (3, 3), (2, 4), (1, 5)]:
@@ -136,6 +137,14 @@ def layouts():
         processes = [cpu for number in nodes for cpu in node(number)]
         add(f"R w7 {label}", CORES[:7], [14, 15], processes)
         add(f"R w14 {label}", list(range(14)), [14, 15], processes)
+    # S: as R, but every source thread has a core of its own: the UDF source on CPU 14 (misc), the file sources on the
+    # performance CPUs the workers leave free. `S w6` is for one file source, `S w5` for two (--sources 2), `S w3` for four.
+    for label, nodes in [("n4-5", [4, 5]), ("n4-7", [4, 5, 6, 7])]:
+        processes = [cpu for number in nodes for cpu in node(number)]
+        for workers in (6, 5, 3):
+            add(f"S w{workers} {label}", CORES[:7], [14], processes, src_perf=True, workers=workers)
+        # worker threads on both hardware threads of five cores, two file sources on cores of their own
+        add(f"S w10 {label}", list(range(10)) + [10, 12], [14], processes, src_perf=True, workers=10)
     return out
 
 
