@@ -14,9 +14,14 @@
 
 #include <Sources/SourceProvider.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -44,9 +49,30 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified, we take the NodeEngine-wide configuration.
         const auto maxInflightBuffers = sourceDescriptor.getMaxInflightBuffers().value_or(defaultMaxInflightBuffers);
+        /// A source that reads bytes, such as a file, in the NATIVE format: the bytes are the tuples, and nothing formats them. Sources
+        /// that add metadata pass on tuple buffers and count the tuples themselves.
+        size_t rawTupleSize = 0;
+        if (sourceDescriptor.getInputFormatType() == Identifier::parse("NATIVE") && !source->addsMetadata())
+        {
+            const auto& schema = sourceDescriptor.getSchema();
+            if (std::ranges::any_of(schema, [](const auto& field) { return field.getDataType().type == DataType::Type::VARSIZED; }))
+            {
+                throw InvalidConfigParameter(
+                    "A {} source cannot read VARSIZED fields in the NATIVE format", sourceDescriptor.getSourceType());
+            }
+            rawTupleSize = getSizeInBytes(schema);
+            if (rawTupleSize == 0 || bufferPool->getBufferSize() % rawTupleSize != 0)
+            {
+                throw InvalidConfigParameter(
+                    "The NATIVE format needs buffers that hold whole tuples, but a tuple has {} bytes and a buffer {}",
+                    rawTupleSize,
+                    bufferPool->getBufferSize());
+            }
+        }
         const SourceRuntimeConfiguration runtimeConfig{
             .inflightBufferLimit = maxInflightBuffers,
-            .cpus = sourceDescriptor.runsOnPerformanceCpus() ? CpuPinning::Role::Performance : CpuPinning::Role::Misc};
+            .cpus = sourceDescriptor.runsOnPerformanceCpus() ? CpuPinning::Role::Performance : CpuPinning::Role::Misc,
+            .rawTupleSize = rawTupleSize};
 
         return std::make_unique<SourceHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source));

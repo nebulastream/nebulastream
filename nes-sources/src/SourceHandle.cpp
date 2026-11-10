@@ -41,7 +41,8 @@ SourceHandle::SourceHandle(
         std::move(originId),
         std::move(bufferPool),
         std::move(sourceImplementation),
-        this->configuration.cpus);
+        this->configuration.cpus,
+        this->configuration.rawTupleSize);
 }
 
 SourceHandle::~SourceHandle() = default;

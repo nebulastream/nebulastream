@@ -37,6 +37,9 @@ struct SourceRuntimeConfiguration
     size_t inflightBufferLimit;
     /// The CPUs the thread of the source is pinned to, if the worker pins its threads
     CpuPinning::Role cpus = CpuPinning::Role::Misc;
+    /// The bytes of a tuple if the source reads the tuples as they are in memory (NATIVE), without an input formatter that finds
+    /// them in the bytes; otherwise 0
+    size_t rawTupleSize = 0;
 };
 
 /// Interface class to handle sources.

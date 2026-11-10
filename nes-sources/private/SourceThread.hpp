@@ -64,7 +64,8 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation,
-        CpuPinning::Role cpus = CpuPinning::Role::Misc);
+        CpuPinning::Role cpus = CpuPinning::Role::Misc,
+        size_t rawTupleSize = 0);
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -97,6 +98,8 @@ protected:
     std::atomic_bool started;
     BackpressureListener backpressureListener;
     CpuPinning::Role cpus;
+    /// See SourceRuntimeConfiguration
+    size_t rawTupleSize;
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

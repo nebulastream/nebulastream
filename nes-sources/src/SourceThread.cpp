@@ -49,12 +49,14 @@ SourceThread::SourceThread(
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<Source> sourceImplementation,
-    const CpuPinning::Role cpus)
+    const CpuPinning::Role cpus,
+    const size_t rawTupleSize)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
     , cpus(cpus)
+    , rawTupleSize(rawTupleSize)
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -99,7 +101,8 @@ SourceImplementationTermination dataSourceThreadRoutine(
     BackpressureListener backpressureListener,
     Source& source,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    const EmitFn& emit)
+    const EmitFn& emit,
+    const size_t rawTupleSize)
 {
     source.open(bufferProvider);
     SCOPE_SUCCESS
@@ -154,7 +157,20 @@ SourceImplementationTermination dataSourceThreadRoutine(
         {
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
-            emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes());
+            /// Without an input formatter (NATIVE), the bytes are the tuples.
+            auto numberOfTuples = fillTupleResult.getNumberOfBytes();
+            if (rawTupleSize != 0)
+            {
+                if (numberOfTuples % rawTupleSize != 0)
+                {
+                    throw CannotFormatSourceData(
+                        "The source read {} bytes in the NATIVE format, which is not a multiple of the {} bytes of a tuple",
+                        numberOfTuples,
+                        rawTupleSize);
+                }
+                numberOfTuples /= rawTupleSize;
+            }
+            emptyBuffer->setNumberOfTuples(numberOfTuples);
             emit(std::move(*emptyBuffer), requiresMetadata);
         }
         else
@@ -179,7 +195,8 @@ void dataSourceThread(
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    const CpuPinning::Role cpus)
+    const CpuPinning::Role cpus,
+    const size_t rawTupleSize)
 {
     /// Every thread starts on the misc CPUs, see Thread::initializeThread
     if (cpus == CpuPinning::Role::Performance)
@@ -204,7 +221,8 @@ void dataSourceThread(
     cpptrace::try_catch(
         [&]()
         {
-            const auto termination = dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, bufferProvider, dataEmit);
+            const auto termination
+                = dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, bufferProvider, dataEmit, rawTupleSize);
             if (termination.result == SourceImplementationTermination::EndOfStream)
             {
                 /// A stop request must be able to interrupt every wait of the source thread, as the owner joins it after requesting stop.
@@ -260,7 +278,8 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         std::move(emitFunction),
         originId,
         localBufferManager,
-        cpus);
+        cpus,
+        rawTupleSize);
     thread = std::move(sourceThread);
     return true;
 }
