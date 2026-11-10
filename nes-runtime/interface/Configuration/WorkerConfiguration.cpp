@@ -28,6 +28,7 @@
 #include <Util/DumpMode.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
+#include <CpuPinning.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -164,13 +165,33 @@ const ConfigField<std::string> PYTHON_UDF_PROCESS_PROTOCOL{
                     {
                         return value;
                     }
-                    return std::unexpected{
-                        InvalidConfigParameter(
+                    return std::unexpected{InvalidConfigParameter(
                         "Invalid process_protocol, must be ARROW_IPC, RAW_BUFFERS, SHARED_MEMORY or SHARED_MEMORY_ZERO_COPY: {}", value)};
                 });
     },
     std::string{"ARROW_IPC"},
     "ARROW_IPC"};
+
+const ConfigField<std::string> PYTHON_UDF_PROCESS_CPUS{
+    Identifier::parse("process_cpus"),
+    "CPUs for the processes of OUT_OF_PROCESS UDFs, e.g. 16-23. Each process is pinned to one of them, in turn, so more processes than "
+    "CPUs share them. Keep them apart from query_engine.performance_cpus and their hyperthread siblings. Default: the processes run on "
+    "all CPUs of the worker",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<std::string, Exception>
+                {
+                    if (CpuPinning::parseCpuList(value))
+                    {
+                        return value;
+                    }
+                    return std::unexpected{InvalidConfigParameter("Invalid process_cpus, expected a CPU list, e.g. 0-7,16: {}", value)};
+                });
+    },
+    std::string{},
+    "all CPUs of the worker"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -188,7 +209,13 @@ Schema<QualifiedErasedConfigField, Ordered> WorkerConfiguration::getConfigSchema
         DEFAULT_MAX_INFLIGHT_BUFFERS,
         DUMP_COMPILATION_RESULT,
         DUMP_GRAPH,
-        createConfigSchema(Identifier::parse("python_udf"), PYTHON_UDF_VENV, PYTHON_UDF_PROCESSES, PYTHON_UDF_PROCESS_VENV, PYTHON_UDF_PROCESS_PROTOCOL));
+        createConfigSchema(
+            Identifier::parse("python_udf"),
+            PYTHON_UDF_VENV,
+            PYTHON_UDF_PROCESSES,
+            PYTHON_UDF_PROCESS_VENV,
+            PYTHON_UDF_PROCESS_PROTOCOL,
+            PYTHON_UDF_PROCESS_CPUS));
 }
 
 WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& config)
@@ -206,6 +233,7 @@ WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& co
         config.get(PYTHON_UDF_VENV),
         config.get(PYTHON_UDF_PROCESSES),
         config.get(PYTHON_UDF_PROCESS_VENV),
-        config.get(PYTHON_UDF_PROCESS_PROTOCOL)};
+        config.get(PYTHON_UDF_PROCESS_PROTOCOL),
+        config.get(PYTHON_UDF_PROCESS_CPUS)};
 }
 }

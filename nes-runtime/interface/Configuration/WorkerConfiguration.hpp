@@ -47,7 +47,8 @@ struct WorkerConfiguration
         std::string pythonUdfVenv,
         uint64_t pythonUdfProcesses = 0,
         std::string pythonUdfProcessVenv = {},
-        std::string pythonUdfProcessProtocol = "ARROW_IPC")
+        std::string pythonUdfProcessProtocol = "ARROW_IPC",
+        std::string pythonUdfProcessCpus = {})
         : queryEngine(queryEngine)
         , defaultQueryExecution(defaultQueryExecution)
         , network(network)
@@ -61,6 +62,7 @@ struct WorkerConfiguration
         , pythonUdfProcesses(pythonUdfProcesses)
         , pythonUdfProcessVenv(std::move(pythonUdfProcessVenv))
         , pythonUdfProcessProtocol(std::move(pythonUdfProcessProtocol))
+        , pythonUdfProcessCpus(std::move(pythonUdfProcessCpus))
     {
     }
 
@@ -101,6 +103,10 @@ struct WorkerConfiguration
 
     /// How the worker and the processes of OUT_OF_PROCESS UDFs exchange batches: ARROW_IPC or RAW_BUFFERS.
     std::string pythonUdfProcessProtocol;
+
+    /// CPUs for the processes of OUT_OF_PROCESS UDFs as a CPU list, e.g. "16-23": each process is pinned to one of them, in turn.
+    /// Empty leaves the processes on all CPUs of the worker.
+    std::string pythonUdfProcessCpus;
 
     static WorkerConfiguration fromConfig(const InstantiatedConfig& config);
 };

@@ -15,6 +15,7 @@
 #include <PythonProcesses.hpp>
 
 #include <array>
+#include <atomic>
 #include <cerrno>
 #include <charconv>
 #include <chrono>
@@ -28,6 +29,7 @@
 #include <string_view>
 #include <system_error>
 #include <thread>
+#include <vector>
 
 #include <poll.h>
 #include <signal.h> /// NOLINT(modernize-deprecated-headers) kill
@@ -39,6 +41,7 @@
 #include <Interface/BufferRef/ArrowBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <CpuPinning.hpp>
 #include <ErrorHandling.hpp>
 #include <PythonBatchWrapper.hpp>
 
@@ -82,6 +85,19 @@ std::string pythonExecutable()
         }
     }
     return "python3";
+}
+
+/// Pins a process to the next CPU of NES_UDF_PROCESS_CPUS, which the worker sets from worker.python_udf.process_cpus. Without it, the
+/// process gets the CPUs of the worker back, as it starts with the ones of the source thread that started it.
+void pin(const pid_t pid)
+{
+    static std::atomic<size_t> started{0};
+    const auto* const list = std::getenv("NES_UDF_PROCESS_CPUS"); /// NOLINT(concurrency-mt-unsafe)
+    const auto cpus = CpuPinning::parseCpuList(list == nullptr ? "" : list).value_or(std::vector<int>{});
+    if (cpus.empty() || !CpuPinning::pinProcess(pid, cpus[started.fetch_add(1) % cpus.size()]))
+    {
+        CpuPinning::unpinProcess(pid);
+    }
 }
 }
 
@@ -142,7 +158,11 @@ Process start(const std::string_view program, const int sharedFd, const int pool
     }
     /// Nothing else of the worker reaches the process, such as its network sockets.
     posix_spawn_file_actions_addclosefrom_np(
-        &actions, (poolFd >= 0 ? PROCESS_POOL_FD : sharedFd >= 0 ? PROCESS_SHARED_FD : PROCESS_SOCKET_FD) + 1);
+        &actions,
+        (poolFd >= 0         ? PROCESS_POOL_FD
+             : sharedFd >= 0 ? PROCESS_SHARED_FD
+                             : PROCESS_SOCKET_FD)
+            + 1);
 
     auto executable = pythonExecutable();
     std::string flag = "-c";
@@ -159,6 +179,7 @@ Process start(const std::string_view program, const int sharedFd, const int pool
             "Failed to start the UDF process '{}': {}", executable, std::strerror(spawned)); /// NOLINT(concurrency-mt-unsafe)
     }
     process.socket = sockets[0];
+    pin(process.pid);
 
     const uint64_t size = program.size();
     sendAll(process, std::as_bytes(std::span{&size, 1}));
