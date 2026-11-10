@@ -77,6 +77,7 @@ results are in `results/history/` and have no commit field.
 | E16 | What do worker threads spend time on (4 KB buffers)? | 11% formatting the query id per task; fixed: inc at 4 KB +38% |
 | E17 | Extra processes on a second node? | inc +34%, lcg +76% |
 | E18 | Workers alone on node 0, processes on other nodes | inc plateaus at 150-173M rows/s with nothing saturated but the source core; lcg stops scaling past 24-32 processes |
+| E19 | Does the committed harness reproduce the earlier numbers? | Yes, within 1% |
 
 ---
 
@@ -276,6 +277,17 @@ results are in `results/history/` and have no commit field.
     and processes not being fed evenly.
   - 14 worker threads on both hyperthreads are no better than 7 here.
 - Raw: `results/history/remote.jsonl`.
+
+## E19 Harness validation
+
+- Date: 2026-11-10. Commit: `cb3c03f5f3` (binary built from `f242c38a20`; the commits in between only add files under
+  `nes-python-udf/benchmark/`).
+- Command:
+  `python3 nes-python-udf/benchmark/harness/run_experiment.py --experiment E19 --format native --udfs inc,lcg --layouts "Dw w3 p5" "R w7 n1" --reps 2`
+- Results (M rows/s, 2 runs): `Dw w3 p5` inc 90.2, 89.6 (E11: 90.5); lcg 14.0, 14.1 (E14: 14.1). `R w7 n1` inc 121.5, 120.3
+  (E18: 121.0); lcg 20.9, 21.1 (E18: 20.8).
+- Conclusion: the harness in the repository reproduces the numbers of the scratch harness, and run-to-run variation is about 1%.
+- Raw: `results/E19.jsonl`.
 
 ## Open questions
 
