@@ -389,14 +389,14 @@ EOF
   # Poll until the sink closure propagates
   for i in $(seq 1 20); do
     sleep 1
-    if grep -q "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log 2>/dev/null; then
+    if grep -q "Query Failed" worker-2/singleNodeWorker.log 2>/dev/null; then
       break
     fi
   done
 
   grep "Backpressure" worker-2/singleNodeWorker.log
   grep "NetworkSink channel was closed by the other side or failed permanently" worker-2/singleNodeWorker.log
-  grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
+  grep "Query Failed" worker-2/singleNodeWorker.log
 
   run docker_nes_cli status $query_id
   [ $status -eq 0 ]
