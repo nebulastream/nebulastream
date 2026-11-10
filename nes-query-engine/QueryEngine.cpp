@@ -40,6 +40,7 @@
 #include <Util/AtomicState.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <CpuPinning.hpp>
 #include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -741,6 +742,7 @@ void ThreadPool::addThread(const Host& host)
         [this, id = numberOfThreads_++](const std::stop_token& stopToken)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
+            CpuPinning::pinThisThread(CpuPinning::Role::Performance);
             const WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
@@ -764,6 +766,19 @@ void ThreadPool::addThread(const Host& host)
         });
 }
 
+namespace
+{
+/// Pinning must be on before the thread pool starts its first thread, so that every thread of the worker is pinned
+const QueryEngineConfiguration& enableCpuPinning(const QueryEngineConfiguration& config)
+{
+    if (config.cpuPinning)
+    {
+        CpuPinning::enable(config.performanceCpus, config.miscCpus);
+    }
+    return config;
+}
+}
+
 QueryEngine::QueryEngine(
     const QueryEngineConfiguration& config,
     std::shared_ptr<QueryEngineStatisticListener> statListener,
@@ -774,7 +789,8 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize))
+    , threadPool(
+          std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, enableCpuPinning(config).admissionQueueSize))
     , host(host)
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads; ++i)

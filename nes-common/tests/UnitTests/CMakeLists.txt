@@ -13,3 +13,4 @@
 add_subdirectory(Util)
 add_nes_unit_test(identifier-test "IdentifierTest.cpp")
 add_nes_unit_test(timestamp-test "TimestampTest.cpp")
+add_nes_unit_test(cpu-pinning-test "CpuPinningTest.cpp")

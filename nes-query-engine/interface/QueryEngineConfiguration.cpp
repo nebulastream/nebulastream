@@ -16,7 +16,10 @@
 
 #include <cstdint>
 #include <expected>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
@@ -24,6 +27,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Variant.hpp>
+#include <CpuPinning.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -65,17 +69,57 @@ const ConfigField<uint64_t> ADMISSION_QUEUE_SIZE{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{1000}};
+
+const ConfigField<bool> CPU_PINNING{
+    Identifier::parse("cpu_pinning"),
+    "Pin every worker thread to a CPU of its own among the performance CPUs, one per physical core first, and all other threads of the "
+    "worker to the misc CPUs",
+    false};
+
+ConfigField<std::vector<int>> cpuListField(std::string name, std::string description)
+{
+    return {
+        Identifier::parse(name),
+        std::move(description),
+        [](const ConfigLiteral& literal)
+        {
+            return tryGetOr<std::string>(literal, expectedType<std::string>())
+                .and_then(
+                    [](const std::string& value) -> std::expected<std::vector<int>, Exception>
+                    {
+                        if (auto cpus = CpuPinning::parseCpuList(value))
+                        {
+                            return *cpus;
+                        }
+                        return std::unexpected{InvalidConfigParameter("Invalid CPU list, expected e.g. 0-7,16: {}", value)};
+                    });
+        },
+        std::vector<int>{},
+        ""};
+}
+
+const auto PERFORMANCE_CPUS = cpuListField(
+    "performance_cpus", "CPUs for the worker threads with cpu_pinning, e.g. 0-15. Empty: the P-cores of a hybrid CPU, otherwise all CPUs");
+const auto MISC_CPUS = cpuListField(
+    "misc_cpus",
+    "CPUs for all other threads with cpu_pinning, e.g. 16-23. Empty: the E-cores of a hybrid CPU, otherwise the performance CPUs");
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryEngineConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("query_engine"), NUMBER_OF_WORKER_THREADS, ADMISSION_QUEUE_SIZE);
+    return createConfigSchema(
+        Identifier::parse("query_engine"), NUMBER_OF_WORKER_THREADS, ADMISSION_QUEUE_SIZE, CPU_PINNING, PERFORMANCE_CPUS, MISC_CPUS);
 }
 
 QueryEngineConfiguration QueryEngineConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(NUMBER_OF_WORKER_THREADS), config.get(ADMISSION_QUEUE_SIZE)};
+    return {
+        config.get(NUMBER_OF_WORKER_THREADS),
+        config.get(ADMISSION_QUEUE_SIZE),
+        config.get(CPU_PINNING),
+        config.get(PERFORMANCE_CPUS),
+        config.get(MISC_CPUS)};
 }
 }

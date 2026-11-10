@@ -22,6 +22,7 @@
 #include <Time/Timestamp.hpp>
 #include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
+#include <CpuPinning.hpp>
 #include <ErrorHandling.hpp>
 #include <NetworkOptions.hpp>
 #include <Thread.hpp>
@@ -87,4 +88,6 @@ void identifyThread(const rust::str threadName, const rust::str host) /// NOLINT
 {
     NES::Thread::ThreadName = static_cast<std::string>(threadName);
     NES::Thread::WorkerNodeId = NES::Host(static_cast<std::string>(host));
+    /// The threads of the network runtime are not NES::Threads, which pin themselves
+    NES::CpuPinning::pinThisThread(NES::CpuPinning::Role::Misc);
 }

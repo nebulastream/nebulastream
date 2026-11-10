@@ -15,6 +15,8 @@
 #pragma once
 
 #include <cstdint>
+#include <utility>
+#include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
@@ -28,13 +30,26 @@ struct QueryEngineConfiguration
 
     QueryEngineConfiguration() = delete;
 
-    QueryEngineConfiguration(uint64_t numberOfWorkerThreads, uint64_t admissionQueueSize)
-        : numberOfWorkerThreads(numberOfWorkerThreads), admissionQueueSize(admissionQueueSize)
+    QueryEngineConfiguration(
+        uint64_t numberOfWorkerThreads,
+        uint64_t admissionQueueSize,
+        bool cpuPinning = false,
+        std::vector<int> performanceCpus = {},
+        std::vector<int> miscCpus = {})
+        : numberOfWorkerThreads(numberOfWorkerThreads)
+        , admissionQueueSize(admissionQueueSize)
+        , cpuPinning(cpuPinning)
+        , performanceCpus(std::move(performanceCpus))
+        , miscCpus(std::move(miscCpus))
     {
     }
 
     uint64_t numberOfWorkerThreads;
     uint64_t admissionQueueSize;
+    /// See CpuPinning; empty CPU lists select its defaults
+    bool cpuPinning;
+    std::vector<int> performanceCpus;
+    std::vector<int> miscCpus;
 
     static QueryEngineConfiguration fromConfig(const InstantiatedConfig& config);
 };

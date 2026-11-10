@@ -19,6 +19,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <spdlog/spdlog.h>
+#include <CpuPinning.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -115,6 +116,8 @@ public:
         WorkerNodeId = std::move(worker_id);
         ThreadName = std::move(name);
         setThreadName(ThreadName);
+        /// Threads that do the work of queries pin themselves again as CpuPinning::Role::Performance
+        CpuPinning::pinThisThread(CpuPinning::Role::Misc);
     }
 
     ///Sets the currents thread's name.
