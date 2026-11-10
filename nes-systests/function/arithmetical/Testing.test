@@ -6,16 +6,7 @@ ATTACH INLINE
 10,5, 1.0, 2.0
 5,10, 1.0, 2.0
 
-
 CREATE SINK sink(var1 UINT32 NOT NULL, var2 UINT32 NOT NULL, res1 INT32 NOT NULL, res2 INT32 NOT NULL, res3 FLOAT32 NOT NULL, res4 FLOAT32 NOT NULL)  TYPE File;
-
-
-SELECT var1, var2, var1 - var2 AS res1, var2 - var1 AS res2
-FROM stream
-INTO FILE();
-----
-10,5,5,4294967291
-5,10,4294967291,5
 
 
 SELECT var1
@@ -25,10 +16,51 @@ INTO File();
 ----
 5
 
-
-SELECT var3, var4, var3 % var4 AS res3, var4 % var3 AS res4
+SELECT var1
 FROM stream
-INTO FILE();
+WHERE var1 = (3 + 1 + 1)
+INTO File();
 ----
-10,5,5,4294967291
-5,10,4294967291,5
+5
+
+SELECT var1
+FROM stream
+WHERE var1 = (6 - 1)
+INTO File();
+----
+5
+
+SELECT var1
+FROM stream
+WHERE var1 = (10 / 2)
+INTO File();
+----
+5
+
+SELECT var1
+FROM stream
+WHERE var1 = (17 % 12)
+INTO File();
+----
+5
+
+SELECT var1
+FROM stream
+WHERE var1 = (1 * 5)
+INTO File();
+----
+5
+
+SELECT var1
+FROM stream
+WHERE var1 = (POW(5, 1))
+INTO File();
+----
+5
+
+#SELECT var3, var4, var3 % var4 AS res3, var4 % var3 AS res4
+#FROM stream
+#INTO FILE();
+#----
+#10,5,5,4294967291
+#5,10,4294967291,5

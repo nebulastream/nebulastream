@@ -22,23 +22,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <vector>
 #include <string>
 
-
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/PlanVisitor.hpp>
-#include <Schema/Binder.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Serialization/ReflectedOperator.hpp>
-#include <Traits/Trait.hpp>
-#include <Traits/TraitSet.hpp>
-#include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 #include <DataTypes/DataType.hpp>
@@ -50,8 +40,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <cmath>
 
-#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 
@@ -61,13 +49,11 @@ namespace
 {
 
 struct OperatorContext
-{   // std::expected?
+{
     std::optional<LogicalFunction> foldedPredicate;
 };
 
 using Visitor = PlanVisitor<OperatorContext>;
-//[[nodiscard]] PlanVisitor<>::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/);
-
 
 LogicalFunction handleAddition(const std::string left, const std::string right, const DataType dataType)
 {
@@ -77,7 +63,6 @@ LogicalFunction handleAddition(const std::string left, const std::string right, 
             : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) + std::stoi(right))));
     }
     // if not INT or UINT it must be a float
-    // warning: if we get more datatypes, this needs to be adjusted!
     return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) + std::stof(right)));
 
 }
@@ -89,8 +74,6 @@ LogicalFunction handleMultiplication(const std::string left, const std::string r
         return (dataType.isInteger() ? ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) * std::stoul(right)))
             : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) * std::stoi(right))));
     }
-    // if not INT or UINT it must be a float
-    // warning: if we get more datatypes, this needs to be adjusted!
     return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) * std::stof(right)));
 }
 
@@ -105,8 +88,6 @@ LogicalFunction handleDivision(const std::string left, const std::string right, 
         return (dataType.isInteger() ? ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) / std::stoul(right)))
             : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) / std::stoi(right))));
     }
-    // if not INT or UINT it must be a float
-    // warning: if we get more datatypes, this needs to be adjusted!
     return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) / std::stof(right)));
 }
 
@@ -117,8 +98,6 @@ LogicalFunction handleSubtraction(const std::string left, const std::string righ
         return (dataType.isInteger() ? ConstantValueLogicalFunction(dataType, std::to_string(std::stoul(left) - std::stoul(right)))
             : ConstantValueLogicalFunction(dataType, std::to_string(std::stoi(left) - std::stoi(right))));
     }
-    // if not INT or UINT it must be a float
-    // warning: if we get more datatypes, this needs to be adjusted!
     return ConstantValueLogicalFunction(dataType, std::to_string(std::stof(left) - std::stof(right)));
 
 }
@@ -160,7 +139,6 @@ LogicalFunction handlePow(const std::string left, const std::string right, const
             return ConstantValueLogicalFunction(dataType, std::to_string(res));
         }
     }
-    //todo: reusable?
     auto res = std::pow(std::stof(left), std::stof(right));
     return ConstantValueLogicalFunction(dataType, std::to_string(res));
 }
@@ -180,10 +158,9 @@ LogicalFunction calculateExpression(const LogicalFunction& function)
         {
             const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-            const auto& leftDataType = left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
-            const auto& rightDataType = right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType();
             DataType dataType;
-            auto newDataType = dataType.inferNumericDataType(leftDataType, rightDataType);
+            auto newDataType = dataType.inferNumericDataType(
+            left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
             return handleAddition(leftConstant, rightConstant, newDataType.value());
         }
     }
@@ -258,41 +235,25 @@ LogicalFunction calculateExpression(const LogicalFunction& function)
 
 Visitor::UpResult rebuildPlan(LogicalOperator op, std::vector<LogicalOperator> children, OperatorContext context) // context: the predicate from the selection
 {
-    //if (selct and pred then set pred new)
-    //{
-
-    //}
-    //return op.withChildren(children);
     if (op.tryGetAs<SelectionLogicalOperator>() && context.foldedPredicate)
     {
         LogicalOperator newSelection = SelectionLogicalOperator::create(children.at(0), context.foldedPredicate.value());
         return newSelection;
     }
-
-    /*if (op.tryGetAs<SinkLogicalOperator>() || op.tryGetAs<AnonymousSinkLogicalOperator>())
-    {
-        return op;
-    }*/
     return op.withChildren(children);
-    //return op;
 }
 
-Visitor::DownResult constantFolding(const LogicalOperator& op/*, const std::vector<std::unordered_set<Field>>& downContexts*/) // todo: should this be a downResult?
+Visitor::DownResult constantFolding(const LogicalOperator& op)
 {
-    //auto tmp = downContexts;
     Visitor::DownResult downResult;
-
 
     if (auto selection = op.tryGetAs<SelectionLogicalOperator>())
     {
         auto predicate = selection.value()->getPredicate();
-
-        //const auto& newSelect = calculateExpression(*selection);
         auto newPredicate = calculateExpression(predicate);
-        downResult.operatorContext.foldedPredicate = std::move(newPredicate); // store the calcualted predicate in the operator context so we dont lose it (?)
+        downResult.operatorContext.foldedPredicate = std::move(newPredicate);
     }
-/// return operator or the new logicalFunction?
-    return downResult; //op.withChildren(children);
+    return downResult;
 }
 
 }

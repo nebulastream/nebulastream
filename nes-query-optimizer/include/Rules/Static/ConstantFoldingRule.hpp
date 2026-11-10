@@ -17,7 +17,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <set>
 #include <string_view>
 #include <typeindex>
-#include <typeinfo>
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>

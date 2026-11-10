@@ -111,7 +111,9 @@ TEST_F(ConstantFoldingRuleTest, nestedAdditionInSelection)
 
 TEST_F(ConstantFoldingRuleTest, noFoldablePredicate)
 {
-    auto source = utils.createSource("noAdditionSource", {"a"});
+    /// BEFORE: Sink < Selection(a = 2) < Source
+    /// AFTER: Sink < Selection(a = 2) < Source
+    auto source = utils.createSource("noFoldingSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -119,7 +121,7 @@ TEST_F(ConstantFoldingRuleTest, noFoldablePredicate)
         ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "2"}
     });
 
-    auto sink = utils.createSink(select, "noAdditionSink", {"a"});
+    auto sink = utils.createSink(select, "noFoldingSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     auto cleaned = ConstantFoldingRule{}.apply(plan);
@@ -134,6 +136,8 @@ TEST_F(ConstantFoldingRuleTest, noFoldablePredicate)
 
 TEST_F(ConstantFoldingRuleTest, simpleMultiplication)
 {
+    /// BEFORE: Sink < Selection(a = 2*2) < Source
+    /// AFTER: Sink < Selection(a = 4) < Source
     auto source = utils.createSource("simpleMultSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
@@ -160,7 +164,9 @@ TEST_F(ConstantFoldingRuleTest, simpleMultiplication)
 
 TEST_F(ConstantFoldingRuleTest, divisionWithNull)
 {
-    auto source = utils.createSource("simpleMultSource", {"a"});
+    /// BEFORE: Sink < Selection(a = 1/0) < Source
+    /// AFTER: Error
+    auto source = utils.createSource("simpleDivSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -169,7 +175,7 @@ TEST_F(ConstantFoldingRuleTest, divisionWithNull)
             ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}}
     });
 
-    auto sink = utils.createSink(select, "simpleMultSink", {"a"});
+    auto sink = utils.createSink(select, "simpleDivSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     EXPECT_ANY_THROW(auto cleaned = ConstantFoldingRule{}.apply(plan));
@@ -177,7 +183,9 @@ TEST_F(ConstantFoldingRuleTest, divisionWithNull)
 
 TEST_F(ConstantFoldingRuleTest, integerDivWouldResultInFloat)
 {
-    auto source = utils.createSource("integerDivWouldResultInFloat", {"a"});
+    /// BEFORE: Sink < Selection(a = 1/2) < Source
+    /// AFTER: Sink < Selection(a = 0) < Source
+    auto source = utils.createSource("integerDivToFloatSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -185,7 +193,7 @@ TEST_F(ConstantFoldingRuleTest, integerDivWouldResultInFloat)
         DivLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "1"},
             ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
     });
-    auto sink = utils.createSink(select, "Sink", {"a"});
+    auto sink = utils.createSink(select, "integerDivToFloatSink", {"a"});
     auto plan = utils.createPlan(sink);
     auto cleaned = ConstantFoldingRule{}.apply(plan);
 
@@ -201,7 +209,9 @@ TEST_F(ConstantFoldingRuleTest, integerDivWouldResultInFloat)
 
 TEST_F(ConstantFoldingRuleTest, floatDivision)
 {
-    auto source = utils.createSource("integerDivWouldResultInFloat", {"a"});
+    /// BEFORE: Sink < Selection(a = 1/2) < Source
+    /// AFTER: Sink < Selection(a = 0.500000) < Source
+    auto source = utils.createSource("floatDivSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -209,7 +219,7 @@ TEST_F(ConstantFoldingRuleTest, floatDivision)
         DivLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "1"},
             ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
     });
-    auto sink = utils.createSink(select, "Sink", {"a"});
+    auto sink = utils.createSink(select, "floatDivSink", {"a"});
     auto plan = utils.createPlan(sink);
     auto cleaned = ConstantFoldingRule{}.apply(plan);
 
@@ -225,7 +235,9 @@ TEST_F(ConstantFoldingRuleTest, floatDivision)
 
 TEST_F(ConstantFoldingRuleTest, simpleSubtraction)
 {
-    auto source = utils.createSource("simpleSubtraction", {"a"});
+    /// BEFORE: Sink < Selection(a = 2-1) < Source
+    /// AFTER: Sink < Selection(a = 1) < Source
+    auto source = utils.createSource("simpleSubSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -234,7 +246,7 @@ TEST_F(ConstantFoldingRuleTest, simpleSubtraction)
             ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "1"}}
     });
 
-    auto sink = utils.createSink(select, "sink", {"a"});
+    auto sink = utils.createSink(select, "simpleSubSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     auto cleaned = ConstantFoldingRule{}.apply(plan);
@@ -253,7 +265,9 @@ TEST_F(ConstantFoldingRuleTest, simpleSubtraction)
 // this test is analogue to the behaviour in the systests
 TEST_F(ConstantFoldingRuleTest, integerSubResultsInUnderflow)
 {
-    auto source = utils.createSource("subWithUnderflow", {"a"});
+    /// BEFORE: Sink < Selection(a = 1-2) < Source
+    /// AFTER: Sink < Selection(a = 18446744073709551615) < Source
+    auto source = utils.createSource("underflowSubSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -262,7 +276,7 @@ TEST_F(ConstantFoldingRuleTest, integerSubResultsInUnderflow)
             ConstantValueLogicalFunction{DataType{DataType::Type::UINT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
     });
 
-    auto sink = utils.createSink(select, "sink", {"a"});
+    auto sink = utils.createSink(select, "underflowSubSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     auto cleaned = ConstantFoldingRule{}.apply(plan);
@@ -279,7 +293,9 @@ TEST_F(ConstantFoldingRuleTest, integerSubResultsInUnderflow)
 
 TEST_F(ConstantFoldingRuleTest, moduloWithFloat)
 {
-    auto source = utils.createSource("moduloWithFloat", {"a"});
+    /// BEFORE: Sink < Selection(a = 1.0 MOD 1.0) < Source
+    /// AFTER: Error
+    auto source = utils.createSource("moduloFloatSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -288,7 +304,7 @@ TEST_F(ConstantFoldingRuleTest, moduloWithFloat)
             ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "1.0"}}
     });
 
-    auto sink = utils.createSink(select, "sink", {"a"});
+    auto sink = utils.createSink(select, "moduloFloatSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     EXPECT_ANY_THROW(auto cleaned = ConstantFoldingRule{}.apply(plan));
@@ -296,7 +312,9 @@ TEST_F(ConstantFoldingRuleTest, moduloWithFloat)
 
 TEST_F(ConstantFoldingRuleTest, integerModulo)
 {
-    auto source = utils.createSource("moduloWithFloat", {"a"});
+    /// BEFORE: Sink < Selection(a = 6 MOD 2) < Source
+    /// AFTER: Sink < Selection(a = 0) < Source
+    auto source = utils.createSource("moduloIntSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -305,7 +323,7 @@ TEST_F(ConstantFoldingRuleTest, integerModulo)
             ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
     });
 
-    auto sink = utils.createSink(select, "sink", {"a"});
+    auto sink = utils.createSink(select, "moduloIntSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     auto cleaned = ConstantFoldingRule{}.apply(plan);
@@ -322,7 +340,9 @@ TEST_F(ConstantFoldingRuleTest, integerModulo)
 
 TEST_F(ConstantFoldingRuleTest, intPow)
 {
-    auto source = utils.createSource("pow", {"a"});
+    /// BEFORE: Sink < Selection(a = 6²) < Source
+    /// AFTER: Sink < Selection(a = 36) < Source
+    auto source = utils.createSource("powIntSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -331,7 +351,7 @@ TEST_F(ConstantFoldingRuleTest, intPow)
             ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
     });
 
-    auto sink = utils.createSink(select, "sink", {"a"});
+    auto sink = utils.createSink(select, "powIntSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     auto cleaned = ConstantFoldingRule{}.apply(plan);
@@ -348,7 +368,9 @@ TEST_F(ConstantFoldingRuleTest, intPow)
 
 TEST_F(ConstantFoldingRuleTest, floatPow)
 {
-    auto source = utils.createSource("pow", {"a"});
+    /// BEFORE: Sink < Selection(a = 4.0²) < Source
+    /// AFTER: Sink < Selection(a = 16.000000) < Source
+    auto source = utils.createSource("powFloatSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
@@ -357,7 +379,7 @@ TEST_F(ConstantFoldingRuleTest, floatPow)
             ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
     });
 
-    auto sink = utils.createSink(select, "sink", {"a"});
+    auto sink = utils.createSink(select, "powFloatSink", {"a"});
     auto plan = utils.createPlan(sink);
 
     auto cleaned = ConstantFoldingRule{}.apply(plan);
@@ -371,6 +393,10 @@ TEST_F(ConstantFoldingRuleTest, floatPow)
     auto op2 = op1.getChildren().at(0);
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
+
+
+//TODO float 16 + 32
+
 /*
  // already throws error when creating the select operator in the original query
 TEST_F(ConstantFoldingRuleTest, noneNumericValue)
@@ -380,8 +406,8 @@ TEST_F(ConstantFoldingRuleTest, noneNumericValue)
         source,
         EqualsLogicalFunction{
         FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
-        AddLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "2"},
-            ConstantValueLogicalFunction{DataType{DataType::Type::CHAR, DataType::NULLABLE::NOT_NULLABLE}, "b"}}
+        AddLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "a"},
+            ConstantValueLogicalFunction{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "b"}}
     });
     auto sink = utils.createSink(select, "Sink", {"a"});
     auto plan = utils.createPlan(sink);
