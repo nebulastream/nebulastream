@@ -17,7 +17,7 @@
 Each run executes one query of udf_csv.test or udf_native.test through systest on a single-node topology and appends one JSON
 line to ../results/<experiment>.jsonl: the commit of the code under test, the full command line, the layout, the inputs and the
 measurements. It refuses to run with uncommitted changes, so that the commit says what was measured; describe the experiment and
-its outcome in ../EXPERIMENTS.md afterwards.
+its outcome in the shared experiment log afterwards: https://claude.ai/artifact/FbNXQThUuqEZEQQNNkEDJK
 
 A layout says where things run on a machine with 16 hardware threads per NUMA node, even CPUs first thread of a core, odd CPUs
 its sibling: `perf` are the performance CPUs (worker threads, one each), `misc` the CPUs of the source and other threads, `py`
@@ -230,7 +230,7 @@ def run(arguments, layout, udf, repetition, record_base):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--experiment", help="id of the experiment in EXPERIMENTS.md, e.g. E20; names the results file")
+    parser.add_argument("--experiment", help="id of the experiment in the experiment log, e.g. E20; names the results file")
     parser.add_argument("--list", action="store_true", help="print the layouts and exit")
     parser.add_argument("--format", choices=sorted(QUERIES), default="native", help="input format (default: native)")
     parser.add_argument("--udfs", default="inc,lcg", help="comma-separated UDFs: inc, upper (csv only), lcg, scan and native_inc (native only)")
