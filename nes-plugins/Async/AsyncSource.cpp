@@ -33,6 +33,7 @@
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
@@ -52,6 +53,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -63,15 +65,15 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/deferred.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/system/system_error.hpp>
 #include <fmt/format.h>
 #include <rfl/Generic.hpp>
 #include <rfl/json/read.hpp>
@@ -108,9 +110,7 @@ const ConfigField<std::string> CHANNEL{
                 });
     }};
 
-const ConfigField<std::string> CALLS{Identifier::parse("CALLS"), "JSON list of the calls of the stage, see AsyncSourceConfig::calls"};
-
-const ConfigField<std::string> INPUT_FIELDS{Identifier::parse("INPUT_FIELDS"), "Comma-separated field order of the handed-off rows"};
+const ConfigField<std::string> CALLS{Identifier::parse("CALLS"), "NES-reflected producer-owned call DAG, see AsyncSourceConfig::calls"};
 
 const ConfigField<size_t> MAX_CONCURRENCY{
     Identifier::parse("MAX_CONCURRENCY"), "Rows whose calls are in flight at the same time", sizeFromLiteral, size_t{16}};
@@ -172,8 +172,7 @@ void requireSameType(const DataType actual, const DataType expected, const std::
 
 Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
 {
-    return createConfigSchema(
-        Identifier::parse("ASYNC_SOURCE"), CHANNEL, CALLS, INPUT_FIELDS, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
+    return createConfigSchema(Identifier::parse("ASYNC_SOURCE"), CHANNEL, CALLS, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
 }
 
 std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig& config)
@@ -181,7 +180,6 @@ std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const 
     return AsyncSourceConfig{
         .channel = config.get(CHANNEL),
         .calls = config.get(CALLS),
-        .inputFields = config.get(INPUT_FIELDS),
         .maxConcurrency = config.get(MAX_CONCURRENCY),
         .channelCapacity = config.get(CHANNEL_CAPACITY),
         .maxRetries = config.get(MAX_RETRIES)};
@@ -199,7 +197,7 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
     {
         throw CannotOpenSource("malformed CALLS of async source: {}", parsed.error().what());
     }
-    const auto descriptions = ReflectionContext{}.unreflect<std::vector<AsyncCall>>(*parsed);
+    graph = std::make_shared<const AsyncCallGraph>(ReflectionContext{}.unreflect<AsyncCallGraph>(*parsed));
 
     outputSchema = sourceDescriptor.getSchema();
     /// Only unchanged fields are copied as raw slots. Typed argument/result access goes through TupleBufferRef.
@@ -210,106 +208,65 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
         outputRowSize += field.getDataType().getSizeInBytesWithNull();
     }
     std::unordered_map<std::string, size_t> inputOffsets;
-    std::vector<QualifiedUnboundField> inputFields;
-    for (const auto& name : config.inputFields | std::views::split(',') | std::ranges::to<std::vector<std::string>>())
+    inputSchema = graph->getInputSchema();
+    for (const auto& field : inputSchema)
     {
-        const auto field = outputFields.find(name);
-        if (field == outputFields.end())
+        const auto name = fmt::format("{}", field.getFullyQualifiedName());
+        const auto output = outputFields.find(name);
+        if (output == outputFields.end())
         {
             throw CannotOpenSource("handed-off field {} is not produced by the async source", name);
         }
+        requireSameType(field.getDataType(), output->second.second, "input field");
         if (!inputOffsets.emplace(name, inputRowSize).second)
         {
             throw CannotOpenSource("duplicate handed-off field {}", name);
         }
-        inputFields.emplace_back(QualifiedIdentifier::create(Identifier::parse(name)), field->second.second);
-        inputRowSize += field->second.second.getSizeInBytesWithNull();
+        inputRowSize += field.getDataType().getSizeInBytesWithNull();
     }
     if (inputOffsets.size() != outputFields.size())
     {
         throw CannotOpenSource("handed-off rows must have exactly the async source's fields");
     }
-    inputSchema = Schema<QualifiedUnboundField, Ordered>{std::move(inputFields)};
-
-    for (const auto& [outputs, function, resultTypes, arguments] : descriptions)
+    outputValues = graph->getOutputs();
+    for (const auto& output : outputValues)
     {
-        BoundCall call{.function = function, .binding = {}, .arguments = {}, .inputFields = {}, .level = 0, .instances = {}};
-        for (const auto dataType : resultTypes)
+        requireSameType(outputFields.at(fmt::format("{}", output.field)).second, output.result.getDataType(), "output field");
+    }
+    for (const auto& node : graph->getCalls())
+    {
+        BoundCall call{.binding = {.argumentTypes = {}, .constantArguments = {}, .resultTypes = node->getResultTypes()}, .instances = {}};
+        for (const auto& argument : node->getArguments())
         {
-            visitRuntimeType(dataType.type, []<typename>() { });
-            call.binding.resultTypes.push_back(dataType);
-        }
-        if (call.binding.resultTypes.empty())
-        {
-            throw CannotOpenSource("async function {} must declare at least one result", function);
-        }
-        for (const auto& [index, field] : outputs)
-        {
-            if (index >= call.binding.resultTypes.size())
+            call.binding.argumentTypes.push_back(std::visit([](const auto& value) { return value.getDataType(); }, argument));
+            if (const auto* constant = std::get_if<RuntimeValue>(&argument))
             {
-                throw CannotOpenSource("async function {} has no output {}", function, index);
-            }
-            requireSameType(outputFields.at(field).second, call.binding.resultTypes[index], "output field");
-            outputValues.push_back({.call = calls.size(), .index = index, .field = QualifiedIdentifier::create(Identifier::parse(field))});
-        }
-        for (const auto& [dataType, field, constant, earlierCall, output] : arguments)
-        {
-            visitRuntimeType(dataType.type, []<typename>() { });
-            call.binding.argumentTypes.push_back(dataType);
-            if (static_cast<int>(field.has_value()) + static_cast<int>(constant.has_value()) + static_cast<int>(earlierCall.has_value())
-                != 1)
-            {
-                throw CannotOpenSource("async argument must have exactly one field, constant or earlier-call binding");
-            }
-            if (field)
-            {
-                requireSameType(outputFields.at(*field).second, dataType, "argument field");
-                const auto name = QualifiedIdentifier::create(Identifier::parse(*field));
-                if (std::ranges::find(call.inputFields, name) == call.inputFields.end())
-                {
-                    call.inputFields.push_back(name);
-                }
-                call.arguments.push_back({.field = name, .call = std::nullopt, .output = 0, .constant = std::nullopt});
-                call.binding.constantArguments.emplace_back(std::nullopt);
-            }
-            else if (earlierCall)
-            {
-                if (*earlierCall >= calls.size() || output >= calls[*earlierCall].binding.resultTypes.size())
-                {
-                    throw CannotOpenSource("async argument reads an invalid earlier call {} output {}", *earlierCall, output);
-                }
-                requireSameType(calls[*earlierCall].binding.resultTypes[output], dataType, "earlier call result");
-                call.level = std::max(call.level, calls[*earlierCall].level + 1);
-                call.arguments.push_back({.field = std::nullopt, .call = earlierCall, .output = output, .constant = std::nullopt});
-                call.binding.constantArguments.emplace_back(std::nullopt);
+                call.binding.constantArguments.emplace_back(*constant);
             }
             else
             {
-                const auto value = RuntimeValue::fromLiteral(dataType, *constant);
-                call.arguments.push_back({.field = std::nullopt, .call = std::nullopt, .output = 0, .constant = value});
-                call.binding.constantArguments.emplace_back(value);
+                call.binding.constantArguments.emplace_back(std::nullopt);
             }
         }
-        const auto factory = AsyncFunctionRegistry::instance().find(function);
+        const auto factory = AsyncFunctionRegistry::instance().find(node->getFunctionType());
         if (!factory)
         {
-            throw UnknownFunctionType("no async implementation registered for {}", function);
+            throw UnknownFunctionType("no async implementation registered for {}", node->getFunctionType());
         }
-        /// The first instance tells what the function allows; every instance sees the same typed constant children.
         call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.binding = call.binding}));
         maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, call.instances.front()->maxConcurrency().value_or(maxConcurrency)));
-        levels = std::max(levels, call.level + 1);
-        calls.push_back(std::move(call));
+        calls.emplace(node, std::move(call));
     }
-    for (auto& call : calls)
+    for (auto& [node, call] : calls)
     {
-        const auto factory = AsyncFunctionRegistry::instance().find(call.function);
+        const auto factory = AsyncFunctionRegistry::instance().find(node->getFunctionType());
         while (call.instances.size() < maxConcurrency)
         {
             call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.binding = call.binding}));
         }
     }
     cancelSignals = std::vector<boost::asio::cancellation_signal>(maxConcurrency);
+    executions.resize(maxConcurrency);
     for (size_t slot = maxConcurrency; slot > 0; --slot)
     {
         freeSlots.push_back(slot - 1);
@@ -317,10 +274,7 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
 
     for (const auto& [name, inputOffset] : inputOffsets)
     {
-        if (std::ranges::none_of(
-                descriptions,
-                [&](const AsyncCall& call)
-                { return std::ranges::any_of(call.outputs, [&](const AsyncCallOutput& output) { return output.field == name; }); }))
+        if (std::ranges::none_of(outputValues, [&](const auto& output) { return fmt::format("{}", output.field) == name; }))
         {
             const auto& [outputOffset, type] = outputFields.at(name);
             copiedFields.push_back({.inputOffset = inputOffset, .outputOffset = outputOffset, .size = type.getSizeInBytesWithNull()});
@@ -351,41 +305,18 @@ void AsyncSource::close()
     channel.release();
 }
 
-AsyncValues AsyncSource::readArguments(
-    const BoundCall& call, const TupleBuffer& input, const size_t row, const std::vector<AsyncCallResult>& results) const
+RuntimeValue AsyncSource::readInput(const InputFieldReference& field, const TupleBuffer& input, const size_t row) const
 {
-    std::optional<Record> record;
-    if (!call.inputFields.empty())
-    {
-        const RecordBuffer buffer{BorrowedNautilusBuffer::from(nautilus::val<const TupleBuffer*>{std::addressof(input)})};
-        auto index = nautilus::val<uint64_t>{row};
-        record = inputBufferRef->readRecord(call.inputFields, buffer, index);
-    }
-    std::vector<RuntimeValue> arguments;
-    arguments.reserve(call.arguments.size());
-    for (size_t index = 0; index < call.arguments.size(); ++index)
-    {
-        const auto& [field, earlierCall, output, constant] = call.arguments[index];
-        if (earlierCall)
-        {
-            arguments.push_back(results[*earlierCall][output].toOwned());
-        }
-        else if (constant)
-        {
-            arguments.push_back(*constant);
-        }
-        else
-        {
-            arguments.push_back(fromVarVal(record->read(*field), call.binding.argumentTypes[index]));
-        }
-    }
-    return AsyncValues{std::move(arguments)};
+    const RecordBuffer buffer{BorrowedNautilusBuffer::from(nautilus::val<const TupleBuffer*>{std::addressof(input)})};
+    auto index = nautilus::val<uint64_t>{row};
+    const auto record = inputBufferRef->readRecord({field.getField()}, buffer, index);
+    return fromVarVal(record.read(field.getField()), field.getDataType());
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_t callIndex, const size_t slot, AsyncValues arguments) const
+boost::asio::awaitable<AsyncValues> AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, AsyncValues arguments) const
 {
-    const auto& call = calls[callIndex];
+    const auto& call = calls.at(node);
     auto& function = *call.instances[slot];
     for (size_t attempt = 0;; ++attempt)
     {
@@ -402,30 +333,7 @@ boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_
         }
         if (result)
         {
-            /// A bug in the function rather than a failure of the service it calls, so it is not retried.
-            if (result->size() != call.binding.resultTypes.size())
-            {
-                throw CannotReadFromSource(
-                    "async function {} produced {} values, but declares {}",
-                    call.function,
-                    result->size(),
-                    call.binding.resultTypes.size());
-            }
-            for (size_t index = 0; index < result->size(); ++index)
-            {
-                const auto value = (*result)[index];
-                const auto expected = call.binding.resultTypes[index];
-                if (value.getDataType().type != expected.type || (value.isNull() && !expected.nullable))
-                {
-                    throw CannotReadFromSource(
-                        "async function {} output {} has type {} (null: {}), expected {}",
-                        call.function,
-                        index,
-                        value.getDataType(),
-                        value.isNull(),
-                        expected);
-                }
-            }
+            /// The graph validates the shared result outside this retry loop; shape/type bugs are never retried.
             co_return std::move(*result);
         }
         if (attempt >= maxRetries
@@ -435,7 +343,11 @@ boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_
         }
         const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
         NES_WARNING(
-            "Async call of {} failed, attempt {} of {} follows in {} ms", call.function, attempt + 2, maxRetries + 1, backoff.count());
+            "Async call of {} failed, attempt {} of {} follows in {} ms",
+            node->getFunctionType(),
+            attempt + 2,
+            maxRetries + 1,
+            backoff.count());
         boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
         co_await timer.async_wait(boost::asio::use_awaitable);
     }
@@ -444,44 +356,17 @@ boost::asio::awaitable<AsyncCallResult> AsyncSource::callWithRetries(const size_
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, const std::shared_ptr<InFlightBuffer> buffer, const size_t row)
 {
-    using CallOperation
-        = decltype(boost::asio::co_spawn(strand, std::declval<boost::asio::awaitable<AsyncCallResult>>(), boost::asio::deferred));
-    /// One result per call. Level by level: the calls of one level run in parallel and only read results of lower levels.
-    std::vector<AsyncCallResult> results(calls.size());
-    for (size_t level = 0; level < levels; ++level)
+    if (stopping)
     {
-        std::vector<size_t> started;
-        std::vector<CallOperation> operations;
-        for (size_t index = 0; index < calls.size(); ++index)
-        {
-            if (calls[index].level == level)
-            {
-                started.push_back(index);
-                operations.push_back(
-                    boost::asio::co_spawn(
-                        strand,
-                        callWithRetries(index, slot, readArguments(calls[index], buffer->input, row, results)),
-                        boost::asio::deferred));
-            }
-        }
-        auto [order, failures, values] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
-                                             .async_wait(boost::asio::experimental::wait_for_all(), boost::asio::use_awaitable);
-        for (size_t position = 0; position < started.size(); ++position)
-        {
-            if (failures[position])
-            {
-                std::rethrow_exception(failures[position]);
-            }
-            results[started[position]] = std::move(values[position]);
-        }
+        throw boost::system::system_error{boost::asio::error::operation_aborted};
     }
-    std::vector<RuntimeValue> outputs;
-    outputs.reserve(outputValues.size());
-    for (const auto& output : outputValues)
-    {
-        outputs.push_back(results[output.call][output.index].toOwned());
-    }
-    buffer->results[row] = AsyncValues{std::move(outputs)};
+    auto execution = std::make_shared<AsyncGraphExecution>(
+        strand,
+        graph,
+        [this, buffer, row](const InputFieldReference& field) { return readInput(field, buffer->input, row); },
+        [this, slot](AsyncCall::Ptr node, AsyncValues arguments) { return callWithRetries(std::move(node), slot, std::move(arguments)); });
+    executions[slot] = execution;
+    buffer->results[row] = co_await execution->run();
 }
 
 void AsyncSource::startRows()
@@ -522,6 +407,7 @@ void AsyncSource::startRows()
 
 void AsyncSource::finishRow(const std::shared_ptr<InFlightBuffer>& buffer, const size_t slot, const std::exception_ptr& error)
 {
+    executions[slot].reset();
     freeSlots.push_back(slot);
     {
         const std::scoped_lock lock(window.mutex);
@@ -604,6 +490,13 @@ void AsyncSource::cancelAndDrain()
         [this]
         {
             stopping = true;
+            for (const auto& execution : executions)
+            {
+                if (execution)
+                {
+                    execution->cancel();
+                }
+            }
             for (auto& signal : cancelSignals)
             {
                 signal.emit(boost::asio::cancellation_type::terminal);

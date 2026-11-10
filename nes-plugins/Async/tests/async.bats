@@ -274,6 +274,21 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(sink_rows typed.csv)" = "$(printf '1,7,true,12,10,11,10\n2,-4,false,-3,20,21,20\n3,0,true,NULL,0,1,0')" ]
 }
 
+@test "ASYNC DAG: nested calls complete with a single admitted row" {
+  run_async_sql typed_values.sql --optimizer.async.max_concurrency=1
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows typed.csv)" = "$(printf '1,7,true,12,10,11,10\n2,-4,false,-3,20,21,20\n3,0,true,NULL,0,1,0')" ]
+}
+
+@test "ASYNC DAG: failure cancels an unrelated long-running producer" {
+  local start=$SECONDS
+  run_async_sql dag_failure.sql
+  [ "$status" -eq 0 ]
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:1/echo failed" nes-repl.log
+  [ "$(sink_rows dag_failure.csv | wc -l)" -eq 0 ]
+  [ $((SECONDS - start)) -lt 10 ]
+}
+
 @test "ASYNC_DELAY: returns CHAR, floating-point and nullable byte values" {
   run_async_sql typed_nullable.sql
   [ "$status" -eq 0 ]

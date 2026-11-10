@@ -18,7 +18,6 @@
 #include <initializer_list>
 #include <memory>
 #include <optional>
-#include <string>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -69,6 +68,7 @@ struct AsyncFunctionBinding
 
 /// Runtime implementation of an AsyncLogicalFunction. An instance serves one row at a time and may retain connections.
 /// Arguments are passed by value to retain their backing storage while suspended. Returned values must own/retain theirs.
+/// Plan/DAG descriptions live separately in AsyncCallGraph.hpp; plugins only need this runtime value interface.
 class AsyncFunction
 {
 public:
@@ -77,33 +77,6 @@ public:
 
     /// Rows whose calls of this function may be in flight at once, if the function itself sets a bound.
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const { return std::nullopt; }
-};
-
-/// An argument's type and binding: a handed-off field, a typed literal, or the result of an earlier call.
-/// Text is only the plan-serialization format for constants; the source parses it once, not once per row.
-struct AsyncCallArgument
-{
-    DataType type;
-    std::optional<std::string> field;
-    std::optional<std::string> constant;
-    std::optional<size_t> call;
-    size_t output = 0;
-};
-
-struct AsyncCallOutput
-{
-    size_t index;
-    std::string field;
-};
-
-/// Calls are listed after every call they read. Only values materialized in the stage's schema have output fields.
-/// Serialize through NES ReflectionContext so nested DataType fields use their existing NES reflection protocol.
-struct AsyncCall
-{
-    std::vector<AsyncCallOutput> outputs;
-    std::string function;
-    std::vector<DataType> resultTypes;
-    std::vector<AsyncCallArgument> arguments;
 };
 
 }

@@ -26,6 +26,7 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
@@ -37,6 +38,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -44,6 +46,7 @@
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
+#include <AsyncGraphExecution.hpp>
 #include <HandoffChannel.hpp>
 
 namespace NES
@@ -53,13 +56,8 @@ struct AsyncSourceConfig
 {
     /// UUID of the channel the `Handoff` sink of the same stage hands its buffers to.
     std::string channel;
-    /// JSON list of `AsyncCall`: the fields each call's values go to, its typed signature and argument bindings, and
-    /// per argument the handed-off field it reads ({"field": ...}), a constant ({"constant": ...}) or a value of an
-    /// earlier call ({"call": ..., "output": ...}).
+    /// NES-reflected AsyncCallGraph: immutable producers, typed constants, scoped inputs and checked output handles.
     std::string calls;
-    /// Comma-separated field order of the handed-off rows. They have the same fields as this source's
-    /// output, possibly in a different order.
-    std::string inputFields;
     /// Rows whose calls are in flight at the same time. A function of the stage may lower it.
     size_t maxConcurrency;
     /// Only used if the source is created before the Handoff sink, which then finds the channel this source created.
@@ -109,33 +107,11 @@ private:
         size_t size;
     };
 
-    /// A typed field, a value of an earlier call, or a constant parsed once during binding.
-    struct BoundArgument
-    {
-        std::optional<Record::RecordFieldIdentifier> field;
-        std::optional<size_t> call;
-        size_t output = 0;
-        std::optional<RuntimeValue> constant;
-    };
-
     struct BoundCall
     {
-        std::string function;
         AsyncFunctionBinding binding;
-        std::vector<BoundArgument> arguments;
-        std::vector<Record::RecordFieldIdentifier> inputFields;
-        /// 0 for calls that read no other call; otherwise one more than the highest level they read.
-        size_t level = 0;
-        /// One per slot, so an instance serves one call at a time.
+        /// A distinct stateful instance per admitted row slot, invoked only after its dependencies are ready.
         std::vector<std::unique_ptr<AsyncFunction>> instances;
-    };
-
-    /// A field of the output that holds one value of a call.
-    struct OutputValue
-    {
-        size_t call;
-        size_t index;
-        Record::RecordFieldIdentifier field;
     };
 
     /// A handed-off buffer whose rows are called.
@@ -167,12 +143,9 @@ private:
         bool channelChanged = false;
     };
 
-    /// `results` holds the values of this row's earlier calls, one result per call.
-    AsyncValues
-    readArguments(const BoundCall& call, const TupleBuffer& input, size_t row, const std::vector<AsyncCallResult>& results) const;
-    /// Retries a failed call up to `maxRetries` times, unless it failed because the query stops, and checks that the
-    /// function produced the values the stage reads.
-    boost::asio::awaitable<AsyncCallResult> callWithRetries(size_t callIndex, size_t slot, AsyncValues arguments) const;
+    RuntimeValue readInput(const InputFieldReference& field, const TupleBuffer& input, size_t row) const;
+    /// Service retries belong to the shared producer invocation, never to its subscribers.
+    boost::asio::awaitable<AsyncValues> callWithRetries(AsyncCall::Ptr node, size_t slot, AsyncValues arguments) const;
     /// Runs the calls of one row with the function instances of `slot`.
     boost::asio::awaitable<void> processRow(size_t slot, std::shared_ptr<InFlightBuffer> buffer, size_t row);
 
@@ -197,10 +170,9 @@ private:
     std::shared_ptr<TupleBufferRef> inputBufferRef;
     std::shared_ptr<TupleBufferRef> outputBufferRef;
     std::vector<CopiedField> copiedFields;
-    /// Ordered so that every call comes after the calls it reads.
-    std::vector<BoundCall> calls;
-    std::vector<OutputValue> outputValues;
-    size_t levels = 0;
+    std::shared_ptr<const AsyncCallGraph> graph;
+    std::unordered_map<AsyncCall::Ptr, BoundCall> calls;
+    std::vector<AsyncCallOutput> outputValues;
 
     /// Taken when the source is created, so that a source that fails afterwards still releases the channel.
     HandoffChannel::Lease channel;
@@ -214,6 +186,7 @@ private:
     /// Strand only. A row in flight holds one slot: its function instances and its cancellation signal.
     std::vector<size_t> freeSlots;
     std::vector<boost::asio::cancellation_signal> cancelSignals;
+    std::vector<std::shared_ptr<AsyncGraphExecution>> executions;
     bool stopping = false;
 };
 

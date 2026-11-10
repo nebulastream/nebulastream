@@ -39,7 +39,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncCallGraph.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/AsyncExecutionTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
@@ -222,87 +222,64 @@ LogicalOperator assignOperator(DecompositionContext& context, const LogicalOpera
     return createNetworkChannel(context, assignedChild, childNode, opNode);
 }
 
-/// Flattens the calls of an async stage into the list the Async source runs. Lifting leaves fields, constants
-/// and directly nested calls as arguments; a nested call is listed before the call reading it, and
-/// structurally equal calls are listed once.
-class AsyncCallList
+/// Preserve producer identity and direct data dependencies when lowering logical async expressions.
+/// Common-subexpression sharing is explicit here; runtime memoization uses node identity, not expression equality.
+class AsyncCallGraphLowering
 {
 public:
-    /// `ASYNC_OUTPUT(call, i)` writes the i-th value of its call, any other call its first.
-    void addResult(const Identifier& output, const LogicalFunction& function)
+    explicit AsyncCallGraphLowering(Schema<QualifiedUnboundField, Ordered> inputSchema) : builder(std::move(inputSchema)) { }
+
+    void addResult(QualifiedIdentifier output, const LogicalFunction& function)
     {
-        const auto [call, index] = resolve(function);
-        calls[call].outputs.push_back({.index = index, .field = output.asCanonicalString()});
+        builder.exportOutput(resolve(function), std::move(output));
     }
 
-    [[nodiscard]] const std::vector<AsyncCall>& get() const { return calls; }
+    [[nodiscard]] AsyncCallGraph build() { return builder.build(); }
 
 private:
-    std::vector<LogicalFunction> described;
-    std::vector<AsyncCall> calls;
+    AsyncCallGraphBuilder builder;
+    std::vector<std::pair<LogicalFunction, AsyncCall::Ptr>> described;
 
-    /// The listed call a function reads and which of its values.
-    std::pair<size_t, size_t> resolve(const LogicalFunction& function)
+    AsyncResultReference resolve(const LogicalFunction& function)
     {
         if (const auto output = function.tryGetAs<AsyncOutputLogicalFunction>())
         {
-            return {describe(output.value()->getCall()), output.value()->getIndex()};
+            return describe(output.value()->getCall())->output(output.value()->getIndex());
         }
-        return {describe(function), 0};
+        return describe(function)->output(0);
     }
 
-    size_t describe(const LogicalFunction& call)
+    AsyncCall::Ptr describe(const LogicalFunction& call)
     {
-        if (const auto known = std::ranges::find(described, call); known != described.end())
+        if (const auto known = std::ranges::find(described, call, &decltype(described)::value_type::first); known != described.end())
         {
-            return static_cast<size_t>(std::distance(described.begin(), known));
+            return known->second;
         }
         const auto async = call.tryGetAs<AsyncLogicalFunction>();
         INVARIANT(async.has_value(), "async stage computes {}, which is not an async call", call);
-        AsyncCall description{
-            .outputs = {},
-            .function = std::string{call.getType()},
-            .resultTypes = async.value()->get().getAsyncOutputTypes(),
-            .arguments = {}};
+        std::vector<AsyncCallArgument> arguments;
         for (const auto& argument : call.getChildren())
         {
             if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
             {
-                description.arguments.push_back(
-                    {.type = argument.getDataType(),
-                     .field = field.value()->getField().getLastName().asCanonicalString(),
-                     .constant = std::nullopt,
-                     .call = std::nullopt,
-                     .output = 0});
+                arguments.emplace_back(builder.input(field.value()->getField().getFullyQualifiedName()));
             }
             else if (const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>())
             {
-                description.arguments.push_back(
-                    {.type = argument.getDataType(),
-                     .field = std::nullopt,
-                     .constant = constant.value()->getConstantValue(),
-                     .call = std::nullopt,
-                     .output = 0});
+                arguments.emplace_back(RuntimeValue::fromLiteral(argument.getDataType(), constant.value()->getConstantValue()));
             }
             else
             {
                 INVARIANT(
                     argument.tryGetAs<AsyncLogicalFunction>().has_value(),
-                    "async call {} has an argument that is neither a field, a constant nor an async call: {}",
-                    call,
+                    "async argument {} is neither a field, constant nor async call",
                     argument);
-                const auto [earlierCall, index] = resolve(argument);
-                description.arguments.push_back(
-                    {.type = argument.getDataType(),
-                     .field = std::nullopt,
-                     .constant = std::nullopt,
-                     .call = earlierCall,
-                     .output = index});
+                arguments.emplace_back(resolve(argument));
             }
         }
-        described.push_back(call);
-        calls.push_back(std::move(description));
-        return calls.size() - 1;
+        auto node = builder.call(AsyncFunctionType{call.getType()}, std::move(arguments), async.value()->get().getAsyncOutputTypes());
+        described.emplace_back(call, node);
+        return node;
     }
 };
 
@@ -317,13 +294,14 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     const auto node = getPlacementFor(asyncOp);
     const auto channel = ChannelId(generateUUID()).getRawValue();
 
-    /// Field accesses only forward an input field; everything else is a call.
-    AsyncCallList calls;
+    const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
+    /// Field accesses only forward an input field; everything else is a producer-owned result.
+    AsyncCallGraphLowering calls{inputFields};
     for (const auto& [field, function] : projection.value()->getProjections())
     {
         if (!function.tryGetAs<FieldAccessLogicalFunction>().has_value())
         {
-            calls.addResult(field.getLastName(), function);
+            calls.addResult(field.getFullyQualifiedName(), function);
         }
     }
 
@@ -346,18 +324,10 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
         sourceConfig.emplace(Identifier::parse("max_retries"), std::to_string(*context.asyncConfig.maxRetries));
     }
 
-    const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     const auto handoffSinkDescriptor
         = context.sinkCatalog->getAnonymousSink(inputFields, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
     INVARIANT(handoffSinkDescriptor.has_value(), "Invalid sink descriptor config for handoff sink");
-    sourceConfig.emplace(Identifier::parse("calls"), rfl::json::write(*ReflectionContext{}.reflect(calls.get())));
-    sourceConfig.emplace(
-        Identifier::parse("input_fields"),
-        fmt::format(
-            "{}",
-            fmt::join(
-                inputFields | std::views::transform([](const auto& field) { return fmt::format("{}", field.getFullyQualifiedName()); }),
-                ",")));
+    sourceConfig.emplace(Identifier::parse("calls"), rfl::json::write(*ReflectionContext{}.reflect(calls.build())));
     context.addPlanToNode(
         SinkLogicalOperator::create(child, handoffSinkDescriptor.value())->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
 
