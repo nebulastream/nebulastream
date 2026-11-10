@@ -94,6 +94,7 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
         new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(unregisterWithError), std::move(planRef)),
         RunningQueryPlanNodeDeleter{.emitter = emitter, .queryId = queryId});
     node->queryId = queryId;
+    node->taskLogContext = fmt::format("{}-{}", queryId, pipelineId);
     emitter.emitPipelineStart(
         queryId,
         node,

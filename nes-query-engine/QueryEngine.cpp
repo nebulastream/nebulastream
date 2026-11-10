@@ -460,7 +460,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     const auto taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
-        LogContext logContext("Task", fmt::format("{}-{}", pipeline->queryId, pipeline->id));
+        const LogContext logContext("Task", pipeline->taskLogContext);
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", pipeline->queryId, pipeline->id, task.buf.getNumberOfTuples());
         std::optional<std::pair<TupleBuffer, std::chrono::milliseconds>> requiresTaskRepetition;
         DefaultPEC pec(

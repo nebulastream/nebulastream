@@ -125,6 +125,12 @@ struct LogContext
         spdlog::mdc::put(this->context, fmt::format("{}", std::forward<Formatable>(f)));
     }
 
+    /// For a value that is already text, which then is not formatted again
+    explicit LogContext(std::string context, const std::string& value) : context(std::move(context))
+    {
+        spdlog::mdc::put(this->context, value);
+    }
+
     ~LogContext() { spdlog::mdc::remove(context); }
 };
 
