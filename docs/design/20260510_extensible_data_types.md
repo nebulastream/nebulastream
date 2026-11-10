@@ -23,7 +23,7 @@ Many formats like JSON, XML, and Avro support composite and array values, so we 
 - G1: A new `DataType` can be added from `nes-plugins/` using the same registration pattern that sources, sinks, and formatters already use, addressing P1.
 - G2: Support a composite `STRUCT` variant with a name and a field list that participates in schemas, parsers, formatters, and Nautilus values, addressing P2.
 - G3: Provide a generic SQL constructor syntax `T(arg1, arg2, ...)` for any registered type, dispatched in the parser without per-type code, addressing P3.
-- G4: Support the definition of format-independent default Serde for each individual DataType plugin (in contrast to only offering format-dependent default Serde for the "Struct" type), addressing P1. E.g. representing a textual `Decimal{integer: INT64, fraction: INT64}` type like a textual float, instead of representing it like `{"integer": 1, "fraction": 25}` in JSON and not offering CSV support for it at all.
+- G4: Support the definition of format-independent default Serde for each individual DataType plugin (in contrast to only offering format-dependent default Serde for the "Struct" type), addressing P1. E.g. representing a textual `Decimal{unscaled: INT64, scale: IN324}` type like a textual float, instead of representing it like `{"unscaled": 125, "scale": 2}` in JSON and not offering CSV support for it at all.
 - G5: Demonstrate G1–G4 end-to-end with example plugins that fit on top of the core without modifying it (`Image/ThermalFrame`, `Reading`, `(Temporal)Point(Sequence)`, `(Temporal)Polygon`, `SpatioTemporalBox`,  `Date`, `Time`, `Timestamp`).
 - G6: Create a fixed-sized (is an array, but name contrasts 'varsized') datatype that is type-specific, i.e., represents an array of type T with a fixed number of elements.
 - G7: Create a vector datatype, which functions similar to the fixed-sized / array type but does not declare the number of elements per value in the schema definition, making it variable-sized.
@@ -102,7 +102,7 @@ Additionally, constructing a plugin like `Circle` out of a `Point` center and a 
    - otherwise → existing function-registry lookup
 8. Domain functions stay per-struct (e.g. `to_celsius`, `is_fever`, `to_rgb`) and gate themselves on `dt.type == STRUCT && dt.structName == "Image"` inside the registered `LogicalFunctionRegistry` entry.
 9. Registered data type plugins may define `Default<Key>ValueDeserializer` and `Default<Key>ValueSerializer`, in case a specific plugin does not follow the generic struct form of the input / output format.
-This can be useful for types like `Decimal`, which might arrive as a single consecutive textual value, but is stored as a composite value out of the whole number and the fraction.
+This can be useful for types like `Decimal`, which might arrive as a single consecutive textual value, but is stored as a composite value out of the unscaled value as integer and the scale.
 This functionality avoids that the user has to manually define the correct serializer for each field with the plugin type in the schema definition.
 
 A new plugin therefore consists of:
@@ -110,7 +110,7 @@ A new plugin therefore consists of:
 - one `CMakeLists.txt` line `add_registry_entry(DataType <name>)`;
 - zero or more domain-specific logical/physical functions, registered the same way as any other function.
 - Optional default serde for the plugin type. Formatters will resort to their default struct-serde if no default for the plugin exists.
-  For example, to be able to receive values of the Decimal{integer: INT64, fraction: INT64} type in the form of "42.125", a default deserializer for Decimal must be implemented, as these values do not follow the standard struct syntax of {"integer": 42, "fraction": 125}.
+  For example, to be able to receive values of the Decimal{unscaled: INT64, scale: INT32} type in the form of "42.125", a default deserializer for Decimal must be implemented, as these values do not follow the standard struct syntax of {"unscaled": 42125, "scale": 3}.
 - (optionally) more non-default Serde for this plugin type.
 
 No edits to core code paths are required beyond the registration entry point.
@@ -430,6 +430,7 @@ SELECT id FROM tSequencePoints WHERE temporal_eintersects_geometry(seq, Polygon(
 - `nes-plugins/InputFormatters/JSONInputFormatter/Deserializers`: New deserializers for json-formatted structs, arrays, and vectors.
 - `nes-plugins/OutputFormatters/JSONOutputFormatter/Serializers`: New serializers for json-formatted structs, arrays, and vectors.
 - `nes-plugins/DataTypes/Time`: registers `Time`, `Date`, `(Unsigned)Timestamp` plugins and their Serde.
+- `nes-plugins/DataTypes/Decimal`: registers `Decimal` plugin, its default serde, and an `Add_Decimal_Decimal` function as PoC for functions over decimal.
 - Systests under `nes-systests/formatter/JSON_OUTPUT/` (`StructConstruction`, `StructAdd`, `StructWHERE`, `ThermalFrameStructJSON`, `ThermalFrameFunctions`, `ThermalFrameToRGB`, `FixedSizedArrayJSON` ...) exercise the end-to-end paths.
 - Systests under `nes-systests/formatter/datatype_plugins` for all `Timestamp` related tests.
 - `nes-plugins/MEOS`: registers all geospatial / geotemporal datatypes and the functions they can be used with. Includes MobilityNebula's MEOS wrapper that acts as interface between NebulaStream and the MEOS library.
