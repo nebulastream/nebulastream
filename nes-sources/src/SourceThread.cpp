@@ -36,6 +36,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <CpuPinning.hpp>
 #include <ErrorHandling.hpp>
 #include <Thread.hpp>
 #include <scope_guard.hpp>
@@ -47,11 +48,13 @@ SourceThread::SourceThread(
     BackpressureListener backpressureListener,
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    const CpuPinning::Role cpus)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
+    , cpus(cpus)
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -131,7 +134,9 @@ SourceImplementationTermination dataSourceThreadRoutine(
             auto buffer = source.nextBuffer(stopToken);
             if (!buffer)
             {
-                return {stopToken.stop_requested() ? SourceImplementationTermination::StopRequested : SourceImplementationTermination::EndOfStream};
+                return {
+                    stopToken.stop_requested() ? SourceImplementationTermination::StopRequested
+                                               : SourceImplementationTermination::EndOfStream};
             }
             emit(std::move(*buffer), requiresMetadata);
             continue;
@@ -173,8 +178,14 @@ void dataSourceThread(
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
-    std::shared_ptr<AbstractBufferProvider> bufferProvider)
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    const CpuPinning::Role cpus)
 {
+    /// Every thread starts on the misc CPUs, see Thread::initializeThread
+    if (cpus == CpuPinning::Role::Performance)
+    {
+        CpuPinning::pinThisThread(cpus);
+    }
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -248,7 +259,8 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager);
+        localBufferManager,
+        cpus);
     thread = std::move(sourceThread);
     return true;
 }

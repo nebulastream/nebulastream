@@ -107,6 +107,8 @@ public:
     [[nodiscard]] const Schema<UnqualifiedUnboundField, Ordered>& getSchema() const;
     ///@returns either a number greater than zero, or a nullopt, indicating that the default value should be used
     [[nodiscard]] std::optional<size_t> getMaxInflightBuffers() const;
+    /// Whether the thread of the source runs on the performance CPUs instead of the misc CPUs, see CpuPinning
+    [[nodiscard]] bool runsOnPerformanceCpus() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
     /// The source-defined config struct (e.g. GeneratorSourceConfig), type-erased. Produced by the
     /// source's SourceConfigRegistry entry, so the source factory can safely any_cast it back.
@@ -127,6 +129,7 @@ private:
     Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
     std::optional<size_t> maxInflightBuffers;
+    bool performanceCpus;
     PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
 
@@ -138,6 +141,7 @@ private:
         Schema<UnqualifiedUnboundField, Ordered> schema,
         Host host,
         std::optional<size_t> maxInflightBuffers,
+        bool performanceCpus,
         PluginSourceConfiguration pluginData,
         InputFormatterDescriptor inputFormatterDescriptor,
         std::optional<Identifier> logicalSourceName);
@@ -178,6 +182,32 @@ public:
         std::nullopt};
 
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
+    static inline const ConfigField<bool> CPUS{
+        Identifier::parse("CPUS"),
+        "The CPUs the thread of the source runs on if the worker pins its threads (query_engine.cpu_pinning): a CPU of its own among "
+        "the performance CPUs, as a worker thread (PERFORMANCE), or the misc CPUs, shared with the other threads (MISC): "
+        "[PERFORMANCE|MISC]",
+        [](const ConfigLiteral& literal) -> std::expected<bool, Exception>
+        {
+            return tryGetOr<std::string>(literal, expectedType<std::string>())
+                .and_then(
+                    [](const std::string& value) -> std::expected<bool, Exception>
+                    {
+                        if (value == "PERFORMANCE" || value == "performance")
+                        {
+                            return true;
+                        }
+                        if (value == "MISC" || value == "misc")
+                        {
+                            return false;
+                        }
+                        return std::unexpected{InvalidConfigParameter("Invalid CPUS of a source, must be PERFORMANCE or MISC: {}", value)};
+                    });
+        },
+        false,
+        "MISC"};
+
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<Host> HOST{
         Identifier::parse("HOST"),
         "Where to place the source, in the form of host:port . Must be a NES node that is part of the topology.",
@@ -189,7 +219,7 @@ public:
     /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
 
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization) - process aborts anyway if config schema setup throws at startup
-    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA);
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, CPUS, HOST, SCHEMA);
 };
 
 template <>
@@ -241,6 +271,7 @@ struct ReflectedSourceDescriptor
     Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
     std::optional<size_t> maxInflightBuffers;
+    bool performanceCpus;
     PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
 

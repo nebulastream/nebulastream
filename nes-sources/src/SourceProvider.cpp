@@ -22,6 +22,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
+#include <CpuPinning.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -43,7 +44,9 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified, we take the NodeEngine-wide configuration.
         const auto maxInflightBuffers = sourceDescriptor.getMaxInflightBuffers().value_or(defaultMaxInflightBuffers);
-        const SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
+        const SourceRuntimeConfiguration runtimeConfig{
+            .inflightBufferLimit = maxInflightBuffers,
+            .cpus = sourceDescriptor.runsOnPerformanceCpus() ? CpuPinning::Role::Performance : CpuPinning::Role::Misc};
 
         return std::make_unique<SourceHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source));

@@ -48,6 +48,7 @@ struct GeneralSourceConfig
 {
     Host host;
     std::optional<size_t> maxInflightBuffers;
+    bool performanceCpus = false;
     bool operator==(const GeneralSourceConfig&) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config);

@@ -24,6 +24,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
+#include <CpuPinning.hpp>
 
 namespace NES
 {
@@ -34,6 +35,8 @@ class SourceThread;
 struct SourceRuntimeConfiguration
 {
     size_t inflightBufferLimit;
+    /// The CPUs the thread of the source is pinned to, if the worker pins its threads
+    CpuPinning::Role cpus = CpuPinning::Role::Misc;
 };
 
 /// Interface class to handle sources.

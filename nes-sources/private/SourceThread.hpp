@@ -30,6 +30,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
+#include <CpuPinning.hpp>
 #include <Thread.hpp>
 
 namespace NES
@@ -62,7 +63,8 @@ public:
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        CpuPinning::Role cpus = CpuPinning::Role::Misc);
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -94,6 +96,7 @@ protected:
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
+    CpuPinning::Role cpus;
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

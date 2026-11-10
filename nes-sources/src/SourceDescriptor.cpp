@@ -46,6 +46,7 @@ SourceDescriptor::SourceDescriptor(
     Schema<UnqualifiedUnboundField, Ordered> schema,
     Host host,
     const std::optional<size_t> maxInflightBuffers,
+    const bool performanceCpus,
     PluginSourceConfiguration pluginData,
     InputFormatterDescriptor inputFormatterDescriptor,
     std::optional<Identifier> logicalSourceName)
@@ -53,6 +54,7 @@ SourceDescriptor::SourceDescriptor(
     , schema(std::move(schema))
     , host(std::move(host))
     , maxInflightBuffers(maxInflightBuffers)
+    , performanceCpus(performanceCpus)
     , pluginSourceConfig(std::move(pluginData))
     , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
     , logicalSourceName(std::move(logicalSourceName))
@@ -87,6 +89,11 @@ Host SourceDescriptor::getHost() const
 std::optional<size_t> SourceDescriptor::getMaxInflightBuffers() const
 {
     return maxInflightBuffers;
+}
+
+bool SourceDescriptor::runsOnPerformanceCpus() const
+{
+    return performanceCpus;
 }
 
 const ExplicitAny& SourceDescriptor::getPluginData() const
@@ -165,6 +172,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .schema = sourceDescriptor.schema,
         .host = sourceDescriptor.host,
         .maxInflightBuffers = sourceDescriptor.maxInflightBuffers,
+        .performanceCpus = sourceDescriptor.performanceCpus,
         .pluginSourceConfig = sourceDescriptor.pluginSourceConfig,
         .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
         .logicalSourceName = sourceDescriptor.logicalSourceName};
@@ -181,6 +189,7 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl,
         std::move(reflectedSourceDescriptor.schema),
         std::move(reflectedSourceDescriptor.host),
         reflectedSourceDescriptor.maxInflightBuffers,
+        reflectedSourceDescriptor.performanceCpus,
         std::move(reflectedSourceDescriptor.pluginSourceConfig),
         std::move(reflectedSourceDescriptor.inputFormatterDescriptor),
         std::move(reflectedSourceDescriptor.logicalSourceName)};

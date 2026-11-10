@@ -81,6 +81,7 @@ std::expected<SourceDescriptor, Exception> PhysicalSourceBuilder::build(
         std::move(schema),
         this->generalSourceConfig.host,
         this->generalSourceConfig.maxInflightBuffers,
+        this->generalSourceConfig.performanceCpus,
         std::move(this->sourcePluginConfig),
         std::move(this->inputFormatterPluginConfig),
         std::move(logicalSourceName)};
@@ -156,7 +157,8 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
     auto maxFlightInBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
 
     return std::make_tuple(
-        GeneralSourceConfig{.host = hostOpt, .maxInflightBuffers = maxFlightInBuffers},
+        GeneralSourceConfig{
+            .host = hostOpt, .maxInflightBuffers = maxFlightInBuffers, .performanceCpus = config.get(SourceDescriptor::CPUS)},
         std::move(pluginSourceConfig),
         std::move(formatDescriptor),
         std::move(schema));
@@ -377,7 +379,11 @@ std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> SourceCa
 
 std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config)
 {
-    return os << fmt::format("GeneralSourceConfig(host: {}, maxInflightBuffers: {})", config.host, config.maxInflightBuffers);
+    return os << fmt::format(
+               "GeneralSourceConfig(host: {}, maxInflightBuffers: {}, cpus: {})",
+               config.host,
+               config.maxInflightBuffers,
+               config.performanceCpus ? "PERFORMANCE" : "MISC");
 }
 
 namespace
@@ -470,7 +476,9 @@ resolveLegacyConfigMaps(
         }
         return std::make_tuple(
             GeneralSourceConfig{
-                .host = config.get(SourceDescriptor::HOST), .maxInflightBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS)},
+                .host = config.get(SourceDescriptor::HOST),
+                .maxInflightBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS),
+                .performanceCpus = config.get(SourceDescriptor::CPUS)},
             PluginSourceConfiguration{sourceType, std::move(instantiatedPluginConfig).value()},
             InputFormatterDescriptor{inputFormatterType, ExplicitAny{std::any{std::monostate{}}}},
             config.get(SourceDescriptor::SCHEMA));
@@ -517,6 +525,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         *logicalSourceIter->second.getSchema(),
         generalConfig.host,
         generalConfig.maxInflightBuffers,
+        generalConfig.performanceCpus,
         std::move(pluginConfig),
         std::move(formatDescriptor),
         logicalSource.getLogicalSourceName()};
@@ -548,6 +557,7 @@ std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
         schema,
         generalConfig.host,
         generalConfig.maxInflightBuffers,
+        generalConfig.performanceCpus,
         std::move(pluginConfig),
         std::move(formatDescriptor),
         std::nullopt};

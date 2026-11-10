@@ -128,11 +128,32 @@ TEST_F(SourceCatalogTest, ConfigMapsRequireExplicitQuotingForNumericStrings)
         *logical,
         Identifier::parse("FILE"),
         Host{"localhost:8080"},
-        {{Identifier::parse("FILE_PATH"), "'123'"}, {Identifier::parse("MAX_INFLIGHT_BUFFERS"), "2"}},
+        {{Identifier::parse("FILE_PATH"), "'123'"},
+         {Identifier::parse("MAX_INFLIGHT_BUFFERS"), "2"},
+         {Identifier::parse("CPUS"), "'PERFORMANCE'"}},
         {{Identifier::parse("TYPE"), "CSV"}, {Identifier::parse("FIELD_DELIMITER"), "'1'"}});
     ASSERT_TRUE(source.has_value()) << source.error();
     EXPECT_EQ(source->getPluginData().getAs<FileSourceConfig>().filePath, "123");
     EXPECT_EQ(source->getMaxInflightBuffers(), 2);
+    EXPECT_TRUE(source->runsOnPerformanceCpus());
+
+    /// Sources run on the misc CPUs unless they ask for the performance CPUs
+    const auto misc = catalog.addPhysicalSource(
+        *logical,
+        Identifier::parse("FILE"),
+        Host{"localhost:8080"},
+        {{Identifier::parse("FILE_PATH"), "'123'"}},
+        {{Identifier::parse("TYPE"), "CSV"}, {Identifier::parse("FIELD_DELIMITER"), "'1'"}});
+    ASSERT_TRUE(misc.has_value()) << misc.error();
+    EXPECT_FALSE(misc->runsOnPerformanceCpus());
+    EXPECT_FALSE(catalog
+                     .addPhysicalSource(
+                         *logical,
+                         Identifier::parse("FILE"),
+                         Host{"localhost:8080"},
+                         {{Identifier::parse("FILE_PATH"), "'123'"}, {Identifier::parse("CPUS"), "'FAST'"}},
+                         {{Identifier::parse("TYPE"), "CSV"}, {Identifier::parse("FIELD_DELIMITER"), "'1'"}})
+                     .has_value());
 }
 
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
