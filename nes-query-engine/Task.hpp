@@ -140,8 +140,8 @@ struct WorkTask : BaseTask
 
     /// Like BaseTask, and if the task counts in the pending tasks of its pipeline, also stops counting it or fails the pipeline.
     /// This is done here rather than in a wrapping callback, which would cost two allocations per task.
-    void complete();
-    void fail(Exception exception);
+    void complete(); /// NOLINT(bugprone-derived-method-shadowing-base-method) tasks dispatch via std::visit on the concrete type
+    void fail(Exception exception); /// NOLINT(bugprone-derived-method-shadowing-base-method)
 
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
