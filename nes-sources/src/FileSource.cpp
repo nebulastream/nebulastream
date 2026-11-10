@@ -15,7 +15,6 @@
 #include <FileSource.hpp>
 
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <expected>
 #include <filesystem>
@@ -77,11 +76,10 @@ FileSource::FileSource(const FileSourceConfig& config) : filePath(config.filePat
 
 void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
-    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
+    this->inputFile = std::ifstream(this->filePath, std::ios::binary);
     if (not this->inputFile)
     {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
+        throw CannotOpenSource("could not open {}: {}", this->filePath, getErrorMessageFromERRNO());
     }
 }
 
