@@ -279,6 +279,18 @@ def run(arguments, layout, udf, repetition, record_base):
         window = [series.get(bucket, 0) for bucket in range(first_bucket, last_bucket + 1)]
         if len(window) >= 8:
             trimmed = sum(window) / operators / (len(window) / 4) / 1e6
+    # By quarter second, summed over the processes: wake-ups sent to the worker, sleeps, and kernel time in seconds (the
+    # difference of the kernel time of a process between two quarter seconds in which it had an event)
+    events = {}
+    for s in active:
+        previous = None
+        for bucket, (wakes, sleeps, kernel, _) in sorted((int(bucket), entry) for bucket, entry in s.get("events", {}).items()):
+            entry = events.setdefault(bucket, [0, 0, 0.0])
+            entry[0] += wakes
+            entry[1] += sleeps
+            if previous is not None:
+                entry[2] += (kernel - previous[1]) / (bucket - previous[0])
+            previous = (bucket, kernel)
     cpu = {}
     for (_, comm), value in threads.items():
         cpu.setdefault("worker" if comm.startswith("WorkerThread") else comm, []).append(value)
@@ -302,6 +314,7 @@ def run(arguments, layout, udf, repetition, record_base):
         warmup=arguments.warmup,
         cooldown=arguments.cooldown,
         mrows_per_s_by_quarter_second=[round(rate, 2) for rate in rates],
+        events_by_quarter_second=[[bucket - min(events)] + [round(value, 4) for value in events[bucket]] for bucket in sorted(events)],
         udf_operators=operators,
         processes_per_operator=arguments.processes or layout["p"],
         sources=arguments.sources,

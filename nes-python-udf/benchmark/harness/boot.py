@@ -65,6 +65,37 @@ def _wrap(namespace, name, key, rows=False):
                 bucket = int(ended * 4)
                 _series[bucket] = _series.get(bucket, 0) + count
     namespace[name] = wrapped
+# By quarter second: wake-ups that a process sends to the worker, sleeps of the process, and its kernel and user time
+_events_series = _S["events"] = {}
+_last_bucket = [None]
+def _event(index):
+    bucket = int(_pc() * 4)
+    entry = _events_series.get(bucket)
+    if entry is None:
+        usage = _res.getrusage(_res.RUSAGE_SELF)
+        entry = _events_series[bucket] = [0, 0, usage.ru_stime, usage.ru_utime]
+    entry[index] += 1
+def _count_wakes(namespace):
+    original = namespace.get("_wake_worker")
+    if original is None:
+        return
+    control, word = namespace["_control"], namespace["_WORKER_SLEEPS"]
+    def wrapped():
+        if control[word]:
+            _event(0)
+        original()
+    namespace["_wake_worker"] = wrapped
+def _count_sleeps(namespace):
+    original = namespace.get("_events")
+    if original is None:
+        return
+    def wrapped(timeout):
+        if timeout:
+            _event(1)
+        return original(timeout)
+    namespace["_events"] = wrapped
+_count_wakes(globals())
+_count_sleeps(globals())
 _wrap(globals(), "_process_batch", "process", True)
 _wrap(globals(), "_answer", "answer")
 _wrap(globals(), "_frame", "answer")
@@ -74,6 +105,7 @@ _wrap(globals(), "_idle", "wait")
 def _attached(operator):
     _wrap(operator.__dict__, "_process_batch", "process", True)
     _wrap(operator.__dict__, "_answer", "answer")
+    _count_wakes(operator.__dict__)
 _T0 = _pc()
 try:
     (_serve if "_serve" in globals() else _main)()
