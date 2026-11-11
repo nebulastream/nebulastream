@@ -63,6 +63,7 @@ public:
 
     /// Compiles the LogicalPlan and immediately starts the query asynchronously. Query execution errors are only reported
     /// during runtime of the query.
+    /// A plan with the QueryId of an earlier accepted plan is not started again, and the call returns that QueryId.
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the started query
     [[nodiscard]] std::expected<QueryId, Exception> startQuery(LogicalPlan plan) noexcept;

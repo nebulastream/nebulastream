@@ -46,6 +46,7 @@ public:
         std::unique_ptr<QueryEngine> queryEngine,
         std::unique_ptr<SourceProvider> sourceProvider);
 
+    /// The caller adds the query to the query log before this call, so the query has a status from then on.
     void startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.

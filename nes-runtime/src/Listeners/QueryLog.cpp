@@ -82,6 +82,17 @@ bool QueryLog::logQueryStatusChange(const QueryId queryId, QueryStatus status, c
     return true;
 }
 
+bool QueryLog::registerQuery(const QueryId queryId, const std::chrono::system_clock::time_point timestamp)
+{
+    const auto log = queryStatusLog.wlock();
+    return log->try_emplace(queryId, Log{QueryStatusChange{QueryStatus::Registered, timestamp}}).second;
+}
+
+void QueryLog::removeQuery(const QueryId queryId)
+{
+    queryStatusLog.wlock()->erase(queryId);
+}
+
 std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId) const
 {
     const auto log = queryStatusLog.rlock();

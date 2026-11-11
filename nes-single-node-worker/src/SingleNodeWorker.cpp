@@ -45,6 +45,7 @@
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+#include <scope_guard.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
@@ -106,6 +107,19 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         }
 
         const LogContext context("queryId", plan.getQueryId());
+
+        /// A coordinator repeats a start when the reply was lost, and the repeated request must not start the query a second time.
+        /// The query log gets its first entry before compilation, so this also holds for a request that arrives during compilation.
+        if (not nodeEngine->getQueryLog()->registerQuery(plan.getQueryId(), std::chrono::system_clock::now()))
+        {
+            NES_INFO("Query {} was already accepted, ignoring the repeated start", plan.getQueryId());
+            return plan.getQueryId();
+        }
+        /// A query that could not be compiled or handed to the engine was never started, so a later start may try again.
+        SCOPE_FAIL
+        {
+            nodeEngine->getQueryLog()->removeQuery(plan.getQueryId());
+        };
 
         const auto planStr = explain(plan, ExplainVerbosity::Debug);
         NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);
