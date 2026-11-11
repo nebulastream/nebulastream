@@ -145,6 +145,13 @@ def layouts():
             add(f"S w{workers} {label}", CORES[:7], [14], processes, src_perf=True, workers=workers)
         # worker threads on both hardware threads of five cores, two file sources on cores of their own
         add(f"S w10 {label}", list(range(10)) + [10, 12], [14], processes, src_perf=True, workers=10)
+    # S ... smt: as `S w6`, with a process on both hardware threads of every core of the nodes, to compare a logical with a
+    # physical core per process. Node 1 and socket 1 (nodes 4-7) are the cores that do not slow down under load.
+    for label, nodes in [("n4", [4]), ("n4-5", [4, 5]), ("n4-7", [4, 5, 6, 7]), ("n1,4-7", [1, 4, 5, 6, 7])]:
+        cores = [cpu for number in nodes for cpu in node(number)]
+        if label in ("n4", "n1,4-7"):
+            add(f"S w6 {label}", CORES[:7], [14], cores, src_perf=True, workers=6)
+        add(f"S w6 {label} smt", CORES[:7], [14], [cpu + thread for cpu in cores for thread in (0, 1)], src_perf=True, workers=6)
     return out
 
 
