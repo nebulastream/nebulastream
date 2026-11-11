@@ -106,6 +106,23 @@ if _os.environ.get("UDF_BENCH_POPULATE") in ("1", "read") and "_pool" in globals
         return view
 _count_wakes(globals())
 _count_sleeps(globals())
+# UDF_BENCH_POOL_NODE=<node>: a host process binds the buffer pool of the worker to a NUMA node (mbind with MPOL_BIND) when it
+# attaches its first operator. The pool is shared memory, so the policy holds for all processes and the worker. Automatic NUMA
+# balancing does not scan memory with such a policy, so it no longer unmaps and moves the pages of the pool.
+if _os.environ.get("UDF_BENCH_POOL_NODE") and "_pool" in globals():
+    import ctypes as _ctypes
+    _bound_pool = _pool
+    def _pool(fd):
+        known = len(_pools)
+        view = _bound_pool(fd)
+        if len(_pools) > known:
+            libc = _ctypes.CDLL(None, use_errno=True)
+            address = _ctypes.addressof(_ctypes.c_char.from_buffer(view.obj))
+            mask = _ctypes.c_ulong(1 << int(_os.environ["UDF_BENCH_POOL_NODE"]))
+            # mbind(address, length, MPOL_BIND, nodemask, maxnode, flags)
+            if libc.syscall(237, _ctypes.c_void_p(address), _ctypes.c_ulong(len(view)), 2, _ctypes.byref(mask), 65, 0):
+                raise OSError(_ctypes.get_errno(), "mbind of the buffer pool failed")
+        return view
 _wrap(globals(), "_process_batch", "process", True)
 _wrap(globals(), "_answer", "answer")
 _wrap(globals(), "_frame", "answer")
