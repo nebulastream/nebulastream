@@ -54,7 +54,8 @@ struct EncodedProxy
 {
     std::string modelName;
     std::string endpoint;
-    double threshold;
+    double thresholdTrue;
+    double thresholdFalse;
     double auditRate;
 };
 }
@@ -117,6 +118,8 @@ struct EncodedPayload
     /// Only written for a cascade, for the same reason.
     std::optional<EncodedProxy> proxy;
     std::optional<int64_t> proxyRole;
+    /// Only written for LLM.JOIN_PAIR_IDS 'UUID', for the same reason.
+    std::optional<bool> uuidPairIds;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -230,11 +233,13 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .proxy = config.proxy ? std::optional{EncodedProxy{
                                         .modelName = config.proxy->modelName,
                                         .endpoint = config.proxy->endpoint,
-                                        .threshold = config.proxy->threshold,
+                                        .thresholdTrue = config.proxy->thresholdTrue,
+                                        .thresholdFalse = config.proxy->thresholdFalse,
                                         .auditRate = config.proxy->auditRate}}
                                   : std::nullopt,
             .proxyRole = payload.proxyRole == SemanticCallPayload::ProxyRole::NONE ? std::nullopt
-                                                                                  : std::optional{static_cast<int64_t>(payload.proxyRole)}});
+                                                                                  : std::optional{static_cast<int64_t>(payload.proxyRole)},
+            .uuidPairIds = config.uuidPairIds ? std::optional{true} : std::nullopt});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -290,9 +295,11 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .proxy = value.proxy ? std::optional{SemanticProxyConfig{
                                        .modelName = std::move(value.proxy->modelName),
                                        .endpoint = std::move(value.proxy->endpoint),
-                                       .threshold = value.proxy->threshold,
+                                       .thresholdTrue = value.proxy->thresholdTrue,
+                                       .thresholdFalse = value.proxy->thresholdFalse,
                                        .auditRate = value.proxy->auditRate}}
-                                 : std::nullopt},
+                                 : std::nullopt,
+            .uuidPairIds = value.uuidPairIds.value_or(false)},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),
@@ -304,7 +311,12 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
 std::string encodeSemanticProxyConfig(const SemanticProxyConfig& config)
 {
     return rfl::json::write(
-        EncodedProxy{.modelName = config.modelName, .endpoint = config.endpoint, .threshold = config.threshold, .auditRate = config.auditRate});
+        EncodedProxy{
+            .modelName = config.modelName,
+            .endpoint = config.endpoint,
+            .thresholdTrue = config.thresholdTrue,
+            .thresholdFalse = config.thresholdFalse,
+            .auditRate = config.auditRate});
 }
 
 SemanticProxyConfig decodeSemanticProxyConfig(const std::string_view encoded)
@@ -316,7 +328,11 @@ SemanticProxyConfig decodeSemanticProxyConfig(const std::string_view encoded)
     }
     auto value = parsed.value();
     return SemanticProxyConfig{
-        .modelName = std::move(value.modelName), .endpoint = std::move(value.endpoint), .threshold = value.threshold, .auditRate = value.auditRate};
+        .modelName = std::move(value.modelName),
+        .endpoint = std::move(value.endpoint),
+        .thresholdTrue = value.thresholdTrue,
+        .thresholdFalse = value.thresholdFalse,
+        .auditRate = value.auditRate};
 }
 
 }

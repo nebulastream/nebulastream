@@ -41,6 +41,17 @@ CREATE SEM_MODEL downMatch
 INPUT (lhs VARSIZED, rhs VARSIZED)
 SET ('Both name the same fruit' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
 
+# The same model with llm_operator's pair ids `<uuid>_<i>_<j>` (LLM.JOIN_PAIR_IDS), one pair per prompt and four per prompt.
+CREATE SEM_MODEL sameThingUuid
+INPUT (lhs VARSIZED, rhs VARSIZED)
+SET ('Both name the same fruit' AS LLM.PROMPT, 'match' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'UUID' AS LLM.JOIN_PAIR_IDS);
+
+CREATE SEM_MODEL sameThingUuidBatched
+INPUT (lhs VARSIZED, rhs VARSIZED)
+SET ('Both name the same fruit' AS LLM.PROMPT, 'match' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'UUID' AS LLM.JOIN_PAIR_IDS, 'ASYNC' AS LLM.EXECUTION, '4' AS LLM.BATCH_SIZE);
+
 CREATE SINK pairs(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, name VARSIZED NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64 NOT NULL, label VARSIZED NOT NULL, ts2 UINT64 NOT NULL) TYPE File;
 
 # An outer join makes the other side nullable.
@@ -110,3 +121,19 @@ SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MAT
   WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
 ----
 ERROR 4006 "unreachable"
+
+# Query 11: UUID pair ids, one pair per prompt: the pairs of query 1.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThingUuid, items.name, labels.label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+0,1000,1,Apple,100,10,APPLE,150
+0,1000,3,Cherry,300,11,cherry,250
+1000,2000,4,apple,1200,13,apple,1100
+
+# Query 12: UUID pair ids, four pairs per prompt: the mock answers by these keys, and the pairs are the same.
+SELECT * FROM (SELECT * FROM items) INNER JOIN (SELECT * FROM labels) ON SEM_MATCH(sameThingUuidBatched, items.name, labels.label)
+  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO pairs;
+----
+0,1000,1,Apple,100,10,APPLE,150
+0,1000,3,Cherry,300,11,cherry,250
+1000,2000,4,apple,1200,13,apple,1100

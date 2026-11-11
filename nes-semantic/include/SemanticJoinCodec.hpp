@@ -48,6 +48,11 @@ public:
 
     [[nodiscard]] std::string buildPrompt(std::span<const JoinPairPayload> pairs) const;
 
+    /// LLM.JOIN_PAIR_IDS 'UUID': rekeys the pairs of one prompt as `SEMJoinOperator._process_join_payload` does,
+    /// `<window uuid>_<left index>_<right index>`. SEM_CALL does not see the window, so the UUID is a fresh v4 per prompt
+    /// and the indices count the prompt's distinct left and right texts in order of appearance. 'ROW' leaves the ids.
+    void keyPairs(std::span<JoinPairPayload> pairs) const;
+
     /// One verdict per pair. As in the reference, a pair matches only if its entry is an object whose `answer` is the
     /// JSON boolean `true`; anything else, a missing pair and an unparseable response included, is no match.
     [[nodiscard]] std::vector<bool> parse(std::string_view response, std::span<const JoinPairPayload> pairs) const;

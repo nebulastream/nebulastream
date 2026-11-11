@@ -84,6 +84,8 @@ struct
     std::optional<std::string> confidenceField;
     /// LLM.PROXY_*, as `encodeSemanticProxyConfig` writes it; absent without a proxy model.
     std::optional<std::string> proxy;
+    /// Optional on read: catalogs reflected before LLM.JOIN_PAIR_IDS existed carry none, which means ROW.
+    std::optional<bool> uuidPairIds;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -253,9 +255,13 @@ void validateProxy(const std::string& name, const SemanticModelConfig& config)
     {
         throw InvalidSemanticModel("Semantic model '{}': LLM.PROXY_MODEL is supported for SEM_FILTER models (no OUTPUT) only", name);
     }
-    if (!(proxy.threshold >= 0.5 && proxy.threshold <= 1.0))
+    for (const auto& [option, threshold] :
+         {std::pair{"PROXY_THRESHOLD_TRUE", proxy.thresholdTrue}, std::pair{"PROXY_THRESHOLD_FALSE", proxy.thresholdFalse}})
     {
-        throw InvalidSemanticModel("Semantic model '{}': LLM.PROXY_THRESHOLD must be between 0.5 and 1, but was {}", name, proxy.threshold);
+        if (!(threshold >= 0.5 && threshold <= 1.0))
+        {
+            throw InvalidSemanticModel("Semantic model '{}': LLM.{} must be between 0.5 and 1, but was {}", name, option, threshold);
+        }
     }
     if (!(proxy.auditRate >= 0.0 && proxy.auditRate <= 1.0))
     {
@@ -476,6 +482,12 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     validateImageFields(name, config, schema);
     validateLabelMode(name, config);
     validateProxy(name, config);
+    if (config.uuidPairIds
+        && (config.keyed || config.steps.size() != 1 || config.steps.front().kind != SemanticStep::Kind::FILTER
+            || config.answerMode != AnswerMode::JSON))
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.JOIN_PAIR_IDS is for SEM_JOIN models (one FILTER step, JSON answers)", name);
+    }
 
     /// Enforced here rather than only in the statement handler, so the optimizer tests and any
     /// embedded caller cannot silently replace an entry either.
@@ -609,6 +621,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .inputLabel = std::make_optional(config.inputLabel),
             .confidenceField = std::make_optional(config.confidenceField),
             .proxy = config.proxy ? std::optional{encodeSemanticProxyConfig(*config.proxy)} : std::nullopt,
+            .uuidPairIds = std::make_optional(config.uuidPairIds),
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -659,7 +672,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .answerMode = unreflectEnum(reflected.answerMode.value_or(0), AnswerMode::LABEL, "AnswerMode"),
         .inputLabel = std::move(reflected.inputLabel).value_or(""),
         .confidenceField = std::move(reflected.confidenceField).value_or(""),
-        .proxy = reflected.proxy ? std::optional{decodeSemanticProxyConfig(*reflected.proxy)} : std::nullopt};
+        .proxy = reflected.proxy ? std::optional{decodeSemanticProxyConfig(*reflected.proxy)} : std::nullopt,
+        .uuidPairIds = reflected.uuidPairIds.value_or(false)};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

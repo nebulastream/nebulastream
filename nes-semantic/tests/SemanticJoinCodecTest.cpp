@@ -14,6 +14,7 @@
 
 #include <SemanticJoinCodec.hpp>
 
+#include <regex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -135,6 +136,48 @@ TEST(SemanticJoinCodecTest, UnparseableOrFencedResponse)
     const SemanticJoinCodec codec{joinConfig()};
     EXPECT_EQ(codec.parse("I cannot compare these.", twoPairs()), (std::vector{false, false}));
     EXPECT_EQ(codec.parse("```json\n{\"row1\": {\"answer\": true, \"confidence\": 1}}\n```", twoPairs()), (std::vector{true, false}));
+}
+
+/// LLM.JOIN_PAIR_IDS 'UUID': llm_operator's `<window uuid>_<i>_<j>` keys, one UUID per prompt, i and j counting the
+/// prompt's distinct left and right texts; the answer is matched by these keys.
+TEST(SemanticJoinCodecTest, UuidPairIdsFollowLlmOperator)
+{
+    auto config = joinConfig();
+    config.uuidPairIds = true;
+    const SemanticJoinCodec codec{config};
+    std::vector<JoinPairPayload> pairs{
+        JoinPairPayload{.pairId = "row1", .left = "L0", .right = "R0"},
+        JoinPairPayload{.pairId = "row2", .left = "L0", .right = "R1"},
+        JoinPairPayload{.pairId = "row3", .left = "L1", .right = "R0"}};
+    codec.keyPairs(pairs);
+    const std::regex format{"([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})_([0-9]+)_([0-9]+)"};
+    std::smatch first;
+    ASSERT_TRUE(std::regex_match(pairs[0].pairId, first, format)) << pairs[0].pairId;
+    const auto window = first[1].str();
+    EXPECT_EQ(pairs[0].pairId, window + "_0_0");
+    EXPECT_EQ(pairs[1].pairId, window + "_0_1");
+    EXPECT_EQ(pairs[2].pairId, window + "_1_0");
+
+    const auto prompt = codec.buildPrompt(pairs);
+    EXPECT_NE(prompt.find(fmt::format(R"("{}_0_1": {{"left": "L0", "right": "R1"}})", window)), std::string::npos) << prompt;
+    const auto answer = fmt::format(
+        R"({{"{0}_0_0": {{"answer": false, "confidence": 0.9}}, "{0}_0_1": {{"answer": true, "confidence": 0.8}}}})", window);
+    EXPECT_EQ(codec.parse(answer, pairs), (std::vector<bool>{false, true, false}));
+
+    /// A fresh UUID for the next prompt.
+    auto next = pairs;
+    codec.keyPairs(next);
+    EXPECT_NE(next[0].pairId, pairs[0].pairId);
+}
+
+/// The default leaves the ids alone.
+TEST(SemanticJoinCodecTest, RowPairIdsAreTheDefault)
+{
+    const SemanticJoinCodec codec{joinConfig()};
+    auto pairs = twoPairs();
+    codec.keyPairs(pairs);
+    EXPECT_EQ(pairs[0].pairId, "row1");
+    EXPECT_EQ(pairs[1].pairId, "row2");
 }
 
 }

@@ -17,6 +17,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -24,6 +25,7 @@
 #include <nlohmann/json.hpp>
 
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
 #include <ResponseParsing.hpp>
 #include <SemanticModelCatalog.hpp>
@@ -69,6 +71,23 @@ std::string SemanticJoinCodec::buildPrompt(const std::span<const JoinPairPayload
             out.push_back('}');
         });
     return prompt;
+}
+
+void SemanticJoinCodec::keyPairs(const std::span<JoinPairPayload> pairs) const
+{
+    if (!config.uuidPairIds)
+    {
+        return;
+    }
+    const auto window = UUIDToString(generateUUID());
+    std::unordered_map<std::string, size_t> lefts;
+    std::unordered_map<std::string, size_t> rights;
+    for (auto& pair : pairs)
+    {
+        const auto left = lefts.try_emplace(pair.left, lefts.size()).first->second;
+        const auto right = rights.try_emplace(pair.right, rights.size()).first->second;
+        pair.pairId = fmt::format("{}_{}_{}", window, left, right);
+    }
 }
 
 std::vector<bool> SemanticJoinCodec::parse(const std::string_view response, const std::span<const JoinPairPayload> pairs) const

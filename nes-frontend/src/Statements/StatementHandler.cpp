@@ -429,7 +429,10 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"PROXY_MODEL"},
     std::string_view{"PROXY_ENDPOINT"},
     std::string_view{"PROXY_THRESHOLD"},
+    std::string_view{"PROXY_THRESHOLD_TRUE"},
+    std::string_view{"PROXY_THRESHOLD_FALSE"},
     std::string_view{"PROXY_AUDIT_RATE"},
+    std::string_view{"JOIN_PAIR_IDS"},
 };
 
 /// Options only a SEM_SCAN or SEM_WINDOW model reads.
@@ -516,6 +519,21 @@ AnswerMode bindAnswerMode(const std::unordered_map<Identifier, std::string>& con
     throw InvalidSemanticModel("Option LLM.ANSWER_MODE must be JSON or LABEL, but was '{}'", raw);
 }
 
+/// `LLM.JOIN_PAIR_IDS`: ROW (default, `row1`..) or UUID (llm_operator's `<uuid>_<i>_<j>`).
+bool bindUuidPairIds(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "JOIN_PAIR_IDS", "ROW");
+    if (raw == "ROW")
+    {
+        return false;
+    }
+    if (raw == "UUID")
+    {
+        return true;
+    }
+    throw InvalidSemanticModel("Option LLM.JOIN_PAIR_IDS must be ROW or UUID, but was '{}'", raw);
+}
+
 /// `LLM.CONFIDENCE_FIELD`, e.g. 'p_true': the name of the probability column, stored canonical.
 std::string bindConfidenceField(const std::unordered_map<Identifier, std::string>& config)
 {
@@ -597,7 +615,12 @@ std::optional<SemanticProxyConfig> bindProxy(const CreateSemanticModelStatement&
     const auto* const model = findOption(statement.config, "PROXY_MODEL");
     if (model == nullptr)
     {
-        for (const auto option : {std::string_view{"PROXY_ENDPOINT"}, std::string_view{"PROXY_THRESHOLD"}, std::string_view{"PROXY_AUDIT_RATE"}})
+        for (const auto option :
+             {std::string_view{"PROXY_ENDPOINT"},
+              std::string_view{"PROXY_THRESHOLD"},
+              std::string_view{"PROXY_THRESHOLD_TRUE"},
+              std::string_view{"PROXY_THRESHOLD_FALSE"},
+              std::string_view{"PROXY_AUDIT_RATE"}})
         {
             if (findOption(statement.config, option) != nullptr)
             {
@@ -606,10 +629,13 @@ std::optional<SemanticProxyConfig> bindProxy(const CreateSemanticModelStatement&
         }
         return std::nullopt;
     }
+    /// PROXY_THRESHOLD sets both classes; PROXY_THRESHOLD_TRUE / _FALSE override it per class.
+    const auto both = fractionOption(statement.config, "PROXY_THRESHOLD", 0.9);
     return SemanticProxyConfig{
         .modelName = *model,
         .endpoint = optionalOption(statement.config, "PROXY_ENDPOINT", ""),
-        .threshold = fractionOption(statement.config, "PROXY_THRESHOLD", 0.9),
+        .thresholdTrue = fractionOption(statement.config, "PROXY_THRESHOLD_TRUE", both),
+        .thresholdFalse = fractionOption(statement.config, "PROXY_THRESHOLD_FALSE", both),
         .auditRate = fractionOption(statement.config, "PROXY_AUDIT_RATE", 0.0)};
 }
 
@@ -773,7 +799,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .answerMode = bindAnswerMode(statement.config),
         .inputLabel = optionalOption(statement.config, "INPUT_LABEL", ""),
         .confidenceField = bindConfidenceField(statement.config),
-        .proxy = bindProxy(statement)};
+        .proxy = bindProxy(statement),
+        .uuidPairIds = bindUuidPairIds(statement.config)};
 }
 
 /// The OUTPUT clause's fields, followed by LLM.CONFIDENCE_FIELD's if there is one.

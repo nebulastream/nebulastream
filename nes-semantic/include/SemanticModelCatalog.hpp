@@ -138,8 +138,11 @@ struct SemanticProxyConfig
     std::string modelName;
     /// `LLM.PROXY_ENDPOINT`: the student's endpoint; empty means the model's own ENDPOINT. For the mock, its behaviour.
     std::string endpoint;
-    /// `LLM.PROXY_THRESHOLD`, between 0.5 and 1: the student answers alone if max(p, 1 - p) >= threshold.
-    double threshold = 0.9;
+    /// `LLM.PROXY_THRESHOLD_TRUE`, between 0.5 and 1: the student's `true` stands alone if p >= thresholdTrue.
+    double thresholdTrue = 0.9;
+    /// `LLM.PROXY_THRESHOLD_FALSE`, between 0.5 and 1: the student's `false` stands alone if 1 - p >= thresholdFalse.
+    /// `LLM.PROXY_THRESHOLD` sets both.
+    double thresholdFalse = 0.9;
     /// `LLM.PROXY_AUDIT_RATE`, between 0 and 1: the share of the student's sure rows the teacher also answers. A row is
     /// picked by a hash of its input text, so the same rows are audited in every run.
     double auditRate = 0.0;
@@ -217,6 +220,10 @@ struct SemanticModelConfig
     std::string confidenceField;
     /// `LLM.PROXY_*`: SEM_FILTER cascade with a student model. One FILTER step, BATCH_SIZE 1, never fused.
     std::optional<SemanticProxyConfig> proxy = std::nullopt;
+    /// `LLM.JOIN_PAIR_IDS 'UUID'`: SEM_JOIN keys each pair in the prompt as llm_operator does, `<uuid>_<i>_<j>` (a fresh
+    /// UUID v4 per prompt; i and j the pair's left and right row among the prompt's distinct left and right texts),
+    /// instead of `row1`..`rowN` ('ROW', the default). Only changes the ids, and so the tokens they cost on both sides.
+    bool uuidPairIds = false;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

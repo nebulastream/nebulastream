@@ -1,6 +1,7 @@
 # name: semantic/SemanticCascade.test
 # description: SEM_FILTER cascade (LLM.PROXY_MODEL): a student answers every row in LABEL mode with logprobs; a row
-#              whose confidence max(p, 1 - p) is below LLM.PROXY_THRESHOLD, and a hash-chosen LLM.PROXY_AUDIT_RATE
+#              whose confidence max(p, 1 - p) is below LLM.PROXY_THRESHOLD (per class: a `true` needs
+#              p >= LLM.PROXY_THRESHOLD_TRUE, a `false` 1 - p >= LLM.PROXY_THRESHOLD_FALSE), and a hash-chosen LLM.PROXY_AUDIT_RATE
 #              share of the others, go to the model itself (the teacher), whose verdict then counts. The student is
 #              the mock's 'prob' behaviour (LLM.PROXY_ENDPOINT): a row's text is its p(true), it answers "true" if
 #              p >= 0.5. The teachers are constant mocks, so every output row shows who decided it.
@@ -57,6 +58,18 @@ CREATE SEM_MODEL auditAll
 INPUT (p VARSIZED)
 SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.9' AS LLM.PROXY_THRESHOLD, '1.0' AS LLM.PROXY_AUDIT_RATE);
+
+# Per class: a `true` needs p >= 0.96, a `false` only 1 - p >= 0.5; the teacher passes every row it is asked about.
+CREATE SEM_MODEL strictTrue
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.96' AS LLM.PROXY_THRESHOLD_TRUE, '0.5' AS LLM.PROXY_THRESHOLD_FALSE);
+
+# PROXY_THRESHOLD sets both classes, PROXY_THRESHOLD_FALSE overrides it for `false`; the teacher drops every row it is asked about.
+CREATE SEM_MODEL strictFalse
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:false' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.5' AS LLM.PROXY_THRESHOLD, '0.99' AS LLM.PROXY_THRESHOLD_FALSE);
 
 CREATE SINK out(id UINT64 NOT NULL, p VARSIZED NOT NULL) TYPE File;
 CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
@@ -120,3 +133,18 @@ SELECT id FROM SEM_FILTER(cascadeYes, reviews) WHERE id > UINT64(2) INTO ids;
 3
 4
 5
+
+# Query 9: the student's `true` stands only for 0.97; 0.6 and 0.95 go to the teacher, which passes them. Its `false`
+# stands for 0.03, 0.4 and 0.08 (1 - p >= 0.5), so 0.4 is dropped although the teacher would pass it.
+SELECT * FROM SEM_FILTER(strictTrue, reviews) INTO out;
+----
+1,0.97
+3,0.6
+5,0.95
+
+# Query 10: every `true` stands (p >= 0.5); every `false` is below 0.99 and goes to the teacher, which drops it.
+SELECT * FROM SEM_FILTER(strictFalse, reviews) INTO out;
+----
+1,0.97
+3,0.6
+5,0.95

@@ -631,7 +631,8 @@ TEST_F(SemanticMapStatementTest, ProxyOptionsBindACascadeOfAFilterModel)
     ASSERT_TRUE(config.proxy.has_value());
     EXPECT_EQ(config.proxy->modelName, "rt-filter-4b-lora");
     EXPECT_EQ(config.proxy->endpoint, "http://student:8000/v1");
-    EXPECT_DOUBLE_EQ(config.proxy->threshold, 0.95);
+    EXPECT_DOUBLE_EQ(config.proxy->thresholdTrue, 0.95);
+    EXPECT_DOUBLE_EQ(config.proxy->thresholdFalse, 0.95);
     EXPECT_DOUBLE_EQ(config.proxy->auditRate, 0.02);
     EXPECT_EQ(config.answerMode, AnswerMode::JSON);
     EXPECT_EQ(config.inputLabel, "Review");
@@ -642,9 +643,19 @@ TEST_F(SemanticMapStatementTest, ProxyOptionsBindACascadeOfAFilterModel)
     const auto defaults = semanticModelCatalog->load("F").getConfig().proxy;
     ASSERT_TRUE(defaults.has_value());
     EXPECT_EQ(defaults->endpoint, "");
-    EXPECT_DOUBLE_EQ(defaults->threshold, 0.9);
+    EXPECT_DOUBLE_EQ(defaults->thresholdTrue, 0.9);
+    EXPECT_DOUBLE_EQ(defaults->thresholdFalse, 0.9);
     EXPECT_DOUBLE_EQ(defaults->auditRate, 0.0);
     semanticModelCatalog->removeModel("F");
+    /// Per class: PROXY_THRESHOLD sets both, PROXY_THRESHOLD_TRUE / _FALSE override it.
+    ASSERT_TRUE(create("CREATE SEM_MODEL g INPUT (reviewText VARSIZED) SET ('Positive?' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+                       "'m' AS LLM.MODEL_NAME, 's' AS LLM.PROXY_MODEL, '0.8' AS LLM.PROXY_THRESHOLD, '0.97' AS LLM.PROXY_THRESHOLD_TRUE)")
+                    .has_value());
+    const auto perClass = semanticModelCatalog->load("G").getConfig().proxy;
+    ASSERT_TRUE(perClass.has_value());
+    EXPECT_DOUBLE_EQ(perClass->thresholdTrue, 0.97);
+    EXPECT_DOUBLE_EQ(perClass->thresholdFalse, 0.8);
+    semanticModelCatalog->removeModel("G");
 
     const auto rejectedWith = [this](const std::string& sql, const std::string& message)
     {
@@ -655,6 +666,14 @@ TEST_F(SemanticMapStatementTest, ProxyOptionsBindACascadeOfAFilterModel)
         EXPECT_NE(std::string{rejected.error().what()}.find(message), std::string::npos) << rejected.error().what();
         EXPECT_TRUE(semanticModelCatalog->getModelNames().empty());
     };
+    rejectedWith(
+        "CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('Positive?' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, "
+        "'0.9' AS LLM.PROXY_THRESHOLD_FALSE)",
+        "requires LLM.PROXY_MODEL");
+    rejectedWith(
+        "CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('Positive?' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, "
+        "'s' AS LLM.PROXY_MODEL, '0.4' AS LLM.PROXY_THRESHOLD_FALSE)",
+        "LLM.PROXY_THRESHOLD_FALSE must be between 0.5 and 1");
     const std::string filter = "CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('Positive?' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
                                "'m' AS LLM.MODEL_NAME";
     rejectedWith(withOptions("o VARSIZED", ", 's' AS LLM.PROXY_MODEL"), "SEM_FILTER models (no OUTPUT) only");
@@ -664,6 +683,30 @@ TEST_F(SemanticMapStatementTest, ProxyOptionsBindACascadeOfAFilterModel)
     rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, 'often' AS LLM.PROXY_AUDIT_RATE)", "must be a number");
     rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, 'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE)", "BATCH_SIZE must be 1");
     rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, 'TRUE' AS LLM.FUSION)", "never fused");
+}
+
+TEST_F(SemanticMapStatementTest, JoinPairIdsOption)
+{
+    const std::string join = "CREATE SEM_MODEL j INPUT (l VARSIZED, r VARSIZED) SET ('Same movie?' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+                             "'m' AS LLM.MODEL_NAME";
+    ASSERT_TRUE(create(join + ")").has_value());
+    EXPECT_FALSE(semanticModelCatalog->load("J").getConfig().uuidPairIds);
+    semanticModelCatalog->removeModel("J");
+    ASSERT_TRUE(create(join + ", 'ROW' AS LLM.JOIN_PAIR_IDS)").has_value());
+    EXPECT_FALSE(semanticModelCatalog->load("J").getConfig().uuidPairIds);
+    semanticModelCatalog->removeModel("J");
+    ASSERT_TRUE(create(join + ", 'UUID' AS LLM.JOIN_PAIR_IDS)").has_value());
+    EXPECT_TRUE(semanticModelCatalog->load("J").getConfig().uuidPairIds);
+    semanticModelCatalog->removeModel("J");
+
+    const auto bad = create(join + ", 'GUID' AS LLM.JOIN_PAIR_IDS)");
+    ASSERT_FALSE(bad.has_value());
+    EXPECT_EQ(bad.error().code(), ErrorCode::InvalidSemanticModel);
+    EXPECT_NE(std::string{bad.error().what()}.find("must be ROW or UUID"), std::string::npos) << bad.error().what();
+    const auto onMap = create(withOptions("o VARSIZED", ", 'UUID' AS LLM.JOIN_PAIR_IDS"));
+    ASSERT_FALSE(onMap.has_value());
+    EXPECT_NE(std::string{onMap.error().what()}.find("LLM.JOIN_PAIR_IDS is for SEM_JOIN models"), std::string::npos) << onMap.error().what();
+    EXPECT_TRUE(semanticModelCatalog->getModelNames().empty());
 }
 
 }

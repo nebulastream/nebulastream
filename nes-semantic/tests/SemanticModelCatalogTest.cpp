@@ -429,7 +429,7 @@ TEST_F(SemanticModelCatalogTest, CascadeRoundTripsThroughReflectionAndPayload)
 {
     auto config = filterConfig();
     config.fusion = false;
-    config.proxy = SemanticProxyConfig{.modelName = "student", .endpoint = "http://student/v1", .threshold = 0.95, .auditRate = 0.02};
+    config.proxy = SemanticProxyConfig{.modelName = "student", .endpoint = "http://student/v1", .thresholdTrue = 0.95, .thresholdFalse = 0.8, .auditRate = 0.02};
     SemanticModelCatalog catalog;
     catalog.registerModel("positive", config, filterSchema());
     const ReflectionContext context;
@@ -443,6 +443,26 @@ TEST_F(SemanticModelCatalogTest, CascadeRoundTripsThroughReflectionAndPayload)
     ASSERT_TRUE(decoded.config.proxy.has_value());
     EXPECT_EQ(*decoded.config.proxy, *config.proxy);
     EXPECT_EQ(decodeSemanticProxyConfig(encodeSemanticProxyConfig(*config.proxy)), *config.proxy);
+}
+
+TEST_F(SemanticModelCatalogTest, CascadeThresholdsPerClassMustBeBetweenHalfAndOne)
+{
+    auto config = filterConfig();
+    config.fusion = false;
+    config.proxy = SemanticProxyConfig{.modelName = "student", .endpoint = "", .thresholdTrue = 0.99, .thresholdFalse = 0.5, .auditRate = 0.0};
+    {
+        SemanticModelCatalog catalog;
+        EXPECT_NO_THROW(catalog.registerModel("positive", config, filterSchema()));
+    }
+    for (const auto& [thresholdTrue, thresholdFalse] : {std::pair{0.4, 0.9}, std::pair{0.9, 0.4}, std::pair{1.1, 0.9}, std::pair{0.9, 1.1}})
+    {
+        SCOPED_TRACE(fmt::format("true {} false {}", thresholdTrue, thresholdFalse));
+        auto changed = config;
+        changed.proxy->thresholdTrue = thresholdTrue;
+        changed.proxy->thresholdFalse = thresholdFalse;
+        SemanticModelCatalog catalog;
+        ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("positive", changed, filterSchema()), ErrorCode::InvalidSemanticModel);
+    }
 }
 
 }

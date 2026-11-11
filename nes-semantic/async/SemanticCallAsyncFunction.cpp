@@ -350,7 +350,8 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
     if (joinCodec)
     {
         /// One pair per prompt; the reference numbers pairs `<window>_<i>_<j>`, a single pair needs no more than the row id.
-        const std::vector pairs{JoinPairPayload{.pairId = "row1", .left = std::move(arguments[0]), .right = std::move(arguments[1])}};
+        std::vector pairs{JoinPairPayload{.pairId = "row1", .left = std::move(arguments[0]), .right = std::move(arguments[1])}};
+        joinCodec->keyPairs(pairs);
         const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
         co_return AsyncCallResult{joinCodec->parse(answer, pairs).front() ? "true" : "false"};
     }
@@ -455,13 +456,15 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callProxyStud
     const auto& proxy = *payload.config.proxy;
     const auto [answer, alternatives] = co_await askLabel(arguments);
     const auto probability = labelProbability(alternatives, labelValues(payload.config.steps.front()), "true");
-    /// No probability (no logprobs, or an answer that is no value) is no confidence: the teacher decides.
+    const bool verdict = answer == "true";
+    /// No probability (no logprobs, or an answer that is no value) is no confidence: the teacher decides. A `true` stands
+    /// if p >= PROXY_THRESHOLD_TRUE, a `false` if 1 - p >= PROXY_THRESHOLD_FALSE.
     std::string route = "teacher";
-    if (probability && std::max(*probability, 1.0 - *probability) >= proxy.threshold)
+    if (probability && (verdict ? *probability >= proxy.thresholdTrue : 1.0 - *probability >= proxy.thresholdFalse))
     {
         route = inAuditSample(spaceJoined(arguments), proxy.auditRate) ? "audit" : "student";
     }
-    co_return AsyncCallResult{answer == "true" ? "true" : "false", std::move(route), probability ? formatProbability(*probability) : ""};
+    co_return AsyncCallResult{verdict ? "true" : "false", std::move(route), probability ? formatProbability(*probability) : ""};
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
@@ -514,6 +517,7 @@ boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(st
                 JoinPairPayload{
                     .pairId = batchRowId(position), .left = std::move(rows[position][0]), .right = std::move(rows[position][1])});
         }
+        joinCodec->keyPairs(pairs);
         const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
         const auto parsed = parseLlmJson(answer);
         const auto verdicts = joinCodec->parse(answer, pairs);
