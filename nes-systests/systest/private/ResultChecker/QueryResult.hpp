@@ -16,6 +16,7 @@
 
 #include <expected>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -28,13 +29,15 @@ namespace NES
 
 struct QueryResult
 {
-    Schema<UnqualifiedUnboundField, Ordered> schema;
+    /// Empty when the output format writes no header, so the result file holds only rows.
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema;
     std::vector<std::string> tuples;
 };
 
 /// Reads a result file: the first line is the schema header, every further line one row.
-/// A file with a header and no rows can be a valid empty result.
+/// A file without a header, as the JSON output formatter writes it, holds only rows, so an empty file is a valid empty result.
+/// A file with a header and no rows can be a valid empty result, but an empty file that should have a header is not.
 /// A file that cannot be read yields the reason as text for the verdict.
-[[nodiscard]] std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::path& resultFilePath);
+[[nodiscard]] std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::path& resultFilePath, bool hasHeader);
 
 }

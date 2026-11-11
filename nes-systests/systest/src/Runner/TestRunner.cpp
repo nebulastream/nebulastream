@@ -171,6 +171,7 @@ std::optional<DistributedQueryId> TestRunner::submitNext(QuerySubmitter& submitt
             StatementOutcome{
                 .reached = std::unexpected{started.error()},
                 .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
+                .sinkWritesHeader = plan.has_value() and plan->sinkWritesHeader,
                 .explained = explained});
         run.timings.emplace_back();
         run.remaining = run.remaining.subspan(1);
@@ -245,6 +246,7 @@ void TestRunner::submitGroup(
                 StatementOutcome{
                     .reached = std::move(outcome),
                     .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
+                    .sinkWritesHeader = plan.has_value() and plan->sinkWritesHeader,
                     .explained = std::nullopt});
             run.timings.push_back(StatementTiming{.execution = executionTime});
             run.remaining = run.remaining.subspan(1);

@@ -27,18 +27,27 @@ namespace NES
 
 Verdict DifferentialCheck::check() const
 {
-    const auto first = loadQueryResult(firstResultFile);
+    const auto first = loadQueryResult(firstResultFile, firstHasHeader);
     if (not first)
     {
         return std::unexpected(Mismatch{fmt::format("the first query of the differential block: {}", first.error())});
     }
-    const auto second = loadQueryResult(secondResultFile);
+    const auto second = loadQueryResult(secondResultFile, secondHasHeader);
     if (not second)
     {
         return std::unexpected(Mismatch{fmt::format("the second query of the differential block: {}", second.error())});
     }
 
-    return toVerdict(compare(first->schema, first->tuples, second->schema, second->tuples), ComparisonOrigin::DifferentialBlock);
+    /// A side without a header borrows the schema of the other side, but at least one side must provide one to compare rows field by field.
+    if (not first->schema.has_value() and not second->schema.has_value())
+    {
+        return std::unexpected(
+            Mismatch{"a differential block needs a schema header on at least one side, but neither result file has one"});
+    }
+    const auto& firstSchema = first->schema.has_value() ? *first->schema : *second->schema;
+    const auto& secondSchema = second->schema.has_value() ? *second->schema : *first->schema;
+
+    return toVerdict(compare(firstSchema, first->tuples, secondSchema, second->tuples), ComparisonOrigin::DifferentialBlock);
 }
 
 }
