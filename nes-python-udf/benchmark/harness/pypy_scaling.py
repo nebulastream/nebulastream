@@ -12,7 +12,9 @@
 
 """How the per-row cost of a UDF changes with the number of interpreters running at once, without NebulaStream.
 
-    python3 pypy_scaling.py --udf lcg --cpus 16,18,20 [--python /usr/bin/pypy3] [--seconds 5]
+    python3 pypy_scaling.py --udf lcg --cpus 16,18,20 [--python /usr/bin/pypy3] [--seconds 5] [--environment NAME=VALUE]
+
+`--udf inc+lcg+inc` runs a chain of calls, with one pass over the batch for each call.
 
 Starts one interpreter per CPU, pinned to it, each calling the UDF on batches of 2731 integers as a UDF process does
 (`[udf(x) for x in batch]`), and prints one JSON line with the nanoseconds per row of every interpreter over the last
@@ -29,19 +31,25 @@ import time
 WORKER = r'''
 import array, sys, time
 udf_name, start, seconds = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
-def inc(x):
-    return x + 1
-def lcg(x):
-    h = x
-    for _ in range(100):
-        h = (h * 1103515245 + 12345) % 2147483648
-    return h
-udf = {"inc": inc, "lcg": lcg}[udf_name]
+SOURCES = {
+    "inc": "def udf(x):\n    return x + 1\n",
+    "lcg": "def udf(x):\n    h = x\n    for _ in range(100):\n        h = (h * 1103515245 + 12345) % 2147483648\n    return h\n",
+}
+# One function object per call of a chain, each from a compilation of its own, as the UDF operators of a chain have
+udfs = []
+for name in udf_name.split("+"):
+    namespace = {}
+    exec(compile(SOURCES[name], "<udf%d>" % len(udfs), "exec"), namespace)
+    udfs.append(namespace["udf"])
+first, later = udfs[0], udfs[1:]
 batch = array.array("q", range(2731))
 rows = 0
 measured = None
 while True:
-    r = [udf(x) for x in batch]
+    # One pass over the batch per call, as one UDF operator per call does; the query adds 1 between the calls
+    r = [first(x) for x in batch]
+    for udf in later:
+        r = [udf(x + 1) for x in r]
     now = time.time()
     if now < start:
         continue
@@ -58,7 +66,8 @@ while True:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--udf", choices=["inc", "lcg"], default="lcg")
+    parser.add_argument("--udf", default="lcg", help="inc, lcg, or a chain of calls such as inc+lcg+inc, innermost first")
+    parser.add_argument("--environment", action="append", default=[], metavar="NAME=VALUE", help="environment variable of the interpreters, e.g. PYPY_GC_NURSERY=1M")
     parser.add_argument("--cpus", required=True, help="comma-separated CPUs, one interpreter each")
     parser.add_argument("--python", default="/usr/bin/pypy3")
     parser.add_argument("--seconds", type=float, default=5.0)
@@ -71,6 +80,7 @@ def main():
             ["taskset", "-c", str(cpu), arguments.python, "-c", WORKER, arguments.udf, str(start), str(arguments.seconds)],
             stdout=subprocess.PIPE,
             text=True,
+            env=dict(os.environ, **dict(setting.split("=", 1) for setting in arguments.environment)),
         )
         for cpu in cpus
     ]
@@ -81,6 +91,9 @@ def main():
             {
                 "label": arguments.label,
                 "udf": arguments.udf,
+                "calls": arguments.udf.count("+") + 1,
+                "environment": arguments.environment,
+                "mrows_per_s": round(sum(1e3 / value for value in values), 2),
                 "cpus": cpus,
                 "python": arguments.python,
                 "seconds": arguments.seconds,
