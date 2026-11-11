@@ -14,10 +14,12 @@
 
 #include <Configuration/WorkerConfiguration.hpp>
 
+#include <algorithm>
 #include <bit>
 #include <cstdint>
 #include <expected>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
@@ -195,6 +197,42 @@ const ConfigField<std::string> PYTHON_UDF_PROCESS_CPUS{
     },
     std::string{},
     "all CPUs of the worker"};
+
+const ConfigField<std::string> PYTHON_UDF_PROCESS_NURSERY{
+    Identifier::parse("process_nursery"),
+    "Size of the allocation nursery of PyPy in the processes of OUT_OF_PROCESS UDFs, e.g. 1M or 512K. The worker passes it to the "
+    "processes as PYPY_GC_NURSERY. The nurseries of all processes that share a level 3 cache must fit in that cache: with the default "
+    "of 4 MB and one process on each hardware thread, a process was three times slower than with 1M. A small nursery costs a cheap UDF "
+    "up to 18%. CPython ignores the value. Default: the default of PyPy",
+    [](const ConfigLiteral& literal)
+    {
+        /// A size in bytes arrives as a number
+        const auto size = std::holds_alternative<int64_t>(literal) ? ConfigLiteral{std::to_string(std::get<int64_t>(literal))} : literal;
+        return tryGetOr<std::string>(size, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<std::string, Exception>
+                {
+                    /// Digits, then at most one of K, M and G, then at most one B
+                    auto rest = std::string_view{value};
+                    const auto digits = std::min(rest.find_first_not_of("0123456789"), rest.size());
+                    rest.remove_prefix(digits);
+                    if (!rest.empty() && std::string_view{"KMG"}.contains(rest.front()))
+                    {
+                        rest.remove_prefix(1);
+                    }
+                    if (rest == "B")
+                    {
+                        rest.remove_prefix(1);
+                    }
+                    if (value.empty() || (digits > 0 && rest.empty()))
+                    {
+                        return value;
+                    }
+                    return std::unexpected{InvalidConfigParameter("Invalid process_nursery, expected a size, e.g. 1M or 512K: {}", value)};
+                });
+    },
+    std::string{},
+    "the default of PyPy"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -218,7 +256,8 @@ Schema<QualifiedErasedConfigField, Ordered> WorkerConfiguration::getConfigSchema
             PYTHON_UDF_PROCESSES,
             PYTHON_UDF_PROCESS_VENV,
             PYTHON_UDF_PROCESS_PROTOCOL,
-            PYTHON_UDF_PROCESS_CPUS));
+            PYTHON_UDF_PROCESS_CPUS,
+            PYTHON_UDF_PROCESS_NURSERY));
 }
 
 WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& config)
@@ -237,6 +276,7 @@ WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& co
         config.get(PYTHON_UDF_PROCESSES),
         config.get(PYTHON_UDF_PROCESS_VENV),
         config.get(PYTHON_UDF_PROCESS_PROTOCOL),
-        config.get(PYTHON_UDF_PROCESS_CPUS)};
+        config.get(PYTHON_UDF_PROCESS_CPUS),
+        config.get(PYTHON_UDF_PROCESS_NURSERY)};
 }
 }

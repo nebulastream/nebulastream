@@ -48,7 +48,8 @@ struct WorkerConfiguration
         uint64_t pythonUdfProcesses = 0,
         std::string pythonUdfProcessVenv = {},
         std::string pythonUdfProcessProtocol = "ARROW_IPC",
-        std::string pythonUdfProcessCpus = {})
+        std::string pythonUdfProcessCpus = {},
+        std::string pythonUdfProcessNursery = {})
         : queryEngine(queryEngine)
         , defaultQueryExecution(defaultQueryExecution)
         , network(network)
@@ -63,6 +64,7 @@ struct WorkerConfiguration
         , pythonUdfProcessVenv(std::move(pythonUdfProcessVenv))
         , pythonUdfProcessProtocol(std::move(pythonUdfProcessProtocol))
         , pythonUdfProcessCpus(std::move(pythonUdfProcessCpus))
+        , pythonUdfProcessNursery(std::move(pythonUdfProcessNursery))
     {
     }
 
@@ -107,6 +109,11 @@ struct WorkerConfiguration
     /// CPUs for the processes of OUT_OF_PROCESS UDFs as a CPU list, e.g. "16-23": each process is pinned to one of them, in turn.
     /// Empty leaves the processes on all CPUs of the worker.
     std::string pythonUdfProcessCpus;
+
+    /// Size of the allocation nursery of PyPy in the processes of OUT_OF_PROCESS UDFs, e.g. "1M". Empty keeps the default of PyPy,
+    /// which is 4 MB. A process writes through its nursery again and again, so the nurseries of all processes that share a level 3
+    /// cache must fit in that cache. If they do not fit, each process becomes up to three times slower. CPython ignores the value.
+    std::string pythonUdfProcessNursery;
 
     static WorkerConfiguration fromConfig(const InstantiatedConfig& config);
 };

@@ -79,6 +79,13 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     setenv("NES_UDF_PROCESS_PROTOCOL", workerConfiguration.pythonUdfProcessProtocol.c_str(), /*overwrite=*/1);
     /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
     setenv("NES_UDF_PROCESS_CPUS", workerConfiguration.pythonUdfProcessCpus.c_str(), /*overwrite=*/1);
+    /// PyPy reads the size of its nursery from its environment when it starts. Without the option, a value in the environment of
+    /// the worker stays in effect.
+    if (const auto& nursery = workerConfiguration.pythonUdfProcessNursery; !nursery.empty())
+    {
+        /// NOLINTNEXTLINE(concurrency-mt-unsafe,misc-include-cleaner)
+        setenv("PYPY_GC_NURSERY", nursery.c_str(), /*overwrite=*/1);
+    }
 
     if (configuration.enableGoogleEventTrace)
     {
