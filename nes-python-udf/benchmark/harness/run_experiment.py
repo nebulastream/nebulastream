@@ -316,7 +316,8 @@ def main():
     unknown = [name for name in arguments.layouts if name not in by_name]
     if unknown:
         parser.error(f"unknown layouts: {unknown}")
-    if git("status", "--porcelain", "--untracked-files=no"):
+    # Results files grow while an experiment runs; they are not code under test.
+    if git("status", "--porcelain", "--untracked-files=no", "--", REPOSITORY, f":(exclude){RESULTS}"):
         sys.exit("There are uncommitted changes. Commit them first, so that the recorded commit says what was measured.")
 
     binary = os.path.join(arguments.build, "nes-systests/systest/systest")
