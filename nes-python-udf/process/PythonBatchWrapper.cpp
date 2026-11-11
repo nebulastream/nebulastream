@@ -554,6 +554,8 @@ def _woken():
         return bool(sock.recv(4096))
     except BlockingIOError:
         return True
+    except ConnectionError:
+        return False
 
 
 def _wake_worker():
@@ -561,7 +563,8 @@ def _wake_worker():
         _control[_WORKER_SLEEPS] = 0
         try:
             sock.send(b"\x01")
-        except BlockingIOError:
+        except (BlockingIOError, ConnectionError):
+            # A worker that closed the socket needs no wake-up; the next wait for a request sees the closed socket
             pass
 
 

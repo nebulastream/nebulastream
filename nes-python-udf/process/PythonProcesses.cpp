@@ -168,6 +168,9 @@ def _events(timeout):
             left = not ready.recv(4096)
         except BlockingIOError:
             left = False
+        except ConnectionError:
+            # The operator closed its socket with wake-ups unread; the other operators continue
+            left = True
         if left:
             _operators[:] = [operator for operator in _operators if operator.sock is not ready]
             ready.close()
