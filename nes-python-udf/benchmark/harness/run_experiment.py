@@ -264,6 +264,21 @@ def run(arguments, layout, udf, repetition, record_base):
     processed = max(sum(s["rows"] for s in statistics), 1)
     # Between the first batch of any process and the last batch of any process; the clocks of the processes are one monotonic clock.
     steady_seconds = max(s["last"] for s in active) - min(s["first"] for s in active) if active else None
+    # The rows of all processes by quarter second. The trimmed rate leaves out the warm-up after the first batch (processes that
+    # start, the compiler of PyPy) and the end of the input, and uses whole quarter seconds only.
+    series = {}
+    for s in active:
+        for bucket, count in s.get("series", {}).items():
+            series[int(bucket)] = series.get(int(bucket), 0) + count
+    trimmed = None
+    rates = []
+    if series:
+        first_bucket = min(series) + 1 + int(arguments.warmup * 4)
+        last_bucket = max(series) - 1 - int(arguments.cooldown * 4)
+        rates = [series.get(bucket, 0) / operators * 4 / 1e6 for bucket in range(min(series), max(series) + 1)]
+        window = [series.get(bucket, 0) for bucket in range(first_bucket, last_bucket + 1)]
+        if len(window) >= 8:
+            trimmed = sum(window) / operators / (len(window) / 4) / 1e6
     cpu = {}
     for (_, comm), value in threads.items():
         cpu.setdefault("worker" if comm.startswith("WorkerThread") else comm, []).append(value)
@@ -282,6 +297,11 @@ def run(arguments, layout, udf, repetition, record_base):
         steady_seconds=round(steady_seconds, 3) if steady_seconds else None,
         # every row passes each UDF operator once
         steady_mrows_per_s=round(sum(s["rows"] for s in active) / operators / steady_seconds / 1e6, 2) if steady_seconds else None,
+        # as steady_mrows_per_s, without the first --warmup and the last --cooldown seconds; None for runs shorter than 2 s more
+        trimmed_mrows_per_s=round(trimmed, 2) if trimmed else None,
+        warmup=arguments.warmup,
+        cooldown=arguments.cooldown,
+        mrows_per_s_by_quarter_second=[round(rate, 2) for rate in rates],
         udf_operators=operators,
         processes_per_operator=arguments.processes or layout["p"],
         sources=arguments.sources,
@@ -301,8 +321,8 @@ def run(arguments, layout, udf, repetition, record_base):
     with open(os.path.join(RESULTS, arguments.experiment + ".jsonl"), "a") as results:
         results.write(json.dumps(record) + "\n")
     print(
-        "%-12s %-10s r%d  %8s M rows/s (steady %s, %.1f s)  processes busy %s (min %s)  %s ns/row  workers busy %s  sources %s  rc %d"
-        % (layout["name"], udf, repetition, record["mrows_per_s"], record["steady_mrows_per_s"], seconds or 0, record["process_busy"], record["process_busy_min"], record["process_ns_per_row"], record["worker_busy"], record["source_threads_cpu"], return_code),
+        "%-12s %-10s r%d  %8s M rows/s (steady %s, trimmed %s, %.1f s)  processes busy %s (min %s)  %s ns/row  workers busy %s  sources %s  rc %d"
+        % (layout["name"], udf, repetition, record["mrows_per_s"], record["steady_mrows_per_s"], record["trimmed_mrows_per_s"], seconds or 0, record["process_busy"], record["process_busy_min"], record["process_ns_per_row"], record["worker_busy"], record["source_threads_cpu"], return_code),
         flush=True,
     )
     if not arguments.keep:
@@ -329,6 +349,8 @@ def main():
     parser.add_argument("--scratch", default="/tmp/nes-udf-experiments", help="directory for the files of the runs")
     parser.add_argument("--worker-argument", action="append", default=[], metavar="ARG", help="further worker configuration, e.g. --worker.x=y")
     parser.add_argument("--environment", action="append", default=[], metavar="NAME=VALUE", help="environment variable of the worker and the UDF processes, e.g. PYPY_GC_NURSERY=1M")
+    parser.add_argument("--warmup", type=float, default=3.0, help="seconds after the first batch that trimmed_mrows_per_s leaves out (default: 3)")
+    parser.add_argument("--cooldown", type=float, default=1.0, help="seconds before the last batch that trimmed_mrows_per_s leaves out (default: 1)")
     parser.add_argument("--note", default="", help="free text stored with every record")
     parser.add_argument("--keep", action="store_true", help="keep the files of the runs, e.g. the generated program and the logs")
     arguments = parser.parse_args()

@@ -13,7 +13,7 @@
 """Runs in place of the bootstrap of a UDF process: reads the program the worker sends, as the bootstrap does, and wraps its
 functions with timers before it starts. When the process ends, it writes what it measured to $RUN_DIR/stats<index>.json:
 rows and batches, the time in _process_batch (process), publishing answers (answer) and waiting for requests (wait), the first
-and last batch, and its CPU time. The first process also saves the generated program as $RUN_DIR/program.py.
+and last batch, its rows by quarter second (series), and its CPU time. The first process also saves the generated program as $RUN_DIR/program.py.
 """
 
 import os
@@ -41,7 +41,9 @@ if os.environ["UDF_INDEX"] == "0":
 INSTRUMENT = r'''
 import time as _t, json as _json, os as _os, resource as _res
 _pc = _t.perf_counter
-_S = {"batches": 0, "rows": 0, "process": 0.0, "answer": 0.0, "wait": 0.0, "first": None, "last": 0.0}
+_S = {"batches": 0, "rows": 0, "process": 0.0, "answer": 0.0, "wait": 0.0, "first": None, "last": 0.0, "series": {}}
+# Rows by quarter second of the monotonic clock, which all processes share, so that the harness can leave out the warm-up
+_series = _S["series"]
 def _wrap(namespace, name, key, rows=False):
     original = namespace.get(name)
     if original is None:
@@ -58,7 +60,10 @@ def _wrap(namespace, name, key, rows=False):
                     _S["first"] = started
                 _S["last"] = ended
                 _S["batches"] += 1
-                _S["rows"] += args[0] if isinstance(args[0], int) else args[0].num_rows
+                count = args[0] if isinstance(args[0], int) else args[0].num_rows
+                _S["rows"] += count
+                bucket = int(ended * 4)
+                _series[bucket] = _series.get(bucket, 0) + count
     namespace[name] = wrapped
 _wrap(globals(), "_process_batch", "process", True)
 _wrap(globals(), "_answer", "answer")
