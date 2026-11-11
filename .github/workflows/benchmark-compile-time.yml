@@ -21,6 +21,9 @@ jobs:
     runs-on: bc58
     container:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER_NAME }}
+        password: ${{ secrets.DOCKER_PULL_SECRET }}
     timeout-minutes: 40
     env:
       CONBENCH_PROJECT_COMMIT: ${{ inputs.head_sha }}

@@ -20,6 +20,9 @@ jobs:
     runs-on: bc58
     container:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER_NAME }}
+        password: ${{ secrets.DOCKER_PULL_SECRET }}
       volumes:
         - test-file-cache:/test-file-cache
       env:
