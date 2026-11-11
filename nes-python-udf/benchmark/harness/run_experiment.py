@@ -169,6 +169,11 @@ def layouts():
         if label in ("n4", "n1,4-7"):
             add(f"S w6 {label}", CORES[:7], [14], cores, src_perf=True, workers=6)
         add(f"S w6 {label} smt", CORES[:7], [14], [cpu + thread for cpu in cores for thread in (0, 1)], src_perf=True, workers=6)
+        # m4, m8: as `smt`, with 4 or 8 misc CPUs (CPU 14 and cores of node 1), so that the threads of the UDF sources of a
+        # chain do not share one CPU
+        if label in ("n4", "n4-7"):
+            for misc in (4, 8):
+                add(f"S w6 {label} smt m{misc}", CORES[:7], [14] + node(1)[: misc - 1], [cpu + thread for cpu in cores for thread in (0, 1)], src_perf=True, workers=6)
     return out
 
 
