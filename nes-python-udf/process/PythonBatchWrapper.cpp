@@ -533,7 +533,9 @@ _MAX_SPIN_SECONDS = 2e-4
 _SLEEP_SECONDS = 1e-3
 _gap = 0.0
 
-_shared = mmap.mmap(4, 0)
+# A host process that serves several UDF operators sets _SHARED_FD, _POOL and _HOSTED before it runs this program, see
+# PythonProcesses::start; a process of its own has the shared memory as file descriptor 4 and the pool as 5.
+_shared = mmap.mmap(globals().get("_SHARED_FD", 4), 0)
 _ring = (len(_shared) - _CONTROL) // 2
 # Aligned uint64 words, which a memoryview reads and writes with single loads and stores
 _control = memoryview(_shared)[:_CONTROL].cast("Q")
@@ -653,34 +655,34 @@ def _answer(tail, rows, buffers):
     return _publish(tail + record)
 
 
-def _main():
-    sock.setblocking(False)
-    head = 0
-    tail = 0
-    while True:
-        if not _await_request(head):
-            return
-        position = head % _ring
-        (record,) = struct.unpack_from("<Q", _requests, position)
-        if record == _WRAP:
-            head += _ring - position
-            _control[_REQUEST_HEAD] = head
-            continue
-        rows, size = struct.unpack_from("<QQ", _requests, position + 8)
-        # The buffers stay in the ring, which the worker reuses only after the answer, as the unchanged columns go back from there
-        body = _requests[position + 24:position + 24 + size]
-        buffers = []
-        offset = 0
-        while offset < size:
-            (length,) = struct.unpack_from("<Q", body, offset)
-            buffers.append(body[offset + 8:offset + 8 + length])
-            offset += 8 + (length + 7) // 8 * 8
-        try:
-            tail = _answer(tail, rows, _process_batch(rows, buffers))
-        except Exception as error:
-            tail = _failed(tail, error)
-        head += record
-        _control[_REQUEST_HEAD] = head
+def _step():
+    # Handles the next request; False if there is none
+    global _head, _tail
+    head = _head
+    if _control[_REQUEST_TAIL] == head:
+        return False
+    position = head % _ring
+    (record,) = struct.unpack_from("<Q", _requests, position)
+    if record == _WRAP:
+        _head = head + _ring - position
+        _control[_REQUEST_HEAD] = _head
+        return True
+    rows, size = struct.unpack_from("<QQ", _requests, position + 8)
+    # The buffers stay in the ring, which the worker reuses only after the answer, as the unchanged columns go back from there
+    body = _requests[position + 24:position + 24 + size]
+    buffers = []
+    offset = 0
+    while offset < size:
+        (length,) = struct.unpack_from("<Q", body, offset)
+        buffers.append(body[offset + 8:offset + 8 + length])
+        offset += 8 + (length + 7) // 8 * 8
+    try:
+        _tail = _answer(_tail, rows, _process_batch(rows, buffers))
+    except Exception as error:
+        _tail = _failed(_tail, error)
+    _head = head + record
+    _control[_REQUEST_HEAD] = _head
+    return True
 )";
 
 /// SHARED_MEMORY_ZERO_COPY: the pool of the worker is the file descriptor 5, and the rings only say where the columns are in it.
@@ -698,7 +700,7 @@ constexpr std::string_view SHARED_MEMORY_IN_PLACE = R"(
 
 import collections
 
-_pool = memoryview(mmap.mmap(5, 0))
+_pool = globals().get("_POOL") or memoryview(mmap.mmap(5, 0))
 _INLINE = 1 << 63
 _NONE = 0xFFFFFFFF
 
@@ -797,37 +799,48 @@ def _answer(tail, rows, placed):
     return _publish(tail + record)
 
 
-def _main():
-    sock.setblocking(False)
-    head = 0
-    tail = 0
-    while True:
-        if not _await_request(head):
-            return
-        position = head % _ring
-        (record,) = struct.unpack_from("<Q", _requests, position)
-        if record == _WRAP:
-            head += _ring - position
-            _control[_REQUEST_HEAD] = head
-            continue
-        rows, children, area, area_size, main = struct.unpack_from("<QQQQQ", _requests, position + 8)
-        if area_size:
-            _areas.append((area, area_size))
-        entries = position + 48
-        inline = entries + 16 * children
-        bases = [(_pool, main)]
-        for index in range(children):
-            offset, _ = struct.unpack_from("<QQ", _requests, entries + 16 * index)
-            bases.append((_requests, inline + offset - _INLINE) if offset & _INLINE else (_pool, offset))
-        try:
-            tail = _answer(tail, rows, _process_batch(rows, bases))
-        except Exception as error:
-            tail = _failed(tail, error)
-        head += record
-        _control[_REQUEST_HEAD] = head
+def _step():
+    # Handles the next request; False if there is none
+    global _head, _tail
+    head = _head
+    if _control[_REQUEST_TAIL] == head:
+        return False
+    position = head % _ring
+    (record,) = struct.unpack_from("<Q", _requests, position)
+    if record == _WRAP:
+        _head = head + _ring - position
+        _control[_REQUEST_HEAD] = _head
+        return True
+    rows, children, area, area_size, main = struct.unpack_from("<QQQQQ", _requests, position + 8)
+    if area_size:
+        _areas.append((area, area_size))
+    entries = position + 48
+    inline = entries + 16 * children
+    bases = [(_pool, main)]
+    for index in range(children):
+        offset, _ = struct.unpack_from("<QQ", _requests, entries + 16 * index)
+        bases.append((_requests, inline + offset - _INLINE) if offset & _INLINE else (_pool, offset))
+    try:
+        _tail = _answer(_tail, rows, _process_batch(rows, bases))
+    except Exception as error:
+        _tail = _failed(_tail, error)
+    _head = head + record
+    _control[_REQUEST_HEAD] = _head
+    return True
 )";
 
 constexpr std::string_view SHARED_MEMORY_START = R"(
+
+# The bytes of the request ring this process took, and of the answer ring it published
+_head = 0
+_tail = 0
+
+
+def _main():
+    sock.setblocking(False)
+    while _await_request(_head):
+        _step()
+
 
 try:
     _define_udfs()
@@ -835,7 +848,9 @@ except BaseException as error:
     _failure(error)
     raise SystemExit(1)
 sock.sendall(struct.pack("<Q", 1))
-_main()
+# A host process calls _step itself, in turn with the ones of its other UDF operators
+if not globals().get("_HOSTED"):
+    _main()
 )";
 }
 

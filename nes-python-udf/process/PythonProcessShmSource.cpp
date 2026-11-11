@@ -215,7 +215,7 @@ void PythonProcessShmSource::open(std::shared_ptr<AbstractBufferProvider> provid
         process.memory = static_cast<std::byte*>(memory);
         try
         {
-            process.handle = PythonProcesses::start(program, file, pool ? pool->fd : -1);
+            process.handle = PythonProcesses::start(program, file, pool ? pool->fd : -1, index);
         }
         catch (...)
         {

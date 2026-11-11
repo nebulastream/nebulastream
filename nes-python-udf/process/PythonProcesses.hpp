@@ -50,12 +50,19 @@ struct Process
 {
     pid_t pid = -1;
     int socket = -1;
+    /// Whether this is a UDF operator in a host process that serves several of them, see `start`. It then has no pid.
+    bool hosted = false;
 };
+
+/// NES_UDF_SHARED_PROCESSES=1: the UDF operators of the worker share its processes instead of starting their own.
+[[nodiscard]] bool sharedProcesses();
 
 /// Starts a Python process that runs `program`: the python of NES_UDF_PROCESS_VENV or else NES_UDF_VENV, otherwise python3 on the
 /// PATH. `sharedFd` and `poolFd`, if not -1, become the file descriptors 4 and 5 of the process. Does not wait for the program to start.
+/// With sharedProcesses() and a `sharedFd`, no process starts: the host process `index` of the worker, which starts on first use, runs
+/// the program next to the ones of the other UDF operators, and the socket of the result is one of the operator alone.
 /// @throws CannotLoadUdf if the process cannot be started
-[[nodiscard]] Process start(std::string_view program, int sharedFd = -1, int poolFd = -1);
+[[nodiscard]] Process start(std::string_view program, int sharedFd = -1, int poolFd = -1, size_t index = 0);
 
 /// Waits for the status a process sends once its program started, see generatePythonBatchWrapper.
 /// @throws CannotLoadUdf with the error of the process if it failed to start

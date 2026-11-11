@@ -28,7 +28,9 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <mutex>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <poll.h>
@@ -72,6 +74,141 @@ def read(size):
         data += chunk
     return bytes(data)
 exec(compile(read(struct.unpack("<Q", read(8))[0]), "<nes-udf-process>", "exec"), {"sock": sock})
+)";
+
+/// The program of a host process, which serves several UDF operators: over its socket it receives, per operator, a socket, the shared
+/// memory with the rings of the operator and the pool of the worker as file descriptors, and the program generatePythonBatchWrapper
+/// made for the operator. It runs each program in a module of its own and then handles the requests of all operators in turn, one
+/// at a time each. An operator leaves when the worker closes its socket; the process ends when the worker closes the socket of the
+/// process.
+constexpr const char* HOST = R"(import mmap, os, select, socket, struct, time, traceback, types
+
+_SPIN_SECONDS = 1e-4
+_SLEEP_SECONDS = 1e-3
+_operators = []
+_pools = {}
+
+
+def _read(size):
+    data = bytearray()
+    while len(data) < size:
+        chunk = sock.recv(size - len(data))
+        if not chunk:
+            raise SystemExit(1)
+        data += chunk
+    return bytes(data)
+
+
+def _pool(fd):
+    # All operators share the one mapping of the pool of the worker
+    status = os.fstat(fd)
+    key = (status.st_dev, status.st_ino)
+    if key not in _pools:
+        _pools[key] = memoryview(mmap.mmap(fd, 0))
+    os.close(fd)
+    return _pools[key]
+
+
+def _attached(operator):
+    pass
+
+
+def _attach():
+    # [program size] with the file descriptors, then the program; False once the worker closed the socket
+    sock.setblocking(True)
+    try:
+        data, fds, _, _ = socket.recv_fds(sock, 8, 3)
+        if not data:
+            return False
+        data += _read(8 - len(data))
+        program = _read(struct.unpack("<Q", data)[0])
+    finally:
+        sock.setblocking(False)
+    channel = socket.socket(fileno=fds[0])
+    operator = types.ModuleType("nes_udf_operator")
+    operator.sock = channel
+    operator._HOSTED = True
+    operator._SHARED_FD = fds[1]
+    operator._POOL = _pool(fds[2]) if len(fds) > 2 else None
+    try:
+        exec(compile(program, "<nes-udf-operator>", "exec"), operator.__dict__)
+    except SystemExit:
+        # The program told the worker why it failed
+        channel.close()
+        return True
+    except BaseException as error:
+        message = "".join(traceback.format_exception_only(type(error), error)).strip().encode()
+        channel.sendall(struct.pack("<QQ", 0, len(message)) + message)
+        channel.close()
+        return True
+    finally:
+        os.close(fds[1])
+    channel.setblocking(False)
+    _attached(operator)
+    _operators.append(operator)
+    return True
+
+
+def _pending():
+    for operator in _operators:
+        if operator._control[operator._REQUEST_TAIL] != operator._head:
+            return True
+    return False
+
+
+def _events(timeout):
+    # New operators, wake-ups and operators that left; False once the worker closed the socket
+    readable, _, _ = select.select([sock] + [operator.sock for operator in _operators], [], [], timeout)
+    for ready in readable:
+        if ready is sock:
+            if not _attach():
+                return False
+            continue
+        try:
+            left = not ready.recv(4096)
+        except BlockingIOError:
+            left = False
+        if left:
+            _operators[:] = [operator for operator in _operators if operator.sock is not ready]
+            ready.close()
+    return True
+
+
+def _idle():
+    # Spins briefly, as a wake-up costs both sides a system call, then sleeps until the worker wakes an operator or sends a new one
+    deadline = time.perf_counter() + _SPIN_SECONDS
+    while time.perf_counter() < deadline:
+        if _pending():
+            return True
+    for operator in _operators:
+        operator._control[operator._PROCESS_SLEEPS] = 1
+    try:
+        if _pending():
+            return True
+        return _events(_SLEEP_SECONDS)
+    finally:
+        for operator in _operators:
+            operator._control[operator._PROCESS_SLEEPS] = 0
+
+
+def _serve():
+    sock.setblocking(False)
+    rounds = 0
+    while True:
+        worked = False
+        for operator in _operators:
+            if operator._step():
+                worked = True
+        rounds += 1
+        if not worked:
+            if not _idle():
+                return
+        elif not rounds & 255:
+            if not _events(0):
+                return
+
+
+_serve()
 )";
 
 std::string pythonExecutable()
@@ -136,7 +273,98 @@ size_t numberOfProcesses()
     return 1;
 }
 
-Process start(const std::string_view program, const int sharedFd, const int poolFd)
+namespace
+{
+Process spawn(std::string_view program, int sharedFd, int poolFd);
+
+/// The host processes of the worker and how many UDF operators use them.
+struct Hosts
+{
+    std::mutex mutex;
+    std::vector<Process> processes;
+    size_t attached = 0;
+};
+
+Hosts& hosts()
+{
+    static Hosts instance;
+    return instance;
+}
+
+/// Makes the host process `index` serve a UDF operator, see HOST; starts the host processes up to it if they do not run yet.
+Process attach(const size_t index, const std::string_view program, const int sharedFd, const int poolFd)
+{
+    auto& [mutex, processes, attached] = hosts();
+    const std::scoped_lock lock{mutex};
+    while (processes.size() <= index)
+    {
+        processes.push_back(spawn(HOST, -1, -1));
+    }
+    const auto& host = processes[index];
+
+    std::array<int, 2> sockets{};
+    if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sockets.data()) != 0)
+    {
+        throw CannotLoadUdf("Failed to create the socket of a UDF operator: {}", std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+    }
+    std::array<int, 3> descriptors{sockets[1], sharedFd, poolFd};
+    const size_t count = poolFd >= 0 ? 3 : 2;
+    uint64_t size = program.size();
+    iovec bytes{.iov_base = &size, .iov_len = sizeof(size)};
+    alignas(cmsghdr) std::array<char, CMSG_SPACE(3 * sizeof(int))> control{};
+    msghdr message{};
+    message.msg_iov = &bytes;
+    message.msg_iovlen = 1;
+    message.msg_control = control.data();
+    message.msg_controllen = CMSG_SPACE(count * sizeof(int));
+    auto* const header = CMSG_FIRSTHDR(&message);
+    header->cmsg_level = SOL_SOCKET;
+    header->cmsg_type = SCM_RIGHTS;
+    header->cmsg_len = CMSG_LEN(count * sizeof(int));
+    std::memcpy(CMSG_DATA(header), descriptors.data(), count * sizeof(int));
+    ssize_t sent = 0;
+    do
+    {
+        sent = sendmsg(host.socket, &message, MSG_NOSIGNAL);
+    } while (sent < 0 && errno == EINTR);
+    ::close(sockets[1]);
+    if (sent != static_cast<ssize_t>(sizeof(size)))
+    {
+        ::close(sockets[0]);
+        throw CannotLoadUdf("Failed to reach a UDF host process: {}", std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+    }
+    try
+    {
+        sendAll(host, std::as_bytes(std::span{program}));
+    }
+    catch (...)
+    {
+        ::close(sockets[0]);
+        throw;
+    }
+    ++attached;
+    return Process{.pid = -1, .socket = sockets[0], .hosted = true};
+}
+}
+
+bool sharedProcesses()
+{
+    const auto* const shared = std::getenv("NES_UDF_SHARED_PROCESSES"); /// NOLINT(concurrency-mt-unsafe)
+    return shared != nullptr && std::string_view{shared} == "1";
+}
+
+Process start(const std::string_view program, const int sharedFd, const int poolFd, const size_t index)
+{
+    if (sharedFd >= 0 && sharedProcesses())
+    {
+        return attach(index, program, sharedFd, poolFd);
+    }
+    return spawn(program, sharedFd, poolFd);
+}
+
+namespace
+{
+Process spawn(const std::string_view program, const int sharedFd, const int poolFd)
 {
     std::array<int, 2> sockets{};
     if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sockets.data()) != 0)
@@ -185,6 +413,7 @@ Process start(const std::string_view program, const int sharedFd, const int pool
     sendAll(process, std::as_bytes(std::span{&size, 1}));
     sendAll(process, std::as_bytes(std::span{program}));
     return process;
+}
 }
 
 void awaitStart(const Process& process)
@@ -259,6 +488,7 @@ void receiveAll(const Process& process, std::span<std::byte> bytes)
 
 void end(const std::span<Process> processes)
 {
+    size_t left = 0;
     for (auto& process : processes)
     {
         if (process.socket >= 0)
@@ -266,6 +496,25 @@ void end(const std::span<Process> processes)
             ::close(process.socket);
             process.socket = -1;
         }
+        if (std::exchange(process.hosted, false))
+        {
+            ++left;
+        }
+    }
+    if (left > 0)
+    {
+        /// The host processes end with the last UDF operator they serve.
+        std::vector<Process> ended;
+        {
+            auto& [mutex, hostProcesses, attached] = hosts();
+            const std::scoped_lock lock{mutex};
+            attached -= left;
+            if (attached == 0)
+            {
+                ended = std::exchange(hostProcesses, {});
+            }
+        }
+        PythonProcesses::end(ended);
     }
     const auto deadline = std::chrono::steady_clock::now() + TERMINATION_GRACE_PERIOD;
     for (auto& process : processes)

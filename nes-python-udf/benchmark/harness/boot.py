@@ -42,8 +42,8 @@ INSTRUMENT = r'''
 import time as _t, json as _json, os as _os, resource as _res
 _pc = _t.perf_counter
 _S = {"batches": 0, "rows": 0, "process": 0.0, "answer": 0.0, "wait": 0.0, "first": None, "last": 0.0}
-def _wrap(name, key, rows=False):
-    original = globals().get(name)
+def _wrap(namespace, name, key, rows=False):
+    original = namespace.get(name)
     if original is None:
         return
     def wrapped(*args):
@@ -59,14 +59,19 @@ def _wrap(name, key, rows=False):
                 _S["last"] = ended
                 _S["batches"] += 1
                 _S["rows"] += args[0] if isinstance(args[0], int) else args[0].num_rows
-    globals()[name] = wrapped
-_wrap("_process_batch", "process", True)
-_wrap("_answer", "answer")
-_wrap("_frame", "answer")
-_wrap("_await_request", "wait")
+    namespace[name] = wrapped
+_wrap(globals(), "_process_batch", "process", True)
+_wrap(globals(), "_answer", "answer")
+_wrap(globals(), "_frame", "answer")
+_wrap(globals(), "_await_request", "wait")
+# A host process, which serves several UDF operators: each has a module with a _process_batch and an _answer of its own
+_wrap(globals(), "_idle", "wait")
+def _attached(operator):
+    _wrap(operator.__dict__, "_process_batch", "process", True)
+    _wrap(operator.__dict__, "_answer", "answer")
 _T0 = _pc()
 try:
-    _main()
+    (_serve if "_serve" in globals() else _main)()
 finally:
     _S["wall"] = _pc() - _T0
     usage = _res.getrusage(_res.RUSAGE_SELF)
@@ -74,6 +79,9 @@ finally:
     with open(_os.path.join(_os.environ["RUN_DIR"], "stats" + _os.environ["UDF_INDEX"] + ".json"), "w") as _out:
         _out.write(_json.dumps(_S))
 '''
-head, sep, tail = program.rpartition("\n_main()")
-assert sep, "the program of the UDF process does not end in a call of _main()"
+for ending in ("\n_serve()", '\nif not globals().get("_HOSTED"):\n    _main()', "\n_main()"):
+    head, sep, tail = program.rpartition(ending)
+    if sep:
+        break
+assert sep, "the program of the UDF process does not end in a call of _main() or _serve()"
 exec(compile(head + INSTRUMENT + tail, "<nes-udf-process>", "exec"), {"sock": sock})

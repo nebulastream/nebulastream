@@ -108,9 +108,9 @@ void PythonProcessSocketSource::open(std::shared_ptr<AbstractBufferProvider> pro
     for (size_t index = 0; index < PythonProcesses::numberOfProcesses(); ++index)
     {
         auto& process = *processes.emplace_back(std::make_unique<Process>());
-        const auto [pid, socket] = PythonProcesses::start(program);
-        process.pid = pid;
-        process.socket = socket;
+        const auto started = PythonProcesses::start(program);
+        process.pid = started.pid;
+        process.socket = started.socket;
     }
     for (auto& process : processes)
     {
