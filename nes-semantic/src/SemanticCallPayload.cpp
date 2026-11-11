@@ -49,9 +49,18 @@ struct EncodedKeyed
     std::string timestampField;
     int64_t windowsPerCall;
 };
+
+struct EncodedProxy
+{
+    std::string modelName;
+    std::string endpoint;
+    double threshold;
+    double auditRate;
+};
 }
 
 using detail::EncodedKeyed;
+using detail::EncodedProxy;
 
 namespace
 {
@@ -105,6 +114,9 @@ struct EncodedPayload
     std::optional<int64_t> answerMode;
     std::optional<std::string> inputLabel;
     std::optional<std::string> confidenceField;
+    /// Only written for a cascade, for the same reason.
+    std::optional<EncodedProxy> proxy;
+    std::optional<int64_t> proxyRole;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -214,7 +226,15 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .imageMaxBytes = config.imageFields.empty() ? std::nullopt : std::optional{static_cast<int64_t>(config.imageMaxBytes)},
             .answerMode = config.answerMode == AnswerMode::JSON ? std::nullopt : std::optional{static_cast<int64_t>(config.answerMode)},
             .inputLabel = config.answerMode == AnswerMode::JSON ? std::nullopt : std::optional{config.inputLabel},
-            .confidenceField = config.confidenceField.empty() ? std::nullopt : std::optional{config.confidenceField}});
+            .confidenceField = config.confidenceField.empty() ? std::nullopt : std::optional{config.confidenceField},
+            .proxy = config.proxy ? std::optional{EncodedProxy{
+                                        .modelName = config.proxy->modelName,
+                                        .endpoint = config.proxy->endpoint,
+                                        .threshold = config.proxy->threshold,
+                                        .auditRate = config.proxy->auditRate}}
+                                  : std::nullopt,
+            .proxyRole = payload.proxyRole == SemanticCallPayload::ProxyRole::NONE ? std::nullopt
+                                                                                  : std::optional{static_cast<int64_t>(payload.proxyRole)}});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -266,12 +286,37 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .imageMaxBytes = static_cast<size_t>(std::max<int64_t>(1, value.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes)))),
             .answerMode = readEnum(value.answerMode.value_or(0), AnswerMode::LABEL, "AnswerMode"),
             .inputLabel = std::move(value.inputLabel).value_or(""),
-            .confidenceField = std::move(value.confidenceField).value_or("")},
+            .confidenceField = std::move(value.confidenceField).value_or(""),
+            .proxy = value.proxy ? std::optional{SemanticProxyConfig{
+                                       .modelName = std::move(value.proxy->modelName),
+                                       .endpoint = std::move(value.proxy->endpoint),
+                                       .threshold = value.proxy->threshold,
+                                       .auditRate = value.proxy->auditRate}}
+                                 : std::nullopt},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),
         .agg = value.agg.value_or(false),
-        .stateId = std::move(value.stateId).value_or("")};
+        .stateId = std::move(value.stateId).value_or(""),
+        .proxyRole = readEnum(value.proxyRole.value_or(0), SemanticCallPayload::ProxyRole::TEACHER, "ProxyRole")};
+}
+
+std::string encodeSemanticProxyConfig(const SemanticProxyConfig& config)
+{
+    return rfl::json::write(
+        EncodedProxy{.modelName = config.modelName, .endpoint = config.endpoint, .threshold = config.threshold, .auditRate = config.auditRate});
+}
+
+SemanticProxyConfig decodeSemanticProxyConfig(const std::string_view encoded)
+{
+    const auto parsed = rfl::json::read<EncodedProxy>(std::string{encoded});
+    if (!parsed)
+    {
+        throw CannotDeserialize("Cannot read the cascade configuration: {}", parsed.error().what());
+    }
+    auto value = parsed.value();
+    return SemanticProxyConfig{
+        .modelName = std::move(value.modelName), .endpoint = std::move(value.endpoint), .threshold = value.threshold, .auditRate = value.auditRate};
 }
 
 }

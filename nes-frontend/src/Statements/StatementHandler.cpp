@@ -426,6 +426,10 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"ANSWER_MODE"},
     std::string_view{"INPUT_LABEL"},
     std::string_view{"CONFIDENCE_FIELD"},
+    std::string_view{"PROXY_MODEL"},
+    std::string_view{"PROXY_ENDPOINT"},
+    std::string_view{"PROXY_THRESHOLD"},
+    std::string_view{"PROXY_AUDIT_RATE"},
 };
 
 /// Options only a SEM_SCAN or SEM_WINDOW model reads.
@@ -587,6 +591,28 @@ double fractionOption(const std::unordered_map<Identifier, std::string>& config,
     return number;
 }
 
+/// `LLM.PROXY_MODEL` and the options that only it uses.
+std::optional<SemanticProxyConfig> bindProxy(const CreateSemanticModelStatement& statement)
+{
+    const auto* const model = findOption(statement.config, "PROXY_MODEL");
+    if (model == nullptr)
+    {
+        for (const auto option : {std::string_view{"PROXY_ENDPOINT"}, std::string_view{"PROXY_THRESHOLD"}, std::string_view{"PROXY_AUDIT_RATE"}})
+        {
+            if (findOption(statement.config, option) != nullptr)
+            {
+                throw InvalidSemanticModel("Semantic model '{}': LLM.{} requires LLM.PROXY_MODEL", statement.name, option);
+            }
+        }
+        return std::nullopt;
+    }
+    return SemanticProxyConfig{
+        .modelName = *model,
+        .endpoint = optionalOption(statement.config, "PROXY_ENDPOINT", ""),
+        .threshold = fractionOption(statement.config, "PROXY_THRESHOLD", 0.9),
+        .auditRate = fractionOption(statement.config, "PROXY_AUDIT_RATE", 0.0)};
+}
+
 constexpr size_t MaxActiveWindows = 1024;
 constexpr size_t MaxExamples = 1024;
 
@@ -746,7 +772,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .imageMaxBytes = numericOption(statement.config, "IMAGE_MAX_BYTES", DefaultImageMaxBytes, MaxImageBytes),
         .answerMode = bindAnswerMode(statement.config),
         .inputLabel = optionalOption(statement.config, "INPUT_LABEL", ""),
-        .confidenceField = bindConfidenceField(statement.config)};
+        .confidenceField = bindConfidenceField(statement.config),
+        .proxy = bindProxy(statement)};
 }
 
 /// The OUTPUT clause's fields, followed by LLM.CONFIDENCE_FIELD's if there is one.

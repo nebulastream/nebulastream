@@ -425,4 +425,24 @@ TEST_F(SemanticModelCatalogTest, LabelModeIsOneUnbatchedUnfusedTextStep)
     rejected("INPUT_LABEL in JSON mode", inputLabelWithoutLabelMode, validSchema());
 }
 
+TEST_F(SemanticModelCatalogTest, CascadeRoundTripsThroughReflectionAndPayload)
+{
+    auto config = filterConfig();
+    config.fusion = false;
+    config.proxy = SemanticProxyConfig{.modelName = "student", .endpoint = "http://student/v1", .threshold = 0.95, .auditRate = 0.02};
+    SemanticModelCatalog catalog;
+    catalog.registerModel("positive", config, filterSchema());
+    const ReflectionContext context;
+    const auto model = catalog.load("positive");
+    EXPECT_EQ(context.unreflect<RegisteredSemanticModel>(context.reflect(model)), model);
+
+    SemanticCallPayload payload{.model = "positive", .config = config, .inputFields = {"DESCRIPTION"}, .outputFields = {}};
+    payload.proxyRole = SemanticCallPayload::ProxyRole::STUDENT;
+    const auto decoded = decodeSemanticCallPayload(encodeSemanticCallPayload(payload));
+    EXPECT_EQ(decoded.proxyRole, SemanticCallPayload::ProxyRole::STUDENT);
+    ASSERT_TRUE(decoded.config.proxy.has_value());
+    EXPECT_EQ(*decoded.config.proxy, *config.proxy);
+    EXPECT_EQ(decodeSemanticProxyConfig(encodeSemanticProxyConfig(*config.proxy)), *config.proxy);
+}
+
 }

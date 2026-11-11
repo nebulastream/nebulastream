@@ -61,8 +61,11 @@ SemanticCallLogicalFunction::SemanticCallLogicalFunction(std::string payload, st
     const auto decoded = decodeSemanticCallPayload(this->payload);
     model = decoded.model;
     /// A SEM_SCAN or SEM_WINDOW call has one value per OUTPUT field; the other calls one per step, then the confidence.
+    /// A cascade's student call has three: its verdict, the route and p(true).
     numberOfSteps = decoded.config.keyed ? decoded.outputFields.size()
-                                         : decoded.config.steps.size() + (decoded.config.confidenceField.empty() ? 0 : 1);
+        : decoded.proxyRole == SemanticCallPayload::ProxyRole::STUDENT
+        ? 3
+        : decoded.config.steps.size() + (decoded.config.confidenceField.empty() ? 0 : 1);
     keyed = decoded.config.keyed.has_value();
     if (numberOfSteps == 0)
     {

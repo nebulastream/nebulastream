@@ -178,6 +178,67 @@ LogicalOperator translateKeyed(const RegisteredSemanticModel& model, const Logic
     return ProjectionLogicalOperator::create(child, evaluation, ProjectionLogicalOperator::Asterisk{true});
 }
 
+/// SEM_FILTER with LLM.PROXY_MODEL: the student's call, then the teacher's, which reads the student's route and verdict
+/// and asks the model only for the rows the student routed to it (unsure or audited); then the verdict selection:
+///
+///     PROJECTION(<child fields>)
+///       SELECTION(__SEM_VERDICT_0 = 'true')
+///         PROJECTION(*, SEM_CALL(teacher, __SEM_PROXY_ROUTE_0, __SEM_PROXY_VERDICT_0, in...) AS __SEM_VERDICT_0)
+///           PROJECTION(*, SEM_CALL(student, in...) AS __SEM_PROXY_VERDICT_0, ASYNC_OUTPUT(.., 1) AS __SEM_PROXY_ROUTE_0,
+///                         ASYNC_OUTPUT(.., 2) AS __SEM_PROXY_P_0)
+///
+/// Every row passes both calls, so none is lost or duplicated, and the order is kept as by any SEM_CALL.
+LogicalOperator translateCascade(const RegisteredSemanticModel& model, const LogicalOperator& child)
+{
+    const auto& proxy = *model.getConfig().proxy;
+    const auto varsized = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+
+    auto student = payloadOf(model);
+    student.proxyRole = SemanticCallPayload::ProxyRole::STUDENT;
+    student.config.modelName = proxy.modelName;
+    if (!proxy.endpoint.empty())
+    {
+        student.config.endpoint = proxy.endpoint;
+    }
+    student.config.answerMode = AnswerMode::LABEL;
+    student.config.batchSize = 1;
+    std::vector<LogicalFunction> studentArguments{ConstantValueLogicalFunction{varsized, encodeSemanticCallPayload(student)}};
+    for (const auto& input : model.getSchema().inputs)
+    {
+        studentArguments.emplace_back(inputField(child, input, model));
+    }
+    const auto studentCall = LogicalFunctionProvider::provide("SEM_CALL", std::move(studentArguments));
+    const auto studentVerdict = Identifier::parse("__SEM_PROXY_VERDICT_0");
+    const auto route = Identifier::parse("__SEM_PROXY_ROUTE_0");
+    const LogicalOperator asked = ProjectionLogicalOperator::create(
+        child,
+        {{studentVerdict, LogicalFunction{studentCall}},
+         {route, LogicalFunction{AsyncOutputLogicalFunction{studentCall, 1}}},
+         {Identifier::parse("__SEM_PROXY_P_0"), LogicalFunction{AsyncOutputLogicalFunction{studentCall, 2}}}},
+        ProjectionLogicalOperator::Asterisk{true});
+
+    auto teacher = payloadOf(model);
+    teacher.proxyRole = SemanticCallPayload::ProxyRole::TEACHER;
+    std::vector<LogicalFunction> teacherArguments{
+        ConstantValueLogicalFunction{varsized, encodeSemanticCallPayload(teacher)},
+        FieldAccessLogicalFunction{*asked.getOutputSchema()[route]},
+        FieldAccessLogicalFunction{*asked.getOutputSchema()[studentVerdict]}};
+    for (const auto& input : model.getSchema().inputs)
+    {
+        teacherArguments.emplace_back(inputField(asked, input, model));
+    }
+    const auto verdict = Identifier::parse("__SEM_VERDICT_0");
+    const LogicalOperator decided = ProjectionLogicalOperator::create(
+        asked, {{verdict, LogicalFunctionProvider::provide("SEM_CALL", std::move(teacherArguments))}}, ProjectionLogicalOperator::Asterisk{true});
+
+    std::vector<Identifier> kept;
+    for (const auto& field : child.getOutputSchema())
+    {
+        kept.push_back(field.getLastName());
+    }
+    return selectOnVerdicts(decided, {verdict}, kept);
+}
+
 /// The operators a semantic operator over `child` turns into. They produce the semantic operator's output schema: the
 /// child's fields followed by the model's OUTPUT fields.
 LogicalOperator translate(const RegisteredSemanticModel& model, const LogicalOperator& child)
@@ -185,6 +246,10 @@ LogicalOperator translate(const RegisteredSemanticModel& model, const LogicalOpe
     if (model.getConfig().keyed)
     {
         return translateKeyed(model, child);
+    }
+    if (model.getConfig().proxy)
+    {
+        return translateCascade(model, child);
     }
     /// BATCH_SIZE rows per prompt are formed by the async framework (`AsyncFunction::maxBatchSize`).
     const auto& steps = model.getConfig().steps;

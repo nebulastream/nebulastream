@@ -93,6 +93,13 @@ private:
     boost::asio::awaitable<std::pair<std::string, TokenLogprobs>> exchange(nlohmann::json request, SemanticHttpClient* client);
     /// LLM.ANSWER_MODE LABEL: one row, the label prompt, one answer token (`SemanticLabelAnswer.hpp`).
     boost::asio::awaitable<AsyncCallResult> callLabel(std::vector<std::string> arguments);
+    /// The label request itself: the value the answer names (if any) and its token's alternatives (with logprobs only
+    /// when CONFIDENCE_FIELD is set or the call is a cascade's student).
+    boost::asio::awaitable<std::pair<std::optional<std::string>, TokenLogprobs>> askLabel(std::vector<std::string> arguments);
+    /// A cascade's student call: (verdict, route, p(true)), see `SemanticCallPayload::ProxyRole`.
+    boost::asio::awaitable<AsyncCallResult> callProxyStudent(std::vector<std::string> arguments);
+    /// A cascade's teacher call: the student's verdict for a "student" row, else the model's own.
+    boost::asio::awaitable<AsyncCallResult> callCascadeTeacher(std::vector<std::string> arguments);
     [[nodiscard]] std::vector<AsyncCallResult> decode(const std::string& answer, const std::vector<RowPayload>& rows) const;
     /// The key's state folded with the row: (state, confidence).
     boost::asio::awaitable<AsyncCallResult> callScan(std::vector<std::string> arguments);

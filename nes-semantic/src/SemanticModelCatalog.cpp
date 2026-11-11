@@ -82,6 +82,8 @@ struct
     std::optional<int64_t> answerMode;
     std::optional<std::string> inputLabel;
     std::optional<std::string> confidenceField;
+    /// LLM.PROXY_*, as `encodeSemanticProxyConfig` writes it; absent without a proxy model.
+    std::optional<std::string> proxy;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -235,12 +237,57 @@ void validateImageFields(const std::string& name, const SemanticModelConfig& con
     }
 }
 
+/// LLM.PROXY_*: a SEM_FILTER model with one step, unbatched and unfused; the student is asked in LABEL mode.
+void validateProxy(const std::string& name, const SemanticModelConfig& config)
+{
+    if (!config.proxy)
+    {
+        return;
+    }
+    const auto& proxy = *config.proxy;
+    if (proxy.modelName.empty())
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.PROXY_MODEL must not be empty", name);
+    }
+    if (config.keyed || config.steps.size() != 1 || config.steps.front().kind != SemanticStep::Kind::FILTER)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.PROXY_MODEL is supported for SEM_FILTER models (no OUTPUT) only", name);
+    }
+    if (!(proxy.threshold >= 0.5 && proxy.threshold <= 1.0))
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.PROXY_THRESHOLD must be between 0.5 and 1, but was {}", name, proxy.threshold);
+    }
+    if (!(proxy.auditRate >= 0.0 && proxy.auditRate <= 1.0))
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': LLM.PROXY_AUDIT_RATE must be between 0 and 1, but was {}", name, proxy.auditRate);
+    }
+    if (config.batchSize != 1)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': a cascade (LLM.PROXY_MODEL) sends one row per prompt; BATCH_SIZE must be 1", name);
+    }
+    if (config.fusion)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': a cascade (LLM.PROXY_MODEL) is never fused; remove LLM.FUSION", name);
+    }
+    if (!config.imageFields.empty() || !config.confidenceField.empty() || !config.datasetPrompt.empty())
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': a cascade (LLM.PROXY_MODEL) takes no LLM.IMAGE_FIELDS, LLM.CONFIDENCE_FIELD or LLM.DATASET_PROMPT", name);
+    }
+    if (config.backend == "mock" && !proxy.endpoint.empty() && !MockSemanticBackend::isValidBehaviour(proxy.endpoint))
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.PROXY_ENDPOINT '{}' is not a mock behaviour", name, proxy.endpoint);
+    }
+}
+
 /// LLM.ANSWER_MODE 'LABEL': one SEM_MAP or SEM_FILTER step, one row per request, with values to answer from.
 void validateLabelMode(const std::string& name, const SemanticModelConfig& config)
 {
     if (config.answerMode != AnswerMode::LABEL)
     {
-        if (!config.inputLabel.empty())
+        /// A cascade's student is asked in LABEL mode, with the model's INPUT_LABEL.
+        if (!config.inputLabel.empty() && !config.proxy)
         {
             throw InvalidSemanticModel("Semantic model '{}': LLM.INPUT_LABEL requires 'LABEL' AS LLM.ANSWER_MODE", name);
         }
@@ -428,6 +475,7 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
 
     validateImageFields(name, config, schema);
     validateLabelMode(name, config);
+    validateProxy(name, config);
 
     /// Enforced here rather than only in the statement handler, so the optimizer tests and any
     /// embedded caller cannot silently replace an entry either.
@@ -560,6 +608,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .answerMode = std::make_optional(static_cast<int64_t>(config.answerMode)),
             .inputLabel = std::make_optional(config.inputLabel),
             .confidenceField = std::make_optional(config.confidenceField),
+            .proxy = config.proxy ? std::optional{encodeSemanticProxyConfig(*config.proxy)} : std::nullopt,
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -609,7 +658,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .imageMaxBytes = static_cast<size_t>(reflected.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes))),
         .answerMode = unreflectEnum(reflected.answerMode.value_or(0), AnswerMode::LABEL, "AnswerMode"),
         .inputLabel = std::move(reflected.inputLabel).value_or(""),
-        .confidenceField = std::move(reflected.confidenceField).value_or("")};
+        .confidenceField = std::move(reflected.confidenceField).value_or(""),
+        .proxy = reflected.proxy ? std::optional{decodeSemanticProxyConfig(*reflected.proxy)} : std::nullopt};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

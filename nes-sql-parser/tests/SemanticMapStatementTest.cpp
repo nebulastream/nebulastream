@@ -619,4 +619,51 @@ TEST_F(SemanticMapStatementTest, ConfidenceFieldIsTheLastOutputField)
         "collides with an OUTPUT field");
 }
 
+TEST_F(SemanticMapStatementTest, ProxyOptionsBindACascadeOfAFilterModel)
+{
+    const auto result = create(
+        "CREATE SEM_MODEL positive INPUT (reviewText VARSIZED) SET ('Is this movie review positive?' AS LLM.PROMPT, "
+        "'http://teacher:8000/v1' AS LLM.ENDPOINT, 'qwen3.5-27b' AS LLM.MODEL_NAME, 'rt-filter-4b-lora' AS LLM.PROXY_MODEL, "
+        "'http://student:8000/v1' AS LLM.PROXY_ENDPOINT, '0.95' AS LLM.PROXY_THRESHOLD, '0.02' AS LLM.PROXY_AUDIT_RATE, "
+        "'Review' AS LLM.INPUT_LABEL)");
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    const auto config = semanticModelCatalog->load("POSITIVE").getConfig();
+    ASSERT_TRUE(config.proxy.has_value());
+    EXPECT_EQ(config.proxy->modelName, "rt-filter-4b-lora");
+    EXPECT_EQ(config.proxy->endpoint, "http://student:8000/v1");
+    EXPECT_DOUBLE_EQ(config.proxy->threshold, 0.95);
+    EXPECT_DOUBLE_EQ(config.proxy->auditRate, 0.02);
+    EXPECT_EQ(config.answerMode, AnswerMode::JSON);
+    EXPECT_EQ(config.inputLabel, "Review");
+    semanticModelCatalog->removeModel("POSITIVE");
+    ASSERT_TRUE(create("CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('Positive?' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+                       "'m' AS LLM.MODEL_NAME, 's' AS LLM.PROXY_MODEL)")
+                    .has_value());
+    const auto defaults = semanticModelCatalog->load("F").getConfig().proxy;
+    ASSERT_TRUE(defaults.has_value());
+    EXPECT_EQ(defaults->endpoint, "");
+    EXPECT_DOUBLE_EQ(defaults->threshold, 0.9);
+    EXPECT_DOUBLE_EQ(defaults->auditRate, 0.0);
+    semanticModelCatalog->removeModel("F");
+
+    const auto rejectedWith = [this](const std::string& sql, const std::string& message)
+    {
+        SCOPED_TRACE(sql);
+        const auto rejected = create(sql);
+        ASSERT_FALSE(rejected.has_value());
+        EXPECT_EQ(rejected.error().code(), ErrorCode::InvalidSemanticModel);
+        EXPECT_NE(std::string{rejected.error().what()}.find(message), std::string::npos) << rejected.error().what();
+        EXPECT_TRUE(semanticModelCatalog->getModelNames().empty());
+    };
+    const std::string filter = "CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('Positive?' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+                               "'m' AS LLM.MODEL_NAME";
+    rejectedWith(withOptions("o VARSIZED", ", 's' AS LLM.PROXY_MODEL"), "SEM_FILTER models (no OUTPUT) only");
+    rejectedWith(filter + ", '0.9' AS LLM.PROXY_THRESHOLD)", "requires LLM.PROXY_MODEL");
+    rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, '0.3' AS LLM.PROXY_THRESHOLD)", "between 0.5 and 1");
+    rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, '2' AS LLM.PROXY_AUDIT_RATE)", "between 0 and 1");
+    rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, 'often' AS LLM.PROXY_AUDIT_RATE)", "must be a number");
+    rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, 'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE)", "BATCH_SIZE must be 1");
+    rejectedWith(filter + ", 's' AS LLM.PROXY_MODEL, 'TRUE' AS LLM.FUSION)", "never fused");
+}
+
 }

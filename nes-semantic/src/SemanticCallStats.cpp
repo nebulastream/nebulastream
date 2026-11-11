@@ -82,6 +82,24 @@ void SemanticCallStats::recordUnusableImage()
     ++unusableImages;
 }
 
+void SemanticCallStats::recordCascadeRow(const std::string_view route, const bool auditDisagreed)
+{
+    const std::scoped_lock lock{mutex};
+    if (route == "student")
+    {
+        ++cascadeStudent;
+    }
+    else if (route == "audit")
+    {
+        ++cascadeAudited;
+        cascadeAuditDisagreed += auditDisagreed ? 1 : 0;
+    }
+    else
+    {
+        ++cascadeTeacher;
+    }
+}
+
 void SemanticCallStats::reportAndReset(const std::string_view context)
 {
     const std::scoped_lock lock{mutex};
@@ -124,6 +142,17 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
         {
             line += fmt::format(", {} rows with an unusable image", unusableImages);
         }
+        /// Only with a cascade, for the same reason.
+        if (cascadeStudent + cascadeTeacher + cascadeAudited > 0)
+        {
+            line += fmt::format(
+                ", cascade: {} rows, {} answered by the student alone, {} unsure to the teacher, {} audited ({} disagreed)",
+                cascadeStudent + cascadeTeacher + cascadeAudited,
+                cascadeStudent,
+                cascadeTeacher,
+                cascadeAudited,
+                cascadeAuditDisagreed);
+        }
         /// A measurement, not a diagnostic: it must not depend on the compiled log level.
         if (std::getenv("NES_SEMANTIC_LATENCY_REPORT") != nullptr) /// NOLINT(concurrency-mt-unsafe)
         {
@@ -138,6 +167,7 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
     responses = responsesWithoutUsage = cutOff = batchedRows = missingRows = tooManyRequests = serverErrors = retries = 0;
     backedOff = std::chrono::milliseconds{0};
     unusableImages = 0;
+    cascadeStudent = cascadeTeacher = cascadeAudited = cascadeAuditDisagreed = 0;
     promptTokens = completionTokens = 0;
 }
 

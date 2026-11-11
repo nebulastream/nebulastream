@@ -1,0 +1,122 @@
+# name: semantic/SemanticCascade.test
+# description: SEM_FILTER cascade (LLM.PROXY_MODEL): a student answers every row in LABEL mode with logprobs; a row
+#              whose confidence max(p, 1 - p) is below LLM.PROXY_THRESHOLD, and a hash-chosen LLM.PROXY_AUDIT_RATE
+#              share of the others, go to the model itself (the teacher), whose verdict then counts. The student is
+#              the mock's 'prob' behaviour (LLM.PROXY_ENDPOINT): a row's text is its p(true), it answers "true" if
+#              p >= 0.5. The teachers are constant mocks, so every output row shows who decided it.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, p VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,0.97
+2,0.03
+3,0.6
+4,0.4
+5,0.95
+6,0.08
+
+# Teacher says true to every row it is asked about.
+CREATE SEM_MODEL cascadeYes
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.9' AS LLM.PROXY_THRESHOLD, 'Review' AS LLM.INPUT_LABEL);
+
+# Teacher says false to every row it is asked about.
+CREATE SEM_MODEL cascadeNo
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:false' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.9' AS LLM.PROXY_THRESHOLD);
+
+# The student is sure about every row (every confidence is >= 0.5).
+CREATE SEM_MODEL studentOnly
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.5' AS LLM.PROXY_THRESHOLD);
+
+# The teacher fails every request: with a threshold of 0.5 it is never asked, so the query succeeds.
+CREATE SEM_MODEL teacherNeverAsked
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.5' AS LLM.PROXY_THRESHOLD);
+
+# ... and with a threshold the student does not reach for every row, it is asked, and the query fails.
+CREATE SEM_MODEL teacherAsked
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.9' AS LLM.PROXY_THRESHOLD);
+
+# No row is sure enough: the teacher answers all of them.
+CREATE SEM_MODEL teacherOnly
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '1.0' AS LLM.PROXY_THRESHOLD);
+
+# Every sure row is audited: the teacher answers all of them, too.
+CREATE SEM_MODEL auditAll
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'teacher' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'student' AS LLM.PROXY_MODEL, 'prob' AS LLM.PROXY_ENDPOINT, '0.9' AS LLM.PROXY_THRESHOLD, '1.0' AS LLM.PROXY_AUDIT_RATE);
+
+CREATE SINK out(id UINT64 NOT NULL, p VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# Query 1: the student decides 0.97 and 0.95 (true) and 0.03 and 0.08 (false); 0.6 and 0.4 are unsure, the teacher passes them.
+SELECT * FROM SEM_FILTER(cascadeYes, reviews) INTO out;
+----
+1,0.97
+3,0.6
+4,0.4
+5,0.95
+
+# Query 2: the same split; the teacher drops the two unsure rows.
+SELECT * FROM SEM_FILTER(cascadeNo, reviews) INTO out;
+----
+1,0.97
+5,0.95
+
+# Query 3: threshold 0.5: the student's own verdict for every row (p >= 0.5 passes).
+SELECT * FROM SEM_FILTER(studentOnly, reviews) INTO out;
+----
+1,0.97
+3,0.6
+5,0.95
+
+# Query 4: the student is sure about every row, so the failing teacher is never called.
+SELECT id FROM SEM_FILTER(teacherNeverAsked, reviews) INTO ids;
+----
+1
+3
+5
+
+# Query 5: here it is called for the unsure rows, and its failure fails the query.
+SELECT id FROM SEM_FILTER(teacherAsked, reviews) INTO ids;
+----
+ERROR 4006 "unreachable"
+
+# Query 6: threshold 1.0: the teacher's verdict for every row.
+SELECT * FROM SEM_FILTER(teacherOnly, reviews) INTO out;
+----
+1,0.97
+2,0.03
+3,0.6
+4,0.4
+5,0.95
+6,0.08
+
+# Query 7: audit rate 1.0: the teacher also answers every sure row, and its verdict counts.
+SELECT * FROM SEM_FILTER(auditAll, reviews) INTO out;
+----
+1,0.97
+2,0.03
+3,0.6
+4,0.4
+5,0.95
+6,0.08
+
+# Query 8: an ordinary predicate downstream of the cascade.
+SELECT id FROM SEM_FILTER(cascadeYes, reviews) WHERE id > UINT64(2) INTO ids;
+----
+3
+4
+5

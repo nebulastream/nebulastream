@@ -72,7 +72,7 @@ bool sameTransport(const SemanticModelConfig& lhs, const SemanticModelConfig& rh
         && lhs.maxRetries == rhs.maxRetries && lhs.maxWaitTime == rhs.maxWaitTime && lhs.requestTimeout == rhs.requestTimeout
         && lhs.maxTokens == rhs.maxTokens && lhs.preserveOrder == rhs.preserveOrder && lhs.retryMissingRows == rhs.retryMissingRows
         && lhs.sharedConcurrency == rhs.sharedConcurrency && lhs.answerMode == rhs.answerMode && lhs.inputLabel == rhs.inputLabel
-        && lhs.confidenceField == rhs.confidenceField;
+        && lhs.confidenceField == rhs.confidenceField && lhs.proxy == rhs.proxy;
 }
 
 std::set<std::string> outputNames(const RegisteredSemanticModel& model)

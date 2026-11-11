@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -48,7 +49,22 @@ struct SemanticCallPayload
     /// SEM_SCAN and SEM_WINDOW (`config.keyed`): the id of the state the stage's function instances share, unique per
     /// translated operator. The call's arguments are the key, then for WINDOW the timestamp, then the INPUT fields.
     std::string stateId = {};
+    /// A cascade's two calls (`config.proxy`). STUDENT: the call asks `config` (already the student's name, endpoint
+    /// and LABEL mode) and has three values: the verdict, the route ("student", "teacher" or "audit") and p(true). TEACHER:
+    /// its arguments are the route and the student's verdict, then the INPUT fields; it returns the student's verdict for
+    /// a "student" row without a request, and asks the model for the others.
+    enum class ProxyRole : uint8_t
+    {
+        NONE,
+        STUDENT,
+        TEACHER,
+    };
+    ProxyRole proxyRole = ProxyRole::NONE;
 };
+
+/// The cascade configuration as JSON, for the catalog's reflection, which keeps it as one string.
+[[nodiscard]] std::string encodeSemanticProxyConfig(const SemanticProxyConfig& config);
+[[nodiscard]] SemanticProxyConfig decodeSemanticProxyConfig(std::string_view encoded);
 
 /// The keyed configuration as JSON, for the catalog's reflection, which keeps it as one string.
 [[nodiscard]] std::string encodeSemanticKeyedConfig(const SemanticKeyedConfig& config);

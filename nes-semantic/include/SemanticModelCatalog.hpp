@@ -128,6 +128,25 @@ enum class AnswerMode : uint8_t
     LABEL,
 };
 
+/// `LLM.PROXY_*`: a SEM_FILTER cascade (docs/technical/semantic_proxy.md). A smaller proxy model, the student, answers
+/// every row first, in LABEL mode with logprobs. A row whose confidence max(p, 1 - p) is below the threshold, p the
+/// student's probability of `true`, also goes to the model itself, the teacher, whose verdict counts; so does a random
+/// audit sample of the other rows. Every other row keeps the student's verdict without a teacher request.
+struct SemanticProxyConfig
+{
+    /// `LLM.PROXY_MODEL`: the student's model name at its endpoint.
+    std::string modelName;
+    /// `LLM.PROXY_ENDPOINT`: the student's endpoint; empty means the model's own ENDPOINT. For the mock, its behaviour.
+    std::string endpoint;
+    /// `LLM.PROXY_THRESHOLD`, between 0.5 and 1: the student answers alone if max(p, 1 - p) >= threshold.
+    double threshold = 0.9;
+    /// `LLM.PROXY_AUDIT_RATE`, between 0 and 1: the share of the student's sure rows the teacher also answers. A row is
+    /// picked by a hash of its input text, so the same rows are audited in every run.
+    double auditRate = 0.0;
+
+    bool operator==(const SemanticProxyConfig&) const = default;
+};
+
 /// Everything needed to talk to the remote model. Catalog-side metadata declared
 /// alongside the model in `CREATE SEM_MODEL`; none of it is derived from the
 /// endpoint itself.
@@ -196,6 +215,8 @@ struct SemanticModelConfig
     /// values (`labelProbability`); empty when the server sent no logprobs for any value. The field is the last of the
     /// model's OUTPUT fields, after the MAP step's. Empty: no such field and no logprobs requested.
     std::string confidenceField;
+    /// `LLM.PROXY_*`: SEM_FILTER cascade with a student model. One FILTER step, BATCH_SIZE 1, never fused.
+    std::optional<SemanticProxyConfig> proxy = std::nullopt;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

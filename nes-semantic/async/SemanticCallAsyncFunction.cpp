@@ -18,7 +18,9 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <iterator>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -122,6 +124,21 @@ std::string sharedResource(const SemanticModelConfig& config)
 std::string batchRowId(const size_t position)
 {
     return "row" + std::to_string(position + 1);
+}
+
+/// LLM.PROXY_AUDIT_RATE: whether the row with this input text is in the audit sample. FNV-1a of the text, so a row is
+/// audited in every run or in none, independent of order and concurrency.
+bool inAuditSample(const std::string& text, const double rate)
+{
+    uint64_t hash = 14695981039346656037ULL;
+    for (const char character : text)
+    {
+        hash ^= static_cast<unsigned char>(character);
+        hash *= 1099511628211ULL;
+    }
+    /// The top 53 bits as a fraction in [0, 1).
+    constexpr double Scale = 1.0 / static_cast<double>(1ULL << 53U);
+    return static_cast<double>(hash >> 11U) * Scale < rate;
 }
 
 /// Instances alive in this process. Each Async source slot owns one, so the last one to go marks the end of a run, which
@@ -293,6 +310,11 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
     {
         leading = payload.config.keyed->kind == SemanticKeyedConfig::Kind::SCAN ? 1 : 2;
     }
+    /// A cascade's teacher call reads the student's route and verdict first.
+    if (payload.proxyRole == SemanticCallPayload::ProxyRole::TEACHER)
+    {
+        leading = 2;
+    }
     PRECONDITION(
         arguments.size() == payload.inputFields.size() + leading,
         "SEM_CALL of model '{}' takes {} arguments, got {}",
@@ -312,6 +334,14 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
         /// One prompt per window: the argument is the window's JSON_AGG array.
         const auto answer = co_await complete(aggCodec->buildPrompt(arguments[0]));
         co_return AsyncCallResult{aggCodec->parse(answer)};
+    }
+    if (payload.proxyRole == SemanticCallPayload::ProxyRole::STUDENT)
+    {
+        co_return co_await callProxyStudent(std::move(arguments));
+    }
+    if (payload.proxyRole == SemanticCallPayload::ProxyRole::TEACHER)
+    {
+        co_return co_await callCascadeTeacher(std::move(arguments));
     }
     if (payload.config.answerMode == AnswerMode::LABEL && !joinCodec)
     {
@@ -359,13 +389,13 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std::vector<std::string> arguments)
+boost::asio::awaitable<std::pair<std::optional<std::string>, TokenLogprobs>>
+SemanticCallAsyncFunction::askLabel(std::vector<std::string> arguments)
 {
     const auto& config = payload.config;
     const auto& step = config.steps.front();
     const auto values = labelValues(step);
     const auto text = spaceJoined(arguments);
-    const bool withConfidence = !config.confidenceField.empty();
     std::pair<std::string, TokenLogprobs> completion;
     if (mock)
     {
@@ -386,13 +416,20 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std
         const auto inputLabel = config.inputLabel.empty() ? fmt::format("{}", fmt::join(payload.inputFields, ", ")) : config.inputLabel;
         auto request = buildChatRequest(config.modelName, buildLabelPrompt(step.prompt, values, inputLabel, text), {}, 0);
         applyLabelRequestFields(request, config.maxTokens);
-        if (withConfidence)
+        if (!config.confidenceField.empty() || payload.proxyRole == SemanticCallPayload::ProxyRole::STUDENT)
         {
             applyLogprobRequestFields(request);
         }
         completion = co_await exchange(std::move(request), nullptr);
     }
-    const auto answer = parseLabelAnswer(completion.first, values);
+    co_return std::pair{parseLabelAnswer(completion.first, values), std::move(completion.second)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std::vector<std::string> arguments)
+{
+    const auto& step = payload.config.steps.front();
+    const auto [answer, alternatives] = co_await askLabel(arguments);
     AsyncCallResult result;
     if (step.kind == SemanticStep::Kind::FILTER)
     {
@@ -402,14 +439,60 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std
     {
         result.push_back(answer.value_or(step.defaultValue));
     }
-    if (withConfidence)
+    if (!payload.config.confidenceField.empty())
     {
         /// A filter's p(true) whatever it answered; a map's probability of the value it gave.
         const auto target = step.kind == SemanticStep::Kind::FILTER ? std::optional<std::string>{"true"} : answer;
-        const auto probability = target ? labelProbability(completion.second, values, *target) : std::nullopt;
+        const auto probability = target ? labelProbability(alternatives, labelValues(step), *target) : std::nullopt;
         result.push_back(probability ? formatProbability(*probability) : std::string{});
     }
     co_return result;
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callProxyStudent(std::vector<std::string> arguments)
+{
+    const auto& proxy = *payload.config.proxy;
+    const auto [answer, alternatives] = co_await askLabel(arguments);
+    const auto probability = labelProbability(alternatives, labelValues(payload.config.steps.front()), "true");
+    /// No probability (no logprobs, or an answer that is no value) is no confidence: the teacher decides.
+    std::string route = "teacher";
+    if (probability && std::max(*probability, 1.0 - *probability) >= proxy.threshold)
+    {
+        route = inAuditSample(spaceJoined(arguments), proxy.auditRate) ? "audit" : "student";
+    }
+    co_return AsyncCallResult{answer == "true" ? "true" : "false", std::move(route), probability ? formatProbability(*probability) : ""};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callCascadeTeacher(std::vector<std::string> arguments)
+{
+    const auto route = std::move(arguments[0]);
+    auto studentVerdict = std::move(arguments[1]);
+    std::vector<std::string> inputs(std::make_move_iterator(arguments.begin() + 2), std::make_move_iterator(arguments.end()));
+    if (route == "student")
+    {
+        SemanticCallStats::instance().recordCascadeRow(route, false);
+        co_return AsyncCallResult{std::move(studentVerdict)};
+    }
+    std::string verdict;
+    if (payload.config.answerMode == AnswerMode::LABEL)
+    {
+        verdict = (co_await callLabel(std::move(inputs))).front();
+    }
+    else
+    {
+        RowPayload row{.rowId = "row1", .fields = {}};
+        for (size_t field = 0; field < inputs.size(); ++field)
+        {
+            row.fields.emplace_back(payload.inputFields[field], std::move(inputs[field]));
+        }
+        const std::vector rows{std::move(row)};
+        const auto answer = co_await complete(filterCodec->buildPrompt(rows));
+        verdict = decode(answer, rows).front().front();
+    }
+    SemanticCallStats::instance().recordCascadeRow(route, route == "audit" && verdict != studentVerdict);
+    co_return AsyncCallResult{std::move(verdict)};
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
