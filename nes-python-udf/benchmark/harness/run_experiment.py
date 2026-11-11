@@ -185,6 +185,7 @@ def run(arguments, layout, udf, repetition, record_base):
     test_file = os.path.join(run_dir, "generated.test")
     write_test(test_file, arguments.format, udf, input_file, layout["src_perf"], arguments.sources)
     environment = dict(os.environ, RUN_DIR=run_dir, BOOT=os.path.join(HARNESS, "boot.py"), UDF_BENCH_PYTHON=arguments.python)
+    environment.update(setting.split("=", 1) for setting in arguments.environment)
     worker_arguments = [
         f"--worker.query_engine.number_of_worker_threads={layout['w']}",
         f"--worker.python_udf.processes={layout['p']}",
@@ -300,6 +301,7 @@ def main():
     parser.add_argument("--data", default="/dev/shm/nes-udf-perf-eval", help="directory with the inputs, on a RAM disk")
     parser.add_argument("--scratch", default="/tmp/nes-udf-experiments", help="directory for the files of the runs")
     parser.add_argument("--worker-argument", action="append", default=[], metavar="ARG", help="further worker configuration, e.g. --worker.x=y")
+    parser.add_argument("--environment", action="append", default=[], metavar="NAME=VALUE", help="environment variable of the worker and the UDF processes, e.g. PYPY_GC_NURSERY=1M")
     parser.add_argument("--note", default="", help="free text stored with every record")
     parser.add_argument("--keep", action="store_true", help="keep the files of the runs, e.g. the generated program and the logs")
     arguments = parser.parse_args()
@@ -332,6 +334,7 @@ def main():
         "memory": arguments.memory,
         "python": subprocess.run([arguments.python, "--version"], capture_output=True, text=True, check=False).stdout.strip().replace("\n", " "),
         "kernel": platform.release(),
+        "environment": arguments.environment,
         "note": arguments.note,
     }
     for name in arguments.layouts:
