@@ -105,9 +105,10 @@ the filter drops the rows the teacher rejects, with the student's answers for th
 SEM_JOIN's prompt is llm_operator's (`SemanticJoinCodec`), but its pair keys differed: NES numbers the pairs of a prompt
 `row1`..`rowN`, llm_operator keys them `<window uuid>_<left index>_<right index>` (`SEMJoinOperator`), a 36-character
 UUID plus two indices that the model repeats in its answer. With `'UUID' AS LLM.JOIN_PAIR_IDS`, NES sends the same
-format: a fresh UUID v4 per prompt (llm_operator's is per window, which SEM_CALL does not see), and i and j the index of
-the pair's left and right text among the prompt's distinct texts in order of appearance (llm_operator's are indices in
-the window, so they can have one digit more). The answer is matched by these keys. The default, 'ROW', is unchanged.
+format: a fresh UUID v4 per prompt (llm_operator's is per window, which SEM_CALL does not see), i the index of the
+pair's left text among the prompt's distinct left texts and j the pair's index among that text's pairs, in order of
+appearance (llm_operator's are positions in the window, so they can have one digit more). Keys stay unique when pairs
+repeat the same texts (MOVIES_8 has duplicate reviews). The answer is matched by these keys. The default, 'ROW', is unchanged.
 Allowed on a model with one FILTER step in JSON answer mode, the only kind SEM_MATCH accepts. Its purpose is
 measurement: prompts identical to llm_operator's, ids aside, for the JOIN comparison.
 

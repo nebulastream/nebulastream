@@ -138,8 +138,8 @@ TEST(SemanticJoinCodecTest, UnparseableOrFencedResponse)
     EXPECT_EQ(codec.parse("```json\n{\"row1\": {\"answer\": true, \"confidence\": 1}}\n```", twoPairs()), (std::vector{true, false}));
 }
 
-/// LLM.JOIN_PAIR_IDS 'UUID': llm_operator's `<window uuid>_<i>_<j>` keys, one UUID per prompt, i and j counting the
-/// prompt's distinct left and right texts; the answer is matched by these keys.
+/// LLM.JOIN_PAIR_IDS 'UUID': llm_operator's `<window uuid>_<i>_<j>` keys, one UUID per prompt, i counting the prompt's
+/// distinct left texts and j the pairs of each; the answer is matched by these keys.
 TEST(SemanticJoinCodecTest, UuidPairIdsFollowLlmOperator)
 {
     auto config = joinConfig();
@@ -148,7 +148,9 @@ TEST(SemanticJoinCodecTest, UuidPairIdsFollowLlmOperator)
     std::vector<JoinPairPayload> pairs{
         JoinPairPayload{.pairId = "row1", .left = "L0", .right = "R0"},
         JoinPairPayload{.pairId = "row2", .left = "L0", .right = "R1"},
-        JoinPairPayload{.pairId = "row3", .left = "L1", .right = "R0"}};
+        JoinPairPayload{.pairId = "row3", .left = "L1", .right = "R0"},
+        /// a repeated pair (duplicate reviews) still gets its own key
+        JoinPairPayload{.pairId = "row4", .left = "L0", .right = "R1"}};
     codec.keyPairs(pairs);
     const std::regex format{"([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})_([0-9]+)_([0-9]+)"};
     std::smatch first;
@@ -157,12 +159,13 @@ TEST(SemanticJoinCodecTest, UuidPairIdsFollowLlmOperator)
     EXPECT_EQ(pairs[0].pairId, window + "_0_0");
     EXPECT_EQ(pairs[1].pairId, window + "_0_1");
     EXPECT_EQ(pairs[2].pairId, window + "_1_0");
+    EXPECT_EQ(pairs[3].pairId, window + "_0_2");
 
     const auto prompt = codec.buildPrompt(pairs);
     EXPECT_NE(prompt.find(fmt::format(R"("{}_0_1": {{"left": "L0", "right": "R1"}})", window)), std::string::npos) << prompt;
     const auto answer = fmt::format(
         R"({{"{0}_0_0": {{"answer": false, "confidence": 0.9}}, "{0}_0_1": {{"answer": true, "confidence": 0.8}}}})", window);
-    EXPECT_EQ(codec.parse(answer, pairs), (std::vector<bool>{false, true, false}));
+    EXPECT_EQ(codec.parse(answer, pairs), (std::vector<bool>{false, true, false, false}));
 
     /// A fresh UUID for the next prompt.
     auto next = pairs;

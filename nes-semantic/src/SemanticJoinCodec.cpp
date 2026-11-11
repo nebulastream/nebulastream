@@ -80,13 +80,14 @@ void SemanticJoinCodec::keyPairs(const std::span<JoinPairPayload> pairs) const
         return;
     }
     const auto window = UUIDToString(generateUUID());
-    std::unordered_map<std::string, size_t> lefts;
-    std::unordered_map<std::string, size_t> rights;
+    /// i: the left text's index among the prompt's distinct left texts; j: the pair's index among the pairs of that left
+    /// text. Keys stay unique when two pairs repeat the same texts (MOVIES_8 has duplicate reviews), as llm_operator's
+    /// window positions do.
+    std::unordered_map<std::string, std::pair<size_t, size_t>> lefts;
     for (auto& pair : pairs)
     {
-        const auto left = lefts.try_emplace(pair.left, lefts.size()).first->second;
-        const auto right = rights.try_emplace(pair.right, rights.size()).first->second;
-        pair.pairId = fmt::format("{}_{}_{}", window, left, right);
+        auto& [left, pairsOfLeft] = lefts.try_emplace(pair.left, lefts.size(), 0).first->second;
+        pair.pairId = fmt::format("{}_{}_{}", window, left, pairsOfLeft++);
     }
 }
 

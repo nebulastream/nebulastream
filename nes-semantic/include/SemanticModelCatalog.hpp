@@ -221,7 +221,7 @@ struct SemanticModelConfig
     /// `LLM.PROXY_*`: SEM_FILTER cascade with a student model. One FILTER step, BATCH_SIZE 1, never fused.
     std::optional<SemanticProxyConfig> proxy = std::nullopt;
     /// `LLM.JOIN_PAIR_IDS 'UUID'`: SEM_JOIN keys each pair in the prompt as llm_operator does, `<uuid>_<i>_<j>` (a fresh
-    /// UUID v4 per prompt; i and j the pair's left and right row among the prompt's distinct left and right texts),
+    /// UUID v4 per prompt; i the pair's left text among the prompt's distinct left texts, j the pair among that text's),
     /// instead of `row1`..`rowN` ('ROW', the default). Only changes the ids, and so the tokens they cost on both sides.
     bool uuidPairIds = false;
 

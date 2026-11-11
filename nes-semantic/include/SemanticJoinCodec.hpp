@@ -50,7 +50,8 @@ public:
 
     /// LLM.JOIN_PAIR_IDS 'UUID': rekeys the pairs of one prompt as `SEMJoinOperator._process_join_payload` does,
     /// `<window uuid>_<left index>_<right index>`. SEM_CALL does not see the window, so the UUID is a fresh v4 per prompt
-    /// and the indices count the prompt's distinct left and right texts in order of appearance. 'ROW' leaves the ids.
+    /// and i counts the prompt's distinct left texts, j the pairs of each left text, in order of appearance (unique even
+    /// for repeated texts). 'ROW' leaves the ids.
     void keyPairs(std::span<JoinPairPayload> pairs) const;
 
     /// One verdict per pair. As in the reference, a pair matches only if its entry is an object whose `answer` is the
