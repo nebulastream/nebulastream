@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
@@ -36,6 +37,7 @@
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <folly/Synchronized.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -45,6 +47,7 @@
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+#include <scope_guard.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
@@ -56,7 +59,9 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
-    : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
+    : listener(std::make_shared<CompositeStatisticListener>())
+    , configuration(configuration)
+    , acceptedQueries(std::make_unique<folly::Synchronized<std::unordered_set<QueryId>>>())
 {
     NES_INFO("Starting SingleNodeWorker {}", host.getRawValue());
     if (configuration.enableGoogleEventTrace)
@@ -106,6 +111,17 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         }
 
         const LogContext context("queryId", plan.getQueryId());
+
+        if (not acceptedQueries->wlock()->insert(plan.getQueryId()).second)
+        {
+            NES_INFO("Query {} was already accepted, ignoring the repeated start", plan.getQueryId());
+            return plan.getQueryId();
+        }
+        /// A query that could not be compiled or handed to the engine was never started, so a later start may try again.
+        SCOPE_FAIL
+        {
+            acceptedQueries->wlock()->erase(plan.getQueryId());
+        };
 
         const auto planStr = explain(plan, ExplainVerbosity::Debug);
         NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);

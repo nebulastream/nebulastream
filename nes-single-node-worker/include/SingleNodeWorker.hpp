@@ -19,12 +19,14 @@
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <unordered_set>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <Util/Pointers.hpp>
+#include <folly/Synchronized.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
@@ -49,6 +51,10 @@ class SingleNodeWorker
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
+    /// The ids of all queries that this worker has accepted, including terminated ones.
+    /// A coordinator repeats a start when the reply was lost,
+    /// and the repeated request must not compile and start the query a second time.
+    UniquePtr<folly::Synchronized<std::unordered_set<QueryId>>> acceptedQueries;
 
 public:
     explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&, const Host& = Host("SingleNodeWorker"));
@@ -63,6 +69,7 @@ public:
 
     /// Compiles the LogicalPlan and immediately starts the query asynchronously. Query execution errors are only reported
     /// during runtime of the query.
+    /// A plan with the QueryId of an earlier accepted plan is not started again, and the call returns that QueryId.
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the started query
     [[nodiscard]] std::expected<QueryId, Exception> startQuery(LogicalPlan plan) noexcept;
