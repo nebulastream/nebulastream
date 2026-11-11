@@ -95,14 +95,14 @@ def _count_sleeps(namespace):
         return original(timeout)
     namespace["_events"] = wrapped
 # UDF_BENCH_POPULATE=1: a host process maps all pages of the buffer pool of the worker when it attaches its first operator, so
-# that it has no page faults on the pool while it handles batches (MADV_POPULATE_READ is 22)
-if _os.environ.get("UDF_BENCH_POPULATE") == "1" and "_pool" in globals():
+# that it has no page faults on the pool while it handles batches (MADV_POPULATE_WRITE is 23; UDF_BENCH_POPULATE=read uses MADV_POPULATE_READ, 22)
+if _os.environ.get("UDF_BENCH_POPULATE") in ("1", "read") and "_pool" in globals():
     _original_pool = _pool
     def _pool(fd):
         known = len(_pools)
         view = _original_pool(fd)
         if len(_pools) > known:
-            view.obj.madvise(22)
+            view.obj.madvise(22 if _os.environ["UDF_BENCH_POPULATE"] == "read" else 23)
         return view
 _count_wakes(globals())
 _count_sleeps(globals())
