@@ -196,8 +196,8 @@ if (ENABLE_LARGE_TESTS)
     # The unpooled pool (hash maps, paged vectors, var-sized data) is bounded so a runaway query fails cleanly instead of
     # OOM-killing the worker.
     set(LARGE_TEST_TOTAL_MEMORY_BYTES 34359738368 CACHE STRING
-            "Memory budget (bytes) for the in-process large systests: 25.6 GiB pooled + 6.4 GiB unpooled")
-    set(LARGE_TEST_UNPOOLED_FRACTION 0.2)
+            "Memory budget (bytes) for the in-process large systests: 24 GiB pooled + 8 GiB unpooled")
+    set(LARGE_TEST_UNPOOLED_FRACTION 0.25)
 
     set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
     ExternalData_Add_Test(test-data

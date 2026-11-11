@@ -30,7 +30,7 @@ on:
       total_memory_in_bytes:
         type: string
         description: "Total memory budget in bytes for the global buffer pool (pooled + unpooled)"
-        default: "34359738368"
+        default: "17179869184"
       enable_slice_cache:
         type: boolean
         description: "Enable slice cache for the large scale tests"
