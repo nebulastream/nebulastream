@@ -62,6 +62,10 @@ UDFS = {
     "lcg": ("x INT64", "INT64", "    h = x\n    for _ in range(100):\n        h = (h * 1103515245 + 12345) % 2147483648\n    return h", "id"),
 }
 
+# Chained calls, which the optimizer cannot fuse: each call reads the result of the one before, so each gets a UDF operator of its
+# own. Name: (UDF, number of calls).
+CHAINS = {"inc2": ("inc", 2), "inc3": ("inc", 3), "lcg2": ("lcg", 2)}
+
 
 def write_test(path, input_format, udf, input_file, source_on_performance_cpu, sources):
     """Writes the systest file of one run: a logical source with `sources` physical file sources and one query."""
@@ -74,8 +78,13 @@ def write_test(path, input_format, udf, input_file, source_on_performance_cpu, s
     lines.append(f"CREATE LOGICAL SOURCE input({description['schema']});")
     for _ in range(sources):
         lines.append(physical + f"ATTACH FILE {input_file}\n")
+    calls = 1
+    if udf in CHAINS:
+        udf, calls = CHAINS[udf]
     if udf in UDFS:
         parameters, result, body, argument = UDFS[udf]
+        for _ in range(calls - 1):
+            argument = f"udf({argument}) + INT64(1)"
         lines.append(f"CREATE FUNCTION udf ({parameters}) RETURNS {result} EXECUTION OUT_OF_PROCESS AS $python$\n{body}\n$python$;\n")
         lines.append(f"SELECT *, udf({argument}) AS r FROM input INTO Void();\n----\n")
     elif udf == "scan":
@@ -175,7 +184,8 @@ def sample_threads(process, threads):
 
 def run(arguments, layout, udf, repetition, record_base):
     inputs = INPUTS[arguments.format]
-    input_name = arguments.input or inputs["default"][udf]
+    operators = CHAINS[udf][1] if udf in CHAINS else 1
+    input_name = arguments.input or inputs["default"][CHAINS[udf][0] if udf in CHAINS else udf]
     input_file, rows = inputs["files"][input_name]
     rows *= arguments.sources
     label = f"{arguments.experiment}-{arguments.format}-{layout['name'].replace(' ', '-')}-{udf}-r{repetition}"
@@ -188,7 +198,7 @@ def run(arguments, layout, udf, repetition, record_base):
     environment.update(setting.split("=", 1) for setting in arguments.environment)
     worker_arguments = [
         f"--worker.query_engine.number_of_worker_threads={layout['w']}",
-        f"--worker.python_udf.processes={layout['p']}",
+        f"--worker.python_udf.processes={arguments.processes or layout['p']}",
         f"--worker.python_udf.process_venv={os.path.join(HARNESS, 'venv')}",
         f"--worker.python_udf.process_protocol={arguments.protocol}",
         f"--worker.default_query_execution.operator_buffer_size={arguments.buffer}",
@@ -257,7 +267,10 @@ def run(arguments, layout, udf, repetition, record_base):
         seconds=seconds,
         mrows_per_s=round(rows / seconds / 1e6, 2) if seconds else None,
         steady_seconds=round(steady_seconds, 3) if steady_seconds else None,
-        steady_mrows_per_s=round(sum(s["rows"] for s in active) / steady_seconds / 1e6, 2) if steady_seconds else None,
+        # every row passes each UDF operator once
+        steady_mrows_per_s=round(sum(s["rows"] for s in active) / operators / steady_seconds / 1e6, 2) if steady_seconds else None,
+        udf_operators=operators,
+        processes_per_operator=arguments.processes or layout["p"],
         sources=arguments.sources,
         input_name=input_name,
         rows_per_batch=round(processed / batches) if statistics else None,
@@ -290,8 +303,9 @@ def main():
     parser.add_argument("--format", choices=sorted(INPUTS), default="native", help="input format (default: native)")
     parser.add_argument("--input", help="input by name instead of the default of the UDF: 30m, 120m (csv); 60m, 480m, 1920m (native)")
     parser.add_argument("--sources", type=int, default=1, help="physical file sources reading the input, each with a thread of its own (default: 1)")
-    parser.add_argument("--udfs", default="inc,lcg", help="comma-separated UDFs: inc, upper (csv only), lcg, scan and native_inc (native only)")
+    parser.add_argument("--udfs", default="inc,lcg", help="comma-separated UDFs: inc, upper (csv only), lcg, the chains inc2, inc3, lcg2 (udf(udf(id) + 1)), scan and native_inc (native only)")
     parser.add_argument("--layouts", nargs="+", default=[], metavar="NAME", help="layout names, see --list")
+    parser.add_argument("--processes", type=int, help="processes per UDF operator (default: one per process CPU of the layout); they are pinned to the process CPUs in turn")
     parser.add_argument("--reps", type=int, default=1)
     parser.add_argument("--buffer", type=int, default=65536, help="operator_buffer_size in bytes (default: 65536)")
     parser.add_argument("--memory", type=int, default=4294967296, help="total_memory_in_bytes (default: 4 GiB)")
