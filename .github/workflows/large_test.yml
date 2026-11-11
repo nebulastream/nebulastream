@@ -64,7 +64,7 @@ jobs:
           images: |
             nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
-          docker_password: ${{ secrets.DOCKER_SECRET }}
+          docker_password: ${{ secrets.DOCKER_PULL_SECRET }}
       - name: Configure, build, and run large System Level Tests
         uses: ./.github/steps/run-in-container
         with:
@@ -134,7 +134,7 @@ jobs:
           images: |
             nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
-          docker_password: ${{ secrets.DOCKER_SECRET }}
+          docker_password: ${{ secrets.DOCKER_PULL_SECRET }}
       - name: Configure, build, and run systest remote test
         uses: ./.github/steps/run-in-container
         with:
