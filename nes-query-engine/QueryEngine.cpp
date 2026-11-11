@@ -962,7 +962,8 @@ void QueryCatalog::start(
     auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
     const auto startTimestamp = std::chrono::system_clock::now();
     auto state = std::make_shared<StateRef>(Reserved{});
-    this->queryStates.emplace(queryId, state);
+    const bool inserted = this->queryStates.emplace(queryId, state).second;
+    INVARIANT(inserted, "Query {} was started twice", queryId);
     queryListener->state = state;
 
     auto [runningQueryPlan, callback] = RunningQueryPlan::start(queryId, std::move(plan), controller, emitter, queryListener);

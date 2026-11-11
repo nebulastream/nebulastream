@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <atomic>
 #include <barrier>
 #include <chrono>
 #include <cstdint>
@@ -73,6 +74,62 @@ TEST_F(QueryLogTest, GetLogForNonExistentQuery)
 {
     const auto log = queryLog->getLogForQuery(randomQueryId());
     EXPECT_FALSE(log.has_value());
+}
+
+TEST_F(QueryLogTest, RegisterQueryOnlyOnce)
+{
+    EXPECT_TRUE(queryLog->registerQuery(testQueryId, testTime));
+    EXPECT_FALSE(queryLog->registerQuery(testQueryId, testTime + 100ms));
+
+    const auto log = queryLog->getLogForQuery(testQueryId);
+    ASSERT_TRUE(log.has_value());
+    ASSERT_EQ(log->size(), 1);
+    EXPECT_EQ(log->at(0).state, QueryStatus::Registered);
+    EXPECT_EQ(log->at(0).timestamp, testTime);
+}
+
+TEST_F(QueryLogTest, RegisterQueryRejectsQueryWithEntries)
+{
+    queryLog->logQueryStatusChange(testQueryId, QueryStatus::Started, testTime);
+    queryLog->logQueryStatusChange(testQueryId, QueryStatus::Stopped, testTime + 100ms);
+
+    EXPECT_FALSE(queryLog->registerQuery(testQueryId, testTime + 200ms));
+    EXPECT_EQ(queryLog->getLogForQuery(testQueryId)->size(), 2);
+}
+
+TEST_F(QueryLogTest, RemoveQueryAllowsRegisteringAgain)
+{
+    ASSERT_TRUE(queryLog->registerQuery(testQueryId, testTime));
+    queryLog->removeQuery(testQueryId);
+
+    EXPECT_FALSE(queryLog->getQueryStatus(testQueryId).has_value());
+    EXPECT_TRUE(queryLog->registerQuery(testQueryId, testTime + 100ms));
+}
+
+TEST_F(QueryLogTest, ConcurrentRegisterQueryAcceptsOne)
+{
+    constexpr uint64_t numThreads = 8;
+    std::atomic<uint64_t> accepted{0};
+    {
+        std::barrier startBarrier{numThreads};
+        std::vector<std::jthread> threads;
+        threads.reserve(numThreads);
+        for (uint64_t threadId = 0; threadId < numThreads; ++threadId)
+        {
+            threads.emplace_back(
+                [&]
+                {
+                    startBarrier.arrive_and_wait();
+                    if (queryLog->registerQuery(testQueryId, std::chrono::system_clock::now()))
+                    {
+                        ++accepted;
+                    }
+                });
+        }
+    }
+
+    EXPECT_EQ(accepted.load(), 1);
+    EXPECT_EQ(queryLog->getLogForQuery(testQueryId)->size(), 1);
 }
 
 TEST_F(QueryLogTest, GetQuerySummarySuccessfulExecution)
