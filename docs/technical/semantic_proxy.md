@@ -78,7 +78,10 @@ PROJECTION(<child fields>)
 
 - **Student call.** The model's payload with PROXY_MODEL, PROXY_ENDPOINT and LABEL mode, and logprobs. It returns its
   verdict, a route and p(true).
-- **Route.** A row is `teacher` if max(p, 1 - p) < PROXY_THRESHOLD, or if it has no p. Otherwise it is `audit` if the
+- **Route.** A row is `teacher` if the student is not sure enough, or if it has no p. Sure means p >= PROXY_THRESHOLD_TRUE
+  for a `true` and 1 - p >= PROXY_THRESHOLD_FALSE for a `false`; PROXY_THRESHOLD sets both (default 0.9), so with one
+  threshold this is max(p, 1 - p) >= PROXY_THRESHOLD. Per class, a controller can accept a student that is reliable on
+  one class only (e.g. sure `false` answers kept, every `true` checked). Otherwise a row is `audit` if the
   FNV-1a hash of its text falls in the PROXY_AUDIT_RATE share (so the same rows are audited in every run), else
   `student`.
 - **Teacher call.** It takes the route and the student's verdict first. A `student` row returns the student's verdict
@@ -90,7 +93,23 @@ PROJECTION(<child fields>)
   audited rows with their disagreements. The audit agreement is the quality signal the system can compute itself.
 
 Restrictions: SEM_FILTER, one step, BATCH_SIZE 1, never fused, no IMAGE_FIELDS, CONFIDENCE_FIELD or DATASET_PROMPT.
-PROXY_THRESHOLD is in [0.5, 1], PROXY_AUDIT_RATE in [0, 1].
+PROXY_THRESHOLD, PROXY_THRESHOLD_TRUE and PROXY_THRESHOLD_FALSE are in [0.5, 1], PROXY_AUDIT_RATE in [0, 1].
+
+**Shadow mode.** There is no option for it. A shadow phase (the teacher answers every row, the student's label and p are
+kept) is two queries over the same rows, a teacher-only SEM_FILTER and the student in LABEL mode with CONFIDENCE_FIELD
+as a SEM_MAP, matched by key. An audit rate of 1.0 is not enough: the cascade projects the student's columns away, and
+the filter drops the rows the teacher rejects, with the student's answers for them.
+
+## 4. JOIN pair ids (`LLM.JOIN_PAIR_IDS`)
+
+SEM_JOIN's prompt is llm_operator's (`SemanticJoinCodec`), but its pair keys differed: NES numbers the pairs of a prompt
+`row1`..`rowN`, llm_operator keys them `<window uuid>_<left index>_<right index>` (`SEMJoinOperator`), a 36-character
+UUID plus two indices that the model repeats in its answer. With `'UUID' AS LLM.JOIN_PAIR_IDS`, NES sends the same
+format: a fresh UUID v4 per prompt (llm_operator's is per window, which SEM_CALL does not see), and i and j the index of
+the pair's left and right text among the prompt's distinct texts in order of appearance (llm_operator's are indices in
+the window, so they can have one digit more). The answer is matched by these keys. The default, 'ROW', is unchanged.
+Allowed on a model with one FILTER step in JSON answer mode, the only kind SEM_MATCH accepts. Its purpose is
+measurement: prompts identical to llm_operator's, ids aside, for the JOIN comparison.
 
 ## Not in this prototype
 
