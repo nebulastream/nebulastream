@@ -584,4 +584,39 @@ TEST_F(SemanticMapStatementTest, AnswerModeLabelBindsWithItsInputLabel)
     rejectedWith(withOptions("o VARSIZED", ", 'LABEL' AS LLM.ANSWER_MODE, 'a,b' AS LLM.OUTPUT_VALUES, 'TRUE' AS LLM.FUSION"), "never fused");
 }
 
+TEST_F(SemanticMapStatementTest, ConfidenceFieldIsTheLastOutputField)
+{
+    const auto filter = create(
+        "CREATE SEM_MODEL student INPUT (reviewText VARSIZED) SET ('Is this movie review positive?' AS LLM.PROMPT, "
+        "'http://x' AS LLM.ENDPOINT, 'student' AS LLM.MODEL_NAME, 'LABEL' AS LLM.ANSWER_MODE, 'p_true' AS LLM.CONFIDENCE_FIELD)");
+    ASSERT_TRUE(filter.has_value()) << filter.error().what();
+    const auto student = semanticModelCatalog->load("STUDENT");
+    EXPECT_TRUE(student.hasFilterStep());
+    EXPECT_EQ(student.getConfig().confidenceField, "P_TRUE");
+    ASSERT_EQ(student.getSchema().outputs.size(), 1);
+    EXPECT_EQ(static_cast<const Identifier&>(student.getSchema().outputs.begin()->getFullyQualifiedName()).asCanonicalString(), "P_TRUE");
+    semanticModelCatalog->removeModel("STUDENT");
+
+    const auto map = create(withOptions("label VARSIZED", ", 'LABEL' AS LLM.ANSWER_MODE, 'true,false' AS LLM.OUTPUT_VALUES, 'p' AS LLM.CONFIDENCE_FIELD"));
+    ASSERT_TRUE(map.has_value()) << map.error().what();
+    const auto& outputs = semanticModelCatalog->load("M").getSchema().outputs;
+    ASSERT_EQ(outputs.size(), 2);
+    EXPECT_EQ(static_cast<const Identifier&>(std::ranges::next(outputs.begin())->getFullyQualifiedName()).asCanonicalString(), "P");
+    semanticModelCatalog->removeModel("M");
+
+    const auto rejectedWith = [this](const std::string& sql, const std::string& message)
+    {
+        SCOPED_TRACE(sql);
+        const auto rejected = create(sql);
+        ASSERT_FALSE(rejected.has_value());
+        EXPECT_EQ(rejected.error().code(), ErrorCode::InvalidSemanticModel);
+        EXPECT_NE(std::string{rejected.error().what()}.find(message), std::string::npos) << rejected.error().what();
+        EXPECT_TRUE(semanticModelCatalog->getModelNames().empty());
+    };
+    rejectedWith(withOptions("o VARSIZED", ", 'p' AS LLM.CONFIDENCE_FIELD"), "requires 'LABEL' AS LLM.ANSWER_MODE");
+    rejectedWith(
+        withOptions("o VARSIZED", ", 'LABEL' AS LLM.ANSWER_MODE, 'a,b' AS LLM.OUTPUT_VALUES, 'o' AS LLM.CONFIDENCE_FIELD"),
+        "collides with an OUTPUT field");
+}
+
 }

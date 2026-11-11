@@ -104,6 +104,7 @@ struct EncodedPayload
     /// Only written for LLM.ANSWER_MODE LABEL, for the same reason.
     std::optional<int64_t> answerMode;
     std::optional<std::string> inputLabel;
+    std::optional<std::string> confidenceField;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -212,7 +213,8 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             .imageRoot = config.imageFields.empty() ? std::nullopt : std::optional{config.imageRoot},
             .imageMaxBytes = config.imageFields.empty() ? std::nullopt : std::optional{static_cast<int64_t>(config.imageMaxBytes)},
             .answerMode = config.answerMode == AnswerMode::JSON ? std::nullopt : std::optional{static_cast<int64_t>(config.answerMode)},
-            .inputLabel = config.answerMode == AnswerMode::JSON ? std::nullopt : std::optional{config.inputLabel}});
+            .inputLabel = config.answerMode == AnswerMode::JSON ? std::nullopt : std::optional{config.inputLabel},
+            .confidenceField = config.confidenceField.empty() ? std::nullopt : std::optional{config.confidenceField}});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -263,7 +265,8 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .imageRoot = std::move(value.imageRoot).value_or(""),
             .imageMaxBytes = static_cast<size_t>(std::max<int64_t>(1, value.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes)))),
             .answerMode = readEnum(value.answerMode.value_or(0), AnswerMode::LABEL, "AnswerMode"),
-            .inputLabel = std::move(value.inputLabel).value_or("")},
+            .inputLabel = std::move(value.inputLabel).value_or(""),
+            .confidenceField = std::move(value.confidenceField).value_or("")},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),

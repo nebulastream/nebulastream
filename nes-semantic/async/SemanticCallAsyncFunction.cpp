@@ -148,9 +148,8 @@ void recordUsage(const nlohmann::json& envelope)
 }
 
 /// `choices[0].message.content` of a chat-completion envelope, if it has one.
-std::optional<std::string> messageContent(const std::string& body)
+std::optional<std::string> messageContent(const nlohmann::json& envelope)
 {
-    const auto envelope = nlohmann::json::parse(body, nullptr, false);
     if (envelope.is_object())
     {
         recordUsage(envelope);
@@ -366,7 +365,8 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std
     const auto& step = config.steps.front();
     const auto values = labelValues(step);
     const auto text = spaceJoined(arguments);
-    std::string content;
+    const bool withConfidence = !config.confidenceField.empty();
+    std::pair<std::string, TokenLogprobs> completion;
     if (mock)
     {
         if (mock->getDelay() > std::chrono::milliseconds{0})
@@ -379,21 +379,37 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std
         {
             throw CannotReadFromSource("SEM_CALL of model '{}': {}", payload.model, answer.error().message);
         }
-        content = std::move(answer).value();
+        completion = std::move(answer).value();
     }
     else
     {
         const auto inputLabel = config.inputLabel.empty() ? fmt::format("{}", fmt::join(payload.inputFields, ", ")) : config.inputLabel;
         auto request = buildChatRequest(config.modelName, buildLabelPrompt(step.prompt, values, inputLabel, text), {}, 0);
         applyLabelRequestFields(request, config.maxTokens);
-        content = co_await exchange(std::move(request), nullptr);
+        if (withConfidence)
+        {
+            applyLogprobRequestFields(request);
+        }
+        completion = co_await exchange(std::move(request), nullptr);
     }
-    const auto answer = parseLabelAnswer(content, values);
+    const auto answer = parseLabelAnswer(completion.first, values);
+    AsyncCallResult result;
     if (step.kind == SemanticStep::Kind::FILTER)
     {
-        co_return AsyncCallResult{answer == "true" ? "true" : "false"};
+        result.emplace_back(answer == "true" ? "true" : "false");
     }
-    co_return AsyncCallResult{answer.value_or(step.defaultValue)};
+    else
+    {
+        result.push_back(answer.value_or(step.defaultValue));
+    }
+    if (withConfidence)
+    {
+        /// A filter's p(true) whatever it answered; a map's probability of the value it gave.
+        const auto target = step.kind == SemanticStep::Kind::FILTER ? std::optional<std::string>{"true"} : answer;
+        const auto probability = target ? labelProbability(completion.second, values, *target) : std::nullopt;
+        result.push_back(probability ? formatProbability(*probability) : std::string{});
+    }
+    co_return result;
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
@@ -617,11 +633,12 @@ SemanticCallAsyncFunction::complete(std::string prompt, SemanticHttpClient* cons
         }
         co_return std::move(answer).value();
     }
-    co_return co_await exchange(std::move(request), client);
+    co_return (co_await exchange(std::move(request), client)).first;
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<std::string> SemanticCallAsyncFunction::exchange(nlohmann::json request, SemanticHttpClient* const client)
+boost::asio::awaitable<std::pair<std::string, TokenLogprobs>>
+SemanticCallAsyncFunction::exchange(nlohmann::json request, SemanticHttpClient* const client)
 {
     const auto start = std::chrono::steady_clock::now();
     std::optional<SemanticHttpResponse> exchanged;
@@ -648,13 +665,14 @@ boost::asio::awaitable<std::string> SemanticCallAsyncFunction::exchange(nlohmann
         }
         throw CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body);
     }
-    if (auto content = messageContent(response.body))
+    const auto envelope = nlohmann::json::parse(response.body, nullptr, false);
+    if (auto content = messageContent(envelope))
     {
-        co_return std::move(content).value();
+        co_return std::pair{std::move(content).value(), firstTokenLogprobs(envelope)};
     }
     /// An answer without content is unusable, not a transport failure: the codec fills in the defaults.
     NES_WARNING("SEM_CALL of model '{}' got a response without chat-completion content: {}", payload.model, response.body);
-    co_return std::string{};
+    co_return std::pair{std::string{}, TokenLogprobs{}};
 }
 
 void SemanticCallAsyncFunction::retryScheduled(const std::chrono::milliseconds delay, bool /*transient*/)

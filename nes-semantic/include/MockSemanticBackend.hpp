@@ -21,10 +21,12 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <SemanticBackend.hpp>
 #include <SemanticImage.hpp>
+#include <SemanticLabelAnswer.hpp>
 
 namespace NES
 {
@@ -83,6 +85,7 @@ public:
         SCAN,
         WINDOW,
         IMAGE_INFO,
+        PROB,
     };
 
     /// Throws InvalidSemanticModel for an unknown behaviour.
@@ -100,9 +103,12 @@ public:
     [[nodiscard]] std::expected<std::string, BackendError>
     respond(const std::string& prompt, std::span<const ImageAttachment> images) const;
 
-    /// LLM.ANSWER_MODE LABEL: the bare answer to one row's text, without an envelope. `echo` answers the text upper-cased,
-    /// `label:<X>` X, `unparseable` prose, `fail` fails; every other behaviour answers like `echo`.
-    [[nodiscard]] std::expected<std::string, BackendError> respondLabel(std::string_view text) const;
+    /// LLM.ANSWER_MODE LABEL: the bare answer to one row's text, without an envelope, and the alternatives of its token
+    /// as a server's `top_logprobs`. `echo` answers the text upper-cased, listing its lower case with logprob 0;
+    /// `label:<X>` answers and lists X; `prob` reads the text as p(true) and answers "true" if p >= 0.5, else "false",
+    /// listing "true" with ln p and "false" with ln(1 - p) (a probability of 0 is not listed); `unparseable` answers
+    /// prose with no alternatives; `fail` fails. Every other behaviour answers like `echo`.
+    [[nodiscard]] std::expected<std::pair<std::string, TokenLogprobs>, BackendError> respondLabel(std::string_view text) const;
 
     [[nodiscard]] std::chrono::milliseconds getDelay() const { return delay; }
 

@@ -221,6 +221,11 @@ LogicalOperator translate(const RegisteredSemanticModel& model, const LogicalOpe
         verdicts.push_back(Identifier::parse(fmt::format("__SEM_VERDICT_{}", verdicts.size())));
         evaluation.emplace_back(verdicts.back(), value(step));
     }
+    /// LLM.CONFIDENCE_FIELD: the value after the steps', under the last OUTPUT field.
+    if (!model.getConfig().confidenceField.empty())
+    {
+        evaluation.emplace_back(nameOf(*std::ranges::prev(std::ranges::end(outputs))), value(steps.size()));
+    }
     LogicalOperator evaluated = ProjectionLogicalOperator::create(child, evaluation, ProjectionLogicalOperator::Asterisk{true});
     if (verdicts.empty())
     {

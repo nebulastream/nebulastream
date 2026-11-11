@@ -425,6 +425,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"IMAGE_MAX_BYTES"},
     std::string_view{"ANSWER_MODE"},
     std::string_view{"INPUT_LABEL"},
+    std::string_view{"CONFIDENCE_FIELD"},
 };
 
 /// Options only a SEM_SCAN or SEM_WINDOW model reads.
@@ -509,6 +510,13 @@ AnswerMode bindAnswerMode(const std::unordered_map<Identifier, std::string>& con
         return AnswerMode::LABEL;
     }
     throw InvalidSemanticModel("Option LLM.ANSWER_MODE must be JSON or LABEL, but was '{}'", raw);
+}
+
+/// `LLM.CONFIDENCE_FIELD`, e.g. 'p_true': the name of the probability column, stored canonical.
+std::string bindConfidenceField(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "CONFIDENCE_FIELD", "");
+    return raw.empty() ? std::string{} : Identifier::parse(raw).asCanonicalString();
 }
 
 SemanticExecution bindExecution(const std::unordered_map<Identifier, std::string>& config)
@@ -737,7 +745,26 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .imageRoot = optionalOption(statement.config, "IMAGE_ROOT", ""),
         .imageMaxBytes = numericOption(statement.config, "IMAGE_MAX_BYTES", DefaultImageMaxBytes, MaxImageBytes),
         .answerMode = bindAnswerMode(statement.config),
-        .inputLabel = optionalOption(statement.config, "INPUT_LABEL", "")};
+        .inputLabel = optionalOption(statement.config, "INPUT_LABEL", ""),
+        .confidenceField = bindConfidenceField(statement.config)};
+}
+
+/// The OUTPUT clause's fields, followed by LLM.CONFIDENCE_FIELD's if there is one.
+SemanticFieldList bindOutputs(const CreateSemanticModelStatement& statement, const SemanticModelConfig& config)
+{
+    if (config.confidenceField.empty())
+    {
+        return statement.outputs;
+    }
+    std::vector<UnqualifiedUnboundField> outputs{statement.outputs.begin(), statement.outputs.end()};
+    outputs.emplace_back(Identifier::parse(config.confidenceField), DataType::Type::VARSIZED);
+    auto withConfidence = SemanticFieldList::tryCreateCollisionFree(std::move(outputs));
+    if (!withConfidence.has_value())
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': LLM.CONFIDENCE_FIELD '{}' collides with an OUTPUT field", statement.name, config.confidenceField);
+    }
+    return std::move(withConfidence).value();
 }
 
 }
@@ -748,10 +775,10 @@ SemanticModelStatementHandler::operator()(const CreateSemanticModelStatement& st
     /// Duplicate names are rejected by the catalog itself (SemanticModelAlreadyExists).
     try
     {
+        auto config = bindSemanticModelConfig(statement);
+        auto outputs = bindOutputs(statement, config);
         semanticModelCatalog->registerModel(
-            statement.name,
-            bindSemanticModelConfig(statement),
-            SemanticModelSchema{.inputs = statement.inputs, .outputs = statement.outputs});
+            statement.name, std::move(config), SemanticModelSchema{.inputs = statement.inputs, .outputs = std::move(outputs)});
     }
     catch (const Exception& e)
     {

@@ -191,6 +191,11 @@ struct SemanticModelConfig
     /// `LLM.INPUT_LABEL`: LABEL mode's name for the input in the prompt, as "Review" in "Review: <text>". Empty: the INPUT
     /// field names, joined by ", ".
     std::string inputLabel;
+    /// `LLM.CONFIDENCE_FIELD`, canonical: LABEL mode only. SEM_CALL asks for the logprobs of the answer token and writes,
+    /// under this name, the probability of `true` (FILTER) or of the value answered (MAP), renormalized over the step's
+    /// values (`labelProbability`); empty when the server sent no logprobs for any value. The field is the last of the
+    /// model's OUTPUT fields, after the MAP step's. Empty: no such field and no logprobs requested.
+    std::string confidenceField;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

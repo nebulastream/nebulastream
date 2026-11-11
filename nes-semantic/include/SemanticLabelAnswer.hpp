@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <nlohmann/json.hpp>
@@ -52,5 +54,29 @@ buildLabelPrompt(std::string_view instruction, const std::vector<std::string>& v
 /// `chat_template_kwargs.enable_thinking` false, the student's training setting. Servers that do not know
 /// `chat_template_kwargs` ignore it (vLLM applies it, Ollama ignores it).
 void applyLabelRequestFields(nlohmann::json& request, size_t maxTokens);
+
+/// How many alternatives per position LLM.CONFIDENCE_FIELD asks for: vLLM's default limit (`--max-logprobs 20`).
+constexpr size_t LabelTopLogprobs = 20;
+
+/// The answer token's alternatives, (token, logprob), as `top_logprobs` lists them.
+using TokenLogprobs = std::vector<std::pair<std::string, double>>;
+
+/// LLM.CONFIDENCE_FIELD: additionally `logprobs` true and `top_logprobs` LabelTopLogprobs.
+void applyLogprobRequestFields(nlohmann::json& request);
+
+/// `choices[0].logprobs.content[0].top_logprobs` of a chat-completion envelope (the OpenAI shape vLLM and Ollama send):
+/// the alternatives at the first generated token, the answer position. Empty when the envelope has none.
+[[nodiscard]] TokenLogprobs firstTokenLogprobs(const nlohmann::json& envelope);
+
+/// The probability of `target` renormalized over `values`: each value's mass is the summed probability of the listed
+/// tokens that spell it, ignoring case and surrounding whitespace ("true", "True", " true"), then normalized over the
+/// values. For a student trained on the lowercase tokens this is the training script's softmax over the [false, true]
+/// logits up to the variants' tiny mass; an untrained model that answers "True" gets a usable number too. A value with
+/// no listed token counts as 0; nothing if no value is listed at all, or `target` is not a value.
+[[nodiscard]] std::optional<double>
+labelProbability(const TokenLogprobs& alternatives, const std::vector<std::string>& values, std::string_view target);
+
+/// The probability as the confidence column holds it: six decimals, e.g. "0.973105".
+[[nodiscard]] std::string formatProbability(double probability);
 
 }

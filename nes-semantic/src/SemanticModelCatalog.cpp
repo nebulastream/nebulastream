@@ -81,6 +81,7 @@ struct
     /// Optional on read: catalogs reflected before LLM.ANSWER_MODE existed carry none, which means JSON.
     std::optional<int64_t> answerMode;
     std::optional<std::string> inputLabel;
+    std::optional<std::string> confidenceField;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -353,9 +354,25 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     {
         validateKeyed(name, config, schema);
     }
-    else if (mapSteps != schema.outputs.size())
+    else if (mapSteps + (config.confidenceField.empty() ? 0 : 1) != schema.outputs.size())
     {
         throw InvalidSemanticModel("Semantic model '{}': {} OUTPUT field(s) but {} map step(s)", name, schema.outputs.size(), mapSteps);
+    }
+    if (!config.confidenceField.empty())
+    {
+        if (config.answerMode != AnswerMode::LABEL)
+        {
+            throw InvalidSemanticModel(
+                "Semantic model '{}': LLM.CONFIDENCE_FIELD reads the logprobs of a one-token answer; it requires 'LABEL' AS "
+                "LLM.ANSWER_MODE",
+                name);
+        }
+        const auto& last = *std::ranges::prev(std::ranges::end(schema.outputs));
+        if (static_cast<const Identifier&>(last.getFullyQualifiedName()).asCanonicalString() != config.confidenceField)
+        {
+            throw InvalidSemanticModel(
+                "Semantic model '{}': the last OUTPUT field must be LLM.CONFIDENCE_FIELD '{}'", name, config.confidenceField);
+        }
     }
 
     for (const auto& step : config.steps)
@@ -542,6 +559,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .imageMaxBytes = std::make_optional(static_cast<int64_t>(config.imageMaxBytes)),
             .answerMode = std::make_optional(static_cast<int64_t>(config.answerMode)),
             .inputLabel = std::make_optional(config.inputLabel),
+            .confidenceField = std::make_optional(config.confidenceField),
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -590,7 +608,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .imageRoot = std::move(reflected.imageRoot).value_or(""),
         .imageMaxBytes = static_cast<size_t>(reflected.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes))),
         .answerMode = unreflectEnum(reflected.answerMode.value_or(0), AnswerMode::LABEL, "AnswerMode"),
-        .inputLabel = std::move(reflected.inputLabel).value_or("")};
+        .inputLabel = std::move(reflected.inputLabel).value_or(""),
+        .confidenceField = std::move(reflected.confidenceField).value_or("")};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

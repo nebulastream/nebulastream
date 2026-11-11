@@ -1,0 +1,55 @@
+# name: semantic/SemanticConfidence.test
+# description: LLM.CONFIDENCE_FIELD in LABEL mode: SEM_CALL asks for the answer token's logprobs and writes the
+#              probability of 'true' (FILTER) or of the value answered (MAP), renormalized over the step's values,
+#              as an extra column after the model's OUTPUT fields. The mock's 'prob' behaviour reads a row's text
+#              as p(true) and answers like a server with logprobs: "true" if p >= 0.5, listing "true" with ln p and
+#              "false" with ln(1 - p). Text that is no probability gets prose and no logprobs, so an empty column.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE scores(id UINT64 NOT NULL, p VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR scores TYPE File;
+ATTACH INLINE
+1,0.97
+2,0.5
+3,0.2
+4,0
+5,1
+6,abc
+
+CREATE SEM_MODEL studentFilter
+INPUT (p VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'prob' AS LLM.ENDPOINT, 'student' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'LABEL' AS LLM.ANSWER_MODE, 'Review' AS LLM.INPUT_LABEL, 'p_true' AS LLM.CONFIDENCE_FIELD);
+
+CREATE SEM_MODEL studentMap
+INPUT (p VARSIZED)
+OUTPUT (label VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'prob' AS LLM.ENDPOINT, 'student' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'LABEL' AS LLM.ANSWER_MODE, 'true,false' AS LLM.OUTPUT_VALUES, 'none' AS LLM.DEFAULT_VALUE, 'confidence' AS LLM.CONFIDENCE_FIELD);
+
+CREATE SINK filtered(id UINT64 NOT NULL, p VARSIZED NOT NULL, p_true VARSIZED NOT NULL) TYPE File;
+CREATE SINK labelled(id UINT64 NOT NULL, p VARSIZED NOT NULL, label VARSIZED NOT NULL, confidence VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL, p_true VARSIZED NOT NULL) TYPE File;
+
+# Query 1: the rows the student passes, each with its p(true).
+SELECT * FROM SEM_FILTER(studentFilter, scores) INTO filtered;
+----
+1,0.97,0.970000
+2,0.5,0.500000
+5,1,1.000000
+
+# Query 2: SEM_MAP labels every row; the confidence is that of the label given. No logprobs: empty, and the default.
+SELECT * FROM SEM_MAP(studentMap, scores) INTO labelled;
+----
+1,0.97,true,0.970000
+2,0.5,true,0.500000
+3,0.2,false,0.800000
+4,0,false,1.000000
+5,1,true,1.000000
+6,abc,none,
+
+# Query 3: the confidence column is an ordinary field downstream.
+SELECT id, p_true FROM SEM_FILTER(studentFilter, scores) WHERE id > UINT64(1) INTO ids;
+----
+2,0.500000
+5,1.000000

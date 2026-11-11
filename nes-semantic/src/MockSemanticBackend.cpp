@@ -17,8 +17,10 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <cmath>
 #include <chrono>
 #include <cstdint>
+#include <exception>
 #include <expected>
 #include <initializer_list>
 #include <optional>
@@ -112,7 +114,8 @@ std::optional<Behaviour> parseBehaviour(std::string_view behaviour)
              {"fail-batch", MockSemanticBackend::Mode::FAIL_BATCH},
              {"scan", MockSemanticBackend::Mode::SCAN},
              {"window", MockSemanticBackend::Mode::WINDOW},
-             {"imageinfo", MockSemanticBackend::Mode::IMAGE_INFO}})
+             {"imageinfo", MockSemanticBackend::Mode::IMAGE_INFO},
+             {"prob", MockSemanticBackend::Mode::PROB}})
     {
         if (behaviour == name)
         {
@@ -228,7 +231,7 @@ MockSemanticBackend::MockSemanticBackend(const std::string_view behaviour, std::
     {
         throw InvalidSemanticModel(
             "Unknown mock backend behaviour '{}' (expected echo, label:<X>, unparseable, fail, match, count, concat, batchinfo, "
-            "echo-missing, echo-extra, fail-batch, scan, window or imageinfo, each optionally followed by @<ms>)",
+            "echo-missing, echo-extra, fail-batch, scan, window, imageinfo or prob, each optionally followed by @<ms>)",
             behaviour);
     }
     mode = parsed->mode;
@@ -255,18 +258,48 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
     return respond(prompt, {});
 }
 
-std::expected<std::string, BackendError> MockSemanticBackend::respondLabel(const std::string_view text) const
+std::expected<std::pair<std::string, TokenLogprobs>, BackendError> MockSemanticBackend::respondLabel(const std::string_view text) const
 {
     switch (mode)
     {
         case Mode::FAIL:
             return std::unexpected{BackendError{.kind = BackendError::Kind::UNREACHABLE, .message = "mock endpoint is unreachable"}};
         case Mode::UNPARSEABLE:
-            return std::string{"I am sorry, but I cannot classify this row."};
+            return std::pair{std::string{"I am sorry, but I cannot classify this row."}, TokenLogprobs{}};
         case Mode::LABEL:
-            return label;
-        default:
-            return toUpper(std::string{text});
+            return std::pair{label, TokenLogprobs{{label, 0.0}}};
+        case Mode::PROB: {
+            const std::string number{text};
+            double probability = 0;
+            size_t parsed = 0;
+            try
+            {
+                probability = std::stod(number, &parsed);
+            }
+            catch (const std::exception&)
+            {
+                parsed = 0;
+            }
+            if (parsed == 0 || parsed != number.size() || !(probability >= 0.0 && probability <= 1.0))
+            {
+                return std::pair{std::string{"not a probability"}, TokenLogprobs{}};
+            }
+            TokenLogprobs alternatives;
+            if (probability > 0.0)
+            {
+                alternatives.emplace_back("true", std::log(probability));
+            }
+            if (probability < 1.0)
+            {
+                alternatives.emplace_back("false", std::log(1.0 - probability));
+            }
+            return std::pair{std::string{probability >= 0.5 ? "true" : "false"}, std::move(alternatives)};
+        }
+        default: {
+            std::string lower{text};
+            std::ranges::transform(lower, lower.begin(), [](const unsigned char character) { return static_cast<char>(std::tolower(character)); });
+            return std::pair{toUpper(std::string{text}), TokenLogprobs{{lower, 0.0}}};
+        }
     }
 }
 
@@ -369,6 +402,7 @@ MockSemanticBackend::respond(const std::string& prompt, const std::span<const Im
         case Mode::ECHO_EXTRA:
         case Mode::ECHO:
         case Mode::IMAGE_INFO:
+        case Mode::PROB:
         case Mode::LABEL: {
             auto response = nlohmann::json::object();
             const auto rows = dataBlock(prompt);

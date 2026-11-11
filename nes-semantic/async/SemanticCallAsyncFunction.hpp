@@ -19,6 +19,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Sources/AsyncFunction.hpp>
 #include <Sources/AsyncResourceLimiter.hpp>
@@ -33,6 +34,7 @@
 #include <SemanticImage.hpp>
 #include <SemanticJoinCodec.hpp>
 #include <SemanticKeyedCodec.hpp>
+#include <SemanticLabelAnswer.hpp>
 #include <SemanticMapCodec.hpp>
 
 namespace NES
@@ -86,8 +88,9 @@ private:
     boost::asio::awaitable<std::string>
     complete(std::string prompt, SemanticHttpClient* client = nullptr, std::vector<ImageAttachment> images = {});
     /// Posts a chat request on `client` (or the instance's own connection) and returns the answer's content, empty if the
-    /// envelope has none. A failed exchange or a non-2xx status throws, a transient one as `AsyncTransientFailure`.
-    boost::asio::awaitable<std::string> exchange(nlohmann::json request, SemanticHttpClient* client);
+    /// envelope has none, and the alternatives of its first token if the envelope lists logprobs. A failed exchange or a
+    /// non-2xx status throws, a transient one as `AsyncTransientFailure`.
+    boost::asio::awaitable<std::pair<std::string, TokenLogprobs>> exchange(nlohmann::json request, SemanticHttpClient* client);
     /// LLM.ANSWER_MODE LABEL: one row, the label prompt, one answer token (`SemanticLabelAnswer.hpp`).
     boost::asio::awaitable<AsyncCallResult> callLabel(std::vector<std::string> arguments);
     [[nodiscard]] std::vector<AsyncCallResult> decode(const std::string& answer, const std::vector<RowPayload>& rows) const;

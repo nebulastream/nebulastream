@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -117,6 +118,115 @@ void applyLabelRequestFields(nlohmann::json& request, const size_t maxTokens)
 {
     request["max_tokens"] = maxTokens > 0 ? maxTokens : 1;
     request["chat_template_kwargs"] = {{"enable_thinking", false}};
+}
+
+void applyLogprobRequestFields(nlohmann::json& request)
+{
+    request["logprobs"] = true;
+    request["top_logprobs"] = LabelTopLogprobs;
+}
+
+TokenLogprobs firstTokenLogprobs(const nlohmann::json& envelope)
+{
+    TokenLogprobs alternatives;
+    if (!envelope.is_object() || !envelope.contains("choices") || !envelope["choices"].is_array() || envelope["choices"].empty())
+    {
+        return alternatives;
+    }
+    const auto& choice = envelope["choices"][0];
+    if (!choice.is_object() || !choice.contains("logprobs") || !choice["logprobs"].is_object())
+    {
+        return alternatives;
+    }
+    const auto& content = choice["logprobs"].value("content", nlohmann::json{});
+    if (!content.is_array() || content.empty() || !content[0].is_object())
+    {
+        return alternatives;
+    }
+    const auto& first = content[0];
+    const auto& top = first.value("top_logprobs", nlohmann::json{});
+    if (top.is_array() && !top.empty())
+    {
+        for (const auto& entry : top)
+        {
+            if (entry.is_object() && entry.contains("token") && entry["token"].is_string() && entry.contains("logprob")
+                && entry["logprob"].is_number())
+            {
+                alternatives.emplace_back(entry["token"].get<std::string>(), entry["logprob"].get<double>());
+            }
+        }
+        return alternatives;
+    }
+    /// No alternatives requested or sent: the generated token alone.
+    if (first.contains("token") && first["token"].is_string() && first.contains("logprob") && first["logprob"].is_number())
+    {
+        alternatives.emplace_back(first["token"].get<std::string>(), first["logprob"].get<double>());
+    }
+    return alternatives;
+}
+
+std::optional<double>
+labelProbability(const TokenLogprobs& alternatives, const std::vector<std::string>& values, const std::string_view target)
+{
+    if (std::ranges::find(values, target) == values.end())
+    {
+        return std::nullopt;
+    }
+    /// Each spelling of a value, relative to the most likely listed one so that very negative logprobs do not underflow.
+    double highest = -INFINITY;
+    for (const auto& [token, logprob] : alternatives)
+    {
+        if (std::isfinite(logprob))
+        {
+            highest = std::max(highest, logprob);
+        }
+    }
+    std::vector<double> mass(values.size(), 0.0);
+    bool listed = false;
+    for (const auto& [token, logprob] : alternatives)
+    {
+        if (!std::isfinite(logprob))
+        {
+            continue;
+        }
+        std::string_view spelled{token};
+        while (!spelled.empty() && std::isspace(static_cast<unsigned char>(spelled.front())) != 0)
+        {
+            spelled.remove_prefix(1);
+        }
+        while (!spelled.empty() && std::isspace(static_cast<unsigned char>(spelled.back())) != 0)
+        {
+            spelled.remove_suffix(1);
+        }
+        for (size_t index = 0; index < values.size(); ++index)
+        {
+            if (equalsIgnoringCase(spelled, values[index]))
+            {
+                mass[index] += std::exp(logprob - highest);
+                listed = true;
+            }
+        }
+    }
+    if (!listed)
+    {
+        return std::nullopt;
+    }
+    double total = 0;
+    double targetMass = 0;
+    for (size_t index = 0; index < values.size(); ++index)
+    {
+        total += mass[index];
+        if (values[index] == target)
+        {
+            targetMass = mass[index];
+        }
+    }
+    return targetMass / total;
+}
+
+std::string formatProbability(const double probability)
+{
+    return fmt::format("{:.6f}", probability);
 }
 
 }
