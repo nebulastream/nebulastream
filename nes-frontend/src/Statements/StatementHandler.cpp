@@ -423,6 +423,8 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"IMAGE_FIELDS"},
     std::string_view{"IMAGE_ROOT"},
     std::string_view{"IMAGE_MAX_BYTES"},
+    std::string_view{"ANSWER_MODE"},
+    std::string_view{"INPUT_LABEL"},
 };
 
 /// Options only a SEM_SCAN or SEM_WINDOW model reads.
@@ -492,6 +494,21 @@ bool bindBooleanOption(const std::unordered_map<Identifier, std::string>& config
         return false;
     }
     throw InvalidSemanticModel("Option LLM.{} must be TRUE or FALSE, but was '{}'", key, raw);
+}
+
+/// `LLM.ANSWER_MODE`: JSON (the default) or LABEL, the one-token mode of distilled students (`SemanticLabelAnswer.hpp`).
+AnswerMode bindAnswerMode(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "ANSWER_MODE", "JSON");
+    if (raw == "JSON")
+    {
+        return AnswerMode::JSON;
+    }
+    if (raw == "LABEL")
+    {
+        return AnswerMode::LABEL;
+    }
+    throw InvalidSemanticModel("Option LLM.ANSWER_MODE must be JSON or LABEL, but was '{}'", raw);
 }
 
 SemanticExecution bindExecution(const std::unordered_map<Identifier, std::string>& config)
@@ -718,7 +735,9 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .keyed = std::move(keyed),
         .imageFields = bindImageFields(statement),
         .imageRoot = optionalOption(statement.config, "IMAGE_ROOT", ""),
-        .imageMaxBytes = numericOption(statement.config, "IMAGE_MAX_BYTES", DefaultImageMaxBytes, MaxImageBytes)};
+        .imageMaxBytes = numericOption(statement.config, "IMAGE_MAX_BYTES", DefaultImageMaxBytes, MaxImageBytes),
+        .answerMode = bindAnswerMode(statement.config),
+        .inputLabel = optionalOption(statement.config, "INPUT_LABEL", "")};
 }
 
 }

@@ -78,6 +78,9 @@ struct
     std::optional<std::vector<std::string>> imageFields;
     std::optional<std::string> imageRoot;
     std::optional<int64_t> imageMaxBytes;
+    /// Optional on read: catalogs reflected before LLM.ANSWER_MODE existed carry none, which means JSON.
+    std::optional<int64_t> answerMode;
+    std::optional<std::string> inputLabel;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -231,6 +234,55 @@ void validateImageFields(const std::string& name, const SemanticModelConfig& con
     }
 }
 
+/// LLM.ANSWER_MODE 'LABEL': one SEM_MAP or SEM_FILTER step, one row per request, with values to answer from.
+void validateLabelMode(const std::string& name, const SemanticModelConfig& config)
+{
+    if (config.answerMode != AnswerMode::LABEL)
+    {
+        if (!config.inputLabel.empty())
+        {
+            throw InvalidSemanticModel("Semantic model '{}': LLM.INPUT_LABEL requires 'LABEL' AS LLM.ANSWER_MODE", name);
+        }
+        return;
+    }
+    if (config.keyed)
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': LLM.ANSWER_MODE LABEL is supported for SEM_MAP and SEM_FILTER models only, not for SEM_SCAN or "
+            "SEM_WINDOW",
+            name);
+    }
+    if (config.steps.size() != 1)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.ANSWER_MODE LABEL asks one question per request; it has one step", name);
+    }
+    const auto& step = config.steps.front();
+    if (step.kind == SemanticStep::Kind::MAP && step.outputValues.size() < 2)
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': LLM.ANSWER_MODE LABEL answers with one of LLM.OUTPUT_VALUES; a SEM_MAP model needs at least two",
+            name);
+    }
+    /// The prompt carries one row: the student is trained on exactly that.
+    if (config.batchSize != 1)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.ANSWER_MODE LABEL sends one row per prompt; BATCH_SIZE must be 1", name);
+    }
+    if (config.fusion)
+    {
+        throw InvalidSemanticModel("Semantic model '{}': a model with LLM.ANSWER_MODE LABEL is never fused; remove LLM.FUSION", name);
+    }
+    if (!config.imageFields.empty())
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.ANSWER_MODE LABEL takes text inputs only, not LLM.IMAGE_FIELDS", name);
+    }
+    /// The prompt is exactly the student's training prompt, which has no dataset description.
+    if (!config.datasetPrompt.empty())
+    {
+        throw InvalidSemanticModel("Semantic model '{}': LLM.ANSWER_MODE LABEL sends no LLM.DATASET_PROMPT; remove it", name);
+    }
+}
+
 }
 
 void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig config, SemanticModelSchema schema)
@@ -358,6 +410,7 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     }
 
     validateImageFields(name, config, schema);
+    validateLabelMode(name, config);
 
     /// Enforced here rather than only in the statement handler, so the optimizer tests and any
     /// embedded caller cannot silently replace an entry either.
@@ -487,6 +540,8 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .imageFields = std::make_optional(config.imageFields),
             .imageRoot = std::make_optional(config.imageRoot),
             .imageMaxBytes = std::make_optional(static_cast<int64_t>(config.imageMaxBytes)),
+            .answerMode = std::make_optional(static_cast<int64_t>(config.answerMode)),
+            .inputLabel = std::make_optional(config.inputLabel),
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -533,7 +588,9 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .keyed = reflected.keyed ? std::optional{decodeSemanticKeyedConfig(*reflected.keyed)} : std::nullopt,
         .imageFields = std::move(reflected.imageFields).value_or(std::vector<std::string>{}),
         .imageRoot = std::move(reflected.imageRoot).value_or(""),
-        .imageMaxBytes = static_cast<size_t>(reflected.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes)))};
+        .imageMaxBytes = static_cast<size_t>(reflected.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes))),
+        .answerMode = unreflectEnum(reflected.answerMode.value_or(0), AnswerMode::LABEL, "AnswerMode"),
+        .inputLabel = std::move(reflected.inputLabel).value_or("")};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

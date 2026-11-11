@@ -552,4 +552,36 @@ TEST_F(SemanticMapStatementTest, ImageFieldsNameInputFields)
         "SEM_MAP and SEM_FILTER models only");
 }
 
+TEST_F(SemanticMapStatementTest, AnswerModeLabelBindsWithItsInputLabel)
+{
+    const auto result = create(
+        "CREATE SEM_MODEL student INPUT (reviewText VARSIZED) SET ('Is this movie review positive?' AS LLM.PROMPT, "
+        "'http://x' AS LLM.ENDPOINT, 'rt-filter-4b-lora' AS LLM.MODEL_NAME, 'LABEL' AS LLM.ANSWER_MODE, 'Review' AS LLM.INPUT_LABEL)");
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    const auto config = semanticModelCatalog->load("STUDENT").getConfig();
+    EXPECT_EQ(config.answerMode, AnswerMode::LABEL);
+    EXPECT_EQ(config.inputLabel, "Review");
+    semanticModelCatalog->removeModel("STUDENT");
+    ASSERT_TRUE(create(withOptions("o VARSIZED", "")).has_value());
+    EXPECT_EQ(semanticModelCatalog->load("M").getConfig().answerMode, AnswerMode::JSON);
+    semanticModelCatalog->removeModel("M");
+
+    const auto rejectedWith = [this](const std::string& sql, const std::string& message)
+    {
+        SCOPED_TRACE(sql);
+        const auto rejected = create(sql);
+        ASSERT_FALSE(rejected.has_value());
+        EXPECT_EQ(rejected.error().code(), ErrorCode::InvalidSemanticModel);
+        EXPECT_NE(std::string{rejected.error().what()}.find(message), std::string::npos) << rejected.error().what();
+        EXPECT_TRUE(semanticModelCatalog->getModelNames().empty());
+    };
+    rejectedWith(withOptions("o VARSIZED", ", 'TOKEN' AS LLM.ANSWER_MODE"), "must be JSON or LABEL");
+    rejectedWith(withOptions("o VARSIZED", ", 'LABEL' AS LLM.ANSWER_MODE"), "needs at least two");
+    rejectedWith(withOptions("o VARSIZED", ", 'Review' AS LLM.INPUT_LABEL"), "requires 'LABEL' AS LLM.ANSWER_MODE");
+    rejectedWith(
+        withOptions("o VARSIZED", ", 'LABEL' AS LLM.ANSWER_MODE, 'a,b' AS LLM.OUTPUT_VALUES, 'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE"),
+        "BATCH_SIZE must be 1");
+    rejectedWith(withOptions("o VARSIZED", ", 'LABEL' AS LLM.ANSWER_MODE, 'a,b' AS LLM.OUTPUT_VALUES, 'TRUE' AS LLM.FUSION"), "never fused");
+}
+
 }

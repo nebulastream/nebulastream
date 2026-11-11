@@ -31,6 +31,7 @@
 #include <rfl/json.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SemanticCallPayload.hpp>
 #include <SemanticImage.hpp>
 
 namespace NES
@@ -362,6 +363,66 @@ TEST_F(SemanticModelCatalogTest, ImageFieldsAreInputsOfAnUnbatchedMapOrFilterMod
     rejected("batched", [](SemanticModelConfig& changed) { changed.batchSize = 4; });
     rejected("fused", [](SemanticModelConfig& changed) { changed.fusion = true; });
     rejected("no bytes allowed", [](SemanticModelConfig& changed) { changed.imageMaxBytes = 0; });
+}
+
+TEST_F(SemanticModelCatalogTest, LabelModeIsOneUnbatchedUnfusedTextStep)
+{
+    auto filter = filterConfig();
+    filter.fusion = false;
+    filter.answerMode = AnswerMode::LABEL;
+    filter.inputLabel = "Review";
+    auto map = validConfig();
+    map.answerMode = AnswerMode::LABEL;
+    {
+        SemanticModelCatalog catalog;
+        catalog.registerModel("student", filter, filterSchema());
+        catalog.registerModel("labeller", map, validSchema());
+        const ReflectionContext context;
+        for (const auto* const name : {"student", "labeller"})
+        {
+            const auto model = catalog.load(name);
+            const auto roundTripped = context.unreflect<RegisteredSemanticModel>(context.reflect(model));
+            EXPECT_EQ(roundTripped, model);
+            EXPECT_EQ(roundTripped.getConfig().answerMode, AnswerMode::LABEL);
+        }
+        EXPECT_EQ(catalog.load("student").getConfig().inputLabel, "Review");
+    }
+    /// The SEM_CALL payload carries the mode; a JSON model's payload is unchanged, so no EXPLAIN hash moves.
+    {
+        const SemanticCallPayload payload{.model = "student", .config = filter, .inputFields = {"DESCRIPTION"}, .outputFields = {}};
+        const auto decoded = decodeSemanticCallPayload(encodeSemanticCallPayload(payload));
+        EXPECT_EQ(decoded.config.answerMode, AnswerMode::LABEL);
+        EXPECT_EQ(decoded.config.inputLabel, "Review");
+        auto json = filterConfig();
+        json.fusion = false;
+        const auto encodedJson
+            = encodeSemanticCallPayload(SemanticCallPayload{.model = "m", .config = json, .inputFields = {"DESCRIPTION"}, .outputFields = {}});
+        EXPECT_EQ(encodedJson.find("answerMode"), std::string::npos) << encodedJson;
+        EXPECT_EQ(encodedJson.find("inputLabel"), std::string::npos) << encodedJson;
+    }
+
+    const auto rejected = [](const std::string& description, SemanticModelConfig config, const SemanticModelSchema& schema)
+    {
+        SCOPED_TRACE(description);
+        SemanticModelCatalog catalog;
+        ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, schema), ErrorCode::InvalidSemanticModel);
+    };
+    auto batched = filter;
+    batched.execution = SemanticExecution::ASYNCHRONOUS;
+    batched.batchSize = 4;
+    rejected("batched", batched, filterSchema());
+    auto fused = filter;
+    fused.fusion = true;
+    rejected("fused", fused, filterSchema());
+    auto withDatasetPrompt = filter;
+    withDatasetPrompt.datasetPrompt = "Movie reviews";
+    rejected("dataset prompt", withDatasetPrompt, filterSchema());
+    auto oneValue = map;
+    oneValue.steps.front().outputValues = {"POSITIVE"};
+    rejected("a MAP step with fewer than two values", oneValue, validSchema());
+    auto inputLabelWithoutLabelMode = validConfig();
+    inputLabelWithoutLabelMode.inputLabel = "Review";
+    rejected("INPUT_LABEL in JSON mode", inputLabelWithoutLabelMode, validSchema());
 }
 
 }

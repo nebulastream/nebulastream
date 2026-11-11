@@ -100,6 +100,10 @@ public:
     [[nodiscard]] std::expected<std::string, BackendError>
     respond(const std::string& prompt, std::span<const ImageAttachment> images) const;
 
+    /// LLM.ANSWER_MODE LABEL: the bare answer to one row's text, without an envelope. `echo` answers the text upper-cased,
+    /// `label:<X>` X, `unparseable` prose, `fail` fails; every other behaviour answers like `echo`.
+    [[nodiscard]] std::expected<std::string, BackendError> respondLabel(std::string_view text) const;
+
     [[nodiscard]] std::chrono::milliseconds getDelay() const { return delay; }
 
 private:

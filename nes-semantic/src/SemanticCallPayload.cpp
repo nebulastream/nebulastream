@@ -101,6 +101,9 @@ struct EncodedPayload
     std::optional<std::vector<std::string>> imageFields;
     std::optional<std::string> imageRoot;
     std::optional<int64_t> imageMaxBytes;
+    /// Only written for LLM.ANSWER_MODE LABEL, for the same reason.
+    std::optional<int64_t> answerMode;
+    std::optional<std::string> inputLabel;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -207,7 +210,9 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             = config.sharedConcurrency > 0 ? std::optional{static_cast<int64_t>(config.sharedConcurrency)} : std::nullopt,
             .imageFields = config.imageFields.empty() ? std::nullopt : std::optional{config.imageFields},
             .imageRoot = config.imageFields.empty() ? std::nullopt : std::optional{config.imageRoot},
-            .imageMaxBytes = config.imageFields.empty() ? std::nullopt : std::optional{static_cast<int64_t>(config.imageMaxBytes)}});
+            .imageMaxBytes = config.imageFields.empty() ? std::nullopt : std::optional{static_cast<int64_t>(config.imageMaxBytes)},
+            .answerMode = config.answerMode == AnswerMode::JSON ? std::nullopt : std::optional{static_cast<int64_t>(config.answerMode)},
+            .inputLabel = config.answerMode == AnswerMode::JSON ? std::nullopt : std::optional{config.inputLabel}});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -256,7 +261,9 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .keyed = value.keyed ? std::optional{decodeKeyed(std::move(*value.keyed))} : std::nullopt,
             .imageFields = std::move(value.imageFields).value_or(std::vector<std::string>{}),
             .imageRoot = std::move(value.imageRoot).value_or(""),
-            .imageMaxBytes = static_cast<size_t>(std::max<int64_t>(1, value.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes))))},
+            .imageMaxBytes = static_cast<size_t>(std::max<int64_t>(1, value.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes)))),
+            .answerMode = readEnum(value.answerMode.value_or(0), AnswerMode::LABEL, "AnswerMode"),
+            .inputLabel = std::move(value.inputLabel).value_or("")},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),

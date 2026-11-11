@@ -33,6 +33,8 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -42,6 +44,7 @@
 #include <SemanticCallStats.hpp>
 #include <SemanticImage.hpp>
 #include <SemanticKeyedCodec.hpp>
+#include <SemanticLabelAnswer.hpp>
 #include <SemanticModelCatalog.hpp>
 #include <SemanticRowPayload.hpp>
 
@@ -239,6 +242,10 @@ SemanticCallAsyncFunction::SemanticCallAsyncFunction(SemanticCallPayload decoded
         }
         imageFieldPositions.push_back(static_cast<size_t>(position - payload.inputFields.begin()));
     }
+    if (config.answerMode == AnswerMode::LABEL && (payload.join || payload.agg || config.keyed))
+    {
+        throw CannotOpenSource("SEM_CALL of model '{}': LLM.ANSWER_MODE LABEL is for SEM_MAP and SEM_FILTER only", payload.model);
+    }
     /// Counted last, so that an instance whose construction threw is not counted.
     ++liveInstances;
 }
@@ -267,7 +274,11 @@ AsyncFunctionRegistryReturnType SemanticCallAsyncFunction::create(AsyncFunctionR
 
 size_t SemanticCallAsyncFunction::maxBatchSize() const
 {
-    return payload.config.keyed || payload.agg ? 1 : std::max<size_t>(1, payload.config.batchSize);
+    if (payload.config.keyed || payload.agg || payload.config.answerMode == AnswerMode::LABEL)
+    {
+        return 1;
+    }
+    return std::max<size_t>(1, payload.config.batchSize);
 }
 
 std::optional<size_t> SemanticCallAsyncFunction::orderingKey() const
@@ -302,6 +313,10 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
         /// One prompt per window: the argument is the window's JSON_AGG array.
         const auto answer = co_await complete(aggCodec->buildPrompt(arguments[0]));
         co_return AsyncCallResult{aggCodec->parse(answer)};
+    }
+    if (payload.config.answerMode == AnswerMode::LABEL && !joinCodec)
+    {
+        co_return co_await callLabel(std::move(arguments));
     }
     if (joinCodec)
     {
@@ -342,6 +357,43 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
     const auto prompt = mapCodec ? mapCodec->buildPrompt(rows) : filterCodec->buildPrompt(rows);
     const auto answer = co_await complete(prompt, nullptr, std::move(images));
     co_return decode(answer, rows).front();
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std::vector<std::string> arguments)
+{
+    const auto& config = payload.config;
+    const auto& step = config.steps.front();
+    const auto values = labelValues(step);
+    const auto text = spaceJoined(arguments);
+    std::string content;
+    if (mock)
+    {
+        if (mock->getDelay() > std::chrono::milliseconds{0})
+        {
+            boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, mock->getDelay()};
+            co_await timer.async_wait(boost::asio::use_awaitable);
+        }
+        auto answer = mock->respondLabel(text);
+        if (!answer)
+        {
+            throw CannotReadFromSource("SEM_CALL of model '{}': {}", payload.model, answer.error().message);
+        }
+        content = std::move(answer).value();
+    }
+    else
+    {
+        const auto inputLabel = config.inputLabel.empty() ? fmt::format("{}", fmt::join(payload.inputFields, ", ")) : config.inputLabel;
+        auto request = buildChatRequest(config.modelName, buildLabelPrompt(step.prompt, values, inputLabel, text), {}, 0);
+        applyLabelRequestFields(request, config.maxTokens);
+        content = co_await exchange(std::move(request), nullptr);
+    }
+    const auto answer = parseLabelAnswer(content, values);
+    if (step.kind == SemanticStep::Kind::FILTER)
+    {
+        co_return AsyncCallResult{answer == "true" ? "true" : "false"};
+    }
+    co_return AsyncCallResult{answer.value_or(step.defaultValue)};
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
@@ -565,7 +617,12 @@ SemanticCallAsyncFunction::complete(std::string prompt, SemanticHttpClient* cons
         }
         co_return std::move(answer).value();
     }
+    co_return co_await exchange(std::move(request), client);
+}
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
+boost::asio::awaitable<std::string> SemanticCallAsyncFunction::exchange(nlohmann::json request, SemanticHttpClient* const client)
+{
     const auto start = std::chrono::steady_clock::now();
     std::optional<SemanticHttpResponse> exchanged;
     try

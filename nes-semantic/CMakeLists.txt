@@ -25,7 +25,8 @@ add_library(nes-semantic
         src/MockSemanticBackend.cpp
         src/SemanticCallPayload.cpp
         src/SemanticCallStats.cpp
-        src/SemanticImage.cpp)
+        src/SemanticImage.cpp
+        src/SemanticLabelAnswer.cpp)
 target_include_directories(nes-semantic PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

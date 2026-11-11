@@ -255,6 +255,21 @@ std::expected<std::string, BackendError> MockSemanticBackend::respond(const std:
     return respond(prompt, {});
 }
 
+std::expected<std::string, BackendError> MockSemanticBackend::respondLabel(const std::string_view text) const
+{
+    switch (mode)
+    {
+        case Mode::FAIL:
+            return std::unexpected{BackendError{.kind = BackendError::Kind::UNREACHABLE, .message = "mock endpoint is unreachable"}};
+        case Mode::UNPARSEABLE:
+            return std::string{"I am sorry, but I cannot classify this row."};
+        case Mode::LABEL:
+            return label;
+        default:
+            return toUpper(std::string{text});
+    }
+}
+
 std::expected<std::string, BackendError>
 MockSemanticBackend::respond(const std::string& prompt, const std::span<const ImageAttachment> images) const
 {

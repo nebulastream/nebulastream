@@ -116,6 +116,18 @@ struct SemanticKeyedConfig
     bool operator==(const SemanticKeyedConfig&) const = default;
 };
 
+/// `LLM.ANSWER_MODE`: how the model is asked and how its answer is read.
+enum class AnswerMode : uint8_t
+{
+    /// The prompt layout of llm_operator (operator prompt, instruction, data as JSON) and a JSON answer per row. The default.
+    JSON,
+    /// One row per request, the prompt `<PROMPT> Answer only with <v1> or <v2>.\n\n<INPUT_LABEL>: <text>`, thinking off and
+    /// one answer token (`max_tokens` 1 unless LLM.MAX_TOKENS says otherwise). A FILTER step's values are `true` and
+    /// `false`, a MAP step's its OUTPUT_VALUES. This is the prompt of the distilled students of llm_operator's
+    /// `finetune_label_token.py`, which are trained to answer it with one token (`SemanticLabelAnswer.hpp`).
+    LABEL,
+};
+
 /// Everything needed to talk to the remote model. Catalog-side metadata declared
 /// alongside the model in `CREATE SEM_MODEL`; none of it is derived from the
 /// endpoint itself.
@@ -174,6 +186,11 @@ struct SemanticModelConfig
     std::string imageRoot;
     /// `LLM.IMAGE_MAX_BYTES`: a larger file is not sent; its row gets the default value.
     size_t imageMaxBytes = DefaultImageMaxBytes;
+    /// `LLM.ANSWER_MODE`. LABEL: SEM_MAP and SEM_FILTER only, one step, one row per request, never fused.
+    AnswerMode answerMode = AnswerMode::JSON;
+    /// `LLM.INPUT_LABEL`: LABEL mode's name for the input in the prompt, as "Review" in "Review: <text>". Empty: the INPUT
+    /// field names, joined by ", ".
+    std::string inputLabel;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

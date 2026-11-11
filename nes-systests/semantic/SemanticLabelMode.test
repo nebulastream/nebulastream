@@ -1,0 +1,88 @@
+# name: semantic/SemanticLabelMode.test
+# description: LLM.ANSWER_MODE 'LABEL', the one-token answer mode of distilled students (llm_operator's
+#              finetune_label_token.py): one row per request, the prompt
+#              "<PROMPT> Answer only with true or false.\n\n<INPUT_LABEL>: <text>", and a bare answer instead of
+#              a JSON envelope. The mock answers a label request with the row's text upper-cased ('echo') or a
+#              constant ('label:<X>'), so the rows steer the answers. An answer is one of the step's values,
+#              ignoring case; anything else is the default (a filter drops the row).
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,true
+2,no
+3,False
+4,TRUE
+5,maybe
+6,yes
+
+CREATE SEM_MODEL labelFilter
+INPUT (description VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'LABEL' AS LLM.ANSWER_MODE, 'Review' AS LLM.INPUT_LABEL);
+
+CREATE SEM_MODEL labelMap
+INPUT (description VARSIZED)
+OUTPUT (label VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'LABEL' AS LLM.ANSWER_MODE, 'true,false' AS LLM.OUTPUT_VALUES, 'none' AS LLM.DEFAULT_VALUE);
+
+CREATE SEM_MODEL keepAllLabel
+INPUT (description VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'label:True.' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'LABEL' AS LLM.ANSWER_MODE);
+
+CREATE SEM_MODEL garbageLabel
+INPUT (description VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'unparseable' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'LABEL' AS LLM.ANSWER_MODE);
+
+CREATE SEM_MODEL downLabel
+INPUT (description VARSIZED)
+SET ('Is this movie review positive?' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'LABEL' AS LLM.ANSWER_MODE);
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL) TYPE File;
+CREATE SINK mapped(id UINT64 NOT NULL, description VARSIZED NOT NULL, label VARSIZED NOT NULL) TYPE File;
+
+# Query 1: only "true" in any case passes. Unlike the JSON envelope's verdicts, "yes" is not one of the values.
+SELECT * FROM SEM_FILTER(labelFilter, reviews) INTO out;
+----
+1,true
+4,TRUE
+
+# Query 2: SEM_MAP writes the value as declared; an answer that is none of the values gets the default.
+SELECT * FROM SEM_MAP(labelMap, reviews) INTO mapped;
+----
+1,true,true
+2,no,none
+3,False,false
+4,TRUE,true
+5,maybe,none
+6,yes,none
+
+# Query 3: "True." is read as true, so every row passes.
+SELECT * FROM SEM_FILTER(keepAllLabel, reviews) INTO out;
+----
+1,true
+2,no
+3,False
+4,TRUE
+5,maybe
+6,yes
+
+# Query 4: prose is no answer: every row is dropped, and the query ends normally.
+SELECT * FROM SEM_FILTER(garbageLabel, reviews) INTO out;
+----
+
+# Query 5: an unreachable endpoint fails the query, as in JSON mode.
+SELECT * FROM SEM_FILTER(downLabel, reviews) INTO out;
+----
+ERROR 4006 "unreachable"
+
+# Query 6: two label-mode operators in one query.
+SELECT * FROM SEM_MAP(labelMap, SEM_FILTER(labelFilter, reviews)) INTO mapped;
+----
+1,true,true
+4,TRUE,true
