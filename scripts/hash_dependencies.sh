@@ -45,3 +45,5 @@ find "${HASH_PATHS[@]}" -type f -exec sh -c ' printf "%s  %s\n" "$(tr -d "\r" < 
   | LC_ALL=C sort -k 2 \
   | sha256sum \
   | cut -d ' ' -f1
+
+# Temporary change of the dependency hash to test the image build. Do not merge.
