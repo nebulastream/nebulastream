@@ -63,8 +63,8 @@ UDFS = {
 }
 
 # Chained calls, which the optimizer cannot fuse: each call reads the result of the one before, so each gets a UDF operator of its
-# own. Name: (UDF, number of calls).
-CHAINS = {"inc2": ("inc", 2), "inc3": ("inc", 3), "lcg2": ("lcg", 2)}
+# own. Name: the UDFs of the calls, innermost first.
+CHAINS = {"inc2": ["inc", "inc"], "inc3": ["inc", "inc", "inc"], "lcg2": ["lcg", "lcg"], "inclcg": ["inc", "lcg"], "lcginc": ["lcg", "inc"]}
 
 
 def write_test(path, input_format, udf, input_file, source_on_performance_cpu, sources):
@@ -78,15 +78,15 @@ def write_test(path, input_format, udf, input_file, source_on_performance_cpu, s
     lines.append(f"CREATE LOGICAL SOURCE input({description['schema']});")
     for _ in range(sources):
         lines.append(physical + f"ATTACH FILE {input_file}\n")
-    calls = 1
-    if udf in CHAINS:
-        udf, calls = CHAINS[udf]
-    if udf in UDFS:
-        parameters, result, body, argument = UDFS[udf]
-        for _ in range(calls - 1):
-            argument = f"udf({argument}) + INT64(1)"
-        lines.append(f"CREATE FUNCTION udf ({parameters}) RETURNS {result} EXECUTION OUT_OF_PROCESS AS $python$\n{body}\n$python$;\n")
-        lines.append(f"SELECT *, udf({argument}) AS r FROM input INTO Void();\n----\n")
+    if udf in UDFS or udf in CHAINS:
+        # One function per call, so that a chain of different UDFs has different functions
+        calls = CHAINS.get(udf, [udf])
+        expression = UDFS[calls[0]][3]
+        for index, call in enumerate(calls):
+            parameters, result, body, _ = UDFS[call]
+            lines.append(f"CREATE FUNCTION udf{index} ({parameters}) RETURNS {result} EXECUTION OUT_OF_PROCESS AS $python$\n{body}\n$python$;\n")
+            expression = f"udf{index}({expression})" + (" + INT64(1)" if index + 1 < len(calls) else "")
+        lines.append(f"SELECT *, {expression} AS r FROM input INTO Void();\n----\n")
     elif udf == "scan":
         lines.append("SELECT * FROM input INTO Void();\n----\n")
     elif udf == "native_inc":
@@ -184,8 +184,8 @@ def sample_threads(process, threads):
 
 def run(arguments, layout, udf, repetition, record_base):
     inputs = INPUTS[arguments.format]
-    operators = CHAINS[udf][1] if udf in CHAINS else 1
-    input_name = arguments.input or inputs["default"][CHAINS[udf][0] if udf in CHAINS else udf]
+    operators = len(CHAINS[udf]) if udf in CHAINS else 1
+    input_name = arguments.input or inputs["default"][CHAINS[udf][-1] if udf in CHAINS else udf]
     input_file, rows = inputs["files"][input_name]
     rows *= arguments.sources
     label = f"{arguments.experiment}-{arguments.format}-{layout['name'].replace(' ', '-')}-{udf}-r{repetition}"
@@ -303,7 +303,7 @@ def main():
     parser.add_argument("--format", choices=sorted(INPUTS), default="native", help="input format (default: native)")
     parser.add_argument("--input", help="input by name instead of the default of the UDF: 30m, 120m (csv); 60m, 480m, 1920m (native)")
     parser.add_argument("--sources", type=int, default=1, help="physical file sources reading the input, each with a thread of its own (default: 1)")
-    parser.add_argument("--udfs", default="inc,lcg", help="comma-separated UDFs: inc, upper (csv only), lcg, the chains inc2, inc3, lcg2 (udf(udf(id) + 1)), scan and native_inc (native only)")
+    parser.add_argument("--udfs", default="inc,lcg", help="comma-separated UDFs: inc, upper (csv only), lcg, the chains inc2, inc3, lcg2, inclcg, lcginc (udf1(udf0(id) + 1)), scan and native_inc (native only)")
     parser.add_argument("--layouts", nargs="+", default=[], metavar="NAME", help="layout names, see --list")
     parser.add_argument("--processes", type=int, help="processes per UDF operator (default: one per process CPU of the layout); they are pinned to the process CPUs in turn")
     parser.add_argument("--reps", type=int, default=1)
