@@ -88,7 +88,8 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", truncateForGrpcMetadata(exception.what()));
     context->AddTrailingMetadata("trace", truncateForGrpcMetadata(formatStacktrace(exception.trace(), false)));
-    return {grpc::INTERNAL, truncateForGrpcMetadata(exception.what())};
+    const auto status = exception.code() == ErrorCode::QueryAlreadyRegistered ? grpc::ALREADY_EXISTS : grpc::INTERNAL;
+    return {status, truncateForGrpcMetadata(exception.what())};
 }
 
 grpc::Status handleError(grpc::ServerContext* context)
