@@ -688,6 +688,136 @@ mod tests {
         );
     }
 
+    /// A start whose compilation outlasts the RPC deadline, and a drop of the query while the worker still compiles.
+    /// The coordinator sees the start time out (retryable), and after the retry interval it sends a stop instead.
+    /// The worker's engine does not know the query yet, so it drops the stop with a warning
+    /// (`QueryCatalog::stopQuery`: "Query was not submitted to the engine") and the worker replies OK.
+    fn start_timed_out_while_compiling() -> WorkerReply {
+        WorkerReply::Start(Err(CallError::Transient(QueryFragmentError::Transport {
+            msg: "deadline exceeded".to_string(),
+        })))
+    }
+
+    /// The worker on main: the query log has no entry until compilation ends, so a status read says `QueryNotFound`.
+    /// The coordinator records the fragment as stopped, and the orphan check stops it once the worker runs it.
+    #[tokio::test]
+    async fn a_stop_during_compilation_is_repaired_when_the_worker_reports_not_found() {
+        let db = Database::for_test().await;
+        let fragment = fragment_row(&db).await;
+        let mut script = Script::new(vec![
+            start_timed_out_while_compiling(),
+            WorkerReply::Stop(Ok(())),
+            WorkerReply::Status(Err(CallError::NotFound)),
+        ]);
+        script.stop_before = Some(1);
+        let (calls, row) = drive(&db, fragment.clone(), script).await;
+        assert_eq!(
+            calls,
+            vec![WorkerCall::Start, WorkerCall::Stop, WorkerCall::Status]
+        );
+        assert_eq!(row.current_state, QueryFragmentState::Stopped);
+
+        // Compilation ends and the worker runs the fragment; it now lists it as active.
+        let stopped = Arc::new(Mutex::new(Vec::new()));
+        let backend = RecordingBackend {
+            stopped: stopped.clone(),
+            active: vec![(fragment.id, Some(1_000))],
+        };
+        stop_orphans(&backend, &(), &db, &HOST.parse().unwrap(), 0).await;
+        assert_eq!(
+            *stopped.lock().unwrap(),
+            vec![fragment.id],
+            "the orphan check stops the fragment that started after its stop"
+        );
+    }
+
+    /// The worker with #2270: the query log gets `Registered` before compilation, so a status read during
+    /// compilation says `Registered` (mapped to `Started`) instead of `QueryNotFound`.
+    /// This test asserts the resulting behavior: the fragment runs on, and nothing stops it again.
+    #[tokio::test]
+    async fn a_stop_during_compilation_is_lost_when_the_worker_reports_registered() {
+        let db = Database::for_test().await;
+        let fragment = fragment_row(&db).await;
+        let mut answers = vec![
+            start_timed_out_while_compiling(),
+            WorkerReply::Stop(Ok(())),
+            // Still compiling: proto QueryState Registered = 0.
+            WorkerReply::Status(Ok(RawStatus {
+                state: 0,
+                start_ms: None,
+                stop_ms: None,
+                error: None,
+            })),
+        ];
+        // Compilation ends and the engine runs the fragment: the acknowledged stop never reached it.
+        answers.extend((0..200).map(|_| status(QueryFragmentState::Running, Some(1_000), None)));
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let (desired_tx, desired_rx) = watch::channel(fragment.desired_state);
+        let transport = Scripted {
+            answers: Mutex::new(answers.into()),
+            calls: calls.clone(),
+            poll: Duration::from_millis(10),
+            db: db.clone(),
+            query_id: fragment.query_id,
+            desired_tx: Arc::new(desired_tx),
+            stop_before: Some(1),
+            stop_after: None,
+        };
+        let (state_tx, _state_rx) = watch::channel(());
+        let task = QueryFragmentTask::new(
+            fragment.clone(),
+            db.clone(),
+            transport,
+            state_tx,
+            desired_rx,
+        )
+        .run();
+        let finished =
+            tokio::time::timeout(RETRY_INTERVAL + Duration::from_millis(500), task).await;
+
+        assert!(
+            finished.is_err(),
+            "the task still waits for a fragment that it asked to stop"
+        );
+        let calls = calls.lock().unwrap().clone();
+        assert_eq!(
+            calls[..3],
+            [WorkerCall::Start, WorkerCall::Stop, WorkerCall::Status]
+        );
+        assert!(
+            calls.len() > 10,
+            "the fragment keeps being polled: {} calls",
+            calls.len()
+        );
+        assert!(
+            calls[3..].iter().all(|call| *call == WorkerCall::Status),
+            "no second stop is ever sent: {calls:?}"
+        );
+        let row = query_fragment::Entity::find_by_id(fragment.id)
+            .one(&db)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(row.desired_state, DesiredQueryFragmentState::Stopped);
+        assert_eq!(
+            row.current_state,
+            QueryFragmentState::Running,
+            "the dropped fragment is recorded as running"
+        );
+
+        // The orphan check skips the fragment, because a non-terminal row counts as wanted.
+        let stopped = Arc::new(Mutex::new(Vec::new()));
+        let backend = RecordingBackend {
+            stopped: stopped.clone(),
+            active: vec![(fragment.id, Some(1_000))],
+        };
+        stop_orphans(&backend, &(), &db, &HOST.parse().unwrap(), 0).await;
+        assert!(
+            stopped.lock().unwrap().is_empty(),
+            "the orphan check does not stop the fragment either"
+        );
+    }
+
     #[tokio::test]
     async fn a_retryable_failure_is_retried_after_the_interval() {
         let db = Database::for_test().await;
