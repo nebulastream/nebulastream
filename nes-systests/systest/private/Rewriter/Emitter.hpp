@@ -62,7 +62,7 @@ private:
     void emitExplain(ExplainStatement explain);
     void emitDifferential(const DifferentialStatement& block);
 
-    [[nodiscard]] PlainStatement modelStatement(SqlParse& parse, const ModelDeclaration& declaration) const;
+    [[nodiscard]] SetupStatement modelStatement(SqlParse& parse, const ModelDeclaration& declaration) const;
 
     const RewriteContext& context; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     Declarations declarations;

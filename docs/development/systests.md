@@ -54,7 +54,8 @@ Logical sources define their schema, but no data input. A query to create a logi
 `CREATE LOGICAL SOURCE input(id UINT64, data FLOAT64);`.
 
 Physical sources define concrete data inputs for logical sources. 
-These can be of different types, such as file sources, TCP sources, or generator sources. 
+These are file sources or generator sources.
+The systests test queries; a connector such as TCP or MQTT is tested in isolation by ConnTest (`nes-conn-test/`).
 Identical to the NES repl parser, you can optionally define parameters for the physical source. 
 You can provide input data for the physical source inline (via the `ATTACH INLINE` statement directly following the physical source definition), or using a file that lies in `nes-systests/testdata/` (via the `ATTACH FILE [path]` statement directly following the physical source definition).
 For both methods, whitespace in the tuples is not trimmed.

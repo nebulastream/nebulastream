@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
@@ -37,7 +36,6 @@
 #include <Parser/TestFileBuilder.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/RewriteContext.hpp>
-#include <Rewriter/SourceRewriting.hpp>
 #include <Rewriter/SqlParse.hpp>
 #include <Rewriter/TestFilePreparer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -248,17 +246,14 @@ TEST_F(TestFilePreparerTest, RewritesInlineSourceNamedSinkAndQuery)
         "1\n");
 
     ASSERT_EQ(setup.size(), 2U);
-    EXPECT_EQ(getSqlOf(setup.at(0)), "CREATE LOGICAL SOURCE TESTKEY_ONETUPLE(field_1 UINT64 NOT NULL);");
-    EXPECT_TRUE(std::holds_alternative<PlainStatement>(setup.at(0)));
+    EXPECT_EQ(setup.at(0).sql, "CREATE LOGICAL SOURCE TESTKEY_ONETUPLE(field_1 UINT64 NOT NULL);");
+    EXPECT_FALSE(setup.at(0).inlineData.has_value());
 
     EXPECT_EQ(
-        getSqlOf(setup.at(1)),
+        setup.at(1).sql,
         R"(CREATE PHYSICAL SOURCE FOR TESTKEY_ONETUPLE TYPE File SET ('/work/sources/TESTKEY_0.csv' AS "SOURCE"."FILE_PATH", )"
         R"('localhost:8080' AS "SOURCE"."HOST", 'CSV' AS "INPUT_FORMATTER"."TYPE");)");
-    const auto* withInline = std::get_if<StatementWithInlineData>(&setup.at(1));
-    ASSERT_NE(withInline, nullptr);
-    EXPECT_EQ(withInline->data.path, "/work/sources/TESTKEY_0.csv");
-    EXPECT_EQ(withInline->data.rows, (std::vector<std::string>{"1"}));
+    EXPECT_EQ(setup.at(1).inlineData, (InlineData{.path = "/work/sources/TESTKEY_0.csv", .rows = {"1"}}));
 
     ASSERT_EQ(queries.size(), 1U);
     const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
@@ -369,11 +364,11 @@ TEST_F(TestFilePreparerTest, RewritesModelAndTheQueryThatInfersWithIt)
 
     ASSERT_EQ(setup.size(), 3U);
     EXPECT_EQ(
-        getSqlOf(setup.at(2)),
+        setup.at(2).sql,
         "CREATE MODEL TESTKEY_IRIS ('/data/model/iris.onnx')\n"
         "INPUT (p1 FLOAT32)\n"
         "OUTPUT (setosa FLOAT32);");
-    EXPECT_TRUE(std::holds_alternative<PlainStatement>(setup.at(2)));
+    EXPECT_FALSE(setup.at(2).inlineData.has_value());
 
     ASSERT_EQ(queries.size(), 1U);
     EXPECT_TRUE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains("MODEL_INFERENCE(TESTKEY_IRIS, TESTKEY_STREAM)"));
@@ -394,124 +389,11 @@ TEST_F(TestFilePreparerTest, RewritesFileSourceWithoutMaterializing)
 
     ASSERT_EQ(setup.size(), 2U);
     EXPECT_EQ(
-        getSqlOf(setup.at(1)),
+        setup.at(1).sql,
         R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE File SET ('/data/small/stream8.csv' AS "SOURCE"."FILE_PATH", )"
         R"('localhost:8080' AS "SOURCE"."HOST", 'CSV' AS "INPUT_FORMATTER"."TYPE");)");
     /// An ATTACH FILE source points at an existing file, so no statement holds inline data to write.
-    EXPECT_TRUE(std::holds_alternative<PlainStatement>(setup.at(1)));
-}
-
-/// The endpoint exists only once the server binds, so the runner adds it later.
-TEST_F(TestFilePreparerTest, StagesTheDataOfASourceThatReadsFromASocket)
-{
-    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
-        "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-        R"(CREATE PHYSICAL SOURCE FOR stream TYPE TCP SET('|' AS INPUT_FORMATTER.FIELD_DELIMITER);)"
-        "\n"
-        "ATTACH INLINE\n"
-        "1|19\n"
-        "\n"
-        "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
-        "\n"
-        "SELECT id FROM stream INTO out;\n"
-        "----\n"
-        "1\n");
-
-    ASSERT_EQ(setup.size(), 2U);
-    EXPECT_EQ(
-        getSqlOf(setup.at(1)),
-        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET ('localhost:8080' AS "SOURCE"."HOST", )"
-        R"('CSV' AS "INPUT_FORMATTER"."TYPE", '|' AS INPUT_FORMATTER.FIELD_DELIMITER);)");
-    const auto* served = std::get_if<StatementWithServedData>(&setup.at(1));
-    ASSERT_NE(served, nullptr);
-    EXPECT_EQ(std::get<std::vector<std::string>>(served->data.content), (std::vector<std::string>{"1|19"}));
-}
-
-TEST_F(TestFilePreparerTest, ServesTheFileOfASourceThatReadsFromASocket)
-{
-    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
-        "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-        "CREATE PHYSICAL SOURCE FOR stream TYPE TCP;\n"
-        "ATTACH FILE small/stream8.csv\n"
-        "\n"
-        "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
-        "\n"
-        "SELECT id FROM stream INTO out;\n"
-        "----\n"
-        "1\n");
-
-    ASSERT_EQ(setup.size(), 2U);
-    const auto* served = std::get_if<StatementWithServedData>(&setup.at(1));
-    ASSERT_NE(served, nullptr);
-    EXPECT_EQ(std::get<std::filesystem::path>(served->data.content), "/data/small/stream8.csv");
-}
-
-/// The runner adds the endpoint once the server binds.
-TEST_F(TestFilePreparerTest, AddsSourceOptionsToAnAlreadyRewrittenStatement)
-{
-    EXPECT_EQ(
-        addSourceOptions(
-            R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET ('localhost:8080' AS "SOURCE"."HOST");)",
-            {SourceOption{.group = "SOURCE", .key = "SOCKET_PORT", .value = int64_t{4242}}}),
-        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET (4242 AS "SOURCE"."SOCKET_PORT", 'localhost:8080' AS "SOURCE"."HOST");)");
-}
-
-/// The binder rejects a key set twice.
-TEST_F(TestFilePreparerTest, AddSourceOptionsKeepsAValueThatTheTestWrote)
-{
-    EXPECT_EQ(
-        addSourceOptions(
-            R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET (200 AS "SOURCE"."FLUSH_INTERVAL_MS");)",
-            {SourceOption{.group = "SOURCE", .key = "SOCKET_PORT", .value = int64_t{4242}},
-             SourceOption{.group = "SOURCE", .key = "FLUSH_INTERVAL_MS", .value = int64_t{100}}}),
-        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE TCP SET (4242 AS "SOURCE"."SOCKET_PORT", 200 AS "SOURCE"."FLUSH_INTERVAL_MS");)");
-}
-
-/// The staged server sends the data, so an endpoint the test wrote would read from elsewhere.
-TEST_F(TestFilePreparerTest, RejectsAServedSourceThatChoosesItsEndpoint)
-{
-    EXPECT_THROW(
-        rewriteSlt(
-            "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-            R"(CREATE PHYSICAL SOURCE FOR stream TYPE TCP SET('4242' AS "SOURCE"."SOCKET_PORT");)"
-            "\n"
-            "ATTACH INLINE\n"
-            "1\n"
-            "\n"
-            "SELECT id FROM stream INTO Void();\n"
-            "----\n"),
-        Exception);
-}
-
-TEST_F(TestFilePreparerTest, KeepsTheEndpointOfASocketSourceWithoutAttachedData)
-{
-    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
-        "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-        R"(CREATE PHYSICAL SOURCE FOR stream TYPE TCP SET('example.org' AS "SOURCE"."SOCKET_HOST", '4242' AS "SOURCE"."SOCKET_PORT");)"
-        "\n"
-        "\n"
-        "SELECT id FROM stream INTO Void();\n"
-        "----\n");
-
-    ASSERT_EQ(setup.size(), 2U);
-    ASSERT_TRUE(std::holds_alternative<PlainStatement>(setup.at(1)));
-    EXPECT_TRUE(getSqlOf(setup.at(1)).contains(R"('example.org' AS "SOURCE"."SOCKET_HOST")"));
-    EXPECT_TRUE(getSqlOf(setup.at(1)).contains(R"('4242' AS "SOURCE"."SOCKET_PORT")"));
-}
-
-TEST_F(TestFilePreparerTest, RejectsAServedSourceThatChoosesItsHost)
-{
-    EXPECT_THROW(
-        rewriteSlt(
-            "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-            R"(CREATE PHYSICAL SOURCE FOR stream TYPE TCP SET('localhost' AS "SOURCE"."SOCKET_HOST");)"
-            "\n"
-            "ATTACH INLINE\n"
-            "1\n"
-            "\n"
-            "SELECT id FROM stream INTO Void();\n"
-            "----\n"),
-        Exception);
+    EXPECT_FALSE(setup.at(1).inlineData.has_value());
 }
 
 /// A discarding sink writes no file, so the query has no result to read back.
@@ -616,10 +498,10 @@ TEST_F(TestFilePreparerTest, RewritesSelfContainedSourceKeepingItsOptions)
 
     ASSERT_EQ(setup.size(), 2U);
     EXPECT_EQ(
-        getSqlOf(setup.at(1)),
+        setup.at(1).sql,
         R"(CREATE PHYSICAL SOURCE FOR TESTKEY_GEN TYPE Generator SET ('localhost:8080' AS "SOURCE"."HOST", )"
         R"('CSV' AS "INPUT_FORMATTER"."TYPE", 'SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA);)");
-    EXPECT_TRUE(std::holds_alternative<PlainStatement>(setup.at(1)));
+    EXPECT_FALSE(setup.at(1).inlineData.has_value());
 }
 
 TEST_F(TestFilePreparerTest, KeepsTheHostAPhysicalSourceChose)
@@ -636,8 +518,8 @@ TEST_F(TestFilePreparerTest, KeepsTheHostAPhysicalSourceChose)
         "1\n");
 
     ASSERT_EQ(setup.size(), 2U);
-    EXPECT_TRUE(getSqlOf(setup.at(1)).contains(R"('elsewhere:9999' AS "SOURCE"."HOST")"));
-    EXPECT_FALSE(getSqlOf(setup.at(1)).contains(R"('localhost:8080' AS "SOURCE"."HOST")"));
+    EXPECT_TRUE(setup.at(1).sql.contains(R"('elsewhere:9999' AS "SOURCE"."HOST")"));
+    EXPECT_FALSE(setup.at(1).sql.contains(R"('localhost:8080' AS "SOURCE"."HOST")"));
 }
 
 TEST_F(TestFilePreparerTest, KeepsTheHostASinkWrittenIntoTheQueryChose)
@@ -763,7 +645,7 @@ TEST_F(TestFilePreparerTest, ExplainKeepsTheDeclaredSinkAndSubmitsItsDeclaration
 
     ASSERT_EQ(setup.size(), 2U);
     EXPECT_EQ(
-        getSqlOf(setup.at(1)),
+        setup.at(1).sql,
         R"(CREATE SINK TESTKEY_OUT(id UINT64 NOT NULL) TYPE File )"
         R"(SET ('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_out.csv' AS "SINK"."FILE_PATH", 'CSV' AS "SINK"."OUTPUT_FORMAT");)");
 
@@ -829,7 +711,7 @@ TEST_F(TestFilePreparerTest, MergesTheRewrittenSinkOptionsIntoTheOnesTheTestWrot
     ASSERT_EQ(setup.size(), 2U);
     /// The format that the test chose survives, and the rewriter adds no second one.
     EXPECT_EQ(
-        getSqlOf(setup.at(1)),
+        setup.at(1).sql,
         R"(CREATE SINK TESTKEY_OUT(id UINT64 NOT NULL) TYPE File )"
         R"(SET ('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_out.csv' AS "SINK"."FILE_PATH", 'JSON' AS "SINK"."OUTPUT_FORMAT");)");
 }

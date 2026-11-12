@@ -55,11 +55,6 @@ constexpr auto Print = "Print";
 constexpr auto Mqtt = "MQTT";
 /// Sink type that writes a checksum over its rows instead of the rows.
 constexpr auto Checksum = "CHECKSUM";
-constexpr auto Tcp = "TCP";
-/// Config keys for a TCP source.
-constexpr auto SocketHost = "SOCKET_HOST";
-constexpr auto SocketPort = "SOCKET_PORT";
-constexpr auto FlushIntervalMs = "FLUSH_INTERVAL_MS";
 
 /// Returns whether two spellings resolve to the same name under the binder's case rules.
 /// A quoted and an unquoted spelling of one name match, and two unquoted spellings differing only in case also match.

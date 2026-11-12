@@ -15,11 +15,9 @@
 #pragma once
 
 #include <string>
-#include <thread>
 #include <vector>
 
 #include <Model/RunnableTestFile.hpp>
-#include <Rewriter/SourceRewriting.hpp>
 
 namespace NES
 {
@@ -27,30 +25,7 @@ namespace NES
 /// Writes the rewriter's planned rows to the file that the physical source reads, creating the parent directory first.
 void writeInlineData(const InlineData& data);
 
-/// A data server for one source, and the source options for the endpoint that it bound.
-/// The server sends its data once and then closes the connection, which ends the stream.
-/// Stopping the thread earlier leaves the source without its data, so the thread has to outlive the queries reading from it.
-struct RunningServer
-{
-    std::jthread thread;
-    std::vector<SourceOption> options;
-};
-
-/// Starts a server on an ephemeral port that sends the given data.
-/// The port is known only once the server binds, so the options come from here rather than from the rewriter.
-[[nodiscard]] RunningServer serve(ServedData data);
-
-/// A test file's setup with its data in place (i.e., stored in a file).
-struct StagedSetup
-{
-    /// The CREATE statements in file order, each served source with the endpoint its server bound.
-    std::vector<std::string> sql;
-    /// Must outlive every query reading from them.
-    std::vector<std::jthread> servers;
-};
-
-/// Writes the inline data to disk and starts a server for each served source.
-/// The rewriter cannot do this: a port exists only once a server has bound it.
-[[nodiscard]] StagedSetup stage(const RunnableTestFile& runnable);
+/// Writes the inline data of a test file to disk and returns its CREATE statements in file order.
+[[nodiscard]] std::vector<std::string> stage(const RunnableTestFile& runnable);
 
 }

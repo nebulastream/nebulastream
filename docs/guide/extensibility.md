@@ -41,7 +41,7 @@ add_registry_entry(<REGISTRY_NAME> <PLUGIN_NAME> [KEY <key>] [OPTIONAL])
 ```
 For instance, the `TCPSource` plugin looks like this:
 ```cmake
-add_library(tcp_source_plugin_library STATIC TCPSource.cpp TCPDataServer.cpp)
+add_library(tcp_source_plugin_library STATIC TCPSource.cpp)
 target_link_libraries(tcp_source_plugin_library PRIVATE nes-sources)
 link_plugin_library(nes-sources tcp_source_plugin_library)
 add_registry_entry(Source TCP)
