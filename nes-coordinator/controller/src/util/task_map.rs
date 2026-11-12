@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-//! A set of running tasks with at most one task per key.
-
 use crate::config::TASK_RESPAWN_DELAY;
 use crate::util::poly_join_set::{AbortHandle, JoinSet};
 use std::collections::HashMap;
@@ -22,11 +20,8 @@ use std::hash::Hash;
 use tokio::task::JoinError;
 use tracing::error;
 
-/// Keyed task set: at most one running task per key.
-/// Spawning the same key twice is a no-op while the first task is still alive,
-/// and a completed task is removed from the map on join so the key can be spawned again.
-/// Used to keep one reconciler child per resource without races.
-#[derive(Default)]
+/// At most one running task per key.
+/// A finished task frees its key when it is joined; a task that returned an error first holds it for the respawn delay.
 pub(crate) struct TaskMap<K> {
     tasks: JoinSet<K>,
     handles: HashMap<K, AbortHandle>,
@@ -40,10 +35,8 @@ impl<K: Eq + Hash + Clone + Send + 'static> TaskMap<K> {
         }
     }
 
-    /// Spawns a task if no task is currently tracked for `key`.
-    ///
     /// Completed tasks are identified by their return value (the key),
-    /// since madsim's `JoinSet` does not support task ids.
+    /// since the madsim stand-in has no task ids.
     /// A panicking task returns no key, so its entry stays tracked,
     /// and the reconcile loop re-raises the panic instead of spawning the key again.
     pub(crate) fn spawn_if_untracked<C, F, E>(&mut self, key: K, make_task: C)

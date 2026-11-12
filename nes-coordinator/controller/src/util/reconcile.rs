@@ -71,7 +71,11 @@ pub(crate) async fn reconcile_loop(
                     if change.is_err() { return Exit::Shutdown; }
                 }
                 _ = poll.tick() => {}
-                () = tick(&mut heartbeat) => { probe = true; }
+                () = async {
+                    if let Some(interval) = heartbeat.as_mut() {
+                        interval.tick().await;
+                    }
+                }, if heartbeat.is_some() => { probe = true; }
             }
         }
         if probe {
@@ -81,14 +85,5 @@ pub(crate) async fn reconcile_loop(
             continue;
         }
         reconciler.reconcile().await;
-    }
-}
-
-async fn tick(heartbeat: &mut Option<tokio::time::Interval>) {
-    match heartbeat {
-        Some(interval) => {
-            interval.tick().await;
-        }
-        None => std::future::pending().await,
     }
 }

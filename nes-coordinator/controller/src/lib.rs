@@ -12,19 +12,15 @@
     limitations under the License.
 */
 
-//! Reconciliation hierarchy: one task per DB row whose state has to be moved toward its target.
-//! The top-level controller spawns one worker task per active worker row,
-//! and each worker task spawns one query_fragment task per query_fragment that is assigned to it.
-//! A worker task's lifetime mirrors its row:
-//! it exists while the row's desired state asks for it,
-//! and is aborted when the row is marked for removal.
-//! Authority is in the DB, never in task memory,
-//! so a restart resumes from exactly the state that the previous process left behind.
+//! Reconciliation hierarchy: one task per catalog row whose observed state has to move toward its desired state.
+//! The controller runs one task per active worker,
+//! and each worker task runs one task per fragment that is assigned to its worker.
+//! A worker task is aborted when its row is marked for removal.
+//! The catalog is the only authority, so a restart resumes from the state that the previous process left behind.
 //!
-//! The loop is level-triggered: a periodic tick re-reads the DB regardless of notifications.
-//! Watch channels coalesce intent signals down to "go look again" wake-ups,
-//! which makes latency good without making correctness depend on any individual signal arriving.
-//! A missed wake-up only delays the next reaction to the next poll interval.
+//! The loop is level-triggered: a periodic tick re-reads the catalog regardless of notifications.
+//! Watch channels coalesce change signals into wake-ups, which lower latency.
+//! A missed wake-up only delays the reaction until the next poll.
 
 use crate::config::POLL_INTERVAL;
 use crate::in_process::{InProcessBackend, WorkerFactory};
@@ -53,8 +49,7 @@ mod worker_task;
 pub use version::worker_versions;
 pub(crate) mod util;
 
-/// Top of the reconciliation hierarchy: one task per active worker row.
-/// A worker may run in-process, backed by an injected factory, or out-of-process over gRPC.
+/// Runs each worker in this process when a worker factory is given, and over gRPC otherwise.
 pub struct Controller {
     db: Database,
     /// Wake-up signal:
@@ -71,41 +66,6 @@ impl std::fmt::Debug for Controller {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Controller").finish_non_exhaustive()
     }
-}
-
-/// The option that a worker reads its data-plane address from,
-/// declared by `SingleNodeWorkerConfiguration` on the C++ side.
-///
-/// Deliberately not the `Worker::DataAddr` identifier of the migration crate.
-/// That one is the `data_addr` column that the coordinator routes by;
-/// this one is an option of the worker process, and the two spellings differ.
-/// Passing the column name here leaves the option unset.
-const WORKER_DATA_ADDRESS_OPTION: &str = "data_address";
-
-/// The configuration that an embedded worker is built from:
-/// its own config with the address that it serves data on added as an option.
-///
-/// The data address is a column of the worker row rather than one of its options,
-/// because the coordinator routes and enforces uniqueness by it.
-/// A worker reads it from its options instead, and without it starts no receiver,
-/// so anything sent to it reports that the receiver was never initialized.
-/// Passing the column through as an option is what lets two embedded workers exchange data.
-/// A config that already has the option keeps it, so an explicit value still wins.
-fn embedded_worker_config(worker: &worker::Model) -> anyhow::Result<String> {
-    let mut config = match &worker.config {
-        serde_json::Value::Null => serde_json::Value::Object(serde_json::Map::new()),
-        config @ serde_json::Value::Object(_) => config.clone(),
-        other => anyhow::bail!(
-            "the config of worker {} is not an object: {other}",
-            worker.host_addr
-        ),
-    };
-    if let Some(options) = config.as_object_mut() {
-        options
-            .entry(WORKER_DATA_ADDRESS_OPTION)
-            .or_insert_with(|| serde_json::Value::String(worker.data_addr.to_string()));
-    }
-    Ok(config.to_string())
 }
 
 impl Controller {
@@ -165,9 +125,6 @@ impl Reconciler for Controller {
         &mut self.workers
     }
 
-    /// One pass over the worker table:
-    /// start a task for each active worker that has none yet,
-    /// and abort and mark removed the ones whose desired state asks for it.
     async fn reconcile(&mut self) {
         let workers = match worker::Entity::actionable(&self.db).await {
             Ok(workers) => workers,
@@ -204,47 +161,5 @@ impl Reconciler for Controller {
                 }
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use model::worker::{DesiredWorkerState, WorkerState, endpoint::NetworkAddr};
-
-    fn worker_with(config: serde_json::Value) -> worker::Model {
-        worker::Model {
-            host_addr: NetworkAddr::new("worker", 8080).unwrap(),
-            data_addr: NetworkAddr::new("worker", 9090).unwrap(),
-            max_operators: None,
-            config,
-            current_state: WorkerState::Pending,
-            desired_state: DesiredWorkerState::Active,
-        }
-    }
-
-    fn option(config: &str) -> String {
-        let parsed: serde_json::Value = serde_json::from_str(config).unwrap();
-        parsed[WORKER_DATA_ADDRESS_OPTION]
-            .as_str()
-            .unwrap()
-            .to_string()
-    }
-
-    #[test]
-    fn a_worker_without_a_config_gets_its_data_address() {
-        let config = embedded_worker_config(&worker_with(serde_json::Value::Null)).unwrap();
-        assert_eq!(option(&config), "worker:9090");
-    }
-
-    #[test]
-    fn an_explicit_data_address_wins() {
-        let worker = worker_with(serde_json::json!({ WORKER_DATA_ADDRESS_OPTION: "other:1" }));
-        assert_eq!(option(&embedded_worker_config(&worker).unwrap()), "other:1");
-    }
-
-    #[test]
-    fn a_config_that_is_not_an_object_is_rejected() {
-        assert!(embedded_worker_config(&worker_with(serde_json::json!([1]))).is_err());
     }
 }
