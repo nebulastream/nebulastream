@@ -185,13 +185,13 @@ impl WorkerRpcService for SingleNodeWorker {
 
         {
             let mut fragments = self.fragments.write().unwrap();
-            // A repeated start is accepted and changes nothing, whatever the fragment's state,
+            // A repeated start is rejected and changes nothing, whatever the fragment's state,
             // so a late repeat cannot restart a stopped fragment.
             if fragments.contains_key(&query_id) {
-                debug!("fragment {query_id} already exists, ignoring");
-                return Ok(Response::new(StartQueryReply {
-                    query_id: Some(SerializableQueryId::from_fragment_id(query_id)),
-                }));
+                debug!("fragment {query_id} already exists, rejecting");
+                return Err(Status::already_exists(format!(
+                    "fragment {query_id} already registered"
+                )));
             }
 
             fragments.insert(query_id, QueryFragment::registered());
@@ -252,6 +252,13 @@ impl WorkerRpcService for SingleNodeWorker {
                 return Ok(Response::new(()));
             }
             Some(_) => {}
+        }
+
+        // A real worker accepts a stop that its engine can still drop,
+        // for example while the fragment is compiling, so the fragment keeps running after the reply.
+        if buggify() {
+            debug!("buggify: dropping the stop of fragment {id}");
+            return Ok(Response::new(()));
         }
 
         let fragments = self.fragments.clone();
