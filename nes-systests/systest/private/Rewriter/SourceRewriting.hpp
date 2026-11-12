@@ -15,12 +15,9 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
-#include <variant>
-#include <vector>
 
 #include <AntlrSQLParser.h>
 #include <TokenStreamRewriter.h>
@@ -72,17 +69,5 @@ void makeAnonymousSourcePathsAbsolute(
 
 /// Adds the config to an anonymous source.
 void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host);
-
-struct SourceOption
-{
-    std::string group;
-    std::string key;
-    std::variant<std::string, int64_t> value;
-};
-
-/// Adds config options to a physical source statement that the rewriter already emitted.
-/// The runner needs this for the server port, which is known only once the run started.
-/// An explicitly set option takes precedence over the default.
-std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options);
 
 }
