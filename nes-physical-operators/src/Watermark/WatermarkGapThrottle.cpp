@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <scope_guard.hpp>
 
 namespace NES
 {
@@ -67,17 +68,32 @@ void WatermarkGapThrottle::onWatermarkMoved(const MultiOriginWatermarkProcessor&
     {
         return;
     }
-    requested.store(true, std::memory_order_release);
-    while (requested.load(std::memory_order_acquire))
+    const auto previous = workState.fetch_or(BUSY | PENDING, std::memory_order_acq_rel);
+    if (previous & BUSY)
     {
-        const std::unique_lock lock(mutex, std::try_to_lock);
-        if (!lock.owns_lock())
+        return;
+    }
+
+    /// An update failure fails the query, but must not leave this handler permanently owned during teardown.
+    SCOPE_FAIL
+    {
+        workState.store(0, std::memory_order_release);
+    };
+
+    while (true)
+    {
+        /// Consume the recorded requests while retaining ownership. Later requests set PENDING again.
+        workState.fetch_and(BUSY, std::memory_order_acq_rel);
         {
-            return; /// the holder sees the request after releasing the lock at the latest
-        }
-        while (requested.exchange(false, std::memory_order_acq_rel))
-        {
+            const std::scoped_lock lock(mutex);
             update(watermarks);
+        }
+
+        /// Unlock before handing ownership to another caller. A request either prevents this CAS or elects a new owner after it.
+        auto expected = BUSY;
+        if (workState.compare_exchange_strong(expected, 0, std::memory_order_release, std::memory_order_relaxed))
+        {
+            return;
         }
     }
 }

@@ -145,6 +145,17 @@ TEST_F(WatermarkGapThrottleTest, ReleasesAnOriginThatIsDone)
     EXPECT_TRUE(isUnblocked(listener(SOURCE_1)));
 }
 
+TEST_F(WatermarkGapThrottleTest, SlowestOriginEndingReleasesTheLeadingSource)
+{
+    throttle.start(newBackpressure());
+    advance(ORIGIN_1, MAX_WATERMARK_GAP + 1);
+    ASSERT_TRUE(isBlocked(listener(SOURCE_1)));
+
+    advance(ORIGIN_2, Timestamp::INFINITE_VALUE);
+    EXPECT_TRUE(isUnblocked(listener(SOURCE_1)));
+    EXPECT_TRUE(isUnblocked(listener(SOURCE_2)));
+}
+
 TEST_F(WatermarkGapThrottleTest, StaysDisabledWithoutBackpressure)
 {
     throttle.start(std::nullopt);
@@ -175,8 +186,25 @@ TEST_F(WatermarkGapThrottleTest, StopReleasesThrottledSourcesAndDisablesTheThrot
     EXPECT_TRUE(isUnblocked(listener(SOURCE_1)));
 }
 
+TEST_F(WatermarkGapThrottleTest, StoppedThrottleCanBeStartedAgain)
+{
+    throttle.start(newBackpressure());
+    advance(ORIGIN_1, MAX_WATERMARK_GAP + 1);
+    ASSERT_TRUE(isBlocked(listener(SOURCE_1)));
+
+    throttle.stop();
+    ASSERT_TRUE(isUnblocked(listener(SOURCE_1)));
+
+    throttle.start(newBackpressure());
+    advance(ORIGIN_1, MAX_WATERMARK_GAP + 2);
+    EXPECT_TRUE(isBlocked(listener(SOURCE_1)));
+
+    advance(ORIGIN_2, Timestamp::INFINITE_VALUE);
+    EXPECT_TRUE(isUnblocked(listener(SOURCE_1)));
+}
+
 /// Origin 1 runs far ahead, so its source is throttled. Then several threads move origin 2 to the same watermark concurrently, so
-/// most notifications find another thread updating, and the source must end up released.
+/// their notifications overlap, and the source must end up released.
 /// This is a smoke test: the window in which a lost update would leave the source throttled is too small to hit reliably from here.
 TEST_F(WatermarkGapThrottleTest, ConcurrentNotificationsEndWithTheSourceReleased)
 {
@@ -216,6 +244,46 @@ TEST_F(WatermarkGapThrottleTest, ConcurrentNotificationsEndWithTheSourceReleased
             }
         }
         ASSERT_TRUE(isUnblocked(listeners.at(SOURCE_1))) << "in round " << round;
+    }
+}
+
+/// An already in-flight buffer of the leading origin finishes concurrently with the slow origin's final EOS watermark.
+/// No subsequent notification is sent to repair a missed update. Repetition exercises the handoff, but is not a deterministic schedule.
+TEST_F(WatermarkGapThrottleTest, ConcurrentFinalWatermarkReleasesTheOtherSource)
+{
+    constexpr uint64_t rounds = 128;
+    for (uint64_t round = 0; round < rounds; ++round)
+    {
+        const SourcesOfInputOrigins sources{{ORIGIN_1, {SOURCE_1}}, {ORIGIN_2, {SOURCE_2}}};
+        auto [controller, listeners] = createBackpressureChannels({SOURCE_1, SOURCE_2});
+        WatermarkGapThrottle roundThrottle(sources);
+        MultiOriginWatermarkProcessor roundWatermarks({ORIGIN_1, ORIGIN_2});
+        roundThrottle.start(WatermarkBackpressure{.controller = controller.newHolder(), .maxWatermarkGap = MAX_WATERMARK_GAP});
+
+        const auto advanceOrigin = [&](const OriginId origin, const Timestamp::Underlying watermark, const SequenceNumber sequence)
+        {
+            std::ignore = roundWatermarks.updateWatermark(
+                Timestamp(watermark), SequenceData(sequence, ChunkNumber(ChunkNumber::INITIAL), true), origin);
+            roundThrottle.onWatermarkMoved(roundWatermarks);
+        };
+        advanceOrigin(ORIGIN_1, MAX_WATERMARK_GAP + 1, SequenceNumber(SequenceNumber::INITIAL));
+        {
+            std::latch startTogether(2);
+            const std::jthread leadingOrigin(
+                [&]
+                {
+                    startTogether.arrive_and_wait();
+                    advanceOrigin(ORIGIN_1, MAX_WATERMARK_GAP + 2, SequenceNumber(SequenceNumber::INITIAL + 1));
+                });
+            const std::jthread endingOrigin(
+                [&]
+                {
+                    startTogether.arrive_and_wait();
+                    advanceOrigin(ORIGIN_2, Timestamp::INFINITE_VALUE, SequenceNumber(SequenceNumber::INITIAL));
+                });
+        }
+        ASSERT_TRUE(isUnblocked(listeners.at(SOURCE_1))) << "in round " << round;
+        ASSERT_TRUE(isUnblocked(listeners.at(SOURCE_2))) << "in round " << round;
     }
 }
 
