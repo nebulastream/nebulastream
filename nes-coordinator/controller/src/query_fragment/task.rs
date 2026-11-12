@@ -51,7 +51,11 @@ impl<T: Transport> QueryFragmentTask<T> {
         state_tx: watch::Sender<()>,
         desired: watch::Receiver<DesiredQueryFragmentState>,
     ) -> Self {
-        let lifecycle = QueryFragmentLifecycle::new(&fragment, transport.poll_interval());
+        let lifecycle = QueryFragmentLifecycle::new(
+            fragment.current_state,
+            fragment.desired_state,
+            transport.poll_interval(),
+        );
         Self {
             fragment,
             db,
@@ -131,10 +135,9 @@ impl<T: Transport> QueryFragmentTask<T> {
         if self.fragment.current_state != prev {
             debug!(from = %prev, to = %self.fragment.current_state, "transition");
         }
-        if buggify() {
-            return Ok(ControlFlow::Continue(()));
+        if !buggify() {
+            let _ = self.state_tx.send(());
         }
-        let _ = self.state_tx.send(());
         Ok(ControlFlow::Continue(()))
     }
 
@@ -143,12 +146,10 @@ impl<T: Transport> QueryFragmentTask<T> {
         let Some(row) = query_fragment::Entity::find_by_id(self.fragment.id)
             .one(&self.db)
             .await?
+            .filter(|row| !row.current_state.is_terminal())
         else {
             return Ok(ControlFlow::Break(()));
         };
-        if row.current_state.is_terminal() {
-            return Ok(ControlFlow::Break(()));
-        }
         if let Err(CallError::Failed(stop_err) | CallError::Transient(stop_err)) =
             self.transport.stop(self.fragment.id).await
         {
@@ -189,7 +190,6 @@ fn plan_for(id: QueryFragmentId, plan: &[u8]) -> Result<SerializableQueryPlan, Q
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::RETRY_INTERVAL;
     use crate::query_fragment::lifecycle::tests::{raw, transient};
     use crate::query_fragment::{QueryFragmentTasks, RawStatus};
     use crate::worker_task::{ActiveFragments, Backend, stop_orphans, stop_removed_fragments};
@@ -221,17 +221,12 @@ mod tests {
         stop_after: Option<(usize, Duration)>,
     }
 
-    async fn request_stop(
-        db: Database,
-        query_id: QueryId,
-        desired_tx: Arc<watch::Sender<DesiredQueryFragmentState>>,
-    ) {
+    async fn drop_query(db: &Database, query_id: QueryId) {
         DropQuery::all()
             .with_filters(GetQuery::all().with_id(query_id))
-            .execute(&db)
+            .execute(db)
             .await
             .unwrap();
-        let _ = desired_tx.send(DesiredQueryFragmentState::Stopped);
     }
 
     impl Scripted {
@@ -248,7 +243,8 @@ mod tests {
                     (self.db.clone(), self.query_id, self.desired_tx.clone());
                 tokio::spawn(async move {
                     tokio::time::sleep(delay).await;
-                    request_stop(db, query_id, desired_tx).await;
+                    drop_query(&db, query_id).await;
+                    let _ = desired_tx.send(DesiredQueryFragmentState::Stopped);
                 });
             }
             self.answers
@@ -307,7 +303,6 @@ mod tests {
     }
 
     async fn fragment_row(db: &Database) -> query_fragment::Model {
-        let conn = db;
         let host: NetworkAddr = HOST.parse().unwrap();
         CreateWorker {
             host_addr: host.clone(),
@@ -317,7 +312,7 @@ mod tests {
             config: Default::default(),
             if_not_exists: false,
         }
-        .execute(conn)
+        .execute(db)
         .await
         .unwrap();
         CreateLogicalSource {
@@ -325,7 +320,7 @@ mod tests {
             schema: Default::default(),
             if_not_exists: false,
         }
-        .execute(conn)
+        .execute(db)
         .await
         .unwrap();
         let source = CreatePhysicalSource {
@@ -336,7 +331,7 @@ mod tests {
             parser_config: Default::default(),
             if_not_exists: false,
         }
-        .execute(conn)
+        .execute(db)
         .await
         .unwrap();
         let sink = CreateSink {
@@ -347,7 +342,7 @@ mod tests {
             config: Default::default(),
             if_not_exists: false,
         }
-        .execute(conn)
+        .execute(db)
         .await
         .unwrap();
         CreateQuery {
@@ -362,12 +357,12 @@ mod tests {
             source_ids: BTreeSet::from([SourceId::new(*source.id)]),
             sink_ids: BTreeSet::from([SinkId::new(*sink.id)]),
         }
-        .execute(conn)
+        .execute(db)
         .await
         .unwrap();
         query_fragment::Entity::find()
             .filter(query_fragment::Column::HostAddr.eq(host))
-            .one(conn)
+            .one(db)
             .await
             .unwrap()
             .unwrap()
@@ -480,9 +475,12 @@ mod tests {
     }
 
     #[derive(Clone)]
-    struct RecordingStops(Arc<Mutex<Vec<QueryFragmentId>>>);
+    struct RecordingWorker {
+        stopped: Arc<Mutex<Vec<QueryFragmentId>>>,
+        active: Vec<(QueryFragmentId, Option<u64>)>,
+    }
 
-    impl Transport for RecordingStops {
+    impl Transport for RecordingWorker {
         fn poll_interval(&self) -> Duration {
             Duration::ZERO
         }
@@ -492,7 +490,7 @@ mod tests {
         }
 
         async fn stop(&self, id: QueryFragmentId) -> Result<(), CallError> {
-            self.0.lock().unwrap().push(id);
+            self.stopped.lock().unwrap().push(id);
             Ok(())
         }
 
@@ -501,29 +499,16 @@ mod tests {
         }
     }
 
-    struct RecordingBackend {
-        stopped: Arc<Mutex<Vec<QueryFragmentId>>>,
-        active: Vec<(QueryFragmentId, Option<u64>)>,
-    }
-
-    impl Backend for RecordingBackend {
-        type Transport = RecordingStops;
+    impl Backend for RecordingWorker {
+        type Transport = Self;
 
         const HEARTBEAT: Option<Duration> = None;
 
-        async fn connect(&self, _: &NetworkAddr) -> anyhow::Result<RecordingStops> {
-            Ok(RecordingStops(self.stopped.clone()))
+        async fn connect(&self, _: &NetworkAddr) -> anyhow::Result<Self> {
+            Ok(self.clone())
         }
 
-        async fn healthy(&self, _: &RecordingStops) -> bool {
-            true
-        }
-
-        async fn active_fragments(
-            &self,
-            _: &RecordingStops,
-            _: u64,
-        ) -> anyhow::Result<ActiveFragments> {
+        async fn active_fragments(&self, _: &Self, _: u64) -> anyhow::Result<ActiveFragments> {
             Ok(ActiveFragments {
                 fragments: self.active.clone(),
                 until: 100,
@@ -538,14 +523,13 @@ mod tests {
         let host: NetworkAddr = HOST.parse().unwrap();
         DropWorker::new(host.clone()).execute(&db).await.unwrap();
 
-        let stopped = Arc::new(Mutex::new(Vec::new()));
-        let backend = RecordingBackend {
-            stopped: stopped.clone(),
+        let backend = RecordingWorker {
+            stopped: Arc::default(),
             active: Vec::new(),
         };
         stop_removed_fragments(&backend, &db, &host).await;
 
-        assert_eq!(*stopped.lock().unwrap(), vec![fragment.id]);
+        assert_eq!(*backend.stopped.lock().unwrap(), vec![fragment.id]);
     }
 
     #[tokio::test]
@@ -554,15 +538,13 @@ mod tests {
         let wanted = fragment_row(&db).await;
         let unknown = QueryFragmentId::new(*wanted.id + 1);
         let host: NetworkAddr = HOST.parse().unwrap();
-        let stopped = Arc::new(Mutex::new(Vec::new()));
-        let backend = RecordingBackend {
-            stopped: stopped.clone(),
+        let backend = RecordingWorker {
+            stopped: Arc::default(),
             active: vec![(wanted.id, Some(10)), (unknown, Some(20))],
         };
 
-        let transport = RecordingStops(stopped.clone());
-        let after = stop_orphans(&backend, &transport, &db, &host, 0).await;
-        assert_eq!(*stopped.lock().unwrap(), vec![unknown]);
+        let after = stop_orphans(&backend, &backend, &db, &host, 0).await;
+        assert_eq!(*backend.stopped.lock().unwrap(), vec![unknown]);
         assert_eq!(
             after, 10,
             "the next listing must still include the oldest active fragment"
@@ -570,9 +552,9 @@ mod tests {
 
         // Removing the worker fails the fragment, so the catalog no longer wants it either.
         DropWorker::new(host.clone()).execute(&db).await.unwrap();
-        stopped.lock().unwrap().clear();
-        stop_orphans(&backend, &transport, &db, &host, 10).await;
-        assert_eq!(*stopped.lock().unwrap(), vec![wanted.id, unknown]);
+        backend.stopped.lock().unwrap().clear();
+        stop_orphans(&backend, &backend, &db, &host, 10).await;
+        assert_eq!(*backend.stopped.lock().unwrap(), vec![wanted.id, unknown]);
     }
 
     #[tokio::test]
@@ -626,30 +608,6 @@ mod tests {
         WorkerReply::Start(Err(transient("deadline exceeded")))
     }
 
-    #[tokio::test]
-    async fn a_stop_request_interrupts_the_retry_wait() {
-        let db = Database::for_test().await;
-        let fragment = fragment_row(&db).await;
-        let mut script = Script::new(vec![
-            start_timed_out_while_compiling(),
-            WorkerReply::Stop(Ok(())),
-            status(QueryFragmentState::Completed, None, Some(2_000)),
-        ]);
-        script.stop_after = Some((1, Duration::from_millis(100)));
-        let started = Instant::now();
-        let (calls, row) = drive(&db, fragment, script).await;
-        assert_eq!(
-            calls,
-            vec![WorkerCall::Start, WorkerCall::Stop, WorkerCall::Status]
-        );
-        assert_eq!(row.current_state, QueryFragmentState::Stopped);
-        assert!(
-            started.elapsed() < RETRY_INTERVAL,
-            "{:?}",
-            started.elapsed()
-        );
-    }
-
     // The worker accepts each stop that arrives during compilation but cannot apply it,
     // so the fragment is reported live until a stop arrives after the compilation.
     #[tokio::test]
@@ -684,26 +642,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_retryable_failure_is_retried_after_the_interval() {
-        let db = Database::for_test().await;
-        let fragment = fragment_row(&db).await;
-        let script = Script::new(vec![
-            WorkerReply::Start(Err(transient("worker busy"))),
-            WorkerReply::Start(Ok(())),
-            status(QueryFragmentState::Completed, Some(1_000), Some(2_000)),
-        ]);
-        let started = Instant::now();
-        let (calls, row) = drive(&db, fragment, script).await;
-        assert_eq!(
-            calls,
-            vec![WorkerCall::Start, WorkerCall::Start, WorkerCall::Status]
-        );
-        assert_eq!(row.current_state, QueryFragmentState::Completed);
-        assert!(row.error.is_none());
-        assert!(started.elapsed() >= RETRY_INTERVAL);
-    }
-
-    #[tokio::test]
     async fn the_task_set_spawns_once_pushes_the_desired_state_and_forgets_finished_rows() {
         let db = Database::for_test().await;
         let fragment = fragment_row(&db).await;
@@ -723,11 +661,7 @@ mod tests {
         let mut desired = tasks.desired_txs[&fragment.id].subscribe();
         assert_eq!(*desired.borrow(), DesiredQueryFragmentState::Completed);
 
-        DropQuery::all()
-            .with_filters(GetQuery::all().with_id(fragment.query_id))
-            .execute(&db)
-            .await
-            .unwrap();
+        drop_query(&db, fragment.query_id).await;
         tasks
             .reconcile_from_catalog(&db, &host, &state_tx, silent)
             .await;

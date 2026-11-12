@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-//! Polymorphic task-set primitives that compile to `tokio`'s real types outside madsim
-//! and to in-crate equivalents under `cfg(madsim)`,
-//! so the rest of the crate can share one source path across the simulated and real runtimes.
-//! The shim mirrors the part of the upstream API that the crate uses.
+//! `JoinSet` is `tokio`'s own outside madsim and an in-crate equivalent under `cfg(madsim)`,
+//! which covers only the part of the API that this crate uses.
 
 #[cfg(madsim)]
 use tokio::task::JoinHandle;
