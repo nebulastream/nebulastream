@@ -18,9 +18,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
-#include <unordered_set>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Util/RuntimeRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -28,13 +26,15 @@
 namespace NES
 {
 
+struct WatermarkGapAnalysis;
+
 using LoweringRuleRegistryReturnType = std::unique_ptr<AbstractLoweringRule>;
 
 struct LoweringRuleRegistryArguments
 {
     QueryExecutionConfiguration conf;
-    /// Windows whose watermark gap throttle must stay disabled, as they share a source with a sibling window.
-    std::unordered_set<OperatorId> windowsWithoutThrottling;
+    /// Shared immutable provenance and sibling analysis; copying registry arguments must not copy the plan's cache.
+    std::shared_ptr<const WatermarkGapAnalysis> watermarkGapAnalysis;
 };
 
 using LoweringRuleFn = std::function<LoweringRuleRegistryReturnType(LoweringRuleRegistryArguments)>;

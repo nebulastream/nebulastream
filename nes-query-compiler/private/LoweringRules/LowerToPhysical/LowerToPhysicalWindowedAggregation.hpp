@@ -14,9 +14,8 @@
 
 #pragma once
 
-#include <unordered_set>
+#include <memory>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -28,7 +27,7 @@ namespace NES
 struct LowerToPhysicalWindowedAggregation : AbstractLoweringRule
 {
     explicit LowerToPhysicalWindowedAggregation(LoweringRuleRegistryArguments arguments)
-        : conf(std::move(arguments.conf)), windowsWithoutThrottling(std::move(arguments.windowsWithoutThrottling))
+        : conf(std::move(arguments.conf)), watermarkGapAnalysis(std::move(arguments.watermarkGapAnalysis))
     {
     }
 
@@ -36,7 +35,7 @@ struct LowerToPhysicalWindowedAggregation : AbstractLoweringRule
 
 private:
     QueryExecutionConfiguration conf;
-    std::unordered_set<OperatorId> windowsWithoutThrottling;
+    std::shared_ptr<const WatermarkGapAnalysis> watermarkGapAnalysis;
 };
 
 }

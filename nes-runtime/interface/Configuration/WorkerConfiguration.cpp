@@ -108,8 +108,8 @@ const ConfigField<uint64_t> MAX_WATERMARK_GAP_IN_MS{
     Identifier::parse("max_watermark_gap_in_ms"),
     "Maximum event-time gap between the watermarks of an operator's input origins before the leading sources are backpressured. 0 "
     "disables watermark backpressure. The gap only bounds the state caused by origins drifting apart, not the state a window needs for "
-    "its own size. Windows that share a source with a sibling window, i.e., one neither above nor below them, do not backpressure their "
-    "sources.",
+    "its own size. To avoid circular source pressure, windows sharing a source with an upstream or sibling multi-origin window do not "
+    "apply watermark backpressure.",
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{0}};

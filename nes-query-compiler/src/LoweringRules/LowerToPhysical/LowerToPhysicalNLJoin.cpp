@@ -110,7 +110,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = join->getWindowType();
 
-    auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling);
+    auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, watermarkGapAnalysis);
 
     auto combinedFieldMappingVec = join->getChildren()
         | std::views::transform([](const auto& child)

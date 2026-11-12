@@ -15,139 +15,249 @@
 #include <LoweringRules/LowerToPhysical/TraceSourcesOfInputOrigins.hpp>
 
 #include <algorithm>
-#include <optional>
+#include <functional>
+#include <memory>
 #include <ranges>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Watermark/WatermarkGapThrottle.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
 
 namespace
 {
-std::optional<LogicalOperator> findProducer(const LogicalOperator& child, const OriginId origin)
-{
-    /// Keyed by operator id, as the BFS reaches an operator below a diamond once per path.
-    std::unordered_map<OperatorId, LogicalOperator> producers;
-    for (const auto& op : BFSRange<LogicalOperator>(child))
-    {
-        if (op.tryGetAs<OriginIdAssigner>().has_value() && std::ranges::contains(*op.getTraitSet().get<OutputOriginIdsTrait>(), origin))
-        {
-            producers.emplace(op.getId(), op);
-        }
-    }
-    INVARIANT(producers.size() <= 1, "{} operators below the window assign the origin {}", producers.size(), origin);
-    if (producers.empty())
-    {
-        return std::nullopt;
-    }
-    return producers.begin()->second;
-}
-
-std::vector<OriginId> getSourceOrigins(const LogicalOperator& producer)
-{
-    std::unordered_set<OriginId> sourceOrigins;
-    for (const auto& op : BFSRange<LogicalOperator>(producer))
-    {
-        if (op.tryGetAs<SourceDescriptorLogicalOperator>().has_value())
-        {
-            /// Must be the origin id the source is lowered with, as it identifies the source's backpressure channel. LowerToPhysicalSource
-            /// lowers a source with its first output origin; a network source carries all origins of its upstream plan.
-            const auto& outputOrigins = *op.getTraitSet().get<OutputOriginIdsTrait>();
-            INVARIANT(outputOrigins.size() > 0, "A source must have at least one output origin");
-            sourceOrigins.insert(outputOrigins[0]);
-        }
-    }
-    return {sourceOrigins.begin(), sourceOrigins.end()};
-}
-
 bool isWindow(const LogicalOperator& op)
 {
     return op.tryGetAs<JoinLogicalOperator>().has_value() || op.tryGetAs<WindowedAggregationLogicalOperator>().has_value();
 }
 
-bool isBelow(const LogicalOperator& upper, const OperatorId lower)
+struct Producer
 {
-    return std::ranges::any_of(BFSRange<LogicalOperator>(upper), [lower](const auto& op) { return op.getId() == lower; });
+    LogicalOperator op;
+    bool ambiguous = false;
+};
+
+struct SubgraphSummary
+{
+    std::unordered_set<OriginId> sources;
+    std::unordered_map<OriginId, Producer> producers;
+    /// Includes the current operator if it is a window.
+    std::unordered_set<LogicalOperator> windows;
+};
+
+void mergeProducer(std::unordered_map<OriginId, Producer>& producers, const OriginId origin, const Producer& producer)
+{
+    const auto [it, inserted] = producers.try_emplace(origin, producer);
+    if (!inserted)
+    {
+        it->second.ambiguous |= producer.ambiguous || it->second.op != producer.op;
+    }
+}
+
+using SummaryPtr = std::shared_ptr<const SubgraphSummary>;
+using ChildSummaries = std::unordered_map<LogicalOperator, SummaryPtr>;
+using SummaryVisitor = PlanVisitor<bool, bool, SummaryPtr>;
+
+SummaryPtr summarize(const LogicalOperator& op, const ChildSummaries& children)
+{
+    auto summary = std::make_shared<SubgraphSummary>();
+    for (const auto& [child, childSummary] : children)
+    {
+        summary->sources.insert(childSummary->sources.begin(), childSummary->sources.end());
+        summary->windows.insert(childSummary->windows.begin(), childSummary->windows.end());
+        for (const auto& [origin, producer] : childSummary->producers)
+        {
+            mergeProducer(summary->producers, origin, producer);
+        }
+    }
+    if (op.tryGetAs<SourceDescriptorLogicalOperator>().has_value())
+    {
+        /// Match LowerToPhysicalSource: a network source carries several origins but owns only its first origin's channel.
+        const auto& outputOrigins = *op.getTraitSet().get<OutputOriginIdsTrait>();
+        INVARIANT(outputOrigins.size() > 0, "A source must have at least one output origin");
+        summary->sources.insert(*outputOrigins.begin());
+    }
+    if (op.tryGetAs<OriginIdAssigner>().has_value())
+    {
+        for (const auto origin : *op.getTraitSet().get<OutputOriginIdsTrait>())
+        {
+            mergeProducer(summary->producers, origin, Producer{.op = op});
+        }
+    }
+    if (isWindow(op))
+    {
+        summary->windows.insert(op);
+    }
+    return summary;
+}
+
+/// PlanVisitor computes a shared immutable summary once per needed DAG node. Its downward contexts limit provenance to subgraphs
+/// below windows; its upward contexts avoid copying summaries for every parent. Sibling comparisons only inspect the cached sets.
+class SourceOriginCache
+{
+public:
+    explicit SourceOriginCache(const LogicalPlan& plan, const bool traceAll)
+    {
+        SummaryVisitor visitor{
+            [traceAll](const LogicalOperator& op, const std::vector<bool>& parentNeeds) -> SummaryVisitor::DownResult
+            {
+                const bool needed = traceAll || isWindow(op) || std::ranges::any_of(parentNeeds, std::identity{});
+                SummaryVisitor::DownResult result{.operatorContext = needed, .downContexts = {}};
+                if (needed)
+                {
+                    for (const auto& child : op.getChildren())
+                    {
+                        result.downContexts.emplace(child, true);
+                    }
+                }
+                return result;
+            },
+            [this](const LogicalOperator& op, const std::vector<LogicalOperator>&, const bool needed, const ChildSummaries& children)
+                -> SummaryVisitor::UpResult
+            {
+                if (!needed)
+                {
+                    return {op, {}};
+                }
+                auto summary = summarize(op, children);
+                summaries.emplace(op, summary);
+                /// This is analysis, not rewriting: keep the original operator instance and its id.
+                return {op, std::move(summary)};
+            }};
+        static_cast<void>(visitor.apply(plan));
+    }
+
+    [[nodiscard]] SourcesOfInputOrigins trace(const std::vector<LogicalOperator>& children) const
+    {
+        SourcesOfInputOrigins result;
+        for (const auto& child : children)
+        {
+            const auto& producers = summaries.at(child)->producers;
+            for (const auto origin : *child.getTraitSet().get<OutputOriginIdsTrait>())
+            {
+                const auto it = producers.find(origin);
+                INVARIANT(it != producers.end(), "No operator below the window produces its input origin {}", origin);
+                INVARIANT(!it->second.ambiguous, "Several operators below the window assign the origin {}", origin);
+                const auto& sources = summaries.at(it->second.op)->sources;
+                result[origin] = {sources.begin(), sources.end()};
+            }
+        }
+        return result;
+    }
+
+    [[nodiscard]] auto getWindows() const { return summaries | std::views::keys | std::views::filter(isWindow); }
+
+    [[nodiscard]] const std::unordered_set<OriginId>& getSourceOrigins(const LogicalOperator& op) const
+    {
+        return summaries.at(op)->sources;
+    }
+
+    [[nodiscard]] bool hasUpstreamWindow(const LogicalOperator& downstream, const LogicalOperator& upstream) const
+    {
+        return summaries.at(downstream)->windows.contains(upstream);
+    }
+
+private:
+    std::unordered_map<LogicalOperator, SummaryPtr> summaries;
+};
+
+void clearSources(SourcesOfInputOrigins& sourcesOfInputOrigins)
+{
+    for (auto& sources : sourcesOfInputOrigins | std::views::values)
+    {
+        sources.clear();
+    }
 }
 }
 
 SourcesOfInputOrigins traceSourcesOfInputOrigins(const std::vector<LogicalOperator>& children)
 {
-    SourcesOfInputOrigins sourcesOfInputOrigins;
-    for (const auto& child : children)
-    {
-        for (const auto inputOrigin : *child.getTraitSet().get<OutputOriginIdsTrait>())
-        {
-            const auto producer = findProducer(child, inputOrigin);
-            INVARIANT(producer.has_value(), "No operator below the window produces its input origin {}", inputOrigin);
-            sourcesOfInputOrigins[inputOrigin] = getSourceOrigins(*producer);
-        }
-    }
-    return sourcesOfInputOrigins;
+    /// Standalone inputs can overlap, e.g., a window and one of its sources. An analysis-only root makes that a single DAG for the
+    /// visitor. No schema is needed and none of the original operators are rebuilt.
+    const auto root = UnionLogicalOperator::create().withChildrenUnsafe(children);
+    return SourceOriginCache(LogicalPlan{INVALID_QUERY_ID, {root}}, true).trace(children);
 }
 
-std::unordered_set<OperatorId> findWindowsSharingSourcesWithSiblings(const LogicalPlan& plan)
+WatermarkGapAnalysisPtr analyzeWatermarkGaps(const LogicalPlan& plan)
 {
-    /// Only windows with several input origins throttle, and each may throttle any source below it.
-    std::unordered_map<OperatorId, std::pair<LogicalOperator, std::unordered_set<OriginId>>> throttlingWindows;
-    for (const auto& root : plan.getRootOperators())
+    const SourceOriginCache cache(plan, false);
+    auto analysis = std::make_shared<WatermarkGapAnalysis>();
+    for (const auto& window : cache.getWindows())
     {
-        for (const auto& op : BFSRange<LogicalOperator>(root))
+        analysis->sourcesByWindow.emplace(window, cache.trace(window.getChildren()));
+    }
+
+    /// Reuse the analysis's window keys and cached source unions instead of maintaining duplicate operator/source collections.
+    auto throttlingWindows = analysis->sourcesByWindow
+        | std::views::filter([](const auto& windowAndSources) { return windowAndSources.second.size() > 1; }) | std::views::keys;
+    for (const auto& window : throttlingWindows)
+    {
+        const auto& sources = cache.getSourceOrigins(window);
+        for (const auto& otherWindow : throttlingWindows)
         {
-            if (!isWindow(op) || throttlingWindows.contains(op.getId()))
+            /// Prefer the upstream controller. Nested windows can otherwise hold each other's sources when watermarks are
+            /// reassigned between them. Siblings disable each other, leaving no two eligible controllers sharing a source.
+            if (window == otherWindow || cache.hasUpstreamWindow(otherWindow, window))
             {
                 continue;
             }
-            if (const auto sourcesOfInputOrigins = traceSourcesOfInputOrigins(op.getChildren()); sourcesOfInputOrigins.size() > 1)
+            const auto& otherSources = cache.getSourceOrigins(otherWindow);
+            const auto& smaller = sources.size() <= otherSources.size() ? sources : otherSources;
+            const auto& larger = sources.size() <= otherSources.size() ? otherSources : sources;
+            if (std::ranges::any_of(smaller, [&](const auto source) { return larger.contains(source); }))
             {
-                auto sources = sourcesOfInputOrigins | std::views::values | std::views::join | std::ranges::to<std::unordered_set>();
-                throttlingWindows.emplace(op.getId(), std::pair{op, std::move(sources)});
-            }
-        }
-    }
-
-    std::unordered_set<OperatorId> windowsSharingSources;
-    for (const auto& [id, window] : throttlingWindows)
-    {
-        for (const auto& [otherId, other] : throttlingWindows)
-        {
-            const bool siblings = id != otherId && !isBelow(window.first, otherId) && !isBelow(other.first, id);
-            if (siblings && std::ranges::any_of(window.second, [&](const auto source) { return other.second.contains(source); }))
-            {
-                windowsSharingSources.insert(id);
+                analysis->windowsWithoutThrottling.insert(window);
                 break;
             }
         }
     }
-    return windowsSharingSources;
+    return analysis;
+}
+
+std::unordered_set<LogicalOperator> findWindowsWithConflictingThrottles(const LogicalPlan& plan)
+{
+    return analyzeWatermarkGaps(plan)->windowsWithoutThrottling;
 }
 
 SourcesOfInputOrigins
-traceThrottleableSourcesOfInputOrigins(const LogicalOperator& window, const std::unordered_set<OperatorId>& windowsWithoutThrottling)
+traceThrottleableSourcesOfInputOrigins(const LogicalOperator& window, const std::unordered_set<LogicalOperator>& windowsWithoutThrottling)
 {
-    auto sourcesOfInputOrigins = traceSourcesOfInputOrigins(window.getChildren());
-    if (windowsWithoutThrottling.contains(window.getId()))
+    auto sources = traceSourcesOfInputOrigins(window.getChildren());
+    if (windowsWithoutThrottling.contains(window))
     {
-        for (auto& sources : sourcesOfInputOrigins | std::views::values)
-        {
-            sources.clear();
-        }
+        clearSources(sources);
     }
-    return sourcesOfInputOrigins;
+    return sources;
+}
+
+SourcesOfInputOrigins traceThrottleableSourcesOfInputOrigins(const LogicalOperator& window, const WatermarkGapAnalysisPtr& analysis)
+{
+    if (!analysis)
+    {
+        return traceSourcesOfInputOrigins(window.getChildren());
+    }
+    auto sources = analysis->sourcesByWindow.at(window);
+    if (analysis->windowsWithoutThrottling.contains(window))
+    {
+        clearSources(sources);
+    }
+    return sources;
 }
 
 }

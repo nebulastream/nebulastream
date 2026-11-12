@@ -125,13 +125,15 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
 
 PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
 {
-    auto windowsWithoutThrottling = findWindowsSharingSourcesWithSiblings(queryPlan);
-    for (const auto window : windowsWithoutThrottling)
+    const auto watermarkGapAnalysis = analyzeWatermarkGaps(queryPlan);
+    for (const auto& window : watermarkGapAnalysis->windowsWithoutThrottling)
     {
-        NES_WARNING("Disabling watermark gap backpressure for window operator {}, as it shares a source with a sibling window", window);
+        NES_WARNING(
+            "Disabling watermark gap backpressure for window operator {}, as it shares a source with an upstream or sibling multi-origin "
+            "window",
+            window.getId());
     }
-    const auto registryArgument
-        = LoweringRuleRegistryArguments{.conf = conf, .windowsWithoutThrottling = std::move(windowsWithoutThrottling)};
+    const auto registryArgument = LoweringRuleRegistryArguments{.conf = conf, .watermarkGapAnalysis = watermarkGapAnalysis};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
     for (const auto& logicalRoot : queryPlan.getRootOperators())

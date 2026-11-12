@@ -314,7 +314,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
-    auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, windowsWithoutThrottling);
+    auto sourcesOfInputOrigins = traceThrottleableSourcesOfInputOrigins(logicalOperator, watermarkGapAnalysis);
 
     /// Our current hash join implementation uses a hash table that requires each key to be 100% identical in terms of no. fields and data types.
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.

@@ -14,28 +14,45 @@
 
 #pragma once
 
+#include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Watermark/WatermarkGapThrottle.hpp>
 
 namespace NES
 {
 
-/// Maps every input origin of a window-based operator with the given children to the origins of the sources in the plan below it.
-/// The plan is the one of this worker, so a network source counts as a source of its own.
+/// Per-compilation immutable watermark-gap analysis. LogicalOperator keys use instance identity, not operator ids or structural equality.
+struct WatermarkGapAnalysis
+{
+    std::unordered_map<LogicalOperator, SourcesOfInputOrigins> sourcesByWindow;
+    /// Multi-origin windows sharing sources with an upstream or sibling multi-origin window must not throttle.
+    std::unordered_set<LogicalOperator> windowsWithoutThrottling;
+};
+
+using WatermarkGapAnalysisPtr = std::shared_ptr<const WatermarkGapAnalysis>;
+
+/// Uses PlanVisitor to compute source provenance and window ancestry once per needed DAG node, then checks siblings using cached sets.
+/// The shared result is reused by all lowering rules of this compilation; it must not be reused for a different plan.
+WatermarkGapAnalysisPtr analyzeWatermarkGaps(const LogicalPlan& plan);
+
+/// Maps every input origin of a window-based operator with the given children to source origins below it.
+/// This is the worker's plan, so a network source counts as a source of its own.
 SourcesOfInputOrigins traceSourcesOfInputOrigins(const std::vector<LogicalOperator>& children);
 
-/// Returns the windows with several input origins that share a source with a sibling window, i.e., one that is neither above nor
-/// below them. Below a single window, throttling cannot deadlock, as the sources of its slowest origin are never throttled. Two sibling
-/// windows, however, may each throttle a source that the other one waits for.
-std::unordered_set<OperatorId> findWindowsSharingSourcesWithSiblings(const LogicalPlan& plan);
+/// Returns windows whose throttle conflicts with an upstream or sibling multi-origin window. Preferring upstream controllers
+/// avoids circular source pressure without assuming that nested windows preserve the same watermark domain.
+std::unordered_set<LogicalOperator> findWindowsWithConflictingThrottles(const LogicalPlan& plan);
 
-/// Like traceSourcesOfInputOrigins for the children of `window`, but maps every input origin to no sources if `window` is one of
-/// `windowsWithoutThrottling`, so that its watermark gap throttle stays disabled.
+/// Like traceSourcesOfInputOrigins, but clears sources for windows whose throttle must remain disabled.
 SourcesOfInputOrigins
-traceThrottleableSourcesOfInputOrigins(const LogicalOperator& window, const std::unordered_set<OperatorId>& windowsWithoutThrottling);
+traceThrottleableSourcesOfInputOrigins(const LogicalOperator& window, const std::unordered_set<LogicalOperator>& windowsWithoutThrottling);
+
+/// Reuses the immutable per-compilation analysis without retraversing the plan. A null analysis falls back to standalone tracing.
+SourcesOfInputOrigins traceThrottleableSourcesOfInputOrigins(const LogicalOperator& window, const WatermarkGapAnalysisPtr& analysis);
 
 }
