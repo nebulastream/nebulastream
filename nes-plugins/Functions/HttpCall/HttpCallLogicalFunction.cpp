@@ -36,17 +36,20 @@
 namespace NES
 {
 
-HttpCallLogicalFunction::HttpCallLogicalFunction(LogicalFunction body, LogicalFunction url, std::optional<LogicalFunction> timeoutMillis)
+HttpCallLogicalFunction::HttpCallLogicalFunction(
+    LogicalFunction body, LogicalFunction url, std::optional<LogicalFunction> timeoutMillis, std::optional<LogicalFunction> retries)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
     , body(std::move(body))
     , url(std::move(url))
     , timeoutMillis(std::move(timeoutMillis))
+    , retries(std::move(retries))
 {
+    PRECONDITION(!this->retries || this->timeoutMillis.has_value(), "HTTP_CALL retries must follow the timeout argument");
 }
 
 bool HttpCallLogicalFunction::operator==(const HttpCallLogicalFunction& rhs) const
 {
-    return body == rhs.body and url == rhs.url and timeoutMillis == rhs.timeoutMillis;
+    return body == rhs.body and url == rhs.url and timeoutMillis == rhs.timeoutMillis and retries == rhs.retries;
 }
 
 DataType HttpCallLogicalFunction::getDataType() const
@@ -75,11 +78,24 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
                 "HTTP_CALL expects a non-nullable integer timeout in milliseconds, but got {}", *copy.timeoutMillis);
         }
     }
+    if (retries)
+    {
+        copy.retries = retries->withInferredDataType(schema);
+        if (not copy.retries->getDataType().isInteger() or copy.retries->getDataType().nullable)
+        {
+            throw DifferentFieldTypeExpected("HTTP_CALL expects a non-nullable integer retry count, but got {}", *copy.retries);
+        }
+    }
     return copy;
 }
 
 std::vector<LogicalFunction> HttpCallLogicalFunction::getChildren() const
 {
+    if (retries)
+    {
+        INVARIANT(timeoutMillis.has_value(), "HTTP_CALL retries must follow the timeout argument");
+        return {body, url, *timeoutMillis, *retries};
+    }
     if (timeoutMillis)
     {
         return {body, url, *timeoutMillis};
@@ -89,10 +105,12 @@ std::vector<LogicalFunction> HttpCallLogicalFunction::getChildren() const
 
 HttpCallLogicalFunction HttpCallLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() >= 2 && children.size() <= 4, "HTTP_CALL takes 2 to 4 children");
     auto copy = *this;
     copy.body = children.at(0);
     copy.url = children.at(1);
     copy.timeoutMillis = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt;
+    copy.retries = children.size() > 3 ? std::optional{children.at(3)} : std::nullopt;
     return copy;
 }
 
@@ -103,6 +121,16 @@ std::string_view HttpCallLogicalFunction::getType() const /// NOLINT(readability
 
 std::string HttpCallLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
+    if (retries)
+    {
+        INVARIANT(timeoutMillis.has_value(), "HTTP_CALL retries must follow the timeout argument");
+        return fmt::format(
+            "HTTP_CALL({}, {}, {}, {})",
+            body.explain(verbosity),
+            url.explain(verbosity),
+            timeoutMillis->explain(verbosity),
+            retries->explain(verbosity));
+    }
     if (timeoutMillis)
     {
         return fmt::format("HTTP_CALL({}, {}, {})", body.explain(verbosity), url.explain(verbosity), timeoutMillis->explain(verbosity));
@@ -117,26 +145,29 @@ Reflected Reflector<HttpCallLogicalFunction>::operator()(const HttpCallLogicalFu
         detail::ReflectedHttpCallLogicalFunction{
             .body = children.at(0),
             .url = children.at(1),
-            .timeoutMillis = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt});
+            .timeoutMillis = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt,
+            .retries = children.size() > 3 ? std::optional{children.at(3)} : std::nullopt});
 }
 
 HttpCallLogicalFunction Unreflector<HttpCallLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [body, url, timeoutMillis] = context.unreflect<detail::ReflectedHttpCallLogicalFunction>(reflected);
-    return HttpCallLogicalFunction{std::move(body), std::move(url), std::move(timeoutMillis)};
+    auto [body, url, timeoutMillis, retries] = context.unreflect<detail::ReflectedHttpCallLogicalFunction>(reflected);
+    return HttpCallLogicalFunction{std::move(body), std::move(url), std::move(timeoutMillis), std::move(retries)};
 }
 
 LogicalFunctionRegistryReturnType HttpCallLogicalFunction::createHTTP_CALL(LogicalFunctionRegistryArguments arguments)
 {
     /// The argument count comes straight from the user's query, so a bad count is reported rather than asserted.
-    if (arguments.children.size() != 2 and arguments.children.size() != 3)
+    if (arguments.children.size() < 2 or arguments.children.size() > 4)
     {
-        throw InvalidQuerySyntax("HTTP_CALL expects 2 or 3 arguments (body, url[, timeout_ms]), but got {}", arguments.children.size());
+        throw InvalidQuerySyntax(
+            "HTTP_CALL expects 2 to 4 arguments (body, url[, timeout_ms[, retries]]), but got {}", arguments.children.size());
     }
     return HttpCallLogicalFunction{
         arguments.children.at(0),
         arguments.children.at(1),
-        arguments.children.size() > 2 ? std::optional{arguments.children.at(2)} : std::nullopt};
+        arguments.children.size() > 2 ? std::optional{arguments.children.at(2)} : std::nullopt,
+        arguments.children.size() > 3 ? std::optional{arguments.children.at(3)} : std::nullopt};
 }
 
 }

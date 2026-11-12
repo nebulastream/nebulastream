@@ -38,3 +38,14 @@ foreach (registry IN ITEMS LogicalFunction LogicalFunctionUnreflection)
     get_property(glue_lib GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_GLUE_LIB")
     target_include_directories(${glue_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Functions)
 endforeach ()
+
+if (NES_ENABLES_TESTS)
+    add_nes_common_test(http-call-resolver-test HttpCallResolverTest.cpp)
+    target_link_libraries(http-call-resolver-test Boost::headers)
+    target_include_directories(http-call-resolver-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+    add_nes_unit_test(http-call-function-test HttpCallFunctionTest.cpp)
+    target_link_libraries(http-call-function-test
+            http_call_logical_function_plugin_library http_call_async_function_plugin_library
+            nes-logical-operators nes-sources reflectcpp::reflectcpp)
+endif ()

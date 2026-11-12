@@ -17,10 +17,10 @@
 #include <cstddef>
 #include <initializer_list>
 #include <memory>
-#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <DataTypes/RuntimeValue.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -35,7 +35,7 @@ AsyncValues::AsyncValues(const std::initializer_list<RuntimeValue> values) : Asy
 
 size_t AsyncValues::size() const
 {
-    return storage ? storage->size() : 0;
+    return storage->size();
 }
 
 bool AsyncValues::empty() const
@@ -45,11 +45,8 @@ bool AsyncValues::empty() const
 
 RuntimeValueView AsyncValues::operator[](const size_t index) const&
 {
-    if (!storage)
-    {
-        throw std::out_of_range("Cannot index empty async values");
-    }
-    return storage->at(index).view();
+    PRECONDITION(index < storage->size(), "Async result index {} is out of bounds for {} values", index, storage->size());
+    return (*storage)[index].view();
 }
 
 }

@@ -21,8 +21,10 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/RuntimeValueNautilus.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <ErrorHandling.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES
 {
@@ -104,14 +106,28 @@ TEST(RuntimeValueNautilusTest, MaterializedBytesDoNotBorrowInputStorage)
     EXPECT_TRUE(emptyOutput.view().bytes().empty());
 }
 
-TEST(RuntimeValueNautilusTest, RejectsImplicitNumericConversionsAndNonNullableNull)
+#ifndef NO_ASSERT
+class RuntimeValueNautilusDeathTest : public testing::Test
 {
+public:
+    static void SetUpTestSuite() { Logger::setupLogging("RuntimeValueNautilusDeathTest.log", LogLevel::LOG_DEBUG, false); }
+};
+
+TEST_F(RuntimeValueNautilusDeathTest, NumericAndNullabilityConversionsViolatePreconditions)
+{
+    SKIP_IF_TSAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     const VarVal integer{int64_t{42}};
     const DataType unsignedType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    EXPECT_THROW(static_cast<void>(fromVarVal(integer, unsignedType)), Exception);
+    EXPECT_DEATH(static_cast<void>(fromVarVal(integer, unsignedType)), "Precondition violated.*does not match");
     const VarVal null{int64_t{0}, true, true};
     const DataType nonNullable{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    EXPECT_THROW(static_cast<void>(fromVarVal(null, nonNullable)), Exception);
+    EXPECT_DEATH(static_cast<void>(fromVarVal(null, nonNullable)), "Precondition violated.*does not match");
+    const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
+    EXPECT_DEATH(static_cast<void>(fromVarVal(integer, nullable)), "Precondition violated.*does not match");
+    const VarVal nullableValue{int64_t{42}, true, false};
+    EXPECT_DEATH(static_cast<void>(fromVarVal(nullableValue, nonNullable)), "Precondition violated.*does not match");
 }
+#endif
 
 }

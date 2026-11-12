@@ -15,6 +15,7 @@
 A `delay_ms` query parameter delays the answer, which makes the service slower than the queries calling it;
 with `slow_after=N`, only the requests to a path after its first N are delayed.
 `fail_first` and `fail_after` turn answers into 500s, for the failure and retry tests.
+`drop_on=N` closes the connection after receiving the N-th POST without returning a response.
 
 Binds an ephemeral port on 127.0.0.1 and prints it as the first line on stdout. An optional first argument names a
 file that logs every request's path when it arrives, so requests the client gave up on are counted as well. Built on asyncio
@@ -48,6 +49,8 @@ async def serve(reader, writer):
             received[path] = received.get(path, 0) + 1
             if received_log:
                 print(path, file=received_log)
+            if received[path] == int(query.get("drop_on", ["0"])[0]):
+                return
             if received[path] > int(query.get("slow_after", ["0"])[0]):
                 await asyncio.sleep(int(query.get("delay_ms", ["0"])[0]) / 1000)
             requests[path] = requests.get(path, 0) + 1

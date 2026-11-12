@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,7 +31,7 @@ namespace NES
 {
 HandoffSink::HandoffSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , channelId(sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL))
+    , channelId(AsyncChannelId{sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL)})
     , channel(channelId, sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL_CAPACITY), HandoffChannel::Role::SINK)
 {
 }

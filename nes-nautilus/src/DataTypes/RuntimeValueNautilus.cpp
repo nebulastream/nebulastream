@@ -31,10 +31,8 @@ namespace
 {
 void requireRuntime()
 {
-    if (nautilus::tracing::inTracer())
-    {
-        throw UnknownOperation("Native runtime values cannot be materialized while tracing; use a traced memory load instead");
-    }
+    PRECONDITION(
+        !nautilus::tracing::inTracer(), "Native runtime values cannot be materialized while tracing; use a traced memory load instead");
 }
 }
 
@@ -69,10 +67,7 @@ VarVal toVarVal(const RuntimeValueView value)
 RuntimeValue fromVarVal(const VarVal& value, const DataType type)
 {
     requireRuntime();
-    if (value.getDataType().type != type.type)
-    {
-        throw DifferentFieldTypeExpected("Nautilus value {} does not match native runtime type {}", value.getDataType(), type);
-    }
+    PRECONDITION(value.getDataType() == type, "Nautilus value {} does not match native runtime type {}", value.getDataType(), type);
     if (nautilus::details::RawValueResolver<bool>::getRawValue(value.isNull()))
     {
         return RuntimeValue::null(type);

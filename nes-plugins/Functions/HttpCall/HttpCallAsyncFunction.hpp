@@ -15,6 +15,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
@@ -27,8 +28,10 @@
 namespace NES
 {
 
-/// Executes `HTTP_CALL(body, url[, timeout_ms])`: POSTs `body` to `url` and returns the response body.
-/// Keeps its connection open between calls; a dropped keep-alive connection is reopened once.
+/// Executes `HTTP_CALL(body, url[, timeout_ms[, retries]])`: POSTs `body` to `url` and returns the response body.
+/// Keeps connections open between calls, but never silently resends a failed POST.
+/// Retries default to zero; explicitly requested retries can duplicate server-side effects.
+/// Each attempt has one deadline covering DNS, connect, request write, and response read.
 ///
 /// http:// only; add a beast::ssl_stream (openssl is in the image) when a service needs https
 class HttpCallAsyncFunction final : public AsyncFunction
@@ -37,11 +40,12 @@ public:
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments);
 
     boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) override;
+    [[nodiscard]] std::optional<size_t> maxRetries(const AsyncValues& arguments) const override;
 
 private:
     /// Takes its arguments by value, as a coroutine has to own what it reads after its first suspension.
     boost::asio::awaitable<std::string>
-    exchange(std::string host, std::string port, std::string target, std::string body, std::chrono::milliseconds timeout);
+    exchange(std::string host, std::string port, std::string target, std::string body, std::chrono::steady_clock::time_point deadline);
 
     std::optional<boost::beast::tcp_stream> stream;
     boost::beast::flat_buffer buffer;

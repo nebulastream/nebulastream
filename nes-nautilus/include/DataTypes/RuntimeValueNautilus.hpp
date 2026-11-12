@@ -25,7 +25,8 @@ namespace NES
 /// toVarVal borrows VARSIZED bytes from the view's owner; neither moving nor destroying a VarVal transfers that ownership.
 [[nodiscard]] VarVal toVarVal(RuntimeValueView value);
 
-/// Materializes an independent native value, copying VARSIZED bytes and preserving the declared nullability.
+/// Materializes an independent native value, copying VARSIZED bytes without changing its datatype.
+/// The supplied type must match the VarVal exactly, including nullability.
 [[nodiscard]] RuntimeValue fromVarVal(const VarVal& value, DataType type);
 
 }

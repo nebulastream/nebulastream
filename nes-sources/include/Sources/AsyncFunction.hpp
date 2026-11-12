@@ -33,7 +33,7 @@ namespace NES
 class AsyncValues
 {
 public:
-    AsyncValues() = default;
+    AsyncValues() = delete;
     explicit AsyncValues(std::vector<RuntimeValue> values);
     AsyncValues(std::initializer_list<RuntimeValue> values);
 
@@ -68,12 +68,17 @@ struct AsyncFunctionBinding
 
 /// Runtime implementation of an AsyncLogicalFunction. An instance serves one row at a time and may retain connections.
 /// Arguments are passed by value to retain their backing storage while suspended. Returned values must own/retain theirs.
+/// Results must match binding.resultTypes exactly, including nullability; the executor does not convert them.
 /// Plan/DAG descriptions live separately in AsyncCallGraph.hpp; plugins only need this runtime value interface.
 class AsyncFunction
 {
 public:
     virtual ~AsyncFunction() = default;
     virtual boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) = 0;
+
+    /// Additional attempts for this call. An explicit value overrides the source default, including zero.
+    /// Evaluated once before invocation; invalid retry options are not retried.
+    [[nodiscard]] virtual std::optional<size_t> maxRetries(const AsyncValues&) const { return std::nullopt; }
 
     /// Rows whose calls of this function may be in flight at once, if the function itself sets a bound.
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const { return std::nullopt; }

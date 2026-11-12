@@ -21,9 +21,9 @@
 #include <mutex>
 #include <optional>
 #include <stop_token>
-#include <string>
 #include <unordered_map>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
@@ -34,7 +34,7 @@ namespace
 struct Registry
 {
     std::mutex mutex;
-    std::unordered_map<std::string, std::shared_ptr<HandoffChannel>> channels;
+    std::unordered_map<AsyncChannelId, std::shared_ptr<HandoffChannel>> channels;
 };
 
 Registry& registry()
@@ -50,7 +50,7 @@ HandoffChannel::HandoffChannel(const size_t capacity) : capacity(std::max<size_t
 }
 
 /// Both locks are taken registry first, so that a source cannot attach to a channel that a sink is removing.
-HandoffChannel::Lease::Lease(std::string id, const size_t capacity, const Role role) : id(std::move(id)), role(role)
+HandoffChannel::Lease::Lease(AsyncChannelId id, const size_t capacity, const Role role) : id(std::move(id)), role(role)
 {
     auto& [mutex, channels] = registry();
     const std::scoped_lock lock(mutex);

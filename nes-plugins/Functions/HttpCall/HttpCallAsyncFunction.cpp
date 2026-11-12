@@ -13,14 +13,16 @@
 */
 
 #include <HttpCallAsyncFunction.hpp>
+#include <HttpCallResolver.hpp>
 
 #include <chrono>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <Util/Strings.hpp>
+#include <Util/CheckedDeadline.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/this_coro.hpp>
@@ -38,16 +40,8 @@ namespace
 {
 namespace http = boost::beast::http;
 
-/// Bounds the connect and, separately, the exchange, unless the call passes its own timeout.
+/// One budget for DNS resolution, connect, request write, and response read, per attempt.
 constexpr std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::seconds(30);
-
-/// The server closed the kept-alive connection before it answered. A timeout or a cancellation is not such a close: the
-/// server may have received the request, so sending it again could repeat it.
-bool closedByPeer(const boost::system::error_code& code)
-{
-    return code == http::error::end_of_stream || code == boost::asio::error::eof || code == boost::asio::error::connection_reset
-        || code == boost::asio::error::broken_pipe;
-}
 }
 
 AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegistryArguments)
@@ -55,21 +49,37 @@ AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegis
     return std::make_unique<HttpCallAsyncFunction>();
 }
 
+std::optional<size_t> HttpCallAsyncFunction::maxRetries(const AsyncValues& arguments) const
+{
+    PRECONDITION(arguments.size() >= 2 && arguments.size() <= 4, "HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
+    if (arguments.size() < 4)
+    {
+        return size_t{0};
+    }
+    const auto retries = arguments[3].getUnsignedInteger();
+    if (!std::in_range<size_t>(retries) || retries == std::numeric_limits<size_t>::max())
+    {
+        throw CannotReadFromSource("HTTP_CALL expects a representable retry count, got {}", retries);
+    }
+    return static_cast<size_t>(retries);
+}
+
 boost::asio::awaitable<AsyncValues> HttpCallAsyncFunction::call(AsyncValues arguments)
 {
-    PRECONDITION(arguments.size() == 2 || arguments.size() == 3, "HTTP_CALL takes (body, url[, timeout_ms])");
+    PRECONDITION(arguments.size() >= 2 && arguments.size() <= 4, "HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
+    const auto startedAt = std::chrono::steady_clock::now();
     const std::string body{arguments[0].get<std::string_view>()};
     const std::string url{arguments[1].get<std::string_view>()};
-    auto timeout = DEFAULT_TIMEOUT;
-    if (arguments.size() == 3)
+    auto millis = static_cast<uint64_t>(DEFAULT_TIMEOUT.count());
+    if (arguments.size() >= 3)
     {
-        const auto millis = arguments[2].getUnsignedInteger();
+        millis = arguments[2].getUnsignedInteger();
         if (millis == 0)
         {
             throw CannotReadFromSource("HTTP_CALL expects a positive timeout in milliseconds, got {}", millis);
         }
-        timeout = std::chrono::milliseconds{millis};
     }
+    const auto deadline = checkedSteadyDeadline(millis, "HTTP_CALL", startedAt);
     const auto parsed = boost::urls::parse_uri(url);
     if (!parsed || parsed->scheme() != "http")
     {
@@ -79,23 +89,10 @@ boost::asio::awaitable<AsyncValues> HttpCallAsyncFunction::call(AsyncValues argu
     const std::string port = parsed->has_port() ? std::string{parsed->port()} : "80";
     const std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
 
-    /// A kept-alive connection may have been closed by the server in the meantime; that only shows on use.
-    const bool reused = stream.has_value() && connectedTo == host + ":" + port;
+    /// A transport error may follow a successfully processed POST. Only the explicit retry policy may resend it.
     try
     {
-        co_return AsyncValues::make(co_await exchange(host, port, target, body, timeout));
-    }
-    catch (const boost::system::system_error& error)
-    {
-        stream.reset();
-        if (!reused || !closedByPeer(error.code()))
-        {
-            throw CannotReadFromSource("HTTP_CALL to {} failed: {}", url, error.what());
-        }
-    }
-    try
-    {
-        co_return AsyncValues::make(co_await exchange(host, port, target, body, timeout));
+        co_return AsyncValues::make(co_await exchange(host, port, target, body, deadline));
     }
     catch (const boost::system::system_error& error)
     {
@@ -108,17 +105,25 @@ boost::asio::awaitable<AsyncValues> HttpCallAsyncFunction::call(AsyncValues argu
 /// NOLINTBEGIN(clang-analyzer-core.CallAndMessage)
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
-    std::string host, std::string port, std::string target, std::string body, const std::chrono::milliseconds timeout)
+    std::string host, std::string port, std::string target, std::string body, const std::chrono::steady_clock::time_point deadline)
 {
     using boost::asio::use_awaitable;
+    const auto requireTimeRemaining = [deadline]
+    {
+        if (std::chrono::steady_clock::now() >= deadline)
+        {
+            throw boost::system::system_error{boost::asio::error::timed_out};
+        }
+    };
+    requireTimeRemaining();
     if (!stream || connectedTo != host + ":" + port)
     {
         const auto executor = co_await boost::asio::this_coro::executor;
-        boost::asio::ip::tcp::resolver resolver{executor};
-        const auto endpoints = co_await resolver.async_resolve(host, port, use_awaitable);
+        const auto endpoints = co_await detail::resolveHttpHost(host, port, deadline);
+        requireTimeRemaining();
         stream.emplace(executor);
         buffer.clear();
-        stream->expires_after(timeout);
+        stream->expires_at(deadline);
         co_await stream->async_connect(endpoints, use_awaitable);
         connectedTo = host + ":" + port;
     }
@@ -128,11 +133,15 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
     request.set(http::field::content_type, "text/plain");
     request.keep_alive(true);
     request.prepare_payload();
-    stream->expires_after(timeout);
+    requireTimeRemaining();
+    stream->expires_at(deadline);
     co_await http::async_write(*stream, request, use_awaitable);
 
     http::response<http::string_body> response;
+    requireTimeRemaining();
+    stream->expires_at(deadline);
     co_await http::async_read(*stream, buffer, response, use_awaitable);
+    requireTimeRemaining();
     if (!response.keep_alive())
     {
         stream.reset();

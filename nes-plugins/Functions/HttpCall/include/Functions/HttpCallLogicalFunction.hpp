@@ -32,15 +32,20 @@
 namespace NES
 {
 
-/// `HTTP_CALL(body, url[, timeout_ms])`: POSTs `body` to `url` and evaluates to the response body. The optional
-/// integer constant bounds the connect and, separately, the exchange; it defaults to 30 seconds.
+/// `HTTP_CALL(body, url[, timeout_ms[, retries]])`: POSTs `body` to `url` and evaluates to the response body.
+/// One timeout covers DNS, connect, request write, and response read per attempt; it defaults to 30 seconds.
+/// Retries default to zero. Opting in may repeat a POST that the server already processed.
 /// Asynchronous only; there is no Nautilus implementation.
 class HttpCallLogicalFunction final : public AsyncLogicalFunction
 {
 public:
     static constexpr std::string_view NAME = "HttpCall";
 
-    HttpCallLogicalFunction(LogicalFunction body, LogicalFunction url, std::optional<LogicalFunction> timeoutMillis);
+    HttpCallLogicalFunction(
+        LogicalFunction body,
+        LogicalFunction url,
+        std::optional<LogicalFunction> timeoutMillis,
+        std::optional<LogicalFunction> retries = std::nullopt);
 
     [[nodiscard]] bool operator==(const HttpCallLogicalFunction& rhs) const;
 
@@ -63,6 +68,7 @@ private:
     LogicalFunction body;
     LogicalFunction url;
     std::optional<LogicalFunction> timeoutMillis;
+    std::optional<LogicalFunction> retries;
 };
 
 namespace detail
@@ -72,6 +78,7 @@ struct ReflectedHttpCallLogicalFunction
     LogicalFunction body;
     LogicalFunction url;
     std::optional<LogicalFunction> timeoutMillis;
+    std::optional<LogicalFunction> retries;
 };
 }
 

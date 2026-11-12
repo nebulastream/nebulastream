@@ -26,7 +26,7 @@ The framework ships two functions:
 
 | Function                                   | Result                                                                                                              |
 |--------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `HTTP_CALL(body, url[, timeout_ms])`       | POSTs `body` to `url` and returns the response body. Plain `http://` only. The timeout defaults to 30 s.           |
+| `HTTP_CALL(body, url[, timeout_ms[, retries]])` | POSTs `body` to `url` and returns the response body. Plain `http://` only. Timeout defaults to 30 s; retries default to 0. |
 | `ASYNC_DELAY(value, millis[, concurrency])` | Returns the value with its input type after waiting `millis`; its second output is the requested delay as `UINT64`. A test and benchmark aid.          |
 
 `ASYNC_OUTPUT(call, i)` reads the i-th value of a call that produces several (`ASYNC_OUTPUT(call, 0)` is the call
@@ -82,12 +82,16 @@ worker it was placed on, by
   own, and
 - an `Async` source (`nes-plugins/Async/AsyncSource.cpp`) in the stage's place.
 
-Both carry the same channel id. `CALLS` transports an `AsyncCallGraph` from
-`nes-sources/include/Sources/AsyncCallGraph.hpp`, including the ordered input schema, immutable call nodes, and exported
-outputs. The source uses that bound schema directly; there is no separate comma-separated input-field mapping.
-Each call's `functionType` is an `AsyncFunctionType`, a strong string registry key such as `HttpCall` or `AsyncDelay`,
-not a call-node identity. Registry insertion and lookup use that strong type and retain case-insensitive matching;
-plugin provisioning explicitly converts its transported string key at the registry boundary.
+Both carry the same UUID-backed strong `AsyncChannelId`, distinct from the network `ChannelId`. Decomposition, the typed source config, both runtime halves, and
+channel leases/registry keys retain that type; only literal configuration and wire serialization use UUID strings.
+Decomposition passes an `AsyncCallGraph` directly in the typed `AsyncSourceConfig`,
+using `PhysicalSourceBuilder` and the catalog's typed anonymous-source API rather than string configuration maps.
+The graph includes the ordered input schema, immutable call nodes, and exported outputs. The source uses that bound schema
+directly; there is no separate comma-separated input-field mapping or internal JSON round-trip. Normal descriptor reflection
+serializes the graph as an object only when the descriptor crosses a wire boundary. Async sources are planner-created;
+literal frontend configuration cannot supply a call graph.
+Each call's `functionType` is a string registry key such as `HttpCall` or `AsyncDelay`, not a call-node identity.
+Registry insertion and lookup use strings with case-insensitive matching.
 
 Each argument is a variant of a native `RuntimeValue`, an `InputFieldReference`, or an `AsyncResultReference`:
 
@@ -141,10 +145,13 @@ The source thread of an `Async` source does not run calls itself. All calls run 
 shared by every Async source on the worker (`SharedEventLoop` in `AsyncSource.cpp`), each source on its own strand.
 There is no dedicated thread per call. Each async stage still has an ordinary source thread waiting for results.
 
-- **Concurrency across buffers.** The source keeps a window of handed-off buffers and starts their rows as long as a
+- **Concurrency across buffers.** The source keeps handed-off buffers in `inFlight.buffers` and starts their rows as long as a
   slot is free, up to `max_concurrency` rows at once, regardless of which buffer they belong to. It takes the next buffer
   from the channel only when the rows waiting to start would no longer keep every slot busy, so the channel, not the
   source, holds what the calls cannot keep up with.
+- **Buffer ownership.** `InFlightState` stores `InFlightBuffer` values directly in a deque. Row coroutines borrow stable
+  references to its elements. A completed buffer is moved out for output only after its last row callback has finished
+  accessing it; shutdown drains rows before clearing the in-flight state. There is no separately allocated shared buffer wrapper.
 - **Order and metadata.** Buffers are emitted in the order they were handed off, each once all of its rows are done.
   One input buffer becomes exactly one output buffer with the same sequence and chunk number, origin and watermark. All
   fields that are not call results are copied byte for byte, and variable-sized data stays valid, because the child
@@ -177,11 +184,16 @@ Each subscription has its own cancellation registration. Timing out or cancellin
 poison its cached result, or affect another subscriber. A result already available when subscribing is returned immediately;
 for a pending subscription, a completion published after its deadline is still a timeout even if notifications race.
 
-These wait deadlines are a runtime API, not new SQL syntax. `HTTP_CALL`'s timeout is an operation timeout: a final producer
-failure is shared by all its consumers. A row/query stop or a terminal root failure instead cancels the entire owned graph.
-The owner cancels every producer and joins all started work before returning/releasing its input buffer. Cleanup is shielded
-from cancellation without disabling the caller's subsequent cancellation state. A completed value/error remains available
-to existing subscribers. Result shape/type failures are not service retries.
+These wait deadlines are a runtime API, not new SQL syntax. `HTTP_CALL` uses one absolute deadline per attempt, covering
+DNS resolution, connection establishment, request writing, and response reading. Each explicit retry receives a fresh budget;
+retry backoff is outside that budget. A final producer failure is shared by all its consumers. A DNS timeout cancels the
+resolver and releases the row's wait promptly; an OS name-service call already running may finish later, with its callback
+owning only resolver state, not row or function resources. A row/query stop or a terminal root failure instead cancels the entire owned graph.
+On failure or caller cancellation, the owner cancels every producer and joins all started work before propagating the
+original error or releasing its input buffer. Cleanup is shielded from cancellation without disabling the caller's subsequent
+cancellation state. Successful execution does not cancel producers and asserts that every cell has finished before returning.
+A completed value/error remains available
+to existing subscribers. Result shape/type contracts are checked with invariants, not service retries.
 
 ### Configuration
 
@@ -192,10 +204,19 @@ The decomposition passes these optimizer options to every async stage, e.g.
 |----------------------------------|---------|----------------------------------------------------------------------------|
 | `optimizer.async.max_concurrency`  | 16      | Rows whose calls are in flight at once, per async stage.                   |
 | `optimizer.async.channel_capacity` | 64      | Buffers the Handoff channel holds before the producer is held back.        |
-| `optimizer.async.max_retries`      | 0       | Further attempts of a failed call, with exponential backoff.               |
+| `optimizer.async.max_retries`      | 0       | Default further attempts of a failed call, with exponential backoff; a function may override it. |
 
 A function can lower the concurrency of its stage through `AsyncFunction::maxConcurrency`, e.g. for a service with a
-rate limit; the stage uses the smallest bound.
+rate limit; the stage uses the smallest bound. A function can override the retry default per call through
+`AsyncFunction::maxRetries(arguments)`.
+
+`HTTP_CALL` always overrides the retry default: the fourth argument is the number of additional attempts, and omitting it
+means zero even when `optimizer.async.max_retries` is enabled. The retry count may be a non-null integer expression.
+For example, `HTTP_CALL(body, url, 30000, 2)` allows up to three attempts, each with a 30-second end-to-end timeout,
+with the source's exponential backoff between attempts.
+There is no separate automatic keep-alive reconnect retry. A failed connection is discarded; resending the POST requires
+explicitly opting into retries. A retry may repeat a request the server already processed, so the caller must ensure
+that duplicate effects are acceptable (for example, by using an idempotent service or an idempotency key).
 
 ## Adding an asynchronous function
 
@@ -241,15 +262,26 @@ co_return AsyncValues::make(arguments[0].toOwned(), millis);
 ```
 
 The current source path materializes owned values; the view interface leaves room for future buffer-backed storage
-without changing the function call API. `RuntimeValue` and `RuntimeValueView` have no tuple-buffer or Nautilus dependency.
+without changing the function call API. Producers must construct values with the correct native payload and exact datatype,
+including nullability. Constructors, typed accessors, and runtime adapters verify these contracts with preconditions or
+invariants; they do not repair types or report contract violations as recoverable exceptions. `toOwned()` only copies storage
+and preserves the datatype. The executor similarly requires input readers to return exactly the declared input type.
+`RuntimeValue` and `RuntimeValueView` have no tuple-buffer or Nautilus dependency.
 VARSIZED is a byte sequence, not necessarily UTF-8, and views do not promise a terminating NUL. Runtime-only free adapters
 `toVarVal(RuntimeValueView)` and `fromVarVal(const VarVal&, DataType)` in `DataTypes/RuntimeValueNautilus.hpp` provide the
 Nautilus bridge without requiring a tuple buffer. The former borrows bytes; the latter copies them into owned storage.
-Neither adapter may be used while tracing a compiled pipeline.
+Neither adapter may be used while tracing a compiled pipeline. `fromVarVal` requires the supplied datatype to match the
+source exactly, including nullability; it does not retype the value. Literal parsing and invalid option values (such as a
+negative duration) still report ordinary user-input errors. Both `HTTP_CALL` and `ASYNC_DELAY` reject millisecond values
+that cannot be converted to steady-clock ticks or added to the start time without overflow. HTTP timeouts must be positive;
+a zero delay remains valid.
 
-Return the declared number of values with exact scalar types; null is allowed only for a nullable output. A non-null
-native value can be returned for a nullable output. Result shape/type errors fail the query without retrying. Inside the
-coroutine, wait only with `co_await` on Asio operations; blocking stalls every async source on the worker.
+Return the declared number of values with datatypes matching `binding.resultTypes` exactly, including nullability.
+Functions are responsible for constructing correctly typed results; the executor does not normalize them. For example,
+a non-null value for a nullable output must carry the nullable datatype, e.g. `RuntimeValue{resultType, int64_t{42}}`.
+Null is allowed only for a nullable output. Result count and datatype mismatches violate invariants and terminate the
+process when assertions are enabled; these checks compile out under `NO_ASSERT` (Benchmark and Release builds).
+Inside the coroutine, wait only with `co_await` on Asio operations; blocking stalls every async source on the worker.
 
 Both parts are registered in the plugin's `CMakeLists.txt`, the logical function under the SQL name and the
 implementation under the same plugin name:
@@ -283,6 +315,7 @@ add_registry_entry(AsyncFunction MyFunction)
   malformed edges/cycles, binary constants and exact floating-point payloads.
 - `nes-plugins/Async/tests/AsyncGraphExecutionTest.cpp` covers diamond sharing, dependency/root concurrency,
   independent wait timeouts/cancellation, producer failure, row cancellation/draining and per-row memoization.
-- `nes-plugins/Async/tests/AsyncSourceValueTest.cpp` checks result arity, type and nullability errors are not retried.
+- `nes-plugins/Async/tests/AsyncSourceValueTest.cpp` checks result arity, type and nullability invariants with death tests
+  when assertions are enabled.
 - `nes-plugins/Async/tests/HandoffChannelTest.cpp` covers the channel's leases.
 - `nes-systests/explain/AsyncFunctionLifting.test` checks the lifted and the decomposed plans.
