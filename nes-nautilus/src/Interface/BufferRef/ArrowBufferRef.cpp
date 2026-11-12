@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -51,7 +52,15 @@ ArrowBufferRef::ArrowBufferRef(
     , fields(std::move(fields))
     , headerSize(headerSize)
     , staticRead(std::getenv("NES_ARROW_STATIC_READ") != nullptr) /// NOLINT(concurrency-mt-unsafe)
-{
+{    if (std::getenv("NES_ARROW_DEBUG") != nullptr) /// NOLINT(concurrency-mt-unsafe)
+    {
+        size_t eligible = 0;
+        for (const auto& field : this->fields)
+        {
+            eligible += (not field.type.nullable && field.type.type != DataType::Type::BOOLEAN && field.type.type != DataType::Type::VARSIZED) ? 1 : 0;
+        }
+        std::fprintf(stderr, "ArrowBufferRef: %zu fields, %zu fixed-size and not nullable, static read %d\n", this->fields.size(), eligible, staticRead ? 1 : 0);
+    }
 }
 
 namespace
