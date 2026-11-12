@@ -44,16 +44,6 @@ pub struct ActionableFragment {
     pub desired_state: DesiredQueryFragmentState,
 }
 
-impl From<&Model> for ActionableFragment {
-    fn from(fragment: &Model) -> Self {
-        Self {
-            id: fragment.id,
-            query_id: fragment.query_id,
-            desired_state: fragment.desired_state,
-        }
-    }
-}
-
 /// The failure that ended a query: the first query_fragment that failed, and where it ran.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct QueryError {
