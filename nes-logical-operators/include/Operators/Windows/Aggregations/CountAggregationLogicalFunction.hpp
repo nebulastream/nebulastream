@@ -44,6 +44,7 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] static DataType getAggregateType();
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] LogicalScalarFunctions getScalarFunctions() const;
     [[nodiscard]] bool shallIncludeNullValues() const noexcept;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] bool operator==(const CountAggregationLogicalFunction& other) const;
@@ -52,6 +53,7 @@ public:
 
 private:
     AggregationFieldAccess inputFunction;
+    LogicalScalarFunctions scalarFunctions;
     bool includeNullValues = false;
     static constexpr std::string_view NAME = "Count";
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::UINT64;

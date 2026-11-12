@@ -67,6 +67,11 @@ AggregationFieldAccess MedianAggregationLogicalFunction::getInputFunction() cons
     return inputFunction;
 }
 
+LogicalScalarFunctions MedianAggregationLogicalFunction::getScalarFunctions() const
+{
+    return scalarFunctions;
+}
+
 std::string MedianAggregationLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Short)

@@ -38,6 +38,9 @@ struct AggregationPhysicalFunctionRegistryArguments
     Record::RecordFieldIdentifier resultFieldIdentifier;
     std::optional<std::shared_ptr<PagedVectorTupleLayout>> tupleLayout;
     bool includeNullValues;
+    /// Lowered counterparts of the logical aggregation's scalar functions, keyed by role. May be empty for aggregations that
+    /// do not use any (e.g. Count).
+    PhysicalScalarFunctions scalarFunctions;
 };
 
 using AggregationPhysicalFunctionFn

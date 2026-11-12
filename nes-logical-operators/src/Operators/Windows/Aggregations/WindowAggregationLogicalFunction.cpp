@@ -21,9 +21,12 @@
 #include <variant>
 
 #include <DataTypes/DataType.hpp>
+#include <Functions/AggregationOperandLogicalFunction.hpp>
+#include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -46,5 +49,28 @@ TypedLogicalFunction<FieldAccessLogicalFunction> inferFieldAccess(AggregationFie
             { return fieldAccessLogicalFunction.withInferredDataType(schema).getAs<FieldAccessLogicalFunction>(); },
         },
         field);
+}
+
+LogicalFunction aggregationOperand(const std::string_view operandName, DataType dataType)
+{
+    return AggregationOperandLogicalFunction{std::string{operandName}, std::move(dataType)};
+}
+
+LogicalFunction castUnlessStruct(const DataType& resultType, LogicalFunction function)
+{
+    if (resultType.type == DataType::Type::STRUCT)
+    {
+        return function;
+    }
+    return CastToTypeLogicalFunction{resultType, std::move(function)};
+}
+
+LogicalScalarFunctions inferScalarFunctions(LogicalScalarFunctions scalarFunctions, const Schema<Field, Unordered>& schema)
+{
+    for (auto& [role, function] : scalarFunctions)
+    {
+        function = function.withInferredDataType(schema);
+    }
+    return scalarFunctions;
 }
 }

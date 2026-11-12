@@ -24,10 +24,12 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -104,6 +106,12 @@ DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType,
     {
         return inputType;
     }
+    /// User-defined (STRUCT) types are summed in their own type. Whether the type supports being added is verified by the type
+    /// inference of the scalar functions (Add_<Type>_<Type> has to be provided by the type's plugin).
+    if (inputType.type == DataType::Type::STRUCT)
+    {
+        return inputType;
+    }
     throw UnsupportedQuery(
         "{} is only supported on numeric fields, but field {} has type {}", NAME, inputFieldName, magic_enum::enum_name(inputType.type));
 }
@@ -112,7 +120,9 @@ SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredType(co
 {
     const auto newInputFunction = inferFieldAccess(inputFunction, schema);
     const DataType outputType = inferFromInput(newInputFunction->getDataType(), newInputFunction->getField().getLastName());
-    return SumAggregationLogicalFunction{newInputFunction, outputType};
+    auto inferred = SumAggregationLogicalFunction{newInputFunction, outputType};
+    inferred.scalarFunctions = inferScalarFunctions(buildScalarFunctions(newInputFunction->getDataType(), outputType), schema);
+    return inferred;
 }
 
 DataType SumAggregationLogicalFunction::getAggregateType() const
@@ -123,6 +133,25 @@ DataType SumAggregationLogicalFunction::getAggregateType() const
 AggregationFieldAccess SumAggregationLogicalFunction::getInputFunction() const
 {
     return inputFunction;
+}
+
+LogicalScalarFunctions SumAggregationLogicalFunction::getScalarFunctions() const
+{
+    return scalarFunctions;
+}
+
+LogicalScalarFunctions SumAggregationLogicalFunction::buildScalarFunctions(const DataType& inputType, const DataType& resultType)
+{
+    using namespace AggregationScalarFunctionRoles;
+    using namespace AggregationOperands;
+    /// lift: state = state + input, combine: state = state + otherState, accumulated in the widened result type (#1694).
+    return {
+        {std::string{LIFT},
+         castUnlessStruct(resultType, AddLogicalFunction{aggregationOperand(STATE, resultType), aggregationOperand(INPUT, inputType)})},
+        {std::string{COMBINE},
+         castUnlessStruct(
+             resultType, AddLogicalFunction{aggregationOperand(STATE, resultType), aggregationOperand(OTHER_STATE, resultType)})},
+    };
 }
 
 std::string SumAggregationLogicalFunction::explain(ExplainVerbosity verbosity) const

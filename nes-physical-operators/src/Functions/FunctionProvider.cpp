@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <Functions/AggregationOperandLogicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
@@ -30,6 +31,7 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
@@ -63,6 +65,12 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     {
         return lowerConstantFunction(constantValueFunction->get());
     }
+    /// Operands of the scalar functions inside aggregation functions are not part of any schema. The physical aggregation
+    /// function writes them into a record under their operand name before executing the scalar function.
+    if (const auto operandFunction = logicalFunction.tryGetAs<AggregationOperandLogicalFunction>())
+    {
+        return FieldAccessPhysicalFunction(QualifiedIdentifier::parse(operandFunction.value()->getOperandName()));
+    }
 
     /// 3. Calling the registry to create an executable function.
 
@@ -81,9 +89,9 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
             return (*factory)(PhysicalFunctionRegistryArguments{
                 .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
         }
-        /// Ordering comparisons accept STRUCT operands during type inference only because a plugin is expected to define
-        /// their semantics. The generic numeric implementations cannot handle STRUCTs, so fail here instead of at runtime.
-        constexpr std::array<std::string_view, 4> structOnlyViaPlugin{"Greater", "GreaterEquals", "Less", "LessEquals"};
+        /// Ordering comparisons, Add and Div accept STRUCT operands during type inference only because a plugin is expected to
+        /// define their semantics. The generic numeric implementations cannot handle STRUCTs, so fail here instead of at runtime.
+        constexpr std::array<std::string_view, 6> structOnlyViaPlugin{"Greater", "GreaterEquals", "Less", "LessEquals", "Add", "Div"};
         if (std::ranges::contains(structOnlyViaPlugin, baseName))
         {
             throw UnknownFunctionType(

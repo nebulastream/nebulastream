@@ -43,6 +43,7 @@ public:
     [[nodiscard]] static std::string_view getName() noexcept;
     [[nodiscard]] DataType getAggregateType() const;
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] LogicalScalarFunctions getScalarFunctions() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] bool operator==(const MaxAggregationLogicalFunction& other) const;
@@ -50,7 +51,10 @@ public:
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
 private:
+    [[nodiscard]] static LogicalScalarFunctions buildScalarFunctions(const DataType& inputType, const DataType& resultType);
+
     AggregationFieldAccess inputFunction;
+    LogicalScalarFunctions scalarFunctions;
     DataType aggregateType;
     static constexpr std::string_view NAME = "Max";
 };

@@ -55,14 +55,34 @@ LogicalFunction DivLogicalFunction::withInferredDataType(const Schema<Field, Uno
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
+    const auto& leftType = copy.left.getDataType();
+    const auto& rightType = copy.right.getDataType();
+
+    /// STRUCT operands are accepted because a plugin is expected to provide their semantics as a `Div_<L>_<R>` physical function,
+    /// which `FunctionProvider` dispatches to during lowering. A STRUCT divided by a numeric (e.g. an aggregate divided by a count
+    /// in AVG) keeps the STRUCT type; two STRUCTs have to be of the same nominal type.
+    const bool leftIsStruct = leftType.type == DataType::Type::STRUCT;
+    const bool rightIsStruct = rightType.type == DataType::Type::STRUCT;
+    if (leftIsStruct != rightIsStruct)
+    {
+        const auto& structType = leftIsStruct ? leftType : rightType;
+        const auto& otherType = leftIsStruct ? rightType : leftType;
+        if (!otherType.isNumeric())
+        {
+            throw CannotInferStamp("Cannot apply division to non-numeric input function left: {}, right: {}", copy.left, copy.right);
+        }
+        copy.dataType = structType;
+        copy.dataType.nullable = leftType.nullable or rightType.nullable;
+        return copy;
+    }
+    if (!leftIsStruct and (!leftType.isNumeric() || !rightType.isNumeric()))
     {
         throw CannotInferStamp("Cannot apply division to non-numeric input function left: {}, right: {}", copy.left, copy.right);
     }
-    auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
+    auto newDataType = leftType.join(rightType);
     if (!newDataType.has_value())
     {
-        throw CannotInferStamp("Could not join datatypes {} and {} for division", copy.left.getDataType(), copy.right.getDataType());
+        throw CannotInferStamp("Could not join datatypes {} and {} for division", leftType, rightType);
     }
     copy.dataType = std::move(newDataType).value();
     copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });

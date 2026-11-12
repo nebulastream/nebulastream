@@ -24,6 +24,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
@@ -37,8 +38,17 @@ namespace NES
 {
 
 SumAggregationPhysicalFunction::SumAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    DataType inputType,
+    DataType resultType,
+    PhysicalFunction inputFunction,
+    Record::RecordFieldIdentifier resultFieldIdentifier,
+    PhysicalScalarFunctions scalarFunctions)
+    : AggregationPhysicalFunction(
+          std::move(inputType),
+          std::move(resultType),
+          std::move(inputFunction),
+          std::move(resultFieldIdentifier),
+          std::move(scalarFunctions))
 {
 }
 
@@ -55,7 +65,10 @@ void SumAggregationPhysicalFunction::lift(
         const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
         const auto isNull = readNull(aggregationState);
         const auto sum = VarVal::readVarValFromMemory(memAreaSum, resultType, nautilus::val<bool>{false});
-        const auto sumPlusValue = (sum + value).castToType(resultType.type);
+        const auto sumPlusValue = applyScalarFunction(
+            AggregationScalarFunctionRoles::LIFT,
+            {{AggregationOperands::STATE, sum}, {AggregationOperands::INPUT, value}},
+            pipelineMemoryProvider.arena);
         const auto newSum = VarVal::select(value.isNull(), sum, sumPlusValue);
         newSum.writeToMemory(memAreaSum);
 
@@ -70,7 +83,10 @@ void SumAggregationPhysicalFunction::lift(
 
         /// Updating the sum and write it back to the aggregation state. The sum is accumulated in the widened result type
         /// (e.g. INT64 for INT8/16/32 inputs) to avoid overflowing the input type (#1694).
-        const auto newSum = (sum + value).castToType(resultType.type);
+        const auto newSum = applyScalarFunction(
+            AggregationScalarFunctionRoles::LIFT,
+            {{AggregationOperands::STATE, sum}, {AggregationOperands::INPUT, value}},
+            pipelineMemoryProvider.arena);
         newSum.writeToMemory(memAreaSum);
     }
 }
@@ -80,7 +96,7 @@ void SumAggregationPhysicalFunction::combine(
     BorrowedNautilusBuffer,
     const nautilus::val<AggregationState*> aggregationState2,
     BorrowedNautilusBuffer,
-    PipelineMemoryProvider&)
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
     if (inputType.nullable)
     {
@@ -95,7 +111,10 @@ void SumAggregationPhysicalFunction::combine(
         const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, resultType, nautilus::val<bool>{false});
 
         /// Combining the sum and writing it back to the first aggregation state
-        const auto newSum = (sum1 + sum2).castToType(resultType.type);
+        const auto newSum = applyScalarFunction(
+            AggregationScalarFunctionRoles::COMBINE,
+            {{AggregationOperands::STATE, sum1}, {AggregationOperands::OTHER_STATE, sum2}},
+            pipelineMemoryProvider.arena);
         newSum.writeToMemory(memAreaSum1);
 
         /// SQL-standard: only stay null when both partitions are still empty
@@ -112,7 +131,10 @@ void SumAggregationPhysicalFunction::combine(
         const auto sum2 = VarVal::readNonNullableVarValFromMemory(memAreaSum2, resultType);
 
         /// Combining the sum and writing it back to the first aggregation state
-        const auto newSum = (sum1 + sum2).castToType(resultType.type);
+        const auto newSum = applyScalarFunction(
+            AggregationScalarFunctionRoles::COMBINE,
+            {{AggregationOperands::STATE, sum1}, {AggregationOperands::OTHER_STATE, sum2}},
+            pipelineMemoryProvider.arena);
         newSum.writeToMemory(memAreaSum1);
     }
 }
@@ -171,7 +193,11 @@ size_t SumAggregationPhysicalFunction::getSizeOfStateInBytes() const
 AggregationPhysicalFunctionRegistryReturnType SumAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<SumAggregationPhysicalFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        std::move(arguments.scalarFunctions));
 }
 
 }

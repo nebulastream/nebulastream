@@ -15,8 +15,14 @@
 #pragma once
 
 #include <cstddef>
+#include <initializer_list>
 #include <memory>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
@@ -37,6 +43,11 @@ struct AggregationState
 {
 };
 
+/// The lowered scalar functions an aggregation uses internally, keyed by role (see AggregationScalarFunctionRoles in
+/// nes-logical-operators). They are built and type-checked by the logical aggregation function and lowered alongside it, so the
+/// physical aggregation can aggregate over any data type for which the scalar functions are registered (e.g. plugin types).
+using PhysicalScalarFunctions = std::unordered_map<std::string, PhysicalFunction>;
+
 /// This class represents an aggregation function. An aggregation function is used to aggregate records in a window.
 /// It represents a single aggregation operation, e.g., sum, min, max, etc.
 /// We take the lift, combine, lower, and reset functions from the paper "General Incremental Sliding-Window Aggregation" by Kanat Tangwongsan et al.
@@ -46,6 +57,12 @@ class AggregationPhysicalFunction
 public:
     AggregationPhysicalFunction(
         DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+    AggregationPhysicalFunction(
+        DataType inputType,
+        DataType resultType,
+        PhysicalFunction inputFunction,
+        Record::RecordFieldIdentifier resultFieldIdentifier,
+        PhysicalScalarFunctions scalarFunctions);
 
     /// Adds the incoming record to the existing aggregation state
     virtual void lift(
@@ -90,10 +107,17 @@ public:
     virtual ~AggregationPhysicalFunction();
 
 protected:
+    using ScalarOperand = std::pair<std::string_view, VarVal>;
+
+    /// Executes the scalar function registered under role on the given operands (see AggregationOperands for the operand names).
+    /// The operands are assembled into a record that the scalar function reads its AggregationOperand leaves from.
+    [[nodiscard]] VarVal applyScalarFunction(std::string_view role, std::initializer_list<ScalarOperand> operands, ArenaRef& arena) const;
+
     DataType inputType;
     DataType resultType;
     PhysicalFunction inputFunction;
     const Record::RecordFieldIdentifier resultFieldIdentifier;
+    PhysicalScalarFunctions scalarFunctions;
 };
 
 }

@@ -24,13 +24,13 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundSchema.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <nautilus/function.hpp>
-#include "Functions/ConstantValueLogicalFunction.hpp"
 
 #include <DataTypes/StructData.hpp>
 #include <DataTypes/VectorData.hpp>

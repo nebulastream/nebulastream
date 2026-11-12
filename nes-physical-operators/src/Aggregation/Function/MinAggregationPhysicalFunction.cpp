@@ -24,6 +24,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
@@ -36,8 +37,17 @@ namespace NES
 {
 
 MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    DataType inputType,
+    DataType resultType,
+    PhysicalFunction inputFunction,
+    Record::RecordFieldIdentifier resultFieldIdentifier,
+    PhysicalScalarFunctions scalarFunctions)
+    : AggregationPhysicalFunction(
+          std::move(inputType),
+          std::move(resultType),
+          std::move(inputFunction),
+          std::move(resultFieldIdentifier),
+          std::move(scalarFunctions))
 {
 }
 
@@ -56,7 +66,14 @@ void MinAggregationPhysicalFunction::lift(
         const auto min = VarVal::readNonNullableVarValFromMemory(memAreaMin, inputType);
 
         /// Updating the min value with the new value, if the new value is smaller
-        const auto newMin = VarVal::select((value < min).getRawValueAs<nautilus::val<bool>>(), value, min);
+        const auto newMin = VarVal::select(
+            applyScalarFunction(
+                AggregationScalarFunctionRoles::LIFT,
+                {{AggregationOperands::INPUT, value}, {AggregationOperands::STATE, min}},
+                pipelineMemoryProvider.arena)
+                .getRawValueAs<nautilus::val<bool>>(),
+            value,
+            min);
         newMin.writeToMemory(memAreaMin);
     }
     else
@@ -68,7 +85,13 @@ void MinAggregationPhysicalFunction::lift(
 
         /// SQL-standard: skip NULL inputs
         const auto valueIsNotNull = not value.isNull();
-        const auto adoptValue = valueIsNotNull and (isNull or (value < min).getRawValueAs<nautilus::val<bool>>());
+        const auto adoptValue = valueIsNotNull
+            and (isNull
+                 or applyScalarFunction(
+                        AggregationScalarFunctionRoles::LIFT,
+                        {{AggregationOperands::INPUT, value}, {AggregationOperands::STATE, min}},
+                        pipelineMemoryProvider.arena)
+                        .getRawValueAs<nautilus::val<bool>>());
         const auto newMin = VarVal::select(adoptValue, value, min);
         newMin.writeToMemory(memAreaMin);
 
@@ -83,7 +106,7 @@ void MinAggregationPhysicalFunction::combine(
     BorrowedNautilusBuffer,
     const nautilus::val<AggregationState*> aggregationState2,
     BorrowedNautilusBuffer,
-    PipelineMemoryProvider&)
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
     if (not inputType.nullable)
     {
@@ -94,7 +117,14 @@ void MinAggregationPhysicalFunction::combine(
         const auto min2 = VarVal::readNonNullableVarValFromMemory(memAreaMin2, inputType);
 
         /// Updating the min value with the new value, if the new value is smaller
-        const auto newMin = VarVal::select((min1 < min2).getRawValueAs<nautilus::val<bool>>(), min1, min2);
+        const auto newMin = VarVal::select(
+            applyScalarFunction(
+                AggregationScalarFunctionRoles::COMBINE,
+                {{AggregationOperands::STATE, min1}, {AggregationOperands::OTHER_STATE, min2}},
+                pipelineMemoryProvider.arena)
+                .getRawValueAs<nautilus::val<bool>>(),
+            min1,
+            min2);
         newMin.writeToMemory(memAreaMin1);
     }
     else
@@ -112,7 +142,14 @@ void MinAggregationPhysicalFunction::combine(
         storeNull(aggregationState1, newIsNull);
 
         /// If state1 is empty take min2; if state2 is empty take min1; otherwise take the pairwise min
-        const auto min1OrMin2 = VarVal::select((min1 < min2).getRawValueAs<nautilus::val<bool>>(), min1, min2);
+        const auto min1OrMin2 = VarVal::select(
+            applyScalarFunction(
+                AggregationScalarFunctionRoles::COMBINE,
+                {{AggregationOperands::STATE, min1}, {AggregationOperands::OTHER_STATE, min2}},
+                pipelineMemoryProvider.arena)
+                .getRawValueAs<nautilus::val<bool>>(),
+            min1,
+            min2);
         const auto newMin = VarVal::select(isNull1, min2, VarVal::select(isNull2, min1, min1OrMin2));
         newMin.writeToMemory(memAreaMin1);
     }
@@ -172,7 +209,11 @@ size_t MinAggregationPhysicalFunction::getSizeOfStateInBytes() const
 AggregationPhysicalFunctionRegistryReturnType MinAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<MinAggregationPhysicalFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        std::move(arguments.scalarFunctions));
 }
 
 }

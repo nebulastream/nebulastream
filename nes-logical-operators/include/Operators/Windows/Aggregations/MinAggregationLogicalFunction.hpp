@@ -44,13 +44,17 @@ public:
     [[nodiscard]] DataType getAggregateType() const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] LogicalScalarFunctions getScalarFunctions() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] bool operator==(const MinAggregationLogicalFunction& other) const;
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
 private:
+    [[nodiscard]] static LogicalScalarFunctions buildScalarFunctions(const DataType& inputType, const DataType& resultType);
+
     AggregationFieldAccess inputFunction;
+    LogicalScalarFunctions scalarFunctions;
     DataType aggregateType;
     static constexpr std::string_view NAME = "Min";
 };

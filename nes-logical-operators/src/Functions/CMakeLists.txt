@@ -17,6 +17,7 @@ add_subdirectory(ComparisonFunctions)
 add_source_files(nes-logical-operators
         LogicalFunctionRegistry.cpp
         LogicalFunctionProvider.cpp
+        AggregationOperandLogicalFunction.cpp
         ConstantValueLogicalFunction.cpp
         FieldAccessLogicalFunction.cpp
         ConcatLogicalFunction.cpp
@@ -36,6 +37,7 @@ add_source_files(nes-logical-operators
 )
 
 
+add_unreflection_entry(LogicalFunction AggregationOperand)
 add_unreflection_entry(LogicalFunction ConstantValue)
 add_unreflection_entry(LogicalFunction FieldAccess)
 add_unreflection_entry(LogicalFunction Concat)
@@ -59,6 +61,7 @@ add_registry_entry(LogicalFunction CastToType)
 add_registry_entry(LogicalFunction CastToUnixTimestamp KEY CastToUnixTs)
 add_registry_entry(LogicalFunction CharLength KEY CHAR_LENGTH)
 add_registry_entry(LogicalFunction Concat)
+add_registry_entry(LogicalFunction AggregationOperand)
 add_registry_entry(LogicalFunction ConstantValue)
 add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
 add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)

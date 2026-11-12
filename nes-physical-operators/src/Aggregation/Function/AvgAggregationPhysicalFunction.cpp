@@ -24,6 +24,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
@@ -39,8 +40,17 @@ namespace NES
 {
 
 AvgAggregationPhysicalFunction::AvgAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    DataType inputType,
+    DataType resultType,
+    PhysicalFunction inputFunction,
+    Record::RecordFieldIdentifier resultFieldIdentifier,
+    PhysicalScalarFunctions scalarFunctions)
+    : AggregationPhysicalFunction(
+          std::move(inputType),
+          std::move(resultType),
+          std::move(inputFunction),
+          std::move(resultFieldIdentifier),
+          std::move(scalarFunctions))
 {
 }
 
@@ -64,7 +74,10 @@ void AvgAggregationPhysicalFunction::lift(
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
         /// Updating the sum and count: skip NULL inputs entirely
-        const auto sumPlusValue = (sum + value).castToType(resultType.type);
+        const auto sumPlusValue = applyScalarFunction(
+            AggregationScalarFunctionRoles::LIFT,
+            {{AggregationOperands::STATE, sum}, {AggregationOperands::INPUT, value}},
+            pipelineMemoryProvider.arena);
         const auto newSum = VarVal::select(value.isNull(), sum, sumPlusValue);
         const auto newCount = count + multiplicationFactor;
 
@@ -84,7 +97,10 @@ void AvgAggregationPhysicalFunction::lift(
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
         /// Updating the sum and count with the new value
-        const auto newSum = (sum + value).castToType(resultType.type);
+        const auto newSum = applyScalarFunction(
+            AggregationScalarFunctionRoles::LIFT,
+            {{AggregationOperands::STATE, sum}, {AggregationOperands::INPUT, value}},
+            pipelineMemoryProvider.arena);
         const auto newCount = count + nautilus::val<uint64_t>{1};
 
         /// Writing the new sum, and count back to the aggregation state
@@ -98,7 +114,7 @@ void AvgAggregationPhysicalFunction::combine(
     BorrowedNautilusBuffer,
     const nautilus::val<AggregationState*> aggregationState2,
     BorrowedNautilusBuffer,
-    PipelineMemoryProvider&)
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
     if (inputType.nullable)
     {
@@ -117,7 +133,10 @@ void AvgAggregationPhysicalFunction::combine(
         const auto count2 = VarVal::readNonNullableVarValFromMemory(memAreaCount2, countType);
 
         /// Combining the sum and count
-        const auto newSum = (sum1 + sum2).castToType(resultType.type);
+        const auto newSum = applyScalarFunction(
+            AggregationScalarFunctionRoles::COMBINE,
+            {{AggregationOperands::STATE, sum1}, {AggregationOperands::OTHER_STATE, sum2}},
+            pipelineMemoryProvider.arena);
         const auto newCount = count1 + count2;
 
         /// Writing the new sum, count and null back to the first aggregation state
@@ -142,7 +161,10 @@ void AvgAggregationPhysicalFunction::combine(
         const auto count2 = VarVal::readNonNullableVarValFromMemory(memAreaCount2, countType);
 
         /// Combining the sum and count
-        const auto newSum = (sum1 + sum2).castToType(resultType.type);
+        const auto newSum = applyScalarFunction(
+            AggregationScalarFunctionRoles::COMBINE,
+            {{AggregationOperands::STATE, sum1}, {AggregationOperands::OTHER_STATE, sum2}},
+            pipelineMemoryProvider.arena);
         const auto newCount = count1 + count2;
 
         /// Writing the new sum and count back to the first aggregation state
@@ -152,7 +174,7 @@ void AvgAggregationPhysicalFunction::combine(
 }
 
 Record AvgAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider& pipelineMemoryProvider)
 {
     if (inputType.nullable)
     {
@@ -172,7 +194,10 @@ Record AvgAggregationPhysicalFunction::lower(
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
         /// Calculating the average and returning a record with the result
-        const auto avg = sum / count.castToType(resultType.type);
+        const auto avg = applyScalarFunction(
+            AggregationScalarFunctionRoles::LOWER,
+            {{AggregationOperands::STATE, sum}, {AggregationOperands::COUNT, count}},
+            pipelineMemoryProvider.arena);
         return Record({{resultFieldIdentifier, avg}});
     }
 
@@ -183,7 +208,10 @@ Record AvgAggregationPhysicalFunction::lower(
     const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
     /// Calculating the average and returning a record with the result
-    const auto avg = sum / count.castToType(resultType.type);
+    const auto avg = applyScalarFunction(
+        AggregationScalarFunctionRoles::LOWER,
+        {{AggregationOperands::STATE, sum}, {AggregationOperands::COUNT, count}},
+        pipelineMemoryProvider.arena);
     return Record({{resultFieldIdentifier, avg}});
 }
 
@@ -216,7 +244,11 @@ size_t AvgAggregationPhysicalFunction::getSizeOfStateInBytes() const
 AggregationPhysicalFunctionRegistryReturnType AvgAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<AvgAggregationPhysicalFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        std::move(arguments.scalarFunctions));
 }
 
 }

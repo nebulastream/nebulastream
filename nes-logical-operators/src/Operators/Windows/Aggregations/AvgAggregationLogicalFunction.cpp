@@ -23,8 +23,11 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -46,8 +49,7 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(AggregationFieldAcc
 
 DataType AvgAggregationLogicalFunction::getAggregateType() const
 {
-    return DataTypeProvider::provideDataType(
-        finalAggregateStampType, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    return aggregateType;
 }
 
 bool AvgAggregationLogicalFunction::shallIncludeNullValues() noexcept
@@ -58,6 +60,29 @@ bool AvgAggregationLogicalFunction::shallIncludeNullValues() noexcept
 AggregationFieldAccess AvgAggregationLogicalFunction::getInputFunction() const
 {
     return inputFunction;
+}
+
+LogicalScalarFunctions AvgAggregationLogicalFunction::getScalarFunctions() const
+{
+    return scalarFunctions;
+}
+
+LogicalScalarFunctions AvgAggregationLogicalFunction::buildScalarFunctions(const DataType& inputType, const DataType& resultType)
+{
+    using namespace AggregationScalarFunctionRoles;
+    using namespace AggregationOperands;
+    const auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+    /// The running sum is kept in the result type. lift: sum = sum + input, combine: sum = sum + otherSum, lower: sum / count.
+    /// The count is deliberately not cast to the result type: a type that supports AVG has to support being divided by an
+    /// integer count, otherwise the aggregation is not supported for it.
+    return {
+        {std::string{LIFT},
+         castUnlessStruct(resultType, AddLogicalFunction{aggregationOperand(STATE, resultType), aggregationOperand(INPUT, inputType)})},
+        {std::string{COMBINE},
+         castUnlessStruct(
+             resultType, AddLogicalFunction{aggregationOperand(STATE, resultType), aggregationOperand(OTHER_STATE, resultType)})},
+        {std::string{LOWER}, DivLogicalFunction{aggregationOperand(STATE, resultType), aggregationOperand(COUNT, countType)}},
+    };
 }
 
 std::string_view AvgAggregationLogicalFunction::getName() noexcept
@@ -84,7 +109,11 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(co
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     const auto newInputFunction = inferFieldAccess(inputFunction, schema);
-    if (!newInputFunction->getDataType().isNumeric())
+    const auto& inputType = newInputFunction->getDataType();
+    /// User-defined (STRUCT) types are averaged in their own type. Whether the type supports being added and divided by the count
+    /// is verified by the type inference of the scalar functions (Add_<Type>_<Type> and Div_<Type>_UINT64 have to be provided
+    /// by the type's plugin).
+    if (!inputType.isNumeric() and inputType.type != DataType::Type::STRUCT)
     {
         throw UnsupportedQuery(
             "{} is only supported on numeric fields, but field {} has type {}",
@@ -93,7 +122,12 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(co
             magic_enum::enum_name(newInputFunction->getDataType().type));
     }
     auto newAggFunction = AvgAggregationLogicalFunction{newInputFunction};
-    newAggFunction.nullable = newInputFunction->getDataType().nullable;
+    newAggFunction.aggregateType = inputType.type == DataType::Type::STRUCT
+        ? inputType
+        : DataTypeProvider::provideDataType(
+              finalAggregateStampType, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    newAggFunction.scalarFunctions
+        = inferScalarFunctions(buildScalarFunctions(newInputFunction->getDataType(), newAggFunction.getAggregateType()), schema);
     return newAggFunction;
 }
 

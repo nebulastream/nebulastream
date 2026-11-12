@@ -67,6 +67,11 @@ AggregationFieldAccess TemporalSequenceAggregationLogicalFunction::getInputFunct
     return inputFunction;
 }
 
+LogicalScalarFunctions TemporalSequenceAggregationLogicalFunction::getScalarFunctions() const
+{
+    return scalarFunctions;
+}
+
 std::string TemporalSequenceAggregationLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Short)

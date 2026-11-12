@@ -105,13 +105,25 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto resultFieldIdentifier = descriptor.name;
         auto name = descriptor.function->getName();
 
+        /// The scalar functions the aggregation uses internally (lift, combine, ...) were type-checked on the logical side and are
+        /// lowered here like any other function. Their operands are AggregationOperand leaves, so no field mapping is involved.
+        PhysicalScalarFunctions scalarFunctions;
+        for (const auto& [role, logicalScalarFunction] : descriptor.function.getScalarFunctions())
+        {
+            scalarFunctions.emplace(
+                role,
+                QueryCompilation::FunctionProvider::lowerFunction(
+                    logicalScalarFunction, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>()));
+        }
+
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
             std::move(physicalInputType),
             std::move(physicalFinalType),
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
             tupleLayout,
-            descriptor.function.shallIncludeNullValues());
+            descriptor.function.shallIncludeNullValues(),
+            std::move(scalarFunctions));
         if (const auto aggregationFactory = AggregationPhysicalFunctionRegistry::instance().find(std::string{name}))
         {
             aggregationPhysicalFunctions.push_back((*aggregationFactory)(std::move(aggregationArguments)));

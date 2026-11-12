@@ -65,6 +65,11 @@ AggregationFieldAccess CountAggregationLogicalFunction::getInputFunction() const
     return inputFunction;
 }
 
+LogicalScalarFunctions CountAggregationLogicalFunction::getScalarFunctions() const
+{
+    return scalarFunctions;
+}
+
 std::string CountAggregationLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Short)

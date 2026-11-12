@@ -22,8 +22,10 @@
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -69,6 +71,24 @@ AggregationFieldAccess MinAggregationLogicalFunction::getInputFunction() const
     return inputFunction;
 }
 
+LogicalScalarFunctions MinAggregationLogicalFunction::getScalarFunctions() const
+{
+    return scalarFunctions;
+}
+
+LogicalScalarFunctions MinAggregationLogicalFunction::buildScalarFunctions(const DataType& inputType, const DataType& resultType)
+{
+    /// lift: input < state (adopt the input if true), combine: state < otherState (keep the state if true)
+    return {
+        {std::string{AggregationScalarFunctionRoles::LIFT},
+         LessLogicalFunction{
+             aggregationOperand(AggregationOperands::INPUT, inputType), aggregationOperand(AggregationOperands::STATE, resultType)}},
+        {std::string{AggregationScalarFunctionRoles::COMBINE},
+         LessLogicalFunction{
+             aggregationOperand(AggregationOperands::STATE, resultType), aggregationOperand(AggregationOperands::OTHER_STATE, resultType)}},
+    };
+}
+
 std::string MinAggregationLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Short)
@@ -95,7 +115,10 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredType(co
             newInputFunction->getField().getLastName(),
             magic_enum::enum_name(newInputFunction->getDataType().type));
     }
-    return MinAggregationLogicalFunction{newInputFunction, newInputFunction->getDataType()};
+    auto inferred = MinAggregationLogicalFunction{newInputFunction, newInputFunction->getDataType()};
+    inferred.scalarFunctions
+        = inferScalarFunctions(buildScalarFunctions(newInputFunction->getDataType(), newInputFunction->getDataType()), schema);
+    return inferred;
 }
 
 Reflected

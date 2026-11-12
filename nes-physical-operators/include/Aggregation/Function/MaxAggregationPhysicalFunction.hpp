@@ -34,7 +34,11 @@ class MaxAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     MaxAggregationPhysicalFunction(
-        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+        DataType inputType,
+        DataType resultType,
+        PhysicalFunction inputFunction,
+        Record::RecordFieldIdentifier resultFieldIdentifier,
+        PhysicalScalarFunctions scalarFunctions);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer,

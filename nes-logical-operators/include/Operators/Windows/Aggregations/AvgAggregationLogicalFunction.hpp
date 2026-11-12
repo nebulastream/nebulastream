@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -37,6 +38,7 @@ public:
     explicit AvgAggregationLogicalFunction(AggregationFieldAccess inputFunction);
 
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] LogicalScalarFunctions getScalarFunctions() const;
     [[nodiscard]] AvgAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] static std::string_view getName() noexcept;
     [[nodiscard]] DataType getAggregateType() const;
@@ -47,10 +49,14 @@ public:
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
 private:
-    AggregationFieldAccess inputFunction;
-    bool nullable{};
-    static constexpr std::string_view NAME = "Avg";
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
+    [[nodiscard]] static LogicalScalarFunctions buildScalarFunctions(const DataType& inputType, const DataType& resultType);
+
+    AggregationFieldAccess inputFunction;
+    LogicalScalarFunctions scalarFunctions;
+    /// FLOAT64 for numeric inputs; a user-defined (STRUCT) type is averaged in its own type.
+    DataType aggregateType{finalAggregateStampType, DataType::NULLABLE::NOT_NULLABLE};
+    static constexpr std::string_view NAME = "Avg";
 };
 
 template <>

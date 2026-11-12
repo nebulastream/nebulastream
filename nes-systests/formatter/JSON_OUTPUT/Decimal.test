@@ -21,6 +21,16 @@ ATTACH INLINE
 3,7,0.5
 4,12.75,3
 
+CREATE LOGICAL SOURCE sales(id UINT64 NOT NULL, ts UINT64 NOT NULL, price Decimal NOT NULL);
+CREATE PHYSICAL SOURCE FOR sales TYPE File;
+ATTACH INLINE
+1,1,10.50
+2,2,2.25
+3,3,199.99
+4,11,0.01
+5,12,42
+6,21,3.14159
+
 CREATE LOGICAL SOURCE pricesJson(id UINT64 NOT NULL, price Decimal NOT NULL, tax Decimal NOT NULL);
 CREATE PHYSICAL SOURCE FOR pricesJson TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
 ATTACH INLINE
@@ -103,3 +113,11 @@ SELECT * FROM prices INTO FILE();
 2,199.99,0.01
 3,3.14159,1.00001
 4,42,8
+
+# SUM over a Decimal column: the aggregation state is a Decimal starting at 0 (scale 0) and the plugin's Add_Decimal_Decimal
+# is used for lift and combine, so operands with a smaller scale are upscaled before adding
+SELECT start, end, SUM(price) AS total FROM sales WINDOW TUMBLING(ts, size 10 ms) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"START":0,"END":10,"TOTAL":212.74}
+{"START":10,"END":20,"TOTAL":42.01}
+{"START":20,"END":30,"TOTAL":3.14159}

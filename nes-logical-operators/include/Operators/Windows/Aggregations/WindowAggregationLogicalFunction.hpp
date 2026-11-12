@@ -21,6 +21,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 
@@ -28,6 +29,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -51,6 +53,7 @@ using WindowAggregationLogicalFunction = TypedWindowAggregationLogicalFunction<>
 
 using AggregationFieldAccess
     = std::variant<TypedLogicalFunction<FieldAccessLogicalFunction>, TypedLogicalFunction<UnboundFieldAccessLogicalFunction>>;
+
 /// Concept defining the interface for all logical operators in the query plan.
 /// This concept defines the common interface that all logical operators must implement.
 /// Logical operators represent operations in the query plan and are used during query
@@ -67,6 +70,10 @@ concept WindowAggregationFunctionConcept = requires(
     { thisFunction.getAggregateType() } -> std::convertible_to<DataType>;
 
     { thisFunction.getInputFunction() } -> std::convertible_to<AggregationFieldAccess>;
+
+    /// The scalar functions (lift, combine, ...) this aggregation needs, see AggregationScalarFunctionRoles.
+    /// Only populated after withInferredType, as the operand types are not known before.
+    { thisFunction.getScalarFunctions() } -> std::convertible_to<LogicalScalarFunctions>;
 
     { thisFunction.explain(verbosity) } -> std::convertible_to<std::string>;
 
@@ -97,6 +104,7 @@ struct ErasedWindowAggregationFunction
     [[nodiscard]] virtual bool equals(const ErasedWindowAggregationFunction& other) const = 0;
     [[nodiscard]] virtual DataType getAggregateType() const = 0;
     [[nodiscard]] virtual AggregationFieldAccess getInputFunction() const = 0;
+    [[nodiscard]] virtual LogicalScalarFunctions getScalarFunctions() const = 0;
 
     [[nodiscard]] virtual bool shallIncludeNullValues() const noexcept = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const = 0;
@@ -278,6 +286,8 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] AggregationFieldAccess getInputFunction() const { return self->getInputFunction(); }
 
+    [[nodiscard]] LogicalScalarFunctions getScalarFunctions() const { return self->getScalarFunctions(); }
+
     [[nodiscard]] bool operator==(const TypedWindowAggregationLogicalFunction& other) const { return self->equals(*other.self); }
 
 private:
@@ -316,6 +326,8 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
     [[nodiscard]] DataType getAggregateType() const override { return impl.getAggregateType(); }
 
     [[nodiscard]] AggregationFieldAccess getInputFunction() const override { return impl.getInputFunction(); }
+
+    [[nodiscard]] LogicalScalarFunctions getScalarFunctions() const override { return impl.getScalarFunctions(); }
 
     [[nodiscard]] bool equals(const ErasedWindowAggregationFunction& other) const override
     {

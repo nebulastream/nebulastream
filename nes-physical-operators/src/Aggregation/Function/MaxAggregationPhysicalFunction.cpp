@@ -24,6 +24,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Operators/Windows/Aggregations/AggregationScalarFunctions.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
@@ -36,8 +37,17 @@ namespace NES
 {
 
 MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    DataType inputType,
+    DataType resultType,
+    PhysicalFunction inputFunction,
+    Record::RecordFieldIdentifier resultFieldIdentifier,
+    PhysicalScalarFunctions scalarFunctions)
+    : AggregationPhysicalFunction(
+          std::move(inputType),
+          std::move(resultType),
+          std::move(inputFunction),
+          std::move(resultFieldIdentifier),
+          std::move(scalarFunctions))
 {
 }
 
@@ -56,7 +66,14 @@ void MaxAggregationPhysicalFunction::lift(
         const auto max = VarVal::readNonNullableVarValFromMemory(memAreaMax, inputType);
 
         /// Updating the max value with the new value, if the new value is smaller
-        const auto newMax = VarVal::select((value > max).getRawValueAs<nautilus::val<bool>>(), value, max);
+        const auto newMax = VarVal::select(
+            applyScalarFunction(
+                AggregationScalarFunctionRoles::LIFT,
+                {{AggregationOperands::INPUT, value}, {AggregationOperands::STATE, max}},
+                pipelineMemoryProvider.arena)
+                .getRawValueAs<nautilus::val<bool>>(),
+            value,
+            max);
         newMax.writeToMemory(memAreaMax);
     }
     else
@@ -68,7 +85,13 @@ void MaxAggregationPhysicalFunction::lift(
 
         /// SQL-standard: skip NULL inputs
         const auto valueIsNotNull = not value.isNull();
-        const auto adoptValue = valueIsNotNull and (isNull or (value > max).getRawValueAs<nautilus::val<bool>>());
+        const auto adoptValue = valueIsNotNull
+            and (isNull
+                 or applyScalarFunction(
+                        AggregationScalarFunctionRoles::LIFT,
+                        {{AggregationOperands::INPUT, value}, {AggregationOperands::STATE, max}},
+                        pipelineMemoryProvider.arena)
+                        .getRawValueAs<nautilus::val<bool>>());
         const auto newMax = VarVal::select(adoptValue, value, max);
         newMax.writeToMemory(memAreaMax);
 
@@ -83,7 +106,7 @@ void MaxAggregationPhysicalFunction::combine(
     BorrowedNautilusBuffer,
     const nautilus::val<AggregationState*> aggregationState2,
     BorrowedNautilusBuffer,
-    PipelineMemoryProvider&)
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
     if (not inputType.nullable)
     {
@@ -94,7 +117,14 @@ void MaxAggregationPhysicalFunction::combine(
         const auto max2 = VarVal::readNonNullableVarValFromMemory(memAreaMax2, inputType);
 
         /// Updating the max value with the new value, if the new value is smaller
-        const auto newMax = VarVal::select((max1 > max2).getRawValueAs<nautilus::val<bool>>(), max1, max2);
+        const auto newMax = VarVal::select(
+            applyScalarFunction(
+                AggregationScalarFunctionRoles::COMBINE,
+                {{AggregationOperands::STATE, max1}, {AggregationOperands::OTHER_STATE, max2}},
+                pipelineMemoryProvider.arena)
+                .getRawValueAs<nautilus::val<bool>>(),
+            max1,
+            max2);
         newMax.writeToMemory(memAreaMax1);
     }
     else
@@ -112,7 +142,14 @@ void MaxAggregationPhysicalFunction::combine(
         storeNull(aggregationState1, newIsNull);
 
         /// If state1 is empty take max2, if state2 is empty take max1, otherwise take the pairwise max
-        const auto max1OrMax2 = VarVal::select((max1 > max2).getRawValueAs<nautilus::val<bool>>(), max1, max2);
+        const auto max1OrMax2 = VarVal::select(
+            applyScalarFunction(
+                AggregationScalarFunctionRoles::COMBINE,
+                {{AggregationOperands::STATE, max1}, {AggregationOperands::OTHER_STATE, max2}},
+                pipelineMemoryProvider.arena)
+                .getRawValueAs<nautilus::val<bool>>(),
+            max1,
+            max2);
         const auto newMax = VarVal::select(isNull1, max2, VarVal::select(isNull2, max1, max1OrMax2));
         newMax.writeToMemory(memAreaMax1);
     }
@@ -172,7 +209,11 @@ size_t MaxAggregationPhysicalFunction::getSizeOfStateInBytes() const
 AggregationPhysicalFunctionRegistryReturnType MaxAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<MaxAggregationPhysicalFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        std::move(arguments.scalarFunctions));
 }
 
 }
