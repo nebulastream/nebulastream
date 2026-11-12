@@ -76,7 +76,7 @@ def chain(udf):
 
 
 # --wide k: the input udf/wide_<k>.bin of make_native_inputs.sh, whose rows have id and k more INT64 fields from the source
-WIDE = {3: 480e6, 9: 240e6, 21: 120e6}
+WIDE = {3: 480e6, 7: 240e6, 15: 120e6, 31: 60e6}
 
 
 def write_test(path, input_format, udf, input_file, source_on_performance_cpu, sources, unused=0, unused_after=False, wide=0):

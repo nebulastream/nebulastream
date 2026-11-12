@@ -33,8 +33,9 @@ C
 for spec in 60000000:60m 480000000:480m 1920000000:1920m; do
     numactl --membind=0 "$generator" "${spec%:*}" "$data/udf/ids_${spec#*:}.bin"
 done
-# Wide rows for --wide of run_experiment.py: id and 3, 9 or 21 more INT64 fields that no UDF reads
-for spec in 3:480000000 9:240000000 21:120000000; do
+# Wide rows for --wide of run_experiment.py: id and 3, 7, 15 or 31 more INT64 fields that no UDF reads. The NATIVE format needs a
+# row size that divides the buffer size, so the rows have 32, 64, 128 and 256 bytes.
+for spec in 3:480000000 7:240000000 15:120000000 31:60000000; do
     numactl --membind=0 "$generator" "${spec#*:}" "$data/udf/wide_${spec%:*}.bin" $(( ${spec%:*} + 1 ))
 done
 ls -la "$data/udf"
