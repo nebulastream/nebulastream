@@ -28,6 +28,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/PendingQueryStarts.hpp>
 
 #include <Util/DumpMode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -115,9 +116,11 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
             NES_INFO("Query {} was already accepted, ignoring the repeated start", plan.getQueryId());
             return plan.getQueryId();
         }
+        pendingStarts.add(plan.getQueryId());
         /// A query that could not be compiled or handed to the engine was never started, so a later start may try again.
         SCOPE_FAIL
         {
+            pendingStarts.remove(plan.getQueryId());
             nodeEngine->getQueryLog()->removeQuery(plan.getQueryId());
         };
 
@@ -129,7 +132,13 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         request->dumpCompilationResult = dumpMode;
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
-        nodeEngine->startQuery(plan.getQueryId(), std::move(result));
+        const bool handedOver
+            = pendingStarts.finish(plan.getQueryId(), [&] { nodeEngine->startQuery(plan.getQueryId(), std::move(result)); });
+        if (not handedOver)
+        {
+            NES_INFO("Query {} was stopped during compilation and is not started", plan.getQueryId());
+            nodeEngine->getQueryLog()->logQueryStatusChange(plan.getQueryId(), QueryStatus::Stopped, std::chrono::system_clock::now());
+        }
         return plan.getQueryId();
     }
     CPPTRACE_CATCH(...)
@@ -144,6 +153,17 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noex
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+        /// The engine ignores a stop for a query that it does not know.
+        /// A start that has not reached this worker yet would take effect afterwards, so the caller has to learn that nothing was stopped.
+        if (not nodeEngine->getQueryLog()->getQueryStatus(queryId).has_value())
+        {
+            return std::unexpected{QueryNotFound("{}", queryId)};
+        }
+        if (pendingStarts.stop(queryId))
+        {
+            NES_INFO("Query {} is stopped during compilation", queryId);
+            return {};
+        }
         nodeEngine->stopQuery(queryId);
         return {};
     }

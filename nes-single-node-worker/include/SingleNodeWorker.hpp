@@ -23,6 +23,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/PendingQueryStarts.hpp>
 
 #include <Util/Pointers.hpp>
 #include <CompositeStatisticListener.hpp>
@@ -49,6 +50,7 @@ class SingleNodeWorker
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
+    PendingQueryStarts pendingStarts;
 
 public:
     explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&, const Host& = Host("SingleNodeWorker"));
@@ -69,6 +71,8 @@ public:
     [[nodiscard]] std::expected<QueryId, Exception> startQuery(LogicalPlan plan) noexcept;
 
     /// Stops the Query and moves it into the StoppedState.
+    /// A query that was accepted and is still being compiled is not started.
+    /// Fails with QueryNotFound for a query that was never accepted, so the caller can tell this apart from a stop that took effect.
     /// @param queryId identifies the registered query
     std::expected<void, Exception> stopQuery(QueryId queryId) noexcept;
 
