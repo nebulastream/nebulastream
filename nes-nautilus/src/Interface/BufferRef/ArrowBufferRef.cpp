@@ -16,8 +16,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <optional>
@@ -48,19 +46,8 @@ namespace NES
 
 ArrowBufferRef::ArrowBufferRef(
     std::vector<Field> fields, const uint64_t headerSize, const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
-    : TupleBufferRef(capacity, bufferSize, tupleSize)
-    , fields(std::move(fields))
-    , headerSize(headerSize)
-    , staticRead(std::getenv("NES_ARROW_STATIC_READ") != nullptr) /// NOLINT(concurrency-mt-unsafe)
-{    if (std::getenv("NES_ARROW_DEBUG") != nullptr) /// NOLINT(concurrency-mt-unsafe)
-    {
-        size_t eligible = 0;
-        for (const auto& field : this->fields)
-        {
-            eligible += (not field.type.nullable && field.type.type != DataType::Type::BOOLEAN && field.type.type != DataType::Type::VARSIZED) ? 1 : 0;
-        }
-        std::fprintf(stderr, "ArrowBufferRef: %zu fields, %zu fixed-size and not nullable, static read %d\n", this->fields.size(), eligible, staticRead ? 1 : 0);
-    }
+    : TupleBufferRef(capacity, bufferSize, tupleSize), fields(std::move(fields)), headerSize(headerSize)
+{
 }
 
 namespace
@@ -257,16 +244,6 @@ Record ArrowBufferRef::readRecord(
             {
                 isNull = !readBit(locate(buffer, offset), recordIndex);
             }
-        }
-
-        /// Experiment (NES_ARROW_STATIC_READ=1): a fixed-size field that is not nullable is where this layout writes it, so the
-        /// scan does not read its location from the header for every record. Only valid for buffers that this layout wrote.
-        if (staticRead && not field.type.nullable && field.type.type != DataType::Type::BOOLEAN && field.type.type != DataType::Type::VARSIZED)
-        {
-            const auto slot
-                = bufferAddress + ((recordIndex * nautilus::val<uint64_t>{field.type.getSizeInBytesWithoutNull()}) + field.dataOffset);
-            record.write(field.name, VarVal::readVarValFromMemory(slot, field.type, isNull));
-            continue;
         }
 
         const auto [dataBuffer, dataOffset] = readLocation(i, Region::DATA);
