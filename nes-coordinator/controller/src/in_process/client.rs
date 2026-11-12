@@ -56,13 +56,17 @@ where
 }
 
 /// A worker in this process either answers or fails for good.
-/// The one code that means state rather than failure is an unknown id:
-/// the status log is append-only and gets its first entry before any work is queued,
+/// Two codes mean state, not failure.
+/// An unknown id: the status log is append-only and gets its first entry before any work is queued,
 /// so an unknown id was never started there.
+/// A known id on start: the worker accepted an earlier start of the same fragment.
 fn classify(error: QueryFragmentError) -> CallError {
     match &error {
         QueryFragmentError::Internal(coded) if coded.code == ErrorCode::QueryNotFound => {
             CallError::NotFound
+        }
+        QueryFragmentError::Internal(coded) if coded.code == ErrorCode::QueryAlreadyRegistered => {
+            CallError::AlreadyExists
         }
         _ => CallError::Failed(error),
     }

@@ -51,6 +51,13 @@ impl WorkerTaskError {
             Self::Connection { .. } => false,
         }
     }
+
+    pub(crate) fn is_already_exists(&self) -> bool {
+        match self {
+            Self::Grpc { status, .. } => status.code() == tonic::Code::AlreadyExists,
+            Self::Connection { .. } => false,
+        }
+    }
 }
 
 /// gRPC status codes worth retrying:
@@ -165,6 +172,13 @@ mod tests {
         assert!(grpc(tonic::Status::not_found("gone")).is_not_found());
         assert!(grpc(with_code(ErrorCode::QueryNotFound)).is_not_found());
         assert!(!grpc(tonic::Status::internal("bug")).is_not_found());
+    }
+
+    #[test]
+    fn only_the_already_exists_status_counts_as_already_exists() {
+        assert!(grpc(tonic::Status::already_exists("known id")).is_already_exists());
+        assert!(!grpc(tonic::Status::internal("bug")).is_already_exists());
+        assert!(!grpc(tonic::Status::not_found("gone")).is_already_exists());
     }
 
     #[test]

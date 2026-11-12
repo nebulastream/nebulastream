@@ -138,7 +138,9 @@ impl RetryBudget {
 pub(super) struct QueryFragmentLifecycle {
     curr_state: QueryFragmentState,
     des_state: DesiredQueryFragmentState,
-    stop_taken: bool,
+    /// A stop was sent and no status has been read since.
+    /// A status read clears it, so a fragment that is still reported live gets the stop again after the poll wait.
+    stop_sent: bool,
     budget: RetryBudget,
     poll_interval: Duration,
     wait_due: Duration,
@@ -150,7 +152,7 @@ impl QueryFragmentLifecycle {
         Self {
             curr_state: row.current_state,
             des_state: row.desired_state,
-            stop_taken: false,
+            stop_sent: false,
             budget: RetryBudget::new(),
             poll_interval,
             wait_due: Duration::ZERO,
@@ -178,7 +180,7 @@ impl QueryFragmentLifecycle {
                 WorkerCall::Start
             }
             (DesiredQueryFragmentState::Completed, _) => WorkerCall::Status,
-            (DesiredQueryFragmentState::Stopped, _) if self.stop_taken => WorkerCall::Status,
+            (DesiredQueryFragmentState::Stopped, _) if self.stop_sent => WorkerCall::Status,
             (DesiredQueryFragmentState::Stopped, _) => WorkerCall::Stop,
         };
         LifecycleAction::Call(call)
@@ -199,6 +201,7 @@ impl QueryFragmentLifecycle {
             }
             WorkerRpcOutcome::Status(status) => {
                 self.budget.reset();
+                self.stop_sent = false;
                 let transition = status_to_transition(status, self.des_state, now);
                 if state_of(&transition) != self.curr_state {
                     LifecycleStep::observed(Some(transition))
@@ -210,7 +213,7 @@ impl QueryFragmentLifecycle {
             }
             WorkerRpcOutcome::Accepted => {
                 self.budget.reset();
-                self.stop_taken = true;
+                self.stop_sent = true;
                 LifecycleStep::observed(None)
             }
             // The query_fragment failed in an unrecoverable way,
@@ -237,11 +240,7 @@ impl QueryFragmentLifecycle {
             self.curr_state,
             QueryFragmentState::Started | QueryFragmentState::Running
         );
-        let polling = match self.des_state {
-            DesiredQueryFragmentState::Completed => live,
-            DesiredQueryFragmentState::Stopped => self.stop_taken,
-        };
-        self.wait_due = if call == WorkerCall::Status && polling && step.retry_wait.is_none() {
+        self.wait_due = if call == WorkerCall::Status && live && step.retry_wait.is_none() {
             self.poll_interval
         } else {
             Duration::ZERO
@@ -281,8 +280,18 @@ fn outcome(
         // Started rather than Running: the worker has only accepted the query_fragment at this point,
         // and the state machine advances a pending query_fragment to started before anything else.
         // The status read promotes it once the worker reports that it is producing.
-        WorkerReply::Start(Ok(())) => {
+        // An already accepted start means that an earlier start reached the worker, although its reply did not reach the controller.
+        // Starting again cannot succeed, so the query_fragment counts as started in that case too.
+        WorkerReply::Start(Ok(()) | Err(CallError::AlreadyExists)) => {
             WorkerRpcOutcome::Transition(QueryFragmentTransition::Started)
+        }
+        // Only a start can find the id already accepted, so a working worker never sends this reply to a stop or a status read.
+        WorkerReply::Stop(Err(CallError::AlreadyExists))
+        | WorkerReply::Status(Err(CallError::AlreadyExists)) => {
+            WorkerRpcOutcome::Failed(QueryFragmentError::Internal(CodedError::new(
+                ErrorCode::QueryAlreadyRegistered,
+                "worker reported the fragment as already registered outside a start",
+            )))
         }
         // A start has nothing to look up, so a working worker never sends this reply.
         // Fail the fragment, because repeating the call would loop without a limit.
@@ -503,6 +512,22 @@ mod tests {
     }
 
     #[test]
+    fn a_start_that_the_worker_already_accepted_is_followed_by_an_observation() {
+        let mut lifecycle = lifecycle(Pending, WantCompleted);
+        let step = apply(
+            &mut lifecycle,
+            WorkerReply::Start(Err(CallError::AlreadyExists)),
+        );
+        assert!(matches!(
+            step.transition,
+            Some(QueryFragmentTransition::Started)
+        ));
+        assert!(step.observed);
+        assert!(step.retry_wait.is_none());
+        assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
+    }
+
+    #[test]
     fn a_start_of_a_fragment_the_worker_does_not_know_fails_it() {
         let mut lifecycle = lifecycle(Pending, WantCompleted);
         let step = apply(&mut lifecycle, WorkerReply::Start(Err(CallError::NotFound)));
@@ -643,18 +668,19 @@ mod tests {
     }
 
     #[test]
-    fn an_accepted_stop_drains_the_fragment_with_polls_in_between() {
-        let mut lifecycle = lifecycle(Running, WantStopped);
+    fn an_accepted_stop_is_sent_again_while_the_fragment_is_reported_live() {
+        let mut lifecycle = lifecycle(Started, WantStopped);
         let step = apply(&mut lifecycle, WorkerReply::Stop(Ok(())));
         assert!(step.transition.is_none());
         assert!(step.observed);
         assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
-        apply(
-            &mut lifecycle,
-            WorkerReply::Status(Ok(raw(Running, Some(1), None))),
-        );
-        assert_eq!(lifecycle.next(), LifecycleAction::Wait(POLL));
-        assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
+        for live in [raw(Started, None, None), raw(Running, Some(1), None)] {
+            apply(&mut lifecycle, WorkerReply::Status(Ok(live)));
+            assert_eq!(lifecycle.next(), LifecycleAction::Wait(POLL));
+            assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Stop));
+            apply(&mut lifecycle, WorkerReply::Stop(Ok(())));
+            assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
+        }
         let step = apply(
             &mut lifecycle,
             WorkerReply::Status(Ok(raw(Completed, Some(1), Some(2)))),
