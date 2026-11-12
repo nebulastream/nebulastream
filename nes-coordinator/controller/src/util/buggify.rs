@@ -13,8 +13,6 @@
 */
 
 //! Fault-injection points for the madsim simulation.
-//! The function returns the simulator's buggify predicate under `cfg(madsim)`
-//! and false otherwise, so the guarded code never runs in normal builds.
 
 #[cfg(madsim)]
 pub(crate) fn buggify() -> bool {

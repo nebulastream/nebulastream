@@ -39,12 +39,7 @@ pub async fn worker_versions(
             .collect();
     }
 
-    join_all(
-        workers
-            .into_iter()
-            .map(|worker| async move { worker_version(worker.host_addr).await }),
-    )
-    .await
+    join_all(workers.into_iter().map(|w| worker_version(w.host_addr))).await
 }
 
 async fn worker_version(addr: NetworkAddr) -> WorkerVersion {
