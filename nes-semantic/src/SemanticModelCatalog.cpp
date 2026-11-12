@@ -78,6 +78,8 @@ struct
     std::optional<std::vector<std::string>> imageFields;
     std::optional<std::string> imageRoot;
     std::optional<int64_t> imageMaxBytes;
+    /// Only written for 'BASE64'.
+    std::optional<std::string> imageEncoding;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -189,6 +191,10 @@ void validateImageFields(const std::string& name, const SemanticModelConfig& con
 {
     if (config.imageFields.empty())
     {
+        if (config.imageEncoding != ImageEncoding::Path)
+        {
+            throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_ENCODING requires LLM.IMAGE_FIELDS", name);
+        }
         return;
     }
     for (const auto& field : config.imageFields)
@@ -228,6 +234,12 @@ void validateImageFields(const std::string& name, const SemanticModelConfig& con
     if (config.imageMaxBytes == 0)
     {
         throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_MAX_BYTES must be at least 1", name);
+    }
+    /// No file is read in base64 mode, so a root would do nothing; the catalog rejects options that do nothing.
+    if (config.imageEncoding == ImageEncoding::Base64 && !config.imageRoot.empty())
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': LLM.IMAGE_ROOT does nothing with LLM.IMAGE_ENCODING 'BASE64' (no file is read); remove it", name);
     }
 }
 
@@ -487,6 +499,8 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .imageFields = std::make_optional(config.imageFields),
             .imageRoot = std::make_optional(config.imageRoot),
             .imageMaxBytes = std::make_optional(static_cast<int64_t>(config.imageMaxBytes)),
+            .imageEncoding = config.imageEncoding == ImageEncoding::Path ? std::nullopt
+                                                                         : std::optional{std::string{imageEncodingName(config.imageEncoding)}},
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -533,7 +547,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .keyed = reflected.keyed ? std::optional{decodeSemanticKeyedConfig(*reflected.keyed)} : std::nullopt,
         .imageFields = std::move(reflected.imageFields).value_or(std::vector<std::string>{}),
         .imageRoot = std::move(reflected.imageRoot).value_or(""),
-        .imageMaxBytes = static_cast<size_t>(reflected.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes)))};
+        .imageMaxBytes = static_cast<size_t>(reflected.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes))),
+        .imageEncoding = parseImageEncoding(reflected.imageEncoding.value_or("PATH")).value_or(ImageEncoding::Path)};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

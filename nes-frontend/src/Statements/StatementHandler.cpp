@@ -423,6 +423,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"IMAGE_FIELDS"},
     std::string_view{"IMAGE_ROOT"},
     std::string_view{"IMAGE_MAX_BYTES"},
+    std::string_view{"IMAGE_ENCODING"},
 };
 
 /// Options only a SEM_SCAN or SEM_WINDOW model reads.
@@ -673,7 +674,7 @@ std::vector<std::string> bindImageFields(const CreateSemanticModelStatement& sta
     }
     if (fields.empty())
     {
-        for (const auto option : {std::string_view{"IMAGE_ROOT"}, std::string_view{"IMAGE_MAX_BYTES"}})
+        for (const auto option : {std::string_view{"IMAGE_ROOT"}, std::string_view{"IMAGE_MAX_BYTES"}, std::string_view{"IMAGE_ENCODING"}})
         {
             if (findOption(statement.config, option) != nullptr)
             {
@@ -682,6 +683,17 @@ std::vector<std::string> bindImageFields(const CreateSemanticModelStatement& sta
         }
     }
     return fields;
+}
+
+/// `LLM.IMAGE_ENCODING`: 'PATH' (default) or 'BASE64'.
+ImageEncoding bindImageEncoding(const CreateSemanticModelStatement& statement)
+{
+    const auto name = optionalOption(statement.config, "IMAGE_ENCODING", "PATH");
+    if (const auto encoding = parseImageEncoding(name))
+    {
+        return *encoding;
+    }
+    throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_ENCODING must be 'PATH' or 'BASE64', not '{}'", statement.name, name);
 }
 
 /// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
@@ -718,7 +730,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .keyed = std::move(keyed),
         .imageFields = bindImageFields(statement),
         .imageRoot = optionalOption(statement.config, "IMAGE_ROOT", ""),
-        .imageMaxBytes = numericOption(statement.config, "IMAGE_MAX_BYTES", DefaultImageMaxBytes, MaxImageBytes)};
+        .imageMaxBytes = numericOption(statement.config, "IMAGE_MAX_BYTES", DefaultImageMaxBytes, MaxImageBytes),
+        .imageEncoding = bindImageEncoding(statement)};
 }
 
 }

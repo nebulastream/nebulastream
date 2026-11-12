@@ -101,6 +101,8 @@ struct EncodedPayload
     std::optional<std::vector<std::string>> imageFields;
     std::optional<std::string> imageRoot;
     std::optional<int64_t> imageMaxBytes;
+    /// Only written for 'BASE64', so path models keep their payload.
+    std::optional<std::string> imageEncoding;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -207,7 +209,9 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
             = config.sharedConcurrency > 0 ? std::optional{static_cast<int64_t>(config.sharedConcurrency)} : std::nullopt,
             .imageFields = config.imageFields.empty() ? std::nullopt : std::optional{config.imageFields},
             .imageRoot = config.imageFields.empty() ? std::nullopt : std::optional{config.imageRoot},
-            .imageMaxBytes = config.imageFields.empty() ? std::nullopt : std::optional{static_cast<int64_t>(config.imageMaxBytes)}});
+            .imageMaxBytes = config.imageFields.empty() ? std::nullopt : std::optional{static_cast<int64_t>(config.imageMaxBytes)},
+            .imageEncoding = config.imageEncoding == ImageEncoding::Path ? std::nullopt
+                                                                         : std::optional{std::string{imageEncodingName(config.imageEncoding)}}});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -256,7 +260,8 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
             .keyed = value.keyed ? std::optional{decodeKeyed(std::move(*value.keyed))} : std::nullopt,
             .imageFields = std::move(value.imageFields).value_or(std::vector<std::string>{}),
             .imageRoot = std::move(value.imageRoot).value_or(""),
-            .imageMaxBytes = static_cast<size_t>(std::max<int64_t>(1, value.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes))))},
+            .imageMaxBytes = static_cast<size_t>(std::max<int64_t>(1, value.imageMaxBytes.value_or(static_cast<int64_t>(DefaultImageMaxBytes)))),
+            .imageEncoding = parseImageEncoding(value.imageEncoding.value_or("PATH")).value_or(ImageEncoding::Path)},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),

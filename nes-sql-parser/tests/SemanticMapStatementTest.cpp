@@ -550,6 +550,23 @@ TEST_F(SemanticMapStatementTest, ImageFieldsNameInputFields)
         "'scan' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND, 'SCAN' AS LLM.KIND, 'k' AS LLM.KEY_BY, 'image' AS "
         "LLM.IMAGE_FIELDS)",
         "SEM_MAP and SEM_FILTER models only");
+    rejectedWith(withOptions("o VARSIZED", ", 'BASE64' AS LLM.IMAGE_ENCODING"), "requires LLM.IMAGE_FIELDS");
+    rejectedWith(withOptions("o VARSIZED", ", 'reviewText' AS LLM.IMAGE_FIELDS, 'URL' AS LLM.IMAGE_ENCODING"), "must be 'PATH' or 'BASE64'");
+    rejectedWith(
+        withOptions("o VARSIZED", ", 'reviewText' AS LLM.IMAGE_FIELDS, 'BASE64' AS LLM.IMAGE_ENCODING, '/data' AS LLM.IMAGE_ROOT"),
+        "does nothing with LLM.IMAGE_ENCODING 'BASE64'");
+}
+
+TEST_F(SemanticMapStatementTest, ImageFieldsInBase64)
+{
+    const auto result = create(
+        "CREATE SEM_MODEL pets INPUT (image VARSIZED) OUTPUT (label VARSIZED) SET ('Cat or dog?' AS LLM.PROMPT, 'http://x' AS "
+        "LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'ASYNC' AS LLM.EXECUTION, 'image' AS LLM.IMAGE_FIELDS, 'base64' AS LLM.IMAGE_ENCODING)");
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    const auto config = semanticModelCatalog->load("PETS").getConfig();
+    EXPECT_EQ(config.imageEncoding, ImageEncoding::Base64);
+    EXPECT_EQ(config.imageFields, std::vector<std::string>{"IMAGE"});
+    semanticModelCatalog->removeModel("PETS");
 }
 
 }

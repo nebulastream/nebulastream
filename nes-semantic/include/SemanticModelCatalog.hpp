@@ -174,6 +174,8 @@ struct SemanticModelConfig
     std::string imageRoot;
     /// `LLM.IMAGE_MAX_BYTES`: a larger file is not sent; its row gets the default value.
     size_t imageMaxBytes = DefaultImageMaxBytes;
+    /// `LLM.IMAGE_ENCODING`: the image fields hold file paths (default) or the image bytes in base64.
+    ImageEncoding imageEncoding = ImageEncoding::Path;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

@@ -310,14 +310,17 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
         const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
         co_return AsyncCallResult{joinCodec->parse(answer, pairs).front() ? "true" : "false"};
     }
-    /// LLM.IMAGE_FIELDS: the file is read here, on the event loop. Images of 20-100 KB come from the page cache in tens of
-    /// microseconds; an asynchronous file read would be a framework feature (docs/technical/semantic_images.md).
+    /// LLM.IMAGE_FIELDS: with 'PATH' the file is read here, on the event loop. Images of 20-100 KB come from the page cache in
+    /// tens of microseconds; an asynchronous file read would be a framework feature (docs/technical/semantic_images.md).
+    /// With 'BASE64' the field already holds the image: its text is checked and goes into the data URL as it is.
     std::vector<ImageAttachment> images;
     std::optional<std::string> unusable;
     for (size_t index = 0; index < imageFieldPositions.size(); ++index)
     {
         auto& value = arguments[imageFieldPositions[index]];
-        auto image = loadImage(value, payload.config.imageRoot, payload.config.imageMaxBytes);
+        auto image = payload.config.imageEncoding == ImageEncoding::Base64
+            ? imageFromBase64(std::move(value), payload.config.imageMaxBytes)
+            : loadImage(value, payload.config.imageRoot, payload.config.imageMaxBytes);
         if (!image)
         {
             unusable = std::move(image).error();
