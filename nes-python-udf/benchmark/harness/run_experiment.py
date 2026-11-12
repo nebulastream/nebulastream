@@ -86,6 +86,12 @@ def write_test(path, input_format, udf, input_file, source_on_performance_cpu, s
     lines.append(f"CREATE LOGICAL SOURCE input({description['schema']});")
     for _ in range(sources):
         lines.append(physical + f"ATTACH FILE {input_file}\n")
+    # Fields that no UDF reads. An inner query creates them, so that they exist before the UDF operators and are in the buffer
+    # that the worker shares with the UDF processes.
+    source = "input"
+    if unused:
+        fields = "".join(f", id + INT64({index + 1}) AS u{index + 1}" for index in range(unused))
+        source = f"(SELECT id{fields} FROM input)"
     if udf in UDFS or chain(udf):
         # One function per call, so that a chain of different UDFs has different functions
         calls = chain(udf) or [udf]
@@ -94,17 +100,11 @@ def write_test(path, input_format, udf, input_file, source_on_performance_cpu, s
             parameters, result, body, _ = UDFS[call]
             lines.append(f"CREATE FUNCTION udf{index} ({parameters}) RETURNS {result} EXECUTION OUT_OF_PROCESS AS $python$\n{body}\n$python$;\n")
             expression = f"udf{index}({expression})" + (" + INT64(1)" if index + 1 < len(calls) else "")
-        # Fields that no UDF reads. An inner query creates them, so that they exist before the UDF operators and are in the
-        # buffer that the worker shares with the UDF processes.
-        source = "input"
-        if unused:
-            fields = "".join(f", id + INT64({index + 1}) AS u{index + 1}" for index in range(unused))
-            source = f"(SELECT id{fields} FROM input)"
         lines.append(f"SELECT *, {expression} AS r FROM {source} INTO Void();\n----\n")
     elif udf == "scan":
         lines.append("SELECT * FROM input INTO Void();\n----\n")
     elif udf == "native_inc":
-        lines.append("SELECT *, id + INT64(1) AS r FROM input INTO Void();\n----\n")
+        lines.append(f"SELECT *, id + INT64(1) AS r FROM {source} INTO Void();\n----\n")
     else:
         raise SystemExit(f"unknown UDF {udf}")
     with open(path, "w") as file:
