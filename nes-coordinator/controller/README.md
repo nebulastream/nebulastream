@@ -59,7 +59,7 @@ The fragment task chooses its next action from the desired and observed states:
 | --- | --- | --- |
 | Completed | Pending | Start the fragment |
 | Completed | Started or Running | Read its status |
-| Stopped | Any non-terminal state | Request a stop, then read status until terminal |
+| Stopped | Any non-terminal state | Request a stop and read its status; request the stop again while the fragment is reported live |
 | Completed or Stopped | Completed, Stopped, or Failed | Finish the task |
 
 The controller keeps the catalog synchronized with the fragment states reported by workers.

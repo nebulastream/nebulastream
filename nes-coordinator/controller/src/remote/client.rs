@@ -54,10 +54,12 @@ impl RemoteTransport {
 }
 
 /// A worker behind a socket can fail to answer for a while; those failures are retried.
-/// An unknown id is state rather than failure; anything else failed for good.
+/// An unknown id and an already accepted start are state, not failure; anything else failed for good.
 fn classify(err: &WorkerTaskError) -> CallError {
     if err.is_not_found() {
         CallError::NotFound
+    } else if err.is_already_exists() {
+        CallError::AlreadyExists
     } else if err.retryable() {
         CallError::Transient(QueryFragmentError::from(err))
     } else {

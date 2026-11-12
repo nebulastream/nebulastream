@@ -91,7 +91,10 @@ impl<T: Transport> QueryFragmentTask<T> {
                     let now = Utc::now();
                     let step = self.lifecycle.apply(reply, now);
                     if let Some(wait) = step.retry_wait {
-                        tokio::time::sleep(wait).await;
+                        tokio::select! {
+                            () = tokio::time::sleep(wait) => {}
+                            _ = self.desired.changed() => {}
+                        }
                     }
                     if matches!(self.persist(step, now).await?, Persisted::Finished) {
                         return Ok(());
@@ -686,6 +689,96 @@ mod tests {
             "{:?}",
             started.elapsed()
         );
+    }
+
+    fn start_timed_out_while_compiling() -> WorkerReply {
+        WorkerReply::Start(Err(CallError::Transient(QueryFragmentError::Transport {
+            msg: "deadline exceeded".to_string(),
+        })))
+    }
+
+    #[tokio::test]
+    async fn a_stop_request_interrupts_the_retry_wait() {
+        let db = Database::for_test().await;
+        let fragment = fragment_row(&db).await;
+        let mut script = Script::new(vec![
+            start_timed_out_while_compiling(),
+            WorkerReply::Stop(Ok(())),
+            status(QueryFragmentState::Completed, None, Some(2_000)),
+        ]);
+        script.stop_after = Some((1, Duration::from_millis(100)));
+        let started = Instant::now();
+        let (calls, row) = drive(&db, fragment, script).await;
+        assert_eq!(
+            calls,
+            vec![WorkerCall::Start, WorkerCall::Stop, WorkerCall::Status]
+        );
+        assert_eq!(row.current_state, QueryFragmentState::Stopped);
+        assert!(
+            started.elapsed() < RETRY_INTERVAL,
+            "{:?}",
+            started.elapsed()
+        );
+    }
+
+    #[tokio::test]
+    async fn a_fragment_recorded_stopped_that_runs_later_is_stopped_by_the_orphan_check() {
+        let db = Database::for_test().await;
+        let fragment = fragment_row(&db).await;
+        let mut script = Script::new(vec![
+            start_timed_out_while_compiling(),
+            WorkerReply::Stop(Ok(())),
+            WorkerReply::Status(Err(CallError::NotFound)),
+        ]);
+        script.stop_before = Some(1);
+        let (calls, row) = drive(&db, fragment.clone(), script).await;
+        assert_eq!(
+            calls,
+            vec![WorkerCall::Start, WorkerCall::Stop, WorkerCall::Status]
+        );
+        assert_eq!(row.current_state, QueryFragmentState::Stopped);
+
+        // The compilation finishes and the worker runs the fragment.
+        let stopped = Arc::new(Mutex::new(Vec::new()));
+        let backend = RecordingBackend {
+            stopped: stopped.clone(),
+            active: vec![(fragment.id, Some(1_000))],
+        };
+        stop_orphans(&backend, &(), &db, &HOST.parse().unwrap(), 0).await;
+        assert_eq!(*stopped.lock().unwrap(), vec![fragment.id]);
+    }
+
+    // The worker accepts the stops sent during compilation but cannot apply them,
+    // so the fragment is reported live until a stop arrives after the compilation.
+    #[tokio::test]
+    async fn a_stop_during_compilation_is_sent_again_until_the_fragment_is_reported_stopped() {
+        let db = Database::for_test().await;
+        let fragment = fragment_row(&db).await;
+        let mut script = Script::new(vec![
+            start_timed_out_while_compiling(),
+            WorkerReply::Stop(Ok(())),
+            status(QueryFragmentState::Started, None, None),
+            WorkerReply::Stop(Ok(())),
+            status(QueryFragmentState::Running, Some(1_000), None),
+            WorkerReply::Stop(Ok(())),
+            status(QueryFragmentState::Completed, Some(1_000), Some(2_000)),
+        ]);
+        script.stop_before = Some(1);
+        let (calls, row) = drive(&db, fragment, script).await;
+        assert_eq!(
+            calls,
+            vec![
+                WorkerCall::Start,
+                WorkerCall::Stop,
+                WorkerCall::Status,
+                WorkerCall::Stop,
+                WorkerCall::Status,
+                WorkerCall::Stop,
+                WorkerCall::Status
+            ]
+        );
+        assert_eq!(row.current_state, QueryFragmentState::Stopped);
+        assert_eq!(row.stop_timestamp.unwrap().timestamp_millis(), 2_000);
     }
 
     #[tokio::test]

@@ -110,6 +110,8 @@ impl QueryFragmentTasks {
 pub(crate) enum CallError {
     /// The worker has no record of the query_fragment id.
     NotFound,
+    /// The worker already accepted a start for the fragment's id.
+    AlreadyExists,
     /// The call may succeed when repeated (within a certain budget).
     Transient(QueryFragmentError),
     /// A terminal, unrecoverable error occurred.
