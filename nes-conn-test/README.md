@@ -5,7 +5,8 @@ other side, it brings it up in Docker, drives the actual connector implementatio
 the engine's own source machinery, and compares what arrives with what was sent. A passing test means
 the connector works with the real protocol, not a stand-in.
 
-This first version covers **sources**; `TCPSource` is the first connector.
+ConnTest tests each connector in isolation; the systests test queries.
+So far it covers **sources**.
 
 ## Running it
 
@@ -16,8 +17,8 @@ cmake --build <build> --target conntest-harness conntest-config-test
 ctest --test-dir <build> -L ConnTest --output-on-failure
 ```
 
-`conntest-TCPSource` (the battery) needs `-DENABLE_DOCKER_TESTS=ON` like every `DockerCompose` test.
-`conntest-runner-tests` (the runner's own unit tests) and `conntest-TCPSource-configs` (the committed configs bind)
+`conntest-<Name>` (a connector's battery) needs `-DENABLE_DOCKER_TESTS=ON` like every `DockerCompose` test.
+`conntest-runner-tests` (the runner's own unit tests) and `conntest-<Name>-configs` (the committed configs bind)
 run without Docker. The battery and the runner tests need `uv`, which the development image ships. In CI the battery runs in the Docker lane, with the sanitizer options of
 `.github/.env/test-<sanitizer>.env` forwarded to the harness.
 
@@ -30,8 +31,8 @@ Outside the development image, uv installs the dependencies, which needs network
 ctest calls the runner's CLI, which can also be used directly, e.g. to pass arguments to pytest:
 
 ```bash
-./nes-conn-test/runner/conntest run --build-dir <build> --plugin TCPSource
-./nes-conn-test/runner/conntest run --build-dir <build> --plugin TCPSource -- -k round_trip
+./nes-conn-test/runner/conntest run --build-dir <build> --plugin <Name>
+./nes-conn-test/runner/conntest run --build-dir <build> --plugin <Name> -- -k round_trip
 ./nes-conn-test/runner/conntest list --build-dir <build>
 ```
 
@@ -75,13 +76,12 @@ Data comes from one deterministic generator: it parses the schema from the confi
 what the loader seeds and the oracle the observed stream is compared against. The wire form is JSONL.
 N buffers of data are as many rows as fit in less than N times the harness's buffer size (4096 bytes) in that encoding,
 so the last buffer is always partly filled.
-A failing test id carries N (e.g. `round_trip_n_buffers-TCPSource-basic-N100`), so it replays exactly.
+A failing test id carries N (e.g. `round_trip_n_buffers-<Name>-basic-N100`), so it replays exactly.
 
 Config validation is not a scenario.
 `conntest-<Name>-configs` binds every committed config of a connector unmodified, without Docker,
 so each one is safe to copy as an example.
-Configs a connector must reject belong in its own unit tests as inline values (see `TCPSource/tests/`),
-not in config files.
+Configs a connector must reject belong in its own unit tests as inline values, not in config files.
 
 ## Adding a connector
 
@@ -120,6 +120,6 @@ A connector whose endpoint is not `host:port`, such as a serial device, override
 The loader gets the endpoint of the service in `compose.yaml`.
 A connector without a service has no `compose.yaml`, and its loader starts the server itself and sets its own endpoint.
 That server must listen on the container's address, not on loopback, so that the fault proxy can reach it.
-`TCPSource/conn-test/` is the reference for that case: the TCP source is a client, so its loader is the server it connects to.
+For example, the loader of a source that connects as a client is the server that the source connects to.
 
 The design principles every change should keep are in `core_design_principles.md`.

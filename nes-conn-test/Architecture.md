@@ -43,8 +43,8 @@ flowchart LR
   It runs the source in the engine's `SourceHandle`, so the source thread, backpressure and emit path are the engine's own.
 - **The loader** (`conn-test/loader.py` of each connector) is the only connector-specific code.
   It writes the rows to the connector's service.
-  A connector without a service, such as `TCPSource`, has no `compose.yaml`;
-  its loader is the server that the connector connects to, on loopback inside the runner container.
+  A connector without a service has no `compose.yaml`;
+  its loader is the server that the connector connects to, inside the runner container.
 
 ## Harness protocol
 

@@ -69,8 +69,8 @@ Service location, port, and credentials come from docker-compose service DNS on
 the project network (`<service>:<port>` from the connector's `compose.yaml`), never from host env vars,
 host networking, published ports, or container-IP guessing. This is what makes
 the setup portable across architectures/platforms (host vs. CI runner).
-A connector without an external service, such as `TCPSource`, has no `compose.yaml`:
-its loader is the server, on loopback inside the runner container.
+A connector without an external service has no `compose.yaml`:
+its loader is the server, inside the runner container.
 
 > Anti-pattern: `host.docker.internal`, `docker network connect $HOSTNAME`,
 > reading a host port from the environment, hardcoding an IP.
@@ -82,7 +82,7 @@ and the battery never goes flaky.
 
 **Data (replay).** A fixed seed, and no wall-clock or unseeded randomness in generation or compare.
 A failure replays from its pytest id, which carries N (e.g.
-`round_trip_n_buffers-TCPSource-basic-N100`).
+`round_trip_n_buffers-<Name>-basic-N100`).
 
 **Control (synchronization).** A scenario advances by **handshakes, never by
 sleeping**: each control step is one request/reply with the C++ harness, and each
