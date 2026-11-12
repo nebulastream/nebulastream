@@ -34,7 +34,7 @@ using SourcesOfInputOrigins = std::unordered_map<OriginId, std::vector<OriginId>
 
 /// Backpressures the sources of input origins whose watermark runs more than the maximum watermark gap ahead of the slowest input
 /// origin, and releases them once the slowest origin has caught up to half the gap.
-/// All member functions are thread-safe; `onWatermarkMoved` never blocks.
+/// All member functions are thread-safe; watermark updates are serialized by a mutex.
 class WatermarkGapThrottle
 {
 public:
@@ -48,9 +48,8 @@ public:
     /// Disables throttling and releases all sources this throttle holds back.
     void stop();
 
-    /// Call whenever the watermark of an input origin moved. A thread that finds another thread updating leaves a request for it instead
-    /// of waiting, and the updating thread repeats the update until no request is left, so the last watermark change is always applied,
-    /// e.g., the final watermark that releases all throttled sources.
+    /// Call whenever the watermark of an input origin moved. Waits for any concurrent update, then reads the current watermarks, so
+    /// even the final watermark that releases throttled sources is applied without depending on another notification.
     void onWatermarkMoved(const MultiOriginWatermarkProcessor& watermarks);
 
 private:
@@ -60,8 +59,6 @@ private:
     const SourcesOfInputOrigins sourcesOfInputOrigins;
     /// Set once `backpressure` is engaged, so operators without watermark gap backpressure never take the mutex.
     std::atomic<bool> enabled{false};
-    /// Set by a thread that found the mutex taken; the thread holding it repeats the update.
-    std::atomic<bool> requested{false};
 
     /// Guards all members below.
     std::mutex mutex;

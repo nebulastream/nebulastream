@@ -67,19 +67,9 @@ void WatermarkGapThrottle::onWatermarkMoved(const MultiOriginWatermarkProcessor&
     {
         return;
     }
-    requested.store(true, std::memory_order_release);
-    while (requested.load(std::memory_order_acquire))
-    {
-        const std::unique_lock lock(mutex, std::try_to_lock);
-        if (!lock.owns_lock())
-        {
-            return; /// the holder sees the request after releasing the lock at the latest
-        }
-        while (requested.exchange(false, std::memory_order_acq_rel))
-        {
-            update(watermarks);
-        }
-    }
+    /// A failed try_lock cannot guarantee that another updater will process this watermark change.
+    const std::scoped_lock lock(mutex);
+    update(watermarks);
 }
 
 void WatermarkGapThrottle::update(const MultiOriginWatermarkProcessor& watermarks)
