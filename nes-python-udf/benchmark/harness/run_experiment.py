@@ -191,6 +191,14 @@ def layouts():
         if label in ("n4", "n4-7"):
             for misc in (4, 8):
                 add(f"S w6 {label} smt m{misc}", CORES[:7], [14] + node(1)[: misc - 1], [cpu + thread for cpu in cores for thread in (0, 1)], src_perf=True, workers=6)
+    # T w<W> p<P>: a free number of worker threads against a free number of processes, to find the best ratio. The worker has
+    # socket 0: W worker threads and 4 file sources on the first hardware threads of the cores of nodes 0-3, misc on the next
+    # core. The processes are on node 4 (socket 1): on cores of their own up to 8, on both hardware threads of the cores for 16.
+    socket0 = [cpu for number in range(4) for cpu in node(number)]
+    for workers in (1, 2, 3, 4, 6, 8, 12, 16, 20, 24):
+        for processes in (1, 2, 4, 8, 16):
+            cpus = node(4)[:processes] if processes <= 8 else [cpu + thread for cpu in node(4) for thread in (0, 1)]
+            add(f"T w{workers} p{processes}", socket0[: workers + 4], [socket0[workers + 4]], cpus, src_perf=True, workers=workers)
     return out
 
 
