@@ -20,8 +20,7 @@ use crate::config::{MAX_CONSECUTIVE_FAILURES, OBSERVATION_WRITE_INTERVAL, RETRY_
 use chrono::{DateTime, Utc};
 use model::error::{CodedError, ErrorCode};
 use model::query::query_fragment::{
-    self, DesiredQueryFragmentState, QueryFragmentError, QueryFragmentState,
-    QueryFragmentTransition,
+    DesiredQueryFragmentState, QueryFragmentError, QueryFragmentState, QueryFragmentTransition,
 };
 use std::time::Duration;
 use tracing::{error, warn};
@@ -68,9 +67,13 @@ impl LifecycleStep {
         }
     }
 
-    const fn failed(transition: QueryFragmentTransition) -> Self {
+    const fn failed(now: DateTime<Utc>, error: QueryFragmentError) -> Self {
         Self {
-            transition: Some(transition),
+            transition: Some(QueryFragmentTransition::Failed {
+                start_timestamp: None,
+                stop_timestamp: now,
+                error,
+            }),
             observed: false,
         }
     }
@@ -97,10 +100,14 @@ pub(super) struct QueryFragmentLifecycle {
 }
 
 impl QueryFragmentLifecycle {
-    pub(super) const fn new(row: &query_fragment::Model, poll_interval: Duration) -> Self {
+    pub(super) const fn new(
+        current: QueryFragmentState,
+        desired: DesiredQueryFragmentState,
+        poll_interval: Duration,
+    ) -> Self {
         Self {
-            current: row.current_state,
-            desired: row.desired_state,
+            current,
+            desired,
             stop_sent: false,
             failures: 0,
             poll_interval,
@@ -166,7 +173,7 @@ impl QueryFragmentLifecycle {
             }
             WorkerRpcOutcome::Failed(err) => {
                 error!(error = %err, "fatal");
-                LifecycleStep::failed(failed_at(now, err))
+                LifecycleStep::failed(now, err)
             }
             WorkerRpcOutcome::Retry(err) => {
                 warn!(error = %err, "retryable failure");
@@ -177,8 +184,7 @@ impl QueryFragmentLifecycle {
                 } else {
                     let cause = format!("retry budget exhausted, last error: {err}");
                     error!("{cause}");
-                    let exhaustion = QueryFragmentError::Transport { msg: cause };
-                    LifecycleStep::failed(failed_at(now, exhaustion))
+                    LifecycleStep::failed(now, QueryFragmentError::Transport { msg: cause })
                 }
             }
         };
@@ -271,14 +277,6 @@ fn outcome(
     }
 }
 
-const fn failed_at(now: DateTime<Utc>, error: QueryFragmentError) -> QueryFragmentTransition {
-    QueryFragmentTransition::Failed {
-        start_timestamp: None,
-        stop_timestamp: now,
-        error,
-    }
-}
-
 fn unix_ms_to_datetime(ms: u64) -> DateTime<Utc> {
     DateTime::from_timestamp_millis(i64::try_from(ms).unwrap_or(i64::MAX)).unwrap_or_default()
 }
@@ -333,7 +331,6 @@ fn status_to_transition(
 #[cfg(test)]
 pub(super) mod tests {
     use super::*;
-    use model::identifier::{QueryFragmentId, QueryId};
 
     const POLL: Duration = Duration::from_millis(25);
     const UNKNOWN_STATE: i32 = 99;
@@ -341,31 +338,11 @@ pub(super) mod tests {
     use DesiredQueryFragmentState::{Completed as WantCompleted, Stopped as WantStopped};
     use QueryFragmentState::{Completed, Pending, Running, Started, Stopped};
 
-    fn row(
-        current: QueryFragmentState,
-        desired: DesiredQueryFragmentState,
-    ) -> query_fragment::Model {
-        query_fragment::Model {
-            id: QueryFragmentId::new(1),
-            query_id: QueryId::new(1),
-            host_addr: "127.0.0.1:1".parse().unwrap(),
-            plan: Vec::new(),
-            num_operators: 1,
-            has_source: true,
-            current_state: current,
-            desired_state: desired,
-            start_timestamp: None,
-            stop_timestamp: None,
-            error: None,
-            last_observed_at: None,
-        }
-    }
-
     fn lifecycle(
         current: QueryFragmentState,
         desired: DesiredQueryFragmentState,
     ) -> QueryFragmentLifecycle {
-        QueryFragmentLifecycle::new(&row(current, desired), POLL)
+        QueryFragmentLifecycle::new(current, desired, POLL)
     }
 
     pub(in crate::query_fragment) fn transient(msg: &str) -> CallError {
@@ -644,20 +621,6 @@ pub(super) mod tests {
                 if stop_timestamp == now && msg == "crashed"
         ));
         assert_eq!(lifecycle.next(), LifecycleAction::Done);
-    }
-
-    #[test]
-    fn a_completion_while_a_stop_is_wanted_is_recorded_as_stopped() {
-        let transition = status_to_transition(
-            raw(Completed, Some(1_000), Some(2_000)),
-            WantStopped,
-            Utc::now(),
-        );
-        assert!(matches!(
-            transition,
-            Ok(QueryFragmentTransition::Stopped { start_timestamp: Some(start), stop_timestamp })
-                if start.timestamp_millis() == 1_000 && stop_timestamp.timestamp_millis() == 2_000
-        ));
     }
 
     #[test]

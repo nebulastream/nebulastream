@@ -36,8 +36,7 @@ pub trait InProcessWorker: Send + Sync + 'static {
 }
 
 /// Constructs an in-process worker from the worker row's config JSON.
-/// Letting the host supply the factory
-/// keeps this crate decoupled from any concrete worker implementation.
+/// The host supplies the factory, so this crate does not depend on a concrete worker.
 pub trait WorkerFactory: Send + Sync + 'static {
     fn create(&self, config_json: &str) -> anyhow::Result<Arc<dyn InProcessWorker>>;
 
@@ -66,10 +65,6 @@ impl Backend for InProcessBackend {
         let factory = self.factory.clone();
         let worker = run_blocking(move || factory.create(&config)).await??;
         Ok(InProcessTransport::new(worker))
-    }
-
-    async fn healthy(&self, _: &InProcessTransport) -> bool {
-        true
     }
 
     /// An in-process worker has no call that lists its fragments, so nothing is compared for it.

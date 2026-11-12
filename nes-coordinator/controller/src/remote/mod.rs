@@ -87,15 +87,6 @@ async fn connect(addr: &NetworkAddr) -> anyhow::Result<Channel> {
         .with_context(|| format!("failed to connect to {addr}"))
 }
 
-async fn health_check(client: &HealthClient<Channel>) -> bool {
-    let mut client = client.clone();
-    let req = tonic::Request::new(health_proto::HealthCheckRequest::default());
-    client
-        .check(req)
-        .await
-        .is_ok_and(|response| response.into_inner().status == ServingStatus::Serving as i32)
-}
-
 pub(crate) struct RemoteBackend;
 
 impl Backend for RemoteBackend {
@@ -108,7 +99,10 @@ impl Backend for RemoteBackend {
     }
 
     async fn healthy(&self, transport: &RemoteTransport) -> bool {
-        health_check(&HealthClient::new(transport.channel().clone())).await
+        HealthClient::new(transport.channel().clone())
+            .check(health_proto::HealthCheckRequest::default())
+            .await
+            .is_ok_and(|response| response.into_inner().status == ServingStatus::Serving as i32)
     }
 
     async fn active_fragments(

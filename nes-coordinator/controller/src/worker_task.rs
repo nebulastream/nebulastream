@@ -44,7 +44,9 @@ pub(crate) trait Backend: Send + Sync + 'static {
         &self,
         addr: &NetworkAddr,
     ) -> impl Future<Output = anyhow::Result<Self::Transport>> + Send;
-    fn healthy(&self, transport: &Self::Transport) -> impl Future<Output = bool> + Send;
+    fn healthy(&self, _: &Self::Transport) -> impl Future<Output = bool> + Send {
+        async { true }
+    }
     /// The fragments that the worker runs and that became active at or after `after`.
     fn active_fragments(
         &self,
@@ -59,16 +61,6 @@ pub(crate) struct ActiveFragments {
     pub fragments: Vec<(QueryFragmentId, Option<u64>)>,
     /// When the worker took the list.
     pub until: u64,
-}
-
-/// The fragments that the worker runs although the catalog does not want them there.
-fn orphans(active: &ActiveFragments, wanted: &HashSet<QueryFragmentId>) -> Vec<QueryFragmentId> {
-    active
-        .fragments
-        .iter()
-        .map(|(id, _)| *id)
-        .filter(|id| !wanted.contains(id))
-        .collect()
 }
 
 /// The `after` of the next listing.
@@ -117,18 +109,19 @@ pub(crate) async fn stop_orphans<B: Backend>(
             return after;
         }
     };
-    let orphans = orphans(&active, &wanted);
-    if !orphans.is_empty() {
-        for id in &orphans {
+    let stops = active
+        .fragments
+        .iter()
+        .filter(|(id, _)| !wanted.contains(id))
+        .map(|(id, _)| {
             warn!(fragment = %id, "stopping a fragment that the catalog does not want on this worker");
-        }
-        futures::future::join_all(orphans.iter().map(|id| transport.stop(*id))).await;
-    }
+            transport.stop(*id)
+        });
+    futures::future::join_all(stops).await;
     next_after(&active, after)
 }
 
 /// Removing a worker fails its fragments in the catalog and aborts its task, so nothing else stops them on the worker.
-/// The stops are abandoned after a deadline.
 pub(crate) async fn stop_removed_fragments<B: Backend>(
     backend: &B,
     db: &Database,

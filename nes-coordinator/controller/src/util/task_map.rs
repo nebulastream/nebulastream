@@ -74,8 +74,6 @@ impl<K: Eq + Hash + Clone + Send + 'static> TaskMap<K> {
         let result = self.tasks.join_next().await?;
         if let Ok(ref key) = result {
             // The key may have been aborted and respawned between the task finishing and this join.
-            // Only remove the tracked handle if it is the one that just finished,
-            // so a respawned handle stays tracked.
             if self.handles.get(key).is_some_and(AbortHandle::is_finished) {
                 self.handles.remove(key);
             }

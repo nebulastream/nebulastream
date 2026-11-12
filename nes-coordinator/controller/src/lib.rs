@@ -39,7 +39,6 @@ use tokio::sync::watch;
 use tracing::{Instrument, info, info_span, warn};
 
 mod config;
-mod error;
 pub mod in_process;
 pub mod query_fragment;
 pub mod remote;
@@ -52,11 +51,9 @@ pub(crate) mod util;
 /// Runs each worker in this process when a worker factory is given, and over gRPC otherwise.
 pub struct Controller {
     db: Database,
-    /// Wake-up signal:
-    /// a change here means the database likely changed and the worker table should be re-read.
+    /// Signals that the catalog may have changed.
     intent_rx: watch::Receiver<()>,
-    /// Outbound signal that this level advanced observed state,
-    /// so a watcher can react without waiting for its next poll.
+    /// Signals that observed state advanced, so a watcher need not wait for its next poll.
     state_tx: watch::Sender<()>,
     workers: TaskMap<NetworkAddr>,
     factory: Option<Arc<dyn WorkerFactory>>,
@@ -96,9 +93,8 @@ impl Controller {
         let intent_rx = self.intent_rx.clone();
         let state_tx = self.state_tx.clone();
         let db = self.db.clone();
-        // Build the task lazily,
-        // so it only runs when the address is not already tracked.
-        // The reconcile pass calls this every tick for every active worker.
+        // The reconcile pass calls this every tick for every active worker,
+        // so the task is built only when the address is not tracked yet.
         if let Some(factory) = self.factory.clone() {
             let span = info_span!("embedded_worker", addr = %addr);
             self.workers.spawn_if_untracked(addr, move || {
@@ -154,8 +150,7 @@ impl Reconciler for Controller {
                     let mut update: worker::ActiveModel = worker.into();
                     update.apply_transition(WorkerTransition::Removed);
                     if let Err(e) = update.save(&self.db).await {
-                        // Log and move on to the other workers;
-                        // this one is still actionable and retried next tick.
+                        // The worker stays actionable, so the next tick retries it.
                         warn!(error = %e, "failed to update worker");
                     }
                 }

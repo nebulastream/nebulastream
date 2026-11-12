@@ -52,13 +52,10 @@ pub(crate) const HEALTH_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
 pub(crate) const HEALTH_CHECK_MAX_MISSES: u32 = 3;
 
-/// Deadline for a single connection attempt.
 pub(crate) const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub(crate) const VERSION_TIMEOUT: Duration = Duration::from_secs(3);
 
-/// Wait before reconnecting after every connection attempt failed.
 pub(crate) const RECONNECT_INTERVAL: Duration = Duration::from_secs(5);
 
-/// Deadline for a single RPC attempt.
 pub(crate) const RPC_TIMEOUT: Duration = Duration::from_secs(2);

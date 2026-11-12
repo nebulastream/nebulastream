@@ -53,36 +53,29 @@ pub(crate) async fn reconcile_loop(
     let mut heartbeat = heartbeat.map(tokio::time::interval);
     reconciler.reconcile().await;
     loop {
-        let mut probe = false;
-        {
-            let tasks = reconciler.tasks();
-            select! {
-                Some(result) = tasks.join_next() => {
-                    match result {
-                        Ok(key) => debug!(%key, "task completed"),
-                        Err(e) if e.is_cancelled() => {}
-                        #[cfg(not(madsim))]
-                        Err(e) => std::panic::resume_unwind(e.into_panic()),
-                        #[cfg(madsim)]
-                        Err(e) => warn!(error = ?e, "task failed"),
-                    }
+        select! {
+            Some(result) = reconciler.tasks().join_next() => {
+                match result {
+                    Ok(key) => debug!(%key, "task completed"),
+                    Err(e) if e.is_cancelled() => {}
+                    #[cfg(not(madsim))]
+                    Err(e) => std::panic::resume_unwind(e.into_panic()),
+                    #[cfg(madsim)]
+                    Err(e) => warn!(error = ?e, "task failed"),
                 }
-                change = intent_rx.changed() => {
-                    if change.is_err() { return Exit::Shutdown; }
+            }
+            change = intent_rx.changed() => {
+                if change.is_err() { return Exit::Shutdown; }
+            }
+            _ = poll.tick() => {}
+            () = async {
+                if let Some(interval) = heartbeat.as_mut() {
+                    interval.tick().await;
                 }
-                _ = poll.tick() => {}
-                () = async {
-                    if let Some(interval) = heartbeat.as_mut() {
-                        interval.tick().await;
-                    }
-                }, if heartbeat.is_some() => { probe = true; }
+            }, if heartbeat.is_some() => {
+                if !reconciler.alive().await { return Exit::LinkLost; }
+                continue;
             }
-        }
-        if probe {
-            if !reconciler.alive().await {
-                return Exit::LinkLost;
-            }
-            continue;
         }
         reconciler.reconcile().await;
     }
