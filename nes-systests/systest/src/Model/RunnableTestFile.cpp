@@ -14,7 +14,6 @@
 
 #include <Model/RunnableTestFile.hpp>
 
-#include <string>
 #include <variant>
 
 #include <Identifiers/Identifiers.hpp>
@@ -22,11 +21,6 @@
 
 namespace NES
 {
-
-const std::string& getSqlOf(const SetupStatement& statement)
-{
-    return std::visit([](const auto& alternative) -> const std::string& { return alternative.sql; }, statement);
-}
 
 SystestQueryId getTestCaseNumber(const RewrittenTestCase& testCase)
 {

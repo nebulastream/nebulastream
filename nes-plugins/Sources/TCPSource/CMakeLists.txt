@@ -13,7 +13,7 @@
 include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
 # One implementation library serving all registries this plugin participates in.
-add_library(tcp_source_plugin_library STATIC TCPSource.cpp TCPDataServer.cpp)
+add_library(tcp_source_plugin_library STATIC TCPSource.cpp)
 target_link_libraries(tcp_source_plugin_library PRIVATE nes-sources)
 target_include_directories(tcp_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 link_plugin_library(nes-sources tcp_source_plugin_library)

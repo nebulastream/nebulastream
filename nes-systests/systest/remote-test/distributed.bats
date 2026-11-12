@@ -123,13 +123,13 @@ fi
 
 @test "two node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
-  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
+  run docker_systest -e large "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  run docker_systest -e large "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
 
@@ -138,6 +138,11 @@ fi
     skip "Docker-based large tests disabled"
   fi
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
-  run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --query-timeout 1200 --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
+  # -e needs at least one group.
+  local exclude=()
+  if [ ${#EXTRA_EXCLUDE_GROUPS[@]} -gt 0 ]; then
+    exclude=(-e "${EXTRA_EXCLUDE_GROUPS[@]}")
+  fi
+  run docker_systest -g large "${exclude[@]}" --query-timeout 1200 --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
 }

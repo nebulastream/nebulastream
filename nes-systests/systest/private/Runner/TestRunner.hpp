@@ -20,7 +20,6 @@
 #include <functional>
 #include <optional>
 #include <span>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -140,7 +139,6 @@ private:
     /// The partitions that setup accepted, which every submit runs.
     std::vector<SetUpPartition> setUpPartitions;
     std::vector<ReportEntry> rejected;
-    std::vector<std::jthread> servers;
 };
 
 }
