@@ -58,6 +58,7 @@ NodeEngine::NodeEngine(
 void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    PRECONDITION(queryLog->getLogForQuery(queryId).has_value(), "Query {} must be in the query log before it is started", queryId);
     systemEventListener->onEvent(StartQuerySystemEvent(std::move(queryId)));
     queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
 }
