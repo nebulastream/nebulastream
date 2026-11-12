@@ -529,6 +529,12 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     return descriptor;
 }
 
+std::expected<SourceDescriptor, Exception>
+SourceCatalog::getAnonymousSource(PhysicalSourceBuilder builder, Schema<UnqualifiedUnboundField, Ordered> schema) const
+{
+    return std::move(builder).build(PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)}, std::move(schema));
+}
+
 std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
     const Identifier& sourceType,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,

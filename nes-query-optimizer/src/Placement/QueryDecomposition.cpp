@@ -15,14 +15,17 @@
 #include <Placement/QueryDecomposition.hpp>
 
 #include <algorithm>
+#include <any>
 #include <array>
 #include <cstddef>
 #include <iterator>
 #include <optional>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Functions/AsyncLogicalFunction.hpp>
 #include <Functions/AsyncOutputLogicalFunction.hpp>
@@ -40,19 +43,20 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/AsyncCallGraph.hpp>
+#include <Sources/AsyncSourceConfig.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/AsyncExecutionTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
+#include <Util/Any.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
-#include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <rfl/json/write.hpp>
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
@@ -68,6 +72,9 @@ namespace NES
 
 namespace
 {
+static_assert(!std::is_constructible_v<AsyncChannelId, ChannelId>);
+static_assert(!std::is_constructible_v<ChannelId, AsyncChannelId>);
+
 struct DecompositionContext
 {
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
@@ -277,7 +284,7 @@ private:
                 arguments.emplace_back(resolve(argument));
             }
         }
-        auto node = builder.call(AsyncFunctionType{call.getType()}, std::move(arguments), async.value()->get().getAsyncOutputTypes());
+        auto node = builder.call(std::string{call.getType()}, std::move(arguments), async.value()->get().getAsyncOutputTypes());
         described.emplace_back(call, node);
         return node;
     }
@@ -292,7 +299,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     INVARIANT(asyncOp.getChildren().size() == 1, "an asynchronously executed operator has exactly one child");
     const auto child = asyncOp.getChildren().front();
     const auto node = getPlacementFor(asyncOp);
-    const auto channel = ChannelId(generateUUID()).getRawValue();
+    const AsyncChannelId channel{generateUUID()};
 
     const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     /// Field accesses only forward an input field; everything else is a producer-owned result.
@@ -307,36 +314,35 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
 
     /// Both halves create the channel, whichever starts first, so both need its capacity.
     std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("channel"), channel}, {Identifier::parse("output_format"), "NATIVE"}};
-    std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("channel"), channel}};
+        {Identifier::parse("channel"), channel.getRawValue()}, {Identifier::parse("output_format"), "NATIVE"}};
+    AsyncSourceConfig sourceConfig{.channel = channel, .calls = calls.build()};
     if (context.asyncConfig.channelCapacity.has_value())
     {
         const auto capacity = std::to_string(*context.asyncConfig.channelCapacity);
         sinkConfig.emplace(Identifier::parse("channel_capacity"), capacity);
-        sourceConfig.emplace(Identifier::parse("channel_capacity"), capacity);
+        sourceConfig.channelCapacity = *context.asyncConfig.channelCapacity;
     }
     if (context.asyncConfig.maxConcurrency.has_value())
     {
-        sourceConfig.emplace(Identifier::parse("max_concurrency"), std::to_string(*context.asyncConfig.maxConcurrency));
+        sourceConfig.maxConcurrency = *context.asyncConfig.maxConcurrency;
     }
     if (context.asyncConfig.maxRetries.has_value())
     {
-        sourceConfig.emplace(Identifier::parse("max_retries"), std::to_string(*context.asyncConfig.maxRetries));
+        sourceConfig.maxRetries = *context.asyncConfig.maxRetries;
     }
 
     const auto handoffSinkDescriptor
         = context.sinkCatalog->getAnonymousSink(inputFields, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
     INVARIANT(handoffSinkDescriptor.has_value(), "Invalid sink descriptor config for handoff sink");
-    sourceConfig.emplace(Identifier::parse("calls"), rfl::json::write(*ReflectionContext{}.reflect(calls.build())));
     context.addPlanToNode(
         SinkLogicalOperator::create(child, handoffSinkDescriptor.value())->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
 
     const auto asyncSourceDescriptor = context.sourceCatalog->getAnonymousSource(
-        Identifier::parse("Async"),
-        asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(),
-        Host(node.getRawValue()),
-        {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
-        sourceConfig);
+        PhysicalSourceBuilder{
+            GeneralSourceConfig{.host = Host(node.getRawValue()), .maxInflightBuffers = std::nullopt},
+            PluginSourceConfiguration{Identifier::parse("Async"), ExplicitAny{std::any{std::move(sourceConfig)}}},
+            InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
+        asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields());
     INVARIANT(asyncSourceDescriptor.has_value(), "Failed to add physical source for async operator");
     const auto sourceTraits = asyncOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(AsyncExecutionTrait); })

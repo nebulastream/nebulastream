@@ -34,8 +34,16 @@ namespace NES
 {
 namespace
 {
+/// co_spawn default-constructs its result on failure; AsyncValues deliberately has no default constructor.
+boost::asio::awaitable<std::optional<AsyncValues>> optionalResult(boost::asio::awaitable<AsyncValues> operation)
+{
+    co_return co_await std::move(operation);
+}
+
 using Operation = decltype(boost::asio::co_spawn(
-    std::declval<SharedAsyncResult::Executor>(), std::declval<boost::asio::awaitable<AsyncValues>>(), boost::asio::deferred));
+    std::declval<SharedAsyncResult::Executor>(),
+    std::declval<boost::asio::awaitable<std::optional<AsyncValues>>>(),
+    boost::asio::deferred));
 
 boost::asio::awaitable<void> waitAll(std::vector<Operation> operations)
 {
@@ -114,10 +122,11 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::invokeNode(std::shared_
             {
                 auto cell = self->evaluate(producer);
                 producers.emplace(producer, cell);
-                dependencies.push_back(boost::asio::co_spawn(self->executor, cell->get(), boost::asio::deferred));
+                dependencies.push_back(boost::asio::co_spawn(self->executor, optionalResult(cell->get()), boost::asio::deferred));
             }
         }
     }
+    /// We await all needed depdencies together instead of one-by-one
     co_await waitAll(std::move(dependencies));
     if (self->cancelled)
     {
@@ -133,54 +142,42 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::invokeNode(std::shared_
         else if (const auto* field = std::get_if<InputFieldReference>(&argument))
         {
             auto value = self->readInput(*field);
-            if (value.getDataType() != field->getDataType())
-            {
-                value = value.view().toOwned(field->getDataType());
-            }
+            INVARIANT(
+                value.getDataType() == field->getDataType(),
+                "async input {} has type {}, expected {}",
+                field->getField(),
+                value.getDataType(),
+                field->getDataType());
             arguments.push_back(std::move(value));
         }
         else
         {
             const auto& reference = std::get<AsyncResultReference>(argument);
+            /// This should not suspend since we already awaited all inputs
             const auto values = co_await producers.at(reference.getProducer())->get();
             arguments.push_back(values[reference.getOutputIndex()].toOwned());
         }
     }
-    /// Do not reserve an invocation resource until dependencies are ready. In particular, a row slot is not a call permit.
-    auto values = co_await self->invoke(node, AsyncValues{std::move(arguments)});
-    if (values.size() != node->getResultTypes().size())
-    {
-        throw CannotReadFromSource(
-            "async function {} produced {} values, but declares {}", node->getFunctionType(), values.size(), node->getResultTypes().size());
-    }
-    bool normalizeNullability = false;
-    for (size_t index = 0; index < values.size(); ++index)
-    {
-        const auto value = values[index];
+    auto returnValues = co_await self->invoke(node, AsyncValues{std::move(arguments)});
+    INVARIANT(
+        returnValues.size() == node->getResultTypes().size(),
+        "async function {} produced {} values, but declares {}",
+        node->getFunctionType(),
+        returnValues.size(),
+        node->getResultTypes().size());
+    IF_INVARIANT(for (size_t index = 0; index < returnValues.size(); ++index) {
+        const auto value = returnValues[index];
         const auto expected = node->getResultTypes()[index];
-        normalizeNullability = normalizeNullability || value.getDataType() != expected;
-        if (value.getDataType().type != expected.type || (value.isNull() && !expected.nullable))
-        {
-            throw CannotReadFromSource(
-                "async function {} output {} has type {} (null: {}), expected {}",
-                node->getFunctionType(),
-                index,
-                value.getDataType(),
-                value.isNull(),
-                expected);
-        }
-    }
-    if (normalizeNullability)
-    {
-        std::vector<RuntimeValue> normalized;
-        normalized.reserve(values.size());
-        for (size_t index = 0; index < values.size(); ++index)
-        {
-            normalized.push_back(values[index].toOwned(node->getResultTypes()[index]));
-        }
-        co_return AsyncValues{std::move(normalized)};
-    }
-    co_return values;
+        INVARIANT(
+            value.getDataType() == expected && (!value.isNull() || expected.nullable),
+            "async function {} output {} has type {} (null: {}), expected {}",
+            node->getFunctionType(),
+            index,
+            value.getDataType(),
+            value.isNull(),
+            expected);
+    })
+    co_return returnValues;
 }
 
 boost::asio::awaitable<void> AsyncGraphExecution::cancelAndDrain()
@@ -213,13 +210,14 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::runImpl(std::shared_ptr
             {
                 auto cell = self->evaluate(producer);
                 producers.emplace(producer, cell);
-                roots.push_back(boost::asio::co_spawn(self->executor, cell->get(), boost::asio::deferred));
+                roots.push_back(boost::asio::co_spawn(self->executor, optionalResult(cell->get()), boost::asio::deferred));
             }
         }
         co_await waitAll(std::move(roots));
         std::vector<RuntimeValue> values;
         for (const auto& output : self->graph->getOutputs())
         {
+            /// This should not suspend since the waitAll should have completed all the awaitables
             const auto outputs = co_await producers.at(output.result.getProducer())->get();
             values.push_back(outputs[output.result.getOutputIndex()].toOwned());
         }
@@ -229,16 +227,15 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::runImpl(std::shared_ptr
     {
         failure = std::current_exception();
     }
-    if (std::ranges::all_of(self->cells, [](const auto& entry) { return entry.second->finished(); }))
+    if (!failure && (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     {
-        self->cancel();
+        failure = std::make_exception_ptr(boost::system::system_error{boost::asio::error::operation_aborted});
     }
-    else
+    if (failure)
     {
         /// Shield only cleanup, not the caller's subsequent work. Preserve its cancellation state/filters.
         const bool throwIfCancelled = co_await boost::asio::this_coro::throw_if_cancelled();
         co_await boost::asio::this_coro::throw_if_cancelled(false);
-        std::exception_ptr cleanupFailure;
         try
         {
             co_await boost::asio::co_spawn(
@@ -246,24 +243,16 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::runImpl(std::shared_ptr
                 self->cancelAndDrain(),
                 boost::asio::bind_cancellation_slot(boost::asio::cancellation_slot{}, boost::asio::use_awaitable));
         }
-        catch (...) /// NOLINT(no-raw-catch-all) restore caller policy even if cleanup initiation fails
+        catch (...) /// NOLINT(no-raw-catch-all) preserve the initiating error and restore caller policy even if cleanup initiation fails
         {
-            cleanupFailure = std::current_exception();
         }
         co_await boost::asio::this_coro::throw_if_cancelled(throwIfCancelled);
-        if (!failure)
-        {
-            failure = cleanupFailure;
-        }
-    }
-    if (failure)
-    {
         std::rethrow_exception(failure);
     }
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-    {
-        throw boost::system::system_error{boost::asio::error::operation_aborted};
-    }
+    INVARIANT(result.has_value(), "Successful async graph execution must produce a result");
+    IF_INVARIANT(for (const auto& [node, cell] : self->cells) {
+        INVARIANT(cell->finished(), "Successful async graph execution left function {} unfinished", node->getFunctionType());
+    })
     co_return std::move(*result);
 }
 

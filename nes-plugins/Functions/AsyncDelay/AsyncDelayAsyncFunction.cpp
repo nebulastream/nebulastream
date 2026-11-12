@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <Sources/AsyncFunction.hpp>
+#include <Util/CheckedDeadline.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
@@ -54,9 +55,10 @@ AsyncFunctionRegistryReturnType AsyncDelayAsyncFunction::create(AsyncFunctionReg
 
 boost::asio::awaitable<AsyncValues> AsyncDelayAsyncFunction::call(AsyncValues arguments)
 {
-    PRECONDITION(arguments.size() >= 2, "ASYNC_DELAY takes (value, millis[, max_concurrency])");
+    PRECONDITION(arguments.size() == 2 || arguments.size() == 3, "ASYNC_DELAY takes (value, millis[, max_concurrency])");
     const auto millis = arguments[1].getUnsignedInteger();
-    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, std::chrono::milliseconds{millis}};
+    const auto deadline = checkedSteadyDeadline(millis, "ASYNC_DELAY");
+    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, deadline};
     co_await timer.async_wait(boost::asio::use_awaitable);
     co_return AsyncValues{arguments[0].toOwned(), RuntimeValue{millis}};
 }

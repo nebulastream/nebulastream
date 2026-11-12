@@ -22,7 +22,9 @@
 #include <variant>
 #include <DataTypes/RuntimeValue.hpp>
 #include <Sources/AsyncCallGraph.hpp>
+#include <Sources/AsyncSourceConfig.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/UUID.hpp>
 #include <gtest/gtest.h>
 #include <rfl/Generic.hpp>
 #include <rfl/json/read.hpp>
@@ -39,9 +41,9 @@ const DataType UNSIGNED{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE
 AsyncCallGraph diamond()
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(AsyncFunctionType{"Producer"}, {RuntimeValue{int64_t{42}}}, {INTEGER, UNSIGNED});
-    const auto left = builder.call(AsyncFunctionType{"Left"}, {producer->output(0)}, {INTEGER});
-    const auto right = builder.call(AsyncFunctionType{"Right"}, {producer->output(1)}, {UNSIGNED});
+    const auto producer = builder.call("Producer", {RuntimeValue{int64_t{42}}}, {INTEGER, UNSIGNED});
+    const auto left = builder.call("Left", {producer->output(0)}, {INTEGER});
+    const auto right = builder.call("Right", {producer->output(1)}, {UNSIGNED});
     builder.exportOutput(left->output(0), QualifiedIdentifier::parse("LEFT"));
     builder.exportOutput(right->output(0), QualifiedIdentifier::parse("RIGHT"));
     return builder.build();
@@ -77,13 +79,40 @@ rfl::Generic::Object& firstReference(rfl::Generic& call)
 static_assert(!std::is_default_constructible_v<AsyncResultReference>);
 static_assert(!std::is_default_constructible_v<InputFieldReference>);
 
+TEST(AsyncCallGraphTest, SourceConfigKeepsTheTypedGraphAndReflectsItAsAnObject)
+{
+    static_assert(std::is_same_v<decltype(AsyncSourceConfig::calls), AsyncCallGraph>);
+    static_assert(std::is_same_v<decltype(AsyncSourceConfig::channel), AsyncChannelId>);
+    const AsyncSourceConfig config{
+        .channel = AsyncChannelId{generateUUID()}, .calls = diamond(), .maxConcurrency = 3, .channelCapacity = 2, .maxRetries = 1};
+    const auto copy = config;
+    EXPECT_EQ(copy.calls.getCalls().front(), config.calls.getCalls().front());
+    const auto reflected = ReflectionContext{}.reflect(config);
+    auto wire = *reflected;
+    EXPECT_TRUE(std::holds_alternative<rfl::Generic::Object>(object(wire).at("calls").variant()));
+    const auto restored = ReflectionContext{}.unreflect<AsyncSourceConfig>(reflected);
+    EXPECT_EQ(restored.channel, config.channel);
+    EXPECT_EQ(restored.maxConcurrency, 3);
+    EXPECT_EQ(restored.channelCapacity, 2);
+    EXPECT_EQ(restored.maxRetries, 1);
+    ASSERT_EQ(restored.calls.getCalls().size(), 3);
+    ASSERT_EQ(restored.calls.getOutputs().size(), 2);
+    const auto left = restored.calls.getOutputs()[0].result.getProducer();
+    const auto right = restored.calls.getOutputs()[1].result.getProducer();
+    const auto leftInput = std::get<AsyncResultReference>(left->getArguments()[0]);
+    const auto rightInput = std::get<AsyncResultReference>(right->getArguments()[0]);
+    EXPECT_EQ(leftInput.getProducer(), rightInput.getProducer());
+    EXPECT_EQ(leftInput.getDataType(), INTEGER);
+    EXPECT_EQ(rightInput.getDataType(), UNSIGNED);
+}
+
 TEST(AsyncCallGraphTest, OutputHandleOwnsItsProducerAndChecksItsSelector)
 {
     std::weak_ptr<const AsyncCall> weak;
     auto output = [&]
     {
         AsyncCallGraphBuilder builder{{}};
-        const auto producer = builder.call(AsyncFunctionType{"Producer"}, {}, {INTEGER});
+        const auto producer = builder.call("Producer", {}, {INTEGER});
         weak = producer;
         EXPECT_THROW(static_cast<void>(producer->output(1)), Exception);
         return producer->output(0);
@@ -104,9 +133,9 @@ TEST(AsyncCallGraphTest, RejectsForeignProducerAndInputEvenWhenNamesAndTypesAgre
     const auto field = first.input(QualifiedIdentifier::parse("SOURCE.VALUE"));
     EXPECT_EQ(field.getField(), QualifiedIdentifier::parse("SOURCE.VALUE"));
     EXPECT_EQ(field.getDataType(), INTEGER);
-    const auto producer = first.call(AsyncFunctionType{"Producer"}, {field}, {INTEGER});
-    EXPECT_THROW(static_cast<void>(second.call(AsyncFunctionType{"Bad"}, {field}, {INTEGER})), Exception);
-    EXPECT_THROW(static_cast<void>(second.call(AsyncFunctionType{"Bad"}, {producer->output(0)}, {INTEGER})), Exception);
+    const auto producer = first.call("Producer", {field}, {INTEGER});
+    EXPECT_THROW(static_cast<void>(second.call("Bad", {field}, {INTEGER})), Exception);
+    EXPECT_THROW(static_cast<void>(second.call("Bad", {producer->output(0)}, {INTEGER})), Exception);
     EXPECT_THROW(second.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT")), Exception);
     EXPECT_THROW(static_cast<void>(first.input(QualifiedIdentifier::parse("VALUE"))), Exception);
 }
@@ -116,7 +145,7 @@ TEST(AsyncCallGraphTest, ReflectionPreservesFullyQualifiedCaseSensitiveInputs)
     const auto name = QualifiedIdentifier::parse("\"Input\".\"Value\"");
     const Schema<QualifiedUnboundField, Ordered> schema{QualifiedUnboundField{name, INTEGER}};
     AsyncCallGraphBuilder builder{schema};
-    const auto producer = builder.call(AsyncFunctionType{"Identity"}, {builder.input(name)}, {INTEGER});
+    const auto producer = builder.call("Identity", {builder.input(name)}, {INTEGER});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto copy = decode(*ReflectionContext{}.reflect(builder.build()));
     EXPECT_EQ(copy.getInputSchema(), schema);
@@ -128,13 +157,13 @@ TEST(AsyncCallGraphTest, ReflectionPreservesFullyQualifiedCaseSensitiveInputs)
 TEST(AsyncCallGraphTest, BuilderIsSingleUseAndPrunesUnreachableWork)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto unused = builder.call(AsyncFunctionType{"Unused"}, {}, {INTEGER});
-    const auto used = builder.call(AsyncFunctionType{"Used"}, {}, {INTEGER});
+    const auto unused = builder.call("Unused", {}, {INTEGER});
+    const auto used = builder.call("Used", {}, {INTEGER});
     builder.exportOutput(used->output(0), QualifiedIdentifier::parse("OUT"));
     auto graph = builder.build();
     ASSERT_EQ(graph.getCalls().size(), 1);
     EXPECT_EQ(graph.getCalls().front(), used);
-    EXPECT_THROW(static_cast<void>(builder.call(AsyncFunctionType{"Late"}, {}, {INTEGER})), Exception);
+    EXPECT_THROW(static_cast<void>(builder.call("Late", {}, {INTEGER})), Exception);
     EXPECT_THROW(static_cast<void>(builder.build()), Exception);
 }
 
@@ -150,8 +179,8 @@ TEST(AsyncCallGraphTest, ReflectionPreservesDiamondIdentityWithoutDependingOnDef
     ASSERT_EQ(copy.getOutputs().size(), 2);
     const auto left = copy.getOutputs()[0].result.getProducer();
     const auto right = copy.getOutputs()[1].result.getProducer();
-    EXPECT_EQ(left->getFunctionType(), AsyncFunctionType{"Left"});
-    EXPECT_EQ(right->getFunctionType(), AsyncFunctionType{"Right"});
+    EXPECT_EQ(left->getFunctionType(), "Left");
+    EXPECT_EQ(right->getFunctionType(), "Right");
     const auto& leftInput = std::get<AsyncResultReference>(left->getArguments().front());
     const auto& rightInput = std::get<AsyncResultReference>(right->getArguments().front());
     EXPECT_EQ(leftInput.getProducer(), rightInput.getProducer());
@@ -222,7 +251,7 @@ TEST(AsyncCallGraphTest, NativeConstantsRoundTripAllTypesNullabilityAndExactPayl
                         }
                     }();
                     AsyncCallGraphBuilder builder{{}};
-                    auto producer = builder.call(AsyncFunctionType{"Constant"}, {value}, {dataType});
+                    auto producer = builder.call("Constant", {value}, {dataType});
                     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
                     const auto graph = decode(*ReflectionContext{}.reflect(builder.build()));
                     const auto& result = std::get<RuntimeValue>(graph.getCalls().front()->getArguments().front());

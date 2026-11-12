@@ -92,8 +92,9 @@ decltype(auto) visitRuntimeType(const DataType::Type type, Visitor&& visitor)
         case DataType::Type::VARSIZED:
             return std::forward<Visitor>(visitor).template operator()<std::string_view>();
         case DataType::Type::UNDEFINED:
-            throw UnknownDataType("UNDEFINED has no runtime value representation");
+            break;
     }
+    PRECONDITION(false, "Datatype {} has no runtime value representation", static_cast<int>(type));
     std::unreachable();
 }
 
@@ -145,23 +146,17 @@ public:
     [[nodiscard]] T get() const
     requires(!std::is_same_v<T, std::string>)
     {
-        if (isNull())
-        {
-            throw DifferentFieldTypeExpected("Cannot read the payload of a null {}", type);
-        }
-        if (const auto* value = std::get_if<T>(&payload))
-        {
-            return *value;
-        }
-        throw DifferentFieldTypeExpected("Runtime value {} does not have the requested native type", type);
+        PRECONDITION(!isNull(), "Cannot read the payload of a null {}", type);
+        PRECONDITION(std::holds_alternative<T>(payload), "Runtime value {} does not have the requested native type", type);
+        return *std::get_if<T>(&payload);
     }
 
     [[nodiscard]] std::span<const std::byte> bytes() const;
-    /// Explicit checked integer conversion for options/durations that accept any SQL integer width.
+    /// Explicit conversion for integer options/durations; negative input is a user-data error.
+    /// The caller must supply a non-null integer value (not BOOLEAN or CHAR).
     [[nodiscard]] uint64_t getUnsignedInteger() const;
+    /// Copy into owned storage, preserving the exact datatype, including nullability.
     [[nodiscard]] RuntimeValue toOwned() const;
-    /// Materialize with a declared nullability, without changing the scalar type or performing a numeric cast.
-    [[nodiscard]] RuntimeValue toOwned(DataType declaredType) const;
 
 private:
     DataType type;
@@ -170,6 +165,7 @@ private:
 
 /// An owning, typed scalar for runtime boundaries. Nullable type and null value are separate properties.
 /// VARSIZED uses std::string as binary-safe owned storage, including embedded NULs.
+/// Producers must supply a matching native payload and datatype; contract checks are preconditions, not conversions.
 class RuntimeValue
 {
 public:

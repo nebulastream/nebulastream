@@ -86,8 +86,10 @@ std::vector<LogicalFunction> AsyncDelayLogicalFunction::getChildren() const
 
 AsyncDelayLogicalFunction AsyncDelayLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2 || children.size() == 3, "ASYNC_DELAY takes 2 or 3 children");
     auto copy = *this;
     copy.value = children.at(0);
+    copy.dataType = copy.value.getDataType();
     copy.millis = children.at(1);
     copy.maxConcurrency = children.size() > 2 ? std::optional{children.at(2)} : std::nullopt;
     return copy;

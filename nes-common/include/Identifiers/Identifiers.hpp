@@ -28,6 +28,8 @@ namespace NES
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
 using LocalQueryId = NESStrongUUIDType<struct LocalQueryId_>;
+/// UUID pairing the Handoff sink and Async source of one local async stage.
+using AsyncChannelId = NESStrongUUIDType<struct AsyncChannelId_>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using PhysicalSourceId = NESStrongType<uint64_t, struct PhysicalSourceId_, 0, 1>;
 using SinkId = NESStrongType<int64_t, struct SinkId_, 0, 1>;

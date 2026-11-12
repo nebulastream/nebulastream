@@ -23,6 +23,8 @@
 #include <unordered_map>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncFunction.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/error.hpp>
@@ -36,6 +38,7 @@
 #include <boost/system/system_error.hpp>
 #include <gtest/gtest.h>
 #include <AsyncGraphExecution.hpp>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SharedAsyncResult.hpp>
 
@@ -50,7 +53,7 @@ const DataType INTEGER{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
 
 struct Outcome
 {
-    AsyncValues values;
+    std::optional<AsyncValues> values;
     std::exception_ptr error;
 };
 
@@ -238,7 +241,7 @@ TEST(SharedAsyncResultTest, ProducerTimeoutIsSharedByEverySubscriber)
                     ++calls;
                     co_await pause(2ms);
                     throw boost::system::system_error{asio::error::timed_out};
-                    co_return AsyncValues{};
+                    co_return AsyncValues::make();
                 });
             auto [first, second] = co_await (observe(value->get()) && observe(value->get()));
             EXPECT_EQ(errorCode(first), asio::error::timed_out);
@@ -326,17 +329,17 @@ TEST(SharedAsyncResultTest, CancelBeforeStartAndExpiredDeadlineDoNotRunProducer)
 TEST(AsyncGraphExecutionTest, DiamondUsesOneInvocationAndSelectsTypedOutputs)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(AsyncFunctionType{"Producer"}, {RuntimeValue{int64_t{42}}}, {INTEGER, INTEGER});
-    const auto left = builder.call(AsyncFunctionType{"Left"}, {producer->output(0)}, {INTEGER});
-    const auto right = builder.call(AsyncFunctionType{"Right"}, {producer->output(1)}, {INTEGER});
-    const auto root = builder.call(AsyncFunctionType{"Root"}, {left->output(0), right->output(0)}, {INTEGER, INTEGER});
+    const auto producer = builder.call("Producer", {RuntimeValue{int64_t{42}}}, {INTEGER, INTEGER});
+    const auto left = builder.call("Left", {producer->output(0)}, {INTEGER});
+    const auto right = builder.call("Right", {producer->output(1)}, {INTEGER});
+    const auto root = builder.call("Root", {left->output(0), right->output(0)}, {INTEGER, INTEGER});
     builder.exportOutput(root->output(0), QualifiedIdentifier::parse("LEFT"));
     builder.exportOutput(root->output(1), QualifiedIdentifier::parse("RIGHT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
         [graph](SharedAsyncResult::Executor executor) -> asio::awaitable<void>
         {
-            std::unordered_map<AsyncFunctionType, int> counts;
+            std::unordered_map<std::string, int> counts;
             auto execution = std::make_shared<AsyncGraphExecution>(
                 executor,
                 graph,
@@ -344,15 +347,15 @@ TEST(AsyncGraphExecutionTest, DiamondUsesOneInvocationAndSelectsTypedOutputs)
                 [&](AsyncCall::Ptr node, AsyncValues arguments) -> asio::awaitable<AsyncValues>
                 {
                     ++counts[node->getFunctionType()];
-                    if (node->getFunctionType() == AsyncFunctionType{"Producer"})
+                    if (node->getFunctionType() == "Producer")
                     {
                         co_return AsyncValues::make(int64_t{42}, int64_t{7});
                     }
-                    if (node->getFunctionType() == AsyncFunctionType{"Left"})
+                    if (node->getFunctionType() == "Left")
                     {
                         co_return AsyncValues::make(arguments[0].get<int64_t>() + 1);
                     }
-                    if (node->getFunctionType() == AsyncFunctionType{"Right"})
+                    if (node->getFunctionType() == "Right")
                     {
                         co_return AsyncValues::make(arguments[0].get<int64_t>() + 2);
                     }
@@ -361,19 +364,51 @@ TEST(AsyncGraphExecutionTest, DiamondUsesOneInvocationAndSelectsTypedOutputs)
             const auto output = co_await execution->run();
             EXPECT_EQ(output[0].get<int64_t>(), 43);
             EXPECT_EQ(output[1].get<int64_t>(), 9);
-            EXPECT_EQ(counts[AsyncFunctionType{"Producer"}], 1);
-            EXPECT_EQ(counts[AsyncFunctionType{"Left"}], 1);
-            EXPECT_EQ(counts[AsyncFunctionType{"Right"}], 1);
-            EXPECT_EQ(counts[AsyncFunctionType{"Root"}], 1);
+            EXPECT_EQ(counts["Producer"], 1);
+            EXPECT_EQ(counts["Left"], 1);
+            EXPECT_EQ(counts["Right"], 1);
+            EXPECT_EQ(counts["Root"], 1);
         });
 }
+
+#ifndef NO_ASSERT
+class AsyncGraphExecutionDeathTest : public testing::Test
+{
+public:
+    static void SetUpTestSuite() { Logger::setupLogging("AsyncGraphExecutionDeathTest.log", LogLevel::LOG_DEBUG, false); }
+};
+
+TEST_F(AsyncGraphExecutionDeathTest, InputReaderMustProduceTheDeclaredNullability)
+{
+    SKIP_IF_TSAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
+    const auto name = QualifiedIdentifier::parse("INPUT.VALUE");
+    AsyncCallGraphBuilder builder{Schema<QualifiedUnboundField, Ordered>{QualifiedUnboundField{name, nullable}}};
+    const auto node = builder.call("Identity", {builder.input(name)}, {nullable});
+    builder.exportOutput(node->output(0), QualifiedIdentifier::parse("OUT"));
+    const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
+    EXPECT_DEATH(
+        run(
+            [graph](SharedAsyncResult::Executor executor) -> asio::awaitable<void>
+            {
+                auto execution = std::make_shared<AsyncGraphExecution>(
+                    executor,
+                    graph,
+                    [](const InputFieldReference&) { return RuntimeValue{int64_t{42}}; },
+                    [](AsyncCall::Ptr, AsyncValues arguments) -> asio::awaitable<AsyncValues> { co_return arguments; });
+                static_cast<void>(co_await execution->run());
+            }),
+        "Invariant violated.*async input");
+}
+#endif
 
 TEST(AsyncGraphExecutionTest, ChainedValuesRetainTheProducersDeclaredNullability)
 {
     const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(AsyncFunctionType{"Producer"}, {}, {nullable});
-    const auto consumer = builder.call(AsyncFunctionType{"Consumer"}, {producer->output(0)}, {INTEGER});
+    const auto producer = builder.call("Producer", {}, {nullable});
+    const auto consumer = builder.call("Consumer", {producer->output(0)}, {INTEGER});
     builder.exportOutput(consumer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -385,9 +420,9 @@ TEST(AsyncGraphExecutionTest, ChainedValuesRetainTheProducersDeclaredNullability
                 noInputs(),
                 [nullable](AsyncCall::Ptr node, AsyncValues arguments) -> asio::awaitable<AsyncValues>
                 {
-                    if (node->getFunctionType() == AsyncFunctionType{"Producer"})
+                    if (node->getFunctionType() == "Producer")
                     {
-                        co_return AsyncValues::make(int64_t{42});
+                        co_return AsyncValues::make(RuntimeValue{nullable, int64_t{42}});
                     }
                     EXPECT_EQ(arguments[0].getDataType(), nullable);
                     EXPECT_FALSE(arguments[0].isNull());
@@ -402,9 +437,9 @@ TEST(AsyncGraphExecutionTest, ChainedValuesRetainTheProducersDeclaredNullability
 TEST(AsyncGraphExecutionTest, ConsumerDoesNotWaitForAnUnrelatedRoot)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto fast = builder.call(AsyncFunctionType{"Fast"}, {}, {INTEGER});
-    const auto dependent = builder.call(AsyncFunctionType{"Dependent"}, {fast->output(0)}, {INTEGER});
-    const auto unrelated = builder.call(AsyncFunctionType{"Unrelated"}, {}, {INTEGER});
+    const auto fast = builder.call("Fast", {}, {INTEGER});
+    const auto dependent = builder.call("Dependent", {fast->output(0)}, {INTEGER});
+    const auto unrelated = builder.call("Unrelated", {}, {INTEGER});
     builder.exportOutput(dependent->output(0), QualifiedIdentifier::parse("A"));
     builder.exportOutput(unrelated->output(0), QualifiedIdentifier::parse("B"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
@@ -419,12 +454,12 @@ TEST(AsyncGraphExecutionTest, ConsumerDoesNotWaitForAnUnrelatedRoot)
                 noInputs(),
                 [&](AsyncCall::Ptr node, AsyncValues arguments) -> asio::awaitable<AsyncValues>
                 {
-                    if (node->getFunctionType() == AsyncFunctionType{"Fast"})
+                    if (node->getFunctionType() == "Fast")
                     {
                         co_await pause(1ms);
                         co_return AsyncValues::make(int64_t{1});
                     }
-                    if (node->getFunctionType() == AsyncFunctionType{"Dependent"})
+                    if (node->getFunctionType() == "Dependent")
                     {
                         dependentRan = true;
                         gate.expires_at(std::chrono::steady_clock::now());
@@ -443,9 +478,9 @@ TEST(AsyncGraphExecutionTest, ConsumerDoesNotWaitForAnUnrelatedRoot)
 TEST(AsyncGraphExecutionTest, IndependentArgumentsAreStartedTogether)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto first = builder.call(AsyncFunctionType{"First"}, {}, {INTEGER});
-    const auto second = builder.call(AsyncFunctionType{"Second"}, {}, {INTEGER});
-    const auto root = builder.call(AsyncFunctionType{"Root"}, {first->output(0), second->output(0)}, {INTEGER});
+    const auto first = builder.call("First", {}, {INTEGER});
+    const auto second = builder.call("Second", {}, {INTEGER});
+    const auto root = builder.call("Root", {first->output(0), second->output(0)}, {INTEGER});
     builder.exportOutput(root->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -458,12 +493,12 @@ TEST(AsyncGraphExecutionTest, IndependentArgumentsAreStartedTogether)
                 noInputs(),
                 [&](AsyncCall::Ptr node, AsyncValues arguments) -> asio::awaitable<AsyncValues>
                 {
-                    if (node->getFunctionType() == AsyncFunctionType{"Second"})
+                    if (node->getFunctionType() == "Second")
                     {
                         gate.expires_at(std::chrono::steady_clock::now());
                         co_return AsyncValues::make(int64_t{2});
                     }
-                    if (node->getFunctionType() == AsyncFunctionType{"First"})
+                    if (node->getFunctionType() == "First")
                     {
                         boost::system::error_code ignored;
                         co_await gate.async_wait(asio::redirect_error(asio::use_awaitable, ignored));
@@ -479,7 +514,7 @@ TEST(AsyncGraphExecutionTest, IndependentArgumentsAreStartedTogether)
 TEST(AsyncGraphExecutionTest, ConsumerDeadlineDoesNotBecomeTheSharedNodesDeadline)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(AsyncFunctionType{"Producer"}, {}, {INTEGER});
+    const auto producer = builder.call("Producer", {}, {INTEGER});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -505,11 +540,57 @@ TEST(AsyncGraphExecutionTest, ConsumerDeadlineDoesNotBecomeTheSharedNodesDeadlin
         });
 }
 
+TEST(AsyncGraphExecutionTest, EmptyGraphCompletesSuccessfully)
+{
+    AsyncCallGraphBuilder builder{{}};
+    const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
+    run(
+        [graph](SharedAsyncResult::Executor executor) -> asio::awaitable<void>
+        {
+            auto execution = std::make_shared<AsyncGraphExecution>(
+                executor,
+                graph,
+                noInputs(),
+                [](AsyncCall::Ptr, AsyncValues) -> asio::awaitable<AsyncValues>
+                {
+                    ADD_FAILURE() << "An empty graph must not invoke any function";
+                    co_return AsyncValues::make();
+                });
+            const auto result = co_await execution->run();
+            EXPECT_TRUE(result.empty());
+        });
+}
+
+TEST(AsyncGraphExecutionTest, CancellationWithoutAutomaticThrowsDoesNotReturnSuccess)
+{
+    AsyncCallGraphBuilder builder{{}};
+    const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
+    run(
+        [graph](SharedAsyncResult::Executor executor) -> asio::awaitable<void>
+        {
+            asio::cancellation_signal stop;
+            const auto body = [&]() -> asio::awaitable<void>
+            {
+                co_await asio::this_coro::throw_if_cancelled(false);
+                stop.emit(asio::cancellation_type::terminal);
+                auto execution = std::make_shared<AsyncGraphExecution>(
+                    executor,
+                    graph,
+                    noInputs(),
+                    [](AsyncCall::Ptr, AsyncValues) -> asio::awaitable<AsyncValues> { co_return AsyncValues::make(); });
+                const auto outcome = co_await observe(execution->run());
+                EXPECT_EQ(errorCode(outcome), asio::error::operation_aborted);
+                EXPECT_FALSE(co_await asio::this_coro::throw_if_cancelled());
+            };
+            co_await asio::co_spawn(executor, body(), asio::bind_cancellation_slot(stop.slot(), asio::use_awaitable));
+        });
+}
+
 TEST(AsyncGraphExecutionTest, FailureCancelsAndDrainsUnrelatedWorkAndPreservesTheInitiatingError)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto bad = builder.call(AsyncFunctionType{"Bad"}, {}, {INTEGER});
-    const auto slow = builder.call(AsyncFunctionType{"Slow"}, {}, {INTEGER});
+    const auto bad = builder.call("Bad", {}, {INTEGER});
+    const auto slow = builder.call("Slow", {}, {INTEGER});
     builder.exportOutput(bad->output(0), QualifiedIdentifier::parse("BAD"));
     builder.exportOutput(slow->output(0), QualifiedIdentifier::parse("SLOW"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
@@ -524,7 +605,7 @@ TEST(AsyncGraphExecutionTest, FailureCancelsAndDrainsUnrelatedWorkAndPreservesTh
                 noInputs(),
                 [&](AsyncCall::Ptr node, AsyncValues) -> asio::awaitable<AsyncValues>
                 {
-                    if (node->getFunctionType() == AsyncFunctionType{"Bad"})
+                    if (node->getFunctionType() == "Bad")
                     {
                         boost::system::error_code ignored;
                         co_await started.async_wait(asio::redirect_error(asio::use_awaitable, ignored));
@@ -565,8 +646,8 @@ TEST(AsyncGraphExecutionTest, FailureCancelsAndDrainsUnrelatedWorkAndPreservesTh
 TEST(AsyncGraphExecutionTest, ExecutionStateIsPerRowNotPerPlanAndEqualNodesAreNotImplicitlyMerged)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto first = builder.call(AsyncFunctionType{"Same"}, {}, {INTEGER});
-    const auto second = builder.call(AsyncFunctionType{"Same"}, {}, {INTEGER});
+    const auto first = builder.call("Same", {}, {INTEGER});
+    const auto second = builder.call("Same", {}, {INTEGER});
     builder.exportOutput(first->output(0), QualifiedIdentifier::parse("A"));
     builder.exportOutput(second->output(0), QualifiedIdentifier::parse("B"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
@@ -591,7 +672,7 @@ TEST(AsyncGraphExecutionTest, ExecutionStateIsPerRowNotPerPlanAndEqualNodesAreNo
 TEST(AsyncGraphExecutionTest, CancellingTheRootWaitAlsoCancelsAndDrainsItsOwnedGraph)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(AsyncFunctionType{"Producer"}, {}, {INTEGER});
+    const auto producer = builder.call("Producer", {}, {INTEGER});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -629,7 +710,7 @@ TEST(AsyncGraphExecutionTest, CancellingTheRootWaitAlsoCancelsAndDrainsItsOwnedG
 TEST(AsyncGraphExecutionTest, SuccessfulExecutionDoesNotDisableTheCallersCancellationState)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(AsyncFunctionType{"Producer"}, {}, {INTEGER});
+    const auto producer = builder.call("Producer", {}, {INTEGER});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -655,7 +736,7 @@ TEST(AsyncGraphExecutionTest, SuccessfulExecutionDoesNotDisableTheCallersCancell
 TEST(AsyncGraphExecutionTest, RowCancellationDrainsAllProducersBeforeReturning)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(AsyncFunctionType{"Producer"}, {}, {INTEGER});
+    const auto producer = builder.call("Producer", {}, {INTEGER});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(

@@ -35,3 +35,10 @@ foreach (registry IN ITEMS LogicalFunction LogicalFunctionUnreflection)
     get_property(glue_lib GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_GLUE_LIB")
     target_include_directories(${glue_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Functions)
 endforeach ()
+
+if (NES_ENABLES_TESTS)
+    add_nes_unit_test(async-delay-function-test AsyncDelayFunctionTest.cpp)
+    target_link_libraries(async-delay-function-test
+            async_delay_logical_function_plugin_library async_delay_async_function_plugin_library
+            nes-logical-operators nes-sources reflectcpp::reflectcpp)
+endif ()

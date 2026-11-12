@@ -16,6 +16,8 @@
 #include <optional>
 #include <stop_token>
 #include <string>
+#include <type_traits>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/UUID.hpp>
@@ -36,7 +38,7 @@ protected:
         = BufferManager::create(4096, 0.0, BufferAlignment{64}, 8, std::make_shared<NesDefaultMemoryAllocator>());
     /// Every buffer a test takes is back in the pool once the channel dropped or handed it on.
     size_t allBuffers = bufferManager->getNumberOfAvailableBuffers();
-    std::string id = UUIDToString(generateUUID());
+    AsyncChannelId id{generateUUID()};
 
     [[nodiscard]] bool registeredChannelIsFresh() const
     {
@@ -44,6 +46,26 @@ protected:
         return !sink->exhausted() && sink->tryPop() == std::nullopt;
     }
 };
+
+static_assert(!std::is_constructible_v<HandoffChannel::Lease, std::string, size_t, HandoffChannel::Role>);
+
+TEST_F(HandoffChannelTest, EquivalentUuidSpellingsAttachToTheSameChannel)
+{
+    const AsyncChannelId lower{std::string{"aabbccdd-1122-3344-5566-778899aabbcc"}};
+    const AsyncChannelId upper{std::string{"AABBCCDD-1122-3344-5566-778899AABBCC"}};
+    const HandoffChannel::Lease sink{lower, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+    const HandoffChannel::Lease source{upper, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+    EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::PUSHED);
+    EXPECT_TRUE(source->tryPop().has_value());
+}
+
+TEST_F(HandoffChannelTest, DistinctUuidsDoNotShareAChannel)
+{
+    const HandoffChannel::Lease source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+    const HandoffChannel::Lease sink{AsyncChannelId{generateUUID()}, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+    EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::FULL);
+    EXPECT_FALSE(source->tryPop().has_value());
+}
 
 TEST_F(HandoffChannelTest, TakesNoBufferBeforeTheSourceAttached)
 {

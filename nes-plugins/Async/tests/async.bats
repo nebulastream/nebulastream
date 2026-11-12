@@ -213,8 +213,8 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(sink_rows healthy.csv)" = "$(printf '1,/slow?delay_ms=1000:Hello\n2,/slow?delay_ms=1000:NebulaStream\n3,/slow?delay_ms=1000:äöü')" ]
 }
 
-@test "HTTP_CALL retries: async.max_retries repeats failed calls until the service answers" {
-  run_async_sql flaky.sql --optimizer.async.max_retries=2
+@test "HTTP_CALL retries: the explicit per-row retry count repeats failed calls until the service answers" {
+  run_async_sql flaky_with_retries.sql
   [ "$status" -eq 0 ]
 
   [ "$(sink_rows responses.csv)" = "$(printf '1,/flaky?fail_first=2:Hello\n2,/flaky?fail_first=2:NebulaStream\n3,/flaky?fail_first=2:äöü')" ]
@@ -222,12 +222,26 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(wc -l < http_paths.log)" -eq 5 ]
 }
 
-@test "HTTP_CALL retries: without async.max_retries the first failed call fails the query" {
-  run_async_sql flaky.sql
+@test "HTTP_CALL retries: omitted retry count stays zero even when source retries are enabled" {
+  run_async_sql flaky.sql --optimizer.async.max_retries=2
   [ "$status" -eq 0 ]
 
   grep -q "Query Failed: .*HTTP_CALL to 127.0.0.1:[0-9]*/flaky?fail_first=2 got status 500" nes-repl.log
   [ "$(sink_rows responses.csv | wc -l)" -eq 0 ]
+}
+
+@test "HTTP_CALL retries: a dropped response on a reused connection is not replayed by default" {
+  run_async_sql replay_drop.sql --optimizer.async.max_concurrency=1 --optimizer.async.max_retries=2
+  [ "$status" -eq 0 ]
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/echo?drop_on=2 failed" nes-repl.log
+  [ "$(wc -l < http_received.log)" -eq 2 ]
+}
+
+@test "HTTP_CALL retries: an explicit retry permits replay after a dropped response" {
+  run_async_sql replay_drop_with_retries.sql --optimizer.async.max_concurrency=1
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows responses.csv)" = "$(printf '1,/echo?drop_on=2:Hello\n2,/echo?drop_on=2:NebulaStream\n3,/echo?drop_on=2:äöü')" ]
+  [ "$(wc -l < http_received.log)" -eq 4 ]
 }
 
 @test "HTTP_CALL timeout: a service slower than the call's timeout fails the query" {

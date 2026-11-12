@@ -30,6 +30,14 @@
 
 namespace NES
 {
+namespace
+{
+/// Only the co_spawn transport needs a default-constructible result, not the function API.
+boost::asio::awaitable<std::optional<AsyncValues>> optionalResult(boost::asio::awaitable<AsyncValues> operation)
+{
+    co_return co_await std::move(operation);
+}
+}
 
 SharedAsyncResult::SharedAsyncResult(Executor executor, Factory factory) : executor(std::move(executor)), factory(std::move(factory))
 {
@@ -69,10 +77,11 @@ void SharedAsyncResult::start()
     {
         boost::asio::co_spawn(
             executor,
-            factory(),
+            optionalResult(factory()),
             boost::asio::bind_cancellation_slot(
                 producerCancellation.slot(),
-                [self](std::exception_ptr error, AsyncValues values) { self->complete(std::move(error), std::move(values)); }));
+                [self](std::exception_ptr error, std::optional<AsyncValues> values)
+                { self->complete(std::move(error), std::move(values)); }));
     }
     catch (...) /// NOLINT(no-raw-catch-all) publish synchronous initiation failures to every subscriber
     {
@@ -80,7 +89,7 @@ void SharedAsyncResult::start()
     }
 }
 
-void SharedAsyncResult::complete(std::exception_ptr error, AsyncValues values)
+void SharedAsyncResult::complete(std::exception_ptr error, std::optional<AsyncValues> values)
 {
     PRECONDITION(executor.running_in_this_thread(), "Shared result must complete on its strand");
     if (done)
@@ -90,6 +99,7 @@ void SharedAsyncResult::complete(std::exception_ptr error, AsyncValues values)
     failure = std::move(error);
     if (!failure)
     {
+        PRECONDITION(values.has_value(), "A successful async invocation must produce a result");
         result = std::move(values);
     }
     completedAt = std::chrono::steady_clock::now();

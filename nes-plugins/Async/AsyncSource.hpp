@@ -32,6 +32,7 @@
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -40,6 +41,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <boost/asio/awaitable.hpp>
@@ -51,22 +53,6 @@
 
 namespace NES
 {
-
-struct AsyncSourceConfig
-{
-    /// UUID of the channel the `Handoff` sink of the same stage hands its buffers to.
-    std::string channel;
-    /// NES-reflected AsyncCallGraph: immutable producers, typed constants, scoped inputs and checked output handles.
-    std::string calls;
-    /// Rows whose calls are in flight at the same time. A function of the stage may lower it.
-    size_t maxConcurrency;
-    /// Only used if the source is created before the Handoff sink, which then finds the channel this source created.
-    size_t channelCapacity;
-    /// Further attempts of a failed call, the n-th after 100 ms * 2^n.
-    size_t maxRetries;
-
-    static std::expected<AsyncSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
-};
 
 /// Consumer half of an asynchronously executed operator: takes the buffers the `Handoff` sink with the
 /// same channel handed off, evaluates the async calls and fills in their result slots.
@@ -119,23 +105,24 @@ private:
     {
         TupleBuffer input;
         size_t rows;
-        /// Guarded by `Window::mutex`.
+        /// Guarded by `InFlightState::mutex`.
         size_t nextRow = 0;
         size_t unfinishedRows;
         /// Per row, the values that go into output fields, in the order of `outputValues`. Each row's coroutine writes its own
         /// rows on the strand; the source thread reads them once `done` is set.
-        std::vector<AsyncValues> results;
-        /// Guarded by `Window::mutex`.
+        std::vector<std::optional<AsyncValues>> results;
+        /// Guarded by `InFlightState::mutex`.
         bool done = false;
     };
 
     /// What the source thread and the strand share; everything here is guarded by `mutex`.
-    struct Window
+    struct InFlightState
     {
         std::mutex mutex;
         std::condition_variable_any changed;
-        /// In the order they were handed off, which is the order they are emitted in.
-        std::deque<std::shared_ptr<InFlightBuffer>> buffers;
+        /// Sole owner of the buffers, in input/output order. End insertion and front removal preserve other references.
+        /// Active rows borrow elements; an element is moved out only after its last completion callback publishes done.
+        std::deque<InFlightBuffer> buffers;
         size_t unstartedRows = 0;
         size_t runningRows = 0;
         std::exception_ptr failure;
@@ -146,8 +133,8 @@ private:
     RuntimeValue readInput(const InputFieldReference& field, const TupleBuffer& input, size_t row) const;
     /// Service retries belong to the shared producer invocation, never to its subscribers.
     boost::asio::awaitable<AsyncValues> callWithRetries(AsyncCall::Ptr node, size_t slot, AsyncValues arguments) const;
-    /// Runs the calls of one row with the function instances of `slot`.
-    boost::asio::awaitable<void> processRow(size_t slot, std::shared_ptr<InFlightBuffer> buffer, size_t row);
+    /// Borrows a deque element until finishRow publishes completion; the in-flight state outlives every row.
+    boost::asio::awaitable<void> processRow(size_t slot, InFlightBuffer& buffer, size_t row);
 
     /// Source thread.
     void admit(TupleBuffer input);
@@ -157,9 +144,9 @@ private:
 
     /// Strand only: starts rows while a slot is free.
     void startRows();
-    void finishRow(const std::shared_ptr<InFlightBuffer>& buffer, size_t slot, const std::exception_ptr& error);
+    void finishRow(InFlightBuffer& buffer, size_t slot, const std::exception_ptr& error);
 
-    std::string channelId;
+    AsyncChannelId channelId;
     /// The configured bound, lowered to what the stage's functions allow.
     size_t maxConcurrency;
     size_t maxRetries;
@@ -182,7 +169,7 @@ private:
 
     /// Source thread only: the channel is closed and drained.
     bool inputExhausted = false;
-    Window window;
+    InFlightState inFlight;
     /// Strand only. A row in flight holds one slot: its function instances and its cancellation signal.
     std::vector<size_t> freeSlots;
     std::vector<boost::asio::cancellation_signal> cancelSignals;

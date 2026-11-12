@@ -87,8 +87,7 @@ RegistryProvision provideRegistry(std::string registryClassName)
             {
                 return InsertResult::EntryTypeMismatch;
             }
-            return Registry::instance().addEntry(typename Registry::KeyType{key}, *typedEntry) ? InsertResult::Success
-                                                                                               : InsertResult::DuplicateKey;
+            return Registry::instance().addEntry(key, *typedEntry) ? InsertResult::Success : InsertResult::DuplicateKey;
         }};
 }
 

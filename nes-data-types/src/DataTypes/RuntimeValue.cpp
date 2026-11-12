@@ -32,35 +32,31 @@ namespace NES
 {
 namespace
 {
+#ifndef NO_ASSERT
 template <typename Payload>
 void validatePayload(const DataType type, const Payload& payload)
 {
-    if (type.type == DataType::Type::UNDEFINED)
-    {
-        throw UnknownDataType("UNDEFINED has no runtime value representation");
-    }
+    PRECONDITION(type.type != DataType::Type::UNDEFINED, "UNDEFINED has no runtime value representation");
     std::visit(
         [&]<typename T>(const T&)
         {
             if constexpr (std::is_same_v<T, std::monostate>)
             {
-                if (!type.nullable)
-                {
-                    throw DifferentFieldTypeExpected("Cannot construct null for non-nullable {}", type);
-                }
+                PRECONDITION(type.nullable, "Cannot construct null for non-nullable {}", type);
             }
-            else if (RuntimeTypeTraits<T>::type != type.type)
+            else
             {
-                throw DifferentFieldTypeExpected("Native payload does not match runtime type {}", type);
+                PRECONDITION(RuntimeTypeTraits<T>::type == type.type, "Native payload does not match runtime type {}", type);
             }
         },
         payload);
 }
+#endif
 }
 
 RuntimeValueView::RuntimeValueView(const DataType type, RuntimeValueViewPayload payload) : type(type), payload(std::move(payload))
 {
-    validatePayload(type, this->payload);
+    IF_PRECONDITION(validatePayload(type, this->payload);)
 }
 
 DataType RuntimeValueView::getDataType() const
@@ -98,44 +94,36 @@ uint64_t RuntimeValueView::getUnsignedInteger() const
             }
             else
             {
-                throw DifferentFieldTypeExpected("Expected an integer runtime value, got {}", type);
+                PRECONDITION(false, "Expected an integer runtime value, got {}", type);
+                std::unreachable();
             }
         });
 }
 
 RuntimeValue RuntimeValueView::toOwned() const
 {
-    return toOwned(type);
-}
-
-RuntimeValue RuntimeValueView::toOwned(const DataType declaredType) const
-{
-    if (declaredType.type != type.type)
-    {
-        throw DifferentFieldTypeExpected("Cannot materialize {} as {} without an explicit scalar cast", type, declaredType);
-    }
     if (isNull())
     {
-        return RuntimeValue::null(declaredType);
+        return RuntimeValue::null(type);
     }
     return visitRuntimeType(
         type.type,
-        [this, declaredType]<typename T>() -> RuntimeValue
+        [this]<typename T>() -> RuntimeValue
         {
             if constexpr (std::same_as<T, std::string_view>)
             {
-                return RuntimeValue{declaredType, std::string{get<T>()}};
+                return RuntimeValue{type, std::string{get<T>()}};
             }
             else
             {
-                return RuntimeValue{declaredType, get<T>()};
+                return RuntimeValue{type, get<T>()};
             }
         });
 }
 
 RuntimeValue::RuntimeValue(const DataType type, RuntimeValuePayload payload) : type(type), payload(std::move(payload))
 {
-    validatePayload(type, this->payload);
+    IF_PRECONDITION(validatePayload(type, this->payload);)
 }
 
 RuntimeValue RuntimeValue::null(const DataType type)

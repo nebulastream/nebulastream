@@ -21,7 +21,10 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -56,7 +59,6 @@ TEST(RuntimeValueTest, ExactNativeTypesAndTypedNulls)
                 const auto null = RuntimeValue::null(nullable);
                 EXPECT_TRUE(null.isNull());
                 EXPECT_EQ(null.view().getDataType(), nullable);
-                EXPECT_THROW(static_cast<void>(null.view().get<T>()), Exception);
                 EXPECT_TRUE(null.view().toOwned().isNull());
                 if constexpr (std::same_as<T, std::string_view>)
                 {
@@ -87,30 +89,45 @@ TEST(RuntimeValueTest, NullableNonNullRetainsItsType)
     EXPECT_EQ(value.view().toOwned().getDataType(), type);
 }
 
-TEST(RuntimeValueTest, CanBindDeclaredNullabilityWithoutChangingScalarType)
+#ifndef NO_ASSERT
+class RuntimeValueDeathTest : public testing::Test
 {
+public:
+    static void SetUpTestSuite() { Logger::setupLogging("RuntimeValueDeathTest.log", LogLevel::LOG_DEBUG, false); }
+};
+
+TEST_F(RuntimeValueDeathTest, MismatchedPayloadUndefinedAndNonNullableNullViolatePreconditions)
+{
+    SKIP_IF_TSAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
+    EXPECT_DEATH((RuntimeValue{type, uint64_t{42}}), "Precondition violated.*payload");
+    EXPECT_DEATH(static_cast<void>(RuntimeValue::null(type)), "Precondition violated.*non-nullable");
+    EXPECT_DEATH((RuntimeValue{DataType{}, int64_t{42}}), "Precondition violated.*UNDEFINED");
+    EXPECT_DEATH(static_cast<void>(RuntimeValue::null(DataType{})), "Precondition violated.*UNDEFINED");
+    EXPECT_DEATH((RuntimeValueView{type, uint64_t{42}}), "Precondition violated.*payload");
+    EXPECT_DEATH(visitRuntimeType(DataType::Type::UNDEFINED, []<typename>() { }), "Precondition violated.*representation");
     const RuntimeValue value{int64_t{42}};
-    const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
-    const auto bound = value.view().toOwned(nullable);
-    EXPECT_EQ(bound.getDataType(), nullable);
-    EXPECT_FALSE(bound.isNull());
-    EXPECT_EQ(bound.view().get<int64_t>(), 42);
-    EXPECT_THROW(static_cast<void>(value.view().toOwned(DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE})), Exception);
-    const auto null = RuntimeValue::null(nullable);
-    EXPECT_THROW(static_cast<void>(null.view().toOwned(value.getDataType())), Exception);
+    EXPECT_DEATH(static_cast<void>(value.view().get<uint64_t>()), "Precondition violated.*native type");
+    EXPECT_DEATH(static_cast<void>(value.view().bytes()), "Precondition violated.*native type");
 }
 
-TEST(RuntimeValueTest, RejectsMismatchedPayloadUndefinedAndNonNullableNull)
+TEST_F(RuntimeValueDeathTest, ReadingNullPayloadViolatesPrecondition)
 {
-    const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    EXPECT_THROW((RuntimeValue{type, uint64_t{42}}), Exception);
-    EXPECT_THROW(static_cast<void>(RuntimeValue::null(type)), Exception);
-    EXPECT_THROW((RuntimeValue{DataType{}, int64_t{42}}), Exception);
-    EXPECT_THROW(static_cast<void>(RuntimeValue::null(DataType{})), Exception);
-    const RuntimeValue value{int64_t{42}};
-    EXPECT_THROW(static_cast<void>(value.view().get<uint64_t>()), Exception);
-    EXPECT_THROW(static_cast<void>(value.view().bytes()), Exception);
+    SKIP_IF_TSAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    for (const auto type : TYPES)
+    {
+        visitRuntimeType(
+            type,
+            [type]<typename T>()
+            {
+                const auto null = RuntimeValue::null(DataType{type, DataType::NULLABLE::IS_NULLABLE});
+                EXPECT_DEATH(static_cast<void>(null.view().get<T>()), "Precondition violated.*null");
+            });
+    }
 }
+#endif
 
 TEST(RuntimeValueTest, ByteOwnershipSurvivesSmallAndLargeStringMoves)
 {
@@ -151,20 +168,28 @@ TEST(RuntimeValueTest, ParsesConstantsOnceWithoutNumericPrecisionLoss)
     EXPECT_THROW(static_cast<void>(RuntimeValue::fromLiteral(tiny, "12oops")), Exception);
 }
 
-TEST(RuntimeValueTest, CheckedIntegerConversionAcceptsWidthsButNotNegativeOrNonIntegerValues)
+TEST(RuntimeValueTest, CheckedIntegerConversionAcceptsWidthsButNotNegativeValues)
 {
     const RuntimeValue tiny{uint8_t{42}};
     const RuntimeValue large{std::numeric_limits<uint64_t>::max()};
     const RuntimeValue positive{int16_t{17}};
     const RuntimeValue negative{int64_t{-1}};
-    const RuntimeValue boolean{true};
-    const RuntimeValue floating{1.0};
     EXPECT_EQ(tiny.view().getUnsignedInteger(), 42);
     EXPECT_EQ(positive.view().getUnsignedInteger(), 17);
     EXPECT_EQ(large.view().getUnsignedInteger(), std::numeric_limits<uint64_t>::max());
     EXPECT_THROW(static_cast<void>(negative.view().getUnsignedInteger()), Exception);
-    EXPECT_THROW(static_cast<void>(boolean.view().getUnsignedInteger()), Exception);
-    EXPECT_THROW(static_cast<void>(floating.view().getUnsignedInteger()), Exception);
 }
+
+#ifndef NO_ASSERT
+TEST_F(RuntimeValueDeathTest, IntegerConversionRequiresAnInteger)
+{
+    SKIP_IF_TSAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    const RuntimeValue boolean{true};
+    const RuntimeValue floating{1.0};
+    EXPECT_DEATH(static_cast<void>(boolean.view().getUnsignedInteger()), "Precondition violated.*integer");
+    EXPECT_DEATH(static_cast<void>(floating.view().getUnsignedInteger()), "Precondition violated.*integer");
+}
+#endif
 
 }

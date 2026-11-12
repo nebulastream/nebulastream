@@ -23,7 +23,7 @@
 #include <mutex>
 #include <optional>
 #include <stop_token>
-#include <string>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
@@ -67,7 +67,7 @@ public:
     class Lease
     {
     public:
-        Lease(std::string id, size_t capacity, Role role);
+        Lease(AsyncChannelId id, size_t capacity, Role role);
         ~Lease();
 
         Lease(const Lease&) = delete;
@@ -81,7 +81,7 @@ public:
         void release();
 
     private:
-        std::string id;
+        AsyncChannelId id;
         Role role;
         std::shared_ptr<HandoffChannel> channel;
     };

@@ -26,6 +26,9 @@ add_nes_common_test(nes-common-tests
         "VersionTest.cpp"
 )
 
+add_nes_common_test(checked-deadline-test "CheckedDeadlineTest.cpp")
+add_nes_common_test(async-channel-id-test "AsyncChannelIdTest.cpp")
+
 add_nes_test(nes-thread-test
         "ThreadTest.cpp"
 )

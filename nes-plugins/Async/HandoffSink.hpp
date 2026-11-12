@@ -24,6 +24,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
@@ -58,7 +59,7 @@ private:
     /// Once the Async source has stopped: drops what is still to be handed off and releases the producer's sources.
     void dropRemaining(const TupleBuffer& buffer);
 
-    std::string channelId;
+    AsyncChannelId channelId;
     HandoffChannel::Lease channel;
     /// Set once the Async source has stopped. Several worker threads may run `execute` at once.
     std::atomic<bool> consumerGone = false;

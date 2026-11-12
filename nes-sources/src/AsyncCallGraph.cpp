@@ -48,7 +48,7 @@ using WireAsyncArgument = std::variant<RuntimeValue, QualifiedIdentifier, WireAs
 struct WireAsyncCall
 {
     std::string id;
-    AsyncFunctionType functionType;
+    std::string functionType;
     std::vector<DataType> resultTypes;
     std::vector<WireAsyncArgument> arguments;
 };
@@ -104,14 +104,14 @@ DataType AsyncResultReference::getDataType() const
 
 AsyncCall::AsyncCall(
     std::shared_ptr<const detail::AsyncCallScope> scope,
-    AsyncFunctionType functionType,
+    std::string functionType,
     std::vector<AsyncCallArgument> arguments,
     std::vector<DataType> resultTypes)
     : scope(std::move(scope)), functionType(std::move(functionType)), arguments(std::move(arguments)), resultTypes(std::move(resultTypes))
 {
 }
 
-const AsyncFunctionType& AsyncCall::getFunctionType() const
+const std::string& AsyncCall::getFunctionType() const
 {
     return functionType;
 }
@@ -189,10 +189,10 @@ InputFieldReference AsyncCallGraphBuilder::input(QualifiedIdentifier field) cons
 }
 
 AsyncCall::Ptr
-AsyncCallGraphBuilder::call(AsyncFunctionType functionType, std::vector<AsyncCallArgument> arguments, std::vector<DataType> resultTypes)
+AsyncCallGraphBuilder::call(std::string functionType, std::vector<AsyncCallArgument> arguments, std::vector<DataType> resultTypes)
 {
     requireOpen();
-    if (functionType.view().empty() || resultTypes.empty())
+    if (functionType.empty() || resultTypes.empty())
     {
         throw InvalidQuerySyntax("An async call needs a function and at least one output type");
     }

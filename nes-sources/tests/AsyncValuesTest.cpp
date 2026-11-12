@@ -16,14 +16,16 @@
 #include <cstdint>
 #include <limits>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <Sources/AsyncFunction.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -31,12 +33,13 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/use_future.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 
 namespace NES
 {
 namespace
 {
-boost::asio::awaitable<AsyncValues> echoAfterSuspension(AsyncValues values)
+boost::asio::awaitable<std::optional<AsyncValues>> echoAfterSuspension(AsyncValues values)
 {
     /// The borrowed view remains valid because the coroutine owns the input handle.
     const auto borrowed = values[0].get<std::string_view>();
@@ -52,7 +55,7 @@ TEST(AsyncValuesTest, CopyAndMoveRetainSmallLargeAndBinaryPayloads)
     {
         auto original = AsyncValues::make(text, uint64_t{42});
         auto retained = original;
-        original = AsyncValues{};
+        original = AsyncValues::make();
         auto moved = std::move(retained);
         EXPECT_EQ(moved[0].get<std::string_view>(), text);
         EXPECT_EQ(moved[1].get<uint64_t>(), 42);
@@ -64,18 +67,18 @@ TEST(AsyncValuesTest, ArgumentsAndResultsOwnTheirStorageAcrossSuspension)
     boost::asio::io_context context;
     auto input = AsyncValues::make(std::string{"small string"}, std::numeric_limits<uint64_t>::max());
     auto result = boost::asio::co_spawn(context, echoAfterSuspension(input), boost::asio::use_future);
-    input = AsyncValues{};
+    input = AsyncValues::make();
     context.run();
-    const auto output = result.get();
+    const auto output = result.get().value();
     EXPECT_EQ(output[0].get<std::string_view>(), "small string");
     EXPECT_EQ(output[1].get<uint64_t>(), std::numeric_limits<uint64_t>::max());
 }
 
 TEST(AsyncValuesTest, EmptyAndTypedNullAreDifferent)
 {
-    const AsyncValues empty;
+    static_assert(!std::is_default_constructible_v<AsyncValues>);
+    const auto empty = AsyncValues::make();
     EXPECT_TRUE(empty.empty());
-    EXPECT_THROW(static_cast<void>(empty[0]), std::out_of_range);
     const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     const auto values = AsyncValues::make(RuntimeValue::null(nullable));
     EXPECT_EQ(values.size(), 1);
