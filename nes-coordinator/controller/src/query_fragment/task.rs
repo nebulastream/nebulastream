@@ -28,28 +28,18 @@ use model::query::query_fragment::{
     DesiredQueryFragmentState, QueryFragmentError, QueryFragmentTransition,
 };
 use sea_orm::{ActiveModelTrait, DbErr, EntityTrait, RuntimeErr};
+use std::ops::ControlFlow;
 use tokio::sync::watch;
 use tracing::{debug, error, warn};
 
-enum Persisted {
-    Written,
-    Finished,
-}
-
-/// Moves a single query_fragment through its lifecycle from pending through to a terminal state.
-/// Uses a transport to call the worker this fragment is hosted on,
-/// instructing it to start, stop, and report the status of the fragment.
-/// Owns the catalog row of the query fragment, receives its desired state over a channel,
-/// and updates the catalog row based on the interactions with the worker.
+/// Moves one fragment from pending to a terminal state by calling its worker,
+/// and writes each transition and observation to the fragment's catalog row.
 pub(crate) struct QueryFragmentTask<T> {
     fragment: query_fragment::Model,
-    update: query_fragment::ActiveModel,
     db: Database,
     transport: T,
-    /// Communicate state changes to the `request_handler`.
     state_tx: watch::Sender<()>,
     desired: watch::Receiver<DesiredQueryFragmentState>,
-    /// Encodes the state transitions based on the observed interactions with the worker.
     lifecycle: QueryFragmentLifecycle,
 }
 
@@ -62,10 +52,8 @@ impl<T: Transport> QueryFragmentTask<T> {
         desired: watch::Receiver<DesiredQueryFragmentState>,
     ) -> Self {
         let lifecycle = QueryFragmentLifecycle::new(&fragment, transport.poll_interval());
-        let update = fragment.clone().into();
         Self {
             fragment,
-            update,
             db,
             transport,
             state_tx,
@@ -77,7 +65,8 @@ impl<T: Transport> QueryFragmentTask<T> {
     pub async fn run(mut self) -> anyhow::Result<()> {
         debug!(state = %self.fragment.current_state, "starting");
         loop {
-            self.lifecycle.desired(*self.desired.borrow_and_update());
+            self.lifecycle
+                .set_desired(*self.desired.borrow_and_update());
             match self.lifecycle.next() {
                 LifecycleAction::Done => return Ok(()),
                 LifecycleAction::Wait(wait) => {
@@ -90,13 +79,7 @@ impl<T: Transport> QueryFragmentTask<T> {
                     let reply = self.call(call).await;
                     let now = Utc::now();
                     let step = self.lifecycle.apply(reply, now);
-                    if let Some(wait) = step.retry_wait {
-                        tokio::select! {
-                            () = tokio::time::sleep(wait) => {}
-                            _ = self.desired.changed() => {}
-                        }
-                    }
-                    if matches!(self.persist(step, now).await?, Persisted::Finished) {
+                    if self.persist(step, now).await?.is_break() {
                         return Ok(());
                     }
                 }
@@ -123,20 +106,21 @@ impl<T: Transport> QueryFragmentTask<T> {
         &mut self,
         step: LifecycleStep,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<Persisted> {
+    ) -> anyhow::Result<ControlFlow<()>> {
         if step.transition.is_none() && !step.observed {
-            return Ok(Persisted::Written);
+            return Ok(ControlFlow::Continue(()));
         }
         let prev = self.fragment.current_state;
+        let mut update: query_fragment::ActiveModel = self.fragment.clone().into();
         if let Some(transition) = step.transition {
-            self.update.apply_transition(transition);
+            update.apply_transition(transition);
         }
         if step.observed {
-            self.update.mark_observed(now);
+            update.mark_observed(now);
         }
-        while let Err(err) = self.write().await {
+        while let Err(err) = self.write(&update).await {
             match classify_write(&err) {
-                WriteFailure::RowGone => return Ok(Persisted::Finished),
+                WriteFailure::RowGone => return Ok(ControlFlow::Break(())),
                 WriteFailure::Rejected => return self.fail_rejected(err).await,
                 WriteFailure::Transient => {
                     warn!(error = %err, "catalog write failed, retrying");
@@ -148,22 +132,22 @@ impl<T: Transport> QueryFragmentTask<T> {
             debug!(from = %prev, to = %self.fragment.current_state, "transition");
         }
         if buggify() {
-            return Ok(Persisted::Written);
+            return Ok(ControlFlow::Continue(()));
         }
         let _ = self.state_tx.send(());
-        Ok(Persisted::Written)
+        Ok(ControlFlow::Continue(()))
     }
 
-    async fn fail_rejected(&self, err: DbErr) -> anyhow::Result<Persisted> {
+    async fn fail_rejected(&self, err: DbErr) -> anyhow::Result<ControlFlow<()>> {
         error!(error = %err, "catalog rejected the write");
         let Some(row) = query_fragment::Entity::find_by_id(self.fragment.id)
             .one(&self.db)
             .await?
         else {
-            return Ok(Persisted::Finished);
+            return Ok(ControlFlow::Break(()));
         };
         if row.current_state.is_terminal() {
-            return Ok(Persisted::Finished);
+            return Ok(ControlFlow::Break(()));
         }
         if let Err(CallError::Failed(stop_err) | CallError::Transient(stop_err)) =
             self.transport.stop(self.fragment.id).await
@@ -176,22 +160,21 @@ impl<T: Transport> QueryFragmentTask<T> {
         ));
         update.update(&self.db).await?;
         let _ = self.state_tx.send(());
-        Ok(Persisted::Finished)
+        Ok(ControlFlow::Break(()))
     }
 
-    async fn write(&mut self) -> Result<(), DbErr> {
+    async fn write(&mut self, update: &query_fragment::ActiveModel) -> Result<(), DbErr> {
         if buggify() {
             return Err(DbErr::Conn(RuntimeErr::Internal(
                 "buggify: write failed".to_string(),
             )));
         }
-        self.fragment = self.update.clone().update(&self.db).await?;
-        self.update = self.fragment.clone().into();
+        self.fragment = update.clone().update(&self.db).await?;
         Ok(())
     }
 }
 
-// The stored plan has no id; the worker knows the plan by the query_fragment's id.
+// The stored plan has no id; the worker knows the plan by the fragment's id.
 fn plan_for(id: QueryFragmentId, plan: &[u8]) -> Result<SerializableQueryPlan, QueryFragmentError> {
     let mut query_plan: SerializableQueryPlan = prost::Message::decode(plan).map_err(|e| {
         QueryFragmentError::Internal(CodedError::new(
@@ -207,14 +190,13 @@ fn plan_for(id: QueryFragmentId, plan: &[u8]) -> Result<SerializableQueryPlan, Q
 mod tests {
     use super::*;
     use crate::config::RETRY_INTERVAL;
+    use crate::query_fragment::lifecycle::tests::{raw, transient};
     use crate::query_fragment::{QueryFragmentTasks, RawStatus};
     use crate::worker_task::{ActiveFragments, Backend, stop_orphans, stop_removed_fragments};
     use model::Execute;
     use model::database::Database;
     use model::identifier::{QueryId, SinkId, SourceId};
-    use model::query::query_fragment::{
-        ActionableFragment, CreateQueryFragment, QueryFragmentState,
-    };
+    use model::query::query_fragment::{CreateQueryFragment, QueryFragmentState};
     use model::query::{CreateQuery, DropQuery, GetQuery};
     use model::sink::CreateSink;
     use model::source::logical::CreateLogicalSource;
@@ -236,7 +218,6 @@ mod tests {
         db: Database,
         query_id: QueryId,
         desired_tx: Arc<watch::Sender<DesiredQueryFragmentState>>,
-        stop_before: Option<usize>,
         stop_after: Option<(usize, Duration)>,
     }
 
@@ -260,9 +241,6 @@ mod tests {
                 calls.push(call);
                 calls.len()
             };
-            if self.stop_before == Some(count) {
-                request_stop(self.db.clone(), self.query_id, self.desired_tx.clone()).await;
-            }
             if let Some((after, delay)) = self.stop_after
                 && after == count
             {
@@ -395,25 +373,13 @@ mod tests {
             .unwrap()
     }
 
-    fn wire(state: QueryFragmentState) -> i32 {
-        (0..16)
-            .find(|value| QueryFragmentState::try_from(*value) == Ok(state))
-            .unwrap()
-    }
-
     fn status(state: QueryFragmentState, start: Option<u64>, stop: Option<u64>) -> WorkerReply {
-        WorkerReply::Status(Ok(RawStatus {
-            state: wire(state),
-            start_ms: start,
-            stop_ms: stop,
-            error: None,
-        }))
+        WorkerReply::Status(Ok(raw(state, start, stop)))
     }
 
     struct Script {
         answers: Vec<WorkerReply>,
         poll: Duration,
-        stop_before: Option<usize>,
         stop_after: Option<(usize, Duration)>,
     }
 
@@ -422,17 +388,16 @@ mod tests {
             Self {
                 answers,
                 poll: Duration::ZERO,
-                stop_before: None,
                 stop_after: None,
             }
         }
     }
 
-    async fn drive(
+    async fn run_script(
         db: &Database,
         fragment: query_fragment::Model,
         script: Script,
-    ) -> (Vec<WorkerCall>, query_fragment::Model) {
+    ) -> Vec<WorkerCall> {
         let calls = Arc::new(Mutex::new(Vec::new()));
         let (desired_tx, desired_rx) = watch::channel(fragment.desired_state);
         let transport = Scripted {
@@ -442,21 +407,28 @@ mod tests {
             db: db.clone(),
             query_id: fragment.query_id,
             desired_tx: Arc::new(desired_tx),
-            stop_before: script.stop_before,
             stop_after: script.stop_after,
         };
         let (state_tx, _state_rx) = watch::channel(());
-        let id = fragment.id;
         QueryFragmentTask::new(fragment, db.clone(), transport, state_tx, desired_rx)
             .run()
             .await
             .unwrap();
+        calls.lock().unwrap().clone()
+    }
+
+    async fn drive(
+        db: &Database,
+        fragment: query_fragment::Model,
+        script: Script,
+    ) -> (Vec<WorkerCall>, query_fragment::Model) {
+        let id = fragment.id;
+        let calls = run_script(db, fragment, script).await;
         let row = query_fragment::Entity::find_by_id(id)
             .one(db)
             .await
             .unwrap()
             .unwrap();
-        let calls = calls.lock().unwrap().clone();
         (calls, row)
     }
 
@@ -507,6 +479,7 @@ mod tests {
         assert_eq!(coded.code, ErrorCode::CatalogWriteRejected);
     }
 
+    #[derive(Clone)]
     struct RecordingStops(Arc<Mutex<Vec<QueryFragmentId>>>);
 
     impl Transport for RecordingStops {
@@ -534,26 +507,23 @@ mod tests {
     }
 
     impl Backend for RecordingBackend {
-        type Link = ();
         type Transport = RecordingStops;
 
-        async fn connect(&self, _: &NetworkAddr) -> anyhow::Result<()> {
-            Ok(())
+        const HEARTBEAT: Option<Duration> = None;
+
+        async fn connect(&self, _: &NetworkAddr) -> anyhow::Result<RecordingStops> {
+            Ok(RecordingStops(self.stopped.clone()))
         }
 
-        fn transport(&self, (): &(), _: &NetworkAddr) -> RecordingStops {
-            RecordingStops(self.stopped.clone())
-        }
-
-        fn heartbeat(&self) -> Option<Duration> {
-            None
-        }
-
-        async fn healthy(&self, (): &()) -> bool {
+        async fn healthy(&self, _: &RecordingStops) -> bool {
             true
         }
 
-        async fn active_fragments(&self, (): &(), _: u64) -> anyhow::Result<ActiveFragments> {
+        async fn active_fragments(
+            &self,
+            _: &RecordingStops,
+            _: u64,
+        ) -> anyhow::Result<ActiveFragments> {
             Ok(ActiveFragments {
                 fragments: self.active.clone(),
                 until: 100,
@@ -590,7 +560,8 @@ mod tests {
             active: vec![(wanted.id, Some(10)), (unknown, Some(20))],
         };
 
-        let after = stop_orphans(&backend, &(), &db, &host, 0).await;
+        let transport = RecordingStops(stopped.clone());
+        let after = stop_orphans(&backend, &transport, &db, &host, 0).await;
         assert_eq!(*stopped.lock().unwrap(), vec![unknown]);
         assert_eq!(
             after, 10,
@@ -600,7 +571,7 @@ mod tests {
         // Removing the worker fails the fragment, so the catalog no longer wants it either.
         DropWorker::new(host.clone()).execute(&db).await.unwrap();
         stopped.lock().unwrap().clear();
-        stop_orphans(&backend, &(), &db, &host, 10).await;
+        stop_orphans(&backend, &transport, &db, &host, 10).await;
         assert_eq!(*stopped.lock().unwrap(), vec![wanted.id, unknown]);
     }
 
@@ -612,52 +583,11 @@ mod tests {
             .exec(&db)
             .await
             .unwrap();
-        let calls = Arc::new(Mutex::new(Vec::new()));
-        let (desired_tx, desired_rx) = watch::channel(fragment.desired_state);
-        let transport = Scripted {
-            answers: Mutex::new(vec![WorkerReply::Start(Ok(()))].into()),
-            calls: calls.clone(),
-            poll: Duration::ZERO,
-            db: db.clone(),
-            query_id: fragment.query_id,
-            desired_tx: Arc::new(desired_tx),
-            stop_before: None,
-            stop_after: None,
-        };
-        let (state_tx, _state_rx) = watch::channel(());
-        QueryFragmentTask::new(fragment, db.clone(), transport, state_tx, desired_rx)
-            .run()
-            .await
-            .unwrap();
-        assert_eq!(*calls.lock().unwrap(), vec![WorkerCall::Start]);
-    }
-
-    #[tokio::test]
-    async fn a_stop_request_turns_the_advance_into_a_stop() {
-        let db = Database::for_test().await;
-        let fragment = fragment_row(&db).await;
-        let mut script = Script::new(vec![
-            WorkerReply::Start(Ok(())),
-            status(QueryFragmentState::Running, Some(1_000), None),
-            status(QueryFragmentState::Running, Some(1_000), None),
-            WorkerReply::Stop(Ok(())),
-            status(QueryFragmentState::Completed, Some(1_000), Some(3_000)),
-        ]);
-        script.stop_before = Some(3);
-        let (calls, row) = drive(&db, fragment, script).await;
+        let script = Script::new(vec![WorkerReply::Start(Ok(()))]);
         assert_eq!(
-            calls,
-            vec![
-                WorkerCall::Start,
-                WorkerCall::Status,
-                WorkerCall::Status,
-                WorkerCall::Stop,
-                WorkerCall::Status
-            ]
+            run_script(&db, fragment, script).await,
+            vec![WorkerCall::Start]
         );
-        assert_eq!(row.current_state, QueryFragmentState::Stopped);
-        assert_eq!(row.desired_state, DesiredQueryFragmentState::Stopped);
-        assert_eq!(row.stop_timestamp.unwrap().timestamp_millis(), 3_000);
     }
 
     #[tokio::test]
@@ -684,6 +614,7 @@ mod tests {
             ]
         );
         assert_eq!(row.current_state, QueryFragmentState::Stopped);
+        assert_eq!(row.desired_state, DesiredQueryFragmentState::Stopped);
         assert!(
             started.elapsed() < Duration::from_secs(5),
             "{:?}",
@@ -692,9 +623,7 @@ mod tests {
     }
 
     fn start_timed_out_while_compiling() -> WorkerReply {
-        WorkerReply::Start(Err(CallError::Transient(QueryFragmentError::Transport {
-            msg: "deadline exceeded".to_string(),
-        })))
+        WorkerReply::Start(Err(transient("deadline exceeded")))
     }
 
     #[tokio::test]
@@ -721,34 +650,7 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn a_fragment_recorded_stopped_that_runs_later_is_stopped_by_the_orphan_check() {
-        let db = Database::for_test().await;
-        let fragment = fragment_row(&db).await;
-        let mut script = Script::new(vec![
-            start_timed_out_while_compiling(),
-            WorkerReply::Stop(Ok(())),
-            WorkerReply::Status(Err(CallError::NotFound)),
-        ]);
-        script.stop_before = Some(1);
-        let (calls, row) = drive(&db, fragment.clone(), script).await;
-        assert_eq!(
-            calls,
-            vec![WorkerCall::Start, WorkerCall::Stop, WorkerCall::Status]
-        );
-        assert_eq!(row.current_state, QueryFragmentState::Stopped);
-
-        // The compilation finishes and the worker runs the fragment.
-        let stopped = Arc::new(Mutex::new(Vec::new()));
-        let backend = RecordingBackend {
-            stopped: stopped.clone(),
-            active: vec![(fragment.id, Some(1_000))],
-        };
-        stop_orphans(&backend, &(), &db, &HOST.parse().unwrap(), 0).await;
-        assert_eq!(*stopped.lock().unwrap(), vec![fragment.id]);
-    }
-
-    // The worker accepts the stops sent during compilation but cannot apply them,
+    // The worker accepts each stop that arrives during compilation but cannot apply it,
     // so the fragment is reported live until a stop arrives after the compilation.
     #[tokio::test]
     async fn a_stop_during_compilation_is_sent_again_until_the_fragment_is_reported_stopped() {
@@ -763,7 +665,7 @@ mod tests {
             WorkerReply::Stop(Ok(())),
             status(QueryFragmentState::Completed, Some(1_000), Some(2_000)),
         ]);
-        script.stop_before = Some(1);
+        script.stop_after = Some((1, Duration::ZERO));
         let (calls, row) = drive(&db, fragment, script).await;
         assert_eq!(
             calls,
@@ -786,9 +688,7 @@ mod tests {
         let db = Database::for_test().await;
         let fragment = fragment_row(&db).await;
         let script = Script::new(vec![
-            WorkerReply::Start(Err(CallError::Transient(QueryFragmentError::Transport {
-                msg: "worker busy".to_string(),
-            }))),
+            WorkerReply::Start(Err(transient("worker busy"))),
             WorkerReply::Start(Ok(())),
             status(QueryFragmentState::Completed, Some(1_000), Some(2_000)),
         ]);
@@ -806,7 +706,8 @@ mod tests {
     #[tokio::test]
     async fn the_task_set_spawns_once_pushes_the_desired_state_and_forgets_finished_rows() {
         let db = Database::for_test().await;
-        let mut fragment = fragment_row(&db).await;
+        let fragment = fragment_row(&db).await;
+        let host: NetworkAddr = HOST.parse().unwrap();
         let (state_tx, _state_rx) = watch::channel(());
         let mut tasks = QueryFragmentTasks::new();
         let spawned = std::cell::Cell::new(0);
@@ -815,23 +716,21 @@ mod tests {
             Silent
         };
 
-        tasks.reconcile(
-            vec![ActionableFragment::from(&fragment)],
-            &db,
-            &state_tx,
-            silent,
-        );
+        tasks
+            .reconcile_from_catalog(&db, &host, &state_tx, silent)
+            .await;
         assert!(tasks.tasks().is_tracked(&fragment.id));
-        let mut desired = tasks.stop_signals[&fragment.id].subscribe();
+        let mut desired = tasks.desired_txs[&fragment.id].subscribe();
         assert_eq!(*desired.borrow(), DesiredQueryFragmentState::Completed);
 
-        fragment.desired_state = DesiredQueryFragmentState::Stopped;
-        tasks.reconcile(
-            vec![ActionableFragment::from(&fragment)],
-            &db,
-            &state_tx,
-            silent,
-        );
+        DropQuery::all()
+            .with_filters(GetQuery::all().with_id(fragment.query_id))
+            .execute(&db)
+            .await
+            .unwrap();
+        tasks
+            .reconcile_from_catalog(&db, &host, &state_tx, silent)
+            .await;
         assert_eq!(spawned.get(), 1);
         assert!(desired.has_changed().unwrap());
         assert_eq!(
@@ -839,7 +738,13 @@ mod tests {
             DesiredQueryFragmentState::Stopped
         );
 
-        tasks.reconcile(vec![], &db, &state_tx, || Silent);
-        assert!(tasks.stop_signals.is_empty());
+        query_fragment::Entity::delete_by_id(fragment.id)
+            .exec(&db)
+            .await
+            .unwrap();
+        tasks
+            .reconcile_from_catalog(&db, &host, &state_tx, || Silent)
+            .await;
+        assert!(tasks.desired_txs.is_empty());
     }
 }

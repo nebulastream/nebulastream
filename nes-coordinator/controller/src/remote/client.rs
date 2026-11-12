@@ -13,10 +13,10 @@
 */
 
 use crate::config::REMOTE_FRAGMENT_POLL_INTERVAL;
-use crate::error::WorkerTaskError;
+use crate::error::classify;
 use crate::query_fragment::{CallError, RawStatus, Transport};
 use crate::remote::worker_rpc_service;
-use crate::remote::worker_rpc_service::nes::SerializableQueryPlan;
+use crate::remote::worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::QueryFragmentError;
 use model::worker::endpoint::NetworkAddr;
@@ -26,44 +26,29 @@ use tracing::{debug, warn};
 
 pub(super) use super::WorkerRpcServiceClient;
 
-fn query_id(id: i64) -> worker_rpc_service::nes::SerializableQueryId {
-    worker_rpc_service::nes::SerializableQueryId::from_fragment_id(id)
-}
-
 /// The transport to a worker behind a socket.
+#[derive(Clone)]
 pub(crate) struct RemoteTransport {
-    client: WorkerRpcServiceClient<Channel>,
+    channel: Channel,
     host_addr: NetworkAddr,
 }
 
 impl RemoteTransport {
-    pub(crate) const fn new(
-        client: WorkerRpcServiceClient<Channel>,
-        host_addr: NetworkAddr,
-    ) -> Self {
-        Self { client, host_addr }
+    pub(crate) const fn new(channel: Channel, host_addr: NetworkAddr) -> Self {
+        Self { channel, host_addr }
     }
 
-    fn call_error(&self, status: tonic::Status) -> CallError {
+    pub(super) fn client(&self) -> WorkerRpcServiceClient<Channel> {
+        WorkerRpcServiceClient::new(self.channel.clone())
+    }
+
+    pub(super) const fn channel(&self) -> &Channel {
+        &self.channel
+    }
+
+    fn call_error(&self, status: &tonic::Status) -> CallError {
         warn!(?status, "rpc error");
-        classify(&WorkerTaskError::Grpc {
-            addr: self.host_addr.clone(),
-            status,
-        })
-    }
-}
-
-/// A worker behind a socket can fail to answer for a while; those failures are retried.
-/// An unknown id and an already accepted start are state, not failure; anything else failed for good.
-fn classify(err: &WorkerTaskError) -> CallError {
-    if err.is_not_found() {
-        CallError::NotFound
-    } else if err.is_already_exists() {
-        CallError::AlreadyExists
-    } else if err.retryable() {
-        CallError::Transient(QueryFragmentError::from(err))
-    } else {
-        CallError::Failed(QueryFragmentError::from(err))
+        classify(&self.host_addr, status)
     }
 }
 
@@ -77,38 +62,35 @@ impl Transport for RemoteTransport {
         let req = worker_rpc_service::StartQueryRequest {
             query_plan: Some(plan),
         };
-        self.client
-            .clone()
+        self.client()
             .start_query(req)
             .await
             .map(|_| ())
-            .map_err(|status| self.call_error(status))
+            .map_err(|status| self.call_error(&status))
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn stop(&self, id: QueryFragmentId) -> Result<(), CallError> {
         let req = worker_rpc_service::StopQueryRequest {
-            query_id: Some(query_id(*id)),
+            query_id: Some(SerializableQueryId::from_fragment_id(*id)),
         };
-        self.client
-            .clone()
+        self.client()
             .stop_query(req)
             .await
             .map(|_| ())
-            .map_err(|status| self.call_error(status))
+            .map_err(|status| self.call_error(&status))
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn status(&self, id: QueryFragmentId) -> Result<RawStatus, CallError> {
         let req = worker_rpc_service::QueryStatusRequest {
-            query_id: Some(query_id(*id)),
+            query_id: Some(SerializableQueryId::from_fragment_id(*id)),
         };
         let reply = self
-            .client
-            .clone()
+            .client()
             .request_query_status(req)
             .await
-            .map_err(|status| self.call_error(status))?
+            .map_err(|status| self.call_error(&status))?
             .into_inner();
         let metrics = reply.metrics.as_ref();
         let status = RawStatus {

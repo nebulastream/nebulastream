@@ -32,14 +32,14 @@ use tracing::{Instrument, info_span, warn};
 
 pub(crate) struct QueryFragmentTasks {
     tasks: TaskMap<QueryFragmentId>,
-    stop_signals: HashMap<QueryFragmentId, watch::Sender<DesiredQueryFragmentState>>,
+    desired_txs: HashMap<QueryFragmentId, watch::Sender<DesiredQueryFragmentState>>,
 }
 
 impl QueryFragmentTasks {
     pub(crate) fn new() -> Self {
         Self {
             tasks: TaskMap::new(),
-            stop_signals: HashMap::new(),
+            desired_txs: HashMap::new(),
         }
     }
 
@@ -61,21 +61,11 @@ impl QueryFragmentTasks {
                 return;
             }
         };
-        self.reconcile(rows, db, state_tx, make_transport);
-    }
-
-    pub(crate) fn reconcile<T: Transport + 'static>(
-        &mut self,
-        rows: Vec<query_fragment::ActionableFragment>,
-        db: &Database,
-        state_tx: &watch::Sender<()>,
-        make_transport: impl Fn() -> T,
-    ) {
         let ids: HashSet<QueryFragmentId> = rows.iter().map(|row| row.id).collect();
-        self.stop_signals.retain(|id, _| ids.contains(id));
+        self.desired_txs.retain(|id, _| ids.contains(id));
         for row in rows {
             if self.tasks.is_tracked(&row.id) {
-                if let Some(desired) = self.stop_signals.get(&row.id) {
+                if let Some(desired) = self.desired_txs.get(&row.id) {
                     desired.send_if_modified(|current| {
                         let changed = *current != row.desired_state;
                         *current = row.desired_state;
@@ -85,7 +75,7 @@ impl QueryFragmentTasks {
                 continue;
             }
             let (desired_tx, desired_rx) = watch::channel(row.desired_state);
-            self.stop_signals.insert(row.id, desired_tx);
+            self.desired_txs.insert(row.id, desired_tx);
             let span = info_span!("query_fragment", id = %row.id, query_id = %row.query_id);
             let db = db.clone();
             let state_tx = state_tx.clone();
@@ -107,18 +97,18 @@ impl QueryFragmentTasks {
     }
 }
 
+/// A failed worker call, classified by what the fragment lifecycle does next.
 pub(crate) enum CallError {
-    /// The worker has no record of the query_fragment id.
+    /// The worker has no record of the fragment id.
     NotFound,
     /// The worker already accepted a start for the fragment's id.
     AlreadyExists,
-    /// The call may succeed when repeated (within a certain budget).
+    /// Repeating the call may succeed.
     Transient(QueryFragmentError),
-    /// A terminal, unrecoverable error occurred.
     Failed(QueryFragmentError),
 }
 
-/// A query_fragment status reported by the worker, before the state is decoded.
+/// A fragment status reported by the worker, before the state is decoded.
 #[derive(Debug)]
 pub struct RawStatus {
     pub state: i32,
@@ -127,12 +117,9 @@ pub struct RawStatus {
     pub error: Option<QueryFragmentError>,
 }
 
-/// Interaction with a worker, current implementors are the in-process worker reached via FFI,
-/// and the remote worker reached via gRPC.
+/// The calls that a fragment task makes to its worker.
 pub(crate) trait Transport: Send + Sync {
-    /// Duration between status calls of a query_fragment.
-    /// Implementors may choose different values here,
-    /// as an in-process status call is cheaper than one over the network.
+    /// The wait between status reads of a live fragment.
     fn poll_interval(&self) -> Duration;
 
     fn start(

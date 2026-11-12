@@ -12,11 +12,7 @@
     limitations under the License.
 */
 
-//! Reads the build that each worker runs.
-//!
-//! The version is not known at worker registration time
-//! (which, as of now, is done by clients, not the workers themselves).
-//! Therefore, we need to fetch the version by asking the worker via gRPC.
+//! A worker's version is not known at registration, because clients register workers, so it is read from the worker.
 
 use crate::config::VERSION_TIMEOUT;
 use crate::in_process::WorkerFactory;
@@ -29,11 +25,8 @@ use std::sync::Arc;
 use tonic::transport::Endpoint;
 use tracing::debug;
 
-/// Asks every given worker which build it runs, all at once.
-///
-/// A factory means the workers run in this process,
-/// and every one of them is therefore the build that this binary was linked with.
-/// Without one, they are processes of their own and each is asked over the network.
+/// The build of each given worker, read concurrently.
+/// In-process workers all run the build that this binary was linked with, so none is contacted.
 pub async fn worker_versions(
     workers: Vec<worker::Model>,
     embedded: Option<Arc<dyn WorkerFactory>>,

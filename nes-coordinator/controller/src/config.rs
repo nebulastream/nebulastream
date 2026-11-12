@@ -24,29 +24,30 @@ pub(crate) const POLL_INTERVAL: Duration = Duration::from_secs(5);
 /// A fragment that the catalog does not want can run for about this long before it is stopped.
 pub(crate) const ORPHAN_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
-/// How long a query_fragment lifecycle waits between status reads for a remote worker.
-/// The interval trades off stale information/latency against network load.
+/// How long a fragment lifecycle waits between status reads for a remote worker.
+/// A shorter interval sees state changes sooner at the cost of network load.
 pub(crate) const REMOTE_FRAGMENT_POLL_INTERVAL: Duration = Duration::from_secs(5);
 
 /// The same wait for an in-process worker.
 /// The read is an FFI call, so it costs almost nothing.
 pub(crate) const EMBEDDED_FRAGMENT_POLL_INTERVAL: Duration = Duration::from_millis(50);
 
-/// Delay before retrying a query_fragment step after a retryable failure.
+/// Delay before retrying a fragment step after a retryable failure.
 pub(crate) const RETRY_INTERVAL: Duration = Duration::from_secs(2);
 
+/// How long a failed task keeps its key, so a failing task is not restarted in a tight loop.
 pub(crate) const TASK_RESPAWN_DELAY: Duration = Duration::from_secs(2);
 
 pub(crate) const REMOVED_WORKER_STOP_DEADLINE: Duration = Duration::from_secs(5);
 
+/// Minimum time between two catalog writes of an unchanged status.
 pub(crate) const OBSERVATION_WRITE_INTERVAL: Duration = Duration::from_secs(1);
 
-/// Retryable failures in a row at which a query_fragment fails.
+/// Retryable failures in a row at which a fragment fails.
 /// Every failure is one call that took at most the RPC deadline, followed by the retry delay,
-/// so a fragment is given up after about two and a half minutes of a worker not answering.
+/// so a fragment is given up after about two and a half minutes of an unreachable worker.
 pub(crate) const MAX_CONSECUTIVE_FAILURES: u32 = 40;
 
-/// How often a connected worker is health-checked.
 pub(crate) const HEALTH_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
 pub(crate) const HEALTH_CHECK_MAX_MISSES: u32 = 3;
@@ -54,7 +55,6 @@ pub(crate) const HEALTH_CHECK_MAX_MISSES: u32 = 3;
 /// Deadline for a single connection attempt.
 pub(crate) const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 
-/// Deadline for asking a worker for its version.
 pub(crate) const VERSION_TIMEOUT: Duration = Duration::from_secs(3);
 
 /// Wait before reconnecting after every connection attempt failed.

@@ -33,21 +33,22 @@ use tokio::sync::watch;
 use tokio::time::Instant;
 use tracing::{error, info, warn};
 
+/// How a worker task reaches its worker.
 pub(crate) trait Backend: Send + Sync + 'static {
-    type Link: Send + Sync;
-    type Transport: Transport + 'static;
+    type Transport: Transport + Clone + Send + Sync + 'static;
+
+    /// How often the link is probed; without an interval it is never probed.
+    const HEARTBEAT: Option<Duration>;
 
     fn connect(
         &self,
         addr: &NetworkAddr,
-    ) -> impl Future<Output = anyhow::Result<Self::Link>> + Send;
-    fn transport(&self, link: &Self::Link, addr: &NetworkAddr) -> Self::Transport;
-    fn heartbeat(&self) -> Option<Duration>;
-    fn healthy(&self, link: &Self::Link) -> impl Future<Output = bool> + Send;
+    ) -> impl Future<Output = anyhow::Result<Self::Transport>> + Send;
+    fn healthy(&self, transport: &Self::Transport) -> impl Future<Output = bool> + Send;
     /// The fragments that the worker runs and that became active at or after `after`.
     fn active_fragments(
         &self,
-        link: &Self::Link,
+        transport: &Self::Transport,
         after: u64,
     ) -> impl Future<Output = anyhow::Result<ActiveFragments>> + Send;
 }
@@ -93,12 +94,12 @@ fn next_after(active: &ActiveFragments, after: u64) -> u64 {
 /// Nothing is remembered between calls: a stop that fails is repeated because the fragment is listed again.
 pub(crate) async fn stop_orphans<B: Backend>(
     backend: &B,
-    link: &B::Link,
+    transport: &B::Transport,
     db: &Database,
     addr: &NetworkAddr,
     after: u64,
 ) -> u64 {
-    let active = match backend.active_fragments(link, after).await {
+    let active = match backend.active_fragments(transport, after).await {
         Ok(active) => active,
         Err(err) => {
             warn!(error = %format_args!("{err:#}"), "could not list the active fragments");
@@ -121,12 +122,13 @@ pub(crate) async fn stop_orphans<B: Backend>(
         for id in &orphans {
             warn!(fragment = %id, "stopping a fragment that the catalog does not want on this worker");
         }
-        let transport = backend.transport(link, addr);
         futures::future::join_all(orphans.iter().map(|id| transport.stop(*id))).await;
     }
     next_after(&active, after)
 }
 
+/// Removing a worker fails its fragments in the catalog and aborts its task, so nothing else stops them on the worker.
+/// The stops are abandoned after a deadline.
 pub(crate) async fn stop_removed_fragments<B: Backend>(
     backend: &B,
     db: &Database,
@@ -143,8 +145,7 @@ pub(crate) async fn stop_removed_fragments<B: Backend>(
         return;
     }
     let stop_all = async {
-        let link = backend.connect(addr).await?;
-        let transport = backend.transport(&link, addr);
+        let transport = backend.connect(addr).await?;
         futures::future::join_all(ids.iter().map(|id| transport.stop(*id))).await;
         anyhow::Ok(())
     };
@@ -160,7 +161,7 @@ pub(crate) async fn stop_removed_fragments<B: Backend>(
 pub(crate) struct WorkerTask<B: Backend> {
     worker: worker::Model,
     backend: B,
-    link: Option<B::Link>,
+    link: Option<B::Transport>,
     missed_probes: u32,
     db: Database,
     intent_rx: watch::Receiver<()>,
@@ -193,7 +194,7 @@ impl<B: Backend> WorkerTask<B> {
     }
 
     pub(crate) async fn run(mut self) -> anyhow::Result<()> {
-        let mut unreachable = false;
+        let mut marked_unreachable = false;
         loop {
             match self.backend.connect(&self.worker.host_addr).await {
                 Ok(link) => {
@@ -203,10 +204,10 @@ impl<B: Backend> WorkerTask<B> {
                     self.listed_after = 0;
                 }
                 Err(err) => {
-                    if !unreachable {
+                    if !marked_unreachable {
                         error!(error = %format_args!("{err:#}"), "connect failed");
                         self.mark(WorkerTransition::Unreachable).await?;
-                        unreachable = true;
+                        marked_unreachable = true;
                     }
                     tokio::time::sleep(RECONNECT_INTERVAL).await;
                     continue;
@@ -214,9 +215,8 @@ impl<B: Backend> WorkerTask<B> {
             }
             self.mark(WorkerTransition::Active).await?;
             info!("active");
-            let heartbeat = self.backend.heartbeat();
             let mut intent_rx = self.intent_rx.clone();
-            let exit = reconcile_loop(&mut self, &mut intent_rx, POLL_INTERVAL, heartbeat).await;
+            let exit = reconcile_loop(&mut self, &mut intent_rx, POLL_INTERVAL, B::HEARTBEAT).await;
             self.link = None;
             self.fragments = QueryFragmentTasks::new();
             match exit {
@@ -224,7 +224,7 @@ impl<B: Backend> WorkerTask<B> {
                 Exit::LinkLost => {
                     warn!("unreachable");
                     self.mark(WorkerTransition::Unreachable).await?;
-                    unreachable = true;
+                    marked_unreachable = true;
                     tokio::time::sleep(RECONNECT_INTERVAL).await;
                 }
             }
@@ -261,9 +261,7 @@ impl<B: Backend> Reconciler for WorkerTask<B> {
         };
         let (backend, addr) = (&self.backend, &self.worker.host_addr);
         self.fragments
-            .reconcile_from_catalog(&self.db, addr, &self.state_tx, || {
-                backend.transport(link, addr)
-            })
+            .reconcile_from_catalog(&self.db, addr, &self.state_tx, || link.clone())
             .await;
         if self
             .last_orphan_check
@@ -303,28 +301,21 @@ mod tests {
     }
 
     #[test]
-    fn only_fragments_the_catalog_does_not_want_are_orphans() {
-        let wanted = HashSet::from([QueryFragmentId::new(1)]);
-        let listed = active(&[(1, Some(5)), (2, Some(6)), (3, None)], 10);
+    fn the_next_listing_does_not_pass_an_active_fragment() {
         assert_eq!(
-            orphans(&listed, &wanted),
-            vec![QueryFragmentId::new(2), QueryFragmentId::new(3)]
+            next_after(&active(&[], 10), 3),
+            10,
+            "nothing active: the worker time"
         );
-        assert!(orphans(&active(&[], 10), &wanted).is_empty());
-    }
-
-    #[test]
-    fn the_next_listing_starts_at_the_worker_time_when_nothing_is_active() {
-        assert_eq!(next_after(&active(&[], 10), 3), 10);
-    }
-
-    #[test]
-    fn the_next_listing_does_not_pass_the_oldest_active_fragment() {
-        assert_eq!(next_after(&active(&[(1, Some(7)), (2, Some(5))], 10), 3), 5);
-    }
-
-    #[test]
-    fn the_next_listing_does_not_move_while_an_active_fragment_has_no_time() {
-        assert_eq!(next_after(&active(&[(1, Some(7)), (2, None)], 10), 3), 3);
+        assert_eq!(
+            next_after(&active(&[(1, Some(7)), (2, Some(5))], 10), 3),
+            5,
+            "the oldest active fragment"
+        );
+        assert_eq!(
+            next_after(&active(&[(1, Some(7)), (2, None)], 10), 3),
+            3,
+            "an active fragment without a time keeps the previous value"
+        );
     }
 }

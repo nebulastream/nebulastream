@@ -22,11 +22,13 @@ use client::InProcessTransport;
 use model::query::query_fragment::QueryFragmentError;
 use model::worker;
 use model::worker::endpoint::NetworkAddr;
+use serde_json::{Map, Value};
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::task::JoinError;
 
 /// A worker in the coordinator's own process.
-/// Its calls block; an internal adapter runs them off the async runtime for the lifecycle driver.
+/// Its calls block, so the transport runs them off the async runtime.
 pub trait InProcessWorker: Send + Sync + 'static {
     fn start_query_fragment(&self, plan: Vec<u8>) -> Result<(), QueryFragmentError>;
     fn stop_query_fragment(&self, id: i64) -> Result<(), QueryFragmentError>;
@@ -39,9 +41,7 @@ pub trait InProcessWorker: Send + Sync + 'static {
 pub trait WorkerFactory: Send + Sync + 'static {
     fn create(&self, config_json: &str) -> anyhow::Result<Arc<dyn InProcessWorker>>;
 
-    /// The build that a worker from this factory would report.
-    /// Answered without creating one,
-    /// because every in-process worker is the build that this binary was linked with.
+    /// The build that a worker from this factory would report, returned without creating one.
     fn version(&self) -> String;
 }
 
@@ -57,30 +57,25 @@ impl InProcessBackend {
 }
 
 impl Backend for InProcessBackend {
-    type Link = Arc<dyn InProcessWorker>;
     type Transport = InProcessTransport;
 
-    async fn connect(&self, _: &NetworkAddr) -> anyhow::Result<Self::Link> {
-        let config = crate::embedded_worker_config(&self.worker)?;
-        create_worker(self.factory.clone(), config).await
+    const HEARTBEAT: Option<Duration> = None;
+
+    async fn connect(&self, _: &NetworkAddr) -> anyhow::Result<InProcessTransport> {
+        let config = embedded_worker_config(&self.worker)?;
+        let factory = self.factory.clone();
+        let worker = run_blocking(move || factory.create(&config)).await??;
+        Ok(InProcessTransport::new(worker))
     }
 
-    fn transport(&self, link: &Self::Link, _: &NetworkAddr) -> InProcessTransport {
-        InProcessTransport::new(link.clone())
-    }
-
-    fn heartbeat(&self) -> Option<Duration> {
-        None
-    }
-
-    async fn healthy(&self, _: &Self::Link) -> bool {
+    async fn healthy(&self, _: &InProcessTransport) -> bool {
         true
     }
 
     /// An in-process worker has no call that lists its fragments, so nothing is compared for it.
     async fn active_fragments(
         &self,
-        _: &Self::Link,
+        _: &InProcessTransport,
         after: u64,
     ) -> anyhow::Result<ActiveFragments> {
         Ok(ActiveFragments {
@@ -90,24 +85,86 @@ impl Backend for InProcessBackend {
     }
 }
 
-#[cfg(not(madsim))]
-async fn create_worker(
-    factory: Arc<dyn WorkerFactory>,
-    config: String,
-) -> anyhow::Result<Arc<dyn InProcessWorker>> {
-    match tokio::task::spawn_blocking(move || factory.create(&config)).await {
-        Ok(result) => result,
-        Err(join_err) => match join_err.try_into_panic() {
-            Ok(panic) => std::panic::resume_unwind(panic),
-            Err(join_err) => Err(join_err.into()),
-        },
-    }
+/// The worker process option for its data-plane address, which is spelled differently from the catalog column.
+const WORKER_DATA_ADDRESS_OPTION: &str = "data_address";
+
+/// The worker's config with its data address added as an option, unless the config already sets one.
+/// The catalog keeps the address in a column because the coordinator routes by it and keeps it unique,
+/// but a worker reads it only from its options and without it starts no data receiver.
+fn embedded_worker_config(worker: &worker::Model) -> anyhow::Result<String> {
+    let mut options = match &worker.config {
+        Value::Null => Map::new(),
+        Value::Object(options) => options.clone(),
+        other => anyhow::bail!(
+            "the config of worker {} is not an object: {other}",
+            worker.host_addr
+        ),
+    };
+    options
+        .entry(WORKER_DATA_ADDRESS_OPTION)
+        .or_insert_with(|| Value::String(worker.data_addr.to_string()));
+    Ok(Value::Object(options).to_string())
 }
 
+/// Runs a blocking worker call off the async runtime and raises its panic again in the caller.
+#[cfg(not(madsim))]
+async fn run_blocking<R: Send + 'static>(
+    f: impl FnOnce() -> R + Send + 'static,
+) -> Result<R, JoinError> {
+    tokio::task::spawn_blocking(f)
+        .await
+        .map_err(|join_err| match join_err.try_into_panic() {
+            Ok(panic) => std::panic::resume_unwind(panic),
+            Err(join_err) => join_err,
+        })
+}
+
+/// Under madsim no in-process worker runs and blocking tasks are unavailable, so the call runs inline.
 #[cfg(madsim)]
-async fn create_worker(
-    factory: Arc<dyn WorkerFactory>,
-    config: String,
-) -> anyhow::Result<Arc<dyn InProcessWorker>> {
-    factory.create(&config)
+async fn run_blocking<R: Send + 'static>(
+    f: impl FnOnce() -> R + Send + 'static,
+) -> Result<R, JoinError> {
+    Ok(f())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use model::worker::{DesiredWorkerState, WorkerState};
+
+    fn worker_with(config: Value) -> worker::Model {
+        worker::Model {
+            host_addr: NetworkAddr::new("worker", 8080).unwrap(),
+            data_addr: NetworkAddr::new("worker", 9090).unwrap(),
+            max_operators: None,
+            config,
+            current_state: WorkerState::Pending,
+            desired_state: DesiredWorkerState::Active,
+        }
+    }
+
+    fn option(config: &str) -> String {
+        let parsed: Value = serde_json::from_str(config).unwrap();
+        parsed[WORKER_DATA_ADDRESS_OPTION]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+
+    #[test]
+    fn a_worker_without_a_config_gets_its_data_address() {
+        let config = embedded_worker_config(&worker_with(Value::Null)).unwrap();
+        assert_eq!(option(&config), "worker:9090");
+    }
+
+    #[test]
+    fn an_explicit_data_address_wins() {
+        let worker = worker_with(serde_json::json!({ WORKER_DATA_ADDRESS_OPTION: "other:1" }));
+        assert_eq!(option(&embedded_worker_config(&worker).unwrap()), "other:1");
+    }
+
+    #[test]
+    fn a_config_that_is_not_an_object_is_rejected() {
+        assert!(embedded_worker_config(&worker_with(serde_json::json!([1]))).is_err());
+    }
 }

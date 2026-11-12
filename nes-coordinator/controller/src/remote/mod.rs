@@ -17,8 +17,8 @@
 mod client;
 
 use crate::config::{CONNECT_TIMEOUT, HEALTH_CHECK_INTERVAL, RPC_TIMEOUT};
-use crate::error::WorkerTaskError;
 use crate::worker_task::{ActiveFragments, Backend};
+use anyhow::Context;
 use client::RemoteTransport;
 use model::identifier::QueryFragmentId;
 use model::worker::endpoint::NetworkAddr;
@@ -74,22 +74,17 @@ use health_proto::health_client::HealthClient;
 pub use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
 
 #[tracing::instrument(level = "info")]
-async fn connect(addr: &NetworkAddr) -> Result<Channel, WorkerTaskError> {
+async fn connect(addr: &NetworkAddr) -> anyhow::Result<Channel> {
     let endpoint = Endpoint::from_shared(format!("http://{addr}"))
-        .map_err(|e| WorkerTaskError::Connection {
-            addr: addr.clone(),
-            err: e,
-        })?
+        .with_context(|| format!("failed to connect to {addr}"))?
         .connect_timeout(CONNECT_TIMEOUT)
         .timeout(RPC_TIMEOUT);
 
-    endpoint.connect().await.map_err(|e| {
-        warn!(%addr, error = %e, "worker unreachable");
-        WorkerTaskError::Connection {
-            addr: addr.clone(),
-            err: e,
-        }
-    })
+    endpoint
+        .connect()
+        .await
+        .inspect_err(|e| warn!(%addr, error = %e, "worker unreachable"))
+        .with_context(|| format!("failed to connect to {addr}"))
 }
 
 async fn health_check(client: &HealthClient<Channel>) -> bool {
@@ -104,34 +99,28 @@ async fn health_check(client: &HealthClient<Channel>) -> bool {
 pub(crate) struct RemoteBackend;
 
 impl Backend for RemoteBackend {
-    type Link = Channel;
     type Transport = RemoteTransport;
 
-    async fn connect(&self, addr: &NetworkAddr) -> anyhow::Result<Channel> {
-        Ok(connect(addr).await?)
+    const HEARTBEAT: Option<Duration> = Some(HEALTH_CHECK_INTERVAL);
+
+    async fn connect(&self, addr: &NetworkAddr) -> anyhow::Result<RemoteTransport> {
+        Ok(RemoteTransport::new(connect(addr).await?, addr.clone()))
     }
 
-    fn transport(&self, link: &Channel, addr: &NetworkAddr) -> RemoteTransport {
-        RemoteTransport::new(WorkerRpcServiceClient::new(link.clone()), addr.clone())
-    }
-
-    fn heartbeat(&self) -> Option<Duration> {
-        Some(HEALTH_CHECK_INTERVAL)
-    }
-
-    async fn healthy(&self, link: &Channel) -> bool {
-        health_check(&HealthClient::new(link.clone())).await
+    async fn healthy(&self, transport: &RemoteTransport) -> bool {
+        health_check(&HealthClient::new(transport.channel().clone())).await
     }
 
     async fn active_fragments(
         &self,
-        link: &Channel,
+        transport: &RemoteTransport,
         after: u64,
     ) -> anyhow::Result<ActiveFragments> {
         let request = worker_rpc_service::WorkerStatusRequest {
             after_unix_timestamp_in_milli_seconds: after,
         };
-        let reply = WorkerRpcServiceClient::new(link.clone())
+        let reply = transport
+            .client()
             .request_status(request)
             .await?
             .into_inner();

@@ -30,13 +30,6 @@ pub(crate) struct JoinSet<T> {
 }
 
 #[cfg(madsim)]
-impl<T> Default for JoinSet<T> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[cfg(madsim)]
 impl<T> JoinSet<T> {
     pub fn new() -> Self {
         Self {
@@ -45,7 +38,7 @@ impl<T> JoinSet<T> {
         }
     }
 
-    pub fn spawn<F>(&mut self, task: F) -> AbortHandle
+    pub fn spawn<F>(&mut self, task: F) -> tokio::task::AbortHandle
     where
         F: Future<Output = T> + Send + 'static,
         T: Send + 'static,
@@ -54,23 +47,12 @@ impl<T> JoinSet<T> {
         let abort_handle = handle.abort_handle();
         self.abort_handles.push(abort_handle.clone());
         self.tasks.push(handle);
-        AbortHandle(abort_handle)
+        abort_handle
     }
 
     pub async fn join_next(&mut self) -> Option<Result<T, tokio::task::JoinError>> {
         use futures::StreamExt;
         self.tasks.next().await
-    }
-
-    pub async fn join_all(mut self) -> Vec<T> {
-        use futures::StreamExt;
-        let mut results = Vec::new();
-        while let Some(result) = self.tasks.next().await {
-            if let Ok(value) = result {
-                results.push(value);
-            }
-        }
-        results
     }
 }
 
@@ -85,19 +67,4 @@ impl<T> Drop for JoinSet<T> {
     }
 }
 
-#[cfg(madsim)]
-pub(crate) struct AbortHandle(tokio::task::AbortHandle);
-
-#[cfg(madsim)]
-impl AbortHandle {
-    pub fn abort(&self) {
-        self.0.abort()
-    }
-
-    pub fn is_finished(&self) -> bool {
-        self.0.is_finished()
-    }
-}
-
-#[cfg(not(madsim))]
 pub(crate) use tokio::task::AbortHandle;

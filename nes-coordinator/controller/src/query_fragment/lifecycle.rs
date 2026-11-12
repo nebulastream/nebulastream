@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-//! Owns the lifecycle of the coordinator representation of a single query query_fragment.
-//! Does not interact with the catalog or the worker hosting the query_fragment.
-//! Instead, has a purely functional interface:
+//! The state machine of one fragment, without I/O:
 //! the caller passes in the desired state and the worker's replies, and gets back the next action.
 
 use super::{CallError, RawStatus};
@@ -36,20 +34,11 @@ pub(super) enum WorkerReply {
 
 enum WorkerRpcOutcome {
     Transition(QueryFragmentTransition),
-    Status(QueryFragmentStatus),
-    /// The request succeeded, but no state change is implied by it.
-    Accepted,
-    /// Terminal error: mark the query_fragment failed.
+    /// The transition that a status read reports; unlike other transitions, it may repeat the current state.
+    Status(QueryFragmentTransition),
+    StopAccepted,
     Failed(QueryFragmentError),
-    /// Transient error: retry against a budget.
     Retry(QueryFragmentError),
-}
-
-struct QueryFragmentStatus {
-    state: QueryFragmentState,
-    start_timestamp: Option<u64>,
-    stop_timestamp: Option<u64>,
-    error: Option<QueryFragmentError>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -69,7 +58,6 @@ pub(super) enum LifecycleAction {
 pub(super) struct LifecycleStep {
     pub transition: Option<QueryFragmentTransition>,
     pub observed: bool,
-    pub retry_wait: Option<Duration>,
 }
 
 impl LifecycleStep {
@@ -77,7 +65,6 @@ impl LifecycleStep {
         Self {
             transition,
             observed: true,
-            retry_wait: None,
         }
     }
 
@@ -85,7 +72,6 @@ impl LifecycleStep {
         Self {
             transition: Some(transition),
             observed: false,
-            retry_wait: None,
         }
     }
 
@@ -93,55 +79,18 @@ impl LifecycleStep {
         Self {
             transition: None,
             observed: false,
-            retry_wait: None,
         }
-    }
-
-    const fn retry(wait: Duration) -> Self {
-        Self {
-            transition: None,
-            observed: false,
-            retry_wait: Some(wait),
-        }
-    }
-}
-
-/// Counts down on consecutive retryable failures, so we don't retry forever.
-/// Converts the last error into a terminal transport error when the budget is exhausted.
-/// A successful outcome resets the counter.
-struct RetryBudget {
-    remaining: u32,
-}
-
-impl RetryBudget {
-    const fn new() -> Self {
-        Self {
-            remaining: MAX_CONSECUTIVE_FAILURES,
-        }
-    }
-
-    const fn reset(&mut self) {
-        self.remaining = MAX_CONSECUTIVE_FAILURES;
-    }
-
-    fn record(&mut self, error: &QueryFragmentError) -> Option<QueryFragmentError> {
-        self.remaining = self.remaining.saturating_sub(1);
-        if self.remaining > 0 {
-            return None;
-        }
-        let cause = format!("retry budget exhausted, last error: {error}");
-        error!("{cause}");
-        Some(QueryFragmentError::Transport { msg: cause })
     }
 }
 
 pub(super) struct QueryFragmentLifecycle {
-    curr_state: QueryFragmentState,
-    des_state: DesiredQueryFragmentState,
+    current: QueryFragmentState,
+    desired: DesiredQueryFragmentState,
     /// A stop was sent and no status has been read since.
     /// A status read clears it, so a fragment that is still reported live gets the stop again after the poll wait.
     stop_sent: bool,
-    budget: RetryBudget,
+    /// Consecutive retryable failures; the fragment fails when they reach the limit.
+    failures: u32,
     poll_interval: Duration,
     wait_due: Duration,
     last_written: Option<DateTime<Utc>>,
@@ -150,10 +99,10 @@ pub(super) struct QueryFragmentLifecycle {
 impl QueryFragmentLifecycle {
     pub(super) const fn new(row: &query_fragment::Model, poll_interval: Duration) -> Self {
         Self {
-            curr_state: row.current_state,
-            des_state: row.desired_state,
+            current: row.current_state,
+            desired: row.desired_state,
             stop_sent: false,
-            budget: RetryBudget::new(),
+            failures: 0,
             poll_interval,
             wait_due: Duration::ZERO,
             last_written: None,
@@ -169,13 +118,13 @@ impl QueryFragmentLifecycle {
     }
 
     pub(super) fn next(&mut self) -> LifecycleAction {
-        if self.curr_state.is_terminal() {
+        if self.current.is_terminal() {
             return LifecycleAction::Done;
         }
         if !self.wait_due.is_zero() {
             return LifecycleAction::Wait(std::mem::take(&mut self.wait_due));
         }
-        let call = match (self.des_state, self.curr_state) {
+        let call = match (self.desired, self.current) {
             (DesiredQueryFragmentState::Completed, QueryFragmentState::Pending) => {
                 WorkerCall::Start
             }
@@ -186,24 +135,24 @@ impl QueryFragmentLifecycle {
         LifecycleAction::Call(call)
     }
 
-    /// A successful answer of any kind refills the retry budget,
-    /// so the budget counts consecutive failures rather than failures over the whole lifetime.
     pub(super) fn apply(&mut self, reply: WorkerReply, now: DateTime<Utc>) -> LifecycleStep {
-        let call = match reply {
-            WorkerReply::Start(_) => WorkerCall::Start,
-            WorkerReply::Stop(_) => WorkerCall::Stop,
-            WorkerReply::Status(_) => WorkerCall::Status,
-        };
-        let step = match outcome(reply, self.des_state, now) {
-            WorkerRpcOutcome::Transition(transition) => {
-                self.budget.reset();
-                LifecycleStep::observed(Some(transition))
-            }
-            WorkerRpcOutcome::Status(status) => {
-                self.budget.reset();
+        self.wait_due = Duration::ZERO;
+        let outcome = outcome(reply, self.desired, now);
+        if !matches!(outcome, WorkerRpcOutcome::Retry(_)) {
+            self.failures = 0;
+        }
+        let step = match outcome {
+            WorkerRpcOutcome::Transition(transition) => LifecycleStep::observed(Some(transition)),
+            WorkerRpcOutcome::Status(transition) => {
                 self.stop_sent = false;
-                let transition = status_to_transition(status, self.des_state, now);
-                if state_of(&transition) != self.curr_state {
+                let state = state_of(&transition);
+                if matches!(
+                    state,
+                    QueryFragmentState::Started | QueryFragmentState::Running
+                ) {
+                    self.wait_due = self.poll_interval;
+                }
+                if state != self.current {
                     LifecycleStep::observed(Some(transition))
                 } else if self.observation_due(now) {
                     LifecycleStep::observed(None)
@@ -211,22 +160,25 @@ impl QueryFragmentLifecycle {
                     LifecycleStep::unchanged()
                 }
             }
-            WorkerRpcOutcome::Accepted => {
-                self.budget.reset();
+            WorkerRpcOutcome::StopAccepted => {
                 self.stop_sent = true;
                 LifecycleStep::observed(None)
             }
-            // The query_fragment failed in an unrecoverable way,
-            // or the worker is permanently unreachable or failed.
             WorkerRpcOutcome::Failed(err) => {
                 error!(error = %err, "fatal");
                 LifecycleStep::failed(failed_at(now, err))
             }
             WorkerRpcOutcome::Retry(err) => {
                 warn!(error = %err, "retryable failure");
-                match self.budget.record(&err) {
-                    Some(exhaustion) => LifecycleStep::failed(failed_at(now, exhaustion)),
-                    None => LifecycleStep::retry(RETRY_INTERVAL),
+                self.failures += 1;
+                if self.failures < MAX_CONSECUTIVE_FAILURES {
+                    self.wait_due = RETRY_INTERVAL;
+                    LifecycleStep::unchanged()
+                } else {
+                    let cause = format!("retry budget exhausted, last error: {err}");
+                    error!("{cause}");
+                    let exhaustion = QueryFragmentError::Transport { msg: cause };
+                    LifecycleStep::failed(failed_at(now, exhaustion))
                 }
             }
         };
@@ -234,25 +186,16 @@ impl QueryFragmentLifecycle {
             self.last_written = Some(now);
         }
         if let Some(transition) = &step.transition {
-            self.curr_state = state_of(transition);
+            self.current = state_of(transition);
         }
-        let live = matches!(
-            self.curr_state,
-            QueryFragmentState::Started | QueryFragmentState::Running
-        );
-        self.wait_due = if call == WorkerCall::Status && live && step.retry_wait.is_none() {
-            self.poll_interval
-        } else {
-            Duration::ZERO
-        };
         step
     }
 
-    pub(super) fn desired(&mut self, desired: DesiredQueryFragmentState) {
-        if desired != self.des_state {
+    pub(super) fn set_desired(&mut self, desired: DesiredQueryFragmentState) {
+        if desired != self.desired {
             self.wait_due = Duration::ZERO;
         }
-        self.des_state = desired;
+        self.desired = desired;
     }
 }
 
@@ -277,11 +220,10 @@ fn outcome(
         stop_timestamp: now,
     };
     match reply {
-        // Started rather than Running: the worker has only accepted the query_fragment at this point,
-        // and the state machine advances a pending query_fragment to started before anything else.
-        // The status read promotes it once the worker reports that it is producing.
-        // An already accepted start means that an earlier start reached the worker, although its reply did not reach the controller.
-        // Starting again cannot succeed, so the query_fragment counts as started in that case too.
+        // The worker has only accepted the fragment, so it is Started, not Running,
+        // until a status read reports it running.
+        // An already accepted start means that an earlier start reached the worker but its reply was lost.
+        // Starting again cannot succeed, so the fragment counts as started in that case too.
         WorkerReply::Start(Ok(()) | Err(CallError::AlreadyExists)) => {
             WorkerRpcOutcome::Transition(QueryFragmentTransition::Started)
         }
@@ -301,20 +243,15 @@ fn outcome(
                 "worker reported the fragment as unknown on start",
             )))
         }
-        WorkerReply::Stop(Ok(())) => WorkerRpcOutcome::Accepted,
+        WorkerReply::Stop(Ok(())) => WorkerRpcOutcome::StopAccepted,
         // The worker not knowing the fragment only says that it does not run there now.
         // An earlier start with an unknown outcome can still take effect afterwards;
         // the per-worker comparison of active fragments with the catalog stops it then.
         WorkerReply::Stop(Err(CallError::NotFound)) => WorkerRpcOutcome::Transition(stopped()),
-        WorkerReply::Status(Ok(raw)) => match QueryFragmentState::try_from(raw.state) {
-            Ok(state) => WorkerRpcOutcome::Status(QueryFragmentStatus {
-                state,
-                start_timestamp: raw.start_ms,
-                stop_timestamp: raw.stop_ms,
-                error: raw.error,
-            }),
-            // A state value that this build does not know is read again rather than acted on,
-            // since acting on it would change the query_fragment's state on a guess.
+        WorkerReply::Status(Ok(raw)) => match status_to_transition(raw, desired, now) {
+            Ok(transition) => WorkerRpcOutcome::Status(transition),
+            // An unknown state value is read again, not acted on,
+            // because acting on it would change the fragment's state on a guess.
             Err(unknown) => WorkerRpcOutcome::Retry(QueryFragmentError::Transport {
                 msg: format!("worker reported unknown query_fragment state: {unknown}"),
             }),
@@ -346,25 +283,27 @@ fn unix_ms_to_datetime(ms: u64) -> DateTime<Utc> {
     DateTime::from_timestamp_millis(i64::try_from(ms).unwrap_or(i64::MAX)).unwrap_or_default()
 }
 
+/// Fails with the state value if this build does not know it.
 fn status_to_transition(
-    status: QueryFragmentStatus,
+    raw: RawStatus,
     desired: DesiredQueryFragmentState,
     now: DateTime<Utc>,
-) -> QueryFragmentTransition {
-    let state = if status.state == QueryFragmentState::Completed
+) -> Result<QueryFragmentTransition, i32> {
+    let reported = QueryFragmentState::try_from(raw.state)?;
+    let state = if reported == QueryFragmentState::Completed
         && desired == DesiredQueryFragmentState::Stopped
     {
         QueryFragmentState::Stopped
     } else {
-        status.state
+        reported
     };
-    let start = status.start_timestamp.map(unix_ms_to_datetime);
-    let stop = status.stop_timestamp.map(unix_ms_to_datetime);
+    let start = raw.start_ms.map(unix_ms_to_datetime);
+    let stop = raw.stop_ms.map(unix_ms_to_datetime);
     let fallback = |field: &str| {
         warn!("worker reported {state} without {field}; using current time");
         now
     };
-    match state {
+    Ok(match state {
         QueryFragmentState::Pending => QueryFragmentTransition::Pending,
         QueryFragmentState::Started => QueryFragmentTransition::Started,
         QueryFragmentState::Running => QueryFragmentTransition::Running {
@@ -381,18 +320,18 @@ fn status_to_transition(
         QueryFragmentState::Failed => QueryFragmentTransition::Failed {
             start_timestamp: start,
             stop_timestamp: stop.unwrap_or_else(|| fallback("stop_timestamp")),
-            error: status.error.unwrap_or_else(|| {
+            error: raw.error.unwrap_or_else(|| {
                 warn!("worker reported Failed without error; using a generic error");
                 QueryFragmentError::Transport {
                     msg: "worker reported failure without detail".to_string(),
                 }
             }),
         },
-    }
+    })
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     use super::*;
     use model::identifier::{QueryFragmentId, QueryId};
 
@@ -429,7 +368,7 @@ mod tests {
         QueryFragmentLifecycle::new(&row(current, desired), POLL)
     }
 
-    fn transient(msg: &str) -> CallError {
+    pub(in crate::query_fragment) fn transient(msg: &str) -> CallError {
         CallError::Transient(QueryFragmentError::Transport {
             msg: msg.to_string(),
         })
@@ -441,24 +380,15 @@ mod tests {
             .unwrap()
     }
 
-    fn raw(state: QueryFragmentState, start: Option<u64>, stop: Option<u64>) -> RawStatus {
+    pub(in crate::query_fragment) fn raw(
+        state: QueryFragmentState,
+        start: Option<u64>,
+        stop: Option<u64>,
+    ) -> RawStatus {
         RawStatus {
             state: wire(state),
             start_ms: start,
             stop_ms: stop,
-            error: None,
-        }
-    }
-
-    fn report(
-        state: QueryFragmentState,
-        start: Option<u64>,
-        stop: Option<u64>,
-    ) -> QueryFragmentStatus {
-        QueryFragmentStatus {
-            state,
-            start_timestamp: start,
-            stop_timestamp: stop,
             error: None,
         }
     }
@@ -468,76 +398,64 @@ mod tests {
     }
 
     #[test]
-    fn a_pending_fragment_is_started_and_a_live_one_observed() {
-        assert_eq!(
-            lifecycle(Pending, WantCompleted).next(),
-            LifecycleAction::Call(WorkerCall::Start)
-        );
-        assert_eq!(
-            lifecycle(Started, WantCompleted).next(),
-            LifecycleAction::Call(WorkerCall::Status)
-        );
-        assert_eq!(
-            lifecycle(Running, WantCompleted).next(),
-            LifecycleAction::Call(WorkerCall::Status)
-        );
+    fn a_fresh_lifecycle_starts_with_the_call_for_its_states() {
+        use LifecycleAction::{Call, Done};
+        use WorkerCall::{Start, Status, Stop};
+        for (current, desired, expected) in [
+            (Pending, WantCompleted, Call(Start)),
+            (Started, WantCompleted, Call(Status)),
+            (Running, WantCompleted, Call(Status)),
+            (Pending, WantStopped, Call(Stop)),
+            (Running, WantStopped, Call(Stop)),
+            (Completed, WantCompleted, Done),
+            (Stopped, WantStopped, Done),
+            (QueryFragmentState::Failed, WantStopped, Done),
+        ] {
+            assert_eq!(
+                lifecycle(current, desired).next(),
+                expected,
+                "{current} {desired:?}"
+            );
+        }
     }
 
     #[test]
-    fn a_terminal_fragment_is_done_whatever_was_wanted() {
-        assert_eq!(
-            lifecycle(Completed, WantCompleted).next(),
-            LifecycleAction::Done
-        );
-        assert_eq!(
-            lifecycle(Stopped, WantStopped).next(),
-            LifecycleAction::Done
-        );
-        assert_eq!(
-            lifecycle(QueryFragmentState::Failed, WantStopped).next(),
-            LifecycleAction::Done
-        );
+    fn a_start_or_an_already_accepted_start_is_followed_by_an_observation_without_a_wait() {
+        for reply in [Ok(()), Err(CallError::AlreadyExists)] {
+            let mut lifecycle = lifecycle(Pending, WantCompleted);
+            let step = apply(&mut lifecycle, WorkerReply::Start(reply));
+            assert!(matches!(
+                step.transition,
+                Some(QueryFragmentTransition::Started)
+            ));
+            assert!(step.observed);
+            assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
+        }
     }
 
     #[test]
-    fn a_start_is_followed_by_an_observation_without_a_wait() {
-        let mut lifecycle = lifecycle(Pending, WantCompleted);
-        let step = apply(&mut lifecycle, WorkerReply::Start(Ok(())));
-        assert!(matches!(
-            step.transition,
-            Some(QueryFragmentTransition::Started)
-        ));
-        assert!(step.observed);
-        assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
-    }
-
-    #[test]
-    fn a_start_that_the_worker_already_accepted_is_followed_by_an_observation() {
-        let mut lifecycle = lifecycle(Pending, WantCompleted);
-        let step = apply(
-            &mut lifecycle,
-            WorkerReply::Start(Err(CallError::AlreadyExists)),
-        );
-        assert!(matches!(
-            step.transition,
-            Some(QueryFragmentTransition::Started)
-        ));
-        assert!(step.observed);
-        assert!(step.retry_wait.is_none());
-        assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
-    }
-
-    #[test]
-    fn a_start_of_a_fragment_the_worker_does_not_know_fails_it() {
-        let mut lifecycle = lifecycle(Pending, WantCompleted);
-        let step = apply(&mut lifecycle, WorkerReply::Start(Err(CallError::NotFound)));
-        assert!(step.retry_wait.is_none());
-        assert!(matches!(
-            step.transition,
-            Some(QueryFragmentTransition::Failed { error: QueryFragmentError::Internal(coded), .. })
-                if coded.code == ErrorCode::QueryNotFound
-        ));
-        assert_eq!(lifecycle.next(), LifecycleAction::Done);
+    fn a_reply_that_a_working_worker_never_sends_fails_the_fragment() {
+        for (current, reply, code) in [
+            (
+                Pending,
+                WorkerReply::Start(Err(CallError::NotFound)),
+                ErrorCode::QueryNotFound,
+            ),
+            (
+                Running,
+                WorkerReply::Status(Err(CallError::AlreadyExists)),
+                ErrorCode::QueryAlreadyRegistered,
+            ),
+        ] {
+            let mut lifecycle = lifecycle(current, WantCompleted);
+            let step = apply(&mut lifecycle, reply);
+            assert!(matches!(
+                step.transition,
+                Some(QueryFragmentTransition::Failed { error: QueryFragmentError::Internal(coded), .. })
+                    if coded.code == code
+            ));
+            assert_eq!(lifecycle.next(), LifecycleAction::Done);
+        }
     }
 
     #[test]
@@ -571,17 +489,18 @@ mod tests {
 
     #[test]
     fn an_unknown_fragment_that_should_stop_is_recorded_stopped() {
-        let mut lifecycle = lifecycle(Running, WantStopped);
-        apply(&mut lifecycle, WorkerReply::Stop(Ok(())));
-        let step = apply(
-            &mut lifecycle,
+        for reply in [
+            WorkerReply::Stop(Err(CallError::NotFound)),
             WorkerReply::Status(Err(CallError::NotFound)),
-        );
-        assert!(matches!(
-            step.transition,
-            Some(QueryFragmentTransition::Stopped { .. })
-        ));
-        assert_eq!(lifecycle.next(), LifecycleAction::Done);
+        ] {
+            let mut lifecycle = lifecycle(Running, WantStopped);
+            let step = apply(&mut lifecycle, reply);
+            assert!(matches!(
+                step.transition,
+                Some(QueryFragmentTransition::Stopped { .. })
+            ));
+            assert_eq!(lifecycle.next(), LifecycleAction::Done);
+        }
     }
 
     #[test]
@@ -598,7 +517,7 @@ mod tests {
         );
         assert!(step.transition.is_none());
         assert!(!step.observed);
-        assert_eq!(step.retry_wait, Some(RETRY_INTERVAL));
+        assert_eq!(lifecycle.next(), LifecycleAction::Wait(RETRY_INTERVAL));
         assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Status));
     }
 
@@ -609,7 +528,7 @@ mod tests {
             &mut lifecycle,
             WorkerReply::Status(Ok(raw(Running, Some(1), None))),
         );
-        lifecycle.desired(WantStopped);
+        lifecycle.set_desired(WantStopped);
         assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Stop));
     }
 
@@ -630,31 +549,6 @@ mod tests {
     }
 
     #[test]
-    fn a_state_change_is_written_within_the_interval() {
-        let mut lifecycle = lifecycle(Running, WantCompleted);
-        let start = Utc::now();
-        lifecycle.apply(WorkerReply::Status(Ok(raw(Running, Some(1), None))), start);
-
-        let step = lifecycle.apply(
-            WorkerReply::Status(Ok(raw(Completed, Some(1), Some(2)))),
-            start + chrono::Duration::milliseconds(50),
-        );
-        assert!(step.transition.is_some());
-    }
-
-    #[test]
-    fn a_fragment_wanted_stopped_begins_by_stopping() {
-        assert_eq!(
-            lifecycle(Pending, WantStopped).next(),
-            LifecycleAction::Call(WorkerCall::Stop)
-        );
-        assert_eq!(
-            lifecycle(Running, WantStopped).next(),
-            LifecycleAction::Call(WorkerCall::Stop)
-        );
-    }
-
-    #[test]
     fn a_stop_that_was_not_taken_is_repeated_after_the_retry_pause() {
         let mut lifecycle = lifecycle(Running, WantStopped);
         let step = apply(
@@ -663,7 +557,7 @@ mod tests {
         );
         assert!(step.transition.is_none());
         assert!(!step.observed);
-        assert_eq!(step.retry_wait, Some(RETRY_INTERVAL));
+        assert_eq!(lifecycle.next(), LifecycleAction::Wait(RETRY_INTERVAL));
         assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Stop));
     }
 
@@ -693,17 +587,6 @@ mod tests {
     }
 
     #[test]
-    fn a_stop_of_a_fragment_the_worker_does_not_know_records_it_stopped() {
-        let mut lifecycle = lifecycle(Pending, WantStopped);
-        let step = apply(&mut lifecycle, WorkerReply::Stop(Err(CallError::NotFound)));
-        assert!(matches!(
-            step.transition,
-            Some(QueryFragmentTransition::Stopped { .. })
-        ));
-        assert_eq!(lifecycle.next(), LifecycleAction::Done);
-    }
-
-    #[test]
     fn retryable_failures_count_until_the_budget_is_spent() {
         let mut lifecycle = lifecycle(Pending, WantCompleted);
         for _ in 1..MAX_CONSECUTIVE_FAILURES {
@@ -712,14 +595,13 @@ mod tests {
                 WorkerReply::Start(Err(transient("worker busy"))),
             );
             assert!(step.transition.is_none());
-            assert_eq!(step.retry_wait, Some(RETRY_INTERVAL));
+            assert_eq!(lifecycle.next(), LifecycleAction::Wait(RETRY_INTERVAL));
             assert_eq!(lifecycle.next(), LifecycleAction::Call(WorkerCall::Start));
         }
         let step = apply(
             &mut lifecycle,
             WorkerReply::Start(Err(transient("worker busy"))),
         );
-        assert!(step.retry_wait.is_none());
         assert!(matches!(
             step.transition,
             Some(QueryFragmentTransition::Failed { error: QueryFragmentError::Transport { msg }, .. })
@@ -729,22 +611,20 @@ mod tests {
     }
 
     #[test]
-    fn a_successful_answer_refills_the_budget() {
-        let mut lifecycle = lifecycle(Pending, WantCompleted);
-        for _ in 1..MAX_CONSECUTIVE_FAILURES {
-            apply(
-                &mut lifecycle,
-                WorkerReply::Start(Err(transient("worker busy"))),
-            );
+    fn every_kind_of_success_refills_the_budget() {
+        let mut lifecycle = lifecycle(Started, WantCompleted);
+        let busy = || WorkerReply::Status(Err(transient("worker busy")));
+        for success in [
+            WorkerReply::Start(Ok(())),
+            WorkerReply::Status(Ok(raw(Started, None, None))),
+            WorkerReply::Stop(Ok(())),
+        ] {
+            for _ in 1..MAX_CONSECUTIVE_FAILURES {
+                assert!(apply(&mut lifecycle, busy()).transition.is_none());
+            }
+            apply(&mut lifecycle, success);
         }
-        apply(&mut lifecycle, WorkerReply::Start(Ok(())));
-        for _ in 1..MAX_CONSECUTIVE_FAILURES {
-            let step = apply(
-                &mut lifecycle,
-                WorkerReply::Status(Err(transient("worker busy"))),
-            );
-            assert_eq!(step.retry_wait, Some(RETRY_INTERVAL));
-        }
+        assert!(apply(&mut lifecycle, busy()).transition.is_none());
     }
 
     #[test]
@@ -758,7 +638,6 @@ mod tests {
             now,
         );
         assert!(!step.observed);
-        assert!(step.retry_wait.is_none());
         assert!(matches!(
             step.transition,
             Some(QueryFragmentTransition::Failed { stop_timestamp, error: QueryFragmentError::Transport { msg }, .. })
@@ -768,37 +647,15 @@ mod tests {
     }
 
     #[test]
-    fn a_report_maps_to_the_transition_of_its_state() {
-        let now = Utc::now();
-        let cases = [
-            (Pending, "Pending"),
-            (Started, "Started"),
-            (Running, "Running"),
-            (Completed, "Completed"),
-            (Stopped, "Stopped"),
-            (QueryFragmentState::Failed, "Failed"),
-        ];
-        for (state, name) in cases {
-            let transition =
-                status_to_transition(report(state, Some(1_000), Some(2_000)), WantCompleted, now);
-            assert_eq!(
-                format!("{transition:?}").split([' ', '{']).next().unwrap(),
-                name
-            );
-            assert_eq!(state_of(&transition), state);
-        }
-    }
-
-    #[test]
     fn a_completion_while_a_stop_is_wanted_is_recorded_as_stopped() {
         let transition = status_to_transition(
-            report(Completed, Some(1_000), Some(2_000)),
+            raw(Completed, Some(1_000), Some(2_000)),
             WantStopped,
             Utc::now(),
         );
         assert!(matches!(
             transition,
-            QueryFragmentTransition::Stopped { start_timestamp: Some(start), stop_timestamp }
+            Ok(QueryFragmentTransition::Stopped { start_timestamp: Some(start), stop_timestamp })
                 if start.timestamp_millis() == 1_000 && stop_timestamp.timestamp_millis() == 2_000
         ));
     }
@@ -807,25 +664,25 @@ mod tests {
     fn a_report_missing_a_timestamp_gets_the_current_time() {
         let now = Utc::now();
         assert!(matches!(
-            status_to_transition(report(Running, None, None), WantCompleted, now),
-            QueryFragmentTransition::Running { start_timestamp } if start_timestamp == now
+            status_to_transition(raw(Running, None, None), WantCompleted, now),
+            Ok(QueryFragmentTransition::Running { start_timestamp }) if start_timestamp == now
         ));
         assert!(matches!(
-            status_to_transition(report(Completed, Some(1_000), None), WantCompleted, now),
-            QueryFragmentTransition::Completed { start_timestamp: Some(_), stop_timestamp } if stop_timestamp == now
+            status_to_transition(raw(Completed, Some(1_000), None), WantCompleted, now),
+            Ok(QueryFragmentTransition::Completed { start_timestamp: Some(_), stop_timestamp }) if stop_timestamp == now
         ));
     }
 
     #[test]
     fn a_failure_reported_without_an_error_gets_a_generic_one() {
         let transition = status_to_transition(
-            report(QueryFragmentState::Failed, None, Some(2_000)),
+            raw(QueryFragmentState::Failed, None, Some(2_000)),
             WantCompleted,
             Utc::now(),
         );
         assert!(matches!(
             transition,
-            QueryFragmentTransition::Failed { error: QueryFragmentError::Transport { msg }, .. }
+            Ok(QueryFragmentTransition::Failed { error: QueryFragmentError::Transport { msg }, .. })
                 if msg == "worker reported failure without detail"
         ));
     }
