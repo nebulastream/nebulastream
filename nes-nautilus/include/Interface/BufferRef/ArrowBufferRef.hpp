@@ -116,6 +116,8 @@ private:
 
     std::vector<Field> fields;
     uint64_t headerSize;
+    /// Experiment: read fixed-size fields that are not nullable at the offsets of this layout, see readRecord
+    bool staticRead;
 };
 
 }

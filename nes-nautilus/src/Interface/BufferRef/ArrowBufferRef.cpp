@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <optional>
@@ -46,7 +47,10 @@ namespace NES
 
 ArrowBufferRef::ArrowBufferRef(
     std::vector<Field> fields, const uint64_t headerSize, const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
-    : TupleBufferRef(capacity, bufferSize, tupleSize), fields(std::move(fields)), headerSize(headerSize)
+    : TupleBufferRef(capacity, bufferSize, tupleSize)
+    , fields(std::move(fields))
+    , headerSize(headerSize)
+    , staticRead(std::getenv("NES_ARROW_STATIC_READ") != nullptr) /// NOLINT(concurrency-mt-unsafe)
 {
 }
 
@@ -244,6 +248,16 @@ Record ArrowBufferRef::readRecord(
             {
                 isNull = !readBit(locate(buffer, offset), recordIndex);
             }
+        }
+
+        /// Experiment (NES_ARROW_STATIC_READ=1): a fixed-size field that is not nullable is where this layout writes it, so the
+        /// scan does not read its location from the header for every record. Only valid for buffers that this layout wrote.
+        if (staticRead && not field.type.nullable && field.type.type != DataType::Type::BOOLEAN && field.type.type != DataType::Type::VARSIZED)
+        {
+            const auto slot
+                = bufferAddress + ((recordIndex * nautilus::val<uint64_t>{field.type.getSizeInBytesWithoutNull()}) + field.dataOffset);
+            record.write(field.name, VarVal::readVarValFromMemory(slot, field.type, isNull));
+            continue;
         }
 
         const auto [dataBuffer, dataOffset] = readLocation(i, Region::DATA);
