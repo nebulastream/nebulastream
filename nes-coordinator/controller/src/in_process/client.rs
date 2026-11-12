@@ -25,7 +25,6 @@ use std::time::Duration;
 /// A call to a worker in this process never fails transiently.
 /// An unknown id is state, not failure: the status log is append-only and gets its first entry before any work is queued,
 /// so the id was never started there.
-/// A known id on start means that the worker accepted an earlier start of the fragment.
 fn classify(error: QueryFragmentError) -> CallError {
     match &error {
         QueryFragmentError::Internal(coded) if coded.code == ErrorCode::QueryNotFound => {
