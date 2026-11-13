@@ -3,8 +3,16 @@ description: |
   Orchestrator for every pull request. Runs the classify gate once, then dispatches the reusable
   code pipeline (pr_code.yml) and/or docs pipeline (pr_docs.yml) depending on what changed, and owns
   the two required-status gates ("Code CI Done" / "Docs CI Done").
+  Same-repo PRs run on `pull_request`. Fork PRs run on `pull_request_target`, which gives them the
+  repository secrets, so they first wait in the `authorize` job for a maintainer to approve the
+  `fork-pr-ci` environment. Each PR therefore triggers both events and exactly one of the two runs
+  does work; the other is skipped entirely.
 on:
   pull_request:
+    types: [ synchronize, opened, reopened ]
+  # Runs the workflow files of main, not of the PR. The PR's code (and its ./.github/steps actions)
+  # still runs with secrets once approved: approving a run means trusting that exact commit.
+  pull_request_target:
     types: [ synchronize, opened, reopened ]
   merge_group:
     branches: [ main ]
@@ -13,13 +21,43 @@ on:
 # In merge_group runs github.head_ref is empty, so fall back to github.ref (the unique
 # gh-readonly-queue ref) to avoid queued runs cancelling each other.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr
+  # PR number, not head_ref: a fork branch with the same name must not cancel another PR's run.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-pr
   cancel-in-progress: true
+
+# Least privilege. Called workflows can only narrow these, so the two pipelines get exactly the
+# scopes their jobs declare (format: issues, nix cache: id-token, docs publish job: pages/id-token).
+permissions:
+  contents: read
 
 jobs:
   # Classify the PR diff once (see .github/ci/full-ci-skip-paths.txt) and hand the result to the two
   # pipelines below. A docs-only PR skips pr_code.yml; a code-only PR skips pr_docs.yml.
+  # The only job with a condition on the trigger; every other job is skipped with it.
+  # For fork PRs it waits for approval of the `fork-pr-ci` environment (required reviewers).
+  # Approval covers this run's head sha only, a new push needs a new approval.
+  authorize:
+    if: ${{ github.event_name == 'merge_group' || (github.event_name == 'pull_request_target') == (github.event.pull_request.head.repo.full_name != github.repository) }}
+    runs-on: ubuntu-24.04
+    environment: ${{ github.event_name == 'pull_request_target' && 'fork-pr-ci' || '' }}
+    permissions:
+      actions: read
+    steps:
+      # GitHub silently creates a missing environment WITHOUT protection, which would hand
+      # secrets to unreviewed fork code. Fail closed unless required reviewers are configured.
+      - name: Require a protected environment
+        if: ${{ github.event_name == 'pull_request_target' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          reviewers=$(gh api "repos/$GITHUB_REPOSITORY/environments/fork-pr-ci" \
+            --jq '[.protection_rules[] | select(.type == "required_reviewers")] | length')
+          if [ "$reviewers" -lt 1 ]; then
+            echo "::error::environment fork-pr-ci has no required reviewers"; exit 1
+          fi
+
   classify:
+    needs: [ authorize ]
     runs-on: ubuntu-24.04
     outputs:
       hasCodeChanges: ${{ steps.classify.outputs.hasCodeChanges }}
@@ -29,6 +67,12 @@ jobs:
         with:
           # Full history so tj-actions can diff base_sha..sha; a shallow clone yields an empty diff.
           fetch-depth: 0
+      # pull_request_target checks out main (so the classify action below is the trusted one);
+      # the fork's head commit is only fetched for the diff, never executed here.
+      - if: ${{ github.event_name == 'pull_request_target' }}
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: git fetch origin "$HEAD_SHA"
       - id: classify
         uses: ./.github/actions/classify-pr-changes
         with:
@@ -40,12 +84,20 @@ jobs:
     needs: [ classify ]
     if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     uses: ./.github/workflows/pr_code.yml
+    permissions:
+      contents: read
+      issues: read
+      id-token: write
     secrets: inherit
 
   docs:
     needs: [ classify ]
     if: ${{ needs.classify.outputs.hasDocChanges == 'true' }}
     uses: ./.github/workflows/pr_docs.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     secrets: inherit
 
   # --- Required-check gates ---------------------------------------------------------------------
@@ -54,9 +106,10 @@ jobs:
   # status checks. Because they are top-level jobs here (not inside the reusable workflows) the
   # context names stay unprefixed; the reusable workflows' own jobs show up as "code / ..." etc.
   code-ci-done:
-    name: Code CI Done
-    needs: [ classify, code ]
-    if: ${{ always() }}
+    # The run of the unused trigger must not create a skipped check named like the required one.
+    name: ${{ (github.event_name == 'merge_group' || (github.event_name == 'pull_request_target') == (github.event.pull_request.head.repo.full_name != github.repository)) && 'Code CI Done' || 'Code CI (unused trigger)' }}
+    needs: [ authorize, classify, code ]
+    if: ${{ always() && needs.authorize.result != 'skipped' }}
     runs-on: ubuntu-24.04
     steps:
       - name: Gate
@@ -78,9 +131,10 @@ jobs:
           echo "::error::Code CI did not succeed: $CODE_RESULT"; exit 1
 
   docs-ci-done:
-    name: Docs CI Done
-    needs: [ classify, docs ]
-    if: ${{ always() }}
+    # The run of the unused trigger must not create a skipped check named like the required one.
+    name: ${{ (github.event_name == 'merge_group' || (github.event_name == 'pull_request_target') == (github.event.pull_request.head.repo.full_name != github.repository)) && 'Docs CI Done' || 'Docs CI (unused trigger)' }}
+    needs: [ authorize, classify, docs ]
+    if: ${{ always() && needs.authorize.result != 'skipped' }}
     runs-on: ubuntu-24.04
     steps:
       - name: Gate

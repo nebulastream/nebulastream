@@ -257,8 +257,10 @@ jobs:
         id: sanitize
         if: ${{ inputs.branch-name != '' }}
         shell: bash
+        env:
+          # via env, not ${{ }} interpolation: a branch name is attacker-controlled shell input
+          BRANCH_NAME: ${{ inputs.branch-name }}
         run: |
-          BRANCH_NAME="${{ inputs.branch-name }}"
           # Docker tags allow only [a-zA-Z0-9._-] and max 128 chars.
           # Replace all invalid characters (e.g. '/') with '-', strip leading '.' or '-'.
           SANITIZED=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/^[.-]*//' | cut -c1-128)

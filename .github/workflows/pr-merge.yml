@@ -1,8 +1,14 @@
 name: NES PR CI Merge
 on:
-  pull_request:
+  # pull_request_target so merged fork PRs get the secrets (image push, codecov). Safe only because
+  # every job is gated on `merged == true` and builds merge_commit_sha, i.e. reviewed code on main.
+  # Never check out pull_request.head.* here.
+  pull_request_target:
     branches: [ main ]
     types: [ closed ]
+
+permissions:
+  contents: read
 
 jobs:
   get-dev-images:
@@ -11,7 +17,7 @@ jobs:
     secrets: inherit
     with:
       branch-name: ${{ github.head_ref }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.merge_commit_sha }}
 
   run_code_coverage:
     if: github.event.pull_request.merged == true
@@ -49,13 +55,6 @@ jobs:
     if: ${{ github.event.pull_request.merged == true && needs.get-dev-images.outputs.build-dependency == 'true' }}
     steps:
       - uses: actions/checkout@v5
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            vcpkg/**
-            docker/dependency/**
       - name: Login to Docker Hub
         uses: ./.github/steps/docker-login
         with:
