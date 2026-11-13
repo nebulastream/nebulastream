@@ -16,11 +16,14 @@
 #include <algorithm>
 #include <chrono>
 #include <concepts>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <future>
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ostream>
 #include <ranges>
 #include <source_location>
@@ -35,6 +38,8 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryUtils.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -43,7 +48,9 @@
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <BackpressureChannel.hpp>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
 #include <nameof.hpp>
@@ -288,6 +295,267 @@ TEST_F(SourceThreadTest, CompletesFiniteMetadataSourceWithNextSequenceNumber)
     EXPECT_EQ(finalWatermark->buffer.getSequenceNumber(), SequenceNumber{43});
     EXPECT_EQ(finalWatermark->buffer.getWatermark(), Timestamp{Timestamp::INFINITE_VALUE});
     EXPECT_TRUE(std::holds_alternative<SourceReturnType::EoS>(events->at(2)));
+}
+
+namespace
+{
+class MockBufferProvider : public AbstractBufferProvider
+{
+public:
+    MOCK_METHOD(BufferManagerType, getBufferManagerType, (), (const, override));
+    MOCK_METHOD(size_t, getBufferSize, (), (const, override));
+    MOCK_METHOD(size_t, getNumOfPooledBuffers, (), (const, override));
+    MOCK_METHOD(size_t, getNumOfUnpooledBuffers, (), (const, override));
+    MOCK_METHOD(TupleBuffer, getBufferBlocking, (), (override));
+    MOCK_METHOD(std::optional<TupleBuffer>, getBufferNoBlocking, (), (override));
+    MOCK_METHOD(std::optional<TupleBuffer>, getBufferWithTimeout, (std::chrono::milliseconds), (override));
+    MOCK_METHOD(std::optional<TupleBuffer>, getUnpooledBuffer, (size_t), (override));
+};
+
+/// Deliberately inherits the default preallocation capability.
+class MockSource : public Source
+{
+public:
+    MOCK_METHOD(FillTupleBufferResult, fillTupleBuffer, (TupleBuffer&, const std::stop_token&), (override));
+    MOCK_METHOD(void, open, (std::shared_ptr<AbstractBufferProvider>), (override));
+    MOCK_METHOD(void, close, (), (override));
+    MOCK_METHOD(bool, addsMetadata, (), (const, override));
+
+protected:
+    std::ostream& toString(std::ostream& out) const override { return out << "MockSource"; }
+};
+
+class ReturningBufferSource : public MockSource
+{
+public:
+    bool requiresPreallocatedBuffer() const override { return false; }
+};
+}
+
+class SourceBufferCapabilityTest : public SourceThreadTest
+{
+protected:
+    std::shared_ptr<BufferManager> bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
+    /// Strict mocks reject every unexpected allocation, including on EOS and failure paths.
+    std::shared_ptr<testing::StrictMock<MockBufferProvider>> provider = std::make_shared<testing::StrictMock<MockBufferProvider>>();
+    RecordingEmitFunction recorder{*bm, {}, {}};
+    std::pair<BackpressureController, BackpressureListener> backpressure = createBackpressureChannel();
+
+    std::unique_ptr<SourceThread> start(std::unique_ptr<MockSource> source, bool addsMetadata = false)
+    {
+        EXPECT_CALL(*source, open(testing::Eq(provider)));
+        EXPECT_CALL(*source, addsMetadata()).WillOnce(testing::Return(addsMetadata));
+        auto thread = std::make_unique<SourceThread>(backpressure.second, INITIAL<OriginId>, provider, std::move(source));
+        verify_non_blocking_start(
+            *thread,
+            [this](OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
+        return thread;
+    }
+};
+
+TEST_F(SourceBufferCapabilityTest, ReturningBuffersNeedNoSpareAndPreserveSourceMetadata)
+{
+    auto buffer = bm->getBufferBlocking();
+    buffer.setNumberOfTuples(DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    buffer.setOriginId(OriginId(42));
+    buffer.setSequenceNumber(SequenceNumber(17));
+    buffer.setChunkNumber(ChunkNumber(3));
+    buffer.setLastChunk(false);
+    /// Keep an alias, as consumers of reused buffers do.
+    const auto alias = buffer;
+    auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
+    EXPECT_FALSE(source->requiresPreallocatedBuffer());
+    EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+        .Times(3)
+        .WillOnce(
+            [&](TupleBuffer& output, const std::stop_token&)
+            {
+                EXPECT_FALSE(!!output);
+                output = buffer;
+                return Source::FillTupleBufferResult::withBytes(DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+            })
+        .WillOnce(
+            [&](TupleBuffer& output, const std::stop_token&)
+            {
+                EXPECT_FALSE(!!output);
+                output = buffer;
+                return Source::FillTupleBufferResult::withBytes(DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+            })
+        .WillOnce(
+            [](TupleBuffer& output, const std::stop_token&)
+            {
+                EXPECT_FALSE(!!output);
+                return Source::FillTupleBufferResult::eos();
+            });
+    auto thread = start(std::move(source), true);
+    wait_for_emits(recorder, 3);
+    verify_non_blocking_stop(*thread);
+    auto records = recorder.recordedEmits.lock();
+    ASSERT_EQ(records->size(), 3);
+    for (size_t i = 0; i < 2; ++i)
+    {
+        ASSERT_TRUE(std::holds_alternative<SourceReturnType::Data>(records->at(i)));
+        const auto& emitted = std::get<SourceReturnType::Data>(records->at(i)).buffer;
+        EXPECT_EQ(emitted.getNumberOfTuples(), alias.getNumberOfTuples());
+        EXPECT_EQ(emitted.getOriginId(), alias.getOriginId());
+        EXPECT_EQ(emitted.getSequenceNumber(), alias.getSequenceNumber());
+        EXPECT_EQ(emitted.getChunkNumber(), alias.getChunkNumber());
+        EXPECT_EQ(emitted.isLastChunk(), alias.isLastChunk());
+    }
+    EXPECT_TRUE(std::holds_alternative<SourceReturnType::EoS>(records->back()));
+}
+
+TEST_F(SourceBufferCapabilityTest, ReturningBufferGetsByteCountAndDefaultMetadata)
+{
+    auto buffer = bm->getBufferBlocking();
+    buffer.setNumberOfTuples(0);
+    auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
+    EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+        .WillOnce(
+            [&](TupleBuffer& output, const std::stop_token&)
+            {
+                EXPECT_FALSE(!!output);
+                output = buffer;
+                return Source::FillTupleBufferResult::withBytes(DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+            })
+        .WillOnce(testing::Return(Source::FillTupleBufferResult::eos()));
+    auto thread = start(std::move(source));
+    wait_for_emits(recorder, 2);
+    verify_non_blocking_stop(*thread);
+    verify_number_of_emits(recorder, 2);
+    verify_last_event<SourceReturnType::EoS>(recorder);
+    EXPECT_EQ(buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    EXPECT_EQ(buffer.getOriginId(), INITIAL<OriginId>);
+    EXPECT_EQ(buffer.getSequenceNumber(), SequenceNumber(1));
+    EXPECT_EQ(buffer.getChunkNumber(), INITIAL_CHUNK_NUMBER);
+    EXPECT_TRUE(buffer.isLastChunk());
+}
+
+TEST_F(SourceBufferCapabilityTest, ReturningSourceCanEndWithoutAllocating)
+{
+    auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
+    EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+        .WillOnce(
+            [](TupleBuffer& output, const std::stop_token&)
+            {
+                EXPECT_FALSE(!!output);
+                return Source::FillTupleBufferResult::eos();
+            });
+    auto thread = start(std::move(source));
+    wait_for_emits(recorder, 1);
+    verify_non_blocking_stop(*thread);
+    verify_number_of_emits(recorder, 1);
+    verify_last_event<SourceReturnType::EoS>(recorder);
+}
+
+TEST_F(SourceBufferCapabilityTest, ReturningSourceStopClosesWithoutEmittingEos)
+{
+    std::promise<void> filling;
+    auto enteredFill = filling.get_future();
+    auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
+    EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+        .WillOnce(
+            [&](TupleBuffer& output, const std::stop_token& stopToken)
+            {
+                EXPECT_FALSE(!!output);
+                filling.set_value();
+                std::mutex mutex;
+                std::condition_variable_any condition;
+                std::unique_lock lock(mutex);
+                condition.wait(lock, stopToken, [] { return false; });
+                return Source::FillTupleBufferResult::eos();
+            });
+    auto thread = start(std::move(source));
+    EXPECT_EQ(enteredFill.wait_for(DEFAULT_LONG_TIMEOUT), std::future_status::ready);
+    verify_non_blocking_stop(*thread);
+    verify_no_events(recorder);
+}
+
+TEST_F(SourceBufferCapabilityTest, ReturningSourceFailureClosesAndPreservesOriginalError)
+{
+    auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
+    EXPECT_CALL(*source, close()).WillOnce(testing::Throw(RunningRoutineFailure("close failure")));
+    EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+        .WillOnce(
+            [](TupleBuffer& output, const std::stop_token&) -> Source::FillTupleBufferResult
+            {
+                EXPECT_FALSE(!!output);
+                throw RunningRoutineFailure("fill failure");
+            });
+    auto thread = start(std::move(source));
+    wait_for_emits(recorder, 1);
+    verify_non_blocking_stop(*thread);
+    verify_number_of_emits(recorder, 1);
+    verify_last_event<SourceReturnType::Error>(recorder);
+    auto records = recorder.recordedEmits.lock();
+    ASSERT_TRUE(std::holds_alternative<SourceReturnType::Error>(records->front()));
+    EXPECT_THAT(std::get<SourceReturnType::Error>(records->front()).ex.what(), testing::HasSubstr("fill failure"));
+    EXPECT_THAT(std::get<SourceReturnType::Error>(records->front()).ex.what(), testing::Not(testing::HasSubstr("close failure")));
+}
+
+TEST_F(SourceBufferCapabilityTest, SuccessfulFillRequiresValidBufferEvenForZeroBytes)
+{
+    for (const size_t bytes : {size_t{0}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER})
+    {
+        SCOPED_TRACE(bytes);
+        recorder.recordedEmits.lock()->clear();
+        auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
+        EXPECT_CALL(*source, close()).Times(1);
+        EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+            .WillOnce(testing::Return(Source::FillTupleBufferResult::withBytes(bytes)));
+        auto thread = start(std::move(source));
+        wait_for_emits(recorder, 1);
+        verify_non_blocking_stop(*thread);
+        verify_number_of_emits(recorder, 1);
+        verify_last_event<SourceReturnType::Error>(recorder);
+    }
+}
+
+TEST_F(SourceBufferCapabilityTest, DefaultSourceStillAcquiresAndRetriesPreallocatedBuffers)
+{
+    auto buffer = bm->getBufferBlocking();
+    buffer.setNumberOfTuples(0);
+    auto source = std::make_unique<testing::StrictMock<MockSource>>();
+    EXPECT_TRUE(source->requiresPreallocatedBuffer());
+    EXPECT_CALL(*provider, getBufferWithTimeout(25ms))
+        .WillOnce(testing::Return(std::nullopt))
+        .WillOnce(testing::Return(std::optional{buffer}))
+        .WillOnce(testing::Return(std::optional{buffer}));
+    EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+        .WillOnce(
+            [&](TupleBuffer& output, const std::stop_token&)
+            {
+                EXPECT_TRUE(!!output);
+                EXPECT_EQ(output.getAvailableMemoryArea().data(), buffer.getAvailableMemoryArea().data());
+                return Source::FillTupleBufferResult::withBytes(DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+            })
+        .WillOnce(
+            [](TupleBuffer& output, const std::stop_token&)
+            {
+                EXPECT_TRUE(!!output);
+                return Source::FillTupleBufferResult::eos();
+            });
+    auto thread = start(std::move(source));
+    wait_for_emits(recorder, 2);
+    verify_non_blocking_stop(*thread);
+    verify_number_of_emits(recorder, 2);
+    verify_last_event<SourceReturnType::EoS>(recorder);
+    EXPECT_EQ(buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    EXPECT_EQ(buffer.getOriginId(), INITIAL<OriginId>);
 }
 
 /// Internal Stop by destroying the SourceThread

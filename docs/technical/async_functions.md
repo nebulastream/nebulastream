@@ -48,7 +48,8 @@ pre-projection (sync)  ->  async stage  ->  post-projection (sync)
 ```
 
 - The **pre-projection** evaluates every argument that is neither a field nor a constant, e.g. `CONCAT(data, '!')`, and
-  reserves an empty result slot per call.
+  reserves an empty result slot per call. Its fields use the same canonical order as the async stage, so the reserved
+  slots can be filled without rearranging the row.
 - The **async stage** is a projection carrying the `AsyncExecutionTrait`. It forwards its input and fills each slot with
   its call, so its input and output have the same fields.
 - The **post-projection** is the original projection, now reading the slots.
@@ -153,9 +154,18 @@ There is no dedicated thread per call. Each async stage still has an ordinary so
   references to its elements. A completed buffer is moved out for output only after its last row callback has finished
   accessing it; shutdown drains rows before clearing the in-flight state. There is no separately allocated shared buffer wrapper.
 - **Order and metadata.** Buffers are emitted in the order they were handed off, each once all of its rows are done.
-  One input buffer becomes exactly one output buffer with the same sequence and chunk number, origin and watermark. All
-  fields that are not call results are copied byte for byte, and variable-sized data stays valid, because the child
-  buffers are carried over in the same order.
+  One input buffer becomes exactly one output buffer with the same sequence and chunk number, origin and watermark.
+  After every row callback has finished, the source fills the reserved result slots and reuses the input parent buffer
+  if the physical layouts match and no other parent-buffer owner remains. Other owners may read those same slots, so
+  shared parents and differing layouts retain a copy fallback; the source never waits for uniqueness. Unchanged fields
+  are copied only on that fallback, and existing child buffers are retained in their original order.
+- **Allocation and variable-sized results.** The Async source opts out of `SourceThread`'s usual empty-buffer acquisition:
+  reuse needs no spare parent buffer. A copy first tries the pool without blocking, then unpooled memory; allocation
+  failure fails the query rather than waiting while retaining buffers from an exhausted pool. Async values still own
+  their result bytes until materialization, and new variable-sized payloads are copied into child storage. The native
+  writer extends only private children (the parent plus its temporary loaded handle are the only two references);
+  shared children get a new result child instead. Result writes and child-list updates happen on the source thread,
+  not concurrently in the row coroutines. Buffer-level mutation therefore still has one writer.
 - **Function instances.** Each slot has its own instance of every function in the stage, created through the
   `AsyncFunctionRegistry`, so an instance serves one call at a time and may keep state between calls, such as an open
   connection.
@@ -317,5 +327,10 @@ add_registry_entry(AsyncFunction MyFunction)
   independent wait timeouts/cancellation, producer failure, row cancellation/draining and per-row memoization.
 - `nes-plugins/Async/tests/AsyncSourceValueTest.cpp` checks result arity, type and nullability invariants with death tests
   when assertions are enabled.
+- [nes-plugins/Async/tests/AsyncSourceBufferReuseTest.cpp](nes-plugins/Async/tests/AsyncSourceBufferReuseTest.cpp)
+  checks parent identity, shared-parent/layout fallbacks, metadata and ordering, exhausted pools and rejected allocation,
+  nullable/binary/large results, failure draining, and concurrent writers retaining a shared child.
+- [nes-sources/tests/SourceThreadTest.cpp](nes-sources/tests/SourceThreadTest.cpp) checks allocation-free returning
+  sources as well as the existing preallocated-source contract, stop/EOS/error cleanup, and metadata preservation.
 - `nes-plugins/Async/tests/HandoffChannelTest.cpp` covers the channel's leases.
 - `nes-systests/explain/AsyncFunctionLifting.test` checks the lifted and the decomposed plans.

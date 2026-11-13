@@ -35,6 +35,7 @@ SINK(CALLSINK)
 ==END==
 
 # Nested calls: one async stage per nesting depth, sync glue in between.
+# Regression: the new argument sorts before the forwarded call slot; pre/async field orders must match.
 EXPLAIN (OPTIMIZED) FORMAT TEXT
 SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http://localhost/b') AS response FROM textStream INTO callSink;
 ----
@@ -42,7 +43,7 @@ SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http:
 SINK(CALLSINK)
   PROJECTION(fields: [ID, __ASYNC_CALL_2 as RESPONSE])
     ASYNC_PROJECTION(fields: [DATA, ID, __ASYNC_ARG_1, __ASYNC_CALL_0, HTTP_CALL(__ASYNC_ARG_1, http://localhost/b) as __ASYNC_CALL_2])
-      PROJECTION(fields: [DATA, ID, __ASYNC_CALL_0, CONCAT(__ASYNC_CALL_0, DATA) as __ASYNC_ARG_1,  as __ASYNC_CALL_2])
+      PROJECTION(fields: [DATA, ID, CONCAT(__ASYNC_CALL_0, DATA) as __ASYNC_ARG_1, __ASYNC_CALL_0,  as __ASYNC_CALL_2])
         ASYNC_PROJECTION(fields: [DATA, ID, HTTP_CALL(DATA, http://localhost/a) as __ASYNC_CALL_0])
           PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
             SOURCE(TEXTSTREAM)
@@ -93,7 +94,7 @@ SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http:
 <REGEX>
 -- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
 (?:(?!--).*\n)*SINK\(HANDOFF\)
-  PROJECTION\(fields: \[DATA, ID, __ASYNC_CALL_0, CONCAT\(__ASYNC_CALL_0, DATA\) as __ASYNC_ARG_1,  as __ASYNC_CALL_2\]\)
+  PROJECTION\(fields: \[DATA, ID, CONCAT\(__ASYNC_CALL_0, DATA\) as __ASYNC_ARG_1, __ASYNC_CALL_0,  as __ASYNC_CALL_2\]\)
     SOURCE\((?:ASYNC|NETWORK)\)
 (?:(?!--).*\n)*.*SOURCE\(ASYNC\)
 </REGEX>

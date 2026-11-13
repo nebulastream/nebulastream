@@ -50,7 +50,8 @@ public:
     TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
     virtual ~TupleBufferRef();
 
-    /// @brief Writes the variable sized data to the buffer
+    /// @brief Writes variable-sized data into a private child, allocating one if the last child is shared or full.
+    /// The caller must serialize mutations of the parent; child payloads shared with other parents are not extended.
     static VariableSizedAccess
     writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 

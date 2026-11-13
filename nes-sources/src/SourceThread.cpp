@@ -114,6 +114,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
     };
 
     const bool requiresMetadata = !source.addsMetadata();
+    const bool requiresPreallocatedBuffer = source.requiresPreallocatedBuffer();
     while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
@@ -125,20 +126,37 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
-        auto emptyBuffer = getBufferUnlessStopped(*bufferProvider, stopToken);
-        if (!emptyBuffer)
+        TupleBuffer buffer;
+        if (requiresPreallocatedBuffer)
+        {
+            auto emptyBuffer = getBufferUnlessStopped(*bufferProvider, stopToken);
+            if (!emptyBuffer)
+            {
+                return {SourceImplementationTermination::StopRequested};
+            }
+            buffer = std::move(*emptyBuffer);
+        }
+        if (stopToken.stop_requested())
         {
             return {SourceImplementationTermination::StopRequested};
         }
 
-        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
+        const auto fillTupleResult = source.fillTupleBuffer(buffer, stopToken);
 
         if (!fillTupleResult.isEoS())
         {
+            if (!buffer)
+            {
+                throw RunningRoutineFailure("Source returned data without a valid TupleBuffer");
+            }
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
-            emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes());
-            emit(std::move(*emptyBuffer), requiresMetadata);
+            /// Reused buffers may have metadata reader aliases; avoid an unnecessary write when the count is already correct.
+            if (buffer.getNumberOfTuples() != fillTupleResult.getNumberOfBytes())
+            {
+                buffer.setNumberOfTuples(fillTupleResult.getNumberOfBytes());
+            }
+            emit(std::move(buffer), requiresMetadata);
         }
         else
         {

@@ -16,5 +16,8 @@ target_link_libraries(handoff-channel-test async_handoff_channel nes-memory nes-
 add_nes_test(async-source-value-test AsyncSourceValueTest.cpp)
 target_link_libraries(async-source-value-test async_source_plugin_library nes-sources nes-nautilus reflectcpp::reflectcpp)
 
+add_nes_test(async-source-buffer-reuse-test AsyncSourceBufferReuseTest.cpp)
+target_link_libraries(async-source-buffer-reuse-test async_source_plugin_library nes-sources nes-nautilus)
+
 add_nes_test(async-graph-execution-test AsyncGraphExecutionTest.cpp)
 target_link_libraries(async-graph-execution-test async_graph_execution)

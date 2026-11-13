@@ -208,6 +208,7 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
             "async input field has type {}, expected {}",
             field.getDataType(),
             output->second.second);
+        matchingLayouts = matchingLayouts && output->second.first == inputRowSize;
         if (!inputOffsets.emplace(name, inputRowSize).second)
         {
             throw CannotOpenSource("duplicate handed-off field {}", name);
@@ -461,6 +462,15 @@ void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output)
             std::memcpy(
                 out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
         }
+    }
+    writeResults(buffer, output);
+}
+
+void AsyncSource::writeResults(const InFlightBuffer& buffer, TupleBuffer& output) const
+{
+    PRECONDITION(buffer.rows <= output.getBufferSize() / outputRowSize, "async output rows must fit the buffer");
+    for (size_t row = 0; row < buffer.rows; ++row)
+    {
         INVARIANT(buffer.results[row].has_value(), "A completed async row must have a result");
         Record results;
         for (size_t position = 0; position < outputValues.size(); ++position)
@@ -520,10 +530,35 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
         }
         if (!inFlight.buffers.empty() && inFlight.buffers.front().done)
         {
-            const auto buffer = std::move(inFlight.buffers.front());
+            auto buffer = std::move(inFlight.buffers.front());
             inFlight.buffers.pop_front();
             lock.unlock();
-            writeOutput(buffer, tupleBuffer);
+            /// All row callbacks have finished before done is published. Do not wait for other owners:
+            /// a fanout consumer may retain the original buffer indefinitely or read the result slots.
+            if (matchingLayouts && buffer.input.getReferenceCounter() == 1)
+            {
+                writeResults(buffer, buffer.input);
+                tupleBuffer = std::move(buffer.input);
+            }
+            else
+            {
+                if (!tupleBuffer || tupleBuffer.getAvailableMemoryArea().data() == buffer.input.getAvailableMemoryArea().data())
+                {
+                    /// A copy must not wait for a pooled buffer while retaining an input from that same
+                    /// exhausted pool. Fall back to unpooled memory, or fail instead of deadlocking.
+                    auto output = bufferProvider->getBufferNoBlocking();
+                    if (!output)
+                    {
+                        output = bufferProvider->getUnpooledBuffer(bufferProvider->getBufferSize());
+                    }
+                    if (!output)
+                    {
+                        throw CannotAllocateBuffer("Cannot allocate async output buffer");
+                    }
+                    tupleBuffer = std::move(*output);
+                }
+                writeOutput(buffer, tupleBuffer);
+            }
             return FillTupleBufferResult::withBytes(buffer.rows);
         }
         if (inputExhausted && inFlight.buffers.empty())

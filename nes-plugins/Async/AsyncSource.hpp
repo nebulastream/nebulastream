@@ -62,9 +62,10 @@ namespace NES
 /// buffers they belong to, and the buffers are emitted in the order they were handed off.
 ///
 /// The lifting rule reserves a slot per call in the handed-off rows, so input and output rows have
-/// the same fields and one input buffer becomes exactly one output buffer. Everything that is not a
-/// call result is copied byte for byte, VARSIZED included: the input's child buffers are stored on
-/// the output in the same order, so the child indices in the copied fields stay valid.
+/// the same fields and one input buffer becomes exactly one output buffer. Completed buffers with
+/// identical input/output layouts are reused when no other parent-buffer owner remains. Otherwise,
+/// unchanged fields are copied to a new output buffer. Child buffers are retained, not deep-copied;
+/// shared children are never extended when storing results.
 class AsyncSource final : public Source
 {
 public:
@@ -78,6 +79,8 @@ public:
 
     /// Origin id, sequence and chunk number and watermark are taken over from the handed-off buffers.
     [[nodiscard]] bool addsMetadata() const override { return true; }
+
+    [[nodiscard]] bool requiresPreallocatedBuffer() const override { return false; }
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
@@ -120,7 +123,8 @@ private:
     {
         std::mutex mutex;
         std::condition_variable_any changed;
-        /// Sole owner of the buffers, in input/output order. End insertion and front removal preserve other references.
+        /// Owns the admitted handles in input/output order; other pipelines may retain the underlying buffers.
+        /// End insertion and front removal preserve borrowed element references.
         /// Active rows borrow elements; an element is moved out only after its last completion callback publishes done.
         std::deque<InFlightBuffer> buffers;
         size_t unstartedRows = 0;
@@ -139,6 +143,7 @@ private:
     /// Source thread.
     void admit(TupleBuffer input);
     void writeOutput(const InFlightBuffer& buffer, TupleBuffer& output) const;
+    void writeResults(const InFlightBuffer& buffer, TupleBuffer& output) const;
     /// Cancels every row in flight and returns once none is running and no handler of this source is left on the strand.
     void cancelAndDrain();
 
@@ -152,6 +157,7 @@ private:
     size_t maxRetries;
     size_t inputRowSize = 0;
     size_t outputRowSize = 0;
+    bool matchingLayouts = true;
     Schema<QualifiedUnboundField, Ordered> inputSchema;
     Schema<QualifiedUnboundField, Ordered> outputSchema;
     std::shared_ptr<TupleBufferRef> inputBufferRef;

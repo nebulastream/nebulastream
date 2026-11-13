@@ -27,7 +27,7 @@ namespace NES
 {
 
 /// Source is the interface for all sources that read data into TupleBuffers.
-/// 'SourceThread' creates TupleBuffers and uses 'Source' to fill.
+/// 'SourceThread' supplies TupleBuffers to fill, or lets sources return their own buffers.
 /// When 'fillTupleBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled TupleBuffer.
 class Source
 {
@@ -61,7 +61,12 @@ public:
     Source() = default;
     virtual ~Source() = default;
 
+    /// Whether SourceThread must acquire a buffer before calling fillTupleBuffer.
+    /// Sources returning false receive an initially invalid TupleBuffer and must replace it with a valid buffer before returning data.
+    [[nodiscard]] virtual bool requiresPreallocatedBuffer() const { return true; }
+
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
+    /// A data result requires a valid tupleBuffer, even for zero bytes. EOS does not require a valid buffer.
     /// @return the number of bytes read
     virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 

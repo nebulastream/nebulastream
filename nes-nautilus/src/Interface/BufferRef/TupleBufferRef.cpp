@@ -100,12 +100,15 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
         return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
     }
 
-    /// If there is no space in the lastChildBuffer, we get a new buffer and copy the var sized into the newly acquired
+    /// Only extend a private child. Loading it adds one reference to the parent's reference; any
+    /// additional owner may concurrently append through another parent. Do not even read its mutable
+    /// used-byte count in that case. The parent itself still requires a single writer.
     /// We store the number of used bytes in the no. tuples field.  We plan on getting rid of this "mis"-use in the near future.
     const ChildBufferIndex childIndex{numberOfChildBuffers - 1};
     auto lastChildBuffer = tupleBuffer.loadChildBuffer(childIndex);
-    const auto usedMemorySize = lastChildBuffer.getNumberOfTuples();
-    if (usedMemorySize + totalVarSizedLength >= lastChildBuffer.getBufferSize())
+    const bool shared = lastChildBuffer.getReferenceCounter() > 2;
+    const auto usedMemorySize = shared ? 0 : lastChildBuffer.getNumberOfTuples();
+    if (shared || usedMemorySize + totalVarSizedLength >= lastChildBuffer.getBufferSize())
     {
         auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
         copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);

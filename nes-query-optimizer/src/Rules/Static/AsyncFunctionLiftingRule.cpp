@@ -357,6 +357,9 @@ private:
             liftedCalls.emplace_back(callKey(call), name);
             callNames.emplace_back(call, std::move(name));
         }
+        /// Match sortedFields(pre) below: appending helpers alone can leave earlier call slots before new arguments.
+        /// Both projections must use the same canonical field order, not merely the same fields and row size.
+        std::ranges::sort(preProjections, {}, [](const UnboundProjection& entry) { return entry.first.asCanonicalString(); });
         const LogicalOperator pre = ProjectionLogicalOperator::create(child, preProjections, ProjectionLogicalOperator::Asterisk{false});
 
         /// async stage: forwards pre and fills each slot with its call.
