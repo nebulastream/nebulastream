@@ -108,6 +108,9 @@ public:
     [[nodiscard]] bool loadChildBuffer(ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
+
+    /// Returns the child without taking a reference to it.
+    [[nodiscard]] MemorySegment* getChildBuffer(ChildBufferIndex index) const;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
 #endif

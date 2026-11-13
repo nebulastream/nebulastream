@@ -15,6 +15,7 @@
 #pragma once
 
 #include <atomic>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -46,6 +47,38 @@ namespace detail
 class BufferControlBlock;
 class MemorySegment;
 }
+
+/// @brief A view of the memory and metadata of a buffer.
+/// Unlike a TupleBuffer, it holds no reference to the buffer.
+/// It is valid only while another owner keeps the buffer alive, such as a parent that holds it as a child (see TupleBuffer::withChildBuffer).
+class TupleBufferView
+{
+public:
+    template <typename T = std::byte>
+    requires(std::is_trivially_copyable_v<T>)
+    [[nodiscard]] std::span<T> getAvailableMemoryArea() const noexcept
+    {
+        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(T) == 0, "Bad alignment for type: {}", typeid(T).name());
+        return std::span<T>{std::bit_cast<T*>(ptr), size / sizeof(T)};
+    }
+
+    [[nodiscard]] uint64_t getBufferSize() const noexcept { return size; }
+
+    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
+    void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
+
+private:
+    friend class TupleBuffer;
+
+    TupleBufferView(detail::BufferControlBlock* controlBlock, uint8_t* ptr, const uint32_t size) noexcept
+        : controlBlock(controlBlock), ptr(ptr), size(size)
+    {
+    }
+
+    detail::BufferControlBlock* controlBlock;
+    uint8_t* ptr;
+    uint32_t size;
+};
 
 /**
  * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and
@@ -131,16 +164,14 @@ public:
     requires(std::is_trivially_copyable_v<T>)
     std::span<T> getAvailableMemoryArea() noexcept
     {
-        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(T) == 0, "Bad alignment for type: {}", typeid(T).name());
-        return std::span<T>{std::bit_cast<T*>(ptr), size / sizeof(T)};
+        return TupleBufferView{controlBlock, ptr, size}.getAvailableMemoryArea<T>();
     }
 
     template <typename T = std::byte>
     requires(std::is_trivially_copyable_v<T>)
     std::span<const T> getAvailableMemoryArea() const noexcept
     {
-        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(const T) == 0, "Bad alignment for type: {}", typeid(T).name());
-        return std::span<const T>{std::bit_cast<const T*>(ptr), size / sizeof(const T)};
+        return TupleBufferView{controlBlock, ptr, size}.getAvailableMemoryArea<T>();
     }
 
     [[nodiscard]] uint32_t getReferenceCounter() const noexcept;
@@ -186,7 +217,18 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
+    /// @brief Calls `function` with a view of the child buffer at `bufferIndex` and returns its result.
+    /// Unlike loadChildBuffer, it takes no reference to the child, so it costs no atomic operations.
+    /// This buffer keeps the child alive, so the view must not outlive the call.
+    template <std::invocable<TupleBufferView> Function>
+    decltype(auto) withChildBuffer(const ChildBufferIndex bufferIndex, Function&& function) const
+    {
+        return std::invoke(std::forward<Function>(function), getChildBufferView(bufferIndex));
+    }
+
 private:
+    [[nodiscard]] TupleBufferView getChildBufferView(ChildBufferIndex bufferIndex) const noexcept;
+
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      */
