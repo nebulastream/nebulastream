@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import json
 import random
-import re
 import struct
 from collections import Counter
 from typing import TYPE_CHECKING, Any
@@ -27,42 +26,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-# `(name, NES type, nullable)`, in declaration order.
+# `(name, NES type, nullable)`, in declaration order, as the harness's BIND reply lists the bound schema.
 NativeColumn = tuple[str, str, bool]
-
-# The TYPE of a source is in a separate CREATE PHYSICAL SOURCE statement,
-# so the logical source's column list ends at its closing paren.
-_CREATE_SOURCE_RE = re.compile(
-    r"CREATE\s+LOGICAL\s+SOURCE\s+\S+\s*\((?P<cols>[^)]*)\)", re.IGNORECASE | re.DOTALL
-)
-
-
-def _parse_columns(cols_text: str) -> list[NativeColumn]:
-    columns: list[NativeColumn] = []
-    for raw in cols_text.split(","):
-        cell = raw.strip()
-        if not cell:
-            continue
-        tokens = cell.split()
-        if len(tokens) < 2:  # noqa: PLR2004  # a column is at least `<name> <TYPE>`
-            raise ValueError(
-                f"malformed column {cell!r}: expected `<name> <TYPE> [NOT NULL]`"
-            )
-        name = tokens[0].strip('`"')
-        typ = tokens[1].upper()
-        nullable = "NOT NULL" not in " ".join(tokens[2:]).upper()
-        columns.append((name, typ, nullable))
-    if not columns:
-        raise ValueError("CREATE LOGICAL SOURCE schema has no columns")
-    return columns
-
-
-def parse_source_schema(nesql: str) -> list[NativeColumn]:
-    m = _CREATE_SOURCE_RE.search(nesql)
-    if not m:
-        raise ValueError("no `CREATE LOGICAL SOURCE <name> (...)` schema found in config")
-    return _parse_columns(m.group("cols"))
-
 
 # Integer types too narrow for [0, 1000).
 # INT8 stays positive.
@@ -139,10 +104,10 @@ def _verify_rows(
 
 
 def rows_to_jsonl(schema: list[NativeColumn], rows: Iterable[tuple[Any, ...]]) -> bytes:
-    """Keys are lowercased, so the wire form does not depend on how the `.nesql` cased or quoted the field names."""
+    """Each key is the canonical name from the BIND reply, which the engine's JSON formatters read and write."""
     out = bytearray()
     for row in rows:
-        obj = {name.lower(): value for (name, _typ, _x), value in zip(schema, row, strict=True)}
+        obj = {name: value for (name, _typ, _x), value in zip(schema, row, strict=True)}
         out += json.dumps(obj, separators=(",", ":")).encode("utf-8")
         out += b"\n"
     return bytes(out)
@@ -154,7 +119,7 @@ def jsonl_to_rows(schema: list[NativeColumn], payload: bytes) -> list[tuple[Any,
         if not line.strip():
             continue
         obj = json.loads(line)
-        rows.append(tuple(obj[name.lower()] for name, _typ, _x in schema))
+        rows.append(tuple(obj[name] for name, _typ, _x in schema))
     return rows
 
 
