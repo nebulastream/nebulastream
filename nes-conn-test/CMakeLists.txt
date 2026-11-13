@@ -24,9 +24,10 @@ if (NES_ENABLES_TESTS)
     )
     target_include_directories(conntest-binder PUBLIC driver)
     find_package(reflectcpp CONFIG REQUIRED)
+    # The frontend's statement handlers turn the bound statements into descriptors, as they do for the REPL and the systests.
     target_link_libraries(conntest-binder
             PUBLIC nes-sql-parser nes-sources nes-common
-            PRIVATE reflectcpp::reflectcpp
+            PRIVATE nes-frontend-lib reflectcpp::reflectcpp
     )
 
     # The connector runs in its own process, so the runner can sequence it step by step and kill and respawn it.

@@ -115,3 +115,26 @@ def test_error_reply_is_one_json_line_whatever_the_message(
         for char in ('"', "\\", "\b", "\f", "\n", "\r", "\t", "\x01"):
             assert char in reply["message"], f"missing {char!r} in {reply['message']!r}"
         assert session.end() == _EXIT_OK
+
+
+_PHYSICAL_SOURCE = "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n"
+
+
+def _bind_error(harness_binary: Path, sock_dir: Path, config: Path) -> tuple[object, object, object]:
+    with Session(harness_binary, sock_dir, config=config) as session:
+        reply = session.command("BIND")
+        assert session.end() == _EXIT_OK
+    return reply["ok"], reply["origin"], reply["code"]
+
+
+# The binder creates the sources through the frontend's statement handlers, so it reports their error codes.
+def test_bind_reports_a_logical_source_that_already_exists(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+    config = tmp_path / "file.nesql"
+    config.write_text("CREATE LOGICAL SOURCE s (id INT32);\nCREATE LOGICAL SOURCE s (id INT32);\n" + _PHYSICAL_SOURCE, encoding="utf-8")
+    assert _bind_error(harness_binary, sock_dir, config) == (False, "harness", 2031)
+
+
+def test_bind_reports_a_physical_source_without_its_logical_source(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+    config = tmp_path / "file.nesql"
+    config.write_text(_PHYSICAL_SOURCE, encoding="utf-8")
+    assert _bind_error(harness_binary, sock_dir, config) == (False, "harness", 2030)
