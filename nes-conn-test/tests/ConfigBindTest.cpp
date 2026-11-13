@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -29,7 +30,8 @@
 
 /// Binds every config of one connector exactly as it is committed, the way a user who copies it would.
 /// The battery binds the same files with the endpoint rewritten, so it never sees them unmodified.
-/// ctest runs one instance per connector and passes its config directory in CONNTEST_CONFIG_DIR.
+/// ctest runs one instance per connector and passes its config directory in CONNTEST_CONFIG_DIR,
+/// and in CONNTEST_KIND whether the connector is a `source` or a `sink`.
 
 namespace NES::ConnTest
 {
@@ -72,13 +74,33 @@ TEST_F(ConfigBindTest, EveryCommittedConfigBinds)
 {
     const char* directory = std::getenv("CONNTEST_CONFIG_DIR"); /// NOLINT(concurrency-mt-unsafe)
     ASSERT_NE(directory, nullptr) << "CONNTEST_CONFIG_DIR is not set. ctest sets it per connector, see add_conn_test.";
+    const char* kindName = std::getenv("CONNTEST_KIND"); /// NOLINT(concurrency-mt-unsafe)
+    ASSERT_NE(kindName, nullptr) << "CONNTEST_KIND is not set. ctest sets it per connector, see add_conn_test.";
+    const auto kind = parseConnectorKind(kindName);
+    /// FAIL() instead of ASSERT_TRUE, because clang-tidy does not know that ASSERT_TRUE returns.
+    /// It would flag the unchecked optional access in the switch below.
+    if (!kind.has_value())
+    {
+        FAIL() << "unknown CONNTEST_KIND " << kindName;
+    }
     const auto files = configFiles(directory);
     ASSERT_FALSE(files.empty()) << "no .nesql config under " << directory;
     for (const auto& file : files)
     {
         SCOPED_TRACE(file.string());
-        const auto descriptor = bindSourceStatements(readFile(file));
-        EXPECT_TRUE(descriptor.has_value()) << descriptor.error().message;
+        switch (*kind)
+        {
+            case ConnectorKind::Source: {
+                const auto descriptor = bindSourceStatements(readFile(file));
+                EXPECT_TRUE(descriptor.has_value()) << descriptor.error().message;
+                break;
+            }
+            case ConnectorKind::Sink: {
+                const auto descriptor = bindSinkStatements(readFile(file));
+                EXPECT_TRUE(descriptor.has_value()) << descriptor.error().message;
+                break;
+            }
+        }
     }
 }
 

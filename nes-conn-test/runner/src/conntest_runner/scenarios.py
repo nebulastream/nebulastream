@@ -19,6 +19,7 @@ Whether a raised error passes is decided by the binding's expectation.
 from __future__ import annotations
 
 import time
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -27,9 +28,14 @@ from conntest_runner.protocol import ConnectorError, HarnessError, describe
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from conntest_runner.datamodel import SinkModel, SourceModel
     from conntest_runner.discovery import Expectation
-    from conntest_runner.harness import Source
+    from conntest_runner.harness import Sink, Source
     from conntest_runner.link import Link
+
+    # A scenario takes the context of a kind that can run it.
+    # The binding modules offer each scenario only to such kinds, so the catalog accepts any context.
+    ScenarioFn = Callable[[Any], None]
 
 
 @dataclass(frozen=True)
@@ -41,7 +47,7 @@ class ScenarioSpec:
     """
 
     name: str
-    fn: Callable[[Ctx], None]
+    fn: ScenarioFn
     default_buffers: int | None = None
     needs_link: bool = False
 
@@ -54,8 +60,8 @@ def scenario(
     *,
     default_buffers: int | None = None,
     needs_link: bool = False,
-) -> Callable[[Callable[[Ctx], None]], Callable[[Ctx], None]]:
-    def register(fn: Callable[[Ctx], None]) -> Callable[[Ctx], None]:
+) -> Callable[[ScenarioFn], ScenarioFn]:
+    def register(fn: ScenarioFn) -> ScenarioFn:
         _CATALOG[name] = ScenarioSpec(
             name=name,
             fn=fn,
@@ -67,7 +73,7 @@ def scenario(
     return register
 
 
-def get_scenario(name: str) -> Callable[[Ctx], None]:
+def get_scenario(name: str) -> ScenarioFn:
     return get_spec(name).fn
 
 
@@ -87,18 +93,20 @@ def scenario_names() -> list[str]:
     return sorted(_CATALOG)
 
 
-@dataclass
-class Ctx:
+@dataclass(kw_only=True)
+class Ctx(ABC):
     """The steps that a scenario takes.
 
     Each step is one harness command or one loader call, so a scenario reads as its sequence of events.
+    A case runs one connector, and the subclass for its kind implements the steps that every kind takes.
+    A kind that leaves one out fails when its case is constructed, not halfway through a scenario.
+    A step that only one kind takes is on that kind's subclass, and a scenario that uses it takes that subclass.
     """
 
     loader: Any
     data: Any
     target: str
-    source: Source
-    rows: list[Any] = field(default_factory=list)  # empty for a scenario that seeds nothing
+    rows: list[Any] = field(default_factory=list)  # empty for a scenario that moves no data
     schema: Any = None
     args: dict[str, Any] = field(default_factory=dict)  # the binding's arguments for this scenario, see discovery.Scenario
     link: Link | None = None  # set for a scenario that needs the link
@@ -112,6 +120,39 @@ class Ctx:
     def setup(self) -> None:
         self.loader.setup(target=self.target, schema=self.schema)
 
+    @abstractmethod
+    def connect(self) -> None: ...
+
+    @abstractmethod
+    def disconnect(self) -> None: ...
+
+    @abstractmethod
+    def kill(self) -> None:
+        """The next connect spawns a fresh harness process and connector."""
+
+    @abstractmethod
+    def transfer_half(self) -> None:
+        """Moves the first half of the data, so that a scenario can inject a fault before it moves the rest."""
+
+    @abstractmethod
+    def transfer(self) -> None:
+        """Moves the data that has not moved yet."""
+
+    @abstractmethod
+    def check_delivered(self) -> None:
+        """Compares what reached the backend with the rows, after the connector has stopped."""
+
+
+@dataclass(kw_only=True)
+class SourceCtx(Ctx):
+    """A source's data moves when its backend is seeded and FILL reads it, and is compared as it is read."""
+
+    source: Source
+    data: SourceModel
+    # The rows seeded into the backend so far.
+    # A connect after a kill keeps the count, because the backend keeps the read position.
+    _seeded: int = field(default=0, init=False)
+
     def connect(self) -> None:
         self.source.open()
 
@@ -119,64 +160,119 @@ class Ctx:
         self.source.close()
 
     def kill(self) -> None:
-        """The next connect spawns a fresh harness process and connector."""
         self.source.kill()
+
+    def transfer_half(self) -> None:
+        self._seed_and_fill((len(self.rows) + 1) // 2 - self._seeded)
+
+    def transfer(self) -> None:
+        self._seed_and_fill(len(self.rows) - self._seeded)
+
+    def check_delivered(self) -> None:
+        """A no-op, because the rows were compared as FILL read them."""
 
     def start_reading(self) -> None:
         """Returns once the connector is inside a read, waiting for data that is never seeded."""
         self.source.fill(0, 0)
 
-    def split_rows(self) -> tuple[list[Any], list[Any]]:
-        """Two halves, to seed one before and one after a fault."""
-        middle = (len(self.rows) + 1) // 2
-        return self.rows[:middle], self.rows[middle:]
-
     def seed(self, rows: Any) -> None:
         self.loader.seed_batch(rows, target=self.target)
 
-    def seed_and_fill(self, rows: Any) -> None:
+    def _seed_and_fill(self, count: int) -> None:
+        rows = self.rows[self._seeded : self._seeded + count]
+        self._seeded += count
         self.seed(rows)
         result = self.source.fill(*self.data.fill_counts(rows))
         self.data.compare_fill(rows, observed=result.observed)
 
 
-def _round_trip(ctx: Ctx) -> None:
+@dataclass(kw_only=True)
+class SinkCtx(Ctx):
+    """A sink's data moves with each WRITE, and is compared once the sink has stopped and the loader has read it back."""
+
+    sink: Sink
+    data: SinkModel
+    # The buffers that the sink's START made from the rows.
+    _buffers: int = field(default=0, init=False)
+    # The buffers written since the last START.
+    _written: int = field(default=0, init=False)
+
+    def connect(self) -> None:
+        self._buffers = self.sink.start().n_buffers
+        self._written = 0
+
+    def disconnect(self) -> None:
+        self.sink.stop()
+
+    def kill(self) -> None:
+        self.sink.kill()
+
+    def transfer_half(self) -> None:
+        self._write((self._buffers + 1) // 2 - self._written)
+
+    def transfer(self) -> None:
+        self._write(self._buffers - self._written)
+
+    def check_delivered(self) -> None:
+        received = self.loader.read_back(
+            target=self.target, schema=self.schema, n_rows=len(self.rows), timeout_s=self.sink.step_timeout_s
+        )
+        self.data.compare_read_back(self.rows, received=received)
+
+    def _write(self, n_buffers: int) -> None:
+        self._written += n_buffers
+        self.sink.write(n_buffers)
+
+
+def _transfer_all(ctx: Ctx) -> None:
     ctx.setup()
     ctx.connect()
-    ctx.seed_and_fill(ctx.rows)
+    ctx.transfer()
     ctx.disconnect()
+    ctx.check_delivered()
 
 
-@scenario("round_trip_1_buffer", default_buffers=1)
-def round_trip_1_buffer(ctx: Ctx) -> None:
-    """Less data than one full buffer, so the source must emit a partly filled buffer.
+@scenario("transfer_1_buffer", default_buffers=1)
+def transfer_1_buffer(ctx: Ctx) -> None:
+    """Less data than one full buffer, so a source must emit a partly filled buffer, and a sink receives a single partly filled buffer.
 
     ``empty`` covers zero buffers.
     """
-    _round_trip(ctx)
+    _transfer_all(ctx)
 
 
-@scenario("round_trip_n_buffers", default_buffers=100)
-def round_trip_n_buffers(ctx: Ctx) -> None:
-    """More buffers than the harness's pool holds by default, so the source must wait for FILL to free them."""
-    _round_trip(ctx)
+@scenario("transfer_n_buffers", default_buffers=100)
+def transfer_n_buffers(ctx: Ctx) -> None:
+    """More buffers than the harness's pool holds by default, so a source must wait for FILL to free them.
+
+    The engine runs a sink with them on several worker threads at once.
+    """
+    _transfer_all(ctx)
 
 
 @scenario("empty")
 def empty(ctx: Ctx) -> None:
+    """A sink that is started and stopped without data must deliver nothing, not even an empty record."""
     ctx.setup()
     ctx.connect()
     ctx.disconnect()
+    ctx.check_delivered()
 
 
-@scenario("bad_endpoint")
+@scenario("bad_endpoint", default_buffers=1)
 def bad_endpoint(ctx: Ctx) -> None:
-    """The config points at a dead endpoint, so OPEN must fail with the declared error."""
+    """The config points at an unreachable endpoint, so the connector must fail with the declared error.
+
+    The scenario moves one buffer, because a sink that holds no data can stop before its connect attempt fails.
+    """
+    ctx.setup()
     ctx.connect()
+    ctx.transfer()
+    ctx.disconnect()
 
 
 @scenario("close_while_reading")
-def close_while_reading(ctx: Ctx) -> None:
+def close_while_reading(ctx: SourceCtx) -> None:
     """Models a worker that stops a query while its source waits for data, for example during a long flush interval.
     The stop request must interrupt the connector's read: CLOSE has the step timeout, so a connector that ignores it fails.
     """
@@ -201,30 +297,31 @@ def slow_link(ctx: Ctx) -> None:
     ctx.setup()
     ctx.fault.throttle(latency_ms=SLOW_LINK_LATENCY_MS)
     ctx.connect()
-    ctx.seed_and_fill(ctx.rows)
+    ctx.transfer()
     ctx.disconnect()
+    ctx.check_delivered()
 
 
 @scenario("silent_link", default_buffers=2, needs_link=True)
 def silent_link(ctx: Ctx) -> None:
     """A live connection on which nothing flows for a while, as between bursts of a real stream.
 
-    A connector that takes the silence for a dead peer or for the end of the stream loses the second batch.
+    A connector that takes the silence for a dead peer or for the end of the stream loses the second half.
     The silence is the fault itself, not a wait for some state, so it is a fixed duration.
     """
     ctx.setup()
     ctx.connect()
-    head, tail = ctx.split_rows()
-    ctx.seed_and_fill(head)
+    ctx.transfer_half()
     ctx.fault.silence()
     time.sleep(SILENCE_HOLD_S)
     ctx.fault.unsilence()
-    ctx.seed_and_fill(tail)
+    ctx.transfer()
     ctx.disconnect()
+    ctx.check_delivered()
 
 
 @scenario("connection_lost", default_buffers=1, needs_link=True)
-def connection_lost(ctx: Ctx) -> None:
+def connection_lost(ctx: SourceCtx) -> None:
     """The connection to the backend goes away for good: the source must end its stream instead of waiting forever.
 
     The data delivered before the loss must be complete.
@@ -233,7 +330,7 @@ def connection_lost(ctx: Ctx) -> None:
     """
     ctx.setup()
     ctx.connect()
-    ctx.seed_and_fill(ctx.rows)
+    ctx.transfer()
     ctx.fault.cut()
     # Asks for one more byte, which can only end with the end of the stream.
     result = ctx.source.fill(0, 1)
@@ -246,11 +343,11 @@ def connection_lost(ctx: Ctx) -> None:
 
 
 @scenario("full_buffer_not_held", default_buffers=2)
-def full_buffer_not_held(ctx: Ctx) -> None:
+def full_buffer_not_held(ctx: SourceCtx) -> None:
     """A full buffer goes downstream at once, however long the flush interval is.
 
     It catches a source that emits a buffer only when its flush interval expires,
-    which the round trips miss because their intervals are short.
+    which the transfer scenarios miss because their intervals are short.
     Bind a config whose flush interval never expires during a test, so a buffer can only arrive because it is full.
     The rows fill one buffer and part of a second.
     The first buffer must arrive as a strict prefix of what was seeded, while the interval holds back the partly filled second.
@@ -268,7 +365,7 @@ def full_buffer_not_held(ctx: Ctx) -> None:
 
 
 @scenario("partial_buffer_held", default_buffers=1)
-def partial_buffer_held(ctx: Ctx) -> None:
+def partial_buffer_held(ctx: SourceCtx) -> None:
     """A partly filled buffer is held back for the flush interval, not emitted as soon as data arrives.
 
     The data is guaranteed to be ready when the read starts.
@@ -294,7 +391,7 @@ def partial_buffer_held(ctx: Ctx) -> None:
 
 
 @scenario("crash_recovery", default_buffers=2)
-def crash_recovery(ctx: Ctx) -> None:
+def crash_recovery(ctx: SourceCtx) -> None:
     """Models a worker that is killed mid-stream without a CLOSE.
 
     A new connector must take over whatever the dead one left on the backend.
@@ -302,15 +399,14 @@ def crash_recovery(ctx: Ctx) -> None:
     """
     ctx.setup()
     ctx.connect()
-    head, tail = ctx.split_rows()
-    ctx.seed_and_fill(head)
+    ctx.transfer_half()
     ctx.kill()
     ctx.connect()
-    ctx.seed_and_fill(tail)
+    ctx.transfer()
     ctx.disconnect()
 
 
-def run_case(fn: Callable[[Ctx], None], ctx: Ctx, expect: Expectation) -> None:
+def run_case(fn: ScenarioFn, ctx: Ctx, expect: Expectation) -> None:
     try:
         fn(ctx)
     except ConnectorError as e:

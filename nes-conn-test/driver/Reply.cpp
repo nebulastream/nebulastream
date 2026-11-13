@@ -61,6 +61,7 @@ struct BindReply
     bool ok = true;
     std::string phase;
     std::vector<BoundColumn> schema;
+    std::int64_t step_timeout_ms = STEP_TIMEOUT.count(); /// NOLINT(readability-identifier-naming): the member name is the JSON key
 };
 
 struct FillReply
@@ -69,6 +70,13 @@ struct FillReply
     std::string phase;
     bool eos = false;
     std::vector<std::int64_t> partial_read_ms; /// NOLINT(readability-identifier-naming): the member name is the JSON key
+};
+
+struct StartReply
+{
+    bool ok = true;
+    std::string phase = "start";
+    std::uint64_t n_buffers = 0; /// NOLINT(readability-identifier-naming): the member name is the JSON key
 };
 
 struct ErrorReply
@@ -155,6 +163,11 @@ std::string fillReply(const std::string_view phase, const bool eos, const std::v
         partialReadMs.push_back(duration.count());
     }
     return write(FillReply{.phase = std::string{phase}, .eos = eos, .partial_read_ms = std::move(partialReadMs)});
+}
+
+std::string startReply(const std::uint64_t numberOfBuffers)
+{
+    return write(StartReply{.n_buffers = numberOfBuffers});
 }
 
 }

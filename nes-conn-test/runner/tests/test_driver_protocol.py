@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Any, Self, cast
 import pytest
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
     from types import TracebackType
 
 _TIMEOUT_S = 30.0
@@ -47,13 +47,15 @@ def sock_dir() -> Iterator[Path]:
 class Session:
     """The test listens on the control socket and the harness connects to it."""
 
-    def __init__(self, harness: Path, sock_dir: Path, *, config: Path) -> None:
+    def __init__(
+        self, harness: Path, sock_dir: Path, *, config: Path, mode: str = "source", args: Sequence[str] = ()
+    ) -> None:
         sock_path = sock_dir / "control.sock"
         self._listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._listener.bind(str(sock_path))
         self._listener.listen(1)
         self.proc = subprocess.Popen(  # noqa: S603
-            [str(harness), "--mode=source", f"--config={config}", f"--control-sock={sock_path}"],
+            [str(harness), f"--mode={mode}", f"--config={config}", f"--control-sock={sock_path}", *args],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -104,15 +106,22 @@ def test_harness_error_is_replayed(harness_binary: Path, sock_dir: Path, tmp_pat
         assert session.end() == _EXIT_OK
 
 
-def test_bind_replies_with_the_schema_that_the_engine_bound(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+_FILE_CONFIGS = {
+    "source": 'CREATE LOGICAL SOURCE s (id TINYINT NOT NULL, "Label" VARSIZED);\n'
+    "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n",
+    "sink": 'CREATE SINK s (id TINYINT NOT NULL, "Label" VARSIZED) TYPE File SET '
+    "('/dev/null' AS \"SINK\".FILE_PATH, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+}
+
+
+@pytest.mark.parametrize("mode", sorted(_FILE_CONFIGS))
+def test_bind_replies_with_the_schema_that_the_engine_bound(
+    harness_binary: Path, sock_dir: Path, tmp_path: Path, mode: str
+) -> None:
     # The alias TINYINT is bound as INT8, and the unquoted name as its canonical, uppercase form.
     config = tmp_path / "file.nesql"
-    config.write_text(
-        'CREATE LOGICAL SOURCE s (id TINYINT NOT NULL, "Label" VARSIZED);\n'
-        "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n",
-        encoding="utf-8",
-    )
-    with Session(harness_binary, sock_dir, config=config) as session:
+    config.write_text(_FILE_CONFIGS[mode], encoding="utf-8")
+    with Session(harness_binary, sock_dir, config=config, mode=mode) as session:
         reply = session.command("BIND")
         assert reply == {
             "ok": True,
@@ -121,6 +130,7 @@ def test_bind_replies_with_the_schema_that_the_engine_bound(harness_binary: Path
                 {"name": "ID", "type": "INT8", "nullable": False},
                 {"name": "Label", "type": "VARSIZED", "nullable": True},
             ],
+            "step_timeout_ms": 30000,
         }, reply
         assert session.end() == _EXIT_OK
 
@@ -159,3 +169,75 @@ def test_bind_reports_a_physical_source_without_its_logical_source(harness_binar
     config = tmp_path / "file.nesql"
     config.write_text(_PHYSICAL_SOURCE, encoding="utf-8")
     assert _bind_error(harness_binary, sock_dir, config) == (False, "harness", 2030)
+
+
+def test_sink_rejects_a_step_out_of_order(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+    # The order is checked before the config is read, so the config need not bind.
+    config = tmp_path / "unused.nesql"
+    config.write_text("-- not read\n", encoding="utf-8")
+    with Session(harness_binary, sock_dir, config=config, mode="sink") as session:
+        for line, phase in (("WRITE 1", "write"), ("WRITE", "write"), ("STOP", "stop")):
+            reply = session.command(line)
+            assert reply["ok"] is False, reply
+            assert (reply["origin"], reply["name"], reply["phase"]) == ("harness", "HarnessProtocol", phase), reply
+        assert session.end() == _EXIT_OK
+
+
+def test_sink_gets_records_that_continue_in_child_buffers(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+    # With 64-byte buffers, the second record crosses into a child, and the third is larger than two buffers.
+    records = [
+        b'{"ID":1,"Label":"' + b"a" * 20 + b'"}\n',
+        b'{"ID":2,"Label":"' + b"b" * 20 + b'"}\n',
+        b'{"ID":3,"Label":"' + b"c" * 130 + b'"}\n',
+        b'{"ID":4,"Label":""}\n',
+    ]
+    output = tmp_path / "out.jsonl"
+    config = tmp_path / "file.nesql"
+    config.write_text(
+        f'CREATE SINK s (id INTEGER NOT NULL, "Label" VARSIZED) TYPE File SET '
+        f"('{output}' AS \"SINK\".FILE_PATH, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+        encoding="utf-8",
+    )
+    records_path = tmp_path / "records.jsonl"
+    records_path.write_bytes(b"".join(records))
+    args = [f"--input-path={records_path}", "--buffer-size=64"]
+    with Session(harness_binary, sock_dir, config=config, mode="sink", args=args) as session:
+        start = session.command("START")
+        assert start == {"ok": True, "phase": "start", "n_buffers": 3}, start
+        assert session.command("WRITE 3")["ok"] is True
+        assert session.command("STOP")["ok"] is True
+        assert session.end() == _EXIT_OK
+    # The file sink writes a header line, and the worker threads may write the buffers in any order.
+    _, written = output.read_bytes().split(b"\n", 1)
+    assert sorted(written.splitlines(keepends=True)) == records
+
+
+_JSON_FILE_SINK_STATEMENT = (
+    'CREATE SINK s (id INTEGER NOT NULL) TYPE File SET (\'/dev/null\' AS "SINK".FILE_PATH, \'JSON\' AS "SINK".OUTPUT_FORMAT)'
+)
+_JSON_FILE_SINK = _JSON_FILE_SINK_STATEMENT + ";\n"
+
+
+@pytest.mark.parametrize(
+    ("config_text", "message"),
+    [
+        pytest.param(_JSON_FILE_SINK.replace("'JSON'", "'CSV'"), "OUTPUT_FORMAT must be 'JSON', not 'CSV'", id="csv"),
+        pytest.param(
+            _JSON_FILE_SINK * 2,
+            f"expected a single CREATE SINK statement, but the config has 2: {_JSON_FILE_SINK_STATEMENT}; {_JSON_FILE_SINK_STATEMENT}",
+            id="two-statements",
+        ),
+        pytest.param("CREATE LOGICAL SOURCE s (id INTEGER NOT NULL);\n", "the statement is not a CREATE SINK", id="not-a-sink"),
+    ],
+)
+def test_sink_bind_rejects_a_config_that_the_session_cannot_run(
+    harness_binary: Path, sock_dir: Path, tmp_path: Path, config_text: str, message: str
+) -> None:
+    # Every rejection is an InvalidConfig, so the message tells them apart.
+    config = tmp_path / "sink.nesql"
+    config.write_text(config_text, encoding="utf-8")
+    with Session(harness_binary, sock_dir, config=config, mode="sink") as session:
+        reply = session.command("BIND")
+        assert (reply["ok"], reply["origin"], reply["name"]) == (False, "harness", "InvalidConfig"), reply
+        assert message in reply["message"], reply
+        assert session.end() == _EXIT_OK
