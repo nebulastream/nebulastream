@@ -10,17 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Worker-only config overlay: tunes operator_buffer_size to 4096 on
-# worker-1. Merged with a query/topology yaml at test time — this file
-# defines no logical sources, sinks, or query on its own.
-
-workers:
-  - host: worker-1:8080
-    data_address: worker-1:9090
-    max_operators: 10000
-    config:
-      worker:
-        default_query_execution:
-          operator_buffer_size: 4096
-
-logical: [ ]
+add_nes_test(mqtt-source-config-test MQTTSourceConfigTest.cpp)
+# MQTTSource.hpp includes the client library's header.
+target_link_libraries(mqtt-source-config-test mqtt_source_plugin_library nes-sources PahoMqttCpp::paho-mqttpp3-static)

@@ -26,6 +26,12 @@ is fed and the read-back oracle, so the two can never drift apart, and there are
 A connector's test surface is entirely in its `conn-test/` directory,
 which it registers with `add_conn_test`. The framework stays connector-agnostic;
 adding or changing one connector must not require edits to framework code.
+A loader's client libraries are declared in the connector's `conn-test/pyproject.toml`;
+the only shared file that a new connector changes is `uv.lock`, which uv generates.
+
+ConnTest covers connectors that are plugins, in `nes-plugins/<Kind>/<Name>/`.
+A connector with an external dependency is a plugin by convention, and the uv workspace relies on it:
+its members are `nes-plugins/*/*/conn-test`, and `add_conn_test` rejects a `conn-test/` directory anywhere else.
 
 > Anti-pattern: special-casing a named connector inside the runner, or reaching
 > out of the plugin dir to make one connector work.

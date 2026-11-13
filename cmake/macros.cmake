@@ -203,7 +203,9 @@ endfunction()
 
 # Adds the connection tests of the connector whose conn-test/ directory is next to the caller.
 # The battery is added only with uv (ENABLE_CONN_TESTS) and Docker (ENABLE_DOCKER_TESTS).
-# The runner finds a connector only through this call, so the directory can be anywhere in the tree.
+# The runner finds a connector only through this call.
+# The directory must be nes-plugins/<Kind>/<Name>/conn-test, the glob of the root pyproject.toml's uv workspace,
+# so that uv installs the loader's dependencies (see nes-conn-test/core_design_principles.md, plugin-isolation).
 #
 # PLUGIN: the connector's name, e.g. TCPSource.
 function(add_conn_test)
@@ -214,6 +216,15 @@ function(add_conn_test)
     if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/conn-test/loader.py)
         message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${CMAKE_CURRENT_SOURCE_DIR}/conn-test/loader.py does not exist")
     endif ()
+    file(RELATIVE_PATH _conn_test_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conn-test)
+    if (NOT _conn_test_dir MATCHES "^nes-plugins/[^/]+/[^/]+/conn-test$")
+        message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${_conn_test_dir} is not nes-plugins/<Kind>/<Name>/conn-test; "
+                "connection tests cover plugins, and only those directories are members of the uv workspace")
+    endif ()
+    if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/conn-test/pyproject.toml)
+        message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${_conn_test_dir}/pyproject.toml does not exist; "
+                "every conn-test directory is a uv workspace member, also without dependencies")
+    endif ()
     if (NOT NES_ENABLES_TESTS)
         return()
     endif ()
@@ -221,7 +232,6 @@ function(add_conn_test)
     if ("${ARG_PLUGIN}" IN_LIST _registered)
         message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): a connector of this name is already registered")
     endif ()
-    file(RELATIVE_PATH _conn_test_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conn-test)
     set_property(GLOBAL APPEND PROPERTY NES_CONN_TEST_CONNECTORS ${ARG_PLUGIN})
     set_property(GLOBAL APPEND PROPERTY NES_CONN_TEST_DIRS ${_conn_test_dir})
     # The connector's committed configs must bind unmodified.

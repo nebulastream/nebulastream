@@ -10,9 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The Python dependencies of the repository's tooling, in one place like the Rust workspace's dependencies in Cargo.toml.
-# uv locks them into uv.lock, and the development image installs that lock into its venv (UV_PROJECT_ENVIRONMENT),
-# so that tools run offline in it. After changing a dependency, run `uv lock`; the lock is part of the dependency hash.
+# The Python dependencies of the repository's tooling.
+# uv locks them, with those of every workspace member, into uv.lock, and the development image installs that lock
+# into its venv (UV_PROJECT_ENVIRONMENT), so that tools run offline in it.
+# After changing a dependency, run `uv lock`; the lock is part of the dependency hash.
 # The repository's Python is not installed: the conn-test runner imports its code from the checkout.
 
 [project]
@@ -22,8 +23,12 @@ requires-python = ">=3.12"
 dependencies = [
     # nes-conn-test/runner
     "pytest>=8.3",
-    # The client libraries of the connection-test loaders, nes-plugins/<Kind>/<Connector>/conn-test/loader.py, go here.
 ]
 
 [tool.uv]
 package = false
+
+[tool.uv.workspace]
+# Each connector declares its loader's client libraries in its own conn-test/pyproject.toml,
+# so that adding a connector does not edit this file.
+members = ["nes-plugins/*/*/conn-test"]

@@ -145,8 +145,9 @@ RUN set -eux; \
     chmod -R a+rX /opt/nes/cargo-vendor /opt/nes/cxxbridge; \
     chmod a+r /opt/nes/cargo-vendor-config.toml
 
-# Install the repository's Python dependencies (the root pyproject.toml), so that its tools run offline, like the vendored crates.
-# Only pyproject.toml and uv.lock are needed: the repository's Python is not installed, it is imported from the checkout.
+# Install the repository's Python dependencies, so that its tools run offline, like the vendored crates.
+# Only pyproject.toml and uv.lock are needed: the repository's Python is not installed, it is imported from the checkout,
+# and uv.lock holds the requirements of every workspace member, which --all-packages installs.
 # The bytecode is compiled here, because the tools' user cannot write the venv;
 # uv's --compile-bytecode starts a worker per core and runs out of file descriptors on many-core hosts.
 FROM development-base AS python-builder
@@ -154,7 +155,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock /tmp/python/
 RUN set -eux; \
     cd /tmp/python; \
-    UV_PROJECT_ENVIRONMENT=/opt/nes/python-venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-cache --python /usr/bin/python3; \
+    UV_PROJECT_ENVIRONMENT=/opt/nes/python-venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --all-packages --no-cache --python /usr/bin/python3; \
     /opt/nes/python-venv/bin/python -m compileall -q /opt/nes/python-venv/lib; \
     chmod -R a+rX /opt/nes/python-venv
 
@@ -196,6 +197,6 @@ COPY --from=cargo-builder /opt/nes/cargo-vendor /opt/nes/cargo-vendor
 COPY --from=cargo-builder /opt/nes/cargo-vendor-config.toml ${NES_CARGO_VENDOR_CONFIG}
 COPY --from=cargo-builder /opt/nes/cxxbridge/bin/cxxbridge ${CARGO_HOME}/bin/cxxbridge
 
-# uv uses this venv for the root pyproject.toml; it is in sync with uv.lock, so `uv run --frozen` needs no network.
+# uv uses this venv for the root pyproject.toml and its members; it is in sync with uv.lock, so `uv run --frozen` needs no network.
 COPY --from=python-builder /opt/nes/python-venv /opt/nes/python-venv
 ENV UV_PROJECT_ENVIRONMENT=/opt/nes/python-venv

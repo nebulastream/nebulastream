@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import sys
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -169,7 +170,14 @@ def _import(path: Path, module_name: str) -> ModuleType:
     if spec is None or spec.loader is None:
         raise ImportError(f"cannot load {path}")
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    # No __pycache__ in conn-test/: one left behind by a branch without the connector
+    # is a uv workspace member without a pyproject.toml, which fails every uv command.
+    write_bytecode = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(mod)
+    finally:
+        sys.dont_write_bytecode = write_bytecode
     return mod
 
 
