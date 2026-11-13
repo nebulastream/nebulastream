@@ -27,6 +27,6 @@ DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
 
     return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
-        .decompose(plan, defaultQueryOptimization.network);
+        .decompose(plan, defaultQueryOptimization.network, defaultQueryOptimization.async);
 }
 }
