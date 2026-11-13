@@ -34,7 +34,8 @@ from conntest_runner.protocol import Got, HarnessError, read_reply
 
 _ACCEPT_TIMEOUT_S = 30.0
 _ACCEPT_POLL_S = 0.1
-_DEFAULT_GLOBAL_DEADLINE_S = 120.0
+# Above the harness's step timeout of 30 s, so a stuck step fails with the harness's StepTimeout, which says which step.
+_GLOBAL_DEADLINE_S = 120.0
 
 
 @dataclass(frozen=True)
@@ -123,7 +124,6 @@ class _Stepper:
         mode: str,
         config: Path,
         extra_args: list[str] | None = None,
-        global_deadline_s: float = _DEFAULT_GLOBAL_DEADLINE_S,
         log_path: Path | None = None,
     ) -> None:
         """``log_path`` collects the output of every harness process of the case, a respawned one included."""
@@ -142,7 +142,7 @@ class _Stepper:
         self._server.bind(str(self._sock_path))
         self._server.listen(1)
         self._proc: _HarnessProc | None = None
-        self._deadline = threading.Timer(global_deadline_s, self._on_deadline)
+        self._deadline = threading.Timer(_GLOBAL_DEADLINE_S, self._on_deadline)
         self._deadline.daemon = True
         self._deadline.start()
 

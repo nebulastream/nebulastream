@@ -48,7 +48,6 @@ _BINDING_PROBLEMS = [
 _BROKEN_SCENARIOS = {
     (bp.plugin, bp.scenario) for bp in _BINDING_PROBLEMS if bp.scenario is not None
 }
-_GLOBAL_DEADLINE_S = float(os.environ.get("CONNTEST_GLOBAL_DEADLINE_S", "120"))
 
 # The harness runs with this buffer size, and N buffers of data are N times it.
 _BUFFER_SIZE = 4096
@@ -138,7 +137,6 @@ def test_scenario(
             config=cfg_file,
             observed_path=observed_path,
             extra_args=[f"--observed-path={observed_path}", f"--buffer-size={_BUFFER_SIZE}"],
-            global_deadline_s=_GLOBAL_DEADLINE_S,
             # Kept next to the config and the observed bytes, so a failed case has all of its artifacts in one place.
             log_path=tmp_path / "harness.log",
         ) as source:
