@@ -101,7 +101,7 @@ def _make_config_spec(glob: str, outcome: str) -> ConfigSpec:
 class Scenario:
     """One scenario binding.
 
-    Plugins create it through the constructors in ``scenario_bindings.py``,
+    Plugins create it through the constructors in ``scenario_bindings``,
     which accept only the arguments that each scenario allows.
     A bare glob in ``configs`` expects OK.
     ``args`` holds the arguments of one scenario, such as the flush interval that a config sets.

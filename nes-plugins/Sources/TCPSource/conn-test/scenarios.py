@@ -16,7 +16,7 @@ The host reads this module without the loader, so it holds data only.
 End-of-stream is the peer closing the connection, so the source waits through silence indefinitely.
 """
 
-from conntest_runner.scenario_bindings import (
+from conntest_runner.scenario_bindings.source import (
     bad_endpoint,
     close_while_reading,
     connection_lost,
