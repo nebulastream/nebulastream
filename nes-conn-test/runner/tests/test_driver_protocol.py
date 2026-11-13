@@ -115,3 +115,25 @@ def test_error_reply_is_one_json_line_whatever_the_message(
         for char in ('"', "\\", "\b", "\f", "\n", "\r", "\t", "\x01"):
             assert char in reply["message"], f"missing {char!r} in {reply['message']!r}"
         assert session.end() == _EXIT_OK
+
+
+@pytest.mark.parametrize(
+    ("logical", "code"),
+    [
+        pytest.param("CREATE LOGICAL SOURCE s (id INT32);\nCREATE LOGICAL SOURCE s (id INT32);\n", 2031, id="SourceAlreadyExists"),
+        pytest.param("", 2030, id="UnknownSourceName"),
+    ],
+)
+def test_bind_reports_the_statement_handlers_error_code(
+    harness_binary: Path, sock_dir: Path, tmp_path: Path, logical: str, code: int
+) -> None:
+    # The binder creates the sources through the frontend's statement handlers, so it reports their error codes.
+    config = tmp_path / "file.nesql"
+    config.write_text(
+        logical + "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n",
+        encoding="utf-8",
+    )
+    with Session(harness_binary, sock_dir, config=config) as session:
+        reply = session.command("BIND")
+        assert (reply["ok"], reply["origin"], reply["code"]) == (False, "harness", code), reply
+        assert session.end() == _EXIT_OK
