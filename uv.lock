@@ -9,6 +9,7 @@ resolution-markers = [
 [manifest]
 members = [
     "conntest-mqttsource",
+    "conntest-tcpsink",
     "conntest-tcpsource",
     "nebulastream",
 ]
@@ -32,6 +33,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "paho-mqtt", specifier = ">=2.1" }]
+
+[[package]]
+name = "conntest-tcpsink"
+version = "0"
+source = { virtual = "nes-plugins/Sinks/TCPSink/conn-test" }
 
 [[package]]
 name = "conntest-tcpsource"

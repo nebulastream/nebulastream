@@ -53,6 +53,9 @@ std::string bindReply(const Schema<UnqualifiedUnboundField, Ordered>& schema);
 /// `{"ok":true,"phase":"fill","eos":false,"partial_read_ms":[2001]}`.
 /// `partial_read_ms` lists how long each read that returned a partly filled buffer took during the step.
 std::string fillReply(std::string_view phase, bool eos, const std::vector<std::chrono::milliseconds>& partialReads);
+/// `{"ok":true,"phase":"start","n_buffers":3}`.
+/// `n_buffers` is how many buffers the sink session made from its input, so the runner can write them step by step.
+std::string startReply(std::uint64_t numberOfBuffers);
 
 /// The error code's name, as in `ExceptionDefinitions.inc`.
 std::string_view errorCodeName(ErrorCode code);

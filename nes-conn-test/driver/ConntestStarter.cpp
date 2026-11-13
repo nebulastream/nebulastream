@@ -26,6 +26,7 @@
 #include <Plugins/BuiltinPlugins.hpp>
 #include <Util/Strings.hpp>
 #include <ControlChannel.hpp>
+#include <SinkSession.hpp>
 #include <SourceSession.hpp>
 
 #include <argparse/argparse.hpp>
@@ -46,12 +47,14 @@ enum class ExitCode : std::uint8_t
 
 void configureArgumentParser(argparse::ArgumentParser& program)
 {
-    program.add_argument("--mode").required().choices("source").help("which stepper to run");
-    program.add_argument("--config").required().help("SQL snippet (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE)");
+    program.add_argument("--mode").required().choices("source", "sink").help("which stepper to run");
+    program.add_argument("--config").required().help("SQL snippet (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE, or CREATE SINK)");
     program.add_argument("--control-sock").required().help("AF_UNIX path of the runner's control channel");
     program.add_argument("--buffer-size").help("per-buffer size in bytes");
     program.add_argument("--buffer-count").help("number of pooled buffers");
     program.add_argument("--observed-path").help("write the bytes observed per FILL here (runner decode)");
+    program.add_argument("--input-path").help("sink: the JSONL records that the sink writes");
+    program.add_argument("--threads").help("sink: how many threads write to the sink at once");
 }
 
 /// An absent flag leaves `target` at its default.
@@ -91,6 +94,24 @@ ExitCode runSource(const argparse::ArgumentParser& program, ControlChannel& chan
     return runSourceSession(options, channel) ? ExitCode::Ok : ExitCode::ChannelError;
 }
 
+ExitCode runSink(const argparse::ArgumentParser& program, ControlChannel& channel)
+{
+    SinkSessionOptions options;
+    options.configFile = program.get<std::string>("--config");
+
+    if (not applyUnsigned(program, "--buffer-size", options.bufferSize) or not applyUnsigned(program, "--buffer-count", options.bufferCount)
+        or not applyUnsigned(program, "--threads", options.threads))
+    {
+        return ExitCode::BadArguments;
+    }
+
+    if (const auto input = program.present<std::string>("--input-path"))
+    {
+        options.inputPath = std::filesystem::path{*input};
+    }
+    return runSinkSession(options, channel) ? ExitCode::Ok : ExitCode::ChannelError;
+}
+
 }
 }
 
@@ -125,5 +146,9 @@ int main(int argc, char** argv)
         return std::to_underlying(NES::ConnTest::ExitCode::ChannelError);
     }
 
+    if (program.get<std::string>("--mode") == "sink")
+    {
+        return std::to_underlying(NES::ConnTest::runSink(program, *channel));
+    }
     return std::to_underlying(NES::ConnTest::runSource(program, *channel));
 }

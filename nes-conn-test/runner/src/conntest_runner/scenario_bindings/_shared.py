@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The scenarios that do not depend on the kind of connector, which the module of each kind offers."""
+"""The scenarios that sources and sinks share, which ``source`` and ``sink`` both offer."""
 
 from __future__ import annotations
 

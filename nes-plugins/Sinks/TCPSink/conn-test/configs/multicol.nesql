@@ -1,0 +1,6 @@
+-- A TCP sink with a mixed-type schema, so the tests' write and read-back are checked beyond a single UINT8 column.
+CREATE SINK multi_output (id INT32 NOT NULL, label VARSIZED NOT NULL, ratio FLOAT64 NOT NULL) TYPE TCP SET (
+    'localhost' AS "SINK".SOCKET_HOST,
+    9000        AS "SINK".SOCKET_PORT,
+    'JSON'      AS "SINK".OUTPUT_FORMAT
+);

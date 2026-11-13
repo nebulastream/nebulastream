@@ -17,6 +17,7 @@
 #include <expected>
 #include <string>
 
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Reply.hpp>
 
@@ -26,5 +27,9 @@ namespace NES::ConnTest
 /// Binds the test's SQL into one physical source descriptor on a local catalog.
 /// Every failure is a harness error, because the committed configs are checked to bind and an invalid config is never a scenario.
 std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::string& sql);
+
+/// Binds the test's SQL, one CREATE SINK statement, into a sink descriptor on a local catalog.
+/// As for a source, every failure is a harness error.
+std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& sql);
 
 }

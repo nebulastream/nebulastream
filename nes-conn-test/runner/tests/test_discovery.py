@@ -15,13 +15,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
+import conntest_runner.scenario_bindings.sink as sink_bindings
 import conntest_runner.scenario_bindings.source as source_bindings
 from conntest_runner.discovery import (
     Expectation,
     IsolationContractError,
+    Kind,
     Scenario,
     binding_problems,
     discover_plugin,
@@ -30,6 +33,9 @@ from conntest_runner.discovery import (
 )
 from conntest_runner.scenarios import scenario_names
 
+if TYPE_CHECKING:
+    from types import ModuleType
+
 _LOADER = (
     "from conntest_runner.contracts import SourceLoader\n"
     "class FakeLoader(SourceLoader):\n"
@@ -37,6 +43,15 @@ _LOADER = (
     "    def config_overrides(self, *, target, endpoint): return {}\n"
     "    def setup(self, *, target, schema=None): pass\n"
     "    def seed_batch(self, rows, *, target): pass\n"
+)
+
+_SINK_LOADER = (
+    "from conntest_runner.contracts import SinkLoader\n"
+    "class FakeLoader(SinkLoader):\n"
+    "    def __init__(self, endpoint): pass\n"
+    "    def config_overrides(self, *, target, endpoint): return {}\n"
+    "    def setup(self, *, target, schema=None): pass\n"
+    "    def read_back(self, *, target, schema, expect_records): return []\n"
 )
 
 # The image tag has a digit on purpose: the port must come from `expose:`, not from a digit elsewhere.
@@ -172,11 +187,12 @@ def _discover_with(
     scenarios_py: str,
     configs: tuple[str, ...] = (),
     data_files: tuple[str, ...] = (),
+    loader: str = _LOADER,
 ):
     """Loads the plugin even for a malformed binding, as long as scenarios.py imports."""
     ct = tmp_path / "conn-test"
-    ct.mkdir()
-    ct.joinpath("loader.py").write_text(_LOADER, encoding="utf-8")
+    ct.mkdir(parents=True)
+    ct.joinpath("loader.py").write_text(loader, encoding="utf-8")
     ct.joinpath("compose.yaml").write_text(
         _COMPOSE_ONE_SERVICE.format(service="svc"), encoding="utf-8"
     )
@@ -211,8 +227,41 @@ def test_unknown_scenario_reported(tmp_path: Path) -> None:
     assert any(p.scenario == "nope" and "not a catalog scenario" in p.message for p in probs)
 
 
+def test_loader_base_class_sets_the_kind(tmp_path: Path) -> None:
+    source = _discover_with(tmp_path / "source", scenarios_py=_SCN.format(""))
+    sink = _discover_with(tmp_path / "sink", scenarios_py=_SCN.format(""), loader=_SINK_LOADER)
+    assert (source.kind, sink.kind) == (Kind.SOURCE, Kind.SINK)
+
+
+def _constructors(module: ModuleType) -> set[str]:
+    return set(module.__all__)
+
+
 def test_every_catalog_scenario_has_a_constructor() -> None:
-    assert set(source_bindings.__all__) == set(scenario_names())
+    assert _constructors(source_bindings) | _constructors(sink_bindings) == set(scenario_names())
+
+
+def test_sink_bindings_offer_no_source_only_scenario() -> None:
+    # A source-only scenario is missing from the sink's module, so a sink cannot even import it.
+    assert "close_while_reading" in _constructors(source_bindings)
+    assert "close_while_reading" not in _constructors(sink_bindings)
+    # The shared constructors are written once.
+    shared = _constructors(source_bindings) & _constructors(sink_bindings)
+    assert all(getattr(source_bindings, n) is getattr(sink_bindings, n) for n in shared)
+
+
+def test_source_only_scenario_in_a_sink_fails_discovery(tmp_path: Path) -> None:
+    # A sink that imports the source's bindings fails before any case runs, with the module to use instead.
+    with pytest.raises(RuntimeError, match=r"close_while_reading.*scenario_bindings\.sink"):
+        _discover_with(
+            tmp_path,
+            scenarios_py=(
+                "from conntest_runner.scenario_bindings.source import close_while_reading\n"
+                "SCENARIOS = [close_while_reading('basic.nesql')]\n"
+            ),
+            configs=("basic.nesql",),
+            loader=_SINK_LOADER,
+        )
 
 
 def test_dangling_config_glob_reported(tmp_path: Path) -> None:

@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from conntest_runner.discovery import Scenario
+from conntest_runner.discovery import Kind, Scenario
 from conntest_runner.scenario_bindings._shared import (
     bad_endpoint,
     empty,
@@ -42,12 +42,12 @@ __all__ = [
 
 def close_while_reading(*globs: str) -> Scenario:
     """Bind a config whose read blocks longer than the step timeout, such as a long flush interval, so that only an interrupted read passes."""
-    return Scenario("close_while_reading", configs=list(globs))
+    return Scenario("close_while_reading", configs=list(globs), kind=Kind.SOURCE)
 
 
 def full_buffer_not_held(*globs: str) -> Scenario:
     """Bind a config whose flush interval never expires during a test, such as one day."""
-    return Scenario("full_buffer_not_held", configs=list(globs))
+    return Scenario("full_buffer_not_held", configs=list(globs), kind=Kind.SOURCE)
 
 
 def partial_buffer_held(config: str, *, flush_interval_ms: int) -> Scenario:
@@ -55,14 +55,14 @@ def partial_buffer_held(config: str, *, flush_interval_ms: int) -> Scenario:
 
     Keep it short, such as 2 s: the scenario waits for the flush.
     """
-    return Scenario("partial_buffer_held", config=config, args={"flush_interval_ms": flush_interval_ms})
+    return Scenario("partial_buffer_held", config=config, args={"flush_interval_ms": flush_interval_ms}, kind=Kind.SOURCE)
 
 
 def connection_lost(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that reports the lost connection as that error instead of ending its stream."""
-    return Scenario("connection_lost", config=config, outcome=outcome(error))
+    return Scenario("connection_lost", config=config, outcome=outcome(error), kind=Kind.SOURCE)
 
 
 def crash_recovery(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that cannot resume after the process dies."""
-    return Scenario("crash_recovery", config=config, outcome=outcome(error))
+    return Scenario("crash_recovery", config=config, outcome=outcome(error), kind=Kind.SOURCE)

@@ -37,8 +37,6 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -46,6 +44,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <BackpressureChannel.hpp>
 #include <Binder.hpp>
+#include <BufferPool.hpp>
 #include <ControlChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <InterceptorSource.hpp>
@@ -65,23 +64,6 @@ constexpr std::chrono::milliseconds INGEST_POLL_INTERVAL{25};
 
 /// A write into a full queue is sliced so that the source thread keeps noticing a stop request, as in the engine.
 constexpr std::chrono::milliseconds QUEUE_WRITE_POLL{100};
-
-/// A limit on the unpooled buffers that a connector may request, not a reservation.
-constexpr std::size_t UNPOOLED_MEMORY_BUDGET_IN_BYTES = 256UZ * 1024 * 1024;
-
-/// The buffer manager is sized by a memory budget, not a buffer count.
-/// Its rounding only moves bytes from the unpooled to the pooled share, so the pool holds at least the requested count.
-std::shared_ptr<BufferManager> makeBufferPool(const std::uint32_t bufferSize, const std::uint32_t bufferCount)
-{
-    constexpr BufferAlignment alignment{64};
-    const auto totalMemory = (static_cast<std::size_t>(bufferSize) * bufferCount) + UNPOOLED_MEMORY_BUDGET_IN_BYTES;
-    return BufferManager::create(
-        totalMemory,
-        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(totalMemory),
-        alignment,
-        bufferSize,
-        std::make_shared<NesDefaultMemoryAllocator>());
-}
 
 /// The state that persists across the commands of one session.
 /// Each OPEN starts a source thread whose emit pushes buffers into a bounded queue, and FILL reads from that queue.

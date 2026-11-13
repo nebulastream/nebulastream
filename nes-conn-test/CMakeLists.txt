@@ -17,7 +17,7 @@ if (NES_ENABLES_TESTS)
     # Deferred to the end of the configure step, after every connector has called add_conn_test.
     cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR} CALL write_conn_test_connectors)
 
-    # Source plugins link into nes-sources, so a new connector needs no edit here.
+    # Source plugins link into nes-sources and sink plugins into nes-sinks, so a new connector needs no edit here.
     add_library(conntest-binder STATIC
             driver/Binder.cpp
             driver/Reply.cpp
@@ -26,15 +26,17 @@ if (NES_ENABLES_TESTS)
     find_package(reflectcpp CONFIG REQUIRED)
     # The frontend's statement handlers turn the bound statements into descriptors, as they do for the REPL and the systests.
     target_link_libraries(conntest-binder
-            PUBLIC nes-sql-parser nes-sources nes-common
+            PUBLIC nes-sql-parser nes-sources nes-sinks nes-common
             PRIVATE nes-frontend-lib reflectcpp::reflectcpp
     )
 
     # The connector runs in its own process, so the runner can sequence it step by step and kill and respawn it.
     add_executable(conntest-harness
+            driver/BufferPool.cpp
             driver/ConntestStarter.cpp
             driver/ControlChannel.cpp
             driver/SessionCommand.cpp
+            driver/SinkSession.cpp
             driver/SourceSession.cpp
     )
 

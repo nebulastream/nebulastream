@@ -75,8 +75,8 @@ Service location, port, and credentials come from docker-compose service DNS on
 the project network (`<service>:<port>` from the connector's `compose.yaml`), never from host env vars,
 host networking, published ports, or container-IP guessing. This is what makes
 the setup portable across architectures/platforms (host vs. CI runner).
-A connector without an external service, such as `TCPSource`, has no `compose.yaml`:
-its loader is the server, on loopback inside the runner container.
+A connector without an external service, such as `TCPSource` or `TCPSink`, has no `compose.yaml`:
+its loader is the server, on the runner container's address.
 
 > Anti-pattern: `host.docker.internal`, `docker network connect $HOSTNAME`,
 > reading a host port from the environment, hardcoding an IP.
@@ -117,6 +117,10 @@ connector genuinely signals one (a source that legitimately ends before the quot
 returns `eos:true` from `FILL`), but never *required* and never *manufactured*. See
 `deterministic` (the quota is the stop) and `generator-is-truth` (the data is
 only data).
+
+A sink's end is its stop: `STOP` returns once the sink has delivered what it holds,
+and the loader reads back only after that, so no marker in the data is needed there either.
+A loader whose backend cannot tell when the last record has arrived bounds its wait by the number of rows the sink was given.
 
 > Anti-pattern: "fixing" a never-ending source by injecting an EoS/sentinel into
 > the generated data and waiting for it in `SourceSession`; making a test pass by
