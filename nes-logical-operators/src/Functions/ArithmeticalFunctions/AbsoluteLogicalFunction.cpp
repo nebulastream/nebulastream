@@ -47,14 +47,14 @@ DataType AbsoluteLogicalFunction::getDataType() const
     return dataType;
 };
 
-namespace
-{
+//namespace
+//{
 /// SQL semantics for ABS() result types (nullability is propagated by the caller):
 /// - Floating-point input keeps its type (magnitude is always representable).
 /// - Unsigned integer input keeps its type (the operation is a no-op).
 /// - Signed integer input is widened by one rank so the absolute value of the type's minimum value is representable
 ///   (e.g. ABS(INT8 -128) = INT16 128). INT64 has no wider type, so it stays INT64 and ABS(INT64_MIN) overflows at runtime.
-DataType::Type inferAbsoluteResultType(const DataType::Type inputType)
+DataType::Type AbsoluteLogicalFunction::inferAbsoluteResultType(const DataType::Type inputType) const
 {
     switch (inputType)
     {
@@ -80,7 +80,7 @@ DataType::Type inferAbsoluteResultType(const DataType::Type inputType)
             throw InferenceRuntimeFailure("Should not infer absolute type for {}", magic_enum::enum_name(inputType));
     }
 }
-}
+//}
 
 LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {

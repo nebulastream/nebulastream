@@ -41,6 +41,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] DataType::Type inferAbsoluteResultType(const DataType::Type inputType) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] AbsoluteLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

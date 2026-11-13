@@ -38,6 +38,12 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/FloorLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
 #include <cmath>
 
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
@@ -143,6 +149,27 @@ LogicalFunction handlePow(const std::string left, const std::string right, const
     return ConstantValueLogicalFunction(dataType, std::to_string(res));
 }
 
+LogicalFunction handleAbsolute(const std::string value, const DataType dataType)
+{
+    if (value.starts_with("-"))
+    {
+        auto absoluteValueAsString = value.substr(1, value.size() - 1);
+        return ConstantValueLogicalFunction(dataType, absoluteValueAsString);
+    }
+    return ConstantValueLogicalFunction(dataType, value);
+}
+
+std::optional<std::string> getInputConstantValue(const LogicalFunction& function)
+{
+    if (function.tryGetAs<ConstantValueLogicalFunction>())
+    {
+        const auto constantValue = function.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
+        return constantValue;
+    }
+    return {};
+}
+
+
 LogicalFunction calculateExpression(const LogicalFunction& function)
 {
     std::vector<LogicalFunction> newChildren;
@@ -152,82 +179,93 @@ LogicalFunction calculateExpression(const LogicalFunction& function)
     }
     if (function.tryGetAs<AddLogicalFunction>())
     {
-        const auto& left = newChildren.at(0);
-        const auto& right = newChildren.at(1);
-        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        const auto& right = getInputConstantValue(newChildren.at(1));
+        if (left.has_value() && right.has_value())
         {
-            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             DataType dataType;
             auto newDataType = dataType.inferNumericDataType(
-            left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
-            return handleAddition(leftConstant, rightConstant, newDataType.value());
+            newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType(), newChildren.at(1).getAs<ConstantValueLogicalFunction>().getDataType());
+            return handleAddition(left.value(), right.value(), newDataType.value());
         }
     }
     if (function.tryGetAs<MulLogicalFunction>())
     {
-        const auto& left = newChildren.at(0);
-        const auto& right = newChildren.at(1);
-        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        const auto& right = getInputConstantValue(newChildren.at(1));
+        if (left.has_value() && right.has_value())
         {
-            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             DataType dataType;
             auto newDataType = dataType.inferNumericDataType(
-            left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
-            return handleMultiplication(leftConstant, rightConstant, newDataType.value());
+            newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType(), newChildren.at(1).getAs<ConstantValueLogicalFunction>().getDataType());
+            return handleMultiplication(left.value(), right.value(), newDataType.value());
         }
     }
     if (function.tryGetAs<DivLogicalFunction>())
     {
-        const auto& left = newChildren.at(0);
-        const auto& right = newChildren.at(1);
-        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        const auto& right = getInputConstantValue(newChildren.at(1));
+        if (left.has_value() && right.has_value())
         {
-            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             DataType dataType;
-            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
-            return handleDivision(leftConstant, rightConstant, newDataType.value());
+            auto newDataType = dataType.inferNumericDataType(
+            newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType(), newChildren.at(1).getAs<ConstantValueLogicalFunction>().getDataType());
+            return handleDivision(left.value(), right.value(), newDataType.value());
         }
     }
     if (function.tryGetAs<SubLogicalFunction>())
     {
-        const auto& left = newChildren.at(0);
-        const auto& right = newChildren.at(1);
-        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        const auto& right = getInputConstantValue(newChildren.at(1));
+        if (left.has_value() && right.has_value())
         {
-            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             DataType dataType;
-            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
-            return handleSubtraction(leftConstant, rightConstant, newDataType.value());
+            auto newDataType = dataType.inferNumericDataType(
+            newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType(), newChildren.at(1).getAs<ConstantValueLogicalFunction>().getDataType());
+            return handleSubtraction(left.value(), right.value(), newDataType.value());
         }
     }
     if (function.tryGetAs<ModuloLogicalFunction>())
     {
-        const auto& left = newChildren.at(0);
-        const auto& right = newChildren.at(1);
-        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        const auto& right = getInputConstantValue(newChildren.at(1));
+        if (left.has_value() && right.has_value())
         {
-            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             DataType dataType;
-            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
-            return handleModulo(leftConstant, rightConstant, newDataType.value());
+            auto newDataType = dataType.inferNumericDataType(
+            newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType(), newChildren.at(1).getAs<ConstantValueLogicalFunction>().getDataType());
+            return handleModulo(left.value(), right.value(), newDataType.value());
         }
     }
     if (function.tryGetAs<PowLogicalFunction>())
     {
-        const auto& left = newChildren.at(0);
-        const auto& right = newChildren.at(1);
-        if (left.tryGetAs<ConstantValueLogicalFunction>() && right.tryGetAs<ConstantValueLogicalFunction>())
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        const auto& right = getInputConstantValue(newChildren.at(1));
+        if (left.has_value() && right.has_value())
         {
-            const auto& leftConstant = left.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
-            const auto& rightConstant = right.tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue();
             DataType dataType;
-            auto newDataType = dataType.inferNumericDataType(left.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType(), right.tryGetAs<ConstantValueLogicalFunction>().value()->getDataType());
-            return handlePow(leftConstant, rightConstant, newDataType.value());
+            auto newDataType = dataType.inferNumericDataType(
+            newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType(), newChildren.at(1).getAs<ConstantValueLogicalFunction>().getDataType());
+            return handlePow(left.value(), right.value(), newDataType.value());
+        }
+    }
+    if (function.tryGetAs<AbsoluteLogicalFunction>())
+    {
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        if (left.has_value())
+        {
+            DataType dataType;
+            const auto childType = function.getAs<AbsoluteLogicalFunction>().getChildren().at(0).tryGetAs<ConstantValueLogicalFunction>()->getDataType().type;
+            const auto absInferredType = function.getAs<AbsoluteLogicalFunction>()->inferAbsoluteResultType(childType);
+            if (newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType().nullable)
+            {
+                dataType = DataType{absInferredType, DataType::NULLABLE::IS_NULLABLE};
+            }
+            else
+            {
+                dataType = DataType{absInferredType, DataType::NULLABLE::NOT_NULLABLE};
+            }
+            return handleAbsolute(left.value(), dataType);
         }
     }
     return function.withChildren(newChildren);
