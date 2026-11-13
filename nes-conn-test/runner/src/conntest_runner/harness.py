@@ -28,9 +28,12 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import IO, Any, Self
+from typing import IO, TYPE_CHECKING, Any, Self
 
 from conntest_runner.protocol import Got, HarnessError, read_reply
+
+if TYPE_CHECKING:
+    from conntest_runner.datamodel import NativeColumn
 
 _ACCEPT_TIMEOUT_S = 30.0
 _ACCEPT_POLL_S = 0.1
@@ -159,6 +162,10 @@ class _Stepper:
             self._spawn()
         assert self._proc is not None  # noqa: S101  # _spawn() sets _proc or raises; narrows the type
         return self._proc.command(line)
+
+    def bind(self) -> list[NativeColumn]:
+        """The schema that the engine bound from the config, which the rows are generated for."""
+        return list(self._command("BIND").schema)
 
     def kill(self) -> None:
         """Models an ungraceful worker death: the backend sees the connection drop without a CLOSE.

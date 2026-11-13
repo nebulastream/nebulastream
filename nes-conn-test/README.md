@@ -72,8 +72,8 @@ and a harness-origin error (infrastructure failure, step timeout) always fails.
 (`runner/toxiproxy.compose.yaml`, controlled by `conntest_runner/link.py`), which joins the stack only for a connector that binds one of them.
 The loader still seeds the backend directly, so a fault affects only the connector's connection.
 
-Data comes from one deterministic generator: it parses the schema from the config's
-`CREATE LOGICAL SOURCE`, and its rows are both
+Data comes from one deterministic generator: it generates rows for the schema that the harness bound from the config
+and returns in its `BIND` reply, and its rows are both
 what the loader seeds and the oracle the observed stream is compared against. The wire form is JSONL.
 N buffers of data are as many rows as fit in less than N times the harness's buffer size (4096 bytes) in that encoding,
 so the last buffer is always partly filled.

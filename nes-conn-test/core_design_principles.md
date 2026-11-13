@@ -7,7 +7,7 @@ battery. If a change fights one of these, it is usually wrong.
 ### generator-is-truth — the data generator
 
 One seeded generator (`generate_rows`) is the **single source of all test data**. It adapts
-to whatever schema the config under test declares (`parse_source_schema`) —
+to whatever schema the config under test declares, as the engine binds it (the harness's `BIND` reply) —
 never hardcoding column names, types, counts, or data
 characteristics (value size, nullability, the absence of delimiters) — so a new
 valid config just works. The rows it generates are *both* the input the connector

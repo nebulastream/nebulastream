@@ -22,7 +22,6 @@ from conntest_runner.datamodel import (
     SourceModel,
     generate_rows,
     jsonl_to_rows,
-    parse_source_schema,
     rows_to_jsonl,
 )
 
@@ -45,26 +44,6 @@ _NULL_SCHEMA = [
     ("reading", "FLOAT64", True),
     ("name", "VARSIZED", False),
 ]
-
-
-
-def test_parse_source_schema() -> None:
-    sql = (
-        "CREATE LOGICAL SOURCE conntest_rows (k INT64 NOT NULL, a INT32 NOT NULL, "
-        "b INT64 NOT NULL, c FLOAT64 NOT NULL); CREATE PHYSICAL SOURCE ... TYPE TCP;"
-    )
-    assert parse_source_schema(sql) == _SRC_ROW_SCHEMA
-    assert parse_source_schema("CREATE LOGICAL SOURCE smoke_input (data UINT8);") == [
-        ("data", "UINT8", True)
-    ]
-    # Quoted identifiers lose their quotes; a column without NOT NULL is nullable.
-    assert parse_source_schema('CREATE LOGICAL SOURCE s (`a` INT32 NOT NULL, "b" VARSIZED);') == [
-        ("a", "INT32", False),
-        ("b", "VARSIZED", True),
-    ]
-    with pytest.raises(ValueError, match="LOGICAL SOURCE"):
-        parse_source_schema("SELECT 1")
-
 
 
 def test_generate_rows_deterministic() -> None:

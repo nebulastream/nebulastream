@@ -21,8 +21,14 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <ErrorHandling.hpp>
 
+#include <magic_enum/magic_enum.hpp>
 #include <rfl/json/write.hpp>
 /// The yyjson write flags. vcpkg installs yyjson on its own, while a reflect-cpp built with its bundled dependencies (Nix) ships it inside rfl.
 /// The same check as in rfl/json/write.hpp.
@@ -41,6 +47,20 @@ struct OkReply
 {
     bool ok = true;
     std::string phase;
+};
+
+struct BoundColumn
+{
+    std::string name;
+    std::string type;
+    bool nullable = false;
+};
+
+struct BindReply
+{
+    bool ok = true;
+    std::string phase;
+    std::vector<BoundColumn> schema;
 };
 
 struct FillReply
@@ -108,6 +128,22 @@ std::string errorReply(const ErrorInfo& err)
 std::string okReply(const std::string_view phase)
 {
     return write(OkReply{.phase = std::string{phase}});
+}
+
+std::string bindReply(const Schema<UnqualifiedUnboundField, Ordered>& schema)
+{
+    std::vector<BoundColumn> columns;
+    columns.reserve(schema.size());
+    for (const auto& field : schema)
+    {
+        const Identifier& name = field.getFullyQualifiedName();
+        columns.push_back(
+            BoundColumn{
+                .name = name.asCanonicalString(),
+                .type = std::string{magic_enum::enum_name(field.getDataType().type)},
+                .nullable = field.getDataType().nullable});
+    }
+    return write(BindReply{.phase = "bind", .schema = std::move(columns)});
 }
 
 std::string fillReply(const std::string_view phase, const bool eos, const std::vector<std::chrono::milliseconds>& partialReads)
