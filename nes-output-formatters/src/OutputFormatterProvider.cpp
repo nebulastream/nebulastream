@@ -16,13 +16,18 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
+#include <DataTypes/UnboundField.hpp>
 #include <Interface/Record.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <ErrorHandling.hpp>
+#include <OutputFormatterHeaderRegistry.hpp>
 #include <OutputFormatterRegistry.hpp>
 
 namespace NES::OutputFormatterProvider
@@ -35,6 +40,21 @@ std::shared_ptr<OutputFormatter> provideOutputFormatter(
     if (const auto formatterFactory = OutputFormatterRegistry::instance().find(outputFormatterType))
     {
         return (*formatterFactory)(OutputFormatterRegistryArguments{.fieldNames = fieldNames, .descriptor = descriptor});
+    }
+    throw UnknownOutputFormatterType("Unknown output-formatter type: {}", outputFormatterType);
+}
+
+std::optional<std::string>
+provideHeader(const OutputFormatterDescriptor& descriptor, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+{
+    if (descriptor.isNative())
+    {
+        return std::nullopt;
+    }
+    const auto outputFormatterType = descriptor.getOutputFormatterType().asCanonicalString();
+    if (const auto header = OutputFormatterHeaderRegistry::instance().find(outputFormatterType))
+    {
+        return (*header)(schema, descriptor);
     }
     throw UnknownOutputFormatterType("Unknown output-formatter type: {}", outputFormatterType);
 }

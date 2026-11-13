@@ -19,6 +19,7 @@ add_source_files(nes-output-formatters
         OutputFormatterRegistry.cpp
         OutputFormatterConfigRegistry.cpp
         OutputFormatterConfigSchemaRegistry.cpp
+        OutputFormatterHeaderRegistry.cpp
         CSVOutputFormatter.cpp
 )
 
@@ -26,3 +27,4 @@ add_source_files(nes-output-formatters
 add_registry_entry(OutputFormatter CSV)
 add_registry_entry(OutputFormatterConfigSchema CSV)
 add_registry_entry(OutputFormatterConfig CSV)
+add_registry_entry(OutputFormatterHeader CSV)

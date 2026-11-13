@@ -29,6 +29,7 @@
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
@@ -37,6 +38,7 @@
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <std/cstring.h>
 
 #include <Identifiers/Identifier.hpp>
@@ -97,6 +99,20 @@ const ConfigField<std::string> TUPLE_DELIMITER{
 const ConfigField<std::string> HEADER_FORMAT{Identifier::parse("HEADER_FORMAT"), "Header format of fields", "{NAME}:{TYPE}:{NULLABLE}"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
+std::string formatHeaderField(const UnqualifiedUnboundField& field, const std::string& headerFormat)
+{
+    const Identifier& identifier = field.getFullyQualifiedName();
+    /// A case-sensitive name keeps its quotes, as in SQL: a reader of the header can then tell it apart from a case-insensitive
+    /// name, which is canonicalized to upper case, and can split the header on the field delimiter even if a quoted name contains it.
+    const auto name = identifier.isCaseSensitive() ? fmt::format(R"("{}")", identifier.asCanonicalString()) : identifier.asCanonicalString();
+    const auto nullable = field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return fmt::format(
+        fmt::runtime(headerFormat),
+        fmt::arg("NAME", name),
+        fmt::arg("TYPE", magic_enum::enum_name(field.getDataType().type)),
+        fmt::arg("NULLABLE", magic_enum::enum_name(nullable)));
+}
+
 }
 
 Schema<QualifiedErasedConfigField, Ordered> CSVOutputFormatter::getConfigSchema()
@@ -119,7 +135,6 @@ CSVOutputFormatter::CSVOutputFormatter(const std::vector<Record::RecordFieldIden
     , fieldDelimiter(config.fieldDelimiter)
     , tupleDelimiter(config.tupleDelimiter)
     , quoteStrings(config.quoteStrings)
-    , headerFormat(config.headerFormat)
 {
     serializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
     serializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
@@ -222,32 +237,13 @@ std::unique_ptr<OutputFormatter> CSVOutputFormatter::provideFormatter(OutputForm
     return std::make_unique<CSVOutputFormatter>(arguments.fieldNames, arguments.descriptor.getConfig().getAs<CSVOutputFormatterConfig>());
 }
 
-std::optional<std::string> CSVOutputFormatter::getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema) const
+std::optional<std::string>
+CSVOutputFormatter::getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema, const OutputFormatterDescriptor& descriptor)
 {
     PRECONDITION(!std::ranges::empty(schema), "Encountered schema without fields.");
-
-    return fmt::format(
-        "{}\n",
-        fmt::join(
-            schema
-                | std::views::transform(
-                    [this](const auto& field)
-                    {
-                        const Identifier& identifier = field.getFullyQualifiedName();
-
-                        return fmt::format(
-                            fmt::runtime(headerFormat),
-                            fmt::arg(
-                                "NAME",
-                                identifier.isCaseSensitive() ? fmt::format(R"("{}")", identifier.asCanonicalString())
-                                                             : identifier.asCanonicalString()),
-                            fmt::arg("TYPE", magic_enum::enum_name(field.getDataType().type)),
-                            fmt::arg(
-                                "NULLABLE",
-                                magic_enum::enum_name(
-                                    field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE)));
-                    }),
-            fieldDelimiter));
+    const auto& config = descriptor.getConfig().getAs<CSVOutputFormatterConfig>();
+    const auto fields = schema | std::views::transform([&config](const auto& field) { return formatHeaderField(field, config.headerFormat); });
+    return fmt::format("{}\n", fmt::join(fields, config.fieldDelimiter));
 }
 
 }

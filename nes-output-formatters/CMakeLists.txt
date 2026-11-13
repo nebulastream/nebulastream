@@ -23,8 +23,8 @@ target_include_directories(nes-output-formatters PUBLIC
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # Runtime registries: an output formatter plugin registers itself with add_registry_entry(<registry> <name>).
-# By convention the plugin provides a class ${name}OutputFormatter with a static getConfigSchema()
-# and a static provideFormatter (formatter constructors differ), and a config struct
+# By convention the plugin provides a class ${name}OutputFormatter with a static getConfigSchema(),
+# a static provideFormatter (formatter constructors differ) and a static getHeader, and a config struct
 # ${name}OutputFormatterConfig with a static fromConfig(const InstantiatedConfig&).
 create_runtime_registry(OutputFormatter nes-output-formatters
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}OutputFormatter::provideFormatter"
@@ -33,6 +33,11 @@ create_runtime_registry(OutputFormatter nes-output-formatters
 
 create_runtime_registry(OutputFormatterConfigSchema nes-output-formatters
         ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}OutputFormatter::getConfigSchema(); }"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}OutputFormatter.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
+create_runtime_registry(OutputFormatterHeader nes-output-formatters
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}OutputFormatter::getHeader"
         HEADER_TEMPLATE "\${PLUGIN_NAME}OutputFormatter.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
@@ -49,5 +54,3 @@ create_runtime_registry(ValueSerializer nes-output-formatters
 add_subdirectory(src)
 get_source(nes-output-formatters NES_OUTPUT_FORMATTERS_SOURCE_FILES)
 target_sources(nes-output-formatters PRIVATE ${NES_OUTPUT_FORMATTERS_SOURCE_FILES})
-
-add_tests_if_enabled(tests)

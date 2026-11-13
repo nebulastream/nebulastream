@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <expected>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <ranges>
 #include <string>
@@ -225,7 +226,7 @@ std::unique_ptr<OutputFormatter> JSONOutputFormatter::provideFormatter(OutputFor
     return std::make_unique<JSONOutputFormatter>(std::move(arguments.fieldNames), config);
 }
 
-std::optional<std::string> JSONOutputFormatter::getHeader(const Schema<UnqualifiedUnboundField, Ordered>&) const
+std::optional<std::string> JSONOutputFormatter::getHeader(const Schema<UnqualifiedUnboundField, Ordered>&, const OutputFormatterDescriptor&)
 {
     return std::nullopt;
 }

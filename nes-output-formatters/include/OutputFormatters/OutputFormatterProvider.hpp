@@ -15,11 +15,15 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
+#include <DataTypes/UnboundField.hpp>
 #include <Interface/Record.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES::OutputFormatterProvider
 {
@@ -27,4 +31,9 @@ namespace NES::OutputFormatterProvider
     const std::string& outputFormatterType,
     const std::vector<Record::RecordFieldIdentifier>& fieldNames,
     const OutputFormatterDescriptor& descriptor);
+
+/// The header that a sink writes once in front of the rows, or nullopt if the format has none.
+/// Native output is not formatted, so it has no header either.
+[[nodiscard]] std::optional<std::string>
+provideHeader(const OutputFormatterDescriptor& descriptor, const Schema<UnqualifiedUnboundField, Ordered>& schema);
 }

@@ -16,21 +16,18 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Schema/Schema.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
@@ -85,9 +82,6 @@ public:
         }
         throw UnknownValueSerializerType("No ValueSerializer configured for DataType {}.", magic_enum::enum_name(dataType));
     }
-
-    /// Returns the header that a sink writes once at the beginning of its output, or nullopt if the format has no header.
-    virtual std::optional<std::string> getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema) const = 0;
 
 protected:
     /// Identifiers of the fields of the output schema

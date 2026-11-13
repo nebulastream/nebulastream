@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <expected>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -25,6 +26,7 @@
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -78,7 +80,9 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
 
-    std::optional<std::string> getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema) const override;
+    /// Registry entry (see OutputFormatterHeaderRegistry.hpp). JSON lines carry their field names, so the format has no header.
+    static std::optional<std::string>
+    getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema, const OutputFormatterDescriptor& descriptor);
 
 private:
     std::vector<std::string> canonicalFieldNames;

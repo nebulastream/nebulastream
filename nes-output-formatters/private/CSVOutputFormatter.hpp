@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -25,6 +26,7 @@
 
 #include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -69,13 +71,14 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
-    std::optional<std::string> getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema) const override;
+    /// Registry entry (see OutputFormatterHeaderRegistry.hpp).
+    static std::optional<std::string>
+    getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema, const OutputFormatterDescriptor& descriptor);
 
 private:
     std::string fieldDelimiter;
     std::string tupleDelimiter;
     bool quoteStrings;
-    std::string headerFormat;
 };
 }
 

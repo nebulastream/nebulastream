@@ -77,7 +77,7 @@ private:
     bool isAppend;
     bool isOpen;
     folly::Synchronized<std::ofstream> outputFileStream;
-    /// Written once at the beginning of an empty file. Provided by the sink's output formatter, if the format has a header.
+    /// Written once at the beginning of an empty file, if the output format has a header (see OutputFormatterProvider::provideHeader).
     std::optional<std::string> header;
 };
 
