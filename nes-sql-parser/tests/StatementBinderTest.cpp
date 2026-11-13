@@ -935,6 +935,28 @@ TEST_F(StatementBinderTest, ProbeReadsAnyRegisteredAggregation)
     ASSERT_EQ(scalarReaders.front()->getPayloadFields().size(), 1);
 }
 
+/// A probe reads the window bounds from the records it is given. Without a build in the same query, a WINDOW clause
+/// would put a window aggregation underneath it, without a single aggregation if the probe is all that is selected.
+TEST_F(StatementBinderTest, ProbeWithoutBuildTakesNoWindowOrAggregation)
+{
+    const std::vector<std::string> queries{
+        fmt::format("SELECT SUM_PROBE(42, v, uint64){}", WINDOWED),
+        fmt::format("SELECT SUM(x), SUM_PROBE(42, v, uint64){}", WINDOWED),
+        "SELECT SUM_PROBE(42, v, uint64) FROM s GROUP BY k WINDOW TUMBLING(ts, SIZE 1 SEC) INTO sink",
+        "SELECT SUM(x), SUM_PROBE(42, v, uint64) FROM s INTO sink",
+    };
+    for (const auto& query : queries)
+    {
+        EXPECT_EQ(bindError(query), ErrorCode::InvalidQuerySyntax) << query;
+        EXPECT_THAT(bindErrorMessage(query), ::testing::HasSubstr("SUM_PROBE probes the records of its source")) << query;
+    }
+
+    const auto plan = bindPlan(fmt::format("SELECT STATISTIC_BUILD(43, SUM(x)), SUM_PROBE(43, v, float64){}", WINDOWED));
+    const auto readers = getOperatorByType<StatisticStoreReaderLogicalOperator>(plan);
+    ASSERT_EQ(readers.size(), 1);
+    EXPECT_TRUE(readers.front()->getChild().tryGetAs<StatisticStoreWriterLogicalOperator>().has_value());
+}
+
 TEST_F(StatementBinderTest, StatisticCallsWithBadArgumentsAreInvalidQuerySyntax)
 {
     const std::vector<std::string> selects{

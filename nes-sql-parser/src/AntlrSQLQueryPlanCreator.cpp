@@ -814,6 +814,17 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
 
     auto windowTypeOpt = helpers.top().windowType;
+    /// A probe reads the window bounds from the records it is given: those a build in the same query writes, or else
+    /// those of its source. Without a build, a WINDOW clause would put a window aggregation underneath the probe, with no
+    /// aggregation at all if the probe is all the query selects.
+    if (helpers.top().statisticProbe.has_value() and not helpers.top().statisticBuild.has_value()
+        and (windowTypeOpt.has_value() or not helpers.top().windowAggs.empty() or not helpers.top().groupByFields.empty()))
+    {
+        throw InvalidQuerySyntax(
+            "{} probes the records of its source, so without a statistic build in the same query it cannot be combined with a "
+            "WINDOW clause, aggregation functions or GROUP BY",
+            helpers.top().statisticProbe->functionName);
+    }
     if (helpers.top().statisticBuild.has_value())
     {
         const auto& functionName = helpers.top().statisticBuild->functionName;
@@ -1453,7 +1464,8 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             .statisticId = parseStatisticId(arguments.front(), funcName, context->getText()),
             .blobType = StatisticBlobType{std::string{probed->name}},
             .payloadFields = toPayloadFields(std::span{arguments}.subspan(1)),
-            .windowMatch = windowMatch};
+            .windowMatch = windowMatch,
+            .functionName = funcName};
         return;
     }
     if (funcName == "STATISTIC_BUILD")

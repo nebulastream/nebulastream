@@ -110,6 +110,7 @@ public:
         StatisticBlobType blobType;
         std::vector<StatisticStoreReaderLogicalOperator::PayloadField> payloadFields;
         StatisticWindowMatch windowMatch;
+        std::string functionName;
     };
 
     std::optional<StatisticProbeInfo> statisticProbe;
