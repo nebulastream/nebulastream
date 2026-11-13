@@ -1,0 +1,42 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The timeout leaves at least 45 s after the last fault ends,
+# because a worker whose reconnect attempts ran out is retried only after 30 s.
+
+[[test]]
+title = "degraded_during_worker_cycling"
+timeout = 75
+
+  # Workers cycling while the network is degraded
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 28
+  end = 33
+  create_weight = 2
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 16
+  begin = 5
+  end = 33
+  create_weight = 2
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Degradation"
+  begin = 5
+  end = 28
+  latency_lo_ms = 200
+  latency_hi_ms = 3000
+  loss_rate = 0.15
