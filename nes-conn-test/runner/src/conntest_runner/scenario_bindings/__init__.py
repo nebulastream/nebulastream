@@ -12,8 +12,9 @@
 
 """Per-scenario constructors for a plugin's ``conn-test/scenarios.py``.
 
-A connector imports them from the module of its kind, so far only ``source``.
+A source imports them from ``source`` and a sink from ``sink``.
 Each module offers only the scenarios that its kind can bind, so a connector that imports from its kind's module cannot bind another kind's scenario.
+Discovery fails a connector that imports from another kind's module, and says which module to use.
 Each constructor takes only the arguments that its scenario accepts, so an invalid argument is a ``TypeError`` when it is written,
 not a defect found at run time.
 """

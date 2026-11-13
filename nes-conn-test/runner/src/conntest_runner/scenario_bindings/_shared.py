@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The scenarios that do not depend on the kind of connector, which the module of each kind offers."""
+"""The scenarios that sources and sinks share, which ``source`` and ``sink`` both offer."""
 
 from __future__ import annotations
 
@@ -21,14 +21,14 @@ def outcome(code: int | str | None) -> str:
     return "OK" if code is None else f"ERROR {code}"
 
 
-def round_trip_1_buffer(*globs: str, loader_args: dict[str, object] | None = None) -> Scenario:
-    """``loader_args`` are for a config whose data the loader must seed differently from the connector's other configs."""
-    return Scenario("round_trip_1_buffer", configs=list(globs), loader_args=loader_args)
+def transfer_1_buffer(*globs: str, loader_args: dict[str, object] | None = None) -> Scenario:
+    """``loader_args`` are for a config whose data the loader must seed or read back differently from the connector's other configs."""
+    return Scenario("transfer_1_buffer", configs=list(globs), loader_args=loader_args)
 
 
-def round_trip_n_buffers(*globs: str, n_buffers: int | None = None) -> Scenario:
+def transfer_n_buffers(*globs: str, n_buffers: int | None = None) -> Scenario:
     """``n_buffers`` replaces the default; keep it above the harness's pool size, or the source never has to wait."""
-    return Scenario("round_trip_n_buffers", configs=list(globs), n_buffers=n_buffers)
+    return Scenario("transfer_n_buffers", configs=list(globs), n_buffers=n_buffers)
 
 
 def empty(*globs: str) -> Scenario:
