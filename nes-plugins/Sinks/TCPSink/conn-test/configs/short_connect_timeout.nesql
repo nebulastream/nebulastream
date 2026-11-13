@@ -1,0 +1,10 @@
+-- A TCP sink that gives up connecting after 1 s.
+-- The connection tests replace SOCKET_HOST and SOCKET_PORT with the endpoint of each test.
+-- With the defaults, the connect timeout and the close timeout are both 10 s, and the close timeout ends first.
+-- The sink then drops its data and stops without an error, so a test that expects a failed connect needs the shorter connect timeout.
+CREATE SINK short_connect_timeout_output (data UINT8) TYPE TCP SET (
+    'localhost' AS "SINK".SOCKET_HOST,
+    9000        AS "SINK".SOCKET_PORT,
+    1000        AS "SINK".CONNECT_TIMEOUT_MS,
+    'JSON'      AS "SINK".OUTPUT_FORMAT
+);

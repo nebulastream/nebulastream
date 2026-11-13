@@ -1,0 +1,9 @@
+-- A minimal TCP sink.
+-- The connection tests replace SOCKET_HOST and SOCKET_PORT with the endpoint of each test.
+-- The tests run no formatter, so 'JSON' describes the bytes that the harness gives the sink.
+-- The harness lays them out in buffers as the formatter does.
+CREATE SINK smoke_output (data UINT8) TYPE TCP SET (
+    'localhost' AS "SINK".SOCKET_HOST,
+    9000        AS "SINK".SOCKET_PORT,
+    'JSON'      AS "SINK".OUTPUT_FORMAT
+);
