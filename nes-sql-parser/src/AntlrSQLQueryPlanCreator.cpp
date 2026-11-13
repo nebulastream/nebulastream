@@ -1291,6 +1291,9 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     const auto funcName = toUpperCase(context->children[0]->getText());
+    /// Inside a join relation (ON clause) the function arguments were collected on the join-condition stack, so the
+    /// constructed function has to be placed there as well; everywhere else the regular expression stack is used.
+    auto& functionBuilder = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
     const auto tokenType = context->getStart()->getType();
 
     /// Ensures the current aggregation argument is a direct field access.
@@ -1298,19 +1301,19 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     /// projection so that the aggregation operates on a simple field reference.
     const auto ensureFieldAccessArgument = [&]()
     {
-        if (helpers.top().functionBuilder.empty())
+        if (functionBuilder.empty())
         {
             throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
         }
-        if (!helpers.top().functionBuilder.back().tryGetAs<UnboundFieldAccessLogicalFunction>())
+        if (!functionBuilder.back().tryGetAs<UnboundFieldAccessLogicalFunction>())
         {
             /// Desugar: pop the expression, create a temp field, store a pre-aggregation projection,
             /// and push a FieldAccess to the temp field back onto functionBuilder.
-            auto expression = std::move(helpers.top().functionBuilder.back());
-            helpers.top().functionBuilder.pop_back();
+            auto expression = std::move(functionBuilder.back());
+            functionBuilder.pop_back();
             const auto tempName = bindIdentifier(fmt::format("_agg_input_{}", helpers.top().aggExprCounter++));
             helpers.top().preAggregationProjections.emplace_back(tempName, std::move(expression));
-            helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(tempName));
+            functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(tempName));
         }
     };
 
@@ -1322,15 +1325,14 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             if (includeNullValues)
             {
                 /// COUNT(*) — no field argument needed; use a dummy * field
-                helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(Identifier::parse("*")));
+                functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(Identifier::parse("*")));
             }
             else
             {
                 ensureFieldAccessArgument();
             }
             helpers.top().windowAggs.emplace_back(
-                CountAggregationLogicalFunction{
-                    helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>(), includeNullValues},
+                CountAggregationLogicalFunction{functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>(), includeNullValues},
                 std::nullopt);
             isAggregation = true;
             break;
@@ -1338,36 +1340,31 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         case AntlrSQLLexer::AVG:
             ensureFieldAccessArgument();
             helpers.top().windowAggs.emplace_back(
-                AvgAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
+                AvgAggregationLogicalFunction{functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()}, std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::MAX:
             ensureFieldAccessArgument();
             helpers.top().windowAggs.emplace_back(
-                MaxAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
+                MaxAggregationLogicalFunction{functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()}, std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::MIN:
             ensureFieldAccessArgument();
             helpers.top().windowAggs.emplace_back(
-                MinAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
+                MinAggregationLogicalFunction{functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()}, std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::SUM:
             ensureFieldAccessArgument();
             helpers.top().windowAggs.emplace_back(
-                SumAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
+                SumAggregationLogicalFunction{functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()}, std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::MEDIAN:
             ensureFieldAccessArgument();
             helpers.top().windowAggs.emplace_back(
-                MedianAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
+                MedianAggregationLogicalFunction{functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()}, std::nullopt);
             isAggregation = true;
             break;
         default:
@@ -1385,8 +1382,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
 
                 /// Aggregation functions only accept field accesses as input. An expression argument is desugared into a pre-aggregation projection, just like for the built-in aggregations.
                 ensureFieldAccessArgument();
-                const std::vector<AggregationFieldAccess> aggInput{
-                    helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()};
+                const std::vector<AggregationFieldAccess> aggInput{functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()};
 
                 const AggregationLogicalFunctionRegistryArguments aggArgs{aggInput, false};
                 const WindowAggregationLogicalFunction aggFunc = (*aggFactory)(aggArgs);
@@ -1404,17 +1400,17 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 ///   non-STRUCT, expr arg    -> CastToTypeLogicalFunction (expression in functionBuilder)
                 if (toUpperCase(funcName) == "ARRAY")
                 {
-                    auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                    std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.emplace_back(ConstructArrayLogicalFunction(std::move(args)));
+                    auto argsBegin = functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                    std::vector<LogicalFunction> args(argsBegin, functionBuilder.end());
+                    functionBuilder.resize(functionBuilder.size() - numArgs);
+                    functionBuilder.emplace_back(ConstructArrayLogicalFunction(std::move(args)));
                 }
                 else if (toUpperCase(funcName) == "VECTOR")
                 {
-                    auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                    std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.emplace_back(ConstructVectorLogicalFunction(std::move(args)));
+                    auto argsBegin = functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                    std::vector<LogicalFunction> args(argsBegin, functionBuilder.end());
+                    functionBuilder.resize(functionBuilder.size() - numArgs);
+                    functionBuilder.emplace_back(ConstructVectorLogicalFunction(std::move(args)));
                 }
                 else if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
                 {
@@ -1437,7 +1433,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                                 numArgs,
                                 context->getText());
                         }
-                        if (numArgs > helpers.top().functionBuilder.size())
+                        if (numArgs > functionBuilder.size())
                         {
                             throw InvalidQuerySyntax(
                                 "Struct constructor '{}' expects {} arguments but only {} are available (raw literals must be wrapped, "
@@ -1445,24 +1441,24 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                                 "FLOAT64(1.5))",
                                 funcName,
                                 numArgs,
-                                helpers.top().functionBuilder.size());
+                                functionBuilder.size());
                         }
-                        auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                        std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
-                        helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                        helpers.top().functionBuilder.emplace_back(ConstructStructLogicalFunction(*dataType, std::move(args)));
+                        auto argsBegin = functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                        std::vector<LogicalFunction> args(argsBegin, functionBuilder.end());
+                        functionBuilder.resize(functionBuilder.size() - numArgs);
+                        functionBuilder.emplace_back(ConstructStructLogicalFunction(*dataType, std::move(args)));
                     }
                     else if (!helpers.top().constantBuilder.empty())
                     {
                         auto value = std::move(helpers.top().constantBuilder.back());
                         helpers.top().constantBuilder.pop_back();
-                        helpers.top().functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
+                        functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
                     }
-                    else if (!helpers.top().functionBuilder.empty())
+                    else if (!functionBuilder.empty())
                     {
-                        auto inner = std::move(helpers.top().functionBuilder.back());
-                        helpers.top().functionBuilder.pop_back();
-                        helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction(*dataType, std::move(inner)));
+                        auto inner = std::move(functionBuilder.back());
+                        functionBuilder.pop_back();
+                        functionBuilder.emplace_back(CastToTypeLogicalFunction(*dataType, std::move(inner)));
                     }
                     else
                     {
@@ -1471,20 +1467,17 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 }
                 else
                 {
-                    if (numArgs > helpers.top().functionBuilder.size())
+                    if (numArgs > functionBuilder.size())
                     {
                         throw InvalidQuerySyntax(
-                            "Function '{}' expects {} arguments but only {} are available",
-                            funcName,
-                            numArgs,
-                            helpers.top().functionBuilder.size());
+                            "Function '{}' expects {} arguments but only {} are available", funcName, numArgs, functionBuilder.size());
                     }
-                    auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                    std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
+                    auto argsBegin = functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                    std::vector<LogicalFunction> funcArgs(argsBegin, functionBuilder.end());
                     if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
                     {
-                        helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                        helpers.top().functionBuilder.push_back(*logicalFunction);
+                        functionBuilder.resize(functionBuilder.size() - numArgs);
+                        functionBuilder.push_back(*logicalFunction);
                     }
                     else
                     {
@@ -1517,14 +1510,14 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     if (isAggregation)
     {
         helpers.top().hasUnnamedAggregation = true;
-        const auto onField = helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>().get();
-        helpers.top().functionBuilder.pop_back();
+        const auto onField = functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>().get();
+        functionBuilder.pop_back();
         const auto autoName = fmt::format("{}_{}", onField.getFieldName(), funcName);
         const auto asField = bindIdentifier(autoName);
         const auto [aggFunc, asName] = helpers.top().windowAggs.back();
         helpers.top().windowAggs.pop_back();
         helpers.top().windowAggs.emplace_back(aggFunc, std::optional{asField});
-        helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
+        functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
     }
 }
 

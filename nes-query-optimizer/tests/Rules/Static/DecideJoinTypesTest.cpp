@@ -606,6 +606,74 @@ TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
     EXPECT_TRUE(trait->implementationType == JoinImplementation::NESTED_LOOP_JOIN);
 }
 
+/// Builds `left_key = right_key` over two sources whose key field has @p keyType and returns the chosen join implementation.
+JoinImplementation decideForKeyType(const DataType& keyType)
+{
+    const auto u64 = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+    const Schema<UnqualifiedUnboundField, Ordered> leftSchema{
+        {Identifier::parse("left_key"), keyType}, {Identifier::parse("left_ts"), u64}};
+    const Schema<UnqualifiedUnboundField, Ordered> rightSchema{
+        {Identifier::parse("right_key"), keyType}, {Identifier::parse("right_ts"), u64}};
+
+    const auto leftSourceOp = SourceDescriptorLogicalOperator::create(
+        DecideJoinTypesTest::createSourceDescriptor(
+            PhysicalSourceId{1}, DecideJoinTypesTest::createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema)));
+    const auto rightSourceOp = SourceDescriptorLogicalOperator::create(
+        DecideJoinTypesTest::createSourceDescriptor(
+            PhysicalSourceId{2}, DecideJoinTypesTest::createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema)));
+
+    auto joinFunction = EqualsLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_key")).value()},
+        FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_key")).value()}};
+
+    auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+        {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+         Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+
+    auto joinOp = JoinLogicalOperator::create(
+        std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+        joinFunction,
+        DecideJoinTypesTest::createTumblingWindow(),
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        characteristics.value());
+
+    const Schema<UnqualifiedUnboundField, Ordered> sinkSchema{
+        {Identifier::parse("left_key"), keyType},
+        {Identifier::parse("left_ts"), u64},
+        {Identifier::parse("right_key"), keyType},
+        {Identifier::parse("right_ts"), u64},
+        {Identifier::parse("START"), u64},
+        {Identifier::parse("END"), u64}};
+    auto sinkOp
+        = SinkLogicalOperator::create(joinOp, DecideJoinTypesTest::createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema));
+    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+
+    const DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    const auto result = rule.apply(plan);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(result);
+    EXPECT_EQ(joins.size(), 1);
+    return joins[0]->getTraitSet().get<JoinImplementationTypeTrait>()->implementationType;
+}
+
+/// Composite key types have no byte-wise equality the hash join could rely on, so an equality on them must take the NLJ.
+TEST_F(DecideJoinTypesTest, CompositeKeyTypesFallBackToNLJ)
+{
+    const auto f64 = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    const DataType structType{
+        DataType::Type::STRUCT, DataType::NULLABLE::NOT_NULLABLE, "Reading", {{"temperature", f64}, {"humidity", f64}}};
+    const DataType fixedSizedType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, f64, 4};
+    const DataType vectorType{DataType::Type::VECTOR, DataType::NULLABLE::NOT_NULLABLE, f64};
+
+    EXPECT_EQ(decideForKeyType(structType), JoinImplementation::NESTED_LOOP_JOIN);
+    EXPECT_EQ(decideForKeyType(fixedSizedType), JoinImplementation::NESTED_LOOP_JOIN);
+    EXPECT_EQ(decideForKeyType(vectorType), JoinImplementation::NESTED_LOOP_JOIN);
+}
+
+/// VARSIZED keys are supported by the hash join and must keep using it.
+TEST_F(DecideJoinTypesTest, VarSizedKeyTypeKeepsHashJoin)
+{
+    EXPECT_EQ(decideForKeyType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), JoinImplementation::HASH_JOIN);
+}
 
 }
 }

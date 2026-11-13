@@ -1,0 +1,63 @@
+# name: join/JoinWithPluginDataTypes.test
+# description: Nested loop join (NLJ) over plugin-provided data types. Both streams carry a `Decimal` column
+# (DataTypes/Decimal plugin, a STRUCT of unscaled INT64 + INT32 scale) and the scalar members of a `Reading`
+# (DataTypes/Reading plugin, a nominal STRUCT of two FLOAT64). The join condition either uses a plugin-registered
+# comparison (`Greater_Reading_Reading`) or an equality on a STRUCT key; in both cases DecideJoinTypesRule cannot pick the
+# hash join and falls back to the NLJ. The plugin values are stored in the NLJ's PagedVector on the build side, read
+# back on the probe side, and then evaluated by the plugin's physical functions.
+# groups: [WindowOperators, Join, CompilationIntensive]
+
+CREATE LOGICAL SOURCE readingsA(sensor_id UINT64 NOT NULL, celsius FLOAT64 NOT NULL, humidity FLOAT64 NOT NULL, price Decimal NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readingsA TYPE File;
+ATTACH INLINE
+1,23.5,65.0,10.50,100
+2,24.0,70.0,2.25,200
+3,25.5,55.0,42,300
+
+CREATE LOGICAL SOURCE readingsB(device_id UINT64 NOT NULL, celsius2 FLOAT64 NOT NULL, humidity2 FLOAT64 NOT NULL, price2 Decimal NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readingsB TYPE File;
+ATTACH INLINE
+1,24.0,60.0,10.50,110
+2,23.0,61.0,2.25,210
+3,26.0,62.0,7,310
+
+# A plugin function as the join predicate: Greater_Reading_Reading compares the `temperature` member only.
+# The join function is not a conjunction of field equalities, so the NLJ is used.
+SELECT sensor_id, device_id
+FROM (SELECT * FROM readingsA) JOIN (SELECT * FROM readingsB) ON Reading(celsius, humidity) > Reading(celsius2, humidity2)
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"SENSOR_ID":1,"DEVICE_ID":2}
+{"SENSOR_ID":2,"DEVICE_ID":2}
+{"SENSOR_ID":3,"DEVICE_ID":1}
+{"SENSOR_ID":3,"DEVICE_ID":2}
+
+# Decimal columns from both sides survive the round trip through the NLJ's PagedVector and are serialized unchanged.
+SELECT sensor_id, device_id, price, price2
+FROM (SELECT * FROM readingsA) JOIN (SELECT * FROM readingsB) ON Reading(celsius, humidity) > Reading(celsius2, humidity2)
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"SENSOR_ID":1,"DEVICE_ID":2,"PRICE":10.50,"PRICE2":2.25}
+{"SENSOR_ID":2,"DEVICE_ID":2,"PRICE":2.25,"PRICE2":2.25}
+{"SENSOR_ID":3,"DEVICE_ID":1,"PRICE":42,"PRICE2":10.50}
+{"SENSOR_ID":3,"DEVICE_ID":2,"PRICE":42,"PRICE2":2.25}
+
+# Decimal equality as the only join key. DecideJoinTypesRule never picks the hash join for STRUCT, FIXEDSIZED or VECTOR
+# keys, so the equality is evaluated by the NLJ's join function. Decimal has no registered Equals, so `=` is the generic
+# STRUCT byte equality; both inputs carry the same scale. The joined Decimals are then added with Add_Decimal_Decimal.
+SELECT sensor_id, device_id, price + price2 AS total
+FROM (SELECT * FROM readingsA) JOIN (SELECT * FROM readingsB) ON price = price2
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"SENSOR_ID":1,"DEVICE_ID":1,"TOTAL":21.00}
+{"SENSOR_ID":2,"DEVICE_ID":2,"TOTAL":4.50}
+
+# The constructed Reading itself can be emitted from the joined record.
+SELECT sensor_id, device_id, Reading(celsius, humidity2) AS reading
+FROM (SELECT * FROM readingsA) JOIN (SELECT * FROM readingsB) ON Reading(celsius, humidity) > Reading(celsius2, humidity2)
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"SENSOR_ID":1,"DEVICE_ID":2,"READING":{"temperature":23.5,"humidity":61.0}}
+{"SENSOR_ID":2,"DEVICE_ID":2,"READING":{"temperature":24.0,"humidity":61.0}}
+{"SENSOR_ID":3,"DEVICE_ID":1,"READING":{"temperature":25.5,"humidity":60.0}}
+{"SENSOR_ID":3,"DEVICE_ID":2,"READING":{"temperature":25.5,"humidity":61.0}}

@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
@@ -77,6 +78,14 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
                 if (not child.tryGetAs<FieldAccessLogicalFunction>().has_value())
                 {
                     /// If the leaf is not a FieldAccessLogicalFunction, we need to use a NLJ
+                    return false;
+                }
+                /// The hash join hashes and compares key fields byte-wise. For composite types (STRUCT, FIXEDSIZED, VECTOR)
+                /// equality is defined by the type's (possibly plugin-provided) Equals function, which only the NLJ evaluates.
+                /// In the future, we could, similar to the scalar functions for aggregations, turn the HASH into a function that may be registered by a datatype plugin.
+                if (const auto keyType = child.getDataType().type;
+                    keyType == DataType::Type::STRUCT or keyType == DataType::Type::FIXEDSIZED or keyType == DataType::Type::VECTOR)
+                {
                     return false;
                 }
             }
