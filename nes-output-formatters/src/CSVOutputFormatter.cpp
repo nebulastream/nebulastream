@@ -27,6 +27,8 @@
 #include <vector>
 
 #include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -49,6 +51,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <function.hpp>
@@ -96,21 +99,40 @@ const ConfigField<std::string> FIELD_DELIMITER{
 const ConfigField<std::string> TUPLE_DELIMITER{
     Identifier::parse("TUPLE_DELIMITER"), "A string to be used for delimiting tuples.", std::string{"\n"}};
 
-const ConfigField<std::string> HEADER_FORMAT{Identifier::parse("HEADER_FORMAT"), "Header format of fields", "{NAME}:{TYPE}:{NULLABLE}"};
+const ConfigField<CSVHeaderFormat> HEADER_FORMAT{
+    Identifier::parse("HEADER_FORMAT"),
+    fmt::format("The header written once in front of the rows: {}", enumPipeList<CSVHeaderFormat>()),
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<CSVHeaderFormat, Exception>
+                {
+                    if (const auto parsed = EnumWrapper{value}.asEnum<CSVHeaderFormat>())
+                    {
+                        return *parsed;
+                    }
+                    return std::unexpected{
+                        InvalidConfigParameter("Invalid header format, must be one of {}: {}", enumPipeList<CSVHeaderFormat>(), value)};
+                });
+    },
+    CSVHeaderFormat::NAME_TYPE_NULLABLE,
+    "NAME_TYPE_NULLABLE"};
+
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
-std::string formatHeaderField(const UnqualifiedUnboundField& field, const std::string& headerFormat)
+std::string formatHeaderField(const UnqualifiedUnboundField& field, const CSVHeaderFormat headerFormat)
 {
     const Identifier& identifier = field.getFullyQualifiedName();
     /// A case-sensitive name keeps its quotes, as in SQL: a reader of the header can then tell it apart from a case-insensitive
     /// name, which is canonicalized to upper case, and can split the header on the field delimiter even if a quoted name contains it.
-    const auto name = identifier.isCaseSensitive() ? fmt::format(R"("{}")", identifier.asCanonicalString()) : identifier.asCanonicalString();
+    auto name = identifier.isCaseSensitive() ? fmt::format(R"("{}")", identifier.asCanonicalString()) : identifier.asCanonicalString();
+    if (headerFormat == CSVHeaderFormat::NAME)
+    {
+        return name;
+    }
     const auto nullable = field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
-    return fmt::format(
-        fmt::runtime(headerFormat),
-        fmt::arg("NAME", name),
-        fmt::arg("TYPE", magic_enum::enum_name(field.getDataType().type)),
-        fmt::arg("NULLABLE", magic_enum::enum_name(nullable)));
+    return fmt::format("{}:{}:{}", name, magic_enum::enum_name(field.getDataType().type), magic_enum::enum_name(nullable));
 }
 
 }
@@ -240,10 +262,15 @@ std::unique_ptr<OutputFormatter> CSVOutputFormatter::provideFormatter(OutputForm
 std::optional<std::string>
 CSVOutputFormatter::getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema, const OutputFormatterDescriptor& descriptor)
 {
-    PRECONDITION(!std::ranges::empty(schema), "Encountered schema without fields.");
     const auto& config = descriptor.getConfig().getAs<CSVOutputFormatterConfig>();
-    const auto fields = schema | std::views::transform([&config](const auto& field) { return formatHeaderField(field, config.headerFormat); });
-    return fmt::format("{}\n", fmt::join(fields, config.fieldDelimiter));
+    if (config.headerFormat == CSVHeaderFormat::NONE)
+    {
+        return std::nullopt;
+    }
+    PRECONDITION(!std::ranges::empty(schema), "Encountered schema without fields.");
+    const auto fields
+        = schema | std::views::transform([&config](const auto& field) { return formatHeaderField(field, config.headerFormat); });
+    return fmt::format("{}{}", fmt::join(fields, config.fieldDelimiter), config.tupleDelimiter);
 }
 
 }

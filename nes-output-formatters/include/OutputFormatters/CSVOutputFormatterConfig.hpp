@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <cstdint>
 #include <expected>
 #include <string>
 #include <Configurations/InstantiatedConfigValue.hpp>
@@ -20,6 +21,18 @@
 
 namespace NES
 {
+
+/// The header that the CSV output formatter writes once in front of the rows. Fields are separated by the field delimiter,
+/// and the header ends with the tuple delimiter, like a row.
+enum class CSVHeaderFormat : uint8_t
+{
+    /// No header, the output holds only rows.
+    NONE,
+    /// The field names, e.g., `ID,VALUE`.
+    NAME,
+    /// Name, type, and nullability of each field, e.g., `ID:UINT64:NOT_NULLABLE,VALUE:FLOAT64:IS_NULLABLE`.
+    NAME_TYPE_NULLABLE,
+};
 
 /// Formatter-defined config struct: instantiated from the generic config by the
 /// OutputFormatterConfig registry entry, carried through the OutputFormatterDescriptor as
@@ -30,7 +43,7 @@ struct CSVOutputFormatterConfig
     std::string fieldDelimiter;
     std::string tupleDelimiter;
     std::string valueSerializers;
-    std::string headerFormat;
+    CSVHeaderFormat headerFormat;
 
     static std::expected<CSVOutputFormatterConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
