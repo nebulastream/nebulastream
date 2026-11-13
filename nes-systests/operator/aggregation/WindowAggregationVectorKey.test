@@ -1,0 +1,35 @@
+# name: aggregation/WindowAggregationVectorKey.test
+# description: Keyed window aggregation with a VECTOR column as the group key. The ChainedHashMap must deep-copy the
+# vector payload into its own var-sized pages when the key is inserted; previously it stored a raw pointer into the
+# input tuple buffer, so the key could dangle once that buffer was recycled. The key is read back from the entry when
+# the window is emitted, so the output keys verify the copied payload.
+# groups: [Aggregation, WindowOperators, CompilationIntensive]
+
+CREATE LOGICAL SOURCE readings(key INT32 VECTOR NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readings TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"KEY": [1, 2, 3], "VALUE": 10, "TS": 0}
+{"KEY": [4], "VALUE": 1, "TS": 10}
+{"KEY": [1, 2, 3], "VALUE": 20, "TS": 20}
+{"KEY": [1, 2], "VALUE": 100, "TS": 30}
+{"KEY": [4], "VALUE": 2, "TS": 40}
+{"KEY": [1, 2, 3], "VALUE": 30, "TS": 50}
+{"KEY": [1, 2], "VALUE": 200, "TS": 70}
+{"KEY": [4], "VALUE": 3, "TS": 80}
+{"KEY": [1, 2, 3], "VALUE": 40, "TS": 100}
+{"KEY": [4], "VALUE": 4, "TS": 110}
+{"KEY": [5, 6, 7, 8, 9], "VALUE": 1000, "TS": 120}
+{"KEY": [1, 2], "VALUE": 300, "TS": 130}
+{"KEY": [5, 6, 7, 8, 9], "VALUE": 2000, "TS": 140}
+
+# Vectors with equal content form one group; different lengths or elements are different groups.
+SELECT start, end, key, SUM(value) AS total, COUNT(value) AS cnt
+FROM readings GROUP BY (key) WINDOW TUMBLING(ts, size 100 ms) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"START":0,"END":100,"KEY":[1,2,3],"TOTAL":60,"CNT":3}
+{"START":0,"END":100,"KEY":[4],"TOTAL":6,"CNT":3}
+{"START":0,"END":100,"KEY":[1,2],"TOTAL":300,"CNT":2}
+{"START":100,"END":200,"KEY":[1,2,3],"TOTAL":40,"CNT":1}
+{"START":100,"END":200,"KEY":[4],"TOTAL":4,"CNT":1}
+{"START":100,"END":200,"KEY":[5,6,7,8,9],"TOTAL":3000,"CNT":2}
+{"START":100,"END":200,"KEY":[1,2],"TOTAL":300,"CNT":1}
