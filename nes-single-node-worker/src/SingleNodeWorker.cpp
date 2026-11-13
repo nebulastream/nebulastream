@@ -45,6 +45,7 @@
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+#include <scope_guard.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
@@ -105,18 +106,32 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
             }
         }
 
-        const LogContext context("queryId", plan.getQueryId());
+        const auto queryId = plan.getQueryId();
+        const LogContext context("queryId", queryId);
+
+        /// A coordinator repeats a start when the reply was lost.
+        /// A start with a known query id is rejected, so the worker never runs two instances of one query.
+        /// The query log gets its first entry before compilation, so this also holds for a request that arrives during compilation.
+        if (not nodeEngine->getQueryLog()->registerQuery(queryId, std::chrono::system_clock::now()))
+        {
+            throw QueryAlreadyRegistered("{}", queryId);
+        }
+        /// A query that could not be compiled or handed to the engine was never started, so a later start may try again.
+        SCOPE_FAIL
+        {
+            nodeEngine->getQueryLog()->removeQuery(queryId);
+        };
 
         const auto planStr = explain(plan, ExplainVerbosity::Debug);
-        NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);
-        listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), planStr});
+        NES_INFO("Registering query {} with plan:\n{}", queryId, planStr);
+        listener->onEvent(SubmitQuerySystemEvent{queryId, planStr});
         const DumpMode dumpMode(configuration.workerConfiguration.dumpQueryCompilationIR, configuration.workerConfiguration.dumpGraph);
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(plan);
         request->dumpCompilationResult = dumpMode;
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
-        nodeEngine->startQuery(plan.getQueryId(), std::move(result));
-        return plan.getQueryId();
+        nodeEngine->startQuery(queryId, std::move(result));
+        return queryId;
     }
     CPPTRACE_CATCH(...)
     {

@@ -61,6 +61,14 @@ struct QueryLog : AbstractQueryStatusListener
     bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
     bool logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
 
+    /// Adds the first entry of a query and returns true.
+    /// Returns false and changes nothing if the query already has entries.
+    /// The check and the insert happen under one lock, so only one of several concurrent calls for a query returns true.
+    [[nodiscard]] bool registerQuery(QueryId queryId, std::chrono::system_clock::time_point timestamp);
+    /// Removes all entries of a query.
+    /// This is for a query whose start failed before the engine received it.
+    void removeQuery(QueryId queryId);
+
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
     [[nodiscard]] std::optional<LocalQueryStatusSnapshot> getQueryStatus(const QueryId& queryId) const;
 
