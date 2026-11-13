@@ -34,7 +34,7 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkConfigSchema.hpp>
 #include <Util/Any.hpp>
 #include <ErrorHandling.hpp>
 #include <SinkConfigRegistry.hpp>

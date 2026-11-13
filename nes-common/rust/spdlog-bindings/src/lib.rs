@@ -18,6 +18,7 @@ use tracing::span::Attributes;
 use tracing::warn;
 use tracing::{Event, Id, Subscriber};
 use tracing_subscriber::Layer;
+use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::Context;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::registry::LookupSpan;
@@ -199,7 +200,12 @@ fn initialize_logging(logger: SharedPtr<ffi::SpdLogger>) {
     let spdlog_layer = SpdlogLayer::new(logger);
 
     // Set the subscriber globally without calling init()
-    let subscriber = tracing_subscriber::registry().with(spdlog_layer);
+    // Workaround for a crash, not a log level choice.
+    // At TRACE the registry records the spans of sea-orm and sqlx,
+    // and one of them closes while it is still current on a sqlx worker thread.
+    // Reading the current span afterwards fails an assertion and the process exits.
+    let subscriber =
+        tracing_subscriber::registry().with(spdlog_layer.with_filter(LevelFilter::DEBUG));
     if let Err(e) = tracing::subscriber::set_global_default(subscriber) {
         warn!("Could not initialize rust logger: {e:?}");
     }

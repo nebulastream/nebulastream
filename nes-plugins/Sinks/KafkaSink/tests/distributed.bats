@@ -36,11 +36,11 @@ backpressure_is_held() {
   setup_distributed tests/good/example.yaml
 
   docker_kafka_consume "kafka-sink-test" results.csv
-  run docker_nes_cli -t tests/good/example.yaml start
+  run docker_nes_cli -s tests/good/example.yaml start
   assert_success
 
   # wait until the query stops
-  wait_until_status tests/good/example.yaml "Stopped" $output
+  wait_until_status tests/good/example.yaml "Completed" "$(newest_query_id)"
 
   wait_until awk 'NF { count++ } END { exit(count != 9) }' results.csv
   # SEQUENCE UINT64 1 10 1 is end-exclusive, so it generates 1..9.
@@ -50,7 +50,7 @@ backpressure_is_held() {
 @test "test child buffer" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   docker_kafka_consume "kafka-sink-test" results.csv
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM
     GENERATOR (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
@@ -71,7 +71,7 @@ backpressure_is_held() {
 EOF
 )"
   assert_success
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Stopped" $output --require-healthy "worker-1"
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Completed" "$(newest_query_id)" --require-healthy "worker-1"
 
   wait_until assert_file_line_count results.csv 1000 --ignore-empty-lines
 }
@@ -80,7 +80,7 @@ EOF
 @test "more data test" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   docker_kafka_consume "kafka-sink-test" results.csv
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM
     GENERATOR (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
@@ -105,7 +105,7 @@ EOF
 EOF
 )"
   assert_success
-  query_id=$output
+  query_id=$(newest_query_id)
 
   # A paused broker acknowledges nothing, so backpressure cannot be released while it is paused. Requiring it to be
   # held rather than merely logged rules out backpressure that came and went before the pause.
@@ -114,13 +114,13 @@ EOF
   wait_until backpressure_is_held
   docker compose unpause kafka-broker
 
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Stopped" "$query_id"
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Completed" "$query_id"
   wait_until assert_file_line_count results.csv 400000 --ignore-empty-lines
 }
 
 @test "fails query when broker stops during processing" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM GENERATOR(
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
@@ -137,8 +137,7 @@ EOF
 EOF
 )"
   assert_success
-  query_id=$output
-
+  query_id=$(newest_query_id)
   wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id" --require-healthy "worker-1"
   sleep 1
   docker compose stop kafka-broker
@@ -148,7 +147,7 @@ EOF
 @test "fails query when broker is unavailable at startup" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   docker compose kill kafka-broker
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM GENERATOR(
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
@@ -165,5 +164,5 @@ EOF
 EOF
 )"
   assert_success
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$output" --require-healthy "worker-1"
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$(newest_query_id)" --require-healthy "worker-1"
 }

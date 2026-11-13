@@ -16,14 +16,18 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
+#include <initializer_list>
 #include <iostream>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -34,9 +38,11 @@
 #include <yaml-cpp/node/parse.h>
 
 #include <Config/Config.hpp>
+#include <Config/Topology.hpp>
+#include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/ConfigParsing.hpp>
-#include <Configurations/Util.hpp>
+#include <Configurations/ConfigResolution.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
@@ -49,8 +55,102 @@
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <WorkerConfig.hpp>
-#include <WorkerOptimizerConfig.hpp>
+
+/// Readers for the topology file, so the file is read with `as<NES::ClusterConfiguration>()`.
+/// They throw instead of returning false, so the error message contains the key. The bare conversion error does not.
+/// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) a missing key gives an undefined node
+namespace YAML
+{
+namespace
+{
+void requireMapWithKeys(const Node& node, const std::string_view what, const std::initializer_list<std::string_view> knownKeys)
+{
+    if (not node.IsMap())
+    {
+        throw std::runtime_error(fmt::format("{} must be a map", what));
+    }
+    for (const auto& entry : node)
+    {
+        if (const auto key = entry.first.as<std::string>(); std::ranges::find(knownKeys, key) == knownKeys.end())
+        {
+            throw std::runtime_error(fmt::format("{} has the unknown key '{}', known keys: {}", what, key, fmt::join(knownKeys, ", ")));
+        }
+    }
+}
+
+template <typename T>
+T readRequired(const Node& node, const std::string& key, const std::string_view what)
+{
+    if (not node[key].IsDefined() or node[key].IsNull())
+    {
+        throw std::runtime_error(fmt::format("{} must set '{}'", what, key));
+    }
+    return node[key].as<T>();
+}
+
+template <typename T>
+std::optional<T> readOptional(const Node& node, const std::string& key)
+{
+    return node[key].IsDefined() and not node[key].IsNull() ? std::optional{node[key].as<T>()} : std::nullopt;
+}
+
+void requireDeclared(const std::vector<NES::Host>& hosts, const std::vector<NES::TopologyWorker>& workers, const std::string_view what)
+{
+    for (const auto& host : hosts)
+    {
+        if (not std::ranges::contains(workers, host, &NES::TopologyWorker::host))
+        {
+            throw std::runtime_error(fmt::format("{} contains '{}', which is not one of the workers", what, host));
+        }
+    }
+}
+
+NES::TopologyWorker readWorker(const Node& node)
+{
+    requireMapWithKeys(node, "a worker", {"host", "data_address", "max_operators", "downstream", "config"});
+    return NES::TopologyWorker{
+        .host = readRequired<NES::Host>(node, "host", "a worker"),
+        .dataAddress = readRequired<std::string>(node, "data_address", "a worker"),
+        .maxOperators = readOptional<uint64_t>(node, "max_operators"),
+        .downstream = readOptional<std::vector<NES::Host>>(node, "downstream").value_or(std::vector<NES::Host>{}),
+        .config = node["config"].IsDefined() and not node["config"].IsNull() ? NES::flattenYAMLConfig(node["config"])
+                                                                             : NES::Schema<NES::LiteralConfigValue, NES::Ordered>{}};
+}
+}
+
+template <>
+struct convert<NES::ClusterConfiguration>
+{
+    static bool decode(const Node& node, NES::ClusterConfiguration& cluster)
+    {
+        requireMapWithKeys(node, "a topology", {"workers", "allow_source_placement", "allow_sink_placement"});
+        if (not node["workers"].IsSequence())
+        {
+            throw std::runtime_error("a topology must set 'workers' to a list");
+        }
+        for (const auto& worker : node["workers"])
+        {
+            cluster.workers.push_back(readWorker(worker));
+        }
+        cluster.allowSourcePlacement = readRequired<std::vector<NES::Host>>(node, "allow_source_placement", "a topology");
+        cluster.allowSinkPlacement = readRequired<std::vector<NES::Host>>(node, "allow_sink_placement", "a topology");
+        /// The first entry of each list is the default host of a source or sink that sets none, so an empty list has no default.
+        if (cluster.workers.empty() or cluster.allowSourcePlacement.empty() or cluster.allowSinkPlacement.empty())
+        {
+            throw std::runtime_error("workers, allow_source_placement and allow_sink_placement must each list at least one worker");
+        }
+        requireDeclared(cluster.allowSourcePlacement, cluster.workers, "allow_source_placement");
+        requireDeclared(cluster.allowSinkPlacement, cluster.workers, "allow_sink_placement");
+        for (const auto& worker : cluster.workers)
+        {
+            requireDeclared(worker.downstream, cluster.workers, fmt::format("the downstream list of '{}'", worker.host));
+        }
+        return true;
+    }
+};
+}
+
+/// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
 
 namespace
 {
@@ -412,52 +512,18 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
 
     config.remoteWorker = program.get<bool>("--remote");
 
+    /// Without --clusterConfig the default topology is loaded, so every run has one.
     try
     {
         if (program.is_used("--clusterConfig"))
         {
             config.clusterConfigPath = program.get<std::string>("--clusterConfig");
         }
-        auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath);
-        NES::SystestClusterConfiguration clusterConfig;
-        clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::Host>>();
-        clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::Host>>();
-        /// The first entry of each list is the default host of a source or sink that sets none, so an empty list has no default.
-        if (clusterConfig.allowSourcePlacement.empty())
-        {
-            throw std::runtime_error("allow_source_placement must list at least one worker");
-        }
-        if (clusterConfig.allowSinkPlacement.empty())
-        {
-            throw std::runtime_error("allow_sink_placement must list at least one worker");
-        }
-        for (const auto& worker : clusterConfigYAML["workers"])
-        {
-            NES::Schema<NES::LiteralConfigValue, NES::Ordered> config;
-            /// Check if worker has config key
-            if (worker["config"].IsDefined() && !worker["config"].IsNull())
-            {
-                /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-                config = NES::flattenYAMLConfig(worker["config"]);
-            }
-
-            clusterConfig.workers.push_back(
-                NES::WorkerConfig{
-                    .host = worker["host"].as<NES::Host>(),
-                    .dataAddress = worker["data_address"].as<std::string>(),
-                    .maxOperators = worker["max_operators"].IsDefined()
-                        ? NES::Capacity(NES::CapacityKind::Limited{worker["max_operators"].as<size_t>()})
-                        : NES::Capacity(NES::CapacityKind::Unlimited{}),
-                    .downstream
-                    = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::Host>>() : std::vector<NES::Host>{},
-                    .config = config,
-                });
-        }
-        config.clusterConfig = clusterConfig;
+        config.clusterConfig = YAML::LoadFile(config.clusterConfigPath).as<NES::ClusterConfiguration>();
     }
-    catch (std::exception& e)
+    catch (const std::exception& e)
     {
-        std::cerr << "Error loading cluster config: " << e.what() << '\n';
+        std::cerr << "Error loading cluster config '" << config.clusterConfigPath << "': " << e.what() << '\n';
         std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
@@ -575,15 +641,16 @@ void applyWorkerConfigFile(const ArgumentParser& program, NES::SystestConfigurat
     }
 }
 
-void validateWorkerOptimizerConfig(NES::SystestConfiguration& config)
+void validateWorkerOptimizerConfig(const NES::SystestConfiguration& config)
 {
-    auto workerOptimizerConfig = NES::resolveConfiguration<NES::WorkerOptimizerConfig>(config.workerOptimizerConfigLiterals);
-    if (not workerOptimizerConfig.has_value())
+    const auto declaredConfig = NES::createConfigSchema(
+        NES::SingleNodeWorkerConfiguration::getConfigSchema(), NES::QueryOptimizerConfiguration::getConfigSchema());
+    if (const auto resolved = NES::toExpected(NES::resolveConfigFullyQualified(config.workerOptimizerConfigLiterals, declaredConfig));
+        not resolved.has_value())
     {
-        std::cerr << "Invalid worker/optimizer configuration arguments: " << fmt::format("{}", workerOptimizerConfig.error()) << '\n';
+        std::cerr << "Invalid worker/optimizer configuration arguments: " << fmt::format("{}", resolved.error()) << '\n';
         std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
-    config.queryOptimizerConfig = std::move(workerOptimizerConfig)->queryOptimizer;
 }
 
 void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfiguration& config)

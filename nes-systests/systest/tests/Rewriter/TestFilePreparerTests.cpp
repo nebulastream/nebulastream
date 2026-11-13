@@ -31,6 +31,7 @@
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Model/ConfigurationOverride.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Parser/SystestParser.hpp>
@@ -40,11 +41,14 @@
 #include <Rewriter/SourceRewriting.hpp>
 #include <Rewriter/SqlParse.hpp>
 #include <Rewriter/TestFilePreparer.hpp>
+#include <Runner/Cluster.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <nes-coordinator-bridge/coordinator.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleWorkerTopology.hpp>
 #include <TemporaryDirectory.hpp>
 
 namespace NES
@@ -200,6 +204,12 @@ public:
     }
 
     static void TearDownTestSuite() { NES_INFO("Tear down TestFileRewriter test class."); }
+
+    static Cluster createCluster()
+    {
+        return Cluster{Cluster::Config{
+            .mode = Bridge::WorkerMode::Embedded, .topology = Testing::singleWorkerTopology(), .optimizerConfig = {}, .workerConfig = {}}};
+    }
 
     static RunnableTestFile rewriteSlt(const std::string& slt)
     {
@@ -919,14 +929,14 @@ TEST_F(TestFilePreparerTest, SelectionKeepsThePartitionKeyStable)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
-    const auto everything = TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}});
+    auto cluster = createCluster();
+    const auto everything = TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}}, cluster);
     ASSERT_EQ(everything.size(), 2U);
 
     TestFilePreparer selecting{config};
-    const auto selected = selecting.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}, std::unordered_set{SystestQueryId{2}}});
+    const auto selected
+        = selecting.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}, std::unordered_set{SystestQueryId{2}}}, cluster);
     ASSERT_EQ(selected.size(), 1U);
     const auto& [overrides, runnable] = selected.front();
     EXPECT_EQ(runnable.key, everything.at(1).file.key);
@@ -956,13 +966,13 @@ TEST_F(TestFilePreparerTest, RejectsASecondFileWhosePrefixedNameCollides)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
+    auto cluster = createCluster();
     TestFilePreparer rewriter{config};
-    EXPECT_NO_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a.test", TestName{"a"}}));
-    EXPECT_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}), Exception);
-    EXPECT_NO_THROW(std::ignore = TestFilePreparer{config}.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}));
+    EXPECT_NO_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a.test", TestName{"a"}}, cluster));
+    EXPECT_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}, cluster), Exception);
+    EXPECT_NO_THROW(
+        std::ignore = TestFilePreparer{config}.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}, cluster));
 }
 
 TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
@@ -976,10 +986,9 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
-    EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}).empty());
+    auto cluster = createCluster();
+    EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}, cluster).empty());
 }
 
 }

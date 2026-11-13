@@ -24,7 +24,6 @@ endfunction()
 add_library(nes-inference
         src/Inference.cpp
         src/Model.cpp
-        src/ModelCatalog.cpp
         src/BackendTool.cpp
         src/OpenVINO/OpenVinoImporter.cpp)
 target_include_directories(nes-inference PUBLIC

@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Model/ParsedTestFile.hpp>
@@ -31,6 +32,8 @@
 #include <Rewriter/SinkRewriting.hpp>
 #include <Rewriter/SourceRewriting.hpp>
 #include <Rewriter/SqlParse.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
@@ -50,6 +53,7 @@ private:
     {
         std::string sql;
         std::optional<std::filesystem::path> resultFile;
+        std::optional<Schema<UnqualifiedUnboundField, Ordered>> declaredSinkSchema;
         std::vector<std::filesystem::path> inputFiles;
     };
 

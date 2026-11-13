@@ -36,6 +36,8 @@
 
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <nes-coordinator-bridge/coordinator.h>
+#include <BridgeConfig.hpp>
 
 #include <Config/RunPolicy.hpp>
 #include <Discovery/TestDiscovery.hpp>
@@ -44,6 +46,7 @@
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
 #include <Rewriter/TestFilePreparer.hpp>
+#include <Runner/Cluster.hpp>
 #include <Runner/TestRunner.hpp>
 #include <Benchmark.hpp>
 #include <ErrorHandling.hpp>
@@ -109,9 +112,10 @@ struct PreparedRun
 };
 
 /// This prepares the tests into a PreparedRun, no test case or setup statement is submitted yet.
+/// Workers are registered here, once for each distinct set of configuration overrides of the test files.
 /// We discover the test files from the given config, and prepare each of them, collecting prepared test file partitions.
 /// If a file cannot be read, parsed, or rewritten, it becomes a failed check (which does not end the run).
-PreparedRun prepareAll(const SystestConfiguration& config)
+PreparedRun prepareAll(const SystestConfiguration& config, Cluster& cluster)
 {
     TestFilePreparer preparer{config};
     PreparedRun run;
@@ -120,7 +124,7 @@ PreparedRun prepareAll(const SystestConfiguration& config)
         fmt::print("Loading queries from test file: file://{}\n", discoveredTestFile.getLogFilePath());
         try
         {
-            std::ranges::move(preparer.prepare(discoveredTestFile), std::back_inserter(run.partitions));
+            std::ranges::move(preparer.prepare(discoveredTestFile, cluster), std::back_inserter(run.partitions));
         }
         catch (const std::exception& exception)
         {
@@ -130,10 +134,10 @@ PreparedRun prepareAll(const SystestConfiguration& config)
     return run;
 }
 
-RunOutcome runOnce(const SystestConfiguration& config, const RunPolicy& policy, PreparedRun prepared)
+RunOutcome runOnce(const SystestConfiguration& config, const Cluster& cluster, const RunPolicy& policy, PreparedRun prepared)
 {
     std::vector<ReportEntry> report = std::move(prepared.rejected);
-    TestRunner runner{config, std::move(prepared.partitions)};
+    TestRunner runner{config, cluster, std::move(prepared.partitions)};
     std::ranges::copy(runner.getRejected(), std::back_inserter(report));
     const auto totalTestCases = runner.countTestCases();
 
@@ -146,9 +150,9 @@ RunOutcome runOnce(const SystestConfiguration& config, const RunPolicy& policy, 
     return summarize(report);
 }
 
-/// Sets up once, then resubmits the bound plans every round until the rounds or the time run out, or a round fails.
+/// Sets up once, then resubmits the queries every round until the rounds or the time run out, or a round fails.
 /// A measuring run keeps each query's best time across rounds.
-RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy, PreparedRun rewritten)
+RunOutcome runRounds(const SystestConfiguration& config, const Cluster& cluster, const RunPolicy& policy, PreparedRun rewritten)
 {
     /// A rejected file would shrink every round's set, and an empty set would loop forever, so the run ends here.
     if (not rewritten.rejected.empty() or rewritten.partitions.empty())
@@ -156,7 +160,7 @@ RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy
         return summarize(rewritten.rejected);
     }
     const auto fileCount = rewritten.partitions.size();
-    TestRunner runner{config, std::move(rewritten.partitions)};
+    TestRunner runner{config, cluster, std::move(rewritten.partitions)};
     if (not runner.getRejected().empty())
     {
         return summarize(runner.getRejected());
@@ -261,14 +265,19 @@ RunOutcome Executor::execute() const
     /// Protect the working dir during the invocation from concurrent invications on the same dir or a subdir
     const auto guard = WorkingDirectoryGuard{config.workingDir};
 
-    auto prepared = prepareAll(config);
+    const auto mode = config.remoteWorker ? Bridge::WorkerMode::Remote : Bridge::WorkerMode::Embedded;
+    const auto [optimizerLiterals, workerLiterals] = Bridge::splitOptimizerConfig(config.workerOptimizerConfigLiterals);
+    Cluster cluster{Cluster::Config{
+        .mode = mode, .topology = config.clusterConfig, .optimizerConfig = optimizerLiterals, .workerConfig = workerLiterals}};
+
+    auto prepared = prepareAll(config, cluster);
     if (const auto* ordering = std::get_if<RunInShuffledOrder>(&runPolicy.ordering))
     {
         shuffle(prepared.partitions, *ordering);
     }
 
-    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(config, runPolicy, std::move(prepared))
-                                                                    : runRounds(config, runPolicy, std::move(prepared));
+    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(config, cluster, runPolicy, std::move(prepared))
+                                                                    : runRounds(config, cluster, runPolicy, std::move(prepared));
 }
 
 }

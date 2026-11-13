@@ -49,11 +49,6 @@ namespace NES
 namespace
 {
 
-QueryId randomQueryId()
-{
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
-}
-
 using PipelineLocation = PhysicalOperatorWrapper::PipelineLocation;
 
 class PhysicalPlanBuilderFlipTest : public Testing::BaseUnitTest
@@ -94,8 +89,7 @@ public:
         auto schema = createSchema();
         auto descriptor = SinkDescriptor::createAnonymous(
             INITIAL_SINK_ID, Identifier::parse("Print"), schema, Host{"localhost"}, {{Identifier::parse("output_format"), "CSV"}}, {});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+        auto sinkOp = SinkPhysicalOperator(descriptor);
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }
@@ -178,7 +172,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, LinearChainFlip)
     /// Build sink->source graph: sink is root, source is child.
     sink->addChild(source);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -208,7 +202,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     unionOp->addChild(source2);
     sink->addChild(unionOp);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -246,7 +240,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     union1->addChild(union2);
     sink->addChild(union1);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -285,7 +279,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, EdgeCountPreserved)
 
     const size_t expectedEdges = 3;
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 

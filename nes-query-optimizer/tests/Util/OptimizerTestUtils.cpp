@@ -35,7 +35,6 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -94,13 +93,7 @@ SinkDescriptor OptimizerTestUtils::createSinkDescriptor(const Identifier& sinkNa
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
 
-    auto sinkDescriptor
-        = SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, Identifier::parse("File"), schema, Host{"localhost"}, sinkConfig, {});
-    if (!sinkDescriptor.has_value())
-    {
-        throw TestException();
-    }
-    return sinkDescriptor.value();
+    return SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, Identifier::parse("File"), schema, Host{"localhost"}, sinkConfig, {});
 }
 
 TypedLogicalOperator<SinkLogicalOperator>
@@ -118,14 +111,12 @@ OptimizerTestUtils::createSink(LogicalOperator child, std::string name, const st
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan OptimizerTestUtils::createPlan(LogicalOperator sink)
 {
-    return LogicalPlan{
-        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), {std::move(sink)}};
+    return LogicalPlan{INVALID_QUERY_ID, {std::move(sink)}};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan OptimizerTestUtils::createPlan(std::vector<LogicalOperator> sinks)
 {
-    return LogicalPlan{
-        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), std::move(sinks)};
+    return LogicalPlan{INVALID_QUERY_ID, std::move(sinks)};
 }
 }

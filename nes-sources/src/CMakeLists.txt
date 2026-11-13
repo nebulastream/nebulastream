@@ -13,6 +13,7 @@
 add_source_files(nes-sources
         SourceThread.cpp
         SourceDescriptor.cpp
+        SourceConfigSchema.cpp
         Source.cpp
         SourceHandle.cpp
         SourceProvider.cpp
@@ -20,7 +21,6 @@ add_source_files(nes-sources
         SourceConfigRegistry.cpp
         SourceConfigSchemaRegistry.cpp
         LogicalSource.cpp
-        SourceCatalog.cpp
         FileSource.cpp
         NetworkSource.cpp
 )

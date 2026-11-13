@@ -14,9 +14,9 @@ add_subdirectory(SinksParsing)
 
 add_source_files(nes-sinks
         SinkDescriptor.cpp
+        SinkConfigSchema.cpp
         Sink.cpp
         SinkProvider.cpp
-        SinkCatalog.cpp
         SinkRegistry.cpp
         SinkConfigRegistry.cpp
         SinkConfigSchemaRegistry.cpp

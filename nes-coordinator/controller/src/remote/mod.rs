@@ -40,22 +40,14 @@ pub mod worker_rpc_service {
 }
 
 impl worker_rpc_service::nes::SerializableQueryId {
-    /// The wire format has two string ids
-    /// while the coordinator identifies fragments by one integer.
-    /// Put the integer in the local id, rendered as a decimal string,
-    /// until the wire format itself moves to an integer id.
     #[must_use]
     pub fn from_fragment_id(id: i64) -> Self {
-        Self {
-            local_query_id: id.to_string(),
-            distributed_query_id: String::new(),
-        }
+        Self { id }
     }
 
-    /// Reverse of the constructor above; an id that did not come from a fragment id parses to `None`.
     #[must_use]
     pub fn fragment_id(&self) -> Option<i64> {
-        self.local_query_id.parse().ok()
+        (self.id != 0).then_some(self.id)
     }
 }
 

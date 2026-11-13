@@ -23,14 +23,16 @@ namespace NES
 {
 /// TODO #601 Refactor Identifiers.hpp
 
+/// Catalog Identifiers: These Identifiers are assigned by the coordinator and are the same on every worker.
+using QueryId = NESStrongType<int64_t, struct QueryId_, 0, 1>;
+using PhysicalSourceId = NESStrongType<int64_t, struct PhysicalSourceId_, 0, 1>;
+using SinkId = NESStrongType<int64_t, struct SinkId_, 0, 1>;
+
 /// Global Identifiers: These Identifiers are unique to the SingleNodeWorkers entire lifetime.
 /// There can never exist two objects with the same Identifier, regardless if the previous object has been destroyed
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
-using LocalQueryId = NESStrongUUIDType<struct LocalQueryId_>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
-using PhysicalSourceId = NESStrongType<uint64_t, struct PhysicalSourceId_, 0, 1>;
-using SinkId = NESStrongType<int64_t, struct SinkId_, 0, 1>;
 
 /// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
@@ -41,7 +43,7 @@ using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber:
 using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 
 
-static constexpr LocalQueryId INVALID_LOCAL_QUERY_ID = LocalQueryId(LocalQueryId::INVALID);
+static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 
 static constexpr OperatorId INVALID_OPERATOR_ID = INVALID<OperatorId>;
 static constexpr OperatorId INITIAL_OPERATOR_ID = INITIAL<OperatorId>;

@@ -47,6 +47,24 @@ struct DataType final
         VARSIZED,
     };
 
+    /// The catalog stores a type as its number, and nes-cli converts the types of a setup file with the same numbering.
+    /// NOLINTBEGIN(readability-magic-numbers)
+    static_assert(static_cast<uint8_t>(Type::UINT8) == 0);
+    static_assert(static_cast<uint8_t>(Type::UINT16) == 1);
+    static_assert(static_cast<uint8_t>(Type::UINT32) == 2);
+    static_assert(static_cast<uint8_t>(Type::UINT64) == 3);
+    static_assert(static_cast<uint8_t>(Type::INT8) == 4);
+    static_assert(static_cast<uint8_t>(Type::INT16) == 5);
+    static_assert(static_cast<uint8_t>(Type::INT32) == 6);
+    static_assert(static_cast<uint8_t>(Type::INT64) == 7);
+    static_assert(static_cast<uint8_t>(Type::FLOAT32) == 8);
+    static_assert(static_cast<uint8_t>(Type::FLOAT64) == 9);
+    static_assert(static_cast<uint8_t>(Type::BOOLEAN) == 10);
+    static_assert(static_cast<uint8_t>(Type::CHAR) == 11);
+    static_assert(static_cast<uint8_t>(Type::UNDEFINED) == 12);
+    static_assert(static_cast<uint8_t>(Type::VARSIZED) == 13);
+    /// NOLINTEND(readability-magic-numbers)
+
     enum class NULLABLE : uint8_t
     {
         IS_NULLABLE,

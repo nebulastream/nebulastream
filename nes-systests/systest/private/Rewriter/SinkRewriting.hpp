@@ -20,11 +20,14 @@
 #include <unordered_map>
 
 #include <AntlrSQLParser.h>
+#include <DataTypes/UnboundField.hpp>
 
 #include <Identifiers/Identifier.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/RewriteContext.hpp>
 #include <Rewriter/SqlParse.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
@@ -32,7 +35,10 @@ namespace NES
 struct SinkDefinition
 {
     std::string type;
+    /// The schema as the test file wrote it, which is copied into the query.
     std::string schema;
+    /// The same schema, bound. Not set if it does not bind, so the coordinator reports the error when the query runs.
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> boundSchema;
 };
 
 using SinkByName = std::unordered_map<Identifier, SinkDefinition>;
@@ -42,6 +48,8 @@ struct RewrittenSink
 {
     std::string sql;
     std::optional<std::filesystem::path> resultFile;
+    /// Set for a declared sink. The header of the result file has to match it.
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> declaredSchema;
 };
 
 /// Returns the query sink from the AST, and rejects a query that declares less or more than one.

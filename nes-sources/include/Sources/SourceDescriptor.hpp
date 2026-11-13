@@ -50,7 +50,6 @@
 
 namespace NES
 {
-class SourceCatalog;
 class OperatorSerializationUtil;
 
 class PluginSourceConfiguration
@@ -117,7 +116,6 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
-    friend class SourceCatalog;
     friend class PhysicalSourceBuilder;
     friend OperatorSerializationUtil;
     friend struct Unreflector<SourceDescriptor>;
@@ -132,7 +130,7 @@ private:
 
     std::optional<Identifier> logicalSourceName;
 
-    /// Used by the SourceCatalog (and descriptor unreflection) to create a valid SourceDescriptor.
+    /// Used by the builder and by descriptor unreflection to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         PhysicalSourceId physicalSourceId,
         Schema<UnqualifiedUnboundField, Ordered> schema,

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -29,7 +30,7 @@ namespace NES
 struct QueryResultCheck
 {
     std::filesystem::path resultFile;
-    Schema<UnqualifiedUnboundField, Ordered> expectedSchema;
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> expectedSchema;
     std::vector<std::string> expectedTuples;
 
     /// Fails when the output file is missing, and otherwise when its schema or its tuples differ from the expected ones.
