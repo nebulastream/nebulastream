@@ -88,6 +88,15 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark(const OriginId orig
     std::unreachable();
 }
 
+void MultiOriginWatermarkProcessor::getCurrentWatermarkPerOrigin(std::vector<std::pair<OriginId, Timestamp>>& watermarks) const
+{
+    watermarks.clear();
+    for (const auto& [origin, processor] : std::views::zip(origins, watermarkProcessors))
+    {
+        watermarks.emplace_back(origin, Timestamp(processor->getCurrentValue()));
+    }
+}
+
 Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
 {
     auto minimalWatermark = UINT64_MAX;

@@ -42,10 +42,11 @@ namespace NES
 {
 
 AggregationOperatorHandler::AggregationOperatorHandler(
-    const std::vector<OriginId>& inputOrigins,
+    SourcesOfInputOrigins sourcesOfInputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore)), setupAlreadyCalled(false)
+    : WindowBasedOperatorHandler(std::move(sourcesOfInputOrigins), outputOriginId, std::move(sliceAndWindowStore))
+    , setupAlreadyCalled(false)
 {
 }
 

@@ -231,7 +231,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     Thread sourceThread(
         fmt::format("DataSrc-{}", originId),
         dataSourceThread,
-        backpressureListener,
+        std::move(backpressureListener),
         std::move(terminationPromise),
         sourceImplementation.get(),
         std::move(emitFunction),
