@@ -95,7 +95,6 @@ TEST_F(NamePrefixerTest, DuplicateStemsKeyApartByDirectory)
            "DEBS",
            "YahooStreamingBenchmark",
            "LinearRoadBenchmark",
-           "LinearRoadBenchmarkTCP",
            "ClusterMonitoring",
            "Manufacturing",
            "Nexmark_with_varsized",
