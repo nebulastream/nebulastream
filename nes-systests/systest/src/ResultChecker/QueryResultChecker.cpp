@@ -25,13 +25,15 @@ namespace NES
 
 Verdict QueryResultCheck::check() const
 {
-    const auto loaded = loadQueryResult(resultFile);
+    const auto loaded = loadQueryResult(resultFile, hasHeader);
     if (not loaded)
     {
         return std::unexpected(Mismatch{loaded.error()});
     }
 
-    return toVerdict(compare(expectedSchema, expectedTuples, loaded->schema, loaded->tuples), ComparisonOrigin::SingleQuery);
+    /// A result without a header has no schema to check, so its rows are compared against the declared schema alone.
+    return toVerdict(
+        compare(expectedSchema, expectedTuples, loaded->schema.value_or(expectedSchema), loaded->tuples), ComparisonOrigin::SingleQuery);
 }
 
 }

@@ -170,6 +170,48 @@ TEST_F(ResultCheckerTest, ReportsAMalformedHeaderAsAVerdict)
     EXPECT_TRUE(differential.error().detail.contains("malformed schema header"));
 }
 
+/// JSON output has no header, so its rows are checked against the declared schema without a schema check of their own.
+TEST_F(ResultCheckerTest, ChecksJSONRowsWithoutAHeader)
+{
+    const auto resultFile = writeResultFile("resultchecker_json.json", "{\"ID\":1}\n{\"ID\":2}\n");
+
+    EXPECT_TRUE((QueryResultCheck{
+        .resultFile = resultFile,
+        .expectedSchema = createSchemaOf("id"),
+        .hasHeader = false,
+        .expectedTuples = {"{\"ID\":1}", "{\"ID\":2}"}}
+                     .check()
+                     .has_value()));
+
+    const auto verdict
+        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .hasHeader = false, .expectedTuples = {"{\"ID\":1}", "{\"ID\":3}"}}
+              .check();
+    ASSERT_FALSE(verdict.has_value());
+    EXPECT_TRUE(verdict.error().detail.contains("Result Mismatch"));
+    EXPECT_FALSE(verdict.error().detail.contains("Schema Mismatch"));
+
+    /// Without a header there is nothing that could be missing, so an empty file is an empty result.
+    const auto empty = writeResultFile("resultchecker_json_empty.json", "");
+    EXPECT_TRUE((QueryResultCheck{.resultFile = empty, .expectedSchema = createSchemaOf("id"), .hasHeader = false, .expectedTuples = {}}
+                     .check()
+                     .has_value()));
+}
+
+/// A differential side without a header borrows the schema of the other side, but two sides without one cannot be compared.
+TEST_F(ResultCheckerTest, ComparesADifferentialBlockWithHeaderlessSides)
+{
+    const auto withHeader = writeResultFile("resultchecker_differential_header.csv", "id:UINT64:NOT_NULLABLE\n{\"ID\":1}\n");
+    const auto json = writeResultFile("resultchecker_differential_json.json", "{\"ID\":1}\n");
+
+    EXPECT_TRUE((DifferentialCheck{.firstResultFile = withHeader, .secondResultFile = json, .secondHasHeader = false}.check().has_value()));
+    EXPECT_TRUE((DifferentialCheck{.firstResultFile = json, .secondResultFile = withHeader, .firstHasHeader = false}.check().has_value()));
+
+    const auto verdict
+        = DifferentialCheck{.firstResultFile = json, .secondResultFile = json, .firstHasHeader = false, .secondHasHeader = false}.check();
+    ASSERT_FALSE(verdict.has_value());
+    EXPECT_TRUE(verdict.error().detail.contains("needs a schema header on at least one side"));
+}
+
 TEST_F(ResultCheckerTest, ExplainExactResultLinesKeepVanillaMatching)
 {
     EXPECT_TRUE(runCheck(makeExplainCheck({"== Optimized Plan ==", "SINK(FILE)"}, "== Optimized Plan ==\nSINK(FILE)\n")).has_value());

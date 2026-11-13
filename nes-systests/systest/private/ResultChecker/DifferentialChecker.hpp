@@ -28,6 +28,9 @@ struct DifferentialCheck
 {
     std::filesystem::path firstResultFile;
     std::filesystem::path secondResultFile;
+    /// Whether the output format of each side writes a schema header in front of the rows.
+    bool firstHasHeader = true;
+    bool secondHasHeader = true;
 
     [[nodiscard]] Verdict check() const;
 };

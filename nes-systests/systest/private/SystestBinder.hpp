@@ -36,6 +36,7 @@ struct BoundPlan
 {
     DistributedLogicalPlan plan;
     Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
+    bool sinkWritesHeader;
 };
 
 struct BoundStatement
