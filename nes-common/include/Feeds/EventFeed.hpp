@@ -44,7 +44,8 @@ constexpr std::string_view ENGINE_EVENTS = "engine_events";
 /// formatted tuple per row without the tuple delimiter, which the source appends.
 ///
 /// Producers must never block, because they may run on latency critical threads such as the query engine's
-/// worker threads. 'tryPush' therefore drops the row when the feed is full and counts the drop instead.
+/// worker threads. When the feed is full, 'push' therefore evicts the oldest row and counts the eviction,
+/// so that a consumer which falls behind sees the most recent rows rather than a stale prefix.
 ///
 /// A feed carries a single queue, so it serves exactly one consumer at a time, see 'EventFeedRegistry'.
 class EventFeed
@@ -52,8 +53,8 @@ class EventFeed
 public:
     explicit EventFeed(size_t capacity);
 
-    /// Non-blocking. Returns false if the row was dropped because the feed is full.
-    bool tryPush(std::string row);
+    /// Non-blocking. Evicts the oldest rows until the new row fits, see 'droppedRows'.
+    void push(std::string row);
 
     /// Waits at most 'timeout' for a row to become available.
     std::optional<std::string> tryPop(std::chrono::milliseconds timeout);
@@ -61,6 +62,7 @@ public:
     /// False while no query reads this feed. Producers check this to skip producing rows nobody reads.
     [[nodiscard]] bool hasConsumer() const;
 
+    /// Number of rows that were evicted unread to make room for newer ones.
     [[nodiscard]] size_t droppedRows() const;
     [[nodiscard]] size_t capacity() const;
 

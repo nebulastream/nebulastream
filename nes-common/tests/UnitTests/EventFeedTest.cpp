@@ -54,23 +54,26 @@ public:
     }
 };
 
-TEST_F(EventFeedTest, DropsRowsWhenFull)
+TEST_F(EventFeedTest, EvictsTheOldestRowsWhenFull)
 {
     EventFeed feed(2);
     EXPECT_EQ(feed.capacity(), 2);
 
-    EXPECT_TRUE(feed.tryPush("first"));
-    EXPECT_TRUE(feed.tryPush("second"));
-    EXPECT_FALSE(feed.tryPush("third")) << "A full feed must drop rather than block its producer";
-    EXPECT_EQ(feed.droppedRows(), 1);
+    feed.push("first");
+    feed.push("second");
+    EXPECT_EQ(feed.droppedRows(), 0);
+    feed.push("third");
+    feed.push("fourth");
+    EXPECT_EQ(feed.droppedRows(), 2) << "A full feed has to make room rather than block its producer";
 
-    const auto first = feed.tryPop(POP_TIMEOUT);
-    ASSERT_TRUE(first.has_value());
-    EXPECT_EQ(first.value(), "first");
+    /// A consumer that fell behind sees the most recent rows, in order.
+    const auto third = feed.tryPop(POP_TIMEOUT);
+    ASSERT_TRUE(third.has_value());
+    EXPECT_EQ(third.value(), "third");
 
-    const auto second = feed.tryPop(POP_TIMEOUT);
-    ASSERT_TRUE(second.has_value());
-    EXPECT_EQ(second.value(), "second");
+    const auto fourth = feed.tryPop(POP_TIMEOUT);
+    ASSERT_TRUE(fourth.has_value());
+    EXPECT_EQ(fourth.value(), "fourth");
 
     EXPECT_FALSE(feed.tryPop(POP_TIMEOUT).has_value()) << "An empty feed must time out rather than return a row";
 }
@@ -108,7 +111,7 @@ TEST_F(EventFeedTest, WorkersInOneProcessDoNotShareAFeedOfTheSameName)
     auto producerA = EventFeedRegistry::instance().create(WORKER_A, FEED, 8);
     auto producerB = EventFeedRegistry::instance().create(WORKER_B, FEED, 8);
 
-    EXPECT_TRUE(producerA->tryPush("from A"));
+    producerA->push("from A");
     const auto consumerB = EventFeedRegistry::instance().acquire(WORKER_B, FEED);
     EXPECT_FALSE(consumerB->tryPop(POP_TIMEOUT).has_value()) << "Worker B must not observe the events of worker A";
 
@@ -123,7 +126,7 @@ TEST_F(EventFeedTest, WorkersInOneProcessDoNotShareAFeedOfTheSameName)
 TEST_F(EventFeedTest, AcquiringFallsBackToTheOnlyFeedOfThatName)
 {
     auto producer = EventFeedRegistry::instance().create(WORKER_A, FEED, 8);
-    EXPECT_TRUE(producer->tryPush("a row"));
+    producer->push("a row");
 
     const auto consumer = EventFeedRegistry::instance().acquire(UNKNOWN_WORKER, FEED);
     const auto row = consumer->tryPop(POP_TIMEOUT);

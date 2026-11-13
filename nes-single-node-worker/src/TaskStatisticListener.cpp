@@ -22,15 +22,12 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <Feeds/EventFeed.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/SystemEventListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
@@ -44,15 +41,6 @@ namespace
 constexpr std::chrono::milliseconds READ_RETRY{100};
 /// Log every nth dropped event to avoid clogging the log when the queue is full
 constexpr uint64_t DROP_LOG_INTERVAL = 100;
-
-/// A query that reads an EngineEvents source observes the events its own execution produces, which never
-/// settles: every buffer it emits creates tasks, which create the events that fill the next buffer.
-/// The submitted plan is the earliest place where such a query can be recognised. Matching on the plan's
-/// debug rendering is what makes this cheap; a dedicated marker on the descriptor would be less brittle,
-/// and would also catch anonymous sources, which render without the 'sourceType' prefix.
-/// The comparison is case-insensitive because a source type reaches the descriptor as an 'Identifier',
-/// which canonicalises it to upper case.
-constexpr std::string_view ENGINE_EVENTS_SOURCE_MARKER = "SOURCETYPE: ENGINEEVENTS";
 
 void warnOnOverflow(const bool writeFailed)
 {
@@ -73,8 +61,8 @@ uint64_t timestampToMicroseconds(const ChronoClock::time_point& timestamp)
     return std::chrono::duration_cast<std::chrono::microseconds>(timestamp.time_since_epoch()).count();
 }
 
-/// Renders one row of the schema
-/// (event_type, ts_us, thread_id, query_id, pipeline_id, task_id, tuples).
+/// Renders one row of the schema (event_type VARSIZED, ts_us UINT64, thread_id UINT64, query_id INT64,
+/// pipeline_id UINT64, task_id UINT64, tuples UINT64).
 /// Columns that an event does not carry are zeroed.
 std::string
 formatRow(const std::string_view eventType, const EventBase& event, const uint64_t pipelineId, const uint64_t taskId, const size_t tuples)
@@ -119,30 +107,14 @@ void TaskStatisticListener::onEvent(Event event)
 
     if (queued.has_value())
     {
-        warnOnOverflow(!events.writeIfNotFull(std::move(queued.value())));
+        /// 'write' rather than 'writeIfNotFull', which may wait for a concurrent read to finish. A worker thread
+        /// must not wait here, and this path is allowed to drop.
+        warnOnOverflow(!events.write(std::move(queued.value())));
     }
-}
-
-void TaskStatisticListener::onEvent(SystemEvent event)
-{
-    const auto* submit = std::get_if<SubmitQuerySystemEvent>(&event);
-    if (submit == nullptr || toUpperCase(submit->query).find(ENGINE_EVENTS_SOURCE_MARKER) == std::string::npos)
-    {
-        return;
-    }
-
-    NES_INFO("Excluding query {} from task statistics, it reads an EngineEvents source", submit->queryId);
-    /// Submission is rare and happens before the query produces any event, so blocking here costs nothing
-    /// and guarantees the marker is not dropped when the queue happens to be full.
-    events.blockingWrite(QueuedEvent{ExcludeQuery{submit->queryId}});
 }
 
 void TaskStatisticListener::threadRoutine(const std::stop_token& token)
 {
-    /// Owned exclusively by this thread. The markers arrive through the same queue as the events they
-    /// suppress, and a query is submitted before it can produce any event, so ordering is guaranteed.
-    std::unordered_set<QueryId> excludedQueries;
-
     while (!token.stop_requested())
     {
         QueuedEvent event;
@@ -151,50 +123,38 @@ void TaskStatisticListener::threadRoutine(const std::stop_token& token)
             continue;
         }
 
-        std::visit(
-            Overloaded{
-                [&](const ExcludeQuery& exclude) { excludedQueries.emplace(exclude.queryId); },
-                [&](const TaskExecutionStart& taskStart)
-                {
-                    if (!excludedQueries.contains(taskStart.queryId))
+        feed->push(
+            std::visit(
+                Overloaded{
+                    [](const TaskExecutionStart& taskStart)
                     {
-                        feed->tryPush(formatRow(
+                        return formatRow(
                             "TASK_START",
                             taskStart,
                             taskStart.pipelineId.getRawValue(),
                             taskStart.taskId.getRawValue(),
-                            taskStart.numberOfTuples));
-                    }
-                },
-                [&](const TaskEmit& taskEmit)
-                {
-                    if (!excludedQueries.contains(taskEmit.queryId))
+                            taskStart.numberOfTuples);
+                    },
+                    [](const TaskEmit& taskEmit)
                     {
-                        feed->tryPush(formatRow(
+                        return formatRow(
                             "TASK_EMIT",
                             taskEmit,
                             taskEmit.fromPipeline.getRawValue(),
                             taskEmit.taskId.getRawValue(),
-                            taskEmit.numberOfTuples));
-                    }
-                },
-                [&](const TaskExecutionComplete& taskComplete)
-                {
-                    if (!excludedQueries.contains(taskComplete.queryId))
+                            taskEmit.numberOfTuples);
+                    },
+                    [](const TaskExecutionComplete& taskComplete)
                     {
-                        feed->tryPush(formatRow(
-                            "TASK_DONE", taskComplete, taskComplete.pipelineId.getRawValue(), taskComplete.taskId.getRawValue(), 0));
-                    }
-                },
-                [&](const TaskExpired& taskExpired)
-                {
-                    if (!excludedQueries.contains(taskExpired.queryId))
+                        return formatRow(
+                            "TASK_DONE", taskComplete, taskComplete.pipelineId.getRawValue(), taskComplete.taskId.getRawValue(), 0);
+                    },
+                    [](const TaskExpired& taskExpired)
                     {
-                        feed->tryPush(formatRow(
-                            "TASK_EXPIRED", taskExpired, taskExpired.pipelineId.getRawValue(), taskExpired.taskId.getRawValue(), 0));
-                    }
-                }},
-            event);
+                        return formatRow(
+                            "TASK_EXPIRED", taskExpired, taskExpired.pipelineId.getRawValue(), taskExpired.taskId.getRawValue(), 0);
+                    }},
+                event));
     }
 }
 

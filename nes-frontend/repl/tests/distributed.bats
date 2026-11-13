@@ -144,6 +144,40 @@ docker_nes_repl() {
   [ "$(echo "$versions" | jq -r '.[0].error')" != "null" ]
 }
 
+# The distributed counterpart of the embedded test: the worker runs in a process of its own, is started
+# with --enable_task_statistics through its topology, and the query reading its task events is placed on it.
+# The coordinator lives inside the REPL, so the REPL has to stay up until the queries are deployed. It waits
+# for them in the background, and is stopped once the rows have been checked while they arrive.
+@test "query engine task events of a remote worker are queryable as a stream" {
+  setup_distributed tests/topologies/1-node-task-statistics.yaml
+
+  (
+    tail -f /dev/null | docker compose exec -T nes-repl bash -c \
+      "nes-repl -f JSON --on-exit WAIT_FOR_QUERY_TERMINATION </workdir/tests/sql-file-tests/good/engine_events_distributed.sql" \
+      >repl-output.json
+  ) &
+  REPL_BG=$!
+
+  # The sink writes into the worker's working directory, which is bind mounted into the test directory.
+  wait_until grep -q '^TASK_START,' worker-node/stats.csv
+  wait_until grep -q '^TASK_DONE,' worker-node/stats.csv
+  # Both the load query and the observer itself show up in the rows.
+  wait_until bash -c "[ \"\$(tail -n +2 worker-node/stats.csv | cut -d, -f4 | sort -u | wc -l)\" -ge 2 ]"
+
+  docker compose exec -T nes-repl pkill -TERM -f "^nes-repl"
+  wait $REPL_BG
+
+  results=$(jq -s '.' repl-output.json)
+  assert_json_equal '2' "$(echo "$results" | jq '[.[] | select(has("CreatedQuery"))] | length')"
+
+  # Every row has the seven columns of the logical source.
+  tail -n +2 worker-node/stats.csv | awk -F, 'NF != 7 { bad++ } END { exit bad > 0 }'
+
+  # The listener drops rather than blocks the query engine, so a drop means its queue was too small.
+  run grep -c "dropped so far" worker-node/singleNodeWorker.log
+  [ "$output" -eq 0 ]
+}
+
 @test "launch bad query should fail" {
   setup_distributed tests/topologies/1-node.yaml
   run docker_nes_repl tests/sql-file-tests/bad/invalid_projection_distributed.sql

@@ -255,8 +255,8 @@ EOF
 
 # The engine's own task events, read back through an EngineEvents source while a second query keeps the
 # engine busy. The number of events an engine produces is not reproducible, so this asserts the invariants
-# that hold rather than a fixed result: rows are produced, every started task also completes, and neither
-# of the two bounded queues on the way dropped anything.
+# that hold rather than a fixed result: rows are produced for both queries, every started task also
+# completes, and neither of the two bounded queues on the way dropped anything.
 @test "query engine task events are queryable as a stream" {
   cat > engine_stats.sql <<'SQL'
 -- A Generator query, purely to give the engine something to do.
@@ -273,11 +273,11 @@ CREATE SINK loadSink(ts UINT64) TYPE File
 
 -- The engine's own task events. The source finds the feed of the worker it is placed on.
 CREATE LOGICAL SOURCE engineStats(
-       event_type VARSIZED, ts_us UINT64, thread_id UINT64, query_id VARSIZED,
+       event_type VARSIZED, ts_us UINT64, thread_id UINT64, query_id INT64,
        pipeline_id UINT64, task_id UINT64, tuples UINT64);
 CREATE PHYSICAL SOURCE FOR engineStats TYPE EngineEvents SET('CSV' as INPUT_FORMATTER."TYPE");
 CREATE SINK statsSink(
-       event_type VARSIZED, ts_us UINT64, thread_id UINT64, query_id VARSIZED,
+       event_type VARSIZED, ts_us UINT64, thread_id UINT64, query_id INT64,
        pipeline_id UINT64, task_id UINT64, tuples UINT64) TYPE File
        SET('stats.csv' as "SINK".FILE_PATH, 'CSV' as "SINK".OUTPUT_FORMAT);
 
@@ -290,7 +290,9 @@ SQL
   # The REPL runs its input and then waits, which is what keeps the queries alive. The statistics query
   # never ends on its own, so the wait is bounded from outside; SIGTERM aborts it through the normal
   # shutdown path, which flushes the sinks. GNU timeout reports 124 for exactly that.
-  run timeout -s TERM 15 "$NES_REPL" -d --on-exit=WAIT_FOR_QUERY_TERMINATION -- --enable_task_statistics=true <engine_stats.sql
+  # The number of worker threads bounds how many tasks can be in flight, see the start/done check below.
+  run timeout -s TERM 15 "$NES_REPL" -d --on-exit=WAIT_FOR_QUERY_TERMINATION -- \
+    --enable_task_statistics=true --worker.query_engine.number_of_worker_threads=2 <engine_stats.sql
   [ "$status" -eq 124 ]
 
   [ -s stats.csv ]
@@ -299,9 +301,17 @@ SQL
   dones=$(tail -n +2 stats.csv | cut -d, -f1 | grep -cx TASK_DONE || true)
   echo "# TASK_START: $starts, TASK_DONE: $dones" >&3
 
+  # Starts and completions pair off, except for the tasks that are in flight at either end of the
+  # observation: one already running when the observer attaches reports only its completion, and one still
+  # running when the stream is cut reports only its start. There are at most as many as worker threads.
   [ "$starts" -gt 0 ]
-  [ "$dones" -ge "$starts" ]
   [ "$((dones - starts))" -le 2 ]
+  [ "$((starts - dones))" -le 2 ]
+
+  # The observer is reported like any other query, so the rows cover both the load query and itself.
+  local queries
+  queries=$(tail -n +2 stats.csv | cut -d, -f4 | sort -u | wc -l)
+  [ "$queries" -ge 2 ]
 
   # Both stages on the way drop rather than block, so a drop means one of them was too small.
   run grep -c "dropped so far" nes-repl.log

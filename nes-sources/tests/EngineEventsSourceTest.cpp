@@ -91,7 +91,7 @@ Schema<UnqualifiedUnboundField, Ordered> statisticsSchema()
         UnqualifiedUnboundField{Identifier::parse("event_type"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("ts_us"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("thread_id"), DataType::Type::UINT64},
-        UnqualifiedUnboundField{Identifier::parse("query_id"), DataType::Type::VARSIZED},
+        UnqualifiedUnboundField{Identifier::parse("query_id"), DataType::Type::INT64},
         UnqualifiedUnboundField{Identifier::parse("pipeline_id"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("task_id"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("tuples"), DataType::Type::UINT64}};
@@ -119,8 +119,8 @@ TEST_F(EngineEventsSourceTest, SourceEmitsWhatTheWorkerPushedIntoItsFeed)
 {
     const Host host{"localhost:8080"};
     auto producer = EventFeedRegistry::instance().create(host, FeedName::ENGINE_EVENTS, 16);
-    EXPECT_TRUE(producer->tryPush("TASK_START,1000,2,1,4,5,64"));
-    EXPECT_TRUE(producer->tryPush("TASK_DONE,1001,2,1,4,5,0"));
+    producer->push("TASK_START,1000,2,1,4,5,64");
+    producer->push("TASK_DONE,1001,2,1,4,5,0");
     const std::string expected = "TASK_START,1000,2,1,4,5,64\nTASK_DONE,1001,2,1,4,5,0\n";
 
     const LogicalSource logicalSource{Identifier::parse("engineStats"), statisticsSchema()};

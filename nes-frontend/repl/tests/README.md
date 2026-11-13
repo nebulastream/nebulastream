@@ -9,5 +9,6 @@ This directory contains integration tests for the NebulaStream REPL (`nes-repl`)
 ## Directory Structure
 
 - `sql-file-tests/` -- BATS tests and SQL input files
-- `topologies/` -- YAML topology definitions used by the tests
+- `topologies/` -- YAML topology definitions used by the tests. A worker may list extra command line options under
+  `args`, e.g. `--enable_task_statistics=true`, which are appended to the defaults in `util/create_compose.sh`
 - `util/` -- Helper scripts (e.g., Docker Compose generation)

@@ -54,7 +54,7 @@ namespace NES
 
 namespace
 {
-/// Number of statistics rows the feed buffers before further rows are dropped
+/// Number of statistics rows the feed buffers before it evicts the oldest ones
 constexpr size_t TASK_STATISTICS_FEED_CAPACITY = 8192;
 }
 
@@ -78,7 +78,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     {
         auto taskStatisticListener = std::make_shared<TaskStatisticListener>(host, TASK_STATISTICS_FEED_CAPACITY);
         taskStatisticListener->start();
-        listener->addListener(taskStatisticListener);
+        listener->addQueryEngineListener(taskStatisticListener);
     }
 
     /// All listeners have to be registered before the engine exists, CompositeStatisticListener does not

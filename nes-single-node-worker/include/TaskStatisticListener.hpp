@@ -20,8 +20,6 @@
 #include <variant>
 #include <Feeds/EventFeed.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/StatisticListener.hpp>
-#include <Listeners/SystemEventListener.hpp>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
 #include <Thread.hpp>
@@ -36,7 +34,12 @@ namespace NES
 /// 'onEvent' runs on the engine's worker threads, so it does no more than filter and enqueue; formatting
 /// happens on a dedicated thread. Both stages are bounded and drop rather than block, following
 /// 'GoogleEventTracePrinter'.
-struct TaskStatisticListener final : StatisticListener
+///
+/// A query that reads the feed is reported like any other, so its own tasks show up in the rows it reads.
+/// This does not feed back without bound, because the source only emits a buffer per flush interval, and
+/// the few tasks each buffer causes become rows of a later buffer. Analyses that are not interested in the
+/// observer's own cost can filter its query id out.
+struct TaskStatisticListener final : QueryEngineStatisticListener
 {
     TaskStatisticListener(const Host& host, size_t feedCapacity);
     ~TaskStatisticListener() override = default;
@@ -47,7 +50,6 @@ struct TaskStatisticListener final : StatisticListener
     TaskStatisticListener& operator=(TaskStatisticListener&&) = delete;
 
     void onEvent(Event event) override;
-    void onEvent(SystemEvent event) override;
 
     /// Starts the thread that formats queued events. Must be called after construction.
     void start();
@@ -55,16 +57,8 @@ struct TaskStatisticListener final : StatisticListener
 private:
     static constexpr size_t QUEUE_LENGTH = 4096;
 
-    /// Tells the formatting thread to ignore everything belonging to a query, see 'onEvent(SystemEvent)'.
-    struct ExcludeQuery
-    {
-        QueryId queryId = INVALID_QUERY_ID;
-    };
-
-    /// Only the events that end up as rows travel through the queue, plus the exclusion markers. Routing
-    /// the markers through the same queue keeps them ordered against the events they suppress, and leaves
-    /// the exclusion set owned exclusively by the formatting thread.
-    using QueuedEvent = std::variant<TaskExecutionStart, TaskEmit, TaskExecutionComplete, TaskExpired, ExcludeQuery>;
+    /// Only the events that end up as rows travel through the queue.
+    using QueuedEvent = std::variant<TaskExecutionStart, TaskEmit, TaskExecutionComplete, TaskExpired>;
 
     void threadRoutine(const std::stop_token& token);
 

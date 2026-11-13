@@ -34,17 +34,22 @@ EventFeed::EventFeed(const size_t capacity) : queue(capacity)
     PRECONDITION(capacity > 0, "An EventFeed needs a capacity of at least one row");
 }
 
-bool EventFeed::tryPush(std::string row)
+void EventFeed::push(std::string row)
 {
     /// 'write' rather than 'writeIfNotFull': both reject a full queue, but 'writeIfNotFull' can additionally
-    /// wait for a read that has been assigned a ticket to complete. Waiting is what a producer on the query
-    /// engine's worker threads must never do, and this path is allowed to drop.
-    if (queue.write(std::move(row)))
+    /// wait for a read that has been assigned a ticket to complete. Waiting is what a producer must never do.
+    ///
+    /// Evicting through the queue's own 'read' is safe next to the consumer, because the queue hands each row
+    /// to exactly one reader. The only effect of the two competing is that 'write' also fails while a read is
+    /// in flight, so under contention one row more than necessary may be evicted. Every iteration either
+    /// evicts a row or finds the queue drained, so the loop ends once the in-flight read completes.
+    while (!queue.write(std::move(row)))
     {
-        return true;
+        if (std::string evicted; queue.read(evicted))
+        {
+            dropped.fetch_add(1, std::memory_order_relaxed);
+        }
     }
-    dropped.fetch_add(1, std::memory_order_relaxed);
-    return false;
 }
 
 std::optional<std::string> EventFeed::tryPop(const std::chrono::milliseconds timeout)

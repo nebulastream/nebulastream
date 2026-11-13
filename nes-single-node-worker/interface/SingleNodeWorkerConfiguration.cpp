@@ -94,7 +94,13 @@ const ConfigField<bool> ENABLE_TASK_STATISTICS{
 
 Schema<QualifiedErasedConfigField, Ordered> SingleNodeWorkerConfiguration::getConfigSchema()
 {
-    return createConfigSchema(DATA_ADDRESS, GRPC_ADDRESS_URI, LOG_LEVEL, ENABLE_GOOGLE_EVENT_TRACE, ENABLE_TASK_STATISTICS, WorkerConfiguration::getConfigSchema());
+    return createConfigSchema(
+        DATA_ADDRESS,
+        GRPC_ADDRESS_URI,
+        LOG_LEVEL,
+        ENABLE_GOOGLE_EVENT_TRACE,
+        ENABLE_TASK_STATISTICS,
+        WorkerConfiguration::getConfigSchema());
 }
 
 SingleNodeWorkerConfiguration SingleNodeWorkerConfiguration::fromConfig(const InstantiatedConfig& config)
