@@ -10,36 +10,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Per-scenario constructors for a plugin's ``conn-test/scenarios.py``.
-
-Each takes only the arguments that its scenario accepts, so an invalid binding is a ``TypeError`` when it is written,
-not a defect found at run time.
-"""
+"""The scenarios that a source can bind: the shared ones, and those about a source's read."""
 
 from __future__ import annotations
 
 from conntest_runner.discovery import Scenario
+from conntest_runner.scenario_bindings._shared import (
+    bad_endpoint,
+    empty,
+    outcome,
+    round_trip_1_buffer,
+    round_trip_n_buffers,
+    silent_link,
+    slow_link,
+)
 
-
-def _error(code: int | str | None) -> str:
-    return "OK" if code is None else f"ERROR {code}"
-
-
-def round_trip_1_buffer(*globs: str) -> Scenario:
-    return Scenario("round_trip_1_buffer", configs=list(globs))
-
-
-def round_trip_n_buffers(*globs: str, n_buffers: int | None = None) -> Scenario:
-    """``n_buffers`` replaces the default; keep it above the harness's pool size, or the source never has to wait."""
-    return Scenario("round_trip_n_buffers", configs=list(globs), n_buffers=n_buffers)
-
-
-def empty(*globs: str) -> Scenario:
-    return Scenario("empty", configs=list(globs))
-
-
-def bad_endpoint(config: str, *, error: int | str) -> Scenario:
-    return Scenario("bad_endpoint", config=config, outcome=_error(error))
+__all__ = [
+    "bad_endpoint",
+    "close_while_reading",
+    "connection_lost",
+    "crash_recovery",
+    "empty",
+    "full_buffer_not_held",
+    "partial_buffer_held",
+    "round_trip_1_buffer",
+    "round_trip_n_buffers",
+    "silent_link",
+    "slow_link",
+]
 
 
 def close_while_reading(*globs: str) -> Scenario:
@@ -60,19 +58,11 @@ def partial_buffer_held(config: str, *, flush_interval_ms: int) -> Scenario:
     return Scenario("partial_buffer_held", config=config, args={"flush_interval_ms": flush_interval_ms})
 
 
-def slow_link(*globs: str) -> Scenario:
-    return Scenario("slow_link", configs=list(globs))
-
-
-def silent_link(*globs: str) -> Scenario:
-    return Scenario("silent_link", configs=list(globs))
-
-
 def connection_lost(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that reports the lost connection as that error instead of ending its stream."""
-    return Scenario("connection_lost", config=config, outcome=_error(error))
+    return Scenario("connection_lost", config=config, outcome=outcome(error))
 
 
 def crash_recovery(config: str, *, error: int | str | None = None) -> Scenario:
     """Pass ``error`` for a connector that cannot resume after the process dies."""
-    return Scenario("crash_recovery", config=config, outcome=_error(error))
+    return Scenario("crash_recovery", config=config, outcome=outcome(error))

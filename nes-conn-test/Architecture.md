@@ -52,7 +52,7 @@ The runner listens on a unix socket, and the harness connects to it.
 Each command is one line, and each reply is one JSON line:
 
 ```
-BIND                     bind the config
+BIND                     bind the config and reply with its bound schema, for which the runner generates the rows
 OPEN                     create the connector and start its source thread, which waits for the first FILL
 FILL <n_rows> <n_bytes>  let the source read until <n_bytes> arrived or the stream ended; `FILL 0 0` returns once the connector is in a read
 CLOSE                    stop the source thread, which closes the connector
@@ -63,7 +63,8 @@ measured by the harness around the connector's `fillTupleBuffer`, so a scenario 
 A failure reply has the error's origin, code, name and phase, for example
 `{"ok":false,"phase":"open","origin":"connector","code":4002,"name":"CannotOpenSource","message":"..."}`.
 A scenario may expect a connector error; a harness error, such as a config that does not bind or a step timeout, always fails it.
-Each step has a timeout (`--step-timeout-ms`, 30 s), and the runner kills a harness that exceeds the test's deadline (120 s).
+Each step has a timeout of 30 s, and the runner kills a harness that exceeds the test's deadline of 120 s.
+Neither can be configured: both only break stalls, so a longer one would only make a failing test slower.
 Stopping a source has the step timeout too. A connector that ignores the stop request fails the step with `StepTimeout`,
 and the harness then exits with code 3, because the stuck source thread still uses its state.
 The bytes of each FILL go to the file in `--observed-path`, where the runner reads them back.
@@ -71,7 +72,7 @@ The bytes of each FILL go to the file in `--observed-path`, where the runner rea
 ## One round trip
 
 1. The runner writes the test's endpoint into a copy of the config.
-2. It starts the harness, and the loader prepares the service.
+2. It starts the harness, generates the rows for the schema of the `BIND` reply, and the loader prepares the service.
 3. `OPEN` creates the connector, which connects to the service.
 4. The loader writes the rows, and `FILL` collects them from the source.
 5. The runner compares the collected rows with the generated ones, ignoring their order.

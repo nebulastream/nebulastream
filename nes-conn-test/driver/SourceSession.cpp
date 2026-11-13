@@ -151,7 +151,7 @@ private:
         {
             return errorReply(descriptor.error());
         }
-        return okReply("bind");
+        return bindReply(descriptor->getSchema());
     }
 
     /// Binds on the first call only, so a repeated BIND or OPEN returns the same descriptor or the same error.
@@ -243,11 +243,11 @@ private:
             std::move(listener), NES::OriginId(1), NES::SourceRuntimeConfiguration{options.bufferCount}, pool, std::move(wrapped));
         handle->start(makeEmitFunction());
 
-        if (openedFuture.wait_for(options.stepTimeout) != std::future_status::ready)
+        if (openedFuture.wait_for(SOURCE_STEP_TIMEOUT) != std::future_status::ready)
         {
             resetSource();
             return errorReply(
-                harnessErrorInfo("open", "StepTimeout", fmt::format("open timed out after {} ms", options.stepTimeout.count())));
+                harnessErrorInfo("open", "StepTimeout", fmt::format("open timed out after {} ms", SOURCE_STEP_TIMEOUT.count())));
         }
         try
         {
@@ -350,7 +350,7 @@ private:
         bool timedOut = false;
         std::optional<ErrorInfo> err;
 
-        const auto deadline = std::chrono::steady_clock::now() + options.stepTimeout;
+        const auto deadline = std::chrono::steady_clock::now() + SOURCE_STEP_TIMEOUT;
         while (true)
         {
             if (bytesObserved >= quota && (quota > 0 || reading->load()))
@@ -401,7 +401,7 @@ private:
             return errorReply(harnessErrorInfo(
                 phase,
                 "StepTimeout",
-                fmt::format("{} timed out after {} ms ({} of quota observed)", phase, options.stepTimeout.count(), bytesObserved)));
+                fmt::format("{} timed out after {} ms ({} of quota observed)", phase, SOURCE_STEP_TIMEOUT.count(), bytesObserved)));
         }
         return fillReply(phase, sawEoS, partialReads->take());
     }
@@ -425,7 +425,7 @@ private:
 
     [[nodiscard]] std::string stopTimeoutMessage() const
     {
-        return fmt::format("the source did not stop within {} ms; its connector ignores the stop request", options.stepTimeout.count());
+        return fmt::format("the source did not stop within {} ms; its connector ignores the stop request", SOURCE_STEP_TIMEOUT.count());
     }
 
     /// The stop has the step timeout, so a connector that ignores the stop request fails the step instead of hanging the session.
@@ -435,7 +435,7 @@ private:
     {
         if (handle)
         {
-            if (handle->tryStop(options.stepTimeout) == SourceReturnType::TryStopResult::TIMEOUT)
+            if (handle->tryStop(SOURCE_STEP_TIMEOUT) == SourceReturnType::TryStopResult::TIMEOUT)
             {
                 stuck = true;
                 return;

@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 
 from conntest_runner.config_rewrite import apply_overrides
-from conntest_runner.datamodel import SourceModel, parse_source_schema
+from conntest_runner.datamodel import SourceModel
 from conntest_runner.discovery import PluginEntry, binding_problems, discover_plugin, resolve_configs
 from conntest_runner.endpoint import split_endpoint
 from conntest_runner.harness import Source
@@ -48,7 +48,6 @@ _BINDING_PROBLEMS = [
 _BROKEN_SCENARIOS = {
     (bp.plugin, bp.scenario) for bp in _BINDING_PROBLEMS if bp.scenario is not None
 }
-_GLOBAL_DEADLINE_S = float(os.environ.get("CONNTEST_GLOBAL_DEADLINE_S", "120"))
 
 # The harness runs with this buffer size, and N buffers of data are N times it.
 _BUFFER_SIZE = 4096
@@ -128,8 +127,6 @@ def test_scenario(
         link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), listen_port=port, upstream=connector_endpoint).create()
         connector_endpoint = f"toxiproxy:{port}"
     cfg_file = _render_config(loader, config_path, endpoint=connector_endpoint, target=target, out_dir=tmp_path)
-    schema = parse_source_schema(config_path.read_text(encoding="utf-8"))
-    data_model = SourceModel(schema)
 
     observed_path = tmp_path / "observed.jsonl"
     try:
@@ -138,10 +135,11 @@ def test_scenario(
             config=cfg_file,
             observed_path=observed_path,
             extra_args=[f"--observed-path={observed_path}", f"--buffer-size={_BUFFER_SIZE}"],
-            global_deadline_s=_GLOBAL_DEADLINE_S,
             # Kept next to the config and the observed bytes, so a failed case has all of its artifacts in one place.
             log_path=tmp_path / "harness.log",
         ) as source:
+            schema = source.bind()
+            data_model = SourceModel(schema)
             n_buffers = _buffers(scenario)
             ctx = Ctx(
                 loader=loader,

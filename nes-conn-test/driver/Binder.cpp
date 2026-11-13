@@ -24,11 +24,11 @@
 #include <variant>
 #include <vector>
 
-#include <Identifiers/Identifiers.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <Reply.hpp>
@@ -89,6 +89,9 @@ std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::strin
     auto sourceCatalog = std::make_shared<SourceCatalog>();
     const StatementBinder binder(
         sourceCatalog, [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
+    /// Connectors read their endpoint from config and conn-test does no placement, so a statement without a host gets any valid one,
+    /// as in the REPL with a single worker.
+    SourceStatementHandler handler{sourceCatalog, DefaultHost{"localhost"}};
 
     std::optional<SourceDescriptor> physicalDescriptor;
     for (const auto& statementContext : *statements)
@@ -98,31 +101,24 @@ std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::strin
         {
             return bindError("binding a statement", bound.error());
         }
-        if (auto* logical = std::get_if<CreateLogicalSourceStatement>(&*bound))
+        if (const auto* logical = std::get_if<CreateLogicalSourceStatement>(&*bound))
         {
-            if (!sourceCatalog->addLogicalSource(logical->name, logical->schema))
+            if (auto created = handler(*logical); !created.has_value())
             {
-                return bindError("creating the logical source", fmt::format("failed: {} is declared twice", logical->name));
+                return bindError("creating the logical source", created.error());
             }
             continue;
         }
-        if (auto* phys = std::get_if<CreatePhysicalSourceStatement>(&*bound))
+        if (const auto* phys = std::get_if<CreatePhysicalSourceStatement>(&*bound))
         {
-            const auto logicalSource = sourceCatalog->getLogicalSource(phys->attachedTo);
-            if (!logicalSource)
-            {
-                return bindError("creating the physical source", fmt::format("failed: no logical source {}", phys->attachedTo));
-            }
             try
             {
-                /// Connectors read their endpoint from config and conn-test does no placement, so a missing host can stay invalid.
-                auto created = sourceCatalog->addPhysicalSource(
-                    *logicalSource, phys->sourceType, phys->host.value_or(Host{Host::INVALID}), phys->sourceConfig, phys->parserConfig);
+                auto created = handler(*phys);
                 if (!created.has_value())
                 {
                     return bindError("creating the physical source", created.error());
                 }
-                physicalDescriptor.emplace(std::move(*created));
+                physicalDescriptor.emplace(std::move(created->created));
             }
             catch (const Exception& ex)
             {

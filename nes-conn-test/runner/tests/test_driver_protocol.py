@@ -104,6 +104,27 @@ def test_harness_error_is_replayed(harness_binary: Path, sock_dir: Path, tmp_pat
         assert session.end() == _EXIT_OK
 
 
+def test_bind_replies_with_the_schema_that_the_engine_bound(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+    # The alias INTEGER is bound as INT32, and the unquoted name as its canonical, uppercase form.
+    config = tmp_path / "file.nesql"
+    config.write_text(
+        'CREATE LOGICAL SOURCE s (id INTEGER NOT NULL, "Label" VARSIZED);\n'
+        "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n",
+        encoding="utf-8",
+    )
+    with Session(harness_binary, sock_dir, config=config) as session:
+        reply = session.command("BIND")
+        assert reply == {
+            "ok": True,
+            "phase": "bind",
+            "schema": [
+                {"name": "ID", "type": "INT32", "nullable": False},
+                {"name": "Label", "type": "VARSIZED", "nullable": True},
+            ],
+        }, reply
+        assert session.end() == _EXIT_OK
+
+
 def test_error_reply_is_one_json_line_whatever_the_message(
     harness_binary: Path, sock_dir: Path, tmp_path: Path
 ) -> None:
