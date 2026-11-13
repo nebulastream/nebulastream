@@ -1,0 +1,35 @@
+# name: formatter/CSV_OUTPUT/HeaderFormat.test
+# description: The CSV output formatter writes the header that HEADER_FORMAT selects in front of the rows, or none at all
+# groups: [Formatter, CSV]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value INT32);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10
+2,20
+
+# The default header holds the name, type, and nullability of each field.
+SELECT * FROM stream INTO File('CSV' as "SINK".OUTPUT_FORMAT);
+----
+1,10
+2,20
+
+SELECT * FROM stream INTO File('CSV' as "SINK".OUTPUT_FORMAT, 'NAME_TYPE_NULLABLE' as "OUTPUT_FORMATTER".HEADER_FORMAT);
+----
+1,10
+2,20
+
+SELECT * FROM stream INTO File('CSV' as "SINK".OUTPUT_FORMAT, 'NAME' as "OUTPUT_FORMATTER".HEADER_FORMAT);
+----
+1,10
+2,20
+
+SELECT * FROM stream INTO File('CSV' as "SINK".OUTPUT_FORMAT, 'NONE' as "OUTPUT_FORMATTER".HEADER_FORMAT);
+----
+1,10
+2,20
+
+# The header format is checked when the config is resolved, not when the sink starts.
+SELECT * FROM stream INTO File('CSV' as "SINK".OUTPUT_FORMAT, '{NAME}' as "OUTPUT_FORMATTER".HEADER_FORMAT);
+----
+ERROR 1000

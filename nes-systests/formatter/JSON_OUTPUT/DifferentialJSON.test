@@ -1,0 +1,14 @@
+# name: formatter/JSON_OUTPUT/DifferentialJSON.test
+# description: The two halves of a differential block compare when both write JSON, which has no header
+# groups: [Differential, JSON]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10
+2,20
+3,30
+
+SELECT id, value FROM stream WHERE value > UINT64(15) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+====
+SELECT id, value FROM stream WHERE value >= UINT64(16) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
