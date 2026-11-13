@@ -12,7 +12,7 @@
 
 """Scenarios that are independent of the kind of connector.
 
-The module of each kind re-exports everything in ``__all__``, so a new scenario here needs no change there.
+``source`` and ``sink`` re-export everything in ``__all__``, so a new scenario here needs no change there.
 """
 
 from __future__ import annotations
@@ -22,10 +22,10 @@ from conntest_runner.discovery import Scenario
 __all__ = [
     "bad_endpoint",
     "empty",
-    "round_trip_1_buffer",
-    "round_trip_n_buffers",
     "silent_link",
     "slow_link",
+    "transfer_1_buffer",
+    "transfer_n_buffers",
 ]
 
 
@@ -33,14 +33,14 @@ def outcome(code: int | str | None) -> str:
     return "OK" if code is None else f"ERROR {code}"
 
 
-def round_trip_1_buffer(*globs: str, loader_args: dict[str, object] | None = None) -> Scenario:
-    """``loader_args`` are for a config whose data the loader must seed differently from the connector's other configs."""
-    return Scenario("round_trip_1_buffer", configs=list(globs), loader_args=loader_args)
+def transfer_1_buffer(*globs: str, loader_args: dict[str, object] | None = None) -> Scenario:
+    """``loader_args`` are for a config whose data the loader must seed or read back differently from the connector's other configs."""
+    return Scenario("transfer_1_buffer", configs=list(globs), loader_args=loader_args)
 
 
-def round_trip_n_buffers(*globs: str, n_buffers: int | None = None) -> Scenario:
+def transfer_n_buffers(*globs: str, n_buffers: int | None = None) -> Scenario:
     """``n_buffers`` replaces the default; keep it above the harness's pool size, or the source never has to wait."""
-    return Scenario("round_trip_n_buffers", configs=list(globs), n_buffers=n_buffers)
+    return Scenario("transfer_n_buffers", configs=list(globs), n_buffers=n_buffers)
 
 
 def empty(*globs: str) -> Scenario:

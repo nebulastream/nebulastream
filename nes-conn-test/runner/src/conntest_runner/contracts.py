@@ -46,7 +46,7 @@ class Loader(ABC):
 
     @abstractmethod
     def setup(self, *, target: str, schema: Any) -> None:
-        """Prepares the backend before the connector opens.
+        """Prepares the backend before a source opens or a sink starts.
 
         It is always called, so a loader with nothing to prepare implements it empty.
         """
@@ -63,4 +63,19 @@ class SourceLoader(Loader):
         A scenario that measures how long the source holds data back calls this method before the source reads,
         so that the time the data spends in flight does not count as held back.
         A loader whose ``seed_batch`` returns only after the backend has the rows keeps this default.
+        """
+
+
+class SinkLoader(Loader):
+    """The loader of a sink reads back what the sink wrote."""
+
+    @abstractmethod
+    def read_back(self, *, target: str, schema: Any, n_rows: int, timeout_s: float) -> list[Any]:
+        """Returns the rows that the sink wrote to ``target``, as typed tuples in any order.
+
+        It is called after the sink has stopped.
+        ``timeout_s`` is the harness's step timeout, which bounds a read-back as it bounds any step.
+        A connector whose wire format is JSON parses the records with the framework's JSONL codec, not its own.
+        ``n_rows`` is the number of rows the sink received.
+        A loader whose backend has no end of stream can stop after that many, but then it does not see extra rows.
         """

@@ -37,8 +37,6 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -46,6 +44,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <BackpressureChannel.hpp>
 #include <Binder.hpp>
+#include <BufferPool.hpp>
 #include <ControlChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <InterceptorSource.hpp>
@@ -65,23 +64,6 @@ constexpr std::chrono::milliseconds INGEST_POLL_INTERVAL{25};
 
 /// A write into a full queue is sliced so that the source thread keeps noticing a stop request, as in the engine.
 constexpr std::chrono::milliseconds QUEUE_WRITE_POLL{100};
-
-/// A limit on the unpooled buffers that a connector may request, not a reservation.
-constexpr std::size_t UNPOOLED_MEMORY_BUDGET_IN_BYTES = 256UZ * 1024 * 1024;
-
-/// The buffer manager is sized by a memory budget, not a buffer count.
-/// Its rounding only moves bytes from the unpooled to the pooled share, so the pool holds at least the requested count.
-std::shared_ptr<BufferManager> makeBufferPool(const std::uint32_t bufferSize, const std::uint32_t bufferCount)
-{
-    constexpr BufferAlignment alignment{64};
-    const auto totalMemory = (static_cast<std::size_t>(bufferSize) * bufferCount) + UNPOOLED_MEMORY_BUDGET_IN_BYTES;
-    return BufferManager::create(
-        totalMemory,
-        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(totalMemory),
-        alignment,
-        bufferSize,
-        std::make_shared<NesDefaultMemoryAllocator>());
-}
 
 /// The state that persists across the commands of one session.
 /// Each OPEN starts a source thread whose emit pushes buffers into a bounded queue, and FILL reads from that queue.
@@ -112,7 +94,7 @@ public:
     [[noreturn]] static void exitStuck()
     {
         std::cerr << "conntest-harness: the source did not stop within the step timeout, exiting\n";
-        std::_Exit(SOURCE_STUCK_EXIT_CODE);
+        std::_Exit(STUCK_EXIT_CODE);
     }
 
     std::string dispatch(std::string_view line)
@@ -243,11 +225,10 @@ private:
             std::move(listener), NES::OriginId(1), NES::SourceRuntimeConfiguration{options.bufferCount}, pool, std::move(wrapped));
         handle->start(makeEmitFunction());
 
-        if (openedFuture.wait_for(SOURCE_STEP_TIMEOUT) != std::future_status::ready)
+        if (openedFuture.wait_for(STEP_TIMEOUT) != std::future_status::ready)
         {
             resetSource();
-            return errorReply(
-                harnessErrorInfo("open", "StepTimeout", fmt::format("open timed out after {} ms", SOURCE_STEP_TIMEOUT.count())));
+            return errorReply(harnessErrorInfo("open", "StepTimeout", fmt::format("open timed out after {} ms", STEP_TIMEOUT.count())));
         }
         try
         {
@@ -350,7 +331,7 @@ private:
         bool timedOut = false;
         std::optional<ErrorInfo> err;
 
-        const auto deadline = std::chrono::steady_clock::now() + SOURCE_STEP_TIMEOUT;
+        const auto deadline = std::chrono::steady_clock::now() + STEP_TIMEOUT;
         while (true)
         {
             if (bytesObserved >= quota && (quota > 0 || reading->load()))
@@ -401,7 +382,7 @@ private:
             return errorReply(harnessErrorInfo(
                 phase,
                 "StepTimeout",
-                fmt::format("{} timed out after {} ms ({} of quota observed)", phase, SOURCE_STEP_TIMEOUT.count(), bytesObserved)));
+                fmt::format("{} timed out after {} ms ({} of quota observed)", phase, STEP_TIMEOUT.count(), bytesObserved)));
         }
         return fillReply(phase, sawEoS, partialReads->take());
     }
@@ -425,7 +406,7 @@ private:
 
     [[nodiscard]] std::string stopTimeoutMessage() const
     {
-        return fmt::format("the source did not stop within {} ms; its connector ignores the stop request", SOURCE_STEP_TIMEOUT.count());
+        return fmt::format("the source did not stop within {} ms; its connector ignores the stop request", STEP_TIMEOUT.count());
     }
 
     /// The stop has the step timeout, so a connector that ignores the stop request fails the step instead of hanging the session.
@@ -435,7 +416,7 @@ private:
     {
         if (handle)
         {
-            if (handle->tryStop(SOURCE_STEP_TIMEOUT) == SourceReturnType::TryStopResult::TIMEOUT)
+            if (handle->tryStop(STEP_TIMEOUT) == SourceReturnType::TryStopResult::TIMEOUT)
             {
                 stuck = true;
                 return;
