@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 
 from conntest_runner.config_rewrite import apply_overrides
-from conntest_runner.datamodel import SourceModel, parse_source_schema
+from conntest_runner.datamodel import SourceModel
 from conntest_runner.discovery import PluginEntry, binding_problems, discover_plugin, resolve_configs
 from conntest_runner.endpoint import split_endpoint
 from conntest_runner.harness import Source
@@ -127,8 +127,6 @@ def test_scenario(
         link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), listen_port=port, upstream=connector_endpoint).create()
         connector_endpoint = f"toxiproxy:{port}"
     cfg_file = _render_config(loader, config_path, endpoint=connector_endpoint, target=target, out_dir=tmp_path)
-    schema = parse_source_schema(config_path.read_text(encoding="utf-8"))
-    data_model = SourceModel(schema)
 
     observed_path = tmp_path / "observed.jsonl"
     try:
@@ -140,6 +138,8 @@ def test_scenario(
             # Kept next to the config and the observed bytes, so a failed case has all of its artifacts in one place.
             log_path=tmp_path / "harness.log",
         ) as source:
+            schema = source.bind()
+            data_model = SourceModel(schema)
             n_buffers = _buffers(scenario)
             ctx = Ctx(
                 loader=loader,

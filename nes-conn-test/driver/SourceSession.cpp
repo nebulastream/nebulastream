@@ -151,7 +151,7 @@ private:
         {
             return errorReply(descriptor.error());
         }
-        return okReply("bind");
+        return bindReply(descriptor->getSchema());
     }
 
     /// Binds on the first call only, so a repeated BIND or OPEN returns the same descriptor or the same error.
