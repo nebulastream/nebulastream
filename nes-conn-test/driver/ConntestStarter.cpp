@@ -15,7 +15,6 @@
 /// conntest-harness runs the connector side of a connection test, one command from the runner at a time.
 /// Commands arrive on a socket, so stdout and stderr stay free for logs and sanitizer output.
 
-#include <chrono>
 #include <cstdint>
 #include <exception>
 #include <filesystem>
@@ -50,7 +49,6 @@ void configureArgumentParser(argparse::ArgumentParser& program)
     program.add_argument("--mode").required().choices("source").help("which stepper to run");
     program.add_argument("--config").required().help("SQL snippet (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE)");
     program.add_argument("--control-sock").required().help("AF_UNIX path of the runner's control channel");
-    program.add_argument("--step-timeout-ms").help("per-step connector-work cap in milliseconds");
     program.add_argument("--buffer-size").help("per-buffer size in bytes");
     program.add_argument("--buffer-count").help("number of pooled buffers");
     program.add_argument("--observed-path").help("write the bytes observed per FILL here (runner decode)");
@@ -80,13 +78,11 @@ ExitCode runSource(const argparse::ArgumentParser& program, ControlChannel& chan
     SourceSessionOptions options;
     options.configFile = program.get<std::string>("--config");
 
-    auto stepTimeoutMs = static_cast<std::uint64_t>(options.stepTimeout.count());
-    if (not applyUnsigned(program, "--buffer-size", options.bufferSize) or not applyUnsigned(program, "--buffer-count", options.bufferCount)
-        or not applyUnsigned(program, "--step-timeout-ms", stepTimeoutMs))
+    if (not applyUnsigned(program, "--buffer-size", options.bufferSize)
+        or not applyUnsigned(program, "--buffer-count", options.bufferCount))
     {
         return ExitCode::BadArguments;
     }
-    options.stepTimeout = std::chrono::milliseconds{stepTimeoutMs};
 
     if (const auto observed = program.present<std::string>("--observed-path"))
     {

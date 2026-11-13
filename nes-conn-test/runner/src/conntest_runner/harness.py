@@ -12,7 +12,7 @@
 
 """Runs the C++ harness and its command session over a unix-domain control socket.
 
-A global deadline per scenario kills a harness that is too stuck to honor its own step timeout.
+A deadline per test kills a harness that is too stuck to honor its own step timeout.
 It is the only timer outside the harness.
 """
 
@@ -34,7 +34,12 @@ from conntest_runner.protocol import Got, HarnessError, read_reply
 
 _ACCEPT_TIMEOUT_S = 30.0
 _ACCEPT_POLL_S = 0.1
-_DEFAULT_GLOBAL_DEADLINE_S = 120.0
+# The harness's step timeout, a constant in nes-conn-test/driver/SourceSession.hpp, from which the timeouts below are derived.
+# Change both together, or a stuck step is reported as a killed harness, not as the step that hung.
+_HARNESS_STEP_TIMEOUT_S = 30.0
+# Four times the step timeout, because a stuck OPEN takes twice the step timeout.
+# So a stuck step replies with the harness's StepTimeout, which says which step, before the deadline kills the harness.
+_TEST_DEADLINE_S = 4 * _HARNESS_STEP_TIMEOUT_S
 
 
 @dataclass(frozen=True)
@@ -123,7 +128,6 @@ class _Stepper:
         mode: str,
         config: Path,
         extra_args: list[str] | None = None,
-        global_deadline_s: float = _DEFAULT_GLOBAL_DEADLINE_S,
         log_path: Path | None = None,
     ) -> None:
         """``log_path`` collects the output of every harness process of the case, a respawned one included."""
@@ -142,7 +146,7 @@ class _Stepper:
         self._server.bind(str(self._sock_path))
         self._server.listen(1)
         self._proc: _HarnessProc | None = None
-        self._deadline = threading.Timer(global_deadline_s, self._on_deadline)
+        self._deadline = threading.Timer(_TEST_DEADLINE_S, self._on_deadline)
         self._deadline.daemon = True
         self._deadline.start()
 
