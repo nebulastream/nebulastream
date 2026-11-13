@@ -14,84 +14,23 @@
 
 #include <ResultChecker/QueryResult.hpp>
 
+#include <cstddef>
 #include <expected>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <optional>
-#include <ranges>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/UnboundField.hpp>
-#include <Identifiers/Identifier.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Util/Strings.hpp>
 
 namespace NES
 {
 
-namespace
-{
-/// A header field is written as name:TYPE:NULLABILITY.
-std::expected<UnqualifiedUnboundField, std::string> parseField(const std::string_view field)
-{
-    std::vector<std::string_view> parts;
-    for (const auto part : NES::splitOnMultipleDelimiters(field, {':'}, {'"'}))
-    {
-        parts.emplace_back(trimWhiteSpaces(part));
-    }
-    if (parts.size() != 3)
-    {
-        return std::unexpected(fmt::format("field '{}' is not written as name:TYPE:NULLABILITY", field));
-    }
-
-    const auto nullable = magic_enum::enum_cast<DataType::NULLABLE>(parts.at(2));
-    if (not nullable)
-    {
-        return std::unexpected(fmt::format("field '{}' has an unknown nullability '{}'", field, parts.at(2)));
-    }
-
-    const auto type = magic_enum::enum_cast<DataType::Type>(parts.at(1));
-    if (not type and toLowerCase(parts.at(1)) != "varsized")
-    {
-        return std::unexpected(fmt::format("field '{}' has an unknown type '{}'", field, parts.at(1)));
-    }
-
-    /// Case sensitive field names will arrive quoted here and therefore remain case sensitive. Case insensitive field names will be canonicalized into upper-case for comparison, so they are not quoted here.
-    return UnqualifiedUnboundField{
-        Identifier::parse(std::string(parts.at(0))), DataTypeProvider::provideDataType(type.value_or(DataType::Type::VARSIZED), *nullable)};
-}
-
-/// One header line: comma separated fields. The first field that does not parse is the reason the header is rejected.
-std::expected<Schema<UnqualifiedUnboundField, Ordered>, std::string> parseHeader(const std::string_view headerLine)
-{
-    std::vector<UnqualifiedUnboundField> fields;
-    for (const auto field : NES::splitOnMultipleDelimiters(headerLine, {','}, {'"'}))
-    {
-        if (field.empty())
-        {
-            continue;
-        }
-        auto parsed = parseField(field);
-        if (not parsed)
-        {
-            return std::unexpected(std::move(parsed.error()));
-        }
-        fields.push_back(std::move(*parsed));
-    }
-    return Schema<UnqualifiedUnboundField, Ordered>{std::move(fields)};
-}
-}
-
-std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::path& resultFilePath, const bool hasHeader)
+std::expected<std::vector<std::string>, std::string>
+loadQueryResult(const std::filesystem::path& resultFilePath, const std::optional<std::string>& expectedHeader)
 {
     std::ifstream resultFile(resultFilePath);
     if (!resultFile)
@@ -99,39 +38,29 @@ std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::p
         return std::unexpected(fmt::format("result file was not written: {}", resultFilePath.string()));
     }
 
-    std::string line;
-    /// Without a header, every line is a row and an empty file is an empty result.
-    if (not hasHeader)
+    if (expectedHeader.has_value())
     {
-        QueryResult result{.schema = std::nullopt, .tuples = {}};
-        while (std::getline(resultFile, line))
+        /// The header ends with the tuple delimiter of its format, which need not be a newline, so it is compared byte for byte.
+        std::string header(expectedHeader->size(), '\0');
+        resultFile.read(header.data(), static_cast<std::streamsize>(header.size()));
+        header.resize(static_cast<size_t>(resultFile.gcount()));
+        if (header != *expectedHeader)
         {
-            result.tuples.push_back(line);
+            return std::unexpected(
+                fmt::format(
+                    "result file does not start with the header {:?} that the sink writes, but with {:?}: {}",
+                    *expectedHeader,
+                    header,
+                    resultFilePath.string()));
         }
-        return result;
     }
 
-    if (!std::getline(resultFile, line))
+    std::vector<std::string> rows;
+    for (std::string line; std::getline(resultFile, line);)
     {
-        return std::unexpected(fmt::format("result file is empty: {}", resultFilePath.string()));
+        rows.push_back(std::move(line));
     }
-
-    auto schema = parseHeader(line);
-    if (not schema)
-    {
-        return std::unexpected(fmt::format("result file has a malformed schema header, {}: {}", schema.error(), resultFilePath.string()));
-    }
-    if (schema->size() == 0)
-    {
-        return std::unexpected(fmt::format("result file has an empty schema header: {}", resultFilePath.string()));
-    }
-
-    QueryResult result{.schema = std::move(*schema), .tuples = {}};
-    while (std::getline(resultFile, line))
-    {
-        result.tuples.push_back(line);
-    }
-    return result;
+    return rows;
 }
 
 }

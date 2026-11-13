@@ -15,6 +15,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -29,12 +30,13 @@ namespace NES
 struct QueryResultCheck
 {
     std::filesystem::path resultFile;
+    /// The schema of the bound plan's sink, with which both the expected and the actual tuples are read.
     Schema<UnqualifiedUnboundField, Ordered> expectedSchema;
-    /// Whether the output format writes a schema header in front of the rows.
-    bool hasHeader = true;
+    /// The header that the sink writes in front of the rows, absent if it writes none.
+    std::optional<std::string> expectedHeader;
     std::vector<std::string> expectedTuples;
 
-    /// Fails when the output file is missing, and otherwise when its schema or its tuples differ from the expected ones.
+    /// Fails when the output file is missing, does not start with the expected header, or holds other tuples than the expected ones.
     [[nodiscard]] Verdict check() const;
 };
 

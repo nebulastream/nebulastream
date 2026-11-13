@@ -36,7 +36,8 @@ struct BoundPlan
 {
     DistributedLogicalPlan plan;
     Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
-    bool sinkWritesHeader;
+    /// The header that the sink writes in front of the rows, absent if it writes none.
+    std::optional<std::string> expectedHeader;
 };
 
 struct BoundStatement

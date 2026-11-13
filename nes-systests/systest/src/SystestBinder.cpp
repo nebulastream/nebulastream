@@ -19,6 +19,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -33,12 +34,14 @@
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <OutputFormatters/OutputFormatterProvider.hpp>
 #include <Rewriter/Constants.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <Util/Overloaded.hpp>
@@ -67,27 +70,43 @@ const Schema<UnqualifiedUnboundField, Ordered>& getChecksumSchema()
     return ChecksumSchema;
 }
 
-Schema<UnqualifiedUnboundField, Ordered> getSinkOutputSchema(const DistributedLogicalPlan& plan)
+/// The header that the checksum sink writes in front of its single row (see ChecksumSink::stop).
+constexpr std::string_view ChecksumHeader = "Count:UINT64:NOT_NULLABLE,Checksum:UINT64:NOT_NULLABLE\n";
+
+SinkDescriptor getSinkDescriptor(const DistributedLogicalPlan& plan)
 {
     const auto sinkOperator = plan.getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
     INVARIANT(sinkOperator.has_value(), "The optimized plan should have a sink operator");
-    const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
+    auto descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
     INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
-    if (Sql::sameName(descriptor->getSinkType(), Sql::Checksum))
+    return std::move(*descriptor);
+}
+
+Schema<UnqualifiedUnboundField, Ordered> getSinkOutputSchema(const SinkDescriptor& descriptor)
+{
+    if (Sql::sameName(descriptor.getSinkType(), Sql::Checksum))
     {
         return getChecksumSchema();
     }
-    return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor->getSchema());
+    return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor.getSchema());
 }
 
-/// Mirrors the output formatters, of which only JSON writes no header.
-bool sinkWritesHeader(const DistributedLogicalPlan& plan)
+/// The header that the sink writes in front of the rows of the result file that the checker reads, or nullopt if it writes none.
+/// It depends on the sink type as well as on the output format: the file sink writes the header of its output format, and the
+/// checksum sink one of its own, whatever the output format. No other sink type writes a file that the checker reads.
+std::optional<std::string> getExpectedHeader(const SinkDescriptor& descriptor)
 {
-    const auto sinkOperator = plan.getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
-    INVARIANT(sinkOperator.has_value(), "The optimized plan should have a sink operator");
-    const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
-    INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
-    return descriptor->getOutputFormatterDescriptor().getOutputFormatterType() != Identifier::parse("JSON");
+    if (Sql::sameName(descriptor.getSinkType(), Sql::Checksum))
+    {
+        return std::string{ChecksumHeader};
+    }
+    if (Sql::sameName(descriptor.getSinkType(), Sql::File))
+    {
+        return OutputFormatterProvider::provideHeader(
+            descriptor.getOutputFormatterDescriptor(),
+            *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor.getSchema()));
+    }
+    return std::nullopt;
 }
 
 template <typename T>
@@ -215,9 +234,11 @@ private:
         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
         plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
         auto optimized = queryOptimizer.optimize(plan);
-        auto schema = getSinkOutputSchema(optimized);
-        const auto writesHeader = sinkWritesHeader(optimized);
-        return BoundPlan{.plan = std::move(optimized), .sinkOutputSchema = std::move(schema), .sinkWritesHeader = writesHeader};
+        const auto sinkDescriptor = getSinkDescriptor(optimized);
+        return BoundPlan{
+            .plan = std::move(optimized),
+            .sinkOutputSchema = getSinkOutputSchema(sinkDescriptor),
+            .expectedHeader = getExpectedHeader(sinkDescriptor)};
     }
 
     [[nodiscard]] std::string runExplain(const std::string& sql) const

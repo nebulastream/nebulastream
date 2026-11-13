@@ -15,22 +15,33 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
+#include <string>
 
+#include <DataTypes/UnboundField.hpp>
 #include <Model/Verdict.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
+
+/// One half of a differential block: the file its query wrote, the schema of its bound plan's sink, and the header that sink writes.
+struct DifferentialSide
+{
+    std::filesystem::path resultFile;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
+    /// Absent if the sink writes no header.
+    std::optional<std::string> expectedHeader;
+};
 
 /// One differential check: the two result files have to agree.
 /// The files are parsed and compared tuple by tuple, the same way a result is compared with its expectation, so they
 /// need not be byte-identical.
 struct DifferentialCheck
 {
-    std::filesystem::path firstResultFile;
-    std::filesystem::path secondResultFile;
-    /// Whether the output format of each side writes a schema header in front of the rows.
-    bool firstHasHeader = true;
-    bool secondHasHeader = true;
+    DifferentialSide first;
+    DifferentialSide second;
 
     [[nodiscard]] Verdict check() const;
 };

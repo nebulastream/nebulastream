@@ -37,7 +37,8 @@ struct StatementOutcome
 
     /// Result file schema, absent for a negative or EXPLAIN case where we don't produce any actual result tuples.
     std::optional<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchema;
-    bool sinkWritesHeader = true;
+    /// The header that the sink writes in front of the rows, absent if it writes none or no plan was bound.
+    std::optional<std::string> expectedHeader;
 
     std::optional<std::string> explained;
 };

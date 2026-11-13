@@ -27,27 +27,19 @@ namespace NES
 
 Verdict DifferentialCheck::check() const
 {
-    const auto first = loadQueryResult(firstResultFile, firstHasHeader);
-    if (not first)
+    const auto firstRows = loadQueryResult(first.resultFile, first.expectedHeader);
+    if (not firstRows)
     {
-        return std::unexpected(Mismatch{fmt::format("the first query of the differential block: {}", first.error())});
+        return std::unexpected(Mismatch{fmt::format("the first query of the differential block: {}", firstRows.error())});
     }
-    const auto second = loadQueryResult(secondResultFile, secondHasHeader);
-    if (not second)
+    const auto secondRows = loadQueryResult(second.resultFile, second.expectedHeader);
+    if (not secondRows)
     {
-        return std::unexpected(Mismatch{fmt::format("the second query of the differential block: {}", second.error())});
+        return std::unexpected(Mismatch{fmt::format("the second query of the differential block: {}", secondRows.error())});
     }
 
-    /// A side without a header borrows the schema of the other side, but at least one side must provide one to compare rows field by field.
-    if (not first->schema.has_value() and not second->schema.has_value())
-    {
-        return std::unexpected(
-            Mismatch{"a differential block needs a schema header on at least one side, but neither result file has one"});
-    }
-    const auto& firstSchema = first->schema.has_value() ? *first->schema : *second->schema;
-    const auto& secondSchema = second->schema.has_value() ? *second->schema : *first->schema;
-
-    return toVerdict(compare(firstSchema, first->tuples, secondSchema, second->tuples), ComparisonOrigin::DifferentialBlock);
+    /// Each side's rows are read with the schema of its own bound plan, so two output formats without a header compare as well.
+    return toVerdict(compare(first.schema, *firstRows, second.schema, *secondRows), ComparisonOrigin::DifferentialBlock);
 }
 
 }

@@ -25,15 +25,14 @@ namespace NES
 
 Verdict QueryResultCheck::check() const
 {
-    const auto loaded = loadQueryResult(resultFile, hasHeader);
-    if (not loaded)
+    const auto rows = loadQueryResult(resultFile, expectedHeader);
+    if (not rows)
     {
-        return std::unexpected(Mismatch{loaded.error()});
+        return std::unexpected(Mismatch{rows.error()});
     }
 
-    /// A result without a header has no schema to check, so its rows are compared against the declared schema alone.
-    return toVerdict(
-        compare(expectedSchema, expectedTuples, loaded->schema.value_or(expectedSchema), loaded->tuples), ComparisonOrigin::SingleQuery);
+    /// The sink wrote its rows with the schema of the bound plan, which the header, if any, already confirmed byte for byte.
+    return toVerdict(compare(expectedSchema, expectedTuples, expectedSchema, *rows), ComparisonOrigin::SingleQuery);
 }
 
 }

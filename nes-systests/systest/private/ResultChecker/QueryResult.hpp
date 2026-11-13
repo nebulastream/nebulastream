@@ -20,24 +20,15 @@
 #include <string>
 #include <vector>
 
-#include <DataTypes/UnboundField.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-
 namespace NES
 {
 
-struct QueryResult
-{
-    /// Empty when the output format writes no header, so the result file holds only rows.
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema;
-    std::vector<std::string> tuples;
-};
-
-/// Reads a result file: the first line is the schema header, every further line one row.
-/// A file without a header, as the JSON output formatter writes it, holds only rows, so an empty file is a valid empty result.
-/// A file with a header and no rows can be a valid empty result, but an empty file that should have a header is not.
-/// A file that cannot be read yields the reason as text for the verdict.
-[[nodiscard]] std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::path& resultFilePath, bool hasHeader);
+/// Reads the rows of a result file, one per line.
+/// The checker knows the schema of the rows from the bound plan, so it does not read it from the file. If the sink writes a header,
+/// the file has to start with exactly that header, whatever the output format; a file with the header and no rows is a valid empty
+/// result, but a file without it is not. Without a header, every line is a row and an empty file is an empty result.
+/// A file that cannot be read, or that does not start with the expected header, yields the reason as text for the verdict.
+[[nodiscard]] std::expected<std::vector<std::string>, std::string>
+loadQueryResult(const std::filesystem::path& resultFilePath, const std::optional<std::string>& expectedHeader);
 
 }

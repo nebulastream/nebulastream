@@ -55,7 +55,8 @@ DistributedQueryStatusSnapshot createSnapshotIn(const QueryStatus state, const s
 
 StatementOutcome createOutcomeOf(std::expected<DistributedQueryStatusSnapshot, Exception> reached)
 {
-    return StatementOutcome{.reached = std::move(reached), .sinkOutputSchema = std::nullopt, .explained = std::nullopt};
+    return StatementOutcome{
+        .reached = std::move(reached), .sinkOutputSchema = std::nullopt, .expectedHeader = std::nullopt, .explained = std::nullopt};
 }
 
 RewrittenTestCase createQueryExpecting(Expectation expectation)
@@ -70,6 +71,7 @@ StatementOutcome createExplainedOutcome(std::string plan)
     return StatementOutcome{
         .reached = std::unexpected{InvalidQuerySyntax("an EXPLAIN never reaches a worker")},
         .sinkOutputSchema = std::nullopt,
+        .expectedHeader = std::nullopt,
         .explained = std::move(plan)};
 }
 
