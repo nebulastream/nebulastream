@@ -34,15 +34,15 @@ namespace NES
 {
 namespace
 {
-/// co_spawn default-constructs its result on failure; AsyncValues deliberately has no default constructor.
-boost::asio::awaitable<std::optional<AsyncValues>> optionalResult(boost::asio::awaitable<AsyncValues> operation)
+/// co_spawn default-constructs its result on failure; SharedRuntimeValues deliberately has no default constructor.
+boost::asio::awaitable<std::optional<SharedRuntimeValues>> optionalResult(boost::asio::awaitable<SharedRuntimeValues> operation)
 {
     co_return co_await std::move(operation);
 }
 
 using Operation = decltype(boost::asio::co_spawn(
-    std::declval<SharedAsyncResult::Executor>(),
-    std::declval<boost::asio::awaitable<std::optional<AsyncValues>>>(),
+    std::declval<SharedAsyncResult::Strand>(),
+    std::declval<boost::asio::awaitable<std::optional<SharedRuntimeValues>>>(),
     boost::asio::deferred));
 
 boost::asio::awaitable<void> waitAll(std::vector<Operation> operations)
@@ -65,12 +65,12 @@ boost::asio::awaitable<void> waitAll(std::vector<Operation> operations)
 }
 
 AsyncGraphExecution::AsyncGraphExecution(
-    SharedAsyncResult::Executor executor, std::shared_ptr<const AsyncCallGraph> graph, ReadInput readInput, Invoke invoke)
+    SharedAsyncResult::Strand executor, std::shared_ptr<const AsyncCallGraph> graph, ReadInput readInput, Invoke invoke)
     : executor(std::move(executor)), graph(std::move(graph)), readInput(std::move(readInput)), invoke(std::move(invoke))
 {
 }
 
-boost::asio::awaitable<AsyncValues> AsyncGraphExecution::run()
+boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::run()
 {
     return runImpl(shared_from_this());
 }
@@ -82,10 +82,9 @@ std::shared_ptr<SharedAsyncResult> AsyncGraphExecution::evaluate(const AsyncCall
     {
         return found->second;
     }
-    if (std::ranges::find(graph->getCalls(), node) == graph->getCalls().end())
-    {
-        throw InvalidQuerySyntax("Producer is not part of this async graph's reachable definitions");
-    }
+    PRECONDITION(
+        std::ranges::find(graph->getCalls(), node) != graph->getCalls().end(),
+        "Producer is not part of this async graph's reachable definitions");
     if (cancelled)
     {
         throw boost::system::system_error{boost::asio::error::operation_aborted};
@@ -105,7 +104,7 @@ void AsyncGraphExecution::cancel()
     }
 }
 
-boost::asio::awaitable<AsyncValues> AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node)
+boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node)
 {
     if (!self || self->cancelled)
     {
@@ -126,7 +125,7 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::invokeNode(std::shared_
             }
         }
     }
-    /// We await all needed depdencies together instead of one-by-one
+    /// Start all lazy dependencies together so independent calls can overlap.
     co_await waitAll(std::move(dependencies));
     if (self->cancelled)
     {
@@ -153,12 +152,12 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::invokeNode(std::shared_
         else
         {
             const auto& reference = std::get<AsyncResultReference>(argument);
-            /// This should not suspend since we already awaited all inputs
+            /// waitAll has completed these producers; get() reads their cached results.
             const auto values = co_await producers.at(reference.getProducer())->get();
             arguments.push_back(values[reference.getOutputIndex()].toOwned());
         }
     }
-    auto returnValues = co_await self->invoke(node, AsyncValues{std::move(arguments)});
+    auto returnValues = co_await self->invoke(node, SharedRuntimeValues{std::move(arguments)});
     INVARIANT(
         returnValues.size() == node->getResultTypes().size(),
         "async function {} produced {} values, but declares {}",
@@ -189,15 +188,12 @@ boost::asio::awaitable<void> AsyncGraphExecution::cancelAndDrain()
     }
 }
 
-boost::asio::awaitable<AsyncValues> AsyncGraphExecution::runImpl(std::shared_ptr<AsyncGraphExecution> self)
+boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::runImpl(std::shared_ptr<AsyncGraphExecution> self)
 {
     PRECONDITION(self->executor.running_in_this_thread(), "Run async graph execution on its strand");
-    if (self->runStarted)
-    {
-        throw InvalidQuerySyntax("A row's async graph execution can only be run once");
-    }
+    PRECONDITION(!self->runStarted, "A row's async graph execution can only be run once");
     self->runStarted = true;
-    std::optional<AsyncValues> result;
+    std::optional<SharedRuntimeValues> result;
     std::exception_ptr failure;
     try
     {
@@ -217,11 +213,11 @@ boost::asio::awaitable<AsyncValues> AsyncGraphExecution::runImpl(std::shared_ptr
         std::vector<RuntimeValue> values;
         for (const auto& output : self->graph->getOutputs())
         {
-            /// This should not suspend since the waitAll should have completed all the awaitables
+            /// waitAll has completed these producers; get() reads their cached results.
             const auto outputs = co_await producers.at(output.result.getProducer())->get();
             values.push_back(outputs[output.result.getOutputIndex()].toOwned());
         }
-        result = AsyncValues{std::move(values)};
+        result = SharedRuntimeValues{std::move(values)};
     }
     catch (...) /// NOLINT(no-raw-catch-all) preserve the initiating error across shielded cleanup
     {

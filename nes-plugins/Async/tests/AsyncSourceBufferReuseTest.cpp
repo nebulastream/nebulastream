@@ -67,7 +67,7 @@ namespace NES
 namespace
 {
 using RowSchema = Schema<UnqualifiedUnboundField, Ordered>;
-using Evaluate = std::function<AsyncValues(int64_t)>;
+using Evaluate = std::function<SharedRuntimeValues(int64_t)>;
 const DataType INT64{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
 const DataType BYTES{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
 
@@ -89,7 +89,7 @@ class RowFunction final : public AsyncFunction
 public:
     RowFunction(Evaluate evaluate, bool suspend) : evaluate(std::move(evaluate)), suspend(suspend) { }
 
-    boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) override
+    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override
     {
         const auto id = arguments[0].get<int64_t>();
         if (suspend)
@@ -119,11 +119,16 @@ public:
 
     size_t getNumOfUnpooledBuffers() const override { return provider->getNumOfUnpooledBuffers(); }
 
-    TupleBuffer getBufferBlocking() override { throw CannotAllocateBuffer("Unexpected blocking allocation"); }
+    TupleBuffer getBufferBlocking() override
+    {
+        ADD_FAILURE() << "Unexpected blocking allocation";
+        return {};
+    }
 
     std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds) override
     {
-        throw CannotAllocateBuffer("Unexpected timed allocation");
+        ADD_FAILURE() << "Unexpected timed allocation";
+        return std::nullopt;
     }
 
     std::optional<TupleBuffer> getBufferNoBlocking() override
@@ -197,7 +202,7 @@ public:
                 InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
             outputSchema);
         ASSERT_TRUE(descriptor.has_value());
-        sink = std::make_unique<HandoffChannel::Lease>(channel, 4, HandoffChannel::Role::SINK);
+        sink = std::make_unique<HandoffChannel::Attachment>(channel, 4, HandoffChannel::Role::SINK);
         source = std::make_unique<AsyncSource>(config, *descriptor);
         EXPECT_FALSE(source->requiresPreallocatedBuffer());
         source->open(outputProvider ? std::move(outputProvider) : provider);
@@ -270,13 +275,13 @@ public:
     RowSchema inputSchema;
     RowSchema outputSchema;
     std::shared_ptr<BufferManager> provider;
-    std::unique_ptr<HandoffChannel::Lease> sink;
+    std::unique_ptr<HandoffChannel::Attachment> sink;
     std::unique_ptr<AsyncSource> source;
 };
 
 TEST_F(AsyncSourceBufferReuseTest, ReusesExclusiveParentWithoutAllocatingAndPreservesMetadata)
 {
-    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return AsyncValues::make(id * 3); }, true);
+    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return SharedRuntimeValues::make(id * 3); }, true);
     auto buffer = input(32);
     const auto* address = buffer.getAvailableMemoryArea().data();
     buffer.setSequenceNumber(SequenceNumber{17});
@@ -310,7 +315,7 @@ TEST_F(AsyncSourceBufferReuseTest, ReusesExclusiveParentWithoutAllocatingAndPres
 
 TEST_F(AsyncSourceBufferReuseTest, SharedParentIsCopiedWithoutChangingTheOtherConsumer)
 {
-    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return AsyncValues::make(id + 10); });
+    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 10); });
     auto original = input(8);
     push(original);
     const auto output = next();
@@ -330,7 +335,7 @@ TEST_F(AsyncSourceBufferReuseTest, DifferentFieldOrderUsesTheCopyPath)
         UnqualifiedUnboundField{Identifier::parse("RESULT"), INT64},
         UnqualifiedUnboundField{Identifier::parse("ID"), INT64},
         UnqualifiedUnboundField{Identifier::parse("KEEP"), INT64}};
-    start(schema(INT64), reordered, INT64, [](int64_t id) { return AsyncValues::make(id + 10); });
+    start(schema(INT64), reordered, INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 10); });
     auto buffer = input(8);
     const auto* address = buffer.getAvailableMemoryArea().data();
     push(std::move(buffer));
@@ -353,7 +358,7 @@ TEST_F(AsyncSourceBufferReuseTest, ReusesParentAndPreservesExistingVariablePaylo
         schema(BYTES, true),
         schema(BYTES, true),
         BYTES,
-        [](int64_t id) { return AsyncValues::make(id == 0 ? std::string{} : std::string(8192, static_cast<char>(id))); });
+        [](int64_t id) { return SharedRuntimeValues::make(id == 0 ? std::string{} : std::string(8192, static_cast<char>(id))); });
     auto buffer = input(8, true);
     const auto* address = buffer.getAvailableMemoryArea().data();
     const auto originalChildren = buffer.getNumberOfChildBuffers();
@@ -372,7 +377,7 @@ TEST_F(AsyncSourceBufferReuseTest, ReusesParentAndPreservesExistingVariablePaylo
 
 TEST_F(AsyncSourceBufferReuseTest, SharedChildRemainsUnchangedAndNewResultsShareAPrivateChild)
 {
-    start(schema(BYTES, true), schema(BYTES, true), BYTES, [](int64_t) { return AsyncValues::make(std::string{"result"}); });
+    start(schema(BYTES, true), schema(BYTES, true), BYTES, [](int64_t) { return SharedRuntimeValues::make(std::string{"result"}); });
     auto buffer = input(8, true);
     const auto* address = buffer.getAvailableMemoryArea().data();
     ASSERT_EQ(buffer.getNumberOfChildBuffers(), 1);
@@ -394,7 +399,7 @@ TEST_F(AsyncSourceBufferReuseTest, SharedChildRemainsUnchangedAndNewResultsShare
 
 TEST_F(AsyncSourceBufferReuseTest, CopyPathDoesNotAppendToTheOriginalParentsChildren)
 {
-    start(schema(BYTES, true), schema(BYTES, true), BYTES, [](int64_t) { return AsyncValues::make(std::string{"result"}); });
+    start(schema(BYTES, true), schema(BYTES, true), BYTES, [](int64_t) { return SharedRuntimeValues::make(std::string{"result"}); });
     auto original = input(8, true);
     auto child = original.loadChildBuffer(ChildBufferIndex{0});
     const auto used = child.getNumberOfTuples();
@@ -421,9 +426,9 @@ TEST_F(AsyncSourceBufferReuseTest, NullableVariableResultsSupportNullEmptyAndBin
         {
             if (id % 3 == 0)
             {
-                return AsyncValues::make(RuntimeValue::null(nullable));
+                return SharedRuntimeValues::make(RuntimeValue::null(nullable));
             }
-            return AsyncValues::make(RuntimeValue{nullable, id % 3 == 1 ? std::string{} : std::string{"\0\xff", 2}});
+            return SharedRuntimeValues::make(RuntimeValue{nullable, id % 3 == 1 ? std::string{} : std::string{"\0\xff", 2}});
         });
     auto buffer = provider->getBufferBlocking();
     for (size_t row = 0; row < 9; ++row)
@@ -453,10 +458,10 @@ TEST_F(AsyncSourceBufferReuseTest, EmptyBufferIsReusedAndEndOfStreamNeedsNoOutpu
         schema(INT64),
         schema(INT64),
         INT64,
-        [](int64_t) -> AsyncValues
+        [](int64_t) -> SharedRuntimeValues
         {
             ADD_FAILURE() << "An empty buffer must not invoke the function";
-            return AsyncValues::make(int64_t{0});
+            return SharedRuntimeValues::make(int64_t{0});
         });
     auto buffer = input(0);
     const auto* address = buffer.getAvailableMemoryArea().data();
@@ -472,7 +477,7 @@ TEST_F(AsyncSourceBufferReuseTest, EmptyBufferIsReusedAndEndOfStreamNeedsNoOutpu
 
 TEST_F(AsyncSourceBufferReuseTest, ReuseNeedsNoFreePooledBuffer)
 {
-    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return AsyncValues::make(id + 1); });
+    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 1); });
     auto buffer = input(8);
     const auto* address = buffer.getAvailableMemoryArea().data();
     push(std::move(buffer));
@@ -489,7 +494,7 @@ TEST_F(AsyncSourceBufferReuseTest, ReuseNeedsNoFreePooledBuffer)
 
 TEST_F(AsyncSourceBufferReuseTest, SharedParentCopyUsesUnpooledMemoryInsteadOfWaitingForItsOwnPool)
 {
-    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return AsyncValues::make(id + 1); });
+    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 1); });
     auto original = input(8);
     push(original);
     std::vector<TupleBuffer> occupied;
@@ -510,7 +515,7 @@ TEST_F(AsyncSourceBufferReuseTest, SharedParentCopyUsesUnpooledMemoryInsteadOfWa
 TEST_F(AsyncSourceBufferReuseTest, RejectedCopyAllocationFailsAndCloseDrainsOtherBorrowedBuffers)
 {
     const auto rejecting = std::make_shared<RejectingOutputProvider>(provider);
-    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return AsyncValues::make(id + 1); }, true, rejecting);
+    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 1); }, true, rejecting);
     auto original = input(1);
     push(original);
     push(input(32));
@@ -535,7 +540,7 @@ TEST_F(AsyncSourceBufferReuseTest, RejectedCopyAllocationFailsAndCloseDrainsOthe
 
 TEST_F(AsyncSourceBufferReuseTest, ConcurrentRowsAndBuffersAreReusedInHandoffOrder)
 {
-    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return AsyncValues::make(id * 7); }, true);
+    start(schema(INT64), schema(INT64), INT64, [](int64_t id) { return SharedRuntimeValues::make(id * 7); }, true);
     std::vector<const std::byte*> addresses;
     for (size_t index = 0; index < 4; ++index)
     {
@@ -565,7 +570,8 @@ TEST_F(AsyncSourceBufferReuseTest, FixedSizeNullableResultsOverwriteOnlyTheirOwn
         schema(nullable),
         schema(nullable),
         nullable,
-        [nullable](int64_t id) { return AsyncValues::make(id % 2 == 0 ? RuntimeValue::null(nullable) : RuntimeValue{nullable, id * 11}); },
+        [nullable](int64_t id)
+        { return SharedRuntimeValues::make(id % 2 == 0 ? RuntimeValue::null(nullable) : RuntimeValue{nullable, id * 11}); },
         true);
     auto buffer = input(32);
     const auto* address = buffer.getAvailableMemoryArea().data();
@@ -597,7 +603,7 @@ TEST_F(AsyncSourceBufferReuseTest, FailureDrainsRowsWithoutPublishingOrMutatingT
             {
                 throw CannotReadFromSource("test failure");
             }
-            return AsyncValues::make(id + 100);
+            return SharedRuntimeValues::make(id + 100);
         },
         true);
     auto original = input(32);

@@ -39,10 +39,14 @@ class HttpCallAsyncFunction final : public AsyncFunction
 public:
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments);
 
-    boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) override;
-    [[nodiscard]] std::optional<size_t> maxRetries(const AsyncValues& arguments) const override;
+    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override;
+    std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) override;
+    [[nodiscard]] std::optional<size_t> maxRetries(const SharedRuntimeValues& arguments) const override;
 
 private:
+    class Prepared;
+    boost::asio::awaitable<SharedRuntimeValues>
+    execute(std::string body, std::string url, std::string host, std::string port, std::string target, uint64_t millis);
     /// Takes its arguments by value, as a coroutine has to own what it reads after its first suspension.
     boost::asio::awaitable<std::string>
     exchange(std::string host, std::string port, std::string target, std::string body, std::chrono::steady_clock::time_point deadline);

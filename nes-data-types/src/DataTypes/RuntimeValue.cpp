@@ -76,9 +76,16 @@ std::span<const std::byte> RuntimeValueView::bytes() const
 
 uint64_t RuntimeValueView::getUnsignedInteger() const
 {
+    const auto value = tryGetUnsignedInteger();
+    PRECONDITION(value.has_value(), "Expected a non-negative integer runtime value");
+    return *value;
+}
+
+std::optional<uint64_t> RuntimeValueView::tryGetUnsignedInteger() const
+{
     return visitRuntimeType(
         type.type,
-        [this]<typename T>() -> uint64_t
+        [this]<typename T>() -> std::optional<uint64_t>
         {
             if constexpr (std::integral<T> && !std::same_as<T, bool> && !std::same_as<T, char>)
             {
@@ -87,7 +94,7 @@ uint64_t RuntimeValueView::getUnsignedInteger() const
                 {
                     if (value < 0)
                     {
-                        throw DifferentFieldTypeExpected("Expected a non-negative integer, got {}", value);
+                        return std::nullopt;
                     }
                 }
                 return static_cast<uint64_t>(value);
@@ -143,7 +150,11 @@ RuntimeValue RuntimeValue::fromLiteral(const DataType type, const std::string_vi
             }
             else
             {
-                return RuntimeValue{type, from_chars_with_exception<T>(literal)};
+                if (const auto parsed = from_chars<T>(literal))
+                {
+                    return RuntimeValue{type, *parsed};
+                }
+                throw InvalidLiteral("'{}' is not a valid constant of type {}", literal, type);
             }
         });
 }
@@ -208,8 +219,16 @@ Reflected Reflector<RuntimeValue>::operator()(const RuntimeValue& value, const R
 RuntimeValue Unreflector<RuntimeValue>::operator()(const Reflected& value, const ReflectionContext& context) const
 {
     const auto [type, payload] = context.unreflect<std::pair<DataType, Reflected>>(value);
+    if (type.type == DataType::Type::UNDEFINED)
+    {
+        throw CannotDeserialize("UNDEFINED has no runtime value representation");
+    }
     if (payload.isEmpty())
     {
+        if (!type.nullable)
+        {
+            throw CannotDeserialize("Cannot deserialize null for non-nullable {}", type);
+        }
         return RuntimeValue::null(type);
     }
     return visitRuntimeType(

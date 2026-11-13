@@ -76,8 +76,8 @@ std::set<std::type_index> AsyncFunctionLiftingRule::wants() const
 namespace
 {
 using UnboundProjection = ProjectionLogicalOperator::UnboundProjection;
-using Substitution = std::vector<std::pair<LogicalFunction, LogicalFunction>>;
-using Named = std::vector<std::pair<LogicalFunction, Identifier>>;
+using ExpressionSubstitutions = std::vector<std::pair<LogicalFunction, LogicalFunction>>;
+using NamedExpressions = std::vector<std::pair<LogicalFunction, Identifier>>;
 
 bool isAsync(const LogicalFunction& function)
 {
@@ -162,9 +162,9 @@ std::string callKey(const LogicalFunction& call)
 }
 
 /// Field accesses that survive are rebound by name when the projection infers its schema.
-LogicalFunction substitute(const LogicalFunction& function, const Substitution& substitution)
+LogicalFunction substitute(const LogicalFunction& function, const ExpressionSubstitutions& substitution)
 {
-    if (const auto it = std::ranges::find(substitution, function, &Substitution::value_type::first); it != substitution.end())
+    if (const auto it = std::ranges::find(substitution, function, &ExpressionSubstitutions::value_type::first); it != substitution.end())
     {
         return it->second;
     }
@@ -196,7 +196,7 @@ std::vector<UnboundProjection> forwardAll(const LogicalOperator& op)
         | std::ranges::to<std::vector>();
 }
 
-class Lifter
+class AsyncCallLifter
 {
 public:
     /// One stage per chain of directly nested calls: each pass lifts the outermost ready calls.
@@ -336,14 +336,14 @@ private:
         {
             collectComputedArguments(call, computedArguments);
         }
-        Named liftedArguments;
+        NamedExpressions liftedArguments;
         for (const auto& argument : computedArguments)
         {
             auto name = freshName("arg", child);
             preProjections.emplace_back(name, argument);
             liftedArguments.emplace_back(argument, std::move(name));
         }
-        Named callNames;
+        NamedExpressions callNames;
         for (const auto& call : calls)
         {
             auto name = freshName("call", child);
@@ -363,7 +363,7 @@ private:
         const LogicalOperator pre = ProjectionLogicalOperator::create(child, preProjections, ProjectionLogicalOperator::Asterisk{false});
 
         /// async stage: forwards pre and fills each slot with its call.
-        Substitution argumentSubstitution;
+        ExpressionSubstitutions argumentSubstitution;
         for (const auto& [argument, name] : liftedArguments)
         {
             argumentSubstitution.emplace_back(argument, accessOutput(pre, name));
@@ -371,7 +371,7 @@ private:
         std::vector<UnboundProjection> asyncProjections;
         for (const auto& field : sortedFields(pre))
         {
-            const auto call = std::ranges::find(callNames, field.getLastName(), &Named::value_type::second);
+            const auto call = std::ranges::find(callNames, field.getLastName(), &NamedExpressions::value_type::second);
             asyncProjections.emplace_back(
                 field.getLastName(),
                 call == callNames.end() ? LogicalFunction{FieldAccessLogicalFunction{field}}
@@ -384,7 +384,7 @@ private:
 
         /// post: the original projection on top of the async stage. An asterisk is expanded against
         /// the original child, so the helper fields do not leak into the output.
-        Substitution callSubstitution;
+        ExpressionSubstitutions callSubstitution;
         for (const auto& [call, name] : callNames)
         {
             callSubstitution.emplace_back(call, accessOutput(async, name));
@@ -416,7 +416,7 @@ private:
 
 LogicalPlan AsyncFunctionLiftingRule::apply(LogicalPlan queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
 {
-    Lifter lifter;
+    AsyncCallLifter lifter;
     PlanVisitor<> visitor{
         [&lifter](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
         { return lifter.liftAll(op.withChildren(children)); }};

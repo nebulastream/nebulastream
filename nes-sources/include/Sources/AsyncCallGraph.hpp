@@ -30,7 +30,7 @@ namespace NES
 {
 namespace detail
 {
-struct AsyncCallScope;
+struct AsyncGraphScope;
 }
 
 class AsyncCall;
@@ -49,8 +49,8 @@ public:
 
 private:
     friend class AsyncCallGraphBuilder;
-    InputFieldReference(std::shared_ptr<const detail::AsyncCallScope> scope, QualifiedIdentifier field);
-    std::shared_ptr<const detail::AsyncCallScope> scope;
+    InputFieldReference(std::shared_ptr<const detail::AsyncGraphScope> scope, QualifiedIdentifier field);
+    std::shared_ptr<const detail::AsyncGraphScope> scope;
     QualifiedIdentifier field;
 };
 
@@ -90,17 +90,17 @@ public:
 private:
     friend class AsyncCallGraphBuilder;
     AsyncCall(
-        std::shared_ptr<const detail::AsyncCallScope> scope,
+        std::shared_ptr<const detail::AsyncGraphScope> scope,
         std::string functionType,
         std::vector<AsyncCallArgument> arguments,
         std::vector<DataType> resultTypes);
-    std::shared_ptr<const detail::AsyncCallScope> scope;
+    std::shared_ptr<const detail::AsyncGraphScope> scope;
     std::string functionType;
     std::vector<AsyncCallArgument> arguments;
     std::vector<DataType> resultTypes;
 };
 
-struct AsyncCallOutput
+struct AsyncOutputMapping
 {
     AsyncResultReference result;
     QualifiedIdentifier field;
@@ -113,18 +113,19 @@ class AsyncCallGraph
 public:
     [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getInputSchema() const;
     [[nodiscard]] const std::vector<AsyncCall::Ptr>& getCalls() const;
-    [[nodiscard]] const std::vector<AsyncCallOutput>& getOutputs() const;
+    [[nodiscard]] const std::vector<AsyncOutputMapping>& getOutputs() const;
 
 private:
     friend class AsyncCallGraphBuilder;
     AsyncCallGraph(
-        std::shared_ptr<const detail::AsyncCallScope> scope, std::vector<AsyncCall::Ptr> calls, std::vector<AsyncCallOutput> outputs);
-    std::shared_ptr<const detail::AsyncCallScope> scope;
+        std::shared_ptr<const detail::AsyncGraphScope> scope, std::vector<AsyncCall::Ptr> calls, std::vector<AsyncOutputMapping> outputs);
+    std::shared_ptr<const detail::AsyncGraphScope> scope;
     std::vector<AsyncCall::Ptr> calls;
-    std::vector<AsyncCallOutput> outputs;
+    std::vector<AsyncOutputMapping> outputs;
 };
 
-/// A single-use builder defines the binding scope. Foreign field/result handles are rejected, including after a rewrite.
+/// A single-use builder defines the binding scope. Misuse is a precondition violation (contract checks may be disabled); callers must supply
+/// handles from this builder's scope and finalize it only once. Foreign field/result handles are rejected, including after a rewrite.
 /// Calls can only depend on already constructed immutable producers, making cycles impossible through this API.
 class AsyncCallGraphBuilder
 {
@@ -143,9 +144,9 @@ public:
 
 private:
     void requireOpen() const;
-    std::shared_ptr<const detail::AsyncCallScope> scope;
+    std::shared_ptr<const detail::AsyncGraphScope> scope;
     std::vector<AsyncCall::Ptr> calls;
-    std::vector<AsyncCallOutput> outputs;
+    std::vector<AsyncOutputMapping> outputs;
     bool built = false;
 };
 

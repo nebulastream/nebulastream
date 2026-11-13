@@ -39,7 +39,7 @@ namespace NES
     const auto maxMillis = std::chrono::duration_cast<Milliseconds>(available).count();
     if (!std::in_range<Milliseconds::rep>(millis) || millis > static_cast<uint64_t>(maxMillis))
     {
-        throw CannotReadFromSource("{} duration {} ms exceeds the representable steady-clock deadline", operation, millis);
+        throw ArithmeticalError("{} duration {} ms exceeds the representable steady-clock deadline", operation, millis);
     }
     return now + std::chrono::duration_cast<Clock::duration>(Milliseconds{static_cast<Milliseconds::rep>(millis)});
 }

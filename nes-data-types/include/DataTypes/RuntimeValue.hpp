@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -152,8 +153,10 @@ public:
     }
 
     [[nodiscard]] std::span<const std::byte> bytes() const;
-    /// Explicit conversion for integer options/durations; negative input is a user-data error.
-    /// The caller must supply a non-null integer value (not BOOLEAN or CHAR).
+    /// Non-throwing domain check for integer options/durations. Negative values return nullopt.
+    /// Both conversions require a non-null integer value (not BOOLEAN or CHAR).
+    [[nodiscard]] std::optional<uint64_t> tryGetUnsignedInteger() const;
+    /// Contract-only conversion after non-negativity was validated at the input boundary.
     [[nodiscard]] uint64_t getUnsignedInteger() const;
     /// Copy into owned storage, preserving the exact datatype, including nullability.
     [[nodiscard]] RuntimeValue toOwned() const;

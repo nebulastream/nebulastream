@@ -35,33 +35,33 @@ namespace NES
 class SharedAsyncResult final : public std::enable_shared_from_this<SharedAsyncResult>
 {
 public:
-    using Executor = boost::asio::strand<boost::asio::io_context::executor_type>;
-    using Factory = std::function<boost::asio::awaitable<AsyncValues>()>;
-    using Deadline = std::chrono::steady_clock::time_point;
+    using Strand = boost::asio::strand<boost::asio::io_context::executor_type>;
+    using Factory = std::function<boost::asio::awaitable<SharedRuntimeValues>()>;
 
-    SharedAsyncResult(Executor executor, Factory factory);
-    [[nodiscard]] boost::asio::awaitable<AsyncValues> get();
-    [[nodiscard]] boost::asio::awaitable<AsyncValues> getUntil(Deadline deadline);
+    SharedAsyncResult(Strand executor, Factory factory);
+    [[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> get();
+    [[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> getUntil(std::chrono::steady_clock::time_point deadline);
     /// Join started work without starting a lazy producer, ignoring its outcome. Use a non-cancelled cleanup scope.
     [[nodiscard]] boost::asio::awaitable<void> join();
     void cancel();
     [[nodiscard]] bool finished() const;
 
 private:
-    static boost::asio::awaitable<AsyncValues> wait(std::shared_ptr<SharedAsyncResult> self, std::optional<Deadline> deadline);
+    static boost::asio::awaitable<SharedRuntimeValues>
+    wait(std::shared_ptr<SharedAsyncResult> self, std::optional<std::chrono::steady_clock::time_point> deadline);
     static boost::asio::awaitable<void> joinImpl(std::shared_ptr<SharedAsyncResult> self);
     void start();
     void cancelImpl();
-    void complete(std::exception_ptr error, std::optional<AsyncValues> result);
-    [[nodiscard]] AsyncValues read() const;
+    void complete(std::exception_ptr error, std::optional<SharedRuntimeValues> result);
+    [[nodiscard]] SharedRuntimeValues read() const;
 
-    Executor executor;
+    Strand executor;
     Factory factory;
     boost::asio::cancellation_signal producerCancellation;
     bool started = false;
     bool done = false;
-    Deadline completedAt{};
-    std::optional<AsyncValues> result;
+    std::chrono::steady_clock::time_point completedAt{};
+    std::optional<SharedRuntimeValues> result;
     std::exception_ptr failure;
     std::vector<std::shared_ptr<boost::asio::steady_timer>> waiters;
 };

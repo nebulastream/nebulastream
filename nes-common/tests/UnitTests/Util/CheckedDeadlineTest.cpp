@@ -16,6 +16,7 @@
 #include <limits>
 #include <Util/CheckedDeadline.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -36,7 +37,8 @@ TEST(CheckedDeadlineTest, ZeroAndOrdinaryDurationsPreserveTheStartTime)
 TEST(CheckedDeadlineTest, RejectsUnsignedNarrowingAndClockTickOverflow)
 {
     const auto now = Clock::time_point{};
-    EXPECT_THROW(static_cast<void>(checkedSteadyDeadline(std::numeric_limits<uint64_t>::max(), "test", now)), Exception);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(checkedSteadyDeadline(std::numeric_limits<uint64_t>::max(), "test", now)), ErrorCode::ArithmeticalError);
     EXPECT_THROW(
         static_cast<void>(checkedSteadyDeadline(static_cast<uint64_t>(std::numeric_limits<int64_t>::max()), "test", now)), Exception);
 }
@@ -45,7 +47,7 @@ TEST(CheckedDeadlineTest, ChecksDeadlineAdditionAsWellAsDurationConversion)
 {
     const auto now = Clock::time_point::max() - 10ms;
     EXPECT_LE(checkedSteadyDeadline(10, "test", now), Clock::time_point::max());
-    EXPECT_THROW(static_cast<void>(checkedSteadyDeadline(11, "test", now)), Exception);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(checkedSteadyDeadline(11, "test", now)), ErrorCode::ArithmeticalError);
     EXPECT_EQ(checkedSteadyDeadline(0, "test", Clock::time_point::max()), Clock::time_point::max());
     EXPECT_THROW(static_cast<void>(checkedSteadyDeadline(1, "test", Clock::time_point::max())), Exception);
 }

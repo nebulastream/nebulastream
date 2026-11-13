@@ -14,21 +14,27 @@
 
 #include <Functions/HttpCallLogicalFunction.hpp>
 
+#include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
+#include <DataTypes/CheckedInteger.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/RuntimeValue.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
+#include <Util/CheckedDeadline.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <boost/url/parse.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -69,6 +75,16 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
             throw DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL, but got {}", argument);
         }
     }
+    if (const auto constant = copy.url.tryGetAs<ConstantValueLogicalFunction>())
+    {
+        const auto runtimeValue = RuntimeValue::fromLiteral(constant->getDataType(), constant->get().getConstantValue());
+        const std::string url{runtimeValue.view().get<std::string_view>()};
+        const auto parsed = boost::urls::parse_uri(url);
+        if (!parsed || parsed->scheme() != "http" || parsed->host().empty())
+        {
+            throw CannotInferSchema("HTTP_CALL constant URL must be an http:// URL with a host");
+        }
+    }
     if (timeoutMillis)
     {
         copy.timeoutMillis = timeoutMillis->withInferredDataType(schema);
@@ -77,6 +93,23 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
             throw DifferentFieldTypeExpected(
                 "HTTP_CALL expects a non-nullable integer timeout in milliseconds, but got {}", *copy.timeoutMillis);
         }
+        if (const auto constant = copy.timeoutMillis->tryGetAs<ConstantValueLogicalFunction>())
+        {
+            const auto runtimeValue = RuntimeValue::fromLiteral(constant->getDataType(), constant->get().getConstantValue());
+            try
+            {
+                const auto millis = checkedUnsignedIntegerOption(runtimeValue.view(), "HTTP_CALL timeout");
+                if (millis == 0)
+                {
+                    throw ArithmeticalError("HTTP_CALL timeout must be positive");
+                }
+                static_cast<void>(checkedSteadyDeadline(millis, "HTTP_CALL"));
+            }
+            catch (const Exception&)
+            {
+                throw CannotInferSchema("HTTP_CALL constant timeout must be a positive representable integer");
+            }
+        }
     }
     if (retries)
     {
@@ -84,6 +117,22 @@ LogicalFunction HttpCallLogicalFunction::withInferredDataType(const Schema<Field
         if (not copy.retries->getDataType().isInteger() or copy.retries->getDataType().nullable)
         {
             throw DifferentFieldTypeExpected("HTTP_CALL expects a non-nullable integer retry count, but got {}", *copy.retries);
+        }
+        if (const auto constant = copy.retries->tryGetAs<ConstantValueLogicalFunction>())
+        {
+            const auto runtimeValue = RuntimeValue::fromLiteral(constant->getDataType(), constant->get().getConstantValue());
+            try
+            {
+                const auto retries = checkedUnsignedIntegerOption(runtimeValue.view(), "HTTP_CALL retries");
+                if (!std::in_range<size_t>(retries) || retries == std::numeric_limits<size_t>::max())
+                {
+                    throw ArithmeticalError("HTTP_CALL retry count is not representable");
+                }
+            }
+            catch (const Exception&)
+            {
+                throw CannotInferSchema("HTTP_CALL constant retries must be a representable non-negative integer");
+            }
         }
     }
     return copy;

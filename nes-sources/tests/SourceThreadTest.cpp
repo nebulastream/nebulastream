@@ -508,20 +508,25 @@ TEST_F(SourceBufferCapabilityTest, ReturningSourceFailureClosesAndPreservesOrigi
 
 TEST_F(SourceBufferCapabilityTest, SuccessfulFillRequiresValidBufferEvenForZeroBytes)
 {
+#ifndef NO_ASSERT
+    SKIP_IF_TSAN();
+    Logger::setupLogging("SourceThreadInvariantDeathTest.log", LogLevel::LOG_DEBUG, false);
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     for (const size_t bytes : {size_t{0}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER})
     {
         SCOPED_TRACE(bytes);
-        recorder.recordedEmits.lock()->clear();
-        auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
-        EXPECT_CALL(*source, close()).Times(1);
-        EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
-            .WillOnce(testing::Return(Source::FillTupleBufferResult::withBytes(bytes)));
-        auto thread = start(std::move(source));
-        wait_for_emits(recorder, 1);
-        verify_non_blocking_stop(*thread);
-        verify_number_of_emits(recorder, 1);
-        verify_last_event<SourceReturnType::Error>(recorder);
+        EXPECT_DEATH(
+            {
+                auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
+                EXPECT_CALL(*source, close()).Times(1);
+                EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
+                    .WillOnce(testing::Return(Source::FillTupleBufferResult::withBytes(bytes)));
+                auto thread = start(std::move(source));
+                std::this_thread::sleep_for(DEFAULT_LONG_TIMEOUT);
+            },
+            "Invariant violated.*Source returned data without a valid TupleBuffer");
     }
+#endif
 }
 
 TEST_F(SourceBufferCapabilityTest, DefaultSourceStillAcquiresAndRetriesPreallocatedBuffers)

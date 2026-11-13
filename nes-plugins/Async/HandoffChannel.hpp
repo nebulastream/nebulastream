@@ -52,32 +52,27 @@ public:
         SOURCE,
     };
 
-    /// Each half holds one lease from its construction to its destruction, which also runs on a hard stop, when the
-    /// engine skips `stop`. The halves are created in either order; the first creates the channel with its capacity.
-    ///
-    /// Until a source leased the channel, it takes no buffers, so a channel without a source is always empty. The lease
-    /// that goes last removes the channel:
-    /// - The source's lease removes it. A sink that still holds it is told that nobody takes its buffers any more, and
-    ///   the buffers that were waiting are dropped.
-    /// - The sink's lease removes it if no source ever leased it and the sink was not closed: the query was torn down,
-    ///   and an empty channel is all there is to drop. A source that is created after all creates a channel of its own,
-    ///   which nobody fills; the teardown stops it as well.
-    /// - A sink that was closed without a source leaves the closed, empty channel behind, so that a source that comes
-    ///   later ends its stream instead of waiting for a sink that is gone. If no source comes, the empty channel stays.
-    class Lease
+    /// RAII handle that attaches a source or sink to a shared channel and performs role-specific cleanup
+    /// on release or destruction, including hard stops that skip stop().
+    /// Either half may create the channel; the first sets its capacity. Buffers are accepted only after a source attaches.
+    /// Releasing the source removes the registry entry, drops queued buffers, and rejects further pushes.
+    /// Releasing an unclosed sink removes the entry if no source ever attached.
+    /// A gracefully closed sink-only channel stays registered so a late source observes end-of-stream;
+    /// if no source arrives, that empty entry remains.
+    class Attachment
     {
     public:
-        Lease(AsyncChannelId id, size_t capacity, Role role);
-        ~Lease();
+        Attachment(AsyncChannelId id, size_t capacity, Role role);
+        ~Attachment();
 
-        Lease(const Lease&) = delete;
-        Lease& operator=(const Lease&) = delete;
-        Lease(Lease&&) = delete;
-        Lease& operator=(Lease&&) = delete;
+        Attachment(const Attachment&) = delete;
+        Attachment& operator=(const Attachment&) = delete;
+        Attachment(Attachment&&) = delete;
+        Attachment& operator=(Attachment&&) = delete;
 
         HandoffChannel* operator->() const { return channel.get(); }
 
-        /// Ends the lease before the destructor does. Further calls do nothing.
+        /// Ends the attachment before the destructor does. Further calls do nothing.
         void release();
 
     private:
@@ -100,7 +95,7 @@ public:
 
     /// Called after every push and on close, under the channel's lock, so it must neither block nor call back into the
     /// channel. Replaces the previous listener; an empty function removes it, after which it is never called again. The
-    /// source's lease removes it when it ends.
+    /// source's attachment removes it when it ends.
     void setListener(std::function<void()> onChange);
 
 private:

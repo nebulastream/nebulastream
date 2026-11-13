@@ -131,7 +131,7 @@ SINK(NETWORK)
 ### The Handoff channel
 
 `HandoffChannel` (`nes-plugins/Async/HandoffChannel.hpp`) is a bounded in-process queue between the two halves; buffers
-pass through it without a copy. Each half holds a `HandoffChannel::Lease` from its construction to its destruction, so
+pass through it without a copy. Each half holds a `HandoffChannel::Attachment` from its construction to its destruction, so
 the channel is released even on a hard stop or when one half never opens. Until a source has attached, the channel takes
 no buffers.
 
@@ -234,7 +234,9 @@ An asynchronous function is a plugin with two parts, see `nes-plugins/Functions/
 
 **The logical function** is a regular logical function plugin (see [How to add a function](../guide/how_to_add_a_function.md))
 that derives from `AsyncLogicalFunction` instead of providing a physical function. It checks its arguments and result type
-in `withInferredDataType`, including which child positions must be constant. It implements `getAsyncOutputTypes()` to
+in `withInferredDataType`, including which child positions must be constant and the domain/range of constant options.
+Invalid constant URLs, timeouts, retry counts, and delays fail before deployment, not during execution.
+It implements `getAsyncOutputTypes()` to
 declare every output type, including nullability. The output count follows from this list; `ASYNC_OUTPUT` selects one
 output. These types must follow from the expression, and the first output type must match `getDataType()`.
 
@@ -248,7 +250,7 @@ public:
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
 
     /// Owns the typed arguments across suspension and returns all typed outputs.
-    boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) override;
+    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override;
 };
 ```
 
@@ -258,17 +260,39 @@ visible at their original positions in `call`, just like dynamic arguments; fact
 state or a concurrency limit. Logical constants become native values during decomposition and retain their exact
 scalar types through transport and binding (no floating-point roundtrip for integer literals).
 
-`AsyncValues` is an immutable, cheap-to-copy owning handle, so a coroutine can keep its arguments across suspension and
+The source calls `prepare(SharedRuntimeValues)` once per producer invocation, before entering its retry loop. Preparation may
+reject invalid per-row input and returns an owning `PreparedAsyncCall`. Its `call()` performs one attempt, while
+`maxRetries()` supplies the invocation's retry policy. Invalid arguments are never retried. The default preparation
+adapter retains the arguments and delegates to the existing `call(SharedRuntimeValues)` API, so plugins without custom
+preparation keep their behavior. HTTP preparation owns the parsed URL, body, timeout, and retry options across attempts;
+network failures, cancellation, and time-dependent deadline checks remain execution-time failures. Prepared calls borrow
+their function instance, which must outlive them; the source keeps one instance per active row slot.
+
+Graph implementation names are resolved against the worker's registry before any function instances are constructed.
+Missing implementations are deployment errors. Subsequent instance creation uses the bound factories, not another lookup.
+The planner and worker share `AsyncHandoffLayout` to establish matching field sets/types and derive copy offsets.
+Graph-builder lifecycle, ownership, and schema contracts use preconditions; malformed serialized graphs are validated
+at the unreflection boundary before those APIs are called.
+
+Error categories follow their boundary: logical datatype mismatches use `DifferentFieldTypeExpected`, other inference
+failures use `CannotInferSchema`, and invalid registry-call syntax uses `InvalidQuerySyntax`. Literal parsing reports
+`InvalidLiteral`. Dynamic numeric option failures use `ArithmeticalError`, malformed URLs use `FormattingError`, and
+HTTP transport/response failures use `IOError` rather than a source-read error. Wire validation uses `CannotDeserialize`;
+Asio cancellation and timeout errors retain their original error codes internally.
+
+`SharedRuntimeValues` is an immutable, cheap-to-copy owning handle, so a coroutine can keep its arguments across suspension and
 the scheduler can retain them for retries. Indexing returns a `RuntimeValueView`, which borrows from that owner and must
 not outlive it. Use `get<int32_t>()` for exact scalar access, `get<std::string_view>()` or `bytes()` for VARSIZED, and
 `isNull()` before accessing a nullable payload. There is no implicit numeric narrowing; `getUnsignedInteger()` is an
-explicit checked conversion for options/durations that accept any non-negative integer width. Use `toOwned()` when a
-value must escape the bundle's lifetime. For example:
+explicit contract-only conversion for an already validated non-negative integer of any width. At input boundaries,
+use `checkedUnsignedIntegerOption` from `DataTypes/CheckedInteger.hpp` (or `tryGetUnsignedInteger()` for non-throwing
+validation) before passing an unsigned option to execution. Use `toOwned()` when a value must escape the bundle's lifetime.
+For example, during invocation preparation:
 
 ```cpp
-const auto millis = arguments[1].getUnsignedInteger();
+const auto millis = checkedUnsignedIntegerOption(arguments[1], "MY_FUNCTION delay");
 // ... co_await a timer ...
-co_return AsyncValues::make(arguments[0].toOwned(), millis);
+co_return SharedRuntimeValues::make(arguments[0].toOwned(), millis);
 ```
 
 The current source path materializes owned values; the view interface leaves room for future buffer-backed storage
@@ -320,7 +344,7 @@ add_registry_entry(AsyncFunction MyFunction)
   It covers typed delay values and outputs, nullable pass-through, computed/field-valued integer delays, chaining, selections, concurrency within and across buffers, backpressure, failures, retries, timeouts and dropping queries.
 - `nes-data-types/tests/UnitTests/RuntimeValueTest.cpp` covers native types, typed nulls, exact integer limits and ownership.
 - `nes-nautilus/tests/UnitTests/RuntimeValueNautilusTest.cpp` covers runtime Nautilus conversions without tuple buffers.
-- `nes-sources/tests/AsyncValuesTest.cpp` covers suspension lifetimes and constant binding.
+- `nes-sources/tests/SharedRuntimeValuesTest.cpp` covers suspension lifetimes and constant binding.
 - `nes-sources/tests/AsyncCallGraphTest.cpp` covers producer ownership, input scopes, graph identity/serialization,
   malformed edges/cycles, binary constants and exact floating-point payloads.
 - `nes-plugins/Async/tests/AsyncGraphExecutionTest.cpp` covers diamond sharing, dependency/root concurrency,

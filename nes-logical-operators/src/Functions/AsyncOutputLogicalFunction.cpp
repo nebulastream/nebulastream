@@ -64,12 +64,12 @@ LogicalFunction AsyncOutputLogicalFunction::withInferredDataType(const Schema<Fi
     const auto async = copy.call.tryGetAs<AsyncLogicalFunction>();
     if (not async.has_value() or copy.call.tryGetAs<AsyncOutputLogicalFunction>().has_value())
     {
-        throw InvalidQuerySyntax("ASYNC_OUTPUT reads a value of an async function call, but got {}", copy.call);
+        throw CannotInferSchema("ASYNC_OUTPUT reads a value of an async function call, but got {}", copy.call);
     }
     const auto outputTypes = async.value()->get().getAsyncOutputTypes();
     if (index >= outputTypes.size())
     {
-        throw InvalidQuerySyntax("ASYNC_OUTPUT reads value {} of {}, which produces {}", index, copy.call, outputTypes.size());
+        throw CannotInferSchema("ASYNC_OUTPUT reads value {} of {}, which produces {}", index, copy.call, outputTypes.size());
     }
     copy.dataType = outputTypes.at(index);
     return copy;

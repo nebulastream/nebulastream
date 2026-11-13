@@ -40,7 +40,7 @@ void HandoffSink::start(PipelineExecutionContext&)
 {
 }
 
-/// Only a graceful stop gets here. A hard stop skips it, and the lease, which goes with the sink, removes the channel if
+/// Only a graceful stop gets here. A hard stop skips it, and the attachment, which goes with the sink, removes the channel if
 /// no source ever attached; closing it there would end the source's stream as if the producer had finished.
 void HandoffSink::stop(PipelineExecutionContext&)
 {

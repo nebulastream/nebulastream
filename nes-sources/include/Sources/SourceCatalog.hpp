@@ -168,7 +168,7 @@ public:
         const std::unordered_map<Identifier, std::string>& descriptorConfig,
         const std::unordered_map<Identifier, std::string>& parserConfig);
 
-    /// Build an anonymous source from an already typed plugin configuration without converting it to literals.
+    /// Builds an anonymous source from a typed builder, bypassing configuration-literal parsing.
     [[nodiscard]] std::expected<SourceDescriptor, Exception>
     getAnonymousSource(PhysicalSourceBuilder builder, Schema<UnqualifiedUnboundField, Ordered> schema) const;
 

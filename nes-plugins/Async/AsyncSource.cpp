@@ -129,8 +129,8 @@ const ConfigField<size_t> MAX_RETRIES{
 
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
-/// One event loop for all Async sources: calls need no dedicated threads; ordinary source threads wait for their results.
-/// One loop thread; add threads if completions get expensive, the per-source strands keep that safe
+/// All Async sources share one event-loop thread; source threads wait for results.
+/// Per-source strands serialize coroutine execution.
 class SharedEventLoop
 {
 public:
@@ -179,57 +179,52 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
     : channelId(config.channel)
     , maxConcurrency(std::max<size_t>(1, config.maxConcurrency))
     , maxRetries(config.maxRetries)
+    , layout(config.calls, sourceDescriptor.getSchema())
     , graph(std::make_shared<const AsyncCallGraph>(config.calls))
+    , calls(bindGraph(*graph))
     , channel(config.channel, config.channelCapacity, HandoffChannel::Role::SOURCE)
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
     static_assert(AsyncSourceConfig::DEFAULT_CHANNEL_CAPACITY == HandoffChannel::DEFAULT_CAPACITY);
 
-    outputSchema = sourceDescriptor.getSchema();
-    /// Only unchanged fields are copied as raw slots. Typed argument/result access goes through TupleBufferRef.
-    std::unordered_map<std::string, std::pair<size_t, DataType>> outputFields;
-    for (const auto& field : sourceDescriptor.getSchema())
+    outputMappings = graph->getOutputs();
+    for (auto& [node, call] : calls)
     {
-        outputFields.emplace(fmt::format("{}", field.getFullyQualifiedName()), std::pair{outputRowSize, field.getDataType()});
-        outputRowSize += field.getDataType().getSizeInBytesWithNull();
+        call.instances.push_back(call.factory(AsyncFunctionRegistryArguments{.binding = call.binding}));
+        PRECONDITION(call.instances.front(), "Async function factory {} returned no implementation", node->getFunctionType());
+        maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, call.instances.front()->maxConcurrency().value_or(maxConcurrency)));
     }
-    std::unordered_map<std::string, size_t> inputOffsets;
-    inputSchema = graph->getInputSchema();
-    for (const auto& field : inputSchema)
+    for (auto& [node, call] : calls)
     {
-        const auto name = fmt::format("{}", field.getFullyQualifiedName());
-        const auto output = outputFields.find(name);
-        if (output == outputFields.end())
+        while (call.instances.size() < maxConcurrency)
         {
-            throw CannotOpenSource("handed-off field {} is not produced by the async source", name);
+            auto instance = call.factory(AsyncFunctionRegistryArguments{.binding = call.binding});
+            PRECONDITION(instance, "Async function factory {} returned no implementation", node->getFunctionType());
+            call.instances.push_back(std::move(instance));
         }
-        INVARIANT(
-            field.getDataType() == output->second.second,
-            "async input field has type {}, expected {}",
-            field.getDataType(),
-            output->second.second);
-        matchingLayouts = matchingLayouts && output->second.first == inputRowSize;
-        if (!inputOffsets.emplace(name, inputRowSize).second)
+    }
+    cancelSignals = std::vector<boost::asio::cancellation_signal>(maxConcurrency);
+    executions.resize(maxConcurrency);
+    for (size_t slot = maxConcurrency; slot > 0; --slot)
+    {
+        freeSlots.push_back(slot - 1);
+    }
+}
+
+std::unordered_map<AsyncCall::Ptr, AsyncSource::BoundCall> AsyncSource::bindGraph(const AsyncCallGraph& graph)
+{
+    std::unordered_map<AsyncCall::Ptr, BoundCall> bound;
+    for (const auto& node : graph.getCalls())
+    {
+        const auto factory = AsyncFunctionRegistry::instance().find(node->getFunctionType());
+        if (!factory)
         {
-            throw CannotOpenSource("duplicate handed-off field {}", name);
+            throw UnknownFunctionType("No async implementation registered on this worker for {}", node->getFunctionType());
         }
-        inputRowSize += field.getDataType().getSizeInBytesWithNull();
-    }
-    if (inputOffsets.size() != outputFields.size())
-    {
-        throw CannotOpenSource("handed-off rows must have exactly the async source's fields");
-    }
-    outputValues = graph->getOutputs();
-    IF_INVARIANT(for (const auto& output : outputValues) {
-        INVARIANT(
-            outputFields.at(fmt::format("{}", output.field)).second == output.result.getDataType(),
-            "async output field {} does not match declared result type {}",
-            output.field,
-            output.result.getDataType());
-    })
-    for (const auto& node : graph->getCalls())
-    {
-        BoundCall call{.binding = {.argumentTypes = {}, .constantArguments = {}, .resultTypes = node->getResultTypes()}, .instances = {}};
+        BoundCall call{
+            .factory = *factory,
+            .binding = {.argumentTypes = {}, .constantArguments = {}, .resultTypes = node->getResultTypes()},
+            .instances = {}};
         for (const auto& argument : node->getArguments())
         {
             call.binding.argumentTypes.push_back(std::visit([](const auto& value) { return value.getDataType(); }, argument));
@@ -242,45 +237,18 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
                 call.binding.constantArguments.emplace_back(std::nullopt);
             }
         }
-        const auto factory = AsyncFunctionRegistry::instance().find(node->getFunctionType());
-        if (!factory)
-        {
-            throw UnknownFunctionType("no async implementation registered for {}", node->getFunctionType());
-        }
-        call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.binding = call.binding}));
-        maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, call.instances.front()->maxConcurrency().value_or(maxConcurrency)));
-        calls.emplace(node, std::move(call));
+        bound.emplace(node, std::move(call));
     }
-    for (auto& [node, call] : calls)
-    {
-        const auto factory = AsyncFunctionRegistry::instance().find(node->getFunctionType());
-        while (call.instances.size() < maxConcurrency)
-        {
-            call.instances.push_back((*factory)(AsyncFunctionRegistryArguments{.binding = call.binding}));
-        }
-    }
-    cancelSignals = std::vector<boost::asio::cancellation_signal>(maxConcurrency);
-    executions.resize(maxConcurrency);
-    for (size_t slot = maxConcurrency; slot > 0; --slot)
-    {
-        freeSlots.push_back(slot - 1);
-    }
-
-    for (const auto& [name, inputOffset] : inputOffsets)
-    {
-        if (std::ranges::none_of(outputValues, [&](const auto& output) { return fmt::format("{}", output.field) == name; }))
-        {
-            const auto& [outputOffset, type] = outputFields.at(name);
-            copiedFields.push_back({.inputOffset = inputOffset, .outputOffset = outputOffset, .size = type.getSizeInBytesWithNull()});
-        }
-    }
+    return bound;
 }
 
 void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     bufferProvider = std::move(provider);
-    inputBufferRef = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
-    outputBufferRef = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), outputSchema, MemoryLayoutType::ROW_LAYOUT);
+    inputBufferRef
+        = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), layout.getInputSchema(), MemoryLayoutType::ROW_LAYOUT);
+    outputBufferRef
+        = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), layout.getOutputSchema(), MemoryLayoutType::ROW_LAYOUT);
     channel->setListener(
         [this]
         {
@@ -308,18 +276,21 @@ RuntimeValue AsyncSource::readInput(const InputFieldReference& field, const Tupl
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<AsyncValues> AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, AsyncValues arguments) const
+boost::asio::awaitable<SharedRuntimeValues>
+AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, SharedRuntimeValues arguments) const
 {
     const auto& call = calls.at(node);
     auto& function = *call.instances[slot];
-    const auto retryLimit = function.maxRetries(arguments).value_or(maxRetries);
+    const auto prepared = function.prepare(std::move(arguments));
+    PRECONDITION(prepared, "Async function preparation must return an invocation");
+    const auto retryLimit = prepared->maxRetries().value_or(maxRetries);
     for (size_t attempt = 0;; ++attempt)
     {
-        std::optional<AsyncCallResult> result;
+        std::optional<SharedRuntimeValues> result;
         std::exception_ptr failure;
         try
         {
-            result = co_await function.call(arguments);
+            result = co_await prepared->call();
         }
         /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
         catch (...) /// NOLINT(no-raw-catch-all)
@@ -359,7 +330,8 @@ boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, InFlight
         strand,
         graph,
         [this, &buffer, row](const InputFieldReference& field) { return readInput(field, buffer.input, row); },
-        [this, slot](AsyncCall::Ptr node, AsyncValues arguments) { return callWithRetries(std::move(node), slot, std::move(arguments)); });
+        [this, slot](AsyncCall::Ptr node, SharedRuntimeValues arguments)
+        { return callWithRetries(std::move(node), slot, std::move(arguments)); });
     executions[slot] = execution;
     buffer.results[row] = co_await execution->run();
 }
@@ -426,7 +398,7 @@ void AsyncSource::admit(TupleBuffer input)
         .rows = rows,
         .nextRow = 0,
         .unfinishedRows = rows,
-        .results = std::vector<std::optional<AsyncValues>>(rows),
+        .results = std::vector<std::optional<SharedRuntimeValues>>(rows),
         .done = rows == 0};
     {
         const std::scoped_lock lock(inFlight.mutex);
@@ -452,12 +424,14 @@ void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output)
         [[maybe_unused]] const auto index = output.storeChildBuffer(childBuffer);
     }
 
-    PRECONDITION(buffer.rows * outputRowSize <= output.getBufferSize(), "handed-off buffer holds more rows than the output buffer");
+    const auto inputRowSize = layout.getInputRowSize();
+    const auto outputRowSize = layout.getOutputRowSize();
+    PRECONDITION(buffer.rows <= output.getBufferSize() / outputRowSize, "handed-off buffer holds more rows than the output buffer");
     const auto in = input.getAvailableMemoryArea();
     const auto out = output.getAvailableMemoryArea();
     for (size_t row = 0; row < buffer.rows; ++row)
     {
-        for (const auto& [inputOffset, outputOffset, size] : copiedFields)
+        for (const auto& [inputOffset, outputOffset, size] : layout.getCopiedFields())
         {
             std::memcpy(
                 out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
@@ -468,14 +442,14 @@ void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output)
 
 void AsyncSource::writeResults(const InFlightBuffer& buffer, TupleBuffer& output) const
 {
-    PRECONDITION(buffer.rows <= output.getBufferSize() / outputRowSize, "async output rows must fit the buffer");
+    PRECONDITION(buffer.rows <= output.getBufferSize() / layout.getOutputRowSize(), "async output rows must fit the buffer");
     for (size_t row = 0; row < buffer.rows; ++row)
     {
         INVARIANT(buffer.results[row].has_value(), "A completed async row must have a result");
         Record results;
-        for (size_t position = 0; position < outputValues.size(); ++position)
+        for (size_t position = 0; position < outputMappings.size(); ++position)
         {
-            results.write(outputValues[position].field, toVarVal((*buffer.results[row])[position]));
+            results.write(outputMappings[position].field, toVarVal((*buffer.results[row])[position]));
         }
         const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(nautilus::val<TupleBuffer*>{std::addressof(output)})};
         auto index = nautilus::val<uint64_t>{row};
@@ -535,7 +509,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
             lock.unlock();
             /// All row callbacks have finished before done is published. Do not wait for other owners:
             /// a fanout consumer may retain the original buffer indefinitely or read the result slots.
-            if (matchingLayouts && buffer.input.getReferenceCounter() == 1)
+            if (layout.matchesInputLayout() && buffer.input.getReferenceCounter() == 1)
             {
                 writeResults(buffer, buffer.input);
                 tupleBuffer = std::move(buffer.input);

@@ -29,22 +29,22 @@ namespace NES
 class AsyncGraphExecution final : public std::enable_shared_from_this<AsyncGraphExecution>
 {
 public:
-    using Invoke = std::function<boost::asio::awaitable<AsyncValues>(AsyncCall::Ptr, AsyncValues)>;
+    using Invoke = std::function<boost::asio::awaitable<SharedRuntimeValues>(AsyncCall::Ptr, SharedRuntimeValues)>;
     using ReadInput = std::function<RuntimeValue(const InputFieldReference&)>;
     AsyncGraphExecution(
-        SharedAsyncResult::Executor executor, std::shared_ptr<const AsyncCallGraph> graph, ReadInput readInput, Invoke invoke);
+        SharedAsyncResult::Strand executor, std::shared_ptr<const AsyncCallGraph> graph, ReadInput readInput, Invoke invoke);
     AsyncGraphExecution(const AsyncGraphExecution&) = delete;
     AsyncGraphExecution& operator=(const AsyncGraphExecution&) = delete;
-    [[nodiscard]] boost::asio::awaitable<AsyncValues> run();
+    [[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> run();
     /// A subscription to one producer. getUntil() times out only that subscription, never other consumers/the producer.
     [[nodiscard]] std::shared_ptr<SharedAsyncResult> evaluate(const AsyncCall::Ptr& node);
     void cancel();
 
 private:
-    static boost::asio::awaitable<AsyncValues> runImpl(std::shared_ptr<AsyncGraphExecution> self);
-    static boost::asio::awaitable<AsyncValues> invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node);
+    static boost::asio::awaitable<SharedRuntimeValues> runImpl(std::shared_ptr<AsyncGraphExecution> self);
+    static boost::asio::awaitable<SharedRuntimeValues> invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node);
     boost::asio::awaitable<void> cancelAndDrain();
-    SharedAsyncResult::Executor executor;
+    SharedAsyncResult::Strand executor;
     std::shared_ptr<const AsyncCallGraph> graph;
     ReadInput readInput;
     Invoke invoke;

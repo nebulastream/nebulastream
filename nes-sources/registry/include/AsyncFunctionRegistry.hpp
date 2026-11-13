@@ -31,10 +31,11 @@ struct AsyncFunctionRegistryArguments
     AsyncFunctionBinding binding;
 };
 
-using AsyncFunctionFn = std::function<AsyncFunctionRegistryReturnType(AsyncFunctionRegistryArguments)>;
+using AsyncFunctionFactory = std::function<AsyncFunctionRegistryReturnType(AsyncFunctionRegistryArguments)>;
 
 /// Keyed by the implementation name, e.g. "HttpCall".
-class AsyncFunctionRegistry final : public RuntimeRegistry<AsyncFunctionRegistry, std::string, AsyncFunctionFn, /*CaseSensitive*/ false>
+class AsyncFunctionRegistry final
+    : public RuntimeRegistry<AsyncFunctionRegistry, std::string, AsyncFunctionFactory, /*CaseSensitive*/ false>
 {
 public:
     static AsyncFunctionRegistry& instance();

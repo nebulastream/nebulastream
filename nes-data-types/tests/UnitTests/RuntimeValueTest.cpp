@@ -19,10 +19,12 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <DataTypes/CheckedInteger.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -154,6 +156,18 @@ TEST(RuntimeValueTest, BorrowedViewCanMaterializeIndependentStorage)
     EXPECT_EQ(owned.view().get<std::string_view>(), "borrowed");
 }
 
+TEST(RuntimeValueTest, MalformedSerializedValuesAreRejectedBeforeConstruction)
+{
+    const ReflectionContext context;
+    const DataType integer{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
+    const auto undefined = context.reflect(std::pair{DataType{}, context.reflect(int64_t{42})});
+    const auto null = context.reflect(std::pair{integer, Reflected{}});
+    const auto wrongPayload = context.reflect(std::pair{integer, context.reflect(std::string{"not an integer"})});
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(context.unreflect<RuntimeValue>(undefined)), ErrorCode::CannotDeserialize);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(context.unreflect<RuntimeValue>(null)), ErrorCode::CannotDeserialize);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(context.unreflect<RuntimeValue>(wrongPayload)), ErrorCode::CannotDeserialize);
+}
+
 TEST(RuntimeValueTest, ParsesConstantsOnceWithoutNumericPrecisionLoss)
 {
     const auto unsignedValue
@@ -163,9 +177,9 @@ TEST(RuntimeValueTest, ParsesConstantsOnceWithoutNumericPrecisionLoss)
         = RuntimeValue::fromLiteral(DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}, "-9223372036854775808");
     EXPECT_EQ(signedValue.view().get<int64_t>(), std::numeric_limits<int64_t>::min());
     const DataType tiny{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE};
-    EXPECT_THROW(static_cast<void>(RuntimeValue::fromLiteral(tiny, "256")), Exception);
-    EXPECT_THROW(static_cast<void>(RuntimeValue::fromLiteral(tiny, "-1")), Exception);
-    EXPECT_THROW(static_cast<void>(RuntimeValue::fromLiteral(tiny, "12oops")), Exception);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(RuntimeValue::fromLiteral(tiny, "256")), ErrorCode::InvalidLiteral);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(RuntimeValue::fromLiteral(tiny, "-1")), ErrorCode::InvalidLiteral);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(RuntimeValue::fromLiteral(tiny, "12oops")), ErrorCode::InvalidLiteral);
 }
 
 TEST(RuntimeValueTest, CheckedIntegerConversionAcceptsWidthsButNotNegativeValues)
@@ -177,7 +191,8 @@ TEST(RuntimeValueTest, CheckedIntegerConversionAcceptsWidthsButNotNegativeValues
     EXPECT_EQ(tiny.view().getUnsignedInteger(), 42);
     EXPECT_EQ(positive.view().getUnsignedInteger(), 17);
     EXPECT_EQ(large.view().getUnsignedInteger(), std::numeric_limits<uint64_t>::max());
-    EXPECT_THROW(static_cast<void>(negative.view().getUnsignedInteger()), Exception);
+    EXPECT_FALSE(negative.view().tryGetUnsignedInteger());
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(checkedUnsignedIntegerOption(negative.view(), "timeout")), ErrorCode::ArithmeticalError);
 }
 
 #ifndef NO_ASSERT
@@ -189,6 +204,8 @@ TEST_F(RuntimeValueDeathTest, IntegerConversionRequiresAnInteger)
     const RuntimeValue floating{1.0};
     EXPECT_DEATH(static_cast<void>(boolean.view().getUnsignedInteger()), "Precondition violated.*integer");
     EXPECT_DEATH(static_cast<void>(floating.view().getUnsignedInteger()), "Precondition violated.*integer");
+    const RuntimeValue negative{int64_t{-1}};
+    EXPECT_DEATH(static_cast<void>(negative.view().getUnsignedInteger()), "Precondition violated.*non-negative");
 }
 #endif
 

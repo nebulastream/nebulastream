@@ -31,10 +31,13 @@
 #include <Util/Reflection.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/use_future.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <HttpCallAsyncFunction.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -58,19 +61,22 @@ HttpCallLogicalFunction logicalCall(std::optional<LogicalFunction> retries = std
 TEST(HttpCallFunctionTest, RetriesDefaultToZero)
 {
     HttpCallAsyncFunction function;
-    EXPECT_EQ(function.maxRetries(AsyncValues::make(std::string{"body"}, std::string{"http://localhost/echo"})), size_t{0});
+    EXPECT_EQ(function.maxRetries(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"})), size_t{0});
     EXPECT_EQ(
-        function.maxRetries(AsyncValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000})), size_t{0});
+        function.maxRetries(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000})),
+        size_t{0});
 }
 
 TEST(HttpCallFunctionTest, ExplicitRetriesAcceptIntegerWidthsAndZero)
 {
     HttpCallAsyncFunction function;
     EXPECT_EQ(
-        function.maxRetries(AsyncValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, uint8_t{2})),
+        function.maxRetries(
+            SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, uint8_t{2})),
         size_t{2});
     EXPECT_EQ(
-        function.maxRetries(AsyncValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{0})),
+        function.maxRetries(
+            SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{0})),
         size_t{0});
 }
 
@@ -79,12 +85,36 @@ TEST(HttpCallFunctionTest, InvalidRetryCountsAreUserInputErrors)
     HttpCallAsyncFunction function;
     EXPECT_THROW(
         static_cast<void>(function.maxRetries(
-            AsyncValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{-1}))),
+            SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{-1}))),
         Exception);
     EXPECT_THROW(
         static_cast<void>(function.maxRetries(
-            AsyncValues::make(
+            SharedRuntimeValues::make(
                 std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, std::numeric_limits<uint64_t>::max()))),
+        Exception);
+}
+
+TEST(HttpCallFunctionTest, FactoryCreatedFunctionPreparesOptionsForEachInvocation)
+{
+    auto function = HttpCallAsyncFunction::create(AsyncFunctionRegistryArguments{.binding = {}});
+    const auto first = function->prepare(
+        SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/first"}, uint64_t{1234}, uint64_t{3}));
+    const auto second = function->prepare(
+        SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/second"}, uint64_t{500}, uint64_t{0}));
+    EXPECT_EQ(first->maxRetries(), size_t{3});
+    EXPECT_EQ(second->maxRetries(), size_t{0});
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(function->prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"}))),
+        ErrorCode::FormattingError);
+}
+
+TEST(HttpCallFunctionTest, DynamicBadOptionsFailSynchronouslyDuringPreparation)
+{
+    HttpCallAsyncFunction function;
+    EXPECT_THROW(static_cast<void>(function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"}))), Exception);
+    EXPECT_THROW(
+        static_cast<void>(
+            function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, uint64_t{0}))),
         Exception);
 }
 
@@ -96,7 +126,8 @@ TEST(HttpCallFunctionTest, UnrepresentableTimeoutsAreRejectedBeforeDns)
         HttpCallAsyncFunction function;
         const auto body = [&]() -> boost::asio::awaitable<void>
         {
-            static_cast<void>(co_await function.call(AsyncValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, millis)));
+            static_cast<void>(
+                co_await function.call(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, millis)));
         };
         auto future = boost::asio::co_spawn(context, body(), boost::asio::use_future);
         context.run();
@@ -125,6 +156,71 @@ TEST(HttpCallFunctionTest, RetryArgumentSurvivesReflectionEqualityAndChildReplac
     EXPECT_EQ(original.withChildren(children), logicalCall(children[3]));
     EXPECT_EQ(original.withChildren(logicalCall().getChildren()), logicalCall());
     EXPECT_NE(original.explain(ExplainVerbosity::Short), logicalCall().explain(ExplainVerbosity::Short));
+}
+
+TEST(HttpCallFunctionTest, RejectsInvalidConstantTimeoutRetryAndUrlDuringInference)
+{
+    const Schema<Field, Unordered> schema{};
+    for (const auto& millis : {std::string{"0"}, std::string{"18446744073709551615"}, std::string{"9223372036854775807"}})
+    {
+        const HttpCallLogicalFunction call{
+            constant(DataType::Type::VARSIZED, "x"),
+            constant(DataType::Type::VARSIZED, "http://localhost"),
+            constant(DataType::Type::UINT64, millis),
+            std::nullopt};
+        EXPECT_THROW(static_cast<void>(call.withInferredDataType(schema)), Exception);
+    }
+    const HttpCallLogicalFunction negativeTimeout{
+        constant(DataType::Type::VARSIZED, "x"),
+        constant(DataType::Type::VARSIZED, "http://localhost"),
+        constant(DataType::Type::INT64, "-1"),
+        std::nullopt};
+    EXPECT_THROW(static_cast<void>(negativeTimeout.withInferredDataType(schema)), Exception);
+    for (const auto& url : {"not a url", "https://localhost", "http:/no-host"})
+    {
+        const HttpCallLogicalFunction call{
+            constant(DataType::Type::VARSIZED, "x"), constant(DataType::Type::VARSIZED, url), std::nullopt, std::nullopt};
+        EXPECT_THROW(static_cast<void>(call.withInferredDataType(schema)), Exception);
+    }
+    EXPECT_THROW(static_cast<void>(logicalCall(constant(DataType::Type::INT64, "-1")).withInferredDataType(schema)), Exception);
+    EXPECT_THROW(
+        static_cast<void>(logicalCall(constant(DataType::Type::UINT64, "18446744073709551615")).withInferredDataType(schema)), Exception);
+}
+
+TEST(HttpCallFunctionTest, ErrorCodesDistinguishInferenceInputAndTransportFailures)
+{
+    const Schema<Field, Unordered> schema{};
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(logicalCall(constant(DataType::Type::INT64, "-1")).withInferredDataType(schema)), ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(logicalCall(constant(DataType::Type::VARSIZED, "two")).withInferredDataType(schema)),
+        ErrorCode::DifferentFieldTypeExpected);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(logicalCall(constant(DataType::Type::UINT8, "256")).withInferredDataType(schema)), ErrorCode::InvalidLiteral);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(HttpCallLogicalFunction::createHTTP_CALL({.children = {}})), ErrorCode::InvalidQuerySyntax);
+
+    HttpCallAsyncFunction function;
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"}))),
+        ErrorCode::FormattingError);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{0}))),
+        ErrorCode::ArithmeticalError);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(
+            function.maxRetries(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{1}, int64_t{-1}))),
+        ErrorCode::ArithmeticalError);
+
+    boost::asio::io_context context;
+    boost::asio::ip::tcp::acceptor reserved{context, {boost::asio::ip::tcp::v4(), 0}};
+    const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
+    reserved.close();
+    const auto invoke = [&]() -> boost::asio::awaitable<void>
+    { static_cast<void>(co_await function.call(SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000}))); };
+    auto future = boost::asio::co_spawn(context, invoke(), boost::asio::use_future);
+    context.run();
+    ASSERT_EXCEPTION_ERRORCODE(future.get(), ErrorCode::IOError);
 }
 
 TEST(HttpCallFunctionTest, RetriesMustBeANonNullableInteger)

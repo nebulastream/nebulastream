@@ -41,6 +41,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncHandoffLayout.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -48,6 +49,7 @@
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
+#include <AsyncFunctionRegistry.hpp>
 #include <AsyncGraphExecution.hpp>
 #include <HandoffChannel.hpp>
 
@@ -88,16 +90,10 @@ protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    /// A field copied unchanged from the input row to the output row.
-    struct CopiedField
-    {
-        size_t inputOffset;
-        size_t outputOffset;
-        size_t size;
-    };
-
     struct BoundCall
     {
+        /// Resolved once on the worker, before constructing any function instances.
+        AsyncFunctionFactory factory;
         AsyncFunctionBinding binding;
         /// A distinct stateful instance per admitted row slot, invoked only after its dependencies are ready.
         std::vector<std::unique_ptr<AsyncFunction>> instances;
@@ -111,9 +107,9 @@ private:
         /// Guarded by `InFlightState::mutex`.
         size_t nextRow = 0;
         size_t unfinishedRows;
-        /// Per row, the values that go into output fields, in the order of `outputValues`. Each row's coroutine writes its own
-        /// rows on the strand; the source thread reads them once `done` is set.
-        std::vector<std::optional<AsyncValues>> results;
+        /// Each row coroutine writes its own result entry, with positions corresponding to outputMappings.
+        /// The source thread reads results only after done is published under InFlightState::mutex.
+        std::vector<std::optional<SharedRuntimeValues>> results;
         /// Guarded by `InFlightState::mutex`.
         bool done = false;
     };
@@ -134,9 +130,10 @@ private:
         bool channelChanged = false;
     };
 
+    static std::unordered_map<AsyncCall::Ptr, BoundCall> bindGraph(const AsyncCallGraph& graph);
     RuntimeValue readInput(const InputFieldReference& field, const TupleBuffer& input, size_t row) const;
     /// Service retries belong to the shared producer invocation, never to its subscribers.
-    boost::asio::awaitable<AsyncValues> callWithRetries(AsyncCall::Ptr node, size_t slot, AsyncValues arguments) const;
+    boost::asio::awaitable<SharedRuntimeValues> callWithRetries(AsyncCall::Ptr node, size_t slot, SharedRuntimeValues arguments) const;
     /// Borrows a deque element until finishRow publishes completion; the in-flight state outlives every row.
     boost::asio::awaitable<void> processRow(size_t slot, InFlightBuffer& buffer, size_t row);
 
@@ -155,20 +152,15 @@ private:
     /// The configured bound, lowered to what the stage's functions allow.
     size_t maxConcurrency;
     size_t maxRetries;
-    size_t inputRowSize = 0;
-    size_t outputRowSize = 0;
-    bool matchingLayouts = true;
-    Schema<QualifiedUnboundField, Ordered> inputSchema;
-    Schema<QualifiedUnboundField, Ordered> outputSchema;
+    AsyncHandoffLayout layout;
     std::shared_ptr<TupleBufferRef> inputBufferRef;
     std::shared_ptr<TupleBufferRef> outputBufferRef;
-    std::vector<CopiedField> copiedFields;
     std::shared_ptr<const AsyncCallGraph> graph;
     std::unordered_map<AsyncCall::Ptr, BoundCall> calls;
-    std::vector<AsyncCallOutput> outputValues;
+    std::vector<AsyncOutputMapping> outputMappings;
 
     /// Taken when the source is created, so that a source that fails afterwards still releases the channel.
-    HandoffChannel::Lease channel;
+    HandoffChannel::Attachment channel;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     /// All coroutines of this source run here, so its state is never touched by two loop threads at once.
     boost::asio::strand<boost::asio::io_context::executor_type> strand;

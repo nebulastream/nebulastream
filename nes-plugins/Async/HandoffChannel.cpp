@@ -50,7 +50,7 @@ HandoffChannel::HandoffChannel(const size_t capacity) : capacity(std::max<size_t
 }
 
 /// Both locks are taken registry first, so that a source cannot attach to a channel that a sink is removing.
-HandoffChannel::Lease::Lease(AsyncChannelId id, const size_t capacity, const Role role) : id(std::move(id)), role(role)
+HandoffChannel::Attachment::Attachment(AsyncChannelId id, const size_t capacity, const Role role) : id(std::move(id)), role(role)
 {
     auto& [mutex, channels] = registry();
     const std::scoped_lock lock(mutex);
@@ -67,12 +67,12 @@ HandoffChannel::Lease::Lease(AsyncChannelId id, const size_t capacity, const Rol
     }
 }
 
-HandoffChannel::Lease::~Lease()
+HandoffChannel::Attachment::~Attachment()
 {
     release();
 }
 
-void HandoffChannel::Lease::release()
+void HandoffChannel::Attachment::release()
 {
     if (!channel)
     {

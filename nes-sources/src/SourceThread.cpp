@@ -145,10 +145,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 
         if (!fillTupleResult.isEoS())
         {
-            if (!buffer)
-            {
-                throw RunningRoutineFailure("Source returned data without a valid TupleBuffer");
-            }
+            INVARIANT(!!buffer, "Source returned data without a valid TupleBuffer");
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             /// Reused buffers may have metadata reader aliases; avoid an unnecessary write when the count is already correct.

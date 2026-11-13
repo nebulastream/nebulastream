@@ -60,7 +60,7 @@ private:
     void dropRemaining(const TupleBuffer& buffer);
 
     AsyncChannelId channelId;
-    HandoffChannel::Lease channel;
+    HandoffChannel::Attachment channel;
     /// Set once the Async source has stopped. Several worker threads may run `execute` at once.
     std::atomic<bool> consumerGone = false;
     /// Applies pressure as soon as the channel rejects a buffer: the channel itself is the buffer that absorbs bursts.

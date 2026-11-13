@@ -14,20 +14,24 @@
 
 #include <Functions/AsyncDelayLogicalFunction.hpp>
 
+#include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
+#include <DataTypes/CheckedInteger.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/RuntimeValue.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
+#include <Util/CheckedDeadline.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
@@ -63,13 +67,44 @@ LogicalFunction AsyncDelayLogicalFunction::withInferredDataType(const Schema<Fie
     {
         throw DifferentFieldTypeExpected("ASYNC_DELAY expects a non-nullable integer delay in milliseconds, but got {}", copy.millis);
     }
+    if (const auto constant = copy.millis.tryGetAs<ConstantValueLogicalFunction>())
+    {
+        const auto value = RuntimeValue::fromLiteral(constant->getDataType(), constant->get().getConstantValue());
+        try
+        {
+            const auto millis = checkedUnsignedIntegerOption(value.view(), "ASYNC_DELAY millis");
+            static_cast<void>(checkedSteadyDeadline(millis, "ASYNC_DELAY"));
+        }
+        catch (const Exception&)
+        {
+            throw CannotInferSchema("ASYNC_DELAY constant delay must be a representable non-negative integer");
+        }
+    }
     if (maxConcurrency)
     {
         copy.maxConcurrency = maxConcurrency->withInferredDataType(schema);
-        if (not copy.maxConcurrency->tryGetAs<ConstantValueLogicalFunction>().has_value()
-            or not copy.maxConcurrency->getDataType().isInteger() or copy.maxConcurrency->getDataType().nullable)
+        if (not copy.maxConcurrency->getDataType().isInteger() or copy.maxConcurrency->getDataType().nullable)
         {
-            throw DifferentFieldTypeExpected("ASYNC_DELAY expects an integer constant concurrency limit, but got {}", *copy.maxConcurrency);
+            throw DifferentFieldTypeExpected(
+                "ASYNC_DELAY expects a non-nullable integer concurrency limit, but got {}", *copy.maxConcurrency);
+        }
+        const auto constant = copy.maxConcurrency->tryGetAs<ConstantValueLogicalFunction>();
+        if (not constant.has_value())
+        {
+            throw CannotInferSchema("ASYNC_DELAY requires a constant concurrency limit, but got {}", *copy.maxConcurrency);
+        }
+        const auto value = RuntimeValue::fromLiteral(constant->getDataType(), constant->get().getConstantValue());
+        try
+        {
+            const auto limit = checkedUnsignedIntegerOption(value.view(), "ASYNC_DELAY concurrency");
+            if (limit == 0 || !std::in_range<size_t>(limit))
+            {
+                throw ArithmeticalError("ASYNC_DELAY concurrency must be positive and representable");
+            }
+        }
+        catch (const Exception&)
+        {
+            throw CannotInferSchema("ASYNC_DELAY constant concurrency must be positive and representable");
         }
     }
     return copy;

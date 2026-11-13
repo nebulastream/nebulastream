@@ -30,20 +30,20 @@ namespace NES
 /// Immutable values plus ownership of their backing storage.
 /// Views are borrowed from this handle, not from a temporary coroutine frame.
 /// Initially backed by owned scalar values, in the future this could be backed by tuple buffers owned by the operator handle.
-class AsyncValues
+class SharedRuntimeValues
 {
 public:
-    AsyncValues() = delete;
-    explicit AsyncValues(std::vector<RuntimeValue> values);
-    AsyncValues(std::initializer_list<RuntimeValue> values);
+    SharedRuntimeValues() = delete;
+    explicit SharedRuntimeValues(std::vector<RuntimeValue> values);
+    SharedRuntimeValues(std::initializer_list<RuntimeValue> values);
 
     template <typename... T>
-    [[nodiscard]] static AsyncValues make(T&&... values)
+    [[nodiscard]] static SharedRuntimeValues make(T&&... values)
     {
         std::vector<RuntimeValue> owned;
         owned.reserve(sizeof...(T));
         (owned.emplace_back(std::forward<T>(values)), ...);
-        return AsyncValues{std::move(owned)};
+        return SharedRuntimeValues{std::move(owned)};
     }
 
     [[nodiscard]] size_t size() const;
@@ -55,8 +55,6 @@ private:
     std::shared_ptr<const std::vector<RuntimeValue>> storage;
 };
 
-using AsyncCallResult = AsyncValues;
-
 /// Given to each instance once. Constant positions are preserved; a missing value means a per-row argument.
 /// A present RuntimeValue may itself be a typed SQL null. Constant arguments remain visible to call().
 struct AsyncFunctionBinding
@@ -66,19 +64,33 @@ struct AsyncFunctionBinding
     std::vector<DataType> resultTypes;
 };
 
+/// One validated, owning producer invocation, reusable for sequential retry attempts.
+/// Preparation rejects input errors before retries; call() performs only execution and operational checks.
+/// A prepared call may borrow its function instance, which must outlive it. Attempts must not run concurrently.
+class PreparedAsyncCall
+{
+public:
+    virtual ~PreparedAsyncCall() = default;
+    virtual boost::asio::awaitable<SharedRuntimeValues> call() = 0;
+
+    [[nodiscard]] virtual std::optional<size_t> maxRetries() const { return std::nullopt; }
+};
+
 /// Runtime implementation of an AsyncLogicalFunction. An instance serves one row at a time and may retain connections.
-/// Arguments are passed by value to retain their backing storage while suspended. Returned values must own/retain theirs.
-/// Results must match binding.resultTypes exactly, including nullability; the executor does not convert them.
-/// Plan/DAG descriptions live separately in AsyncCallGraph.hpp; plugins only need this runtime value interface.
+/// Arguments and returned values retain their storage across suspension. Results must match binding.resultTypes exactly,
+/// including nullability; the executor does not convert them. Plan descriptions live separately in AsyncCallGraph.hpp.
 class AsyncFunction
 {
 public:
     virtual ~AsyncFunction() = default;
-    virtual boost::asio::awaitable<AsyncValues> call(AsyncValues arguments) = 0;
+    virtual boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) = 0;
+    /// Runs once before the source's retry loop. Override to validate/normalize per-row input before any attempt.
+    /// The default adapter owns arguments, evaluates maxRetries once, and delegates attempts to call(arguments).
+    virtual std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments);
 
     /// Additional attempts for this call. An explicit value overrides the source default, including zero.
     /// Evaluated once before invocation; invalid retry options are not retried.
-    [[nodiscard]] virtual std::optional<size_t> maxRetries(const AsyncValues&) const { return std::nullopt; }
+    [[nodiscard]] virtual std::optional<size_t> maxRetries(const SharedRuntimeValues&) const { return std::nullopt; }
 
     /// Rows whose calls of this function may be in flight at once, if the function itself sets a bound.
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const { return std::nullopt; }

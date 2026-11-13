@@ -42,9 +42,10 @@ struct StartHttpResolution
     }
 };
 
-/// Runs on one strand. A resolver cancellation need not interrupt an OS getaddrinfo already in progress.
-/// Keep its state alive in the completion handler, but do not hold the row's coroutine past the deadline.
-/// The initiation function is injectable so tests can exercise stalled and late DNS completions deterministically.
+/// Must run on a strand. On timeout or cancellation, stop waiting and request
+/// resolver cancellation. The hostname lookup may finish later, so its callback
+/// retains shared state and ignores results after this coroutine has exited.
+/// Tests can replace startResolve to simulate stalled or late hostname resolution.
 template <typename StartResolve = StartHttpResolution>
 boost::asio::awaitable<boost::asio::ip::tcp::resolver::results_type>
 resolveHttpHost(std::string host, std::string port, const std::chrono::steady_clock::time_point deadline, StartResolve startResolve = {})

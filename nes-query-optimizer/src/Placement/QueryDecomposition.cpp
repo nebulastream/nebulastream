@@ -43,6 +43,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/AsyncCallGraph.hpp>
+#include <Sources/AsyncHandoffLayout.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -312,10 +313,16 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
         }
     }
 
-    /// Both halves create the channel, whichever starts first, so both need its capacity.
+    const auto graph = calls.build();
+    const AsyncHandoffLayout layout{graph, asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields()};
+    const auto unqualified = [](const auto& field) { return UnqualifiedUnboundField{field}; };
+    const Schema<UnqualifiedUnboundField, Ordered> handoffInput{layout.getInputSchema() | std::views::transform(unqualified)};
+    const Schema<UnqualifiedUnboundField, Ordered> handoffOutput{layout.getOutputSchema() | std::views::transform(unqualified)};
+
+    /// Both halves use the same layout contract, and create the channel with the same capacity.
     std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("channel"), channel.getRawValue()}, {Identifier::parse("output_format"), "NATIVE"}};
-    AsyncSourceConfig sourceConfig{.channel = channel, .calls = calls.build()};
+    AsyncSourceConfig sourceConfig{.channel = channel, .calls = graph};
     if (context.asyncConfig.channelCapacity.has_value())
     {
         const auto capacity = std::to_string(*context.asyncConfig.channelCapacity);
@@ -332,7 +339,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     }
 
     const auto handoffSinkDescriptor
-        = context.sinkCatalog->getAnonymousSink(inputFields, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
+        = context.sinkCatalog->getAnonymousSink(handoffInput, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
     INVARIANT(handoffSinkDescriptor.has_value(), "Invalid sink descriptor config for handoff sink");
     context.addPlanToNode(
         SinkLogicalOperator::create(child, handoffSinkDescriptor.value())->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
@@ -342,7 +349,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
             GeneralSourceConfig{.host = Host(node.getRawValue()), .maxInflightBuffers = std::nullopt},
             PluginSourceConfiguration{Identifier::parse("Async"), ExplicitAny{std::any{std::move(sourceConfig)}}},
             InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
-        asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields());
+        handoffOutput);
     INVARIANT(asyncSourceDescriptor.has_value(), "Failed to add physical source for async operator");
     const auto sourceTraits = asyncOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(AsyncExecutionTrait); })

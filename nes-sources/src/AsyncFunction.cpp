@@ -25,25 +25,54 @@
 namespace NES
 {
 
-AsyncValues::AsyncValues(std::vector<RuntimeValue> values) : storage(std::make_shared<const std::vector<RuntimeValue>>(std::move(values)))
+namespace
+{
+class DefaultPreparedAsyncCall final : public PreparedAsyncCall
+{
+public:
+    DefaultPreparedAsyncCall(AsyncFunction& function, SharedRuntimeValues arguments, std::optional<size_t> retries)
+        : function(function), arguments(std::move(arguments)), retries(retries)
+    {
+    }
+
+    boost::asio::awaitable<SharedRuntimeValues> call() override { co_return co_await function.call(arguments); }
+
+    std::optional<size_t> maxRetries() const override { return retries; }
+
+private:
+    AsyncFunction& function;
+    SharedRuntimeValues arguments;
+    std::optional<size_t> retries;
+};
+}
+
+std::unique_ptr<PreparedAsyncCall> AsyncFunction::prepare(SharedRuntimeValues arguments)
+{
+    const auto retries = maxRetries(arguments);
+    return std::make_unique<DefaultPreparedAsyncCall>(*this, std::move(arguments), retries);
+}
+
+SharedRuntimeValues::SharedRuntimeValues(std::vector<RuntimeValue> values)
+    : storage(std::make_shared<const std::vector<RuntimeValue>>(std::move(values)))
 {
 }
 
-AsyncValues::AsyncValues(const std::initializer_list<RuntimeValue> values) : AsyncValues(std::vector<RuntimeValue>{values})
+SharedRuntimeValues::SharedRuntimeValues(const std::initializer_list<RuntimeValue> values)
+    : SharedRuntimeValues(std::vector<RuntimeValue>{values})
 {
 }
 
-size_t AsyncValues::size() const
+size_t SharedRuntimeValues::size() const
 {
     return storage->size();
 }
 
-bool AsyncValues::empty() const
+bool SharedRuntimeValues::empty() const
 {
     return size() == 0;
 }
 
-RuntimeValueView AsyncValues::operator[](const size_t index) const&
+RuntimeValueView SharedRuntimeValues::operator[](const size_t index) const&
 {
     PRECONDITION(index < storage->size(), "Async result index {} is out of bounds for {} values", index, storage->size());
     return (*storage)[index].view();

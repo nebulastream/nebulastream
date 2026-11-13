@@ -33,22 +33,22 @@ namespace NES
 namespace
 {
 /// Only the co_spawn transport needs a default-constructible result, not the function API.
-boost::asio::awaitable<std::optional<AsyncValues>> optionalResult(boost::asio::awaitable<AsyncValues> operation)
+boost::asio::awaitable<std::optional<SharedRuntimeValues>> optionalResult(boost::asio::awaitable<SharedRuntimeValues> operation)
 {
     co_return co_await std::move(operation);
 }
 }
 
-SharedAsyncResult::SharedAsyncResult(Executor executor, Factory factory) : executor(std::move(executor)), factory(std::move(factory))
+SharedAsyncResult::SharedAsyncResult(Strand executor, Factory factory) : executor(std::move(executor)), factory(std::move(factory))
 {
 }
 
-boost::asio::awaitable<AsyncValues> SharedAsyncResult::get()
+boost::asio::awaitable<SharedRuntimeValues> SharedAsyncResult::get()
 {
     return wait(shared_from_this(), std::nullopt);
 }
 
-boost::asio::awaitable<AsyncValues> SharedAsyncResult::getUntil(const Deadline deadline)
+boost::asio::awaitable<SharedRuntimeValues> SharedAsyncResult::getUntil(const std::chrono::steady_clock::time_point deadline)
 {
     return wait(shared_from_this(), deadline);
 }
@@ -80,7 +80,7 @@ void SharedAsyncResult::start()
             optionalResult(factory()),
             boost::asio::bind_cancellation_slot(
                 producerCancellation.slot(),
-                [self](std::exception_ptr error, std::optional<AsyncValues> values)
+                [self](std::exception_ptr error, std::optional<SharedRuntimeValues> values)
                 { self->complete(std::move(error), std::move(values)); }));
     }
     catch (...) /// NOLINT(no-raw-catch-all) publish synchronous initiation failures to every subscriber
@@ -89,7 +89,7 @@ void SharedAsyncResult::start()
     }
 }
 
-void SharedAsyncResult::complete(std::exception_ptr error, std::optional<AsyncValues> values)
+void SharedAsyncResult::complete(std::exception_ptr error, std::optional<SharedRuntimeValues> values)
 {
     PRECONDITION(executor.running_in_this_thread(), "Shared result must complete on its strand");
     if (done)
@@ -112,7 +112,7 @@ void SharedAsyncResult::complete(std::exception_ptr error, std::optional<AsyncVa
     waiters.clear();
 }
 
-AsyncValues SharedAsyncResult::read() const
+SharedRuntimeValues SharedAsyncResult::read() const
 {
     PRECONDITION(done, "Cannot read a pending shared result");
     if (failure)
@@ -141,7 +141,8 @@ void SharedAsyncResult::cancelImpl()
     producerCancellation.emit(boost::asio::cancellation_type::terminal);
 }
 
-boost::asio::awaitable<AsyncValues> SharedAsyncResult::wait(std::shared_ptr<SharedAsyncResult> self, const std::optional<Deadline> deadline)
+boost::asio::awaitable<SharedRuntimeValues>
+SharedAsyncResult::wait(std::shared_ptr<SharedAsyncResult> self, const std::optional<std::chrono::steady_clock::time_point> deadline)
 {
     PRECONDITION(self->executor.running_in_this_thread(), "Shared result waits must run on its strand");
     if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
@@ -157,7 +158,7 @@ boost::asio::awaitable<AsyncValues> SharedAsyncResult::wait(std::shared_ptr<Shar
         throw boost::system::system_error{boost::asio::error::timed_out};
     }
     auto waiter = std::make_shared<boost::asio::steady_timer>(self->executor);
-    waiter->expires_at(deadline.value_or(Deadline::max()));
+    waiter->expires_at(deadline.value_or(std::chrono::steady_clock::time_point::max()));
     self->waiters.push_back(waiter);
     const auto readForWait = [&]
     {

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <DataTypes/CheckedInteger.hpp>
 #include <AsyncDelayAsyncFunction.hpp>
 
 #include <chrono>
@@ -40,27 +41,45 @@ AsyncFunctionRegistryReturnType AsyncDelayAsyncFunction::create(AsyncFunctionReg
     if (binding.constantArguments.size() > 2 && binding.constantArguments[2])
     {
         const auto limit = binding.constantArguments[2]->view().getUnsignedInteger();
-        if (limit == 0 || !std::in_range<size_t>(limit))
-        {
-            throw CannotOpenSource("ASYNC_DELAY expects a positive, representable concurrency limit");
-        }
+        PRECONDITION(limit > 0 && std::in_range<size_t>(limit), "ASYNC_DELAY binding concurrency must be logically validated");
         bound = static_cast<size_t>(limit);
     }
-    if (!bound)
-    {
-        return std::make_unique<AsyncDelayAsyncFunction>(std::nullopt);
-    }
-    return std::make_unique<AsyncDelayAsyncFunction>(*bound);
+    return std::make_unique<AsyncDelayAsyncFunction>(bound);
 }
 
-boost::asio::awaitable<AsyncValues> AsyncDelayAsyncFunction::call(AsyncValues arguments)
+namespace
+{
+class PreparedDelayCall final : public PreparedAsyncCall
+{
+public:
+    PreparedDelayCall(RuntimeValue value, uint64_t millis) : value(std::move(value)), millis(millis) { }
+
+    boost::asio::awaitable<SharedRuntimeValues> call() override
+    {
+        const auto deadline = checkedSteadyDeadline(millis, "ASYNC_DELAY");
+        boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, deadline};
+        co_await timer.async_wait(boost::asio::use_awaitable);
+        co_return SharedRuntimeValues{value, RuntimeValue{millis}};
+    }
+
+private:
+    RuntimeValue value;
+    uint64_t millis;
+};
+}
+
+std::unique_ptr<PreparedAsyncCall> AsyncDelayAsyncFunction::prepare(SharedRuntimeValues arguments)
 {
     PRECONDITION(arguments.size() == 2 || arguments.size() == 3, "ASYNC_DELAY takes (value, millis[, max_concurrency])");
-    const auto millis = arguments[1].getUnsignedInteger();
-    const auto deadline = checkedSteadyDeadline(millis, "ASYNC_DELAY");
-    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, deadline};
-    co_await timer.async_wait(boost::asio::use_awaitable);
-    co_return AsyncValues{arguments[0].toOwned(), RuntimeValue{millis}};
+    const auto millis = checkedUnsignedIntegerOption(arguments[1], "ASYNC_DELAY millis");
+    static_cast<void>(checkedSteadyDeadline(millis, "ASYNC_DELAY"));
+    return std::make_unique<PreparedDelayCall>(arguments[0].toOwned(), millis);
+}
+
+boost::asio::awaitable<SharedRuntimeValues> AsyncDelayAsyncFunction::call(SharedRuntimeValues arguments)
+{
+    auto prepared = prepare(std::move(arguments));
+    co_return co_await prepared->call();
 }
 
 }

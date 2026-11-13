@@ -30,7 +30,7 @@ namespace
 {
 
 /// The registry is not visible from outside, so the tests tell a removed channel from one left behind by what a new
-/// lease on the same id finds: a removed channel is created anew, open and empty.
+/// attachment on the same id finds: a removed channel is created anew, open and empty.
 class HandoffChannelTest : public testing::Test
 {
 protected:
@@ -42,44 +42,44 @@ protected:
 
     [[nodiscard]] bool registeredChannelIsFresh() const
     {
-        const HandoffChannel::Lease sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+        const HandoffChannel::Attachment sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
         return !sink->exhausted() && sink->tryPop() == std::nullopt;
     }
 };
 
-static_assert(!std::is_constructible_v<HandoffChannel::Lease, std::string, size_t, HandoffChannel::Role>);
+static_assert(!std::is_constructible_v<HandoffChannel::Attachment, std::string, size_t, HandoffChannel::Role>);
 
 TEST_F(HandoffChannelTest, EquivalentUuidSpellingsAttachToTheSameChannel)
 {
     const AsyncChannelId lower{std::string{"aabbccdd-1122-3344-5566-778899aabbcc"}};
     const AsyncChannelId upper{std::string{"AABBCCDD-1122-3344-5566-778899AABBCC"}};
-    const HandoffChannel::Lease sink{lower, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
-    const HandoffChannel::Lease source{upper, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+    const HandoffChannel::Attachment sink{lower, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+    const HandoffChannel::Attachment source{upper, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
     EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::PUSHED);
     EXPECT_TRUE(source->tryPop().has_value());
 }
 
 TEST_F(HandoffChannelTest, DistinctUuidsDoNotShareAChannel)
 {
-    const HandoffChannel::Lease source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
-    const HandoffChannel::Lease sink{AsyncChannelId{generateUUID()}, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+    const HandoffChannel::Attachment source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+    const HandoffChannel::Attachment sink{AsyncChannelId{generateUUID()}, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
     EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::FULL);
     EXPECT_FALSE(source->tryPop().has_value());
 }
 
 TEST_F(HandoffChannelTest, TakesNoBufferBeforeTheSourceAttached)
 {
-    HandoffChannel::Lease sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+    HandoffChannel::Attachment sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
     EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::FULL);
 
-    const HandoffChannel::Lease source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+    const HandoffChannel::Attachment source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
     EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::PUSHED);
 }
 
 TEST_F(HandoffChannelTest, HandsOffAndEndsTheStreamWhenTheSinkClosesFirst)
 {
-    std::optional<HandoffChannel::Lease> sink{std::in_place, id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
-    std::optional<HandoffChannel::Lease> source{std::in_place, id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+    std::optional<HandoffChannel::Attachment> sink{std::in_place, id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+    std::optional<HandoffChannel::Attachment> source{std::in_place, id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
     ASSERT_EQ((*sink)->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::PUSHED);
     (*sink)->close();
     sink.reset();
@@ -91,12 +91,12 @@ TEST_F(HandoffChannelTest, HandsOffAndEndsTheStreamWhenTheSinkClosesFirst)
     EXPECT_EQ(bufferManager->getNumberOfAvailableBuffers(), allBuffers);
 }
 
-/// The source's construction fails after it took its lease, e.g. on an invalid function configuration.
+/// The source's construction fails after it attached, e.g. on an invalid function configuration.
 TEST_F(HandoffChannelTest, SinkLearnsThatAFailedSourceIsGone)
 {
-    std::optional<HandoffChannel::Lease> sink{std::in_place, id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+    std::optional<HandoffChannel::Attachment> sink{std::in_place, id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
     {
-        const HandoffChannel::Lease source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+        const HandoffChannel::Attachment source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
         ASSERT_EQ((*sink)->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::PUSHED);
     }
     EXPECT_EQ((*sink)->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::CONSUMER_GONE);
@@ -105,12 +105,12 @@ TEST_F(HandoffChannelTest, SinkLearnsThatAFailedSourceIsGone)
     EXPECT_TRUE(registeredChannelIsFresh());
 }
 
-/// The source half never got as far as its lease, e.g. because it failed to lower, and the teardown destroys the sink
+/// The source half never attached, e.g. because it failed to lower, and the teardown destroys the sink
 /// without a graceful stop.
 TEST_F(HandoffChannelTest, SinkTornDownWithoutASourceRemovesTheChannel)
 {
     {
-        const HandoffChannel::Lease sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+        const HandoffChannel::Attachment sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
         EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::FULL);
     }
     EXPECT_TRUE(registeredChannelIsFresh());
@@ -122,10 +122,10 @@ TEST_F(HandoffChannelTest, SinkTornDownWithoutASourceRemovesTheChannel)
 TEST_F(HandoffChannelTest, SinkAfterAFailedSourceIsHeldBackUntilTornDown)
 {
     {
-        const HandoffChannel::Lease source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+        const HandoffChannel::Attachment source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
     }
     {
-        const HandoffChannel::Lease sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+        const HandoffChannel::Attachment sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
         EXPECT_EQ(sink->tryPush(bufferManager->getBufferBlocking()), HandoffChannel::PushResult::FULL);
     }
     EXPECT_TRUE(registeredChannelIsFresh());
@@ -135,11 +135,11 @@ TEST_F(HandoffChannelTest, SinkAfterAFailedSourceIsHeldBackUntilTornDown)
 TEST_F(HandoffChannelTest, SourceAfterAGracefullyClosedSinkEndsItsStream)
 {
     {
-        const HandoffChannel::Lease sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
+        const HandoffChannel::Attachment sink{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SINK};
         sink->close();
     }
     {
-        const HandoffChannel::Lease source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+        const HandoffChannel::Attachment source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
         EXPECT_EQ(source->pop(std::stop_token{}), std::nullopt);
         EXPECT_TRUE(source->exhausted());
     }
@@ -148,7 +148,7 @@ TEST_F(HandoffChannelTest, SourceAfterAGracefullyClosedSinkEndsItsStream)
 
 TEST_F(HandoffChannelTest, ReleaseIsIdempotent)
 {
-    HandoffChannel::Lease source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
+    HandoffChannel::Attachment source{id, HandoffChannel::DEFAULT_CAPACITY, HandoffChannel::Role::SOURCE};
     source.release();
     source.release();
     EXPECT_TRUE(registeredChannelIsFresh());

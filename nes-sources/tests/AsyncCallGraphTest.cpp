@@ -23,12 +23,15 @@
 #include <DataTypes/RuntimeValue.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
 #include <gtest/gtest.h>
 #include <rfl/Generic.hpp>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -108,13 +111,20 @@ TEST(AsyncCallGraphTest, SourceConfigKeepsTheTypedGraphAndReflectsItAsAnObject)
 
 TEST(AsyncCallGraphTest, OutputHandleOwnsItsProducerAndChecksItsSelector)
 {
+#ifndef NO_ASSERT
+    SKIP_IF_TSAN();
+#endif
     std::weak_ptr<const AsyncCall> weak;
     auto output = [&]
     {
         AsyncCallGraphBuilder builder{{}};
         const auto producer = builder.call("Producer", {}, {INTEGER});
         weak = producer;
-        EXPECT_THROW(static_cast<void>(producer->output(1)), Exception);
+#ifndef NO_ASSERT
+        Logger::setupLogging("AsyncCallGraphDeathTest.log", LogLevel::LOG_DEBUG, false);
+        GTEST_FLAG_SET(death_test_style, "threadsafe");
+        EXPECT_DEATH(static_cast<void>(producer->output(1)), "Precondition violated");
+#endif
         return producer->output(0);
     }();
     /// The builder and every other owning handle have gone away.
@@ -134,11 +144,56 @@ TEST(AsyncCallGraphTest, RejectsForeignProducerAndInputEvenWhenNamesAndTypesAgre
     EXPECT_EQ(field.getField(), QualifiedIdentifier::parse("SOURCE.VALUE"));
     EXPECT_EQ(field.getDataType(), INTEGER);
     const auto producer = first.call("Producer", {field}, {INTEGER});
-    EXPECT_THROW(static_cast<void>(second.call("Bad", {field}, {INTEGER})), Exception);
-    EXPECT_THROW(static_cast<void>(second.call("Bad", {producer->output(0)}, {INTEGER})), Exception);
-    EXPECT_THROW(second.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT")), Exception);
-    EXPECT_THROW(static_cast<void>(first.input(QualifiedIdentifier::parse("VALUE"))), Exception);
+#ifndef NO_ASSERT
+    SKIP_IF_TSAN();
+    Logger::setupLogging("AsyncCallGraphDeathTest.log", LogLevel::LOG_DEBUG, false);
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_DEATH(static_cast<void>(second.call("Bad", {field}, {INTEGER})), "Precondition violated");
+    EXPECT_DEATH(static_cast<void>(second.call("Bad", {producer->output(0)}, {INTEGER})), "Precondition violated");
+    EXPECT_DEATH(second.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT")), "Precondition violated");
+    EXPECT_DEATH(static_cast<void>(first.input(QualifiedIdentifier::parse("VALUE"))), "Precondition violated");
+#endif
 }
+
+#ifndef NO_ASSERT
+TEST(AsyncCallGraphTest, BuilderContractMisuseDies)
+{
+    SKIP_IF_TSAN();
+    Logger::setupLogging("AsyncCallGraphDeathTest.log", LogLevel::LOG_DEBUG, false);
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_DEATH(
+        (
+            []
+            {
+                AsyncCallGraphBuilder builder{Schema<QualifiedUnboundField, Ordered>{
+                    QualifiedUnboundField{QualifiedIdentifier::parse("DUP"), INTEGER},
+                    QualifiedUnboundField{QualifiedIdentifier::parse("DUP"), INTEGER}}};
+                static_cast<void>(builder);
+            }()),
+        "Precondition violated.*Duplicate async input");
+
+    EXPECT_DEATH(
+        {
+            AsyncCallGraphBuilder builder{{}};
+            const auto call = builder.call("Producer", {}, {INTEGER});
+            builder.exportOutput(call->output(0), QualifiedIdentifier::parse("OUT"));
+            builder.exportOutput(call->output(0), QualifiedIdentifier::parse("OUT"));
+        },
+        "Precondition violated.*Duplicate async output");
+    EXPECT_DEATH(
+        {
+            AsyncCallGraphBuilder builder{{}};
+            static_cast<void>(builder.call("", {}, {INTEGER}));
+        },
+        "Precondition violated.*needs a function");
+    EXPECT_DEATH(
+        {
+            AsyncCallGraphBuilder builder{{}};
+            static_cast<void>(builder.call("NoResult", {}, {}));
+        },
+        "Precondition violated.*needs a function");
+}
+#endif
 
 TEST(AsyncCallGraphTest, ReflectionPreservesFullyQualifiedCaseSensitiveInputs)
 {
@@ -163,8 +218,13 @@ TEST(AsyncCallGraphTest, BuilderIsSingleUseAndPrunesUnreachableWork)
     auto graph = builder.build();
     ASSERT_EQ(graph.getCalls().size(), 1);
     EXPECT_EQ(graph.getCalls().front(), used);
-    EXPECT_THROW(static_cast<void>(builder.call("Late", {}, {INTEGER})), Exception);
-    EXPECT_THROW(static_cast<void>(builder.build()), Exception);
+#ifndef NO_ASSERT
+    SKIP_IF_TSAN();
+    Logger::setupLogging("AsyncCallGraphDeathTest.log", LogLevel::LOG_DEBUG, false);
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_DEATH(static_cast<void>(builder.call("Late", {}, {INTEGER})), "Precondition violated");
+    EXPECT_DEATH(static_cast<void>(builder.build()), "Precondition violated");
+#endif
 }
 
 TEST(AsyncCallGraphTest, ReflectionPreservesDiamondIdentityWithoutDependingOnDefinitionOrder)
@@ -212,6 +272,53 @@ TEST(AsyncCallGraphTest, ReflectionRejectsDanglingDuplicateCyclicAndOutOfRangeRe
     auto& types = std::get<rfl::Generic::Array>(object(calls(badType)[0])["resultTypes"].variant());
     types[0] = rfl::Generic::Array{int64_t{7}};
     EXPECT_THROW(static_cast<void>(decode(badType)), Exception);
+
+    auto emptySignature = *context.reflect(graph);
+    object(calls(emptySignature)[0])["functionType"] = std::string{};
+    EXPECT_THROW(static_cast<void>(decode(emptySignature)), Exception);
+
+    auto duplicateExport = *context.reflect(graph);
+    auto& exports = std::get<rfl::Generic::Array>(object(duplicateExport)["outputs"].variant());
+    ASSERT_GE(exports.size(), 2U);
+    exports[1] = exports[0];
+    EXPECT_THROW(static_cast<void>(decode(duplicateExport)), Exception);
+
+    const auto inputName = QualifiedIdentifier::parse("IN.VALUE");
+    AsyncCallGraphBuilder inputBuilder{Schema<QualifiedUnboundField, Ordered>{QualifiedUnboundField{inputName, INTEGER}}};
+    const auto inputCall = inputBuilder.call("Read", {inputBuilder.input(inputName)}, {INTEGER});
+    inputBuilder.exportOutput(inputCall->output(0), QualifiedIdentifier::parse("OUT"));
+    const auto inputWire = *context.reflect(inputBuilder.build());
+
+    auto duplicateInput = inputWire;
+    auto& schema = std::get<rfl::Generic::Array>(object(duplicateInput)["inputSchema"].variant());
+    ASSERT_EQ(schema.size(), 1U);
+    schema.push_back(schema.front());
+    EXPECT_THROW(static_cast<void>(decode(duplicateInput)), Exception);
+
+    auto unknownInput = inputWire;
+    auto& inputArguments = std::get<rfl::Generic::Array>(object(calls(unknownInput).front())["arguments"].variant());
+    object(inputArguments.front())["value"] = std::string{"MISSING"};
+    EXPECT_THROW(static_cast<void>(decode(unknownInput)), Exception);
+
+    auto emptyResults = inputWire;
+    object(calls(emptyResults).front())["resultTypes"] = rfl::Generic::Array{};
+    EXPECT_THROW(static_cast<void>(decode(emptyResults)), Exception);
+
+    auto undefinedType = inputWire;
+    auto& undefinedTypes = std::get<rfl::Generic::Array>(object(calls(undefinedType).front())["resultTypes"].variant());
+    undefinedTypes.front() = rfl::Generic::Array{int64_t{0}, int64_t{0}};
+    EXPECT_THROW(static_cast<void>(decode(undefinedType)), Exception);
+}
+
+TEST(AsyncCallGraphTest, MalformedWireFailuresUseDeserializationErrorCode)
+{
+    const ReflectionContext context;
+    auto malformed = *context.reflect(diamond());
+    object(calls(malformed)[0])["functionType"] = std::string{};
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(decode(malformed)), ErrorCode::CannotDeserialize);
+    auto dangling = *context.reflect(diamond());
+    firstReference(calls(dangling)[1])["producer"] = std::string{"missing"};
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(decode(dangling)), ErrorCode::CannotDeserialize);
 }
 
 TEST(AsyncCallGraphTest, NativeConstantsRoundTripAllTypesNullabilityAndExactPayloads)

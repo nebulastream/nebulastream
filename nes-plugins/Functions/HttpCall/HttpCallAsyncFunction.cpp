@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <DataTypes/CheckedInteger.hpp>
 #include <HttpCallAsyncFunction.hpp>
 #include <HttpCallResolver.hpp>
 
@@ -49,55 +50,102 @@ AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegis
     return std::make_unique<HttpCallAsyncFunction>();
 }
 
-std::optional<size_t> HttpCallAsyncFunction::maxRetries(const AsyncValues& arguments) const
+std::optional<size_t> HttpCallAsyncFunction::maxRetries(const SharedRuntimeValues& arguments) const
 {
     PRECONDITION(arguments.size() >= 2 && arguments.size() <= 4, "HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
     if (arguments.size() < 4)
     {
         return size_t{0};
     }
-    const auto retries = arguments[3].getUnsignedInteger();
+    const auto retries = checkedUnsignedIntegerOption(arguments[3], "HTTP_CALL retries");
     if (!std::in_range<size_t>(retries) || retries == std::numeric_limits<size_t>::max())
     {
-        throw CannotReadFromSource("HTTP_CALL expects a representable retry count, got {}", retries);
+        throw ArithmeticalError("HTTP_CALL expects a representable retry count, got {}", retries);
     }
     return static_cast<size_t>(retries);
 }
 
-boost::asio::awaitable<AsyncValues> HttpCallAsyncFunction::call(AsyncValues arguments)
+class HttpCallAsyncFunction::Prepared final : public PreparedAsyncCall
+{
+public:
+    Prepared(
+        HttpCallAsyncFunction& owner,
+        std::string body,
+        std::string url,
+        std::string host,
+        std::string port,
+        std::string target,
+        uint64_t millis,
+        size_t retries)
+        : owner(owner)
+        , body(std::move(body))
+        , url(std::move(url))
+        , host(std::move(host))
+        , port(std::move(port))
+        , target(std::move(target))
+        , millis(millis)
+        , retries(retries)
+    {
+    }
+
+    boost::asio::awaitable<SharedRuntimeValues> call() override { co_return co_await owner.execute(body, url, host, port, target, millis); }
+
+    std::optional<size_t> maxRetries() const override { return retries; }
+
+private:
+    HttpCallAsyncFunction& owner;
+    std::string body, url, host, port, target;
+    uint64_t millis;
+    size_t retries;
+};
+
+std::unique_ptr<PreparedAsyncCall> HttpCallAsyncFunction::prepare(SharedRuntimeValues arguments)
 {
     PRECONDITION(arguments.size() >= 2 && arguments.size() <= 4, "HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
-    const auto startedAt = std::chrono::steady_clock::now();
-    const std::string body{arguments[0].get<std::string_view>()};
-    const std::string url{arguments[1].get<std::string_view>()};
+    std::string body{arguments[0].get<std::string_view>()};
+    std::string url{arguments[1].get<std::string_view>()};
     auto millis = static_cast<uint64_t>(DEFAULT_TIMEOUT.count());
     if (arguments.size() >= 3)
     {
-        millis = arguments[2].getUnsignedInteger();
-        if (millis == 0)
-        {
-            throw CannotReadFromSource("HTTP_CALL expects a positive timeout in milliseconds, got {}", millis);
-        }
+        millis = checkedUnsignedIntegerOption(arguments[2], "HTTP_CALL timeout");
     }
-    const auto deadline = checkedSteadyDeadline(millis, "HTTP_CALL", startedAt);
-    const auto parsed = boost::urls::parse_uri(url);
-    if (!parsed || parsed->scheme() != "http")
+    if (millis == 0)
     {
-        throw CannotReadFromSource("HTTP_CALL needs an http:// url, got {}", url);
+        throw ArithmeticalError("HTTP_CALL expects a positive timeout in milliseconds, got {}", millis);
     }
-    const std::string host = parsed->host();
-    const std::string port = parsed->has_port() ? std::string{parsed->port()} : "80";
-    const std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
+    static_cast<void>(checkedSteadyDeadline(millis, "HTTP_CALL"));
+    const auto parsed = boost::urls::parse_uri(url);
+    if (!parsed || parsed->scheme() != "http" || parsed->host().empty())
+    {
+        throw FormattingError("HTTP_CALL needs an http:// url with a host, got {}", url);
+    }
+    std::string host{parsed->host()};
+    std::string port = parsed->has_port() ? std::string{parsed->port()} : "80";
+    std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
+    const auto retries = maxRetries(arguments).value_or(0);
+    return std::make_unique<Prepared>(
+        *this, std::move(body), std::move(url), std::move(host), std::move(port), std::move(target), millis, retries);
+}
 
-    /// A transport error may follow a successfully processed POST. Only the explicit retry policy may resend it.
+boost::asio::awaitable<SharedRuntimeValues> HttpCallAsyncFunction::call(SharedRuntimeValues arguments)
+{
+    auto prepared = prepare(std::move(arguments));
+    co_return co_await prepared->call();
+}
+
+boost::asio::awaitable<SharedRuntimeValues>
+HttpCallAsyncFunction::execute(std::string body, std::string url, std::string host, std::string port, std::string target, uint64_t millis)
+{
+    const auto deadline = checkedSteadyDeadline(millis, "HTTP_CALL");
     try
     {
-        co_return AsyncValues::make(co_await exchange(host, port, target, body, deadline));
+        co_return SharedRuntimeValues::make(
+            co_await exchange(std::move(host), std::move(port), std::move(target), std::move(body), deadline));
     }
     catch (const boost::system::system_error& error)
     {
         stream.reset();
-        throw CannotReadFromSource("HTTP_CALL to {} failed: {}", url, error.what());
+        throw IOError("HTTP_CALL to {} failed: {}", url, error.what());
     }
 }
 
@@ -148,7 +196,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
     }
     if (response.result_int() < 200 || response.result_int() >= 300)
     {
-        throw CannotReadFromSource("HTTP_CALL to {}:{}{} got status {}: {}", host, port, target, response.result_int(), response.body());
+        throw IOError("HTTP_CALL to {}:{}{} got status {}: {}", host, port, target, response.result_int(), response.body());
     }
     co_return std::move(response.body());
 }
