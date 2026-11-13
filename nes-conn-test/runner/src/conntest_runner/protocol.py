@@ -24,6 +24,10 @@ import re
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from conntest_runner.datamodel import NativeColumn
 
 # The table is parsed on first use, not at import, so importing this module touches no file,
 # and a missing .inc fails with its path instead of as an ImportError.
@@ -92,10 +96,12 @@ class Got:
 
     A FILL reply has no row counts, because the data is checked from the ``--observed-path`` file.
     ``partial_read_ms`` lists how long each read that returned a partly filled buffer took during a FILL.
+    ``schema`` is the schema that a BIND bound, empty in every other reply.
     """
 
     eos: bool = False
     partial_read_ms: tuple[int, ...] = ()
+    schema: tuple[NativeColumn, ...] = ()
 
 
 class ConnectorError(Exception):
@@ -126,7 +132,11 @@ class HarnessError(Exception):
 def read_reply(line: str) -> Got:
     j = json.loads(line)
     if j.get("ok"):
-        return Got(eos=bool(j.get("eos", False)), partial_read_ms=tuple(int(ms) for ms in j.get("partial_read_ms", [])))
+        return Got(
+            eos=bool(j.get("eos", False)),
+            partial_read_ms=tuple(int(ms) for ms in j.get("partial_read_ms", [])),
+            schema=tuple((str(c["name"]), str(c["type"]), bool(c["nullable"])) for c in j.get("schema", [])),
+        )
     origin = j.get("origin")
     phase = str(j.get("phase", ""))
     message = str(j.get("message", ""))
