@@ -15,6 +15,8 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <ranges>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -39,12 +41,16 @@
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Windows/JoinFunctionSplit.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -131,6 +137,63 @@ public:
             {Identifier::parse("right_ts"), rightType},
             {Identifier::parse("START"), u64},
             {Identifier::parse("END"), u64}};
+    }
+
+    /// Builds Source(left) JOIN Source(right) ON <joinFunction> -> Sink and returns the join after applying DecideJoinTypesRule.
+    /// `createJoinFunction` receives the two source operators to bind its field accesses to.
+    template <typename CreateJoinFunction>
+    static TypedLogicalOperator<JoinLogicalOperator> applyRuleToJoin(
+        CreateJoinFunction createJoinFunction, const JoinLogicalOperator::JoinType joinType, const StreamJoinStrategy joinStrategy)
+    {
+        const auto leftSourceOp = SourceDescriptorLogicalOperator::create(
+            createSourceDescriptor(PhysicalSourceId{1}, createLogicalSource(Identifier::parse("LEFT_TEST"), createSchema("left"))));
+        const auto rightSourceOp = SourceDescriptorLogicalOperator::create(
+            createSourceDescriptor(PhysicalSourceId{2}, createLogicalSource(Identifier::parse("RIGHT_TEST"), createSchema("right"))));
+
+        auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+            {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+             Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+        auto joinOp = JoinLogicalOperator::create(
+            std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+            createJoinFunction(leftSourceOp, rightSourceOp),
+            createTumblingWindow(),
+            joinType,
+            characteristics.value());
+
+        const bool leftNullable
+            = joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN or joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+        const bool rightNullable
+            = joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN or joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+        auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(leftNullable, rightNullable));
+        auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
+        const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+
+        const DecideJoinTypesRule rule(joinStrategy);
+        auto joins = getOperatorByType<JoinLogicalOperator>(rule.apply(plan));
+        INVARIANT(joins.size() == 1, "Expected exactly one join");
+        return joins[0];
+    }
+
+    static JoinImplementation getJoinImplementation(const TypedLogicalOperator<JoinLogicalOperator>& join)
+    {
+        return join->getTraitSet().get<JoinImplementationTypeTrait>()->implementationType;
+    }
+
+    static FieldAccessLogicalFunction fieldOf(const TypedLogicalOperator<SourceDescriptorLogicalOperator>& source, const std::string& name)
+    {
+        return FieldAccessLogicalFunction{source->getOutputSchema().getFieldByName(Identifier::parse(name)).value()};
+    }
+
+    /// left_id = right_id AND right_value >= left_value AND right_ts <= left_ts
+    static LogicalFunction equiAndRangeCondition(
+        const TypedLogicalOperator<SourceDescriptorLogicalOperator>& left,
+        const TypedLogicalOperator<SourceDescriptorLogicalOperator>& right)
+    {
+        return AndLogicalFunction{
+            AndLogicalFunction{
+                EqualsLogicalFunction{fieldOf(left, "left_id"), fieldOf(right, "right_id")},
+                GreaterEqualsLogicalFunction{fieldOf(right, "right_value"), fieldOf(left, "left_value")}},
+            LessEqualsLogicalFunction{fieldOf(right, "right_ts"), fieldOf(left, "left_ts")}};
     }
 };
 
@@ -606,6 +669,121 @@ TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
     EXPECT_TRUE(trait->implementationType == JoinImplementation::NESTED_LOOP_JOIN);
 }
 
+/// Equi-key AND range conditions: the hash join hashes on the key and evaluates the ranges as a residual.
+TEST_F(DecideJoinTypesTest, EquiKeyWithRangeResidualProducesHashJoin)
+{
+    for (const auto strategy : {StreamJoinStrategy::OPTIMIZER_CHOOSES, StreamJoinStrategy::HASH_JOIN})
+    {
+        const auto join = applyRuleToJoin(equiAndRangeCondition, JoinLogicalOperator::JoinType::INNER_JOIN, strategy);
+        EXPECT_EQ(getJoinImplementation(join), JoinImplementation::HASH_JOIN);
+    }
+}
+
+/// A forced NLJ stays a NLJ, even if the condition has an equi-key.
+TEST_F(DecideJoinTypesTest, EquiKeyWithRangeResidualAndForcedNLJProducesNLJ)
+{
+    const auto join
+        = applyRuleToJoin(equiAndRangeCondition, JoinLogicalOperator::JoinType::INNER_JOIN, StreamJoinStrategy::NESTED_LOOP_JOIN);
+    EXPECT_EQ(getJoinImplementation(join), JoinImplementation::NESTED_LOOP_JOIN);
+}
+
+/// Outer joins with a residual use the hash join as well; the probe then decides "matched" per pair including the residual.
+TEST_F(DecideJoinTypesTest, OuterJoinsWithEquiKeyAndRangeResidualProduceHashJoin)
+{
+    for (const auto joinType :
+         {JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN,
+          JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
+          JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
+    {
+        const auto join = applyRuleToJoin(equiAndRangeCondition, joinType, StreamJoinStrategy::OPTIMIZER_CHOOSES);
+        EXPECT_EQ(getJoinImplementation(join), JoinImplementation::HASH_JOIN);
+    }
+}
+
+/// Only range conditions: there is nothing to hash on.
+TEST_F(DecideJoinTypesTest, PureRangeConditionProducesNLJ)
+{
+    for (const auto strategy : {StreamJoinStrategy::OPTIMIZER_CHOOSES, StreamJoinStrategy::HASH_JOIN})
+    {
+        const auto join = applyRuleToJoin(
+            [](const auto& left, const auto& right) -> LogicalFunction
+            {
+                return AndLogicalFunction{
+                    GreaterEqualsLogicalFunction{fieldOf(right, "right_value"), fieldOf(left, "left_value")},
+                    LessEqualsLogicalFunction{fieldOf(right, "right_ts"), fieldOf(left, "left_ts")}};
+            },
+            JoinLogicalOperator::JoinType::INNER_JOIN,
+            strategy);
+        EXPECT_EQ(getJoinImplementation(join), JoinImplementation::NESTED_LOOP_JOIN);
+    }
+}
+
+/// A top-level OR of equalities has no key common to all matches, so it must not be hashed (previously it was hashed on both equalities,
+/// i.e. evaluated as an AND).
+TEST_F(DecideJoinTypesTest, TopLevelOrOfEqualitiesProducesNLJ)
+{
+    for (const auto strategy : {StreamJoinStrategy::OPTIMIZER_CHOOSES, StreamJoinStrategy::HASH_JOIN})
+    {
+        const auto join = applyRuleToJoin(
+            [](const auto& left, const auto& right) -> LogicalFunction
+            {
+                return OrLogicalFunction{
+                    EqualsLogicalFunction{fieldOf(left, "left_id"), fieldOf(right, "right_id")},
+                    EqualsLogicalFunction{fieldOf(left, "left_value"), fieldOf(right, "right_value")}};
+            },
+            JoinLogicalOperator::JoinType::INNER_JOIN,
+            strategy);
+        EXPECT_EQ(getJoinImplementation(join), JoinImplementation::NESTED_LOOP_JOIN);
+    }
+}
+
+/// An equi-key AND-ed with an OR: the key is hashed and the OR becomes the residual.
+TEST_F(DecideJoinTypesTest, EquiKeyAndOrResidualProducesHashJoin)
+{
+    const auto join = applyRuleToJoin(
+        [](const auto& left, const auto& right) -> LogicalFunction
+        {
+            return AndLogicalFunction{
+                EqualsLogicalFunction{fieldOf(left, "left_id"), fieldOf(right, "right_id")},
+                OrLogicalFunction{
+                    EqualsLogicalFunction{fieldOf(left, "left_value"), fieldOf(right, "right_value")},
+                    LessEqualsLogicalFunction{fieldOf(right, "right_ts"), fieldOf(left, "left_ts")}}};
+        },
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    EXPECT_EQ(getJoinImplementation(join), JoinImplementation::HASH_JOIN);
+}
+
+/// The split orders each key by join side, regardless of how the equality is written, and keeps the other conjuncts as the residual.
+TEST_F(DecideJoinTypesTest, SplitJoinFunctionSeparatesEquiKeysFromResidual)
+{
+    const auto join = applyRuleToJoin(
+        [](const auto& left, const auto& right) -> LogicalFunction
+        {
+            return AndLogicalFunction{
+                AndLogicalFunction{
+                    GreaterEqualsLogicalFunction{fieldOf(right, "right_value"), fieldOf(left, "left_value")},
+                    EqualsLogicalFunction{fieldOf(right, "right_id"), fieldOf(left, "left_id")}},
+                AndLogicalFunction{
+                    /// Both fields from the same input: not a join key
+                    EqualsLogicalFunction{fieldOf(left, "left_ts"), fieldOf(left, "left_value")},
+                    LessEqualsLogicalFunction{fieldOf(right, "right_ts"), fieldOf(left, "left_ts")}}};
+        },
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        StreamJoinStrategy::OPTIMIZER_CHOOSES);
+
+    const auto [equiKeys, residual] = splitJoinFunction(*join);
+    ASSERT_EQ(equiKeys.size(), 1);
+    EXPECT_EQ(equiKeys[0].left.getLastName(), Identifier::parse("left_id"));
+    EXPECT_EQ(equiKeys[0].right.getLastName(), Identifier::parse("right_id"));
+    ASSERT_TRUE(residual.has_value());
+    const auto residualComparisons = BFSRange(*residual)
+        | std::views::filter([](const LogicalFunction& function) { return not function.tryGetAs<AndLogicalFunction>().has_value(); })
+        | std::views::filter([](const LogicalFunction& function) { return not function.getChildren().empty(); })
+        | std::ranges::to<std::vector>();
+    EXPECT_EQ(residualComparisons.size(), 3);
+    EXPECT_TRUE(residual->getDataType().isType(DataType::Type::BOOLEAN));
+}
 
 }
 }

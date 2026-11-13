@@ -25,7 +25,6 @@
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -49,11 +48,13 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
 #include <Join/HashJoin/HJInnerProbePhysicalOperator.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJOuterProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/JoinTriggerStrategy.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
@@ -61,6 +62,7 @@
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/Windows/JoinFunctionSplit.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -116,93 +118,72 @@ std::optional<Nautilus::Interface::BloomFilterParams> createBloomFilterParams(co
 }
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
-getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalOperator& rightChild, const LogicalFunction& joinFunction)
+getJoinFieldExtensionsLeftRight(const std::vector<EquiJoinKey>& equiKeys, const LogicalFunction& joinFunction)
 {
     /// Tuple  of left, right join fields and the combined data type, e.g., i32 and i8 --> i32
     std::vector<FieldNamesExtension> leftJoinNames;
     std::vector<FieldNamesExtension> rightJoinNames;
 
-    /// Retrieves all leaf functions, as we need the leaf functions (join comparison) to check if they have the same number and data types
-    /// for both join sides.
-    std::unordered_set<LogicalFunction> parentsOfJoinComparisons;
-    for (auto itr : BFSRange<LogicalFunction>(joinFunction))
-    {
-        /// If any child is a leaf function, we put the current function into the set
-        const auto anyChildIsLeaf
-            = std::ranges::any_of(itr.getChildren(), [](const LogicalFunction& child) { return child.getChildren().empty(); });
-        if (anyChildIsLeaf)
-        {
-            parentsOfJoinComparisons.insert(itr);
-        }
-    }
     uint64_t counter = 0;
-    std::ranges::for_each(
-        parentsOfJoinComparisons,
-        [leftChild, rightChild, &leftJoinNames, &rightJoinNames, &counter, &joinFunction](const LogicalFunction& parent)
+    for (const auto& [leftField, rightField] : equiKeys)
+    {
+        if (leftField.getProducedBy() == rightField.getProducedBy())
         {
-            /// We expect the parent to have exactly two children and that both children are FieldAccessLogicalFunction
-            /// This should be true, as the join operator receives an input schema from its parent operator without any additional functions
-            /// over the join fields.
-            PRECONDITION(parent.getChildren().size() == 2, "Expect the parent to have exact two children, left and right join fields");
-            const auto& firstField = parent.getChildren().at(0).tryGetAs<FieldAccessLogicalFunction>();
-            const auto& secondField = parent.getChildren().at(1).tryGetAs<FieldAccessLogicalFunction>();
-            if (not(firstField.has_value() && secondField.has_value()))
-            {
-                throw UnknownJoinStrategy(
-                    "Could not handle join strategy that has chained logical functions operating over the join fields!");
-            }
+            throw UnknownJoinStrategy("Cannot handle self joins yet, but got {} as part of the predicate", joinFunction);
+        }
 
-            auto [leftField, rightField] = [&]
+        /// If they do not have the same data types, we need to cast both to a common one
+        if (leftField.getDataType() != rightField.getDataType())
+        {
+            /// We are now converting the fields to a physical data type and then joining them together
+            if (auto joinedDataType = leftField.getDataType().join(rightField.getDataType()); joinedDataType.has_value())
             {
-                if (firstField.value()->getField().getProducedBy() == leftChild)
-                {
-                    PRECONDITION(
-                        secondField.value()->getField().getProducedBy() == rightChild, "Expected the second field to be the right field");
-                    return std::pair{firstField.value()->getField(), secondField.value()->getField()};
-                }
-                PRECONDITION(
-                    firstField.value()->getField().getProducedBy() == rightChild, "Expected the first field to be the right field");
-                PRECONDITION(
-                    secondField.value()->getField().getProducedBy() == leftChild, "Expected the second field to be the left field");
-                return std::pair{secondField.value()->getField(), firstField.value()->getField()};
-            }();
-            if (leftField.getProducedBy() == rightField.getProducedBy())
-            {
-                throw UnknownJoinStrategy("Cannot handle self joins yet, but got {} as part of the predicate", joinFunction);
-            }
-
-            /// If they do not have the same data types, we need to cast both to a common one
-            if (firstField->getDataType() != secondField->getDataType())
-            {
-                /// We are now converting the fields to a physical data type and then joining them together
-                if (auto joinedDataType = leftField.getDataType().join(rightField.getDataType()); joinedDataType.has_value())
-                {
-                    const auto leftFieldNewName
-                        = QualifiedIdentifier::create(leftField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
-                    const auto rightFieldNewName
-                        = QualifiedIdentifier::create(rightField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
-                    leftJoinNames.emplace_back(
-                        FieldNamesExtension{.oldField = leftField, .newField = QualifiedUnboundField{leftFieldNewName, *joinedDataType}});
-                    rightJoinNames.emplace_back(
-                        FieldNamesExtension{.oldField = rightField, .newField = QualifiedUnboundField{rightFieldNewName, *joinedDataType}});
-                }
-                else
-                {
-                    throw UnknownJoinStrategy("Cannot join field types {} and {}", leftField.getDataType(), rightField.getDataType());
-                }
+                const auto leftFieldNewName
+                    = QualifiedIdentifier::create(leftField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
+                const auto rightFieldNewName
+                    = QualifiedIdentifier::create(rightField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
+                leftJoinNames.emplace_back(
+                    FieldNamesExtension{.oldField = leftField, .newField = QualifiedUnboundField{leftFieldNewName, *joinedDataType}});
+                rightJoinNames.emplace_back(
+                    FieldNamesExtension{.oldField = rightField, .newField = QualifiedUnboundField{rightFieldNewName, *joinedDataType}});
             }
             else
             {
-                leftJoinNames.emplace_back(
-                    FieldNamesExtension{
-                        .oldField = leftField, .newField = QualifiedUnboundField{leftField.getLastName(), leftField.getDataType()}});
-                rightJoinNames.emplace_back(
-                    FieldNamesExtension{
-                        .oldField = rightField, .newField = QualifiedUnboundField{rightField.getLastName(), rightField.getDataType()}});
+                throw UnknownJoinStrategy("Cannot join field types {} and {}", leftField.getDataType(), rightField.getDataType());
             }
-        });
+        }
+        else
+        {
+            leftJoinNames.emplace_back(
+                FieldNamesExtension{
+                    .oldField = leftField, .newField = QualifiedUnboundField{leftField.getLastName(), leftField.getDataType()}});
+            rightJoinNames.emplace_back(
+                FieldNamesExtension{
+                    .oldField = rightField, .newField = QualifiedUnboundField{rightField.getLastName(), rightField.getDataType()}});
+        }
+    }
 
     return {leftJoinNames, rightJoinNames};
+}
+
+/// Names of the fields of `inputSchema` that `function` reads; the residual only needs these to be evaluated on a candidate pair.
+std::vector<Record::RecordFieldIdentifier>
+getAccessedFieldNames(const Schema<QualifiedUnboundField, Ordered>& inputSchema, const LogicalFunction& function)
+{
+    std::vector<Record::RecordFieldIdentifier> names;
+    for (const auto& node : BFSRange(function))
+    {
+        if (const auto fieldAccess = node.tryGetAs<FieldAccessLogicalFunction>())
+        {
+            const auto lastName = fieldAccess.value()->getField().getLastName();
+            const auto name = QualifiedIdentifier{lastName};
+            if (inputSchema.contains(lastName) and std::ranges::find(names, name) == names.end())
+            {
+                names.push_back(name);
+            }
+        }
+    }
+    return names;
 }
 
 /// Creates for each field a map operator that has as its function a cast to the correct data type
@@ -312,6 +293,9 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
+    /// The equi-key conjuncts become the hash map key; the remaining conjuncts are evaluated per candidate pair by the probe.
+    const auto [equiKeys, logicalResidual] = splitJoinFunction(*join);
+    PRECONDITION(not equiKeys.empty(), "A hash join needs at least one equi-join key, but got {}", logicalJoinFunction);
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     const auto inputOriginIds = join.getChildren()
         | std::views::transform(
@@ -324,7 +308,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     /// Our current hash join implementation uses a hash table that requires each key to be 100% identical in terms of no. fields and data types.
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.
-    auto [leftJoinFields, rightJoinFields] = getJoinFieldExtensionsLeftRight(leftOperator, rightOperator, logicalJoinFunction);
+    auto [leftJoinFields, rightJoinFields] = getJoinFieldExtensionsLeftRight(equiKeys, logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields, memoryLayoutType);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType);
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(newLeftInputSchema);
@@ -417,6 +401,14 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     /// Creating the hash join probe — select inner or outer probe based on join type
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, physicalOutputSchema);
+    std::optional<HJResidual> residual;
+    if (logicalResidual.has_value())
+    {
+        residual = HJResidual{
+            .function = QueryCompilation::FunctionProvider::lowerFunction(*logicalResidual, combinedFieldMapping),
+            .leftFieldNames = getAccessedFieldNames(newLeftInputSchema, *logicalResidual),
+            .rightFieldNames = getAccessedFieldNames(newRightInputSchema, *logicalResidual)};
+    }
 
     /// Building operator wrapper for the two builds and the probe.
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
@@ -470,7 +462,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             leftTupleLayout,
             rightTupleLayout,
             leftHashMapConfig,
-            rightHashMapConfig));
+            rightHashMapConfig,
+            residual));
     }
     else
     {
@@ -484,7 +477,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             leftTupleLayout,
             rightTupleLayout,
             leftHashMapConfig,
-            rightHashMapConfig));
+            rightHashMapConfig,
+            residual));
     }
 
     std::shared_ptr<PhysicalOperatorWrapper> leftLeaf = leftBuildWrapper;
