@@ -22,16 +22,29 @@ members = [
     "nes-physical-operators/rust/cast-to-unix-timestamp",
     "nes-coordinator/model",
     "nes-coordinator/migration",
+    "nes-coordinator/controller",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+redundant_pub_crate = "allow"
+module_name_repetitions = "allow"
+# The lint suggests Duration::from_mins/from_hours, which are not stable in
+# the pinned dev-container rustc, so the constants stay in from_secs.
+duration_suboptimal_units = "allow"
+
 # Shared dependency declarations. Member crates opt in with `dep.workspace = true`.
 [workspace.dependencies]
 nes_network = { path = "nes-network/network" }
 migration = { path = "nes-coordinator/migration" }
+model = { path = "nes-coordinator/model" }
 
 anyhow = "1.0"
 async-channel = "2.3.1"
@@ -42,6 +55,7 @@ futures = "0.3.31"
 pin-project = "1.1.10"
 proptest = "1.5"
 proptest-derive = "0.5"
+prost = "0.13"
 sea-orm = { version = "=1.1.1", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
@@ -66,6 +80,8 @@ tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor"] }
 tokio-stream = "0.1.17"
 tokio-util = { version = "0.7.13", features = ["codec"] }
+tonic = "0.13"
+tonic-build = "0.13"
 tracing = "0.1.44"
 tracing-subscriber = "0.3"
 url = { version = "2.5.4", features = ["serde"] }
