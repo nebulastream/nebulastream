@@ -88,6 +88,11 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   HOST_NAME=$(echo $HOST | cut -d':' -f1)
   HOST_PORT=$(echo $HOST | cut -d':' -f2)
   DATA=$(yq -r ".workers[$i].data_address" "$WORKERS_FILE")
+  # Optional worker options on top of the defaults below, e.g. `args: ["--enable_task_statistics=true"]`.
+  EXTRA_ARGS=""
+  while IFS= read -r arg; do
+    [ -n "$arg" ] && EXTRA_ARGS+=$'\n'"      \"$arg\","
+  done < <(yq -r ".workers[$i].args // [] | .[]" "$WORKERS_FILE")
 
   # The worker runs as the unprivileged nes user (uid 10000), so its bind-mounted working dir
   # must exist with write access for it; docker would create it owned by root.
@@ -110,7 +115,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       "--",
       "--grpc=$HOST_NAME:$HOST_PORT",
       "--data_address=$DATA",
-      "--worker.default_query_execution.execution_mode=INTERPRETER",
+      "--worker.default_query_execution.execution_mode=INTERPRETER",${EXTRA_ARGS}
     ]
     volumes:
       - type: bind

@@ -299,8 +299,9 @@ struct Repl::Impl
                 rx->history_add(line);
             }
 
-            for (const char charInLine : line)
+            for (size_t index = 0; index < line.size(); ++index)
             {
+                const char charInLine = line[index];
                 if (inString)
                 {
                     if (charInLine == stringChar)
@@ -308,6 +309,10 @@ struct Repl::Impl
                         inString = false;
                         stringChar = 0;
                     }
+                }
+                else if (charInLine == '-' && index + 1 < line.size() && line[index + 1] == '-')
+                {
+                    break;
                 }
                 else
                 {
