@@ -110,6 +110,11 @@ def test_read_reply_ok_bind() -> None:
     assert got == Got(schema=(("ID", "INT32", False), ("Label", "VARSIZED", True)))
 
 
+def test_read_reply_ok_start() -> None:
+    got = read_reply(json.dumps({"ok": True, "phase": "start", "n_buffers": 3}))
+    assert got == Got(eos=False, n_buffers=3)
+
+
 def test_read_reply_connector_error() -> None:
     with pytest.raises(ConnectorError) as ei:
         read_reply(

@@ -31,6 +31,10 @@ std::optional<std::string> slurpFile(const std::filesystem::path& path);
 /// `FILL 3 120` -> `FILL`.
 std::string_view verbOf(std::string_view line);
 
+/// `WRITE 3` -> `3`.
+/// Returns nullopt when the argument is missing or not a plain unsigned integer.
+std::optional<std::uint64_t> argOf(std::string_view line);
+
 /// `FILL 3 120` -> `{3, 120}`.
 /// Returns nullopt when an argument is missing or not a plain unsigned integer, so `5x` is rejected, not truncated.
 std::optional<std::pair<std::uint64_t, std::uint64_t>> twoArgsOf(std::string_view line);

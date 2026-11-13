@@ -26,6 +26,8 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -132,6 +134,51 @@ std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::strin
         return bindError("creating the physical source", "failed: the config has no CREATE PHYSICAL SOURCE statement");
     }
     return std::move(*physicalDescriptor);
+}
+
+std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& sql)
+{
+    const auto statements = parseProgram(sql);
+    if (not statements)
+    {
+        return bindError("parsing the SQL", statements.error());
+    }
+    /// A second statement would be ignored or replace the first, so the config must hold exactly one.
+    if (statements->size() != 1)
+    {
+        return bindError("creating the sink", fmt::format("failed: the config has {} statements, not one CREATE SINK", statements->size()));
+    }
+
+    /// The binder needs a source catalog, even though a sink config declares no source.
+    const StatementBinder binder(
+        std::make_shared<SourceCatalog>(),
+        [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
+    auto bound = binder.bind(statements->front().get());
+    if (!bound.has_value())
+    {
+        return bindError("binding a statement", bound.error());
+    }
+    const auto* sink = std::get_if<CreateSinkStatement>(&*bound);
+    if (sink == nullptr)
+    {
+        return bindError("creating the sink", "failed: the statement is not a CREATE SINK");
+    }
+    try
+    {
+        /// Any valid host, as for a source.
+        SinkStatementHandler handler{std::make_shared<SinkCatalog>(), DefaultHost{"localhost"}};
+        auto created = handler(*sink);
+        if (!created.has_value())
+        {
+            return bindError("creating the sink", created.error());
+        }
+        return std::move(created->created);
+    }
+    catch (const Exception& ex)
+    {
+        /// Some connectors validate their config here by throwing, not by returning an error.
+        return bindError("creating the sink", ex);
+    }
 }
 
 }

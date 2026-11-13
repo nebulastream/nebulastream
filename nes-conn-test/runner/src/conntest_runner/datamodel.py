@@ -165,3 +165,28 @@ class SourceModel:
 
     def compare_fill(self, rows: list[tuple[Any, ...]], *, observed: bytes) -> None:
         _verify_rows(self.schema, rows, jsonl_to_rows(self.schema, observed))
+
+
+class SinkModel:
+    """Generates the data of one sink test and checks the rows that the loader reads back.
+
+    The generated rows are both what the sink writes and the oracle, so the two cannot drift apart.
+    """
+
+    def __init__(self, schema: list[NativeColumn]) -> None:
+        self.schema = schema
+
+    def make_rows(self, n_buffers: int, seed: int, buffer_size: int) -> list[tuple[Any, ...]]:
+        """As many rows as fit in less than ``n_buffers`` in their JSONL encoding.
+
+        The harness packs whole records into buffers, so where a record does not fit at the end of a buffer,
+        the rows can take one buffer more.
+        """
+        return generate_rows(self.schema, seed=seed, max_bytes=n_buffers * buffer_size - 1)
+
+    def encode(self, rows: list[tuple[Any, ...]]) -> bytes:
+        """The JSONL records that the harness hands to the sink, written to its ``--input-path``."""
+        return rows_to_jsonl(self.schema, rows)
+
+    def compare_read_back(self, rows: list[tuple[Any, ...]], *, received: list[Any]) -> None:
+        _verify_rows(self.schema, rows, received)

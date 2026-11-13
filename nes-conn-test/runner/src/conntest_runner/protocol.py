@@ -96,11 +96,13 @@ class Got:
 
     A FILL reply has no row counts, because the data is checked from the ``--observed-path`` file.
     ``partial_read_ms`` lists how long each read that returned a partly filled buffer took during a FILL.
+    ``n_buffers`` is how many buffers a sink's START made from its input, which WRITE then hands to the sink.
     ``schema`` is the schema that a BIND bound, empty in every other reply.
     """
 
     eos: bool = False
     partial_read_ms: tuple[int, ...] = ()
+    n_buffers: int = 0
     schema: tuple[NativeColumn, ...] = ()
 
 
@@ -135,6 +137,7 @@ def read_reply(line: str) -> Got:
         return Got(
             eos=bool(j.get("eos", False)),
             partial_read_ms=tuple(int(ms) for ms in j.get("partial_read_ms", [])),
+            n_buffers=int(j.get("n_buffers", 0)),
             schema=tuple((str(c["name"]), str(c["type"]), bool(c["nullable"])) for c in j.get("schema", [])),
         )
     origin = j.get("origin")

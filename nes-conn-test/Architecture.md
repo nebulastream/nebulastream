@@ -13,7 +13,7 @@ flowchart LR
             loader["the connector's loader.py"]
             subgraph harness["conntest-harness process"]
                 binder["binds the SQL config"]
-                handle["SourceHandle<br/>the engine's source thread"]
+                handle["a source: the engine's SourceHandle<br/>a sink: called from several threads"]
                 connector["the connector"]
             end
         end
@@ -22,10 +22,10 @@ flowchart LR
 
     cli -- "reads the connectors that called add_conn_test" --> registry
     cli -- "docker compose up, then run" --> project
-    pytest -- "BIND, OPEN, FILL, CLOSE<br/>one JSON reply each" --> harness
-    pytest -- "rows to seed" --> loader
-    loader -- "writes" --> service
-    connector -- "reads" --> service
+    pytest -- "BIND, OPEN, FILL, CLOSE or<br/>BIND, START, WRITE, STOP<br/>one JSON reply each" --> harness
+    pytest -- "rows to seed, or<br/>a read-back of a sink's rows" --> loader
+    loader -- "seeds or reads back" --> service
+    connector -- "reads or writes" --> service
     loader -. "without a service:<br/>the loader is the server" .-> connector
     binder --> handle --> connector
 ```
@@ -36,15 +36,18 @@ flowchart LR
   It starts the connector's service, if the connector has a `compose.yaml`,
   runs pytest in a runner container on the same network, prints the logs on failure, and removes the project.
 - **The runner** (`runner/`) is the pytest battery.
-  For each scenario and config, it generates the rows from the config's schema, seeds them through the loader,
-  steps the harness, and compares the bytes that the source delivered with the generated rows.
+  For each scenario and config, it generates the rows from the config's schema and steps the harness.
+  For a source, it seeds the rows through the loader and compares the bytes that the source delivered with them.
+  For a sink, it gives the rows to the harness and compares them with what the loader reads back once the sink has stopped.
 - **The harness** (`driver/`) runs one connector in its own process, so the runner can kill and respawn it.
-  It binds the SQL config and creates the source through the engine's registry.
-  It runs the source in the engine's `SourceHandle`, so the source thread, backpressure and emit path are the engine's own.
+  It binds the SQL config and creates the connector through the engine's registry.
+  It runs a source in the engine's `SourceHandle`, so the source thread, backpressure and emit path are the engine's own.
+  It calls a sink from several threads at once, as the engine's worker threads do,
+  and repeats a buffer or a stop when the sink requests it, after the interval that the sink requests.
 - **The loader** (`conn-test/loader.py` of each connector) is the only connector-specific code.
-  It writes the rows to the connector's service.
-  A connector without a service, such as `TCPSource`, has no `compose.yaml`;
-  its loader is the server that the connector connects to, on loopback inside the runner container.
+  It writes the rows to the connector's service, or, for a sink, reads back what the sink wrote there.
+  A connector without a service, such as `TCPSource` or `TCPSink`, has no `compose.yaml`;
+  its loader is the server that the connector connects to, inside the runner container.
 
 ## Harness protocol
 
@@ -69,6 +72,20 @@ Stopping a source has the step timeout too. A connector that ignores the stop re
 and the harness then exits with code 3, because the stuck source thread still uses its state.
 The bytes of each FILL go to the file in `--observed-path`, where the runner reads them back.
 
+A sink session (`--mode=sink`) has its own commands:
+
+```
+BIND                     bind the config and reply with its bound schema, as for a source
+START                    pack the input's records into buffers, create the sink and start it; the reply has `n_buffers`
+WRITE <n_buffers>        hand the next <n_buffers> buffers to the sink, from `--threads` threads at once
+STOP                     stop the sink, which delivers what it still holds or fails
+```
+
+The engine compiles the output formatter into the query, so a sink only receives formatted bytes.
+The harness reads them as JSONL records from `--input-path` and packs whole records into buffers of `--buffer-size` bytes.
+Each buffer has its own sequence number, because a sink keeps track of the buffers that it holds back by that number.
+BIND rejects a sink config whose output format is not JSON, since the records are JSON.
+
 ## One round trip
 
 1. The runner writes the test's endpoint into a copy of the config.
@@ -77,3 +94,10 @@ The bytes of each FILL go to the file in `--observed-path`, where the runner rea
 4. The loader writes the rows, and `FILL` collects them from the source.
 5. The runner compares the collected rows with the generated ones, ignoring their order.
 6. `CLOSE` stops the source.
+
+For a sink, the runner writes the rows that it generated for the schema of the `BIND` reply to the harness's input file, which the harness reads at `START`.
+
+1. `START` creates the sink, which connects to the service.
+2. `WRITE` hands every buffer to the sink.
+3. `STOP` returns once the sink has delivered everything, or with its error.
+4. The loader reads back what arrived, and the runner compares it with the generated rows, ignoring their order.

@@ -19,6 +19,7 @@ import json
 import pytest
 
 from conntest_runner.datamodel import (
+    SinkModel,
     SourceModel,
     generate_rows,
     jsonl_to_rows,
@@ -44,6 +45,24 @@ _NULL_SCHEMA = [
     ("reading", "FLOAT64", True),
     ("name", "VARSIZED", False),
 ]
+
+
+def test_sink_model_rows_fit_in_n_buffers() -> None:
+    model = SinkModel(_NULL_SCHEMA)
+    rows = model.make_rows(n_buffers=3, seed=7, buffer_size=256)
+    assert len(model.encode(rows)) < 3 * 256
+    assert jsonl_to_rows(_NULL_SCHEMA, model.encode(rows)) == rows
+
+
+def test_sink_model_compare_read_back_is_order_insensitive_and_counts_rows() -> None:
+    model = SinkModel(_NULL_SCHEMA)
+    rows = model.make_rows(n_buffers=2, seed=7, buffer_size=256)
+    model.compare_read_back(rows, received=list(reversed(rows)))
+    # A sink that loses a record, or delivers one twice, fails the compare.
+    with pytest.raises(AssertionError):
+        model.compare_read_back(rows, received=rows[1:])
+    with pytest.raises(AssertionError):
+        model.compare_read_back(rows, received=[*rows, rows[0]])
 
 
 def test_generate_rows_deterministic() -> None:

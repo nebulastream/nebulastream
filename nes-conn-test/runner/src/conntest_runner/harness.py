@@ -219,3 +219,19 @@ class Source(_Stepper):
             return Path(self._observed_path).read_bytes()
         except OSError:
             return b""
+
+
+class Sink(_Stepper):
+    def __init__(self, **kw: Any) -> None:
+        super().__init__(mode="sink", **kw)
+
+    def start(self) -> Got:
+        """The reply's ``n_buffers`` is how many buffers the harness made from the ``--input-path`` records."""
+        return self._command("START")
+
+    def write(self, n_buffers: int) -> Got:
+        """Hands the next ``n_buffers`` buffers to the sink, or as many as are left."""
+        return self._command(f"WRITE {n_buffers}")
+
+    def stop(self) -> Got:
+        return self._command("STOP")

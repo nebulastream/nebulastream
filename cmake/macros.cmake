@@ -217,10 +217,11 @@ function(add_conn_test)
         message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${CMAKE_CURRENT_SOURCE_DIR}/conn-test/loader.py does not exist")
     endif ()
     file(RELATIVE_PATH _conn_test_dir ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conn-test)
-    if (NOT _conn_test_dir MATCHES "^nes-plugins/[^/]+/[^/]+/conn-test$")
-        message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${_conn_test_dir} is not nes-plugins/<Kind>/<Name>/conn-test; "
-                "connection tests cover plugins, and only those directories are members of the uv workspace")
+    if (NOT _conn_test_dir MATCHES "^nes-plugins/(Sources|Sinks)/[^/]+/conn-test$")
+        message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${_conn_test_dir} is not nes-plugins/<Sources|Sinks>/<Name>/conn-test; "
+                "connection tests cover source and sink plugins, and only those directories are members of the uv workspace")
     endif ()
+    string(REGEX REPLACE "^nes-plugins/([^/]+)/.*$" "\\1" _kind ${_conn_test_dir})
     if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/conn-test/pyproject.toml)
         message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): ${_conn_test_dir}/pyproject.toml does not exist; "
                 "every conn-test directory is a uv workspace member, also without dependencies")
@@ -239,7 +240,7 @@ function(add_conn_test)
     add_test(NAME conntest-${ARG_PLUGIN}-configs COMMAND conntest-config-test)
     set_tests_properties(conntest-${ARG_PLUGIN}-configs PROPERTIES
             LABELS "ConnTest"
-            ENVIRONMENT "CONNTEST_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}/conn-test/configs")
+            ENVIRONMENT "CONNTEST_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}/conn-test/configs;CONNTEST_KIND=${_kind}")
     if (NOT ENABLE_CONN_TESTS OR NOT ENABLE_DOCKER_TESTS)
         return()
     endif ()
