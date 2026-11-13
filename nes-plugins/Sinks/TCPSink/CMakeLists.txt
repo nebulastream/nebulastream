@@ -32,3 +32,4 @@ add_e2e_test(
 )
 
 add_tests_if_enabled(tests)
+add_conn_test(PLUGIN TCPSink)

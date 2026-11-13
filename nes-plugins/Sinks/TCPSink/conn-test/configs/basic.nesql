@@ -1,0 +1,11 @@
+-- A minimal TCP sink.
+-- The connection tests replace SOCKET_HOST and SOCKET_PORT with the endpoint of each test.
+-- The tests run no formatter; 'JSON' describes the bytes on the wire.
+-- The connect timeout is below the 10 s close timeout, so a sink that cannot connect fails while it stops,
+-- instead of dropping its data when the close timeout ends first.
+CREATE SINK smoke_output (data UINT8) TYPE TCP SET (
+    'localhost' AS "SINK".SOCKET_HOST,
+    9000        AS "SINK".SOCKET_PORT,
+    1000        AS "SINK".CONNECT_TIMEOUT_MS,
+    'JSON'      AS "SINK".OUTPUT_FORMAT
+);
