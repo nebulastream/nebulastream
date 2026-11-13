@@ -24,16 +24,16 @@ from conntest_runner.scenario_bindings.source import (
     empty,
     full_buffer_not_held,
     partial_buffer_held,
-    round_trip_1_buffer,
-    round_trip_n_buffers,
     silent_link,
     slow_link,
+    transfer_1_buffer,
+    transfer_n_buffers,
 )
 
 SCENARIOS = [
-    round_trip_1_buffer("basic.nesql"),
-    # Only this round trip also covers the multi-column schema and the immediate flush.
-    round_trip_n_buffers("basic.nesql", "multicol.nesql", "intervals.nesql"),
+    transfer_1_buffer("basic.nesql"),
+    # Only this transfer also covers the multi-column schema and the immediate flush.
+    transfer_n_buffers("basic.nesql", "multicol.nesql", "intervals.nesql"),
     # No FILL follows the OPEN, so the source connects and closes without a read.
     empty("basic.nesql"),
     # An unreachable endpoint fails the open with CannotOpenSource (4002).

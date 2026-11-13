@@ -14,17 +14,35 @@
 
 #pragma once
 
+#include <cstdint>
 #include <expected>
+#include <optional>
 #include <string>
+#include <string_view>
 
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Reply.hpp>
 
 namespace NES::ConnTest
 {
 
+enum class ConnectorKind : uint8_t
+{
+    Source,
+    Sink,
+};
+
+/// Parses `source` or `sink`, ignoring case.
+std::optional<ConnectorKind> parseConnectorKind(std::string_view text);
+
 /// Binds the test's SQL into one physical source descriptor on a local catalog.
 /// Every failure is a harness error, because the committed configs are checked to bind and an invalid config is never a scenario.
 std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::string& sql);
+
+/// Binds the test's SQL, one CREATE SINK statement, into a sink descriptor on a local catalog.
+/// Every failure is a harness error, because the config test checks that every committed config binds.
+/// The harness gives the sink JSONL records, so a config whose output format is not JSON does not bind.
+std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& sql);
 
 }
