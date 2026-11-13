@@ -16,7 +16,7 @@ The host reads this module without the loader, so it holds data only.
 The broker delivers only to existing subscriptions, so every scenario seeds after OPEN has subscribed.
 """
 
-from conntest_runner.scenario_bindings import (
+from conntest_runner.scenario_bindings.source import (
     bad_endpoint,
     close_while_reading,
     connection_lost,

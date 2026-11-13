@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 class ScenarioSpec:
     """``default_buffers`` is how much data the scenario seeds, and None for a scenario that seeds nothing.
 
-    A binding can change it only where its constructor in ``scenario_bindings.py`` takes ``n_buffers``.
+    A binding can change it only where its constructor in ``scenario_bindings`` takes ``n_buffers``.
     ``needs_link`` routes the connector through the fault proxy, which the scenario controls as ``ctx.link``.
     """
 

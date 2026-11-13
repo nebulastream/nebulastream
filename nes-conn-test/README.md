@@ -48,6 +48,7 @@ See [Architecture.md](Architecture.md).
 A scenario is a connector-agnostic function in the shared catalog
 (`runner/src/conntest_runner/scenarios.py`). A connector opts in through its `conn-test/scenarios.py`
 and supplies the binding: which config(s) and the expected outcome.
+A connector takes the constructors from the module of its kind, `conntest_runner.scenario_bindings.source` for a source.
 
 | Scenario | What it proves |
 |---|---|
@@ -96,7 +97,7 @@ conn-test/
   configs/*.nesql       valid configs (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE); each must bind as committed
   loader.py             a SourceLoader subclass that seeds the service
   pyproject.toml        the loader's client libraries, if any; required even without them, as a member of the uv workspace
-  scenarios.py          SCENARIOS = [...] built from conntest_runner.scenario_bindings
+  scenarios.py          SCENARIOS = [...] built from conntest_runner.scenario_bindings.source
 ```
 
 and one line in the connector's `CMakeLists.txt`:

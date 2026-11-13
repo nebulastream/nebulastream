@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 
+import conntest_runner.scenario_bindings.source as source_bindings
 from conntest_runner.discovery import (
     Expectation,
     IsolationContractError,
@@ -27,6 +28,7 @@ from conntest_runner.discovery import (
     parse_expectation,
     registered_connectors,
 )
+from conntest_runner.scenarios import scenario_names
 
 _LOADER = (
     "from conntest_runner.contracts import SourceLoader\n"
@@ -207,6 +209,10 @@ def test_unknown_scenario_reported(tmp_path: Path) -> None:
     )
     probs = binding_problems(entry, known_scenarios={"round_trip"})
     assert any(p.scenario == "nope" and "not a catalog scenario" in p.message for p in probs)
+
+
+def test_every_catalog_scenario_has_a_constructor() -> None:
+    assert set(source_bindings.__all__) == set(scenario_names())
 
 
 def test_dangling_config_glob_reported(tmp_path: Path) -> None:
