@@ -15,9 +15,6 @@
 
 #include <QueryCompiler.hpp>
 
-#include <cstdlib>
-#include <iostream>
-
 #include <memory>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
@@ -36,10 +33,6 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, defaultQueryExecution.nautilusPerf);
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
-    if (std::getenv("NES_PRINT_PIPELINES") != nullptr) /// NOLINT(concurrency-mt-unsafe)
-    {
-        std::cerr << *pipelinedQueryPlan << '\n';
-    }
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }
 }
