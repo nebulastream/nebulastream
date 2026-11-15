@@ -11,9 +11,9 @@
 # limitations under the License.
 
 # Workers become unreachable for a window and keep their fragments.
-# Each clog lasts up to 30 s, so some workers come back before the coordinator's reconnect attempts run out and some after.
+# Each clog lasts up to 30 s, so some workers come back before the coordinator marks them unreachable and some after.
 # The timeout leaves at least 45 s after the last fault ends,
-# because a worker whose reconnect attempts ran out is retried only after 30 s.
+# so the coordinator reconnects to every worker and restarts its fragments before the checks.
 
 [[test]]
 title = "majority_unreachable"

@@ -16,69 +16,48 @@
 //! and runs the checks once the simulation window has elapsed.
 //!
 //! `buggify` is a fault-injection switch.
-//! The controller and the fake worker have buggify points; when buggify is on,
-//! a point fires at random (but seed-reproducible) moments and runs its fault there,
-//! for example an early error return or a slow reply.
-//! This hits failure paths that are otherwise rare.
-//! It is enabled at the start of a trial and disabled partway through,
-//! so the system can recover before the final checks.
+//! The controller and the fake worker have buggify points.
+//! While buggify is on, a point fires at random but seed-reproducible moments and runs its fault, such as an early error or a slow reply.
+//! This reaches failure paths that are otherwise rare.
+//! A trial enables it at the start and disables it partway through, so the system can recover before the final checks.
 
-use crate::config::TestConfig;
-use crate::harness::TestHarness;
+use crate::config::TrialConfig;
+use crate::harness::Harness;
 use crate::invariant;
 use crate::model_state::ModelState;
 use futures::future::join_all;
+use madsim::buggify;
 use madsim::runtime::Handle;
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::time::Duration;
+use tokio::time::Instant;
 use tracing::info;
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::time::uptime;
 
 #[expect(
     clippy::await_holding_refcell_ref,
     reason = "the model is only mutated while workloads run, the checks run after all of them finished, and madsim is single-threaded"
 )]
-pub async fn run_test(name: &str, cfg: TestConfig) {
-    let _ = tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("off")),
-        )
-        .with_timer(tracing_subscriber::fmt::time::uptime())
-        .with_target(false)
-        .try_init();
+pub async fn run(name: &str, cfg: &TrialConfig) {
+    init_tracing();
 
     let seed = Handle::current().seed();
     let timeout = Duration::from_secs(cfg.timeout);
 
     info!("=== simulation test: {name} (seed={seed}, timeout={timeout:?}) ===");
 
-    if cfg.buggify_until.is_some() {
-        madsim::buggify::enable();
-        info!("buggify enabled");
-    }
+    let model = RefCell::new(ModelState::default());
 
-    let buggify_end = cfg.buggify_until.map(Duration::from_secs);
+    let harness = Harness::start();
 
-    // Using Rc is safe because madsim always runs within a single thread.
-    let model = Rc::new(RefCell::new(ModelState::default()));
-
-    let harness = TestHarness::start().await;
-
-    let start = tokio::time::Instant::now();
+    let start = Instant::now();
     let deadline = start + timeout;
 
-    if let Some(buggify_end) = buggify_end {
-        let buggify_deadline = start + buggify_end;
-        tokio::spawn(async move {
-            tokio::time::sleep_until(buggify_deadline).await;
-            madsim::buggify::disable();
-            info!("buggify disabled");
-        });
-    }
+    schedule_buggify(cfg.buggify_until, start);
 
     join_all(
-        cfg.workload
+        cfg.workloads
             .iter()
             .map(|workload| workload.run(&model, &harness)),
     )
@@ -88,15 +67,30 @@ pub async fn run_test(name: &str, cfg: TestConfig) {
     tokio::time::sleep_until(deadline).await;
     info!("simulation window elapsed, running checks");
 
-    invariant::check_all(&harness, &model.borrow()).await;
-
-    let failed = model.borrow().failed_queries().len();
-    assert!(
-        failed >= cfg.min_queries_failed_by_worker_drop,
-        "worker drops failed {failed} queries, expect at least {}",
-        cfg.min_queries_failed_by_worker_drop,
-    );
-    info!("worker drops failed {failed} queries");
+    invariant::check_all(&harness, &model.borrow(), cfg.min_failed_queries).await;
 
     info!("=== simulation test PASSED (seed={seed}) ===");
+}
+
+fn init_tracing() {
+    let _ = tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("off")),
+        )
+        .with_timer(uptime())
+        .with_target(false)
+        .try_init();
+}
+
+fn schedule_buggify(until: Option<u64>, start: Instant) {
+    let Some(until) = until else {
+        return;
+    };
+    buggify::enable();
+    info!("buggify enabled");
+    tokio::spawn(async move {
+        tokio::time::sleep_until(start + Duration::from_secs(until)).await;
+        buggify::disable();
+        info!("buggify disabled");
+    });
 }

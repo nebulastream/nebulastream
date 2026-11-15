@@ -15,105 +15,52 @@
 //! TOML schema for simulation trial configs.
 //!
 //! A test file in `tests/simulation/configs` holds one or more trial entries.
-//! Each entry pins simulator behavior (timeout, buggify)
-//! and lists the workloads to run, each selected by its `name` key.
+//! Each entry pins simulator behavior (timeout, buggify) and lists the workloads to run, each selected by its `name` key.
 
-use crate::workload::attrition::AttritionWorkload;
-use crate::workload::clog::ClogWorkload;
-use crate::workload::degradation::DegradationWorkload;
-use crate::workload::ops::OpsConfig;
-use crate::workload::stall::StallWorkload;
+use crate::workload::Workload;
+use anyhow::{Result, ensure};
 use serde::Deserialize;
-use std::time::Duration;
 
-/// The latency range of the simulated network outside of a degradation window.
-pub const SEND_LATENCY_LO: Duration = Duration::from_millis(1);
-pub const SEND_LATENCY_HI: Duration = Duration::from_millis(100);
-
-#[derive(Debug, Deserialize)]
-pub struct TestFile {
-    pub test: Vec<TestConfig>,
-}
-
-/// One trial. `timeout`, `buggify_until` and every `begin` and `end` are seconds of simulated time since the trial started.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct TestConfig {
+pub struct TrialFile {
+    #[serde(rename = "test")]
+    pub trials: Vec<TrialConfig>,
+}
+
+/// One trial.
+/// `timeout`, `buggify_until` and every `begin` and `end` are seconds of simulated time since the trial started.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TrialConfig {
     pub title: String,
     /// When the checks run.
     pub timeout: u64,
-    /// Buggify is on from the start until this time. Without the key it stays off.
+    /// Buggify is on from the start until this time.
+    /// Without the key it stays off.
     pub buggify_until: Option<u64>,
     /// The trial fails if worker drops failed fewer queries than this,
     /// so it cannot pass without having dropped a worker that ran a fragment.
     #[serde(default)]
-    pub min_queries_failed_by_worker_drop: usize,
-    pub workload: Vec<WorkloadSpec>,
+    pub min_failed_queries: usize,
+    #[serde(rename = "workload")]
+    pub workloads: Vec<Workload>,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(tag = "name")]
-pub enum WorkloadSpec {
-    Worker(OpsConfig),
-    Query(OpsConfig),
-    Attrition(AttritionWorkload),
-    Clog(ClogWorkload),
-    Stall(StallWorkload),
-    Degradation(DegradationWorkload),
-}
-
-impl WorkloadSpec {
-    /// The time after which the workload does nothing more.
-    fn end(&self) -> u64 {
-        match self {
-            Self::Worker(ops) | Self::Query(ops) => ops.end,
-            Self::Attrition(attrition) => attrition.begin + attrition.restart_delay_hi_secs,
-            Self::Clog(clog) => clog.end,
-            Self::Stall(stall) => stall.end,
-            Self::Degradation(degradation) => degradation.end,
-        }
-    }
-}
-
-impl TestConfig {
+impl TrialConfig {
     /// The checks run at the timeout, so a workload that is still active then leaves the system no time to recover.
-    pub fn validate(&self) {
-        for workload in &self.workload {
-            let well_formed = match workload {
-                WorkloadSpec::Worker(ops) | WorkloadSpec::Query(ops) => ops.begin <= ops.end,
-                WorkloadSpec::Attrition(attrition) => {
-                    attrition.restart_delay_lo_secs < attrition.restart_delay_hi_secs
-                }
-                WorkloadSpec::Clog(clog) => clog.begin < clog.end,
-                WorkloadSpec::Stall(stall) => stall.begin < stall.end,
-                WorkloadSpec::Degradation(degradation) => degradation.begin < degradation.end,
-            };
-            assert!(
-                well_formed,
-                "trial '{}': {workload:?} has an empty or inverted time range",
-                self.title,
-            );
-            if let WorkloadSpec::Worker(ops) | WorkloadSpec::Query(ops) = workload {
-                assert!(
-                    ops.create_weight > 0 || ops.drop_weight > 0,
-                    "trial '{}': {workload:?} has no operation with a non-zero weight",
-                    self.title,
-                );
-            }
-            assert!(
-                workload.end() < self.timeout,
-                "trial '{}': {workload:?} is still active at the timeout of {}s",
-                self.title,
-                self.timeout,
-            );
+    pub fn validate(&self) -> Result<()> {
+        for workload in &self.workloads {
+            workload.validate(&self.title, self.timeout)?;
         }
         if let Some(until) = self.buggify_until {
-            assert!(
+            ensure!(
                 until < self.timeout,
                 "trial '{}': buggify is still on at the timeout of {}s",
                 self.title,
                 self.timeout,
             );
         }
+        Ok(())
     }
 }

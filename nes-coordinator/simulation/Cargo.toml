@@ -22,7 +22,7 @@ controller.workspace = true
 coordinator.workspace = true
 tokio = { version = "0.2", package = "madsim-tokio", features = ["rt", "rt-multi-thread", "sync", "macros", "time"] }
 tonic = { version = "0.5.1", package = "madsim-tonic" }
-# The real tokio, next to the madsim facade above: the trial runner seeds its internal random generator.
+# The real tokio next to the madsim facade, because the trial runner seeds the real tokio's random generator.
 tokio-real.workspace = true
 async-channel.workspace = true
 ahash.workspace = true
@@ -32,11 +32,11 @@ tracing.workspace = true
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 madsim.workspace = true
 toml.workspace = true
-serde = { workspace = true }
+serde.workspace = true
 libtest-mimic.workspace = true
 
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ["cfg(madsim)", "cfg(tokio_unstable)"] }
+[lints]
+workspace = true
 
 [[test]]
 name = "simulation"
