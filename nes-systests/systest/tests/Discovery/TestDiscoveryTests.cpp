@@ -391,4 +391,23 @@ TEST_F(TestDiscoveryTest, SeveralSearchDirectoriesNarrowToTheirUnionWithoutRepea
     EXPECT_EQ(findNameOf(discovered, tempDir.get() / "wanted" / "a.test"), "wanted/a");
     EXPECT_EQ(findNameOf(discovered, tempDir.get() / "wanted" / "nested" / "b.test"), "wanted/nested/b");
 }
+
+TEST_F(TestDiscoveryTest, AllowsTextAfterTheClosingBracketOfGroups)
+{
+    const Testing::TemporaryDirectory tempDir;
+    const auto testFile = tempDir.get() / "a.test";
+    writeTextFile(testFile, "# groups: [Aggregation, WindowOperators, CompilationIntensive] see #1272\n");
+
+    SystestConfiguration config;
+    config.testDiscoverRoot = tempDir.get().string();
+    config.directlySpecifiedTestFiles = testFile.string();
+
+    const auto discovered = discoverTestFiles(config);
+
+    ASSERT_EQ(discovered.size(), 1);
+    EXPECT_EQ(
+        discovered.front().groups,
+        (std::vector<TestGroup>{TestGroup{"Aggregation"}, TestGroup{"WindowOperators"}, TestGroup{"CompilationIntensive"}}));
+}
+
 }

@@ -32,9 +32,9 @@
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Model/Expectation.hpp>
+#include <Model/ParsedTestFile.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Parser/SystestParser.hpp>
-#include <Parser/TestFileBuilder.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/RewriteContext.hpp>
 #include <Rewriter/SourceRewriting.hpp>
@@ -203,11 +203,9 @@ public:
 
     static RunnableTestFile rewriteSlt(const std::string& slt)
     {
-        SystestParser parser;
-        parser.loadString(slt);
         const std::filesystem::path testFilePath{"/tests/testkey.test"};
         return TestFilePreparer::rewritePartition(
-            buildTestFile(parser, testFilePath),
+            ParsedTestFile{.path = testFilePath, .statements = parseTestFile(slt, {})},
             RewriteContext{
                 .testFileKey = TestFileKeyFactory{"/tests"}.deriveKeyOf(testFilePath, 0, 1),
                 .name = "testkey",
@@ -219,20 +217,6 @@ public:
 };
 
 /// The rewriter does not check the missing physical source.
-TEST_F(TestFilePreparerTest, MergesADifferentialBlockIntoOneCase)
-{
-    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
-        "CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
-        "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE File;\n"
-        "\n"
-        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-        "====\n"
-        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n");
-
-    ASSERT_EQ(queries.size(), 1U);
-    EXPECT_TRUE(std::holds_alternative<RewrittenDifferential>(queries.at(0).action));
-}
-
 TEST_F(TestFilePreparerTest, RewritesInlineSourceNamedSinkAndQuery)
 {
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(

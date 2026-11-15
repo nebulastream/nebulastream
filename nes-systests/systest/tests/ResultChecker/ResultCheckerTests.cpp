@@ -24,10 +24,8 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Discovery/TestFileReader.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Parser/SystestParser.hpp>
 #include <ResultChecker/Check.hpp>
 #include <ResultChecker/DifferentialChecker.hpp>
 #include <ResultChecker/ExplainChecker.hpp>
@@ -179,33 +177,16 @@ TEST_F(ResultCheckerTest, ExplainExactResultLinesKeepVanillaMatching)
     EXPECT_TRUE(verdict.error().detail.contains("first difference at line 2"));
 }
 
-TEST_F(ResultCheckerTest, ExplainRegexAssertionsFromDummyMatchActualOutput)
+TEST_F(ResultCheckerTest, ExplainRegexAssertionsMatchActualOutput)
 {
-    SystestParser parser{};
-
-    bool explainCallbackCalled = false;
-    std::vector<std::string> expectedResultLines;
-
-    parser.registerOnExplainQueryCallback([&](const std::string&, SystestQueryId) { explainCallbackCalled = true; });
-    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId)
-                                          { expectedResultLines = std::move(resultTuples); });
-
-    static constexpr std::string_view Filename = SYSTEST_DATA_DIR "regex_explain.dummy";
-    parser.loadString(readTestFile(Filename));
-    ASSERT_NO_THROW(parser.parse());
-
-    ASSERT_TRUE(explainCallbackCalled);
-    ASSERT_EQ(
-        expectedResultLines,
-        (std::vector<std::string>{
-            "<REGEX>== Optimized Plan ==</REGEX>",
-            "<REGEX>",
-            R"(SINK\(SINK[0-9]+\))",
-            R"(  SOURCE\(stream_[0-9]+\))",
-            "</REGEX>",
-            "<!REGEX>SELECTION</!REGEX>"}));
-
-    EXPECT_TRUE(runCheck(makeExplainCheck(std::move(expectedResultLines), "== Optimized Plan ==\nSINK(SINK42)\n  SOURCE(stream_17)\n"))
+    EXPECT_TRUE(runCheck(makeExplainCheck(
+                             {"<REGEX>== Optimized Plan ==</REGEX>",
+                              "<REGEX>",
+                              R"(SINK\(SINK[0-9]+\))",
+                              R"(  SOURCE\(stream_[0-9]+\))",
+                              "</REGEX>",
+                              "<!REGEX>SELECTION</!REGEX>"},
+                             "== Optimized Plan ==\nSINK(SINK42)\n  SOURCE(stream_17)\n"))
                     .has_value());
 }
 

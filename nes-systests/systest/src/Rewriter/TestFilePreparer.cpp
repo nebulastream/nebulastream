@@ -15,6 +15,7 @@
 #include <Rewriter/TestFilePreparer.hpp>
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -33,7 +34,6 @@
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Parser/SystestParser.hpp>
-#include <Parser/TestFileBuilder.hpp>
 #include <Parser/TestFilePartition.hpp>
 #include <Rewriter/ClassifiedStatement.hpp>
 #include <Rewriter/Declarations.hpp>
@@ -84,14 +84,13 @@ TestFilePreparer::TestFilePreparer(const SystestConfiguration& config)
 
 ParsedTestFile TestFilePreparer::parse(const DiscoveredTestFile& testFile) const
 {
-    SystestParser parser;
-    parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
-    parser.registerSubstitutionRule(
-        {.keyword = "CONFIG/", .ruleFunction = [&](std::string& substitute) { substitute = (configDir / "").string(); }});
-    parser.loadString(readTestFile(testFile.file));
+    const auto substitutions = std::array{
+        Substitution{.keyword = "TESTDATA", .replacement = testDataDir.string()},
+        Substitution{.keyword = "CONFIG/", .replacement = (configDir / "").string()}};
+    const auto content = readTestFile(testFile.file);
     try
     {
-        return buildTestFile(parser, testFile.file);
+        return ParsedTestFile{.path = testFile.file, .statements = parseTestFile(content, substitutions)};
     }
     catch (Exception& exception)
     {
