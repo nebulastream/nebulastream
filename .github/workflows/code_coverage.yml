@@ -57,8 +57,13 @@ jobs:
             cmake -DCODE_COVERAGE=ON -DENABLE_DOCKER_TESTS=ON -B build
             cmake --build build -j -- -k 0
             cmake --build build --target ccov-all-export
-      - uses: codecov/codecov-action@v7
-        with:
+      # The action does not retry a connection reset while it downloads the codecov CLI,
+      # so one dropped connection would otherwise fail the job after the whole coverage build.
+      - name: Upload coverage to Codecov
+        id: codecov
+        continue-on-error: true
+        uses: codecov/codecov-action@v7
+        with: &codecov-upload
           slug: nebulastream/nebulastream
           fail_ci_if_error: true
           files: build/ccov/coverage.lcov
@@ -66,3 +71,7 @@ jobs:
           override_branch: ${{ inputs.branch-name }}
           override_commit: ${{ inputs.head_sha }}
           report_type: coverage
+      - name: Retry the Codecov upload
+        if: steps.codecov.outcome == 'failure'
+        uses: codecov/codecov-action@v7
+        with: *codecov-upload
