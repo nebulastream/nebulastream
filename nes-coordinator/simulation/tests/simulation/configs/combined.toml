@@ -12,7 +12,7 @@
 
 # Several failure modes with overlapping windows, while workers cycle and queries run throughout.
 # The timeout leaves at least 45 s after the last fault ends,
-# because a worker whose reconnect attempts ran out is retried only after 30 s.
+# so the coordinator reconnects to every worker and restarts its fragments before the checks.
 
 [[test]]
 title = "compound_failures"
@@ -65,8 +65,8 @@ timeout = 85
   name = "Attrition"
   begin = 20
   kill_rate = 0.3
-  restart_delay_lo_secs = 2
-  restart_delay_hi_secs = 8
+  restart_delay_lo = 2
+  restart_delay_hi = 8
 
   # Phase 4: stall surviving workers during recovery from attrition
   [[test.workload]]

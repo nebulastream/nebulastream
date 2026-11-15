@@ -20,12 +20,13 @@
 //! and ends at a random point in the second half,
 //! so the outages overlap in a rolling pattern that stresses concurrent reconnects.
 
-use crate::harness::TestHarness;
+use crate::harness::Harness;
 use crate::workload::pick_victims;
 use madsim::rand::{Rng, thread_rng};
 use madsim::task::NodeId;
 use serde::Deserialize;
 use std::time::Duration;
+use tokio::time::Instant;
 use tracing::info;
 
 #[derive(Debug, Deserialize)]
@@ -45,7 +46,7 @@ enum Event {
 impl ClogWorkload {
     const NAME: &str = "Clog";
 
-    pub async fn run(&self, harness: &TestHarness) {
+    pub async fn run(&self, harness: &Harness) {
         info!(
             "{}: ({}s..{}s) clog_rate={:.0}%",
             Self::NAME,
@@ -56,46 +57,33 @@ impl ClogWorkload {
 
         tokio::time::sleep(Duration::from_secs(self.begin)).await;
 
-        let candidates = harness.get_worker_ids();
-
-        let t = Duration::from_secs(self.end - self.begin);
-        let half = t / 2;
+        let half = Duration::from_secs(self.end - self.begin) / 2;
 
         let mut rng = thread_rng();
-        let mut victims: Vec<(NodeId, Duration, Duration)> = Vec::new();
-        for id in pick_victims(&candidates, self.clog_rate) {
-            let start = half.mul_f64(rng.gen_range(0.0..1.0));
-            let end = half + half.mul_f64(rng.gen_range(0.0..1.0));
-            victims.push((id, start, end));
-        }
+        let mut events: Vec<(Duration, Event)> =
+            pick_victims(&harness.get_worker_nodes(), self.clog_rate)
+                .into_iter()
+                .flat_map(|id| {
+                    let start = half.mul_f64(rng.gen_range(0.0..1.0));
+                    let end = half + half.mul_f64(rng.gen_range(0.0..1.0));
+                    [(start, Event::Clog(id)), (end, Event::Unclog(id))]
+                })
+                .collect();
+        events.sort_by_key(|&(at, _)| at);
 
-        let mut events: Vec<(Duration, Event)> = Vec::with_capacity(victims.len() * 2);
-        for &(id, start, end) in &victims {
-            events.push((start, Event::Clog(id)));
-            events.push((end, Event::Unclog(id)));
-        }
-        events.sort_by_key(|(at, _)| *at);
-
-        let mut elapsed = Duration::ZERO;
-        for (at, evt) in events {
-            if at > elapsed {
-                tokio::time::sleep(at - elapsed).await;
-                elapsed = at;
-            }
-            match evt {
+        let origin = Instant::now();
+        for (at, event) in events {
+            tokio::time::sleep_until(origin + at).await;
+            match event {
                 Event::Clog(id) => {
                     info!("{}: clog {id}", Self::NAME);
-                    harness.clog_node(id);
+                    harness.clog(id);
                 }
                 Event::Unclog(id) => {
-                    harness.unclog_node(id);
+                    harness.unclog(id);
                     info!("{}: unclog {id}", Self::NAME);
                 }
             }
-        }
-
-        if elapsed < t {
-            tokio::time::sleep(t - elapsed).await;
         }
     }
 }

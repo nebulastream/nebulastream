@@ -17,12 +17,12 @@
 //!
 //! Workloads do not send statements directly.
 //! A workload picks an operation, the model resolves it into a ready statement or the next prerequisite,
-//! the statement is sent, and the response is folded back into the model.
+//! the workload sends the statement, and the model observes the response.
 //! Resolving every operation through the model keeps the mirror and the assertions consistent
 //! without catalog details in every workload.
 
-use crate::harness::next_worker_ip;
-use anyhow::{Context, Result, anyhow};
+use crate::harness::{FIRST_WORKER_OCTET, build_ip};
+use anyhow::{Context, Result};
 use madsim::rand::seq::IteratorRandom;
 use madsim::rand::{Rng, thread_rng};
 use model::identifier::{QueryFragmentId, QueryId, SinkId, SourceId};
@@ -34,8 +34,7 @@ use model::source::physical::CreatePhysicalSource;
 use model::statement::{ParsedStatement, StatementResult};
 use model::worker::endpoint::{DEFAULT_DATA_PORT, DEFAULT_HOST_PORT, NetworkAddr};
 use model::worker::{CreateWorker, DropWorker};
-use std::collections::BTreeSet;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 const LOGICAL_SOURCE_NAME: &str = "source";
 const SINK_NAME: &str = "sink";
@@ -44,9 +43,6 @@ const SINK_NAME: &str = "sink";
 pub enum Operation {
     CreateWorker,
     DropWorker,
-    CreateLogicalSource,
-    CreatePhysicalSource,
-    CreateSink,
     CreateQuery,
     DropQuery,
 }
@@ -63,157 +59,146 @@ pub enum Step {
 impl Step {
     fn into_prerequisite(self) -> Self {
         match self {
-            Step::Ready(s) | Step::Prerequisite(s) => Step::Prerequisite(s),
+            Self::Ready(s) | Self::Prerequisite(s) => Self::Prerequisite(s),
         }
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum QueryStatus {
+    Active,
+    Dropped,
+    /// A fragment of the query was on a worker when the worker was dropped.
+    Failed,
+}
+
+struct Query {
+    status: QueryStatus,
+    fragments: HashMap<QueryFragmentId, NetworkAddr>,
 }
 
 #[derive(Default)]
 pub struct ModelState {
-    created_workers: HashSet<NetworkAddr>,
+    active_workers: HashSet<NetworkAddr>,
     dropped_workers: HashSet<NetworkAddr>,
+    pinned_workers: HashSet<NetworkAddr>,
+    leaving_workers: HashSet<NetworkAddr>,
+    allocated_worker_ips: u8,
 
-    logical: Option<String>,
-    physical: Option<(SourceId, NetworkAddr)>,
+    has_logical_source: bool,
+    source: Option<(SourceId, NetworkAddr)>,
 
     sink: Option<(SinkId, NetworkAddr)>,
 
-    active_queries: HashSet<QueryId>,
-    dropped_queries: HashSet<QueryId>,
-    /// Queries that had a fragment on a worker when that worker was dropped.
-    failed_queries: HashSet<QueryId>,
-    fragments: HashMap<QueryId, HashMap<QueryFragmentId, NetworkAddr>>,
+    queries: HashMap<QueryId, Query>,
+    leaving_queries: HashSet<QueryId>,
 }
 
 impl ModelState {
-    pub fn resolve(&self, op: Operation) -> Result<Step> {
+    pub fn resolve(&mut self, op: Operation) -> Result<Step> {
         match op {
             Operation::CreateWorker => self.create_worker(),
             Operation::DropWorker => self.drop_worker(),
-            Operation::CreateLogicalSource => Ok(Step::Ready(
-                ParsedStatement::CreateLogicalSource(CreateLogicalSource {
-                    name: LOGICAL_SOURCE_NAME.to_string(),
-                    schema: Default::default(),
-                    if_not_exists: true,
-                }),
-            )),
-            Operation::CreatePhysicalSource => self.create_physical_source(),
-            Operation::CreateSink => self.create_sink(),
             Operation::CreateQuery => self.create_query(),
-            Operation::DropQuery => {
-                let qid = self
-                    .active_queries
-                    .iter()
-                    .choose(&mut thread_rng())
-                    .ok_or_else(|| anyhow!("no query to drop"))?;
-                Ok(Step::Ready(ParsedStatement::DropQuery(
-                    DropQuery::all().with_filters(GetQuery::all().with_id(*qid)),
-                )))
-            }
+            Operation::DropQuery => self.drop_query(),
         }
     }
 
-    /// Folds a statement response into the model.
+    /// Applies a statement response to the model.
     /// Every response has to come back through here,
     /// otherwise the model and the real catalog diverge and the invariants report a mismatch that the system did not cause.
-    pub fn observe(&mut self, rsp: StatementResult) {
-        match rsp {
+    pub fn observe(&mut self, reply: StatementResult) {
+        match reply {
             StatementResult::CreatedWorker(worker) => {
-                self.created_workers.insert(worker.host_addr);
+                self.active_workers.insert(worker.host_addr);
             }
             StatementResult::DroppedWorker(worker) => {
-                let addr = worker.unwrap().host_addr;
-                assert!(self.created_workers.remove(&addr), "unknown worker {addr}");
-                assert!(
-                    self.dropped_workers.insert(addr.clone()),
-                    "worker {addr} dropped twice"
-                );
-                let failed: Vec<QueryId> = self
-                    .active_queries
-                    .iter()
-                    .filter(|qid| self.fragments[qid].values().any(|a| *a == addr))
-                    .copied()
-                    .collect();
-                for qid in failed {
-                    self.active_queries.remove(&qid);
-                    self.failed_queries.insert(qid);
+                let addr = worker
+                    .expect("the catalog dropped a worker it does not know")
+                    .host_addr;
+                assert!(self.active_workers.remove(&addr), "unknown worker {addr}");
+                for query in self.queries.values_mut() {
+                    if query.status == QueryStatus::Active
+                        && query.fragments.values().any(|a| *a == addr)
+                    {
+                        query.status = QueryStatus::Failed;
+                    }
                 }
+                self.dropped_workers.insert(addr);
             }
-            StatementResult::CreatedLogicalSource(source) => {
-                self.logical = Some(source.name);
+            StatementResult::CreatedLogicalSource(_) => {
+                self.has_logical_source = true;
             }
             StatementResult::CreatedPhysicalSource(source) => {
-                self.physical = Some((source.id, source.host_addr));
+                self.pinned_workers.insert(source.host_addr.clone());
+                self.source = Some((source.id, source.host_addr));
             }
             StatementResult::CreatedSink(sink) => {
+                self.pinned_workers.insert(sink.host_addr.clone());
                 self.sink = Some((sink.id, sink.host_addr));
             }
             StatementResult::CreatedQuery(QueryWithFragments { query, fragments }) => {
                 assert!(
-                    !self.fragments.contains_key(&query.id),
+                    !self.queries.contains_key(&query.id),
                     "query {} already created",
                     query.id
                 );
-                // Workloads run concurrently,
-                // so a worker drop can be observed between this query's placement and its response.
+                // Workloads run concurrently, so the model can observe a worker drop between this query's placement and its response.
                 let on_dropped_worker = fragments
                     .iter()
                     .any(|f| self.dropped_workers.contains(&f.host_addr));
-                if on_dropped_worker {
-                    self.failed_queries.insert(query.id);
+                let status = if on_dropped_worker {
+                    QueryStatus::Failed
                 } else {
-                    self.active_queries.insert(query.id);
-                }
-                self.fragments.insert(
+                    QueryStatus::Active
+                };
+                self.queries.insert(
                     query.id,
-                    fragments.into_iter().map(|f| (f.id, f.host_addr)).collect(),
+                    Query {
+                        status,
+                        fragments: fragments.into_iter().map(|f| (f.id, f.host_addr)).collect(),
+                    },
                 );
             }
             StatementResult::DroppedQueries(dropped) => {
-                assert_eq!(dropped.len(), 1, "a drop by id must remove one query");
-                let dropped = dropped.first().unwrap();
-                // A worker drop that was observed before this response has already failed the query.
-                if self.failed_queries.contains(&dropped.id) {
-                    return;
+                let [dropped] = dropped.as_slice() else {
+                    panic!(
+                        "a drop by id must remove one query, removed {}",
+                        dropped.len()
+                    );
+                };
+                let query = self.queries.get_mut(&dropped.id).unwrap_or_else(|| {
+                    panic!("query {} dropped but not active in the model", dropped.id)
+                });
+                match query.status {
+                    // A worker drop that was observed before this response has already failed the query.
+                    QueryStatus::Failed => {}
+                    QueryStatus::Active => query.status = QueryStatus::Dropped,
+                    QueryStatus::Dropped => panic!("query {} dropped twice", dropped.id),
                 }
-                assert!(
-                    self.active_queries.remove(&dropped.id),
-                    "query {} dropped but not active in the model",
-                    dropped.id
-                );
-                assert!(
-                    self.dropped_queries.insert(dropped.id),
-                    "query {} dropped twice",
-                    dropped.id
-                );
             }
             other => panic!("unexpected response: {other:?}"),
         }
     }
 
-    fn create_query(&self) -> Result<Step> {
-        if self.physical.is_none() {
-            return self
-                .resolve(Operation::CreatePhysicalSource)
-                .map(Step::into_prerequisite);
-        }
-        if self.sink.is_none() {
-            return self
-                .resolve(Operation::CreateSink)
-                .map(Step::into_prerequisite);
-        }
-        let (source_id, source_addr) = self.physical.as_ref().unwrap();
-        let (sink_id, sink_addr) = self.sink.as_ref().unwrap();
+    fn create_query(&mut self) -> Result<Step> {
+        let Some((source_id, source_addr)) = &self.source else {
+            return self.create_physical_source().map(Step::into_prerequisite);
+        };
+        let Some((sink_id, sink_addr)) = &self.sink else {
+            return self.create_sink().map(Step::into_prerequisite);
+        };
         let mut rng = thread_rng();
-        // The source and sink hosts always get a fragment; the rest of the placement is a random subset of the workers.
-        let k = rng.gen_range(0..=self.created_workers.len());
+        // The source and sink hosts always get a fragment.
+        // The other fragments go to a random subset of the workers.
+        let k = rng.gen_range(0..=self.active_workers.len());
         let workers: HashSet<&NetworkAddr> = self
-            .created_workers
+            .active_workers
             .iter()
             .choose_multiple(&mut rng, k)
             .into_iter()
             .chain([source_addr, sink_addr])
-            .collect::<HashSet<_>>();
+            .collect();
 
         Ok(Step::Ready(ParsedStatement::CreateQuery(CreateQuery {
             name: None,
@@ -232,20 +217,13 @@ impl ModelState {
         })))
     }
 
-    fn create_sink(&self) -> Result<Step> {
-        if self.created_workers.is_empty() {
-            return self
-                .resolve(Operation::CreateWorker)
-                .map(Step::into_prerequisite);
-        }
-        let addr = self
-            .created_workers
-            .iter()
-            .choose(&mut thread_rng())
-            .unwrap();
+    fn create_sink(&mut self) -> Result<Step> {
+        let Some(addr) = self.pin_worker() else {
+            return self.create_worker().map(Step::into_prerequisite);
+        };
         Ok(Step::Ready(ParsedStatement::CreateSink(CreateSink {
             name: SINK_NAME.to_string(),
-            host_addr: addr.clone(),
+            host_addr: addr,
             sink_type: "File".to_string(),
             schema: Default::default(),
             config: Default::default(),
@@ -253,26 +231,25 @@ impl ModelState {
         })))
     }
 
-    fn create_physical_source(&self) -> Result<Step> {
-        if self.created_workers.is_empty() {
-            return self
-                .resolve(Operation::CreateWorker)
-                .map(Step::into_prerequisite);
+    fn create_logical_source() -> Step {
+        Step::Ready(ParsedStatement::CreateLogicalSource(CreateLogicalSource {
+            name: LOGICAL_SOURCE_NAME.to_string(),
+            schema: Default::default(),
+            if_not_exists: true,
+        }))
+    }
+
+    fn create_physical_source(&mut self) -> Result<Step> {
+        if !self.has_logical_source {
+            return Ok(Self::create_logical_source().into_prerequisite());
         }
-        if self.logical.is_none() {
-            return self
-                .resolve(Operation::CreateLogicalSource)
-                .map(Step::into_prerequisite);
-        }
-        let addr = self
-            .created_workers
-            .iter()
-            .choose(&mut thread_rng())
-            .unwrap();
+        let Some(addr) = self.pin_worker() else {
+            return self.create_worker().map(Step::into_prerequisite);
+        };
         Ok(Step::Ready(ParsedStatement::CreatePhysicalSource(
             CreatePhysicalSource {
                 logical_source: LOGICAL_SOURCE_NAME.to_string(),
-                host_addr: addr.clone(),
+                host_addr: addr,
                 source_type: "File".to_string(),
                 source_config: Default::default(),
                 parser_config: Default::default(),
@@ -281,24 +258,46 @@ impl ModelState {
         )))
     }
 
-    fn drop_worker(&self) -> Result<Step> {
+    fn drop_query(&mut self) -> Result<Step> {
+        let qid = self
+            .get_queries(QueryStatus::Active)
+            .map(|(id, _)| id)
+            // A concurrent drop of the same query would fail the model on its second reply.
+            .filter(|id| !self.leaving_queries.contains(id))
+            .choose(&mut thread_rng())
+            .context("no query to drop")?;
+        self.leaving_queries.insert(qid);
+        Ok(Step::Ready(ParsedStatement::DropQuery(
+            DropQuery::all().with_filters(GetQuery::all().with_id(qid)),
+        )))
+    }
+
+    fn drop_worker(&mut self) -> Result<Step> {
         let addr = self
-            .created_workers
+            .active_workers
             .iter()
-            // The model uses its source and sink for every later query, so their hosts must stay.
-            .filter(|addr| !self.hosts_source_or_sink(addr))
+            // The model uses its source and sink for every later query, so their hosts stay.
+            // The model drops a worker at most once.
+            .filter(|addr| {
+                !self.pinned_workers.contains(*addr) && !self.leaving_workers.contains(*addr)
+            })
             .choose(&mut thread_rng())
             .context("no workers to drop")?
             .clone();
+        self.leaving_workers.insert(addr.clone());
         Ok(Step::Ready(ParsedStatement::DropWorker(DropWorker::new(
             addr,
         ))))
     }
 
-    fn create_worker(&self) -> Result<Step> {
-        let ip = next_worker_ip();
-        let host_addr = NetworkAddr::new(&ip, DEFAULT_HOST_PORT).map_err(|e| anyhow!(e))?;
-        let data_addr = NetworkAddr::new(&ip, DEFAULT_DATA_PORT).map_err(|e| anyhow!(e))?;
+    fn create_worker(&mut self) -> Result<Step> {
+        let octet = FIRST_WORKER_OCTET
+            .checked_add(self.allocated_worker_ips)
+            .expect("ran out of worker IPs");
+        self.allocated_worker_ips += 1;
+        let ip = build_ip(octet).to_string();
+        let host_addr = NetworkAddr::new(&ip, DEFAULT_HOST_PORT)?;
+        let data_addr = NetworkAddr::new(&ip, DEFAULT_DATA_PORT)?;
         Ok(Step::Ready(ParsedStatement::CreateWorker(CreateWorker {
             host_addr,
             data_addr,
@@ -309,53 +308,64 @@ impl ModelState {
         })))
     }
 
+    fn get_queries(&self, status: QueryStatus) -> impl Iterator<Item = (QueryId, &Query)> {
+        self.queries
+            .iter()
+            .filter(move |(_, query)| query.status == status)
+            .map(|(&id, query)| (id, query))
+    }
+
+    fn get_query_ids(&self, status: QueryStatus) -> Vec<QueryId> {
+        self.get_queries(status).map(|(id, _)| id).collect()
+    }
+
+    fn get_fragment_ids(&self, status: QueryStatus) -> HashSet<QueryFragmentId> {
+        self.get_queries(status)
+            .flat_map(|(_, query)| query.fragments.keys())
+            .copied()
+            .collect()
+    }
+
     pub fn active_queries(&self) -> Vec<QueryId> {
-        self.active_queries.iter().copied().collect()
+        self.get_query_ids(QueryStatus::Active)
     }
 
     pub fn active_fragments(&self) -> HashSet<QueryFragmentId> {
-        self.active_queries
-            .iter()
-            .flat_map(|id| self.fragments.get(id).unwrap().keys())
-            .copied()
-            .collect()
+        self.get_fragment_ids(QueryStatus::Active)
     }
 
     pub fn dropped_queries(&self) -> Vec<QueryId> {
-        self.dropped_queries.iter().copied().collect()
+        self.get_query_ids(QueryStatus::Dropped)
     }
 
     pub fn dropped_fragments(&self) -> HashSet<QueryFragmentId> {
-        self.dropped_queries
-            .iter()
-            .flat_map(|id| self.fragments.get(id).unwrap().keys())
-            .copied()
-            .collect()
+        self.get_fragment_ids(QueryStatus::Dropped)
     }
 
     pub fn failed_queries(&self) -> Vec<QueryId> {
-        self.failed_queries.iter().copied().collect()
+        self.get_query_ids(QueryStatus::Failed)
     }
 
     pub fn failed_fragments(&self) -> HashSet<QueryFragmentId> {
-        self.failed_queries
-            .iter()
-            .flat_map(|id| self.fragments.get(id).unwrap().keys())
-            .copied()
-            .collect()
+        self.get_fragment_ids(QueryStatus::Failed)
     }
 
-    pub fn active_workers(&self) -> Vec<NetworkAddr> {
-        self.created_workers.iter().cloned().collect()
+    pub const fn active_workers(&self) -> &HashSet<NetworkAddr> {
+        &self.active_workers
     }
 
-    pub fn dropped_workers(&self) -> &HashSet<NetworkAddr> {
+    pub const fn dropped_workers(&self) -> &HashSet<NetworkAddr> {
         &self.dropped_workers
     }
 
-    fn hosts_source_or_sink(&self, addr: &NetworkAddr) -> bool {
-        let has_source = self.physical.as_ref().is_some_and(|(_, a)| a == addr);
-        let has_sink = self.sink.as_ref().is_some_and(|(_, a)| a == addr);
-        has_source || has_sink
+    /// Reserves the host of a source or sink when the create is resolved, because a concurrent worker drop can resolve before its reply.
+    fn pin_worker(&mut self) -> Option<NetworkAddr> {
+        let addr = self
+            .active_workers
+            .difference(&self.leaving_workers)
+            .choose(&mut thread_rng())?
+            .clone();
+        self.pinned_workers.insert(addr.clone());
+        Some(addr)
     }
 }
