@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -26,29 +25,14 @@
 namespace NES
 {
 
-/// How two result sets differ: the schema difference and the row difference, each empty when that part matched.
-struct ComparisonOutcome
-{
-    std::string schemaError;
-    std::string resultError;
-};
-
-/// Compares an expected schema and rows with the actual ones, in any tuple order.
-/// Field names and types align the schemas, and every value compares exactly except a float, which compares within a relative epsilon.
-[[nodiscard]] ComparisonOutcome compare(
+/// Compares the expected schema and rows with the actual ones, in any row order.
+/// Fields pair up by position and match by name and type.
+/// Every value compares exactly except a float, which compares within a relative epsilon.
+/// A mismatch holds the side by side report a developer reads when a test fails.
+[[nodiscard]] Verdict compareResults(
     const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema,
     const std::vector<std::string>& expectedRows,
     const Schema<UnqualifiedUnboundField, Ordered>& actualSchema,
     const std::vector<std::string>& actualRows);
-
-/// Which kind of comparison produced an outcome.
-enum class ComparisonOrigin : uint8_t
-{
-    SingleQuery,
-    DifferentialBlock
-};
-
-/// Turns a comparison outcome into a verdict.
-[[nodiscard]] Verdict toVerdict(const ComparisonOutcome& outcome, ComparisonOrigin origin);
 
 }

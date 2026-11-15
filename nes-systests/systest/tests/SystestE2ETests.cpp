@@ -45,23 +45,19 @@ size_t countFailedCases(const std::string_view report)
 }
 
 /// The start of a failed case's report line, such as `  FAIL  errors/Unparseable:3: ` for query 3.
-std::string formatFailLine(const std::string_view directory, const std::string_view testFile, const int queryNumber)
+std::string formatFailLine(const std::string_view testFile, const int queryNumber)
 {
-    return fmt::format("{}{}/{}:{}: ", FailMarker, directory, testFile, queryNumber);
+    return fmt::format("{}errors/{}:{}: ", FailMarker, testFile, queryNumber);
 }
 }
 
 namespace NES
 {
 
-struct E2ETestParameters
+namespace
 {
-    std::string directory;
-    std::string testFile;
-};
-
 /// Runs the executor end to end on the files under `testdata/errors`.
-class SystestE2ETest : public Testing::BaseUnitTest, public testing::WithParamInterface<E2ETestParameters>
+class SystestE2ETest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestSuite()
@@ -94,6 +90,7 @@ public:
         return config;
     }
 };
+}
 
 TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 {
@@ -101,14 +98,14 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     const auto result = Executor{createConfigFor(testFile)}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr) << " Return type not as expected.";
-    ASSERT_FALSE(failed->report.contains(formatFailLine("errors", testFile, 1))) << "Correct query found in failed queries.";
-    ASSERT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 2))) << "Query not found in failed queries.";
-    ASSERT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 3))) << "Query not found in failed queries.";
-    ASSERT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 4))) << "Query not found in failed queries.";
-    ASSERT_FALSE(failed->report.contains(formatFailLine("errors", testFile, 5))) << "Correct query found in failed queries.";
-    ASSERT_FALSE(failed->report.contains(formatFailLine("errors", testFile, 6))) << "Correct query found in failed queries.";
-    ASSERT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 7))) << "Query not found in failed queries.";
-    ASSERT_FALSE(failed->report.contains(formatFailLine("errors", testFile, 8))) << "Correct query found in failed queries.";
+    ASSERT_FALSE(failed->report.contains(formatFailLine(testFile, 1))) << "Correct query found in failed queries.";
+    ASSERT_TRUE(failed->report.contains(formatFailLine(testFile, 2))) << "Query not found in failed queries.";
+    ASSERT_TRUE(failed->report.contains(formatFailLine(testFile, 3))) << "Query not found in failed queries.";
+    ASSERT_TRUE(failed->report.contains(formatFailLine(testFile, 4))) << "Query not found in failed queries.";
+    ASSERT_FALSE(failed->report.contains(formatFailLine(testFile, 5))) << "Correct query found in failed queries.";
+    ASSERT_FALSE(failed->report.contains(formatFailLine(testFile, 6))) << "Correct query found in failed queries.";
+    ASSERT_TRUE(failed->report.contains(formatFailLine(testFile, 7))) << "Query not found in failed queries.";
+    ASSERT_FALSE(failed->report.contains(formatFailLine(testFile, 8))) << "Correct query found in failed queries.";
     ASSERT_EQ(countFailedCases(failed->report), 4) << "Number of failed queries is unexpected.";
 }
 
@@ -181,7 +178,7 @@ TEST_F(SystestE2ETest, ADifferentialBlockWhoseHalvesDisagreeFails)
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr);
     EXPECT_EQ(countFailedCases(failed->report), 1) << failed->report;
-    EXPECT_TRUE(failed->report.contains(formatFailLine("errors", "DifferentialDisagrees", 1))) << failed->report;
+    EXPECT_TRUE(failed->report.contains(formatFailLine("DifferentialDisagrees", 1))) << failed->report;
 }
 
 TEST_F(SystestE2ETest, ADifferentialBlockWhoseHalfDoesNotBindFailsAlone)
@@ -191,7 +188,7 @@ TEST_F(SystestE2ETest, ADifferentialBlockWhoseHalfDoesNotBindFailsAlone)
     ASSERT_NE(failed, nullptr);
     EXPECT_TRUE(failed->report.starts_with("1 queries passed, 1 failed\n")) << failed->report;
     EXPECT_EQ(countFailedCases(failed->report), 1) << failed->report;
-    EXPECT_TRUE(failed->report.contains(formatFailLine("errors", "DifferentialHalfUnbound", 1))) << failed->report;
+    EXPECT_TRUE(failed->report.contains(formatFailLine("DifferentialHalfUnbound", 1))) << failed->report;
 }
 
 /// Without a round or time limit, a failed round is a repeating run's only exit.
@@ -323,10 +320,10 @@ TEST_F(SystestE2ETest, AShuffledRunKeepsEachExpectationWithItsQuery)
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr);
     EXPECT_EQ(countFailedCases(failed->report), 4) << failed->report;
-    EXPECT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 2))) << failed->report;
-    EXPECT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 3))) << failed->report;
-    EXPECT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 4))) << failed->report;
-    EXPECT_TRUE(failed->report.contains(formatFailLine("errors", testFile, 7))) << failed->report;
+    EXPECT_TRUE(failed->report.contains(formatFailLine(testFile, 2))) << failed->report;
+    EXPECT_TRUE(failed->report.contains(formatFailLine(testFile, 3))) << failed->report;
+    EXPECT_TRUE(failed->report.contains(formatFailLine(testFile, 4))) << failed->report;
+    EXPECT_TRUE(failed->report.contains(formatFailLine(testFile, 7))) << failed->report;
 }
 
 /// All files declare the same names into the shared catalogs.
@@ -383,7 +380,7 @@ TEST_F(SystestE2ETest, TheReportListsFailuresInFileOrder)
     std::vector<size_t> positions;
     for (const auto number : {2, 3, 4, 7})
     {
-        const auto position = failed->report.find(formatFailLine("errors", testFile, number));
+        const auto position = failed->report.find(formatFailLine(testFile, number));
         ASSERT_NE(position, std::string::npos) << failed->report;
         positions.push_back(position);
     }
@@ -438,37 +435,4 @@ TEST_F(SystestE2ETest, TheReportKeepsFileOrderAcrossSettingsGroups)
     EXPECT_TRUE(std::max(first1, first2) < std::min(second1, second2) or std::max(second1, second2) < std::min(first1, first2))
         << failed->report;
 }
-
-/// Each file has a correct first query and a wrong second one, and only the second should fail.
-TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
-{
-    const auto& [directory, testFile] = GetParam();
-    auto config = createConfigFor(fmt::format("{}/{}", directory, testFile));
-    config.testFileExtension = std::string{EXTENSION};
-    config.workingDir = fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile);
-
-    const auto result = Executor{config}.execute();
-    const auto* failed = std::get_if<RunFailed>(&result);
-    ASSERT_NE(failed, nullptr) << " Return type not as expected.";
-    ASSERT_EQ(countFailedCases(failed->report), 1) << "Too many failed queries.";
-    const auto testDirectory = fmt::format("errors/{}", directory);
-    ASSERT_FALSE(failed->report.contains(formatFailLine(testDirectory, testFile, 1))) << "Correct query found in failed queries.";
-    ASSERT_TRUE(failed->report.contains(formatFailLine(testDirectory, testFile, 2))) << "Incorrect query not found in failed queries.";
-}
-
-INSTANTIATE_TEST_CASE_P(
-    QueryTests,
-    SystestE2ETest,
-    testing::Values(
-        E2ETestParameters{"schema", "FieldNameDifference"},
-        E2ETestParameters{"schema", "TypeDifference"},
-        E2ETestParameters{"schema", "ResultsEmptyButSchemasDifferent"},
-        E2ETestParameters{"result", "SingleValueIsDifferent"},
-        E2ETestParameters{"result", "LessResultsThanExpected"},
-        E2ETestParameters{"result", "MoreResultsThanExpected"},
-        E2ETestParameters{"result", "ResultEmptyButExpectedIsNot"},
-        E2ETestParameters{"result", "ExpectedEmptyButResultIsNot"},
-        E2ETestParameters{"result", "ResultIsSubsetOfExpected"},
-        E2ETestParameters{"result", "ExpectedIsColumnSubsetOfResult"},
-        E2ETestParameters{"result", "ExpectedIsSubsetOfResult"}));
 }

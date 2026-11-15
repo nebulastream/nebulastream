@@ -38,7 +38,10 @@ Verdict DifferentialCheck::check() const
         return std::unexpected(Mismatch{fmt::format("the second query of the differential block: {}", second.error())});
     }
 
-    return toVerdict(compare(first->schema, first->tuples, second->schema, second->tuples), ComparisonOrigin::DifferentialBlock);
+    return compareResults(first->schema, first->tuples, second->schema, second->tuples)
+        .transform_error(
+            [](const Mismatch& mismatch)
+            { return Mismatch{fmt::format("{}\n\nThis error happened during differential query execution.", mismatch.detail)}; });
 }
 
 }
