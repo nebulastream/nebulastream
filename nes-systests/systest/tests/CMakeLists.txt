@@ -29,16 +29,13 @@ add_nes_test_systest(systest-run-policy-test
 
 add_nes_test_systest(slt-parser-test
         "Parser/SystestParserTests.cpp"
-        "Parser/SystestParserInvalidTestFilesTests.cpp"
-        "Parser/SystestParserValidTestFilesTests.cpp"
         "ResultChecker/ResultCheckerTests.cpp"
         "ResultChecker/OutcomeCheckerTests.cpp"
         "Model/KeepSelectedStatementsTests.cpp"
         "Model/TestCaseIdTests.cpp"
         "WorkingDirectoryGuardTests.cpp")
 
-add_nes_test_systest(testfile-builder-test
-        "Parser/TestFileBuilderTests.cpp"
+add_nes_test_systest(testfile-partition-test
         "Parser/TestFilePartitionTests.cpp")
 
 add_nes_test_systest(systest-name-prefixer-test
