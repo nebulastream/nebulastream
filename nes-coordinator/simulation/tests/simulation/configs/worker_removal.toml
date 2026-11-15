@@ -13,7 +13,7 @@
 [[test]]
 title = "busy_workers"
 timeout = 90
-min_queries_failed_by_worker_drop = 1
+min_failed_queries = 1
 
   [[test.workload]]
   name = "Worker"

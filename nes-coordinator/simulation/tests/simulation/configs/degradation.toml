@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # The timeout leaves at least 45 s after the last fault ends,
-# because a worker whose reconnect attempts ran out is retried only after 30 s.
+# so the coordinator reconnects to every worker and restarts its fragments before the checks.
 
 [[test]]
 title = "degraded_during_worker_cycling"

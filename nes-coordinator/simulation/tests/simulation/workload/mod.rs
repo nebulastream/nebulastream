@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-//! Workloads/Faultloads.
+//! Workloads that make up a trial.
 //!
 //! A workload is the unit of behavior that composes a trial.
 //! There are two kinds:
 //!
 //!  - Driver workloads (`ops`) submit catalog operations for queries or workers.
 //!  - Failure-injection workloads (`attrition`, `clog`, `stall`, `degradation`)
-//!    degrade/stop the network or nodes for a defined duration.
+//!    degrade or stop the network or nodes for a defined duration.
 //!
-//! A trial selects its workloads by name in TOML.
+//! A trial selects each workload by its `name` key in TOML.
 
 pub mod attrition;
 pub mod clog;
@@ -29,43 +29,112 @@ pub mod degradation;
 pub mod ops;
 pub mod stall;
 
-use crate::config::WorkloadSpec;
-use crate::harness::TestHarness;
-use crate::model_state::{ModelState, Operation, Step};
+use crate::harness::Harness;
+use crate::model_state::{ModelState, Operation};
+use anyhow::{Result, ensure};
+use attrition::AttritionWorkload;
+use clog::ClogWorkload;
+use degradation::DegradationWorkload;
 use madsim::rand::seq::SliceRandom;
-use madsim::rand::{Rng, thread_rng};
+use madsim::rand::thread_rng;
 use madsim::task::NodeId;
-use model::statement::{ParsedStatement, StatementResult};
+use ops::OpsWorkload;
+use serde::Deserialize;
+use stall::StallWorkload;
 use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::Duration;
-use tracing::{debug, warn};
 
-pub fn gen_delays(num_ops: usize, lo: u64, hi: u64) -> Vec<Duration> {
-    let mut rng = thread_rng();
-    let lo_ms = lo * 1000;
-    let hi_ms = hi * 1000;
-    let mut timestamps: Vec<u64> = (0..num_ops).map(|_| rng.gen_range(lo_ms..=hi_ms)).collect();
-    timestamps.sort();
-    let mut prev = lo_ms;
-    let delays: Vec<Duration> = timestamps
-        .iter()
-        .map(|&t| {
-            let delay = Duration::from_millis(t - prev);
-            prev = t;
-            delay
-        })
-        .collect();
-
-    debug!(delays = %delays.iter().map(|d| format!("{}ms", d.as_millis())).collect::<Vec<_>>().join(", "));
-    delays
+#[derive(Debug, Deserialize)]
+#[serde(tag = "name")]
+pub enum Workload {
+    Worker(OpsWorkload),
+    Query(OpsWorkload),
+    Attrition(AttritionWorkload),
+    Clog(ClogWorkload),
+    Stall(StallWorkload),
+    Degradation(DegradationWorkload),
 }
 
-pub fn pick_weighted<T: Copy>(choices: &[(T, u32)]) -> T {
-    choices
-        .choose_weighted(&mut thread_rng(), |(_, w)| *w)
-        .unwrap()
-        .0
+impl Workload {
+    /// The time after which the workload does nothing more.
+    const fn end(&self) -> u64 {
+        match self {
+            Self::Worker(ops) | Self::Query(ops) => ops.end,
+            Self::Attrition(attrition) => {
+                attrition.begin.saturating_add(attrition.restart_delay_hi)
+            }
+            Self::Clog(clog) => clog.end,
+            Self::Stall(stall) => stall.end,
+            Self::Degradation(degradation) => degradation.end,
+        }
+    }
+
+    const fn rate(&self) -> Option<f64> {
+        match self {
+            Self::Worker(_) | Self::Query(_) => None,
+            Self::Attrition(attrition) => Some(attrition.kill_rate),
+            Self::Clog(clog) => Some(clog.clog_rate),
+            Self::Stall(stall) => Some(stall.pause_rate),
+            Self::Degradation(degradation) => Some(degradation.loss_rate),
+        }
+    }
+
+    pub fn validate(&self, title: &str, timeout: u64) -> Result<()> {
+        let well_formed = match self {
+            Self::Worker(ops) | Self::Query(ops) => ops.begin <= ops.end,
+            Self::Attrition(attrition) => attrition.restart_delay_lo < attrition.restart_delay_hi,
+            Self::Clog(clog) => clog.begin < clog.end,
+            Self::Stall(stall) => stall.begin < stall.end,
+            Self::Degradation(degradation) => degradation.begin < degradation.end,
+        };
+        ensure!(
+            well_formed,
+            "trial '{title}': {self:?} has an empty or inverted time range"
+        );
+        if let Self::Worker(ops) | Self::Query(ops) = self {
+            ensure!(
+                ops.create_weight
+                    .checked_add(ops.drop_weight)
+                    .is_some_and(|total| total > 0),
+                "trial '{title}': {self:?} has weights that are all zero or sum past u32::MAX"
+            );
+        }
+        if let Some(rate) = self.rate() {
+            ensure!(
+                (0.0..=1.0).contains(&rate),
+                "trial '{title}': {self:?} has a rate outside [0, 1]"
+            );
+        }
+        if let Self::Degradation(degradation) = self {
+            ensure!(
+                degradation.latency_lo_ms < degradation.latency_hi_ms,
+                "trial '{title}': {self:?} has an empty latency range"
+            );
+        }
+        ensure!(
+            self.end() < timeout,
+            "trial '{title}': {self:?} is still active at the timeout of {timeout}s"
+        );
+        Ok(())
+    }
+
+    /// Runs concurrently with the other workloads of the trial.
+    pub async fn run(&self, model: &RefCell<ModelState>, harness: &Harness) {
+        use Operation::{CreateQuery, CreateWorker, DropQuery, DropWorker};
+        match self {
+            Self::Worker(ops) => {
+                ops.run("Worker", CreateWorker, DropWorker, model, harness)
+                    .await;
+            }
+            Self::Query(ops) => {
+                ops.run("Query", CreateQuery, DropQuery, model, harness)
+                    .await;
+            }
+            Self::Attrition(attrition) => attrition.run(harness).await,
+            Self::Clog(clog) => clog.run(harness).await,
+            Self::Stall(stall) => stall.run(harness).await,
+            Self::Degradation(degradation) => degradation.run(harness).await,
+        }
+    }
 }
 
 /// Picks the nodes that a fault hits: the share `rate` of the candidates, and at least one.
@@ -80,51 +149,4 @@ pub fn pick_victims(candidates: &[NodeId], rate: f64) -> Vec<NodeId> {
         .choose_multiple(&mut thread_rng(), count)
         .copied()
         .collect()
-}
-
-impl WorkloadSpec {
-    /// Runs concurrently with the other workloads of the trial.
-    pub async fn run(&self, model: &Rc<RefCell<ModelState>>, harness: &TestHarness) {
-        use Operation::{CreateQuery, CreateWorker, DropQuery, DropWorker};
-        match self {
-            Self::Worker(cfg) => {
-                ops::run("Worker", cfg, CreateWorker, DropWorker, model, harness).await;
-            }
-            Self::Query(cfg) => {
-                ops::run("Query", cfg, CreateQuery, DropQuery, model, harness).await;
-            }
-            Self::Attrition(attrition) => attrition.run(harness).await,
-            Self::Clog(clog) => clog.run(harness).await,
-            Self::Stall(stall) => stall.run(harness).await,
-            Self::Degradation(degradation) => degradation.run(harness).await,
-        }
-    }
-}
-
-/// Sends the statements for an operation, prerequisites first, and folds each response into the model.
-pub async fn execute(op: Operation, model: &Rc<RefCell<ModelState>>, harness: &TestHarness) {
-    loop {
-        let step = model.borrow().resolve(op);
-        let (stmt, is_ready) = match step {
-            Ok(Step::Prerequisite(s)) => (s, false),
-            Ok(Step::Ready(s)) => (s, true),
-            Err(e) => {
-                warn!("operation not possible: {e:?}");
-                return;
-            }
-        };
-        let rsp = send_stmt(harness, stmt).await;
-        model.borrow_mut().observe(rsp);
-        if is_ready {
-            return;
-        }
-    }
-}
-
-async fn send_stmt(harness: &TestHarness, stmt: ParsedStatement) -> StatementResult {
-    match stmt {
-        ParsedStatement::CreateWorker(req) => harness.create_worker(req).await.unwrap(),
-        ParsedStatement::DropWorker(req) => harness.drop_worker(req).await.unwrap(),
-        other => harness.send(other).await.unwrap(),
-    }
 }

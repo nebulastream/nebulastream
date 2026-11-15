@@ -14,15 +14,13 @@
 
 //! Failure-injection workload that raises network latency and packet loss for a window, then restores a baseline.
 //!
-//! Targets the parts of the system that assume a mostly working network:
-//! RPC retries and deadlines.
+//! Targets the parts of the system that assume a mostly working network: RPC retries and deadlines.
 //! The restored latency is small but non-zero so the test never relies on instant delivery.
 
-use crate::config;
-use crate::harness::TestHarness;
-use madsim::net::NetSim;
+use crate::harness::Harness;
 use serde::Deserialize;
 use std::time::Duration;
+use tokio::time::Instant;
 use tracing::info;
 
 #[derive(Debug, Deserialize)]
@@ -38,7 +36,7 @@ pub struct DegradationWorkload {
 impl DegradationWorkload {
     const NAME: &str = "Degradation";
 
-    pub async fn run(&self, _harness: &TestHarness) {
+    pub async fn run(&self, harness: &Harness) {
         info!(
             "{}: ({}s..{}s) latency={}ms..{}ms loss={:.0}%",
             Self::NAME,
@@ -49,21 +47,16 @@ impl DegradationWorkload {
             self.loss_rate * 100.0,
         );
 
-        let net = NetSim::current();
-
-        tokio::time::sleep(Duration::from_secs(self.begin)).await;
+        let start = Instant::now();
+        tokio::time::sleep_until(start + Duration::from_secs(self.begin)).await;
         info!("{}: increasing latency and packet loss", Self::NAME);
-        net.update_config(|cfg| {
-            cfg.send_latency = Duration::from_millis(self.latency_lo_ms)
-                ..Duration::from_millis(self.latency_hi_ms);
-            cfg.packet_loss_rate = self.loss_rate;
-        });
+        harness.degrade_network(
+            Duration::from_millis(self.latency_lo_ms)..Duration::from_millis(self.latency_hi_ms),
+            self.loss_rate,
+        );
 
-        tokio::time::sleep(Duration::from_secs(self.end - self.begin)).await;
-        net.update_config(|cfg| {
-            cfg.send_latency = config::SEND_LATENCY_LO..config::SEND_LATENCY_HI;
-            cfg.packet_loss_rate = 0.0;
-        });
+        tokio::time::sleep_until(start + Duration::from_secs(self.end)).await;
+        harness.restore_network();
         info!("{}: restored network defaults", Self::NAME);
     }
 }

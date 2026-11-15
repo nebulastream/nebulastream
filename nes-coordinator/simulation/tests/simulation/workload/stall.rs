@@ -18,10 +18,11 @@
 //! This tests whether the controller's RPC and probe timeouts fire and its reconciliation resumes once the node comes back,
 //! rather than staying stuck in an intermediate state.
 
-use crate::harness::TestHarness;
+use crate::harness::Harness;
 use crate::workload::pick_victims;
 use serde::Deserialize;
 use std::time::Duration;
+use tokio::time::Instant;
 use tracing::info;
 
 #[derive(Debug, Deserialize)]
@@ -35,7 +36,7 @@ pub struct StallWorkload {
 impl StallWorkload {
     const NAME: &str = "Stall";
 
-    pub async fn run(&self, harness: &TestHarness) {
+    pub async fn run(&self, harness: &Harness) {
         info!(
             "{}: ({}s..{}s) pause_rate={:.0}%",
             Self::NAME,
@@ -44,15 +45,16 @@ impl StallWorkload {
             self.pause_rate * 100.0,
         );
 
-        tokio::time::sleep(Duration::from_secs(self.begin)).await;
+        let start = Instant::now();
+        tokio::time::sleep_until(start + Duration::from_secs(self.begin)).await;
 
-        let victims = pick_victims(&harness.get_worker_ids(), self.pause_rate);
+        let victims = pick_victims(&harness.get_worker_nodes(), self.pause_rate);
         for &id in &victims {
             info!("{}: pause {id}", Self::NAME);
             harness.pause(id);
         }
 
-        tokio::time::sleep(Duration::from_secs(self.end - self.begin)).await;
+        tokio::time::sleep_until(start + Duration::from_secs(self.end)).await;
         for &id in &victims {
             harness.resume(id);
             info!("{}: resume {id}", Self::NAME);

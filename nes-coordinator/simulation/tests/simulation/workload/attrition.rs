@@ -18,12 +18,12 @@
 //! Restarts happen after random delays inside the configured restart window,
 //! so the system sees a correlated outage followed by a staggered recovery, which is harder than losing one node at a time.
 
-use crate::harness::TestHarness;
+use crate::harness::Harness;
 use crate::workload::pick_victims;
 use madsim::rand::{Rng, thread_rng};
-use madsim::task::NodeId;
 use serde::Deserialize;
 use std::time::Duration;
+use tokio::time::Instant;
 use tracing::info;
 
 #[derive(Debug, Deserialize)]
@@ -31,35 +31,33 @@ use tracing::info;
 pub struct AttritionWorkload {
     pub begin: u64,
     pub kill_rate: f64,
-    pub restart_delay_lo_secs: u64,
-    pub restart_delay_hi_secs: u64,
+    pub restart_delay_lo: u64,
+    pub restart_delay_hi: u64,
 }
 
 impl AttritionWorkload {
     const NAME: &str = "Attrition";
 
-    pub async fn run(&self, harness: &TestHarness) {
+    pub async fn run(&self, harness: &Harness) {
         info!(
             "{}: kill_at={}s kill_rate={:.0}% restart_delay={}s..{}s",
             Self::NAME,
             self.begin,
             self.kill_rate * 100.0,
-            self.restart_delay_lo_secs,
-            self.restart_delay_hi_secs,
+            self.restart_delay_lo,
+            self.restart_delay_hi,
         );
 
         tokio::time::sleep(Duration::from_secs(self.begin)).await;
 
-        let restart_delay = Duration::from_secs(self.restart_delay_lo_secs)
-            ..Duration::from_secs(self.restart_delay_hi_secs);
+        let restart_delay =
+            Duration::from_secs(self.restart_delay_lo)..Duration::from_secs(self.restart_delay_hi);
         let mut rng = thread_rng();
-        let victims = pick_victims(&harness.get_worker_ids(), self.kill_rate);
 
-        // Sorted by delay so the restart loop below can sleep the difference between
-        // consecutive delays instead of tracking each node's deadline separately.
-        let mut restarts: Vec<(NodeId, Duration)> = victims
-            .iter()
-            .map(|&id| (id, rng.gen_range(restart_delay.clone())))
+        // Sorted by delay, because the restart loop waits for each deadline in turn.
+        let mut restarts: Vec<_> = pick_victims(&harness.get_worker_nodes(), self.kill_rate)
+            .into_iter()
+            .map(|id| (id, rng.gen_range(restart_delay.clone())))
             .collect();
         restarts.sort_by_key(|&(_, delay)| delay);
 
@@ -69,12 +67,9 @@ impl AttritionWorkload {
             harness.kill(id);
         }
 
-        let mut elapsed = Duration::ZERO;
+        let killed_at = Instant::now();
         for &(id, delay) in &restarts {
-            if delay > elapsed {
-                tokio::time::sleep(delay - elapsed).await;
-                elapsed = delay;
-            }
+            tokio::time::sleep_until(killed_at + delay).await;
             info!("{}: restart {id} (after {delay:?})", Self::NAME);
             harness.restart(id);
         }
