@@ -35,7 +35,6 @@ public:
     /// Binds the optional constant concurrency limit from the logical call.
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
 
-    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override;
     std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) override;
 
     [[nodiscard]] std::optional<size_t> maxConcurrency() const override { return concurrencyLimit; }

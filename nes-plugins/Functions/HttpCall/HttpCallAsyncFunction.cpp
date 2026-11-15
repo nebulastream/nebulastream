@@ -16,6 +16,7 @@
 #include <HttpCallAsyncFunction.hpp>
 #include <HttpCallResolver.hpp>
 
+#include <cerrno>
 #include <chrono>
 #include <cstdint>
 #include <limits>
@@ -50,7 +51,9 @@ AsyncFunctionRegistryReturnType HttpCallAsyncFunction::create(AsyncFunctionRegis
     return std::make_unique<HttpCallAsyncFunction>();
 }
 
-std::optional<size_t> HttpCallAsyncFunction::maxRetries(const SharedRuntimeValues& arguments) const
+namespace
+{
+size_t parseRetries(const SharedRuntimeValues& arguments)
 {
     PRECONDITION(arguments.size() >= 2 && arguments.size() <= 4, "HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
     if (arguments.size() < 4)
@@ -63,6 +66,51 @@ std::optional<size_t> HttpCallAsyncFunction::maxRetries(const SharedRuntimeValue
         throw ArithmeticalError("HTTP_CALL expects a representable retry count, got {}", retries);
     }
     return static_cast<size_t>(retries);
+}
+}
+
+void detail::checkHttpStatus(unsigned status, std::string_view endpoint, std::string_view body)
+{
+    if (status >= 200 && status < 300)
+    {
+        return;
+    }
+    switch (status)
+    {
+        case 408:
+        case 429:
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+            throw RetryableAsyncError(
+                "HTTP_CALL to {} got status {}: {}. Retrying this POST may duplicate server-side effects", endpoint, status, body);
+        default:
+            throw IOError("HTTP_CALL to {} got status {}: {}", endpoint, status, body);
+    }
+}
+
+void detail::rethrowHttpTransportError(const boost::system::system_error& error, std::string_view url)
+{
+    namespace asioError = boost::asio::error;
+    const auto code = error.code();
+    if (code == asioError::operation_aborted)
+    {
+        throw;
+    }
+    if (code == asioError::connection_refused || code == asioError::connection_reset || code == asioError::connection_aborted
+        || code == asioError::timed_out || code == asioError::network_unreachable || code == asioError::network_down
+        || code == asioError::host_unreachable
+#ifdef EHOSTDOWN
+        || code == boost::system::error_condition{EHOSTDOWN, boost::system::generic_category()}
+#endif
+        || code == asioError::try_again || code == asioError::eof || code == asioError::host_not_found_try_again
+        || code == boost::beast::error::timeout || code == http::error::end_of_stream)
+    {
+        throw RetryableAsyncError(
+            "HTTP_CALL to {} failed transiently: {}. Retrying this POST may duplicate server-side effects", url, error.what());
+    }
+    throw IOError("HTTP_CALL to {} failed permanently: {}", url, error.what());
 }
 
 class HttpCallAsyncFunction::Prepared final : public PreparedAsyncCall
@@ -77,26 +125,26 @@ public:
         std::string target,
         uint64_t millis,
         size_t retries)
-        : owner(owner)
+        : PreparedAsyncCall(retries)
+        , owner(owner)
         , body(std::move(body))
         , url(std::move(url))
         , host(std::move(host))
         , port(std::move(port))
         , target(std::move(target))
         , millis(millis)
-        , retries(retries)
     {
     }
 
-    boost::asio::awaitable<SharedRuntimeValues> call() override { co_return co_await owner.execute(body, url, host, port, target, millis); }
-
-    std::optional<size_t> maxRetries() const override { return retries; }
+    boost::asio::awaitable<SharedRuntimeValues> executeAttempt() override
+    {
+        co_return co_await owner.execute(body, url, host, port, target, millis);
+    }
 
 private:
     HttpCallAsyncFunction& owner;
     std::string body, url, host, port, target;
     uint64_t millis;
-    size_t retries;
 };
 
 std::unique_ptr<PreparedAsyncCall> HttpCallAsyncFunction::prepare(SharedRuntimeValues arguments)
@@ -122,15 +170,9 @@ std::unique_ptr<PreparedAsyncCall> HttpCallAsyncFunction::prepare(SharedRuntimeV
     std::string host{parsed->host()};
     std::string port = parsed->has_port() ? std::string{parsed->port()} : "80";
     std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
-    const auto retries = maxRetries(arguments).value_or(0);
+    const auto retries = parseRetries(arguments);
     return std::make_unique<Prepared>(
         *this, std::move(body), std::move(url), std::move(host), std::move(port), std::move(target), millis, retries);
-}
-
-boost::asio::awaitable<SharedRuntimeValues> HttpCallAsyncFunction::call(SharedRuntimeValues arguments)
-{
-    auto prepared = prepare(std::move(arguments));
-    co_return co_await prepared->call();
 }
 
 boost::asio::awaitable<SharedRuntimeValues>
@@ -145,7 +187,7 @@ HttpCallAsyncFunction::execute(std::string body, std::string url, std::string ho
     catch (const boost::system::system_error& error)
     {
         stream.reset();
-        throw IOError("HTTP_CALL to {} failed: {}", url, error.what());
+        detail::rethrowHttpTransportError(error, url);
     }
 }
 
@@ -194,10 +236,7 @@ boost::asio::awaitable<std::string> HttpCallAsyncFunction::exchange(
     {
         stream.reset();
     }
-    if (response.result_int() < 200 || response.result_int() >= 300)
-    {
-        throw IOError("HTTP_CALL to {}:{}{} got status {}: {}", host, port, target, response.result_int(), response.body());
-    }
+    detail::checkHttpStatus(response.result_int(), host + ":" + port + target, response.body());
     co_return std::move(response.body());
 }
 

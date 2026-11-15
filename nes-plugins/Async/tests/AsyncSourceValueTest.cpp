@@ -23,6 +23,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Async/HandoffChannel.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -45,63 +46,84 @@
 #include <AsyncSource.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <HandoffChannel.hpp>
 #include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
 namespace
 {
-class FixedResultFunction final : public AsyncFunction
+class PreparedFixedResult final : public PreparedAsyncCall
 {
 public:
-    FixedResultFunction(
-        SharedRuntimeValues result, std::shared_ptr<std::atomic<size_t>> calls, std::optional<size_t> retryLimit, size_t failures)
-        : result(std::move(result)), calls(std::move(calls)), retryLimit(retryLimit), failures(failures)
+    PreparedFixedResult(
+        SharedRuntimeValues result,
+        std::shared_ptr<std::atomic<size_t>> calls,
+        std::optional<size_t> retries,
+        size_t failures,
+        bool retryable)
+        : PreparedAsyncCall(retries), result(std::move(result)), calls(std::move(calls)), failures(failures), retryable(retryable)
     {
     }
 
-    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues) override
+    boost::asio::awaitable<SharedRuntimeValues> executeAttempt() override
     {
         if (++*calls <= failures)
         {
-            throw CannotReadFromSource("test invocation failed");
+            if (retryable)
+            {
+                throw RetryableAsyncError("test invocation failed");
+            }
+            throw IOError("permanent test failure");
         }
         co_return result;
     }
 
-    std::optional<size_t> maxRetries(const SharedRuntimeValues&) const override { return retryLimit; }
+private:
+    SharedRuntimeValues result;
+    std::shared_ptr<std::atomic<size_t>> calls;
+    size_t failures;
+    bool retryable;
+};
+
+class FixedResultFunction final : public AsyncFunction
+{
+public:
+    FixedResultFunction(
+        SharedRuntimeValues result,
+        std::shared_ptr<std::atomic<size_t>> calls,
+        std::optional<size_t> retryLimit,
+        size_t failures,
+        bool retryable = true)
+        : result(std::move(result)), calls(std::move(calls)), retryLimit(retryLimit), failures(failures), retryable(retryable)
+    {
+    }
+
+    std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues) override
+    {
+        return std::make_unique<PreparedFixedResult>(result, calls, retryLimit, failures, retryable);
+    }
 
 private:
     SharedRuntimeValues result;
     std::shared_ptr<std::atomic<size_t>> calls;
     std::optional<size_t> retryLimit;
     size_t failures;
+    bool retryable;
 };
 
 class PreparationFailureFunction final : public AsyncFunction
 {
 public:
-    PreparationFailureFunction(std::shared_ptr<std::atomic<size_t>> preparations, std::shared_ptr<std::atomic<size_t>> attempts)
-        : preparations(std::move(preparations)), attempts(std::move(attempts))
-    {
-    }
+    explicit PreparationFailureFunction(std::shared_ptr<std::atomic<size_t>> preparations) : preparations(std::move(preparations)) { }
 
     std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues) override
     {
         ++*preparations;
-        throw CannotReadFromSource("Invalid per-row arguments");
-    }
-
-    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override
-    {
-        ++*attempts;
-        co_return arguments;
+        throw RetryableAsyncError("Preparation failures must never be retried");
     }
 
 private:
     std::shared_ptr<std::atomic<size_t>> preparations;
-    std::shared_ptr<std::atomic<size_t>> attempts;
 };
 
 class AsyncSourceValueTest : public Testing::BaseUnitTest
@@ -122,8 +144,8 @@ public:
         size_t concurrency = 1,
         std::function<std::unique_ptr<AsyncFunction>()> create = {})
     {
-        const AsyncChannelId id{generateUUID()};
-        const std::string functionType{"FixedResult_" + id.getRawValue()};
+        const auto channel = std::make_shared<HandoffChannel>(2);
+        const std::string functionType{"FixedResult_" + UUIDToString(generateUUID())};
         const bool added = AsyncFunctionRegistry::instance().addEntry(
             functionType,
             [result, calls, retryLimit, failures, create = std::move(create)](
@@ -142,7 +164,7 @@ public:
         const auto producer = builder.call(functionType, {}, {declaredType});
         builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("RESULT"));
         const AsyncSourceConfig config{
-            .channel = id, .calls = builder.build(), .maxConcurrency = concurrency, .channelCapacity = 2, .maxRetries = sourceRetries};
+            .channel = channel, .calls = builder.build(), .maxConcurrency = concurrency, .maxRetries = sourceRetries};
         const auto descriptor = catalog.getAnonymousSource(
             PhysicalSourceBuilder{
                 GeneralSourceConfig{.host = Host{"localhost:8080"}, .maxInflightBuffers = std::nullopt},
@@ -155,16 +177,17 @@ public:
         const auto provider
             = BufferManager::create(1024 * 1024, 0.1, BufferAlignment{64}, 4096, std::make_shared<NesDefaultMemoryAllocator>());
         {
-            HandoffChannel::Attachment sink{id, 2, HandoffChannel::Role::SINK};
+            auto sink = channel->takeSender();
             AsyncSource source{installedConfig, *descriptor};
+            channel->validate();
             source.open(provider);
             for (size_t buffer = 0; buffer < bufferCount; ++buffer)
             {
                 auto input = provider->getBufferBlocking();
                 input.setNumberOfTuples(rowsPerBuffer);
-                ASSERT_EQ(sink->tryPush(input), HandoffChannel::PushResult::PUSHED);
+                ASSERT_EQ(sink.tryPush(input), HandoffChannel::PushResult::PUSHED);
             }
-            sink->close();
+            sink.close();
             try
             {
                 for (size_t buffer = 0; buffer < bufferCount; ++buffer)
@@ -255,17 +278,38 @@ TEST_F(AsyncSourceValueTest, InvalidArgumentsFailPreparationOnceWithoutExecuting
             1,
             1,
             1,
-            [=] { return std::make_unique<PreparationFailureFunction>(preparations, attempts); }),
+            [=] { return std::make_unique<PreparationFailureFunction>(preparations); }),
         Exception);
     EXPECT_EQ(preparations->load(), 1);
     EXPECT_EQ(attempts->load(), 0);
 }
 
+TEST_F(AsyncSourceValueTest, PermanentFailureIsNotRetriedEvenWithAnExplicitRetryOverride)
+{
+    const auto calls = std::make_shared<std::atomic<size_t>>(0);
+    const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
+    const auto result = SharedRuntimeValues::make(int64_t{42});
+    EXPECT_THROW(
+        run(result,
+            type,
+            calls,
+            size_t{3},
+            1,
+            8,
+            1,
+            1,
+            1,
+            [=] { return std::make_unique<FixedResultFunction>(result, calls, size_t{3}, 1, false); }),
+        Exception);
+    EXPECT_EQ(calls->load(), 1);
+}
+
 TEST_F(AsyncSourceValueTest, AllImplementationsAreResolvedBeforeAnyInstancesAreCreated)
 {
-    const AsyncChannelId channel{generateUUID()};
-    const auto known = "Bound_" + channel.getRawValue();
-    const auto missing = "Missing_" + channel.getRawValue();
+    const auto channel = std::make_shared<HandoffChannel>(2);
+    const auto suffix = UUIDToString(generateUUID());
+    const auto known = "Bound_" + suffix;
+    const auto missing = "Missing_" + suffix;
     const auto creations = std::make_shared<std::atomic<size_t>>(0);
     ASSERT_TRUE(
         AsyncFunctionRegistry::instance().addEntry(

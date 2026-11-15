@@ -124,7 +124,7 @@ TEST(AsyncDelayFunctionTest, ZeroDelayPreservesTypedNullAndReturnsNonNullableUns
     const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     const auto body = [&]() -> boost::asio::awaitable<void>
     {
-        const auto result = co_await function.call(SharedRuntimeValues::make(RuntimeValue::null(nullable), uint64_t{0}));
+        const auto result = co_await invokeOnce(function, SharedRuntimeValues::make(RuntimeValue::null(nullable), uint64_t{0}));
         EXPECT_EQ(result.size(), 2);
         EXPECT_EQ(result[0].getDataType(), nullable);
         EXPECT_TRUE(result[0].isNull());
@@ -149,9 +149,10 @@ TEST(AsyncDelayFunctionTest, ConcurrencyBindingAndPreparedInvocationReuse)
         for (const auto millis : {uint64_t{0}, uint64_t{1}})
         {
             const auto prepared = function->prepare(SharedRuntimeValues::make(int64_t{7}, millis, uint64_t{2}));
+            EXPECT_EQ(prepared->retryOverride, std::nullopt);
             for (int attempt = 0; attempt < 2; ++attempt)
             {
-                const auto result = co_await prepared->call();
+                const auto result = co_await prepared->executeAttempt();
                 EXPECT_EQ(result[0].get<int64_t>(), 7);
                 EXPECT_EQ(result[1].get<uint64_t>(), millis);
             }
@@ -175,7 +176,7 @@ TEST(AsyncDelayFunctionTest, UnrepresentableDurationsAreInputErrorsBeforeStartin
         boost::asio::io_context context;
         AsyncDelayAsyncFunction function{std::nullopt};
         const auto body = [&]() -> boost::asio::awaitable<void>
-        { static_cast<void>(co_await function.call(SharedRuntimeValues::make(int64_t{42}, millis))); };
+        { static_cast<void>(co_await invokeOnce(function, SharedRuntimeValues::make(int64_t{42}, millis))); };
         auto future = boost::asio::co_spawn(context, body(), boost::asio::use_future);
         context.run();
         EXPECT_THROW(future.get(), Exception);

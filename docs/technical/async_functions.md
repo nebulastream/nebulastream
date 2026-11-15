@@ -83,8 +83,8 @@ worker it was placed on, by
   own, and
 - an `Async` source (`nes-plugins/Async/AsyncSource.cpp`) in the stage's place.
 
-Both carry the same UUID-backed strong `AsyncChannelId`, distinct from the network `ChannelId`. Decomposition, the typed source config, both runtime halves, and
-channel leases/registry keys retain that type; only literal configuration and wire serialization use UUID strings.
+Both typed configurations hold the same `std::shared_ptr<HandoffChannel>`. Reflection assigns that shared object a wire ID
+and reconstructs one channel for both configurations. The ID is local to a reflection context, not a process-global registry key.
 Decomposition passes an `AsyncCallGraph` directly in the typed `AsyncSourceConfig`,
 using `PhysicalSourceBuilder` and the catalog's typed anonymous-source API rather than string configuration maps.
 The graph includes the ordered input schema, immutable call nodes, and exported outputs. The source uses that bound schema
@@ -130,10 +130,19 @@ SINK(NETWORK)
 
 ### The Handoff channel
 
-`HandoffChannel` (`nes-plugins/Async/HandoffChannel.hpp`) is a bounded in-process queue between the two halves; buffers
-pass through it without a copy. Each half holds a `HandoffChannel::Attachment` from its construction to its destruction, so
-the channel is released even on a hard stop or when one half never opens. Until a source has attached, the channel takes
-no buffers.
+`HandoffChannel` (`nes-async/include/Async/HandoffChannel.hpp`) is a bounded in-process queue with a move-only sender and receiver.
+Buffers pass through it without a copy. The Handoff sink owns the sender; the Async source owns the receiver.
+
+The query manager submits all local fragments for one worker as a batch. Serialization and deserialization each use one
+`ReflectionContext` across the batch to preserve shared-pointer identity. The worker reconstructs a fresh batch for each
+execution, including embedded execution, so reusing a plan cannot reuse a closed queue. It compiles and instantiates all
+fragments, validates that both endpoints were claimed, then starts execution. Capacity is specified once on the shared channel.
+There is no process-global channel registry or extra resource argument in source/sink factories. Configuration pointers retain
+unclaimed endpoints; claimed sender/receiver handles independently own the queue and signal closure even if configurations remain alive.
+
+Closing the sender normally lets the receiver drain queued buffers and then observe end-of-stream. Destroying an unfinished
+sender cancels the channel instead, so a failed producer cannot look like successful completion. Closing or destroying the
+receiver discards queued buffers and rejects further sends. These rules do not depend on which local fragment starts first.
 
 When the channel is full, the `Handoff` sink applies backpressure through the sink's `BackpressureHandler`: it stashes
 the buffer, holds back the sources of the producing pipeline, and retries until the Async source caught up. The channel
@@ -189,7 +198,8 @@ This change does not fuse synchronous expressions or filters across those bounda
 
 ### Deadlines, cancellation and ownership
 
-`SharedAsyncResult::get()` creates an independent subscription; `getUntil(steady_clock_deadline)` bounds only that wait.
+Graph execution exposes `run()` and owner cancellation; producer lookup is internal, so graph consumers cannot cancel individual shared producers.
+Internally, `SharedAsyncResult::get()` creates an independent subscription; `getUntil(steady_clock_deadline)` bounds only that wait.
 Each subscription has its own cancellation registration. Timing out or cancelling one wait does not cancel the producer,
 poison its cached result, or affect another subscriber. A result already available when subscribing is returned immediately;
 for a pending subscription, a completion published after its deadline is still a timeout even if notifications race.
@@ -217,13 +227,15 @@ The decomposition passes these optimizer options to every async stage, e.g.
 | `optimizer.async.max_retries`      | 0       | Default further attempts of a failed call, with exponential backoff; a function may override it. |
 
 A function can lower the concurrency of its stage through `AsyncFunction::maxConcurrency`, e.g. for a service with a
-rate limit; the stage uses the smallest bound. A function can override the retry default per call through
-`AsyncFunction::maxRetries(arguments)`.
+rate limit; the stage uses the smallest bound. A prepared invocation can override the retry default through its fixed
+`PreparedAsyncCall::retryOverride` metadata.
 
 `HTTP_CALL` always overrides the retry default: the fourth argument is the number of additional attempts, and omitting it
 means zero even when `optimizer.async.max_retries` is enabled. The retry count may be a non-null integer expression.
 For example, `HTTP_CALL(body, url, 30000, 2)` allows up to three attempts, each with a 30-second end-to-end timeout,
-with the source's exponential backoff between attempts.
+with the source's exponential backoff between attempts. Only execution failures explicitly classified as `RetryableAsyncError`
+are retried. HTTP classifies transient transport failures and statuses 408, 429, 500, 502, 503, and 504 this way; other HTTP errors
+fail immediately. Preparation failures and cancellation are never retried.
 There is no separate automatic keep-alive reconnect retry. A failed connection is discarded; resending the POST requires
 explicitly opting into retries. A retry may repeat a request the server already processed, so the caller must ensure
 that duplicate effects are acceptable (for example, by using an idempotent service or an idempotency key).
@@ -249,24 +261,27 @@ class MyAsyncFunction final : public AsyncFunction
 public:
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
 
-    /// Owns the typed arguments across suspension and returns all typed outputs.
-    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override;
+    /// Validates arguments and returns an owning invocation for sequential attempts.
+    std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) override;
 };
 ```
 
 `create` receives `arguments.binding`, an `AsyncFunctionBinding` containing declared argument/result types and
 positional optional constants. There is no separate per-function configuration payload. Constant arguments remain
-visible at their original positions in `call`, just like dynamic arguments; factories may inspect them to initialize
+visible at their original positions in `prepare`, just like dynamic arguments; factories may inspect them to initialize
 state or a concurrency limit. Logical constants become native values during decomposition and retain their exact
 scalar types through transport and binding (no floating-point roundtrip for integer literals).
 
 The source calls `prepare(SharedRuntimeValues)` once per producer invocation, before entering its retry loop. Preparation may
-reject invalid per-row input and returns an owning `PreparedAsyncCall`. Its `call()` performs one attempt, while
-`maxRetries()` supplies the invocation's retry policy. Invalid arguments are never retried. The default preparation
-adapter retains the arguments and delegates to the existing `call(SharedRuntimeValues)` API, so plugins without custom
-preparation keep their behavior. HTTP preparation owns the parsed URL, body, timeout, and retry options across attempts;
-network failures, cancellation, and time-dependent deadline checks remain execution-time failures. Prepared calls borrow
-their function instance, which must outlive them; the source keeps one instance per active row slot.
+reject invalid per-row input and returns an owning `PreparedAsyncCall`. Its `executeAttempt()` performs one attempt, while
+its constructor fixes the optional `retryOverride`. Plugins implement only this preparation/attempt protocol; there is no
+second direct-call extension point. `invokeOnce(function, arguments)` is a nonvirtual convenience function that prepares and
+executes once without retries.
+
+HTTP preparation owns the parsed URL, body, timeout, and retry options across attempts. Network failures, cancellation, and
+time-dependent deadline checks remain execution-time failures. Only `RetryableAsyncError` permits another attempt; ordinary
+exceptions fail immediately. Prepared calls may borrow their function instance, which must outlive them; the source keeps
+one instance per active row slot.
 
 Graph implementation names are resolved against the worker's registry before any function instances are constructed.
 Missing implementations are deployment errors. Subsequent instance creation uses the bound factories, not another lookup.
@@ -277,11 +292,13 @@ at the unreflection boundary before those APIs are called.
 Error categories follow their boundary: logical datatype mismatches use `DifferentFieldTypeExpected`, other inference
 failures use `CannotInferSchema`, and invalid registry-call syntax uses `InvalidQuerySyntax`. Literal parsing reports
 `InvalidLiteral`. Dynamic numeric option failures use `ArithmeticalError`, malformed URLs use `FormattingError`, and
-HTTP transport/response failures use `IOError` rather than a source-read error. Wire validation uses `CannotDeserialize`;
-Asio cancellation and timeout errors retain their original error codes internally.
+permanent HTTP transport/response failures use `IOError`. Transient failures use `RetryableAsyncError`; this classification
+does not itself grant permission to replay a POST. Wire validation uses `CannotDeserialize`; Asio cancellation retains its
+original error code.
 
 `SharedRuntimeValues` is an immutable, cheap-to-copy owning handle, so a coroutine can keep its arguments across suspension and
-the scheduler can retain them for retries. Indexing returns a `RuntimeValueView`, which borrows from that owner and must
+the scheduler can retain them for retries. Default construction produces a valid empty list, not a failure result.
+Indexing returns a `RuntimeValueView`, which borrows from that owner and must
 not outlive it. Use `get<int32_t>()` for exact scalar access, `get<std::string_view>()` or `bytes()` for VARSIZED, and
 `isNull()` before accessing a nullable payload. There is no implicit numeric narrowing; `getUnsignedInteger()` is an
 explicit contract-only conversion for an already validated non-negative integer of any width. At input boundaries,
@@ -291,8 +308,7 @@ For example, during invocation preparation:
 
 ```cpp
 const auto millis = checkedUnsignedIntegerOption(arguments[1], "MY_FUNCTION delay");
-// ... co_await a timer ...
-co_return SharedRuntimeValues::make(arguments[0].toOwned(), millis);
+return std::make_unique<MyPreparedCall>(arguments[0].toOwned(), millis);
 ```
 
 The current source path materializes owned values; the view interface leaves room for future buffer-backed storage
@@ -356,5 +372,5 @@ add_registry_entry(AsyncFunction MyFunction)
   nullable/binary/large results, failure draining, and concurrent writers retaining a shared child.
 - [nes-sources/tests/SourceThreadTest.cpp](nes-sources/tests/SourceThreadTest.cpp) checks allocation-free returning
   sources as well as the existing preallocated-source contract, stop/EOS/error cleanup, and metadata preservation.
-- `nes-plugins/Async/tests/HandoffChannelTest.cpp` covers the channel's leases.
+- `nes-async/tests/HandoffChannelTest.cpp` covers channel ownership, endpoint closure, and shared-configuration reconstruction.
 - `nes-systests/explain/AsyncFunctionLifting.test` checks the lifted and the decomposed plans.

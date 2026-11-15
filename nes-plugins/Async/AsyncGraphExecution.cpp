@@ -34,16 +34,8 @@ namespace NES
 {
 namespace
 {
-/// co_spawn default-constructs its result on failure; SharedRuntimeValues deliberately has no default constructor.
-boost::asio::awaitable<std::optional<SharedRuntimeValues>> optionalResult(boost::asio::awaitable<SharedRuntimeValues> operation)
-{
-    co_return co_await std::move(operation);
-}
-
 using Operation = decltype(boost::asio::co_spawn(
-    std::declval<SharedAsyncResult::Strand>(),
-    std::declval<boost::asio::awaitable<std::optional<SharedRuntimeValues>>>(),
-    boost::asio::deferred));
+    std::declval<SharedAsyncResult::Strand>(), std::declval<boost::asio::awaitable<SharedRuntimeValues>>(), boost::asio::deferred));
 
 boost::asio::awaitable<void> waitAll(std::vector<Operation> operations)
 {
@@ -121,7 +113,7 @@ boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::invokeNode(std:
             {
                 auto cell = self->evaluate(producer);
                 producers.emplace(producer, cell);
-                dependencies.push_back(boost::asio::co_spawn(self->executor, optionalResult(cell->get()), boost::asio::deferred));
+                dependencies.push_back(boost::asio::co_spawn(self->executor, cell->get(), boost::asio::deferred));
             }
         }
     }
@@ -206,7 +198,7 @@ boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::runImpl(std::sh
             {
                 auto cell = self->evaluate(producer);
                 producers.emplace(producer, cell);
-                roots.push_back(boost::asio::co_spawn(self->executor, optionalResult(cell->get()), boost::asio::deferred));
+                roots.push_back(boost::asio::co_spawn(self->executor, cell->get(), boost::asio::deferred));
             }
         }
         co_await waitAll(std::move(roots));

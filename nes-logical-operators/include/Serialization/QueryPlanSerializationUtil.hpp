@@ -20,13 +20,15 @@
 
 namespace NES
 {
-
+class ReflectionContext;
 
 class QueryPlanSerializationUtil
 {
 public:
     static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan);
+    static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan, const ReflectionContext& context);
     static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan);
+    static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan, const ReflectionContext& context);
 
     static NES::SerializableQueryId serializeQueryId(const QueryId& queryId);
     static QueryId deserializeQueryId(const NES::SerializableQueryId& proto);

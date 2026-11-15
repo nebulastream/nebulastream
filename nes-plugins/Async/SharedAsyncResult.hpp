@@ -52,7 +52,7 @@ private:
     static boost::asio::awaitable<void> joinImpl(std::shared_ptr<SharedAsyncResult> self);
     void start();
     void cancelImpl();
-    void complete(std::exception_ptr error, std::optional<SharedRuntimeValues> result);
+    void complete(std::exception_ptr error, SharedRuntimeValues result);
     [[nodiscard]] SharedRuntimeValues read() const;
 
     Strand executor;

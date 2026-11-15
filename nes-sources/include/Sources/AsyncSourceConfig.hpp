@@ -15,7 +15,8 @@
 
 #include <cstddef>
 #include <expected>
-#include <Identifiers/Identifiers.hpp>
+#include <memory>
+#include <Async/HandoffChannel.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <ErrorHandling.hpp>
 
@@ -27,16 +28,14 @@ class InstantiatedConfig;
 struct AsyncSourceConfig
 {
     static constexpr size_t DEFAULT_MAX_CONCURRENCY = 16;
-    static constexpr size_t DEFAULT_CHANNEL_CAPACITY = 64;
     static constexpr size_t DEFAULT_MAX_RETRIES = 0;
 
-    /// UUID of the channel shared with the Handoff sink.
-    AsyncChannelId channel;
+    /// The same channel object is held by the paired Handoff sink configuration.
+    std::shared_ptr<HandoffChannel> channel;
     /// Immutable producers, typed constants, scoped inputs, and checked output handles.
     AsyncCallGraph calls;
     /// Rows in flight, further bounded by the stage's functions.
     size_t maxConcurrency = DEFAULT_MAX_CONCURRENCY;
-    size_t channelCapacity = DEFAULT_CHANNEL_CAPACITY;
     size_t maxRetries = DEFAULT_MAX_RETRIES;
 
     /// Async sources need a planner-supplied graph, not frontend literal configuration.

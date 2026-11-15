@@ -28,6 +28,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Async/HandoffChannel.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/RuntimeValueNautilus.hpp>
@@ -59,7 +60,6 @@
 #include <AsyncSource.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <HandoffChannel.hpp>
 #include <InputFormatterDescriptor.hpp>
 
 namespace NES
@@ -84,14 +84,13 @@ RowSchema schema(const DataType result, bool text = false)
     return RowSchema{std::move(fields)};
 }
 
-class RowFunction final : public AsyncFunction
+class PreparedRowCall final : public PreparedAsyncCall
 {
 public:
-    RowFunction(Evaluate evaluate, bool suspend) : evaluate(std::move(evaluate)), suspend(suspend) { }
+    PreparedRowCall(Evaluate evaluate, bool suspend, int64_t id) : evaluate(std::move(evaluate)), suspend(suspend), id(id) { }
 
-    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override
+    boost::asio::awaitable<SharedRuntimeValues> executeAttempt() override
     {
-        const auto id = arguments[0].get<int64_t>();
         if (suspend)
         {
             boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
@@ -99,6 +98,22 @@ public:
             co_await timer.async_wait(boost::asio::use_awaitable);
         }
         co_return evaluate(id);
+    }
+
+private:
+    Evaluate evaluate;
+    bool suspend;
+    int64_t id;
+};
+
+class RowFunction final : public AsyncFunction
+{
+public:
+    RowFunction(Evaluate evaluate, bool suspend) : evaluate(std::move(evaluate)), suspend(suspend) { }
+
+    std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) override
+    {
+        return std::make_unique<PreparedRowCall>(evaluate, suspend, arguments[0].get<int64_t>());
     }
 
 private:
@@ -183,8 +198,8 @@ public:
     {
         inputSchema = std::move(input);
         outputSchema = std::move(output);
-        const AsyncChannelId channel{generateUUID()};
-        const auto functionType = "BufferReuse_" + channel.getRawValue();
+        const auto channel = std::make_shared<HandoffChannel>(4);
+        const auto functionType = "BufferReuse_" + UUIDToString(generateUUID());
         ASSERT_TRUE(
             AsyncFunctionRegistry::instance().addEntry(
                 functionType,
@@ -193,8 +208,7 @@ public:
         AsyncCallGraphBuilder builder{inputSchema};
         const auto call = builder.call(functionType, {builder.input(QualifiedIdentifier::parse("ID"))}, {resultType});
         builder.exportOutput(call->output(0), QualifiedIdentifier::parse("RESULT"));
-        const AsyncSourceConfig config{
-            .channel = channel, .calls = builder.build(), .maxConcurrency = 8, .channelCapacity = 4, .maxRetries = 0};
+        const AsyncSourceConfig config{.channel = channel, .calls = builder.build(), .maxConcurrency = 8, .maxRetries = 0};
         const auto descriptor = catalog.getAnonymousSource(
             PhysicalSourceBuilder{
                 GeneralSourceConfig{.host = Host{"localhost:8080"}, .maxInflightBuffers = std::nullopt},
@@ -202,8 +216,9 @@ public:
                 InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
             outputSchema);
         ASSERT_TRUE(descriptor.has_value());
-        sink = std::make_unique<HandoffChannel::Attachment>(channel, 4, HandoffChannel::Role::SINK);
+        sink = std::make_unique<HandoffChannel::Sender>(channel->takeSender());
         source = std::make_unique<AsyncSource>(config, *descriptor);
+        channel->validate();
         EXPECT_FALSE(source->requiresPreallocatedBuffer());
         source->open(outputProvider ? std::move(outputProvider) : provider);
     }
@@ -254,7 +269,7 @@ public:
         return buffer;
     }
 
-    void push(TupleBuffer buffer) { ASSERT_EQ(sink->operator->()->tryPush(buffer), HandoffChannel::PushResult::PUSHED); }
+    void push(TupleBuffer buffer) { ASSERT_EQ(sink->tryPush(buffer), HandoffChannel::PushResult::PUSHED); }
 
     TupleBuffer next()
     {
@@ -275,7 +290,7 @@ public:
     RowSchema inputSchema;
     RowSchema outputSchema;
     std::shared_ptr<BufferManager> provider;
-    std::unique_ptr<HandoffChannel::Attachment> sink;
+    std::unique_ptr<HandoffChannel::Sender> sink;
     std::unique_ptr<AsyncSource> source;
 };
 
@@ -466,7 +481,7 @@ TEST_F(AsyncSourceBufferReuseTest, EmptyBufferIsReusedAndEndOfStreamNeedsNoOutpu
     auto buffer = input(0);
     const auto* address = buffer.getAvailableMemoryArea().data();
     push(std::move(buffer));
-    sink->operator->()->close();
+    sink->close();
     const auto output = next();
     EXPECT_EQ(output.getAvailableMemoryArea().data(), address);
     EXPECT_EQ(output.getNumberOfTuples(), 0);
@@ -549,7 +564,7 @@ TEST_F(AsyncSourceBufferReuseTest, ConcurrentRowsAndBuffersAreReusedInHandoffOrd
         addresses.push_back(buffer.getAvailableMemoryArea().data());
         push(std::move(buffer));
     }
-    sink->operator->()->close();
+    sink->close();
     for (size_t index = 0; index < 4; ++index)
     {
         const auto output = next();

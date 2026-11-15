@@ -44,6 +44,11 @@ namespace NES
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
+    return serializeQueryPlan(queryPlan, ReflectionContext{});
+}
+
+SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan, const ReflectionContext& context)
+{
     INVARIANT(queryPlan.getRootOperators().size() == 1, "Query plan should currently have only one root operator");
     auto rootOperator = queryPlan.getRootOperators().front();
 
@@ -70,10 +75,10 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
             .type = std::string{itr->getName()},
             .operatorId = itr->getOperatorId(),
             .childrenIds = std::move(childrenIds),
-            .config = itr->reflect(ReflectionContext{}),
+            .config = itr->reflect(context),
             .traitSet = itr->getTraitSet()};
 
-        const auto serializedString = rfl::json::write(*ReflectionContext{}.reflect(reflectedOperator));
+        const auto serializedString = rfl::json::write(*context.reflect(reflectedOperator));
         serializableQueryPlan.add_reflectedoperators(serializedString);
     }
 
@@ -84,6 +89,12 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
 }
 
 LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan)
+{
+    return deserializeQueryPlan(serializedQueryPlan, ReflectionContext{});
+}
+
+LogicalPlan
+QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan, const ReflectionContext& context)
 {
     std::vector<Exception> deserializeExceptions;
 
@@ -98,7 +109,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
                 throw CannotDeserialize(parsed.error().what());
             }
 
-            auto reflectedOperator = ReflectionContext{}.unreflect<ReflectedOperator>(*parsed);
+            auto reflectedOperator = context.unreflect<ReflectedOperator>(*parsed);
             reflectedOperators.emplace(reflectedOperator.operatorId, reflectedOperator);
         }
         CPPTRACE_CATCH(...)
@@ -125,7 +136,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
 
     const auto reflectedPlan = std::make_shared<ReflectedPlan>(reflectedOperators);
     const auto operatorMapping = std::static_pointer_cast<OperatorMapping>(reflectedPlan);
-    const auto reflectionContext = ReflectionContext{reflectedPlan, operatorMapping};
+    const auto reflectionContext = context.with(reflectedPlan, operatorMapping);
 
     /// 3) Build root-operators
     if (serializedQueryPlan.rootoperatorids().empty())

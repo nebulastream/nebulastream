@@ -33,7 +33,8 @@ namespace NES
 class SharedRuntimeValues
 {
 public:
-    SharedRuntimeValues() = delete;
+    /// A null backing store is a valid empty immutable list (also used by moved-from handles).
+    SharedRuntimeValues() = default;
     explicit SharedRuntimeValues(std::vector<RuntimeValue> values);
     SharedRuntimeValues(std::initializer_list<RuntimeValue> values);
 
@@ -56,7 +57,7 @@ private:
 };
 
 /// Given to each instance once. Constant positions are preserved; a missing value means a per-row argument.
-/// A present RuntimeValue may itself be a typed SQL null. Constant arguments remain visible to call().
+/// A present RuntimeValue may itself be a typed SQL null. Constant arguments remain visible to prepare().
 struct AsyncFunctionBinding
 {
     std::vector<DataType> argumentTypes;
@@ -65,15 +66,20 @@ struct AsyncFunctionBinding
 };
 
 /// One validated, owning producer invocation, reusable for sequential retry attempts.
-/// Preparation rejects input errors before retries; call() performs only execution and operational checks.
+/// Preparation rejects input errors before retries; executeAttempt() performs only execution and operational checks.
 /// A prepared call may borrow its function instance, which must outlive it. Attempts must not run concurrently.
 class PreparedAsyncCall
 {
 public:
-    virtual ~PreparedAsyncCall() = default;
-    virtual boost::asio::awaitable<SharedRuntimeValues> call() = 0;
+    explicit PreparedAsyncCall(std::optional<size_t> retryOverride = std::nullopt) : retryOverride(retryOverride) { }
 
-    [[nodiscard]] virtual std::optional<size_t> maxRetries() const { return std::nullopt; }
+    virtual ~PreparedAsyncCall() = default;
+    virtual boost::asio::awaitable<SharedRuntimeValues> executeAttempt() = 0;
+
+    /// Additional attempts; nullopt uses the executor default, while zero explicitly disables retries.
+    /// Fixed at preparation time so execution cannot change retry policy between attempts.
+    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) immutable invocation metadata
+    const std::optional<size_t> retryOverride;
 };
 
 /// Runtime implementation of an AsyncLogicalFunction. An instance serves one row at a time and may retain connections.
@@ -83,17 +89,15 @@ class AsyncFunction
 {
 public:
     virtual ~AsyncFunction() = default;
-    virtual boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) = 0;
-    /// Runs once before the source's retry loop. Override to validate/normalize per-row input before any attempt.
-    /// The default adapter owns arguments, evaluates maxRetries once, and delegates attempts to call(arguments).
-    virtual std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments);
-
-    /// Additional attempts for this call. An explicit value overrides the source default, including zero.
-    /// Evaluated once before invocation; invalid retry options are not retried.
-    [[nodiscard]] virtual std::optional<size_t> maxRetries(const SharedRuntimeValues&) const { return std::nullopt; }
+    /// Runs once before the source's retry loop. Validate/normalize input and retain its ownership here.
+    virtual std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) = 0;
 
     /// Rows whose calls of this function may be in flight at once, if the function itself sets a bound.
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const { return std::nullopt; }
 };
+
+/// Prepare and execute exactly one attempt, ignoring retryOverride. The function must outlive
+/// the operation; the prepared call and its owned arguments remain alive across suspension.
+[[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> invokeOnce(AsyncFunction& function, SharedRuntimeValues arguments);
 
 }

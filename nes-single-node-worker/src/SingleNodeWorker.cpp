@@ -21,6 +21,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 #include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -28,16 +29,20 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <Util/DumpMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <CompiledQueryPlan.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
@@ -90,33 +95,77 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a local query ID, generate one if needed
-        /// but preserve the distributed query ID if present
-        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
+        auto result = startQueries(std::vector<LogicalPlan>{std::move(plan)});
+        if (!result)
         {
-            auto localId = LocalQueryId(generateUUID());
-            if (plan.getQueryId().isDistributed())
-            {
-                plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
-            }
-            else
-            {
-                plan.setQueryId(QueryId::createLocal(localId));
-            }
+            return std::unexpected(result.error());
+        }
+        return result->front();
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected(wrapExternalException());
+    }
+    std::unreachable();
+}
+
+std::expected<std::vector<QueryId>, Exception> SingleNodeWorker::startQueries(std::vector<LogicalPlan> plans) noexcept
+{
+    CPPTRACE_TRY
+    {
+        /// Clone the entire batch before compiling: logical plans may share mutable runtime
+        /// configuration with their callers, but every execution needs fresh pointees.
+        /// Separate contexts retain cross-plan identity without reusing original objects.
+        const ReflectionContext serializationContext;
+        const ReflectionContext executionContext;
+        std::vector<LogicalPlan> executionPlans;
+        executionPlans.reserve(plans.size());
+        for (const auto& plan : plans)
+        {
+            const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan, serializationContext);
+            executionPlans.emplace_back(QueryPlanSerializationUtil::deserializeQueryPlan(serialized, executionContext));
         }
 
-        const LogContext context("queryId", plan.getQueryId());
+        std::vector<std::unique_ptr<CompiledQueryPlan>> compiledPlans;
+        std::vector<QueryId> queryIds;
+        compiledPlans.reserve(plans.size());
+        queryIds.reserve(plans.size());
+        for (auto& plan : executionPlans)
+        {
+            /// Check if the plan already has a local query ID, generate one if needed
+            /// but preserve the distributed query ID if present
+            if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
+            {
+                auto localId = LocalQueryId(generateUUID());
+                if (plan.getQueryId().isDistributed())
+                {
+                    plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
+                }
+                else
+                {
+                    plan.setQueryId(QueryId::createLocal(localId));
+                }
+            }
 
-        const auto planStr = explain(plan, ExplainVerbosity::Debug);
-        NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);
-        listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), planStr});
-        const DumpMode dumpMode(configuration.workerConfiguration.dumpQueryCompilationIR, configuration.workerConfiguration.dumpGraph);
-        auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(plan);
-        request->dumpCompilationResult = dumpMode;
-        auto result = compiler->compileQuery(std::move(request));
-        INVARIANT(result, "expected successful query compilation or exception, but got nothing");
-        nodeEngine->startQuery(plan.getQueryId(), std::move(result));
-        return plan.getQueryId();
+            const LogContext context("queryId", plan.getQueryId());
+
+            const auto planStr = explain(plan, ExplainVerbosity::Debug);
+            NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);
+            listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), planStr});
+            const DumpMode dumpMode(configuration.workerConfiguration.dumpQueryCompilationIR, configuration.workerConfiguration.dumpGraph);
+            auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(plan);
+            request->dumpCompilationResult = dumpMode;
+            auto result = compiler->compileQuery(std::move(request));
+            INVARIANT(result, "expected successful query compilation or exception, but got nothing");
+            queryIds.push_back(plan.getQueryId());
+            compiledPlans.push_back(std::move(result));
+        }
+        auto preparedPlans = nodeEngine->prepareQueries(std::move(compiledPlans));
+        /// Preparation takes channel endpoints. Validate only after every plan has been
+        /// prepared; on failure, RAII destroys the prepared plans without starting them.
+        executionContext.validateSharedObjects();
+        nodeEngine->startQueries(std::move(preparedPlans));
+        return queryIds;
     }
     CPPTRACE_CATCH(...)
     {

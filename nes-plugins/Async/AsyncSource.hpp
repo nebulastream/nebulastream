@@ -28,6 +28,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Async/HandoffChannel.hpp>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/RuntimeValue.hpp>
@@ -51,7 +52,6 @@
 #include <boost/asio/strand.hpp>
 #include <AsyncFunctionRegistry.hpp>
 #include <AsyncGraphExecution.hpp>
-#include <HandoffChannel.hpp>
 
 namespace NES
 {
@@ -74,6 +74,7 @@ public:
     static constexpr std::string_view NAME = "Async";
 
     AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor);
+    ~AsyncSource() override;
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
@@ -90,6 +91,8 @@ protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
+    AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor, HandoffChannel::Receiver receiver);
+
     struct BoundCall
     {
         /// Resolved once on the worker, before constructing any function instances.
@@ -148,7 +151,6 @@ private:
     void startRows();
     void finishRow(InFlightBuffer& buffer, size_t slot, const std::exception_ptr& error);
 
-    AsyncChannelId channelId;
     /// The configured bound, lowered to what the stage's functions allow.
     size_t maxConcurrency;
     size_t maxRetries;
@@ -160,7 +162,7 @@ private:
     std::vector<AsyncOutputMapping> outputMappings;
 
     /// Taken when the source is created, so that a source that fails afterwards still releases the channel.
-    HandoffChannel::Attachment channel;
+    HandoffChannel::Receiver channel;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     /// All coroutines of this source run here, so its state is never touched by two loop threads at once.
     boost::asio::strand<boost::asio::io_context::executor_type> strand;

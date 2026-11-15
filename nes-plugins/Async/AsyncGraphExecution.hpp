@@ -36,11 +36,12 @@ public:
     AsyncGraphExecution(const AsyncGraphExecution&) = delete;
     AsyncGraphExecution& operator=(const AsyncGraphExecution&) = delete;
     [[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> run();
-    /// A subscription to one producer. getUntil() times out only that subscription, never other consumers/the producer.
-    [[nodiscard]] std::shared_ptr<SharedAsyncResult> evaluate(const AsyncCall::Ptr& node);
     void cancel();
 
 private:
+    friend struct AsyncGraphExecutionTestAccess;
+    /// Producer subscriptions are internal; external callers own only the row execution.
+    [[nodiscard]] std::shared_ptr<SharedAsyncResult> evaluate(const AsyncCall::Ptr& node);
     static boost::asio::awaitable<SharedRuntimeValues> runImpl(std::shared_ptr<AsyncGraphExecution> self);
     static boost::asio::awaitable<SharedRuntimeValues> invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node);
     boost::asio::awaitable<void> cancelAndDrain();

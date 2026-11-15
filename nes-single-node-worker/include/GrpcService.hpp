@@ -30,6 +30,7 @@ class GRPCServer final : public WorkerRPCService::Service
 {
 public:
     grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest*, StartQueryReply*) override;
+    grpc::Status StartQueries(grpc::ServerContext*, const StartQueriesRequest*, StartQueriesReply*) override;
 
     grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
 

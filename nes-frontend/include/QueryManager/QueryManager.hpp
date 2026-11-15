@@ -19,6 +19,7 @@
 #include <expected>
 #include <map>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -43,6 +44,21 @@ class QuerySubmissionBackend
 public:
     virtual ~QuerySubmissionBackend() = default;
     [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
+
+    [[nodiscard]] virtual std::expected<std::vector<QueryId>, Exception> startQueries(std::vector<LogicalPlan> plans)
+    {
+        if (plans.size() != 1)
+        {
+            return std::unexpected(QueryStartFailed("Backend does not support batch query submission"));
+        }
+        auto result = start(std::move(plans.front()));
+        if (!result)
+        {
+            return std::unexpected(result.error());
+        }
+        return std::vector<QueryId>{*result};
+    }
+
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;

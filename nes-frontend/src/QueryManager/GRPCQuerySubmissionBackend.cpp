@@ -27,6 +27,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h> /// Both are needed, clang-tidy complains otherwise
@@ -64,9 +65,6 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(LogicalPlan 
     const auto status = stub->StartQuery(&context, request, &reply);
     if (status.ok())
     {
-        NES_DEBUG("Starting local query {} on node {} was successful.", localPlan.getQueryId(), workerConfig.host);
-        /// The worker returns its assigned LocalQueryId, but we need to return the full QueryId
-        /// which includes the DistributedQueryId from the plan
         auto workerQueryId = QueryPlanSerializationUtil::deserializeQueryId(reply.queryid());
         if (localPlan.getQueryId().isDistributed())
         {
@@ -76,6 +74,42 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(LogicalPlan 
     }
     return std::unexpected{QueryStartFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
+}
+
+std::expected<std::vector<QueryId>, Exception> GRPCQuerySubmissionBackend::startQueries(std::vector<LogicalPlan> plans)
+{
+    grpc::ClientContext context;
+    StartQueriesRequest request;
+    const ReflectionContext reflectionContext;
+    for (const auto& plan : plans)
+    {
+        request.add_queryplans()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(plan, reflectionContext));
+    }
+    StartQueriesReply reply;
+    const auto status = stub->StartQueries(&context, request, &reply);
+    if (!status.ok())
+    {
+        return std::unexpected{QueryStartFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details())};
+    }
+    if (static_cast<size_t>(reply.queryids_size()) != plans.size())
+    {
+        return std::unexpected(QueryStartFailed("Worker returned mismatched batch query ID count"));
+    }
+    std::vector<QueryId> ids;
+    ids.reserve(static_cast<size_t>(reply.queryids_size()));
+    for (int i = 0; i < reply.queryids_size(); ++i)
+    {
+        auto workerId = QueryPlanSerializationUtil::deserializeQueryId(reply.queryids(i));
+        const auto& plan = plans.at(static_cast<size_t>(i));
+        ids.push_back(
+            plan.getQueryId().isDistributed() ? QueryId::create(workerId.getLocalQueryId(), plan.getQueryId().getDistributedQueryId())
+                                              : workerId);
+    }
+    return ids;
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> GRPCQuerySubmissionBackend::status(QueryId queryId) const

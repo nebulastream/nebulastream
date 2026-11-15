@@ -35,6 +35,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Async/HandoffChannel.hpp>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
@@ -59,7 +60,6 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UUID.hpp>
 #include <Util/Variant.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
@@ -77,7 +77,6 @@
 #include <fmt/format.h>
 #include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <HandoffChannel.hpp>
 
 namespace NES
 {
@@ -91,39 +90,15 @@ std::expected<size_t, Exception> sizeFromLiteral(const ConfigLiteral& literal)
 }
 
 /// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
-const ConfigField<AsyncChannelId> CHANNEL{
-    Identifier::parse("CHANNEL"),
-    "UUID of the channel the Handoff sink of the same stage hands its buffers to",
-    [](const ConfigLiteral& literal)
-    {
-        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-            .and_then(
-                [](const std::string& value) -> std::expected<AsyncChannelId, Exception>
-                {
-                    const auto uuid = stringToUUID(value);
-                    if (!uuid)
-                    {
-                        return std::unexpected{InvalidConfigParameter("AsyncSource: channel must be a valid UUID, got: {}", value)};
-                    }
-                    return AsyncChannelId{*uuid};
-                });
-    }};
-
 const ConfigField<size_t> MAX_CONCURRENCY{
     Identifier::parse("MAX_CONCURRENCY"),
     "Rows whose calls are in flight at the same time",
     sizeFromLiteral,
     AsyncSourceConfig::DEFAULT_MAX_CONCURRENCY};
 
-const ConfigField<size_t> CHANNEL_CAPACITY{
-    Identifier::parse("CHANNEL_CAPACITY"),
-    "Buffers the channel holds, if this source creates it",
-    sizeFromLiteral,
-    AsyncSourceConfig::DEFAULT_CHANNEL_CAPACITY};
-
 const ConfigField<size_t> MAX_RETRIES{
     Identifier::parse("MAX_RETRIES"),
-    "Further attempts of a failed call, the n-th after 100 ms * 2^n",
+    "Further attempts after RetryableAsyncError, with exponential backoff starting at 100 ms",
     sizeFromLiteral,
     AsyncSourceConfig::DEFAULT_MAX_RETRIES};
 
@@ -167,7 +142,7 @@ constexpr size_t MAX_BACKOFF_DOUBLINGS = 10;
 
 Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("ASYNC_SOURCE"), CHANNEL, MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
+    return createConfigSchema(Identifier::parse("ASYNC_SOURCE"), MAX_CONCURRENCY, MAX_RETRIES);
 }
 
 std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig&)
@@ -176,17 +151,28 @@ std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const 
 }
 
 AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor)
-    : channelId(config.channel)
-    , maxConcurrency(std::max<size_t>(1, config.maxConcurrency))
+    : AsyncSource(
+          config,
+          sourceDescriptor,
+          config.channel ? config.channel->takeReceiver() : throw InvalidConfigParameter("AsyncSource requires a non-null channel"))
+{
+}
+
+AsyncSource::~AsyncSource()
+{
+    cancelAndDrain();
+    channel.close();
+}
+
+AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor, HandoffChannel::Receiver receiver)
+    : maxConcurrency(std::max<size_t>(1, config.maxConcurrency))
     , maxRetries(config.maxRetries)
     , layout(config.calls, sourceDescriptor.getSchema())
     , graph(std::make_shared<const AsyncCallGraph>(config.calls))
     , calls(bindGraph(*graph))
-    , channel(config.channel, config.channelCapacity, HandoffChannel::Role::SOURCE)
+    , channel(std::move(receiver))
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
-    static_assert(AsyncSourceConfig::DEFAULT_CHANNEL_CAPACITY == HandoffChannel::DEFAULT_CAPACITY);
-
     outputMappings = graph->getOutputs();
     for (auto& [node, call] : calls)
     {
@@ -249,7 +235,7 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
         = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), layout.getInputSchema(), MemoryLayoutType::ROW_LAYOUT);
     outputBufferRef
         = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), layout.getOutputSchema(), MemoryLayoutType::ROW_LAYOUT);
-    channel->setListener(
+    channel.setListener(
         [this]
         {
             {
@@ -264,7 +250,7 @@ void AsyncSource::close()
 {
     /// Also after a failure or a stop request, which already drained: rows of this source must not outlive it.
     cancelAndDrain();
-    channel.release();
+    channel.close();
 }
 
 RuntimeValue AsyncSource::readInput(const InputFieldReference& field, const TupleBuffer& input, const size_t row) const
@@ -283,24 +269,22 @@ AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, SharedRunti
     auto& function = *call.instances[slot];
     const auto prepared = function.prepare(std::move(arguments));
     PRECONDITION(prepared, "Async function preparation must return an invocation");
-    const auto retryLimit = prepared->maxRetries().value_or(maxRetries);
+    const auto retryLimit = prepared->retryOverride.value_or(maxRetries);
     for (size_t attempt = 0;; ++attempt)
     {
-        std::optional<SharedRuntimeValues> result;
         std::exception_ptr failure;
         try
         {
-            result = co_await prepared->call();
+            /// Result shape/type invariants are checked by the graph, outside retries.
+            co_return co_await prepared->executeAttempt();
         }
-        /// The failure is kept and rethrown unchanged; CPPTRACE_TRY cannot wrap a co_await.
-        catch (...) /// NOLINT(no-raw-catch-all)
+        catch (const Exception& error)
         {
+            if (error.code() != ErrorCode::RetryableAsyncError)
+            {
+                throw;
+            }
             failure = std::current_exception();
-        }
-        if (result)
-        {
-            /// The graph checks result invariants outside this retry loop; shape/type bugs are never retried.
-            co_return std::move(*result);
         }
         if (attempt >= retryLimit
             || (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
@@ -549,7 +533,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
             inFlight.channelChanged = false;
             lock.unlock();
             /// With nothing in flight, the next buffer is all there is to wait for.
-            auto input = idle ? channel->pop(stopToken) : channel->tryPop();
+            auto input = idle ? channel.pop(stopToken) : channel.tryPop();
             if (stopToken.stop_requested())
             {
                 cancelAndDrain();
@@ -561,7 +545,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
             }
             else
             {
-                inputExhausted = channel->exhausted();
+                inputExhausted = channel.exhausted();
             }
             lock.lock();
             if (input || inputExhausted)
@@ -585,7 +569,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
 
 std::ostream& AsyncSource::toString(std::ostream& str) const
 {
-    return str << "AsyncSource(" << channelId << ")";
+    return str << "AsyncSource";
 }
 
 }

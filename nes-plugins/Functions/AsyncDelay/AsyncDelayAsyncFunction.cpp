@@ -54,7 +54,7 @@ class PreparedDelayCall final : public PreparedAsyncCall
 public:
     PreparedDelayCall(RuntimeValue value, uint64_t millis) : value(std::move(value)), millis(millis) { }
 
-    boost::asio::awaitable<SharedRuntimeValues> call() override
+    boost::asio::awaitable<SharedRuntimeValues> executeAttempt() override
     {
         const auto deadline = checkedSteadyDeadline(millis, "ASYNC_DELAY");
         boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, deadline};
@@ -74,12 +74,6 @@ std::unique_ptr<PreparedAsyncCall> AsyncDelayAsyncFunction::prepare(SharedRuntim
     const auto millis = checkedUnsignedIntegerOption(arguments[1], "ASYNC_DELAY millis");
     static_cast<void>(checkedSteadyDeadline(millis, "ASYNC_DELAY"));
     return std::make_unique<PreparedDelayCall>(arguments[0].toOwned(), millis);
-}
-
-boost::asio::awaitable<SharedRuntimeValues> AsyncDelayAsyncFunction::call(SharedRuntimeValues arguments)
-{
-    auto prepared = prepare(std::move(arguments));
-    co_return co_await prepared->call();
 }
 
 }

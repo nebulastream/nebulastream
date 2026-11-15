@@ -18,7 +18,7 @@ find_package(reflectcpp CONFIG REQUIRED)
 add_library(nes-sources STATIC)
 set_target_properties(nes-sources PROPERTIES LINKER_LANGUAGE CXX)
 # PUBLIC nes-input-formatter-provider: SourceDescriptor's public API exposes InputFormatterDescriptor by value.
-target_link_libraries(nes-sources PUBLIC nes-common nes-schema nes-configurations nes-memory nes-executable nes-network-bindings nes-input-formatter-provider PRIVATE reflectcpp::reflectcpp)
+target_link_libraries(nes-sources PUBLIC nes-common nes-schema nes-configurations nes-memory nes-async nes-executable nes-network-bindings nes-input-formatter-provider PRIVATE reflectcpp::reflectcpp)
 target_link_rust_lib(nes-sources nes_network_bindings)
 
 target_include_directories(nes-sources PUBLIC

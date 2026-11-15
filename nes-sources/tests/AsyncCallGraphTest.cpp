@@ -20,6 +20,7 @@
 #include <string_view>
 #include <type_traits>
 #include <variant>
+#include <Async/HandoffChannel.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
@@ -85,18 +86,19 @@ static_assert(!std::is_default_constructible_v<InputFieldReference>);
 TEST(AsyncCallGraphTest, SourceConfigKeepsTheTypedGraphAndReflectsItAsAnObject)
 {
     static_assert(std::is_same_v<decltype(AsyncSourceConfig::calls), AsyncCallGraph>);
-    static_assert(std::is_same_v<decltype(AsyncSourceConfig::channel), AsyncChannelId>);
+    static_assert(std::is_same_v<decltype(AsyncSourceConfig::channel), std::shared_ptr<HandoffChannel>>);
     const AsyncSourceConfig config{
-        .channel = AsyncChannelId{generateUUID()}, .calls = diamond(), .maxConcurrency = 3, .channelCapacity = 2, .maxRetries = 1};
+        .channel = std::make_shared<HandoffChannel>(2), .calls = diamond(), .maxConcurrency = 3, .maxRetries = 1};
     const auto copy = config;
     EXPECT_EQ(copy.calls.getCalls().front(), config.calls.getCalls().front());
     const auto reflected = ReflectionContext{}.reflect(config);
     auto wire = *reflected;
     EXPECT_TRUE(std::holds_alternative<rfl::Generic::Object>(object(wire).at("calls").variant()));
     const auto restored = ReflectionContext{}.unreflect<AsyncSourceConfig>(reflected);
-    EXPECT_EQ(restored.channel, config.channel);
+    EXPECT_NE(restored.channel, config.channel);
+    EXPECT_EQ(copy.channel, config.channel);
     EXPECT_EQ(restored.maxConcurrency, 3);
-    EXPECT_EQ(restored.channelCapacity, 2);
+    EXPECT_EQ(restored.channel->getCapacity(), 2);
     EXPECT_EQ(restored.maxRetries, 1);
     ASSERT_EQ(restored.calls.getCalls().size(), 3);
     ASSERT_EQ(restored.calls.getOutputs().size(), 2);

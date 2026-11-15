@@ -130,25 +130,27 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     for (const auto& [host, localPlans] : plan)
     {
         INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
-        for (auto localPlan : localPlans)
+        try
         {
-            try
+            auto plans = localPlans;
+            for (auto& localPlan : plans)
             {
-                /// Set the distributed query ID on the local plan before sending to worker
                 localPlan.setQueryId(QueryId::createDistributed(id));
-                const auto result = backends.at(host).start(localPlan);
-                if (result)
-                {
-                    NES_DEBUG("Starting query on node {} was successful.", host);
-                    localQueries[host].emplace_back(*result);
-                    continue;
-                }
+            }
+            const auto result = backends.at(host).startQueries(std::move(plans));
+            if (result)
+            {
+                NES_DEBUG("Starting {} queries on node {} was successful.", result->size(), host);
+                localQueries[host].insert(localQueries[host].end(), result->begin(), result->end());
+            }
+            else
+            {
                 exceptions.emplace_back(result.error());
             }
-            catch (const std::exception& e)
-            {
-                exceptions.emplace_back(QueryStartFailed("Message from external exception: {}", e.what()));
-            }
+        }
+        catch (const std::exception& e)
+        {
+            exceptions.emplace_back(QueryStartFailed("Message from external exception: {}", e.what()));
         }
     }
 

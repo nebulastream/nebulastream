@@ -14,6 +14,7 @@
 
 #pragma once
 #include <memory>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
@@ -47,6 +48,9 @@ public:
         std::unique_ptr<SourceProvider> sourceProvider);
 
     void startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
+    /// Instantiate all local fragments without starting execution.
+    std::vector<std::unique_ptr<ExecutableQueryPlan>> prepareQueries(std::vector<std::unique_ptr<CompiledQueryPlan>> compiledQueryPlans);
+    void startQueries(std::vector<std::unique_ptr<ExecutableQueryPlan>> plans);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
     void stopQuery(QueryId queryId);

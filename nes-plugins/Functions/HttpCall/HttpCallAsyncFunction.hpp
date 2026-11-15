@@ -18,15 +18,24 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <Sources/AsyncFunction.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
+#include <boost/system/system_error.hpp>
 #include <AsyncFunctionRegistry.hpp>
 
 namespace NES
 {
+namespace detail
+{
+/// Internal HTTP failure policy, shared by execution and deterministic classification tests.
+void checkHttpStatus(unsigned status, std::string_view endpoint, std::string_view body);
+/// Must be called from a system_error catch handler; cancellation is rethrown unchanged.
+[[noreturn]] void rethrowHttpTransportError(const boost::system::system_error& error, std::string_view url);
+}
 
 /// Executes `HTTP_CALL(body, url[, timeout_ms[, retries]])`: POSTs `body` to `url` and returns the response body.
 /// Keeps connections open between calls, but never silently resends a failed POST.
@@ -39,9 +48,7 @@ class HttpCallAsyncFunction final : public AsyncFunction
 public:
     static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments);
 
-    boost::asio::awaitable<SharedRuntimeValues> call(SharedRuntimeValues arguments) override;
     std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) override;
-    [[nodiscard]] std::optional<size_t> maxRetries(const SharedRuntimeValues& arguments) const override;
 
 private:
     class Prepared;

@@ -19,6 +19,7 @@ import "google/protobuf/empty.proto";
 
 service WorkerRPCService {
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
+  rpc StartQueries (StartQueriesRequest) returns (StartQueriesReply) {}
   rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
@@ -36,6 +37,14 @@ message StartQueryRequest {
 
 message StartQueryReply {
   NES.SerializableQueryId queryId = 1;
+}
+
+message StartQueriesRequest {
+  repeated NES.SerializableQueryPlan queryPlans = 1;
+}
+
+message StartQueriesReply {
+  repeated NES.SerializableQueryId queryIds = 1;
 }
 
 message StopQueryRequest {

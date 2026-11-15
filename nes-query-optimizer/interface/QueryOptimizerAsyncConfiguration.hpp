@@ -43,7 +43,7 @@ struct QueryOptimizerAsyncConfiguration
     std::optional<uint64_t> maxConcurrency;
     /// Buffers that wait between the producer half of an async stage and its calls before the producer is held back.
     std::optional<uint64_t> channelCapacity;
-    /// Further attempts of a failed async call, the n-th after 100 ms * 2^n.
+    /// Further attempts after RetryableAsyncError, with exponential backoff starting at 100 ms.
     std::optional<uint64_t> maxRetries;
 
     static QueryOptimizerAsyncConfiguration fromConfig(const InstantiatedConfig& config);

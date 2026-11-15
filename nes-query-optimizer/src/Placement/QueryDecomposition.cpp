@@ -19,6 +19,7 @@
 #include <array>
 #include <cstddef>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -27,6 +28,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Async/HandoffChannel.hpp>
 #include <Functions/AsyncLogicalFunction.hpp>
 #include <Functions/AsyncOutputLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
@@ -40,7 +42,9 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/HandoffSinkConfig.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncHandoffLayout.hpp>
@@ -73,9 +77,6 @@ namespace NES
 
 namespace
 {
-static_assert(!std::is_constructible_v<AsyncChannelId, ChannelId>);
-static_assert(!std::is_constructible_v<ChannelId, AsyncChannelId>);
-
 struct DecompositionContext
 {
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
@@ -300,7 +301,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     INVARIANT(asyncOp.getChildren().size() == 1, "an asynchronously executed operator has exactly one child");
     const auto child = asyncOp.getChildren().front();
     const auto node = getPlacementFor(asyncOp);
-    const AsyncChannelId channel{generateUUID()};
+    const auto channel = std::make_shared<HandoffChannel>(context.asyncConfig.channelCapacity.value_or(HandoffChannel::DEFAULT_CAPACITY));
 
     const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     /// Field accesses only forward an input field; everything else is a producer-owned result.
@@ -319,16 +320,7 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
     const Schema<UnqualifiedUnboundField, Ordered> handoffInput{layout.getInputSchema() | std::views::transform(unqualified)};
     const Schema<UnqualifiedUnboundField, Ordered> handoffOutput{layout.getOutputSchema() | std::views::transform(unqualified)};
 
-    /// Both halves use the same layout contract, and create the channel with the same capacity.
-    std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("channel"), channel.getRawValue()}, {Identifier::parse("output_format"), "NATIVE"}};
     AsyncSourceConfig sourceConfig{.channel = channel, .calls = graph};
-    if (context.asyncConfig.channelCapacity.has_value())
-    {
-        const auto capacity = std::to_string(*context.asyncConfig.channelCapacity);
-        sinkConfig.emplace(Identifier::parse("channel_capacity"), capacity);
-        sourceConfig.channelCapacity = *context.asyncConfig.channelCapacity;
-    }
     if (context.asyncConfig.maxConcurrency.has_value())
     {
         sourceConfig.maxConcurrency = *context.asyncConfig.maxConcurrency;
@@ -338,11 +330,13 @@ LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalO
         sourceConfig.maxRetries = *context.asyncConfig.maxRetries;
     }
 
-    const auto handoffSinkDescriptor
-        = context.sinkCatalog->getAnonymousSink(handoffInput, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
-    INVARIANT(handoffSinkDescriptor.has_value(), "Invalid sink descriptor config for handoff sink");
+    const auto handoffSinkDescriptor = context.sinkCatalog->createAnonymousSinkDescriptor(
+        std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(handoffInput),
+        GeneralSinkConfig{.host = Host(node.getRawValue())},
+        PluginSinkConfiguration{Identifier::parse("Handoff"), ExplicitAny{std::any{HandoffSinkConfig{.channel = channel}}}},
+        OutputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}});
     context.addPlanToNode(
-        SinkLogicalOperator::create(child, handoffSinkDescriptor.value())->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
+        SinkLogicalOperator::create(child, handoffSinkDescriptor)->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
 
     const auto asyncSourceDescriptor = context.sourceCatalog->getAnonymousSource(
         PhysicalSourceBuilder{

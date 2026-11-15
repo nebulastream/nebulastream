@@ -13,10 +13,15 @@
 */
 
 #include <any>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <Plugins/PluginDescriptor.hpp>
+#include <Sources/AsyncFunction.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/use_future.hpp>
 #include <gtest/gtest.h>
 #include <AsyncFunctionRegistry.hpp>
 
@@ -26,6 +31,19 @@ namespace
 {
 class StringFunctionRegistry final : public RuntimeRegistry<StringFunctionRegistry, std::string, int, false>
 {
+};
+
+/// A plugin needs only prepare(); there is no call()/maxRetries() compatibility adapter.
+class PreparedOnlyFunction final : public AsyncFunction
+{
+    class Prepared final : public PreparedAsyncCall
+    {
+    public:
+        boost::asio::awaitable<SharedRuntimeValues> executeAttempt() override { co_return SharedRuntimeValues{}; }
+    };
+
+public:
+    std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues) override { return std::make_unique<Prepared>(); }
 };
 }
 
@@ -39,6 +57,21 @@ TEST(AsyncFunctionRegistryTest, StringKeysKeepCaseInsensitiveLookupAndDuplicateD
     EXPECT_EQ(registry.find("HTTPCALL"), 42);
     EXPECT_FALSE(registry.addEntry("hTtPcAlL", 99));
     EXPECT_EQ(registry.find("HttpCall"), 42);
+}
+
+TEST(AsyncFunctionRegistryTest, FactoryCanProvideAPrepareOnlyImplementation)
+{
+    auto& registry = AsyncFunctionRegistry::instance();
+    EXPECT_TRUE(registry.addEntry(
+        "PreparedOnlyTestFunction", [](AsyncFunctionRegistryArguments) { return std::make_unique<PreparedOnlyFunction>(); }));
+    const auto factory = registry.find("preparedonlytestfunction");
+    ASSERT_TRUE(factory.has_value());
+    auto function = (*factory)(AsyncFunctionRegistryArguments{.binding = {}});
+    ASSERT_NE(function, nullptr);
+    boost::asio::io_context context;
+    auto result = boost::asio::co_spawn(context, invokeOnce(*function, {}), boost::asio::use_future);
+    context.run();
+    EXPECT_TRUE(result.get().empty());
 }
 
 TEST(AsyncFunctionRegistryTest, PluginProvisionUsesStringKeys)

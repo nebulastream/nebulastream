@@ -50,6 +50,11 @@ struct StartQuery
     LogicalPlan plan;
 };
 
+struct StartQueries
+{
+    std::vector<LogicalPlan> plans;
+};
+
 struct StopQuery
 {
     QueryId id;
@@ -70,6 +75,11 @@ struct StartQueryReply
     std::expected<QueryId, Exception> reply;
 };
 
+struct StartQueriesReply
+{
+    std::expected<std::vector<QueryId>, Exception> reply;
+};
+
 struct StopQueryReply
 {
     std::expected<void, Exception> reply;
@@ -85,10 +95,10 @@ struct WorkerStatusReply
     std::expected<WorkerStatus, Exception> reply;
 };
 
-using Request = std::variant<Stop, StartQuery, StopQuery, QueryStatusQuery, WorkerStatusQuery>;
+using Request = std::variant<Stop, StartQuery, StartQueries, StopQuery, QueryStatusQuery, WorkerStatusQuery>;
 /// `std::monostate` first so the variant is default-constructible — needed because
 /// folly's `dequeue(T&)` writes into an existing slot. It is never actually pushed.
-using Reply = std::variant<std::monostate, StartQueryReply, StopQueryReply, QueryStatusReply, WorkerStatusReply>;
+using Reply = std::variant<std::monostate, StartQueryReply, StartQueriesReply, StopQueryReply, QueryStatusReply, WorkerStatusReply>;
 }
 
 /// All shared state between callers and the single worker thread lives here:
@@ -115,6 +125,11 @@ public:
     }
 
     std::expected<QueryId, Exception> start(LogicalPlan plan) { return submit<StartQueryReply>(StartQuery{.plan = std::move(plan)}); }
+
+    std::expected<std::vector<QueryId>, Exception> startQueries(std::vector<LogicalPlan> plans)
+    {
+        return submit<StartQueriesReply>(StartQueries{.plans = std::move(plans)});
+    }
 
     std::expected<void, Exception> stop(QueryId id) { return submit<StopQueryReply>(StopQuery{.id = std::move(id)}); }
 
@@ -158,6 +173,8 @@ private:
                 Overloaded{
                     [](Stop) -> Reply { std::unreachable(); },
                     [&](StartQuery& request) -> Reply { return StartQueryReply{.reply = worker.startQuery(std::move(request.plan))}; },
+                    [&](StartQueries& request) -> Reply
+                    { return StartQueriesReply{.reply = worker.startQueries(std::move(request.plans))}; },
                     [&](const StopQuery& request) -> Reply { return StopQueryReply{.reply = worker.stopQuery(request.id)}; },
                     [&](const QueryStatusQuery& request) -> Reply { return QueryStatusReply{.reply = worker.getQueryStatus(request.id)}; },
                     [&](const WorkerStatusQuery& request) -> Reply
@@ -209,6 +226,11 @@ EmbeddedWorkerQuerySubmissionBackend::~EmbeddedWorkerQuerySubmissionBackend() = 
 std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LogicalPlan plan)
 {
     return channel->start(std::move(plan));
+}
+
+std::expected<std::vector<QueryId>, Exception> EmbeddedWorkerQuerySubmissionBackend::startQueries(std::vector<LogicalPlan> plans)
+{
+    return channel->startQueries(std::move(plans));
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)

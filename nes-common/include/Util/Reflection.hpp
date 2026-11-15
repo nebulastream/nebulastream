@@ -23,6 +23,7 @@
 #include <Util/Reflection/OptionalReflection.hpp>
 #include <Util/Reflection/PairReflection.hpp>
 #include <Util/Reflection/ReflectionCore.hpp>
+#include <Util/Reflection/SharedPtrReflection.hpp>
 #include <Util/Reflection/StringViewReflection.hpp>
 #include <Util/Reflection/UnorderedMapReflection.hpp>
 #include <Util/Reflection/VariantReflection.hpp>
@@ -42,6 +43,7 @@ namespace NES
 /// - Reflector/Unreflector specializations for standard library types:
 ///   - std::vector
 ///   - std::optional
+///   - std::shared_ptr (context-scoped identity)
 ///   - std::pair
 ///   - std::variant
 ///   - std::unordered_map

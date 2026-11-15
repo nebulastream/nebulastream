@@ -66,6 +66,7 @@ public:
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the started query
     [[nodiscard]] std::expected<QueryId, Exception> startQuery(LogicalPlan plan) noexcept;
+    [[nodiscard]] std::expected<std::vector<QueryId>, Exception> startQueries(std::vector<LogicalPlan> plans) noexcept;
 
     /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query

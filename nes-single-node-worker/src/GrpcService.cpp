@@ -23,6 +23,7 @@
 #include <Plans/LogicalPlan.hpp>
 
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Reflection.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -136,6 +137,32 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
                 return grpc::Status::OK;
             }
             return handleError(result.error(), context);
+        },
+        context);
+}
+
+grpc::Status GRPCServer::StartQueries(grpc::ServerContext* context, const StartQueriesRequest* request, StartQueriesReply* response)
+{
+    return tryWithDefaultHandling(
+        [&]
+        {
+            const ReflectionContext reflectionContext;
+            std::vector<LogicalPlan> plans;
+            plans.reserve(request->queryplans_size());
+            for (const auto& serialized : request->queryplans())
+            {
+                plans.emplace_back(QueryPlanSerializationUtil::deserializeQueryPlan(serialized, reflectionContext));
+            }
+            auto result = delegate.startQueries(std::move(plans));
+            if (!result)
+            {
+                return handleError(result.error(), context);
+            }
+            for (const auto& id : *result)
+            {
+                *response->add_queryids() = QueryPlanSerializationUtil::serializeQueryId(id);
+            }
+            return grpc::Status::OK;
         },
         context);
 }

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <future>
@@ -18,6 +19,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/HttpCallLogicalFunction.hpp>
@@ -30,9 +32,11 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/use_future.hpp>
+#include <boost/beast/http/error.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -61,9 +65,11 @@ HttpCallLogicalFunction logicalCall(std::optional<LogicalFunction> retries = std
 TEST(HttpCallFunctionTest, RetriesDefaultToZero)
 {
     HttpCallAsyncFunction function;
-    EXPECT_EQ(function.maxRetries(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"})), size_t{0});
     EXPECT_EQ(
-        function.maxRetries(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000})),
+        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}))->retryOverride, size_t{0});
+    EXPECT_EQ(
+        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}))
+            ->retryOverride,
         size_t{0});
 }
 
@@ -71,12 +77,12 @@ TEST(HttpCallFunctionTest, ExplicitRetriesAcceptIntegerWidthsAndZero)
 {
     HttpCallAsyncFunction function;
     EXPECT_EQ(
-        function.maxRetries(
-            SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, uint8_t{2})),
+        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, uint8_t{2}))
+            ->retryOverride,
         size_t{2});
     EXPECT_EQ(
-        function.maxRetries(
-            SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{0})),
+        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{0}))
+            ->retryOverride,
         size_t{0});
 }
 
@@ -84,11 +90,11 @@ TEST(HttpCallFunctionTest, InvalidRetryCountsAreUserInputErrors)
 {
     HttpCallAsyncFunction function;
     EXPECT_THROW(
-        static_cast<void>(function.maxRetries(
+        static_cast<void>(function.prepare(
             SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{-1}))),
         Exception);
     EXPECT_THROW(
-        static_cast<void>(function.maxRetries(
+        static_cast<void>(function.prepare(
             SharedRuntimeValues::make(
                 std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, std::numeric_limits<uint64_t>::max()))),
         Exception);
@@ -101,8 +107,8 @@ TEST(HttpCallFunctionTest, FactoryCreatedFunctionPreparesOptionsForEachInvocatio
         SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/first"}, uint64_t{1234}, uint64_t{3}));
     const auto second = function->prepare(
         SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/second"}, uint64_t{500}, uint64_t{0}));
-    EXPECT_EQ(first->maxRetries(), size_t{3});
-    EXPECT_EQ(second->maxRetries(), size_t{0});
+    EXPECT_EQ(first->retryOverride, size_t{3});
+    EXPECT_EQ(second->retryOverride, size_t{0});
     ASSERT_EXCEPTION_ERRORCODE(
         static_cast<void>(function->prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"}))),
         ErrorCode::FormattingError);
@@ -126,8 +132,8 @@ TEST(HttpCallFunctionTest, UnrepresentableTimeoutsAreRejectedBeforeDns)
         HttpCallAsyncFunction function;
         const auto body = [&]() -> boost::asio::awaitable<void>
         {
-            static_cast<void>(
-                co_await function.call(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, millis)));
+            static_cast<void>(co_await invokeOnce(
+                function, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, millis)));
         };
         auto future = boost::asio::co_spawn(context, body(), boost::asio::use_future);
         context.run();
@@ -209,7 +215,7 @@ TEST(HttpCallFunctionTest, ErrorCodesDistinguishInferenceInputAndTransportFailur
         ErrorCode::ArithmeticalError);
     ASSERT_EXCEPTION_ERRORCODE(
         static_cast<void>(
-            function.maxRetries(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{1}, int64_t{-1}))),
+            function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{1}, int64_t{-1}))),
         ErrorCode::ArithmeticalError);
 
     boost::asio::io_context context;
@@ -217,10 +223,145 @@ TEST(HttpCallFunctionTest, ErrorCodesDistinguishInferenceInputAndTransportFailur
     const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
     reserved.close();
     const auto invoke = [&]() -> boost::asio::awaitable<void>
-    { static_cast<void>(co_await function.call(SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000}))); };
+    { static_cast<void>(co_await invokeOnce(function, SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000}))); };
     auto future = boost::asio::co_spawn(context, invoke(), boost::asio::use_future);
     context.run();
-    ASSERT_EXCEPTION_ERRORCODE(future.get(), ErrorCode::IOError);
+    ASSERT_EXCEPTION_ERRORCODE(future.get(), ErrorCode::RetryableAsyncError);
+}
+
+TEST(HttpCallFunctionTest, OnlyExplicitTransientStatusesAreRetryable)
+{
+    for (unsigned status = 100; status < 600; ++status)
+    {
+        SCOPED_TRACE(status);
+        if (status >= 200 && status < 300)
+        {
+            EXPECT_NO_THROW(detail::checkHttpStatus(status, "http://test/endpoint", "response"));
+        }
+        else if (status == 408 || status == 429 || status == 500 || status == 502 || status == 503 || status == 504)
+        {
+            ASSERT_EXCEPTION_ERRORCODE(detail::checkHttpStatus(status, "http://test/endpoint", "response"), ErrorCode::RetryableAsyncError);
+        }
+        else
+        {
+            ASSERT_EXCEPTION_ERRORCODE(detail::checkHttpStatus(status, "http://test/endpoint", "response"), ErrorCode::IOError);
+        }
+    }
+}
+
+namespace
+{
+void failTransport(const boost::system::error_code& code)
+{
+    try
+    {
+        throw boost::system::system_error{code};
+    }
+    catch (const boost::system::system_error& error)
+    {
+        detail::rethrowHttpTransportError(error, "http://test/endpoint");
+    }
+}
+}
+
+TEST(HttpCallFunctionTest, OnlyWhitelistedTransportFailuresAreRetryable)
+{
+    namespace asioError = boost::asio::error;
+    const std::vector<boost::system::error_code> transient{
+        asioError::connection_refused,
+        asioError::connection_reset,
+        asioError::connection_aborted,
+        asioError::timed_out,
+        asioError::network_unreachable,
+        asioError::network_down,
+        asioError::host_unreachable,
+#ifdef EHOSTDOWN
+        boost::system::error_code{EHOSTDOWN, boost::system::system_category()},
+#endif
+        asioError::try_again,
+        asioError::eof,
+        asioError::host_not_found_try_again,
+        boost::beast::error::timeout,
+        boost::beast::http::error::end_of_stream};
+    for (const auto& code : transient)
+    {
+        SCOPED_TRACE(code.message());
+        ASSERT_EXCEPTION_ERRORCODE(failTransport(code), ErrorCode::RetryableAsyncError);
+    }
+    const std::vector<boost::system::error_code> permanent{
+        asioError::host_not_found,
+        asioError::no_recovery,
+        asioError::invalid_argument,
+        asioError::access_denied,
+        boost::beast::http::error::bad_status,
+        boost::beast::http::error::bad_content_length,
+        boost::beast::http::error::partial_message,
+        boost::beast::http::error::body_limit};
+    for (const auto& code : permanent)
+    {
+        SCOPED_TRACE(code.message());
+        ASSERT_EXCEPTION_ERRORCODE(failTransport(code), ErrorCode::IOError);
+    }
+}
+
+TEST(HttpCallFunctionTest, CancellationRethrowsOriginalExceptionWithoutRetryClassification)
+{
+    const boost::system::system_error original{boost::asio::error::operation_aborted, "cancelled by test"};
+    try
+    {
+        try
+        {
+            throw original;
+        }
+        catch (const boost::system::system_error& error)
+        {
+            detail::rethrowHttpTransportError(error, "http://test/endpoint");
+        }
+    }
+    catch (const boost::system::system_error& error)
+    {
+        EXPECT_EQ(error.code(), original.code());
+        EXPECT_STREQ(error.what(), original.what());
+        return;
+    }
+    FAIL() << "Cancellation must remain a system_error";
+}
+
+TEST(HttpCallFunctionTest, PreparedAttemptsOwnOptionsAndDoNotReparseArguments)
+{
+    boost::asio::io_context context;
+    HttpCallAsyncFunction function;
+    boost::asio::ip::tcp::acceptor reserved{context, {boost::asio::ip::tcp::v4(), 0}};
+    const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
+    reserved.close();
+    auto arguments = SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000}, uint8_t{2});
+    const auto prepared = function.prepare(arguments);
+    arguments = SharedRuntimeValues::make(std::string{"changed"}, std::string{"not a URL"}, int64_t{-1}, int64_t{-1});
+    for (int attempt = 0; attempt < 2; ++attempt)
+    {
+        EXPECT_EQ(prepared->retryOverride, size_t{2});
+        auto future = boost::asio::co_spawn(context, prepared->executeAttempt(), boost::asio::use_future);
+        context.run();
+        ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(future.get()), ErrorCode::RetryableAsyncError);
+        context.restart();
+    }
+}
+
+TEST(HttpCallFunctionTest, RetryableFailuresWarnAboutPostReplay)
+{
+    try
+    {
+        detail::checkHttpStatus(503, "http://test/endpoint", "overloaded");
+        FAIL() << "503 must fail";
+    }
+    catch (const Exception& error)
+    {
+        const std::string message{error.what()};
+        EXPECT_NE(message.find("http://test/endpoint"), std::string::npos);
+        EXPECT_NE(message.find("503"), std::string::npos);
+        EXPECT_NE(message.find("overloaded"), std::string::npos);
+        EXPECT_NE(message.find("POST may duplicate server-side effects"), std::string::npos);
+    }
 }
 
 TEST(HttpCallFunctionTest, RetriesMustBeANonNullableInteger)

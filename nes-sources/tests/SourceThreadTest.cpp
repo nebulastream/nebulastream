@@ -341,7 +341,7 @@ protected:
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    /// Strict mocks reject every unexpected allocation, including on EOS and failure paths.
+    /// Strict mocks reject spare data-buffer allocations; normal EOS explicitly allows a final-watermark allocation.
     std::shared_ptr<testing::StrictMock<MockBufferProvider>> provider = std::make_shared<testing::StrictMock<MockBufferProvider>>();
     RecordingEmitFunction recorder{*bm, {}, {}};
     std::pair<BackpressureController, BackpressureListener> backpressure = createBackpressureChannel();
@@ -374,7 +374,8 @@ TEST_F(SourceBufferCapabilityTest, ReturningBuffersNeedNoSpareAndPreserveSourceM
     const auto alias = buffer;
     auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
     EXPECT_FALSE(source->requiresPreallocatedBuffer());
-    EXPECT_CALL(*source, close()).Times(1);
+    const testing::Expectation closed = EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*provider, getBufferWithTimeout(25ms)).After(closed).WillOnce(testing::Return(std::optional{bm->getBufferBlocking()}));
     EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
         .Times(3)
         .WillOnce(
@@ -398,10 +399,12 @@ TEST_F(SourceBufferCapabilityTest, ReturningBuffersNeedNoSpareAndPreserveSourceM
                 return Source::FillTupleBufferResult::eos();
             });
     auto thread = start(std::move(source), true);
-    wait_for_emits(recorder, 3);
+    wait_for_emits(recorder, 4);
     verify_non_blocking_stop(*thread);
+    verify_final_watermark(recorder);
     auto records = recorder.recordedEmits.lock();
-    ASSERT_EQ(records->size(), 3);
+    ASSERT_EQ(records->size(), 4);
+    EXPECT_EQ(std::get<SourceReturnType::Data>(records->at(2)).buffer.getSequenceNumber(), SequenceNumber(18));
     for (size_t i = 0; i < 2; ++i)
     {
         ASSERT_TRUE(std::holds_alternative<SourceReturnType::Data>(records->at(i)));
@@ -420,7 +423,8 @@ TEST_F(SourceBufferCapabilityTest, ReturningBufferGetsByteCountAndDefaultMetadat
     auto buffer = bm->getBufferBlocking();
     buffer.setNumberOfTuples(0);
     auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
-    EXPECT_CALL(*source, close()).Times(1);
+    const testing::Expectation closed = EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*provider, getBufferWithTimeout(25ms)).After(closed).WillOnce(testing::Return(std::optional{bm->getBufferBlocking()}));
     EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
         .WillOnce(
             [&](TupleBuffer& output, const std::stop_token&)
@@ -431,10 +435,11 @@ TEST_F(SourceBufferCapabilityTest, ReturningBufferGetsByteCountAndDefaultMetadat
             })
         .WillOnce(testing::Return(Source::FillTupleBufferResult::eos()));
     auto thread = start(std::move(source));
-    wait_for_emits(recorder, 2);
+    wait_for_emits(recorder, 3);
     verify_non_blocking_stop(*thread);
-    verify_number_of_emits(recorder, 2);
+    verify_number_of_emits(recorder, 3);
     verify_last_event<SourceReturnType::EoS>(recorder);
+    verify_final_watermark(recorder);
     EXPECT_EQ(buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     EXPECT_EQ(buffer.getOriginId(), INITIAL<OriginId>);
     EXPECT_EQ(buffer.getSequenceNumber(), SequenceNumber(1));
@@ -442,10 +447,11 @@ TEST_F(SourceBufferCapabilityTest, ReturningBufferGetsByteCountAndDefaultMetadat
     EXPECT_TRUE(buffer.isLastChunk());
 }
 
-TEST_F(SourceBufferCapabilityTest, ReturningSourceCanEndWithoutAllocating)
+TEST_F(SourceBufferCapabilityTest, ReturningSourceCanEndWithoutAllocatingDataBuffer)
 {
     auto source = std::make_unique<testing::StrictMock<ReturningBufferSource>>();
-    EXPECT_CALL(*source, close()).Times(1);
+    const testing::Expectation closed = EXPECT_CALL(*source, close()).Times(1);
+    EXPECT_CALL(*provider, getBufferWithTimeout(25ms)).After(closed).WillOnce(testing::Return(std::optional{bm->getBufferBlocking()}));
     EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
         .WillOnce(
             [](TupleBuffer& output, const std::stop_token&)
@@ -454,10 +460,11 @@ TEST_F(SourceBufferCapabilityTest, ReturningSourceCanEndWithoutAllocating)
                 return Source::FillTupleBufferResult::eos();
             });
     auto thread = start(std::move(source));
-    wait_for_emits(recorder, 1);
+    wait_for_emits(recorder, 2);
     verify_non_blocking_stop(*thread);
-    verify_number_of_emits(recorder, 1);
+    verify_number_of_emits(recorder, 2);
     verify_last_event<SourceReturnType::EoS>(recorder);
+    verify_final_watermark(recorder);
 }
 
 TEST_F(SourceBufferCapabilityTest, ReturningSourceStopClosesWithoutEmittingEos)
@@ -538,7 +545,9 @@ TEST_F(SourceBufferCapabilityTest, DefaultSourceStillAcquiresAndRetriesPrealloca
     EXPECT_CALL(*provider, getBufferWithTimeout(25ms))
         .WillOnce(testing::Return(std::nullopt))
         .WillOnce(testing::Return(std::optional{buffer}))
-        .WillOnce(testing::Return(std::optional{buffer}));
+        .WillOnce(testing::Return(std::optional{buffer}))
+        /// EOS needs a separate final-watermark buffer, not the aliased data buffer.
+        .WillOnce(testing::Return(std::optional{bm->getBufferBlocking()}));
     EXPECT_CALL(*source, close()).Times(1);
     EXPECT_CALL(*source, fillTupleBuffer(testing::_, testing::_))
         .WillOnce(
@@ -555,10 +564,11 @@ TEST_F(SourceBufferCapabilityTest, DefaultSourceStillAcquiresAndRetriesPrealloca
                 return Source::FillTupleBufferResult::eos();
             });
     auto thread = start(std::move(source));
-    wait_for_emits(recorder, 2);
+    wait_for_emits(recorder, 3);
     verify_non_blocking_stop(*thread);
-    verify_number_of_emits(recorder, 2);
+    verify_number_of_emits(recorder, 3);
     verify_last_event<SourceReturnType::EoS>(recorder);
+    verify_final_watermark(recorder);
     EXPECT_EQ(buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     EXPECT_EQ(buffer.getOriginId(), INITIAL<OriginId>);
 }

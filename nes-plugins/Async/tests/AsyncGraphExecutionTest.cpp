@@ -44,6 +44,15 @@
 
 namespace NES
 {
+/// Test-only access to producer subscriptions; production callers can only run/cancel a row.
+struct AsyncGraphExecutionTestAccess
+{
+    static std::shared_ptr<SharedAsyncResult> evaluate(AsyncGraphExecution& execution, const AsyncCall::Ptr& node)
+    {
+        return execution.evaluate(node);
+    }
+};
+
 namespace
 {
 namespace asio = boost::asio;
@@ -145,6 +154,74 @@ TEST(SharedAsyncResultTest, LazyProducerRunsOnceAndAllSubscribersIncludingLateOn
             const auto late = co_await value->get();
             EXPECT_EQ(late[0].get<std::string_view>(), std::string_view("a\0b", 3));
         });
+}
+
+TEST(SharedAsyncResultTest, DefaultEmptyResultIsSuccessfulAndCached)
+{
+    run(
+        [](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
+        {
+            int calls = 0;
+            auto value = std::make_shared<SharedAsyncResult>(
+                executor,
+                [&]() -> asio::awaitable<SharedRuntimeValues>
+                {
+                    ++calls;
+                    co_return SharedRuntimeValues{};
+                });
+            EXPECT_FALSE(value->finished());
+            auto [first, second] = co_await (value->get() && value->get());
+            EXPECT_TRUE(first.empty());
+            EXPECT_TRUE(second.empty());
+            EXPECT_TRUE(value->finished());
+            const auto late = co_await value->get();
+            EXPECT_TRUE(late.empty());
+            EXPECT_EQ(calls, 1);
+        });
+}
+
+TEST(SharedAsyncResultTest, SpawnDefaultValueOnProducerFailureIsNeverPublishedAsEmptySuccess)
+{
+    for (const bool synchronousFailure : {false, true})
+    {
+        asio::io_context context;
+        const auto executor = asio::make_strand(context);
+        int calls = 0;
+        int completions = 0;
+        auto value = std::make_shared<SharedAsyncResult>(
+            executor,
+            [&]() -> asio::awaitable<SharedRuntimeValues>
+            {
+                ++calls;
+                if (synchronousFailure)
+                {
+                    throw CannotReadFromSource("synchronous producer failure");
+                }
+                return []() -> asio::awaitable<SharedRuntimeValues>
+                {
+                    co_await pause(1ms);
+                    throw CannotReadFromSource("asynchronous producer failure");
+                    co_return SharedRuntimeValues{};
+                }();
+            });
+        const auto completed = [&](std::exception_ptr error, SharedRuntimeValues values)
+        {
+            ++completions;
+            EXPECT_TRUE(error);
+            /// co_spawn supplies an empty transport value on error; it is not a successful result.
+            EXPECT_TRUE(values.empty());
+        };
+        asio::co_spawn(executor, value->get(), completed);
+        asio::co_spawn(executor, value->get(), completed);
+        context.run();
+        EXPECT_EQ(completions, 2);
+        EXPECT_EQ(calls, 1);
+        context.restart();
+        asio::co_spawn(executor, value->get(), completed);
+        context.run();
+        EXPECT_EQ(completions, 3);
+        EXPECT_EQ(calls, 1);
+    }
 }
 
 TEST(SharedAsyncResultTest, ImmediateCompletionCannotLoseTheWakeup)
@@ -402,7 +479,7 @@ TEST_F(AsyncGraphExecutionDeathTest, EvaluateRejectsNodeOutsideGraph)
                     noInputs(),
                     [](AsyncCall::Ptr, SharedRuntimeValues) -> asio::awaitable<SharedRuntimeValues>
                     { co_return SharedRuntimeValues::make(int64_t{1}); });
-                static_cast<void>(execution->evaluate(foreign));
+                static_cast<void>(AsyncGraphExecutionTestAccess::evaluate(*execution, foreign));
                 co_return;
             }),
         "Precondition violated.*not part of this async graph");
@@ -585,7 +662,7 @@ TEST(AsyncGraphExecutionTest, ConsumerDeadlineDoesNotBecomeTheSharedNodesDeadlin
                     co_await pause(30ms);
                     co_return SharedRuntimeValues::make(int64_t{42});
                 });
-            const auto subscription = execution->evaluate(producer);
+            const auto subscription = AsyncGraphExecutionTestAccess::evaluate(*execution, producer);
             auto [shortWait, result]
                 = co_await (observe(subscription->getUntil(std::chrono::steady_clock::now() + 2ms)) && execution->run());
             EXPECT_EQ(errorCode(shortWait), asio::error::timed_out);
@@ -682,6 +759,7 @@ TEST(AsyncGraphExecutionTest, FailureCancelsAndDrainsUnrelatedWorkAndPreservesTh
                 });
             const auto outcome = co_await observe(execution->run());
             EXPECT_TRUE(outcome.error);
+            EXPECT_FALSE(outcome.values.has_value());
             if (!outcome.error)
             {
                 co_return;

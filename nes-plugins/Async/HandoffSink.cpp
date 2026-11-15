@@ -15,24 +15,22 @@
 #include <HandoffSink.hpp>
 
 #include <chrono>
+#include <expected>
 #include <optional>
-#include <string>
-#include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp>
+#include <vector>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/SinkDescriptor.hpp>
+#include <Sinks/HandoffSinkConfig.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
-HandoffSink::HandoffSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+HandoffSink::HandoffSink(BackpressureController backpressureController, const HandoffSinkConfig& config)
     : Sink(std::move(backpressureController))
-    , channelId(AsyncChannelId{sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL)})
-    , channel(channelId, sinkDescriptor.getFromConfig(ConfigParametersHandoff::CHANNEL_CAPACITY), HandoffChannel::Role::SINK)
+    , channel(config.channel ? config.channel->takeSender() : throw InvalidConfigParameter("HandoffSink requires a non-null channel"))
 {
 }
 
@@ -40,11 +38,10 @@ void HandoffSink::start(PipelineExecutionContext&)
 {
 }
 
-/// Only a graceful stop gets here. A hard stop skips it, and the attachment, which goes with the sink, removes the channel if
-/// no source ever attached; closing it there would end the source's stream as if the producer had finished.
+/// Only a graceful stop gets here. A hard stop destroys the sender without closing it and aborts the receiver.
 void HandoffSink::stop(PipelineExecutionContext&)
 {
-    channel->close();
+    channel.close();
 }
 
 void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
@@ -57,14 +54,13 @@ void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecution
     auto currentBuffer = std::optional(inputTupleBuffer);
     while (currentBuffer)
     {
-        switch (channel->tryPush(*currentBuffer))
+        switch (channel.tryPush(*currentBuffer))
         {
             case HandoffChannel::PushResult::PUSHED:
                 currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
                 break;
             case HandoffChannel::PushResult::FULL:
-                /// The calls fall behind, or the Async source has not attached yet: hold the producer's sources back
-                /// until the channel takes buffers again.
+                /// The calls fall behind: hold the producer's sources back until the channel takes buffers again.
                 if (const auto retry = backpressureHandler.onFull(*currentBuffer, backpressureController))
                 {
                     pipelineExecutionContext.repeatTask(*retry, RETRY_INTERVAL);
@@ -74,7 +70,7 @@ void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecution
                 /// The query is stopping or has failed, and nothing will take a buffer again. Retrying would keep this
                 /// half of the query running forever, so the rest is dropped and the producer's sources are released.
                 consumerGone = true;
-                NES_DEBUG("Async source of channel {} has stopped; dropping the buffers still to be handed off", channelId);
+                NES_DEBUG("Async source has stopped; dropping the buffers still to be handed off");
                 dropRemaining(*currentBuffer);
                 return;
         }
@@ -90,9 +86,14 @@ void HandoffSink::dropRemaining(const TupleBuffer& buffer)
     }
 }
 
-DescriptorConfig::Config HandoffSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+Schema<QualifiedErasedConfigField, Ordered> HandoffSink::getConfigSchema()
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersHandoff>(std::move(config), NAME);
+    return Schema<QualifiedErasedConfigField, Ordered>{std::vector<QualifiedErasedConfigField>{}};
+}
+
+std::expected<HandoffSinkConfig, Exception> HandoffSinkConfig::fromConfig(const InstantiatedConfig&)
+{
+    return std::unexpected{InvalidConfigParameter("Handoff sinks require a planner-supplied channel, not literal configuration")};
 }
 
 }

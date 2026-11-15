@@ -16,25 +16,25 @@ find_package(reflectcpp CONFIG REQUIRED)
 
 # Asynchronous execution: the Handoff sink ends the producer half of a split async operator, the Async source
 # runs its calls and starts the consumer half. Both meet in the in-process HandoffChannel.
-add_library(async_handoff_channel STATIC HandoffChannel.cpp)
-target_link_libraries(async_handoff_channel PUBLIC nes-memory)
-target_include_directories(async_handoff_channel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
 add_library(async_graph_execution STATIC SharedAsyncResult.cpp AsyncGraphExecution.cpp)
 target_include_directories(async_graph_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(async_graph_execution PUBLIC nes-sources)
 
 add_library(async_source_plugin_library STATIC AsyncSource.cpp)
-target_link_libraries(async_source_plugin_library PRIVATE nes-sources nes-nautilus reflectcpp::reflectcpp async_graph_execution PUBLIC async_handoff_channel)
+target_link_libraries(async_source_plugin_library PRIVATE nes-sources nes-nautilus reflectcpp::reflectcpp async_graph_execution PUBLIC nes-async)
+target_include_directories(async_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 link_plugin_library(nes-sources async_source_plugin_library)
 add_registry_entry(Source Async)
-add_registry_entry(SourceValidation Async)
+add_registry_entry(SourceConfig Async)
+add_registry_entry(SourceConfigSchema Async)
 
 add_library(handoff_sink_plugin_library STATIC HandoffSink.cpp)
-target_link_libraries(handoff_sink_plugin_library PRIVATE nes-sinks PUBLIC async_handoff_channel)
+target_link_libraries(handoff_sink_plugin_library PRIVATE nes-sinks PUBLIC nes-async)
+target_include_directories(handoff_sink_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 link_plugin_library(nes-sinks handoff_sink_plugin_library)
 add_registry_entry(Sink Handoff)
-add_registry_entry(SinkValidation Handoff)
+add_registry_entry(SinkConfig Handoff)
+add_registry_entry(SinkConfigSchema Handoff)
 
 add_tests_if_enabled(tests)
 

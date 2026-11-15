@@ -18,6 +18,8 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -115,7 +117,9 @@ concept HasExplicitReflector = HasTwoParamReflector<T> || ContextfulReflector<T>
 /// Instead of calling rfl::from_generic directly (which loses context), ReflectionContext manually
 /// deserializes each field through context.unreflect(), ensuring context flows through the entire tree.
 ///
-/// The context is immutable after construction - all context values must be provided during initialization.
+/// Typed entries are immutable after construction; with() creates an amended copy.
+/// Pointer identity state is mutable and shared by copies/children, but never by fresh contexts.
+/// Use a fresh context for each independent execution and retain it across the whole batch.
 ///
 /// Example usage:
 /// @code
@@ -132,13 +136,77 @@ class ReflectionContext
 {
     std::unordered_map<std::type_index, std::any> context;
 
+    /// Identity belongs to a batch, never to a process. Copies and with() children share it.
+    /// Like the typed context entries, this state is not intended for concurrent access.
+    struct SerializedPointer
+    {
+        std::shared_ptr<const void> owner;
+        std::type_index type;
+        int64_t id;
+        std::optional<std::string> definition;
+        bool active = false;
+    };
+
+    struct DeserializedPointer
+    {
+        std::shared_ptr<void> owner;
+        std::type_index type;
+        std::string definition;
+        std::function<void(const std::shared_ptr<void>&)> validate;
+    };
+
+    struct PointerIdentities
+    {
+        int64_t nextId = 1;
+        std::unordered_map<const void*, SerializedPointer> serialized;
+        /// An empty owner marks a definition currently being constructed (cycles are rejected).
+        std::unordered_map<int64_t, DeserializedPointer> deserialized;
+    };
+
+    std::shared_ptr<PointerIdentities> pointerIdentities = std::make_shared<PointerIdentities>();
+
+    /// Only reflection specializations may access the identity bookkeeping.
+    template <typename T>
+    friend struct Reflector;
+    template <typename T>
+    friend struct Unreflector;
+
 public:
     explicit ReflectionContext() = default;
+
+    /// Validate reconstructed shared configuration objects after all batch fragments have
+    /// been instantiated, before any are started. Types without validate() are skipped.
+    /// This visits each identity once per call and observes live pointee mutations.
+    /// Exceptions from validate() propagate to the caller. Copies/children see the same batch.
+    void validateSharedObjects() const
+    {
+        for (const auto& [id, entry] : pointerIdentities->deserialized)
+        {
+            if (!entry.owner)
+            {
+                throw CannotDeserialize("Shared pointer id {} is still being reconstructed", id);
+            }
+            if (entry.validate)
+            {
+                entry.validate(entry.owner);
+            }
+        }
+    }
 
     template <typename... Args>
     explicit ReflectionContext(Args... args)
         : context{std::pair{std::type_index{typeid(std::remove_cvref_t<Args>)}, std::any{std::move(args)}}...}
     {
+    }
+
+    /// Retain existing typed entries, replacing entries of the same type. Identity remains
+    /// shared with the parent, including when per-plan context entries are replaced.
+    template <typename... Args>
+    [[nodiscard]] ReflectionContext with(Args... args) const
+    {
+        ReflectionContext child = *this;
+        (child.context.insert_or_assign(std::type_index{typeid(std::remove_cvref_t<Args>)}, std::any{std::move(args)}), ...);
+        return child;
     }
 
     template <typename T>

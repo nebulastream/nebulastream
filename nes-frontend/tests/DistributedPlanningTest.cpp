@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 
+#include <Async/HandoffChannel.hpp>
 #include <Configurations/Util.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -41,13 +42,19 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Sinks/HandoffSinkConfig.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <gtest/gtest.h>
 #include <yaml-cpp/node/convert.h>
@@ -57,6 +64,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
+#include <SerializableQueryPlan.pb.h>
 #include <WorkerCatalog.hpp>
 
 namespace NES::Test
@@ -282,6 +290,204 @@ public:
 };
 
 ///NOLINTBEGIN(bugprone-unchecked-optional-access, readability-identifier-length)
+namespace
+{
+std::vector<LogicalPlan> optimizeAsyncDelayPlans()
+{
+    auto [optimizer, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT ASYNC_DELAY(a, 1) AS a FROM mock_source INTO mock_sink
+sinks:
+  - name: mock_sink
+    schema: [ a ]
+    host: "localhost:8080"
+logical:
+  - name: mock_source
+    schema: [ a ]
+physical:
+  - logical: mock_source
+    host: "localhost:8080"
+workers:
+  - host: "localhost:8080"
+    max_operators: 10
+)");
+    auto plans = optimizer->optimize(boundPlan);
+    EXPECT_EQ(plans.size(), 2);
+    return plans[Host("localhost:8080")];
+}
+
+struct AsyncChannels
+{
+    std::vector<std::shared_ptr<HandoffChannel>> sources;
+    std::vector<std::shared_ptr<HandoffChannel>> sinks;
+};
+
+AsyncChannels extractAsyncChannels(const std::vector<LogicalPlan>& plans)
+{
+    AsyncChannels channels;
+    for (const auto& plan : plans)
+    {
+        for (const auto& source : getOperatorByType<SourceDescriptorLogicalOperator>(plan))
+        {
+            const auto& descriptor = source.get().getSourceDescriptor();
+            if (descriptor.getSourceType() == Identifier::parse("ASYNC"))
+            {
+                channels.sources.push_back(descriptor.getPluginData().getAs<AsyncSourceConfig>().channel);
+            }
+        }
+        for (const auto& sink : getOperatorByType<SinkLogicalOperator>(plan))
+        {
+            const auto& descriptor = sink.get().getSinkDescriptor();
+            if (descriptor->getSinkType() == "HANDOFF")
+            {
+                channels.sinks.push_back(descriptor->getPluginSinkConfiguration().getPluginData().getAs<HandoffSinkConfig>().channel);
+            }
+        }
+    }
+    return channels;
+}
+
+std::vector<SerializableQueryPlan> serializeAsyncPlans(const std::vector<LogicalPlan>& plans)
+{
+    ReflectionContext context;
+    std::vector<SerializableQueryPlan> serialized;
+    for (const auto& plan : plans)
+    {
+        serialized.push_back(QueryPlanSerializationUtil::serializeQueryPlan(plan, context));
+    }
+    return serialized;
+}
+
+std::vector<LogicalPlan>
+deserializeAsyncPlans(const std::vector<SerializableQueryPlan>& serialized, const ReflectionContext& context, bool reverse = false)
+{
+    std::vector<LogicalPlan> plans;
+    for (size_t index = 0; index < serialized.size(); ++index)
+    {
+        const auto position = reverse ? serialized.size() - index - 1 : index;
+        plans.push_back(QueryPlanSerializationUtil::deserializeQueryPlan(serialized[position], context));
+    }
+    return plans;
+}
+}
+
+TEST_F(DistributedPlanningTest, AsyncDecompositionSharesChannel)
+{
+    const auto plans = optimizeAsyncDelayPlans();
+    ASSERT_EQ(plans.size(), 2);
+    const auto channels = extractAsyncChannels(plans);
+    ASSERT_EQ(channels.sources.size(), 1);
+    ASSERT_EQ(channels.sinks.size(), 1);
+    ASSERT_NE(channels.sources.front(), nullptr);
+    EXPECT_EQ(channels.sources.front(), channels.sinks.front());
+    EXPECT_GT(channels.sources.front()->getCapacity(), 0);
+}
+
+TEST_F(DistributedPlanningTest, AsyncSerializationPreservesAliasingInEitherPlanOrder)
+{
+    const auto plans = optimizeAsyncDelayPlans();
+    ASSERT_EQ(plans.size(), 2);
+    const auto original = extractAsyncChannels(plans);
+    ASSERT_EQ(original.sources.size(), 1);
+    ASSERT_NE(original.sources.front(), nullptr);
+    const auto serialized = serializeAsyncPlans(plans);
+
+    for (const bool reverse : {false, true})
+    {
+        SCOPED_TRACE(reverse ? "reverse deserialization" : "forward deserialization");
+        ReflectionContext context;
+        const auto restored = deserializeAsyncPlans(serialized, context, reverse);
+        const auto channels = extractAsyncChannels(restored);
+        ASSERT_EQ(channels.sources.size(), 1);
+        ASSERT_EQ(channels.sinks.size(), 1);
+        ASSERT_NE(channels.sources.front(), nullptr);
+        EXPECT_EQ(channels.sources.front(), channels.sinks.front());
+        EXPECT_NE(channels.sources.front(), original.sources.front());
+        EXPECT_EQ(channels.sources.front()->getCapacity(), original.sources.front()->getCapacity());
+        auto sender = channels.sinks.front()->takeSender();
+        auto receiver = channels.sources.front()->takeReceiver();
+        EXPECT_NO_THROW(context.validateSharedObjects());
+    }
+}
+
+TEST_F(DistributedPlanningTest, AsyncSerializationFreshContextsHaveIndependentEndpointClaims)
+{
+    const auto plans = optimizeAsyncDelayPlans();
+    ASSERT_EQ(plans.size(), 2);
+    const auto original = extractAsyncChannels(plans);
+    ASSERT_EQ(original.sources.size(), 1);
+    const auto serialized = serializeAsyncPlans(plans);
+
+    ReflectionContext firstContext;
+    const auto firstPlans = deserializeAsyncPlans(serialized, firstContext);
+    const auto first = extractAsyncChannels(firstPlans);
+    ASSERT_EQ(first.sources.size(), 1);
+    ASSERT_EQ(first.sinks.size(), 1);
+    ASSERT_NE(first.sources.front(), nullptr);
+    ASSERT_EQ(first.sources.front(), first.sinks.front());
+    auto firstSender = first.sinks.front()->takeSender();
+    auto firstReceiver = first.sources.front()->takeReceiver();
+    EXPECT_NO_THROW(firstContext.validateSharedObjects());
+
+    // Reusing the wire batch must not reuse the first execution's already-claimed channel.
+    ReflectionContext secondContext;
+    const auto secondPlans = deserializeAsyncPlans(serialized, secondContext);
+    const auto second = extractAsyncChannels(secondPlans);
+    ASSERT_EQ(second.sources.size(), 1);
+    ASSERT_EQ(second.sinks.size(), 1);
+    ASSERT_NE(second.sources.front(), nullptr);
+    ASSERT_EQ(second.sources.front(), second.sinks.front());
+    EXPECT_NE(first.sources.front(), original.sources.front());
+    EXPECT_NE(second.sources.front(), original.sources.front());
+    EXPECT_NE(second.sources.front(), first.sources.front());
+    EXPECT_EQ(second.sources.front()->getCapacity(), first.sources.front()->getCapacity());
+    EXPECT_THROW(secondContext.validateSharedObjects(), Exception);
+    auto secondSender = second.sinks.front()->takeSender();
+    auto secondReceiver = second.sources.front()->takeReceiver();
+    EXPECT_NO_THROW(secondContext.validateSharedObjects());
+    EXPECT_NO_THROW(firstContext.validateSharedObjects());
+}
+
+TEST_F(DistributedPlanningTest, AsyncSerializationValidationRejectsIncompleteEndpointClaims)
+{
+    const auto plans = optimizeAsyncDelayPlans();
+    ASSERT_EQ(plans.size(), 2);
+    const auto serialized = serializeAsyncPlans(plans);
+    for (const bool senderFirst : {false, true})
+    {
+        SCOPED_TRACE(senderFirst ? "sender only" : "receiver only");
+        ReflectionContext context;
+        const auto restored = deserializeAsyncPlans(serialized, context);
+        const auto channels = extractAsyncChannels(restored);
+        ASSERT_EQ(channels.sources.size(), 1);
+        ASSERT_EQ(channels.sinks.size(), 1);
+        ASSERT_NE(channels.sources.front(), nullptr);
+        ASSERT_EQ(channels.sources.front(), channels.sinks.front());
+        EXPECT_THROW(context.validateSharedObjects(), Exception);
+
+        std::optional<HandoffChannel::Sender> sender;
+        std::optional<HandoffChannel::Receiver> receiver;
+        if (senderFirst)
+        {
+            sender.emplace(channels.sinks.front()->takeSender());
+        }
+        else
+        {
+            receiver.emplace(channels.sources.front()->takeReceiver());
+        }
+        EXPECT_THROW(context.validateSharedObjects(), Exception);
+        if (senderFirst)
+        {
+            receiver.emplace(channels.sources.front()->takeReceiver());
+        }
+        else
+        {
+            sender.emplace(channels.sinks.front()->takeSender());
+        }
+        EXPECT_NO_THROW(context.validateSharedObjects());
+    }
+}
+
 TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
 {
     auto [opt, boundPlan] = loadAndBind(R"(

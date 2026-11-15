@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string>
@@ -284,6 +285,187 @@ TEST(ReflectionTest, VariantWithUnsigned32BitAboveIntMax)
     const auto deserialized = context.unreflect<ConfigType>(reflected);
     ASSERT_TRUE(std::holds_alternative<uint32_t>(deserialized));
     EXPECT_EQ(std::get<uint32_t>(deserialized), 3000000000U);
+}
+
+/// Movable, non-default-constructible channel-like configuration.
+struct MovableChannelConfig
+{
+    explicit MovableChannelConfig(size_t capacity) : capacity(capacity) { }
+
+    MovableChannelConfig(MovableChannelConfig&&) = default;
+    size_t capacity;
+};
+
+template <>
+struct Reflector<MovableChannelConfig>
+{
+    Reflected operator()(const MovableChannelConfig& value, const ReflectionContext& ctx) const { return ctx.reflect(value.capacity); }
+};
+
+template <>
+struct Unreflector<MovableChannelConfig>
+{
+    MovableChannelConfig operator()(const Reflected& value, const ReflectionContext& ctx) const
+    {
+        return MovableChannelConfig{ctx.unreflect<size_t>(value)};
+    }
+};
+
+struct SharedPointerCycle
+{
+    std::shared_ptr<SharedPointerCycle> next;
+};
+
+TEST(ReflectionTest, SharedPointerIdentityAcrossCopiesChildrenAndReversedPlans)
+{
+    const ReflectionContext writer;
+    const auto original = std::make_shared<MovableChannelConfig>(32);
+    const auto first = writer.reflect(original);
+    const auto copy = writer;
+    const auto second = copy.with(17).reflect(original);
+    const auto distinct = writer.reflect(std::make_shared<MovableChannelConfig>(32));
+
+    const ReflectionContext reader;
+    const auto restoredSecond = reader.with(19).unreflect<std::shared_ptr<MovableChannelConfig>>(second);
+    const auto restoredFirst = reader.unreflect<std::shared_ptr<MovableChannelConfig>>(first);
+    EXPECT_EQ(restoredFirst, restoredSecond);
+    EXPECT_NE(restoredFirst, original);
+    EXPECT_EQ(restoredFirst->capacity, 32);
+    EXPECT_NE(reader.unreflect<std::shared_ptr<MovableChannelConfig>>(distinct), restoredFirst);
+    const auto fresh = ReflectionContext{}.unreflect<std::shared_ptr<MovableChannelConfig>>(first);
+    EXPECT_NE(fresh, restoredFirst);
+    restoredFirst->capacity = 64;
+    EXPECT_EQ(fresh->capacity, 32);
+    const auto constView = reader.unreflect<std::shared_ptr<const MovableChannelConfig>>(first);
+    EXPECT_EQ(constView, restoredFirst);
+    EXPECT_EQ(rfl::json::write(*writer.reflect(std::shared_ptr<const MovableChannelConfig>{original})), rfl::json::write(*first));
+}
+
+TEST(ReflectionTest, SharedPointerNullAndOwningCaches)
+{
+    const ReflectionContext context;
+    EXPECT_TRUE(context.reflect(std::shared_ptr<int>{}).isEmpty());
+    EXPECT_EQ(context.unreflect<std::shared_ptr<int>>(Reflected{}), nullptr);
+    auto original = std::make_shared<int>(42);
+    const std::weak_ptr<int> serializedOwner = original;
+    const auto wire = context.reflect(original);
+    original.reset();
+    EXPECT_FALSE(serializedOwner.expired());
+    auto restored = context.unreflect<std::shared_ptr<int>>(wire);
+    const std::weak_ptr<int> deserializedOwner = restored;
+    restored.reset();
+    EXPECT_FALSE(deserializedOwner.expired());
+    EXPECT_EQ(context.unreflect<std::shared_ptr<int>>(wire), deserializedOwner.lock());
+}
+
+TEST(ReflectionTest, SharedPointerConflictingDefinitionsAndTypes)
+{
+    const ReflectionContext writer;
+    auto original = std::make_shared<int>(1);
+    const auto wire = writer.reflect(original);
+    *original = 2;
+    EXPECT_THROW(static_cast<void>(writer.reflect(original)), Exception);
+
+    /// Independent writers start at id 1, but different definitions must not be merged.
+    const auto conflicting = ReflectionContext{}.reflect(std::make_shared<int>(2));
+    const ReflectionContext reader;
+    EXPECT_EQ(*reader.unreflect<std::shared_ptr<int>>(wire), 1);
+    EXPECT_THROW(static_cast<void>(reader.unreflect<std::shared_ptr<int>>(conflicting)), Exception);
+    EXPECT_THROW(static_cast<void>(reader.unreflect<std::shared_ptr<double>>(wire)), Exception);
+    EXPECT_THROW(static_cast<void>(reader.unreflect<std::shared_ptr<int>>(reader.reflect(3))), Exception);
+
+    const auto otherType = std::shared_ptr<const unsigned int>(original, reinterpret_cast<const unsigned int*>(original.get()));
+    EXPECT_THROW(static_cast<void>(writer.reflect(otherType)), Exception);
+}
+
+TEST(ReflectionTest, SharedPointerCyclesAreRejectedAndFailureDoesNotPoisonContext)
+{
+    const ReflectionContext context;
+    auto cycle = std::make_shared<SharedPointerCycle>();
+    cycle->next = cycle;
+    EXPECT_THROW(static_cast<void>(context.reflect(cycle)), Exception);
+    cycle->next.reset();
+    EXPECT_NO_THROW(static_cast<void>(context.reflect(cycle)));
+
+    /// Finite malicious wire: nested occurrence reuses its parent's id.
+    rfl::Generic::Object inner;
+    inner["id"] = rfl::Generic{int64_t{1}};
+    inner["value"] = rfl::Generic{std::nullopt};
+    rfl::Generic::Object pointee;
+    pointee["next"] = rfl::Generic{inner};
+    rfl::Generic::Object outer;
+    outer["id"] = rfl::Generic{int64_t{1}};
+    outer["value"] = rfl::Generic{pointee};
+    EXPECT_THROW(static_cast<void>(context.unreflect<std::shared_ptr<SharedPointerCycle>>(Reflected{rfl::Generic{outer}})), Exception);
+    EXPECT_NO_THROW(static_cast<void>(context.unreflect<std::shared_ptr<SharedPointerCycle>>(context.reflect(cycle))));
+}
+
+TEST(ReflectionTest, WithRetainsAddsAndOverridesTypedContextEntries)
+{
+    const ReflectionContext parent{InnerDataDeserializationConfig{true}};
+    const auto input = parent.reflect(InnerData{"channel", 7});
+    const auto child = parent.with(123);
+    EXPECT_EQ(ReflectionContext{}.with(InnerDataDeserializationConfig{true}).unreflect<InnerData>(input).optionalField, 7);
+    EXPECT_EQ(child.unreflect<InnerData>(input).optionalField, 7);
+    EXPECT_EQ(child.with().unreflect<InnerData>(input).optionalField, 7);
+    EXPECT_FALSE(child.with(InnerDataDeserializationConfig{false}).unreflect<InnerData>(input).optionalField.has_value());
+    EXPECT_EQ(parent.unreflect<InnerData>(input).optionalField, 7);
+}
+
+struct ValidatedSharedConfig
+{
+    bool senderClaimed = false;
+    bool receiverClaimed = false;
+    int validationCalls = 0;
+
+    void validate()
+    {
+        ++validationCalls;
+        if (!senderClaimed || !receiverClaimed)
+        {
+            throw CannotDeserialize("Both endpoints must be claimed");
+        }
+    }
+};
+
+TEST(ReflectionTest, ValidateReconstructedSharedObjectsAfterMutationAndReleaseScope)
+{
+    const ReflectionContext writer;
+    const auto source = std::make_shared<ValidatedSharedConfig>();
+    const auto wire = writer.reflect(source);
+    /// Serializing an object must not register it for validation.
+    EXPECT_NO_THROW(writer.validateSharedObjects());
+    EXPECT_EQ(source->validationCalls, 0);
+
+    std::weak_ptr<ValidatedSharedConfig> lifetime;
+    {
+        const ReflectionContext reader;
+        auto decoded = reader.unreflect<std::shared_ptr<ValidatedSharedConfig>>(wire);
+        lifetime = decoded;
+        const auto child = reader.with(42);
+        EXPECT_EQ(child.unreflect<std::shared_ptr<ValidatedSharedConfig>>(wire), decoded);
+        /// Ordinary pointees need no validate() method.
+        const auto plainWire = writer.reflect(std::make_shared<int>(7));
+        EXPECT_EQ(*reader.unreflect<std::shared_ptr<int>>(plainWire), 7);
+        EXPECT_THROW(child.validateSharedObjects(), Exception);
+        EXPECT_EQ(decoded->validationCalls, 1);
+        decoded->senderClaimed = true;
+        EXPECT_THROW(reader.validateSharedObjects(), Exception);
+        decoded->receiverClaimed = true;
+        EXPECT_NO_THROW(child.validateSharedObjects());
+        EXPECT_EQ(decoded->validationCalls, 3);
+        decoded->receiverClaimed = false;
+        EXPECT_THROW(reader.validateSharedObjects(), Exception);
+        decoded.reset();
+        EXPECT_FALSE(lifetime.expired());
+    }
+    EXPECT_TRUE(lifetime.expired());
+    EXPECT_EQ(source->validationCalls, 0);
+    EXPECT_NO_THROW(ReflectionContext{}.validateSharedObjects());
+    const ReflectionContext fresh;
+    const auto freshDecoded = fresh.unreflect<std::shared_ptr<ValidatedSharedConfig>>(wire);
+    EXPECT_EQ(freshDecoded->validationCalls, 0);
+    EXPECT_THROW(fresh.validateSharedObjects(), Exception);
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)
