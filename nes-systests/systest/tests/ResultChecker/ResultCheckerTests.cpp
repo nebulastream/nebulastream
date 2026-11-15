@@ -115,7 +115,14 @@ TEST_F(ResultCheckerTest, ComparesTheTwoResultFilesOfADifferentialBlock)
 
     const auto verdict = DifferentialCheck{.firstResultFile = first, .secondResultFile = differing}.check();
     ASSERT_FALSE(verdict.has_value());
-    EXPECT_TRUE(verdict.error().detail.contains("differential query execution"));
+    EXPECT_EQ(verdict.error().detail, R"(Result Mismatch
+Expected Results(Sorted) | Actual Results(Sorted)
+-------------------------------------------------
+1 | 1
+2 | _
+_ | 3
+
+This error happened during differential query execution.)");
 }
 
 TEST_F(ResultCheckerTest, ReportsWhichSideOfADifferentialBlockHasNoOutput)
