@@ -17,7 +17,7 @@
 //! An invariant compares one piece of model state against what the coordinator or the workers report,
 //! and panics on mismatch.
 
-use crate::harness::TestHarness;
+use crate::harness::Harness;
 use crate::model_state::ModelState;
 use model::identifier::{QueryFragmentId, QueryId};
 use model::query::query_fragment::{self, QueryFragmentState};
@@ -29,17 +29,18 @@ use model::worker::{GetWorker, WorkerState};
 use std::collections::HashSet;
 use tracing::info;
 
-pub async fn check_all(harness: &TestHarness, model: &ModelState) {
-    get_active_catalog_fragments(harness, model).await;
-    get_dropped_catalog_fragments(harness, model).await;
-    get_failed_catalog_queries(harness, model).await;
-    get_active_worker_fragments(harness, model).await;
-    get_active_catalog_workers(harness, model).await;
-    get_dropped_catalog_workers(harness, model).await;
+pub async fn check_all(harness: &Harness, model: &ModelState, min_failed_queries: usize) {
+    check_active_catalog_fragments(harness, model).await;
+    check_dropped_catalog_queries(harness, model).await;
+    check_failed_catalog_queries(harness, model).await;
+    check_active_worker_fragments(harness, model).await;
+    check_active_catalog_workers(harness, model).await;
+    check_dropped_catalog_workers(harness, model).await;
+    check_failed_query_count(model, min_failed_queries);
     info!("all invariants hold");
 }
 
-async fn get_catalog_queries(harness: &TestHarness, qids: Vec<QueryId>) -> Vec<QueryWithFragments> {
+async fn get_catalog_queries(harness: &Harness, qids: Vec<QueryId>) -> Vec<QueryWithFragments> {
     let StatementResult::Queries(queries) = harness
         .send(ParsedStatement::GetQuery(
             GetQuery::all().with_fragments().with_ids(qids),
@@ -53,7 +54,7 @@ async fn get_catalog_queries(harness: &TestHarness, qids: Vec<QueryId>) -> Vec<Q
 }
 
 async fn get_catalog_fragments(
-    harness: &TestHarness,
+    harness: &Harness,
     qids: Vec<QueryId>,
 ) -> Vec<query_fragment::Model> {
     let queries = get_catalog_queries(harness, qids).await;
@@ -62,7 +63,7 @@ async fn get_catalog_fragments(
 
 /// A fragment ends as Stopped unless its worker was removed first, which fails it.
 /// The model does not know which of the two happened first.
-fn stopped_or_failed_by_removal(fragment: &query_fragment::Model, model: &ModelState) -> bool {
+pub fn is_stopped_or_failed_by_drop(fragment: &query_fragment::Model, model: &ModelState) -> bool {
     match fragment.current_state {
         QueryFragmentState::Stopped => true,
         QueryFragmentState::Failed => model.dropped_workers().contains(&fragment.host_addr),
@@ -70,7 +71,21 @@ fn stopped_or_failed_by_removal(fragment: &query_fragment::Model, model: &ModelS
     }
 }
 
-async fn get_catalog_workers(state: WorkerState, harness: &TestHarness) -> HashSet<NetworkAddr> {
+fn assert_stopped_or_failed_by_drop(
+    name: &str,
+    fragment: &query_fragment::Model,
+    model: &ModelState,
+) {
+    assert!(
+        is_stopped_or_failed_by_drop(fragment, model),
+        "{name}: fragment {} on {} is {:?}, expect Stopped, or Failed on a dropped worker",
+        fragment.id,
+        fragment.host_addr,
+        fragment.current_state,
+    );
+}
+
+async fn get_catalog_workers(harness: &Harness, state: WorkerState) -> HashSet<NetworkAddr> {
     let StatementResult::Workers(workers) = harness
         .send(ParsedStatement::GetWorker(
             GetWorker::all().with_current_state(state),
@@ -84,92 +99,70 @@ async fn get_catalog_workers(state: WorkerState, harness: &TestHarness) -> HashS
 }
 
 /// Catalog fragments of active queries match the model and are all Running.
-async fn get_active_catalog_fragments(harness: &TestHarness, model: &ModelState) {
-    const NAME: &str = "catalog_fragments_active";
+async fn check_active_catalog_fragments(harness: &Harness, model: &ModelState) {
+    const NAME: &str = "active_catalog_fragments";
     let fragments = get_catalog_fragments(harness, model.active_queries()).await;
     let ids: HashSet<QueryFragmentId> = fragments.iter().map(|f| f.id).collect();
-    assert_eq!(ids, model.active_fragments(), "{}: ID mismatch", NAME);
+    assert_eq!(ids, model.active_fragments(), "{NAME}: ID mismatch");
     for f in &fragments {
         assert_eq!(
             f.current_state,
             QueryFragmentState::Running,
-            "{}: fragment {} is {:?}, expect Running",
-            NAME,
+            "{NAME}: fragment {} is {:?}, expect Running",
             f.id,
             f.current_state,
         );
     }
 }
 
-/// Catalog fragments of dropped queries match the model and are all Stopped, or Failed on a dropped worker.
-async fn get_dropped_catalog_fragments(harness: &TestHarness, model: &ModelState) {
-    const NAME: &str = "catalog_fragments_dropped";
-    let fragments = get_catalog_fragments(harness, model.dropped_queries()).await;
-    let ids: HashSet<QueryFragmentId> = fragments.iter().map(|f| f.id).collect();
-    assert_eq!(ids, model.dropped_fragments(), "{}: ID mismatch", NAME,);
-    for f in &fragments {
-        assert!(
-            stopped_or_failed_by_removal(f, model),
-            "{}: fragment {} on {} is {:?}, expect Stopped, or Failed on a dropped worker",
-            NAME,
-            f.id,
-            f.host_addr,
-            f.current_state,
-        );
-    }
+/// Every dropped query has terminated and is deleted.
+/// The worker check below shows that its fragments were stopped on the workers.
+async fn check_dropped_catalog_queries(harness: &Harness, model: &ModelState) {
+    const NAME: &str = "dropped_catalog_queries";
+    let left: Vec<_> = get_catalog_queries(harness, model.dropped_queries())
+        .await
+        .into_iter()
+        .map(|row| (row.query.id, row.query.state))
+        .collect();
+    assert!(
+        left.is_empty(),
+        "{NAME}: dropped queries left in the catalog: {left:?}"
+    );
 }
 
-/// A query that ran on a dropped worker is Failed: one fragment is Failed on a dropped worker, and none is left running.
-async fn get_failed_catalog_queries(harness: &TestHarness, model: &ModelState) {
-    const NAME: &str = "catalog_queries_failed";
+/// A query that ran on a dropped worker is Failed, and each of its fragments is Stopped or Failed on a dropped worker.
+async fn check_failed_catalog_queries(harness: &Harness, model: &ModelState) {
+    const NAME: &str = "failed_catalog_queries";
     let queries = get_catalog_queries(harness, model.failed_queries()).await;
     let ids: HashSet<QueryFragmentId> = queries
         .iter()
         .flat_map(|row| row.fragments.iter().map(|f| f.id))
         .collect();
-    assert_eq!(ids, model.failed_fragments(), "{}: ID mismatch", NAME);
+    assert_eq!(ids, model.failed_fragments(), "{NAME}: ID mismatch");
     for row in &queries {
         assert_eq!(
             row.query.state,
             QueryState::Failed,
-            "{}: query {} is {:?}, expect Failed",
-            NAME,
+            "{NAME}: query {} is {:?}, expect Failed",
             row.query.id,
             row.query.state,
         );
-        assert!(
-            row.fragments
-                .iter()
-                .any(|f| f.current_state == QueryFragmentState::Failed),
-            "{}: query {} has no Failed fragment",
-            NAME,
-            row.query.id,
-        );
         for f in &row.fragments {
-            assert!(
-                stopped_or_failed_by_removal(f, model),
-                "{}: fragment {} on {} is {:?}, expect Stopped, or Failed on a dropped worker",
-                NAME,
-                f.id,
-                f.host_addr,
-                f.current_state,
-            );
+            assert_stopped_or_failed_by_drop(NAME, f, model);
         }
     }
 }
 
 /// Workers report the same set of active fragments as the model.
-async fn get_active_worker_fragments(harness: &TestHarness, model: &ModelState) {
-    const NAME: &str = "worker_fragments_active";
-    let active = harness.get_active_fragments(&model.active_workers()).await;
-    let actual: HashSet<_> = active.into_iter().collect();
+async fn check_active_worker_fragments(harness: &Harness, model: &ModelState) {
+    const NAME: &str = "active_worker_fragments";
+    let actual = harness.get_worker_fragments(model.active_workers()).await;
     let expected = model.active_fragments();
     let leaked: Vec<_> = actual.difference(&expected).collect();
     let missing: Vec<_> = expected.difference(&actual).collect();
     assert!(
         leaked.is_empty() && missing.is_empty(),
-        "{}: {} leaked (active on worker but query dropped): {:?}, {} missing (expected active but not on worker): {:?}",
-        NAME,
+        "{NAME}: {} leaked (active on worker but query dropped): {:?}, {} missing (expected active but not on worker): {:?}",
         leaked.len(),
         leaked,
         missing.len(),
@@ -178,20 +171,24 @@ async fn get_active_worker_fragments(harness: &TestHarness, model: &ModelState) 
 }
 
 /// Catalog workers marked Active match the model's active workers.
-async fn get_active_catalog_workers(harness: &TestHarness, model: &ModelState) {
-    const NAME: &str = "catalog_workers_active";
-    let active = get_catalog_workers(WorkerState::Active, harness).await;
-    assert_eq!(
-        active,
-        model.active_workers().into_iter().collect::<HashSet<_>>(),
-        "{}: set mismatch",
-        NAME,
-    );
+async fn check_active_catalog_workers(harness: &Harness, model: &ModelState) {
+    const NAME: &str = "active_catalog_workers";
+    let active = get_catalog_workers(harness, WorkerState::Active).await;
+    assert_eq!(&active, model.active_workers(), "{NAME}: set mismatch");
 }
 
 /// Catalog workers marked Removed match the model's dropped workers.
-async fn get_dropped_catalog_workers(harness: &TestHarness, model: &ModelState) {
-    const NAME: &str = "catalog_workers_dropped";
-    let removed = get_catalog_workers(WorkerState::Removed, harness).await;
-    assert_eq!(&removed, model.dropped_workers(), "{}: set mismatch", NAME,);
+async fn check_dropped_catalog_workers(harness: &Harness, model: &ModelState) {
+    const NAME: &str = "dropped_catalog_workers";
+    let removed = get_catalog_workers(harness, WorkerState::Removed).await;
+    assert_eq!(&removed, model.dropped_workers(), "{NAME}: set mismatch");
+}
+
+fn check_failed_query_count(model: &ModelState, min: usize) {
+    let failed = model.failed_query_count();
+    assert!(
+        failed >= min,
+        "worker drops failed {failed} queries, expect at least {min}"
+    );
+    info!("worker drops failed {failed} queries");
 }

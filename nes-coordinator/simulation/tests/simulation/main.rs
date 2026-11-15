@@ -20,10 +20,19 @@
 //! and asserts invariants at the end.
 //!
 //! Trials run on a worker thread under a wall-clock timeout so a stuck simulation cannot hang the whole test binary.
-//! The seed is printed on every failure so a flake can be replayed with `MADSIM_TEST_SEED=...`.
+//! Every failure prints its seed, which `MADSIM_TEST_SEED=...` replays.
+//! The binary also runs unit trials of the harness itself.
 //!
 //! The crate has to compile without madsim (clippy, normal builds, tooling),
 //! so most of the test code is behind `cfg(madsim)` and the non-madsim build produces an empty trial list.
+
+#![cfg_attr(
+    madsim,
+    expect(
+        clippy::future_not_send,
+        reason = "madsim runs every trial on one thread, and workloads share the model through a RefCell"
+    )
+)]
 
 #[cfg(madsim)]
 mod config;
@@ -36,6 +45,8 @@ mod model_state;
 #[cfg(madsim)]
 mod runner;
 #[cfg(madsim)]
+mod unit;
+#[cfg(madsim)]
 mod worker;
 #[cfg(madsim)]
 mod workload;
@@ -44,13 +55,20 @@ use libtest_mimic::{Arguments, Trial};
 
 #[cfg(madsim)]
 use {
+    ahash::AHasher,
+    config::{TrialConfig, TrialFile},
+    madsim::Config,
     madsim::runtime::Runtime,
     std::env,
-    std::fs,
+    std::ffi::OsStr,
+    std::fs::{self, DirEntry},
+    std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
     std::path::Path,
-    std::sync::mpsc,
+    std::sync::mpsc::{self, RecvTimeoutError},
     std::thread,
     std::time::{Duration, SystemTime, UNIX_EPOCH},
+    tokio_real::runtime::{Builder as TokioRuntimeBuilder, RngSeed, Runtime as TokioRuntime},
+    tokio_real::task::unconstrained,
 };
 
 #[cfg(all(madsim, not(tokio_unstable)))]
@@ -66,7 +84,10 @@ fn main() {
     init_process_wide_hash_keys();
 
     #[cfg(madsim)]
-    let trials = discover_trials();
+    let trials: Vec<Trial> = discover_trials()
+        .into_iter()
+        .chain(unit::build_trials())
+        .collect();
 
     #[cfg(not(madsim))]
     let trials: Vec<Trial> = vec![];
@@ -77,50 +98,60 @@ fn main() {
 /// Sets the process-wide hash keys of `ahash` from a fixed seed, before any trial runs.
 /// `ahash` reads them once per process from the system's entropy source,
 /// which the simulator replaces with the seeded random stream of the running trial.
-/// Without this call the first trial to hash a value would spend part of its stream on the keys,
+/// Otherwise the first trial to hash a value would spend part of its stream on the keys,
 /// and every later trial would inherit keys that depend on that trial's seed.
-/// A trial would then behave differently depending on which trials ran before it in the process.
 #[cfg(madsim)]
 fn init_process_wide_hash_keys() {
-    Runtime::with_seed_and_config(0, madsim::Config::default()).block_on(async {
-        let _ = ahash::AHasher::default();
+    Runtime::with_seed_and_config(0, Config::default()).block_on(async {
+        let _ = AHasher::default();
     });
 }
 
 #[cfg(madsim)]
 fn discover_trials() -> Vec<Trial> {
-    use config::TestFile;
-
     let config_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/simulation/configs");
 
     let mut trials = Vec::new();
 
     let mut entries: Vec<_> = fs::read_dir(&config_dir)
         .unwrap_or_else(|e| panic!("failed to read config dir {}: {e}", config_dir.display()))
-        .filter_map(|e| e.ok())
+        .map(|e| {
+            e.unwrap_or_else(|e| panic!("failed to read an entry of {}: {e}", config_dir.display()))
+        })
         .filter(|e| e.path().extension().is_some_and(|ext| ext == "toml"))
         .collect();
-    entries.sort_by_key(|e| e.file_name());
+    entries.sort_by_key(DirEntry::file_name);
 
     let env_seed: Option<u64> = env::var("MADSIM_TEST_SEED").ok().map(|s| {
         s.parse()
             .unwrap_or_else(|e| panic!("MADSIM_TEST_SEED={s} is not a seed: {e}"))
     });
 
-    let mut trial_index: u64 = 0;
+    let wall_timeout = env::var("SIM_WALL_TIMEOUT_SECS").map_or(
+        Duration::from_secs(DEFAULT_WALL_TIMEOUT_SECS),
+        |s| {
+            Duration::from_secs(s.parse().unwrap_or_else(|e| {
+                panic!("SIM_WALL_TIMEOUT_SECS={s} is not a number of seconds: {e}")
+            }))
+        },
+    );
 
     for entry in entries {
         let path = entry.path();
-        let stem = path.file_stem().unwrap().to_str().unwrap().to_string();
+        let stem = path
+            .file_stem()
+            .and_then(OsStr::to_str)
+            .unwrap_or_else(|| panic!("{} has no UTF-8 file name", path.display()));
 
         let content = fs::read_to_string(&path)
             .unwrap_or_else(|e| panic!("failed to read {}: {e}", path.display()));
-        let file: TestFile = toml::from_str(&content)
+        let file: TrialFile = toml::from_str(&content)
             .unwrap_or_else(|e| panic!("failed to parse {}: {e}", path.display()));
 
-        for spec in file.test {
-            spec.validate();
-            let name = format!("{stem}::{}", spec.title);
+        for cfg in file.trials {
+            cfg.validate()
+                .unwrap_or_else(|e| panic!("invalid trial in {}: {e}", path.display()));
+            let name = format!("{stem}::{}", cfg.title);
 
             // No seed pinned: derive one per trial from the wall clock.
             // Trials can start in the same nanosecond, so xor in the trial index times a large odd constant to keep seeds distinct.
@@ -129,13 +160,11 @@ fn discover_trials() -> Vec<Trial> {
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_nanos() as u64;
-                nanos ^ trial_index.wrapping_mul(0x9E3779B97F4A7C15)
+                nanos ^ (trials.len() as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)
             });
-            trial_index += 1;
 
-            let trial_name = name.clone();
-            trials.push(Trial::test(name, move || {
-                run_trial(&trial_name, spec, seed);
+            trials.push(Trial::test(name.clone(), move || {
+                run_trial(&name, cfg, seed, wall_timeout);
                 Ok(())
             }));
         }
@@ -145,22 +174,16 @@ fn discover_trials() -> Vec<Trial> {
 }
 
 #[cfg(madsim)]
-fn run_trial(name: &str, spec: config::TestConfig, seed: u64) {
-    let wall_timeout = env::var("SIM_WALL_TIMEOUT_SECS")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .map(Duration::from_secs)
-        .unwrap_or(Duration::from_secs(DEFAULT_WALL_TIMEOUT_SECS));
-
-    let trial = name.to_string();
+fn run_trial(name: &str, cfg: TrialConfig, seed: u64, wall_timeout: Duration) {
+    let trial_name = name.to_string();
     let (tx, rx) = mpsc::channel();
     let _ = thread::Builder::new()
         .name(format!("sim-{name}"))
         .spawn(move || {
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                let rt = Runtime::with_seed_and_config(seed, madsim::Config::default());
-                seeded_tokio_context(seed).block_on(tokio_real::task::unconstrained(async {
-                    rt.block_on(runner::run_test(&trial, spec))
+            let result = catch_unwind(AssertUnwindSafe(|| {
+                let rt = Runtime::with_seed_and_config(seed, Config::default());
+                build_seeded_tokio_runtime(seed).block_on(unconstrained(async {
+                    rt.block_on(runner::run(&trial_name, &cfg));
                 }));
             }));
             let _ = tx.send(result);
@@ -171,27 +194,21 @@ fn run_trial(name: &str, spec: config::TestConfig, seed: u64) {
         Ok(Ok(())) => {}
         Ok(Err(payload)) => {
             print_repro(name, seed, "FAILED");
-            std::panic::resume_unwind(payload);
+            resume_unwind(payload);
         }
-        Err(mpsc::RecvTimeoutError::Timeout) => {
-            print_repro(
-                name,
-                seed,
-                &format!("TIMED OUT after {}s", wall_timeout.as_secs()),
-            );
-            panic!(
-                "trial {name} exceeded wall-clock timeout of {}s",
-                wall_timeout.as_secs()
-            );
+        Err(RecvTimeoutError::Timeout) => {
+            print_repro(name, seed, &format!("TIMED OUT after {wall_timeout:?}"));
+            panic!("trial {name} exceeded wall-clock timeout of {wall_timeout:?}");
         }
-        Err(mpsc::RecvTimeoutError::Disconnected) => {
+        Err(RecvTimeoutError::Disconnected) => {
             print_repro(name, seed, "ABORTED (worker disconnected)");
             panic!("trial {name} worker thread disconnected without sending a result");
         }
     }
 }
 
-/// A tokio runtime that only gives the trial's thread a seeded tokio random generator; nothing is spawned on it.
+/// A tokio runtime that only seeds the trial thread's tokio random generator.
+/// Nothing is spawned on it.
 /// The simulator replaces tokio's runtime, but `select!` and watch channels are still tokio's own,
 /// and they pick branches and waiter slots from a per-thread generator.
 /// Tokio seeds that generator from a process-wide counter, so without this a trial would behave differently
@@ -200,11 +217,9 @@ fn run_trial(name: &str, spec: config::TestConfig, seed: u64) {
 /// The trial has to run without tokio's cooperative budget inside this context,
 /// because nothing resets the budget between the simulator's task polls.
 #[cfg(madsim)]
-fn seeded_tokio_context(seed: u64) -> tokio_real::runtime::Runtime {
-    tokio_real::runtime::Builder::new_current_thread()
-        .rng_seed(tokio_real::runtime::RngSeed::from_bytes(
-            &seed.to_le_bytes(),
-        ))
+fn build_seeded_tokio_runtime(seed: u64) -> TokioRuntime {
+    TokioRuntimeBuilder::new_current_thread()
+        .rng_seed(RngSeed::from_bytes(&seed.to_le_bytes()))
         .build()
         .expect("failed to build the tokio runtime")
 }
