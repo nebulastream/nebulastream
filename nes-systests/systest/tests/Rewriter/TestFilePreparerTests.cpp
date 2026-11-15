@@ -982,4 +982,31 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
     EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}).empty());
 }
 
+TEST_F(TestFilePreparerTest, ReportsTheFileThatFailsToParse)
+{
+    const Testing::TemporaryDirectory tmp;
+    const auto file = tmp.get() / "Broken.test";
+    {
+        std::ofstream out{file};
+        out << "SELECT id FROM s INTO k;\n";
+    }
+    SystestConfiguration config{};
+    config.testDiscoverRoot = tmp.get().string();
+    config.workingDir = tmp.get().string();
+    config.clusterConfig = SystestClusterConfiguration{
+        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
+
+    try
+    {
+        std::ignore = TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"Broken"}});
+        ADD_FAILURE() << "expected the file to be rejected";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::SLTUnexpectedToken);
+        EXPECT_TRUE(std::string_view{exception.what()}.contains(fmt::format("Could not successfully parse test file://{}", file.string())))
+            << exception.what();
+    }
+}
+
 }
