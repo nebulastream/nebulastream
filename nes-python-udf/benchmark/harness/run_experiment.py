@@ -356,6 +356,8 @@ def run(arguments, layout, udf, repetition, record_base):
         process_busy=round(sum(busy) / len(busy), 2) if busy else None,
         process_busy_min=round(min(busy), 2) if busy else None,
         processes_reporting=len(statistics),
+        # PyPy is slower in every compiled loop once cpyext is loaded (E46)
+        cpyext_loaded=sum(1 for s in statistics if s.get("cpyext")),
         worker_busy=round(sum(cpu.get("worker", [])) / (layout["w"] * seconds), 2) if seconds else None,
         source_threads_cpu=sorted(round(value / seconds, 2) for name, values in cpu.items() if name.startswith("DataSrc") for value in values) if seconds else None,
         misc_threads_cpu={name: round(sum(values) / seconds, 2) for name, values in cpu.items() if name in ("task-delayer", "net-sender", "net-receiver")} if seconds else None,

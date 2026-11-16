@@ -161,6 +161,8 @@ finally:
     if _profile:
         _pyprof.dump()
     _S["wall"] = _pc() - _T0
+    # cpyext slows every compiled loop of PyPy; record if anything loaded it
+    _S["cpyext"] = "cpyext" in __import__("sys").modules
     _times = _os.times()
     _switches = {}
     with open("/proc/self/status") as _status:
