@@ -39,7 +39,8 @@ if os.environ["UDF_INDEX"] == "0":
         saved.write(program)
 
 INSTRUMENT = r'''
-import time as _t, json as _json, os as _os, resource as _res
+# No resource module: in PyPy it loads cpyext, which slows every compiled loop of the process (E46, E48)
+import time as _t, json as _json, os as _os
 _pc = _t.perf_counter
 _S = {"batches": 0, "rows": 0, "process": 0.0, "answer": 0.0, "wait": 0.0, "first": None, "last": 0.0, "series": {}}
 # Rows by quarter second of the monotonic clock, which all processes share, so that the harness can leave out the warm-up
@@ -72,8 +73,8 @@ def _event(index):
     bucket = int(_pc() * 4)
     entry = _events_series.get(bucket)
     if entry is None:
-        usage = _res.getrusage(_res.RUSAGE_SELF)
-        entry = _events_series[bucket] = [0, 0, usage.ru_stime, usage.ru_utime]
+        times = _os.times()
+        entry = _events_series[bucket] = [0, 0, times.system, times.user]
     entry[index] += 1
 def _count_wakes(namespace):
     original = namespace.get("_wake_worker")
@@ -160,8 +161,13 @@ finally:
     if _profile:
         _pyprof.dump()
     _S["wall"] = _pc() - _T0
-    usage = _res.getrusage(_res.RUSAGE_SELF)
-    _S.update(user=usage.ru_utime, sys=usage.ru_stime, vcsw=usage.ru_nvcsw, ivcsw=usage.ru_nivcsw)
+    _times = _os.times()
+    _switches = {}
+    with open("/proc/self/status") as _status:
+        for _line in _status:
+            if "ctxt_switches" in _line:
+                _switches[_line.split(":")[0]] = int(_line.split()[-1])
+    _S.update(user=_times.user, sys=_times.system, vcsw=_switches.get("voluntary_ctxt_switches"), ivcsw=_switches.get("nonvoluntary_ctxt_switches"))
     with open(_os.path.join(_os.environ["RUN_DIR"], "stats" + _os.environ["UDF_INDEX"] + ".json"), "w") as _out:
         _out.write(_json.dumps(_S))
 '''
