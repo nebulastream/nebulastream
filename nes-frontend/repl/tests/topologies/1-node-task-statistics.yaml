@@ -1,0 +1,5 @@
+workers:
+  - host: "worker-node:8080"
+    data_address: "worker-node:9090"
+    args:
+      - "--enable_task_statistics=true"
