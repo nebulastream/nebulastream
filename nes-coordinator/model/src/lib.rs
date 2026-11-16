@@ -103,8 +103,7 @@ where
     E::find().filter(filter.to_condition()).all(conn).await
 }
 
-/// Reads and then deletes every row that matches a request's condition, returning the deleted rows.
-/// Delete-with-returning is not exposed by the ORM (as of now), so this is two statements.
+/// Deletes every row that matches a request's condition and returns the deleted rows.
 pub(crate) async fn drop_all<E>(
     filter: &impl IntoCondition,
     conn: &impl ConnectionTrait,
@@ -112,10 +111,10 @@ pub(crate) async fn drop_all<E>(
 where
     E: EntityTrait,
 {
-    let condition = filter.to_condition();
-    let rows = E::find().filter(condition.clone()).all(conn).await?;
-    E::delete_many().filter(condition).exec(conn).await?;
-    Ok(rows)
+    E::delete_many()
+        .filter(filter.to_condition())
+        .exec_with_returning(conn)
+        .await
 }
 
 /// Single entry point for every catalog request.
