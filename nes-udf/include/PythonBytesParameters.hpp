@@ -21,16 +21,30 @@ namespace NES
 /// is annotated as bytes, also as part of a union such as Optional[bytes]. NES has one VARSIZED type for text and binary
 /// data until it distinguishes them itself, so these annotations choose: a bytes parameter receives the raw bytes, and
 /// any other parameter receives a str and fails on invalid UTF-8. Without usable annotations every parameter is a str.
+///
+/// It does not import inspect for a plain function: in PyPy, inspect loads cpyext, and with cpyext loaded every compiled loop
+/// of the process is slower (lcg took 328 instead of 225 ns for each row).
 constexpr const char* PythonBytesParametersSource = R"(
-import inspect
+import types
 import typing
+
+
+def _parameter_names(function):
+    if isinstance(function, types.FunctionType) and not hasattr(function, "__wrapped__"):
+        code = function.__code__
+        return list(code.co_varnames[: code.co_argcount])
+    import inspect
+
+    return list(inspect.signature(function).parameters)
 
 
 def _bytes_parameters(function, count):
     flags = [False] * count
     try:
         hints = typing.get_type_hints(function)
-        names = list(inspect.signature(function).parameters)
+        if not hints:
+            return flags
+        names = _parameter_names(function)
     except Exception:
         return flags
     for index, name in enumerate(names[:count]):

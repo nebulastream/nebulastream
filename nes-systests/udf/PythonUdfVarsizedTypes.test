@@ -23,6 +23,7 @@ ATTACH INLINE
 CREATE FUNCTION text_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.text_length';
 CREATE FUNCTION byte_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.byte_length';
 CREATE FUNCTION optional_byte_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.optional_byte_length';
+CREATE FUNCTION wrapped_byte_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_wrapped.wrapped_byte_length';
 CREATE FUNCTION type_name_ip (x VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.type_name';
 CREATE FUNCTION echo_bytes_ip (x VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.echo_bytes';
 CREATE FUNCTION describe_ip (x VARSIZED, y VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.describe';
@@ -39,6 +40,11 @@ SELECT byte_length_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
 2
 
 SELECT optional_byte_length_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+2
+
+# A wrapped function gets bytes from the annotation of the function it wraps
+SELECT wrapped_byte_length_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
 2
 
@@ -87,6 +93,7 @@ str
 CREATE FUNCTION text_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.text_length';
 CREATE FUNCTION byte_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.byte_length';
 CREATE FUNCTION optional_byte_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.optional_byte_length';
+CREATE FUNCTION wrapped_byte_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_wrapped.wrapped_byte_length';
 CREATE FUNCTION type_name_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.type_name';
 CREATE FUNCTION echo_bytes_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.echo_bytes';
 CREATE FUNCTION describe_oop (x VARSIZED, y VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.describe';
@@ -103,6 +110,11 @@ SELECT byte_length_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
 2
 
 SELECT optional_byte_length_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+2
+
+# A wrapped function gets bytes from the annotation of the function it wraps
+SELECT wrapped_byte_length_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
 2
 
