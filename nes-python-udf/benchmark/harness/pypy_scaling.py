@@ -29,6 +29,11 @@ import sys
 import time
 
 WORKER = r'''
+import os as _os_pyprof, sys as _sys_pyprof
+if _os_pyprof.environ.get("UDF_BENCH_PYPROF"):
+    _sys_pyprof.path.insert(0, _os_pyprof.environ["UDF_BENCH_PYPROF_PATH"])
+    import pyprof
+    pyprof.start()
 import array, sys, time
 udf_name, start, seconds = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
 SOURCES = {

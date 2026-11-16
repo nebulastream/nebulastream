@@ -145,10 +145,20 @@ def _attached(operator):
     _wrap(operator.__dict__, "_process_batch", "process", True)
     _wrap(operator.__dict__, "_answer", "answer")
     _count_wakes(operator.__dict__)
+# UDF_BENCH_PYPROF=<file>: the first process samples its Python stacks for flamegraphs, see pyprof.py. UDF_BENCH_PYPROF_PATH
+# is the directory of pyprof.py.
+_profile = _os.environ.get("UDF_BENCH_PYPROF") and _os.environ.get("UDF_INDEX") == "0"
+if _profile:
+    import sys as _sys
+    _sys.path.insert(0, _os.environ["UDF_BENCH_PYPROF_PATH"])
+    import pyprof as _pyprof
+    _pyprof.start()
 _T0 = _pc()
 try:
     (_serve if "_serve" in globals() else _main)()
 finally:
+    if _profile:
+        _pyprof.dump()
     _S["wall"] = _pc() - _T0
     usage = _res.getrusage(_res.RUSAGE_SELF)
     _S.update(user=usage.ru_utime, sys=usage.ru_stime, vcsw=usage.ru_nvcsw, ivcsw=usage.ru_nivcsw)

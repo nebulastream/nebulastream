@@ -38,6 +38,11 @@ import sys
 import time
 
 WORKER = r'''
+import os as _os_pyprof, sys as _sys_pyprof
+if _os_pyprof.environ.get("UDF_BENCH_PYPROF"):
+    _sys_pyprof.path.insert(0, _os_pyprof.environ["UDF_BENCH_PYPROF_PATH"])
+    import pyprof
+    pyprof.start()
 import mmap, os, struct, sys, time, types
 directory, chain, rows, start, seconds = sys.argv[1], sys.argv[2].split("+"), int(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5])
 RING = 4 * 1024 * 1024   # RING_SIZE of PythonProcessShmSource.cpp
