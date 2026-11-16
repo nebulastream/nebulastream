@@ -1,0 +1,3 @@
+ShmemHugePages:  4206592 kB
+ShmemPmdMapped:  4206592 kB
+FileHugePages:  35704832 kB
