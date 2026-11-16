@@ -13,8 +13,7 @@
 */
 
 /* Binds a shared memory file to a NUMA node: pool_bind <file> <node>. The policy belongs to the shared memory, so it holds for every
-   process that maps it. The UDF processes of the benchmark run it on the buffer pool of the worker (UDF_BENCH_POOL_NODE), as a child
-   process: ctypes in PyPy slows every compiled loop of the process that imports it (E48). */
+   process that maps it. run_experiment.py runs it on the buffer pool of the worker (UDF_BENCH_POOL_NODE) as soon as the pool exists. */
 
 #define _GNU_SOURCE
 #include <fcntl.h>

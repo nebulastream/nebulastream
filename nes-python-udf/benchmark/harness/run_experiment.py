@@ -220,6 +220,25 @@ def sample_threads(process, threads):
         time.sleep(0.2)
 
 
+def bind_pools(process, helper, node, bound):
+    """Binds every buffer pool of the worker to a NUMA node (mbind with MPOL_BIND) as soon as it exists, with the helper pool_bind.c.
+
+    The pool is shared memory, so the policy holds for the worker and all UDF processes. Automatic NUMA balancing does not scan
+    memory with such a policy, so it no longer unmaps and moves the pages of the pool (E34). `bound` receives the bound files."""
+    while process.poll() is None:
+        for fd in glob.glob(f"/proc/{process.pid}/fd/*"):
+            try:
+                target = os.readlink(fd)
+                if not target.startswith("/memfd:nes-buffers"):
+                    continue
+                identity = os.stat(fd).st_ino
+            except OSError:
+                continue
+            if identity not in bound:
+                bound[identity] = subprocess.run([helper, fd, node], check=False).returncode
+        time.sleep(0.01)
+
+
 def run(arguments, layout, udf, repetition, record_base):
     inputs = INPUTS[arguments.format]
     operators = len(chain(udf) or [udf])
@@ -237,10 +256,9 @@ def run(arguments, layout, udf, repetition, record_base):
     environment = dict(os.environ, RUN_DIR=run_dir, BOOT=os.path.join(HARNESS, "boot.py"), UDF_BENCH_PYTHON=arguments.python)
     environment.update(setting.split("=", 1) for setting in arguments.environment)
     if "UDF_BENCH_POOL_NODE" in environment:
-        # The helper that binds the buffer pool, see boot.py
+        # The helper that binds the buffer pool, see bind_pools
         helper = os.path.join(arguments.scratch, "pool_bind")
         subprocess.run(["gcc", "-O2", "-o", helper, os.path.join(HARNESS, "pool_bind.c")], check=True)
-        environment["UDF_BENCH_POOL_BIND"] = helper
     worker_arguments = [
         f"--worker.query_engine.number_of_worker_threads={layout['w']}",
         f"--worker.python_udf.processes={arguments.processes or layout['p']}",
@@ -276,8 +294,15 @@ def run(arguments, layout, udf, repetition, record_base):
         threads = {}
         sampler = threading.Thread(target=sample_threads, args=(process, threads))
         sampler.start()
+        bound_pools = {}
+        binder = None
+        if "UDF_BENCH_POOL_NODE" in environment:
+            binder = threading.Thread(target=bind_pools, args=(process, helper, environment["UDF_BENCH_POOL_NODE"], bound_pools))
+            binder.start()
         return_code = process.wait()
         sampler.join()
+        if binder is not None:
+            binder.join()
 
     seconds = None
     for path in glob.glob(run_dir + "/work/**/BenchmarkResults.json", recursive=True):
@@ -364,6 +389,8 @@ def run(arguments, layout, udf, repetition, record_base):
         # PyPy is slower in every compiled loop once cpyext is loaded (E46)
         cpyext_loaded=sum(1 for s in statistics if s.get("cpyext")),
         ctypes_loaded=sum(1 for s in statistics if s.get("ctypes")),
+        # The return codes of the binding of each buffer pool (UDF_BENCH_POOL_NODE), 0 if it worked
+        pools_bound=list(bound_pools.values()),
         worker_busy=round(sum(cpu.get("worker", [])) / (layout["w"] * seconds), 2) if seconds else None,
         source_threads_cpu=sorted(round(value / seconds, 2) for name, values in cpu.items() if name.startswith("DataSrc") for value in values) if seconds else None,
         misc_threads_cpu={name: round(sum(values) / seconds, 2) for name, values in cpu.items() if name in ("task-delayer", "net-sender", "net-receiver")} if seconds else None,

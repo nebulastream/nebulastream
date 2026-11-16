@@ -107,24 +107,9 @@ if _os.environ.get("UDF_BENCH_POPULATE") in ("1", "read") and "_pool" in globals
         return view
 _count_wakes(globals())
 _count_sleeps(globals())
-# UDF_BENCH_POOL_NODE=<node>: the process binds the buffer pool of the worker to a NUMA node (mbind with MPOL_BIND) before it
-# handles batches. The pool is shared memory, so the policy holds for all processes and the worker. Automatic NUMA balancing does
-# not scan memory with such a policy, so it no longer unmaps and moves the pages of the pool. The helper UDF_BENCH_POOL_BIND
-# (pool_bind.c) does the system call in a child process: ctypes in PyPy slows every compiled loop of the process (E48).
-if _os.environ.get("UDF_BENCH_POOL_NODE"):
-    import subprocess as _subprocess
-    def _bind(fd):
-        _subprocess.run([_os.environ["UDF_BENCH_POOL_BIND"], "/proc/%d/fd/%d" % (_os.getpid(), fd), _os.environ["UDF_BENCH_POOL_NODE"]], check=True)
-    if "_pool" in globals() and callable(_pool):
-        # A host process gets the pool with its first operator
-        _bound_pool = _pool
-        def _pool(fd):
-            if not _pools:
-                _bind(fd)
-            return _bound_pool(fd)
-    elif _os.path.exists("/proc/self/fd/5"):
-        # A process of its own has the pool as file descriptor 5, if its protocol uses the pool
-        _bind(5)
+# UDF_BENCH_POOL_NODE=<node>: run_experiment.py binds the buffer pool of the worker to a NUMA node, see bind_pools there. Binding
+# from these processes needed ctypes (slows every compiled loop of PyPy, E48) or a child process for each of them (an unstable
+# start with 64 processes, E49).
 _wrap(globals(), "_process_batch", "process", True)
 _wrap(globals(), "_answer", "answer")
 _wrap(globals(), "_frame", "answer")
