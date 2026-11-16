@@ -16,10 +16,15 @@ The host reads this module without the loader, so the module holds only data.
 """
 
 from conntest_runner.scenario_bindings.sink import (
+    backpressure,
     bad_endpoint,
     empty,
+    reconnect,
+    reconnect_timeout,
+    shutdown_while_blocked,
     silent_link,
     slow_link,
+    stop_while_blocked,
     transfer_1_buffer,
     transfer_n_buffers,
 )
@@ -34,4 +39,11 @@ SCENARIOS = [
     # The sink has no idle timeout, so it must deliver every row over a slow link and after a silent one.
     slow_link("basic.nesql"),
     silent_link("basic.nesql"),
+    backpressure("backpressure.nesql"),
+    # The sink gives up on the buffers that it could not write once its close timeout ends.
+    stop_while_blocked("deep_queue.nesql"),
+    shutdown_while_blocked("deep_queue.nesql"),
+    # The sink sends only the buffer that it was writing again, so the data in flight when the connection broke is lost.
+    reconnect("multicol.nesql", loss=True),
+    reconnect_timeout("short_connect_timeout.nesql", error=4004),
 ]
