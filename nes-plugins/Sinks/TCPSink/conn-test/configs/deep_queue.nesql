@@ -1,0 +1,10 @@
+-- A TCP sink that queues every buffer of the blocked-writer scenarios, so that their WRITE returns while the backend reads nothing.
+-- It gives up on the queued buffers 1 s after its stop, well within the step timeout.
+-- The connection tests replace SOCKET_HOST and SOCKET_PORT with the endpoint of each test.
+CREATE SINK deep_queue_output (data UINT8) TYPE TCP SET (
+    'localhost' AS "SINK".SOCKET_HOST,
+    9000        AS "SINK".SOCKET_PORT,
+    'JSON'      AS "SINK".OUTPUT_FORMAT,
+    512         AS "SINK".MAX_QUEUED_BUFFERS,
+    1000        AS "SINK".CLOSE_TIMEOUT_MS
+);
