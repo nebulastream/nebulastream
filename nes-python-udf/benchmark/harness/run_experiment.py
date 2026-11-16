@@ -236,6 +236,11 @@ def run(arguments, layout, udf, repetition, record_base):
     write_test(test_file, arguments.format, udf, input_file, layout["src_perf"], arguments.sources, arguments.unused, arguments.unused_after, arguments.wide)
     environment = dict(os.environ, RUN_DIR=run_dir, BOOT=os.path.join(HARNESS, "boot.py"), UDF_BENCH_PYTHON=arguments.python)
     environment.update(setting.split("=", 1) for setting in arguments.environment)
+    if "UDF_BENCH_POOL_NODE" in environment:
+        # The helper that binds the buffer pool, see boot.py
+        helper = os.path.join(arguments.scratch, "pool_bind")
+        subprocess.run(["gcc", "-O2", "-o", helper, os.path.join(HARNESS, "pool_bind.c")], check=True)
+        environment["UDF_BENCH_POOL_BIND"] = helper
     worker_arguments = [
         f"--worker.query_engine.number_of_worker_threads={layout['w']}",
         f"--worker.python_udf.processes={arguments.processes or layout['p']}",
@@ -358,6 +363,7 @@ def run(arguments, layout, udf, repetition, record_base):
         processes_reporting=len(statistics),
         # PyPy is slower in every compiled loop once cpyext is loaded (E46)
         cpyext_loaded=sum(1 for s in statistics if s.get("cpyext")),
+        ctypes_loaded=sum(1 for s in statistics if s.get("ctypes")),
         worker_busy=round(sum(cpu.get("worker", [])) / (layout["w"] * seconds), 2) if seconds else None,
         source_threads_cpu=sorted(round(value / seconds, 2) for name, values in cpu.items() if name.startswith("DataSrc") for value in values) if seconds else None,
         misc_threads_cpu={name: round(sum(values) / seconds, 2) for name, values in cpu.items() if name in ("task-delayer", "net-sender", "net-receiver")} if seconds else None,

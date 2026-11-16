@@ -109,33 +109,22 @@ _count_wakes(globals())
 _count_sleeps(globals())
 # UDF_BENCH_POOL_NODE=<node>: the process binds the buffer pool of the worker to a NUMA node (mbind with MPOL_BIND) before it
 # handles batches. The pool is shared memory, so the policy holds for all processes and the worker. Automatic NUMA balancing does
-# not scan memory with such a policy, so it no longer unmaps and moves the pages of the pool.
+# not scan memory with such a policy, so it no longer unmaps and moves the pages of the pool. The helper UDF_BENCH_POOL_BIND
+# (pool_bind.c) does the system call in a child process: ctypes in PyPy slows every compiled loop of the process (E48).
 if _os.environ.get("UDF_BENCH_POOL_NODE"):
-    import ctypes as _ctypes, mmap as _mmap
-    def _bind(mapping):
-        libc = _ctypes.CDLL(None, use_errno=True)
-        address = _ctypes.addressof(_ctypes.c_char.from_buffer(mapping))
-        mask = _ctypes.c_ulong(1 << int(_os.environ["UDF_BENCH_POOL_NODE"]))
-        # mbind(address, length, MPOL_BIND, nodemask, maxnode, flags)
-        if libc.syscall(237, _ctypes.c_void_p(address), _ctypes.c_ulong(len(mapping)), 2, _ctypes.byref(mask), 65, 0):
-            raise OSError(_ctypes.get_errno(), "mbind of the buffer pool failed")
+    import subprocess as _subprocess
+    def _bind(fd):
+        _subprocess.run([_os.environ["UDF_BENCH_POOL_BIND"], "/proc/%d/fd/%d" % (_os.getpid(), fd), _os.environ["UDF_BENCH_POOL_NODE"]], check=True)
     if "_pool" in globals() and callable(_pool):
         # A host process gets the pool with its first operator
         _bound_pool = _pool
         def _pool(fd):
-            known = len(_pools)
-            view = _bound_pool(fd)
-            if len(_pools) > known:
-                _bind(view.obj)
-            return view
-    else:
+            if not _pools:
+                _bind(fd)
+            return _bound_pool(fd)
+    elif _os.path.exists("/proc/self/fd/5"):
         # A process of its own has the pool as file descriptor 5, if its protocol uses the pool
-        try:
-            _bound = _mmap.mmap(5, 0)
-        except (OSError, ValueError):
-            _bound = None
-        if _bound is not None:
-            _bind(_bound)
+        _bind(5)
 _wrap(globals(), "_process_batch", "process", True)
 _wrap(globals(), "_answer", "answer")
 _wrap(globals(), "_frame", "answer")
@@ -163,6 +152,8 @@ finally:
     _S["wall"] = _pc() - _T0
     # cpyext slows every compiled loop of PyPy; record if anything loaded it
     _S["cpyext"] = "cpyext" in __import__("sys").modules
+    # ctypes has the same effect without cpyext (E48)
+    _S["ctypes"] = "ctypes" in __import__("sys").modules
     _times = _os.times()
     _switches = {}
     with open("/proc/self/status") as _status:
