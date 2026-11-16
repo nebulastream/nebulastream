@@ -25,6 +25,7 @@ members = [
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
     "nes-coordinator/request-handler",
+    "nes-coordinator/simulation",
 ]
 
 [workspace.package]
@@ -49,13 +50,17 @@ migration = { path = "nes-coordinator/migration" }
 model = { path = "nes-coordinator/model" }
 controller = { path = "nes-coordinator/controller" }
 request_handler = { path = "nes-coordinator/request-handler" }
+coordinator = { path = "nes-coordinator/coordinator" }
 
+ahash = "0.8"
 anyhow = "1.0"
 async-channel = "2.3.1"
 async-trait = "0.1"
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
 cxx = "1.0.194"
 futures = "0.3.31"
+libtest-mimic = "0.8"
+madsim = { version = "0.2.34", features = ["macros"] }
 pin-project = "1.1.10"
 proptest = "1.5"
 proptest-derive = "0.5"
@@ -80,10 +85,13 @@ strum = { version = "0.26", features = ["derive"] }
 test-strategy = "0.4.5"
 thiserror = "2.0"
 tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time"] }
+# The real tokio under a second name, for members whose `tokio` is the madsim facade.
+tokio-real = { version = "1.52.0", package = "tokio", features = ["rt"] }
 tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor"] }
 tokio-stream = "0.1.17"
 tokio-util = { version = "0.7.13", features = ["codec"] }
+toml = "1.1.2"
 tracing = "0.1.44"
 tracing-subscriber = "0.3"
 url = { version = "2.5.4", features = ["serde"] }
@@ -93,3 +101,6 @@ url = { version = "2.5.4", features = ["serde"] }
 # They cannot inherit those from this table: workspace inheritance cannot rename a package,
 # and the entries here must stay the real crates for the network and binding members.
 # The dependency policy script allows the madsim-* facades as the only inline exception.
+[patch.crates-io]
+sqlx = { git = "https://github.com/madsim-rs/sqlx.git", rev = "3efe6d0065963db2a2b7f30dee69f647e28dec81" }
+getrandom = { git = "https://github.com/madsim-rs/getrandom.git", rev = "e79a7aecbcf8a43a802d30742667b77d75c613bd" }
