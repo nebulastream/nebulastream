@@ -1,0 +1,774 @@
+@@@ input
+#
+
+
+
+@@@ expected
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+CREATE SINK x(a UINT64) TYPE File;
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+ERROR 1003
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+Configuration k: 1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+
+CREATE SINK x(a UINT64) TYPE File;
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+CREATE 'CREATE SINK x(a UINT64) TYPE File;'
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+SELECT b FROM s INTO k;
+----
+2
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+1,a#b
+  # indented note
+   
+# full line comment
+2
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1,a', '  ', '   ', '2'] {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+
+SELECT b FROM s INTO k;
+----
+2
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS [] {}
+SELECT 2 'SELECT b FROM s INTO k;' ROWS ['2'] {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+selected,2
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+SELECTION
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS [] {}
+@@@ input
+SELECT a FROM s INTO k;
+---- # rows
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+EXPLAIN SELECT a FROM s INTO k;
+---- 
+plan
+==END==
+
+@@@ expected
+EXPLAIN 1 'EXPLAIN SELECT a FROM s INTO k;' ['---- ', 'plan']
+@@@ input
+SELECT a FROM s INTO k;
+-----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k; # note
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k; ' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k;
+CREATE SINK x(a UINT64) TYPE File;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;\nCREATE SINK x(a UINT64) TYPE File;' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k;
+Configuration c: 1
+----
+1
+
+@@@ expected
+EXCEPTION 2000
+@@@ input
+SELECT a
+
+  # note
+FROM s INTO k;
+
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a\nFROM s INTO k;' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k
+----
+1
+
+@@@ expected
+EXCEPTION 2000
+@@@ input
+SELECT a FROM s INTO k
+====
+SELECT b FROM s INTO k;
+
+@@@ expected
+EXCEPTION 2000
+@@@ input
+SELECT a FROM s INTO k;
+
+SELECT b FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+select a from s into k;
+----
+1
+
+@@@ expected
+SELECT 1 'select a from s into k;' ROWS ['1'] {}
+@@@ input
+  SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 '  SELECT a FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+SELECTa;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECTa;' ROWS ['1'] {}
+@@@ input
+  SELECTa;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+create sink x(a UINT64) type File;
+explain select a from s into k;
+----
+plan
+==END==
+
+@@@ expected
+CREATE 'create sink x(a UINT64) type File;'
+EXPLAIN 1 'explain select a from s into k;' ['plan']
+@@@ input
+configuration c: 1
+GLOBALCONFIGURATION g: 2
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {c=1, g=2}
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+
+SELECT b FROM s INTO k;
+----
+ERROR 1003
+
+EXPLAIN SELECT c FROM s INTO k;
+----
+plan
+==END==
+SELECT d FROM s INTO k;
+----
+4
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+SELECT 2 'SELECT b FROM s INTO k;' ERROR 1003 {}
+EXPLAIN 3 'EXPLAIN SELECT c FROM s INTO k;' ['plan']
+SELECT 4 'SELECT d FROM s INTO k;' ROWS ['4'] {}
+@@@ input
+EXPLAIN SELECT a FROM s INTO k;
+----
+SELECT x
+----
+
+CREATE y
+====
+  indented
+==END== trailing
+SELECT b FROM s INTO k;
+----
+1
+
+@@@ expected
+EXPLAIN 1 'EXPLAIN SELECT a FROM s INTO k;' ['SELECT x', '----', '', 'CREATE y', '====', '  indented']
+SELECT 2 'SELECT b FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+EXPLAIN SELECT a FROM s INTO k;
+----
+plan # note
+  ==END==
+
+SELECT b FROM s INTO k;
+----
+1
+
+@@@ expected
+EXPLAIN 1 'EXPLAIN SELECT a FROM s INTO k;' ['plan ', '  ==END==', '', 'SELECT b FROM s INTO k;', '----', '1', '']
+@@@ input
+SELECT a FROM s INTO k;
+
+====
+SELECT b FROM s
+INTO k;
+CREATE SINK x(a UINT64) TYPE File;
+Configuration c: 1
+
+SELECT c FROM s INTO k;
+----
+1
+
+@@@ expected
+DIFFERENTIAL 1 'SELECT a FROM s INTO k;' 'SELECT b FROM s\nINTO k;' {}
+CREATE 'CREATE SINK x(a UINT64) TYPE File;'
+SELECT 2 'SELECT c FROM s INTO k;' ROWS ['1'] {c=1}
+@@@ input
+SELECT a FROM s INTO k;
+====
+SELECT b FROM s INTO k;
+====
+SELECT c FROM s INTO k;
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+====
+SELECT b FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+====
+SELECT b FROM s INTO k;
+ERROR 1003
+
+@@@ expected
+EXCEPTION 10000
+@@@ input
+SELECT a FROM s INTO k;
+----
+1
+
+====
+SELECT b FROM s INTO k;
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+====
+
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+====
+----
+1
+
+@@@ expected
+EXCEPTION 2000
+@@@ input
+CREATE LOGICAL SOURCE s(
+
+  a UINT64 # column
+);
+
+@@@ expected
+CREATE 'CREATE LOGICAL SOURCE s(\n  a UINT64 \n);'
+@@@ input
+CREATE SINK x(a UINT64) TYPE File
+
+@@@ expected
+CREATE 'CREATE SINK x(a UINT64) TYPE File\n'
+@@@ input
+CREATE SINK x(a UINT64) TYPE File; # note
+CREATE SINK y(a UINT64) TYPE File;
+
+@@@ expected
+CREATE 'CREATE SINK x(a UINT64) TYPE File; \nCREATE SINK y(a UINT64) TYPE File;'
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1
+   
+# note
+2 # trailing
+CREATE SINK x(a UINT64) TYPE File;
+
+CREATE SINK y(a UINT64) TYPE File;
+
+@@@ expected
+CREATE 'CREATE PHYSICAL SOURCE FOR s TYPE File;' INLINE ['1', '   ', '2 ', 'CREATE SINK x(a UINT64) TYPE File;']
+CREATE 'CREATE SINK y(a UINT64) TYPE File;'
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+
+CREATE SINK y(a UINT64) TYPE File;
+
+@@@ expected
+CREATE 'CREATE PHYSICAL SOURCE FOR s TYPE File;' INLINE []
+CREATE 'CREATE SINK y(a UINT64) TYPE File;'
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1
+2
+@@@ expected
+CREATE 'CREATE PHYSICAL SOURCE FOR s TYPE File;' INLINE ['1', '2']
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+@@@ expected
+CREATE 'CREATE PHYSICAL SOURCE FOR s TYPE File;' INLINE []
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH FILE  data/s.csv # note
+CREATE SINK y(a UINT64) TYPE File;
+
+@@@ expected
+CREATE 'CREATE PHYSICAL SOURCE FOR s TYPE File;' FILE ' data/s.csv '
+CREATE 'CREATE SINK y(a UINT64) TYPE File;'
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+attach inline
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH FILE
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+ERROR 1003
+
+@@@ expected
+EXCEPTION 10000
+@@@ input
+SELECT a FROM s INTO k;
+
+CREATE SINK x(a UINT64) TYPE File;
+----
+1
+
+@@@ expected
+CREATE 'CREATE SINK x(a UINT64) TYPE File;'
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+SELECT a FROM s INTO k;
+
+Configuration c: 1
+----
+1
+SELECT b FROM s INTO k;
+----
+2
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+
+GlobalConfiguration c: [1,2]
+----
+1
+SELECT b FROM s INTO k;
+----
+2
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+EXPLAIN SELECT a FROM s INTO k;
+----
+ERROR 1003
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+GlobalConfiguration g: [1, 2]
+Configuration k: [8, 16]
+SELECT a FROM s INTO k;
+====
+SELECT b FROM s INTO k;
+
+@@@ expected
+DIFFERENTIAL 1 'SELECT a FROM s INTO k;' 'SELECT b FROM s INTO k;' {k=8, g=1}
+DIFFERENTIAL 1 'SELECT a FROM s INTO k;' 'SELECT b FROM s INTO k;' {k=8, g=2}
+DIFFERENTIAL 1 'SELECT a FROM s INTO k;' 'SELECT b FROM s INTO k;' {k=16, g=1}
+DIFFERENTIAL 1 'SELECT a FROM s INTO k;' 'SELECT b FROM s INTO k;' {k=16, g=2}
+@@@ input
+Configuration k: 1
+Configuration k: 2
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+GlobalConfiguration k: 1
+Configuration k: 2
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+DIFFERENTIAL
+SELECT b FROM s INTO k;
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 9999000 "x"
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM TESTDATA INTO k;
+----
+CONFIG/x
+
+@@@ expected
+SELECT 1 'SELECT a FROM /data INTO k;' ROWS ['CONFIG/x'] {}
+@@@ input
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH FILE TESTDATA/a.csv
+
+@@@ expected
+CREATE 'CREATE PHYSICAL SOURCE FOR s TYPE File;' FILE '/data/a.csv'
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR SLTUnexpectedToken
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ERROR 1002 {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ERROR 1003 {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 unquoted message text
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ERROR 1003 'unquoted message text' {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+error 01003 	"quoted"
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ERROR 1003 'quoted' {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 ""
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ERROR 1003 '' {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 "
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ERROR 1003 '' {}
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR sltunexpectedtoken
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 "open
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 close"
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 "message" # note
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+SELECT a FROM s INTO k;
+----
+ERROR 1003 "issue #42"
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k: 8
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=8}
+@@@ input
+Configuration   k:   8 # note
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=8}
+@@@ input
+Configuration k: some value
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=some value}
+@@@ input
+Configuration k: [8, 1024]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=8}
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=1024}
+@@@ input
+Configuration k: [ 8 ]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=8}
+@@@ input
+Configuration k: [8,,16]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=8}
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {k=16}
+@@@ input
+Configuration k: [,]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {}
+@@@ input
+GlobalConfiguration g: [1, 2]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {g=1}
+SELECT 1 'SELECT a FROM s INTO k;' ROWS ['1'] {g=2}
+@@@ input
+Configuration
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k:8
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k [8]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration : 8
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k:
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k: 8, 16
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k: [8
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k: 8]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k: []
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k: [8, ,16]
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+Configuration k: [8] # note
+SELECT a FROM s INTO k;
+----
+1
+
+@@@ expected
+EXCEPTION 1002
+@@@ input
+GlobalConfiguration g:1
+SELECT a FROM s INTO k;
+----
+1
+@@@ expected
+EXCEPTION 1002

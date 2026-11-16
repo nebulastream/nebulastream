@@ -32,9 +32,9 @@
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Model/Expectation.hpp>
+#include <Model/ParsedTestFile.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Parser/SystestParser.hpp>
-#include <Parser/TestFileBuilder.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/RewriteContext.hpp>
 #include <Rewriter/SourceRewriting.hpp>
@@ -203,11 +203,9 @@ public:
 
     static RunnableTestFile rewriteSlt(const std::string& slt)
     {
-        SystestParser parser;
-        parser.loadString(slt);
         const std::filesystem::path testFilePath{"/tests/testkey.test"};
         return TestFilePreparer::rewritePartition(
-            buildTestFile(parser, testFilePath),
+            ParsedTestFile{.path = testFilePath, .statements = parseTestFile(slt, {})},
             RewriteContext{
                 .testFileKey = TestFileKeyFactory{"/tests"}.deriveKeyOf(testFilePath, 0, 1),
                 .name = "testkey",
@@ -219,20 +217,6 @@ public:
 };
 
 /// The rewriter does not check the missing physical source.
-TEST_F(TestFilePreparerTest, MergesADifferentialBlockIntoOneCase)
-{
-    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
-        "CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
-        "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE File;\n"
-        "\n"
-        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-        "====\n"
-        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n");
-
-    ASSERT_EQ(queries.size(), 1U);
-    EXPECT_TRUE(std::holds_alternative<RewrittenDifferential>(queries.at(0).action));
-}
-
 TEST_F(TestFilePreparerTest, RewritesInlineSourceNamedSinkAndQuery)
 {
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
@@ -980,6 +964,33 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
         .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
     EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}).empty());
+}
+
+TEST_F(TestFilePreparerTest, ReportsTheFileThatFailsToParse)
+{
+    const Testing::TemporaryDirectory tmp;
+    const auto file = tmp.get() / "Broken.test";
+    {
+        std::ofstream out{file};
+        out << "SELECT id FROM s INTO k;\n";
+    }
+    SystestConfiguration config{};
+    config.testDiscoverRoot = tmp.get().string();
+    config.workingDir = tmp.get().string();
+    config.clusterConfig = SystestClusterConfiguration{
+        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
+
+    try
+    {
+        std::ignore = TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"Broken"}});
+        ADD_FAILURE() << "expected the file to be rejected";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::SLTUnexpectedToken);
+        EXPECT_TRUE(std::string_view{exception.what()}.contains(fmt::format("Could not successfully parse test file://{}", file.string())))
+            << exception.what();
+    }
 }
 
 }

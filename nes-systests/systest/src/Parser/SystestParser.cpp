@@ -17,340 +17,120 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <concepts>
 #include <cstddef>
-#include <cstring>
-#include <functional>
-#include <istream>
+#include <cstdint>
+#include <filesystem>
 #include <optional>
-#include <regex>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
-#include <fmt/format.h>
-
+#include <Identifiers/Identifiers.hpp>
 #include <Model/ConfigurationOverride.hpp>
+#include <Model/Expectation.hpp>
+#include <Model/ParsedTestFile.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 
+namespace NES
+{
 namespace
 {
 
-bool emptyOrComment(const std::string& line)
+enum class TokenType : uint8_t
 {
-    return line.empty() /// completely empty
-        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
-        || line.starts_with('#'); /// slt comment
-}
+    SELECT,
+    EXPLAIN,
+    CREATE,
+    RESULT,
+    ERROR,
+    CONFIGURATION,
+    GLOBAL_CONFIGURATION,
+    DIFFERENTIAL,
+};
 
-std::vector<NES::ConfigurationOverride> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
-{
-    std::istringstream stream(line);
+constexpr std::string_view CreateToken = "CREATE";
+constexpr std::string_view SelectToken = "SELECT";
+constexpr std::string_view ExplainToken = "EXPLAIN";
+constexpr std::string_view ResultToken = "----";
+constexpr std::string_view ErrorToken = "ERROR";
+constexpr std::string_view DifferentialToken = "====";
+constexpr std::string_view ConfigurationToken = "CONFIGURATION";
+constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION";
+constexpr std::string_view AttachInlineToken = "ATTACH INLINE";
+constexpr std::string_view AttachFileToken = "ATTACH FILE";
+constexpr std::string_view PlanEndToken = "==END==";
 
-    std::string token;
-    std::string key;
-    stream >> token >> key;
+constexpr std::string_view Whitespace = " \t\n\v\f\r";
 
-    if (!key.ends_with(':'))
-    {
-        throw NES::SLTUnexpectedToken("Expected colon at end of key: '{}'", key);
-    }
-    key.pop_back(); /// remove trailing ':'
-
-    if (key.empty())
-    {
-        throw NES::SLTUnexpectedToken("Expected {} key before colon, but got empty key", kindLabel);
-    }
-
-    std::string valueList;
-    std::getline(stream >> std::ws, valueList);
-
-    if (valueList.empty())
-    {
-        throw NES::SLTUnexpectedToken("Expected {} value after key '{}', but got empty value", kindLabel, key);
-    }
-
-    std::vector<std::string> values;
-    auto invalidFormat = [&](std::string_view details)
-    { throw NES::SLTUnexpectedToken("Invalid {} format for key '{}': '{}'. {}", kindLabel, key, valueList, details); };
-
-    if (valueList.front() == '[' && valueList.back() == ']')
-    {
-        valueList = valueList.substr(1, valueList.size() - 2);
-        if (valueList.empty())
-        {
-            invalidFormat("Expected at least one value inside the brackets");
-        }
-        values = NES::splitWithStringDelimiter<std::string>(valueList, ",");
-    }
-    else
-    {
-        if (valueList.find_first_of("[]") != std::string::npos)
-        {
-            invalidFormat("Use either single value or properly formatted list in square brackets");
-        }
-        if (valueList.contains(','))
-        {
-            invalidFormat("Multiple values must be enclosed in square brackets");
-        }
-        values = {valueList};
-    }
-
-    std::vector<NES::ConfigurationOverride> result;
-    for (auto& value : values)
-    {
-        value = NES::trimWhiteSpaces(value);
-        if (value.empty())
-        {
-            throw NES::SLTUnexpectedToken("Empty {} value found for key '{}'", kindLabel, key);
-        }
-        NES::ConfigurationOverride override;
-        override[key] = value;
-        result.emplace_back(std::move(override));
-    }
-    return result;
-}
-
-}
-
-namespace NES
-{
-
-using namespace std::string_view_literals;
-
-static constexpr std::string_view CreateToken = "CREATE"sv;
-static constexpr std::string_view QueryToken = "SELECT"sv;
-static constexpr std::string_view ExplainToken = "EXPLAIN"sv;
-static constexpr std::string_view ResultDelimiter = "----"sv;
-static constexpr std::string_view ErrorToken = "ERROR"sv;
-static constexpr std::string_view DifferentialToken = "===="sv;
-static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
-static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
-
-static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
+constexpr auto TokenToType = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
-     {QueryToken, TokenType::QUERY},
+     {SelectToken, TokenType::SELECT},
      {ExplainToken, TokenType::EXPLAIN},
-     {ResultDelimiter, TokenType::RESULT_DELIMITER},
-     {ErrorToken, TokenType::ERROR_EXPECTATION},
+     {ResultToken, TokenType::RESULT},
+     {ErrorToken, TokenType::ERROR},
      {ConfigurationToken, TokenType::CONFIGURATION},
      {GlobalConfigurationToken, TokenType::GLOBAL_CONFIGURATION},
      {DifferentialToken, TokenType::DIFFERENTIAL}});
 
-void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
+constexpr std::array QueryStopTokens{TokenType::RESULT, TokenType::DIFFERENTIAL};
+constexpr std::array DifferentialStopTokens{
+    TokenType::RESULT,
+    TokenType::DIFFERENTIAL,
+    TokenType::ERROR,
+    TokenType::CREATE,
+    TokenType::CONFIGURATION,
+    TokenType::GLOBAL_CONFIGURATION};
+
+struct SplitWord
 {
-    const auto found
-        = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& existing) { return existing.keyword == rule.keyword; });
-    PRECONDITION(
-        found == substitutionRules.end(),
-        "substitution rule keywords must be unique. Tried to register for the second time: {}",
-        rule.keyword);
-    substitutionRules.emplace_back(rule);
+    std::string_view word;
+    std::string_view rest;
+};
+
+SplitWord splitFirstWord(const std::string_view text)
+{
+    const auto start = std::min(text.find_first_not_of(Whitespace), text.size());
+    const auto end = std::min(text.find_first_of(Whitespace, start), text.size());
+    return {.word = text.substr(start, end - start), .rest = text.substr(end)};
 }
 
-void SystestParser::loadString(const std::string& str)
+std::string_view trimLeading(const std::string_view text, const std::string_view characters)
 {
-    currentLine = 0;
-    lines.clear();
+    return text.substr(std::min(text.find_first_not_of(characters), text.size()));
+}
 
-    std::istringstream stream(str);
-    std::string line;
-    while (std::getline(stream, line))
+bool isBlankOrComment(const std::string_view line)
+{
+    return line.find_first_not_of(Whitespace) == std::string_view::npos || line.starts_with('#');
+}
+
+bool isIdentifierCharacter(const char character)
+{
+    return std::isalnum(static_cast<unsigned char>(character)) != 0 || character == '_';
+}
+
+void applySubstitutions(std::string& line, const std::span<const Substitution> substitutions)
+{
+    for (const auto& [keyword, replacement] : substitutions)
     {
-        /// Remove commented code
-        const size_t commentPos = line.find('#');
-        if (commentPos != std::string::npos)
+        for (auto pos = line.find(keyword); pos != std::string::npos; pos = line.find(keyword, pos))
         {
-            line = line.substr(0, commentPos);
-        }
-        /// add lines that do not start with a comment
-        if (commentPos != 0)
-        {
-            applySubstitutionRules(line);
-            /// Add to parsing lines
-            lines.push_back(line);
-        }
-    }
-}
-
-void SystestParser::registerOnQueryCallback(QueryCallback callback)
-{
-    this->onQueryCallback = std::move(callback);
-}
-
-void SystestParser::registerOnExplainQueryCallback(ExplainQueryCallback callback)
-{
-    this->onExplainQueryCallback = std::move(callback);
-}
-
-void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
-{
-    this->onResultTuplesCallback = std::move(callback);
-}
-
-void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback callback)
-{
-    this->onErrorExpectationCallback = std::move(callback);
-}
-
-void SystestParser::registerOnCreateCallback(CreateCallback callback)
-{
-    this->onCreateCallback = std::move(callback);
-}
-
-void SystestParser::registerOnConfigurationCallback(ConfigurationCallback callback)
-{
-    this->onConfigurationCallback = std::move(callback);
-}
-
-void SystestParser::registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback)
-{
-    this->onGlobalConfigurationCallback = std::move(callback);
-}
-
-void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback)
-{
-    this->onDifferentialQueryBlockCallback = std::move(callback);
-}
-
-/// Here we model the structure of the test file by what we `expect` to see.
-void SystestParser::parse()
-{
-    static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
-
-    SystestQueryIdAssigner queryIdAssigner{};
-    while (auto token = getNextToken())
-    {
-        switch (token.value())
-        {
-            case TokenType::CREATE: {
-                auto [query, testData] = expectCreateStatement();
-                onCreateCallback(query, testData);
-                break;
-            }
-            case TokenType::QUERY: {
-                auto query = expectQuery(DefaultQueryStopTokens);
-                expectedResultType = ResultType::TUPLES;
-                lastParsedQuery = query;
-                auto queryId = queryIdAssigner.getNextQueryNumber();
-                lastParsedQueryId = queryId;
-                if (onQueryCallback)
-                {
-                    onQueryCallback(query, queryId);
-                }
-                break;
-            }
-            case TokenType::EXPLAIN: {
-                auto statement = expectQuery(DefaultQueryStopTokens);
-                expectedResultType = ResultType::VERBATIM;
-                /// EXPLAIN statements cannot be part of a differential block
-                lastParsedQuery.reset();
-                lastParsedQueryId.reset();
-                auto queryId = queryIdAssigner.getNextQueryNumber();
-                if (onExplainQueryCallback)
-                {
-                    onExplainQueryCallback(statement, queryId);
-                }
-                break;
-            }
-            case TokenType::RESULT_DELIMITER: {
-                const auto optionalToken = peekToken();
-                if (optionalToken == TokenType::ERROR_EXPECTATION)
-                {
-                    expectedResultType = ResultType::TUPLES;
-                    ++currentLine;
-                    auto expectation = expectError();
-                    if (onErrorExpectationCallback)
-                    {
-                        onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
-                    }
-                }
-                else if (expectedResultType == ResultType::VERBATIM)
-                {
-                    expectedResultType = ResultType::TUPLES;
-                    /// EXPLAIN output is free-form plan text, so it is read verbatim instead of as result tuples
-                    auto verbatimResultLines = expectVerbatimResultLines();
-                    if (onResultTuplesCallback)
-                    {
-                        onResultTuplesCallback(std::move(verbatimResultLines), queryIdAssigner.getNextQueryResultNumber());
-                    }
-                }
-                else
-                {
-                    if (onResultTuplesCallback)
-                    {
-                        onResultTuplesCallback(expectTuples(false), queryIdAssigner.getNextQueryResultNumber());
-                    }
-                }
-                break;
-            }
-            case TokenType::CONFIGURATION: {
-                auto overrides = expectConfiguration();
-                if (onConfigurationCallback)
-                {
-                    onConfigurationCallback(std::move(overrides));
-                }
-                break;
-            }
-            case TokenType::GLOBAL_CONFIGURATION: {
-                auto overrides = expectGlobalConfiguration();
-                if (onGlobalConfigurationCallback)
-                {
-                    onGlobalConfigurationCallback(std::move(overrides));
-                }
-                break;
-            }
-            case TokenType::DIFFERENTIAL: {
-                INVARIANT(
-                    expectedResultType == ResultType::TUPLES,
-                    "DIFFERENTIAL block cannot follow an EXPLAIN statement (verbatim result expected)");
-                INVARIANT(lastParsedQuery.has_value() && lastParsedQueryId.has_value(), "Differential block without preceding query");
-
-                auto [leftQuery, rightQuery] = expectDifferentialBlock();
-                const auto mainQueryId = lastParsedQueryId.value();
-                auto differentialQueryId = queryIdAssigner.getNextQueryResultNumber();
-
-                lastParsedQuery = rightQuery;
-                lastParsedQueryId = differentialQueryId;
-
-                if (onDifferentialQueryBlockCallback)
-                {
-                    onDifferentialQueryBlockCallback(std::move(leftQuery), std::move(rightQuery), mainQueryId, differentialQueryId);
-                }
-                break;
-            }
-            case TokenType::ERROR_EXPECTATION:
-                throw TestException(
-                    "Should never run into the ERROR_EXPECTATION token during systest file parsing, but got line: {}", lines[currentLine]);
-        }
-    }
-}
-
-void SystestParser::applySubstitutionRules(std::string& line)
-{
-    for (const auto& rule : substitutionRules)
-    {
-        size_t pos = 0;
-        const std::string& keyword = rule.keyword;
-        while ((pos = line.find(keyword, pos)) != std::string::npos)
-        {
-            /// Check word boundaries: the character immediately before and after the keyword
-            /// must not be alphanumeric or underscore. This prevents replacing substrings of
-            /// longer identifiers (e.g., replacing "we" inside "producedPower").
-            const bool leftBoundary = pos == 0 || (std::isalnum(static_cast<unsigned char>(line[pos - 1])) == 0 && line[pos - 1] != '_');
-            const auto endPos = pos + keyword.length();
-            const bool rightBoundary
-                = endPos >= line.size() || (std::isalnum(static_cast<unsigned char>(line[endPos])) == 0 && line[endPos] != '_');
+            /// A keyword is replaced only as a whole word, so "we" inside "producedPower" stays.
+            const auto before = std::string_view{line}.substr(0, pos);
+            const auto after = std::string_view{line}.substr(pos + keyword.length());
+            const auto leftBoundary = before.empty() || !isIdentifierCharacter(before.back());
+            const auto rightBoundary = after.empty() || !isIdentifierCharacter(after.front());
 
             if (leftBoundary && rightBoundary)
             {
-                std::string substring = line.substr(pos, keyword.length());
-                rule.ruleFunction(substring);
-                line.replace(pos, keyword.length(), substring);
-                pos += substring.length();
+                line.replace(pos, keyword.length(), replacement);
+                pos += replacement.length();
             }
             else
             {
@@ -360,373 +140,509 @@ void SystestParser::applySubstitutionRules(std::string& line)
     }
 }
 
-std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
+std::vector<std::string> readLines(const std::string_view content, const std::span<const Substitution> substitutions)
 {
-    /// Query is a special case as it's identifying token is not space seperated
-    if (toLowerCase(line).starts_with(toLowerCase(QueryToken)))
+    std::vector<std::string> lines;
+    std::istringstream stream{std::string{content}};
+    std::string line;
+    while (std::getline(stream, line))
     {
-        return TokenType::QUERY;
+        /// A line starting with `#` is dropped rather than kept as a blank line, so it does not end a block of rows.
+        if (const auto commentPos = line.find('#'); commentPos != 0)
+        {
+            lines.push_back(line.substr(0, commentPos));
+            applySubstitutions(lines.back(), substitutions);
+        }
+    }
+    return lines;
+}
+
+std::optional<TokenType> findToken(const std::string_view line)
+{
+    /// SELECT matches as a prefix of the whole line, so a query needs no space after the keyword.
+    if (toUpperCase(line.substr(0, SelectToken.size())) == SelectToken)
+    {
+        return TokenType::SELECT;
     }
 
-    std::string potentialToken;
-    std::istringstream stream(line);
-    stream >> potentialToken;
-
-    /// Lookup in map
-    const auto* it = std::ranges::find_if(
-        stringToToken, [&potentialToken](const auto& pair) { return toLowerCase(pair.first) == toLowerCase(potentialToken); });
-    if (it != stringToToken.end())
+    const auto firstWord = toUpperCase(splitFirstWord(line).word);
+    for (const auto& [token, type] : TokenToType)
     {
-        return it->second;
+        if (token == firstWord)
+        {
+            return type;
+        }
     }
     return std::nullopt;
 }
 
-bool SystestParser::moveToNextToken()
+class LineCursor
 {
-    /// Do not move to next token if its the first
-    if (firstToken)
+public:
+    explicit LineCursor(const std::span<const std::string> lines) : lines{lines} { }
+
+    [[nodiscard]] std::optional<std::string_view> peek() const
     {
-        firstToken = false;
-    }
-    else if (shouldRevisitCurrentLine)
-    {
-        shouldRevisitCurrentLine = false;
-    }
-    else
-    {
-        ++currentLine;
+        if (lines.empty())
+        {
+            return std::nullopt;
+        }
+        return lines.front();
     }
 
-    /// Ignore comments
-    while (currentLine < lines.size() && emptyOrComment(lines[currentLine]))
+    std::optional<std::string_view> next()
     {
-        ++currentLine;
+        const auto line = peek();
+        skip();
+        return line;
     }
 
-    /// Return false if we reached the end of the file
-    return currentLine < lines.size();
-}
+    void skip()
+    {
+        if (!lines.empty())
+        {
+            lines = lines.subspan(1);
+        }
+    }
 
-std::optional<TokenType> SystestParser::getNextToken()
+    void skipBlank() { lines = {std::ranges::find_if_not(lines, isBlankOrComment), lines.end()}; }
+
+    [[nodiscard]] std::vector<std::string> takeWhile(const std::predicate<std::string_view> auto& predicate)
+    {
+        const auto end = std::ranges::find_if_not(lines, predicate);
+        std::vector<std::string> taken{lines.begin(), end};
+        lines = {end, lines.end()};
+        return taken;
+    }
+
+private:
+    std::span<const std::string> lines;
+};
+
+struct TokenLine
 {
-    if (!moveToNextToken())
+    TokenType type;
+    std::string_view line;
+};
+
+std::optional<TokenLine> getNextToken(LineCursor& cursor)
+{
+    cursor.skipBlank();
+    const auto line = cursor.peek();
+    if (!line.has_value())
     {
         return std::nullopt;
     }
-
-    const std::string line = lines[currentLine];
-
-    INVARIANT(!line.empty(), "a potential token should never be empty");
-
-    if (const auto token = getTokenIfValid(line); token.has_value())
+    if (const auto type = findToken(*line); type.has_value())
     {
-        return token;
+        return TokenLine{.type = *type, .line = *line};
     }
-
-    throw SLTUnexpectedToken("Should never run into the INVALID token during systest file parsing, but got line: {}.", lines[currentLine]);
+    throw SLTUnexpectedToken("Should never run into the INVALID token during systest file parsing, but got line: {}.", *line);
 }
 
-std::optional<TokenType> SystestParser::peekToken() const
+std::optional<TokenType> peekTokenAfter(LineCursor cursor)
 {
-    size_t peekLine = currentLine + 1;
-    /// Skip empty lines and comments
-    while (peekLine < lines.size() && emptyOrComment(lines[peekLine]))
-    {
-        ++peekLine;
-    }
-    if (peekLine >= lines.size())
-    {
-        return std::nullopt;
-    }
-
-    const std::string line = lines[peekLine];
-
-    INVARIANT(!line.empty(), "a potential token should never be empty");
-    return getTokenIfValid(line);
+    cursor.skip();
+    cursor.skipBlank();
+    return cursor.peek().and_then(findToken);
 }
 
-std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
+std::vector<ConfigurationOverride> parseConfigurationLine(const std::string_view line, const std::string_view kindLabel)
 {
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
-    std::vector<std::string> tuples;
-    /// skip the result line `----`
-    if (currentLine < lines.size() && (toLowerCase(lines[currentLine]) == toLowerCase(ResultDelimiter) || ignoreFirst))
+    const auto [keyWithColon, afterKey] = splitFirstWord(splitFirstWord(line).rest);
+    if (!keyWithColon.ends_with(':'))
     {
-        currentLine++;
+        throw SLTUnexpectedToken("Expected colon at end of key: '{}'", keyWithColon);
     }
-    /// read the tuples until we encounter an empty line or the next token
-    while (currentLine < lines.size())
+    const auto key = keyWithColon.substr(0, keyWithColon.size() - 1);
+    if (key.empty())
     {
-        if (lines[currentLine].empty())
+        throw SLTUnexpectedToken("Expected {} key before colon, but got empty key", kindLabel);
+    }
+
+    const auto valueList = trimLeading(afterKey, Whitespace);
+    if (valueList.empty())
+    {
+        throw SLTUnexpectedToken("Expected {} value after key '{}', but got empty value", kindLabel, key);
+    }
+
+    const auto invalidFormat = [&](const std::string_view details)
+    { throw SLTUnexpectedToken("Invalid {} format for key '{}': '{}'. {}", kindLabel, key, valueList, details); };
+
+    std::vector<std::string> values;
+    if (valueList.starts_with('[') && valueList.ends_with(']'))
+    {
+        const auto insideBrackets = valueList.substr(1, valueList.size() - 2);
+        if (insideBrackets.empty())
         {
-            break;
+            invalidFormat("Expected at least one value inside the brackets");
         }
-
-        std::istringstream stream(lines[currentLine]);
-        if (std::string potentialToken; stream >> potentialToken)
-        {
-            if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
-            {
-                break;
-            }
-        }
-
-        tuples.push_back(lines[currentLine]);
-        currentLine++;
-    }
-    return tuples;
-}
-
-std::vector<std::string> SystestParser::expectVerbatimResultLines()
-{
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
-    std::vector<std::string> resultLines;
-    /// skip the result line `----`
-    if (toLowerCase(lines[currentLine]) == toLowerCase(ResultDelimiter))
-    {
-        currentLine++;
-    }
-    while (currentLine < lines.size() && !lines[currentLine].starts_with("==END=="))
-    {
-        resultLines.push_back(lines[currentLine]);
-        currentLine++;
-    }
-    return resultLines;
-}
-
-std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> SystestParser::expectCreateStatement()
-{
-    std::string createQuery;
-    std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData = std::nullopt;
-
-    while (currentLine < lines.size())
-    {
-        const std::string line = lines[currentLine++];
-        if (emptyOrComment(line))
-        {
-            continue;
-        }
-
-        createQuery += line;
-        if (createQuery.ends_with(';'))
-        {
-            break;
-        }
-        createQuery += '\n';
-    }
-
-    while (currentLine < lines.size() && emptyOrComment(lines[currentLine]))
-    {
-        currentLine++;
-    }
-
-    if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH INLINE"))
-    {
-        testData = std::make_pair(TestDataIngestionType::INLINE, std::vector<std::string>{});
-        currentLine++;
-        while (currentLine < lines.size() && !lines[currentLine].empty())
-        {
-            testData.value().second.push_back(lines[currentLine]);
-            currentLine++;
-        }
-        currentLine--;
-    }
-    else if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH FILE"))
-    {
-        testData = std::make_pair(TestDataIngestionType::FILE, std::vector<std::string>{});
-        testData->second.push_back(lines[currentLine].substr(std::strlen("ATTACH FILE") + 1));
+        values = splitWithStringDelimiter<std::string>(insideBrackets, ",");
     }
     else
     {
-        currentLine--;
-    }
-
-    return std::make_pair(createQuery, testData);
-}
-
-std::string SystestParser::expectQuery()
-{
-    return expectQuery({TokenType::RESULT_DELIMITER});
-}
-
-std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stopTokens)
-{
-    INVARIANT(currentLine < lines.size(), "current parse line should exist");
-
-    std::string queryString;
-    while (currentLine < lines.size())
-    {
-        const auto& line = lines[currentLine];
-        if (emptyOrComment(line))
+        if (valueList.find_first_of("[]") != std::string_view::npos)
         {
-            if (!queryString.empty())
-            {
-                const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString));
-                if (!trimmedQuerySoFar.empty() && trimmedQuerySoFar.back() == ';')
-                {
-                    break;
-                }
-            }
-            ++currentLine;
-            continue;
+            invalidFormat("Use either single value or properly formatted list in square brackets");
         }
-
-        /// Check if we've reached a stop token
-        std::istringstream stream(line);
-        if (std::string potentialToken; stream >> potentialToken)
+        if (valueList.contains(','))
         {
-            if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
-            {
-                if (stopTokens.contains(tokenType.value()))
-                {
-                    if (const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString)); trimmedQuerySoFar.back() != ';')
-                    {
-                        throw InvalidQuerySyntax("Queries must end with a semicolon: \"{}\"", trimmedQuerySoFar);
-                    }
-                    break;
-                }
-            }
-            else
-            {
-                if (const auto trimmedLineView = trimWhiteSpaces(std::string_view(line));
-                    !trimmedLineView.empty() && toLowerCase(trimmedLineView) == "differential")
-                {
-                    throw SLTUnexpectedToken(
-                        "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
-                }
-            }
+            invalidFormat("Multiple values must be enclosed in square brackets");
         }
+        values = {std::string{valueList}};
+    }
 
-        if (!queryString.empty())
+    std::vector<ConfigurationOverride> result;
+    for (const auto& rawValue : values)
+    {
+        const auto value = std::string{trimWhiteSpaces(rawValue)};
+        if (value.empty())
         {
-            queryString += "\n";
+            throw SLTUnexpectedToken("Empty {} value found for key '{}'", kindLabel, key);
         }
-        queryString += line;
-        ++currentLine;
+        result.push_back(ConfigurationOverride{{std::string{key}, value}});
     }
+    return result;
+}
 
-    if (queryString.empty())
+/// Reads `ERROR <code> [message]`, where the code is a number or an error type and the message may be quoted.
+ExpectedError parseErrorLine(const std::string_view line)
+{
+    const auto [keyword, afterKeyword] = splitFirstWord(line);
+    if (toUpperCase(keyword) != ErrorToken)
     {
-        throw SLTUnexpectedToken("Expected query but got empty query string");
+        throw SLTUnexpectedToken("Expected {} on the line directly after {}, but got: {}", ErrorToken, ResultToken, line);
     }
 
-    shouldRevisitCurrentLine = currentLine < lines.size();
-    return queryString;
-}
-
-std::pair<std::string, std::string> SystestParser::expectDifferentialBlock()
-{
-    INVARIANT(currentLine < lines.size(), "current parse line should exist");
-    INVARIANT(lastParsedQuery.has_value(), "Differential block must follow a query definition");
-
-    std::string potentialToken;
-    if (std::istringstream stream(lines[currentLine]); !(stream >> potentialToken))
-    {
-        throw SLTUnexpectedToken("Expected differential delimiter at current line");
-    }
-
-    if (auto tokenOpt = getTokenIfValid(potentialToken); !tokenOpt.has_value() || tokenOpt.value() != TokenType::DIFFERENTIAL)
-    {
-        throw SLTUnexpectedToken("Expected differential delimiter at current line");
-    }
-
-    /// Skip the differential delimiter line
-    ++currentLine;
-    shouldRevisitCurrentLine = false;
-
-    static const std::unordered_set<TokenType> differentialStopTokens{
-        TokenType::RESULT_DELIMITER,
-        TokenType::DIFFERENTIAL,
-        TokenType::ERROR_EXPECTATION,
-        TokenType::CREATE,
-        TokenType::CONFIGURATION,
-        TokenType::GLOBAL_CONFIGURATION};
-
-    /// Parse the differential query until the next recognized section
-    std::string rightQuery = expectQuery(differentialStopTokens);
-    const std::string leftQuery = lastParsedQuery.value();
-
-    return {leftQuery, std::move(rightQuery)};
-}
-
-std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
-{
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    return parseConfigurationLine(lines[currentLine], "configuration");
-}
-
-std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
-{
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    return parseConfigurationLine(lines[currentLine], "global configuration");
-}
-
-SystestParser::ErrorExpectation SystestParser::expectError() const
-{
-    /// Expects the form:
-    /// ERROR <CODE> "optional error message to check"
-    /// ERROR <ERRORTYPE STR> "optional error message to check"
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    ErrorExpectation expectation;
-    const auto& line = lines[currentLine];
-    std::istringstream stream(line);
-
-    /// Skip the ERROR token
-    std::string token;
-    stream >> token;
-    INVARIANT(toLowerCase(token) == toLowerCase(ErrorToken), "Expected ERROR token");
-
-    /// Read the error code
-    std::string errorStr;
-    if (!(stream >> errorStr))
+    const auto [codeText, afterCode] = splitFirstWord(afterKeyword);
+    if (codeText.empty())
     {
         throw SLTUnexpectedToken("failed to read error code in: {}", line);
     }
-
-    if (const std::regex numberRegex("^\\d+$"); std::regex_match(errorStr, numberRegex))
+    const auto isNumber = std::ranges::all_of(codeText, [](const unsigned char character) { return std::isdigit(character) != 0; });
+    const auto code = isNumber ? from_chars<uint64_t>(codeText).and_then(errorCodeExists) : errorTypeExists(codeText);
+    if (!code.has_value())
     {
-        /// String is a valid integer
-        auto code = std::stoul(errorStr);
-        if (!errorCodeExists(code))
-        {
-            throw SLTUnexpectedToken("invalid error code: {} is not defined in ErrorDefinitions.inc", errorStr);
-        }
-        expectation.code = static_cast<ErrorCode>(code);
-    }
-    else if (auto codeOpt = errorTypeExists(errorStr))
-    {
-        expectation.code = codeOpt.value();
-    }
-    else
-    {
-        throw SLTUnexpectedToken("invalid error type: {} is not defined in ErrorDefinitions.inc", errorStr);
+        throw SLTUnexpectedToken("invalid error {}: {} is not defined in ErrorDefinitions.inc", isNumber ? "code" : "type", codeText);
     }
 
-    /// Read optional error message
-    if (std::string message; std::getline(stream, message))
+    const auto message = trimLeading(afterCode, " \t");
+    if (message.empty())
     {
-        /// Trim leading whitespace
-        message.erase(0, message.find_first_not_of(" \t"));
-        if (!message.empty())
-        {
-            /// Validate quotes are properly paired
-            if (message.front() == '"')
-            {
-                if (message.back() != '"')
-                {
-                    throw SLTUnexpectedToken("unmatched quote in error message: {}", message);
-                }
-                message = message.substr(1, message.length() - 2);
-            }
-            else if (message.back() == '"')
-            {
-                throw SLTUnexpectedToken("unmatched quote in error message: {}", message);
-            }
-            expectation.message = message;
-        }
+        return ExpectedError{.code = code.value(), .message = std::nullopt};
     }
-
-    return expectation;
+    const auto quoted = message.starts_with('"');
+    if (quoted != message.ends_with('"'))
+    {
+        throw SLTUnexpectedToken("unmatched quote in error message: {}", message);
+    }
+    if (!quoted)
+    {
+        return ExpectedError{.code = code.value(), .message = std::string{message}};
+    }
+    const auto unquoted = message.size() < 2 ? std::string_view{} : message.substr(1, message.size() - 2);
+    return ExpectedError{.code = code.value(), .message = std::string{unquoted}};
 }
+
+std::vector<std::string> expectRows(LineCursor& cursor)
+{
+    if (cursor.peek() == ResultToken)
+    {
+        cursor.skip();
+    }
+    auto rows
+        = cursor.takeWhile([](const std::string_view line) { return !line.empty() && !findToken(splitFirstWord(line).word).has_value(); });
+    /// Skipping the line that ends the rows drops a statement written directly below them without a blank line.
+    cursor.skip();
+    return rows;
+}
+
+std::vector<std::string> expectPlan(LineCursor& cursor)
+{
+    if (cursor.peek() == ResultToken)
+    {
+        cursor.skip();
+    }
+    auto planLines = cursor.takeWhile([](const std::string_view line) { return !line.starts_with(PlanEndToken); });
+    cursor.skip();
+    return planLines;
+}
+
+Expectation expectResult(LineCursor& cursor, const bool isPlan)
+{
+    /// The lookahead skips blank lines, but the error has to be on the line directly after the delimiter.
+    if (peekTokenAfter(cursor) == TokenType::ERROR)
+    {
+        cursor.skip();
+        return parseErrorLine(cursor.next().value_or(""));
+    }
+    if (isPlan)
+    {
+        return ExpectedPlan{.lines = expectPlan(cursor)};
+    }
+    return ExpectedRows{.rows = expectRows(cursor)};
+}
+
+std::optional<AttachedData> expectAttach(LineCursor& cursor)
+{
+    const auto attachLine = cursor.peek().value_or("");
+    if (attachLine.starts_with(AttachInlineToken))
+    {
+        cursor.skip();
+        return InlineRows{.rows = cursor.takeWhile([](const std::string_view line) { return !line.empty(); })};
+    }
+    if (attachLine.starts_with(AttachFileToken))
+    {
+        const auto afterToken = attachLine.substr(AttachFileToken.size());
+        if (afterToken.empty())
+        {
+            throw SLTUnexpectedToken("Expected a path after '{}'", AttachFileToken);
+        }
+        cursor.skip();
+        return AttachedFile{.path = std::filesystem::path{afterToken.substr(1)}};
+    }
+    return std::nullopt;
+}
+
+CreateStatement expectCreate(LineCursor& cursor)
+{
+    std::string sql;
+    while (const auto line = cursor.next())
+    {
+        if (isBlankOrComment(*line))
+        {
+            continue;
+        }
+        sql += *line;
+        if (sql.ends_with(';'))
+        {
+            break;
+        }
+        sql += '\n';
+    }
+    cursor.skipBlank();
+    return CreateStatement{.sql = std::move(sql), .attach = expectAttach(cursor)};
+}
+
+std::string expectQuery(LineCursor& cursor, const std::span<const TokenType> stopTokens)
+{
+    std::string sql;
+    while (const auto line = cursor.peek())
+    {
+        if (isBlankOrComment(*line))
+        {
+            if (trimWhiteSpaces(sql).ends_with(';'))
+            {
+                break;
+            }
+            cursor.skip();
+            continue;
+        }
+
+        if (const auto type = findToken(*line); type.has_value() && std::ranges::contains(stopTokens, type.value()))
+        {
+            if (const auto trimmedSql = trimWhiteSpaces(sql); !trimmedSql.ends_with(';'))
+            {
+                throw InvalidQuerySyntax("Queries must end with a semicolon: \"{}\"", trimmedSql);
+            }
+            break;
+        }
+        if (toLowerCase(trimWhiteSpaces(*line)) == "differential")
+        {
+            throw SLTUnexpectedToken("Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, *line);
+        }
+
+        if (!sql.empty())
+        {
+            sql += '\n';
+        }
+        sql += *line;
+        cursor.skip();
+    }
+
+    if (sql.empty())
+    {
+        throw SLTUnexpectedToken("Expected query but got empty query string");
+    }
+    return sql;
+}
+
+/// The configuration lines in scope for the next query.
+/// A global line holds until the file ends, and a later global line replaces the keys of an earlier one.
+/// A local line holds for one query, and any duplicate key with other local lines in scope is an error.
+/// A line may list several values, and the query runs once per pairing of values across the lines in scope.
+class CurrentOverrides
+{
+public:
+    void addGlobal(const std::vector<ConfigurationOverride>& overrides) { global = combine(overrides, global, OnDuplicateKey::Replace); }
+
+    void addLocal(const std::vector<ConfigurationOverride>& overrides) { local = combine(overrides, local, OnDuplicateKey::Reject); }
+
+    /// The result always holds at least one entry, so a query with no overrides runs exactly once.
+    [[nodiscard]] std::vector<ConfigurationOverride> takeForNextQuery()
+    {
+        return combine(std::exchange(local, {}), global, OnDuplicateKey::Reject);
+    }
+
+    void discardLocal() { local = {}; }
+
+private:
+    std::vector<ConfigurationOverride> global;
+    std::vector<ConfigurationOverride> local;
+};
+
+/// An EXPLAIN expects the plan it prints, so this rejects an expected error.
+ExpectedPlan getExpectedPlan(const Expectation& expected)
+{
+    if (const auto* plan = std::get_if<ExpectedPlan>(&expected))
+    {
+        return *plan;
+    }
+    throw SLTUnexpectedToken("an EXPLAIN expects the plan it prints, not an error");
+}
+
+struct PendingQuery
+{
+    std::string sql;
+    SystestQueryId id;
+    std::vector<ConfigurationOverride> overrides;
+    bool isExplain = false;
+};
+
+class StatementAssembler
+{
+public:
+    void addCreate(CreateStatement create) { statements.emplace_back(std::move(create)); }
+
+    void addGlobalOverrides(const std::vector<ConfigurationOverride>& line) { overrides.addGlobal(line); }
+
+    void addLocalOverrides(const std::vector<ConfigurationOverride>& line) { overrides.addLocal(line); }
+
+    /// Reads the overrides in scope now, rather than when the result completes the query,
+    /// because a configuration line that follows the query belongs to the next one.
+    void beginSelect(std::string sql)
+    {
+        const auto id = assignQueryId();
+        pendingQuery = PendingQuery{.sql = std::move(sql), .id = id, .overrides = overrides.takeForNextQuery()};
+    }
+
+    /// The runner does not execute an EXPLAIN, and the optimizer configuration of the run determines its plan.
+    /// The local lines in scope therefore have no effect, and this discards them instead of keeping them for the next query.
+    void beginExplain(std::string sql)
+    {
+        const auto id = assignQueryId();
+        overrides.discardLocal();
+        pendingQuery = PendingQuery{.sql = std::move(sql), .id = id, .overrides = {}, .isExplain = true};
+    }
+
+    [[nodiscard]] bool expectsPlan() const { return pendingQuery.has_value() && pendingQuery->isExplain; }
+
+    void completeQuery(const Expectation& expected)
+    {
+        auto [sql, id, queryOverrides, isExplain] = takePendingQuery();
+        if (isExplain)
+        {
+            statements.emplace_back(ExplainStatement{.sql = std::move(sql), .id = id, .expected = getExpectedPlan(expected)});
+            return;
+        }
+        /// One statement per pairing of overrides, all with the same number, because they are one query of the file run more than once.
+        for (auto& alternative : queryOverrides)
+        {
+            statements.emplace_back(SelectStatement{.sql = sql, .id = id, .expected = expected, .overrides = std::move(alternative)});
+        }
+    }
+
+    void completeDifferential(const std::string& secondSql)
+    {
+        auto [firstSql, id, blockOverrides, isExplain] = takePendingQuery();
+        if (isExplain)
+        {
+            throw SLTUnexpectedToken("an EXPLAIN cannot be the first half of a differential block");
+        }
+        for (auto& alternative : blockOverrides)
+        {
+            statements.emplace_back(
+                DifferentialStatement{
+                    .firstSql = firstSql, .firstId = id, .secondSql = secondSql, .secondId = id, .overrides = std::move(alternative)});
+        }
+    }
+
+    [[nodiscard]] std::vector<TestStatement> take() &&
+    {
+        if (pendingQuery.has_value())
+        {
+            throw SLTUnexpectedToken("the file ends with a query that has no result or expected error: {}", pendingQuery->sql);
+        }
+        return std::move(statements);
+    }
+
+private:
+    [[nodiscard]] SystestQueryId assignQueryId()
+    {
+        if (pendingQuery.has_value())
+        {
+            throw SLTUnexpectedToken("a query follows the query {} before its result or expected error", pendingQuery->sql);
+        }
+        return SystestQueryId{nextQueryId++};
+    }
+
+    [[nodiscard]] PendingQuery takePendingQuery()
+    {
+        auto pending = std::exchange(pendingQuery, std::nullopt);
+        if (!pending.has_value())
+        {
+            throw SLTUnexpectedToken("a result, an expected error, or a differential block must follow a query");
+        }
+        return std::move(*pending);
+    }
+
+    CurrentOverrides overrides;
+    std::optional<PendingQuery> pendingQuery;
+    SystestQueryId::Underlying nextQueryId = SystestQueryId::INITIAL;
+    std::vector<TestStatement> statements;
+};
+
+}
+
+std::vector<TestStatement> parseTestFile(const std::string_view content, const std::span<const Substitution> substitutions)
+{
+    const auto lines = readLines(content, substitutions);
+    LineCursor cursor{lines};
+    StatementAssembler assembler;
+    while (const auto next = getNextToken(cursor))
+    {
+        const auto& [type, line] = *next;
+        switch (type)
+        {
+            case TokenType::CREATE:
+                assembler.addCreate(expectCreate(cursor));
+                break;
+            case TokenType::SELECT:
+                assembler.beginSelect(expectQuery(cursor, QueryStopTokens));
+                break;
+            case TokenType::EXPLAIN:
+                assembler.beginExplain(expectQuery(cursor, QueryStopTokens));
+                break;
+            case TokenType::RESULT:
+                assembler.completeQuery(expectResult(cursor, assembler.expectsPlan()));
+                break;
+            case TokenType::CONFIGURATION:
+                assembler.addLocalOverrides(parseConfigurationLine(line, "configuration"));
+                cursor.skip();
+                break;
+            case TokenType::GLOBAL_CONFIGURATION:
+                assembler.addGlobalOverrides(parseConfigurationLine(line, "global configuration"));
+                cursor.skip();
+                break;
+            case TokenType::DIFFERENTIAL:
+                cursor.skip();
+                assembler.completeDifferential(expectQuery(cursor, DifferentialStopTokens));
+                break;
+            case TokenType::ERROR:
+                throw TestException("Should never run into the ERROR token during systest file parsing, but got line: {}", line);
+        }
+    }
+    return std::move(assembler).take();
+}
+
 }
