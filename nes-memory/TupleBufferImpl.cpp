@@ -199,11 +199,14 @@ bool BufferControlBlock::release()
     const uint32_t prevRefCnt = referenceCounter.fetch_sub(1);
     if (prevRefCnt == 1)
     {
-        for (auto&& child : children)
+        /// Moving the list into a local frees its storage at the end of this block, while clear() would keep it.
+        /// The control block of a pooled buffer exists as long as its buffer manager, and the pool reuses its buffers in FIFO order,
+        /// so kept storage would add up to one list for every pooled buffer that ever held children.
+        const auto releasedChildren = std::exchange(children, {});
+        for (auto* child : releasedChildren)
         {
             child->controlBlock->release();
         }
-        children.clear();
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
