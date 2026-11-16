@@ -61,7 +61,8 @@ using ExitUdfRowFn = void (*)(int);
 using CleanupUdfFn = void (*)(UdfInstance*);
 using FreeFn = void (*)(void*);
 using InitializeUdfStageFn = UdfStageInstance* (*)(int, UdfInstance* const*, char**);
-using ExecuteUdfStageRowFn = int (*)(UdfStageInstance*, const void* const*, const long long*, const int*, void*, char**, long long*, int*, char**);
+using ExecuteUdfStageRowFn
+    = int (*)(UdfStageInstance*, const void* const*, const long long*, const int*, void*, char**, long long*, int*, char**);
 using ExecuteUdfStageBatchFn = int (*)(UdfStageInstance*, ArrowArray*, ArrowArray*, char**);
 using CleanupUdfStageFn = void (*)(UdfStageInstance*);
 
@@ -272,6 +273,14 @@ UdfInstance* InProcessBackend::initialize(const BridgeLibrary& bridge) const
     char* errorMessage = nullptr;
     UdfInstance* handle = nullptr;
     const auto argCount = static_cast<int>(definition.argTypeCodes.size());
+    auto argTypeCodes = definition.argTypeCodes;
+    for (std::size_t i = 0; i < argTypeCodes.size(); ++i)
+    {
+        if (definition.bytesArguments.at(i))
+        {
+            argTypeCodes[i] |= UDF_AS_BYTES;
+        }
+    }
     if (definition.entrypoint.empty())
     {
         if (bridge.initializeFromSource == nullptr)
@@ -283,14 +292,14 @@ UdfInstance* InProcessBackend::initialize(const BridgeLibrary& bridge) const
             definition.source.c_str(),
             definition.functionName.c_str(),
             argCount,
-            definition.argTypeCodes.data(),
+            argTypeCodes.data(),
             definition.returnTypeCode,
             &errorMessage);
     }
     else
     {
         handle = reinterpret_cast<InitializeUdfFn>(bridge.initialize)(
-            definition.entrypoint.c_str(), argCount, definition.argTypeCodes.data(), definition.returnTypeCode, &errorMessage);
+            definition.entrypoint.c_str(), argCount, argTypeCodes.data(), definition.returnTypeCode, &errorMessage);
     }
     if (handle == nullptr)
     {
@@ -410,7 +419,11 @@ void InProcessBackend::executeScalarRow(
 }
 
 void InProcessBackend::executeVarsizedRow(
-    const std::int8_t* argValues, const std::int8_t* argLens, const std::int8_t* argNulls, std::vector<std::int8_t>& result, int* resultNull)
+    const std::int8_t* argValues,
+    const std::int8_t* argLens,
+    const std::int8_t* argNulls,
+    std::vector<std::int8_t>& result,
+    int* resultNull)
 {
     std::int8_t scalarUnused[SLOT_BYTES] = {};
     char* resultString = nullptr;
@@ -464,8 +477,8 @@ UdfStageInstance* InProcessFusedUdfs::initialize(const BridgeLibrary& bridge, co
             "initialize_udf_stage/execute_udf_stage_row/execute_udf_stage_batch/cleanup_udf_stage");
     }
     char* errorMessage = nullptr;
-    UdfStageInstance* const handle
-        = reinterpret_cast<InitializeUdfStageFn>(bridge.initializeStage)(static_cast<int>(udfHandles.size()), udfHandles.data(), &errorMessage);
+    UdfStageInstance* const handle = reinterpret_cast<InitializeUdfStageFn>(bridge.initializeStage)(
+        static_cast<int>(udfHandles.size()), udfHandles.data(), &errorMessage);
     if (handle == nullptr)
     {
         throw CannotLoadUdf("Failed to fuse {} UDFs: {}", udfHandles.size(), takeMessage(bridge, errorMessage));
@@ -593,6 +606,7 @@ void InProcessFusedUdfs::executeRow(
             }
         }
     } const freeResultStrings{*bridge};
+
     for (std::size_t udf = 0; udf < udfs.size(); ++udf)
     {
         resultNulls[udf] = static_cast<std::int8_t>(resultNullFlags[udf]);
@@ -634,6 +648,9 @@ std::shared_ptr<UdfBackend> UdfBackend::create(const UdfDescriptor& descriptor, 
     definition.entrypoint = descriptor.getEntrypoint();
     definition.argTypeCodes = descriptor.getArgTypes() | std::views::transform([](const auto& type) { return toUdfTypeCode(type.type); })
         | std::ranges::to<std::vector>();
+    definition.bytesArguments = std::views::iota(uint64_t{0}, static_cast<uint64_t>(descriptor.getArgTypes().size()))
+        | std::views::transform([&](const uint64_t position) { return descriptor.isBytesArgument(position); })
+        | std::ranges::to<std::vector<bool>>();
     definition.returnTypeCode = toUdfTypeCode(descriptor.getReturnType().type);
     if (const auto& source = descriptor.getSource())
     {

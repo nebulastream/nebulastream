@@ -690,6 +690,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
                 .entrypoint = entrypoint,
                 .argTypes = args | std::views::transform([](const NES::CLI::SchemaField& field) { return field.type; })
                     | std::ranges::to<std::vector<NES::DataType>>(),
+                .bytesArguments = {},
                 .returnType = returns,
                 .execution = *execution,
                 .language = *language});

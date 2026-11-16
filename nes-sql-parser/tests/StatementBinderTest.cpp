@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -505,6 +506,44 @@ TEST_F(StatementBinderTest, BindCreateFunctionOutOfProcess)
     const auto& create = std::get<CreateFunctionStatement>(*statement);
     EXPECT_EQ(create.execution, UdfExecution::OutOfProcess);
     EXPECT_TRUE(create.path.empty());
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithBytesArguments)
+{
+    if (!isUdfBridgeShipped("PythonOutOfProcess"))
+    {
+        GTEST_SKIP() << "This build ships no UDF bridge";
+    }
+    const auto statement = binder->parseAndBindSingle(
+        "CREATE FUNCTION f (a VARSIZED BYTES, b VARSIZED, c CHAR bytes, d INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'm.f'");
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    ASSERT_EQ(create.argTypes.size(), 4U);
+    EXPECT_EQ(create.bytesArguments, (std::vector<uint64_t>{0, 2}));
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithBytesOnANumberThrows)
+{
+    if (!isUdfBridgeShipped("PythonOutOfProcess"))
+    {
+        GTEST_SKIP() << "This build ships no UDF bridge";
+    }
+    const auto statement
+        = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64 BYTES) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'm.f'");
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownArgumentMarkerThrows)
+{
+    if (!isUdfBridgeShipped("PythonOutOfProcess"))
+    {
+        GTEST_SKIP() << "This build ships no UDF bridge";
+    }
+    const auto statement
+        = binder->parseAndBindSingle("CREATE FUNCTION f (a VARSIZED RAW) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'm.f'");
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
 }
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithoutPythonUdfsThrows)

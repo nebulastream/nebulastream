@@ -321,6 +321,7 @@ UdfInfo toUdfInfo(const UdfDescriptor& descriptor)
         .path = descriptor.getPath().string(),
         .entrypoint = descriptor.getSource().has_value() ? std::string{"<inline>"} : descriptor.getEntrypoint(),
         .argTypes = descriptor.getArgTypes(),
+        .bytesArguments = descriptor.getBytesArguments(),
         .returnType = descriptor.getReturnType(),
     };
 }
@@ -345,7 +346,8 @@ std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::ope
             statement.returnType,
             statement.execution,
             statement.source,
-            statement.language);
+            statement.language,
+            statement.bytesArguments);
     }
     catch (const Exception& e)
     {

@@ -10,7 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""UDFs whose annotations choose how a VARSIZED argument arrives: bytes for raw bytes, anything else for UTF-8 text."""
+"""UDFs for VARSIZED and CHAR arguments. BYTES in CREATE FUNCTION chooses how an argument arrives: as bytes, or else as UTF-8 text.
+
+The annotations only document what each function expects."""
 
 from typing import Optional
 
@@ -39,7 +41,7 @@ def describe(data: bytes, text: str):
     return f"{len(data)}/{text}"
 
 
-# A CHAR arrives like a VARSIZED value of one byte: a one-character str, or bytes when annotated so.
+# A CHAR arrives like a VARSIZED value of one byte: a one-character str, or bytes when declared with BYTES.
 
 
 def char_code(char: str):

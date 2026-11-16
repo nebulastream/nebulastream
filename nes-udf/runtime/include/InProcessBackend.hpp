@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -65,6 +65,8 @@ public:
         std::string source;
         std::string functionName;
         std::vector<int> argTypeCodes;
+        /// For each argument, if the function receives it as bytes; the bridge gets this as UDF_AS_BYTES in the type code.
+        std::vector<bool> bytesArguments;
         int returnTypeCode = 0;
     };
 
@@ -106,7 +108,6 @@ public:
     [[nodiscard]] int getReturnTypeCode() const { return definition.returnTypeCode; }
 
 private:
-
     /// Initializes the UDF in `library`. Throws CannotLoadUdf on failure.
     [[nodiscard]] UdfInstance* initialize(const BridgeLibrary& library) const;
 

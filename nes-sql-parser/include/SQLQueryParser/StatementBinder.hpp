@@ -190,6 +190,8 @@ struct CreateFunctionStatement
     std::string path;
     std::string entrypoint;
     std::vector<DataType> argTypes;
+    /// Positions of the VARSIZED or CHAR arguments declared with BYTES, which the function receives as bytes instead of str.
+    std::vector<uint64_t> bytesArguments;
     DataType returnType;
     UdfExecution execution = UdfExecution::InProcess;
     /// Set if the UDF is defined by AS $python$...$python$; `entrypoint` is empty then.

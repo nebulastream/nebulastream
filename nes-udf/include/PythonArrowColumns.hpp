@@ -18,8 +18,8 @@ namespace NES
 {
 
 /// Converts between pyarrow columns and the Python values of UDF arguments and results, for the Python UDFs that run on Arrow
-/// batches: VARSIZED is `binary` and CHAR `fixed_size_binary(1)`, offered as bytes to a bytes parameter (see
-/// PythonBytesParametersSource) and as str, failing on invalid UTF-8, to any other. Expects pyarrow imported as `pa`.
+/// batches: VARSIZED is `binary` and CHAR `fixed_size_binary(1)`, offered as bytes to a parameter declared with BYTES in
+/// CREATE FUNCTION and as str, failing on invalid UTF-8, to any other. Expects pyarrow imported as `pa`.
 ///  - _binary_column / _char_column: the values of a VARSIZED / CHAR column as a list.
 ///  - _binary / _char: a VARSIZED / CHAR result as bytes, raising for anything but bytes or str (of one byte for CHAR).
 constexpr const char* PythonArrowColumnsSource = R"(

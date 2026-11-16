@@ -325,11 +325,34 @@ public:
 
         /// A scalar UDF matches its arguments positionally. Their names only matter inside an AS body.
         std::vector<DataType> argTypes;
+        std::vector<uint64_t> bytesArguments;
         std::vector<std::string> parameterNames;
         for (auto* const argField : functionDefAST->functionArgField())
         {
             argTypes.push_back(bindDataType(argField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
-            parameterNames.emplace_back(bindIdentifier(argField->identifier()->strictIdentifier()).getOriginalString());
+            parameterNames.emplace_back(bindIdentifier(argField->name->strictIdentifier()).getOriginalString());
+            if (argField->representation == nullptr)
+            {
+                continue;
+            }
+            const auto representation = argField->representation->getText();
+            if (toUpperCase(representation) != "BYTES")
+            {
+                throw InvalidStatement(
+                    "CREATE FUNCTION {}: argument '{}' has '{}' after its type, expected BYTES or nothing",
+                    functionName,
+                    parameterNames.back(),
+                    representation);
+            }
+            if (argTypes.back().type != DataType::Type::VARSIZED && argTypes.back().type != DataType::Type::CHAR)
+            {
+                throw InvalidStatement(
+                    "CREATE FUNCTION {}: BYTES needs a VARSIZED or CHAR argument, '{}' is {}",
+                    functionName,
+                    parameterNames.back(),
+                    argTypes.back());
+            }
+            bytesArguments.push_back(argTypes.size() - 1);
         }
         std::optional<InlineUdfSource> source;
         if (functionDefAST->body != nullptr)
@@ -347,6 +370,7 @@ public:
             .path = path,
             .entrypoint = entrypoint,
             .argTypes = std::move(argTypes),
+            .bytesArguments = std::move(bytesArguments),
             .returnType = returnType,
             .execution = execution,
             .source = std::move(source),

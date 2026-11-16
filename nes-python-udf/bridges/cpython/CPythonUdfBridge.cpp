@@ -40,7 +40,6 @@
 
 #include <UdfAbi.h>
 #include <PythonArrowColumns.hpp>
-#include <PythonBytesParameters.hpp>
 
 /// Implements the C ABI of UdfAbi.h on top of the CPython C API: C types and malloc'ed strings owned by the caller.
 /// NOLINTBEGIN(google-runtime-int,cppcoreguidelines-owning-memory,cppcoreguidelines-no-malloc,misc-include-cleaner,cppcoreguidelines-pro-type-reinterpret-cast,cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-const-cast,cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,readability-identifier-naming,concurrency-mt-unsafe)
@@ -103,7 +102,7 @@ struct UdfCtx
     std::string source;
     std::string functionName;
     std::vector<int> argTypes;
-    std::vector<char> bytesParameters; /* for each argument, if a VARSIZED value stays raw bytes instead of a str */
+    std::vector<char> bytesParameters; /* for each argument, if a VARSIZED or CHAR value stays raw bytes (declared with BYTES) */
     int returnType = 0;
     PyObject* argumentSchema = nullptr; /* pa.Schema of the struct of argument columns */
     PyObject* argumentTypeList = nullptr; /* list of the argument type codes */
@@ -400,27 +399,17 @@ char* fetchPythonError()
     return dupString(out);
 }
 
-/* Runs PythonBytesParametersSource on `function`. If that fails every parameter is a str. GIL held. */
-std::vector<char> findBytesParameters(PyObject* function, const int argc)
+/* Sets the argument types of `description` from the type codes of the ABI, and which arguments the function receives as bytes
+ * from UDF_AS_BYTES in them. */
+void setArgumentTypes(UdfCtx& description, const int* codes, const int argc)
 {
-    std::vector<char> flags(static_cast<size_t>(argc), 0);
-    PyObject* globals = PyDict_New();
-    PyObject* definition = PyRun_String(NES::PythonBytesParametersSource, Py_file_input, globals, globals);
-    PyObject* result = (definition != nullptr)
-        ? PyObject_CallFunction(PyDict_GetItemString(globals, "_bytes_parameters"), "Oi", function, argc)
-        : nullptr;
-    if (result != nullptr)
+    description.argTypes.resize(static_cast<size_t>(argc));
+    description.bytesParameters.resize(static_cast<size_t>(argc));
+    for (int i = 0; i < argc; ++i)
     {
-        for (int i = 0; i < argc; ++i)
-        {
-            flags[static_cast<size_t>(i)] = static_cast<char>(PyObject_IsTrue(PyList_GET_ITEM(result, i)) == 1);
-        }
+        description.argTypes[static_cast<size_t>(i)] = codes[i] & ~UDF_AS_BYTES;
+        description.bytesParameters[static_cast<size_t>(i)] = static_cast<char>((codes[i] & UDF_AS_BYTES) != 0);
     }
-    PyErr_Clear();
-    Py_XDECREF(result);
-    Py_XDECREF(definition);
-    Py_DECREF(globals);
-    return flags;
 }
 
 /* Defines BatchSource once. Returns false with a Python error set if that fails, e.g. without pyarrow. GIL held. */
@@ -477,7 +466,6 @@ UdfInstance* registerCallable(PyObject* function, UdfCtx description, char** err
     auto* ctx = new UdfCtx(std::move(description));
     ctx->id = g_nextId++;
     ctx->callable = function; /* transfer ownership */
-    ctx->bytesParameters = findBytesParameters(function, static_cast<int>(ctx->argTypes.size()));
     return reinterpret_cast<UdfInstance*>(ctx);
 }
 
@@ -816,7 +804,7 @@ extern "C" UdfInstance* initialize_udf(const char* entrypoint, int argc, const i
 
     UdfCtx description;
     description.entrypoint = full;
-    description.argTypes.assign(arg_type_codes, arg_type_codes + argc);
+    setArgumentTypes(description, arg_type_codes, argc);
     description.returnType = return_type_code;
     UdfInstance* const udf = registerCallable(function, std::move(description), errormessage);
     PyGILState_Release(gil);
@@ -878,7 +866,7 @@ extern "C" UdfInstance* initialize_udf_from_source(
     UdfCtx description;
     description.source = sourceText;
     description.functionName = funcName;
-    description.argTypes.assign(arg_type_codes, arg_type_codes + argc);
+    setArgumentTypes(description, arg_type_codes, argc);
     description.returnType = return_type_code;
     UdfInstance* const udf = registerCallable(function, std::move(description), errormessage);
     PyGILState_Release(gil);

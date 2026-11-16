@@ -100,7 +100,7 @@ UdfDescriptor UdfDescriptor::fromSource(
     const UdfLanguage language)
 {
     return UdfDescriptor{
-        std::move(name), std::move(path), std::string{}, std::move(source), std::move(argTypes), returnType, execution, language};
+        std::move(name), std::move(path), std::string{}, std::move(source), std::move(argTypes), {}, returnType, execution, language};
 }
 
 namespace detail
@@ -114,6 +114,7 @@ struct ReflectedUdfDescriptor
     std::optional<std::vector<std::string>> sourceParameterNames;
     std::optional<std::string> sourceBody;
     std::optional<std::vector<DataType>> argTypes;
+    std::optional<std::vector<uint64_t>> bytesArguments;
     std::optional<DataType> returnType;
     std::optional<UdfExecution> execution;
     std::optional<UdfLanguage> language;
@@ -131,6 +132,7 @@ Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, 
             .sourceParameterNames = source.has_value() ? std::make_optional(source->parameterNames) : std::nullopt,
             .sourceBody = source.has_value() ? std::make_optional(source->body) : std::nullopt,
             .argTypes = std::make_optional(descriptor.getArgTypes()),
+            .bytesArguments = std::make_optional(descriptor.getBytesArguments()),
             .returnType = std::make_optional(descriptor.getReturnType()),
             .execution = std::make_optional(descriptor.getExecution()),
             .language = std::make_optional(descriptor.getLanguage())});
@@ -158,6 +160,7 @@ UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const
         std::move(reflected.entrypoint).value(),
         std::move(source),
         std::move(reflected.argTypes).value(),
+        std::move(reflected.bytesArguments).value_or(std::vector<uint64_t>{}),
         std::move(reflected.returnType).value(),
         reflected.execution.value_or(UdfExecution::InProcess),
         reflected.language.value_or(UdfLanguage::Python)};

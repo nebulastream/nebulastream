@@ -89,7 +89,8 @@ createFunctionDefinition: FUNCTION udfName=identifier '(' (functionArgField (','
                           (LANGUAGE language=identifier)?
                           (EXECUTION execution=identifier)?
                           (ENTRYPOINT entrypoint=STRING | AS body=PYTHON_BODY);
-functionArgField: identifier typeDefinition;
+/// A VARSIZED or CHAR argument followed by BYTES reaches the function as raw bytes instead of a str.
+functionArgField: name=identifier typeDefinition (representation=identifier)?;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: strictIdentifier typeDefinition nullableDefinition?;

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -79,6 +80,8 @@ class UdfDescriptor
     std::string entrypoint;
     std::optional<InlineUdfSource> source;
     std::vector<DataType> argTypes;
+    /// Positions of the VARSIZED or CHAR arguments that a Python function receives as bytes instead of str, in ascending order.
+    std::vector<uint64_t> bytesArguments;
     DataType returnType;
     UdfExecution execution;
     UdfLanguage language;
@@ -89,6 +92,7 @@ class UdfDescriptor
         std::string entrypoint,
         std::optional<InlineUdfSource> source,
         std::vector<DataType> argTypes,
+        std::vector<uint64_t> bytesArguments,
         DataType returnType,
         UdfExecution execution,
         UdfLanguage language)
@@ -97,6 +101,7 @@ class UdfDescriptor
         , entrypoint(std::move(entrypoint))
         , source(std::move(source))
         , argTypes(std::move(argTypes))
+        , bytesArguments(std::move(bytesArguments))
         , returnType(returnType)
         , execution(execution)
         , language(language)
@@ -130,6 +135,11 @@ public:
     [[nodiscard]] const std::optional<InlineUdfSource>& getSource() const { return source; }
 
     [[nodiscard]] const std::vector<DataType>& getArgTypes() const { return argTypes; }
+
+    [[nodiscard]] const std::vector<uint64_t>& getBytesArguments() const { return bytesArguments; }
+
+    /// If the argument at `position` was declared with BYTES: the function receives it as bytes instead of str.
+    [[nodiscard]] bool isBytesArgument(uint64_t position) const { return std::ranges::binary_search(bytesArguments, position); }
 
     [[nodiscard]] const DataType& getReturnType() const { return returnType; }
 

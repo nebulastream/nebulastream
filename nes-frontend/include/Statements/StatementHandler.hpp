@@ -15,6 +15,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstdint>
 #include <expected>
 #include <map>
 #include <memory>
@@ -161,6 +162,7 @@ struct UdfInfo
     std::string path;
     std::string entrypoint;
     std::vector<DataType> argTypes;
+    std::vector<uint64_t> bytesArguments;
     DataType returnType;
 };
 

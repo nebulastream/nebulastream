@@ -252,14 +252,16 @@ LogicalOperator splitOutOfProcessUdfOperator(DecompositionContext& context, cons
             description.body = source->body;
             description.parameterNames = source->parameterNames;
         }
-        for (const auto& argument : function.getChildren())
+        for (const auto& [position, argument] : std::views::enumerate(function.getChildren()))
         {
+            const auto bytes = descriptor.isBytesArgument(static_cast<uint64_t>(position));
             if (const auto access = argument.tryGetAs<FieldAccessLogicalFunction>())
             {
                 description.arguments.push_back(
                     {.field = fieldPosition(fields, access.value()->getField().getLastName()),
                      .constant = std::nullopt,
-                     .constantType = {}});
+                     .constantType = {},
+                     .bytes = bytes});
             }
             else
             {
@@ -268,7 +270,8 @@ LogicalOperator splitOutOfProcessUdfOperator(DecompositionContext& context, cons
                 description.arguments.push_back(
                     {.field = std::nullopt,
                      .constant = constant.value()->getConstantValue(),
-                     .constantType = std::string{magic_enum::enum_name(constant.value()->getDataType().type)}});
+                     .constantType = std::string{magic_enum::enum_name(constant.value()->getDataType().type)},
+                     .bytes = bytes});
             }
         }
         calls.push_back(std::move(description));

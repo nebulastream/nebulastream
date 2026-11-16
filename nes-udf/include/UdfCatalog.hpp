@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -49,7 +50,10 @@ public:
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         std::optional<InlineUdfSource> source = std::nullopt,
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-        UdfLanguage language = UdfLanguage::Python);
+        UdfLanguage language = UdfLanguage::Python,
+        /// Positions of the VARSIZED or CHAR arguments that the function receives as bytes instead of str.
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        std::vector<uint64_t> bytesArguments = {});
     void removeUdf(const std::string& udfName);
     [[nodiscard]] bool hasUdf(const std::string& udfName) const;
     [[nodiscard]] std::vector<std::string> getUdfNames() const;

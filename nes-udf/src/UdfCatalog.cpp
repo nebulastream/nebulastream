@@ -14,6 +14,8 @@
 
 #include <UdfCatalog.hpp>
 
+#include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -36,7 +38,8 @@ void UdfCatalog::registerUdf(
     DataType returnType,
     const UdfExecution execution,
     std::optional<InlineUdfSource> source,
-    const UdfLanguage language)
+    const UdfLanguage language,
+    std::vector<uint64_t> bytesArguments)
 {
     if (source.has_value() && source->parameterNames.size() != argTypes.size())
     {
@@ -70,9 +73,26 @@ void UdfCatalog::registerUdf(
         validateType(argType, "argument");
     }
     validateType(returnType, "return");
+    std::ranges::sort(bytesArguments);
+    for (const auto position : bytesArguments)
+    {
+        if (position >= argTypes.size()
+            || (argTypes.at(position).type != DataType::Type::VARSIZED && argTypes.at(position).type != DataType::Type::CHAR))
+        {
+            throw NES::InvalidStatement("UDF '{}': only a VARSIZED or CHAR argument can be BYTES, not argument {}", name, position + 1);
+        }
+    }
 
     auto descriptor = UdfDescriptor{
-        name, std::move(path), std::move(entrypoint), std::move(source), std::move(argTypes), returnType, execution, language};
+        name,
+        std::move(path),
+        std::move(entrypoint),
+        std::move(source),
+        std::move(argTypes),
+        std::move(bytesArguments),
+        returnType,
+        execution,
+        language};
     catalog.registerEntry(std::move(name), std::move(descriptor));
 }
 

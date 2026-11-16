@@ -1,5 +1,5 @@
 # name: udf/PythonUdfVarsizedTypes.test
-# description: A UDF chooses with its annotations if a VARSIZED argument arrives as str (UTF-8, the default) or bytes (raw)
+# description: BYTES in CREATE FUNCTION chooses if a VARSIZED or CHAR argument arrives as str (UTF-8, the default) or bytes (raw)
 # groups: [PythonUdf, PythonUdfProcess]
 
 # 0xC3 0xA4 is the UTF-8 encoding of a single character
@@ -21,13 +21,17 @@ ATTACH INLINE
 
 # --- EXECUTION IN_PROCESS ---
 CREATE FUNCTION text_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.text_length';
-CREATE FUNCTION byte_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.byte_length';
-CREATE FUNCTION optional_byte_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.optional_byte_length';
-CREATE FUNCTION wrapped_byte_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_wrapped.wrapped_byte_length';
+CREATE FUNCTION byte_length_ip (x VARSIZED BYTES) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.byte_length';
+CREATE FUNCTION optional_byte_length_ip (x VARSIZED BYTES) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.optional_byte_length';
+CREATE FUNCTION unmarked_byte_length_ip (x VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.byte_length';
+CREATE FUNCTION type_name_bytes_ip (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.type_name';
 CREATE FUNCTION type_name_ip (x VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.type_name';
-CREATE FUNCTION echo_bytes_ip (x VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.echo_bytes';
-CREATE FUNCTION describe_ip (x VARSIZED, y VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.describe';
+CREATE FUNCTION echo_bytes_ip (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.echo_bytes';
+CREATE FUNCTION describe_ip (x VARSIZED BYTES, y VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.describe';
 CREATE FUNCTION body_type_name_ip (x VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS AS $python$
+    return type(x).__name__
+$python$;
+CREATE FUNCTION body_type_name_bytes_ip (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION IN_PROCESS AS $python$
     return type(x).__name__
 $python$;
 
@@ -43,10 +47,19 @@ SELECT optional_byte_length_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
 2
 
-# A wrapped function gets bytes from the annotation of the function it wraps
-SELECT wrapped_byte_length_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
+# Only the declaration decides: without BYTES, a function annotated with bytes gets a str
+SELECT unmarked_byte_length_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
-2
+1
+
+# BYTES also applies to a function without annotations and to a body
+SELECT type_name_bytes_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+bytes
+
+SELECT body_type_name_bytes_ip(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+bytes
 
 SELECT optional_byte_length_ip(b) AS r FROM nullable INTO FILE();
 ----
@@ -76,7 +89,7 @@ SELECT type_name_ip(FROM_BASE64(b)) AS r FROM binary INTO FILE();
 ----
 ERROR 3007
 
-# Each parameter chooses for itself, and the choice also applies to a constant
+# BYTES applies to each argument on its own, also to a constant
 SELECT describe_ip(FROM_BASE64(b), 'abc') AS r FROM binary INTO FILE();
 ----
 1/abc
@@ -91,13 +104,17 @@ str
 
 # --- EXECUTION OUT_OF_PROCESS ---
 CREATE FUNCTION text_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.text_length';
-CREATE FUNCTION byte_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.byte_length';
-CREATE FUNCTION optional_byte_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.optional_byte_length';
-CREATE FUNCTION wrapped_byte_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_wrapped.wrapped_byte_length';
+CREATE FUNCTION byte_length_oop (x VARSIZED BYTES) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.byte_length';
+CREATE FUNCTION optional_byte_length_oop (x VARSIZED BYTES) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.optional_byte_length';
+CREATE FUNCTION unmarked_byte_length_oop (x VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.byte_length';
+CREATE FUNCTION type_name_bytes_oop (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.type_name';
 CREATE FUNCTION type_name_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.type_name';
-CREATE FUNCTION echo_bytes_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.echo_bytes';
-CREATE FUNCTION describe_oop (x VARSIZED, y VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.describe';
+CREATE FUNCTION echo_bytes_oop (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.echo_bytes';
+CREATE FUNCTION describe_oop (x VARSIZED BYTES, y VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.describe';
 CREATE FUNCTION body_type_name_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
+    return type(x).__name__
+$python$;
+CREATE FUNCTION body_type_name_bytes_oop (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
     return type(x).__name__
 $python$;
 
@@ -113,10 +130,19 @@ SELECT optional_byte_length_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
 2
 
-# A wrapped function gets bytes from the annotation of the function it wraps
-SELECT wrapped_byte_length_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
+# Only the declaration decides: without BYTES, a function annotated with bytes gets a str
+SELECT unmarked_byte_length_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
-2
+1
+
+# BYTES also applies to a function without annotations and to a body
+SELECT type_name_bytes_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+bytes
+
+SELECT body_type_name_bytes_oop(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+bytes
 
 SELECT optional_byte_length_oop(b) AS r FROM nullable INTO FILE();
 ----
@@ -146,7 +172,7 @@ SELECT type_name_oop(FROM_BASE64(b)) AS r FROM binary INTO FILE();
 ----
 ERROR 3007
 
-# Each parameter chooses for itself, and the choice also applies to a constant
+# BYTES applies to each argument on its own, also to a constant
 SELECT describe_oop(FROM_BASE64(b), 'abc') AS r FROM binary INTO FILE();
 ----
 1/abc
@@ -161,11 +187,12 @@ str
 
 # --- EXECUTION INLINE ---
 # Codon's str holds raw bytes and is not validated, so unlike the Python modes, a str counts bytes and accepts invalid UTF-8.
+# Codon reads the annotations of the function when it compiles it. BYTES does not change what it passes.
 CREATE FUNCTION text_length_inline (x VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.text_length';
-CREATE FUNCTION byte_length_inline (x VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.byte_length';
-CREATE FUNCTION optional_byte_length_inline (x VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.optional_byte_length';
-CREATE FUNCTION echo_bytes_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.echo_bytes';
-CREATE FUNCTION describe_inline (x VARSIZED, y VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.describe';
+CREATE FUNCTION byte_length_inline (x VARSIZED BYTES) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.byte_length';
+CREATE FUNCTION optional_byte_length_inline (x VARSIZED BYTES) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.optional_byte_length';
+CREATE FUNCTION echo_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.echo_bytes';
+CREATE FUNCTION describe_inline (x VARSIZED BYTES, y VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.describe';
 
 SELECT text_length_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
@@ -197,7 +224,7 @@ SELECT describe_inline(FROM_BASE64(b), 'abc') AS r FROM binary INTO FILE();
 
 
 # --- CHAR ---
-# A CHAR is one byte. It arrives like a one-byte VARSIZED value, as a one-character str or as bytes, and a CHAR result is a
+# A CHAR is one byte. It arrives like a one-byte VARSIZED value, as a one-character str or with BYTES as bytes, and a CHAR result is a
 # str or bytes of exactly one byte.
 CREATE LOGICAL SOURCE chars(c CHAR NOT NULL, n CHAR);
 CREATE PHYSICAL SOURCE FOR chars TYPE File;
@@ -208,9 +235,9 @@ Z,
 # CHAR, EXECUTION IN_PROCESS
 CREATE FUNCTION char_code_ip (x CHAR) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.char_code';
 CREATE FUNCTION optional_char_code_ip (x CHAR) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.optional_char_code';
-CREATE FUNCTION char_byte_ip (x CHAR) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.char_byte';
+CREATE FUNCTION char_byte_ip (x CHAR BYTES) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.char_byte';
 CREATE FUNCTION next_char_ip (x CHAR) RETURNS CHAR EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.next_char';
-CREATE FUNCTION char_from_bytes_ip (x CHAR) RETURNS CHAR EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.char_from_bytes';
+CREATE FUNCTION char_from_bytes_ip (x CHAR BYTES) RETURNS CHAR EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.char_from_bytes';
 CREATE FUNCTION too_long_ip (x CHAR) RETURNS CHAR EXECUTION IN_PROCESS ENTRYPOINT 'varsized_types.too_long';
 CREATE FUNCTION body_upper_ip (x CHAR) RETURNS CHAR EXECUTION IN_PROCESS AS $python$
     return x.upper()
@@ -243,9 +270,9 @@ ERROR 3007
 # CHAR, EXECUTION OUT_OF_PROCESS
 CREATE FUNCTION char_code_oop (x CHAR) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.char_code';
 CREATE FUNCTION optional_char_code_oop (x CHAR) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.optional_char_code';
-CREATE FUNCTION char_byte_oop (x CHAR) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.char_byte';
+CREATE FUNCTION char_byte_oop (x CHAR BYTES) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.char_byte';
 CREATE FUNCTION next_char_oop (x CHAR) RETURNS CHAR EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.next_char';
-CREATE FUNCTION char_from_bytes_oop (x CHAR) RETURNS CHAR EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.char_from_bytes';
+CREATE FUNCTION char_from_bytes_oop (x CHAR BYTES) RETURNS CHAR EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.char_from_bytes';
 CREATE FUNCTION too_long_oop (x CHAR) RETURNS CHAR EXECUTION OUT_OF_PROCESS ENTRYPOINT 'varsized_types.too_long';
 CREATE FUNCTION body_upper_oop (x CHAR) RETURNS CHAR EXECUTION OUT_OF_PROCESS AS $python$
     return x.upper()
@@ -278,9 +305,9 @@ ERROR 3007
 # CHAR, EXECUTION INLINE
 CREATE FUNCTION char_code_inline (x CHAR) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.char_code';
 CREATE FUNCTION optional_char_code_inline (x CHAR) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.optional_char_code';
-CREATE FUNCTION char_byte_inline (x CHAR) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.char_byte';
+CREATE FUNCTION char_byte_inline (x CHAR BYTES) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.char_byte';
 CREATE FUNCTION next_char_inline (x CHAR) RETURNS CHAR EXECUTION INLINE ENTRYPOINT 'varsized_types.next_char';
-CREATE FUNCTION char_from_bytes_inline (x CHAR) RETURNS CHAR EXECUTION INLINE ENTRYPOINT 'varsized_types.char_from_bytes';
+CREATE FUNCTION char_from_bytes_inline (x CHAR BYTES) RETURNS CHAR EXECUTION INLINE ENTRYPOINT 'varsized_types.char_from_bytes';
 CREATE FUNCTION too_long_inline (x CHAR) RETURNS CHAR EXECUTION INLINE ENTRYPOINT 'varsized_types.too_long';
 CREATE FUNCTION body_upper_inline (x CHAR) RETURNS CHAR EXECUTION INLINE AS $python$
     return x.upper()

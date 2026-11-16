@@ -27,7 +27,6 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <PythonArrowColumns.hpp>
-#include <PythonBytesParameters.hpp>
 #include <UdfProcessCall.hpp>
 
 namespace NES
@@ -47,12 +46,12 @@ std::string pythonString(const std::string_view text)
     return fmt::format("bytes.fromhex(\"{}\").decode()", hex);
 }
 
-std::string pythonConstant(const UdfProcessArgument& argument, const std::string_view asBytes)
+std::string pythonConstant(const UdfProcessArgument& argument)
 {
     const auto text = pythonString(argument.constant.value());
     if (argument.constantType == "VARSIZED" || argument.constantType == "CHAR")
     {
-        return fmt::format("{0}.encode() if {1} else {0}", text, asBytes);
+        return argument.bytes ? fmt::format("{}.encode()", text) : text;
     }
     if (argument.constantType == "BOOLEAN")
     {
@@ -91,15 +90,15 @@ std::string defineUdf(const size_t index, const UdfProcessCall& call)
 
 /// The Python values of column `index` of an ARROW_IPC batch, as a list. A VARSIZED column becomes bytes or, failing on invalid
 /// UTF-8, str.
-std::string readArrowColumn(const size_t index, const ArrowBufferRef::Field& field, const std::string_view asBytes)
+std::string readArrowColumn(const size_t index, const ArrowBufferRef::Field& field, const bool asBytes)
 {
     if (field.type.type == DataType::Type::VARSIZED)
     {
-        return fmt::format("_binary_column(batch.column({}), {})", index, asBytes);
+        return fmt::format("_binary_column(batch.column({}), {})", index, asBytes ? "True" : "False");
     }
     if (field.type.type == DataType::Type::CHAR)
     {
-        return fmt::format("_char_column(batch.column({}), {})", index, asBytes);
+        return fmt::format("_char_column(batch.column({}), {})", index, asBytes ? "True" : "False");
     }
     return fmt::format("batch.column({}).to_pylist()", index);
 }
@@ -250,7 +249,7 @@ std::string bindPoolBuffers(const size_t index, const ArrowBufferRef::Field& fie
 
 /// A Python expression for the values of the argument column `index`: what the schema says the column holds decides how it is read,
 /// so the process does not ask per batch. `reader` names the function that reads a VARSIZED or CHAR column as bytes or as str, which
-/// only the annotations of the UDF decide.
+/// BYTES in the declaration of the UDF decides.
 std::string readColumn(const size_t index, const ArrowBufferRef::Field& field, const std::string_view reader)
 {
     /// A column that cannot hold NULLs has no bitmap to look at.
@@ -867,7 +866,6 @@ generatePythonBatchWrapper(const ArrowBufferRef& layout, const std::vector<UdfPr
                           "def _define_udfs():\n"
                           "    namespace = globals()\n"
                           "    exec(_UDF_SOURCE, namespace)\n\n\n";
-    program += PythonBytesParametersSource;
     /// _binary and _char, which check a VARSIZED or CHAR result, do not use pyarrow.
     program += PythonArrowColumnsSource;
     /// SHARED_MEMORY frames the bodies of its batches as RAW_BUFFERS does.
@@ -926,34 +924,30 @@ generatePythonBatchWrapper(const ArrowBufferRef& layout, const std::vector<UdfPr
     for (const auto& [callIndex, call] : std::views::enumerate(calls))
     {
         udfs += defineUdf(callIndex, call);
-        udfs += fmt::format("_udf_{0}_bytes = _bytes_parameters(_udf_{0}, {1})\n", callIndex, call.arguments.size());
 
         /// The columns the call iterates over, and what it passes for each parameter: a value of a column, or a constant.
         std::vector<std::string> columns;
         std::vector<std::string> parameters;
         for (const auto& [argumentIndex, argument] : std::views::enumerate(call.arguments))
         {
-            const auto asBytes = fmt::format("_udf_{}_bytes[{}]", callIndex, argumentIndex);
             if (!argument.field.has_value())
             {
                 const auto name = fmt::format("_constant_{}_{}", callIndex, argumentIndex);
-                udfs += fmt::format("{} = {}\n", name, pythonConstant(argument, asBytes));
+                udfs += fmt::format("{} = {}\n", name, pythonConstant(argument));
                 parameters.push_back(name);
                 continue;
             }
             const auto& field = fields.at(*argument.field);
             if (!raw)
             {
-                columns.push_back(readArrowColumn(*argument.field, field, asBytes));
+                columns.push_back(readArrowColumn(*argument.field, field, argument.bytes));
             }
             else if (isVarSized(field) || field.type.type == DataType::Type::CHAR)
             {
-                /// The annotations of the UDF decide once, when the process starts, if the column is read as bytes or as str.
-                const auto reader = fmt::format("_read_{}_{}", callIndex, argumentIndex);
+                /// BYTES in the declaration of the UDF decides if the column is read as bytes or as str.
                 const auto [bytesReader, strReader] = readers(field);
-                udfs += fmt::format("{} = {} if {} else {}\n", reader, bytesReader, asBytes, strReader);
                 bind(*argument.field, true);
-                columns.push_back(readColumn(*argument.field, field, reader));
+                columns.push_back(readColumn(*argument.field, field, argument.bytes ? bytesReader : strReader));
             }
             else
             {

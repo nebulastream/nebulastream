@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <concepts>
@@ -551,7 +552,7 @@ constexpr std::array<std::string_view, 6> udfInfoOutputColumns{"udf_name", "lang
 using UdfNameOutputRowType = std::tuple<std::string>;
 constexpr std::array<std::string_view, 1> udfNameOutputColumns{"udf_name"};
 
-/// Render a UDF's declared signature as "(ARG0, ARG1) -> RETURN".
+/// Render a UDF's declared signature as "(ARG0, ARG1 BYTES) -> RETURN".
 inline std::string toUdfSignature(const UdfInfo& udf)
 {
     std::string args;
@@ -562,6 +563,10 @@ inline std::string toUdfSignature(const UdfInfo& udf)
             args += ", ";
         }
         args += magic_enum::enum_name(udf.argTypes.at(i).type);
+        if (std::ranges::contains(udf.bytesArguments, i))
+        {
+            args += " BYTES";
+        }
     }
     return "(" + args + ") -> " + std::string{magic_enum::enum_name(udf.returnType.type)};
 }
