@@ -13,6 +13,7 @@
 */
 #include <DataTypes/VarVal.hpp>
 
+#include <algorithm>
 #include <concepts>
 #include <cstdint>
 #include <ostream>
@@ -23,6 +24,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/FixedSizedData.hpp>
+#include <DataTypes/StructData.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/select.hpp>
@@ -31,6 +33,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
+#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -86,13 +89,37 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
             }
             else if constexpr (std::is_same_v<ValType, FixedSizedData>)
             {
-                /// All elements are written byte-aligned into memory
-                nautilus::memcpy(memRef, val.getRawPtr(), nautilus::val<size_t>{val.getTotalSizeInBytes()});
+                if (val.getElementType().isFlat())
+                {
+                    /// All elements are written byte-aligned into memory. This saves us copy operations.
+                    nautilus::memcpy(memRef, val.getRawPtr(), nautilus::val<size_t>{val.getTotalSizeInBytes()});
+                    return;
+                }
+                /// Elements reference var-sized payloads. The source's slots may hold layout-specific references (e.g. a
+                /// VariableSizedAccess into a PagedVector page), so they are resolved through the source's loader element by element
+                /// and written as pointer + length, which is what readers of inline memory expect.
+                const auto elementSize = val.getElementType().getSizeInBytesWithoutNull();
+                for (nautilus::static_val<size_t> i = 0; i < val.getNumElements(); ++i)
+                {
+                    val.at(nautilus::val<uint64_t>{i}).writeToMemory(memRef + nautilus::val<size_t>{i * elementSize});
+                }
             }
             else if constexpr (std::is_same_v<ValType, StructData>)
             {
-                /// All elements are written bytealigned into memory
-                nautilus::memcpy(memRef, val.getRawPtr(), nautilus::val<size_t>{val.getTotalSizeInBytes()});
+                const auto& fields = val.getFields();
+                if (std::ranges::all_of(fields, [](const auto& field) { return field.second.isFlat(); }))
+                {
+                    /// All elements are written bytealigned into memory
+                    nautilus::memcpy(memRef, val.getRawPtr(), nautilus::val<size_t>{val.getTotalSizeInBytes()});
+                    return;
+                }
+                /// See FixedSizedData above: resolve var-sized members through the source's loader instead of copying raw slots.
+                size_t offset = 0;
+                for (nautilus::static_val<size_t> i = 0; i < fields.size(); ++i)
+                {
+                    val.at(i).writeToMemory(memRef + nautilus::val<size_t>{offset});
+                    offset += fields.at(i).second.getSizeInBytesWithoutNull();
+                }
             }
             else
             {

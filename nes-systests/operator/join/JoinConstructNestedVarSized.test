@@ -1,0 +1,35 @@
+# name: join/JoinConstructNestedVarSized.test
+# description: Constructs composites (`ARRAY(...)`) from join results whose inputs are composites with var-sized members
+# (`INT32 ARRAY[2][]`). Both join sides are materialized in PagedVectors, so the array elements read by the constructor hold
+# layout-specific var-sized references (child index + offset) rather than inline pointers. Writing such an element into the
+# constructed value must resolve its nested vectors through the source layout's loader instead of copying the raw slot.
+# Records read directly from the input formatter are arena-backed with inline pointers, so they do not exercise this path.
+# groups: [WindowOperators, Join, CompilationIntensive]
+
+CREATE LOGICAL SOURCE lhs(id UINT64 NOT NULL, vecs INT32 ARRAY[2][] NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lhs TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID": 1, "VECS": [[1, 2], [3]], "TS": 10}
+{"ID": 2, "VECS": [[4, 5, 6], [7, 8]], "TS": 20}
+
+CREATE LOGICAL SOURCE rhs(id2 UINT64 NOT NULL, other INT32 ARRAY[2][] NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rhs TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID2": 1, "OTHER": [[10], [20, 30]], "TS2": 30}
+{"ID2": 2, "OTHER": [[40, 50], [60]], "TS2": 50}
+
+# Array built from the build-side column twice
+SELECT id, ARRAY(vecs, vecs) AS nested
+FROM (SELECT * FROM lhs) JOIN (SELECT * FROM rhs) ON id = id2 AND ts < ts2
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"NESTED":[[[1,2],[3]],[[1,2],[3]]]}
+{"ID":2,"NESTED":[[[4,5,6],[7,8]],[[4,5,6],[7,8]]]}
+
+# Array mixing a build-side and a probe-side column, next to a plain projection of one of them
+SELECT id, vecs, ARRAY(other, vecs) AS nested
+FROM (SELECT * FROM lhs) JOIN (SELECT * FROM rhs) ON id = id2 AND ts < ts2
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"VECS":[[1,2],[3]],"NESTED":[[[10],[20,30]],[[1,2],[3]]]}
+{"ID":2,"VECS":[[4,5,6],[7,8]],"NESTED":[[[40,50],[60]],[[4,5,6],[7,8]]]}
