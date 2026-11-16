@@ -31,6 +31,12 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/FloorLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
 
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -108,6 +114,11 @@ TEST_F(ConstantFoldingRuleTest, nestedAdditionInSelection)
     auto op2 = op1.getChildren().at(0);
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
+
+/*TEST_F(ConstantFoldingRuleTest, minAndMaxFloat)
+{
+
+}*/
 
 TEST_F(ConstantFoldingRuleTest, noFoldablePredicate)
 {
@@ -394,6 +405,51 @@ TEST_F(ConstantFoldingRuleTest, floatPow)
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
+TEST_F(ConstantFoldingRuleTest, intABS)
+{
+    auto source = utils.createSource("intABSSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        AbsoluteLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "-10"}}
+    });
+    auto sink = utils.createSink(select, "powFloatSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "10");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, floatABS)
+{
+    auto source = utils.createSource("intABSSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        AbsoluteLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "-10.00"}}
+    });
+    auto sink = utils.createSink(select, "powFloatSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "10.00");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
 
 //TODO float 16 + 32
 

@@ -21,6 +21,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <utility>
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -153,10 +154,52 @@ LogicalFunction handleAbsolute(const std::string value, const DataType dataType)
 {
     if (value.starts_with("-"))
     {
+        NES_DEBUG("value is negative");
         auto absoluteValueAsString = value.substr(1, value.size() - 1);
+        NES_DEBUG("absoluteValueAsString: {}", absoluteValueAsString);
+        auto tmp = ConstantValueLogicalFunction(dataType, absoluteValueAsString);
+        NES_DEBUG("created Function: {}", tmp.explain(ExplainVerbosity::Debug));
         return ConstantValueLogicalFunction(dataType, absoluteValueAsString);
     }
+    NES_DEBUG("return with value: {}", value);
+    auto tmp = ConstantValueLogicalFunction(dataType, value);
+    NES_DEBUG("created Function: {}", tmp.explain(ExplainVerbosity::Debug));
     return ConstantValueLogicalFunction(dataType, value);
+}
+
+LogicalFunction handleFloor(const std::string value, const DataType dataType)
+{
+    std::string newValue = std::to_string(std::stoi(value));
+    if (value.starts_with("-"))
+    {
+        newValue = std::to_string(std::stoi(value) -1);
+    }
+    return ConstantValueLogicalFunction(dataType, newValue);
+}
+
+LogicalFunction handleRound(const std::string value, const DataType dataType)
+{
+    const std::string newValue = std::to_string(std::round(std::stof(value)));
+    return ConstantValueLogicalFunction(dataType, newValue);
+}
+
+LogicalFunction handleSqrt(const std::string value, const DataType dataType)
+{
+    const std::string newValue = std::to_string(std::sqrt(std::stof(value)));
+    return ConstantValueLogicalFunction(dataType, newValue);
+}
+
+LogicalFunction handleExp(const std::string value, const DataType dataType)
+{
+    const std::string eulerNumber = "2.7182818284590452353602874713527";
+    //const auto newValue = handlePow(eulerNumber, value, dataType);
+    return handlePow(eulerNumber, value, dataType);
+}
+
+LogicalFunction handleCeil(const std::string value, const DataType dataType)
+{
+    const std::string newValue = std::to_string(std::ceil(std::stof(value)));
+    return ConstantValueLogicalFunction(dataType, newValue);
 }
 
 std::optional<std::string> getInputConstantValue(const LogicalFunction& function)
@@ -251,12 +294,22 @@ LogicalFunction calculateExpression(const LogicalFunction& function)
     }
     if (function.tryGetAs<AbsoluteLogicalFunction>())
     {
+        NES_DEBUG("function is ABS");
         const auto& left = getInputConstantValue(newChildren.at(0));
         if (left.has_value())
         {
             DataType dataType;
+            if (!function.getAs<AbsoluteLogicalFunction>().getChildren().at(0).tryGetAs<ConstantValueLogicalFunction>()->getDataType().isSignedInteger())
+            {
+                NES_DEBUG("function is NOT signed");
+                dataType = function.getAs<AbsoluteLogicalFunction>().getChildren().at(0).tryGetAs<ConstantValueLogicalFunction>()->getDataType();
+                NES_DEBUG("function: {}", function.getChildren().at(0).explain(ExplainVerbosity::Debug));
+                return handleAbsolute(left.value(), dataType);
+            }
+            NES_DEBUG("function IS signed");
             const auto childType = function.getAs<AbsoluteLogicalFunction>().getChildren().at(0).tryGetAs<ConstantValueLogicalFunction>()->getDataType().type;
             const auto absInferredType = function.getAs<AbsoluteLogicalFunction>()->inferAbsoluteResultType(childType);
+            NES_DEBUG("function: {}", function.getChildren().at(0).explain(ExplainVerbosity::Debug));
             if (newChildren.at(0).getAs<ConstantValueLogicalFunction>().getDataType().nullable)
             {
                 dataType = DataType{absInferredType, DataType::NULLABLE::IS_NULLABLE};
@@ -268,6 +321,52 @@ LogicalFunction calculateExpression(const LogicalFunction& function)
             return handleAbsolute(left.value(), dataType);
         }
     }
+    if (function.tryGetAs<FloorLogicalFunction>())
+    {
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        if (left.has_value() && newChildren.at(0).getDataType().isFloat())
+        {
+            return handleFloor(left.value(), newChildren.at(0).getDataType());
+        }
+    }
+    if (function.tryGetAs<RoundLogicalFunction>())
+    {
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        if (left.has_value() && newChildren.at(0).getDataType().isFloat())
+        {
+            return handleRound(left.value(), newChildren.at(0).getDataType());
+        }
+    }
+    if (function.tryGetAs<SqrtLogicalFunction>())
+    {
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        if (left.has_value())
+        {
+            const auto dataType = DataTypeProvider::provideDataType(
+            DataType::Type::FLOAT64, newChildren.at(0).getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+            return handleSqrt(left.value(), dataType);
+        }
+    }
+    if (function.tryGetAs<ExpLogicalFunction>())
+    {
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        if (left.has_value())
+        {
+            const auto dataType = DataTypeProvider::provideDataType(
+            DataType::Type::FLOAT64, newChildren.at(0).getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+            return handleExp(left.value(), dataType);
+        }
+    }
+    if (function.tryGetAs<CeilLogicalFunction>())
+    {
+        const auto& left = getInputConstantValue(newChildren.at(0));
+        if (left.has_value() && newChildren.at(0).getDataType().isFloat())
+        {
+            return handleCeil(left.value(), newChildren.at(0).getDataType());
+        }
+    }
+
+
     return function.withChildren(newChildren);
 }
 
@@ -299,6 +398,7 @@ Visitor::DownResult constantFolding(const LogicalOperator& op)
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan ConstantFoldingRule::apply(const LogicalPlan& queryPlan) const
 {
+    NES_DEBUG("in apply");
     Visitor visitor{constantFolding, rebuildPlan};
     return visitor.apply(queryPlan);
 }
