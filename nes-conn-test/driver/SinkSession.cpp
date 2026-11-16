@@ -287,8 +287,10 @@ public:
     SinkSessionState(SinkSessionState&&) = delete;
     SinkSessionState& operator=(SinkSessionState&&) = delete;
 
-    /// A session that ends without STOP destroys the engine with the query still running, which destroys the sink without stopping it.
-    /// The runner ends a session that way only after the scenario failed, and a sink that failed may not be able to stop.
+    /// A session that ends without STOP destroys the engine with the query still running, which destroys the sink without stopping it,
+    /// as when the worker shuts down.
+    /// The runner ends a session that way after a scenario failed, because a sink that failed may not be able to stop,
+    /// and in a scenario that shuts the connector down.
     ~SinkSessionState() = default;
 
     std::string dispatch(std::string_view line)

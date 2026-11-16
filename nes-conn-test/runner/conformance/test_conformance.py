@@ -154,6 +154,7 @@ def test_scenario(
                     schema=schema,
                     args=scenario.args,
                     link=link,
+                    loss=expect.loss,
                 )
                 run_case(get_scenario(scenario.name), ctx, expect)
         else:
