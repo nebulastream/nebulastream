@@ -84,7 +84,7 @@ into the same `ModelStatementHandler`:
 - Topology YAML: a top-level `models:` list (see
   `docs/guide/nebulastream-frontend.md`).
 
-`ModelCatalog::registerModel` validates the request and stores it:
+`RegisteredModel::create` validates the request, and the coordinator stores the model:
 
 1. The path on disk must exist. The check happens wherever `CREATE MODEL`
    is processed — that is the coordinator for a deployed cluster, or the
