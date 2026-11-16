@@ -19,30 +19,23 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
-#include <iterator>
+#include <functional>
 #include <limits>
 #include <optional>
-#include <ostream>
 #include <ranges>
 #include <string>
 #include <string_view>
-#include <tuple>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
-#include <fmt/base.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <nameof.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Identifiers/NESStrongType.hpp>
 #include <Model/Verdict.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
@@ -52,212 +45,189 @@ namespace NES
 {
 namespace
 {
+struct SchemaAlignment
+{
+    std::vector<std::optional<DataType::Type>> matchedTypes;
+    std::vector<size_t> unexpectedColumns;
+};
+
+struct Row
+{
+    std::string text;
+    std::vector<std::string> values;
+};
+
+enum class Advance : uint8_t
+{
+    Expected,
+    Actual,
+    Both
+};
+
+struct RowStep
+{
+    Advance advance;
+    std::string line;
+    bool matches;
+};
+
+/// The expected side is the schema that the test declared for the sink, and the actual side is the header that the sink wrote.
+/// A name that the test wrote unquoted has no case of its own, so it matches the written name whatever case that has.
+bool compareField(const UnqualifiedUnboundField& expectedField, const UnqualifiedUnboundField& actualField)
+{
+    if (expectedField.getDataType() != actualField.getDataType())
+    {
+        return false;
+    }
+    const auto& expectedIdentifier = *expectedField.getFullyQualifiedName().begin();
+    const auto& actualIdentifier = *actualField.getFullyQualifiedName().begin();
+    return expectedIdentifier.isCaseSensitive()
+        ? expectedIdentifier == actualIdentifier
+        : expectedIdentifier.asCanonicalString() == toUpperCase(actualIdentifier.asCanonicalString());
+}
+
+/// Fields pair up by position, because the column order is part of the query's semantics.
+/// A column at the wrong position reports as missing on one side and unexpected on the other.
+SchemaAlignment
+alignSchemas(const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema, const Schema<UnqualifiedUnboundField, Ordered>& actualSchema)
+{
+    SchemaAlignment alignment;
+    for (const auto column : std::views::iota(0UZ, std::max(expectedSchema.size(), actualSchema.size())))
+    {
+        /// A schema returns no field for an index past its end.
+        /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+        const auto expectedField = expectedSchema[column];
+        const auto actualField = actualSchema[column];
+        /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+        const auto matched = expectedField.has_value() and actualField.has_value() and compareField(*expectedField, *actualField);
+        if (expectedField.has_value())
+        {
+            alignment.matchedTypes.push_back(matched ? std::optional{expectedField->getDataType().type} : std::nullopt);
+        }
+        if (actualField.has_value() and not matched)
+        {
+            alignment.unexpectedColumns.push_back(column);
+        }
+    }
+    return alignment;
+}
+
+std::vector<size_t> getMatchedColumns(const SchemaAlignment& alignment)
+{
+    return std::views::iota(0UZ, alignment.matchedTypes.size())
+        | std::views::filter([&alignment](const size_t column) { return alignment.matchedTypes.at(column).has_value(); })
+        | std::ranges::to<std::vector>();
+}
+
+std::vector<std::string> diffSchemas(
+    const SchemaAlignment& alignment,
+    const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema,
+    const Schema<UnqualifiedUnboundField, Ordered>& actualSchema)
+{
+    std::vector<std::string> lines;
+    for (const auto& [expectedField, type] : std::views::zip(expectedSchema, alignment.matchedTypes))
+    {
+        if (not type.has_value())
+        {
+            lines.push_back(fmt::format("- '{}' is missing from actual result schema.", expectedField));
+        }
+    }
+    for (const auto& [column, actualField] : actualSchema | views::enumerate)
+    {
+        if (std::ranges::contains(alignment.unexpectedColumns, static_cast<size_t>(column)))
+        {
+            lines.push_back(fmt::format("+ '{}' is unexpected field in actual result schema.", actualField));
+        }
+    }
+    if (not lines.empty())
+    {
+        lines.insert(lines.begin(), fmt::format("{} != {}", fmt::join(expectedSchema, ", "), fmt::join(actualSchema, ", ")));
+    }
+    return lines;
+}
+
+/// An empty column becomes NULL, so it has a value to compare.
+/// Both sides may separate fields with commas, so both drop them.
+/// Double spaces go too, because a single space separates the fields.
+Row normalizeRow(const std::string& row)
+{
+    auto text = row | std::views::split(',')
+        | std::views::transform([](const auto& part) { return part.empty() ? std::string_view{"NULL"} : std::string_view{part}; })
+        | std::views::join_with(' ') | std::ranges::to<std::string>();
+    removeDoubleSpaces(text);
+    auto values = text | std::views::split(' ') | std::ranges::to<std::vector<std::string>>();
+    return Row{.text = std::move(text), .values = std::move(values)};
+}
+
+std::vector<Row> sortRows(std::vector<Row> rows, const std::vector<size_t>& sortColumns)
+{
+    const auto getSortValue = [](const Row& row, const size_t column)
+    { return column < row.values.size() ? std::string_view{row.values.at(column)} : std::string_view{}; };
+    std::ranges::sort(
+        rows,
+        [&sortColumns, &getSortValue](const Row& lhs, const Row& rhs)
+        {
+            return std::ranges::lexicographical_compare(
+                sortColumns,
+                sortColumns,
+                std::ranges::less{},
+                [&lhs, &getSortValue](const size_t column) { return getSortValue(lhs, column); },
+                [&rhs, &getSortValue](const size_t column) { return getSortValue(rhs, column); });
+        });
+    return rows;
+}
+
+/// Reads a boolean written either as an integer, where anything but 0 is true, or as `true` or `false`.
+bool parseBool(const std::string& value)
+{
+    if (const auto lower = toLowerCase(value); lower == "true" or lower == "false")
+    {
+        return lower == "true";
+    }
+    const auto number = from_chars<int>(value);
+    INVARIANT(number.has_value(), "Cannot convert '{}' to bool", value);
+    return static_cast<bool>(number.value());
+}
+
+bool compareFloat(const std::string& expected, const std::string& actual)
+{
+    static constexpr auto Epsilon = 1e-5;
+    const auto expectedNumber = std::stod(expected);
+    const auto actualNumber = std::stod(actual);
+    if (expectedNumber == actualNumber)
+    {
+        return true;
+    }
+    const auto difference = std::abs(expectedNumber - actualNumber);
+    const auto magnitude = std::abs(expectedNumber) + std::abs(actualNumber);
+    if (magnitude < std::numeric_limits<double>::min())
+    {
+        return difference < (Epsilon * std::numeric_limits<double>::min());
+    }
+    const auto relativeError = difference / std::min(magnitude, std::numeric_limits<double>::max());
+    const auto withinEpsilon = relativeError < Epsilon;
+    if (not withinEpsilon)
+    {
+        NES_TRACE(
+            "Relative error {} is greater than allowed error {} for values {} and {}",
+            relativeError,
+            Epsilon,
+            expectedNumber,
+            actualNumber);
+    }
+    return withinEpsilon;
+}
+
 /// Compares two field values as text of the given type.
 /// An integer or a string compares exactly, and a float within a relative epsilon, because the text of a float is not stable.
 /// NULL matches only NULL.
-template <typename T>
-bool compareStringAsTypeWithError(const std::string& left, const std::string& right)
+bool compareValue(const DataType::Type type, const std::string& expected, const std::string& actual)
 {
-    if (toLowerCase(left) == "null" and toLowerCase(right) == "null")
+    const auto expectedIsNull = toLowerCase(expected) == "null";
+    const auto actualIsNull = toLowerCase(actual) == "null";
+    if (expectedIsNull or actualIsNull)
     {
-        return true;
-    }
-    if ((toLowerCase(left) == "null" and toLowerCase(right) != "null") or (toLowerCase(left) != "null" and toLowerCase(right) == "null"))
-    {
-        return false;
-    }
-
-    static constexpr auto EPSILON = 1e-5;
-    if constexpr (std::is_floating_point_v<T>)
-    {
-        const auto doubleLeft = std::stod(left);
-        const auto doubleRight = std::stod(right);
-        const auto absDoubleLeft = std::abs(doubleLeft);
-        const auto absDoubleRight = std::abs(doubleRight);
-        const auto absDiff = std::abs(doubleLeft - doubleRight);
-        if (doubleLeft == doubleRight)
-        {
-            return true;
-        }
-        if (doubleLeft == 0.0 || doubleRight == 0.0 || (absDoubleLeft + absDoubleRight < std::numeric_limits<double>::min()))
-        {
-            return absDiff < (EPSILON * std::numeric_limits<double>::min());
-        }
-        const auto relativeErrorCalculated = absDiff / (std::min(absDoubleLeft + absDoubleRight, std::numeric_limits<double>::max()));
-        const auto allowedError = relativeErrorCalculated < EPSILON;
-        if (not allowedError)
-        {
-            NES_TRACE(
-                "Relative error {} is greater than allowed error {} for values {} and {}",
-                relativeErrorCalculated,
-                EPSILON,
-                doubleLeft,
-                doubleRight);
-        }
-        return allowedError;
-    }
-    else if constexpr (std::is_same_v<T, std::string> || std::is_integral_v<T>)
-    {
-        return left == right;
-    }
-    else
-    {
-        throw InvalidDynamicCast("Unknown type {}", NAMEOF_TYPE(T));
-    }
-}
-
-template <typename T, typename Tag>
-class ResultCheckStrongType
-{
-public:
-    explicit constexpr ResultCheckStrongType(T value) : value(std::move(value)) { }
-
-    friend std::ostream& operator<<(std::ostream& os, const ResultCheckStrongType& strongType) { return os << strongType.getRawValue(); }
-
-    [[nodiscard]] const T& getRawValue() const { return value; }
-
-    [[nodiscard]] T& getRawValue() { return value; }
-
-private:
-    T value;
-};
-
-using ExpectedResultField = ResultCheckStrongType<std::string, struct ExpectedResultFields_>;
-using ActualResultField = ResultCheckStrongType<std::string, struct ActualResultFields_>;
-
-template <typename FieldType, typename Tag>
-class ResultTuple
-{
-public:
-    explicit ResultTuple(std::string tuple) : tuple(std::move(tuple)) { }
-
-    [[nodiscard]] size_t size() const { return tuple.size(); }
-
-    friend std::ostream& operator<<(std::ostream& os, const ResultTuple& resultTuple) { return os << resultTuple.tuple; }
-
-    [[nodiscard]] const std::string& getRawValue() const { return tuple; }
-
-    [[nodiscard]] std::vector<FieldType> getFields() const
-    {
-        return tuple | std::views::split(' ')
-            | std::views::transform([](auto&& range) { return FieldType(std::string(range.begin(), range.end())); })
-            | std::ranges::to<std::vector>();
-    }
-
-private:
-    std::string tuple;
-};
-
-void sortOnFields(std::vector<std::string>& results, const std::vector<size_t>& fieldIdxs)
-{
-    std::ranges::sort(
-        results,
-        [&fieldIdxs](const std::string& lhs, const std::string& rhs)
-        {
-            for (const size_t fieldIdx : fieldIdxs)
-            {
-                const auto lhsField = std::string_view((lhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
-                const auto rhsField = std::string_view((rhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
-
-                if (lhsField == rhsField)
-                {
-                    continue;
-                }
-                return lhsField < rhsField;
-            }
-            /// All fields are equal
-            return false;
-        });
-}
-
-template <typename TupleIdxType, typename Tag>
-class ResultTuples
-{
-public:
-    explicit ResultTuples(std::vector<std::string> results, const std::vector<size_t>& expectedResultsFieldSortIdxs)
-        : results(std::move(results))
-    {
-        /// An empty column becomes NULL, so it has a value to compare.
-        for (auto& line : this->results)
-        {
-            auto tokens = line | std::views::split(',')
-                | std::views::transform(
-                              [](auto&& rng)
-                              {
-                                  const std::string token(rng.begin(), rng.end());
-                                  return token.empty() ? std::string{"NULL"} : token;
-                              })
-                | std::ranges::to<std::vector>();
-            line = fmt::format("{}", fmt::join(tokens, ","));
-        }
-
-        /// Both sides may separate fields with commas, so both drop them.
-        /// Double spaces go too, because a single space separates the fields.
-        std::ranges::for_each(this->results, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
-        std::ranges::for_each(this->results, removeDoubleSpaces);
-
-        sortOnFields(this->results, expectedResultsFieldSortIdxs);
-    }
-
-    using TupleType = Tag;
-
-    [[nodiscard]] TupleType getTuple(const TupleIdxType tupleIdx) const { return TupleType{results.at(tupleIdx.getRawValue())}; }
-
-    [[nodiscard]] size_t size() const { return results.size(); }
-
-private:
-    std::vector<std::string> results;
-};
-
-using ExpectedResultIndex = NESStrongType<uint64_t, struct ExpectedResultIndex_, 0, 1>;
-using ActualResultIndex = NESStrongType<uint64_t, struct ActualResultIndex_, 0, 1>;
-using ExpectedResultTuple = ResultTuple<ExpectedResultField, struct ExpectedResultTuple_>;
-using ActualResultTuple = ResultTuple<ActualResultField, struct ActualResultTuple_>;
-using ExpectedResultTuples = ResultTuples<ExpectedResultIndex, ExpectedResultTuple>;
-using ActualResultTuples = ResultTuples<ActualResultIndex, ActualResultTuple>;
-using ExpectedResultSchema = ResultCheckStrongType<Schema<UnqualifiedUnboundField, Ordered>, struct ExpectedResultSchema_>;
-using ActualResultSchema = ResultCheckStrongType<Schema<UnqualifiedUnboundField, Ordered>, struct ActualResultSchema_>;
-}
-}
-
-FMT_OSTREAM(NES::ExpectedResultTuple);
-FMT_OSTREAM(NES::ActualResultTuple);
-FMT_OSTREAM(NES::ActualResultField);
-FMT_OSTREAM(NES::ExpectedResultField);
-
-namespace NES
-{
-namespace
-{
-/// Reads a boolean written either as an integer, where anything but 0 is true, or as `true` or `false`.
-bool convertToBool(const std::string& str)
-{
-    const auto lower = toLowerCase(str);
-    if (lower == "true")
-    {
-        return true;
-    }
-    if (lower == "false")
-    {
-        return false;
-    }
-    const auto boolInt = from_chars<int>(str);
-    INVARIANT(boolInt.has_value(), "Cannot convert '{}' to bool", str);
-    return static_cast<bool>(boolInt.value());
-}
-
-bool compareStringAsTypeWithError(const DataType::Type type, const ExpectedResultField& left, const ActualResultField& right)
-{
-    const auto leftLower = toLowerCase(left.getRawValue());
-    const auto rightLower = toLowerCase(right.getRawValue());
-    /// Two NULL values are equal.
-    if (leftLower == "null" and rightLower == "null")
-    {
-        return true;
-    }
-    if (leftLower == "null" or rightLower == "null")
-    {
-        return false;
+        return expectedIsNull and actualIsNull;
     }
 
     switch (type)
@@ -272,382 +242,158 @@ bool compareStringAsTypeWithError(const DataType::Type type, const ExpectedResul
         case DataType::Type::UINT64:
         case DataType::Type::CHAR:
         case DataType::Type::VARSIZED:
-            return left.getRawValue() == right.getRawValue();
+            return expected == actual;
         case DataType::Type::BOOLEAN: {
-            const auto leftBool = convertToBool(left.getRawValue());
-            const auto rightBool = convertToBool(right.getRawValue());
-            return leftBool == rightBool;
+            const auto expectedBool = parseBool(expected);
+            const auto actualBool = parseBool(actual);
+            return expectedBool == actualBool;
         }
         case DataType::Type::FLOAT32:
-            return compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
         case DataType::Type::FLOAT64:
-            return compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
+            return compareFloat(expected, actual);
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting UNDEFINED in result check comparison");
     }
     std::unreachable();
 }
 
-struct ExpectedToActualFieldMap
+std::string formatPair(const std::string_view expected, const std::string_view actual)
 {
-    struct TypeIndexPair
-    {
-        DataType type;
-        std::optional<size_t> actualIndex;
-    };
-
-    std::string schemaError;
-    std::vector<size_t> expectedResultsFieldSortIdx;
-    std::vector<size_t> actualResultsFieldSortIdx;
-    std::vector<TypeIndexPair> expectedToActualFieldMap;
-    std::vector<size_t> additionalActualFields;
-};
-
-class LineIndexIterator
-{
-public:
-    LineIndexIterator(const size_t expectedResultLinesSize, const size_t actualResultLinesSize)
-        : expectedResultLinesSize(expectedResultLinesSize)
-        , actualResultLinesSize(actualResultLinesSize)
-        , totalResultLinesSize(expectedResultLinesSize + actualResultLinesSize)
-    {
-    }
-
-    [[nodiscard]] bool hasNext() const
-    {
-        return (expectedResultTupleIdx.getRawValue() + actualResultTupleIdx.getRawValue()) < totalResultLinesSize;
-    }
-
-    [[nodiscard]] ExpectedResultIndex getExpected() const { return expectedResultTupleIdx; }
-
-    [[nodiscard]] ActualResultIndex getActual() const { return actualResultTupleIdx; }
-
-    void advanceExpected() { this->expectedResultTupleIdx = ExpectedResultIndex{this->expectedResultTupleIdx.getRawValue() + 1}; }
-
-    void advanceActual() { this->actualResultTupleIdx = ActualResultIndex{this->actualResultTupleIdx.getRawValue() + 1}; }
-
-    [[nodiscard]] bool hasOnlyExpectedLinesLeft() const
-    {
-        return expectedResultTupleIdx < expectedResultLinesSize and actualResultTupleIdx >= actualResultLinesSize;
-    }
-
-    [[nodiscard]] bool hasOnlyActualLinesLeft() const
-    {
-        return actualResultTupleIdx < actualResultLinesSize and expectedResultTupleIdx >= expectedResultLinesSize;
-    }
-
-private:
-    ExpectedResultIndex expectedResultTupleIdx = ExpectedResultIndex{0};
-    ActualResultIndex actualResultTupleIdx = ActualResultIndex{0};
-    ExpectedResultIndex expectedResultLinesSize = ExpectedResultIndex{0};
-    ActualResultIndex actualResultLinesSize = ActualResultIndex{0};
-    size_t totalResultLinesSize = 0;
-};
-
-ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResultSchema, const ActualResultSchema& actualResultSchema)
-{
-    /// The expected side is the schema that the test declared for the sink, and the actual side is the header that the sink wrote.
-    /// A name that the test wrote unquoted has no case of its own, so it matches the written name whatever case that has.
-    const auto fieldsMatch = [](const auto& expectedField, const auto& actualField)
-    {
-        if (expectedField.getDataType() != actualField.getDataType())
-        {
-            return false;
-        }
-        const auto& expectedIdentifier = *expectedField.getFullyQualifiedName().begin();
-        const auto& actualIdentifier = *actualField.getFullyQualifiedName().begin();
-        if (expectedIdentifier.isCaseSensitive())
-        {
-            return expectedIdentifier == actualIdentifier;
-        }
-        return expectedIdentifier.asCanonicalString() == toUpperCase(actualIdentifier.asCanonicalString());
-    };
-
-    ExpectedToActualFieldMap expectedToActualFieldMap{};
-    /// Unequal schemas open the schema error with both of them.
-    if (not std::ranges::equal(expectedResultSchema.getRawValue(), actualResultSchema.getRawValue(), fieldsMatch))
-    {
-        expectedToActualFieldMap.schemaError += fmt::format(
-            "\n{} != {}", fmt::join(expectedResultSchema.getRawValue(), ", "), fmt::join(actualResultSchema.getRawValue(), ", "));
-    }
-    /// Fields pair up by position, because the column order is part of the query's semantics.
-    /// A column at the wrong position reports as missing on one side and unexpected on the other.
-    const auto& expectedFields = expectedResultSchema.getRawValue();
-    const auto& actualFields = actualResultSchema.getRawValue();
-    for (const auto& [expectedFieldIdx, expectedField] : expectedFields | views::enumerate)
-    {
-        if (const auto idx = static_cast<size_t>(expectedFieldIdx);
-            idx < std::ranges::size(actualFields) and fieldsMatch(expectedField, *actualFields[idx]))
-        {
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.getDataType(), idx);
-            expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(idx);
-            expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(idx);
-        }
-        else
-        {
-            expectedToActualFieldMap.schemaError += fmt::format("\n- '{}' is missing from actual result schema.", expectedField);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.getDataType(), std::nullopt);
-        }
-    }
-    for (const auto& [actualFieldIdx, actualField] : actualFields | views::enumerate)
-    {
-        if (const auto idx = static_cast<size_t>(actualFieldIdx);
-            idx >= std::ranges::size(expectedFields) or not fieldsMatch(*expectedFields[idx], actualField))
-        {
-            expectedToActualFieldMap.schemaError += fmt::format("\n+ '{}' is unexpected field in actual result schema.", actualField);
-            expectedToActualFieldMap.additionalActualFields.emplace_back(idx);
-        }
-    }
-    return expectedToActualFieldMap;
+    return fmt::format("{} | {}", expected, actual);
 }
 
-enum class FieldMatchResult : uint8_t
+std::string formatMissingRow(const Row& expected)
 {
-    ALL_FIELDS_MATCHED,
-    ALL_EXISTING_FIELD_MATCHED,
-    AT_LEAST_ONE_FIELD_MISMATCHED,
-};
+    return formatPair(expected.text, std::string(expected.text.size(), '_'));
+}
 
-/// Compares the expected fields of one row with the actual ones.
-/// Reports that all matched, that the ones with a counterpart matched, or that at least one differed.
-FieldMatchResult compareMatchableExpectedFields(
-    const ExpectedToActualFieldMap& expectedToActualFieldMap,
-    const std::vector<ExpectedResultField>& splitExpectedResult,
-    const std::vector<ActualResultField>& splitActualResult)
+std::string formatUnexpectedRow(const Row& actual)
 {
-    auto fieldMatchResult = FieldMatchResult::ALL_FIELDS_MATCHED;
-    for (const auto& [expectedIdx, typeActualPair] : expectedToActualFieldMap.expectedToActualFieldMap | views::enumerate)
+    return formatPair(std::string(actual.text.size(), '_'), actual.text);
+}
+
+std::string formatFieldCountMismatch(const Row& expected, const size_t columnCount)
+{
+    return formatPair(
+        expected.text,
+        fmt::format(
+            "{} (expected sink schema has: {}, but got {})",
+            expected.values.size() < columnCount ? "Not enough expected fields" : "Too many expected fields",
+            columnCount,
+            expected.values.size()));
+}
+
+std::string formatAlignedRow(const SchemaAlignment& alignment, const Row& expected, const Row& actual)
+{
+    std::vector<std::string_view> expectedValues;
+    std::vector<std::string_view> actualValues;
+    for (const auto& [column, type] : alignment.matchedTypes | views::enumerate)
     {
-        const auto& expectedField = splitExpectedResult.at(expectedIdx);
-        if (typeActualPair.actualIndex.has_value())
-        {
-            const auto& actualField = splitActualResult.at(typeActualPair.actualIndex.value());
-            if (not compareStringAsTypeWithError(typeActualPair.type.type, expectedField, actualField))
+        expectedValues.emplace_back(expected.values.at(column));
+        actualValues.emplace_back(type.has_value() ? std::string_view{actual.values.at(column)} : "_");
+    }
+    for (const auto column : alignment.unexpectedColumns)
+    {
+        expectedValues.emplace_back("_");
+        actualValues.emplace_back(actual.values.at(column));
+    }
+    return formatPair(fmt::to_string(fmt::join(expectedValues, " ")), fmt::to_string(fmt::join(actualValues, " ")));
+}
+
+/// Equal text matches before the field count is checked, so an expected row with the wrong field count still matches identical output.
+RowStep compareRow(const SchemaAlignment& alignment, const Row& expected, const Row& actual)
+{
+    if (expected.text == actual.text)
+    {
+        return RowStep{.advance = Advance::Both, .line = formatPair(expected.text, actual.text), .matches = true};
+    }
+    if (const auto columnCount = alignment.matchedTypes.size(); expected.values.size() != columnCount)
+    {
+        return RowStep{.advance = Advance::Expected, .line = formatFieldCountMismatch(expected, columnCount), .matches = false};
+    }
+    if (const auto valuesMatch = std::ranges::all_of(
+            alignment.matchedTypes | views::enumerate,
+            [&expected, &actual](const auto& matchedType)
             {
-                return FieldMatchResult::AT_LEAST_ONE_FIELD_MISMATCHED;
-            }
-        }
-        else
+                const auto& [column, type] = matchedType;
+                return not type.has_value() or compareValue(*type, expected.values.at(column), actual.values.at(column));
+            });
+        not valuesMatch)
+    {
+        return expected.text < actual.text ? RowStep{.advance = Advance::Expected, .line = formatMissingRow(expected), .matches = false}
+                                           : RowStep{.advance = Advance::Actual, .line = formatUnexpectedRow(actual), .matches = false};
+    }
+    if (std::ranges::all_of(alignment.matchedTypes, [](const auto& type) { return type.has_value(); })
+        and expected.values.size() == actual.values.size())
+    {
+        return RowStep{.advance = Advance::Both, .line = formatPair(expected.text, actual.text), .matches = true};
+    }
+    return RowStep{.advance = Advance::Both, .line = formatAlignedRow(alignment, expected, actual), .matches = false};
+}
+
+/// The report lists the matching rows too, so a mismatch shows the rows around it.
+/// A walk without a mismatch returns no lines.
+std::vector<std::string>
+diffRows(const SchemaAlignment& alignment, const std::vector<Row>& expectedRows, const std::vector<Row>& actualRows)
+{
+    std::vector<std::string> lines;
+    bool allMatch = true;
+    auto expected = std::ranges::subrange{expectedRows};
+    auto actual = std::ranges::subrange{actualRows};
+    while (not expected.empty() and not actual.empty())
+    {
+        auto [advance, line, matches] = compareRow(alignment, expected.front(), actual.front());
+        lines.push_back(std::move(line));
+        allMatch = allMatch and matches;
+        if (advance != Advance::Actual)
         {
-            fieldMatchResult = FieldMatchResult::ALL_EXISTING_FIELD_MATCHED;
+            expected.advance(1);
         }
-    }
-    return fieldMatchResult;
-}
-
-void populateErrorWithMatchingFields(
-    std::string& resultError,
-    const ExpectedToActualFieldMap& expectedToActualFieldMap,
-    const std::vector<ExpectedResultField>& splitExpectedResult,
-    const std::vector<ActualResultField>& splitActualResult,
-    LineIndexIterator& lineIdxIt)
-{
-    std::vector<std::string> expectedFields;
-    std::vector<std::string> actualFields;
-    for (const auto& [expectedIdx, typeActualPair] : expectedToActualFieldMap.expectedToActualFieldMap | views::enumerate)
-    {
-        expectedFields.push_back(fmt::to_string(splitExpectedResult.at(expectedIdx)));
-        actualFields.push_back(
-            typeActualPair.actualIndex.has_value() ? fmt::to_string(splitActualResult.at(typeActualPair.actualIndex.value())) : "_");
-    }
-    for (const auto& additionalIdx : expectedToActualFieldMap.additionalActualFields)
-    {
-        expectedFields.emplace_back("_");
-        actualFields.push_back(fmt::to_string(splitActualResult.at(additionalIdx)));
-    }
-    resultError += fmt::format("\n{} | {}", fmt::join(expectedFields, " "), fmt::join(actualFields, " "));
-    lineIdxIt.advanceExpected();
-    lineIdxIt.advanceActual();
-}
-
-bool compareTuples(
-    std::string& resultError,
-    const ExpectedResultTuple& expectedResultLine,
-    const ActualResultTuple& actualResultLine,
-    const ExpectedToActualFieldMap& expectedToActualFieldMap,
-    LineIndexIterator& lineIdxIt)
-{
-    if (expectedResultLine.getRawValue() == actualResultLine.getRawValue())
-    {
-        resultError += fmt::format("\n{} | {}", expectedResultLine, actualResultLine);
-        lineIdxIt.advanceExpected();
-        lineIdxIt.advanceActual();
-        return true;
-    }
-
-    /// The lines differ as text, but their values may still be equal.
-    const auto splitExpected = expectedResultLine.getFields();
-    const auto splitActualResult = actualResultLine.getFields();
-
-    if (splitExpected.size() != expectedToActualFieldMap.expectedToActualFieldMap.size())
-    {
-        lineIdxIt.advanceExpected();
-        resultError += fmt::format(
-            "\n{} | {}",
-            expectedResultLine,
-            fmt::format(
-                "{} (expected sink schema has: {}, but got {})",
-                ((splitExpected.size() < expectedToActualFieldMap.expectedToActualFieldMap.size()) ? "Not enough expected fields"
-                                                                                                   : "Too many expected fields"),
-                expectedToActualFieldMap.expectedToActualFieldMap.size(),
-                splitExpected.size()));
-        return false;
-    }
-
-    const bool hasSameNumberOfFields = (splitExpected.size() == splitActualResult.size());
-    switch (compareMatchableExpectedFields(expectedToActualFieldMap, splitExpected, splitActualResult))
-    {
-        case FieldMatchResult::ALL_FIELDS_MATCHED: {
-            if (hasSameNumberOfFields)
-            {
-                resultError += fmt::format("\n{} | {}", expectedResultLine, actualResultLine);
-                lineIdxIt.advanceExpected();
-                lineIdxIt.advanceActual();
-                return true;
-            }
-            populateErrorWithMatchingFields(resultError, expectedToActualFieldMap, splitExpected, splitActualResult, lineIdxIt);
-            return false;
-        }
-        case FieldMatchResult::ALL_EXISTING_FIELD_MATCHED: {
-            populateErrorWithMatchingFields(resultError, expectedToActualFieldMap, splitExpected, splitActualResult, lineIdxIt);
-            return false;
-        }
-        case FieldMatchResult::AT_LEAST_ONE_FIELD_MISMATCHED: {
-            if (expectedResultLine.getRawValue() < actualResultLine.getRawValue())
-            {
-                resultError += fmt::format("\n{} | {}", expectedResultLine, std::string(expectedResultLine.size(), '_'));
-                lineIdxIt.advanceExpected();
-            }
-            else
-            {
-                resultError += fmt::format("\n{} | {}", std::string(actualResultLine.size(), '_'), actualResultLine);
-                lineIdxIt.advanceActual();
-            }
-            return false;
-        }
-    }
-    std::unreachable();
-}
-
-std::string compareResults(
-    const ExpectedResultTuples& formattedExpectedResultLines,
-    const ActualResultTuples& formattedActualResultLines,
-    const ExpectedToActualFieldMap& expectedToActualFieldMap)
-{
-    std::string resultError;
-
-    bool allResultTuplesMatch = true;
-    LineIndexIterator lineIdxIt{formattedExpectedResultLines.size(), formattedActualResultLines.size()};
-    while (lineIdxIt.hasNext())
-    {
-        if (lineIdxIt.hasOnlyExpectedLinesLeft())
+        if (advance != Advance::Expected)
         {
-            const auto& expectedLine = formattedExpectedResultLines.getTuple(lineIdxIt.getExpected());
-            resultError += fmt::format("\n{} | {}", expectedLine, std::string(expectedLine.size(), '_'));
-            lineIdxIt.advanceExpected();
-            allResultTuplesMatch = false;
-            continue;
+            actual.advance(1);
         }
-        if (lineIdxIt.hasOnlyActualLinesLeft())
-        {
-            const auto& actualLine = formattedActualResultLines.getTuple(lineIdxIt.getActual());
-            resultError += fmt::format("\n{} | {}", std::string(actualLine.size(), '_'), actualLine);
-            lineIdxIt.advanceActual();
-            allResultTuplesMatch = false;
-            continue;
-        }
-        /// Both sides still have lines, so compare the next pair.
-        allResultTuplesMatch &= compareTuples(
-            resultError,
-            formattedExpectedResultLines.getTuple(lineIdxIt.getExpected()),
-            formattedActualResultLines.getTuple(lineIdxIt.getActual()),
-            expectedToActualFieldMap,
-            lineIdxIt);
     }
-    /// A comparison that matched still collected every line for the side-by-side listing, and none of it is an error.
-    return allResultTuplesMatch ? std::string{} : resultError;
-}
-
-struct QuerySchemasAndResults
-{
-    explicit QuerySchemasAndResults(
-        ExpectedResultSchema expectedSchema,
-        ActualResultSchema actualSchema,
-        std::vector<std::string> expectedQueryResult,
-        std::vector<std::string> actualQueryResult)
-        : expectedSchema(std::move(expectedSchema))
-        , actualSchema(std::move(actualSchema))
-        , expectedToActualResultMap(compareSchemas(this->expectedSchema, this->actualSchema))
-        , expectedResults(ExpectedResultTuples(std::move(expectedQueryResult), this->expectedToActualResultMap.expectedResultsFieldSortIdx))
-        , actualResults(ActualResultTuples(std::move(actualQueryResult), this->expectedToActualResultMap.actualResultsFieldSortIdx))
+    lines.append_range(expected | std::views::transform(formatMissingRow));
+    lines.append_range(actual | std::views::transform(formatUnexpectedRow));
+    if (allMatch and expected.empty() and actual.empty())
     {
+        return {};
     }
-
-    const ExpectedResultTuples& getExpectedResultTuples() const { return expectedResults; }
-
-    const ActualResultTuples& getActualResultTuples() const { return actualResults; }
-
-    [[nodiscard]] const ExpectedToActualFieldMap& getExpectedToActualResultMap() const { return expectedToActualResultMap; }
-
-    [[nodiscard]] const std::string& getSchemaError() const { return expectedToActualResultMap.schemaError; }
-
-private:
-    ExpectedResultSchema expectedSchema;
-    ActualResultSchema actualSchema;
-    ExpectedToActualFieldMap expectedToActualResultMap;
-    ExpectedResultTuples expectedResults;
-    ActualResultTuples actualResults;
-};
-
-
+    return lines;
 }
 
-ComparisonOutcome compare(
-    const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema,
-    const std::vector<std::string>& expectedRows,
-    const Schema<UnqualifiedUnboundField, Ordered>& actualSchema,
-    const std::vector<std::string>& actualRows)
-{
-    const QuerySchemasAndResults querySchemasAndResults{
-        ExpectedResultSchema{expectedSchema}, ActualResultSchema{actualSchema}, expectedRows, actualRows};
-    const auto resultError = compareResults(
-        querySchemasAndResults.getExpectedResultTuples(),
-        querySchemasAndResults.getActualResultTuples(),
-        querySchemasAndResults.getExpectedToActualResultMap());
-    return ComparisonOutcome{.schemaError = querySchemasAndResults.getSchemaError(), .resultError = resultError};
-}
-
-Verdict toVerdict(const ComparisonOutcome& outcome, const ComparisonOrigin origin)
+Verdict buildVerdict(const std::vector<std::string>& schemaLines, const std::vector<std::string>& rowLines)
 {
     static constexpr std::string_view SchemaMismatchHeader = "Schema Mismatch\n"
                                                              "---------------";
     static constexpr std::string_view ResultMismatchHeader = "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
                                                              "-------------------------------------------------";
-    const bool schemaMismatch = not outcome.schemaError.empty();
-    const bool resultMismatch = not outcome.resultError.empty();
-    if (not schemaMismatch and not resultMismatch)
+    if (schemaLines.empty() and rowLines.empty())
     {
         return Success{};
     }
+    const auto schemaBlock
+        = schemaLines.empty() ? std::string{} : fmt::format("{}\n{}\n\n", SchemaMismatchHeader, fmt::join(schemaLines, "\n"));
+    const auto rowBlock
+        = rowLines.empty() ? std::string{"All Results match"} : fmt::format("{}\n{}", ResultMismatchHeader, fmt::join(rowLines, "\n"));
+    return std::unexpected{Mismatch{schemaBlock + rowBlock}};
+}
+}
 
-    std::vector<std::string> blocks;
-    if (schemaMismatch)
-    {
-        blocks.emplace_back(fmt::format("{}{}", SchemaMismatchHeader, outcome.schemaError));
-    }
-    if (schemaMismatch and not resultMismatch)
-    {
-        blocks.emplace_back("All Results match");
-    }
-    if (resultMismatch)
-    {
-        blocks.emplace_back(fmt::format("{}{}", ResultMismatchHeader, outcome.resultError));
-    }
-    if (origin == ComparisonOrigin::DifferentialBlock)
-    {
-        blocks.emplace_back("This error happened during differential query execution.");
-    }
-    return std::unexpected(Mismatch{fmt::to_string(fmt::join(blocks, "\n\n"))});
+Verdict compareResults(
+    const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema,
+    const std::vector<std::string>& expectedRows,
+    const Schema<UnqualifiedUnboundField, Ordered>& actualSchema,
+    const std::vector<std::string>& actualRows)
+{
+    const auto alignment = alignSchemas(expectedSchema, actualSchema);
+    const auto sortColumns = getMatchedColumns(alignment);
+    const auto prepareRows = [&sortColumns](const std::vector<std::string>& rows)
+    { return sortRows(rows | std::views::transform(normalizeRow) | std::ranges::to<std::vector>(), sortColumns); };
+    const auto expected = prepareRows(expectedRows);
+    const auto actual = prepareRows(actualRows);
+    return buildVerdict(diffSchemas(alignment, expectedSchema, actualSchema), diffRows(alignment, expected, actual));
 }
 
 }

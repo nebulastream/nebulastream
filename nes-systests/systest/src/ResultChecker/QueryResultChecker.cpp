@@ -31,7 +31,7 @@ Verdict QueryResultCheck::check() const
         return std::unexpected(Mismatch{loaded.error()});
     }
 
-    return toVerdict(compare(expectedSchema, expectedTuples, loaded->schema, loaded->tuples), ComparisonOrigin::SingleQuery);
+    return compareResults(expectedSchema, expectedTuples, loaded->schema, loaded->tuples);
 }
 
 }

@@ -15,7 +15,6 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -25,7 +24,6 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <ResultChecker/Check.hpp>
 #include <ResultChecker/DifferentialChecker.hpp>
 #include <ResultChecker/ExplainChecker.hpp>
@@ -35,6 +33,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
+#include <TemporaryDirectory.hpp>
 
 namespace NES
 {
@@ -58,7 +57,8 @@ Schema<UnqualifiedUnboundField, Ordered> createSchemaOf(const std::string& field
 
 std::filesystem::path writeResultFile(const std::string& name, const std::string& content)
 {
-    const auto path = std::filesystem::temp_directory_path() / name;
+    static const Testing::TemporaryDirectory Directory;
+    const auto path = Directory.get() / name;
     std::ofstream file{path};
     file << content;
     return path;
@@ -71,51 +71,21 @@ public:
     static void SetUpTestSuite() { Logger::setupLogging("ResultCheckerTest.log", LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(ResultCheckerTest, ChecksResultRowsWithTheDeclaredSchema)
-{
-    const auto resultFile = writeResultFile("resultchecker_rows.csv", "id:UINT64:NOT_NULLABLE\n1\n2\n3\n");
-
-    EXPECT_TRUE((QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1", "2", "3"}}
-                     .check()
-                     .has_value()));
-
-    const auto verdict
-        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1", "2", "4"}}.check();
-    ASSERT_FALSE(verdict.has_value());
-    EXPECT_TRUE(verdict.error().detail.contains("Result Mismatch"));
-}
-
-/// The declared schema is what the test asked the sink to write, and the header is what the sink wrote.
-/// A test whose rows happen to match still fails when the two disagree, because the query then answered about other fields.
-TEST_F(ResultCheckerTest, ReportsASchemaTheSinkDidNotWrite)
-{
-    const auto resultFile = writeResultFile("resultchecker_schema.csv", "id:UINT64:NOT_NULLABLE\n1\n");
-
-    const auto verdict
-        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("value"), .expectedTuples = {"1"}}.check();
-    ASSERT_FALSE(verdict.has_value());
-    EXPECT_TRUE(verdict.error().detail.contains("Schema Mismatch"));
-}
-
-TEST_F(ResultCheckerTest, ReportsAMissingResultFile)
-{
-    const auto verdict
-        = QueryResultCheck{.resultFile = "/does/not/exist.csv", .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1"}}.check();
-    ASSERT_FALSE(verdict.has_value());
-    EXPECT_TRUE(verdict.error().detail.contains("result file was not written"));
-}
-
-TEST_F(ResultCheckerTest, ComparesTheTwoResultFilesOfADifferentialBlock)
+TEST_F(ResultCheckerTest, ReportsARowMismatchOfADifferentialBlock)
 {
     const auto first = writeResultFile("resultchecker_differential_first.csv", "id:UINT64:NOT_NULLABLE\n1\n2\n");
-    const auto agreeing = writeResultFile("resultchecker_differential_agreeing.csv", "id:UINT64:NOT_NULLABLE\n2\n1\n");
     const auto differing = writeResultFile("resultchecker_differential_differing.csv", "id:UINT64:NOT_NULLABLE\n1\n3\n");
-
-    EXPECT_TRUE((DifferentialCheck{.firstResultFile = first, .secondResultFile = agreeing}.check().has_value()));
 
     const auto verdict = DifferentialCheck{.firstResultFile = first, .secondResultFile = differing}.check();
     ASSERT_FALSE(verdict.has_value());
-    EXPECT_TRUE(verdict.error().detail.contains("differential query execution"));
+    EXPECT_EQ(verdict.error().detail, R"(Result Mismatch
+Expected Results(Sorted) | Actual Results(Sorted)
+-------------------------------------------------
+1 | 1
+2 | _
+_ | 3
+
+This error happened during differential query execution.)");
 }
 
 TEST_F(ResultCheckerTest, ReportsWhichSideOfADifferentialBlockHasNoOutput)
@@ -131,6 +101,24 @@ TEST_F(ResultCheckerTest, ReportsWhichSideOfADifferentialBlockHasNoOutput)
     ASSERT_FALSE(secondMissing.has_value());
     EXPECT_TRUE(secondMissing.error().detail.contains("the second query of the differential block"));
     EXPECT_TRUE(secondMissing.error().detail.contains("result file was not written"));
+}
+
+TEST_F(ResultCheckerTest, ReportsASchemaMismatchOfADifferentialBlock)
+{
+    const auto first = writeResultFile("resultchecker_differential_schema_first.csv", "id:UINT64:NOT_NULLABLE\n1\n");
+    const auto second = writeResultFile("resultchecker_differential_schema_second.csv", "id:INT64:NOT_NULLABLE\n1\n");
+
+    const auto verdict = DifferentialCheck{.firstResultFile = first, .secondResultFile = second}.check();
+    ASSERT_FALSE(verdict.has_value());
+    EXPECT_EQ(verdict.error().detail, R"(Schema Mismatch
+---------------
+QualifiedUnboundField: (name: ID, type: DataType(type: UINT64 nullable: false)) != QualifiedUnboundField: (name: ID, type: DataType(type: INT64 nullable: false))
+- 'QualifiedUnboundField: (name: ID, type: DataType(type: UINT64 nullable: false))' is missing from actual result schema.
++ 'QualifiedUnboundField: (name: ID, type: DataType(type: INT64 nullable: false))' is unexpected field in actual result schema.
+
+All Results match
+
+This error happened during differential query execution.)");
 }
 
 /// A header and no rows is an empty result, which is a valid answer. No header at all is not.
@@ -160,12 +148,6 @@ TEST_F(ResultCheckerTest, ReportsAMalformedHeaderAsAVerdict)
     ASSERT_FALSE(verdict.has_value());
     EXPECT_TRUE(verdict.error().detail.contains("malformed schema header"));
     EXPECT_TRUE(verdict.error().detail.contains("name:TYPE:NULLABILITY"));
-
-    const auto written = writeResultFile("resultchecker_differential_ok.csv", "id:UINT64:NOT_NULLABLE\n1\n");
-    const auto differential = DifferentialCheck{.firstResultFile = written, .secondResultFile = malformed}.check();
-    ASSERT_FALSE(differential.has_value());
-    EXPECT_TRUE(differential.error().detail.contains("the second query of the differential block"));
-    EXPECT_TRUE(differential.error().detail.contains("malformed schema header"));
 }
 
 TEST_F(ResultCheckerTest, ExplainExactResultLinesKeepVanillaMatching)
@@ -230,9 +212,8 @@ TEST_F(ResultCheckerTest, ExplainRegexAssertionsRejectMalformedTags)
     }
 }
 
-/// The report is what a developer reads when a test fails, so its shape is pinned: the schema lines for a field that is
-/// missing and one that is unexpected.
-TEST_F(ResultCheckerTest, ReportsASchemaMismatchAsBefore)
+/// The loader stores unquoted header names in upper case, and the report shows them that way.
+TEST_F(ResultCheckerTest, ReportsTheLoadedHeaderInASchemaMismatch)
 {
     const auto resultFile = writeResultFile("resultchecker_golden_schema.csv", "id:UINT64:NOT_NULLABLE,extra:UINT64:NOT_NULLABLE\n1,2\n");
     const Schema<UnqualifiedUnboundField, Ordered> expectedSchema{std::vector{
@@ -249,24 +230,6 @@ QualifiedUnboundField: (name: ID, type: DataType(type: UINT64 nullable: false)),
 + 'QualifiedUnboundField: (name: EXTRA, type: DataType(type: UINT64 nullable: false))' is unexpected field in actual result schema.
 
 All Results match)");
-}
-
-/// The row table of a result mismatch: one row that differs and one row the sink wrote that the test did not expect.
-TEST_F(ResultCheckerTest, ReportsAResultMismatchAsBefore)
-{
-    const auto resultFile = writeResultFile("resultchecker_golden_rows.csv", "id:UINT64:NOT_NULLABLE\n1\n3\n4\n");
-
-    const auto verdict
-        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1", "2"}}.check();
-
-    ASSERT_FALSE(verdict.has_value());
-    EXPECT_EQ(verdict.error().detail, R"(Result Mismatch
-Expected Results(Sorted) | Actual Results(Sorted)
--------------------------------------------------
-1 | 1
-2 | _
-_ | 3
-_ | 4)");
 }
 
 /// runCheck is the runner's only path from a check to a Verdict, so the dispatch over every alternative has its own test.

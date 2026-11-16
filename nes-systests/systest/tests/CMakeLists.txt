@@ -30,6 +30,7 @@ add_nes_test_systest(systest-run-policy-test
 add_nes_test_systest(slt-parser-test
         "Parser/SystestParserTests.cpp"
         "ResultChecker/ResultCheckerTests.cpp"
+        "ResultChecker/ResultComparisonTests.cpp"
         "ResultChecker/OutcomeCheckerTests.cpp"
         "Model/KeepSelectedStatementsTests.cpp"
         "Model/TestCaseIdTests.cpp"
