@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarSizedLoader.hpp>
 #include <nautilus/std/sstream.h>
 #include <nautilus/val.hpp>
 
@@ -47,7 +48,10 @@ class VarVal;
 class StructData
 {
 public:
+    /// Fields are read with the inline var-sized loader, i.e. VARSIZED and VECTOR fields of the struct are expected to be stored as ptr(8 bytes), size(8 bytes).
     StructData(const nautilus::val<int8_t*>& reference, std::vector<std::pair<std::string, DataType>> fields);
+    /// VARSIZED/VECTOR fields are resolved through loadVarSized on access. Use this constructor if varsized values are not represented as ptr(8 bytes), size(8 bytes) inline and need to be accessed in a different way.
+    StructData(const nautilus::val<int8_t*>& reference, std::vector<std::pair<std::string, DataType>> fields, VarSizedLoadFn loadVarSized);
     StructData(const StructData& other) = default;
     StructData(StructData&& other) noexcept = default;
     StructData& operator=(const StructData& other) = default;
@@ -97,6 +101,7 @@ private:
 
     nautilus::val<int8_t*> ptr;
     std::vector<std::pair<std::string, DataType>> fields;
+    VarSizedLoadFn loadVarSized;
 };
 
 }

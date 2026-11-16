@@ -23,7 +23,6 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <DataTypes/VectorData.hpp>
 #include <Interface/Record.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <static.hpp>
 #include <val_bool.hpp>
@@ -35,65 +34,9 @@ namespace NES
 
 namespace
 {
-/// Used for STRUCT and FIXEDSIZED values, which may contain non-nested varsized elements.
-/// Varsized values are stored as 16 bytes inside the struct data. The first 8 bytes describe the address of the values and the last 8 bytes describe the size of the content.
-/// Since between nodes, varsized values are stored as offset (4 bytes), child index (4 bytes), and size (8 bytes), we need to overwrite these 16 byts with the type of reference
-/// described above, which we do in this function.
-void convertVarsizedReferences(const DataType& dataType, const nautilus::val<int8_t*>& address, const VarSizedLoadFn& loadVarSized)
-{
-    nautilus::val<int8_t*> varValRef = address;
-    /// Early opt out in case the data type is flat, so all basic types and structs / fixedsized values without varsized elements.
-    if (!dataType.isFlat())
-    {
-        switch (dataType.type)
-        {
-            case DataType::Type::FIXEDSIZED: {
-                /// Iterate over elements and convert varsized references.
-                for (nautilus::static_val<uint32_t> i = 0; i < dataType.count; ++i)
-                {
-                    convertVarsizedReferences(
-                        *dataType.elementType,
-                        varValRef + nautilus::val<size_t>{i * dataType.elementType->getSizeInBytesWithoutNull()},
-                        loadVarSized);
-                }
-                return;
-            }
-            case DataType::Type::STRUCT: {
-                for (nautilus::static_val<size_t> i = 0; i < dataType.fields.size(); ++i)
-                {
-                    /// Iterate over fields and convert varsized references.
-                    const auto& [field, type] = dataType.fields.at(i);
-                    convertVarsizedReferences(type, varValRef, loadVarSized);
-                    varValRef += nautilus::val<size_t>{type.getSizeInBytesWithoutNull()};
-                }
-                return;
-            }
-            case DataType::Type::VARSIZED: {
-                /// Load variablesized access as pointer and size and write these values byte-aligned into varValRef.
-                const auto [ptr, size] = loadVarSized(varValRef);
-                const VarVal variableSizedVal{VariableSizedData{ptr, size}, false, false};
-                variableSizedVal.writeToMemory(varValRef);
-                return;
-            }
-            case DataType::Type::VECTOR: {
-                /// Load variablesized access as pointer and size and write these values byte-aligned into varValRef.
-                const auto [ptr, size] = loadVarSized(varValRef);
-                const VarVal variableSizedVal{VectorData{ptr, *dataType.elementType, size}, false, false};
-                variableSizedVal.writeToMemory(varValRef);
-                return;
-            }
-            default: {
-                /// Santity check. The other datatypes should never be deemed as not fixed sized.
-                INVARIANT(false, "Type {} was deemed as not fixed-sized!", magic_enum::enum_name(dataType.type));
-                return;
-            }
-        }
-    }
-}
-
-/// Reads a single field value from @param address, honoring the leading null-byte convention. Non-VARSIZED
-/// values are read directly; for VARSIZED the (pointer, length) pair is resolved by @param loadVarSized.
-/// STRUCT and FIXEDSIZED directly store the pointer to the address in their values, but will convert any contained varsized fields into (pointer, length) form first.
+/// Reads a single field value from address, honoring the leading null-byte convention. Non-VARSIZED
+/// values are read directly; for VARSIZED the (pointer, length) pair is resolved by loadVarSized.
+/// STRUCT and FIXEDSIZED directly store the pointer to the address in their values and carry loadVarSized to resolve nested var-sized members.
 VarVal readFieldValue(const DataType& dataType, const nautilus::val<int8_t*>& address, const VarSizedLoadFn& loadVarSized)
 {
     /// For now, we store the null byte before the actual VarVal
@@ -108,15 +51,14 @@ VarVal readFieldValue(const DataType& dataType, const nautilus::val<int8_t*>& ad
     if (dataType.type == DataType::Type::STRUCT)
     {
         /// Inline storage: the struct's bytes live directly in the tuple at `varValRef`. Per-field offsets are determined by `StructData`'s inline-layout rules.
-        /// We need to convert the the varsized references into (pointer, length) form first.
-        convertVarsizedReferences(dataType, varValRef, loadVarSized);
-        return VarVal{StructData{varValRef, dataType.fields}, dataType.nullable, null};
+        /// Nested var-sized fields keep their stored reference and are resolved through `loadVarSized` on access. The slot must not be
+        /// rewritten, as the same stored record may be read repeatedly (e.g. by a nested loop join) or concurrently.
+        return VarVal{StructData{varValRef, dataType.fields, loadVarSized}, dataType.nullable, null};
     }
     if (dataType.type == DataType::Type::FIXEDSIZED)
     {
-        /// Like struct, we first convert the varsized elements and then directly store the pointer to the memory in the value.
-        convertVarsizedReferences(dataType, varValRef, loadVarSized);
-        return VarVal{FixedSizedData{varValRef, dataType.count, *dataType.elementType}, dataType.nullable, null};
+        /// Like struct: inline storage, nested var-sized elements resolved lazily through `loadVarSized`.
+        return VarVal{FixedSizedData{varValRef, dataType.count, *dataType.elementType, loadVarSized}, dataType.nullable, null};
     }
     if (dataType.type == DataType::Type::VARSIZED)
     {

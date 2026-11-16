@@ -1,0 +1,40 @@
+# name: join/JoinWithNestedVarSized.test
+# description: Nested loop join where the build side carries a FIXEDSIZED array of VECTORs (`INT32 ARRAY[2][]`), i.e. a
+# composite with var-sized members. The NLJ reads every build-side tuple repeatedly: once per probe-side tuple, and
+# twice per matching pair (key record and joined record). Reading a composite must therefore not modify the stored
+# slot of its var-sized members; the nested vectors are resolved through the PagedVector's loader on access instead.
+# groups: [WindowOperators, Join, CompilationIntensive]
+
+CREATE LOGICAL SOURCE lhs(id UINT64 NOT NULL, vecs INT32 ARRAY[2][] NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lhs TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID": 1, "VECS": [[1, 2], [3]], "TS": 10}
+{"ID": 2, "VECS": [[4, 5, 6], [7, 8]], "TS": 20}
+
+CREATE LOGICAL SOURCE rhs(id2 UINT64 NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rhs TYPE File;
+ATTACH INLINE
+1,30
+1,40
+2,50
+1,60
+
+# Every build-side tuple is read once per probe-side tuple and twice per match, and must serialize identically each time.
+SELECT id, id2, vecs
+FROM (SELECT * FROM lhs) JOIN (SELECT * FROM rhs) ON id = id2 AND ts < ts2
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ID2":1,"VECS":[[1,2],[3]]}
+{"ID":1,"ID2":1,"VECS":[[1,2],[3]]}
+{"ID":1,"ID2":1,"VECS":[[1,2],[3]]}
+{"ID":2,"ID2":2,"VECS":[[4,5,6],[7,8]]}
+
+# The nested vectors are also readable from the probe side projection of a single element
+SELECT id, id2, vecs
+FROM (SELECT * FROM rhs) JOIN (SELECT * FROM lhs) ON id2 = id AND ts2 > ts
+  WINDOW TUMBLING (ts2, ts, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ID2":1,"VECS":[[1,2],[3]]}
+{"ID":1,"ID2":1,"VECS":[[1,2],[3]]}
+{"ID":1,"ID2":1,"VECS":[[1,2],[3]]}
+{"ID":2,"ID2":2,"VECS":[[4,5,6],[7,8]]}

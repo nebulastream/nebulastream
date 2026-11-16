@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarSizedLoader.hpp>
 #include <nautilus/std/sstream.h>
 #include <nautilus/val.hpp>
 
@@ -41,7 +42,10 @@ class VarVal;
 class FixedSizedData
 {
 public:
+    /// Elements are read with the inline var-sized loader, i.e. VARSIZED/VECTOR elements are expected to be stored as ptr(8 bytes), size(8 bytes).
     FixedSizedData(const nautilus::val<int8_t*>& reference, size_t numElements, const DataType& elementType);
+    /// VARSIZED/VECTOR elements are resolved through loadVarSized on access. Use this constructor if varsized values are not represented as ptr(8 bytes), size(8 bytes) inline and need to be accessed in a different way.
+    FixedSizedData(const nautilus::val<int8_t*>& reference, size_t numElements, const DataType& elementType, VarSizedLoadFn loadVarSized);
     FixedSizedData(const FixedSizedData& other) = default;
     FixedSizedData(FixedSizedData&& other) noexcept = default;
     FixedSizedData& operator=(const FixedSizedData& other) = default;
@@ -78,6 +82,7 @@ private:
     nautilus::val<int8_t*> ptr;
     size_t numElements;
     DataType elementType;
+    VarSizedLoadFn loadVarSized;
 };
 
 }

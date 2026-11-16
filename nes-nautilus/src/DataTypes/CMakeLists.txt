@@ -13,6 +13,7 @@
 add_source_files(nes-nautilus
         FixedSizedData.cpp
         StructData.cpp
+        VarSizedLoader.cpp
         VariableSizedData.cpp
         VarVal.cpp
         VectorData.cpp

@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarSizedLoader.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <val_arith.hpp>
@@ -61,7 +62,7 @@ struct FieldAccess
 /// Variable-sized seam used only for the VARSIZED branch, since varsized payloads live outside the
 /// fixed-size slot (in a PagedVector page or a TupleBuffer child buffer, depending on the layout).
 /// Load resolves the (pointer, length) of the payload; store writes the payload at the slot.
-using VarSizedLoadFn = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> slot)>;
+/// VarSizedLoadFn is declared in DataTypes/VarSizedLoader.hpp, as composite values carry it to resolve nested members lazily.
 using VarSizedStoreFn = std::function<void(
     const nautilus::val<int8_t*>& slot, const nautilus::val<int8_t*> varsizedContent, const nautilus::val<uint64_t>& varSizedSize)>;
 

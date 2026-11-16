@@ -17,8 +17,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
+#include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/VarSizedLoader.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/std/cstring.h>
@@ -30,7 +32,13 @@ namespace NES
 {
 
 FixedSizedData::FixedSizedData(const nautilus::val<int8_t*>& reference, const size_t numElements, const DataType& elementType)
-    : ptr(reference), numElements(numElements), elementType(elementType)
+    : FixedSizedData(reference, numElements, elementType, inlineVarSizedLoader())
+{
+}
+
+FixedSizedData::FixedSizedData(
+    const nautilus::val<int8_t*>& reference, const size_t numElements, const DataType& elementType, VarSizedLoadFn loadVarSized)
+    : ptr(reference), numElements(numElements), elementType(elementType), loadVarSized(std::move(loadVarSized))
 {
 }
 
@@ -65,7 +73,7 @@ VarVal FixedSizedData::at(const nautilus::val<uint64_t>& index) const
 
     const auto elementSize = elementType.getSizeInBytesWithoutNull();
     const auto elementPtr = ptr + (index * nautilus::val<uint64_t>(elementSize));
-    return VarVal::readNonNullableVarValFromMemory(elementPtr, elementType);
+    return readNestedVarVal(elementPtr, elementType, loadVarSized);
 }
 
 void FixedSizedData::writeAt(const nautilus::val<uint64_t>& index, const VarVal& value) const

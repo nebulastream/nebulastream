@@ -25,6 +25,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/FixedSizedData.hpp>
+#include <DataTypes/VarSizedLoader.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/std/cstring.h>
@@ -38,7 +39,13 @@ namespace NES
 {
 
 StructData::StructData(const nautilus::val<int8_t*>& reference, std::vector<std::pair<std::string, DataType>> fields)
-    : ptr(reference), fields(std::move(fields))
+    : StructData(reference, std::move(fields), inlineVarSizedLoader())
+{
+}
+
+StructData::StructData(
+    const nautilus::val<int8_t*>& reference, std::vector<std::pair<std::string, DataType>> fields, VarSizedLoadFn loadVarSized)
+    : ptr(reference), fields(std::move(fields)), loadVarSized(std::move(loadVarSized))
 {
 }
 
@@ -101,7 +108,7 @@ VarVal StructData::at(const size_t fieldIndex) const
     }
     const auto& fieldType = fields.at(fieldIndex).second;
     const auto fieldPtr = ptr + nautilus::val<size_t>(offset);
-    return VarVal::readNonNullableVarValFromMemory(fieldPtr, fieldType);
+    return readNestedVarVal(fieldPtr, fieldType, loadVarSized);
 }
 
 VarVal StructData::at(const std::string_view fieldName) const
