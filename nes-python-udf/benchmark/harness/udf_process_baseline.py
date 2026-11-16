@@ -165,7 +165,12 @@ def main():
     start = time.time() + arguments.seconds + 2
     command = [arguments.python, "-c", WORKER, os.path.abspath(arguments.programs), arguments.udf, str(arguments.rows), str(start), str(arguments.seconds)]
     environment = dict(os.environ, **dict(setting.split("=", 1) for setting in arguments.environment))
-    processes = [subprocess.Popen(["taskset", "-c", str(cpu)] + command, stdout=subprocess.PIPE, text=True, env=environment) for cpu in cpus]
+    # Only the first interpreter profiles (UDF_BENCH_PYPROF), like the first process of NebulaStream in boot.py
+    quiet = {name: value for name, value in environment.items() if name != "UDF_BENCH_PYPROF"}
+    processes = [
+        subprocess.Popen(["taskset", "-c", str(cpu)] + command, stdout=subprocess.PIPE, text=True, env=environment if index == 0 else quiet)
+        for index, cpu in enumerate(cpus)
+    ]
     outputs = [process.communicate()[0] for process in processes]
     if any(process.returncode for process in processes):
         sys.exit("an interpreter failed")
