@@ -1,0 +1,1 @@
+{"seconds": 4.007, "process": {"minflt": 3257, "majflt": 0, "utime_ticks": 398, "stime_ticks": 2, "voluntary_ctxt_switches": 0, "nonvoluntary_ctxt_switches": 28}, "interrupts": {"LOC": 64134, "CAL": 1}}

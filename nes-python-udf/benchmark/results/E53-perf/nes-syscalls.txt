@@ -1,0 +1,3 @@
+Error:	No permissions to read /sys/kernel/tracing//events/raw_syscalls/sys_(enter|exit)
+Hint:	Try 'sudo mount -o remount,mode=755 /sys/kernel/tracing/'
+
