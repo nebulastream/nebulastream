@@ -97,7 +97,7 @@ jobs:
             build/**/*.stats
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && !github.event.act }}
-        uses: codecov/codecov-action@v7
+        uses: ./.github/retry/codecov-action-v7
         with:
           report_type: test_results
           slug: nebulastream/nebulastream

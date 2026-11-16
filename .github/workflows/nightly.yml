@@ -185,8 +185,12 @@ jobs:
     runs-on: [ self-hosted ]
     if: ${{ failure() && !github.event.act }}
     steps:
+      # The retry wrapper is a local action, so it needs the repository.
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: .github/retry
       - name: Notify Zulip
-        uses: zulip/github-actions-zulip/send-message@v1
+        uses: ./.github/retry/zulip-send-message-v1
         with:
           api-key: ${{ secrets.PRBOT_API_KEY }}
           email: "pr-reminder-bot@nebulastream.zulipchat.com"

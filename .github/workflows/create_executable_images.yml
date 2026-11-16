@@ -59,7 +59,7 @@ jobs:
         with:
           ref: ${{ needs.sanitize-tag.outputs.sha }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: ./.github/retry/setup-buildx-action-v4
       - name: Login to Docker Hub
         uses: ./.github/steps/docker-login
         with:
@@ -99,7 +99,7 @@ jobs:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: ./.github/retry/setup-buildx-action-v4
       - name: Combine Manifests
         run: |
           docker buildx imagetools create -t nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }} \

@@ -16,7 +16,7 @@ jobs:
               uses: actions/checkout@v5
 
             - name: Use reminder action
-              uses: LeoRaasch/my-github-actions/zulip-pr-reminder@v1
+              uses: ./.github/retry/zulip-pr-reminder-v1
               with:
                 git-name: 'nebulastream/nebulastream-public'
                 git-token: ${{ secrets.GITHUB_TOKEN }}

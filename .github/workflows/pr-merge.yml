@@ -62,7 +62,7 @@ jobs:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: ./.github/retry/setup-buildx-action-v4
       - name: Retag Base Image
         run: |
           docker buildx imagetools create -t nebulastream/nes-development-base:latest \

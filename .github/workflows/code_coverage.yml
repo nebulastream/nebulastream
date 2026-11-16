@@ -57,7 +57,7 @@ jobs:
             cmake -DCODE_COVERAGE=ON -DENABLE_DOCKER_TESTS=ON -B build
             cmake --build build -j -- -k 0
             cmake --build build --target ccov-all-export
-      - uses: codecov/codecov-action@v7
+      - uses: ./.github/retry/codecov-action-v7
         with:
           slug: nebulastream/nebulastream
           fail_ci_if_error: true
