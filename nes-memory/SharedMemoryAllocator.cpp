@@ -83,6 +83,10 @@ void* SharedMemoryAllocator::do_allocate(const size_t bytes, [[maybe_unused]] co
         throw BufferAllocationFailure(
             "Failed to map shared memory of {} bytes: {}", bytes, std::strerror(error)); /// NOLINT(concurrency-mt-unsafe)
     }
+    /// Asks for 2 MiB pages where the system allows them for shared memory (transparent_hugepage/shmem_enabled set to advise or
+    /// always). Every UDF process that maps this memory gets a page fault for each page it touches first; with 2 MiB pages these are
+    /// 512 times fewer than with 4 KiB pages (E53, E54). Without that setting the call has no effect, so its result is ignored.
+    madvise(memory, bytes, MADV_HUGEPAGE);
     auto& [mutex, live] = mappings();
     const std::scoped_lock lock(mutex);
     live.push_back({.fd = fd, .base = static_cast<std::byte*>(memory), .size = bytes});
