@@ -20,9 +20,7 @@ use crate::identifier::QueryId;
 use crate::worker::endpoint::NetworkAddr;
 use sea_orm::Set;
 use sea_orm::entity::prelude::*;
-use sea_orm::{
-    ActiveValue, DerivePartialModel, FromJsonQueryResult, FromQueryResult, NotSet, QuerySelect,
-};
+use sea_orm::{ActiveValue, DerivePartialModel, FromJsonQueryResult, NotSet, QuerySelect};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use thiserror::Error;
@@ -36,8 +34,8 @@ pub enum QueryFragmentError {
     Transport { msg: String },
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, DerivePartialModel, FromQueryResult)]
-#[sea_orm(entity = "Entity")]
+#[derive(Clone, Debug, PartialEq, Eq, DerivePartialModel)]
+#[sea_orm(entity = "Entity", from_query_result)]
 pub struct ActionableFragment {
     pub id: QueryFragmentId,
     pub query_id: QueryId,

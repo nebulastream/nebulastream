@@ -16,8 +16,8 @@ use crate::worker::endpoint::NetworkAddr;
 use crate::worker::{DesiredWorkerState, Model};
 use crate::{Execute, worker};
 use anyhow::{Context, Result};
-use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
+use sea_orm::sea_query::Expr;
+use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
 /// Soft removal: sets the target state to `Removed` rather than deleting the row.
@@ -37,20 +37,15 @@ impl DropWorker {
 impl Execute for DropWorker {
     type Response = Option<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Option<Model>> {
-        let worker = worker::Entity::find_by_id(self.host_addr.clone())
-            .one(conn)
+        let workers = worker::Entity::update_many()
+            .col_expr(
+                worker::Column::DesiredState,
+                Expr::value(DesiredWorkerState::Removed),
+            )
+            .filter(worker::Column::HostAddr.eq(self.host_addr.clone()))
+            .exec_with_returning(conn)
             .await
-            .context("failed to fetch worker")?;
-        let Some(worker) = worker else {
-            return Ok(None);
-        };
-        let mut active: worker::ActiveModel = worker.into();
-        active.desired_state = Set(DesiredWorkerState::Removed);
-        Ok(Some(
-            active
-                .update(conn)
-                .await
-                .context("failed to update worker")?,
-        ))
+            .context("failed to update worker")?;
+        Ok(workers.into_iter().next())
     }
 }
