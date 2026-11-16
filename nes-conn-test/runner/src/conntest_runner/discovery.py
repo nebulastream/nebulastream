@@ -51,13 +51,19 @@ class BindingProblem:
 
 @dataclass(frozen=True)
 class Expectation:
-    """Unless ``ok``, the case must fail with a connector-origin error of ``code``, and in ``phase`` if one is given."""
+    """Unless ``ok``, the case must fail with a connector-origin error of ``code``, and in ``phase`` if one is given.
+
+    ``loss`` is set for LOSS, which is an ``ok`` case whose read-back may miss or repeat the rows that were in flight at a fault.
+    """
 
     ok: bool
     code: int | None = None
     phase: str | None = None
+    loss: bool = False
 
     def __str__(self) -> str:
+        if self.loss:
+            return "LOSS"
         if self.ok:
             return "OK"
         # An ERROR expectation always has a code.
@@ -75,9 +81,11 @@ def parse_expectation(spec: str) -> Expectation:
     text = spec.strip()
     if text == "OK":
         return Expectation(ok=True)
+    if text == "LOSS":
+        return Expectation(ok=True, loss=True)
     parts = text.split()
     if parts[0] != "ERROR" or len(parts) < _ERROR_MIN_PARTS:
-        raise ValueError(f"bad expectation {spec!r}: expected 'OK' or 'ERROR <code|Name> [phase]'")
+        raise ValueError(f"bad expectation {spec!r}: expected 'OK', 'LOSS' or 'ERROR <code|Name> [phase]'")
     code = resolve_code(parts[1])
     phase = parts[_PHASE_INDEX] if len(parts) > _PHASE_INDEX else None
     return Expectation(ok=False, code=code, phase=phase)

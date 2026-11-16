@@ -20,3 +20,6 @@ services:
     # The port is toxiproxy's default, set here so that link.py does not depend on the default.
     command: ["-host=0.0.0.0", "-port=8474"]
     stop_grace_period: 0s
+    # Bounded socket buffers make the amount of data that a stalled link takes independent of the host's autotuning.
+    sysctls:
+      net.ipv4.tcp_rmem: "4096 65536 65536"

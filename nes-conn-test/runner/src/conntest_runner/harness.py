@@ -115,22 +115,24 @@ class _HarnessProc:
             self.conn.close()
         self.proc.wait(timeout=10)
 
-    def end_session(self) -> None:
+    def end_session(self, timeout: float | None) -> int:
         """The harness's session loop returns on EOF, so the harness shuts down gracefully.
 
-        A harness that is still running after the timeout is killed, and the error says so.
+        Returns the exit code.
+        A harness that is still running after ``timeout`` is killed, and the error says so.
+        Without a timeout, the wait ends at the latest when the case's deadline kills the harness.
         """
         with contextlib.suppress(OSError):
             self.conn.close()
         try:
-            self.proc.wait(timeout=_END_SESSION_TIMEOUT_S)
+            return self.proc.wait(timeout=timeout)
         except subprocess.TimeoutExpired as e:
             self.proc.kill()
             self.proc.wait()
             raise HarnessError(
                 name="ExitTimeout",
                 phase="end",
-                message=f"the harness did not exit within {_END_SESSION_TIMEOUT_S} s after EOF and was killed",
+                message=f"the harness did not exit within {timeout} s after EOF and was killed",
             ) from e
 
 
@@ -205,11 +207,26 @@ class _Stepper:
             self._proc.kill()
             self._proc = None
 
+    def shutdown(self) -> int:
+        """Models a worker that shuts down while the connector runs: the session ends without a CLOSE or STOP,
+        and the harness destroys the connector without stopping it, as the engine does.
+
+        Returns the exit code.
+        A harness that does not exit is killed at the case's deadline, so its exit code is that of SIGKILL.
+        The next command spawns a new process.
+        """
+        if self._proc is None:
+            raise RuntimeError("shutdown without a running harness")
+        # The process stays registered while the session ends, so that the deadline can kill it.
+        exit_code = self._proc.end_session(timeout=None)
+        self._proc = None
+        return exit_code
+
     def cleanup(self) -> None:
         self._deadline.cancel()
         try:
             if self._proc is not None:
-                self._proc.end_session()
+                self._proc.end_session(timeout=_END_SESSION_TIMEOUT_S)
         finally:
             self._proc = None
             with contextlib.suppress(OSError):
@@ -263,6 +280,13 @@ class Sink(_Stepper):
     def write(self, n_buffers: int) -> Got:
         """Hands the next ``n_buffers`` buffers to the sink, or as many as are left."""
         return self._command(f"WRITE {n_buffers}")
+
+    def write_until_backpressure(self, n_buffers: int) -> Got:
+        """Hands the next ``n_buffers`` buffers to the sink as WRITE does, but returns as soon as the sink applies backpressure.
+
+        The reply's ``backpressure`` says whether it did, which it did not if it finished every buffer first.
+        """
+        return self._command(f"WRITE_UNTIL_BACKPRESSURE {n_buffers}")
 
     def stop(self) -> Got:
         return self._command("STOP")

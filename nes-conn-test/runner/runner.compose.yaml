@@ -30,3 +30,7 @@ services:
       LSAN_OPTIONS: ${LSAN_OPTIONS:-}
       TSAN_OPTIONS: ${TSAN_OPTIONS:-}
       UBSAN_OPTIONS: ${UBSAN_OPTIONS:-}
+    # The harness runs here, so a stalled link fills the connector's send buffer.
+    # The bound keeps that amount independent of the host's autotuning, see conntest_runner/link.py.
+    sysctls:
+      net.ipv4.tcp_wmem: "4096 65536 65536"

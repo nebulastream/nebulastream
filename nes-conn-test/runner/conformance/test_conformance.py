@@ -147,7 +147,17 @@ def test_scenario(
                 rows = sink_model.make_rows(n_buffers, _DEFAULT_SEED, _BUFFER_SIZE) if n_buffers is not None else []
                 # The harness reads the input at START, so it can be written after BIND.
                 input_path.write_bytes(sink_model.encode(rows))
-                ctx = SinkCtx(loader=loader, data=sink_model, target=target, sink=sink, rows=rows, schema=schema, args=scenario.args, link=link)
+                ctx = SinkCtx(
+                    loader=loader,
+                    data=sink_model,
+                    target=target,
+                    sink=sink,
+                    rows=rows,
+                    schema=schema,
+                    args=scenario.args,
+                    link=link,
+                    loss=expect.loss,
+                )
                 run_case(get_scenario(scenario.name), ctx, expect)
         else:
             observed_path = tmp_path / "observed.jsonl"
