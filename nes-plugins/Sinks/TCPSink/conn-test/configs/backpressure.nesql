@@ -1,0 +1,10 @@
+-- A TCP sink that applies backpressure after a few buffers, so that the backpressure scenario fills its queue.
+-- The connection tests replace SOCKET_HOST and SOCKET_PORT with the endpoint of each test.
+CREATE SINK backpressure_output (data UINT8) TYPE TCP SET (
+    'localhost' AS "SINK".SOCKET_HOST,
+    9000        AS "SINK".SOCKET_PORT,
+    'JSON'      AS "SINK".OUTPUT_FORMAT,
+    4           AS "SINK".MAX_QUEUED_BUFFERS,
+    4           AS "SINK".BACKPRESSURE_UPPER_THRESHOLD,
+    2           AS "SINK".BACKPRESSURE_LOWER_THRESHOLD
+);

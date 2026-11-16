@@ -103,9 +103,11 @@ class TcpSinkLoader(SinkLoader):
         """The sink closes its connection when it stops, so the receiver has everything once it has read each connection to its end.
 
         A connection that is still open after the step timeout means a hung sink.
+        A connection that broke can end inside a record, which the sink sends again from its start on the next connection,
+        so each connection is parsed on its own and an incomplete last record is dropped.
         """
         self._receiver.done.set()
         self._receiver.thread.join(timeout_s)
         if self._receiver.thread.is_alive():
             raise TimeoutError(f"the sink's connection was still open {timeout_s} s after the sink stopped")
-        return jsonl_to_rows(schema, b"".join(self._receiver.received))
+        return [row for data in self._receiver.received for row in jsonl_to_rows(schema, bytes(data[: data.rfind(b"\n") + 1]))]
