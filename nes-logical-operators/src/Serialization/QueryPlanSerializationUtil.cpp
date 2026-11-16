@@ -48,10 +48,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
-    if (queryPlan.getQueryId().isValid())
-    {
-        *serializableQueryPlan.mutable_queryid() = serializeQueryId(queryPlan.getQueryId());
-    }
+    *serializableQueryPlan.mutable_queryid() = serializeQueryId(queryPlan.getQueryId());
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;
     for (auto itr : BFSRange(rootOperator))
@@ -177,40 +174,19 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     rootOperators = std::vector<LogicalOperator>{sink};
 
     /// 4) Finalize plan
-    auto queryId = INVALID_QUERY_ID;
-    if (serializedQueryPlan.has_queryid())
-    {
-        queryId = deserializeQueryId(serializedQueryPlan.queryid());
-    }
-    return LogicalPlan(queryId, std::move(rootOperators));
+    /// A plan without a query id is read as the invalid id, which is the default value of the field.
+    return LogicalPlan(deserializeQueryId(serializedQueryPlan.queryid()), std::move(rootOperators));
 }
 
-NES::SerializableQueryId QueryPlanSerializationUtil::serializeQueryId(const QueryId& queryId)
+SerializableQueryId QueryPlanSerializationUtil::serializeQueryId(const QueryId& queryId)
 {
-    NES::SerializableQueryId proto;
-    proto.set_local_query_id(queryId.getLocalQueryId().getRawValue());
-    proto.set_distributed_query_id(queryId.getDistributedQueryId().getRawValue());
+    SerializableQueryId proto;
+    proto.set_id(queryId.getRawValue());
     return proto;
 }
 
-QueryId QueryPlanSerializationUtil::deserializeQueryId(const NES::SerializableQueryId& proto)
+QueryId QueryPlanSerializationUtil::deserializeQueryId(const SerializableQueryId& proto)
 {
-    auto localId = LocalQueryId(proto.local_query_id());
-    auto distributedId = DistributedQueryId(proto.distributed_query_id());
-    const bool hasLocal = localId != INVALID_LOCAL_QUERY_ID;
-    const bool hasDistributed = distributedId != DistributedQueryId(DistributedQueryId::INVALID);
-    if (hasLocal && hasDistributed)
-    {
-        return QueryId::create(localId, distributedId);
-    }
-    if (hasLocal)
-    {
-        return QueryId::createLocal(localId);
-    }
-    if (hasDistributed)
-    {
-        return QueryId::createDistributed(distributedId);
-    }
-    return QueryId::invalid();
+    return QueryId{proto.id()};
 }
 }

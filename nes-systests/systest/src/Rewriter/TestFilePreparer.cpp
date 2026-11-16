@@ -18,11 +18,11 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include <Runner/Cluster.hpp>
 #include <fmt/format.h>
 
 #include <Config/Config.hpp>
@@ -48,13 +48,6 @@ namespace NES
 namespace
 {
 
-/// Re-checks what the config parser already checks, for configs built in code.
-const Host& getDefaultHost(const std::vector<Host>& allowed, const std::string_view option)
-{
-    PRECONDITION(not allowed.empty(), "Topology must list at least one worker in {} to assign a default host", option);
-    return allowed.front();
-}
-
 /// Warns on a number the file lacks, likely a typo: `-t Filter.test:3,7` on queries 1-5 warns about 7.
 void warnNumbersNotInFile(
     const std::unordered_set<SystestQueryId>& selectedNumbers, const ParsedTestFile& parsedFile, const std::filesystem::path& file)
@@ -73,12 +66,7 @@ void warnNumbersNotInFile(
 }
 
 TestFilePreparer::TestFilePreparer(const SystestConfiguration& config)
-    : workingDir{config.workingDir}
-    , testDataDir{config.testDataDir}
-    , configDir{config.configDir}
-    , keyFactory{config.testDiscoverRoot}
-    , defaultSourceHost{getDefaultHost(config.clusterConfig.allowSourcePlacement, "allow_source_placement")}
-    , defaultSinkHost{getDefaultHost(config.clusterConfig.allowSinkPlacement, "allow_sink_placement")}
+    : workingDir{config.workingDir}, testDataDir{config.testDataDir}, configDir{config.configDir}, keyFactory{config.testDiscoverRoot}
 {
 }
 
@@ -101,7 +89,7 @@ ParsedTestFile TestFilePreparer::parse(const DiscoveredTestFile& testFile) const
     }
 }
 
-std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFile& testFile)
+std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFile& testFile, Cluster& cluster)
 {
     const ParsedTestFile parsedFile = parse(testFile);
     warnNumbersNotInFile(testFile.queryFilter, parsedFile, testFile.file);
@@ -118,6 +106,7 @@ std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFil
         {
             continue;
         }
+        const auto [sources, sinks] = cluster.placementFor(overrides);
         /// The loop reads only the overrides after this move.
         auto runnable = rewritePartition(
             std::move(file),
@@ -126,8 +115,8 @@ std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFil
                 .name = testFile.getName().getRawValue(),
                 .workingDir = workingDir,
                 .testDataDir = testDataDir,
-                .sourceHost = defaultSourceHost,
-                .sinkHost = defaultSinkHost});
+                .sourceHost = sources,
+                .sinkHost = sinks});
         nameOwners.claim(runnable.originalNames, testFile.file);
         rewritten.push_back(RunnablePartition{.overrides = std::move(overrides), .file = std::move(runnable)});
     }

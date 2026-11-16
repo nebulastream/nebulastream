@@ -53,7 +53,6 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {

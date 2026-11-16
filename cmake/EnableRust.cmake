@@ -159,6 +159,9 @@ if (NOT "${ADDITIONAL_RUSTFLAGS}" STREQUAL "")
     list(APPEND ENV_VARS_LIST RUSTDOCFLAGS=${ADDITIONAL_RUSTFLAGS})
 endif ()
 
+# The controller crate generates its gRPC code from the proto files at build time.
+list(APPEND ENV_VARS_LIST "PROTOC=$<TARGET_FILE:protobuf::protoc>")
+
 set(NES_RUST_CARGO_FLAGS "${ADDITIONAL_CARGOFLAGS}" CACHE INTERNAL "Cargo flags for Rust crate builds")
 set(NES_RUST_ENV_VARS "${ENV_VARS_LIST}" CACHE INTERNAL "Environment variables for Rust crate builds")
 

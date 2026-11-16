@@ -22,18 +22,18 @@
 #include <variant>
 #include <vector>
 
+#include <Identifiers/Identifiers.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <SingleWorkerTopology.hpp>
 
 #include <Config/Config.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
 #include <Executor.hpp>
 #include <TemporaryDirectory.hpp>
-#include <WorkerConfig.hpp>
 
 namespace
 {
@@ -73,7 +73,6 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestE2ETest test class."); }
 
     static constexpr std::string_view EXTENSION = ".dummy";
-    static constexpr size_t DEFAULT_WORKER_CAPACITY = 1000;
 
     /// A working directory per file, so runs do not share result files.
     static SystestConfiguration createConfigFor(const std::string_view testFile)
@@ -82,15 +81,14 @@ public:
         config.testDiscoverRoot = SYSTEST_DATA_DIR;
         config.directlySpecifiedTestFiles = fmt::format("{}/errors/{}{}", SYSTEST_DATA_DIR, testFile, EXTENSION);
         config.workingDir = fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile);
-        config.clusterConfig = SystestClusterConfiguration{
-            .workers = {WorkerConfig{
-                .host = Host{"localhost:8080"},
-                .dataAddress = "localhost:9090",
-                .maxOperators = Capacity{CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}},
-                .downstream = {},
-                .config = {}}},
-            .allowSourcePlacement = {Host{"localhost:8080"}},
-            .allowSinkPlacement = {Host{"localhost:8080"}}};
+        config.clusterConfig = Testing::singleWorkerTopology();
+        return config;
+    }
+
+    static SystestConfiguration createRemoteConfigFor(const std::string_view testFile)
+    {
+        auto config = createConfigFor(testFile);
+        config.remoteWorker = true;
         return config;
     }
 };
@@ -289,8 +287,7 @@ TEST_F(SystestE2ETest, AConcurrencyOfZeroStillRunsTheQueries)
 
 TEST_F(SystestE2ETest, ARemoteRunSkipsAFileThatRequiresSettingsAndStillSucceeds)
 {
-    auto config = createConfigFor("AllSkipped");
-    config.remoteWorker = true;
+    const auto config = createRemoteConfigFor("AllSkipped");
     const auto result = Executor{config}.execute();
     const auto* succeeded = std::get_if<RunSucceeded>(&result);
     ASSERT_NE(succeeded, nullptr) << std::get<RunFailed>(result).report;
@@ -300,12 +297,21 @@ TEST_F(SystestE2ETest, ARemoteRunSkipsAFileThatRequiresSettingsAndStillSucceeds)
         << succeeded->report;
 }
 
+TEST_F(SystestE2ETest, ARemoteRunSkipsAFileWhoseSourceIsServedByThisProcess)
+{
+    const auto config = createRemoteConfigFor("ServedSource");
+    const auto result = Executor{config}.execute();
+    const auto* succeeded = std::get_if<RunSucceeded>(&result);
+    ASSERT_NE(succeeded, nullptr) << std::get<RunFailed>(result).report;
+    EXPECT_TRUE(succeeded->report.starts_with("0 queries passed, 0 failed, 1 skipped\n")) << succeeded->report;
+    EXPECT_TRUE(succeeded->report.contains("  SKIP  errors/ServedSource: 1 test cases: a remote worker cannot reach")) << succeeded->report;
+}
+
 /// With every file skipped, no round has anything to submit.
 TEST_F(SystestE2ETest, ARepeatingRemoteRunWhoseFilesAllSkipEndsInsteadOfLooping)
 {
-    auto config = createConfigFor("AllSkipped");
+    auto config = createRemoteConfigFor("AllSkipped");
     config.workingDir = fmt::format("{}/nes-systests/systest/AllSkippedEndless", PATH_TO_BINARY_DIR);
-    config.remoteWorker = true;
     config.endlessMode = true;
     const auto result = Executor{config}.execute();
     const auto* succeeded = std::get_if<RunSucceeded>(&result);

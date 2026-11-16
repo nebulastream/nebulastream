@@ -21,8 +21,11 @@
 #include <variant>
 #include <vector>
 
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Model/Expectation.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
@@ -71,6 +74,8 @@ struct RewrittenQuery
     /// Absent when there is nothing to compare: the sink discards its input (e.g., `VoidSink`), or the statement does not
     /// parse and never runs.
     std::optional<std::filesystem::path> resultFile;
+    /// Set if the query writes into a declared sink. The header of the result file is then checked against it.
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> declaredSinkSchema;
     std::vector<std::filesystem::path> inputFiles;
 
     Expectation expected;

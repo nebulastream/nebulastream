@@ -38,8 +38,9 @@
 #include <Phases/PipeliningPhase.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <PhysicalOperator.hpp>
@@ -56,11 +57,6 @@ namespace NES
 {
 namespace
 {
-
-QueryId randomQueryId()
-{
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
-}
 
 using PipelineLocation = PhysicalOperatorWrapper::PipelineLocation;
 
@@ -81,16 +77,16 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getAnonymousSource(
-            Identifier::parse("File"),
-            schema,
-            Host("localhost"),
-            {{Identifier::parse("TYPE"), "CSV"}},
-            {{Identifier::parse("file_path"), "/dev/null"}});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sourceOp = SourceDescriptorPhysicalOperator(
-            std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
-            OriginId(nextOriginId++));
+        auto descriptor = SourceDescriptor::create(
+                              PhysicalSourceId{1},
+                              LogicalSource{Identifier::parse("1"), schema},
+                              Identifier::parse("File"),
+                              Host{"localhost"},
+                              {{Identifier::parse("file_path"), "/dev/null"}},
+                              {{Identifier::parse("type"), "CSV"}},
+                              true)
+                              .value();
+        auto sourceOp = SourceDescriptorPhysicalOperator(std::move(descriptor), OriginId(nextOriginId++));
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sourceOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
     }
@@ -98,10 +94,14 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper(const std::string& outputFormat = "CSV") const
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getAnonymousSink(
-            schema, Identifier::parse("Print"), Host("localhost"), {{Identifier::parse("output_format"), outputFormat}}, {});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+        auto descriptor = SinkDescriptor::createAnonymous(
+            INITIAL_SINK_ID,
+            Identifier::parse("Print"),
+            schema,
+            Host{"localhost"},
+            {{Identifier::parse("output_format"), outputFormat}},
+            {});
+        auto sinkOp = SinkPhysicalOperator(descriptor);
         /// The real sink lowering (LowerToPhysicalSink) places sinks as INTERMEDIATE; the pipelining
         /// phase identifies them via the operator type, not the pipeline location.
         return std::make_shared<PhysicalOperatorWrapper>(
@@ -148,7 +148,7 @@ public:
     /// Builds the PhysicalPlan for the given sink-rooted wrapper and runs the pipelining phase.
     static std::shared_ptr<PipelinedQueryPlan> pipeline(const std::shared_ptr<PhysicalOperatorWrapper>& sinkRoot)
     {
-        auto builder = PhysicalPlanBuilder(randomQueryId());
+        auto builder = PhysicalPlanBuilder(QueryId{1});
         builder.addSinkRoot(sinkRoot);
         builder.setOperatorBufferSize(BUFFER_SIZE);
         return QueryCompilation::PipeliningPhase::apply(std::move(builder).finalize());
@@ -171,8 +171,6 @@ public:
         return count;
     }
 
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
     uint64_t nextOriginId = 1;
 };
 
