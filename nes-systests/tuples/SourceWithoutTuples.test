@@ -3,10 +3,10 @@
 # groups: [Sources]
 
 CREATE LOGICAL SOURCE noTuple(field_1 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR noTuple TYPE File;
+CREATE PHYSICAL SOURCE FOR noTuple TYPE FileSource;
 ATTACH INLINE
 
-CREATE SINK noTupelSink(field_1 UINT64 NOT NULL) TYPE File;
+CREATE SINK noTupelSink(field_1 UINT64 NOT NULL) TYPE FileSink;
 
 # Description: check if we run into an error if we process a single tuple.
 SELECT field_1 FROM noTuple INTO noTupelSink;

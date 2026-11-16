@@ -3,10 +3,10 @@
 # groups: [Formatter]
 
 CREATE LOGICAL SOURCE stream(text VARSIZED NOT NULL, text2 VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE FILE;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH FILE small/comma.csv
 
-CREATE SINK file_sink(text VARSIZED NOT NULL, text2 VARSIZED NOT NULL) TYPE File;
+CREATE SINK file_sink(text VARSIZED NOT NULL, text2 VARSIZED NOT NULL) TYPE FileSink;
 
 SELECT * FROM stream INTO file_sink;
 ----

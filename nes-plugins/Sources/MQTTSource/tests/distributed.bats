@@ -74,15 +74,15 @@ docker_mqtt_subscribe() {
 @test "launch query from commandline" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        100 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        100 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO CHECKSUM('CSV' AS "SINK"."OUTPUT_FORMAT", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO ChecksumSink('CSV' AS "OUTPUT_FORMATTER"."TYPE", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "CHECKSUM_SINK"."FILE_PATH")
 EOF
 )"
 
@@ -104,15 +104,15 @@ EOF
 @test "empty message delimiter allows tuples to span messages" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        100 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        '' AS "SOURCE"."IMPLICIT_MESSAGE_DELIMITER",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        100 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        '' AS "MQTT_SOURCE"."IMPLICIT_MESSAGE_DELIMITER",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO FILE('CSV' AS "SINK"."OUTPUT_FORMAT", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO FileSink('CSV' AS "OUTPUT_FORMATTER"."TYPE", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "FILE_SINK"."FILE_PATH")
 EOF
 )"
 
@@ -134,15 +134,15 @@ EOF
 @test "long flushing interval" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        5000 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        5000 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO FILE('CSV' AS "SINK"."OUTPUT_FORMAT", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO FileSink('CSV' AS "OUTPUT_FORMATTER"."TYPE", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "FILE_SINK"."FILE_PATH")
 EOF
 )"
 
@@ -160,15 +160,15 @@ EOF
 @test "long flushing interval does not flush early" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        120000 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        120000 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO FILE('CSV' AS "SINK"."OUTPUT_FORMAT", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO FileSink('CSV' AS "OUTPUT_FORMATTER"."TYPE", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "FILE_SINK"."FILE_PATH")
 EOF
 )"
 
@@ -190,15 +190,15 @@ EOF
 
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        1000000 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        1000000 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO FILE('CSV' AS "SINK"."OUTPUT_FORMAT", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO FileSink('CSV' AS "OUTPUT_FORMATTER"."TYPE", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "FILE_SINK"."FILE_PATH")
 EOF
 )"
 
@@ -226,15 +226,15 @@ EOF
 @test "more data" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        100 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        100 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO FILE('CSV' AS "SINK"."OUTPUT_FORMAT", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO FileSink('CSV' AS "OUTPUT_FORMATTER"."TYPE", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "FILE_SINK"."FILE_PATH")
 EOF
 )"
 
@@ -257,15 +257,15 @@ EOF
 @test "fails query when broker stops during processing" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        100 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        100 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO CHECKSUM('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO ChecksumSink('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "CHECKSUM_SINK"."FILE_PATH")
 EOF
 )"
   assert_success
@@ -283,15 +283,15 @@ EOF
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   docker compose kill mqtt-broker
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        100 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        100 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO CHECKSUM('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO ChecksumSink('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "CHECKSUM_SINK"."FILE_PATH")
 EOF
 )"
   assert_success
@@ -301,16 +301,16 @@ EOF
 @test "mqtt source with json messages" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        100 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
-        true AS "SOURCE"."LOG_MESSAGES",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        100 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
+        true AS "MQTT_SOURCE"."LOG_MESSAGES",
         'JSON' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(ID UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO FILE('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH", 'CSV' as "SINK"."OUTPUT_FORMAT")
+    ) INTO FileSink('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "FILE_SINK"."FILE_PATH", 'CSV' as "OUTPUT_FORMATTER"."TYPE")
 EOF
   )"
   assert_success
@@ -327,15 +327,15 @@ EOF
 @test "mqtt source with cooperative shutdown" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM MQTT(
+    SELECT * FROM MQTTSource(
         'worker-1:8080' AS "SOURCE"."HOST",
-        'mqtt-source-test' AS "SOURCE"."TOPIC",
-        'mqtt-broker' AS "SOURCE"."SERVER_URI",
-        100000 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        2 AS "SOURCE"."QOS",
+        'mqtt-source-test' AS "MQTT_SOURCE"."TOPIC",
+        'mqtt-broker' AS "MQTT_SOURCE"."SERVER_URI",
+        100000 AS "MQTT_SOURCE"."FLUSH_INTERVAL_MS",
+        2 AS "MQTT_SOURCE"."QOS",
         'JSON' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(ID UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO FILE('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH", 'CSV' as "SINK"."OUTPUT_FORMAT")
+    ) INTO FileSink('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "FILE_SINK"."FILE_PATH", 'CSV' as "OUTPUT_FORMATTER"."TYPE")
 EOF
   )"
   assert_success

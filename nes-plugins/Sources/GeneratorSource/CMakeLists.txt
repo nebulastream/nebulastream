@@ -20,8 +20,8 @@ target_include_directories(generator_source_plugin_library PUBLIC ${CMAKE_CURREN
 target_compile_definitions(generator_source_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
 link_plugin_library(nes-sources generator_source_plugin_library)
 
-add_registry_entry(Source Generator)
-add_registry_entry(SourceConfigSchema Generator)
-add_registry_entry(SourceConfig Generator)
+add_registry_entry(Source GeneratorSource)
+add_registry_entry(SourceConfigSchema GeneratorSource)
+add_registry_entry(SourceConfig GeneratorSource)
 
 add_tests_if_enabled(tests)

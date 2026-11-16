@@ -35,11 +35,12 @@ sinks:
     schema:
       - name: number
         type: UINT64
-    type: Kafka
+    type: KafkaSink
     config:
-      output_format: CSV
       brokers: kafka-broker:9092
       topic: kafka-sink-test
+    parser_config:
+      type: CSV
 
 logical:
   - name: GENERATOR
@@ -53,7 +54,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: GENERATOR
+    type: GeneratorSource
     source_config:
       stop_generator_when_sequence_finishes: ALL
       generator_schema: |

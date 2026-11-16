@@ -23,6 +23,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
@@ -53,6 +54,10 @@ class AggregationPhysicalFunctionRegistry : public RuntimeRegistry<
 {
 public:
     static AggregationPhysicalFunctionRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<AggregationPhysicalFunctionRegistry>("AggregationPhysicalFunction")};
+    }
 };
 
 }

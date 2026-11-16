@@ -3,10 +3,10 @@
 # groups: [JSON]
 
 CREATE LOGICAL SOURCE jsonSource(firstField VARSIZED, secondField CHAR);
-CREATE PHYSICAL SOURCE FOR jsonSource TYPE File;
+CREATE PHYSICAL SOURCE FOR jsonSource TYPE FileSource;
 ATTACH INLINE;
 This sentence has "special" characters\,"
 
-SELECT * FROM jsonSource INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+SELECT * FROM jsonSource INTO FileSink('JSON' as "OUTPUT_FORMATTER"."TYPE");
 ----
 {"FIRSTFIELD":"This sentence has \"special\" characters\\","SECONDFIELD":"\""}

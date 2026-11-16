@@ -4,7 +4,7 @@
 
 
 CREATE LOGICAL SOURCE stream(key VARSIZED NOT NULL, i8 INT8 NOT NULL, ts UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 apple,10,0
 book,5,25
@@ -12,7 +12,7 @@ cat,20,50
 
 # Checking if a count over a keyed window works for all data types
 SELECT start, end, key, COUNT(i8) as i8_out
-FROM stream GROUP BY (key) WINDOW TUMBLING(ts, size 100 ms) INTO FILE ();
+FROM stream GROUP BY (key) WINDOW TUMBLING(ts, size 100 ms) INTO FileSink ();
 ----
 0,100,apple,1
 0,100,book,1

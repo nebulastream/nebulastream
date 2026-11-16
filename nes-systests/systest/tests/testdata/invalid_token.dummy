@@ -3,11 +3,11 @@
 # groups: [Map]
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1,1,1000
 
-CREATE SINK streamSink(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
+CREATE SINK streamSink(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE FileSink;
 
 # Map with add function touches one field
 SELECT id + 1 AS id, value, timestamp FROM stream INTO streamSink;
@@ -17,12 +17,12 @@ SELECT id + 1 AS id, value, timestamp FROM stream INTO streamSink;
 
 # The second source is invalid and should therefore
 CREATE LOGICAL SOURCE streamBad(id UINT64, value UINT64, timestamp UINT64);
-CREATE PHYSICAL SOURCE FOR streamBad TYPE File;
+CREATE PHYSICAL SOURCE FOR streamBad TYPE FileSource;
 ATTACH INLINE
 THISISANINVALIDTOKEN
 1,1,1000
 
-CREATE SINK streamSink(streamBad.id UINT64, streamBad.value UINT64, streamBad.timestamp UINT64)  TYPE File;
+CREATE SINK streamSink(streamBad.id UINT64, streamBad.value UINT64, streamBad.timestamp UINT64)  TYPE FileSink;
 
 
 # Query that is never parsed

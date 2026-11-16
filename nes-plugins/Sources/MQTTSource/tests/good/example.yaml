@@ -35,10 +35,11 @@ sinks:
     schema:
       - name: DOUBLE
         type: FLOAT64
-    type: Checksum
+    type: ChecksumSink
     config:
-      output_format: CSV
       file_path: results.csv
+    parser_config:
+      type: CSV
 
 logical:
   - name: MQTT
@@ -52,7 +53,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: MQTT
+    type: MQTTSource
     source_config:
       server_uri: mqtt-broker
       topic: mqtt-source-test

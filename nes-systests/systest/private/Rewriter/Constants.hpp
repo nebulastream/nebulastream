@@ -29,33 +29,46 @@
 namespace NES::Sql
 {
 
-/// Config groups
+/// Generic config groups
 constexpr auto Source = "SOURCE";
 constexpr auto Sink = "SINK";
 constexpr auto InputFormatter = "INPUT_FORMATTER";
 constexpr auto OutputFormatter = "OUTPUT_FORMATTER";
 
+/// Per-plugin config groups
+constexpr auto FileSourceGroup = "FILE_SOURCE";
+constexpr auto TcpSourceGroup = "TCP_SOURCE";
+constexpr auto FileSinkGroup = "FILE_SINK";
+constexpr auto ChecksumSinkGroup = "CHECKSUM_SINK";
+constexpr auto CsvOutputFormatterGroup = "CSV_OUTPUT_FORMATTER";
+
 /// Config keys within the groups.
 constexpr auto FilePath = "FILE_PATH";
 constexpr auto Host = "HOST";
-constexpr auto OutputFormat = "OUTPUT_FORMAT";
 constexpr auto Type = "TYPE";
 constexpr auto Schema = "SCHEMA";
 constexpr auto QuoteStrings = "QUOTE_STRINGS";
+constexpr auto Path = "PATH";
 
 /// Default input/output format
 constexpr auto Csv = "CSV";
 
-/// Default sink type.
-constexpr auto File = "File";
+/// Source & sink plugin names.
+constexpr auto FileSource = "FileSource";
+constexpr auto TcpSource = "TCPSource";
+constexpr auto FileSink = "FileSink";
 /// Sink that discards its input and takes no file path.
-constexpr auto Void = "Void";
+constexpr auto VoidSink = "VoidSink";
 /// Sink types that the engine accepts but that write nothing a test can read.
-constexpr auto Print = "Print";
-constexpr auto Mqtt = "MQTT";
+constexpr auto PrintSink = "PrintSink";
+constexpr auto MqttSink = "MQTTSink";
 /// Sink type that writes a checksum over its rows instead of the rows.
-constexpr auto Checksum = "CHECKSUM";
-constexpr auto Tcp = "TCP";
+constexpr auto ChecksumSink = "ChecksumSink";
+
+/// Table-valued operator & model functor names.
+constexpr auto ModelInference = "MODEL_INFERENCE";
+constexpr auto OpenVinoModel = "OPENVINO_MODEL";
+
 /// Config keys for a TCP source.
 constexpr auto SocketHost = "SOCKET_HOST";
 constexpr auto SocketPort = "SOCKET_PORT";
@@ -65,13 +78,21 @@ constexpr auto FlushIntervalMs = "FLUSH_INTERVAL_MS";
 /// A quoted and an unquoted spelling of one name match, and two unquoted spellings differing only in case also match.
 inline bool sameName(const std::string_view left, const std::string_view right)
 {
-    return Identifier::parse(std::string{left}) == Identifier::parse(std::string{right});
+    const auto parsedLeft = Identifier::tryParse(std::string{left});
+    const auto parsedRight = Identifier::tryParse(std::string{right});
+    return parsedLeft.has_value() and parsedRight.has_value() and *parsedLeft == *parsedRight;
 }
 
-/// Only `File` and `Checksum` take a file path, so only they can be pointed at the file that the checker reads.
+/// Only `FileSink` and `ChecksumSink` take a file path, so only they can be pointed at the file that the checker reads.
 inline bool writesReadableResult(const std::string_view sinkType)
 {
-    return sameName(sinkType, File) or sameName(sinkType, Checksum);
+    return sameName(sinkType, FileSink) or sameName(sinkType, ChecksumSink);
+}
+
+/// Returns the per-plugin config group that holds `FILE_PATH` for a readable sink type.
+inline std::string_view sinkFilePathGroup(const std::string_view sinkType)
+{
+    return sameName(sinkType, ChecksumSink) ? ChecksumSinkGroup : FileSinkGroup;
 }
 
 /// Returns the value as a SQL string literal.

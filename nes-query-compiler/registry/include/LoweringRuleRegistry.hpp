@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
@@ -46,6 +47,10 @@ class LoweringRuleRegistry : public RuntimeRegistry<LoweringRuleRegistry, std::s
 {
 public:
     static LoweringRuleRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<LoweringRuleRegistry>("LoweringRule")};
+    }
 };
 
 }

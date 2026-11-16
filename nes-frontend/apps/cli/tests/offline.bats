@@ -208,7 +208,7 @@ sinks:
     schema:
       - name: value
         type: UINT64
-    type: Void
+    type: VoidSink
     config: { }
     parser_config: { }
 logical:
@@ -222,7 +222,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       generator_rate_type: FIXED
       generator_rate_config: emit_rate 10
@@ -308,8 +308,8 @@ bad_topology() {
 }
 
 @test "error: unknown physical source key reports key and suggestions" {
-  # Add an extra 'input_format: CSV' line after 'type: Generator' in the physical section
-  local f=$(bad_topology '/^physical:/,/^[a-z]/s/^    type: Generator/    type: Generator\n    input_format: CSV/')
+  # Add an extra 'input_format: CSV' line after 'type: GeneratorSource' in the physical section
+  local f=$(bad_topology '/^physical:/,/^[a-z]/s/^    type: GeneratorSource/    type: GeneratorSource\n    input_format: CSV/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
   [[ "$output" == *"Unknown key 'input_format'"* ]]
@@ -349,20 +349,20 @@ bad_topology() {
   local f=$(bad_topology 's/type: CSV/input_format: CSV/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Source config does not contain input formatter type"* ]]
+  [[ "$output" == *"parser config of physical source for GENERATOR_SOURCE must specify the TYPE"* ]]
 }
 
 @test "error: unregistered source type reports type name" {
-  # Change source type from 'Generator' to a non-existent type
-  local f=$(bad_topology 's/type: Generator/type: NonExistentSource/')
+  # Change source type from 'GeneratorSource' to a non-existent type
+  local f=$(bad_topology 's/type: GeneratorSource/type: NonExistentSource/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
   [[ "$output" == *"source type 'NONEXISTENTSOURCE' is not registered"* ]]
 }
 
 @test "error: unregistered sink type reports type name" {
-  # Change sink type from 'Void' to a non-existent type
-  local f=$(bad_topology 's/type: Void/type: NonExistentSink/')
+  # Change sink type from 'VoidSink' to a non-existent type
+  local f=$(bad_topology 's/type: VoidSink/type: NonExistentSink/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
   [[ "$output" == *"sink type 'NONEXISTENTSINK' is not registered"* ]]

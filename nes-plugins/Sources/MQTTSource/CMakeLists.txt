@@ -21,9 +21,9 @@ find_package(PahoMqttCpp CONFIG REQUIRED)
 target_link_libraries(mqtt_source_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 
 link_plugin_library(nes-sources mqtt_source_plugin_library)
-add_registry_entry(Source MQTT)
-add_registry_entry(SourceConfigSchema MQTT)
-add_registry_entry(SourceConfig MQTT)
+add_registry_entry(Source MQTTSource)
+add_registry_entry(SourceConfigSchema MQTTSource)
+add_registry_entry(SourceConfig MQTTSource)
 # These tests use docker CLI to run docker-compose from within the development container.
 add_e2e_test(
     NAME mqtt-source-test

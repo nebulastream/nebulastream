@@ -14,30 +14,61 @@
 
 #pragma once
 
+#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <tuple>
+#include <vector>
 
 #include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Types/NESType.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-/// Maps a sink type name to a provider of the config schema the sink declares
-/// (see e.g. FileSink::getConfigSchema). Frontends resolve user-passed configs against this
-/// schema (see Configurations/ConfigResolution.hpp) to obtain an InstantiatedConfig.
-/// Entries self-register at static initialization time via generated glue TUs
-/// (see create_runtime_registry(SinkConfigSchema ...) in nes-sinks/CMakeLists.txt).
 using SinkConfigSchemaProviderFn = std::function<Schema<QualifiedErasedConfigField, Ordered>()>;
+
+struct SinkTypeTrait
+{
+    Identifier sinkType;
+};
+
+/// Value representation produced by SQL anonymous sink constructors (e.g. `FileSink(...)`, `VoidSink()`, `ChecksumSink()`).
+/// Carries the sink type and config literal schema without depending on `LogicalOperator`,
+/// avoiding circular dependencies between `nes-sinks` and `nes-logical-operators`.
+struct BoundAnonymousSink
+{
+    Identifier sinkType;
+    Schema<LiteralConfigValue, Ordered> configOptions;
+
+    [[nodiscard]] std::expected<
+        std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>,
+        Exception>
+    resolve(
+        const Schema<ConfigFieldDefault, Ordered>& configDefaults = {},
+        const Schema<ConfigFieldTransformation, Unordered>& configTransformations = {}) const;
+};
 
 class SinkConfigSchemaRegistry
     : public RuntimeRegistry<SinkConfigSchemaRegistry, std::string, SinkConfigSchemaProviderFn, /*CaseSensitive*/ false>
 {
 public:
+    static constexpr bool EXPOSE_TO_SQL_SCOPE = true;
+
     static SinkConfigSchemaRegistry& instance();
+    static NESTypeClass sinkTypeClass();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses();
 
     [[nodiscard]] std::optional<Schema<QualifiedErasedConfigField, Ordered>> getSchema(const std::string& sinkType) const
     {
@@ -48,5 +79,7 @@ public:
         return std::nullopt;
     }
 };
+
+NESFunctor makeSinkConfigSchemaFunctor(std::string_view sinkTypeName, SinkConfigSchemaProviderFn provider);
 
 }

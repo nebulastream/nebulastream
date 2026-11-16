@@ -14,45 +14,39 @@
 
 #pragma once
 
+#include <expected>
 #include <functional>
 #include <string>
 #include <vector>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Util/Reflection.hpp>
+#include <Types/NESType.hpp>
 #include <Util/RuntimeRegistry.hpp>
-#include "Types/NESType.hpp"
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-using LogicalOperatorRegistryReturnType = LogicalOperator;
+using LogicalOperatorRegistryReturnType = std::expected<LogicalOperator, Exception>;
+using LogicalOperatorFn = std::function<LogicalOperatorRegistryReturnType(const NESValueParameters&)>;
 
-struct LogicalOperatorRegistryArguments
-{
-    std::vector<LogicalOperator> children;
-    Reflected reflected;
-};
-
-using LogicalOperatorFn = std::function<LogicalOperatorRegistryReturnType(LogicalOperatorRegistryArguments)>;
-struct LogicalOperatorNESTypeDescriptor
-{
-    QualifiedIdentifier logicalOperatorName;
-};
-
-struct LogicalOperatorTypeClassTag
+struct LogicalOperatorTrait
 {
 };
-/// Name-based construction surface for logical operators. Currently has no entries: operators
-/// gain one by implementing a static create member and adding an
-/// add_registry_entry(LogicalOperator <name>) line.
+
+/// Wraps a `LogicalOperator` into a `NESValue` carrying `LogicalOperatorTrait` (`LogicalOperator` type class).
+[[nodiscard]] NESValue makeLogicalOperatorValue(LogicalOperator op);
+
+/// Frontend-exposed registry for table-valued functions / relational operator constructors (e.g. `MODEL_INFERENCE`).
 class LogicalOperatorRegistry : public RuntimeRegistry<LogicalOperatorRegistry, std::string, LogicalOperatorFn, /*CaseSensitive*/ false>
 {
 public:
-    static LogicalOperatorRegistry& instance();
+    static constexpr bool EXPOSE_TO_SQL_SCOPE = true;
 
+    static LogicalOperatorRegistry& instance();
+    static NESTypeClass logicalOperatorTypeClass();
     static NamedNESParametrizedTypeClass getParametrizedTypeClass();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses();
 };
 
 }

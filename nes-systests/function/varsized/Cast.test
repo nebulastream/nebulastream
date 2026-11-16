@@ -6,7 +6,7 @@
 
 # FLOAT64
 CREATE LOGICAL SOURCE varSizedNumericFloat64Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericFloat64Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericFloat64Stream TYPE FileSource;
 ATTACH INLINE
 14.5
  14.5
@@ -18,7 +18,7 @@ ATTACH INLINE
 000123.4500
  ? 7 ? . ? 5 ?
 
-SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM varSizedNumericFloat64Stream INTO FILE();
+SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM varSizedNumericFloat64Stream INTO FileSink();
 ----
 14.5
 14.5
@@ -33,14 +33,14 @@ SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM varSizedNumericFloat64Stre
 
 # FLOAT32
 CREATE LOGICAL SOURCE varSizedNumericFloat32Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericFloat32Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericFloat32Stream TYPE FileSource;
 ATTACH INLINE
 3.5
 0
 -7.25
 1?2?.5
 
-SELECT CASTTOTYPE(value AS FLOAT32) AS value_out FROM varSizedNumericFloat32Stream INTO FILE();
+SELECT CASTTOTYPE(value AS FLOAT32) AS value_out FROM varSizedNumericFloat32Stream INTO FileSink();
 ----
 3.5
 0
@@ -50,7 +50,7 @@ SELECT CASTTOTYPE(value AS FLOAT32) AS value_out FROM varSizedNumericFloat32Stre
 
 # INT8
 CREATE LOGICAL SOURCE varSizedNumericInt8Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericInt8Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt8Stream TYPE FileSource;
 ATTACH INLINE
 42
 -1
@@ -58,7 +58,7 @@ ATTACH INLINE
 1?2?7
  0 0 5
 
-SELECT CASTTOTYPE(value AS INT8) AS value_out FROM varSizedNumericInt8Stream INTO FILE();
+SELECT CASTTOTYPE(value AS INT8) AS value_out FROM varSizedNumericInt8Stream INTO FileSink();
 ----
 42
 -1
@@ -69,14 +69,14 @@ SELECT CASTTOTYPE(value AS INT8) AS value_out FROM varSizedNumericInt8Stream INT
 
 # INT16
 CREATE LOGICAL SOURCE varSizedNumericInt16Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericInt16Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt16Stream TYPE FileSource;
 ATTACH INLINE
 32000
 -32000
 0
 1?2?3
 
-SELECT CASTTOTYPE(value AS INT16) AS value_out FROM varSizedNumericInt16Stream INTO FILE();
+SELECT CASTTOTYPE(value AS INT16) AS value_out FROM varSizedNumericInt16Stream INTO FileSink();
 ----
 32000
 -32000
@@ -86,7 +86,7 @@ SELECT CASTTOTYPE(value AS INT16) AS value_out FROM varSizedNumericInt16Stream I
 
 # INT32
 CREATE LOGICAL SOURCE varSizedNumericInt32Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericInt32Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt32Stream TYPE FileSource;
 ATTACH INLINE
 123
  123
@@ -94,7 +94,7 @@ ATTACH INLINE
 1?2?3
 00077
 
-SELECT CASTTOTYPE(value AS INT32) AS value_out FROM varSizedNumericInt32Stream INTO FILE();
+SELECT CASTTOTYPE(value AS INT32) AS value_out FROM varSizedNumericInt32Stream INTO FileSink();
 ----
 123
 123
@@ -105,13 +105,13 @@ SELECT CASTTOTYPE(value AS INT32) AS value_out FROM varSizedNumericInt32Stream I
 
 # INT64
 CREATE LOGICAL SOURCE varSizedNumericInt64Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericInt64Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt64Stream TYPE FileSource;
 ATTACH INLINE
 922337203685477580
 -922337203685477580
 12?3
 
-SELECT CASTTOTYPE(value AS INT64) AS value_out FROM varSizedNumericInt64Stream INTO FILE();
+SELECT CASTTOTYPE(value AS INT64) AS value_out FROM varSizedNumericInt64Stream INTO FileSink();
 ----
 922337203685477580
 -922337203685477580
@@ -120,13 +120,13 @@ SELECT CASTTOTYPE(value AS INT64) AS value_out FROM varSizedNumericInt64Stream I
 
 # UINT8
 CREATE LOGICAL SOURCE varSizedNumericUInt8Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericUInt8Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt8Stream TYPE FileSource;
 ATTACH INLINE
 255
 0
 4?2
 
-SELECT CASTTOTYPE(value AS UINT8) AS value_out FROM varSizedNumericUInt8Stream INTO FILE();
+SELECT CASTTOTYPE(value AS UINT8) AS value_out FROM varSizedNumericUInt8Stream INTO FileSink();
 ----
 255
 0
@@ -135,13 +135,13 @@ SELECT CASTTOTYPE(value AS UINT8) AS value_out FROM varSizedNumericUInt8Stream I
 
 # UINT16
 CREATE LOGICAL SOURCE varSizedNumericUInt16Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericUInt16Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt16Stream TYPE FileSource;
 ATTACH INLINE
 65535
 0
 1?2?3
 
-SELECT CASTTOTYPE(value AS UINT16) AS value_out FROM varSizedNumericUInt16Stream INTO FILE();
+SELECT CASTTOTYPE(value AS UINT16) AS value_out FROM varSizedNumericUInt16Stream INTO FileSink();
 ----
 65535
 0
@@ -150,13 +150,13 @@ SELECT CASTTOTYPE(value AS UINT16) AS value_out FROM varSizedNumericUInt16Stream
 
 # UINT32
 CREATE LOGICAL SOURCE varSizedNumericUInt32Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericUInt32Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt32Stream TYPE FileSource;
 ATTACH INLINE
 123
 0
 4?2
 
-SELECT CASTTOTYPE(value AS UINT32) AS value_out FROM varSizedNumericUInt32Stream INTO FILE();
+SELECT CASTTOTYPE(value AS UINT32) AS value_out FROM varSizedNumericUInt32Stream INTO FileSink();
 ----
 123
 0
@@ -165,13 +165,13 @@ SELECT CASTTOTYPE(value AS UINT32) AS value_out FROM varSizedNumericUInt32Stream
 
 # UINT64
 CREATE LOGICAL SOURCE varSizedNumericUInt64Stream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR varSizedNumericUInt64Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt64Stream TYPE FileSource;
 ATTACH INLINE
 184467440737095516
 0
 1?2?3
 
-SELECT CASTTOTYPE(value AS UINT64) AS value_out FROM varSizedNumericUInt64Stream INTO FILE();
+SELECT CASTTOTYPE(value AS UINT64) AS value_out FROM varSizedNumericUInt64Stream INTO FileSink();
 ----
 184467440737095516
 0
@@ -182,13 +182,13 @@ SELECT CASTTOTYPE(value AS UINT64) AS value_out FROM varSizedNumericUInt64Stream
 
 # UINT64 to FLOAT64
 CREATE LOGICAL SOURCE numericCastUint64Stream(value UINT64);
-CREATE PHYSICAL SOURCE FOR numericCastUint64Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR numericCastUint64Stream TYPE FileSource;
 ATTACH INLINE
 123
 0
 42
 
-SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM numericCastUint64Stream INTO FILE();
+SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM numericCastUint64Stream INTO FileSink();
 ----
 123
 0
@@ -197,13 +197,13 @@ SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM numericCastUint64Stream IN
 
 # INT32 to FLOAT64
 CREATE LOGICAL SOURCE numericCastInt32Stream(value INT32);
-CREATE PHYSICAL SOURCE FOR numericCastInt32Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR numericCastInt32Stream TYPE FileSource;
 ATTACH INLINE
 -42
 0
 123
 
-SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM numericCastInt32Stream INTO FILE();
+SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM numericCastInt32Stream INTO FileSink();
 ----
 -42
 0
@@ -212,13 +212,13 @@ SELECT CASTTOTYPE(value AS FLOAT64) AS value_out FROM numericCastInt32Stream INT
 
 # INT64 to INT32
 CREATE LOGICAL SOURCE numericCastInt64ToInt32Stream(value INT64);
-CREATE PHYSICAL SOURCE FOR numericCastInt64ToInt32Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR numericCastInt64ToInt32Stream TYPE FileSource;
 ATTACH INLINE
 42
 -1
 0
 
-SELECT CASTTOTYPE(value AS INT32) AS value_out FROM numericCastInt64ToInt32Stream INTO FILE();
+SELECT CASTTOTYPE(value AS INT32) AS value_out FROM numericCastInt64ToInt32Stream INTO FileSink();
 ----
 42
 -1
@@ -229,21 +229,21 @@ SELECT CASTTOTYPE(value AS INT32) AS value_out FROM numericCastInt64ToInt32Strea
 
 # non-numeric string
 CREATE LOGICAL SOURCE nonNumericStream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR nonNumericStream TYPE File;
+CREATE PHYSICAL SOURCE FOR nonNumericStream TYPE FileSource;
 ATTACH INLINE
 abc
 
-SELECT CASTTOTYPE(value AS INT32) AS value_out FROM nonNumericStream INTO FILE();
+SELECT CASTTOTYPE(value AS INT32) AS value_out FROM nonNumericStream INTO FileSink();
 ----
 Error 4003
 
 
 # overflow: value too large for INT8
 CREATE LOGICAL SOURCE overflowStream(value VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR overflowStream TYPE File;
+CREATE PHYSICAL SOURCE FOR overflowStream TYPE FileSource;
 ATTACH INLINE
 999
 
-SELECT CASTTOTYPE(value AS INT8) AS value_out FROM overflowStream INTO FILE();
+SELECT CASTTOTYPE(value AS INT8) AS value_out FROM overflowStream INTO FileSink();
 ----
 Error 4003

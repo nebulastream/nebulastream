@@ -30,18 +30,19 @@ target_include_directories(nes-sources PUBLIC
 # config struct ${name}SourceConfig with a static fromConfig(const InstantiatedConfig&); the
 # systest data adaptors are static members of the source class.
 create_runtime_registry(Source nes-sources
-        ENTRY_TEMPLATE "makeSourceFactory<\${PLUGIN_NAME}Source, \${PLUGIN_NAME}SourceConfig>()"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
+        ENTRY_TEMPLATE "makeSourceFactory<\${PLUGIN_NAME}, \${PLUGIN_NAME}Config>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
 create_runtime_registry(SourceConfigSchema nes-sources
-        ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}Source::getConfigSchema(); }"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
+        ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}::getConfigSchema(); }"
+        FUNCTOR_TEMPLATE "makeSourceConfigSchemaFunctor(\"\${KEY}\", [] { return \${PLUGIN_NAME}::getConfigSchema(); })"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
 create_runtime_registry(SourceConfig nes-sources
-        ENTRY_TEMPLATE "makeSourceConfigEntry<\${PLUGIN_NAME}SourceConfig>()"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
+        ENTRY_TEMPLATE "makeSourceConfigEntry<\${PLUGIN_NAME}Config>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
 add_subdirectory(src)

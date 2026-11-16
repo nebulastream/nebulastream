@@ -8,7 +8,7 @@ CREATE LOGICAL SOURCE api_requests(
     ts INT64 NOT NULL
 );
 
-CREATE PHYSICAL SOURCE FOR api_requests TYPE File;
+CREATE PHYSICAL SOURCE FOR api_requests TYPE FileSource;
 ATTACH INLINE
 /login,120.0,10000
 /login,100.0,20000
@@ -22,7 +22,7 @@ ATTACH INLINE
 CREATE SINK sink(
     response_time_count UINT64 NOT NULL,
     response_time_avg   FLOAT64 NOT NULL
-) TYPE File;
+) TYPE FileSink;
 
 SELECT
     COUNT(response_time) AS response_time_count,

@@ -339,11 +339,11 @@ TEST_F(SystestE2ETest, ABrokenFileFailsAloneAndTheOtherFilesStillRun)
         out << content;
     };
     constexpr std::string_view passing = "CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);\n"
-                                         "CREATE PHYSICAL SOURCE FOR s TYPE File;\n"
+                                         "CREATE PHYSICAL SOURCE FOR s TYPE FileSource;\n"
                                          "ATTACH INLINE\n"
                                          "1\n"
                                          "\n"
-                                         "CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;\n"
+                                         "CREATE SINK sinkA(id UINT64 NOT NULL) TYPE FileSink;\n"
                                          "\n"
                                          "SELECT id FROM s INTO sinkA;\n"
                                          "----\n"
@@ -400,11 +400,11 @@ TEST_F(SystestE2ETest, TheReportKeepsFileOrderAcrossSettingsGroups)
         out << content;
     };
     constexpr std::string_view setup = "CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);\n"
-                                       "CREATE PHYSICAL SOURCE FOR s TYPE File;\n"
+                                       "CREATE PHYSICAL SOURCE FOR s TYPE FileSource;\n"
                                        "ATTACH INLINE\n"
                                        "1\n"
                                        "\n"
-                                       "CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;\n"
+                                       "CREATE SINK sinkA(id UINT64 NOT NULL) TYPE FileSink;\n"
                                        "\n";
     constexpr std::string_view settings = "Configuration worker.default_query_execution.operator_buffer_size: [4096]\n";
     constexpr std::string_view failing = "SELECT id FROM s INTO sinkA;\n"

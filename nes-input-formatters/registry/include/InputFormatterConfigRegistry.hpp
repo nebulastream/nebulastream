@@ -20,6 +20,7 @@
 #include <string>
 
 #include <Configurations/InstantiatedConfigValue.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/Any.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/RuntimeRegistry.hpp>
@@ -40,6 +41,10 @@ class InputFormatterConfigRegistry
 {
 public:
     static InputFormatterConfigRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<InputFormatterConfigRegistry>("InputFormatterConfig")};
+    }
 };
 
 /// ConfigStruct must provide `static ConfigStruct fromConfig(const InstantiatedConfig&)` and be

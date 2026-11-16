@@ -3,7 +3,7 @@
 # groups: [Selection]
 
 CREATE LOGICAL SOURCE s(t VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR s TYPE File;
+CREATE PHYSICAL SOURCE FOR s TYPE FileSource;
 ATTACH INLINE
 sometext
 othertext
@@ -16,7 +16,7 @@ sometext
 random
 sometext
 
-CREATE SINK string_sink(t VARSIZED NOT NULL) TYPE File;
+CREATE SINK string_sink(t VARSIZED NOT NULL) TYPE FileSink;
 
 SELECT * FROM s
 WHERE t == 'sometext'

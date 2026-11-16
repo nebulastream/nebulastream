@@ -16,7 +16,6 @@ add_source_files(nes-query-optimizer
         LogicalSourceExpansionRule.cpp
         TypeInferenceRule.cpp
         SinkBindingRule.cpp
-        InferModelResolutionRule.cpp
         CalcTargetOrderRule.cpp
 )
 
@@ -25,6 +24,5 @@ add_registry_entry(PlanRule AnonymousSourceBindingRule KEY AnonymousSourceBindin
 add_registry_entry(PlanRule LogicalSourceExpansionRule KEY LogicalSourceExpansion)
 add_registry_entry(PlanRule TypeInferenceRule KEY TypeInference)
 add_registry_entry(PlanRule SinkBindingRule KEY SinkBinding)
-add_registry_entry(PlanRule InferModelResolutionRule KEY InferModelResolution)
 add_registry_entry(PlanRule CalcTargetOrderRule KEY CalcTargetOrder)
 

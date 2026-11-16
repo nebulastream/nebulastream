@@ -4,7 +4,7 @@
 
 # Same fixture as OctetLength.test — id column lets us include an empty-string row.
 CREATE LOGICAL SOURCE textStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR textStream TYPE File;
+CREATE PHYSICAL SOURCE FOR textStream TYPE FileSource;
 ATTACH INLINE
 1,
 2,Hello
@@ -16,7 +16,7 @@ ATTACH INLINE
 8,🎉🚀
 9,Hi🌍
 
-CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE File;
+CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE FileSink;
 
 # Codepoint count: ASCII rows match their byte length, "äöü" is 3 codepoints (not 6).
 SELECT id AS id, CHAR_LENGTH(data) AS len FROM textStream INTO lengthSink;

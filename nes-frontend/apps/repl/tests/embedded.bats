@@ -32,8 +32,8 @@ setup()         { nes_offline_setup; }
   [ ${#lines[@]} -eq 8 ]
 
   assert_json_equal '[{"schema":[{"name":"TS","type":"UINT64"}],"source_name":"ENDLESS"}]' "${lines[0]}"
-  assert_json_equal '[{"host":"localhost:8080","input_formatter_config":{"allowCommasInStrings":true,"fieldDelimiter":44,"tupleDelimiter":10,"valueDeserializers":"","type":"CSV"},"physical_source_id":1,"schema":[{"name":"TS","type":"UINT64"}],"source_config":"{\"seed\":1,\"maxRuntime\":10000000,\"generatorSchemaRaw\":\"SEQUENCE UINT64 0 10000000 1\",\"stopGeneratorWhenSequenceFinishes\":0,\"flushInterval\":10,\"generatorRateConfig\":{\"index\":0,\"value\":{\"emitRate\":10.0}}}","source_name":"ENDLESS","source_type":"GENERATOR"}]' "${lines[1]}"
-  assert_json_equal '[{"host":"localhost:8080","output_formatter_config":{"config":{"fieldDelimiter":",","quoteStrings":false,"tupleDelimiter":"\n","valueSerializers":""},"outputFormatterType":"CSV"},"schema":[{"name":"TS","type":"UINT64"}],"sink_config":"{\"filePath\":\"out.csv\",\"append\":false}","sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[2]}"
+  assert_json_equal '[{"host":"localhost:8080","input_formatter_config":{"allowCommasInStrings":true,"fieldDelimiter":44,"tupleDelimiter":10,"valueDeserializers":"","type":"CSV"},"physical_source_id":1,"schema":[{"name":"TS","type":"UINT64"}],"source_config":"{\"seed\":1,\"maxRuntime\":10000000,\"generatorSchemaRaw\":\"SEQUENCE UINT64 0 10000000 1\",\"stopGeneratorWhenSequenceFinishes\":0,\"flushInterval\":10,\"generatorRateConfig\":{\"index\":0,\"value\":{\"emitRate\":10.0}}}","source_name":"ENDLESS","source_type":"GENERATORSOURCE"}]' "${lines[1]}"
+  assert_json_equal '[{"host":"localhost:8080","output_formatter_config":{"config":{"fieldDelimiter":",","quoteStrings":false,"tupleDelimiter":"\n","valueSerializers":""},"outputFormatterType":"CSV"},"schema":[{"name":"TS","type":"UINT64"}],"sink_config":"{\"filePath\":\"out.csv\",\"append\":false}","sink_name":"SOMESINK","sink_type":"FILESINK"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
   QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
 
@@ -112,7 +112,7 @@ setup()         { nes_offline_setup; }
 
   assert_equal "$(extract_explain "${lines[$i_logical_text]}")" "$(cat <<'EOF'
 == Initial Logical Plan ==
-ANONYMOUS_SINK(VOID)
+ANONYMOUS_SINK(VOIDSINK)
   PROJECTION(fields: [START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2])
     PROJECTION(fields: [*])
       Join(INNER_JOIN, ID = ID2)
@@ -127,7 +127,7 @@ EOF
 
   assert_equal "$(extract_explain "${lines[$i_optimized_text]}")" "$(cat <<'EOF'
 == Optimized Global Plan ==
-SINK(VOID)
+SINK(VOIDSINK)
   Join(INNER_JOIN, ID = ID2)
     WATERMARK_ASSIGNER(Event time)
       SOURCE(STREAM)
@@ -140,21 +140,21 @@ EOF
 == Decomposed Plans ==
 -- 1 plan(s) on sink-node:8080 --
 0:
-SINK(VOID)
+SINK(VOIDSINK)
   Join(INNER_JOIN, ID = ID2)
-    SOURCE(NETWORK)
-    SOURCE(NETWORK)
+    SOURCE(NETWORKSOURCE)
+    SOURCE(NETWORKSOURCE)
 
 
 -- 2 plan(s) on source-node:8080 --
 0:
-SINK(NETWORK)
+SINK(NETWORKSINK)
   WATERMARK_ASSIGNER(Event time)
     SOURCE(STREAM)
 
 
 1:
-SINK(NETWORK)
+SINK(NETWORKSINK)
   WATERMARK_ASSIGNER(Event time)
     SOURCE(STREAM2)
 EOF
@@ -163,7 +163,7 @@ EOF
   assert_equal "$(extract_explain "${lines[$i_logical_visual]}")" "$(cat <<'EOF'
 == Initial Logical Plan ==
 
-                    ANONYMOUS_SINK(VOID)
+                  ANONYMOUS_SINK(VOIDSINK)
                               │
 PROJECTION(fields: [START, END, ID, VALUE, TIMESTAMP, ID2...
                               │
@@ -182,7 +182,7 @@ EOF
   assert_equal "$(extract_explain "${lines[$i_optimized_visual]}")" "$(cat <<'EOF'
 == Optimized Global Plan ==
 
-                         SINK(VOID)
+                       SINK(VOIDSINK)
                               │
                  Join(INNER_JOIN, ID = ID2)
                ┌──────────────┴───────────────┐
@@ -197,17 +197,17 @@ EOF
 -- 1 plan(s) on sink-node:8080 --
 0:
 
-          SINK(VOID)
-               │
-  Join(INNER_JOIN, ID = ID2)
-       ┌───────┴───────┐
-SOURCE(NETWORK) SOURCE(NETWORK)
+              SINK(VOIDSINK)
+                     │
+        Join(INNER_JOIN, ID = ID2)
+          ┌──────────┴──────────┐
+SOURCE(NETWORKSOURCE) SOURCE(NETWORKSOURCE)
 
 
 -- 2 plan(s) on source-node:8080 --
 0:
 
-        SINK(NETWORK)
+      SINK(NETWORKSINK)
                │
 WATERMARK_ASSIGNER(Event time)
                │
@@ -216,7 +216,7 @@ WATERMARK_ASSIGNER(Event time)
 
 1:
 
-        SINK(NETWORK)
+      SINK(NETWORKSINK)
                │
 WATERMARK_ASSIGNER(Event time)
                │

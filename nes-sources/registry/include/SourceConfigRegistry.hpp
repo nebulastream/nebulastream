@@ -20,6 +20,7 @@
 #include <string>
 
 #include <Configurations/InstantiatedConfigValue.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/Any.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/RuntimeRegistry.hpp>
@@ -41,6 +42,10 @@ class SourceConfigRegistry : public RuntimeRegistry<SourceConfigRegistry, std::s
 {
 public:
     static SourceConfigRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<SourceConfigRegistry>("SourceConfig")};
+    }
 };
 
 /// ConfigStruct must provide `static ConfigStruct fromConfig(const InstantiatedConfig&)` and be

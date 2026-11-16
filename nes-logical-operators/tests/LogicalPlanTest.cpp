@@ -77,7 +77,7 @@ public:
                         return SourceDescriptor::create(
                                    PhysicalSourceId{1},
                                    logicalSource,
-                                   Identifier::parse("File"),
+                                   Identifier::parse("FileSource"),
                                    Host("localhost"),
                                    sourceConfig,
                                    dummyParserConfig,

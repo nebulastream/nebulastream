@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <exception>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -143,7 +144,7 @@ std::vector<Context*> findAll(antlr4::tree::ParseTree* node)
 
 /// Returns the options that the test wrote on a definition, or null when it wrote none.
 template <typename Definition>
-AntlrSQLParser::NamedConfigExpressionSeqContext* declaredOptions(Definition* definition)
+AntlrSQLParser::NamedConfigLiteralSeqContext* declaredOptions(Definition* definition)
 {
     const auto* clause = definition->optionsClause();
     return clause != nullptr ? clause->options : nullptr;
@@ -164,24 +165,47 @@ void insertSetClause(antlr4::TokenStreamRewriter& rewriter, Definition* definiti
     }
 }
 
+/// Returns whether a qualified identifier is a single part matching `name`, or two parts matching `group.key`.
+[[nodiscard]] bool isSingleIdentifier(const AntlrSQLParser::QualifiedIdentifierContext* qualified, std::string_view name);
+[[nodiscard]] bool isOption(const AntlrSQLParser::QualifiedIdentifierContext* qualified, std::string_view group, std::string_view key);
+
 /// Returns whether a config option has exactly the given group and key.
 /// The comparison canonicalizes both names as the binder does, so a quoted and an unquoted spelling of one name match.
 /// Comparing the parsed name rather than the statement text also stops a value that reads like the name from matching.
-[[nodiscard]] bool isOption(const AntlrSQLParser::NamedConfigExpressionContext* option, std::string_view group, std::string_view key);
+[[nodiscard]] bool isOption(AntlrSQLParser::NamedConfigLiteralContext* option, std::string_view group, std::string_view key);
+[[nodiscard]] bool isOption(const AntlrSQLParser::NamedFunctionCallArgumentContext* option, std::string_view group, std::string_view key);
 
 /// Returns whether an option list sets the given name, so a default is only added where the test set nothing.
 /// A statement without an option list sets nothing.
-[[nodiscard]] bool declaresOption(AntlrSQLParser::NamedConfigExpressionSeqContext* options, std::string_view group, std::string_view key);
+[[nodiscard]] bool declaresOption(AntlrSQLParser::NamedConfigLiteralSeqContext* options, std::string_view group, std::string_view key);
+[[nodiscard]] bool declaresOption(
+    std::span<AntlrSQLParser::NamedFunctionCallArgumentContext* const> options, std::string_view group, std::string_view key);
 
-/// Returns the node holding a config option's value when that value is a string literal, and null for a number or a schema.
+/// Returns the node holding a config option's value when that value is a string literal, and null for a number, boolean, or schema.
 /// The node rather than the text, so the caller can replace the value in place.
-[[nodiscard]] AntlrSQLParser::StringLiteralContext* getStringValueOf(AntlrSQLParser::NamedConfigExpressionContext* option);
+[[nodiscard]] AntlrSQLParser::StringLiteralContext* getStringValueOf(AntlrSQLParser::NamedConfigLiteralContext* option);
+[[nodiscard]] AntlrSQLParser::StringLiteralContext* getStringValueOf(AntlrSQLParser::FunctionCallArgumentContext* argument);
+[[nodiscard]] AntlrSQLParser::StringLiteralContext* getStringValueOf(AntlrSQLParser::NamedFunctionCallArgumentContext* option);
 
-/// Returns the content of a string literal, without the quotes around it.
+/// Returns the content of a string literal, without the quotes around it (and unescaping doubled SQL quotes).
 [[nodiscard]] std::string unquote(const std::string& literal);
 
 /// Returns a config option's value, or nullopt when the list does not set the option or sets it to something other than a string literal.
 [[nodiscard]] std::optional<std::string>
-declaredOptionValue(AntlrSQLParser::NamedConfigExpressionSeqContext* options, std::string_view group, std::string_view key);
+declaredOptionValue(AntlrSQLParser::NamedConfigLiteralSeqContext* options, std::string_view group, std::string_view key);
+
+/// Returns all catalog-object identifier references (logical sources and declared models) inside FROM clauses of `tree`.
+[[nodiscard]] std::vector<AntlrSQLParser::IdentifierContext*> catalogReferencesInFrom(antlr4::tree::ParseTree* tree);
+
+/// Parsed view of an anonymous source constructor call in a FROM clause (e.g. `FileSource(...)` or `GeneratorSource()`).
+struct AnonymousSourceCall
+{
+    AntlrSQLParser::IdentifierContext* callee;
+    std::vector<AntlrSQLParser::NamedFunctionCallArgumentContext*> arguments;
+    antlr4::Token* closeParen;
+};
+
+/// Returns all anonymous source constructor calls inside FROM clauses of `tree`.
+[[nodiscard]] std::vector<AnonymousSourceCall> anonymousSourcesInFrom(antlr4::tree::ParseTree* tree);
 
 }

@@ -2,10 +2,10 @@
 -- A flush interval of 0 hands each read downstream at once, instead of holding a partly filled buffer back.
 CREATE LOGICAL SOURCE intervals_input (data UINT8);
 
-CREATE PHYSICAL SOURCE FOR intervals_input TYPE TCP SET (
-    'localhost' AS "SOURCE".SOCKET_HOST,
-    65535       AS "SOURCE".SOCKET_PORT,
-    0           AS "SOURCE".FLUSH_INTERVAL_MS,
-    60000       AS "SOURCE".CONNECT_TIMEOUT_MS,
+CREATE PHYSICAL SOURCE FOR intervals_input TYPE TCPSource SET (
+    'localhost' AS TCP_SOURCE.SOCKET_HOST,
+    65535       AS TCP_SOURCE.SOCKET_PORT,
+    0           AS TCP_SOURCE.FLUSH_INTERVAL_MS,
+    60000       AS TCP_SOURCE.CONNECT_TIMEOUT_MS,
     'JSON'      AS INPUT_FORMATTER."TYPE"
 );

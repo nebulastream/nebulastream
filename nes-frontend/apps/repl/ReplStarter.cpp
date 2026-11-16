@@ -33,14 +33,16 @@
 #include <vector>
 #include <unistd.h>
 
+#include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigParsing.hpp>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -271,13 +273,12 @@ int main(int argc, char** argv)
         const auto queryOptimizerConfig = workerOptimizerConfig->queryOptimizer;
 
 
-        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+        auto sourceCatalogHandle = NES::SourceCatalog::create();
+        auto sourceCatalog = NES::copyPtr(sourceCatalogHandle);
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
-        auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -318,12 +319,20 @@ int main(int argc, char** argv)
         };
         queryManager
             = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(std::move(resolveWorkerConfiguration)));
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
+        auto binder = NES::StatementBinder{
+            sourceCatalog,
+            sinkCatalog,
+            modelCatalog,
+            NES::Schema<NES::ConfigFieldDefault, NES::Ordered>{
+                NES::ConfigFieldDefault{NES::QualifiedIdentifier::parse("SOURCE.HOST"), NES::ConfigLiteral{grpcAddr}},
+                NES::ConfigFieldDefault{NES::QualifiedIdentifier::parse("SINK.HOST"), NES::ConfigLiteral{grpcAddr}}}};
 #else
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
+        auto binder = NES::StatementBinder{sourceCatalog, sinkCatalog, modelCatalog};
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};

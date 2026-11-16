@@ -21,9 +21,9 @@ target_link_libraries(tcp_sink_plugin_library PRIVATE nes-sinks c-ares::cares Bo
 target_include_directories(tcp_sink_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 link_plugin_library(nes-sinks tcp_sink_plugin_library)
-add_registry_entry(Sink TCP)
-add_registry_entry(SinkConfigSchema TCP)
-add_registry_entry(SinkConfig TCP)
+add_registry_entry(Sink TCPSink)
+add_registry_entry(SinkConfigSchema TCPSink)
+add_registry_entry(SinkConfig TCPSink)
 
 add_e2e_test(
     NAME tcp-sink-test

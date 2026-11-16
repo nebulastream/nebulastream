@@ -5,7 +5,7 @@
 # SUCCESS CASES
 
 CREATE LOGICAL SOURCE timestampsStream(timestamp VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR timestampsStream TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream TYPE FileSource;
 ATTACH INLINE
 1970-01-01T00:00:00Z
 1970-01-01T00:00:01Z
@@ -21,7 +21,7 @@ ATTACH INLINE
 2024-02-29T12:00:00Z
 
 
-SELECT timestamp, CASTTOUNIXTS(timestamp) AS timestamp_out FROM timestampsStream INTO FILE();
+SELECT timestamp, CASTTOUNIXTS(timestamp) AS timestamp_out FROM timestampsStream INTO FileSink();
 ----
 1970-01-01T00:00:00Z 0
 1970-01-01T00:00:01Z 1000
@@ -41,45 +41,45 @@ SELECT timestamp, CASTTOUNIXTS(timestamp) AS timestamp_out FROM timestampsStream
 
 # different data type than a var sized
 CREATE LOGICAL SOURCE WrongDataType(timestamp UINT64);
-CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE FileSource;
 ATTACH INLINE
 1639494303000
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM WrongDataType INTO File();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM WrongDataType INTO FileSink();
 ----
 Error 2006
 
 # just a string no timestamp
 CREATE LOGICAL SOURCE timestampsStream_ERR1(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR1 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR1 TYPE FileSource;
 ATTACH INLINE
 not-a-timestamp
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR1 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR1 INTO FileSink();
 ----
 Error 4003
 
 # illegal tailing string
 CREATE LOGICAL SOURCE timestampsStream_ERR2(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR2 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR2 TYPE FileSource;
 ATTACH INLINE
 1970-01-01T00:00:00Zabc
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR2 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR2 INTO FileSink();
 ----
 Error 4003
 
 
 # illegal format
 CREATE LOGICAL SOURCE timestampsStream_ERR3(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR3 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR3 TYPE FileSource;
 ATTACH INLINE
 1969-12-31T23:59:59Z
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR3 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR3 INTO FileSink();
 ----
 Error 4003
 
@@ -87,11 +87,11 @@ Error 4003
 
 # empty string as timestamp
 CREATE LOGICAL SOURCE timestampsStream_ERR4(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR4 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR4 TYPE FileSource;
 ATTACH INLINE
 " "
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR4 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR4 INTO FileSink();
 ----
 Error 4003
 
@@ -99,48 +99,48 @@ Error 4003
 
 # invalid leap-day date
 CREATE LOGICAL SOURCE timestampsStream_ERR5(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR5 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR5 TYPE FileSource;
 ATTACH INLINE
 2023-02-29T12:00:00Z
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR5 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR5 INTO FileSink();
 ----
 Error 4003
 
 
 # invalid timezone offset without colon
 CREATE LOGICAL SOURCE timestampsStream_ERR6(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR6 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR6 TYPE FileSource;
 ATTACH INLINE
 1970-01-01T00:00:00+0100
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR6 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR6 INTO FileSink();
 ----
 Error 4003
 
 
 # invalid timezone offset with hour only
 CREATE LOGICAL SOURCE timestampsStream_ERR7(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR7 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR7 TYPE FileSource;
 ATTACH INLINE
 1970-01-01T00:00:00+01
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR7 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR7 INTO FileSink();
 ----
 Error 4003
 
 
 # invalid timezone offset with malformed minute part
 CREATE LOGICAL SOURCE timestampsStream_ERR8(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR8 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR8 TYPE FileSource;
 ATTACH INLINE
 1970-01-01T00:00:00+01:0
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR8 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR8 INTO FileSink();
 ----
 Error 4003
 
@@ -148,22 +148,22 @@ Error 4003
 
 # date-only string without time part
 CREATE LOGICAL SOURCE timestampsStream_ERR9(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_ERR9 TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_ERR9 TYPE FileSource;
 ATTACH INLINE
 1970-01-01
 
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR9 INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_ERR9 INTO FileSink();
 ----
 Error 4003
 
 
 # NULL CASES
 CREATE LOGICAL SOURCE timestampsStream_NULL(V1 UINT64 NOT NULL, timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR timestampsStream_NULL TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_NULL TYPE FileSource;
 ATTACH INLINE
 0,
 
-SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_NULL INTO FILE();
+SELECT CASTTOUNIXTS(timestamp) AS TSMS FROM timestampsStream_NULL INTO FileSink();
 ----
 NULL

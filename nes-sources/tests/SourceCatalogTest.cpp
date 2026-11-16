@@ -111,7 +111,7 @@ TEST_F(SourceCatalogTest, ConfigMapsRequireExplicitQuotingForNumericStrings)
     EXPECT_FALSE(catalog
                      .addPhysicalSource(
                          *logical,
-                         Identifier::parse("FILE"),
+                         Identifier::parse("FILESOURCE"),
                          Host{"localhost:8080"},
                          {{Identifier::parse("FILE_PATH"), "123"}},
                          {{Identifier::parse("TYPE"), "CSV"}})
@@ -119,14 +119,14 @@ TEST_F(SourceCatalogTest, ConfigMapsRequireExplicitQuotingForNumericStrings)
     EXPECT_FALSE(catalog
                      .addPhysicalSource(
                          *logical,
-                         Identifier::parse("FILE"),
+                         Identifier::parse("FILESOURCE"),
                          Host{"localhost:8080"},
                          {{Identifier::parse("FILE_PATH"), "'123'"}},
                          {{Identifier::parse("TYPE"), "CSV"}, {Identifier::parse("FIELD_DELIMITER"), "1"}})
                      .has_value());
     const auto source = catalog.addPhysicalSource(
         *logical,
-        Identifier::parse("FILE"),
+        Identifier::parse("FILESOURCE"),
         Host{"localhost:8080"},
         {{Identifier::parse("FILE_PATH"), "'123'"}, {Identifier::parse("MAX_INFLIGHT_BUFFERS"), "2"}},
         {{Identifier::parse("TYPE"), "CSV"}, {Identifier::parse("FIELD_DELIMITER"), "'1'"}});
@@ -144,8 +144,8 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 
     const auto sourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
-    const auto physical1Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("File"));
-    const auto physical2Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("File"));
+    const auto physical1Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("FileSource"));
+    const auto physical2Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("FileSource"));
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -167,7 +167,7 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 
     ASSERT_TRUE(sourceCatalog->removePhysicalSource(physical1));
 
-    const auto physical3Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("File"));
+    const auto physical3Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("FileSource"));
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical3 = physical3Opt.value();
 
@@ -204,8 +204,8 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
     const auto sourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto& logicalSource = sourceOpt.value();
-    const auto physical1Opt = addFilePhysicalSource(sourceCatalog, logicalSource, Identifier::parse("File"));
-    const auto physical2Opt = addFilePhysicalSource(sourceCatalog, logicalSource, Identifier::parse("File"));
+    const auto physical1Opt = addFilePhysicalSource(sourceCatalog, logicalSource, Identifier::parse("FileSource"));
+    const auto physical2Opt = addFilePhysicalSource(sourceCatalog, logicalSource, Identifier::parse("FileSource"));
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -266,7 +266,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
             }
             if (logicalSourceOpt.has_value())
             {
-                auto physicalSourceOpt = addFilePhysicalSource(sourceCatalog, *logicalSourceOpt, Identifier::parse("File"));
+                auto physicalSourceOpt = addFilePhysicalSource(sourceCatalog, *logicalSourceOpt, Identifier::parse("FileSource"));
                 if (physicalSourceOpt.has_value())
                 {
                     successfulPhysicalAdds.fetch_add(1);

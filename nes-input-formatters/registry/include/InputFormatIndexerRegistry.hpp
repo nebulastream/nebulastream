@@ -20,6 +20,7 @@
 #include <utility>
 
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterDescriptor.hpp>
@@ -37,6 +38,10 @@ class InputFormatIndexerRegistry
 {
 public:
     static InputFormatIndexerRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<InputFormatIndexerRegistry>("InputFormatter")};
+    }
 };
 
 /// Factory for the common case: the descriptor's type-erased config is the formatter's own config

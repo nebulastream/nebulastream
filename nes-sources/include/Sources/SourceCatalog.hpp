@@ -147,6 +147,9 @@ public:
     std::expected<SourceDescriptor, Exception>
     registerWithLogicalSource(PhysicalSourceBuilder builder, const Identifier& logicalSourceName);
 
+    [[nodiscard]] std::expected<SourceDescriptor, Exception>
+    createAnonymousSourceDescriptor(PhysicalSourceBuilder builder, Schema<UnqualifiedUnboundField, Ordered> schema) const;
+
     /// @brief removes a physical source
     /// @return true if there is a source descriptor with that id registered and it was removed
     [[nodiscard]] bool removePhysicalSource(const SourceDescriptor& physicalSource);

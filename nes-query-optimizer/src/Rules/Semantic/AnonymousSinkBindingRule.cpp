@@ -20,7 +20,6 @@
 #include <typeinfo>
 #include <vector>
 
-#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
@@ -40,29 +39,18 @@ LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
     {
         if (auto sink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); sink.has_value())
         {
-            const auto schema = sink.value()->getTargetSchema();
-            const auto type = sink.value()->getSinkType();
-            auto config = sink.value()->getSinkConfig();
-            const auto formatConfig = sink.value()->getFormatConfig();
-
-            /// "host" is not part of the sink config — it determines placement, not sink behavior.
-            /// It is stored in the config map only because AnonymousSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find(Identifier::parse("host"));
-            if (hostIt == config.end())
+            auto generalConfig = sink.value()->getGeneralSinkConfig();
+            if (generalConfig.host == Host{Host::INVALID})
             {
                 throw InvalidConfigParameter("'host'");
             }
-            auto host = Host(hostIt->second);
-            config.erase(hostIt);
+            auto sinkDescriptor = sinkCatalog->createAnonymousSinkDescriptor(
+                sink.value()->getSinkSchema(),
+                generalConfig,
+                sink.value()->getPluginSinkConfiguration(),
+                sink.value()->getOutputFormatterDescriptor());
 
-            const auto sinkDescriptor = sinkCatalog->getAnonymousSink(schema, type, host, config, formatConfig);
-
-            if (!sinkDescriptor.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create anonymous sink descriptor");
-            }
-
-            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor.value());
+            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor);
             sinkOperator = sinkOperator->withChildrenUnsafe(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }

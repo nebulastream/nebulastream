@@ -97,7 +97,7 @@ public:
         return SourceDescriptor::create(
                    physicalSourceId,
                    logicalSource,
-                   Identifier::parse("File"),
+                   Identifier::parse("FileSource"),
                    Host{"localhost"},
                    sourceConfig,
                    {{Identifier::parse("type"), "CSV"}},
@@ -109,7 +109,8 @@ public:
     {
         const std::unordered_map<Identifier, std::string> sinkConfig{
             {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
-        return SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, Identifier::parse("file"), schema, Host{"localhost"}, sinkConfig, {})
+        return SinkDescriptor::createNamed(
+                   INVALID_SINK_ID, sinkName, Identifier::parse("FileSink"), schema, Host{"localhost"}, sinkConfig, {})
             .value();
     }
 

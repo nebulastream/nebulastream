@@ -39,9 +39,21 @@ public:
     {
     }
 
+    template <typename T>
+    static ExplicitAny create(T&& val)
+    {
+        return ExplicitAny{std::any{std::forward<T>(val)}};
+    }
+
     [[nodiscard]] const std::any& getUnderlying() const { return value; }
 
     [[nodiscard]] bool hasValue() const { return value.has_value(); }
+
+    template <typename T>
+    [[nodiscard]] const std::remove_cvref_t<T>* tryGetAs() const noexcept
+    {
+        return std::any_cast<std::remove_cvref_t<T>>(&value);
+    }
 
     template <typename T>
     [[nodiscard]] T getAs() const

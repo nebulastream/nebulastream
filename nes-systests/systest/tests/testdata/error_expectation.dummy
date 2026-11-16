@@ -2,13 +2,13 @@
 # description: Test file for error expectations
 
 CREATE LOGICAL SOURCE window(id UINT64, value UINT64, timestamp UINT64);
-CREATE PHYSICAL SOURCE FOR window TYPE File;
+CREATE PHYSICAL SOURCE FOR window TYPE FileSource;
 ATTACH INLINE
 1,1,1000
 12,1,1001
 4,1,1002
 
-CREATE SINK sinkWindow(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkWindow(id UINT64, value UINT64, timestamp UINT64)  TYPE FileSink;
 
 # Use explicit error code
 SELECT * FROM window WHERE value == 1 INTO sinkWindow;

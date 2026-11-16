@@ -4,15 +4,15 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
-CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
+CREATE PHYSICAL SOURCE FOR ysb1k TYPE FileSource;
 ATTACH FILE small/ysb/ysb1k_100K.csv
 
 CREATE LOGICAL SOURCE ysb10k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
-CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
+CREATE PHYSICAL SOURCE FOR ysb10k TYPE FileSource;
 ATTACH FILE small/ysb/ysb10k_100K.csv
 
-CREATE SINK ysb1kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id UINT64, sum_user_id UINT64)  TYPE Checksum;
-CREATE SINK ysb10kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id UINT64, sum_user_id UINT64)  TYPE Checksum;
+CREATE SINK ysb1kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id UINT64, sum_user_id UINT64)  TYPE ChecksumSink;
+CREATE SINK ysb10kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id UINT64, sum_user_id UINT64)  TYPE ChecksumSink;
 
 # Query 1 YSB with 1k campaign_ids
 SELECT

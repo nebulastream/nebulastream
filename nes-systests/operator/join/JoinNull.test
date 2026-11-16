@@ -6,7 +6,7 @@ GlobalConfiguration worker.default_query_execution.bloom_filter.enable_bloom_fil
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64, timestamp1 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 0,,0
 0,5,200
@@ -19,7 +19,7 @@ ATTACH INLINE
 0,,2100
 
 CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64, timestamp2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream2 TYPE FileSource;
 ATTACH INLINE
 0,0,100
 0,2,300
@@ -30,13 +30,13 @@ ATTACH INLINE
 1,,1800
 1,12,2500
 
-CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64, timestamp2 UINT64 NOT NULL) TYPE File;
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64, timestamp2 UINT64 NOT NULL) TYPE FileSink;
 
 # Query 1 - Join two streams
 SELECT *
 FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
 ON (id = id2)
-WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
 INTO sink;
 ----
 0,1000,0,NULL,0,0,0,100
@@ -59,7 +59,7 @@ INTO sink;
 SELECT *
 FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
 ON (value = value2)
-WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
 INTO sink;
 ----
 1000,2000,0,7,1000,0,7,1300
@@ -70,7 +70,7 @@ INTO sink;
 SELECT *
 FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
 ON (value = value2 AND id = id2)
-WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
 INTO sink;
 ----
 1000,2000,0,7,1000,0,7,1300

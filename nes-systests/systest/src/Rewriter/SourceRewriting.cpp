@@ -47,7 +47,20 @@ namespace
 /// Such a source takes an endpoint instead of a path, and needs a server sending its data while it reads.
 bool readsFromSocket(const std::string_view sourceType)
 {
-    return Sql::sameName(sourceType, Sql::Tcp);
+    return Sql::sameName(sourceType, Sql::TcpSource);
+}
+
+void replaceIfRelative(
+    antlr4::TokenStreamRewriter& rewriter, AntlrSQLParser::StringLiteralContext* value, const std::filesystem::path& testDataDir)
+{
+    if (value == nullptr)
+    {
+        return;
+    }
+    if (const std::filesystem::path declared{unquote(value->getText())}; declared.is_relative())
+    {
+        rewriter.replace(value->getStart(), value->getStop(), Sql::stringLiteral((testDataDir / declared).string()));
+    }
 }
 
 }
@@ -61,7 +74,7 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     /// The rewriter makes the ATTACH path absolute, under the test data directory.
     /// A path the test wrote would stay relative, or set the option twice next to an ATTACH.
     auto* declared = declaredOptions(declaration.definition);
-    if (declaresOption(declared, Sql::Source, Sql::FilePath))
+    if (declaresOption(declared, Sql::FileSourceGroup, Sql::FilePath) or declaresOption(declared, Sql::Source, Sql::FilePath))
     {
         throw TestException(
             "A physical source must not choose its data file, because a source reads the data that its ATTACH names: {}",
@@ -69,7 +82,10 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     }
 
     if (declaration.attached.has_value() and readsFromSocket(declaration.definition->type->getText())
-        and (declaresOption(declared, Sql::Source, Sql::SocketHost) or declaresOption(declared, Sql::Source, Sql::SocketPort)))
+        and (declaresOption(declared, Sql::TcpSourceGroup, Sql::SocketHost)
+             or declaresOption(declared, Sql::TcpSourceGroup, Sql::SocketPort)
+             or declaresOption(declared, Sql::Source, Sql::SocketHost)
+             or declaresOption(declared, Sql::Source, Sql::SocketPort)))
     {
         throw TestException(
             "A source with attached data must not choose its socket endpoint, because a server sends it that data: {}",
@@ -85,7 +101,7 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     std::optional<std::filesystem::path> inputFile;
     std::optional<InlineData> inlineData;
     std::optional<ServedData> servedData;
-    /// A source that produces its own data (e.g., Generator) takes neither.
+    /// A source that produces its own data (e.g., GeneratorSource) takes neither.
     if (declaration.attached.has_value())
     {
         if (readsFromSocket(declaration.definition->type->getText()))
@@ -145,12 +161,12 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
 /// The CSV default exists because creating the source's descriptor rejects a source without an input format.
 /// The options that the test wrote come last, unchanged.
 std::string SourceRewriter::renderSetClauseFor(
-    SqlParse& parse, AntlrSQLParser::NamedConfigExpressionSeqContext* declared, const std::optional<std::filesystem::path>& dataFile) const
+    SqlParse& parse, AntlrSQLParser::NamedConfigLiteralSeqContext* declared, const std::optional<std::filesystem::path>& dataFile) const
 {
     std::vector<std::string> options;
     if (dataFile.has_value())
     {
-        options.push_back(Sql::option(Sql::Source, Sql::FilePath, dataFile->string()));
+        options.push_back(Sql::option(Sql::FileSourceGroup, Sql::FilePath, dataFile->string()));
     }
     if (not declaresOption(declared, Sql::Source, Sql::Host))
     {
@@ -170,15 +186,37 @@ std::string SourceRewriter::renderSetClauseFor(
 void makeAnonymousSourcePathsAbsolute(
     const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir)
 {
-    for (const auto* source : findAll<AntlrSQLParser::AnonymousSourceContext>(parse.tree()))
+    for (const auto& source : anonymousSourcesInFrom(parse.tree()))
     {
-        for (auto* option : source->parameters->namedConfigExpression())
+        for (auto* option : source.arguments)
         {
-            if (auto* value = getStringValueOf(option); value != nullptr and isOption(option, Sql::Source, Sql::FilePath))
+            if (isOption(option, Sql::FileSourceGroup, Sql::FilePath) or isOption(option, Sql::Source, Sql::FilePath))
             {
-                if (const std::filesystem::path declared{unquote(value->getText())}; declared.is_relative())
+                replaceIfRelative(rewriter, getStringValueOf(option), testDataDir);
+            }
+        }
+    }
+
+    /// Also resolve relative model paths in inline `OPENVINO_MODEL(...)` constructors against `testDataDir`.
+    for (auto* posCall : findAll<AntlrSQLParser::PositionalFunctionCallContext>(parse.tree()))
+    {
+        if (auto* calleeRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(posCall->callee);
+            calleeRef != nullptr and Sql::sameName(calleeRef->identifier()->getText(), Sql::OpenVinoModel)
+            and not posCall->functionCallArgument().empty())
+        {
+            replaceIfRelative(rewriter, getStringValueOf(posCall->functionCallArgument().front()), testDataDir);
+        }
+    }
+    for (auto* namedCall : findAll<AntlrSQLParser::NamedFunctionCallContext>(parse.tree()))
+    {
+        if (auto* calleeRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(namedCall->callee);
+            calleeRef != nullptr and Sql::sameName(calleeRef->identifier()->getText(), Sql::OpenVinoModel))
+        {
+            for (auto* arg : namedCall->namedFunctionCallArgument())
+            {
+                if (isSingleIdentifier(arg->name, Sql::Path))
                 {
-                    rewriter.replace(value->getStart(), value->getStop(), Sql::stringLiteral((testDataDir / declared).string()));
+                    replaceIfRelative(rewriter, getStringValueOf(arg), testDataDir);
                 }
             }
         }
@@ -187,21 +225,27 @@ void makeAnonymousSourcePathsAbsolute(
 
 void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host)
 {
-    for (const auto* source : findAll<AntlrSQLParser::AnonymousSourceContext>(parse.tree()))
+    for (const auto& source : anonymousSourcesInFrom(parse.tree()))
     {
-        const auto declared = source->parameters->namedConfigExpression();
         std::vector<std::string> missing;
-        if (not std::ranges::any_of(declared, [](auto* option) { return isOption(option, Sql::Source, Sql::Host); }))
+        if (not declaresOption(source.arguments, Sql::Source, Sql::Host))
         {
             missing.push_back(Sql::option(Sql::Source, Sql::Host, host.view()));
         }
-        if (not std::ranges::any_of(declared, [](auto* option) { return isOption(option, Sql::InputFormatter, Sql::Type); }))
+        if (not declaresOption(source.arguments, Sql::InputFormatter, Sql::Type))
         {
             missing.push_back(Sql::option(Sql::InputFormatter, Sql::Type, Sql::Csv));
         }
         if (not missing.empty())
         {
-            rewriter.insertAfter(source->parameters->getStop(), fmt::format(", {}", Sql::optionList(missing)));
+            if (source.arguments.empty())
+            {
+                rewriter.insertBefore(source.closeParen, Sql::optionList(missing));
+            }
+            else
+            {
+                rewriter.insertAfter(source.arguments.back()->getStop(), fmt::format(", {}", Sql::optionList(missing)));
+            }
         }
     }
 }

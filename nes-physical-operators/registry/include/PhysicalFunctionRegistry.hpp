@@ -19,6 +19,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
@@ -41,6 +42,10 @@ class PhysicalFunctionRegistry : public RuntimeRegistry<PhysicalFunctionRegistry
 {
 public:
     static PhysicalFunctionRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<PhysicalFunctionRegistry>("PhysicalFunction")};
+    }
 };
 
 }

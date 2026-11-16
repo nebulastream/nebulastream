@@ -12,7 +12,10 @@
 
 add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
 target_link_libraries(statement-binder-test nes-sql-parser nes-frontend-lib)
-target_compile_definitions(statement-binder-test PRIVATE INFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
+target_compile_definitions(statement-binder-test PRIVATE
+    INFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata"
+    SYSTEST_MODEL_DATA="${CMAKE_SOURCE_DIR}/nes-systests/testdata/model"
+)
 if (ENABLE_INFERENCE_TESTS)
     target_compile_definitions(statement-binder-test PRIVATE NES_HAVE_INFERENCE_TESTS=1)
 endif ()

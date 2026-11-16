@@ -5,27 +5,27 @@
 
 # Source definition. We have removed some columns that are not needed in our queries
 CREATE LOGICAL SOURCE bid5K(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64);
-CREATE PHYSICAL SOURCE FOR bid5K TYPE File;
+CREATE PHYSICAL SOURCE FOR bid5K TYPE FileSource;
 ATTACH FILE small/nexmark/bid_5K.csv
 
 CREATE LOGICAL SOURCE bid100K(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64);
-CREATE PHYSICAL SOURCE FOR bid100K TYPE File;
+CREATE PHYSICAL SOURCE FOR bid100K TYPE FileSource;
 ATTACH FILE small/nexmark/bid_100K.csv
 
 CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32, initialbid INT32, reserve INT32, expires UINT64, seller INT32, category INT32);
-CREATE PHYSICAL SOURCE FOR auction TYPE File;
+CREATE PHYSICAL SOURCE FOR auction TYPE FileSource;
 ATTACH FILE small/nexmark/auction_100K.csv
 
 CREATE LOGICAL SOURCE person(id INT32, name VARSIZED, email_address VARSIZED, credit_card VARSIZED, city VARSIZED, state VARSIZED, timestamp UINT64 NOT NULL, extra VARSIZED);
-CREATE PHYSICAL SOURCE FOR person TYPE File;
+CREATE PHYSICAL SOURCE FOR person TYPE FileSource;
 ATTACH FILE small/nexmark/person_100K.csv
 
-CREATE SINK bidCheckSum(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64)  TYPE Checksum;
-CREATE SINK q1CheckSum(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64)  TYPE Checksum;
-CREATE SINK q2CheckSum(auctionId INT32, price FLOAT64)  TYPE Checksum;
-CREATE SINK q5Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32, num UINT64 NOT NULL, max_tmp UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q8CheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, name VARSIZED)  TYPE Checksum;
-CREATE SINK q8VariantCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, bid_timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64, auction_timestamp UINT64 NOT NULL, id INT32, initialbid INT32, reserve INT32, expires UINT64, seller INT32, category INT32)  TYPE Checksum;
+CREATE SINK bidCheckSum(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64)  TYPE ChecksumSink;
+CREATE SINK q1CheckSum(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64)  TYPE ChecksumSink;
+CREATE SINK q2CheckSum(auctionId INT32, price FLOAT64)  TYPE ChecksumSink;
+CREATE SINK q5Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32, num UINT64 NOT NULL, max_tmp UINT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK q8CheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, name VARSIZED)  TYPE ChecksumSink;
+CREATE SINK q8VariantCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, bid_timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, price FLOAT64, auction_timestamp UINT64 NOT NULL, id INT32, initialbid INT32, reserve INT32, expires UINT64, seller INT32, category INT32)  TYPE ChecksumSink;
 
 
 # Query 0
@@ -59,7 +59,7 @@ INNER JOIN (SELECT max_tmp, start as bid_start, end as bid_end
                            WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
                     WINDOW TUMBLING(start, SIZE 2 SEC)))
 ON num == max_tmp
-WINDOW TUMBLING(auction_start, bid_start, SIZE 2 SEC)
+BINARY_WINDOW TUMBLING(auction_start, bid_start, SIZE 2 SEC)
 INTO q5Checksum;
 ----
 6 12261
@@ -73,7 +73,7 @@ FROM (
             FROM (SELECT timestamp as person_timestamp, id, name, email_address, credit_card, city, state, extra FROM person)
         INNER JOIN
             (SELECT timestamp as auction_timestamp, id as auction_id, initialbid, reserve, expires, seller, category FROM auction)
-        ON id = seller WINDOW TUMBLING (person_timestamp, auction_timestamp, size 10 sec)
+        ON id = seller BINARY_WINDOW TUMBLING (person_timestamp, auction_timestamp, size 10 sec)
     )
 INTO q8CheckSum;
 ----
@@ -87,6 +87,6 @@ SELECT start, end, bid_timestamp, auctionId, bidder, price, auction_timestamp, i
     FROM (SELECT timestamp as bid_timestamp, auctionId, bidder, price FROM bid5K)
 INNER JOIN
     (SELECT timestamp as auction_timestamp, id, initialbid, reserve, expires, seller, category FROM auction)
-ON auctionId = id WINDOW TUMBLING (bid_timestamp, auction_timestamp, size 10 sec) INTO q8VariantCheckSum;
+ON auctionId = id BINARY_WINDOW TUMBLING (bid_timestamp, auction_timestamp, size 10 sec) INTO q8VariantCheckSum;
 ----
 165 956509

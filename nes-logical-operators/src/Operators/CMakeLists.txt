@@ -12,6 +12,7 @@
 
 add_source_files(nes-logical-operators
         LogicalOperatorRegistry.cpp
+        ModelRegistry.cpp
         LogicalOperator.cpp
         SelectionLogicalOperator.cpp
         ProjectionLogicalOperator.cpp
@@ -19,7 +20,6 @@ add_source_files(nes-logical-operators
         IngestionTimeWatermarkAssignerLogicalOperator.cpp
         EventTimeWatermarkAssignerLogicalOperator.cpp
         InferModelLogicalOperator.cpp
-        InferModelNameLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)
@@ -33,4 +33,6 @@ add_unreflection_entry(LogicalOperator Union)
 add_unreflection_entry(LogicalOperator IngestionTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator EventTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator InferModel)
-add_unreflection_entry(LogicalOperator InferModelName)
+
+add_registry_entry(LogicalOperator InferModel KEY MODEL_INFERENCE HEADER Operators/InferModelLogicalOperator.hpp)
+add_registry_entry(Model OpenVinoModelPlugin KEY OPENVINO_MODEL HEADER ModelRegistry.hpp)

@@ -4,7 +4,7 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(ts UINT64 NOT NULL, id INT32 NOT NULL, value INT32);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 0,0,0
 20,1,3
@@ -21,7 +21,7 @@ ATTACH INLINE
 530,0,
 
 CREATE LOGICAL SOURCE stream2(ts UINT64 NOT NULL, id INT32, value INT32);
-CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream2 TYPE FileSource;
 ATTACH INLINE
 0,,
 10,,1
@@ -36,13 +36,13 @@ ATTACH INLINE
 1140,3,
 
 CREATE LOGICAL SOURCE stream3(id UINT64 NOT NULL, value UINT64, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream3 TYPE FileSource;
 ATTACH INLINE
 1,,2004
 1,,3000
 
 CREATE LOGICAL SOURCE stream4(ts UINT64 NOT NULL, value INT32);
-CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream4 TYPE FileSource;
 ATTACH INLINE
 0,
 250,
@@ -53,9 +53,9 @@ ATTACH INLINE
 1500,1
 1750,
 
-CREATE SINK sink0(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT64) TYPE File;
-CREATE SINK sink1(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT64, valueMax INT32, valueMin INT32, valueAvg FLOAT64, valueMedian FLOAT64) TYPE File;
-CREATE SINK sink2(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, valueSum INT64, valueMin INT32, valueMax INT32, valueAvg FLOAT64, valueCount UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sink0(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT64) TYPE FileSink;
+CREATE SINK sink1(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT64, valueMax INT32, valueMin INT32, valueAvg FLOAT64, valueMedian FLOAT64) TYPE FileSink;
+CREATE SINK sink2(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, valueSum INT64, valueMin INT32, valueMax INT32, valueAvg FLOAT64, valueCount UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE FileSink;
 
 
 # Checking if a sum over a tumbling window works with null values in the value field
@@ -128,7 +128,7 @@ INTO sink2;
 SELECT start, end, MAX(value), MIN(value), AVG(value), MEDIAN(value)
 FROM stream3
 WINDOW TUMBLING(timestamp, size 1 sec)
-INTO File();
+INTO FileSink();
 ----
 2000,3000,NULL,NULL,NULL,NULL
 3000,4000,NULL,NULL,NULL,NULL
@@ -143,7 +143,7 @@ SELECT start, end,
        COUNT(value) AS valueCount,
        COUNT(*) AS countStarCount
 FROM stream4 WINDOW TUMBLING(ts, size 1 sec)
-INTO File();
+INTO FileSink();
 ----
 0,1000,NULL,NULL,NULL,NULL,NULL,0,4
 1000,2000,48,1,24,16,23,3,4

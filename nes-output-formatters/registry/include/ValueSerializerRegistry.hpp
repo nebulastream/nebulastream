@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <OutputFormatters/ValueSerializer.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
@@ -36,6 +37,10 @@ class ValueSerializerRegistry : public RuntimeRegistry<ValueSerializerRegistry, 
 {
 public:
     static ValueSerializerRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<ValueSerializerRegistry>("ValueSerializer")};
+    }
 };
 
 }

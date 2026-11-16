@@ -4,7 +4,7 @@
 # groups: [regression, Function, FunctionAbs, Aggregation, WindowOperators]
 
 CREATE LOGICAL SOURCE aggregateStream(i8 INT8 NOT NULL, nullableI8 INT8, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR aggregateStream TYPE File;
+CREATE PHYSICAL SOURCE FOR aggregateStream TYPE FileSource;
 ATTACH INLINE
 -128,-128,0
 -7,-7,1
@@ -19,7 +19,7 @@ ATTACH INLINE
 SELECT start, MIN(ABS(i8)) AS minimum, MAX(ABS(i8)) AS maximum
 FROM aggregateStream
 WINDOW TUMBLING(timestamp, size 10 ms)
-INTO File();
+INTO FileSink();
 ----
 0,0,128
 10,7,7
@@ -29,7 +29,7 @@ INTO File();
 SELECT start, MIN(ABS(nullableI8)) AS minimum, MAX(ABS(nullableI8)) AS maximum
 FROM aggregateStream
 WINDOW TUMBLING(timestamp, size 10 ms)
-INTO File();
+INTO FileSink();
 ----
 0,0,128
 10,NULL,NULL

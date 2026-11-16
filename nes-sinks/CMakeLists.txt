@@ -26,19 +26,20 @@ target_include_directories(nes-sinks PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 # Runtime registries: a sink plugin registers itself with add_registry_entry(<Registry> <name>).
-# By convention the plugin provides a class ${name}Sink with a static getConfigSchema(), and a
-# config struct ${name}SinkConfig with a static fromConfig(const InstantiatedConfig&).
+# By convention the plugin provides a class ${name} (e.g. FileSink) with a static getConfigSchema(), and a
+# config struct ${name}Config (e.g. FileSinkConfig) with a static fromConfig(const InstantiatedConfig&).
 create_runtime_registry(Sink nes-sinks
-        ENTRY_TEMPLATE "makeSinkFactory<\${PLUGIN_NAME}Sink, \${PLUGIN_NAME}SinkConfig>()"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
+        ENTRY_TEMPLATE "makeSinkFactory<\${PLUGIN_NAME}, \${PLUGIN_NAME}Config>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp")
 
 create_runtime_registry(SinkConfigSchema nes-sinks
-        ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}Sink::getConfigSchema(); }"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
+        ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}::getConfigSchema(); }"
+        FUNCTOR_TEMPLATE "makeSinkConfigSchemaFunctor(\"\${KEY}\", [] { return \${PLUGIN_NAME}::getConfigSchema(); })"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp")
 
 create_runtime_registry(SinkConfig nes-sinks
-        ENTRY_TEMPLATE "makeSinkConfigEntry<\${PLUGIN_NAME}SinkConfig>()"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
+        ENTRY_TEMPLATE "makeSinkConfigEntry<\${PLUGIN_NAME}Config>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp")
 
 add_subdirectory(src)
 get_source(nes-sinks NES_SINKS_SOURCE_FILES)

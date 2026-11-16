@@ -3,22 +3,22 @@
 # groups: [Function, Text, Projection]
 
 CREATE LOGICAL SOURCE nameStream(firstName VARSIZED NOT NULL, lastName VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR nameStream TYPE File;
+CREATE PHYSICAL SOURCE FOR nameStream TYPE FileSource;
 ATTACH INLINE
 Edgar,Codd
 Jim,Grey
 Michael,Stonebraker
 
 CREATE LOGICAL SOURCE nameStreamWithMiddle(firstName VARSIZED NOT NULL, middleName VARSIZED NOT NULL, lastName VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR nameStreamWithMiddle TYPE File;
+CREATE PHYSICAL SOURCE FOR nameStreamWithMiddle TYPE FileSource;
 ATTACH INLINE
 Edgar,Frank,Codd
 James,Nicholas,Grey
 Michael,Ralph,Stonebraker
 Rudolf,,Bayer
 
-CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED NOT NULL) TYPE File;
-CREATE SINK firstNameMiddleNameLastNameSink(firstNameMiddleNameLastName VARSIZED NOT NULL) TYPE File;
+CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED NOT NULL) TYPE FileSink;
+CREATE SINK firstNameMiddleNameLastNameSink(firstNameMiddleNameLastName VARSIZED NOT NULL) TYPE FileSink;
 
 SELECT CONCAT(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----

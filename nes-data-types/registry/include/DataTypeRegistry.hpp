@@ -15,12 +15,12 @@
 #pragma once
 
 #include <functional>
-#include <string>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Types/NESType.hpp>
 #include <Util/RuntimeRegistry.hpp>
-#include "Identifiers/QualifiedIdentifier.hpp"
-#include "Types/NESType.hpp"
 
 namespace NES
 {
@@ -32,19 +32,36 @@ struct DataTypeRegistryArguments
     DataType::NULLABLE nullable{DataType::NULLABLE::IS_NULLABLE};
 };
 
-struct DataTypeNESTypeClassTag
+struct NumericDataTypeClassTag
 {
+    bool operator==(const NumericDataTypeClassTag&) const = default;
+};
+
+struct IntegerDataTypeClassTag
+{
+    bool operator==(const IntegerDataTypeClassTag&) const = default;
+};
+
+struct FloatDataTypeClassTag
+{
+    bool operator==(const FloatDataTypeClassTag&) const = default;
 };
 
 using DataTypeFn = std::function<DataTypeRegistryReturnType(DataTypeRegistryArguments)>;
 
-/// Entries are keyed by the DataType::Type enumerator name; the entry expression constructs the
-/// DataType directly from the enumerator matching the key.
+/// Entries are keyed by the DataType::Type enumerator name; exposes `ScalarDatatype`,
+/// `NumericDatatype`, `IntegerDatatype`, and `FloatDatatype` type classes.
 class DataTypeRegistry : public RuntimeRegistry<DataTypeRegistry, QualifiedIdentifier, DataTypeFn, /*CaseSensitive*/ false>
 {
 public:
+    static constexpr bool EXPOSE_TO_SQL_SCOPE = true;
+
     static DataTypeRegistry& instance();
-    static NamedNESParametrizedTypeClass getParametrizedTypeClass();
+    static NESTypeClass scalarDataTypeClass();
+    static NESTypeClass numericDataTypeClass();
+    static NESTypeClass integerDataTypeClass();
+    static NESTypeClass floatDataTypeClass();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses();
 };
 
 }

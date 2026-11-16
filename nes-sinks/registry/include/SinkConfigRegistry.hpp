@@ -20,6 +20,7 @@
 #include <string>
 
 #include <Configurations/InstantiatedConfigValue.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/Any.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/RuntimeRegistry.hpp>
@@ -47,6 +48,10 @@ class SinkConfigRegistry : public RuntimeRegistry<SinkConfigRegistry, std::strin
 {
 public:
     static SinkConfigRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<SinkConfigRegistry>("SinkConfig")};
+    }
 };
 
 /// ConfigStruct must provide `static ConfigStruct fromConfig(const InstantiatedConfig&)` and be

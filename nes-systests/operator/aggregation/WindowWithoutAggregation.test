@@ -3,7 +3,7 @@
 # groups: [Aggregation, Window]
 
 CREATE LOGICAL SOURCE integers(i UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR integers TYPE File;
+CREATE PHYSICAL SOURCE FOR integers TYPE FileSource;
 ATTACH INLINE
 1,100
 2,125
@@ -13,7 +13,7 @@ ATTACH INLINE
 2,325
 
 CREATE LOGICAL SOURCE strings(name VARSIZED NOT NULL, category VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR strings TYPE File;
+CREATE PHYSICAL SOURCE FOR strings TYPE FileSource;
 ATTACH INLINE
 alice,catA,100
 bob,catB,125
@@ -22,8 +22,8 @@ dave,catB,225
 eve,catA,300
 frank,catB,325
 
-CREATE SINK sinkStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkStrStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK sinkStrStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE FileSink;
 
 # Window-only with integer source: should produce start/end columns.
 SELECT start, end FROM integers WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStartEnd;

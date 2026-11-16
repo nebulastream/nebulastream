@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
@@ -62,6 +63,10 @@ class SinkRegistry : public RuntimeRegistry<SinkRegistry, std::string, SinkFacto
 {
 public:
     static SinkRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<SinkRegistry>("PhysicalSink")};
+    }
 };
 
 }

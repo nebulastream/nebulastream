@@ -35,13 +35,14 @@ sinks:
     schema:
       - name: number
         type: UINT64
-    type: MQTT
+    type: MQTTSink
     config:
-      output_format: CSV
       server_uri: mqtt-broker
       topic: mqtt-sink-test
       client_id: nes-test-client
       qos: 2
+    parser_config:
+      type: CSV
 
 logical:
   - name: GENERATOR
@@ -55,7 +56,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: GENERATOR
+    type: GeneratorSource
     source_config:
       stop_generator_when_sequence_finishes: ALL
       generator_schema: |

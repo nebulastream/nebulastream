@@ -30,7 +30,6 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -44,15 +43,21 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <QueryId.hpp>
 
 namespace NES
@@ -73,15 +78,15 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 }
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
-    Identifier anonymousSourceType,
-    Schema<UnqualifiedUnboundField, Ordered> schema,
-    std::unordered_map<Identifier, std::string> sourceConfig,
-    std::unordered_map<Identifier, std::string> parserConfig)
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration pluginSourceConfig,
+    InputFormatterDescriptor pluginInputFormatterConfig,
+    Schema<UnqualifiedUnboundField, Ordered> schema)
 {
     return LogicalPlan(
         INVALID_QUERY_ID,
         {AnonymousSourceLogicalOperator::create(
-            std::move(anonymousSourceType), std::move(schema), std::move(sourceConfig), std::move(parserConfig))});
+            std::move(schema), std::move(generalSourceConfig), std::move(pluginSourceConfig), std::move(pluginInputFormatterConfig))});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
@@ -158,27 +163,27 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     return leftLogicalPlan;
 }
 
-LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const LogicalPlan& childPlan)
-{
-    NES_TRACE("LogicalPlanBuilder: add infer model operator to query plan for model {}", modelName);
-    return promoteOperatorToRoot(childPlan, TypedLogicalOperator<InferModelNameLogicalOperator>{modelName.asCanonicalString()});
-}
-
 LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& queryPlan)
 {
     return promoteOperatorToRoot(queryPlan, SinkLogicalOperator::create(std::move(sinkName)));
 }
 
 LogicalPlan LogicalPlanBuilder::addAnonymousSink(
-    Identifier type,
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-    std::unordered_map<Identifier, std::string> sinkConfig,
-    std::unordered_map<Identifier, std::string> formatConfig,
+    AnonymousSinkSchema sinkSchema,
+    GeneralSinkConfig generalSinkConfig,
+    PluginSinkConfiguration pluginSinkConfig,
+    OutputFormatterDescriptor outputFormatterDescriptor,
     const LogicalPlan& queryPlan)
 {
+    const auto sinkType = pluginSinkConfig.getType();
     return promoteOperatorToRoot(
         queryPlan,
-        AnonymousSinkLogicalOperator::create(std::move(type), std::move(schema), std::move(sinkConfig), std::move(formatConfig)));
+        AnonymousSinkLogicalOperator::create(
+            sinkType,
+            std::move(sinkSchema),
+            std::move(generalSinkConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor)));
 }
 
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)

@@ -77,7 +77,7 @@ public:
         auto descriptor = SourceDescriptor::create(
                               PhysicalSourceId{1},
                               LogicalSource{Identifier::parse("1"), schema},
-                              Identifier::parse("File"),
+                              Identifier::parse("FileSource"),
                               Host{"localhost"},
                               {{Identifier::parse("file_path"), "/dev/null"}},
                               {{Identifier::parse("type"), "CSV"}},
@@ -93,7 +93,7 @@ public:
     {
         auto schema = createSchema();
         auto descriptor = SinkDescriptor::createAnonymous(
-            INITIAL_SINK_ID, Identifier::parse("Print"), schema, Host{"localhost"}, {{Identifier::parse("output_format"), "CSV"}}, {});
+            INITIAL_SINK_ID, Identifier::parse("PrintSink"), schema, Host{"localhost"}, {{Identifier::parse("output_format"), "CSV"}}, {});
         EXPECT_TRUE(descriptor.has_value());
         auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
         return std::make_shared<PhysicalOperatorWrapper>(

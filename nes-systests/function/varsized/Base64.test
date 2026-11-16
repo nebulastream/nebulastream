@@ -4,7 +4,7 @@
 
 # --- Source with plain ASCII data (for encode and roundtrip tests) ---
 CREATE LOGICAL SOURCE asciiStream(data VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR asciiStream TYPE File;
+CREATE PHYSICAL SOURCE FOR asciiStream TYPE FileSource;
 ATTACH INLINE
 Hello World
 NebulaStream
@@ -12,16 +12,16 @@ abc123
 
 # --- Source with base64-encoded ASCII strings (for decode and roundtrip tests) ---
 CREATE LOGICAL SOURCE base64Stream(data VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR base64Stream TYPE File;
+CREATE PHYSICAL SOURCE FOR base64Stream TYPE FileSource;
 ATTACH INLINE
 SGVsbG8gV29ybGQ=
 TmVidWxhU3RyZWFt
 YWJjMTIz
 
 # --- Sinks ---
-CREATE SINK encodeSink(encoded VARSIZED NOT NULL) TYPE File;
-CREATE SINK decodeSink(decoded VARSIZED NOT NULL) TYPE File;
-CREATE SINK roundtripSink(roundtrip VARSIZED NOT NULL) TYPE File;
+CREATE SINK encodeSink(encoded VARSIZED NOT NULL) TYPE FileSink;
+CREATE SINK decodeSink(decoded VARSIZED NOT NULL) TYPE FileSink;
+CREATE SINK roundtripSink(roundtrip VARSIZED NOT NULL) TYPE FileSink;
 
 # Test TO_BASE64: encode known ASCII strings and validate base64 output
 SELECT TO_BASE64(data) AS encoded FROM asciiStream INTO encodeSink;

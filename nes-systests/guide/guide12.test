@@ -14,11 +14,11 @@ CREATE LOGICAL SOURCE payments(
     ts_payments       INT64 NOT NULL
 );
 
-CREATE PHYSICAL SOURCE FOR orders TYPE File;
+CREATE PHYSICAL SOURCE FOR orders TYPE FileSource;
 ATTACH INLINE
 1,42,10000
 
-CREATE PHYSICAL SOURCE FOR payments TYPE File;
+CREATE PHYSICAL SOURCE FOR payments TYPE FileSource;
 ATTACH INLINE
 1,99.99,12000
 
@@ -26,7 +26,7 @@ CREATE SINK sink(
     order_id    INT64 NOT NULL,
     customer_id INT64 NOT NULL,
     amount    FLOAT64 NOT NULL
-) TYPE File;
+) TYPE FileSink;
 
 SELECT
     order_id,
@@ -35,7 +35,7 @@ SELECT
 FROM (SELECT * FROM orders)
 INNER JOIN (SELECT * FROM payments)
 ON order_id = payments_order_id
-WINDOW SLIDING(ts_orders, ts_payments, SIZE 30 SEC, ADVANCE BY 5 SEC)
+BINARY_WINDOW SLIDING(ts_orders, ts_payments, SIZE 30 SEC, ADVANCE BY 5 SEC)
 INTO sink;
 ----
 1,42,99.99

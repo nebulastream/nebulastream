@@ -6,7 +6,7 @@ CREATE LOGICAL SOURCE health_sensor(
     oxygen_level FLOAT64 NOT NULL,
     ts INT64 NOT NULL
 );
-CREATE PHYSICAL SOURCE FOR health_sensor TYPE File;
+CREATE PHYSICAL SOURCE FOR health_sensor TYPE FileSource;
 ATTACH INLINE
 95.0,10
 96.0,20
@@ -16,7 +16,7 @@ ATTACH INLINE
 96.5,120
 99.0,130
 
-CREATE SINK sink(oxygen_level_median FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sink(oxygen_level_median FLOAT64 NOT NULL) TYPE FileSink;
 
 SELECT MEDIAN(oxygen_level) AS oxygen_level_median
 FROM health_sensor

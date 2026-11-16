@@ -11,4 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-common
-        NESType.cpp)
+        NESType.cpp
+        NESTypeCatalog.cpp)

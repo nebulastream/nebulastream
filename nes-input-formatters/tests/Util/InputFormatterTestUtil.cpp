@@ -142,7 +142,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     const auto sourceDescriptor = SourceDescriptor::create(
                                       PhysicalSourceId{1},
                                       logicalSource,
-                                      Identifier::parse("File"),
+                                      Identifier::parse("FileSource"),
                                       Host("localhost"),
                                       fileSourceConfiguration,
                                       {{Identifier::parse("type"), "CSV"}},

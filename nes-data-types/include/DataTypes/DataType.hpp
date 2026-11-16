@@ -29,6 +29,15 @@
 namespace NES
 {
 
+/// Open trait attached to all scalar `NESType`s (both built-in `DataType`s and custom scalar type constructors).
+struct ScalarTypeTrait
+{
+    std::function<std::optional<struct DataType>(const ExplicitAny&)> tryGetDataType;
+};
+
+/// Canonical scalar literal payload carried by scalar constant `NESValue`s.
+using ScalarLiteralValue = std::variant<std::string, int64_t, uint64_t, double, bool, std::monostate>;
+
 struct DataType final
 {
     enum class Type : uint8_t
@@ -136,6 +145,10 @@ struct DataType final
     Type type;
     bool nullable;
 
+    [[nodiscard]] NESType toNESType() const;
+    static NESValue makeBooleanValue(bool value);
+    static NESValue makeIntegerValue(int64_t value);
+    static NESFunctor makeRegistryFunctor(std::function<DataType(struct DataTypeRegistryArguments)> factory);
     static NESFunctor functorOf(DataType::Type type);
 };
 

@@ -57,7 +57,7 @@ public:
 private:
     [[nodiscard]] std::string renderSetClauseFor(
         SqlParse& parse,
-        AntlrSQLParser::NamedConfigExpressionSeqContext* declared,
+        AntlrSQLParser::NamedConfigLiteralSeqContext* declared,
         const std::optional<std::filesystem::path>& dataFile) const;
 
     const RewriteContext& context; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -65,7 +65,7 @@ private:
     size_t ordinal = 0;
 };
 
-/// Makes the relative data file path of a source written into a query absolute, under the test data directory.
+/// Makes the relative data file path of an anonymous source or inline model written into a query absolute, under the test data directory.
 /// The worker resolves a relative path from its own working directory, which may not match where the test data is.
 void makeAnonymousSourcePathsAbsolute(
     const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir);

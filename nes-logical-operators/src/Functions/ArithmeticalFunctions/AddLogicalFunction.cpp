@@ -53,6 +53,10 @@ LogicalFunction AddLogicalFunction::withInferredDataType(const Schema<Field, Uno
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
 
+    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply addition to non-numeric input function left: {}, right: {}", copy.left, copy.right);
+    }
     auto newType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newType.has_value())
     {

@@ -74,7 +74,7 @@ OptimizerTestUtils::createSourceDescriptor(const Identifier& identifier, const S
     auto sourceDescriptor = SourceDescriptor::create(
         INITIAL_PHYSICAL_SOURCE_ID,
         logicalSource,
-        Identifier::parse("File"),
+        Identifier::parse("FileSource"),
         Host{"localhost"},
         sourceConfig,
         {{Identifier::parse("type"), "CSV"}},
@@ -94,8 +94,8 @@ SinkDescriptor OptimizerTestUtils::createSinkDescriptor(const Identifier& sinkNa
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
 
-    auto sinkDescriptor
-        = SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, Identifier::parse("File"), schema, Host{"localhost"}, sinkConfig, {});
+    auto sinkDescriptor = SinkDescriptor::createNamed(
+        INVALID_SINK_ID, sinkName, Identifier::parse("FileSink"), schema, Host{"localhost"}, sinkConfig, {});
     if (!sinkDescriptor.has_value())
     {
         throw TestException();

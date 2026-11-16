@@ -3,7 +3,7 @@
 # groups: [Selection]
 
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1,1,1000
 12,1,1001
@@ -34,7 +34,7 @@ ATTACH INLINE
 1,20,20000
 1,21,21000
 
-CREATE SINK sinkWindow(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkWindow(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE FileSink;
 
 # Filter equal
 SELECT * FROM stream WHERE value == 1 INTO sinkWindow;

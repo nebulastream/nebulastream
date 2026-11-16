@@ -18,11 +18,12 @@ sinks:
     schema:
       - name: number
         type: UINT64
-    type: TCP
+    type: TCPSink
     config:
-      output_format: CSV
       socket_host: tcp-client
       socket_port: 9000
+    parser_config:
+      type: CSV
 
 logical:
   - name: GENERATOR
@@ -36,7 +37,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: GENERATOR
+    type: GeneratorSource
     source_config:
       stop_generator_when_sequence_finishes: ALL
       generator_schema: |

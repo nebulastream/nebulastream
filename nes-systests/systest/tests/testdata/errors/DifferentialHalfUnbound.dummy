@@ -2,11 +2,11 @@
 # description: the second half of the block reads a source that was never declared, so the block fails to bind and the query after it still passes
 
 CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR s TYPE File;
+CREATE PHYSICAL SOURCE FOR s TYPE FileSource;
 ATTACH INLINE
 1
 
-CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE FileSink;
 
 SELECT id FROM s INTO sinkA;
 ====

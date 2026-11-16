@@ -73,7 +73,7 @@ static SourceDescriptor createTestSourceDescriptor(const LogicalSource& logicalS
     return SourceDescriptor::create(
                PhysicalSourceId{1},
                logicalSource,
-               Identifier::parse("File"),
+               Identifier::parse("FileSource"),
                Host{"localhost"},
                sourceConfig,
                {{Identifier::parse("type"), "CSV"}},
@@ -91,7 +91,7 @@ static SinkDescriptor createTestSinkDescriptor()
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
 
     return SinkDescriptor::createNamed(
-               INVALID_SINK_ID, Identifier::parse("testSink"), Identifier::parse("file"), schema, Host{"localhost"}, sinkConfig, {})
+               INVALID_SINK_ID, Identifier::parse("testSink"), Identifier::parse("FileSink"), schema, Host{"localhost"}, sinkConfig, {})
         .value();
 }
 
@@ -106,7 +106,13 @@ static SinkDescriptor createTestSinkDescriptorWithNewField()
         UnqualifiedUnboundField{Identifier::parse("new_field"), DataType::Type::INT64}};
 
     return SinkDescriptor::createNamed(
-               INVALID_SINK_ID, Identifier::parse("testSinkWithNew"), Identifier::parse("file"), schema, Host{"localhost"}, sinkConfig, {})
+               INVALID_SINK_ID,
+               Identifier::parse("testSinkWithNew"),
+               Identifier::parse("FileSink"),
+               schema,
+               Host{"localhost"},
+               sinkConfig,
+               {})
         .value();
 }
 
@@ -347,7 +353,7 @@ TEST_F(DecideFieldMappingsTest, RenameProjectionShouldBeReportedAsAccessed)
     const auto renamedSink = SinkDescriptor::createNamed(
                                  INVALID_SINK_ID,
                                  Identifier::parse("renamedSink"),
-                                 Identifier::parse("file"),
+                                 Identifier::parse("FileSink"),
                                  renamedSinkSchema,
                                  Host{"localhost"},
                                  sinkConfig,

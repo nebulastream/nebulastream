@@ -14,14 +14,23 @@
 
 #pragma once
 
+#include <expected>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <variant>
 #include <vector>
+
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Types/NESType.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -37,11 +46,39 @@ struct AggregationLogicalFunctionRegistryArguments
 using AggregationLogicalFunctionFn
     = std::function<AggregationLogicalFunctionRegistryReturnType(AggregationLogicalFunctionRegistryArguments)>;
 
-/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
-/// Entries are static create members on the aggregation function classes (constructor
-/// signatures differ between aggregations). Enables name-based construction of aggregation
-/// functions, e.g. for parser-side extensibility.
-/// Case-insensitive to mirror the retired BaseRegistry.
+/// Marker value representing `(*)` in SQL function calls such as `COUNT(*)`.
+struct AsteriskTag
+{
+    bool operator==(const AsteriskTag&) const = default;
+};
+
+[[nodiscard]] NESValue makeAsteriskValue();
+
+struct AggregationLogicalFunctionTypeTrait
+{
+    Identifier aggregationName;
+    std::optional<NESType> resultScalarType;
+};
+
+/// Value representation produced when an aggregation functor (`SUM`, `COUNT`, `AVG`, etc.) is applied
+/// to an argument in SQL. Preserves compound child expressions so the query binder can desugar them
+/// into pre-aggregation projections uniformly for both built-in and plugin aggregations.
+struct BoundAggregationCall
+{
+    Identifier aggregationName;
+    AggregationLogicalFunctionFn factory;
+    std::variant<LogicalFunction, AsteriskTag> argument;
+    bool includeNullValues = false;
+
+    [[nodiscard]] std::expected<WindowAggregationLogicalFunction, Exception>
+    instantiateOnField(const AggregationFieldAccess& fieldAccess) const;
+
+    bool operator==(const BoundAggregationCall& other) const
+    {
+        return aggregationName == other.aggregationName && argument == other.argument && includeNullValues == other.includeNullValues;
+    }
+};
+
 class AggregationLogicalFunctionRegistry : public RuntimeRegistry<
                                                AggregationLogicalFunctionRegistry,
                                                std::string,
@@ -49,9 +86,13 @@ class AggregationLogicalFunctionRegistry : public RuntimeRegistry<
                                                /*CaseSensitive*/ false>
 {
 public:
-    /// Defined out-of-line (AggregationLogicalFunctionRegistry.cpp) so exactly one instance
-    /// exists process-wide even with plugins loaded as shared objects.
+    static constexpr bool EXPOSE_TO_SQL_SCOPE = true;
+
     static AggregationLogicalFunctionRegistry& instance();
+    static NESTypeClass aggregationLogicalFunctionTypeClass();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses();
 };
+
+NESFunctor makeAggregationLogicalFunctionFunctor(std::string_view key, AggregationLogicalFunctionFn factory);
 
 }

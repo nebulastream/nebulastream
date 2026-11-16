@@ -5,7 +5,7 @@
 # Use an id column so we can include rows with an empty VARSIZED value
 # (a bare empty line would terminate the ATTACH INLINE block).
 CREATE LOGICAL SOURCE textStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR textStream TYPE File;
+CREATE PHYSICAL SOURCE FOR textStream TYPE FileSource;
 ATTACH INLINE
 1,
 2,Hello
@@ -18,7 +18,7 @@ ATTACH INLINE
 9,Hi🌍
 
 CREATE LOGICAL SOURCE systestSafeTextStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR systestSafeTextStream TYPE File;
+CREATE PHYSICAL SOURCE FOR systestSafeTextStream TYPE FileSource;
 ATTACH INLINE
 2,Hello
 3,NebulaStream
@@ -29,8 +29,8 @@ ATTACH INLINE
 8,🎉🚀
 9,Hi🌍
 
-CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE File;
-CREATE SINK passThroughSink(id UINT64 NOT NULL, data VARSIZED NOT NULL, len UINT64 NOT NULL) TYPE File;
+CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK passThroughSink(id UINT64 NOT NULL, data VARSIZED NOT NULL, len UINT64 NOT NULL) TYPE FileSink;
 
 # Empty string, simple words, words with spaces, special characters, and UTF-8 multibyte chars
 # (OCTET_LENGTH returns byte count — "äöü" is 2 bytes per char in UTF-8 → 6)

@@ -4,23 +4,23 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH FILE small/stream.csv
 
 CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream2 TYPE FileSource;
 ATTACH FILE small/stream2.csv
 
 CREATE LOGICAL SOURCE stream4(id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream4 TYPE FileSource;
 ATTACH FILE small/stream4.csv
 
-CREATE SINK sinkLt(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkGt(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkLe(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkGe(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkLtSliding(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkLtTumbling2s(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkLt(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK sinkGt(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK sinkLe(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK sinkGe(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK sinkLtSliding(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK sinkLtTumbling2s(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL) TYPE FileSink;
 
 # Query 1 - (id < id2) then (id < id4), tumbling 1 sec
 # Tests: stream.id must be strictly smaller than both joined stream ids — the most selective of the ordered operators
@@ -29,10 +29,10 @@ SELECT * FROM (
     SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
     FROM (
       SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+      INNER JOIN (SELECT * FROM stream2) ON id < id2 BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
     )
   )
-  INNER JOIN (SELECT * FROM stream4) ON id < id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4) ON id < id4 BINARY_WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
 )
 INTO sinkLt;
 ----
@@ -60,10 +60,10 @@ SELECT * FROM (
     SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
     FROM (
       SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id > id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+      INNER JOIN (SELECT * FROM stream2) ON id > id2 BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
     )
   )
-  INNER JOIN (SELECT * FROM stream4) ON id > id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4) ON id > id4 BINARY_WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
 )
 INTO sinkGt;
 ----
@@ -77,10 +77,10 @@ SELECT * FROM (
     SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
     FROM (
       SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id <= id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+      INNER JOIN (SELECT * FROM stream2) ON id <= id2 BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
     )
   )
-  INNER JOIN (SELECT * FROM stream4) ON id <= id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4) ON id <= id4 BINARY_WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
 )
 INTO sinkLe;
 ----
@@ -128,10 +128,10 @@ SELECT * FROM (
     SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
     FROM (
       SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id >= id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+      INNER JOIN (SELECT * FROM stream2) ON id >= id2 BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
     )
   )
-  INNER JOIN (SELECT * FROM stream4) ON id >= id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4) ON id >= id4 BINARY_WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
 )
 INTO sinkGe;
 ----
@@ -158,10 +158,10 @@ SELECT * FROM (
     SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
     FROM (
       SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id < id2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms)
+      INNER JOIN (SELECT * FROM stream2) ON id < id2 BINARY_WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms)
     )
   )
-  INNER JOIN (SELECT * FROM stream4) ON id < id4 WINDOW SLIDING (timestamp1, timestamp4, size 1 sec, advance by 500 ms)
+  INNER JOIN (SELECT * FROM stream4) ON id < id4 BINARY_WINDOW SLIDING (timestamp1, timestamp4, size 1 sec, advance by 500 ms)
 )
 INTO sinkLtSliding;
 ----
@@ -237,10 +237,10 @@ SELECT * FROM (
     SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
     FROM (
       SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 2 sec)
+      INNER JOIN (SELECT * FROM stream2) ON id < id2 BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 2 sec)
     )
   )
-  INNER JOIN (SELECT * FROM stream4) ON id < id4 WINDOW TUMBLING (timestamp1, timestamp4, size 2 sec)
+  INNER JOIN (SELECT * FROM stream4) ON id < id4 BINARY_WINDOW TUMBLING (timestamp1, timestamp4, size 2 sec)
 )
 INTO sinkLtTumbling2s;
 ----

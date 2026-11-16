@@ -4,16 +4,16 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED NOT NULL, page_id VARSIZED NOT NULL, campaign_id VARSIZED NOT NULL, ad_id VARSIZED NOT NULL, ad_type VARSIZED NOT NULL, event_type VARSIZED NOT NULL, event_time UINT64 NOT NULL, ip_address VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
+CREATE PHYSICAL SOURCE FOR ysb1k TYPE FileSource;
 ATTACH FILE large/ysb/ysb1k_with_varsized_3GB.csv
 
 CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED NOT NULL, page_id VARSIZED NOT NULL, campaign_id VARSIZED NOT NULL, ad_id VARSIZED NOT NULL, ad_type VARSIZED NOT NULL, event_type VARSIZED NOT NULL, event_time UINT64 NOT NULL, ip_address VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
+CREATE PHYSICAL SOURCE FOR ysb10k TYPE FileSource;
 ATTACH FILE large/ysb/ysb10k_with_varsized_3GB.csv
 
-CREATE SINK printSink(campaign UINT64 NOT NULL)  TYPE File;
-CREATE SINK ysb1kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED NOT NULL, count_user_id UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK ysb10kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED NOT NULL, count_user_id UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK printSink(campaign UINT64 NOT NULL)  TYPE FileSink;
+CREATE SINK ysb1kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED NOT NULL, count_user_id UINT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK ysb10kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED NOT NULL, count_user_id UINT64 NOT NULL)  TYPE ChecksumSink;
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
 # YSB Query

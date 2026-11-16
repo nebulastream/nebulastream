@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #pragma once
 
 #include <cstddef>
@@ -28,20 +27,27 @@
 #include <unordered_set>
 #include <variant>
 #include <vector>
+
 #include <AntlrSQLParser.h>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
+#include <ModelCatalog.hpp>
 
 namespace NES
 {
@@ -55,8 +61,6 @@ enum class StatementOutputFormat : uint8_t
     TEXT
 };
 
-/// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
-/// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
 struct CreateLogicalSourceStatement
 {
     Identifier name;
@@ -65,34 +69,28 @@ struct CreateLogicalSourceStatement
 
 struct CreatePhysicalSourceStatement
 {
-    LogicalSourceName attachedTo;
-    Identifier sourceType;
-    std::optional<Host> host;
-    std::unordered_map<Identifier, std::string> sourceConfig;
-    std::unordered_map<Identifier, std::string> parserConfig;
+    Identifier logicalSourceName;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration pluginSourceConfig;
+    InputFormatterDescriptor pluginInputFormatterConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
 struct CreateSinkStatement
 {
     Identifier name;
-    Identifier sinkType;
     Schema<UnqualifiedUnboundField, Ordered> schema;
-    std::optional<Host> host;
-    std::unordered_map<Identifier, std::string> sinkConfig;
-    std::unordered_map<Identifier, std::string> formatConfig;
+    GeneralSinkConfig generalSinkConfig;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 };
 
-/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
-/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
 struct ShowLogicalSourcesStatement
 {
     std::optional<Identifier> name;
     std::optional<StatementOutputFormat> format;
 };
 
-/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
-/// referencing a dms object
 struct ShowPhysicalSourcesStatement
 {
     std::optional<LogicalSourceName> logicalSource;
@@ -240,30 +238,52 @@ inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& sta
     return std::visit(visitor, statement);
 }
 
+struct DefaultHost
+{
+    std::string hostName;
+};
+
+struct RequireHostConfig
+{
+};
+
+using HostPolicy = std::variant<RequireHostConfig, DefaultHost>;
+
 class StatementBinder
 {
-    /// PIMPL pattern to hide all the internally used binder member functions
+    /// PIMPL pattern to hide all internally used binder member functions and scope structures.
     class Impl;
     std::unique_ptr<Impl> impl;
 
 public:
     explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryWithSinkContext*)>& queryPlanBinder);
+        std::shared_ptr<const SourceCatalog> sourceCatalog = nullptr,
+        std::shared_ptr<const SinkCatalog> sinkCatalog = nullptr,
+        std::shared_ptr<const ModelCatalog> modelCatalog = nullptr,
+        Schema<ConfigFieldDefault, Ordered> defaultConfigValues = {},
+        Schema<ConfigFieldTransformation, Unordered> configTransformations = {});
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;
     StatementBinder(StatementBinder&& other) noexcept;
     StatementBinder& operator=(StatementBinder&& other) noexcept;
-
-    /// If the destructor was implicitly defaulted, it would call the destructor of the unique ptr, which would require the definition of Impl.
-    /// Deferring the destructor default to the implementation, where also the definition of Impl is, solves this problem.
     ~StatementBinder();
+
     [[nodiscard]] std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const;
     [[nodiscard]] std::expected<std::vector<std::expected<Statement, Exception>>, Exception>
     parseAndBind(std::string_view statementString) const;
     [[nodiscard]] std::expected<Statement, Exception> parseAndBindSingle(std::string_view statementStrings) const;
+
+    /// Streaming multi-statement parse & bind: invokes `onStatement` sequentially so DDL statements applied by the
+    /// caller update the catalogs before subsequent queries in the same script are bound.
+    [[nodiscard]] std::expected<void, Exception> parseAndBindEach(
+        std::string_view statementString,
+        const std::function<void(std::expected<Statement, Exception>)>& onStatement) const;
+
+    [[nodiscard]] std::expected<LogicalPlan, Exception> parseAndBindQuery(std::string_view queryString) const;
+    [[nodiscard]] static LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
 };
+
 }
 
 namespace fmt
@@ -293,7 +313,6 @@ struct formatter<std::unordered_map<std::string, std::string>>
         return out;
     }
 };
-
 }
 
 FMT_OSTREAM(NES::CreateLogicalSourceStatement);

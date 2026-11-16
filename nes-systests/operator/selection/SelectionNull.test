@@ -3,7 +3,7 @@
 # groups: [Selection, NullHandling]
 
 CREATE LOGICAL SOURCE stream(ts UINT64 NOT NULL, value1 INT32, value2 VARSIZED);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1,,
 2,,
@@ -17,7 +17,7 @@ ATTACH INLINE
 10,,
 
 CREATE LOGICAL SOURCE stream2(id UINT64 NOT NULL, value1 INT32, value2 INT32, ts UINT64 NOT NULL, text VARSIZED);
-CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream2 TYPE FileSource;
 ATTACH INLINE
 1,1,2,100,alpha
 2,,3,101,beta
@@ -31,7 +31,7 @@ ATTACH INLINE
 10,10,,109,omega
 
 CREATE LOGICAL SOURCE bool_stream(id UINT64 NOT NULL, flag BOOLEAN, flag2 BOOLEAN);
-CREATE PHYSICAL SOURCE FOR bool_stream TYPE File;
+CREATE PHYSICAL SOURCE FOR bool_stream TYPE FileSource;
 ATTACH INLINE
 1,true,true
 2,true,false
@@ -44,7 +44,7 @@ ATTACH INLINE
 9,,false
 
 CREATE LOGICAL SOURCE cmp_stream(id UINT64 NOT NULL, a INT32, b INT32);
-CREATE PHYSICAL SOURCE FOR cmp_stream TYPE File;
+CREATE PHYSICAL SOURCE FOR cmp_stream TYPE FileSource;
 ATTACH INLINE
 1,1,2
 2,,2
@@ -53,16 +53,16 @@ ATTACH INLINE
 5,,-1
 6,0,0
 
-CREATE SINK sink0(ts UINT64 NOT NULL, value1 INT32, value2 VARSIZED) TYPE File;
-CREATE SINK sink1(ts UINT64 NOT NULL, value1 INT32) TYPE File;
-CREATE SINK sinkMapped(id UINT64 NOT NULL, v1_plus INT32, v2_minus INT32) TYPE File;
-CREATE SINK sinkTextSuffix(id UINT64 NOT NULL, text_suffix VARSIZED) TYPE File;
-CREATE SINK sinkBoolCmp(id UINT64 NOT NULL, v1_eq_1 BOOLEAN, v2_eq_2 BOOLEAN, v1_eq_v2 BOOLEAN, v1_self_eq BOOLEAN, v2_self_eq BOOLEAN) TYPE File;
-CREATE SINK sinkBoolOps(id UINT64 NOT NULL, v1_and_v2 BOOLEAN, v1_or_v2 BOOLEAN, not_v1_eq_1 BOOLEAN, v1_eq_1_isnull BOOLEAN NOT NULL) TYPE File;
-CREATE SINK sinkTextCmp(id UINT64 NOT NULL, is_beta BOOLEAN, text_self_eq BOOLEAN, concat_isnull BOOLEAN NOT NULL) TYPE File;
-CREATE SINK bool_sinkBool(id UINT64 NOT NULL, flag BOOLEAN, flag2 BOOLEAN, flag_and BOOLEAN, flag_or BOOLEAN, not_flag BOOLEAN, flag_eq_true BOOLEAN, flag_eq_false BOOLEAN, flag2_eq_true BOOLEAN, flag_isnull BOOLEAN NOT NULL, flag2_isnull BOOLEAN NOT NULL) TYPE File;
-CREATE SINK bool_sinkIds(id UINT64 NOT NULL) TYPE File;
-CREATE SINK cmp_sinkCmp(id UINT64 NOT NULL, a_lt_3 BOOLEAN, b_gt_0 BOOLEAN, a_lt_b BOOLEAN) TYPE File;
+CREATE SINK sink0(ts UINT64 NOT NULL, value1 INT32, value2 VARSIZED) TYPE FileSink;
+CREATE SINK sink1(ts UINT64 NOT NULL, value1 INT32) TYPE FileSink;
+CREATE SINK sinkMapped(id UINT64 NOT NULL, v1_plus INT32, v2_minus INT32) TYPE FileSink;
+CREATE SINK sinkTextSuffix(id UINT64 NOT NULL, text_suffix VARSIZED) TYPE FileSink;
+CREATE SINK sinkBoolCmp(id UINT64 NOT NULL, v1_eq_1 BOOLEAN, v2_eq_2 BOOLEAN, v1_eq_v2 BOOLEAN, v1_self_eq BOOLEAN, v2_self_eq BOOLEAN) TYPE FileSink;
+CREATE SINK sinkBoolOps(id UINT64 NOT NULL, v1_and_v2 BOOLEAN, v1_or_v2 BOOLEAN, not_v1_eq_1 BOOLEAN, v1_eq_1_isnull BOOLEAN NOT NULL) TYPE FileSink;
+CREATE SINK sinkTextCmp(id UINT64 NOT NULL, is_beta BOOLEAN, text_self_eq BOOLEAN, concat_isnull BOOLEAN NOT NULL) TYPE FileSink;
+CREATE SINK bool_sinkBool(id UINT64 NOT NULL, flag BOOLEAN, flag2 BOOLEAN, flag_and BOOLEAN, flag_or BOOLEAN, not_flag BOOLEAN, flag_eq_true BOOLEAN, flag_eq_false BOOLEAN, flag2_eq_true BOOLEAN, flag_isnull BOOLEAN NOT NULL, flag2_isnull BOOLEAN NOT NULL) TYPE FileSink;
+CREATE SINK bool_sinkIds(id UINT64 NOT NULL) TYPE FileSink;
+CREATE SINK cmp_sinkCmp(id UINT64 NOT NULL, a_lt_3 BOOLEAN, b_gt_0 BOOLEAN, a_lt_b BOOLEAN) TYPE FileSink;
 
 # Filter equal on INT32 with null
 SELECT * FROM stream WHERE value1 == 1 INTO sink0;

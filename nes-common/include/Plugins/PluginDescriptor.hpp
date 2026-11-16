@@ -15,15 +15,22 @@
 #pragma once
 
 #include <any>
+#include <concepts>
 #include <cstdint>
+#include <expected>
 #include <functional>
-#include <memory>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "Identifiers/Identifier.hpp"
-#include "Types/NESType.hpp"
+#include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Types/NESType.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -35,13 +42,63 @@ enum class InsertResult : uint8_t
     EntryTypeMismatch,
 };
 
-/// A registry a plugin makes available to the plugin system. Carries a type-erased pointer to the
-/// registry singleton plus a type-erased inserter bound to the concrete registry type, so the
-/// plugin system can register entries into it without knowing their types (see provideRegistry).
+/// Default type descriptor and type-class helpers for nullary plugin registries whose entries
+/// wrap `Registry::EntryType` directly without custom SQL-level type parameters.
+template <typename Registry>
+struct DefaultRegistryTypeDescriptor
+{
+    typename Registry::EntryType entry;
+};
+
+template <typename Registry>
+struct DefaultRegistryTypeClassTag
+{
+    bool operator==(const DefaultRegistryTypeClassTag&) const = default;
+};
+
+template <typename Registry>
+NamedNESParametrizedTypeClass makeDefaultRegistryTypeClass(std::string_view typeClassName)
+{
+    return NamedNESParametrizedTypeClass::constant(
+        QualifiedIdentifier::parse(typeClassName),
+        NESTypeClass{
+            DefaultRegistryTypeClassTag<Registry>{},
+            [](const DefaultRegistryTypeClassTag<Registry>&, const NESType& type)
+            { return type.tryGetDescriptorAs<DefaultRegistryTypeDescriptor<Registry>>() != nullptr; }});
+}
+
+template <typename Registry>
+NESFunctor makeDefaultNullaryRegistryFunctor(typename Registry::EntryType entry)
+{
+    using EntryT = typename Registry::EntryType;
+    return NESFunctor::nullary<EntryT>(
+        std::move(entry),
+        [](const EntryT& storedEntry) -> std::expected<NESType, Exception>
+        {
+            return NESType::create<DefaultRegistryTypeDescriptor<Registry>, EntryT>(
+                DefaultRegistryTypeDescriptor<Registry>{.entry = storedEntry},
+                [](const DefaultRegistryTypeDescriptor<Registry>& desc, const NESValueParameters& params)
+                    -> std::expected<EntryT, Exception>
+                {
+                    if (!params.empty())
+                    {
+                        return std::unexpected{
+                            InvalidQuerySyntax("Nullary registry type expects 0 value arguments, but got {}", params.size())};
+                    }
+                    return desc.entry;
+                });
+        });
+}
+
+/// A registry a plugin makes available to the plugin system. Carries the registry's name,
+/// singleton identity, optional exposed parameterized type classes, and a type-erased inserter.
 struct RegistryProvision
 {
-    NamedNESParametrizedTypeClass correspondingParametrizedTypeClass;
-    /// identity of the singleton, for idempotent re-provision checks
+    QualifiedIdentifier registryName;
+    /// Identity of the singleton, for idempotent re-provision checks across shared libraries
+    const void* singletonIdentity = nullptr;
+    bool exposeToSqlScope = false;
+    std::vector<NamedNESParametrizedTypeClass> typeClasses;
     std::function<InsertResult(const NamedNESFunctor&)> insertEntry;
 };
 
@@ -51,11 +108,8 @@ struct EntryProvision
 {
     NamedNESFunctor correspondingFunctor;
     QualifiedIdentifier registryName;
-    //Identifier key;
-    ///// must hold exactly the registry's EntryType (the generated glue coerces to it)
-    //std::any entry;
-    /// optional entries are skipped when the host does not know the registry; required entries
-    /// fail the load instead
+    /// Optional entries are skipped when the host does not know the registry; required entries
+    /// fail the load instead.
     bool optional = false;
 };
 
@@ -63,7 +117,7 @@ struct EntryProvision
 /// Plugins only describe; they never register anything themselves.
 struct PluginDescriptor
 {
-    /// for diagnostics
+    /// For diagnostics
     std::string name;
     std::vector<RegistryProvision> registries;
     std::vector<EntryProvision> entries;
@@ -77,20 +131,44 @@ using PluginDescribeFn = void (*)(PluginDescriptor&);
 /// Creates the provision for a concrete registry; the inserter closes over the registry type,
 /// which is what allows the plugin system to stay type-erased.
 template <typename Registry>
-/// NOLINTNEXTLINE(performance-unnecessary-value-param)
-RegistryProvision provideRegistry()
+RegistryProvision provideRegistry(std::string_view registryClassName)
 {
     return RegistryProvision{
-        .correspondingParametrizedTypeClass = Registry::getParametrizedTypeClass(),
+        .registryName = QualifiedIdentifier::parse(registryClassName),
+        .singletonIdentity = &Registry::instance(),
+        .exposeToSqlScope = Registry::EXPOSE_TO_SQL_SCOPE,
+        .typeClasses = Registry::getParametrizedTypeClasses(),
         .insertEntry = [](const NamedNESFunctor& entry)
         {
-            const auto* typedEntry = std::any_cast<typename Registry::EntryType>(&entry.getUnderlyingFunctor()->structure.getUnderlying());
+            const auto* typedEntry = entry.getUnderlyingFunctor().template tryGetStructureAs<typename Registry::EntryType>();
             if (typedEntry == nullptr)
             {
                 return InsertResult::EntryTypeMismatch;
             }
-            return Registry::instance().addEntry(entry.getFullyQualifiedName(), *typedEntry) ? InsertResult::Success
-                                                                                             : InsertResult::DuplicateKey;
+            const auto key = [&]() -> typename Registry::KeyType
+            {
+                if constexpr (std::same_as<typename Registry::KeyType, QualifiedIdentifier>)
+                {
+                    return entry.getFullyQualifiedName();
+                }
+                else
+                {
+                    /// Preserve original identifier casing for CaseSensitive registries (e.g. UnreflectionRegistry);
+                    /// CaseSensitive=false registries normalize to uppercase inside RuntimeRegistry::internalKey.
+                    return fmt::format(
+                        "{}",
+                        fmt::join(
+                            entry.getFullyQualifiedName()
+                                | std::views::transform([](const Identifier& part) { return part.getOriginalString(); }),
+                            "."));
+                }
+            }();
+            if (!Registry::instance().addEntry(key, *typedEntry))
+            {
+                return InsertResult::DuplicateKey;
+            }
+            std::ignore = Registry::instance().addFunctor(key, entry);
+            return InsertResult::Success;
         }};
 }
 

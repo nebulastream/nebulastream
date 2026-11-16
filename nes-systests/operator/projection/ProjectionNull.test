@@ -3,7 +3,7 @@
 # groups: [Projection, NullHandling]
 
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64, timestamp UINT64 NOT NULL, text VARSIZED);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1,,0,
 2,100,1,hello
@@ -16,7 +16,7 @@ ATTACH INLINE
 9,,8,nullend
 10,500,9,
 
-CREATE SINK sink(value UINT64, text VARSIZED) TYPE File;
+CREATE SINK sink(value UINT64, text VARSIZED) TYPE FileSink;
 
 # 0: [value, text]
 SELECT value, text FROM stream INTO sink;

@@ -15,8 +15,10 @@
 #include <Plugins/PluginLoader.hpp>
 
 #include <vector>
+
 #include <Plugins/PluginDescriptor.hpp>
 #include <Plugins/RegistryCatalog.hpp>
+#include <Types/NESTypeCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -29,21 +31,31 @@ void announceRegistries(const PluginDescriptor& descriptor)
 {
     for (const auto& provision : descriptor.registries)
     {
-        if (const auto existing = RegistryCatalog::instance().find(provision.correspondingParametrizedTypeClass.getFullyQualifiedName()))
+        if (const auto existing = RegistryCatalog::instance().find(provision.registryName))
         {
-            if (existing->correspondingParametrizedTypeClass == provision.correspondingParametrizedTypeClass)
+            if (existing->singletonIdentity == provision.singletonIdentity)
             {
                 continue;
             }
             throw CannotLoadPlugin(
                 "{} provides registry {}, but a different registry is already announced under that name",
                 descriptor.name,
-                provision.correspondingParametrizedTypeClass.getFullyQualifiedName());
+                provision.registryName);
         }
-        if (!RegistryCatalog::instance().addEntry(provision.correspondingParametrizedTypeClass.getFullyQualifiedName(), provision))
+        if (!RegistryCatalog::instance().addEntry(provision.registryName, provision))
         {
-            throw CannotLoadPlugin(
-                "{} failed to announce registry {}", descriptor.name, provision.correspondingParametrizedTypeClass.getFullyQualifiedName());
+            throw CannotLoadPlugin("{} failed to announce registry {}", descriptor.name, provision.registryName);
+        }
+        for (const auto& typeClass : provision.typeClasses)
+        {
+            if (!NESTypeCatalog::instance().registerTypeClass(typeClass))
+            {
+                throw CannotLoadPlugin(
+                    "{}: duplicate conflicting type class '{}' announced by registry {}",
+                    descriptor.name,
+                    typeClass.getFullyQualifiedName(),
+                    provision.registryName);
+            }
         }
     }
 }
@@ -52,7 +64,7 @@ void registerEntries(const PluginDescriptor& descriptor)
 {
     for (const auto& entry : descriptor.entries)
     {
-        const auto provision = RegistryCatalog::instance().find(entry.correspondingFunctor.getFullyQualifiedName());
+        const auto provision = RegistryCatalog::instance().find(entry.registryName);
         if (!provision)
         {
             if (entry.optional)
@@ -75,10 +87,27 @@ void registerEntries(const PluginDescriptor& descriptor)
             case InsertResult::Success:
                 break;
             case InsertResult::DuplicateKey:
-                throw CannotLoadPlugin("{}: duplicate registration for \"{}\" in {}", descriptor.name, entry.correspondingFunctor.getFullyQualifiedName(), entry.registryName);
+                throw CannotLoadPlugin(
+                    "{}: duplicate registration for \"{}\" in {}",
+                    descriptor.name,
+                    entry.correspondingFunctor.getFullyQualifiedName(),
+                    entry.registryName);
             case InsertResult::EntryTypeMismatch:
                 throw CannotLoadPlugin(
-                    "{}: entry \"{}\" does not match the entry type of {}", descriptor.name, entry.correspondingFunctor.getFullyQualifiedName(), entry.registryName);
+                    "{}: entry \"{}\" does not match the entry type of {}",
+                    descriptor.name,
+                    entry.correspondingFunctor.getFullyQualifiedName(),
+                    entry.registryName);
+        }
+        if (!NESTypeCatalog::instance().registerFunctor(
+                entry.registryName, entry.correspondingFunctor, provision->exposeToSqlScope))
+        {
+            throw CannotLoadPlugin(
+                "{}: duplicate functor registration for \"{}\" (registry {}, SQL-exposed: {})",
+                descriptor.name,
+                entry.correspondingFunctor.getFullyQualifiedName(),
+                entry.registryName,
+                provision->exposeToSqlScope);
         }
     }
 }

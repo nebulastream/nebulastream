@@ -19,6 +19,7 @@
 #include <string>
 
 #include <Configurations/ConfigField.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Util/RuntimeRegistry.hpp>
@@ -41,6 +42,10 @@ class OutputFormatterConfigSchemaRegistry : public RuntimeRegistry<
 {
 public:
     static OutputFormatterConfigSchemaRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<OutputFormatterConfigSchemaRegistry>("OutputFormatterConfigSchema")};
+    }
 
     [[nodiscard]] std::optional<Schema<QualifiedErasedConfigField, Ordered>> getSchema(const std::string& outputFormatterType) const
     {

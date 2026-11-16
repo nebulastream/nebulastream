@@ -14,30 +14,62 @@
 
 #pragma once
 
+#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <tuple>
+#include <vector>
 
 #include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Types/NESType.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
 
-/// Maps a source type name to a provider of the config schema the source declares
-/// (see e.g. GeneratorSource::getConfigSchema). Frontends resolve user-passed configs against
-/// this schema (see Configurations/ConfigResolution.hpp) to obtain an InstantiatedConfig.
-/// The entry is a provider function rather than the schema itself so that schema construction
-/// runs lazily at first use instead of during static initialization.
 using SourceConfigSchemaProviderFn = std::function<Schema<QualifiedErasedConfigField, Ordered>()>;
+
+struct SourceTypeTrait
+{
+    Identifier sourceType;
+};
+
+/// Value representation produced by SQL anonymous source constructors (e.g. `FileSource(...)`).
+/// Carries the source type and config literal schema without depending on `LogicalOperator`,
+/// avoiding circular dependencies between `nes-sources` and `nes-logical-operators`.
+struct BoundAnonymousSource
+{
+    Identifier sourceType;
+    Schema<LiteralConfigValue, Ordered> configOptions;
+
+    [[nodiscard]] std::expected<
+        std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>,
+        Exception>
+    resolve(
+        const Schema<ConfigFieldDefault, Ordered>& configDefaults = {},
+        const Schema<ConfigFieldTransformation, Unordered>& configTransformations = {}) const;
+};
 
 class SourceConfigSchemaRegistry
     : public RuntimeRegistry<SourceConfigSchemaRegistry, std::string, SourceConfigSchemaProviderFn, /*CaseSensitive*/ false>
 {
 public:
+    static constexpr bool EXPOSE_TO_SQL_SCOPE = true;
+
     static SourceConfigSchemaRegistry& instance();
+    static NESTypeClass sourceTypeClass();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses();
 
     [[nodiscard]] std::optional<Schema<QualifiedErasedConfigField, Ordered>> getSchema(const std::string& sourceType) const
     {
@@ -48,5 +80,7 @@ public:
         return std::nullopt;
     }
 };
+
+NESFunctor makeSourceConfigSchemaFunctor(std::string_view sourceTypeName, SourceConfigSchemaProviderFn provider);
 
 }

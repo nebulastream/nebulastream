@@ -52,21 +52,21 @@ backpressure_is_held() {
   docker_kafka_consume "kafka-sink-test" results.csv
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM
-    GENERATOR (
+    GeneratorSource (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
-        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-        'SEQUENCE UINT64 0 1000 1, RANDOMSTR 4096 4096' AS "SOURCE"."GENERATOR_SCHEMA",
+        'ALL' AS "GENERATOR_SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+        'SEQUENCE UINT64 0 1000 1, RANDOMSTR 4096 4096' AS "GENERATOR_SOURCE"."GENERATOR_SCHEMA",
         SCHEMA(id UINT64 NOT NULL, text VARSIZED NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO KAFKA(
+    ) INTO KafkaSink(
         'worker-1:8080' AS "SINK"."HOST",
-        'kafka-sink-test' AS "SINK"."TOPIC",
-        'kafka-broker:9092' AS "SINK"."BROKERS",
-        'CSV' AS "SINK"."OUTPUT_FORMAT",
+        'kafka-sink-test' AS "KAFKA_SINK"."TOPIC",
+        'kafka-broker:9092' AS "KAFKA_SINK"."BROKERS",
+        'CSV' AS "OUTPUT_FORMATTER"."TYPE",
         -- provoke backpressure
-        4 AS "SINK"."MAX_OUTSTANDING_MESSAGES",
-        '2' AS "SINK"."BACKPRESSURE_LOWER_THRESHOLD",
-        '4' AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD"
+        4 AS "KAFKA_SINK"."MAX_OUTSTANDING_MESSAGES",
+        2 AS "SINK"."BACKPRESSURE_LOWER_THRESHOLD",
+        4 AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD"
     )
 EOF
 )"
@@ -82,25 +82,25 @@ EOF
   docker_kafka_consume "kafka-sink-test" results.csv
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM
-    GENERATOR (
+    GeneratorSource (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
-        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-        'SEQUENCE UINT64 0 400000 1' AS "SOURCE"."GENERATOR_SCHEMA",
-        2 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        'EMIT_RATE 100000' AS "SOURCE"."GENERATOR_RATE_CONFIG",
+        'ALL' AS "GENERATOR_SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+        'SEQUENCE UINT64 0 400000 1' AS "GENERATOR_SOURCE"."GENERATOR_SCHEMA",
+        2 AS "GENERATOR_SOURCE"."FLUSH_INTERVAL_MS",
+        'EMIT_RATE 100000' AS "GENERATOR_SOURCE"."GENERATOR_RATE_CONFIG",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO KAFKA(
+    ) INTO KafkaSink(
         'worker-1:8080' AS "SINK"."HOST",
-        'kafka-sink-test' AS "SINK"."TOPIC",
-        'kafka-broker:9092' AS "SINK"."BROKERS",
-        'CSV' AS "SINK"."OUTPUT_FORMAT",
+        'kafka-sink-test' AS "KAFKA_SINK"."TOPIC",
+        'kafka-broker:9092' AS "KAFKA_SINK"."BROKERS",
+        'CSV' AS "OUTPUT_FORMATTER"."TYPE",
         -- provoke backpressure
-        4 AS "SINK"."MAX_OUTSTANDING_MESSAGES",
-        '2' AS "SINK"."BACKPRESSURE_LOWER_THRESHOLD",
-        '4' AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD",
+        4 AS "KAFKA_SINK"."MAX_OUTSTANDING_MESSAGES",
+        2 AS "SINK"."BACKPRESSURE_LOWER_THRESHOLD",
+        4 AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD",
         -- must outlast the broker pause below
-        60000 AS "SINK"."DELIVERY_TIMEOUT_MS"
+        60000 AS "KAFKA_SINK"."DELIVERY_TIMEOUT_MS"
     )
 EOF
 )"
@@ -121,18 +121,18 @@ EOF
 @test "fails query when broker stops during processing" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM GENERATOR(
+    SELECT * FROM GeneratorSource(
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
-        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-        'SEQUENCE UINT64 0 10000000 1' AS "SOURCE"."GENERATOR_SCHEMA",
-        'EMIT_RATE 10' AS "SOURCE"."GENERATOR_RATE_CONFIG",
+        'ALL' AS "GENERATOR_SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+        'SEQUENCE UINT64 0 10000000 1' AS "GENERATOR_SOURCE"."GENERATOR_SCHEMA",
+        'EMIT_RATE 10' AS "GENERATOR_SOURCE"."GENERATOR_RATE_CONFIG",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO KAFKA(
+    ) INTO KafkaSink(
         'worker-1:8080' AS "SINK"."HOST",
-        'kafka-sink-test' AS "SINK"."TOPIC",
-        'kafka-broker:9092' AS "SINK"."BROKERS",
-        'CSV' AS "SINK"."OUTPUT_FORMAT"
+        'kafka-sink-test' AS "KAFKA_SINK"."TOPIC",
+        'kafka-broker:9092' AS "KAFKA_SINK"."BROKERS",
+        'CSV' AS "OUTPUT_FORMATTER"."TYPE"
     )
 EOF
 )"
@@ -149,18 +149,18 @@ EOF
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   docker compose kill kafka-broker
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM GENERATOR(
+    SELECT * FROM GeneratorSource(
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
-        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-        'SEQUENCE UINT64 0 10000000 1' AS "SOURCE"."GENERATOR_SCHEMA",
-        'EMIT_RATE 10' AS "SOURCE"."GENERATOR_RATE_CONFIG",
+        'ALL' AS "GENERATOR_SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+        'SEQUENCE UINT64 0 10000000 1' AS "GENERATOR_SOURCE"."GENERATOR_SCHEMA",
+        'EMIT_RATE 10' AS "GENERATOR_SOURCE"."GENERATOR_RATE_CONFIG",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO KAFKA(
+    ) INTO KafkaSink(
         'worker-1:8080' AS "SINK"."HOST",
-        'kafka-sink-test' AS "SINK"."TOPIC",
-        'kafka-broker:9092' AS "SINK"."BROKERS",
-        'CSV' AS "SINK"."OUTPUT_FORMAT"
+        'kafka-sink-test' AS "KAFKA_SINK"."TOPIC",
+        'kafka-broker:9092' AS "KAFKA_SINK"."BROKERS",
+        'CSV' AS "OUTPUT_FORMATTER"."TYPE"
     )
 EOF
 )"

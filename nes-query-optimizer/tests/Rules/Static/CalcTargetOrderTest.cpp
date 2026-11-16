@@ -68,7 +68,7 @@ static SourceDescriptor createTestSourceDescriptor(const LogicalSource& logicalS
     return SourceDescriptor::create(
                PhysicalSourceId{1},
                logicalSource,
-               Identifier::parse("File"),
+               Identifier::parse("FileSource"),
                Host{"localhost"},
                sourceConfig,
                {{Identifier::parse("type"), "CSV"}},
@@ -81,7 +81,8 @@ static SinkDescriptor createTestSinkDescriptor()
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
 
-    return SinkDescriptor::createAnonymous(INITIAL_SINK_ID, Identifier::parse("file"), std::nullopt, Host{"localhost"}, sinkConfig, {})
+    return SinkDescriptor::createAnonymous(
+               INITIAL_SINK_ID, Identifier::parse("FileSink"), std::nullopt, Host{"localhost"}, sinkConfig, {})
         .value();
 }
 

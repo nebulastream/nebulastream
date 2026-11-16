@@ -3,12 +3,12 @@
 # groups: [DataTypes, RawStringAndBooleanLiterals]
 
 CREATE LOGICAL SOURCE stream(text VARSIZED NOT NULL, flag BOOLEAN NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 hello,true
 other,false
 
-CREATE SINK sink(raw_string VARSIZED NOT NULL, numeric_string VARSIZED NOT NULL, raw_boolean BOOLEAN NOT NULL, lowercase_boolean BOOLEAN NOT NULL, string_comparison BOOLEAN NOT NULL, boolean_comparison BOOLEAN NOT NULL, explicit_string VARSIZED NOT NULL, explicit_boolean BOOLEAN NOT NULL) TYPE File;
+CREATE SINK sink(raw_string VARSIZED NOT NULL, numeric_string VARSIZED NOT NULL, raw_boolean BOOLEAN NOT NULL, lowercase_boolean BOOLEAN NOT NULL, string_comparison BOOLEAN NOT NULL, boolean_comparison BOOLEAN NOT NULL, explicit_string VARSIZED NOT NULL, explicit_boolean BOOLEAN NOT NULL) TYPE FileSink;
 
 SELECT
     'hello' AS raw_string,

@@ -41,6 +41,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -90,19 +91,23 @@ DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType,
         return DataTypeProvider::provideDataType(
             DataType::Type::UNDEFINED, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     }
-    if (inputType.isSignedInteger())
+    const auto widenedType = [&]() -> DataType
     {
-        return DataTypeProvider::provideDataType(
-            DataType::Type::INT64, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-    }
-    if (inputType.isInteger())
-    {
-        return DataTypeProvider::provideDataType(
-            DataType::Type::UINT64, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-    }
-    if (inputType.isFloat())
-    {
+        const auto nullability = inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+        if (inputType.isSignedInteger())
+        {
+            return DataTypeProvider::provideDataType(DataType::Type::INT64, nullability);
+        }
+        if (inputType.isInteger())
+        {
+            return DataTypeProvider::provideDataType(DataType::Type::UINT64, nullability);
+        }
         return inputType;
+    }();
+    const auto addableConstraint = LogicalFunctionRegistry::closedBinaryFunctionTypeClass(QualifiedIdentifier::parse("Add"));
+    if (addableConstraint.validate(widenedType.toNESType()))
+    {
+        return widenedType;
     }
     throw UnsupportedQuery(
         "{} is only supported on numeric fields, but field {} has type {}", NAME, inputFieldName, magic_enum::enum_name(inputType.type));

@@ -21,6 +21,7 @@
 #include <Interface/Record.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
@@ -43,6 +44,10 @@ class OutputFormatterRegistry
 {
 public:
     static OutputFormatterRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<OutputFormatterRegistry>("OutputFormatter")};
+    }
 };
 
 }

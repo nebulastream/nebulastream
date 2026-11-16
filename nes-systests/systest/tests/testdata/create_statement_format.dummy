@@ -6,7 +6,7 @@
 
 # Conclude queries with semicolon
 CREATE LOGICAL SOURCE input1(id UINT64);
-CREATE PHYSICAL SOURCE FOR input1 TYPE File;
+CREATE PHYSICAL SOURCE FOR input1 TYPE FileSource;
 ATTACH INLINE
 1
 2
@@ -15,7 +15,7 @@ ATTACH INLINE
 # Conclude queries with new lines
 CREATE LOGICAL SOURCE input2(id UINT64);
 
-CREATE PHYSICAL SOURCE FOR input2 TYPE File;
+CREATE PHYSICAL SOURCE FOR input2 TYPE FileSource;
 
 ATTACH INLINE
 1
@@ -29,14 +29,14 @@ CREATE LOGICAL SOURCE
 
 CREATE PHYSICAL SOURCE
  FOR input3
- TYPE File
+ TYPE FileSource
 ;
 ATTACH INLINE
 1
 2
 3
 
-CREATE SINK output(id UINT64) TYPE File;
+CREATE SINK output(id UINT64) TYPE FileSink;
 
 
 SELECT id AS id FROM input1 INTO output;

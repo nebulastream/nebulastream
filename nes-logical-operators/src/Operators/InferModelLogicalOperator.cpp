@@ -38,10 +38,13 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Types/NESType.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorRegistry.hpp>
 #include <Model.hpp>
+#include <ModelRegistry.hpp>
 
 namespace NES
 {
@@ -57,6 +60,81 @@ InferModelLogicalOperator::InferModelLogicalOperator(WeakLogicalOperator self, R
     inferLocalSchema();
 }
 
+std::expected<LogicalOperator, Exception> InferModelLogicalOperator::create(const NESValueParameters& params)
+{
+    static const std::array<QualifiedIdentifier, 2> formalParams{
+        QualifiedIdentifier::parse("MODEL"),
+        QualifiedIdentifier::parse("STREAM")};
+
+    const auto boundExp = params.bindAgainst(formalParams);
+    if (!boundExp.has_value())
+    {
+        return std::unexpected{InvalidQuerySyntax("MODEL_INFERENCE expects arguments (MODEL, STREAM): {}", boundExp.error().what())};
+    }
+    const auto& bound = *boundExp;
+    const auto modelVal = bound.getFieldByName(formalParams[0]).value().getValue();
+    const auto streamVal = bound.getFieldByName(formalParams[1]).value().getValue();
+
+    if (!ModelRegistry::mlModelTypeClass().validate(modelVal.getType()))
+    {
+        return std::unexpected{InvalidQuerySyntax("MODEL_INFERENCE first argument (MODEL) must satisfy type class ML_MODEL")};
+    }
+    if (!LogicalOperatorRegistry::logicalOperatorTypeClass().validate(streamVal.getType()))
+    {
+        return std::unexpected{InvalidQuerySyntax("MODEL_INFERENCE second argument (STREAM) must satisfy type class LogicalOperator")};
+    }
+
+    const auto* mlTrait = modelVal.getType().tryGetTrait<MLModelTrait>();
+    const auto* childOp = streamVal.tryGetAs<LogicalOperator>();
+    if (mlTrait == nullptr || childOp == nullptr)
+    {
+        return std::unexpected{InvalidQuerySyntax("Invalid arguments passed to MODEL_INFERENCE")};
+    }
+    return mlTrait->createInferenceOperator(modelVal, *childOp);
+}
+
+NESFunctor InferModelLogicalOperator::functorOf(const std::string_view key)
+{
+    struct ModelInferenceDescriptor
+    {
+        std::string key;
+        LogicalOperatorFn factory;
+        bool operator==(const ModelInferenceDescriptor& other) const { return key == other.key; }
+    };
+
+    const std::string keyCopy{key};
+    LogicalOperatorFn fn = &InferModelLogicalOperator::create;
+    return NESFunctor{
+        std::move(fn),
+        [](const LogicalOperatorFn& lhs, const LogicalOperatorFn& rhs) { return &lhs == &rhs; },
+        [keyCopy](const LogicalOperatorFn& factory, const NESTypeParameters& typeParams) -> std::expected<NESType, Exception>
+        {
+            if (!typeParams.empty())
+            {
+                const ExpectedNESTypeArguments expectedTypeArgs{Schema<ExpectedNESTypeParameter, Ordered>{
+                    ExpectedNESTypeParameter{
+                        .name = QualifiedIdentifier::parse("MODEL"),
+                        .constraint = ModelRegistry::mlModelTypeClass(),
+                        .kind = ExpectedNESTypeParameter::Kind::TypeParameter},
+                    ExpectedNESTypeParameter{
+                        .name = QualifiedIdentifier::parse("STREAM"),
+                        .constraint = LogicalOperatorRegistry::logicalOperatorTypeClass(),
+                        .kind = ExpectedNESTypeParameter::Kind::TypeParameter}}};
+                const auto validated = expectedTypeArgs.validateAndBind(typeParams);
+                if (!validated.has_value())
+                {
+                    return std::unexpected{validated.error()};
+                }
+            }
+            return NESType::create<ModelInferenceDescriptor, LogicalOperator>(
+                       ModelInferenceDescriptor{.key = keyCopy, .factory = factory},
+                       [](const ModelInferenceDescriptor& desc, const NESValueParameters& params)
+                           -> std::expected<LogicalOperator, Exception>
+                       { return desc.factory(params); })
+                .withTrait(LogicalOperatorTrait{});
+        }};
+}
+
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
 std::string_view InferModelLogicalOperator::getName() const noexcept
 {
@@ -70,7 +148,7 @@ const RegisteredModel& InferModelLogicalOperator::getModel() const
 
 bool InferModelLogicalOperator::operator==(const InferModelLogicalOperator& rhs) const
 {
-    return model == rhs.model && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
+    return model == rhs.model && outputSchema == rhs.outputSchema && getTraitSet() == rhs.getTraitSet();
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static

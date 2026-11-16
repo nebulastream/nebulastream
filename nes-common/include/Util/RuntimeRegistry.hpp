@@ -21,21 +21,21 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <Types/NESType.hpp>
 #include <Util/Strings.hpp>
 
 namespace NES
 {
 
-/// A registry whose entries are registered at runtime, NOT static-initialization time but from main(), by
+/// A registry whose entries are registered at runtime, NOT static-initialization time, from main(), by
 /// auto-generated per-plugin glue translation units. The linker keeps
 /// the glue TUs alive via --whole-archive applied to a dedicated glue sub-library
 /// (see cmake/RuntimeRegistrationUtil.cmake).
 ///
 /// EntryTypeT is arbitrary: a factory std::function, a struct bundling several
 /// functions, or a plain value. Concrete registries derive via CRTP so instance()
-/// returns the concrete type and custom convenience members can be added:
-///
-///     class MyRegistry : public RuntimeRegistry<MyRegistry, std::string, MyEntry> {};
+/// returns the concrete type and custom convenience members can be added.
 ///
 /// If CaseSensitive is false and the key type is string-like, keys are normalized to
 /// upper case on insertion and lookup (mirrors the behavior of Identifier).
@@ -59,6 +59,9 @@ public:
     using KeyType = KeyTypeT;
     using EntryType = EntryTypeT;
 
+    static constexpr bool EXPOSE_TO_SQL_SCOPE = false;
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses() { return {}; }
+
     RuntimeRegistry(const RuntimeRegistry&) = delete;
     RuntimeRegistry(RuntimeRegistry&&) noexcept = delete;
     RuntimeRegistry& operator=(const RuntimeRegistry&) = delete;
@@ -78,12 +81,26 @@ public:
         return entries.try_emplace(internalKey(name), std::move(entry)).second;
     }
 
+    [[nodiscard]] bool addFunctor(const KeyTypeT& name, NamedNESFunctor functor)
+    {
+        return functors.try_emplace(internalKey(name), std::move(functor)).second;
+    }
+
     [[nodiscard]] bool contains(const KeyTypeT& name) const { return entries.contains(internalKey(name)); }
 
     /// Returns a copy of the registered entry, or nullopt if the key is unknown.
     [[nodiscard]] std::optional<EntryTypeT> find(const KeyTypeT& name) const
     {
         if (const auto it = entries.find(internalKey(name)); it != entries.end())
+        {
+            return it->second;
+        }
+        return std::nullopt;
+    }
+
+    [[nodiscard]] std::optional<NamedNESFunctor> findFunctor(const KeyTypeT& name) const
+    {
+        if (const auto it = functors.find(internalKey(name)); it != functors.end())
         {
             return it->second;
         }
@@ -98,8 +115,17 @@ public:
         return names;
     }
 
+    [[nodiscard]] std::vector<NamedNESFunctor> getRegisteredFunctors() const
+    {
+        std::vector<NamedNESFunctor> result;
+        result.reserve(functors.size());
+        std::ranges::transform(functors, std::back_inserter(result), [](const auto& entry) { return entry.second; });
+        return result;
+    }
+
 private:
     std::unordered_map<KeyTypeT, EntryTypeT> entries;
+    std::unordered_map<KeyTypeT, NamedNESFunctor> functors;
 
     friend ConcreteRegistry;
 };

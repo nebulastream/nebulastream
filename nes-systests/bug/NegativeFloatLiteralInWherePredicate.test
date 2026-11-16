@@ -3,14 +3,14 @@
 # groups: [Bug, Selection, Parser]
 
 CREATE LOGICAL SOURCE stream(doublee FLOAT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 -1.0
 -0.25
 0.25
 1.0
 
-CREATE SINK sinkStream(doublee FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkStream(doublee FLOAT64 NOT NULL) TYPE FileSink;
 
 SELECT *
 FROM stream
@@ -21,14 +21,14 @@ INTO sinkStream;
 0.25
 
 CREATE LOGICAL SOURCE intStream(value INT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR intStream TYPE File;
+CREATE PHYSICAL SOURCE FOR intStream TYPE FileSource;
 ATTACH INLINE
 -2
 -1
 0
 1
 
-CREATE SINK sinkIntStream(value INT64 NOT NULL) TYPE File;
+CREATE SINK sinkIntStream(value INT64 NOT NULL) TYPE FileSink;
 
 SELECT *
 FROM intStream

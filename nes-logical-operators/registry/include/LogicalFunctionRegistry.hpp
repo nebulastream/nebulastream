@@ -14,11 +14,18 @@
 
 #pragma once
 
+#include <expected>
 #include <functional>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
+
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Types/NESType.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -32,17 +39,31 @@ struct LogicalFunctionRegistryArguments
 
 using LogicalFunctionFn = std::function<LogicalFunctionRegistryReturnType(LogicalFunctionRegistryArguments)>;
 
-/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
-/// Entries are static create<Key> members on the function classes (construction differs per
-/// function, and a single class can register under several keys, e.g. ExtractFromTimestamp as
-/// Day_Of/Month_Of/Year_Of).
-/// Case-insensitive to mirror the retired BaseRegistry.
+/// Trait attached to `NESType`s representing scalar `LogicalFunction` expressions.
+/// When instantiated at the type level over concrete argument types, `resultScalarType`
+/// records the inferred output `NESType` (e.g. for `ClosedBinaryFunction("Add")`).
+struct LogicalFunctionTypeTrait
+{
+    std::optional<NESType> resultScalarType;
+};
+
+/// Converts any scalar literal or `LogicalFunction` `NESValue` into a `LogicalFunction` AST node.
+[[nodiscard]] std::expected<LogicalFunction, Exception> nesValueToLogicalFunction(const NESValue& value);
+
+/// Wraps a `LogicalFunction` AST node into a `NESValue` carrying `LogicalFunctionTypeTrait`.
+[[nodiscard]] NESValue makeLogicalFunctionValue(LogicalFunction function);
+
 class LogicalFunctionRegistry : public RuntimeRegistry<LogicalFunctionRegistry, std::string, LogicalFunctionFn, /*CaseSensitive*/ false>
 {
 public:
-    /// Defined out-of-line (LogicalFunctionRegistry.cpp) so exactly one instance exists
-    /// process-wide even with plugins loaded as shared objects.
+    static constexpr bool EXPOSE_TO_SQL_SCOPE = true;
+
     static LogicalFunctionRegistry& instance();
+    static NESTypeClass logicalFunctionTypeClass();
+    static NESTypeClass closedBinaryFunctionTypeClass(QualifiedIdentifier functionName);
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses();
 };
+
+NESFunctor makeLogicalFunctionFunctor(std::string_view key, LogicalFunctionFn factory);
 
 }

@@ -82,7 +82,7 @@ public:
     {
         auto schema = createSchema();
         auto descriptor = sourceCatalog.getAnonymousSource(
-            Identifier::parse("File"),
+            Identifier::parse("FileSource"),
             schema,
             Host("localhost"),
             {{Identifier::parse("TYPE"), "CSV"}},
@@ -99,7 +99,7 @@ public:
     {
         auto schema = createSchema();
         auto descriptor = sinkCatalog.getAnonymousSink(
-            schema, Identifier::parse("Print"), Host("localhost"), {{Identifier::parse("output_format"), outputFormat}}, {});
+            schema, Identifier::parse("PrintSink"), Host("localhost"), {{Identifier::parse("output_format"), outputFormat}}, {});
         EXPECT_TRUE(descriptor.has_value());
         auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
         /// The real sink lowering (LowerToPhysicalSink) places sinks as INTERMEDIATE; the pipelining

@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <Plans/LogicalPlan.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Rules/Rule.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -44,6 +45,10 @@ class PlanRuleRegistry : public RuntimeRegistry<PlanRuleRegistry, std::string, P
 {
 public:
     static PlanRuleRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<PlanRuleRegistry>("PlanRule")};
+    }
 };
 
 }

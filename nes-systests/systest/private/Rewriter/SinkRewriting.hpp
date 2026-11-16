@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_map>
 
@@ -37,7 +38,7 @@ struct SinkDefinition
 
 using SinkByName = std::unordered_map<Identifier, SinkDefinition>;
 
-/// The result file is absent for some sink types that occur in the tests (e.g., Checksum, Void).
+/// The result file is absent for some sink types that occur in the tests (e.g., VoidSink).
 struct RewrittenSink
 {
     std::string sql;
@@ -46,6 +47,9 @@ struct RewrittenSink
 
 /// Returns the query sink from the AST, and rejects a query that declares less or more than one.
 AntlrSQLParser::SinkContext* requireSingleSink(const SqlParse& parse, const std::string& sql);
+
+/// Returns whether `sink` references a declared sink by name (rather than an inline sink constructor).
+[[nodiscard]] bool isNamedSinkReference(AntlrSQLParser::SinkContext* sink);
 
 /// Inlines the sink into the query statement, and rewrites the sink declarations of EXPLAIN test cases.
 class SinkRewriter
@@ -64,7 +68,7 @@ public:
 private:
     [[nodiscard]] RewrittenSink inlined(
         const std::string& type,
-        AntlrSQLParser::NamedConfigExpressionSeqContext* declared,
+        std::span<AntlrSQLParser::NamedFunctionCallArgumentContext* const> declared,
         const std::string& trailingOptions,
         const std::filesystem::path& candidateResultFile) const;
 

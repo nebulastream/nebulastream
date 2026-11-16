@@ -8,17 +8,17 @@
 ## Furthermore, as we are having heavily out-of-order data, we need to use float64 for the cpu, ram and disk fields to ensure that the results are deterministic for the original data. The lightsaber data uses float32 for these fields.
 ##
 CREATE LOGICAL SOURCE monitoringLightsaber(creationTS UINT64 NOT NULL, jobId UINT64 NOT NULL, taskId UINT64 NOT NULL, machineId INT64 NOT NULL, eventType INT16 NOT NULL, userId INT16 NOT NULL, category INT16 NOT NULL, priority INT16 NOT NULL, cpu FLOAT32 NOT NULL, ram FLOAT32 NOT NULL, disk FLOAT32 NOT NULL, constraints INT16 NOT NULL);
-CREATE PHYSICAL SOURCE FOR monitoringLightsaber TYPE File;
+CREATE PHYSICAL SOURCE FOR monitoringLightsaber TYPE FileSource;
 ATTACH FILE large/cluster_monitoring/google-cluster-data-lightsaber_1M.csv
 
 CREATE LOGICAL SOURCE monitoringClusterData(creationTS UINT64 NOT NULL, jobId UINT64 NOT NULL, taskId UINT64 NOT NULL, machineId INT64 NOT NULL, eventType INT16 NOT NULL, userId INT16 NOT NULL, category INT16 NOT NULL, priority INT16 NOT NULL, cpu FLOAT64 NOT NULL, ram FLOAT64 NOT NULL, disk FLOAT64 NOT NULL, constraints BOOLEAN NOT NULL);
-CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE File;
+CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE FileSource;
 ATTACH FILE large/cluster_monitoring/google-cluster-data-original_1G.csv
 
 
-CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT64 NOT NULL, jobId UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK q2Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32 NOT NULL, jobId UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q2Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32 NOT NULL, jobId UINT64 NOT NULL)  TYPE File;
+CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT64 NOT NULL, jobId UINT64 NOT NULL) TYPE ChecksumSink;
+CREATE SINK q2Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32 NOT NULL, jobId UINT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK q2Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32 NOT NULL, jobId UINT64 NOT NULL)  TYPE FileSink;
 
 # These test is currently disabled, as we cannot ensure deterministic results for the queries
 # The problem is that the queries perform a floating point aggregation. Due to our out-of-order processing, the results may differ slightly.

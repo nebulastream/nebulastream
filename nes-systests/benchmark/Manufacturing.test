@@ -4,10 +4,10 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE manufacturing(creationTS UINT64 NOT NULL, messageIndex UINT64 NOT NULL, mf01 INT16 NOT NULL, mf02 INT16 NOT NULL, mf03 INT16 NOT NULL, pc13 INT16 NOT NULL, pc14 INT16 NOT NULL, pc15 INT16 NOT NULL, pc25 INT16 NOT NULL, pc26 INT16 NOT NULL, pc27 INT16 NOT NULL, res INT16 NOT NULL, bm05 INT16 NOT NULL, bm06 INT16 NOT NULL);
-CREATE PHYSICAL SOURCE FOR manufacturing TYPE File;
+CREATE PHYSICAL SOURCE FOR manufacturing TYPE FileSource;
 ATTACH FILE large/manufacturing/manufacturing_1G.csv
 
-CREATE SINK manufacturingChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, avg_mf01 FLOAT64 NOT NULL, sum_mf02 INT64 NOT NULL, min_mf03 INT16 NOT NULL, count_mf01 UINT64 NOT NULL, sum_mf01 INT64 NOT NULL)  TYPE Checksum;
+CREATE SINK manufacturingChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, avg_mf01 FLOAT64 NOT NULL, sum_mf02 INT64 NOT NULL, min_mf03 INT16 NOT NULL, count_mf01 UINT64 NOT NULL, sum_mf01 INT64 NOT NULL)  TYPE ChecksumSink;
 
 
 # Query 1 Windowed Aggregation with three different aggregation functions

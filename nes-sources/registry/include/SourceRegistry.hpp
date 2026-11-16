@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 
+#include <Plugins/PluginDescriptor.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
@@ -33,6 +34,10 @@ class SourceRegistry : public RuntimeRegistry<SourceRegistry, std::string, Sourc
 {
 public:
     static SourceRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<SourceRegistry>("PhysicalSource")};
+    }
 };
 
 /// Factory for the common case: the descriptor's type-erased plugin data is the source's own

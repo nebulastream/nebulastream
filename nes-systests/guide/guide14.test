@@ -7,7 +7,7 @@ CREATE LOGICAL SOURCE s(
     y INT32 NOT NULL
 );
 
-CREATE PHYSICAL SOURCE FOR s TYPE File;
+CREATE PHYSICAL SOURCE FOR s TYPE FileSource;
 ATTACH INLINE
 5,3
 2,7
@@ -15,7 +15,7 @@ ATTACH INLINE
 
 CREATE SINK sink(
     squared_error INT32 NOT NULL
-) TYPE File;
+) TYPE FileSink;
 
 SELECT
     (x - y) * (x - y) AS squared_error

@@ -34,7 +34,7 @@ sinks:
       - name: label
         type: UINT64
         nullable: false
-    type: Void
+    type: VoidSink
 
 logical:
   - name: GENERATOR_SOURCE
@@ -54,7 +54,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       generator_rate_type: FIXED
       generator_rate_config: emit_rate 10

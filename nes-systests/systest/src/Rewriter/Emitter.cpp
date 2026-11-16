@@ -183,11 +183,11 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
     rewriter.replace(sink->getStart(), sink->getStop(), inlinedSink);
 
     std::vector<std::filesystem::path> inputFiles;
-    for (auto* namedSource : findAll<AntlrSQLParser::NamedSourceContext>(parse->tree()))
+    for (auto* namedSource : catalogReferencesInFrom(parse->tree()))
     {
         /// A name that no identifier can hold matches no key, because every key comes from a name that this file declared.
         /// It is skipped rather than reported, so the query is still submitted and rejected when it runs.
-        const auto name = sourceName(namedSource->multipartIdentifier()->getText());
+        const auto name = sourceName(namedSource->getText());
         if (not name)
         {
             continue;
@@ -218,8 +218,8 @@ void Emitter::emitExplain(ExplainStatement explain)
 {
     SqlParse parse{explain.sql};
     /// VISUAL (the default) aligns on label widths, which restoring names breaks.
-    if (auto* format = findFirst<AntlrSQLParser::ExplainStatementContext>(parse.tree())->explainFormat(); format == nullptr
-        or (format->identifier() != nullptr and Identifier::parse(format->identifier()->getText()) == Identifier::parse("visual")))
+    if (auto* format = findFirst<AntlrSQLParser::ExplainStatementContext>(parse.tree())->explainFormat();
+        format == nullptr or (format->identifier() != nullptr and Sql::sameName(format->identifier()->getText(), "visual")))
     {
         throw TestException(
             "An EXPLAIN check has to state FORMAT TEXT or FORMAT VERBOSE, because the VISUAL layout depends on the prefixed names: {}",
@@ -232,7 +232,7 @@ void Emitter::emitExplain(ExplainStatement explain)
     makeAnonymousSourcePathsAbsolute(parse, rewriter, context.testDataDir);
     completeAnonymousSources(parse, rewriter, context.sourceHost);
 
-    if (auto* sink = requireSingleSink(parse, explain.sql); sink->identifier() == nullptr)
+    if (auto* sink = requireSingleSink(parse, explain.sql); not isNamedSinkReference(sink))
     {
         /// An EXPLAIN starts no query, so the file is never written, but the sink descriptor is still validated and needs a path.
         const auto candidate = context.resultFile(fmt::format("{}", explain.id.getRawValue()));

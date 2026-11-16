@@ -18,7 +18,7 @@ sinks:
         type: UINT64
       - name: A
         type: UINT64
-    type: Void
+    type: VoidSink
 
 logical:
   - name: '"quotedSource"'
@@ -33,7 +33,7 @@ physical:
     host: worker-1:8080
     parser_config:
       type: CSV
-    type: Generator
+    type: GeneratorSource
     source_config:
       generator_rate_type: FIXED
       generator_rate_config: emit_rate 10

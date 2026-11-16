@@ -46,32 +46,32 @@ query: |
                 SELECT * FROM (SELECT * FROM stream)
                 INNER JOIN (SELECT * FROM stream2)
                 ON id = id2
-                WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+                BINARY_WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
               )
             )
             INNER JOIN (SELECT * FROM stream3)
             ON id2 = id3
-            WINDOW TUMBLING (timestamp2, timestamp3, size 1 sec)
+            BINARY_WINDOW TUMBLING (timestamp2, timestamp3, size 1 sec)
           )
           INNER JOIN (SELECT * FROM stream4)
           ON id3 = id4
-          WINDOW TUMBLING (timestamp3, timestamp4, size 1 sec)
+          BINARY_WINDOW TUMBLING (timestamp3, timestamp4, size 1 sec)
         )
         INNER JOIN (SELECT * FROM stream5)
         ON id4 = id5
-        WINDOW TUMBLING (timestamp4, timestamp5, size 1 sec)
+        BINARY_WINDOW TUMBLING (timestamp4, timestamp5, size 1 sec)
       )
       INNER JOIN (SELECT * FROM stream6)
       ON id5 = id6
-      WINDOW TUMBLING (timestamp5, timestamp6, size 1 sec)
+      BINARY_WINDOW TUMBLING (timestamp5, timestamp6, size 1 sec)
     )
     INNER JOIN (SELECT * FROM stream7)
     ON id6 = id7
-    WINDOW TUMBLING (timestamp6, timestamp7, size 1 sec)
+    BINARY_WINDOW TUMBLING (timestamp6, timestamp7, size 1 sec)
   )
   INNER JOIN (SELECT * FROM stream8)
   ON id7 = id8
-  WINDOW TUMBLING (timestamp7, timestamp8, size 1 sec)
+  BINARY_WINDOW TUMBLING (timestamp7, timestamp8, size 1 sec)
   INTO sink;
 sinks:
   - name: sink
@@ -82,17 +82,18 @@ sinks:
         type: UINT64
       - name: id
         type: UINT64
-    type: File
+    type: FileSink
     config:
       FILE_PATH: out.csv
-      OUTPUT_FORMAT: CSV
+    parser_config:
+      type: CSV
   - name: VOID_SINK
     schema:
       - name: timestamp1
         type: UINT64
       - name: id
         type: UINT64
-    type: Void
+    type: VoidSink
 
 logical:
   - name: stream
@@ -149,7 +150,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10
@@ -162,7 +163,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10
@@ -175,7 +176,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10
@@ -188,7 +189,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10
@@ -201,7 +202,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10
@@ -214,7 +215,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10
@@ -227,7 +228,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10
@@ -240,7 +241,7 @@ physical:
     parser_config:
       TYPE: CSV
       FIELD_DELIMITER: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       GENERATOR_RATE_TYPE: FIXED
       GENERATOR_RATE_CONFIG: emit_rate 10

@@ -3,18 +3,18 @@
 # groups: [Sinks]
 
 SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
+FROM FileSource(
+	'small/stream8.csv' AS "FILE_SOURCE".FILE_PATH,
 	'CSV' AS INPUT_FORMATTER."TYPE",
 	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
-INTO Void();
+INTO VoidSink();
 ----
 
-CREATE SINK discard(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE Void;
+CREATE SINK discard(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE VoidSink;
 
 SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
+FROM FileSource(
+	'small/stream8.csv' AS "FILE_SOURCE".FILE_PATH,
 	'CSV' AS INPUT_FORMATTER."TYPE",
 	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
 INTO discard;
@@ -22,9 +22,9 @@ INTO discard;
 
 # The output format is configurable, so that a query can run the formatting step without any I/O.
 SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
+FROM FileSource(
+	'small/stream8.csv' AS "FILE_SOURCE".FILE_PATH,
 	'CSV' AS INPUT_FORMATTER."TYPE",
 	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
-INTO Void('CSV' AS "SINK".OUTPUT_FORMAT);
+INTO VoidSink('CSV' AS "OUTPUT_FORMATTER"."TYPE");
 ----

@@ -64,7 +64,7 @@ public:
         const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
         const auto descriptor
             = SourceDescriptor::create(
-                  PhysicalSourceId{1}, logical, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig, false)
+                  PhysicalSourceId{1}, logical, Identifier::parse("FileSource"), Host{"localhost"}, sourceConfig, parserConfig, false)
                   .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }

@@ -3,11 +3,11 @@
 # groups: [Tuples]
 
 CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;
+CREATE PHYSICAL SOURCE FOR oneTuple TYPE FileSource;
 ATTACH INLINE
 1
 
-CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL)  TYPE FileSink;
 
 # Description: check if we run into an error if we process a single tuple.
 SELECT field_1 FROM oneTuple INTO sinkOneTuple;

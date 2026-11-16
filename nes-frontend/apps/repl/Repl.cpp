@@ -32,7 +32,6 @@
 #include <unistd.h>
 
 #include <DataTypes/UnboundSchema.hpp> /// NOLINT(misc-include-cleaner)
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <Statements/StatementJsonSerializers.hpp> /// NOLINT(misc-include-cleaner)
@@ -374,83 +373,81 @@ struct Repl::Impl
 
     bool executeQuery(const std::string& query)
     {
-        auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
-        auto parseResult = managedParser->parseMultiple();
-        if (not parseResult.has_value())
-        {
-            handleError(std::move(parseResult.error()));
-            return false;
-        }
-        auto toHandle = parseResult.value() | std::views::transform([this](const auto& stmt) { return binder.bind(stmt.get()); })
-            | std::ranges::to<std::vector>();
+        const auto parseResult = binder.parseAndBindEach(
+            query,
+            [&](std::expected<NES::Statement, NES::Exception> bindingResult)
+            {
+                if (!bindingResult.has_value())
+                {
+                    handleError(std::move(bindingResult.error()));
+                    return;
+                }
+                /// NOLINTNEXTLINE(fuchsia-trailing-return)
+                auto visitor = [&](const auto& stmt) -> std::expected<NES::StatementResult, NES::Exception>
+                {
+                    if constexpr (requires { sourceStatementHandler.apply(stmt); })
+                    {
+                        return sourceStatementHandler.apply(stmt);
+                    }
+                    else if constexpr (requires { sinkStatementHandler.apply(stmt); })
+                    {
+                        return sinkStatementHandler.apply(stmt);
+                    }
+                    else if constexpr (requires { modelStatementHandler.apply(stmt); })
+                    {
+                        return modelStatementHandler.apply(stmt);
+                    }
+                    else if constexpr (requires { topologyStatementHandler.apply(stmt); })
+                    {
+                        return topologyStatementHandler.apply(stmt);
+                    }
+                    else if constexpr (requires { queryStatementHandler->apply(stmt); })
+                    {
+                        return queryStatementHandler->apply(stmt);
+                    }
+                    else
+                    {
+                        static_assert(false, "All statement types need to have a handler");
+                        std::unreachable();
+                    }
+                };
+                auto result = std::visit(visitor, bindingResult.value());
+                if (!result.has_value())
+                {
+                    handleError(std::move(result.error()));
+                    return;
+                }
+                switch (getOutputFormat(bindingResult.value()).value_or(defaultOutputFormat))
+                {
+                    case NES::StatementOutputFormat::TEXT:
+                        std::cout << std::visit(
+                            [](const auto& statementResult)
+                            {
+                                return toText(
+                                    StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult));
+                            },
+                            result.value());
+                        break;
+                    case NES::StatementOutputFormat::JSON:
+                        std::cout << std::visit(
+                            [](const auto& statementResult)
+                            {
+                                return rfl::json::write(
+                                    NES::rowsToJsonArray(
+                                        NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(
+                                            statementResult),
+                                        NES::ReflectionContext{}));
+                            },
+                            result.value())
+                                  << "\n";
+                }
+                std::flush(std::cout);
+            });
 
-        for (auto& bindingResult : toHandle)
+        if (!parseResult.has_value())
         {
-            if (not bindingResult.has_value())
-            {
-                handleError(std::move(bindingResult.error()));
-                continue;
-            }
-            /// NOLINTNEXTLINE(fuchsia-trailing-return)
-            auto visitor = [&](const auto& stmt) -> std::expected<NES::StatementResult, NES::Exception>
-            {
-                if constexpr (requires { sourceStatementHandler.apply(stmt); })
-                {
-                    return sourceStatementHandler.apply(stmt);
-                }
-                else if constexpr (requires { sinkStatementHandler.apply(stmt); })
-                {
-                    return sinkStatementHandler.apply(stmt);
-                }
-                else if constexpr (requires { modelStatementHandler.apply(stmt); })
-                {
-                    return modelStatementHandler.apply(stmt);
-                }
-                else if constexpr (requires { topologyStatementHandler.apply(stmt); })
-                {
-                    return topologyStatementHandler.apply(stmt);
-                }
-                else if constexpr (requires { queryStatementHandler->apply(stmt); })
-                {
-                    return queryStatementHandler->apply(stmt);
-                }
-                else
-                {
-                    static_assert(false, "All statement types need to have a handler");
-                    std::unreachable();
-                }
-            };
-            auto result = std::visit(visitor, bindingResult.value());
-            if (not result.has_value())
-            {
-                handleError(std::move(result.error()));
-                continue;
-            }
-            switch (getOutputFormat(bindingResult.value()).value_or(defaultOutputFormat))
-            {
-                case NES::StatementOutputFormat::TEXT:
-                    std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
-                            return toText(
-                                StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult));
-                        },
-                        result.value());
-                    break;
-                case NES::StatementOutputFormat::JSON:
-                    std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
-                            return rfl::json::write(
-                                NES::rowsToJsonArray(
-                                    NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(
-                                        statementResult),
-                                    NES::ReflectionContext{}));
-                        },
-                        result.value())
-                              << "\n";
-            }
-            std::flush(std::cout);
+            handleError(parseResult.error());
+            return false;
         }
         return true;
     }

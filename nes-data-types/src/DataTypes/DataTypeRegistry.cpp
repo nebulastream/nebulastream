@@ -14,6 +14,12 @@
 
 #include <DataTypeRegistry.hpp>
 
+#include <vector>
+
+#include <DataTypes/DataType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Types/NESType.hpp>
+
 namespace NES
 {
 
@@ -23,17 +29,69 @@ DataTypeRegistry& DataTypeRegistry::instance()
     return inst;
 }
 
-NamedNESParametrizedTypeClass DataTypeRegistry::getParametrizedTypeClass()
+NESTypeClass DataTypeRegistry::scalarDataTypeClass()
 {
-    static const NESTypeClass DatatypeClass{
-        DataTypeNESTypeClassTag{},
-        [](const DataTypeNESTypeClassTag&, const NESType& type)
+    return NESTypeClass::forTrait<ScalarTypeTrait>();
+}
+
+NESTypeClass DataTypeRegistry::numericDataTypeClass()
+{
+    return NESTypeClass{
+        NumericDataTypeClassTag{},
+        [](const NumericDataTypeClassTag&, const NESType& type)
         {
-            return std::any_cast<const DataType*>(&type.getDescriptor().getUnderlying()) != nullptr;
-        },
-        [](const DataTypeNESTypeClassTag&, const DataTypeNESTypeClassTag&) { return true; }};
-    return NamedNESParametrizedTypeClass{
-        QualifiedIdentifier::parse("ScalarDatatype"), NESParametrizedTypeClass{[&](const NESTypeClassParameters&) { return DatatypeClass; }}};
+            if (const auto* trait = type.tryGetTrait<ScalarTypeTrait>())
+            {
+                if (const auto dt = trait->tryGetDataType(type.getDescriptor()))
+                {
+                    return dt->isNumeric();
+                }
+            }
+            return false;
+        }};
+}
+
+NESTypeClass DataTypeRegistry::integerDataTypeClass()
+{
+    return NESTypeClass{
+        IntegerDataTypeClassTag{},
+        [](const IntegerDataTypeClassTag&, const NESType& type)
+        {
+            if (const auto* trait = type.tryGetTrait<ScalarTypeTrait>())
+            {
+                if (const auto dt = trait->tryGetDataType(type.getDescriptor()))
+                {
+                    return dt->isInteger();
+                }
+            }
+            return false;
+        }};
+}
+
+NESTypeClass DataTypeRegistry::floatDataTypeClass()
+{
+    return NESTypeClass{
+        FloatDataTypeClassTag{},
+        [](const FloatDataTypeClassTag&, const NESType& type)
+        {
+            if (const auto* trait = type.tryGetTrait<ScalarTypeTrait>())
+            {
+                if (const auto dt = trait->tryGetDataType(type.getDescriptor()))
+                {
+                    return dt->isFloat();
+                }
+            }
+            return false;
+        }};
+}
+
+std::vector<NamedNESParametrizedTypeClass> DataTypeRegistry::getParametrizedTypeClasses()
+{
+    return {
+        NamedNESParametrizedTypeClass::constant(QualifiedIdentifier::parse("ScalarDatatype"), scalarDataTypeClass()),
+        NamedNESParametrizedTypeClass::constant(QualifiedIdentifier::parse("NumericDatatype"), numericDataTypeClass()),
+        NamedNESParametrizedTypeClass::constant(QualifiedIdentifier::parse("IntegerDatatype"), integerDataTypeClass()),
+        NamedNESParametrizedTypeClass::constant(QualifiedIdentifier::parse("FloatDatatype"), floatDataTypeClass())};
 }
 
 }

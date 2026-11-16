@@ -10,7 +10,7 @@
 GlobalConfiguration worker.default_query_execution.page_size: [16384]
 
 CREATE LOGICAL SOURCE stream(value INT64 NOT NULL, ts UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1,100
 3,150
@@ -32,6 +32,6 @@ SELECT start, end, MEDIAN(value) as out0, MEDIAN(value) as out1, MEDIAN(value) a
        MEDIAN(value) as out52, MEDIAN(value) as out53, MEDIAN(value) as out54, MEDIAN(value) as out55,
        MEDIAN(value) as out56, MEDIAN(value) as out57, MEDIAN(value) as out58, MEDIAN(value) as out59,
        MEDIAN(value) as out60, MEDIAN(value) as out61, MEDIAN(value) as out62, MEDIAN(value) as out63
-FROM stream WINDOW TUMBLING(ts, size 1000 ms) INTO File();
+FROM stream WINDOW TUMBLING(ts, size 1000 ms) INTO FileSink();
 ----
 0,1000,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3

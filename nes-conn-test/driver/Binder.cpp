@@ -22,11 +22,13 @@
 #include <string_view>
 #include <utility>
 #include <variant>
-#include <vector>
 
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Schema.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
@@ -39,10 +41,6 @@ namespace NES::ConnTest
 {
 namespace
 {
-
-/// The generated grammar type is reached through the parser wrapper's header, not the generated header.
-/// NOLINTNEXTLINE(misc-include-cleaner)
-using BoundStatementContexts = std::vector<NES::AntlrSQLQueryParser::ManagedAntlrParser::ManagedContext<AntlrSQLParser::StatementContext>>;
 
 /// For example `config does not bind: creating the physical source failed with InvalidConfigParameter (1000): ...`.
 std::unexpected<ErrorInfo> bindError(const std::string_view step, const std::string_view detail)
@@ -63,73 +61,80 @@ std::unexpected<ErrorInfo> bindError(const std::string_view step, const Exceptio
     return error;
 }
 
-std::expected<BoundStatementContexts, Exception> parseProgram(const std::string& sql)
-{
-    auto parser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(sql);
-    try
-    {
-        return parser->parseMultiple();
-    }
-    catch (const Exception& ex)
-    {
-        return std::unexpected{ex};
-    }
-}
-
 }
 
 std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::string& sql)
 {
-    const auto statements = parseProgram(sql);
-    if (not statements)
-    {
-        return bindError("parsing the SQL", statements.error());
-    }
+    auto sourceCatalogHandle = SourceCatalog::create();
+    auto sourceCatalog = copyPtr(sourceCatalogHandle);
 
-    auto sourceCatalog = std::make_shared<SourceCatalog>();
-    const StatementBinder binder(
-        sourceCatalog, [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
+    /// Connectors read their endpoint from config and conn-test does no placement, so a missing host defaults to INVALID.
+    const StatementBinder binder{
+        sourceCatalog,
+        /*sinkCatalog=*/nullptr,
+        /*modelCatalog=*/nullptr,
+        Schema<ConfigFieldDefault, Ordered>{
+            ConfigFieldDefault{QualifiedIdentifier::parse("SOURCE.HOST"), ConfigLiteral{std::string{Host::INVALID}}}}};
 
     std::optional<SourceDescriptor> physicalDescriptor;
-    for (const auto& statementContext : *statements)
-    {
-        auto bound = binder.bind(statementContext.get());
-        if (!bound.has_value())
+    std::optional<ErrorInfo> stepFailure;
+
+    const auto parseRes = binder.parseAndBindEach(
+        sql,
+        [&](std::expected<Statement, Exception> bound)
         {
-            return bindError("binding a statement", bound.error());
-        }
-        if (auto* logical = std::get_if<CreateLogicalSourceStatement>(&*bound))
-        {
-            if (!sourceCatalog->addLogicalSource(logical->name, logical->schema))
+            if (stepFailure.has_value())
             {
-                return bindError("creating the logical source", fmt::format("failed: {} is declared twice", logical->name));
+                return;
             }
-            continue;
-        }
-        if (auto* phys = std::get_if<CreatePhysicalSourceStatement>(&*bound))
-        {
-            const auto logicalSource = sourceCatalog->getLogicalSource(phys->attachedTo);
-            if (!logicalSource)
+            if (!bound.has_value())
             {
-                return bindError("creating the physical source", fmt::format("failed: no logical source {}", phys->attachedTo));
+                stepFailure = bindError("binding a statement", bound.error()).error();
+                return;
             }
-            try
+            if (auto* logical = std::get_if<CreateLogicalSourceStatement>(&*bound))
             {
-                /// Connectors read their endpoint from config and conn-test does no placement, so a missing host can stay invalid.
-                auto created = sourceCatalog->addPhysicalSource(
-                    *logicalSource, phys->sourceType, phys->host.value_or(Host{Host::INVALID}), phys->sourceConfig, phys->parserConfig);
-                if (!created.has_value())
+                if (!sourceCatalog->addLogicalSource(logical->name, logical->schema))
                 {
-                    return bindError("creating the physical source", created.error());
+                    stepFailure = bindError("creating the logical source", fmt::format("failed: {} is declared twice", logical->name)).error();
                 }
-                physicalDescriptor.emplace(std::move(*created));
+                return;
             }
-            catch (const Exception& ex)
+            if (auto* phys = std::get_if<CreatePhysicalSourceStatement>(&*bound))
             {
-                /// Some connectors validate their config here by throwing, not by returning an error.
-                return bindError("creating the physical source", ex);
+                const auto logicalSource = sourceCatalog->getLogicalSource(phys->logicalSourceName);
+                if (!logicalSource)
+                {
+                    stepFailure
+                        = bindError("creating the physical source", fmt::format("failed: no logical source {}", phys->logicalSourceName)).error();
+                    return;
+                }
+                try
+                {
+                    auto created = sourceCatalog->registerWithLogicalSource(
+                        PhysicalSourceBuilder{phys->generalSourceConfig, phys->pluginSourceConfig, phys->pluginInputFormatterConfig},
+                        phys->logicalSourceName);
+                    if (!created.has_value())
+                    {
+                        stepFailure = bindError("creating the physical source", created.error()).error();
+                        return;
+                    }
+                    physicalDescriptor.emplace(std::move(*created));
+                }
+                catch (const Exception& ex)
+                {
+                    stepFailure = bindError("creating the physical source", ex).error();
+                }
             }
-        }
+        });
+
+    if (!parseRes.has_value())
+    {
+        return bindError("parsing the SQL", parseRes.error());
+    }
+    if (stepFailure.has_value())
+    {
+        return std::unexpected{std::move(*stepFailure)};
     }
     if (!physicalDescriptor)
     {

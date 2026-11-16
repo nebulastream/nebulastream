@@ -8,7 +8,7 @@ CREATE LOGICAL SOURCE stock_quotes(
     ts     INT64 NOT NULL
 );
 
-CREATE PHYSICAL SOURCE FOR stock_quotes TYPE File;
+CREATE PHYSICAL SOURCE FOR stock_quotes TYPE FileSource;
 ATTACH INLINE
 AAPL,95.0,5
 AAPL,97.0,10
@@ -31,7 +31,7 @@ CREATE SINK sink(
     max_price FLOAT64 NOT NULL,
     min_price FLOAT64 NOT NULL,
     cnt       UINT64 NOT NULL
-) TYPE File;
+) TYPE FileSink;
 
 SELECT
     ticker,

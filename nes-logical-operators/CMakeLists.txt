@@ -46,18 +46,24 @@ target_link_libraries(nes-logical-operators PUBLIC nes-schema nes-sources nes-si
 # Runtime registries: entries are static create members on the plugin classes.
 create_runtime_registry(AggregationLogicalFunction nes-logical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}AggregationLogicalFunction::create"
+        FUNCTOR_TEMPLATE "makeAggregationLogicalFunctionFunctor(\"\${KEY}\", &\${PLUGIN_NAME}AggregationLogicalFunction::create)"
         HEADER_TEMPLATE "\${PLUGIN_NAME}AggregationLogicalFunction.hpp")
 
-# Name-based construction surface for logical operators; no entries yet (operators gain one by
-# implementing a static create member and registering it).
 create_runtime_registry(LogicalOperator nes-logical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}LogicalOperator::create"
+        FUNCTOR_TEMPLATE "\${PLUGIN_NAME}LogicalOperator::functorOf(\"\${KEY}\")"
         HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalOperator.hpp")
+
+create_runtime_registry(Model nes-logical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}::create"
+        FUNCTOR_TEMPLATE "makeModelFunctor(\"\${KEY}\", &\${PLUGIN_NAME}::create)"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp")
 
 # Name + Key based registry for logical functions, one logical function might want to register itself for multiple keys
 # For example, ExtractFromTimestampLogicalFunction as Day_Of, Month_Of and Year_Of
 create_runtime_registry(LogicalFunction nes-logical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}LogicalFunction::create\${KEY}"
+        FUNCTOR_TEMPLATE "makeLogicalFunctionFunctor(\"\${KEY}\", &\${PLUGIN_NAME}LogicalFunction::create\${KEY})"
         HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalFunction.hpp")
 
 add_tests_if_enabled(tests)

@@ -18,9 +18,9 @@ target_link_libraries(tcp_source_plugin_library PRIVATE nes-sources)
 target_include_directories(tcp_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 link_plugin_library(nes-sources tcp_source_plugin_library)
 
-add_registry_entry(Source TCP)
-add_registry_entry(SourceConfigSchema TCP)
-add_registry_entry(SourceConfig TCP)
+add_registry_entry(Source TCPSource)
+add_registry_entry(SourceConfigSchema TCPSource)
+add_registry_entry(SourceConfig TCPSource)
 
 add_tests_if_enabled(tests)
 add_conn_test(PLUGIN TCPSource)

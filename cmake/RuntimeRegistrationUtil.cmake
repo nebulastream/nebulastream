@@ -31,6 +31,7 @@
 #
 # create_runtime_registry(<name> <target>
 #     ENTRY_TEMPLATE <expr>
+#     [FUNCTOR_TEMPLATE <expr>]       # optional NESFunctor expression wrapping ENTRY_TEMPLATE
 #     [REGISTRY_CLASS <class>]        # defaults to ${name}Registry
 #     [REGISTRY_HEADER <header>]      # defaults to ${REGISTRY_CLASS}.hpp
 #     [HEADER_TEMPLATE <header>]      # per-plugin header to #include; supports ${PLUGIN_NAME}
@@ -49,7 +50,7 @@
 function(create_runtime_registry name target)
     # PARSE_ARGV (not ${ARGN}) so that ENTRY_TEMPLATE values containing semicolons
     # (C++ statements) survive argument parsing without being split as lists.
-    cmake_parse_arguments(PARSE_ARGV 2 ARG "" "ENTRY_TEMPLATE;REGISTRY_CLASS;REGISTRY_HEADER;HEADER_TEMPLATE;GLUE_SUFFIX" "EXTRA_INCLUDES;INCLUDE_DIRS")
+    cmake_parse_arguments(PARSE_ARGV 2 ARG "" "ENTRY_TEMPLATE;FUNCTOR_TEMPLATE;REGISTRY_CLASS;REGISTRY_HEADER;HEADER_TEMPLATE;GLUE_SUFFIX" "EXTRA_INCLUDES;INCLUDE_DIRS")
 
     if(NOT TARGET ${target})
         message(FATAL_ERROR "create_runtime_registry(${name} ${target}): target '${target}' does not exist. Call add_library(${target}) before create_runtime_registry().")
@@ -137,7 +138,7 @@ namespace
 {
 void describeRegistry(PluginDescriptor& descriptor)
 {
-    descriptor.registries.push_back(provideRegistry<${ARG_REGISTRY_CLASS}>());
+    descriptor.registries.push_back(provideRegistry<${ARG_REGISTRY_CLASS}>(\"${ARG_REGISTRY_CLASS}\"));
 }
 /// Static registration is the purpose of this initializer; it only stores a function pointer.
 /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
@@ -154,6 +155,7 @@ const auto collected${name}Registry = [] {
     set_property(GLOBAL PROPERTY "${name}_RUNTIME_REGISTRY_CLASS" "${ARG_REGISTRY_CLASS}")
     set_property(GLOBAL PROPERTY "${name}_RUNTIME_REGISTRY_HEADER" "${ARG_REGISTRY_HEADER}")
     set_property(GLOBAL PROPERTY "${name}_RUNTIME_REGISTRY_ENTRY_TEMPLATE" "${ARG_ENTRY_TEMPLATE}")
+    set_property(GLOBAL PROPERTY "${name}_RUNTIME_REGISTRY_FUNCTOR_TEMPLATE" "${ARG_FUNCTOR_TEMPLATE}")
     set_property(GLOBAL PROPERTY "${name}_RUNTIME_REGISTRY_HEADER_TEMPLATE" "${ARG_HEADER_TEMPLATE}")
     set_property(GLOBAL PROPERTY "${name}_RUNTIME_REGISTRY_EXTRA_INCLUDES" "${ARG_EXTRA_INCLUDES}")
 endfunction()
@@ -260,12 +262,16 @@ endfunction()
 # Renders the EntryProvision expression shared by the built-in and dynamic glue shapes.
 # Placeholders (${REGISTRY_CLASS}, ${KEY}, ${PLUGIN_NAME}) are substituted by the caller;
 # ${indent} is prepended to the continuation lines.
-function(_runtime_registry_render_entry_provision out_var entry_template optional_literal indent)
+function(_runtime_registry_render_entry_provision out_var entry_template functor_template optional_literal indent)
+    if(functor_template)
+        set(functor_expr "${functor_template}")
+    else()
+        set(functor_expr "makeDefaultNullaryRegistryFunctor<\${REGISTRY_CLASS}>(\${REGISTRY_CLASS}::EntryType{${entry_template}})")
+    endif()
     set(${out_var}
 "EntryProvision{
-${indent}    .registryClassName = \"\${REGISTRY_CLASS}\",
-${indent}    .key = \"\${KEY}\",
-${indent}    .entry = std::any{\${REGISTRY_CLASS}::EntryType{${entry_template}}},
+${indent}    .correspondingFunctor = NamedNESFunctor{QualifiedIdentifier::parse(\"\${KEY}\"), ${functor_expr}},
+${indent}    .registryName = QualifiedIdentifier::parse(\"\${REGISTRY_CLASS}\"),
 ${indent}    .optional = ${optional_literal}}" PARENT_SCOPE)
 endfunction()
 
@@ -277,6 +283,7 @@ function(_add_registry_entry_impl registry plugin_name registry_key header_overr
     get_property(registry_class GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_CLASS")
     get_property(registry_header GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_HEADER")
     get_property(entry_template GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_ENTRY_TEMPLATE")
+    get_property(functor_template GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_FUNCTOR_TEMPLATE")
     get_property(header_template GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_HEADER_TEMPLATE")
     get_property(extra_includes GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_EXTRA_INCLUDES")
 
@@ -293,7 +300,7 @@ function(_add_registry_entry_impl registry plugin_name registry_key header_overr
         string(APPEND includes "\n#include <${include_path}>")
     endif()
 
-    _runtime_registry_render_entry_provision(entry_provision "${entry_template}" "${optional_literal}" "    ")
+    _runtime_registry_render_entry_provision(entry_provision "${entry_template}" "${functor_template}" "${optional_literal}" "    ")
 
     # Disambiguate the generated TU and its collector symbol by the registry key rather than
     # the plugin name: the key is unique within a registry, which lets a single C++ type

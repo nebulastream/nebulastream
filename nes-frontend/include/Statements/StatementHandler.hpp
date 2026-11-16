@@ -197,24 +197,12 @@ public:
     friend HandlerImpl;
 };
 
-struct DefaultHost
-{
-    std::string hostName;
-};
-
-struct RequireHostConfig
-{
-};
-
-using HostPolicy = std::variant<RequireHostConfig, DefaultHost>;
-
 class SourceStatementHandler final : public StatementHandler<SourceStatementHandler>
 {
     std::shared_ptr<SourceCatalog> sourceCatalog;
-    HostPolicy hostPolicy;
 
 public:
-    SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy);
+    explicit SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog);
 
     std::expected<CreateLogicalSourceStatementResult, Exception> operator()(const CreateLogicalSourceStatement& statement);
     std::expected<CreatePhysicalSourceStatementResult, Exception> operator()(const CreatePhysicalSourceStatement& statement);

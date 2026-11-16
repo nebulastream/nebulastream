@@ -3,7 +3,7 @@
 # groups: [Function]
 
 CREATE LOGICAL SOURCE timestampsStream(timestamp UINT64);
-CREATE PHYSICAL SOURCE FOR timestampsStream TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream TYPE FileSource;
 ATTACH INLINE
 0
 1000
@@ -15,17 +15,17 @@ ATTACH INLINE
 
 # different data type than a uint64_t
 CREATE LOGICAL SOURCE WrongDataType(timestamp VARSIZED);
-CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE FileSource;
 ATTACH INLINE
 1970-01-01T00:00:00.000Z
 
 # Error, wrong data type
-SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM WrongDataType INTO FILE();
+SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM WrongDataType INTO FileSink();
 ----
 Error 2006
 
 
-SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM timestampsStream INTO FILE();
+SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM timestampsStream INTO FileSink();
 ----
 1970-01-01T00:00:00.000Z
 1970-01-01T00:00:01.000Z
@@ -39,10 +39,10 @@ SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM timestampsStream INTO 
 # NULL CASES
 
 CREATE LOGICAL SOURCE timestampsStream_NULL(V1 UINT64 NOT NULL, timestamp UINT64);
-CREATE PHYSICAL SOURCE FOR timestampsStream_NULL TYPE File;
+CREATE PHYSICAL SOURCE FOR timestampsStream_NULL TYPE FileSource;
 ATTACH INLINE
 0,
 
-SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM timestampsStream_NULL INTO FILE();
+SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM timestampsStream_NULL INTO FileSink();
 ----
 NULL

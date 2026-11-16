@@ -9,24 +9,24 @@
 # Window W2=[2000,6000): id=3 is unmatched left; id2=1 and id2=4 are on the right but no match
 # Without Plan 01 fix: N-squared probe calls would produce a false NULL row for id=1 in W1
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1,10,500
 2,20,1500
 3,30,2500
 
 CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream2 TYPE FileSource;
 ATTACH INLINE
 1,100,2500
 4,400,3500
 
-CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64, value2 UINT64, timestamp2 UINT64) TYPE File;
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64, value2 UINT64, timestamp2 UINT64) TYPE FileSink;
 
 SELECT *
 FROM (SELECT * FROM stream) LEFT OUTER JOIN (SELECT * FROM stream2)
 ON (id = id2)
-WINDOW SLIDING (timestamp, timestamp2, size 4 sec, advance by 2 sec)
+BINARY_WINDOW SLIDING (timestamp, timestamp2, size 4 sec, advance by 2 sec)
 INTO sink;
 ----
 0,4000,1,10,500,1,100,2500

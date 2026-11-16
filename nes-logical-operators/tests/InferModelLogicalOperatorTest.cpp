@@ -34,7 +34,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/InferModelLogicalOperator.hpp>
-#include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Schema/Schema.hpp>
@@ -85,7 +84,7 @@ makeSourceWithSchema(std::string_view sourceName, const Schema<UnqualifiedUnboun
     const auto descriptor = SourceDescriptor::create(
                                 PhysicalSourceId{1},
                                 logical,
-                                Identifier::parse("File"),
+                                Identifier::parse("FileSource"),
                                 Host{"localhost"},
                                 sourceConfig,
                                 {{Identifier::parse("type"), "CSV"}},
@@ -207,25 +206,6 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceVarsizedInputAccepted)
     EXPECT_EQ(outputSchema.size(), 2U);
     EXPECT_TRUE(outputSchema[Identifier::parse("text")].has_value());
     EXPECT_TRUE(outputSchema[Identifier::parse("embedding")].has_value());
-}
-
-/// InferModelNameLogicalOperator construction, getName, explain.
-TEST_F(InferModelLogicalOperatorTest, NameVariantBasicProperties)
-{
-    const auto nameOp = TypedLogicalOperator<InferModelNameLogicalOperator>{std::string{"myModel"}};
-
-    EXPECT_EQ(std::string{nameOp->getName()}, "InferModelName");
-    EXPECT_EQ(nameOp->getModelName(), "myModel");
-    EXPECT_TRUE(nameOp->getChildren().empty());
-
-    const auto desc = nameOp->explain(ExplainVerbosity::Short, OperatorId{2});
-    EXPECT_FALSE(desc.empty());
-    EXPECT_NE(desc.find("myModel"), std::string::npos);
-
-    EXPECT_NO_THROW({
-        const LogicalOperator wrapped{nameOp};
-        (void)wrapped;
-    });
 }
 
 /// NOLINTEND(readability-magic-numbers, bugprone-unchecked-optional-access)

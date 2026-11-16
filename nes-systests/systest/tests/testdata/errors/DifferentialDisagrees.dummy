@@ -2,12 +2,12 @@
 # description: the two halves of the block return different rows, so the block fails
 
 CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR s TYPE File;
+CREATE PHYSICAL SOURCE FOR s TYPE FileSource;
 ATTACH INLINE
 1
 2
 
-CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE FileSink;
 
 SELECT id FROM s INTO sinkA;
 ====

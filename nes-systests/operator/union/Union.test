@@ -3,7 +3,7 @@
 # groups: [Union, CompilationIntensive] TODO #1272
 
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1,1,1000
 1,1,1001
@@ -11,7 +11,7 @@ ATTACH INLINE
 1,1,1003
 
 CREATE LOGICAL SOURCE stream2(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream2 TYPE FileSource;
 ATTACH INLINE
 2,2,2000
 2,2,2001
@@ -19,7 +19,7 @@ ATTACH INLINE
 2,2,2003
 
 CREATE LOGICAL SOURCE stream3(id UINT64 NOT NULL, id2 UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream3 TYPE FileSource;
 ATTACH INLINE
 1,2,2,3000
 1,2,2,3001
@@ -27,14 +27,14 @@ ATTACH INLINE
 1,2,2,3003
 
 CREATE LOGICAL SOURCE stream3_1(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp3_1 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream3_1 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream3_1 TYPE FileSource;
 ATTACH INLINE
 1,1,1005
 1,1,1008
 2,2,2005
 2,2,2006
 
-CREATE SINK sink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE FileSink;
 
 # Simple Union
 SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink;
@@ -49,7 +49,7 @@ SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink;
 2,2,2003
 
 # Union with projection to fixup the schema
-SELECT id, timestamp FROM stream UNION SELECT id2 as id, timestamp FROM stream3 INTO File();
+SELECT id, timestamp FROM stream UNION SELECT id2 as id, timestamp FROM stream3 INTO FileSink();
 ----
 1,1000
 1,1001
@@ -60,7 +60,7 @@ SELECT id, timestamp FROM stream UNION SELECT id2 as id, timestamp FROM stream3 
 2,3002
 2,3003
 
-CREATE SINK sink2(timestamp UINT64 NOT NULL, origin UINT8 NOT NULL)  TYPE File;
+CREATE SINK sink2(timestamp UINT64 NOT NULL, origin UINT8 NOT NULL)  TYPE FileSink;
 # Union with selection to fixup the schema and projection of constant into the schema
 SELECT timestamp, 1 as origin FROM stream UNION SELECT timestamp, 2 as origin FROM stream WHERE timestamp < 1002 INTO sink2;
 ----
@@ -87,7 +87,7 @@ SELECT id, value, timestamp FROM stream UNION SELECT id, value, timestamp FROM s
 2,2,3002
 2,2,3003
 
-CREATE SINK sink3(timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sink3(timestamp UINT64 NOT NULL)  TYPE FileSink;
 
 # nested union with projection to fixup the schema
 SELECT timestamp
@@ -108,7 +108,7 @@ INTO sink3;
 # CURRENTLY WindowAggregation and Unions are broken in the sense that an EoS will not flush the window state!
 
 CREATE LOGICAL SOURCE stream4(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream4 TYPE FileSource;
 ATTACH INLINE
 1,1000
 12,1001
@@ -116,14 +116,14 @@ ATTACH INLINE
 1,2001
 
 CREATE LOGICAL SOURCE stream5(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream5 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream5 TYPE FileSource;
 ATTACH INLINE
 65,1000
 21,1001
 3,1002
 2,2001
 
-CREATE SINK sink4(max_value UINT64 NOT NULL)  TYPE File;
+CREATE SINK sink4(max_value UINT64 NOT NULL)  TYPE FileSink;
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM stream4 UNION SELECT * FROM stream5
@@ -134,13 +134,13 @@ INTO sink4;
 65
 2
 
-CREATE SINK sink5(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp3_1 UINT64 NOT NULL) TYPE File;
+CREATE SINK sink5(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp3_1 UINT64 NOT NULL) TYPE FileSink;
 
 SELECT *
 FROM (SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2))
 INNER JOIN (SELECT * FROM stream3_1)
 ON (id = id2)
-WINDOW TUMBLING (timestamp, timestamp3_1, size 1 sec)
+BINARY_WINDOW TUMBLING (timestamp, timestamp3_1, size 1 sec)
 INTO sink5;
 ----
 1000,2000,1,1,1000,1,1,1005
@@ -164,7 +164,7 @@ INTO sink5;
 
 # This demonstrates that all pending windows are triggered at the end of the execution
 CREATE LOGICAL SOURCE stream6(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream6 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream6 TYPE FileSource;
 ATTACH INLINE
 1,1000
 12,1001
@@ -172,14 +172,14 @@ ATTACH INLINE
 1,1003
 
 CREATE LOGICAL SOURCE stream7(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream7 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream7 TYPE FileSource;
 ATTACH INLINE
 65,1000
 21,1001
 3,1002
 2,2003
 
-CREATE SINK sink5(max_value UINT64 NOT NULL)  TYPE File;
+CREATE SINK sink5(max_value UINT64 NOT NULL)  TYPE FileSink;
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM stream6 UNION SELECT * FROM stream7
@@ -192,7 +192,7 @@ INTO sink4;
 
 # This demonstrates that the previous test still works when a union is nested in a projection
 CREATE LOGICAL SOURCE stream8(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream8 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream8 TYPE FileSource;
 ATTACH INLINE
 1,1000
 12,1001
@@ -200,14 +200,14 @@ ATTACH INLINE
 1,1003
 
 CREATE LOGICAL SOURCE stream9(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream9 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream9 TYPE FileSource;
 ATTACH INLINE
 65,1000
 21,1001
 3,1002
 2,2003
 
-CREATE SINK sink6(max_value UINT64 NOT NULL)  TYPE File;
+CREATE SINK sink6(max_value UINT64 NOT NULL)  TYPE FileSink;
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM (SELECT * FROM stream8 UNION SELECT * FROM stream9)
@@ -218,7 +218,7 @@ INTO sink6;
 65
 2
 
-CREATE SINK subquery_sink(timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK subquery_sink(timestamp UINT64 NOT NULL)  TYPE FileSink;
 # triple union query as a subquery as a nested query.
 SELECT timestamp
 FROM (

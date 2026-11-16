@@ -19,7 +19,7 @@ sinks:
     schema:
       - name: stream$value
         type: UINT64
-    type: Void
+    type: VoidSink
 logical:
   - name: stream
     schema:
@@ -32,7 +32,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       generator_rate_type: FIXED
       generator_rate_config: emit_rate 10

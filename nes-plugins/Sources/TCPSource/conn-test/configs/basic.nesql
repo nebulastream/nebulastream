@@ -4,10 +4,10 @@
 -- "SOURCE" and "TYPE" are reserved words, so they must be quoted.
 CREATE LOGICAL SOURCE smoke_input (data UINT8);
 
-CREATE PHYSICAL SOURCE FOR smoke_input TYPE TCP SET (
-    'localhost' AS "SOURCE".SOCKET_HOST,
-    9000        AS "SOURCE".SOCKET_PORT,
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE TCPSource SET (
+    'localhost' AS TCP_SOURCE.SOCKET_HOST,
+    9000        AS TCP_SOURCE.SOCKET_PORT,
     -- Only bounds how long a partly filled buffer is held back; an empty buffer keeps waiting.
-    100         AS "SOURCE".FLUSH_INTERVAL_MS,
+    100         AS TCP_SOURCE.FLUSH_INTERVAL_MS,
     'JSON'      AS INPUT_FORMATTER."TYPE"
 );

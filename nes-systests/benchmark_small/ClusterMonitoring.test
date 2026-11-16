@@ -4,11 +4,11 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE monitoringClusterData(creationTS UINT64, jobId UINT64, taskId UINT64, machineId INT64, eventType INT16, userId INT16, category INT16, priority INT16, cpu FLOAT64, ram FLOAT64, disk FLOAT64, constraints BOOLEAN);
-CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE File;
+CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE FileSource;
 ATTACH FILE small/cluster_monitoring/google-cluster-data-lightsaber_100K.csv
 
 
-CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT64, jobId UINT64) TYPE Checksum;
+CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT64, jobId UINT64) TYPE ChecksumSink;
 
 # These test is currently disabled, as we cannot ensure deterministic results for the queries
 # The problem is that the queries perform a floating point aggregation. Due to our out-of-order processing, the results may differ slightly.

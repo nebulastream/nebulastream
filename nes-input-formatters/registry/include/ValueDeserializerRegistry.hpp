@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
 #include <ValueDeserializer.hpp>
 
@@ -37,6 +38,10 @@ class ValueDeserializerRegistry : public RuntimeRegistry<ValueDeserializerRegist
 {
 public:
     static ValueDeserializerRegistry& instance();
+    static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses()
+    {
+        return {makeDefaultRegistryTypeClass<ValueDeserializerRegistry>("ValueDeserializer")};
+    }
 };
 
 }

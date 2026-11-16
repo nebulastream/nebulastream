@@ -36,7 +36,7 @@ sinks:
         type: VARSIZED
       - name: o1
         type: VARSIZED
-    type: Void
+    type: VoidSink
     config: { }
     parser_config: { }
 
@@ -54,7 +54,7 @@ physical:
     parser_config:
       type: CSV
       field_delimiter: ","
-    type: Generator
+    type: GeneratorSource
     source_config:
       generator_rate_type: FIXED
       generator_rate_config: emit_rate 10

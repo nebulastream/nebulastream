@@ -32,8 +32,10 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/ReflectedOperator.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Types/NESType.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <ErrorHandling.hpp>
 #include <Model.hpp>
 
 namespace NES
@@ -49,6 +51,9 @@ class InferModelLogicalOperator : public Reorderer, public ManagedByOperator
 public:
     InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model);
     InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model, LogicalOperator child);
+
+    static std::expected<LogicalOperator, Exception> create(const NESValueParameters& params);
+    static NESFunctor functorOf(std::string_view key);
 
     [[nodiscard]] const RegisteredModel& getModel() const;
 

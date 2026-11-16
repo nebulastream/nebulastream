@@ -4,23 +4,23 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE solarPanels(producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR solarPanels TYPE File;
+CREATE PHYSICAL SOURCE FOR solarPanels TYPE FileSource;
 ATTACH FILE large/debs/SOLAR_PANELS_TOPIC_1G.csv
 
 CREATE LOGICAL SOURCE windTurbines(producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR windTurbines TYPE File;
+CREATE PHYSICAL SOURCE FOR windTurbines TYPE FileSource;
 ATTACH FILE large/debs/WIND_TURBINES_TOPIC_5M.csv
 
 CREATE LOGICAL SOURCE consumers(consumerId INT32 NOT NULL, sectorId INT32 NOT NULL, consumedPower FLOAT64 NOT NULL, consumerType VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR consumers TYPE File;
+CREATE PHYSICAL SOURCE FOR consumers TYPE FileSource;
 ATTACH FILE large/debs/CONSUMERS_TOPIC_1G.csv
 
-CREATE SINK consumersChecksum(consumerId INT32 NOT NULL, sectorId INT32 NOT NULL, consumedPower FLOAT64 NOT NULL, consumerType VARSIZED NOT NULL, timestamp UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK solarPanelsChecksum(producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q4Checksum(consumedPower FLOAT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q5Checksum(producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, ts UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q6Checksum(source UINT64 NOT NULL, producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, ts UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK winPowerProductionChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK consumersChecksum(consumerId INT32 NOT NULL, sectorId INT32 NOT NULL, consumedPower FLOAT64 NOT NULL, consumerType VARSIZED NOT NULL, timestamp UINT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK solarPanelsChecksum(producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK q4Checksum(consumedPower FLOAT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK q5Checksum(producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, ts UINT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK q6Checksum(source UINT64 NOT NULL, producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, ts UINT64 NOT NULL)  TYPE ChecksumSink;
+CREATE SINK winPowerProductionChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL)  TYPE ChecksumSink;
 
 # Query 0a - Simple Source Sink with consumers stream
 SELECT * FROM consumers INTO consumersChecksum;

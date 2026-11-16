@@ -1,5 +1,5 @@
 query: |
-  SELECT * FROM (SELECT ts, a, id0 FROM stream0 WHERE a != b) INNER JOIN (SELECT * FROM stream1 WHERE c < d) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+  SELECT * FROM (SELECT ts, a, id0 FROM stream0 WHERE a != b) INNER JOIN (SELECT * FROM stream1 WHERE c < d) ON id0 = id1 BINARY_WINDOW TUMBLING (ts, size 1 sec) INTO sink
 
 sinks:
   - name: sink

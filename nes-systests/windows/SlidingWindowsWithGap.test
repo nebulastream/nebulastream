@@ -4,15 +4,15 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH FILE small/stream.csv
 
 CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+CREATE PHYSICAL SOURCE FOR stream2 TYPE FileSource;
 ATTACH FILE small/stream2.csv
 
-CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL)  TYPE File;
-CREATE SINK sinkStreamAgg(start UINT64 NOT NULL, end UINT64 NOT NULL, value UINT64 NOT NULL, id_count UINT64 NOT NULL, id_sum UINT64 NOT NULL, id_min UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL)  TYPE FileSink;
+CREATE SINK sinkStreamAgg(start UINT64 NOT NULL, end UINT64 NOT NULL, value UINT64 NOT NULL, id_count UINT64 NOT NULL, id_sum UINT64 NOT NULL, id_min UINT64 NOT NULL)  TYPE FileSink;
 
 
 # Query 1 - Sliding Window Aggregation with a gap
@@ -45,7 +45,7 @@ SELECT *
 FROM (SELECT * FROM stream)
 INNER JOIN (SELECT * FROM stream2)
     ON (id = id2)
-WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 3 sec)
+BINARY_WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 3 sec)
 INTO sinkStreamStream2;
 ----
 3000 4000 1 3 3000 1 3 3009

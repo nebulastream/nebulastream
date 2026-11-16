@@ -6,7 +6,7 @@
 GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
 
 CREATE LOGICAL SOURCE multiBuffer(field_1 UINT64 NOT NULL, field_2 UINT64 NOT NULL, field_3 UINT64 NOT NULL, field_4 UINT64 NOT NULL, field_5 UINT64 NOT NULL, field_6 UINT64 NOT NULL, field_7 UINT64 NOT NULL, field_8 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR multiBuffer TYPE File;
+CREATE PHYSICAL SOURCE FOR multiBuffer TYPE FileSource;
 ATTACH INLINE
 1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1
@@ -207,7 +207,7 @@ ATTACH INLINE
 1,1,1,1,1,1,1,1
 2,2,2,2,2,2,2,2
 
-CREATE SINK out(field_1 UINT64 NOT NULL, field_2 UINT64 NOT NULL, field_3 UINT64 NOT NULL, field_4 UINT64 NOT NULL, field_5 UINT64 NOT NULL, field_6 UINT64 NOT NULL, field_7 UINT64 NOT NULL, field_8 UINT64 NOT NULL)  TYPE File;
+CREATE SINK out(field_1 UINT64 NOT NULL, field_2 UINT64 NOT NULL, field_3 UINT64 NOT NULL, field_4 UINT64 NOT NULL, field_5 UINT64 NOT NULL, field_6 UINT64 NOT NULL, field_7 UINT64 NOT NULL, field_8 UINT64 NOT NULL)  TYPE FileSink;
 
 # Description: Checks if we the formatter correctly handles data that exactly fits one raw buffer.
 # Source contains 4096 bytes.

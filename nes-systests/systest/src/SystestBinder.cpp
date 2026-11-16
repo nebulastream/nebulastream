@@ -34,7 +34,6 @@
 #include <Model/RunnableTestFile.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Rewriter/Constants.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -73,7 +72,7 @@ Schema<UnqualifiedUnboundField, Ordered> getSinkOutputSchema(const DistributedLo
     INVARIANT(sinkOperator.has_value(), "The optimized plan should have a sink operator");
     const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
     INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
-    if (Sql::sameName(descriptor->getSinkType(), Sql::Checksum))
+    if (Sql::sameName(descriptor->getSinkType(), Sql::ChecksumSink))
     {
         return getChecksumSchema();
     }
@@ -94,14 +93,15 @@ void throwOnError(std::expected<T, Exception> result)
 struct SystestBinder::Impl
 {
     explicit Impl(const SystestConfiguration& config)
-        : sourceCatalog{std::make_shared<SourceCatalog>()}
+        : sourceCatalogHandle{SourceCatalog::create()}
+        , sourceCatalog{copyPtr(sourceCatalogHandle)}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
-        , sourceHandler{sourceCatalog, RequireHostConfig{}}
+        , sourceHandler{sourceCatalog}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
-        , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
+        , statementBinder{sourceCatalog, sinkCatalog, modelCatalog}
         , queryOptimizer{
               config.queryOptimizerConfig,
               sourceCatalog,
@@ -162,16 +162,10 @@ private:
 
     [[nodiscard]] Statement bindStatement(const std::string& sql) const
     {
-        const auto managedParser = AntlrSQLQueryParser::ManagedAntlrParser::create(sql);
-        const auto parseResult = managedParser->parseSingle();
-        if (not parseResult.has_value())
+        auto binding = statementBinder.parseAndBindSingle(sql);
+        if (!binding.has_value())
         {
-            throw InvalidQuerySyntax("failed to parse the statement \"{}\"", replaceAll(sql, "\n", " "));
-        }
-        auto binding = statementBinder.bind(parseResult.value().get());
-        if (not binding.has_value())
-        {
-            throw InvalidQuerySyntax("failed to bind the statement \"{}\": {}", replaceAll(sql, "\n", " "), binding.error());
+            throw std::move(binding).error();
         }
         return std::move(binding).value();
     }
@@ -202,7 +196,12 @@ private:
     /// The query id correlates the statement with its answer.
     [[nodiscard]] BoundPlan optimizeInto(const std::string& sql, const std::string& queryId) const
     {
-        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
+        auto planExp = statementBinder.parseAndBindQuery(sql);
+        if (!planExp.has_value())
+        {
+            throw std::move(planExp).error();
+        }
+        auto plan = std::move(*planExp);
         plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
         auto optimized = queryOptimizer.optimize(plan);
         auto schema = getSinkOutputSchema(optimized);
@@ -221,6 +220,7 @@ private:
     }
 
     /// One catalog set for the whole run, which the rewriter's prefixing keeps collision-free.
+    SharedPtr<SourceCatalog> sourceCatalogHandle;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;

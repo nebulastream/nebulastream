@@ -64,6 +64,10 @@ LogicalFunction SubLogicalFunction::withInferredDataType(const Schema<Field, Uno
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply subtraction to non-numeric input function left: {}, right: {}", copy.left, copy.right);
+    }
     auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newDataType.has_value())
     {
