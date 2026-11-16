@@ -65,6 +65,22 @@ def test_sink_model_compare_read_back_is_order_insensitive_and_counts_rows() -> 
         model.compare_read_back(rows, received=[*rows, rows[0]])
 
 
+def test_sink_model_lossy_compare_allows_missing_and_repeated_rows_before_the_last() -> None:
+    model = SinkModel(_NULL_SCHEMA)
+    rows = model.make_rows(n_buffers=2, seed=7, buffer_size=256)
+    model.compare_lossy_read_back(rows, received=[rows[0], rows[0], rows[-1]])
+    with pytest.raises(AssertionError, match="last row"):
+        model.compare_lossy_read_back(rows, received=rows[:-1])
+    with pytest.raises(AssertionError, match="never written"):
+        model.compare_lossy_read_back(rows, received=[*rows, (-1, None, "foreign")])
+
+
+def test_sink_model_lossy_compare_needs_unique_rows() -> None:
+    schema = [("data", "UINT8", False)]
+    with pytest.raises(AssertionError, match="VARSIZED"):
+        SinkModel(schema).compare_lossy_read_back([(1,), (1,)], received=[(1,)])
+
+
 def test_generate_rows_deterministic() -> None:
     a = generate_rows(_NATIVE_SCHEMA, seed=1, max_bytes=4096)
     assert a == generate_rows(_NATIVE_SCHEMA, seed=1, max_bytes=4096)

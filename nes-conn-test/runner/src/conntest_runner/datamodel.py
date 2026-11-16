@@ -198,3 +198,26 @@ class SinkModel:
 
     def compare_read_back(self, rows: list[tuple[Any, ...]], *, received: list[Any]) -> None:
         _verify_rows(self.schema, rows, received)
+
+    def compare_lossy_read_back(self, rows: list[tuple[Any, ...]], *, received: list[Any]) -> None:
+        """For a LOSS expectation: rows may be missing or repeated, but every row that arrived must be one that was written.
+
+        The last row is written after the fault, so its arrival shows that the connector recovered.
+        A missing or repeated row can only be told apart from others if every written row is unique,
+        which a VARSIZED column ensures.
+        """
+        written = {_canon_row(self.schema, r) for r in rows}
+        if len(written) != len(rows):
+            raise AssertionError(
+                f"{len(rows) - len(written)} of the {len(rows)} written rows repeat another, so a loss cannot be checked; "
+                f"bind a config with a VARSIZED column, whose values are unique per row"
+            )
+        arrived = {_canon_row(self.schema, tuple(r)) for r in received}
+        foreign = [tuple(r) for r in received if _canon_row(self.schema, tuple(r)) not in written]
+        if foreign:
+            raise AssertionError(f"{len(foreign)} rows arrived that were never written: {foreign[:8]}")
+        if rows and _canon_row(self.schema, rows[-1]) not in arrived:
+            raise AssertionError(
+                f"the last row {rows[-1]} did not arrive, so the connector did not recover from the fault; "
+                f"{len(arrived)} of the {len(rows)} rows arrived"
+            )

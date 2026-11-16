@@ -18,6 +18,7 @@ Whether a raised error passes is decided by the binding's expectation.
 
 from __future__ import annotations
 
+import signal
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -131,6 +132,13 @@ class Ctx(ABC):
         """The next connect spawns a fresh harness process and connector."""
 
     @abstractmethod
+    def shutdown(self) -> int:
+        """Ends the session without a disconnect, so the harness destroys the connector, and returns the harness's exit code.
+
+        A harness that does not exit is killed at the case's deadline, so its exit code is that of SIGKILL.
+        """
+
+    @abstractmethod
     def transfer_half(self) -> None:
         """Moves the first half of the data, so that a scenario can inject a fault before it moves the rest."""
 
@@ -161,6 +169,9 @@ class SourceCtx(Ctx):
 
     def kill(self) -> None:
         self.source.kill()
+
+    def shutdown(self) -> int:
+        return self.source.shutdown()
 
     def transfer_half(self) -> None:
         self._seed_and_fill((len(self.rows) + 1) // 2 - self._seeded)
@@ -194,6 +205,7 @@ class SinkCtx(Ctx):
     data: SinkModel
     # The buffers that the harness's LOAD made from the rows.
     buffers: int
+    loss: bool = False  # set for a LOSS expectation, under which the read-back may miss or repeat rows
     # The buffers written since the last START.
     _written: int = field(default=0, init=False)
 
@@ -207,17 +219,33 @@ class SinkCtx(Ctx):
     def kill(self) -> None:
         self.sink.kill()
 
+    def shutdown(self) -> int:
+        return self.sink.shutdown()
+
     def transfer_half(self) -> None:
         self._write((self.buffers + 1) // 2 - self._written)
 
     def transfer(self) -> None:
         self._write(self.buffers - self._written)
 
+    def write_until_backpressure(self) -> bool:
+        """Writes the data that has not moved yet, but returns as soon as the sink applies backpressure, and returns whether it did.
+
+        It did not if the sink took every buffer first.
+        A later transfer waits until the sink has taken the buffers.
+        """
+        n_buffers = self.buffers - self._written
+        self._written += n_buffers
+        return self.sink.write_until_backpressure(n_buffers).backpressure
+
     def check_delivered(self) -> None:
         received = self.loader.read_back(
             target=self.target, schema=self.schema, n_rows=len(self.rows), timeout_s=self.sink.step_timeout_s
         )
-        self.data.compare_read_back(self.rows, received=received)
+        if self.loss:
+            self.data.compare_lossy_read_back(self.rows, received=received)
+        else:
+            self.data.compare_read_back(self.rows, received=received)
 
     def _write(self, n_buffers: int) -> None:
         self._written += n_buffers
@@ -406,13 +434,98 @@ def crash_recovery(ctx: SourceCtx) -> None:
     ctx.disconnect()
 
 
+@scenario("backpressure", default_buffers=200, needs_link=True)
+def backpressure(ctx: SinkCtx) -> None:
+    """The backend stops reading for a while, as a paused or overloaded peer does.
+
+    The sink must apply backpressure, so that the engine holds back the source instead of the sink taking every buffer,
+    and must deliver every row once the backend reads again.
+    The data is several times what the stalled link takes, so the sink's queue must fill.
+    A sink that blocks its worker thread instead of applying backpressure ends the write with a step timeout.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.fault.stall()
+    if not ctx.write_until_backpressure():
+        raise AssertionError("the sink took every buffer while the backend read nothing, so it never applied backpressure")
+    ctx.fault.unstall()
+    ctx.transfer()
+    ctx.disconnect()
+    ctx.check_delivered()
+
+
+@scenario("stop_while_blocked", default_buffers=200, needs_link=True)
+def stop_while_blocked(ctx: SinkCtx) -> None:
+    """Models a query that is stopped while the backend reads nothing, so the connector's writer is blocked.
+
+    The connector must give up on the data that the backend does not take, so that STOP returns within the step timeout.
+    The data is several times what the stalled link takes, so the writer must be blocked when STOP comes.
+    The link stays stalled, so nothing is read back.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.fault.stall()
+    ctx.transfer()
+    ctx.disconnect()
+
+
+@scenario("shutdown_while_blocked", default_buffers=200, needs_link=True)
+def shutdown_while_blocked(ctx: SinkCtx) -> None:
+    """Models a worker that shuts down while the backend reads nothing, so the connector's writer is blocked.
+
+    The engine then destroys the connector without stopping it, and the destruction must not wait for the backend.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.fault.stall()
+    ctx.transfer()
+    exit_code = ctx.shutdown()
+    if exit_code == -signal.SIGKILL:
+        raise AssertionError("the harness did not exit after its session ended, so destroying the connector blocked until the deadline")
+    if exit_code != 0:
+        raise AssertionError(f"the harness exited with {exit_code} after its session ended")
+
+
+@scenario("reconnect", default_buffers=200, needs_link=True)
+def reconnect(ctx: SinkCtx) -> None:
+    """The connection to the backend breaks mid-stream and the backend can be reached again at once, as after a restart.
+
+    The connector must connect again and deliver the rest of the data.
+    TCP acknowledges bytes only to the sending kernel, so a connector without acknowledgements of its own
+    may lose or repeat the data in flight, and its binding expects LOSS.
+    The second half is larger than the bounded socket buffers, so the connector cannot write all of it into the broken connection.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.transfer_half()
+    ctx.fault.cut()
+    ctx.fault.restore()
+    ctx.transfer()
+    ctx.disconnect()
+    ctx.check_delivered()
+
+
+@scenario("reconnect_timeout", default_buffers=200, needs_link=True)
+def reconnect_timeout(ctx: SinkCtx) -> None:
+    """The connection to the backend breaks mid-stream and the backend stays unreachable.
+
+    A connector that connects again must give up once its timeout ends and fail, not wait forever, so its binding expects that error.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.transfer_half()
+    ctx.fault.cut()
+    ctx.transfer()
+    ctx.disconnect()
+
+
 def run_case(fn: ScenarioFn, ctx: Ctx, expect: Expectation) -> None:
     try:
         fn(ctx)
     except ConnectorError as e:
         if expect.ok:
             raise AssertionError(
-                f"expected OK but raised {describe(e.code)}@{e.phase}: {e.message}"
+                f"expected {expect} but raised {describe(e.code)}@{e.phase}: {e.message}"
             ) from e
         if e.code != expect.code:
             # An ERROR expectation always has a code.

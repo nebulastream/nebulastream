@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A connection between the connector and its backend that a fault scenario can sever, slow down or silence.
+"""A connection between the connector and its backend that a fault scenario can sever, slow down, silence or stall.
 
 The connector's config points at the proxy, ``toxiproxy:<port>`` with a port that toxiproxy chooses, and toxiproxy forwards to the backend.
 The loader seeds the backend directly, so a fault affects only the connector's side.
@@ -131,6 +131,24 @@ class Link:
     def unsilence(self) -> None:
         for stream in _DIRECTIONS:
             self._request("DELETE", f"/proxies/{self._name}/toxics/silence_{stream}")
+
+    def stall(self) -> None:
+        """The backend stops reading what the connector sends, so the connector's socket fills up, as with a paused peer.
+
+        The latency toxic of a silence cannot do this, because it keeps up to 1024 chunks inside the proxy,
+        so the connector could send megabytes before its socket filled up.
+        A bandwidth of 0 KB/s holds the first chunk, and the proxy reads nothing more until the stall is lifted.
+        The compose files bound the socket buffers, so about 150 KB fit into the link before it is full.
+        """
+        self._request(
+            "POST",
+            f"/proxies/{self._name}/toxics",
+            {"name": "stall", "type": "bandwidth", "stream": "upstream", "attributes": {"rate": 0}},
+        )
+
+    def unstall(self) -> None:
+        """The proxy forwards what it held, so the stall loses no data."""
+        self._request("DELETE", f"/proxies/{self._name}/toxics/stall")
 
     def cleanup(self) -> None:
         with contextlib.suppress(urllib.error.URLError, OSError):
