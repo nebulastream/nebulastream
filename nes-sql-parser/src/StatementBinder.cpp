@@ -29,6 +29,7 @@
 #include <string_view>
 #include <Util/Strings.hpp>
 
+#include <limits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -56,8 +57,10 @@
 #include <Util/URI.hpp>
 #include <ErrorHandling.hpp>
 
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <CommonParserFunctions.hpp>
@@ -292,6 +295,47 @@ public:
             .outputs = std::move(outputSchemaExp).value()};
     }
 
+    static ConfigLiteral toConfigLiteral(const std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>& value)
+    {
+        if (const auto* schema = std::get_if<Schema<UnqualifiedUnboundField, Ordered>>(&value))
+        {
+            return *schema;
+        }
+        return std::visit(
+            Overloaded{
+                [](const uint64_t unsignedValue) -> ConfigLiteral
+                {
+                    if (unsignedValue > static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
+                    {
+                        throw InvalidConfigParameter("Config value {} is out of range", unsignedValue);
+                    }
+                    return static_cast<int64_t>(unsignedValue);
+                },
+                [](const auto& otherValue) -> ConfigLiteral { return otherValue; }},
+            std::get<Literal>(value));
+    }
+
+    CreateDecoderStatement bindCreateDecoderStatement(AntlrSQLParser::CreateDecoderDefinitionContext* decoderDefAST) const
+    {
+        CreateDecoderStatement statement{.name = bindIdentifier(decoderDefAST->decoderName), .stages = {}, .options = {}};
+        for (auto* const stage : decoderDefAST->decoderStages)
+        {
+            statement.stages.push_back(bindIdentifier(stage));
+        }
+        if (decoderDefAST->optionsClause() != nullptr)
+        {
+            for (auto& [key, value] : bindConfigOptionsWithDuplicates(decoderDefAST->optionsClause()->options->namedConfigExpression()))
+            {
+                if (std::ranges::any_of(statement.options, [&](const auto& option) { return option.getFullyQualifiedName() == key; }))
+                {
+                    throw InvalidConfigParameter("Duplicate decoder option: {}", key);
+                }
+                statement.options.emplace_back(key, toConfigLiteral(value));
+            }
+        }
+        return statement;
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -315,6 +359,10 @@ public:
         if (auto* const modelDefAST = createAST->createDefinition()->createModelDefinition(); modelDefAST != nullptr)
         {
             return bindCreateModelStatement(modelDefAST);
+        }
+        if (auto* const decoderDefAST = createAST->createDefinition()->createDecoderDefinition(); decoderDefAST != nullptr)
+        {
+            return bindCreateDecoderStatement(decoderDefAST);
         }
         throw InvalidStatement("Unrecognized CREATE statement");
     }
@@ -445,6 +493,19 @@ public:
                 = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
             return ShowModelsStatement{.format = format};
         }
+        if (const auto* decodersSubject = dynamic_cast<AntlrSQLParser::ShowDecodersSubjectContext*>(showAST->showSubject());
+            decodersSubject != nullptr)
+        {
+            ShowDecodersStatement statement{
+                .name = std::nullopt,
+                .format = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt};
+            if (showFilter != nullptr)
+            {
+                statement.name
+                    = Identifier::parse(requireFilterValue<std::string>(bindShowFilter(showFilter), "NAME", "a string", "SHOW DECODERS"));
+            }
+            return statement;
+        }
         if (const auto* versionSubject = dynamic_cast<AntlrSQLParser::ShowVersionSubjectContext*>(showAST->showSubject());
             versionSubject != nullptr)
         {
@@ -509,6 +570,11 @@ public:
         return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
     }
 
+    static DropDecoderStatement bindDropDecoder(const std::pair<Identifier, Literal>& filter)
+    {
+        return DropDecoderStatement{Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP DECODER"))};
+    }
+
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
         const auto* const dropFilter = dropAst->dropFilter();
@@ -538,6 +604,10 @@ public:
         if (subject->dropModel() != nullptr)
         {
             return bindDropModel(filter);
+        }
+        if (subject->dropDecoder() != nullptr)
+        {
+            return bindDropDecoder(filter);
         }
         throw InvalidStatement("Unrecognized DROP statement");
     }

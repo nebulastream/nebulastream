@@ -29,6 +29,7 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -167,6 +168,26 @@ struct CreateModelStatement
     Schema<UnqualifiedUnboundField, Ordered> outputs;
 };
 
+/// CREATE DECODER name AS (stage, ...) SET(...): a named, ordered chain of decoder stages with their options
+/// (qualified by stage name). Physical sources reference it via "SOURCE"."DECODER".
+struct CreateDecoderStatement
+{
+    Identifier name;
+    std::vector<Identifier> stages;
+    std::vector<LiteralConfigValue> options;
+};
+
+struct ShowDecodersStatement
+{
+    std::optional<Identifier> name;
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropDecoderStatement
+{
+    Identifier name;
+};
+
 struct ShowModelsStatement
 {
     std::optional<StatementOutputFormat> format;
@@ -209,17 +230,20 @@ using Statement = std::variant<
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
     CreateModelStatement,
+    CreateDecoderStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
     DropModelStatement,
+    DropDecoderStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     ShowModelsStatement,
+    ShowDecodersStatement,
     ShowVersionStatement,
     DropQueryStatement>;
 

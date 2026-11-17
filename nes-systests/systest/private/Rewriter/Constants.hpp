@@ -42,6 +42,8 @@ constexpr auto OutputFormat = "OUTPUT_FORMAT";
 constexpr auto Type = "TYPE";
 constexpr auto Schema = "SCHEMA";
 constexpr auto QuoteStrings = "QUOTE_STRINGS";
+/// Names a decoder (CREATE DECODER) in a string literal.
+constexpr auto Decoder = "DECODER";
 
 /// Default input/output format
 constexpr auto Csv = "CSV";

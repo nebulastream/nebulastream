@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <DataTypes/UnboundField.hpp>
+#include <Decoders/DecoderCatalog.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -151,6 +152,21 @@ struct DropModelStatementResult
     std::string name;
 };
 
+struct CreateDecoderStatementResult
+{
+    NamedDecoder decoder;
+};
+
+struct ShowDecodersStatementResult
+{
+    std::vector<NamedDecoder> decoders;
+};
+
+struct DropDecoderStatementResult
+{
+    Identifier name;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -160,14 +176,17 @@ using StatementResult = std::variant<
     WorkerStatusStatementResult,
     ShowVersionStatementResult,
     CreateModelStatementResult,
+    CreateDecoderStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
     ShowModelsStatementResult,
+    ShowDecodersStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
     DropModelStatementResult,
+    DropDecoderStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
@@ -222,6 +241,10 @@ public:
     std::expected<ShowPhysicalSourcesStatementResult, Exception> operator()(const ShowPhysicalSourcesStatement& statement) const;
     std::expected<DropLogicalSourceStatementResult, Exception> operator()(const DropLogicalSourceStatement& statement);
     std::expected<DropPhysicalSourceStatementResult, Exception> operator()(const DropPhysicalSourceStatement& statement);
+    /// Named decoders live with the sources: physical sources reference them via SOURCE.DECODER.
+    std::expected<CreateDecoderStatementResult, Exception> operator()(const CreateDecoderStatement& statement);
+    std::expected<ShowDecodersStatementResult, Exception> operator()(const ShowDecodersStatement& statement) const;
+    std::expected<DropDecoderStatementResult, Exception> operator()(const DropDecoderStatement& statement);
 };
 
 class SinkStatementHandler final : public StatementHandler<SinkStatementHandler>

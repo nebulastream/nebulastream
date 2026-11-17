@@ -71,6 +71,9 @@ EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
 EXCEPTION(UnknownValueSerializerType, 2044, "unknown value serializer type")
 EXCEPTION(UnknownValueDeserializerType, 2045, "unknown value deserializer type")
+EXCEPTION(UnknownDecoderType, 2046, "unknown decoder type")
+EXCEPTION(UnknownDecoderName, 2047, "unknown decoder name")
+EXCEPTION(DecoderAlreadyExists, 2048, "decoder already exists")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
@@ -98,6 +101,7 @@ EXCEPTION(FormattingError, 4003, "error during formatting")
 EXCEPTION(CannotOpenSink, 4004, "failed to open a sink")
 EXCEPTION(CannotWriteToSink, 4005, "failed to write to a sink")
 EXCEPTION(CannotReadFromSource, 4006, "failed to read from a source")
+EXCEPTION(CannotDecodeSourceData, 4007, "cannot decode source data")
 
 /// 5XXX API errors
 EXCEPTION(QueryNotFound, 5000, "query is not registered")

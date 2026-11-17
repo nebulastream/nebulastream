@@ -841,6 +841,65 @@ TEST_F(StatementBinderTest, ShowSinks)
     ASSERT_EQ(filteredQuotedSinksResult.value().sinks.at(0).getSinkName(), Identifier::parse("TESTSINK1"));
 }
 
+TEST_F(StatementBinderTest, DecoderLifecycle)
+{
+    /// CREATE DECODER binds the ordered stage list and the stage-qualified options.
+    const auto create = binder->parseAndBindSingle("CREATE DECODER csv_lz4 AS (LZ4)");
+    ASSERT_TRUE(create.has_value()) << create.error();
+    ASSERT_TRUE(std::holds_alternative<CreateDecoderStatement>(*create));
+    const auto& createDecoder = std::get<CreateDecoderStatement>(*create);
+    EXPECT_EQ(createDecoder.name, Identifier::parse("CSV_LZ4"));
+    EXPECT_EQ(createDecoder.stages, std::vector{Identifier::parse("LZ4")});
+    EXPECT_TRUE(createDecoder.options.empty());
+    const auto created = sourceStatementHandler->apply(createDecoder);
+    ASSERT_TRUE(created.has_value()) << created.error();
+    EXPECT_EQ(created->decoder.stages.size(), 1U);
+    EXPECT_FALSE(sourceStatementHandler->apply(createDecoder).has_value()) << "decoder names are unique";
+
+    /// Options are bound as qualified literals; their validity is checked when the decoder is created.
+    const auto withOption = binder->parseAndBindSingle("CREATE DECODER withOption AS (LZ4) SET (27 AS LZ4.NO_SUCH_OPTION)");
+    ASSERT_TRUE(withOption.has_value()) << withOption.error();
+    ASSERT_EQ(std::get<CreateDecoderStatement>(*withOption).options.size(), 1U);
+    EXPECT_FALSE(sourceStatementHandler->apply(std::get<CreateDecoderStatement>(*withOption)).has_value());
+    EXPECT_FALSE(binder->parseAndBindSingle("CREATE DECODER dup AS (LZ4) SET (1 AS LZ4.X, 2 AS LZ4.X)").has_value());
+    EXPECT_FALSE(
+        sourceStatementHandler->apply(std::get<CreateDecoderStatement>(*binder->parseAndBindSingle("CREATE DECODER bad AS (NOPE)")))
+            .has_value());
+
+    const auto show = binder->parseAndBindSingle("SHOW DECODERS");
+    ASSERT_TRUE(show.has_value()) << show.error();
+    const auto shown = sourceStatementHandler->apply(std::get<ShowDecodersStatement>(*show));
+    ASSERT_TRUE(shown.has_value());
+    ASSERT_EQ(shown->decoders.size(), 1U);
+    EXPECT_EQ(shown->decoders.at(0).name, Identifier::parse("CSV_LZ4"));
+
+    /// A physical source referencing the decoder gets a copy of its stages.
+    ASSERT_TRUE(
+        sourceStatementHandler
+            ->apply(std::get<CreateLogicalSourceStatement>(*binder->parseAndBindSingle("CREATE LOGICAL SOURCE compressed(a UINT64)")))
+            .has_value());
+    const auto physical = binder->parseAndBindSingle(
+        R"(CREATE PHYSICAL SOURCE FOR compressed TYPE File SET ('/dev/null' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE", 'csv_lz4' AS "SOURCE"."DECODER"))");
+    ASSERT_TRUE(physical.has_value()) << physical.error();
+    const auto physicalResult = sourceStatementHandler->apply(std::get<CreatePhysicalSourceStatement>(*physical));
+    ASSERT_TRUE(physicalResult.has_value()) << physicalResult.error();
+    const auto [descriptor] = physicalResult.value();
+    ASSERT_EQ(descriptor.getDecoders().size(), 1U);
+    EXPECT_EQ(descriptor.getDecoders().at(0).getStageType(), Identifier::parse("LZ4"));
+
+    /// Dropping the decoder leaves the source's copy untouched.
+    const auto drop = binder->parseAndBindSingle("DROP DECODER WHERE NAME = 'csv_lz4'");
+    ASSERT_TRUE(drop.has_value()) << drop.error();
+    ASSERT_TRUE(sourceStatementHandler->apply(std::get<DropDecoderStatement>(*drop)).has_value());
+    EXPECT_FALSE(sourceStatementHandler->apply(std::get<DropDecoderStatement>(*drop)).has_value());
+    const auto stored = sourceCatalog->getPhysicalSource(descriptor.getPhysicalSourceId());
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->getDecoders().size(), 1U);
+
+    /// Referencing a decoder that does not exist fails.
+    EXPECT_FALSE(sourceStatementHandler->apply(std::get<CreatePhysicalSourceStatement>(*physical)).has_value());
+}
+
 #if NES_HAVE_INFERENCE_TESTS
 TEST_F(StatementBinderTest, BindCreateModel)
 {

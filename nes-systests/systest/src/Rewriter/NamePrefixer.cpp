@@ -248,6 +248,10 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefix(source->logicalSource);
     }
+    for (const auto* decoder : findAll<AntlrSQLParser::CreateDecoderDefinitionContext>(parse.tree()))
+    {
+        prefix(decoder->decoderName);
+    }
     for (const auto* sink : findAll<AntlrSQLParser::CreateSinkDefinitionContext>(parse.tree()))
     {
         prefix(sink->sinkName);

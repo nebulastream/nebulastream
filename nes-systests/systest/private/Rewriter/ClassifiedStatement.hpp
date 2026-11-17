@@ -49,7 +49,13 @@ struct ModelDeclaration
     AntlrSQLParser::CreateModelDefinitionContext* definition;
 };
 
-using CreateDeclaration = std::variant<LogicalSourceDeclaration, PhysicalSourceDeclaration, SinkDeclaration, ModelDeclaration>;
+struct DecoderDeclaration
+{
+    AntlrSQLParser::CreateDecoderDefinitionContext* definition;
+};
+
+using CreateDeclaration
+    = std::variant<LogicalSourceDeclaration, PhysicalSourceDeclaration, SinkDeclaration, ModelDeclaration, DecoderDeclaration>;
 
 /// A pointer holds the parse, because a parse points at its own members and cannot move.
 /// The declaration points into that parse, so the two share one lifetime.

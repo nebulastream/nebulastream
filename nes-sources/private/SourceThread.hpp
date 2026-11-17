@@ -22,6 +22,7 @@
 #include <ostream>
 #include <stop_token>
 #include <thread>
+#include <Decoders/Decoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -62,7 +63,8 @@ public:
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::unique_ptr<Decoder> decoder = nullptr);
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -92,6 +94,8 @@ protected:
     OriginId originId;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
     std::unique_ptr<Source> sourceImplementation;
+    /// Runs between fillTupleBuffer and emit if the source has decoder stages (SOURCE.DECODER).
+    std::unique_ptr<Decoder> decoder;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
 

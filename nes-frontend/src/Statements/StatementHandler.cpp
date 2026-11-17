@@ -106,6 +106,33 @@ SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statemen
     return std::unexpected{created.error()};
 }
 
+std::expected<CreateDecoderStatementResult, Exception> SourceStatementHandler::operator()(const CreateDecoderStatement& statement)
+{
+    return sourceCatalog->getDecoderCatalog()
+        .addDecoder(statement.name, statement.stages, createConfigLiteralSchema(statement.options))
+        .transform([](NamedDecoder decoder) { return CreateDecoderStatementResult{std::move(decoder)}; });
+}
+
+std::expected<ShowDecodersStatementResult, Exception> SourceStatementHandler::operator()(const ShowDecodersStatement& statement) const
+{
+    if (statement.name)
+    {
+        auto decoder = sourceCatalog->getDecoderCatalog().getDecoder(*statement.name);
+        return ShowDecodersStatementResult{decoder ? std::vector{std::move(*decoder)} : std::vector<NamedDecoder>{}};
+    }
+    return ShowDecodersStatementResult{sourceCatalog->getDecoderCatalog().getAllDecoders()};
+}
+
+std::expected<DropDecoderStatementResult, Exception> SourceStatementHandler::operator()(const DropDecoderStatement& statement)
+{
+    /// Sources keep their copy of the stages, so dropping a decoder never affects existing sources.
+    if (not sourceCatalog->getDecoderCatalog().removeDecoder(statement.name))
+    {
+        return std::unexpected{UnknownDecoderName("No decoder named '{}'", statement.name)};
+    }
+    return DropDecoderStatementResult{statement.name};
+}
+
 std::expected<ShowLogicalSourcesStatementResult, Exception>
 SourceStatementHandler::operator()(const ShowLogicalSourcesStatement& statement) const
 {

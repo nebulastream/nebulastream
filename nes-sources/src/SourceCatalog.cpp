@@ -36,6 +36,7 @@
 #include <Configurations/ConfigResolution.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Decoders/DecoderCatalog.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
@@ -44,6 +45,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
@@ -60,6 +62,30 @@
 namespace NES
 {
 
+namespace
+{
+/// Copies the stages of the named decoder (SOURCE.DECODER) into the config: the source keeps them even if the decoder
+/// is dropped or recreated later.
+std::expected<void, Exception> resolveNamedDecoder(GeneralSourceConfig& config, const DecoderCatalog* decoderCatalog)
+{
+    if (not config.decoder)
+    {
+        return {};
+    }
+    if (decoderCatalog == nullptr)
+    {
+        return std::unexpected{
+            UnknownDecoderName("The decoder '{}' cannot be resolved here: named decoders require a source catalog", *config.decoder)};
+    }
+    auto decoder = decoderCatalog->getDecoder(*config.decoder);
+    if (not decoder)
+    {
+        return std::unexpected{UnknownDecoderName("No decoder named '{}'. Create it first with CREATE DECODER.", *config.decoder)};
+    }
+    config.decoders = std::move(decoder->stages);
+    return {};
+}
+}
 
 PhysicalSourceBuilder::PhysicalSourceBuilder(
     GeneralSourceConfig generalSourceConfig,
@@ -81,6 +107,7 @@ std::expected<SourceDescriptor, Exception> PhysicalSourceBuilder::build(
         std::move(schema),
         this->generalSourceConfig.host,
         this->generalSourceConfig.maxInflightBuffers,
+        this->generalSourceConfig.decoders,
         std::move(this->sourcePluginConfig),
         std::move(this->inputFormatterPluginConfig),
         std::move(logicalSourceName)};
@@ -156,7 +183,8 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
     auto maxFlightInBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
 
     return std::make_tuple(
-        GeneralSourceConfig{.host = hostOpt, .maxInflightBuffers = maxFlightInBuffers},
+        GeneralSourceConfig{
+            .host = hostOpt, .maxInflightBuffers = maxFlightInBuffers, .decoder = config.get(SourceDescriptor::DECODER), .decoders = {}},
         std::move(pluginSourceConfig),
         std::move(formatDescriptor),
         std::move(schema));
@@ -215,6 +243,10 @@ SourceCatalog::getConfigSchema(const Identifier& sourceType, const Identifier& i
 std::expected<SourceDescriptor, Exception>
 SourceCatalog::registerWithLogicalSource(PhysicalSourceBuilder builder, const Identifier& logicalSourceName)
 {
+    if (auto resolved = resolveNamedDecoder(builder.generalSourceConfig, decoderCatalog.get()); not resolved.has_value())
+    {
+        return std::unexpected{resolved.error()};
+    }
     const std::unique_lock lock(catalogMutex);
     const auto logicalSourceIter = namesToLogicalSourceMapping.find(logicalSourceName);
     if (logicalSourceIter == namesToLogicalSourceMapping.end())
@@ -377,7 +409,12 @@ std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> SourceCa
 
 std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config)
 {
-    return os << fmt::format("GeneralSourceConfig(host: {}, maxInflightBuffers: {})", config.host, config.maxInflightBuffers);
+    return os << fmt::format(
+               "GeneralSourceConfig(host: {}, maxInflightBuffers: {}, decoder: {}, decoders: {})",
+               config.host,
+               config.maxInflightBuffers,
+               config.decoder,
+               config.decoders);
 }
 
 namespace
@@ -470,7 +507,10 @@ resolveLegacyConfigMaps(
         }
         return std::make_tuple(
             GeneralSourceConfig{
-                .host = config.get(SourceDescriptor::HOST), .maxInflightBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS)},
+                .host = config.get(SourceDescriptor::HOST),
+                .maxInflightBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS),
+                .decoder = config.get(SourceDescriptor::DECODER),
+                .decoders = {}},
             PluginSourceConfiguration{sourceType, std::move(instantiatedPluginConfig).value()},
             InputFormatterDescriptor{inputFormatterType, ExplicitAny{std::any{std::monostate{}}}},
             config.get(SourceDescriptor::SCHEMA));
@@ -499,6 +539,10 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         return std::unexpected{std::move(resolved).error()};
     }
     auto& [generalConfig, pluginConfig, formatDescriptor, declaredSchema] = *resolved;
+    if (auto decoderResolved = resolveNamedDecoder(generalConfig, decoderCatalog.get()); not decoderResolved.has_value())
+    {
+        return std::unexpected{decoderResolved.error()};
+    }
 
     const std::unique_lock lock(catalogMutex);
     const auto logicalSourceIter = namesToLogicalSourceMapping.find(logicalSource.getLogicalSourceName());
@@ -517,6 +561,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         *logicalSourceIter->second.getSchema(),
         generalConfig.host,
         generalConfig.maxInflightBuffers,
+        generalConfig.decoders,
         std::move(pluginConfig),
         std::move(formatDescriptor),
         logicalSource.getLogicalSourceName()};
@@ -542,12 +587,18 @@ std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
         return std::nullopt;
     }
     auto& [generalConfig, pluginConfig, formatDescriptor, declaredSchema] = *resolved;
+    if (auto decoderResolved = resolveNamedDecoder(generalConfig, decoderCatalog.get()); not decoderResolved.has_value())
+    {
+        NES_ERROR("Could not create anonymous source: {}", decoderResolved.error().what());
+        return std::nullopt;
+    }
     const auto physicalSourceId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
     return SourceDescriptor{
         physicalSourceId,
         schema,
         generalConfig.host,
         generalConfig.maxInflightBuffers,
+        generalConfig.decoders,
         std::move(pluginConfig),
         std::move(formatDescriptor),
         std::nullopt};
@@ -569,6 +620,10 @@ std::expected<SourceDescriptor, Exception> SourceDescriptor::create(
         return std::unexpected{resolved.error()};
     }
     auto [generalConfig, pluginConfig, formatter, declaredSchema] = std::move(*resolved);
+    if (auto decoderResolved = resolveNamedDecoder(generalConfig, nullptr); not decoderResolved.has_value())
+    {
+        return std::unexpected{decoderResolved.error()};
+    }
     return PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(formatter)}.build(
         id, *logicalSource.getSchema(), isAnonymous ? std::nullopt : std::optional{logicalSource.getLogicalSourceName()});
 }

@@ -55,6 +55,10 @@ CreateDeclaration classify(const SqlParse& parse, CreateStatement create)
     {
         return ModelDeclaration{.definition = model};
     }
+    if (auto* decoder = findFirst<AntlrSQLParser::CreateDecoderDefinitionContext>(parse.tree()))
+    {
+        return DecoderDeclaration{.definition = decoder};
+    }
     throw TestException("Unsupported CREATE statement: {}", create.sql);
 }
 

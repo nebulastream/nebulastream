@@ -17,6 +17,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <Decoders/Decoder.hpp>
+#include <Decoders/DecoderChain.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -40,13 +42,20 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
     if (const auto sourceFactory = SourceRegistry::instance().find(sourceDescriptor.getSourceType().asCanonicalString()))
     {
         auto source = (*sourceFactory)(sourceDescriptor);
+        /// Fresh stage instances per source, in the order of the named decoder; nullptr without a decoder.
+        auto decoder = DecoderChain::createDecoder(sourceDescriptor.getDecoders());
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified, we take the NodeEngine-wide configuration.
         const auto maxInflightBuffers = sourceDescriptor.getMaxInflightBuffers().value_or(defaultMaxInflightBuffers);
         const SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
         return std::make_unique<SourceHandle>(
-            std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source));
+            std::move(backpressureListener),
+            std::move(originId),
+            std::move(runtimeConfig),
+            bufferPool,
+            std::move(source),
+            std::move(decoder));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }

@@ -160,9 +160,19 @@ std::string SourceRewriter::renderSetClauseFor(
     {
         options.push_back(Sql::option(Sql::InputFormatter, Sql::Type, Sql::Csv));
     }
-    if (const auto declaredText = parse.getTextOf(declared); not declaredText.empty())
+    if (declared != nullptr)
     {
-        options.push_back(declaredText);
+        for (auto* option : declared->namedConfigExpression())
+        {
+            /// A decoder is declared in the same test file and prefixed, so its reference has to be prefixed too.
+            auto* value = getStringValueOf(option);
+            const auto prefixed = (value != nullptr and isOption(option, Sql::Source, Sql::Decoder))
+                ? names.prefixed(unquote(value->getText()))
+                : std::nullopt;
+            options.push_back(
+                prefixed ? fmt::format("{} AS {}", Sql::stringLiteral(prefixed->getOriginalString()), parse.getTextOf(option->name))
+                         : parse.getTextOf(option));
+        }
     }
     return Sql::setClause(Sql::optionList(options));
 }

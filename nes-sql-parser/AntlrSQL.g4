@@ -66,7 +66,7 @@ explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
 
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition | createDecoderDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -84,6 +84,10 @@ createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
 modelInputField: identifier typeDefinition;
 modelOutputField: identifier typeDefinition;
 
+/// A named, ordered chain of decoder stages (e.g. decryption, decompression, deserialization) that physical sources
+/// reference via "SOURCE"."DECODER" (quoted: DECODER is a keyword). Stage options are qualified by the stage name, e.g. SET(27 AS ZSTD.WINDOW_LOG_MAX).
+createDecoderDefinition: DECODER decoderName=identifier AS '(' decoderStages+=identifier (',' decoderStages+=identifier)* ')' optionsClause?;
+
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 
@@ -93,8 +97,9 @@ nullableDefinition: NOT NULLTOKEN;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel | dropDecoder;
 dropModel: MODEL;
+dropDecoder: DECODER;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
@@ -111,6 +116,7 @@ showSubject: QUERIES #showQueriesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
     | SINKS #showSinksSubject
     | MODELS #showModelsSubject
+    | DECODERS #showDecodersSubject
     | VERSION #showVersionSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
@@ -553,6 +559,8 @@ JSON: 'JSON';
 TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
 MODEL: 'MODEL';
+DECODER: 'DECODER';
+DECODERS: 'DECODERS';
 MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
 INPUT: 'INPUT';

@@ -37,6 +37,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <rfl/json/write.hpp>
 #include <DistributedQuery.hpp>
@@ -545,6 +547,53 @@ struct StatementOutputAssembler<DropModelStatementResult>
     }
 };
 
+using DecoderNameOutputRowType = std::tuple<std::string>;
+constexpr std::array<std::string_view, 1> decoderNameOutputColumns{"decoder_name"};
+
+using DecoderInfoOutputRowType = std::tuple<std::string, std::string>;
+constexpr std::array<std::string_view, 2> decoderInfoOutputColumns{"decoder_name", "stages"};
+
+inline DecoderInfoOutputRowType toDecoderInfoRow(const NamedDecoder& decoder)
+{
+    return {
+        decoder.name.asCanonicalString(),
+        fmt::format("{}", fmt::join(decoder.stages | std::views::transform([](const auto& stage) { return stage.getStageType(); }), ", "))};
+}
+
+template <>
+struct StatementOutputAssembler<CreateDecoderStatementResult>
+{
+    using OutputRowType = DecoderInfoOutputRowType;
+
+    auto convert(const CreateDecoderStatementResult& result)
+    {
+        return std::make_pair(decoderInfoOutputColumns, std::vector{toDecoderInfoRow(result.decoder)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ShowDecodersStatementResult>
+{
+    using OutputRowType = DecoderInfoOutputRowType;
+
+    auto convert(const ShowDecodersStatementResult& result)
+    {
+        return std::make_pair(
+            decoderInfoOutputColumns, result.decoders | std::views::transform(toDecoderInfoRow) | std::ranges::to<std::vector>());
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropDecoderStatementResult>
+{
+    using OutputRowType = DecoderNameOutputRowType;
+
+    auto convert(const DropDecoderStatementResult& result)
+    {
+        return std::make_pair(decoderNameOutputColumns, std::vector{std::make_tuple(result.name.asCanonicalString())});
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 
@@ -565,5 +614,8 @@ static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
 static_assert(AssemblembleStatementResult<CreateModelStatementResult>);
 static_assert(AssemblembleStatementResult<ShowModelsStatementResult>);
 static_assert(AssemblembleStatementResult<DropModelStatementResult>);
+static_assert(AssemblembleStatementResult<CreateDecoderStatementResult>);
+static_assert(AssemblembleStatementResult<ShowDecodersStatementResult>);
+static_assert(AssemblembleStatementResult<DropDecoderStatementResult>);
 
 }

@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <ostream>
@@ -26,10 +27,13 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Decoders/DecoderCatalog.hpp>
+#include <Decoders/DecoderStageDescriptor.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
@@ -48,6 +52,9 @@ struct GeneralSourceConfig
 {
     Host host;
     std::optional<size_t> maxInflightBuffers;
+    /// SOURCE.DECODER: the named decoder; its stages are copied into `decoders` by the SourceCatalog.
+    std::optional<Identifier> decoder;
+    std::vector<DecoderStageDescriptor> decoders;
     bool operator==(const GeneralSourceConfig&) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config);
@@ -77,6 +84,9 @@ private:
     PluginSourceConfiguration sourcePluginConfig;
     InputFormatterDescriptor inputFormatterPluginConfig;
     bool wasCalled = false;
+
+    /// Resolves the named decoder (SOURCE.DECODER) into the config before building.
+    friend class SourceCatalog;
 };
 
 class SourceConfigSchema
@@ -183,6 +193,9 @@ public:
     [[nodiscard]] std::unordered_set<LogicalSource> getAllLogicalSources() const;
     [[nodiscard]] std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> getLogicalToPhysicalSourceMapping() const;
 
+    /// The named decoders (CREATE DECODER) that physical sources can reference via SOURCE.DECODER.
+    [[nodiscard]] DecoderCatalog& getDecoderCatalog() const { return *decoderCatalog; }
+
 
 private:
     mutable std::recursive_mutex catalogMutex;
@@ -190,6 +203,8 @@ private:
     std::unordered_map<Identifier, LogicalSource> namesToLogicalSourceMapping;
     std::unordered_map<PhysicalSourceId, SourceDescriptor> idsToPhysicalSources;
     std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> logicalToPhysicalSourceMapping;
+    /// Shared so that the (internally synchronized) decoder catalog stays usable through a const SourceCatalog.
+    std::shared_ptr<DecoderCatalog> decoderCatalog = std::make_shared<DecoderCatalog>();
 
     friend PhysicalSourceBuilder;
 };

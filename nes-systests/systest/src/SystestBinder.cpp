@@ -156,7 +156,9 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
-                [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
+                [&](const CreateDecoderStatement& statement) { throwOnError(sourceHandler(statement)); },
+                [&](const auto&)
+                { throw UnsupportedQuery("a setup statement has to declare a source, a sink, a model, or a decoder: {}", sql); }},
             binding);
     }
 
