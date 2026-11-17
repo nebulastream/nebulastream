@@ -82,7 +82,6 @@ TEST_F(ConstantFoldingRuleTest, simpleAdditionInSelection)
     ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "4");
     auto op2 = op1.getChildren().at(0);
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
-
 }
 
 TEST_F(ConstantFoldingRuleTest, nestedAdditionInSelection)
@@ -115,9 +114,37 @@ TEST_F(ConstantFoldingRuleTest, nestedAdditionInSelection)
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
+
+
+//TODO float 16 + 32
 /*TEST_F(ConstantFoldingRuleTest, minAndMaxFloat)
 {
+    auto source = utils.createSource("simpleAdditionSource", {"a"});
 
+    auto add = AddLogicalFunction{
+        ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "2"},
+        ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}
+    };
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        add
+    });
+
+    auto sink = utils.createSink(select, "simpleAdditionSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "4");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }*/
 
 TEST_F(ConstantFoldingRuleTest, noFoldablePredicate)
@@ -386,7 +413,7 @@ TEST_F(ConstantFoldingRuleTest, floatPow)
         source,
         EqualsLogicalFunction{
         FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
-        PowLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "4.0"},
+        PowLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "4.00"},
             ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "2"}}
     });
 
@@ -451,24 +478,143 @@ TEST_F(ConstantFoldingRuleTest, floatABS)
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
-//TODO float 16 + 32
-
-/*
- // already throws error when creating the select operator in the original query
-TEST_F(ConstantFoldingRuleTest, noneNumericValue)
+TEST_F(ConstantFoldingRuleTest, floatCeil)
 {
-    auto source = utils.createSource("noneNumericValue", {"a"});
+    auto source = utils.createSource("floatCeilSource", {"a"});
     auto select = SelectionLogicalOperator::create(
         source,
         EqualsLogicalFunction{
         FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
-        AddLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "a"},
-            ConstantValueLogicalFunction{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "b"}}
+        CeilLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "1.1"}}
     });
-    auto sink = utils.createSink(select, "Sink", {"a"});
+    auto sink = utils.createSink(select, "floatCeilSink", {"a"});
     auto plan = utils.createPlan(sink);
-    EXPECT_ANY_THROW(auto cleaned = ConstantFoldingRule{}.apply(plan));
-}*/
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "2.000000");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, floatFloor)
+{
+    auto source = utils.createSource("floatFloorSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        FloorLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "1.1"}}
+    });
+    auto sink = utils.createSink(select, "floatFloorSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "1");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, floatRoundUp)
+{
+    auto source = utils.createSource("floatRoundUpSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        RoundLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "1.6"}}
+    });
+    auto sink = utils.createSink(select, "floatRoundUpSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "2.000000");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, floatRoundDown)
+{
+    auto source = utils.createSource("floatRoundDownSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        RoundLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}, "1.4"}}
+    });
+    auto sink = utils.createSink(select, "floatRoundDownSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "1.000000");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, Exp)
+{
+    auto source = utils.createSource("expSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        ExpLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "0"}}
+    });
+    auto sink = utils.createSink(select, "expSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "1.000000");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(ConstantFoldingRuleTest, floatExp)
+{
+    auto source = utils.createSource("floatExpSource", {"a"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        ExpLogicalFunction{ConstantValueLogicalFunction{DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "1.00"}}
+    });
+    auto sink = utils.createSink(select, "floatExpSink", {"a"});
+    auto plan = utils.createPlan(sink);
+
+    auto cleaned = ConstantFoldingRule{}.apply(plan);
+    auto op0 = cleaned.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>());
+    ASSERT_EQ(op1.getAs<SelectionLogicalOperator>()->getPredicate().getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().value()->getConstantValue(), "2.718282");
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
 
 /// NOLINTEND(bugprone-unchecked-optional-access)
 }
