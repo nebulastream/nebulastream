@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -25,11 +24,12 @@
 namespace NES
 {
 
+/// The getters return copies of the stored tuples. A copy shares the stored payload, so it is cheap and stays valid
+/// after the statistic is deleted from the store, e.g. while a probe is still reading it.
 class AbstractStatisticStore
 {
 public:
-    using StatisticRef = std::shared_ptr<const StatisticTuple>;
-    using IdStatisticPair = std::pair<StatisticId, StatisticRef>;
+    using IdStatisticPair = std::pair<StatisticId, StatisticTuple>;
 
     AbstractStatisticStore() = default;
     virtual ~AbstractStatisticStore() = default;
@@ -47,11 +47,11 @@ public:
     virtual bool deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
     /// Gets all statistics belonging to the statisticId in the period of [startTs, endTs]
-    virtual std::vector<StatisticRef> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
+    virtual std::vector<StatisticTuple> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
     /// Gets a single statistic belonging to the statisticId that has exactly the startTs and endTs
-    virtual std::optional<StatisticRef> getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
-        = 0;
+    virtual std::optional<StatisticTuple>
+    getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
     /// Returns all statistics which are currently saved in this store
     virtual std::vector<IdStatisticPair> getAllStatistics() = 0;

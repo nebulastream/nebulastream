@@ -15,7 +15,6 @@
 #pragma once
 
 #include <map>
-#include <memory>
 #include <optional>
 #include <unordered_map>
 #include <utility>
@@ -34,14 +33,14 @@ class DefaultStatisticStore final : public AbstractStatisticStore
 public:
     bool insertStatistic(const StatisticId& statisticId, StatisticTuple statistic) override;
     bool deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
-    std::vector<StatisticRef> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
-    std::optional<StatisticRef>
+    std::vector<StatisticTuple> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
+    std::optional<StatisticTuple>
     getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
     std::vector<IdStatisticPair> getAllStatistics() override;
     void clear() override;
 
 private:
-    using WindowedStatistics = std::multimap<std::pair<Timestamp, Timestamp>, StatisticRef>;
+    using WindowedStatistics = std::multimap<std::pair<Timestamp, Timestamp>, StatisticTuple>;
 
     folly::Synchronized<std::unordered_map<StatisticId, WindowedStatistics>> statistics;
 };

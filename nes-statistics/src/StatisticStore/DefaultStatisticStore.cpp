@@ -42,7 +42,7 @@ bool DefaultStatisticStore::insertStatistic(const StatisticId& statisticId, Stat
 {
     const auto key = std::pair{statistic.getStartTs(), statistic.getEndTs()};
     const auto statisticsLocked = statistics.wlock();
-    (*statisticsLocked)[statisticId].emplace(key, std::make_shared<const StatisticTuple>(std::move(statistic)));
+    (*statisticsLocked)[statisticId].emplace(key, std::move(statistic));
     return true;
 }
 
@@ -74,7 +74,7 @@ bool DefaultStatisticStore::deleteStatistics(const StatisticId& statisticId, con
     return foundAny;
 }
 
-std::vector<DefaultStatisticStore::StatisticRef>
+std::vector<StatisticTuple>
 DefaultStatisticStore::getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();
@@ -85,7 +85,7 @@ DefaultStatisticStore::getStatistics(const StatisticId& statisticId, const Times
     }
     const auto [lowerKey, upperKey] = containedWindowBounds(startTs, endTs);
 
-    std::vector<StatisticRef> foundStatistics;
+    std::vector<StatisticTuple> foundStatistics;
     const auto last = idIt->second.upper_bound(upperKey);
     for (auto it = idIt->second.lower_bound(lowerKey); it != last; ++it)
     {
@@ -97,7 +97,7 @@ DefaultStatisticStore::getStatistics(const StatisticId& statisticId, const Times
     return foundStatistics;
 }
 
-std::optional<DefaultStatisticStore::StatisticRef>
+std::optional<StatisticTuple>
 DefaultStatisticStore::getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();

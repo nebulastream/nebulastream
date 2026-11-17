@@ -21,7 +21,6 @@
 #include <ostream>
 #include <string>
 
-#include <Identifiers/StatisticIdentifiers.hpp>
 #include <Operators/Statistic/StatisticBlobType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -32,22 +31,23 @@ namespace NES
 {
 
 /// A statistic captures some property of a stream (or another component) over a period of time.
-/// Since statistics are built and probed by compiled queries, the synopsis itself is kept as an opaque, shared byte array;
+/// It does not carry its StatisticId: the store keys statistics by id, so every insert and lookup already names it.
+/// Since statistics are built and probed by compiled queries, the synopsis itself is kept as an opaque byte array;
 /// its layout is only understood by the physical function identified by `typeName`.
+/// The array is shared and immutable, so copying a tuple is cheap and a copy handed out by the store keeps the payload
+/// alive even after the store deletes its own copy.
 class StatisticTuple
 {
 public:
     StatisticTuple(
-        const StatisticId statisticId,
         StatisticBlobType typeName,
         const Timestamp& startTs,
         const Timestamp& endTs,
         const uint64_t numberOfSeenMeasurements,
         /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form
-        std::shared_ptr<std::byte[]> statisticData,
+        std::shared_ptr<const std::byte[]> statisticData,
         const uint64_t statisticDataSize)
-        : statisticId(statisticId)
-        , typeName(std::move(typeName))
+        : typeName(std::move(typeName))
         , startTs(startTs)
         , endTs(endTs)
         , numberOfSeenMeasurements(numberOfSeenMeasurements)
@@ -68,11 +68,9 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfSeenMeasurements() const { return numberOfSeenMeasurements; }
 
-    [[nodiscard]] StatisticId getStatisticId() const { return statisticId; }
-
     bool operator==(const StatisticTuple& other) const
     {
-        return statisticId == other.statisticId and typeName == other.typeName and startTs == other.startTs and endTs == other.endTs
+        return typeName == other.typeName and startTs == other.startTs and endTs == other.endTs
             and numberOfSeenMeasurements == other.numberOfSeenMeasurements and statisticDataSize == other.statisticDataSize
             and std::equal(statisticData.get(), statisticData.get() + statisticDataSize, other.statisticData.get());
     }
@@ -80,13 +78,12 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const StatisticTuple& statistic);
 
 private:
-    StatisticId statisticId;
     StatisticBlobType typeName;
     Timestamp startTs;
     Timestamp endTs;
     uint64_t numberOfSeenMeasurements;
     /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form
-    std::shared_ptr<std::byte[]> statisticData;
+    std::shared_ptr<const std::byte[]> statisticData;
     uint64_t statisticDataSize;
 };
 

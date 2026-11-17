@@ -15,16 +15,15 @@
 #include <StatisticTuple.hpp>
 
 #include <ostream>
-#include <Identifiers/StatisticIdentifiers.hpp>
 
 namespace NES
 {
 
 std::ostream& operator<<(std::ostream& os, const StatisticTuple& statistic)
 {
-    return os << "StatisticTuple(id=" << statistic.getStatisticId() << ", type=" << statistic.getTypeName()
-              << ", start=" << statistic.getStartTs() << ", end=" << statistic.getEndTs()
-              << ", measurements=" << statistic.getNumberOfSeenMeasurements() << ", dataSize=" << statistic.getStatisticDataSize() << ")";
+    return os << "StatisticTuple(type=" << statistic.getTypeName() << ", start=" << statistic.getStartTs()
+              << ", end=" << statistic.getEndTs() << ", measurements=" << statistic.getNumberOfSeenMeasurements()
+              << ", dataSize=" << statistic.getStatisticDataSize() << ")";
 }
 
 }

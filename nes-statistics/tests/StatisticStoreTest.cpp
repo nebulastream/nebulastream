@@ -33,13 +33,12 @@ namespace
 {
 
 /// A statistic whose payload is a single byte carrying 'marker', so tests can tell instances apart.
-StatisticTuple makeStatistic(const uint64_t id, const uint64_t startTs, const uint64_t endTs, const std::byte marker = std::byte{0})
+StatisticTuple makeStatistic(const uint64_t startTs, const uint64_t endTs, const std::byte marker = std::byte{0})
 {
     /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form
     auto data = std::make_shared<std::byte[]>(1);
     data[0] = marker;
     return StatisticTuple{
-        StatisticId{id},
         StatisticBlobType{AvgAggregationLogicalFunction::getName()},
         Timestamp{startTs},
         Timestamp{endTs},
@@ -71,20 +70,33 @@ public:
 TEST_F(StatisticStoreTest, InsertedStatisticIsReturnedByRangeQuery)
 {
     DefaultStatisticStore store;
-    const auto statistic = makeStatistic(1, 0, 10);
+    const auto statistic = makeStatistic(0, 10);
     ASSERT_TRUE(store.insertStatistic(StatisticId{1}, statistic));
 
     const auto found = store.getStatistics(StatisticId{1}, Timestamp{0}, Timestamp{10});
     ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(*found.front(), statistic);
+    EXPECT_EQ(found.front(), statistic);
+}
+
+TEST_F(StatisticStoreTest, ReturnedStatisticOutlivesItsDeletionFromTheStore)
+{
+    DefaultStatisticStore store;
+    store.insertStatistic(StatisticId{1}, makeStatistic(0, 10, std::byte{42}));
+    const auto found = store.getSingleStatistic(StatisticId{1}, Timestamp{0}, Timestamp{10});
+    ASSERT_TRUE(found.has_value());
+
+    /// A probe keeps reading the payload after the store dropped the statistic, so the payload must still be there.
+    store.clear();
+    ASSERT_EQ(found->getStatisticDataSize(), 1U);
+    EXPECT_EQ(found->getStatisticData()[0], 42);
 }
 
 TEST_F(StatisticStoreTest, RangeQueryIsInclusiveAndExcludesWindowsOutsideIt)
 {
     DefaultStatisticStore store;
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 0, 10));
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 10, 20));
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 20, 30));
+    store.insertStatistic(StatisticId{1}, makeStatistic(0, 10));
+    store.insertStatistic(StatisticId{1}, makeStatistic(10, 20));
+    store.insertStatistic(StatisticId{1}, makeStatistic(20, 30));
 
     /// [0, 20] fully contains the first two windows but only clips the third.
     EXPECT_EQ(store.getStatistics(StatisticId{1}, Timestamp{0}, Timestamp{20}).size(), 2U);
@@ -94,7 +106,7 @@ TEST_F(StatisticStoreTest, RangeQueryIsInclusiveAndExcludesWindowsOutsideIt)
 TEST_F(StatisticStoreTest, UnknownStatisticIdYieldsNothing)
 {
     DefaultStatisticStore store;
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 0, 10));
+    store.insertStatistic(StatisticId{1}, makeStatistic(0, 10));
 
     EXPECT_TRUE(store.getStatistics(StatisticId{2}, Timestamp{0}, Timestamp{10}).empty());
     EXPECT_FALSE(store.getSingleStatistic(StatisticId{2}, Timestamp{0}, Timestamp{10}).has_value());
@@ -103,7 +115,7 @@ TEST_F(StatisticStoreTest, UnknownStatisticIdYieldsNothing)
 TEST_F(StatisticStoreTest, SingleStatisticRequiresAnExactWindowMatch)
 {
     DefaultStatisticStore store;
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 10, 20));
+    store.insertStatistic(StatisticId{1}, makeStatistic(10, 20));
 
     EXPECT_TRUE(store.getSingleStatistic(StatisticId{1}, Timestamp{10}, Timestamp{20}).has_value());
     /// A range that merely contains the window is not an exact match.
@@ -113,13 +125,13 @@ TEST_F(StatisticStoreTest, SingleStatisticRequiresAnExactWindowMatch)
 TEST_F(StatisticStoreTest, DeleteRemovesOnlyFullyContainedWindows)
 {
     DefaultStatisticStore store;
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 0, 10));
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 20, 30));
+    store.insertStatistic(StatisticId{1}, makeStatistic(0, 10));
+    store.insertStatistic(StatisticId{1}, makeStatistic(20, 30));
 
     ASSERT_TRUE(store.deleteStatistics(StatisticId{1}, Timestamp{0}, Timestamp{10}));
     const auto remaining = store.getStatistics(StatisticId{1}, Timestamp{0}, Timestamp{30});
     ASSERT_EQ(remaining.size(), 1U);
-    EXPECT_EQ(remaining.front()->getStartTs().getRawValue(), 20U);
+    EXPECT_EQ(remaining.front().getStartTs().getRawValue(), 20U);
 
     /// Nothing left in that range, so the second delete reports no work done.
     EXPECT_FALSE(store.deleteStatistics(StatisticId{1}, Timestamp{0}, Timestamp{10}));
@@ -128,8 +140,8 @@ TEST_F(StatisticStoreTest, DeleteRemovesOnlyFullyContainedWindows)
 TEST_F(StatisticStoreTest, StoreDoesNotDeduplicate)
 {
     DefaultStatisticStore store;
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 0, 10, std::byte{1}));
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 0, 10, std::byte{2}));
+    store.insertStatistic(StatisticId{1}, makeStatistic(0, 10, std::byte{1}));
+    store.insertStatistic(StatisticId{1}, makeStatistic(0, 10, std::byte{2}));
 
     EXPECT_EQ(store.getStatistics(StatisticId{1}, Timestamp{0}, Timestamp{10}).size(), 2U);
 }
@@ -137,22 +149,22 @@ TEST_F(StatisticStoreTest, StoreDoesNotDeduplicate)
 TEST_F(StatisticStoreTest, GetAllStatisticsSpansEveryId)
 {
     DefaultStatisticStore store;
-    store.insertStatistic(StatisticId{1}, makeStatistic(1, 0, 10));
-    store.insertStatistic(StatisticId{2}, makeStatistic(2, 0, 10));
-    store.insertStatistic(StatisticId{2}, makeStatistic(2, 10, 20));
+    store.insertStatistic(StatisticId{1}, makeStatistic(0, 10));
+    store.insertStatistic(StatisticId{2}, makeStatistic(0, 10));
+    store.insertStatistic(StatisticId{2}, makeStatistic(10, 20));
 
     EXPECT_EQ(store.getAllStatistics().size(), 3U);
 }
 
 TEST_F(StatisticStoreTest, GlobalStoreIsShared)
 {
-    globalStatisticStore().insertStatistic(StatisticId{7}, makeStatistic(7, 0, 10));
+    globalStatisticStore().insertStatistic(StatisticId{7}, makeStatistic(0, 10));
     EXPECT_EQ(globalStatisticStore().getStatistics(StatisticId{7}, Timestamp{0}, Timestamp{10}).size(), 1U);
 }
 
 TEST_F(StatisticStoreTest, GlobalStoreClearDropsEverything)
 {
-    globalStatisticStore().insertStatistic(StatisticId{1}, makeStatistic(1, 0, 10));
+    globalStatisticStore().insertStatistic(StatisticId{1}, makeStatistic(0, 10));
     globalStatisticStore().clear();
     EXPECT_TRUE(globalStatisticStore().getStatistics(StatisticId{1}, Timestamp{0}, Timestamp{10}).empty());
 }
