@@ -152,10 +152,20 @@ struct Reflector<TestAggregationLogicalFunction<IsStatistic>>
 };
 }
 
-template <bool IsStatistic>
-struct std::hash<NES::TestAggregationLogicalFunction<IsStatistic>>
+/// Explicit specializations rather than one partial specialization over IsStatistic, which cert-dcl58-cpp rejects.
+template <>
+struct std::hash<NES::TestPlainAggregationLogicalFunction>
 {
-    size_t operator()(const NES::TestAggregationLogicalFunction<IsStatistic>& function) const noexcept
+    size_t operator()(const NES::TestPlainAggregationLogicalFunction& function) const noexcept
+    {
+        return folly::hash::hash_combine(function.getInputFunction(), function.getParameter());
+    }
+};
+
+template <>
+struct std::hash<NES::TestSynopsisAggregationLogicalFunction>
+{
+    size_t operator()(const NES::TestSynopsisAggregationLogicalFunction& function) const noexcept
     {
         return folly::hash::hash_combine(function.getInputFunction(), function.getParameter());
     }

@@ -56,11 +56,6 @@ public:
     {
     }
 
-    StatisticTuple(const StatisticTuple&) = default;
-    StatisticTuple& operator=(const StatisticTuple&) = delete;
-    StatisticTuple(StatisticTuple&&) = default;
-    StatisticTuple& operator=(StatisticTuple&&) = delete;
-
     [[nodiscard]] const StatisticBlobType& getTypeName() const { return typeName; }
 
     [[nodiscard]] Timestamp getStartTs() const { return startTs; }
