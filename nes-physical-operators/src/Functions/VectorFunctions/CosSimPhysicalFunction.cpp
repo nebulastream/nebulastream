@@ -73,13 +73,13 @@ double computeCosineSimilarity(int8_t* inputPtr1, uint64_t inputSize1, int8_t* i
         norm1 += v1 * v1;
     }
 
-    // This is more numerically stable than sqrt(norm1 * norm2).
+    /// This is more numerically stable than sqrt(norm1 * norm2).
     const double denom = std::sqrt(norm1) * std::sqrt(norm2);
     if (denom <= 0.0)
     {
         return 0.0;
     }
-    // To even out numerical errors, the result is clamped.
+    /// To even out numerical errors, the result is clamped.
     return std::clamp(dot / denom, -1.0, 1.0);
 }
 }
