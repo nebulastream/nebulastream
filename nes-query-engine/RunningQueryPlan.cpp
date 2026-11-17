@@ -156,6 +156,7 @@ std::
             unregisterWithError,
             terminationCallbackRef,
             pipelineSetupCallbackRef);
+        node->backpressure = queryPlan.backpressure;
         pipelines.emplace_back(node);
         cache[pipeline] = std::move(node);
         return cache[pipeline];

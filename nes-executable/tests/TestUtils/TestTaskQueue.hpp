@@ -35,6 +35,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <folly/MPMCQueue.h>
+#include <BackpressureManager.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -100,6 +101,9 @@ public:
     [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
 
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
+
+    /// The test has no sources, so a voter of a manager without sources has no effect.
+    [[nodiscard]] BackpressureVoter newBackpressureVoter() override { return BackpressureManager({}, {}).newVoter(); }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; };
 

@@ -56,6 +56,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <folly/Synchronized.h>
 #include <gtest/gtest.h>
+#include <BackpressureManager.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <Pipeline.hpp>
@@ -93,6 +94,9 @@ protected:
         [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
+
+        /// The test has no sources, so a voter of a manager without sources has no effect.
+        [[nodiscard]] BackpressureVoter newBackpressureVoter() override { return BackpressureManager({}, {}).newVoter(); }
 
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
         {

@@ -55,6 +55,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <BackpressureManager.hpp>
 #include <BaseUnitTest.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -92,6 +93,9 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
+
+        /// The test has no sources, so a voter of a manager without sources has no effect.
+        [[nodiscard]] BackpressureVoter newBackpressureVoter() override { return BackpressureManager({}, {}).newVoter(); }
 
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
         {

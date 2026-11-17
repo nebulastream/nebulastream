@@ -14,13 +14,14 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <gtest/gtest.h>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 
 namespace NES
 {
@@ -50,108 +51,111 @@ protected:
 
 TEST_F(BackpressureHandlerTest, UnrelatedSuccessDoesNotCreateAnotherRetry)
 {
-    auto [controller, listener] = createBackpressureChannel();
+    auto [voter, listener] = createSingleSourceBackpressure();
     BackpressureHandler handler;
+    handler.start(std::move(voter));
     const auto a = makeBuffer(OriginId{1}, SequenceNumber{1}, ChunkNumber{1});
     const auto b = makeBuffer(OriginId{1}, SequenceNumber{2}, ChunkNumber{1});
     const auto c = makeBuffer(OriginId{1}, SequenceNumber{3}, ChunkNumber{1});
     const auto d = makeBuffer(OriginId{1}, SequenceNumber{4}, ChunkNumber{1});
 
-    expectBuffer(handler.onFull(a, controller), a);
-    EXPECT_FALSE(handler.onSuccess(b, controller));
-    EXPECT_FALSE(handler.onFull(c, controller));
-    EXPECT_FALSE(handler.onSuccess(b, controller));
-    EXPECT_FALSE(handler.onFull(d, controller));
-    expectBuffer(handler.onFull(a, controller), a);
-    expectBuffer(handler.onSuccess(a, controller), c);
-    expectBuffer(handler.onSuccess(c, controller), d);
-    EXPECT_FALSE(handler.onSuccess(d, controller));
+    expectBuffer(handler.onFull(a), a);
+    EXPECT_FALSE(handler.onSuccess(b));
+    EXPECT_FALSE(handler.onFull(c));
+    EXPECT_FALSE(handler.onSuccess(b));
+    EXPECT_FALSE(handler.onFull(d));
+    expectBuffer(handler.onFull(a), a);
+    expectBuffer(handler.onSuccess(a), c);
+    expectBuffer(handler.onSuccess(c), d);
+    EXPECT_FALSE(handler.onSuccess(d));
     EXPECT_TRUE(handler.empty());
 }
 
 TEST_F(BackpressureHandlerTest, DequeuedBufferRemainsPendingWhenRejectedAgain)
 {
-    auto [controller, listener] = createBackpressureChannel();
+    auto [voter, listener] = createSingleSourceBackpressure();
     BackpressureHandler handler;
+    handler.start(std::move(voter));
     const auto a = makeBuffer(OriginId{1}, SequenceNumber{1}, ChunkNumber{1});
     const auto b = makeBuffer(OriginId{1}, SequenceNumber{2}, ChunkNumber{1});
     const auto c = makeBuffer(OriginId{1}, SequenceNumber{3}, ChunkNumber{1});
 
-    expectBuffer(handler.onFull(a, controller), a);
-    EXPECT_FALSE(handler.onFull(b, controller));
-    EXPECT_FALSE(handler.onFull(c, controller));
-    expectBuffer(handler.onSuccess(a, controller), b);
-    expectBuffer(handler.onFull(b, controller), b);
-    expectBuffer(handler.onFull(b, controller), b);
+    expectBuffer(handler.onFull(a), a);
+    EXPECT_FALSE(handler.onFull(b));
+    EXPECT_FALSE(handler.onFull(c));
+    expectBuffer(handler.onSuccess(a), b);
+    expectBuffer(handler.onFull(b), b);
+    expectBuffer(handler.onFull(b), b);
     /// A completed already; its success must not clear B's new pending marker.
-    EXPECT_FALSE(handler.onSuccess(a, controller));
-    expectBuffer(handler.onSuccess(b, controller), c);
-    EXPECT_FALSE(handler.onSuccess(c, controller));
+    EXPECT_FALSE(handler.onSuccess(a));
+    expectBuffer(handler.onSuccess(b), c);
+    EXPECT_FALSE(handler.onSuccess(c));
     EXPECT_TRUE(handler.empty());
 }
 
 TEST_F(BackpressureHandlerTest, PendingIdentityIncludesOriginAndChunk)
 {
-    auto [controller, listener] = createBackpressureChannel();
+    auto [voter, listener] = createSingleSourceBackpressure();
     BackpressureHandler handler;
+    handler.start(std::move(voter));
     const auto a = makeBuffer(OriginId{1}, SequenceNumber{1}, ChunkNumber{1});
     const auto otherOrigin = makeBuffer(OriginId{2}, SequenceNumber{1}, ChunkNumber{1});
     const auto otherChunk = makeBuffer(OriginId{1}, SequenceNumber{1}, ChunkNumber{2});
 
-    expectBuffer(handler.onFull(a, controller), a);
+    expectBuffer(handler.onFull(a), a);
     /// A successful buffer with a different origin or chunk must leave A pending.
-    EXPECT_FALSE(handler.onSuccess(otherOrigin, controller));
-    EXPECT_FALSE(handler.onSuccess(otherChunk, controller));
-    EXPECT_FALSE(handler.onFull(otherOrigin, controller));
-    EXPECT_FALSE(handler.onFull(otherChunk, controller));
-    expectBuffer(handler.onSuccess(a, controller), otherOrigin);
-    expectBuffer(handler.onFull(otherOrigin, controller), otherOrigin);
-    expectBuffer(handler.onSuccess(otherOrigin, controller), otherChunk);
-    EXPECT_FALSE(handler.onSuccess(otherChunk, controller));
+    EXPECT_FALSE(handler.onSuccess(otherOrigin));
+    EXPECT_FALSE(handler.onSuccess(otherChunk));
+    EXPECT_FALSE(handler.onFull(otherOrigin));
+    EXPECT_FALSE(handler.onFull(otherChunk));
+    expectBuffer(handler.onSuccess(a), otherOrigin);
+    expectBuffer(handler.onFull(otherOrigin), otherOrigin);
+    expectBuffer(handler.onSuccess(otherOrigin), otherChunk);
+    EXPECT_FALSE(handler.onSuccess(otherChunk));
     EXPECT_TRUE(handler.empty());
 }
 
 TEST_F(BackpressureHandlerTest, UnrelatedSuccessDoesNotReleasePendingBackpressure)
 {
-    auto [controller, listener] = createBackpressureChannel();
+    auto [voter, listener] = createSingleSourceBackpressure();
     BackpressureHandler handler(1, 0);
+    handler.start(std::move(voter));
     const auto a = makeBuffer(OriginId{1}, SequenceNumber{1}, ChunkNumber{1});
     const auto b = makeBuffer(OriginId{1}, SequenceNumber{2}, ChunkNumber{1});
 
-    expectBuffer(handler.onFull(a, controller), a);
-    /// applyPressure returns false if pressure is already held, without changing it.
-    EXPECT_FALSE(controller.applyPressure());
-    EXPECT_FALSE(handler.onSuccess(b, controller));
-    EXPECT_FALSE(controller.applyPressure());
-    expectBuffer(handler.onFull(a, controller), a);
-    EXPECT_FALSE(handler.onSuccess(a, controller));
-    /// releasePressure returns false if the handler already released it.
-    EXPECT_FALSE(controller.releasePressure());
+    expectBuffer(handler.onFull(a), a);
+    EXPECT_TRUE(listener.isBlocked());
+    EXPECT_FALSE(handler.onSuccess(b));
+    EXPECT_TRUE(listener.isBlocked());
+    expectBuffer(handler.onFull(a), a);
+    EXPECT_FALSE(handler.onSuccess(a));
+    EXPECT_FALSE(listener.isBlocked());
     /// A fresh failure must start a new retry chain after the old one drained.
-    expectBuffer(handler.onFull(b, controller), b);
-    EXPECT_FALSE(handler.onSuccess(b, controller));
-    EXPECT_FALSE(controller.releasePressure());
+    expectBuffer(handler.onFull(b), b);
+    EXPECT_FALSE(handler.onSuccess(b));
+    EXPECT_FALSE(listener.isBlocked());
 }
 
 TEST_F(BackpressureHandlerTest, BackpressureRemainsUntilBacklogDrains)
 {
-    auto [controller, listener] = createBackpressureChannel();
+    auto [voter, listener] = createSingleSourceBackpressure();
     BackpressureHandler handler(2, 0);
+    handler.start(std::move(voter));
     const auto a = makeBuffer(OriginId{1}, SequenceNumber{1}, ChunkNumber{1});
     const auto b = makeBuffer(OriginId{1}, SequenceNumber{2}, ChunkNumber{1});
     const auto c = makeBuffer(OriginId{1}, SequenceNumber{3}, ChunkNumber{1});
 
-    expectBuffer(handler.onFull(a, controller), a);
-    EXPECT_FALSE(controller.releasePressure());
-    EXPECT_FALSE(handler.onFull(b, controller));
-    EXPECT_FALSE(controller.releasePressure());
-    EXPECT_FALSE(handler.onFull(c, controller));
-    EXPECT_FALSE(controller.applyPressure());
-    expectBuffer(handler.onSuccess(a, controller), b);
-    EXPECT_FALSE(controller.applyPressure());
-    expectBuffer(handler.onSuccess(b, controller), c);
-    EXPECT_FALSE(handler.onSuccess(c, controller));
-    EXPECT_FALSE(controller.releasePressure());
+    expectBuffer(handler.onFull(a), a);
+    EXPECT_FALSE(listener.isBlocked());
+    EXPECT_FALSE(handler.onFull(b));
+    EXPECT_FALSE(listener.isBlocked());
+    EXPECT_FALSE(handler.onFull(c));
+    EXPECT_TRUE(listener.isBlocked());
+    expectBuffer(handler.onSuccess(a), b);
+    EXPECT_TRUE(listener.isBlocked());
+    expectBuffer(handler.onSuccess(b), c);
+    EXPECT_FALSE(handler.onSuccess(c));
+    EXPECT_FALSE(listener.isBlocked());
     EXPECT_TRUE(handler.empty());
 }
 }

@@ -21,7 +21,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -36,7 +37,12 @@ BackpressureHandler::BackpressureHandler(size_t upperThreshold, size_t lowerThre
     }
 }
 
-std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, BackpressureController& backpressureController)
+void BackpressureHandler::start(BackpressureVoter voter)
+{
+    stateLock.wlock()->voter = std::move(voter);
+}
+
+std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer)
 {
     auto rstate = stateLock.ulock();
     const BufferId bufferId{
@@ -54,7 +60,8 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     /// Apply backpressure when the buffer count reaches the upper hysteresis threshold.
     if (!wstate->hasBackpressure && wstate->buffered.size() >= upperThreshold)
     {
-        backpressureController.applyPressure();
+        INVARIANT(wstate->voter.has_value(), "The backpressure handler was not started");
+        wstate->voter->applyBackpressureToAll();
         NES_DEBUG("Backpressure acquired: {} buffered (upper threshold: {})", wstate->buffered.size(), upperThreshold);
         wstate->hasBackpressure = true;
     }
@@ -72,7 +79,7 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     return {};
 }
 
-std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buffer, BackpressureController& backpressureController)
+std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buffer)
 {
     const auto state = stateLock.wlock();
     const BufferId bufferId{
@@ -86,7 +93,8 @@ std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buf
     /// Release backpressure when the buffer count drops to the lower hysteresis threshold.
     if (state->hasBackpressure && state->buffered.size() <= lowerThreshold)
     {
-        backpressureController.releasePressure();
+        INVARIANT(state->voter.has_value(), "The backpressure handler was not started");
+        state->voter->releaseBackpressureToAll();
         NES_DEBUG("Backpressure released: {} buffered (lower threshold: {})", state->buffered.size(), lowerThreshold);
         state->hasBackpressure = false;
     }

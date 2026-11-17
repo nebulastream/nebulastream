@@ -44,7 +44,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 #include <Binder.hpp>
 #include <ControlChannel.hpp>
 #include <ErrorHandling.hpp>
@@ -202,10 +202,10 @@ private:
         queue = std::make_unique<folly::MPMCQueue<TupleBuffer>>(std::max<std::size_t>(options.bufferCount, 1));
         eos.store(false);
 
-        auto [channelController, listener] = createBackpressureChannel();
+        auto [channelController, listener] = createSingleSourceBackpressure();
         controller = std::move(channelController);
         /// The source blocks after open() until the first FILL, which comes after the runner has seeded the backend.
-        controller->applyPressure();
+        controller->applyBackpressureToAll();
 
         std::unique_ptr<NES::Source> inner;
         try
@@ -331,7 +331,7 @@ private:
         /// Releasing again on a later FILL has no effect.
         if (controller)
         {
-            controller->releasePressure();
+            controller->releaseBackpressureToAll();
         }
 
         std::optional<std::ofstream> observedOut;
@@ -466,7 +466,7 @@ private:
 
     /// The harness holds the controller in place of a sink.
     /// Declared before the handle so that it outlives the source's listener.
-    std::optional<BackpressureController> controller;
+    std::optional<BackpressureVoter> controller;
 
     /// Declared last so that it is destroyed first: the source thread stops before the members it uses go away.
     std::unique_ptr<SourceHandle> handle;

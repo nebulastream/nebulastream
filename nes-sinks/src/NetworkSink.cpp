@@ -44,7 +44,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -104,10 +103,8 @@ std::expected<NetworkSinkConfig, Exception> NetworkSinkConfig::fromConfig(const 
         .maxPendingAcks = config.get(MAX_PENDING_ACKS)};
 }
 
-NetworkSink::NetworkSink(
-    BackpressureController backpressureController, const NetworkSinkConfig& config, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , tupleSize(getSizeInBytes(*NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
+NetworkSink::NetworkSink(const NetworkSinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : tupleSize(getSizeInBytes(*NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
     , backpressureHandler(sinkDescriptor.getBackpressureUpperThreshold(), sinkDescriptor.getBackpressureLowerThreshold())
     , channelId(config.channel)
     , connectionAddr(config.dataEndpoint)
@@ -117,8 +114,9 @@ NetworkSink::NetworkSink(
 {
 }
 
-void NetworkSink::start(PipelineExecutionContext&)
+void NetworkSink::start(PipelineExecutionContext& pipelineExecutionContext)
 {
+    backpressureHandler.start(pipelineExecutionContext.newBackpressureVoter());
     this->server = sender_instance(thisConnection);
     const NetworkServiceOptions options{
         .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
@@ -212,7 +210,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             case SendResult::Closed: {
                 /// Future buffers are voided.
                 this->closed = true;
-                [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer, backpressureController);
+                [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer);
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
@@ -221,11 +219,11 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
                 /// Sent a buffer, check the backpressure handler to send another one
-                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
+                currentBuffer = backpressureHandler.onSuccess(*currentBuffer);
                 break;
             }
             case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (const auto emit = backpressureHandler.onFull(*currentBuffer))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }

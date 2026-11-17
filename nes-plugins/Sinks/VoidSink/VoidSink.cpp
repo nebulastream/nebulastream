@@ -24,13 +24,12 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
-VoidSink::VoidSink(BackpressureController backpressureController, const VoidSinkConfig&) : Sink(std::move(backpressureController))
+VoidSink::VoidSink(const VoidSinkConfig&)
 {
 }
 

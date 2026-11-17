@@ -26,6 +26,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/UnboundField.hpp>
@@ -49,6 +50,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/sstream.h>
+#include <BackpressureManager.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <TestTaskQueue.hpp>
@@ -165,7 +167,7 @@ createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
 
-std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
+std::pair<BackpressureVoter, std::unique_ptr<SourceHandle>> createFileSource(
     const std::string& filePath,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,

@@ -29,7 +29,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 #include <Thread.hpp>
 
 namespace NES

@@ -22,12 +22,14 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 
-/// A `BackpressureManager` combines the backpressure votes of all components of a query into one blocked flag per source. Each source
-/// waits on its own `BackpressureListener`.
+/// One `BackpressureManager` exists per running query. `ExecutableQueryPlan::instantiate` creates it and gives one `BackpressureListener`
+/// to each source. Pipelines get voters through the `PipelineExecutionContext`, never through constructor arguments, so lowering does not
+/// need to know about backpressure.
 ///
 /// Every component that wants to influence the sources gets its own `BackpressureVoter`. A voter can cast two kinds of votes:
 ///
-///  - A hard vote blocks all sources. Hard votes are OR-ed: one hard vote is enough to block.
+///  - A hard vote blocks all sources. The sink uses it when its downstream cannot accept more data. Hard votes are OR-ed: one hard vote
+///    is enough to block.
 ///  - A soft vote applies to the sources of one origin, and has three states: apply, release, or no opinion. Soft votes are combined with
 ///    a veto: a source is blocked by soft votes only if at least one voter applies and no voter releases.
 ///

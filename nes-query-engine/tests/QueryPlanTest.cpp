@@ -36,6 +36,7 @@
 #include <Util/UUID.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <BackpressureManager.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -152,6 +153,10 @@ struct TestPipelineExecutionContext : PipelineExecutionContext
     MOCK_METHOD(uint64_t, getNumberOfWorkerThreads, (), (const, override));
     MOCK_METHOD(std::shared_ptr<AbstractBufferProvider>, getBufferManager, (), (const, override));
     MOCK_METHOD(PipelineId, getPipelineId, (), (const, override));
+
+    /// The test has no sources, so a voter of a manager without sources has no effect.
+    BackpressureVoter newBackpressureVoter() override { return BackpressureManager({}, {}).newVoter(); }
+
     MOCK_METHOD((std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&), getOperatorHandlers, (), (override));
     MOCK_METHOD(void, setOperatorHandlers, ((std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&)), (override));
     MOCK_METHOD(bool, emitBuffer, (const TupleBuffer&, ContinuationPolicy), (override));

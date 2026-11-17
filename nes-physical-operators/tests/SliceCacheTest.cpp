@@ -53,6 +53,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <BackpressureManager.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -164,6 +165,9 @@ public:
         [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
+
+        /// The test has no sources, so a voter of a manager without sources has no effect.
+        [[nodiscard]] BackpressureVoter newBackpressureVoter() override { return BackpressureManager({}, {}).newVoter(); }
 
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
         {

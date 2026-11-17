@@ -42,7 +42,6 @@
 #include <mqtt/exception.h>
 #include <mqtt/message.h>
 #include <mqtt/types.h>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -127,9 +126,8 @@ std::expected<MQTTSinkConfig, Exception> MQTTSinkConfig::fromConfig(const Instan
     };
 }
 
-MQTTSink::MQTTSink(BackpressureController backpressureController, const MQTTSinkConfig& config, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , serverURI(config.serverURI)
+MQTTSink::MQTTSink(const MQTTSinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : serverURI(config.serverURI)
     , clientId(generateClientId(config.clientId))
     , topic(config.topic)
     , qos(static_cast<int32_t>(config.qos))
@@ -152,8 +150,9 @@ std::ostream& MQTTSink::toString(std::ostream& os) const
     return os;
 }
 
-void MQTTSink::start(PipelineExecutionContext&)
+void MQTTSink::start(PipelineExecutionContext& pec)
 {
+    backpressureHandler.start(pec.newBackpressureVoter());
     NES_INFO("Opening MQTTSink at {} using clientId: {}.", serverURI, clientId);
     client = std::make_unique<mqtt::async_client>(serverURI, clientId, maxOutstandingMessages);
     client->set_callback(connectionCallback);
@@ -227,11 +226,11 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
         switch (tryPublish(*currentBuffer))
         {
             case SendResult::Ok: {
-                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
+                currentBuffer = backpressureHandler.onSuccess(*currentBuffer);
                 continue;
             }
             case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (const auto emit = backpressureHandler.onFull(*currentBuffer))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
