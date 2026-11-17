@@ -1,0 +1,48 @@
+# name: benchmark/PythonUdfProcess.test
+# description: The UDFs of benchmark/PythonUdf.test with EXECUTION OUT_OF_PROCESS only, on an input that is large enough for many
+# worker threads and UDF processes: 300M rows, so that each query runs for about 10 s or more and the start of the processes does
+# not dominate. Next to them, the queries without UDFs show what scanning the input costs. Generate the input with
+# nes-systests/benchmark/generate_udf_bench_input.py (--rows 300000000, about 7.7 GB) and keep it on a RAM disk.
+# groups: [benchmark, large, PythonUdfProcess]
+
+CREATE LOGICAL SOURCE rows300m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows300m TYPE File;
+ATTACH FILE udf/udf_bench_300m.csv
+
+CREATE FUNCTION inc_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return x + 1
+$python$;
+
+CREATE FUNCTION upper_oop (x VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
+    return x.upper()
+$python$;
+
+CREATE FUNCTION lcg_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    h = x
+    for _ in range(100):
+        h = (h * 1103515245 + 12345) % 2147483648
+    return h
+$python$;
+
+# Baselines without UDFs
+SELECT * FROM rows300m INTO Void();
+----
+
+SELECT *, id + INT64(1) AS r FROM rows300m INTO Void();
+----
+
+# NES has no UPPER; CONCAT also builds a new VARSIZED value per row
+SELECT *, CONCAT(s, s) AS r FROM rows300m INTO Void();
+----
+
+# INT64 -> INT64
+SELECT *, inc_oop(id) AS r FROM rows300m INTO Void();
+----
+
+# VARSIZED -> VARSIZED
+SELECT *, upper_oop(s) AS r FROM rows300m INTO Void();
+----
+
+# Compute-bound
+SELECT *, lcg_oop(id) AS r FROM rows300m INTO Void();
+----

@@ -15,6 +15,8 @@
     python3 generate_udf_bench_input.py /dev/shm/nes-udf-bench/udf/udf_bench.csv --rows 30000000
     python3 generate_udf_bench_input.py /dev/shm/nes-udf-bench/udf/udf_bench_3m.csv --rows 3000000
     python3 generate_udf_bench_input.py /dev/shm/nes-udf-bench/udf/udf_bench_1m.csv --rows 1000000
+and the input of benchmark/PythonUdfProcess.test (about 7.7 GB):
+    python3 generate_udf_bench_input.py /dev/shm/nes-udf-bench/udf/udf_bench_300m.csv --rows 300000000
 
 Then run the benchmark with `--data /dev/shm/nes-udf-bench`.
 """

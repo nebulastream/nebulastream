@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Runs all queries of nes-systests/benchmark/PythonUdf.test in benchmark mode (one query at a time) on one layout of
+"""Runs all queries of a benchmark test file (default nes-systests/benchmark/PythonUdf.test) in benchmark mode (one query at a time) on one layout of
 run_experiment.py and appends one line per query and round to ../results/<experiment>.jsonl: its time, its rows per second, the
 commit and the full command line. The UDF processes run on the interpreter of UDF_BENCH_PYTHON through the venv of the harness.
 Generate the inputs first, see nes-systests/benchmark/generate_udf_bench_input.py."""
@@ -31,18 +31,19 @@ import run_experiment  # noqa: E402
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 REPOSITORY = os.path.abspath(os.path.join(HARNESS, "../../.."))
 TEST = os.path.join(REPOSITORY, "nes-systests/benchmark/PythonUdf.test")
-ROWS = {"rows30m": 30_000_000, "rows3m": 3_000_000, "rows1m": 1_000_000}
+ROWS = {"rows300m": 300_000_000, "rows30m": 30_000_000, "rows3m": 3_000_000, "rows1m": 1_000_000}
 
 
-def queries():
+def queries(test):
     """The query of each number, as systest numbers them: the statements that end with ----."""
-    statements = re.findall(r"^(SELECT .*?);\n----", open(TEST).read(), flags=re.MULTILINE | re.DOTALL)
+    statements = re.findall(r"^(SELECT .*?);\n----", open(test).read(), flags=re.MULTILINE | re.DOTALL)
     return {number + 1: statement for number, statement in enumerate(statements)}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment", required=True)
+    parser.add_argument("--test", default=TEST, help="the benchmark test file (default: benchmark/PythonUdf.test)")
     parser.add_argument("--layout", default="T w16 p16")
     parser.add_argument("--rounds", type=int, default=1)
     parser.add_argument("--hybrid", action="store_true", help="optimizer.udf_process_layout=HYBRID")
@@ -83,7 +84,7 @@ def main():
     ]
     command = [
         os.path.join(arguments.build, "nes-systests/systest/systest"),
-        "-t", TEST,
+        "-t", arguments.test,
         "--data", arguments.data,
         "--workingDir", run_dir + "/work",
         "--log-path", run_dir + "/log.txt",
@@ -96,9 +97,10 @@ def main():
         return_code = subprocess.run(command, env=environment, stdout=output, stderr=subprocess.STDOUT).returncode
     print(open(run_dir + "/out.txt").read()[-3000:])
 
-    statements = queries()
+    statements = queries(arguments.test)
     common = {
         "experiment": arguments.experiment,
+        "test": os.path.relpath(arguments.test, REPOSITORY),
         "commit": run_experiment.git("rev-parse", "HEAD"),
         "commit_time": run_experiment.git("log", "-1", "--format=%cI"),
         "started": started,
