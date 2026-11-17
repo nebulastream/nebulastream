@@ -23,7 +23,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 #include <SourceThread.hpp>
 
 namespace NES

@@ -38,7 +38,6 @@
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -71,8 +70,7 @@ std::expected<PrintSinkConfig, Exception> PrintSinkConfig::fromConfig(const Inst
     return PrintSinkConfig{.ingestion = config.get(INGESTION)};
 }
 
-PrintSink::PrintSink(BackpressureController backpressureController, const PrintSinkConfig& config)
-    : Sink(std::move(backpressureController)), outputStream(&std::cout), ingestion(config.ingestion)
+PrintSink::PrintSink(const PrintSinkConfig& config) : outputStream(&std::cout), ingestion(config.ingestion)
 {
 }
 

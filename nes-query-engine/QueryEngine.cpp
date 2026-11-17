@@ -40,6 +40,7 @@
 #include <Util/AtomicState.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <BackpressureManager.hpp>
 #include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -203,6 +204,7 @@ using Queue = folly::MPMCQueue<Task>;
 struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
+    const BackpressureManager* backpressure = nullptr;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
     std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
@@ -274,6 +276,13 @@ struct DefaultPEC final : PipelineExecutionContext
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return pipelineId;
+    }
+
+    [[nodiscard]] BackpressureVoter newBackpressureVoter() override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        PRECONDITION(backpressure != nullptr, "The backpressure manager was not set");
+        return backpressure->newVoter();
     }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
@@ -516,6 +525,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+        pec.backpressure = pipeline->backpressure.get();
         pipeline->stage->execute(task.buf, pec);
 
         if (requiresTaskRepetition)
@@ -577,6 +587,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "Repeat pipeline setup is currently not supported. Although there is no inherit reason this wouldn't work, but its not "
                     "tested");
             });
+        pec.backpressure = pipeline->backpressure.get();
         pipeline->stage->start(pec);
         pool.statistic->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
         return true;
@@ -666,6 +677,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;
     auto queryId = stopPipelineTask.queryId;
+    pec.backpressure = stopPipelineTask.pipeline->backpressure.get();
     stopPipelineTask.pipeline->stage->stop(pec);
 
     if (requiresTaskRepetition)

@@ -20,7 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <folly/Synchronized.h>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 
 namespace NES
 {
@@ -29,7 +29,8 @@ namespace NES
 ///
 /// A sink calls `onFull` when its outbound channel rejects a buffer (queue full / max in-flight reached).
 /// The handler stashes the buffer in an internal deque and acquires backpressure from the
-/// associated `BackpressureController` once the deque hits `upperThreshold`.
+/// voter passed to `start` once the deque hits `upperThreshold`.
+/// The voter casts a hard vote, which blocks all sources of the query.
 ///
 /// While rejected buffers remain, exactly one is marked "pending": it is either being attempted by
 /// the sink or held by a scheduled retry task, outside the deque. Other rejected buffers stay queued.
@@ -51,6 +52,7 @@ class BackpressureHandler
     struct State
     {
         bool hasBackpressure = false;
+        std::optional<BackpressureVoter> voter;
         std::deque<TupleBuffer> buffered;
         std::optional<BufferId> pending;
     };
@@ -64,8 +66,11 @@ public:
     /// @param lowerThreshold Number of buffered tuple buffers at which backpressure is released.
     explicit BackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0); /// NOLINT(fuchsia-default-arguments-declarations)
 
-    std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& backpressureController);
-    std::optional<TupleBuffer> onSuccess(const TupleBuffer& buffer, BackpressureController& backpressureController);
+    /// Must be called before `onFull` or `onSuccess`, usually in the `start` of the sink.
+    void start(BackpressureVoter voter);
+
+    std::optional<TupleBuffer> onFull(TupleBuffer buffer);
+    std::optional<TupleBuffer> onSuccess(const TupleBuffer& buffer);
     [[nodiscard]] bool empty() const;
 };
 

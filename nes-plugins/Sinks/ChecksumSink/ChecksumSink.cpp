@@ -39,7 +39,6 @@
 #include <Util/Variant.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -74,8 +73,7 @@ std::expected<ChecksumSinkConfig, Exception> ChecksumSinkConfig::fromConfig(cons
     return ChecksumSinkConfig{.filePath = config.get(FILE_PATH)};
 }
 
-ChecksumSink::ChecksumSink(BackpressureController backpressureController, const ChecksumSinkConfig& config)
-    : Sink(std::move(backpressureController)), isOpen(false), outputFilePath(config.filePath)
+ChecksumSink::ChecksumSink(const ChecksumSinkConfig& config) : isOpen(false), outputFilePath(config.filePath)
 {
 }
 

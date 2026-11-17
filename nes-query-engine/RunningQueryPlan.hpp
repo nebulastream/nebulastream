@@ -21,6 +21,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <folly/Synchronized.h>
+#include <BackpressureManager.hpp>
 #include <Callback.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -87,6 +88,8 @@ struct RunningQueryPlanNode
     std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<ExecutablePipelineStage> stage;
+    /// Shared, as a start task can still run while the running query plan is destroyed, before the sources release the node.
+    std::shared_ptr<const BackpressureManager> backpressure;
 
     std::function<void(Exception)> unregisterWithError;
     CallbackRef planRef;

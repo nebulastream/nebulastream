@@ -43,6 +43,7 @@
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <BackpressureManager.hpp>
 #include <BaseUnitTest.hpp>
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
@@ -230,7 +231,7 @@ TEST_F(SourceThreadTest, CompletesAlreadyInfiniteMetadataSource)
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     RecordingEmitFunction recorder(*bm);
     SourceThread sourceThread(
         std::move(backpressureListener), INITIAL<OriginId>, bm, std::make_unique<MetadataSource>(Timestamp{Timestamp::INFINITE_VALUE}));
@@ -265,7 +266,7 @@ TEST_F(SourceThreadTest, CompletesFiniteMetadataSourceWithNextSequenceNumber)
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     RecordingEmitFunction recorder(*bm);
     SourceThread sourceThread(std::move(backpressureListener), INITIAL<OriginId>, bm, std::make_unique<MetadataSource>(Timestamp{5000}));
     verify_non_blocking_start(
@@ -299,7 +300,7 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     {
@@ -332,7 +333,7 @@ TEST_F(SourceThreadTest, NoOpDestruction)
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     {
@@ -354,7 +355,7 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -388,7 +389,7 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     control->failDuringOpen(std::chrono::milliseconds(0));
@@ -420,7 +421,7 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
         BUFFER_ALIGNMENT,
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -455,7 +456,7 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
     RecordingEmitFunction recorder(*bm);
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -492,8 +493,8 @@ TEST_F(SourceThreadTest, ApplyBackbressure)
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
     RecordingEmitFunction recorder(*bm);
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
-    backpressureController.applyPressure();
+    auto [backpressureController, backpressureListener] = createSingleSourceBackpressure();
+    backpressureController.applyBackpressureToAll();
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -512,7 +513,7 @@ TEST_F(SourceThreadTest, ApplyBackbressure)
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         EXPECT_FALSE(control->wasClosed());
         wait_for_emits(recorder, 0);
-        backpressureController.releasePressure();
+        backpressureController.releaseBackpressureToAll();
         wait_for_emits(recorder, 5);
         verify_non_blocking_stop(sourceThread);
     }
@@ -534,8 +535,8 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
         POOLED_BUFFER_SIZE,
         std::make_shared<NesDefaultMemoryAllocator>());
     RecordingEmitFunction recorder(*bm);
-    auto [backpressureController, ingestion] = createBackpressureChannel();
-    backpressureController.applyPressure();
+    auto [backpressureController, ingestion] = createSingleSourceBackpressure();
+    backpressureController.applyBackpressureToAll();
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
