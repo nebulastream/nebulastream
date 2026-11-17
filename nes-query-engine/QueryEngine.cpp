@@ -980,6 +980,18 @@ void QueryCatalog::start(
         return;
     }
     auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
+    plan->backpressureListener.observe(
+        [statistic, queryId](const bool pressure)
+        {
+            if (pressure)
+            {
+                statistic->onEvent(BackpressureApplied{ThreadPool::WorkerThread::id, queryId});
+            }
+            else
+            {
+                statistic->onEvent(BackpressureReleased{ThreadPool::WorkerThread::id, queryId});
+            }
+        });
     queryListener->state = state;
 
     auto [runningQueryPlan, callback] = RunningQueryPlan::start(queryId, std::move(plan), controller, emitter, queryListener);

@@ -34,6 +34,7 @@
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -98,12 +99,19 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     }
 
 
-    return std::make_unique<ExecutableQueryPlan>(compiledQueryPlan.queryId, compiledQueryPlan.pipelines, std::move(instantiatedSources));
+    return std::make_unique<ExecutableQueryPlan>(
+        compiledQueryPlan.queryId, compiledQueryPlan.pipelines, std::move(instantiatedSources), std::move(backpressureListener));
 }
 
 ExecutableQueryPlan::ExecutableQueryPlan(
-    QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources)
-    : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
+    QueryId queryId,
+    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+    std::vector<SourceWithSuccessor> instantiatedSources,
+    BackpressureListener backpressureListener)
+    : queryId(std::move(queryId))
+    , pipelines(std::move(pipelines))
+    , sources(std::move(instantiatedSources))
+    , backpressureListener(std::move(backpressureListener))
 {
 }
 }
