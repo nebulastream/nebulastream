@@ -32,7 +32,8 @@
 
 namespace NES
 {
-CosSimPhysicalFunction::CosSimPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction, DataType outputType)
+CosSimPhysicalFunction::CosSimPhysicalFunction(
+    PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction, DataType outputType)
     : leftPhysicalFunction(std::move(leftPhysicalFunction))
     , rightPhysicalFunction(std::move(rightPhysicalFunction))
     , outputType(std::move(outputType))
@@ -91,8 +92,7 @@ VarVal CosSimPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
 
     if (outputType.nullable)
     {
-        const auto isNull = (leftVal.isNullable() && leftVal.isNull()) || 
-                            (rightVal.isNullable() && rightVal.isNull());
+        const auto isNull = (leftVal.isNullable() && leftVal.isNull()) || (rightVal.isNullable() && rightVal.isNull());
         if (isNull)
         {
             return VarVal{0.0, true, true}.castToType(outputType.type);
@@ -103,11 +103,7 @@ VarVal CosSimPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     const auto rightValue = rightVal.getRawValueAs<VariableSizedData>();
 
     const auto similarity = nautilus::invoke(
-        computeCosineSimilarity,
-        leftValue.getContent(),
-        leftValue.getSize(),
-        rightValue.getContent(),
-        rightValue.getSize());
+        computeCosineSimilarity, leftValue.getContent(), leftValue.getSize(), rightValue.getContent(), rightValue.getSize());
 
     return VarVal{similarity, outputType.nullable, nautilus::val<bool>{false}}.castToType(outputType.type);
 }

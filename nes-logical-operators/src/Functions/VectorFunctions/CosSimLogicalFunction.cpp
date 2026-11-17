@@ -38,7 +38,9 @@
 namespace NES
 {
 
-CosSimLogicalFunction::CosSimLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right)) { };
+CosSimLogicalFunction::CosSimLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right))
+{
+}
 
 bool CosSimLogicalFunction::operator==(const CosSimLogicalFunction& rhs) const
 {
@@ -64,12 +66,13 @@ LogicalFunction CosSimLogicalFunction::withInferredDataType(const Schema<Field, 
     copy.right = right.withInferredDataType(schema);
     if ((!copy.left.getDataType().isType(DataType::Type::VARSIZED)) || (!copy.right.getDataType().isType(DataType::Type::VARSIZED)))
     {
-        throw CannotInferStamp("Can only apply cossim to two VARSIZED vector inputs, but got left: {}, right: {}",
-            copy.left.getDataType(), copy.right.getDataType());
+        throw CannotInferStamp(
+            "Can only apply cossim to two VARSIZED vector inputs, but got left: {}, right: {}",
+            copy.left.getDataType(),
+            copy.right.getDataType());
     }
     copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(),
-        [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
 };
 
