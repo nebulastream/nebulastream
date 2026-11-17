@@ -19,6 +19,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -29,6 +30,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -60,8 +62,10 @@ struct BufferMetaData
 class WindowBasedOperatorHandler : public OperatorHandler
 {
 public:
+    /// With a `maxWatermarkGap` other than 0 and several input origins, votes for backpressure with a `WatermarkGapThrottle`.
     WindowBasedOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
+        uint64_t maxWatermarkGap,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
@@ -106,5 +110,6 @@ protected:
     std::atomic<Timestamp::Underlying> highestTriggeredWatermark{Timestamp::INITIAL_VALUE};
     /// Lower bounds of all buffers that are currently processed by a build operator.
     folly::Synchronized<std::multiset<Timestamp::Underlying>> buildLowerBounds;
+    std::optional<WatermarkGapThrottle> watermarkGapThrottle;
 };
 }

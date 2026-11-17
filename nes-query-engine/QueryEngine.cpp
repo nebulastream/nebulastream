@@ -285,6 +285,13 @@ struct DefaultPEC final : PipelineExecutionContext
         return backpressure->newVoter();
     }
 
+    [[nodiscard]] BackpressureVoter newWindowBackpressureVoter(const OriginId outputOrigin) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        PRECONDITION(backpressure != nullptr, "The backpressure manager was not set");
+        return backpressure->newWindowVoter(outputOrigin);
+    }
+
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
         PRECONDITION(operatorHandlers, "OperatorHandlers were not set");

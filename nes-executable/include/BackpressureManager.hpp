@@ -15,43 +15,24 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 
-/// One `BackpressureManager` exists per running query. `ExecutableQueryPlan::instantiate` creates it and gives one `BackpressureListener`
-/// to each source. Pipelines get voters through the `PipelineExecutionContext`, never through constructor arguments, so lowering does not
-/// need to know about backpressure.
-///
-/// Every component that wants to influence the sources gets its own `BackpressureVoter`. A voter can cast two kinds of votes:
-///
-///  - A hard vote blocks all sources. The sink uses it when its downstream cannot accept more data. Hard votes are OR-ed: one hard vote
-///    is enough to block.
-///  - A soft vote applies to the sources of one origin, and is either apply or release. A voter that has not voted on an origin has no
-///    opinion on it. Soft votes are combined with a veto: a source is blocked by soft votes only if at least one voter applies and no voter
-///    releases.
-///
-/// So for every source:
-///
-///     blocked = hardVotes > 0 || (softApplies > 0 && softReleases == 0)
-///
-/// An operator that needs progress from a source releases it, so no two operators can block each other's slowest source. Hard votes are
-/// not subject to the veto, because a full sink must stop all sources, even the ones a window waits for.
-///
-/// Thread safety: the origin-to-source map and the set of sources are fixed when the manager is created and are read-only afterwards.
-/// Only the per-source vote counters change. Each source channel guards its counters with its own lock.
-///
-/// Lifetime: listeners and voters share the state of the manager, so they may outlive it. Destroying a voter withdraws all its votes, so a
-/// source is never blocked by a component that no longer exists.
-
 namespace NES
 {
 
-/// Maps every origin of the query plan of this worker to the origins of the sources whose data drives it. Every origin has exactly one
-/// producer, so the map is global for the query. A source maps to itself. A network source counts as a source of this worker.
+/// Maps every origin of the query plan of this worker to the sources whose data reaches it.
+/// Every origin has exactly one producer, so the map is global for the query.
+/// A source maps to itself, and a network source counts as a source of this worker.
 using SourcesOfOrigins = std::unordered_map<OriginId, std::vector<OriginId>>;
+
+/// Maps every origin that a window-based operator of this worker produces to the input origins of that operator.
+/// Origins that are not in the map, e.g., sources, are leaves of the critical path.
+using InputsOfOrigins = std::unordered_map<OriginId, std::vector<OriginId>>;
 
 namespace detail
 {
@@ -59,14 +40,11 @@ struct BackpressureChannel;
 struct BackpressureState;
 }
 
-/// The handle through which one component votes. A voter is the unit of identity: the manager counts the votes of a voter once, no
-/// matter which pipeline or worker thread casts them. So a handler that is shared by several pipelines (e.g., the build and probe
-/// pipelines of a join) must create one voter in `start` and use it from all its pipelines.
-///
-/// Destroying a voter withdraws all its votes. The vote functions only accept an lvalue voter, as a vote of a temporary voter is
-/// withdrawn at the end of the statement.
-/// A voter is not thread-safe: the caller must serialize all calls on the same voter.
-/// Not copyable, as a copy would cast the same votes twice.
+/// The handle through which one component votes.
+/// The manager counts the votes of a voter once, no matter which pipeline or worker thread casts them.
+/// So a handler that several pipelines share, e.g., the build and probe pipelines of a join, creates one voter and uses it from all.
+/// Destroying a voter withdraws all its votes, so the vote functions reject a temporary voter.
+/// A voter is not thread-safe and not copyable, as a copy would cast the same votes twice.
 class BackpressureVoter
 {
 public:
@@ -76,33 +54,34 @@ public:
     BackpressureVoter& operator=(BackpressureVoter&&) noexcept;
     ~BackpressureVoter();
 
-    /// Hard vote for all sources of the query. Return true if the vote of this voter changed.
+    /// Hard vote for all sources of the query.
+    /// Returns true if the vote of this voter changed.
     bool applyBackpressureToAll() &;
     bool releaseBackpressureToAll() &;
 
-    /// Soft vote for the sources of `origin`, which must be an origin of the query plan of this worker. A later vote on the same origin
-    /// replaces the earlier one. Return true if the vote of this voter changed for at least one source.
+    /// Soft vote for the sources of `origin`, which must be an origin of the query plan of this worker.
+    /// A later vote on the same origin replaces the earlier one.
+    /// Returns true if the vote of this voter changed for at least one source.
     bool applyBackpressureTo(OriginId origin) &;
     bool releaseBackpressureTo(OriginId origin) &;
 
 private:
     friend class BackpressureManager;
     struct State;
-    explicit BackpressureVoter(std::shared_ptr<const detail::BackpressureState> shared);
+    BackpressureVoter(std::shared_ptr<const detail::BackpressureState> shared, std::optional<OriginId> outputOrigin);
     bool vote(OriginId origin, bool apply);
     void withdrawAll();
 
     std::unique_ptr<State> state;
 };
 
-/// The source side of one channel. A source waits on its listener before it reads the next buffer.
+/// A source waits on its listener before it reads the next buffer.
 class BackpressureListener
 {
 public:
     /// Blocks while the source of this listener is blocked, or until `stopToken` is triggered.
     void wait(const std::stop_token& stopToken) const;
 
-    /// Returns whether the source of this listener is blocked right now.
     [[nodiscard]] bool isBlocked() const;
 
 private:
@@ -111,12 +90,34 @@ private:
     std::shared_ptr<detail::BackpressureChannel> channel;
 };
 
-/// Owns one channel per source of the query, and combines the votes of all voters into one blocked flag per channel.
+/// Combines the votes of all voters of one running query into one blocked flag per source.
+///
+/// A hard vote blocks all sources; a sink casts it when its downstream cannot accept more data.
+/// A soft vote applies to or releases the sources of one origin.
+/// A window-based operator applies to input origins that run too far ahead and releases the others.
+/// The release of a window voter does not veto: it states that the window waits on that input origin.
+/// The manager follows these waits from the top of the plan down to the sources.
+/// This gives the critical path: the sources that the slowest chain of windows waits on.
+/// A window without a release, e.g., one that has not started yet, waits on all its inputs.
+///
+///     blocked = hardVotes > 0 || (softApplies > 0 && softReleases == 0 && !critical)
+///
+/// So a window above can throttle the sources of a window below while it does not wait on that window.
+/// Other voters, e.g., sinks and tests, keep the plain veto through `softReleases`.
+///
+/// Soft votes never block a source on the critical path, so it advances.
+/// Then the slowest input of the top window advances, the gaps close, and the windows withdraw their applies.
+/// This is why soft votes cannot deadlock.
+/// A full sink must stop all sources, so hard votes also block critical sources.
+///
+/// Listeners and voters share the state of the manager, so they may outlive it.
 class BackpressureManager
 {
 public:
-    /// Creates one channel for every source. `sourcesOfOrigins` may only name these sources. Every source maps to itself, even if
-    /// `sourcesOfOrigins` does not contain it.
+    /// `sourcesOfOrigins` may only name `sources`.
+    BackpressureManager(const std::vector<OriginId>& sources, SourcesOfOrigins sourcesOfOrigins, InputsOfOrigins inputsOfOrigins);
+
+    /// Without `inputsOfOrigins`, no source is critical and releases veto as plain soft votes.
     BackpressureManager(const std::vector<OriginId>& sources, SourcesOfOrigins sourcesOfOrigins);
 
     /// Not copyable or movable: the running query plan and its pipelines share one manager through a `std::shared_ptr`.
@@ -126,17 +127,21 @@ public:
     BackpressureManager& operator=(BackpressureManager&&) = delete;
     ~BackpressureManager() = default;
 
-    /// Returns the listener of `source`.
     [[nodiscard]] BackpressureListener getListener(OriginId source) const;
 
-    /// Returns a new voter without any votes. Thread-safe.
+    /// Returns a new voter without any votes.
+    /// Thread-safe.
     [[nodiscard]] BackpressureVoter newVoter() const;
+
+    /// Returns a new voter for the window-based operator that produces `outputOrigin`.
+    /// Thread-safe.
+    [[nodiscard]] BackpressureVoter newWindowVoter(OriginId outputOrigin) const;
 
 private:
     std::shared_ptr<const detail::BackpressureState> state;
 };
 
-/// Creates a manager with a single source and returns a voter and the listener of that source. For tests of a single source or sink.
+/// Returns a voter and the listener of a manager with a single source, for tests of a single source or sink.
 std::pair<BackpressureVoter, BackpressureListener> createSingleSourceBackpressure();
 
 }

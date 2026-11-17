@@ -14,6 +14,7 @@
 
 #include <Join/StreamJoinOperatorHandler.hpp>
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <utility>
@@ -31,10 +32,12 @@ namespace NES
 {
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
+    const uint64_t maxWatermarkGap,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     JoinTriggerStrategy triggerStrategy)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore)), triggerStrategy(std::move(triggerStrategy))
+    : WindowBasedOperatorHandler(inputOrigins, maxWatermarkGap, outputOriginId, std::move(sliceAndWindowStore))
+    , triggerStrategy(std::move(triggerStrategy))
 {
 }
 

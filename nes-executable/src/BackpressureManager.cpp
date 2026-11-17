@@ -19,9 +19,11 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ranges>
 #include <stop_token>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -34,8 +36,7 @@ namespace NES
 
 namespace
 {
-/// The vote of one voter at one origin or source. The order is important: when the votes of one voter for several origins meet at the
-/// same source, the largest vote wins.
+/// When the votes of one voter for several origins meet at the same source, the largest vote wins.
 enum class SoftVote : uint8_t
 {
     NoOpinion,
@@ -53,14 +54,15 @@ struct BackpressureChannel
         uint64_t hard = 0;
         uint64_t softApply = 0;
         uint64_t softRelease = 0;
+        bool critical = false;
 
-        [[nodiscard]] bool blocked() const { return hard > 0 || (softApply > 0 && softRelease == 0); }
+        [[nodiscard]] bool blocked() const { return hard > 0 || (softApply > 0 && softRelease == 0 && !critical); }
     };
 
     folly::Synchronized<Votes, std::mutex> votes;
     std::condition_variable_any unblocked;
 
-    /// `change` adds or removes the votes of one voter. Removing a vote the voter has not cast is an invariant violation.
+    /// `change` adds or removes the votes of one voter.
     template <typename Change>
     void update(Change change)
     {
@@ -101,27 +103,109 @@ struct BackpressureChannel
                 current.hard += delta;
             });
     }
+
+    void setCritical(const bool critical)
+    {
+        update([&](Votes& current) { current.critical = critical; });
+    }
 };
 
 struct BackpressureState
 {
     std::unordered_map<OriginId, std::shared_ptr<BackpressureChannel>> channels;
     SourcesOfOrigins sourcesOfOrigins;
+    InputsOfOrigins inputsOfOrigins;
+    /// Origins that no window of this worker consumes, where the critical path starts.
+    std::vector<OriginId> topOrigins;
+
+    /// For every window output origin, how many voters of that window wait on each input origin.
+    /// Its lock is taken before the lock of any channel, never after.
+    using Waits = std::unordered_map<OriginId, std::unordered_map<OriginId, uint64_t>>;
+    mutable folly::Synchronized<Waits, std::mutex> waits;
+
+    /// A window without waits waits on all its inputs.
+    [[nodiscard]] std::unordered_set<OriginId> criticalSources(const Waits& current) const
+    {
+        std::unordered_set<OriginId> visited;
+        std::unordered_set<OriginId> critical;
+        std::vector<OriginId> pending = topOrigins;
+        while (!pending.empty())
+        {
+            const auto origin = pending.back();
+            pending.pop_back();
+            if (!visited.insert(origin).second)
+            {
+                continue;
+            }
+            const auto inputs = inputsOfOrigins.find(origin);
+            if (inputs == inputsOfOrigins.end())
+            {
+                /// A source, or an origin of an upstream worker that reaches this worker through a network source.
+                if (const auto sources = sourcesOfOrigins.find(origin); sources != sourcesOfOrigins.end())
+                {
+                    critical.insert(sources->second.begin(), sources->second.end());
+                }
+                continue;
+            }
+            if (const auto waiting = current.find(origin); waiting != current.end())
+            {
+                for (const auto input : waiting->second | std::views::keys)
+                {
+                    pending.push_back(input);
+                }
+            }
+            else
+            {
+                pending.insert(pending.end(), inputs->second.begin(), inputs->second.end());
+            }
+        }
+        return critical;
+    }
+
+    /// Recomputes the critical flags while holding the lock of the waits, so concurrent changes apply their results in order.
+    void updateCritical(const Waits& current) const
+    {
+        const auto critical = criticalSources(current);
+        for (const auto& [source, channel] : channels)
+        {
+            channel->setCritical(critical.contains(source));
+        }
+    }
+
+    void changeWait(const OriginId output, const OriginId input, const int64_t delta) const
+    {
+        auto locked = waits.lock();
+        auto& count = (*locked)[output][input];
+        INVARIANT(delta > 0 || count > 0, "A window withdraws a wait it has not cast");
+        count += delta;
+        if (count == 0)
+        {
+            locked->at(output).erase(input);
+            if (locked->at(output).empty())
+            {
+                locked->erase(output);
+            }
+        }
+        updateCritical(*locked);
+    }
 };
 }
 
 struct BackpressureVoter::State
 {
     std::shared_ptr<const detail::BackpressureState> shared;
+    /// Set for the voter of a window-based operator, whose releases are waits on input origins, not vetoes.
+    std::optional<OriginId> outputOrigin;
     bool hard = false;
-    /// The vote of this voter for every origin it has an opinion on.
     std::unordered_map<OriginId, SoftVote> originVotes;
-    /// The vote this voter has counted at every source. Derived from `originVotes`: the largest vote of all origins that the source drives.
+    /// For every source, the largest vote in `originVotes` among the origins that the source reaches.
     std::unordered_map<OriginId, SoftVote> sourceVotes;
 };
 
-BackpressureVoter::BackpressureVoter(std::shared_ptr<const detail::BackpressureState> shared)
-    : state(std::make_unique<State>(State{.shared = std::move(shared), .hard = false, .originVotes = {}, .sourceVotes = {}}))
+BackpressureVoter::BackpressureVoter(std::shared_ptr<const detail::BackpressureState> shared, const std::optional<OriginId> outputOrigin)
+    : state(
+          std::make_unique<State>(
+              State{.shared = std::move(shared), .outputOrigin = outputOrigin, .hard = false, .originVotes = {}, .sourceVotes = {}}))
 {
 }
 
@@ -155,6 +239,16 @@ void BackpressureVoter::withdrawAll()
     for (const auto& [source, vote] : state->sourceVotes)
     {
         state->shared->channels.at(source)->addSoft(vote, -1);
+    }
+    if (state->outputOrigin)
+    {
+        for (const auto& [origin, vote] : state->originVotes)
+        {
+            if (vote == SoftVote::Release)
+            {
+                state->shared->changeWait(*state->outputOrigin, origin, -1);
+            }
+        }
     }
     state->sourceVotes.clear();
     state->originVotes.clear();
@@ -203,6 +297,12 @@ bool BackpressureVoter::vote(const OriginId origin, const bool apply)
     const auto sourcesOfOrigin = sourcesOfOrigins.find(origin);
     INVARIANT(sourcesOfOrigin != sourcesOfOrigins.end(), "Origin {} is not an origin of this query", origin);
 
+    const auto previous = state->originVotes.contains(origin) ? state->originVotes.at(origin) : SoftVote::NoOpinion;
+    if (state->outputOrigin && (previous == SoftVote::Release) != (vote == SoftVote::Release))
+    {
+        state->shared->changeWait(*state->outputOrigin, origin, vote == SoftVote::Release ? 1 : -1);
+    }
+
     state->originVotes.insert_or_assign(origin, vote);
 
     bool changed = false;
@@ -215,6 +315,12 @@ bool BackpressureVoter::vote(const OriginId origin, const bool apply)
             {
                 newVote = std::max(newVote, originVote);
             }
+        }
+        /// The critical path accounts for the release of a window.
+        /// At the source, the release only cancels the window's own apply.
+        if (state->outputOrigin && newVote == SoftVote::Release)
+        {
+            newVote = SoftVote::NoOpinion;
         }
         const auto oldVote = state->sourceVotes.contains(source) ? state->sourceVotes.at(source) : SoftVote::NoOpinion;
         if (newVote == oldVote)
@@ -253,7 +359,8 @@ bool BackpressureListener::isBlocked() const
     return channel->votes.lock()->blocked();
 }
 
-BackpressureManager::BackpressureManager(const std::vector<OriginId>& sources, SourcesOfOrigins sourcesOfOrigins)
+BackpressureManager::BackpressureManager(
+    const std::vector<OriginId>& sources, SourcesOfOrigins sourcesOfOrigins, InputsOfOrigins inputsOfOrigins)
 {
     auto shared = std::make_shared<detail::BackpressureState>();
     for (const auto source : sources)
@@ -269,7 +376,26 @@ BackpressureManager::BackpressureManager(const std::vector<OriginId>& sources, S
         }
     }
     shared->sourcesOfOrigins = std::move(sourcesOfOrigins);
+    std::unordered_set<OriginId> consumed;
+    for (const auto& inputs : inputsOfOrigins | std::views::values)
+    {
+        consumed.insert(inputs.begin(), inputs.end());
+    }
+    for (const auto origin : inputsOfOrigins | std::views::keys)
+    {
+        if (!consumed.contains(origin))
+        {
+            shared->topOrigins.push_back(origin);
+        }
+    }
+    shared->inputsOfOrigins = std::move(inputsOfOrigins);
+    shared->updateCritical(*shared->waits.lock());
     state = std::move(shared);
+}
+
+BackpressureManager::BackpressureManager(const std::vector<OriginId>& sources, SourcesOfOrigins sourcesOfOrigins)
+    : BackpressureManager(sources, std::move(sourcesOfOrigins), {})
+{
 }
 
 BackpressureListener BackpressureManager::getListener(const OriginId source) const
@@ -281,7 +407,12 @@ BackpressureListener BackpressureManager::getListener(const OriginId source) con
 
 BackpressureVoter BackpressureManager::newVoter() const
 {
-    return BackpressureVoter{state};
+    return BackpressureVoter{state, std::nullopt};
+}
+
+BackpressureVoter BackpressureManager::newWindowVoter(const OriginId outputOrigin) const
+{
+    return BackpressureVoter{state, outputOrigin};
 }
 
 std::pair<BackpressureVoter, BackpressureListener> createSingleSourceBackpressure()

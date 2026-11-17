@@ -177,5 +177,87 @@ TEST_F(BackpressureManagerTest, VoteForAnUnknownOriginFails)
     EXPECT_DEATH_DEBUG(window.applyBackpressureTo(OriginId(99)), "");
 }
 
+/// W1 joins person and auction, W2 joins W1's output with bid. bid is much larger, so W1's output runs ahead of it.
+constexpr OriginId PERSON{11};
+constexpr OriginId AUCTION{12};
+constexpr OriginId BID{13};
+constexpr OriginId W1_OUTPUT{14};
+constexpr OriginId W2_OUTPUT{15};
+
+class CriticalPathTest : public ::testing::Test
+{
+protected:
+    BackpressureManager manager{
+        {PERSON, AUCTION, BID},
+        {{W1_OUTPUT, {PERSON, AUCTION}}, {W2_OUTPUT, {PERSON, AUCTION, BID}}},
+        {{W1_OUTPUT, {PERSON, AUCTION}}, {W2_OUTPUT, {W1_OUTPUT, BID}}}};
+    BackpressureListener person = manager.getListener(PERSON);
+    BackpressureListener auction = manager.getListener(AUCTION);
+    BackpressureListener bid = manager.getListener(BID);
+    BackpressureVoter w1 = manager.newWindowVoter(W1_OUTPUT);
+    BackpressureVoter w2 = manager.newWindowVoter(W2_OUTPUT);
+};
+
+TEST_F(CriticalPathTest, AWindowWithoutWaitsWaitsOnAllItsInputs)
+{
+    w2.applyBackpressureTo(W1_OUTPUT);
+    EXPECT_FALSE(person.isBlocked());
+    EXPECT_FALSE(auction.isBlocked());
+}
+
+TEST_F(CriticalPathTest, UpperWindowOverridesTheReleaseOfAWindowItDoesNotWaitOn)
+{
+    w1.releaseBackpressureTo(PERSON);
+    w2.releaseBackpressureTo(BID);
+    w2.applyBackpressureTo(W1_OUTPUT);
+    EXPECT_TRUE(person.isBlocked());
+    EXPECT_TRUE(auction.isBlocked());
+    EXPECT_FALSE(bid.isBlocked());
+}
+
+TEST_F(CriticalPathTest, ReleaseCountsOnceTheUpperWindowWaitsOnTheLowerOne)
+{
+    w1.releaseBackpressureTo(PERSON);
+    w2.releaseBackpressureTo(BID);
+    w2.applyBackpressureTo(W1_OUTPUT);
+
+    /// bid caught up: W2 now waits on W1, and runs ahead on bid.
+    w2.releaseBackpressureTo(W1_OUTPUT);
+    w2.applyBackpressureTo(BID);
+    EXPECT_FALSE(person.isBlocked());
+    EXPECT_FALSE(auction.isBlocked());
+    EXPECT_TRUE(bid.isBlocked());
+}
+
+TEST_F(CriticalPathTest, ACriticalSourceWakesItsListener)
+{
+    w1.releaseBackpressureTo(PERSON);
+    w2.releaseBackpressureTo(BID);
+    w2.applyBackpressureTo(W1_OUTPUT);
+    auto waited = std::async(std::launch::async, [&] { person.wait(std::stop_token{}); });
+    EXPECT_EQ(waited.wait_for(std::chrono::milliseconds(50)), std::future_status::timeout);
+    w2.releaseBackpressureTo(W1_OUTPUT);
+    EXPECT_EQ(waited.wait_for(std::chrono::seconds(10)), std::future_status::ready);
+}
+
+TEST_F(CriticalPathTest, DestroyingAWindowVoterWithdrawsItsWaits)
+{
+    auto other = manager.newVoter();
+    other.applyBackpressureTo(PERSON);
+    w2.releaseBackpressureTo(BID);
+    EXPECT_TRUE(person.isBlocked());
+
+    w2 = manager.newWindowVoter(W2_OUTPUT);
+    EXPECT_FALSE(person.isBlocked());
+}
+
+TEST_F(CriticalPathTest, HardVoteBlocksCriticalSources)
+{
+    auto sink = manager.newVoter();
+    w2.releaseBackpressureTo(BID);
+    sink.applyBackpressureToAll();
+    EXPECT_TRUE(bid.isBlocked());
+}
+
 }
 }

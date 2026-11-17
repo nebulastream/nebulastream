@@ -189,8 +189,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         std::unreachable();
     };
 
-    auto handler
-        = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds, conf.maxWatermarkGapInMs, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};

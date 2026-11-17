@@ -63,6 +63,12 @@ public:
     /// The default voter belongs to a manager without sources and has no effect, which suits tests.
     [[nodiscard]] virtual BackpressureVoter newBackpressureVoter() { return BackpressureManager({}, {}).newVoter(); }
 
+    /// Like `newBackpressureVoter`, for the window-based operator that produces `outputOrigin`.
+    [[nodiscard]] virtual BackpressureVoter newWindowBackpressureVoter(const OriginId outputOrigin)
+    {
+        return BackpressureManager({}, {}).newWindowVoter(outputOrigin);
+    }
+
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
     virtual void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) = 0;

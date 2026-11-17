@@ -218,7 +218,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore));
+        *inputOriginIds | std::ranges::to<std::vector>(), conf.maxWatermarkGapInMs, outputOriginId, std::move(sliceAndWindowStore));
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

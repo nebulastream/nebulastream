@@ -43,9 +43,10 @@ namespace NES
 
 AggregationOperatorHandler::AggregationOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
+    const uint64_t maxWatermarkGap,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore)), setupAlreadyCalled(false)
+    : WindowBasedOperatorHandler(inputOrigins, maxWatermarkGap, outputOriginId, std::move(sliceAndWindowStore)), setupAlreadyCalled(false)
 {
 }
 
