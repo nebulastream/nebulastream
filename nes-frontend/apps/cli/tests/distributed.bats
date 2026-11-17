@@ -485,7 +485,10 @@ EOF
   wait_until_status tests/good/oversized-buffer.yaml Failed "$query_id"
 
   grep "cannot be sent" worker-2/singleNodeWorker.log
-  grep "NetworkSink channel failed permanently" worker-2/singleNodeWorker.log
+  # The final watermark buffer follows the oversized one.
+  # If the channel handler fails the oversized send first, the sink's write of the watermark buffer finds the closed channel and reports the failure.
+  # Otherwise the watermark buffer is queued, and the sink's flush while stopping reports the failure.
+  grep -E "NetworkSink channel (failed permanently|was closed by the other side or failed permanently)" worker-2/singleNodeWorker.log
 }
 
 @test "placement fails with reversed downstream edges" {

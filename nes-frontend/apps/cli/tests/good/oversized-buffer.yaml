@@ -25,7 +25,7 @@
 #
 #   worker-2 ─► worker-1
 #   The source emits a single tuple with a 9 MiB string, which exceeds the 8 MiB frame limit of the network channel.
-#   No other buffer follows, so the sink can only observe the failure while stopping.
+#   Only the final watermark buffer follows, so the sink observes the failure either while writing the watermark buffer or while stopping.
 
 query: |
   SELECT
