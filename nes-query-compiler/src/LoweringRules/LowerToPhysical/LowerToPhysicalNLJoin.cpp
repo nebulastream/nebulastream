@@ -48,6 +48,7 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <LoweringRules/LowerToPhysical/WatermarkGapThrottleOf.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -189,8 +190,12 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         std::unreachable();
     };
 
-    auto handler
-        = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds,
+        watermarkGapThrottleOf(inputOriginIds, conf),
+        outputOriginId,
+        std::move(sliceAndWindowStore),
+        createTriggerStrategy());
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};

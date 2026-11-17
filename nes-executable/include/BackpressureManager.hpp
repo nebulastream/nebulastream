@@ -31,7 +31,8 @@
 ///  - A hard vote blocks all sources. The sink uses it when its downstream cannot accept more data. Hard votes are OR-ed: one hard vote
 ///    is enough to block.
 ///  - A soft vote applies to the sources of one origin, and has three states: apply, release, or no opinion. Soft votes are combined with
-///    a veto: a source is blocked by soft votes only if at least one voter applies and no voter releases.
+///    a veto: a source is blocked by soft votes only if at least one voter applies and no voter releases. A window-based operator applies
+///    to the sources of input origins that run too far ahead, and releases the sources of its slowest input origin.
 ///
 /// So for every source:
 ///
@@ -51,6 +52,7 @@ namespace NES
 
 /// Maps every origin of the query plan of this worker to the origins of the sources whose data drives it. Every origin has exactly one
 /// producer, so the map is global for the query. A source maps to itself. A network source counts as a source of this worker.
+/// The query compiler computes the map and stores it in the `CompiledQueryPlan`.
 using SourcesOfOrigins = std::unordered_map<OriginId, std::vector<OriginId>>;
 
 namespace detail

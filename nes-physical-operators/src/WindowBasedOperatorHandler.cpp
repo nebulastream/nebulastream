@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -35,6 +36,7 @@ namespace NES
 
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
+    const std::optional<uint64_t> maxWatermarkGap,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
@@ -43,15 +45,27 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {
+    if (maxWatermarkGap)
+    {
+        watermarkGapThrottle.emplace(inputOrigins, *maxWatermarkGap);
+    }
 }
 
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+    if (watermarkGapThrottle)
+    {
+        watermarkGapThrottle->start(pipelineExecutionContext.newBackpressureVoter());
+    }
 }
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
+    if (watermarkGapThrottle)
+    {
+        watermarkGapThrottle->stop();
+    }
 }
 
 NAUTILUS_INLINE WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
@@ -102,9 +116,17 @@ void WindowBasedOperatorHandler::finishBuildBuffer(const Timestamp lowerBound)
 
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
+    const auto originWatermarkBefore = watermarkProcessorBuild->getCurrentWatermark(bufferMetaData.originId);
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+
+    /// The gap between the input origins changes only if the watermark of some origin moved. The thread whose update moves an origin's
+    /// watermark observes that move, so no change goes unapplied.
+    if (watermarkGapThrottle && watermarkProcessorBuild->getCurrentWatermark(bufferMetaData.originId) != originWatermarkBefore)
+    {
+        watermarkGapThrottle->onWatermarkMoved(*watermarkProcessorBuild);
+    }
 
     NES_TRACE(
         "New global watermark: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",

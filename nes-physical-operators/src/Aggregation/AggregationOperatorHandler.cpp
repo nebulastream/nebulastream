@@ -22,6 +22,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -43,9 +44,10 @@ namespace NES
 
 AggregationOperatorHandler::AggregationOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
+    const std::optional<uint64_t> maxWatermarkGap,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore)), setupAlreadyCalled(false)
+    : WindowBasedOperatorHandler(inputOrigins, maxWatermarkGap, outputOriginId, std::move(sliceAndWindowStore)), setupAlreadyCalled(false)
 {
 }
 

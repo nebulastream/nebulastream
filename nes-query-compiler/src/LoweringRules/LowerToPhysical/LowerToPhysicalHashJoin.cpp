@@ -59,6 +59,7 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <LoweringRules/LowerToPhysical/WatermarkGapThrottleOf.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -394,8 +395,12 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         std::unreachable();
     };
 
-    auto handler
-        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = std::make_shared<HJOperatorHandler>(
+        inputOriginIds,
+        watermarkGapThrottleOf(inputOriginIds, conf),
+        outputOriginId,
+        std::move(sliceAndWindowStore),
+        createTriggerStrategy());
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{

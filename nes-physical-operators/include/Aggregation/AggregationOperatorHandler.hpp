@@ -19,6 +19,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -51,6 +52,7 @@ class AggregationOperatorHandler final : public WindowBasedOperatorHandler
 public:
     AggregationOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
+        std::optional<uint64_t> maxWatermarkGap,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 

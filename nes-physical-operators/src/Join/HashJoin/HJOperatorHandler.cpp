@@ -22,6 +22,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -82,10 +83,11 @@ std::vector<TupleBuffer> getHashMapsFromSlices(const std::vector<std::shared_ptr
 
 HJOperatorHandler::HJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
+    const std::optional<uint64_t> maxWatermarkGap,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     JoinTriggerStrategy triggerStrategy)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
+    : StreamJoinOperatorHandler(inputOrigins, maxWatermarkGap, outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
     , setupAlreadyCalledLeft(false)
     , setupAlreadyCalledRight(false)
 {

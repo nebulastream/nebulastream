@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <BackpressureManager.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <QueryId.hpp>
 
@@ -68,5 +69,7 @@ struct CompiledQueryPlan
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<Sink> sinks;
     std::vector<Source> sources;
+    /// Computed by the query compiler from the logical plan. `ExecutableQueryPlan::instantiate` creates the `BackpressureManager` from it.
+    SourcesOfOrigins sourcesOfOrigins;
 };
 }

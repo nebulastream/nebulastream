@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
@@ -64,6 +65,7 @@ class NLJOperatorHandler final : public StreamJoinOperatorHandler
 public:
     NLJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
+        std::optional<uint64_t> maxWatermarkGap,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);

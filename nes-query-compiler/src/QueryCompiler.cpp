@@ -20,6 +20,7 @@
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Phases/PipeliningPhase.hpp>
+#include <Phases/TraceSourcesOfOrigins.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -33,6 +34,8 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, defaultQueryExecution.nautilusPerf);
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
-    return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
+    auto compiledQueryPlan = lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
+    compiledQueryPlan->sourcesOfOrigins = traceSourcesOfOrigins(request->queryPlan);
+    return compiledQueryPlan;
 }
 }

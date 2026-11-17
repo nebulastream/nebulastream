@@ -43,6 +43,7 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <LoweringRules/LowerToPhysical/WatermarkGapThrottleOf.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -217,8 +218,9 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
+    const auto inputOrigins = *inputOriginIds | std::ranges::to<std::vector>();
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore));
+        inputOrigins, watermarkGapThrottleOf(inputOrigins, conf), outputOriginId, std::move(sliceAndWindowStore));
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

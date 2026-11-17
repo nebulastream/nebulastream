@@ -19,6 +19,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -57,6 +58,7 @@ class HJOperatorHandler final : public StreamJoinOperatorHandler
 public:
     HJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
+        std::optional<uint64_t> maxWatermarkGap,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);
