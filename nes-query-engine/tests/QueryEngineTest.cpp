@@ -245,6 +245,39 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
+/// The engine reports when the sink of a query applies and when it releases backpressure, and no call that changes nothing.
+TEST_F(QueryEngineTest, singleQueryReportsSinkBackpressure)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto sink = builder.addSink({source});
+    auto query = test.addNewQuery(std::move(builder));
+
+    auto ctrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+
+    test.stats.expect(ExpectStats::BackpressureApplied(1), ExpectStats::BackpressureReleased(1));
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(ctrl->waitUntilOpened());
+
+        EXPECT_TRUE(sinkCtrl->backpressureController.applyPressure());
+        EXPECT_FALSE(sinkCtrl->backpressureController.applyPressure());
+        EXPECT_TRUE(sinkCtrl->backpressureController.releasePressure());
+        ctrl->injectEoS();
+    }
+    ASSERT_TRUE(sinkCtrl->waitForStop());
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+    test.stop();
+}
+
 /// System Stop: Meaning the Query was stopped internally from the query manager via the stop query
 TEST_F(QueryEngineTest, singleQueryWithSystemStop)
 {

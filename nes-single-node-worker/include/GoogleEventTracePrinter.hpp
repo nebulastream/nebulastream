@@ -91,6 +91,8 @@ private:
     /// Track active queries and pipelines for cleanup
     std::unordered_map<QueryId, std::pair<std::chrono::system_clock::time_point, WorkerThreadId>> activeQueries;
     std::unordered_map<PipelineId, std::tuple<QueryId, std::chrono::system_clock::time_point, WorkerThreadId>> activePipelines;
+    /// The thread of each query's applied backpressure, because a span must end on the thread on which it began.
+    std::unordered_map<QueryId, WorkerThreadId> activeBackpressure;
 
     /// Must be declared last so it's destroyed first, ensuring the thread stops before maps are destroyed
     Thread traceThread;

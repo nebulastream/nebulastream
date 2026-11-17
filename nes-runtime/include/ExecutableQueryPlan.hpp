@@ -21,6 +21,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <BackpressureChannel.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryId.hpp>
 
@@ -35,11 +36,16 @@ struct ExecutableQueryPlan
     static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
 
     ExecutableQueryPlan(
-        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);
+        QueryId queryId,
+        std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+        std::vector<SourceWithSuccessor> instantiatedSources,
+        BackpressureListener backpressureListener);
 
     QueryId queryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<SourceWithSuccessor> sources;
+    /// A listener of the channel that the sink controls, so that the engine can report when the sink holds back the sources.
+    BackpressureListener backpressureListener;
     friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan);
 };
 }
