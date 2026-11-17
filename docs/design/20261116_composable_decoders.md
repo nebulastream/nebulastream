@@ -408,6 +408,18 @@ next stage has consumed buffers.
 Not chosen for the source-thread implementation. Since a stage only exchanges buffers through its context, the interface permits
 this execution model later without changes to plugins.
 
+# Proof of Concept
+Branch [`oc/decoder-prototype`](https://github.com/nebulastream/nebulastream/tree/oc/decoder-prototype) contains a
+working prototype:
+- `nes-decoder`: the stage interface, the chain, the stage registries, and `CREATE DECODER`, `SHOW DECODERS` and
+  `DROP DECODER`, including systest support;
+- `nes-plugins/Decoders/LZ4Decoder` and `nes-plugins/Decoders/ZstdDecoder`, with unit tests for arbitrary input
+  chunking, concatenated frames, truncated and corrupt input, and chains of both codecs (Zstd then LZ4, LZ4 then Zstd);
+- a systest that reads an LZ4-compressed CSV file with the same result as the uncompressed file.
+
+The prototype differs from this document in one respect: its stages use a collect-then-emit interface (A3) instead of
+the exchange interface proposed here.
+
 # Summary
 Decoders run in the source thread, where buffers are in order (P2, G2), as in Leo Raasch's design. This document
 generalises the single decoder to an ordered chain of plugin stages with no fixed kind or position (P4, G3, G4),
