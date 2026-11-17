@@ -75,6 +75,7 @@
     "simdjson",
     "spdlog",
     "yaml-cpp",
+    "zstd",
     "rapidcheck"
   ],
   "default-features": [
