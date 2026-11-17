@@ -4,6 +4,8 @@
 *.zip binary
 *.nes binary
 *.bin binary
+*.lz4 binary
+*.zst binary
 # Inference model fixtures (nes-inference/tests/testdata)
 *.pb binary
 *.pbtxt binary

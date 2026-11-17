@@ -74,6 +74,8 @@ INGORED_ENDINGS = {
     "yaml",
     "zip",
     "bin",
+    "lz4",
+    "zst",
     "sql",
     "nesql",
     "nix",
