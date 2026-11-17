@@ -79,7 +79,7 @@ def chain(udf):
 WIDE = {3: 480e6, 7: 240e6, 15: 120e6, 31: 60e6}
 
 
-def write_test(path, input_format, udf, input_file, source_on_performance_cpu, sources, unused=0, unused_after=False, wide=0):
+def write_test(path, input_format, udf, input_file, source_on_performance_cpu, sources, unused=0, unused_after=False, wide=0, no_calls=False):
     """Writes the systest file of one run: a logical source with `sources` physical file sources and one query."""
     description = INPUTS[input_format]
     options = list(description["source_options"])
@@ -109,7 +109,7 @@ def write_test(path, input_format, udf, input_file, source_on_performance_cpu, s
         expression = UDFS[calls[0]][3]
         for index, call in enumerate(calls):
             parameters, result, body, _ = UDFS[call]
-            lines.append(f"CREATE FUNCTION udf{index} ({parameters}) RETURNS {result} EXECUTION OUT_OF_PROCESS AS $python$\n{body}\n$python$;\n")
+            lines.append(f"CREATE FUNCTION udf{index} ({parameters}) RETURNS {result} EXECUTION {'IN_PROCESS' if no_calls else 'OUT_OF_PROCESS'} AS $python$\n{body}\n$python$;\n")
             expression = f"udf{index}({expression})" + (" + INT64(1)" if index + 1 < len(calls) else "")
         lines.append(f"SELECT *{later}, {expression} AS r FROM {source} INTO Void();\n----\n")
     elif udf == "scan":
@@ -252,7 +252,7 @@ def run(arguments, layout, udf, repetition, record_base):
     shutil.rmtree(run_dir, ignore_errors=True)
     os.makedirs(run_dir + "/work")
     test_file = os.path.join(run_dir, "generated.test")
-    write_test(test_file, arguments.format, udf, input_file, layout["src_perf"], arguments.sources, arguments.unused, arguments.unused_after, arguments.wide)
+    write_test(test_file, arguments.format, udf, input_file, layout["src_perf"], arguments.sources, arguments.unused, arguments.unused_after, arguments.wide, arguments.no_calls)
     environment = dict(os.environ, RUN_DIR=run_dir, BOOT=os.path.join(HARNESS, "boot.py"), UDF_BENCH_PYTHON=arguments.python)
     environment.update(setting.split("=", 1) for setting in arguments.environment)
     if "UDF_BENCH_POOL_NODE" in environment:
@@ -270,6 +270,7 @@ def run(arguments, layout, udf, repetition, record_base):
         "--worker.query_engine.performance_cpus=" + ",".join(map(str, layout["perf"])),
         "--worker.query_engine.misc_cpus=" + ",".join(map(str, layout["misc"])),
         "--worker.python_udf.process_cpus=" + ",".join(map(str, layout["py"])),
+        *(["--worker.default_query_execution.in_process_udf_calls=NONE"] if arguments.no_calls else []),
         *arguments.worker_argument,
     ]
     command = [
@@ -419,6 +420,7 @@ def main():
     parser.add_argument("--unused", type=int, default=0, help="INT64 fields that the query adds and no UDF reads (default: 0)")
     parser.add_argument("--wide", type=int, default=0, choices=sorted(WIDE), help="read rows with this many more INT64 fields from the source, which no UDF reads (native format)")
     parser.add_argument("--unused-after", action="store_true", help="create the --unused fields after the UDF, so that they are not in its buffer")
+    parser.add_argument("--no-calls", action="store_true", help="baseline without the UDF processes: the UDFs run IN_PROCESS with in_process_udf_calls=NONE, so the records only go through an Arrow batch between two pipelines and the results are NULL")
     parser.add_argument("--processes", type=int, help="processes per UDF operator (default: one per process CPU of the layout); they are pinned to the process CPUs in turn")
     parser.add_argument("--reps", type=int, default=1)
     parser.add_argument("--buffer", type=int, default=65536, help="operator_buffer_size in bytes (default: 65536)")
