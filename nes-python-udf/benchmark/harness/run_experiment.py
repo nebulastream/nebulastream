@@ -270,7 +270,8 @@ def run(arguments, layout, udf, repetition, record_base):
         "--worker.query_engine.performance_cpus=" + ",".join(map(str, layout["perf"])),
         "--worker.query_engine.misc_cpus=" + ",".join(map(str, layout["misc"])),
         "--worker.python_udf.process_cpus=" + ",".join(map(str, layout["py"])),
-        *(["--worker.default_query_execution.in_process_udf_calls=NONE"] if arguments.no_calls else []),
+        *([f"--worker.default_query_execution.in_process_udf_calls={'NONE_HYBRID' if arguments.hybrid else 'NONE'}"] if arguments.no_calls else []),
+        *(["--optimizer.udf_process_layout=HYBRID"] if arguments.hybrid else []),
         *arguments.worker_argument,
     ]
     command = [
@@ -421,6 +422,7 @@ def main():
     parser.add_argument("--wide", type=int, default=0, choices=sorted(WIDE), help="read rows with this many more INT64 fields from the source, which no UDF reads (native format)")
     parser.add_argument("--unused-after", action="store_true", help="create the --unused fields after the UDF, so that they are not in its buffer")
     parser.add_argument("--no-calls", action="store_true", help="baseline without the UDF processes: the UDFs run IN_PROCESS with in_process_udf_calls=NONE, so the records only go through an Arrow batch between two pipelines and the results are NULL")
+    parser.add_argument("--hybrid", action="store_true", help="batches of the UDF processes in the hybrid layout: the fields that no UDF reads or writes stay in the row layout of NES (optimizer.udf_process_layout=HYBRID; with --no-calls in_process_udf_calls=NONE_HYBRID)")
     parser.add_argument("--processes", type=int, help="processes per UDF operator (default: one per process CPU of the layout); they are pinned to the process CPUs in turn")
     parser.add_argument("--reps", type=int, default=1)
     parser.add_argument("--buffer", type=int, default=65536, help="operator_buffer_size in bytes (default: 65536)")
