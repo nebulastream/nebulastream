@@ -78,12 +78,19 @@ void ZstdDecoder::process(const std::span<const std::byte> input, const BufferPr
             target = ZSTD_outBuffer{.dst = memory.data(), .size = memory.size(), .pos = 0};
         }
         /// Reads until the input is used up or the target is full; returns 0 when a frame is complete and flushed.
+        const auto inputBefore = source.pos;
+        const auto outputBefore = target.pos;
         const auto hint = ZSTD_decompressStream(context, &target, &source);
         if (ZSTD_isError(hint))
         {
             throw CannotDecodeSourceData("Corrupt Zstd input: {}", ZSTD_getErrorName(hint));
         }
-        insideFrame = hint != 0;
+        if (source.pos > inputBefore || target.pos > outputBefore)
+        {
+            /// A call without progress (no input left, e.g. after a frame that ended exactly at a full buffer) reports
+            /// the header size of a next frame; it says nothing about the stream being inside a frame.
+            insideFrame = hint != 0;
+        }
 
         if (target.pos == target.size)
         {

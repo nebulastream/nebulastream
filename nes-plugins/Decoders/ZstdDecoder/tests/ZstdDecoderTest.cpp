@@ -134,6 +134,18 @@ protected:
     }
 };
 
+/// Regression: a frame that ends exactly where an output buffer is full must not be reported as truncated. After the
+/// full buffer, the decoder is called once more without input and then reports the header size of a next frame.
+TEST_F(ZstdDecoderTest, FrameEndingAtFullOutputBufferIsNotTruncated)
+{
+    std::string original = csvLines(5000);
+    original.resize(8 * BUFFER_SIZE);
+    const auto zstd = zstdCompress(std::as_bytes(std::span{original}));
+    const auto lz4 = lz4Compress(std::as_bytes(std::span{original}));
+    EXPECT_EQ(decodeWithChain({Identifier::parse("ZSTD")}, zstd), original);
+    EXPECT_EQ(decodeWithChain({Identifier::parse("LZ4")}, lz4), original);
+}
+
 TEST_F(ZstdDecoderTest, DecodesFrameFedInAnyChunking)
 {
     const auto original = csvLines(20000);

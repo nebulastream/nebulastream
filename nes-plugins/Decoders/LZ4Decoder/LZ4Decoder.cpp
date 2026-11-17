@@ -87,7 +87,12 @@ void LZ4Decoder::process(const std::span<const std::byte> input, const BufferPro
         INVARIANT(written > 0 || read > 0 || consumed == input.size(), "LZ4F_decompress made no progress");
         consumed += read;
         filled += written;
-        insideFrame = hint != 0;
+        if (read > 0 || written > 0)
+        {
+            /// A call without progress (no input left, e.g. after a frame that ended exactly at a full buffer) reports
+            /// the header size of a next frame; it says nothing about the stream being inside a frame.
+            insideFrame = hint != 0;
+        }
 
         if (filled == target.size())
         {
