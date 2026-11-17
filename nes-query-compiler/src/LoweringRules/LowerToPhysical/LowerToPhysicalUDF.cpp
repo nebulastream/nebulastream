@@ -24,6 +24,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/ArrowBufferRef.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -33,9 +34,12 @@
 #include <Util/SchemaFactory.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <UDFBatchPhysicalOperator.hpp>
 #include <UDFPhysicalOperator.hpp>
 #include <UdfInterpreter.hpp>
@@ -89,6 +93,38 @@ LoweringRuleResultSubgraph LowerToPhysicalUDF::apply(LogicalOperator logicalOper
         descriptors.push_back(descriptor);
     }
 
+    const auto memoryLayoutType = traitSet.get<MemoryLayoutTypeTrait>()->memoryLayout;
+    /// Only for measurements: the pipeline break around an OUT_OF_PROCESS UDF without the process. The emit writes the records into an
+    /// Arrow batch that also holds the result columns and leaves them NULL. The scan of the next pipeline reads the batch back.
+    if (conf.inProcessUdfCalls == InProcessUdfCalls::NONE)
+    {
+        const auto handlerId = getNextOperatorHandlerId();
+        const auto batch = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, outputSchema, MemoryLayoutType::ARROW_LAYOUT);
+        auto emit = std::make_shared<PhysicalOperatorWrapper>(
+            EmitPhysicalOperator(handlerId, batch),
+            inputSchema,
+            outputSchema,
+            memoryLayoutType,
+            MemoryLayoutType::ARROW_LAYOUT,
+            handlerId,
+            std::make_shared<EmitOperatorHandler>(),
+            PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        auto scan = std::make_shared<PhysicalOperatorWrapper>(
+            ScanPhysicalOperator(
+                batch,
+                outputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+                    | std::ranges::to<std::vector>()),
+            outputSchema,
+            outputSchema,
+            MemoryLayoutType::ARROW_LAYOUT,
+            memoryLayoutType,
+            std::nullopt,
+            std::nullopt,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN,
+            std::vector{emit});
+        return {.root = scan, .leaves = {emit}};
+    }
+
     const auto interpreter = [&]
     {
         switch (conf.inProcessUdfInterpreter)
@@ -132,7 +168,6 @@ LoweringRuleResultSubgraph LowerToPhysicalUDF::apply(LogicalOperator logicalOper
             conf.inProcessUdfFusion);
     }();
 
-    const auto memoryLayoutType = traitSet.get<MemoryLayoutTypeTrait>()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(physicalOperator),
         inputSchema,

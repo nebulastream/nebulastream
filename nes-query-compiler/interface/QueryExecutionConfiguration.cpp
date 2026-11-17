@@ -119,7 +119,7 @@ const ConfigField<bool> NAUTILUS_PERF{
     false};
 const ConfigField<InProcessUdfCalls> IN_PROCESS_UDF_CALLS{
     Identifier::parse("in_process_udf_calls"),
-    fmt::format("How IN_PROCESS UDFs are called: per record (ROW), or per batch of records in Arrow format through pyarrow (BATCH): {}", enumPipeList<InProcessUdfCalls>()),
+    fmt::format("How IN_PROCESS UDFs are called: per record (ROW), or per batch of records in Arrow format through pyarrow (BATCH), or not at all, only for measurements: the records go through an Arrow batch between two pipelines as around an OUT_OF_PROCESS UDF, and the results are NULL (NONE): {}", enumPipeList<InProcessUdfCalls>()),
     [](const ConfigLiteral& literal)
     {
         return tryGetOr<std::string>(literal, expectedType<std::string>())

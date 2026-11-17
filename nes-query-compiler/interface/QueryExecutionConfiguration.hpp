@@ -30,10 +30,13 @@ namespace NES
 {
 
 /// How the operator of IN_PROCESS UDFs calls them: per record, or per batch of records in Arrow format through pyarrow.
+/// NONE does not call them. It is only for measurements: the records go into an Arrow batch at the end of one pipeline and are read
+/// back by the next, as around an OUT_OF_PROCESS UDF, but without the process. The results are NULL.
 enum class InProcessUdfCalls : uint8_t
 {
     ROW,
     BATCH,
+    NONE,
 };
 
 /// Which interpreter a worker thread runs IN_PROCESS UDFs in, see UdfInterpreter.
