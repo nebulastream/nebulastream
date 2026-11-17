@@ -116,9 +116,22 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
 }
 
 std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema)
+LowerSchemaProvider::lowerSchemaToArrow(
+    const uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, const std::vector<uint64_t>& rowFields)
 {
     PRECONDITION(!std::ranges::empty(schema), "We can not lower an empty schema!");
+    const auto inRow = [&](const uint64_t position) { return std::ranges::contains(rowFields, position); };
+    /// The row region holds each row field with its null byte, as the row layout does.
+    uint64_t rowSize = 0;
+    for (const auto& [position, field] : std::views::enumerate(schema))
+    {
+        if (inRow(static_cast<uint64_t>(position)))
+        {
+            PRECONDITION(
+                field.getDataType().type != DataType::Type::VARSIZED, "VARSIZED field {} cannot go into the row region", field.getFullyQualifiedName());
+            rowSize += field.getDataType().getSizeInBytesWithNull();
+        }
+    }
 
     const auto align8 = [](const uint64_t value) { return (value + 7) & ~uint64_t{7}; };
     const auto bitmapSize = [&](const uint64_t capacity) { return align8((capacity + 7) / 8); };
@@ -143,17 +156,24 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
     const auto layoutSize = [&](const uint64_t capacity)
     {
         uint64_t size = headerSize;
-        for (const auto& field : schema)
+        for (const auto& [position, field] : std::views::enumerate(schema))
         {
-            size += (field.getDataType().nullable ? bitmapSize(capacity) : 0) + dataSize(field.getDataType(), capacity);
+            if (!inRow(static_cast<uint64_t>(position)))
+            {
+                size += (field.getDataType().nullable ? bitmapSize(capacity) : 0) + dataSize(field.getDataType(), capacity);
+            }
         }
-        return size;
+        return size + align8(capacity * rowSize);
     };
 
     /// Start from the estimate without alignment padding, then shrink until the aligned layout fits.
-    uint64_t bitsPerRecord = 0;
-    for (const auto& field : schema)
+    uint64_t bitsPerRecord = rowSize * 8;
+    for (const auto& [position, field] : std::views::enumerate(schema))
     {
+        if (inRow(static_cast<uint64_t>(position)))
+        {
+            continue;
+        }
         const auto& type = field.getDataType();
         bitsPerRecord += (type.nullable ? 1 : 0)
             + (type.type == DataType::Type::BOOLEAN        ? 1
@@ -171,13 +191,30 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
     std::vector<ArrowBufferRef::Field> fields;
     fields.reserve(std::ranges::size(schema));
     uint64_t offset = headerSize;
-    for (const auto& field : schema)
+    uint64_t rowOffset = 0;
+    for (const auto& [position, field] : std::views::enumerate(schema))
     {
         const auto& type = field.getDataType();
-        if (type.nullable)
+        if (inRow(static_cast<uint64_t>(position)))
         {
             fields.push_back(
-                {.name = field.getFullyQualifiedName(), .type = type, .dataTypeSize = 0, .bitmapOffset = offset, .dataOffset = 0});
+                {.name = field.getFullyQualifiedName(),
+                 .type = type,
+                 .dataTypeSize = 0,
+                 .bitmapOffset = ArrowBufferRef::Field::NO_BITMAP,
+                 .dataOffset = 0,
+                 .rowOffset = rowOffset});
+            rowOffset += type.getSizeInBytesWithNull();
+        }
+        else if (type.nullable)
+        {
+            fields.push_back(
+                {.name = field.getFullyQualifiedName(),
+                 .type = type,
+                 .dataTypeSize = 0,
+                 .bitmapOffset = offset,
+                 .dataOffset = 0,
+                 .rowOffset = ArrowBufferRef::Field::NO_ROW});
             offset += bitmapSize(capacity);
         }
         else
@@ -187,11 +224,16 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
                  .type = type,
                  .dataTypeSize = 0,
                  .bitmapOffset = ArrowBufferRef::Field::NO_BITMAP,
-                 .dataOffset = 0});
+                 .dataOffset = 0,
+                 .rowOffset = ArrowBufferRef::Field::NO_ROW});
         }
     }
     for (auto& field : fields)
     {
+        if (field.inRow())
+        {
+            continue;
+        }
         field.dataTypeSize = field.type.type == DataType::Type::VARSIZED
             ? pendingVarSizedSize
             : (field.type.type == DataType::Type::BOOLEAN ? 0 : field.type.getSizeInBytesWithoutNull());
@@ -199,6 +241,6 @@ LowerSchemaProvider::lowerSchemaToArrow(const uint64_t bufferSize, const Schema<
         offset += dataSize(field.type, capacity);
     }
     /// bufferSize / capacity is the effective size of one record including the header, bitmaps and padding.
-    return std::make_shared<ArrowBufferRef>(std::move(fields), headerSize, capacity, bufferSize, bufferSize / capacity);
+    return std::make_shared<ArrowBufferRef>(std::move(fields), headerSize, capacity, bufferSize, bufferSize / capacity, offset, rowSize);
 }
 }

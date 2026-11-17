@@ -132,6 +132,8 @@ private:
     /// SHARED_MEMORY_ZERO_COPY: the pool of the worker, which the processes map.
     std::optional<SharedMemoryAllocator::Mapping> pool;
     std::vector<UdfProcessCall> calls;
+    /// Positions of the fields in the row region of the batches, see ArrowBufferRef.
+    std::vector<uint64_t> rowFields;
     /// Whether a call returns VARSIZED values, which need value areas.
     bool varSizedResults = false;
     Schema<UnqualifiedUnboundField, Ordered> schema;

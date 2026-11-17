@@ -16,6 +16,8 @@
 
 #include <expected>
 #include <memory>
+#include <cstdint>
+#include <variant>
 #include <optional>
 #include <ostream>
 #include <stop_token>
@@ -52,11 +54,31 @@ const ConfigField<std::string> CALLS{
     Identifier::parse("CALLS"),
     "The serialized calls of the UDF operator",
     [](const ConfigLiteral& literal) { return NES::tryGetOr<std::string>(literal, expectedType<std::string>()); }};
+const ConfigField<std::string> ROW_FIELDS{
+    Identifier::parse("ROW_FIELDS"),
+    "Comma-separated positions of the fields that the batches keep in their row region, see RowFieldsTrait",
+    [](const ConfigLiteral& literal) -> std::expected<std::string, Exception>
+    {
+        /// A single position arrives as a number
+        if (const auto* position = std::get_if<int64_t>(&literal))
+        {
+            return std::to_string(*position);
+        }
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>());
+    },
+    std::string{},
+    ""};
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 std::unique_ptr<Source> makeImplementation(const PythonProcessSourceConfig& config, const SourceDescriptor& sourceDescriptor)
 {
     const auto protocol = PythonProcesses::protocol();
+    if (!config.rowFields.empty() && protocol != UdfProcessProtocol::SHARED_MEMORY_ZERO_COPY)
+    {
+        throw InvalidConfigParameter(
+            "The hybrid layout of UDF process batches (optimizer.udf_process_layout=HYBRID) needs the process protocol "
+            "SHARED_MEMORY_ZERO_COPY");
+    }
     if (protocol == UdfProcessProtocol::SHARED_MEMORY || protocol == UdfProcessProtocol::SHARED_MEMORY_ZERO_COPY)
     {
         return std::make_unique<PythonProcessShmSource>(config, sourceDescriptor, protocol);
@@ -67,12 +89,12 @@ std::unique_ptr<Source> makeImplementation(const PythonProcessSourceConfig& conf
 
 Schema<QualifiedErasedConfigField, Ordered> PythonProcessSource::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("PYTHON_PROCESS_SOURCE"), CHANNEL, CALLS);
+    return createConfigSchema(Identifier::parse("PYTHON_PROCESS_SOURCE"), CHANNEL, CALLS, ROW_FIELDS);
 }
 
 std::expected<PythonProcessSourceConfig, Exception> PythonProcessSourceConfig::fromConfig(const InstantiatedConfig& config)
 {
-    return PythonProcessSourceConfig{.channel = config.get(CHANNEL), .calls = config.get(CALLS)};
+    return PythonProcessSourceConfig{.channel = config.get(CHANNEL), .calls = config.get(CALLS), .rowFields = config.get(ROW_FIELDS)};
 }
 
 PythonProcessSource::PythonProcessSource(const PythonProcessSourceConfig& config, const SourceDescriptor& sourceDescriptor)

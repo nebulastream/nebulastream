@@ -31,19 +31,32 @@ enum class StreamJoinStrategy : uint8_t
     OPTIMIZER_CHOOSES
 };
 
+/// How the batches of a UDF process hold the fields that its UDFs do not read or write: in Arrow columns as the others (ARROW), or in
+/// the row layout of NES in a row region of the same buffer (HYBRID), see ArrowBufferRef. HYBRID needs the protocol
+/// SHARED_MEMORY_ZERO_COPY, as the process leaves these fields where they are.
+enum class UdfProcessLayout : uint8_t
+{
+    ARROW,
+    HYBRID
+};
+
 struct QueryOptimizerConfiguration
 {
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     QueryOptimizerConfiguration() = delete;
 
-    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, QueryOptimizerNetworkConfiguration network)
-        : joinStrategy(joinStrategy), network(network)
+    QueryOptimizerConfiguration(
+        StreamJoinStrategy joinStrategy,
+        QueryOptimizerNetworkConfiguration network,
+        UdfProcessLayout udfProcessLayout = UdfProcessLayout::ARROW)
+        : joinStrategy(joinStrategy), network(network), udfProcessLayout(udfProcessLayout)
     {
     }
 
     StreamJoinStrategy joinStrategy;
     QueryOptimizerNetworkConfiguration network;
+    UdfProcessLayout udfProcessLayout;
 
     static QueryOptimizerConfiguration fromConfig(const InstantiatedConfig& config);
 };

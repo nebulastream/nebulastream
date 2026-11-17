@@ -14,6 +14,10 @@
 
 #pragma once
 
+#include <cstdint>
+
+#include <QueryOptimizerConfiguration.hpp>
+
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -40,7 +44,10 @@ public:
         SharedPtr<const SourceCatalog> sourceCatalog,
         SharedPtr<const SinkCatalog> sinkCatalog);
 
-    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& networkConfiguration);
+    DistributedLogicalPlan decompose(
+        const LogicalPlan& placedPlan,
+        const QueryOptimizerNetworkConfiguration& networkConfiguration,
+        UdfProcessLayout udfProcessLayout = UdfProcessLayout::ARROW);
 };
 
 }

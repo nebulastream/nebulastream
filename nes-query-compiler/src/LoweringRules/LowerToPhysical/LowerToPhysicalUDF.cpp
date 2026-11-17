@@ -14,6 +14,8 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalUDF.hpp>
 
+#include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <ranges>
 #include <utility>
@@ -25,6 +27,7 @@
 #include <Interface/BufferRef/ArrowBufferRef.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -96,10 +99,38 @@ LoweringRuleResultSubgraph LowerToPhysicalUDF::apply(LogicalOperator logicalOper
     const auto memoryLayoutType = traitSet.get<MemoryLayoutTypeTrait>()->memoryLayout;
     /// Only for measurements: the pipeline break around an OUT_OF_PROCESS UDF without the process. The emit writes the records into an
     /// Arrow batch that also holds the result columns and leaves them NULL. The scan of the next pipeline reads the batch back.
-    if (conf.inProcessUdfCalls == InProcessUdfCalls::NONE)
+    if (conf.inProcessUdfCalls == InProcessUdfCalls::NONE || conf.inProcessUdfCalls == InProcessUdfCalls::NONE_HYBRID)
     {
+        /// NONE_HYBRID keeps the fields in a row region that are neither a result nor an argument, as QueryDecomposition does.
+        std::vector<uint64_t> rowFields;
+        if (conf.inProcessUdfCalls == InProcessUdfCalls::NONE_HYBRID)
+        {
+            std::vector<QualifiedIdentifier> used
+                = results | std::views::transform([](const auto& result) { return result.field; }) | std::ranges::to<std::vector>();
+            for (const auto& function : udf->getCalls() | std::views::values)
+            {
+                for (const auto& argument : function.getChildren())
+                {
+                    if (const auto access = argument.tryGetAs<FieldAccessLogicalFunction>())
+                    {
+                        if (auto mapped = childTraitSet.get<FieldMappingTrait>()->getMapping(access.value()->getField().unbound()))
+                        {
+                            used.push_back(*mapped);
+                        }
+                    }
+                }
+            }
+            for (const auto& [position, field] : std::views::enumerate(outputSchema))
+            {
+                if (!std::ranges::contains(used, field.getFullyQualifiedName())
+                    && field.getDataType().type != DataType::Type::VARSIZED)
+                {
+                    rowFields.push_back(static_cast<uint64_t>(position));
+                }
+            }
+        }
         const auto handlerId = getNextOperatorHandlerId();
-        const auto batch = LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, outputSchema, MemoryLayoutType::ARROW_LAYOUT);
+        const auto batch = LowerSchemaProvider::lowerSchemaToArrow(conf.operatorBufferSize, outputSchema, rowFields);
         auto emit = std::make_shared<PhysicalOperatorWrapper>(
             EmitPhysicalOperator(handlerId, batch),
             inputSchema,

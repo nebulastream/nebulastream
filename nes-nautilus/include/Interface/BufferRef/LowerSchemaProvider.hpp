@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -46,8 +47,10 @@ public:
     static std::shared_ptr<TupleBufferRef>
     lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);
 
-    /// Lowers the schema to the Apache Arrow compatible memory layout, see ArrowBufferRef.
-    static std::shared_ptr<TupleBufferRef> lowerSchemaToArrow(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema);
+    /// Lowers the schema to the Apache Arrow compatible memory layout, see ArrowBufferRef. The fields at the positions in rowFields go
+    /// into the row region of a hybrid buffer instead of Arrow columns; they must not be VARSIZED.
+    static std::shared_ptr<TupleBufferRef> lowerSchemaToArrow(
+        uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, const std::vector<uint64_t>& rowFields = {});
 };
 
 }

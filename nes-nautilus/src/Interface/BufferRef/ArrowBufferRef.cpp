@@ -14,6 +14,7 @@
 
 #include <Interface/BufferRef/ArrowBufferRef.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -30,6 +31,7 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/RecordLayoutUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
@@ -45,9 +47,22 @@ namespace NES
 {
 
 ArrowBufferRef::ArrowBufferRef(
-    std::vector<Field> fields, const uint64_t headerSize, const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
-    : TupleBufferRef(capacity, bufferSize, tupleSize), fields(std::move(fields)), headerSize(headerSize)
+    std::vector<Field> fields,
+    const uint64_t headerSize,
+    const uint64_t capacity,
+    const uint64_t bufferSize,
+    const uint64_t tupleSize,
+    const uint64_t rowRegionOffset,
+    const uint64_t rowSize)
+    : TupleBufferRef(capacity, bufferSize, tupleSize)
+    , fields(std::move(fields))
+    , headerSize(headerSize)
+    , rowRegionOffset(rowRegionOffset)
+    , rowSize(rowSize)
 {
+    PRECONDITION(
+        std::ranges::none_of(this->fields, [](const Field& field) { return field.inRow() && field.type.type == DataType::Type::VARSIZED; }),
+        "The row region of an Arrow layout holds no VARSIZED fields");
 }
 
 namespace
@@ -144,6 +159,13 @@ void ArrowBufferRef::finalizeBuffer(TupleBuffer& buffer, AbstractBufferProvider&
     for (size_t index = 0; index < fields.size(); ++index)
     {
         const auto& field = fields[index];
+        if (field.inRow())
+        {
+            setLocation(buffer, index, Region::VALIDITY, none);
+            setLocation(buffer, index, Region::DATA, none);
+            setLocation(buffer, index, Region::VALUES, none);
+            continue;
+        }
         setLocation(
             buffer,
             index,
@@ -228,11 +250,25 @@ Record ArrowBufferRef::readRecord(
             readValueFromMemRef<uint32_t>(position), readValueFromMemRef<uint32_t>(position + nautilus::val<uint64_t>{sizeof(uint32_t)})};
     };
 
+    const auto rowAddress = bufferAddress + nautilus::val<uint64_t>{rowRegionOffset} + (recordIndex * nautilus::val<uint64_t>{rowSize});
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
         const auto& field = fields.at(i);
         if (not includesField(projections, field.name))
         {
+            continue;
+        }
+
+        if (field.inRow())
+        {
+            const auto row = readRecordFields(
+                {FieldAccess{field.name, field.type, rowAddress + nautilus::val<uint64_t>{field.rowOffset}}},
+                [](nautilus::val<int8_t*>) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
+                {
+                    INVARIANT(false, "The row region of an Arrow layout holds no VARSIZED fields");
+                    std::unreachable();
+                });
+            record.write(field.name, row.read(field.name));
             continue;
         }
 
@@ -287,9 +323,21 @@ TupleBufferRef::WriteRecordResult ArrowBufferRef::writeRecord(
     if (recordIndex < capacity)
     {
         const auto bufferAddress = recordBuffer.getMemArea();
+        const auto rowAddress
+            = bufferAddress + nautilus::val<uint64_t>{rowRegionOffset} + (recordIndex * nautilus::val<uint64_t>{rowSize});
         for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {
             const auto& field = fields.at(i);
+            if (field.inRow())
+            {
+                /// Skips the field if the record does not have it, as for the Arrow fields; it has no bitmap to clear.
+                writeRecordFields(
+                    {FieldAccess{field.name, field.type, rowAddress + nautilus::val<uint64_t>{field.rowOffset}}},
+                    rec,
+                    [](nautilus::val<int8_t*>, const VarVal&)
+                    { INVARIANT(false, "The row region of an Arrow layout holds no VARSIZED fields"); });
+                continue;
+            }
             const nautilus::val<int8_t*> slot = bufferAddress + ((recordIndex * field.dataTypeSize) + field.dataOffset);
             /// A field the record does not have, like the result of an out-of-process UDF, is NULL until someone fills it in.
             /// Its VARSIZED slot still needs a size, as `finalize` reads every slot.

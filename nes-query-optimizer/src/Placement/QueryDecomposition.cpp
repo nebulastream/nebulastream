@@ -23,6 +23,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
@@ -41,6 +44,7 @@
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
+#include <Traits/RowFieldsTrait.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
@@ -50,6 +54,7 @@
 #include <InputFormatterDescriptor.hpp>
 #include <NetworkTopology.hpp>
 #include <QueryId.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <UdfDescriptor.hpp>
 #include <UdfProcessCall.hpp>
@@ -66,6 +71,7 @@ struct DecompositionContext
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
+    UdfProcessLayout udfProcessLayout;
     SharedPtr<const SourceCatalog> sourceCatalog;
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
@@ -277,6 +283,28 @@ LogicalOperator splitOutOfProcessUdfOperator(DecompositionContext& context, cons
         calls.push_back(std::move(description));
     }
 
+    /// With the hybrid layout, the fields that no call reads or writes stay in the row region of the batches. VARSIZED fields stay in
+    /// Arrow columns, as the row layout keeps their values in child buffers of its own.
+    std::vector<uint64_t> rowFields;
+    if (context.udfProcessLayout == UdfProcessLayout::HYBRID)
+    {
+        for (const auto& [position, field] : std::views::enumerate(fields))
+        {
+            const auto index = static_cast<uint64_t>(position);
+            const auto used = std::ranges::any_of(
+                calls,
+                [&](const UdfProcessCall& call)
+                {
+                    return call.resultField == index
+                        || std::ranges::any_of(call.arguments, [&](const auto& argument) { return argument.field == index; });
+                });
+            if (!used && field.getDataType().type != DataType::Type::VARSIZED)
+            {
+                rowFields.push_back(index);
+            }
+        }
+    }
+
     static const auto ProcessType = Identifier::parse("PythonProcess");
     const auto channel = ChannelId(generateUUID()).getRawValue();
     const auto sinkDescriptor = context.sinkCatalog->getAnonymousSink(
@@ -291,19 +319,30 @@ LogicalOperator splitOutOfProcessUdfOperator(DecompositionContext& context, cons
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(FieldOrderingTrait); })
         | std::ranges::to<TraitSet>();
     sinkTraitSet.insert(FieldOrderingTrait{fields});
+    if (!rowFields.empty())
+    {
+        sinkTraitSet.insert(RowFieldsTrait{rowFields});
+    }
     context.addPlanToNode(
         SinkLogicalOperator::create(child, sinkDescriptor.value())->withTraitSet(std::move(sinkTraitSet)).withInferredSchema(), node);
 
+    std::unordered_map<Identifier, std::string> sourceConfig{
+        {Identifier::parse("channel"), channel},
+        {Identifier::parse("calls"), serializeUdfProcessCalls(calls)},
+        {Identifier::parse("max_inflight_buffers"), std::to_string(UDF_PROCESS_SOURCE_INFLIGHT_BUFFERS)}};
+    if (!rowFields.empty())
+    {
+        sourceConfig.emplace(Identifier::parse("row_fields"), fmt::format("{}", fmt::join(rowFields, ",")));
+    }
     const auto sourceDescriptor = context.sourceCatalog->getAnonymousSource(
-        ProcessType,
-        fields,
-        Host(node.getRawValue()),
-        {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
-        {{Identifier::parse("channel"), channel},
-         {Identifier::parse("calls"), serializeUdfProcessCalls(calls)},
-         {Identifier::parse("max_inflight_buffers"), std::to_string(UDF_PROCESS_SOURCE_INFLIGHT_BUFFERS)}});
+        ProcessType, fields, Host(node.getRawValue()), {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}}, sourceConfig);
     INVARIANT(sourceDescriptor.has_value(), "Invalid source descriptor config for a UDF process");
-    return SourceDescriptorLogicalOperator::create(sourceDescriptor.value())->withTraitSet(udf.getTraitSet());
+    auto sourceTraitSet = udf.getTraitSet();
+    if (!rowFields.empty())
+    {
+        sourceTraitSet.insert(RowFieldsTrait{rowFields});
+    }
+    return SourceDescriptorLogicalOperator::create(sourceDescriptor.value())->withTraitSet(std::move(sourceTraitSet));
 }
 
 LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op)
@@ -332,7 +371,8 @@ QueryDecomposer::QueryDecomposer(
 {
 }
 
-DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
+DistributedLogicalPlan QueryDecomposer::decompose(
+    const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration, const UdfProcessLayout udfProcessLayout)
 {
     PRECONDITION(placedPlan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
     PRECONDITION(
@@ -343,6 +383,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
     DecompositionContext context{
         .plansByNode = {},
         .config = configuration,
+        .udfProcessLayout = udfProcessLayout,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};

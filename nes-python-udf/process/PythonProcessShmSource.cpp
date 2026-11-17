@@ -22,6 +22,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <ranges>
+#include <string>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -50,6 +52,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
 #include <ArrowBatches.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <PythonBatchWrapper.hpp>
 #include <PythonProcessChannel.hpp>
@@ -155,6 +158,10 @@ PythonProcessShmSource::PythonProcessShmSource(
     : channel(config.channel, PythonProcessChannel::Role::SOURCE)
     , zeroCopy(protocol == UdfProcessProtocol::SHARED_MEMORY_ZERO_COPY)
     , calls(deserializeUdfProcessCalls(config.calls))
+    , rowFields(
+          splitWithStringDelimiter<std::string>(config.rowFields, ",")
+          | std::views::filter([](const std::string& position) { return !position.empty(); })
+          | std::views::transform([](const std::string& position) { return static_cast<uint64_t>(std::stoull(position)); }) | std::ranges::to<std::vector>())
     , schema(sourceDescriptor.getSchema())
 {
 }
@@ -175,7 +182,7 @@ void PythonProcessShmSource::open(std::shared_ptr<AbstractBufferProvider> provid
 {
     bufferProvider = std::move(provider);
     layout = std::dynamic_pointer_cast<ArrowBufferRef>(
-        LowerSchemaProvider::lowerSchemaToArrow(bufferProvider->getBufferSize(), Schema<QualifiedUnboundField, Ordered>{schema}));
+        LowerSchemaProvider::lowerSchemaToArrow(bufferProvider->getBufferSize(), Schema<QualifiedUnboundField, Ordered>{schema}, rowFields));
     INVARIANT(layout != nullptr, "lowerSchemaToArrow must return an ArrowBufferRef");
     arrowSchema = makeArrowSchema(*layout);
     varSizedResults = std::ranges::any_of(

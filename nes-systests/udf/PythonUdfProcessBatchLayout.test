@@ -1,0 +1,38 @@
+# name: udf/PythonUdfProcessBatchLayout.test
+# description: Fields that the UDFs of a process do not read or write go through the batches next to the ones they do. With
+# optimizer.udf_process_layout=HYBRID they stay in a row region of the batch, except VARSIZED fields; the results are the same.
+# groups: [PythonUdf, PythonUdfProcess]
+
+CREATE LOGICAL SOURCE mixed(a INT64 NOT NULL, b INT64, c CHAR NOT NULL, f BOOLEAN, d FLOAT64 NOT NULL, u UINT8 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR mixed TYPE File;
+ATTACH INLINE
+1,10,x,true,1.5,7,one
+2,,y,,2.5,8,two
+3,30,z,false,3.5,9,three
+
+CREATE FUNCTION inc (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return x + 1
+$python$;
+CREATE FUNCTION or_zero (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return 0 if x is None else x
+$python$;
+
+# Every type of field next to the UDF, NULLs among them
+SELECT *, inc(a) AS i FROM mixed INTO FILE();
+----
+1,10,x,true,1.500000,7,one,2
+2,NULL,y,NULL,2.500000,8,two,3
+3,30,z,false,3.500000,9,three,4
+
+# A field computed before the UDF, a filter and a field computed after it
+SELECT a, e, inc(a) AS i, u + UINT8(1) AS v FROM (SELECT a, d, u, a * INT64(10) AS e FROM mixed WHERE a > INT64(1)) INTO FILE();
+----
+2,20,3,9
+3,30,4,10
+
+# Two UDF operators: the field b is an argument of the second one, and the result of the first one is a field the second does not use
+SELECT a, i, or_zero(b) AS z FROM (SELECT a, b, inc(a) AS i FROM mixed) INTO FILE();
+----
+1,2,10
+2,3,0
+3,4,30

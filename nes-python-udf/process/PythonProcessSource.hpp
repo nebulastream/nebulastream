@@ -41,6 +41,8 @@ struct PythonProcessSourceConfig
     std::string channel;
     /// The serialized calls of the UDF operator, see UdfProcessCall.
     std::string calls;
+    /// Comma-separated positions of the fields in the row region of the batches, see RowFieldsTrait. Empty for batches in Arrow only.
+    std::string rowFields;
 
     static std::expected<PythonProcessSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };

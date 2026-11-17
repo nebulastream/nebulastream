@@ -14,8 +14,10 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <ranges>
+#include <vector>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -29,6 +31,7 @@
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
+#include <Traits/RowFieldsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
@@ -77,7 +80,10 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
     {
         auto scan = std::make_shared<PhysicalOperatorWrapper>(
             ScanPhysicalOperator(
-                LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, outputSchema, MemoryLayoutType::ARROW_LAYOUT),
+                LowerSchemaProvider::lowerSchemaToArrow(
+                    conf.operatorBufferSize,
+                    outputSchema,
+                    hasTrait<RowFieldsTrait>(traitSet) ? traitSet.get<RowFieldsTrait>()->positions : std::vector<uint64_t>{}),
                 outputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
                     | std::ranges::to<std::vector>()),
             outputSchema,

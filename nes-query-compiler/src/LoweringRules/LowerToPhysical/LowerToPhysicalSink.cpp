@@ -29,6 +29,7 @@
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Traits/RowFieldsTrait.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Util/Variant.hpp>
 #include <EmitOperatorHandler.hpp>
@@ -141,7 +142,11 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
         const auto handlerId = getNextOperatorHandlerId();
         auto emit = std::make_shared<PhysicalOperatorWrapper>(
             EmitPhysicalOperator(
-                handlerId, LowerSchemaProvider::lowerSchema(conf.operatorBufferSize, batchSchema, MemoryLayoutType::ARROW_LAYOUT)),
+                handlerId,
+                LowerSchemaProvider::lowerSchemaToArrow(
+                    conf.operatorBufferSize,
+                    batchSchema,
+                    hasTrait<RowFieldsTrait>(traitSet) ? traitSet.get<RowFieldsTrait>()->positions : std::vector<uint64_t>{})),
             inputSchemaWithRedirections,
             batchSchema,
             memoryLayoutType,

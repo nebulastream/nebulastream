@@ -54,18 +54,39 @@ const ConfigField<StreamJoinStrategy> JOIN_STRATEGY{
     },
     StreamJoinStrategy::OPTIMIZER_CHOOSES,
     "OPTIMIZER_CHOOSES"};
+
+const ConfigField<UdfProcessLayout> UDF_PROCESS_LAYOUT{
+    Identifier::parse("udf_process_layout"),
+    "How the batches of a UDF process hold the fields that its UDFs do not read or write: in Arrow columns (ARROW), or in the row "
+    "layout of NES in the same buffer (HYBRID), which needs the process protocol SHARED_MEMORY_ZERO_COPY [ARROW|HYBRID].",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<UdfProcessLayout, Exception>
+                {
+                    if (const auto parsed = EnumWrapper{value}.asEnum<UdfProcessLayout>())
+                    {
+                        return *parsed;
+                    }
+                    return std::unexpected{InvalidConfigParameter("Invalid udf_process_layout, must be ARROW or HYBRID: {}", value)};
+                });
+    },
+    UdfProcessLayout::ARROW,
+    "ARROW"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("optimizer"), JOIN_STRATEGY, QueryOptimizerNetworkConfiguration::getConfigSchema());
+    return createConfigSchema(
+        Identifier::parse("optimizer"), JOIN_STRATEGY, UDF_PROCESS_LAYOUT, QueryOptimizerNetworkConfiguration::getConfigSchema());
 }
 
 QueryOptimizerConfiguration QueryOptimizerConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(JOIN_STRATEGY), QueryOptimizerNetworkConfiguration::fromConfig(config)};
+    return {config.get(JOIN_STRATEGY), QueryOptimizerNetworkConfiguration::fromConfig(config), config.get(UDF_PROCESS_LAYOUT)};
 }
 
 }

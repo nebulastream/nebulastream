@@ -42,6 +42,10 @@ namespace NES
 ///  - BOOLEAN data is bit-packed.
 ///  - While records are written, a VARSIZED field holds a pointer and a size per record, 16 bytes. `finalize` copies the values into
 ///    one contiguous child buffer and replaces the pointers by the capacity + 1 int32 offsets of Arrow `binary`.
+///
+/// A hybrid buffer keeps some fields in the row layout of NES instead, in a row region behind the columns: one record after the other,
+/// each field with its null byte, see RowTupleBufferRef. These are the fields that a UDF process does not read or write, so the
+/// worker writes and reads each record of them in one place. Their header entries say that they have no Arrow regions.
 class ArrowBufferRef final : public TupleBufferRef
 {
 public:
@@ -74,9 +78,22 @@ public:
         /// Where this layout writes the bitmap, NO_BITMAP for a field that is not nullable.
         uint64_t bitmapOffset;
         uint64_t dataOffset;
+        /// Where the field starts in a record of the row region, NO_ROW for a field in Arrow columns.
+        static constexpr uint64_t NO_ROW = UINT64_MAX;
+        uint64_t rowOffset;
+
+        [[nodiscard]] bool inRow() const { return rowOffset != NO_ROW; }
     };
 
-    ArrowBufferRef(std::vector<Field> fields, uint64_t headerSize, uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
+    /// rowRegionOffset and rowSize are where the row region starts and the bytes of one of its records, 0 without row fields.
+    ArrowBufferRef(
+        std::vector<Field> fields,
+        uint64_t headerSize,
+        uint64_t capacity,
+        uint64_t bufferSize,
+        uint64_t tupleSize,
+        uint64_t rowRegionOffset = 0,
+        uint64_t rowSize = 0);
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
@@ -116,6 +133,8 @@ private:
 
     std::vector<Field> fields;
     uint64_t headerSize;
+    uint64_t rowRegionOffset;
+    uint64_t rowSize;
 };
 
 }
