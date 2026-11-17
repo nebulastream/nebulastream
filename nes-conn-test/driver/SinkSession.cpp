@@ -373,13 +373,13 @@ private:
             std::vector<ExecutableQueryPlan::SourceWithSuccessor> sources;
             sources.emplace_back(
                 std::make_unique<SourceHandle>(
-                    std::move(listener),
+                    listener,
                     INITIAL_ORIGIN_ID,
                     SourceRuntimeConfiguration{workerDefaults.defaultMaxInflightBuffers},
                     pool,
                     std::make_unique<FeedSource>(feed)),
                 std::vector<std::weak_ptr<ExecutablePipeline>>{sink});
-            engine->start(std::make_unique<ExecutableQueryPlan>(*query, std::vector{sink}, std::move(sources)));
+            engine->start(std::make_unique<ExecutableQueryPlan>(*query, std::vector{sink}, std::move(sources), std::move(listener)));
         }
         catch (const Exception& ex)
         {

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <stop_token>
 #include <utility>
@@ -66,4 +67,10 @@ class BackpressureListener
 
 public:
     void wait(const std::stop_token& stopToken) const;
+
+    /// Lets the owner of a query report when its sink holds back the sources, for example in the engine's statistics.
+    /// The observer gets true when pressure is applied and false when it is released, and no call when the state does not change.
+    /// It runs under the channel's lock, so it sees the changes in order, and it must not block.
+    /// A channel has one observer, so a later call replaces it.
+    void observe(std::function<void(bool pressure)> observer) const;
 };

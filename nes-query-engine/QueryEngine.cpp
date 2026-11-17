@@ -960,6 +960,18 @@ void QueryCatalog::start(
     };
 
     auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
+    plan->backpressureListener.observe(
+        [statistic, queryId](const bool pressure)
+        {
+            if (pressure)
+            {
+                statistic->onEvent(BackpressureApplied{ThreadPool::WorkerThread::id, queryId});
+            }
+            else
+            {
+                statistic->onEvent(BackpressureReleased{ThreadPool::WorkerThread::id, queryId});
+            }
+        });
     const auto startTimestamp = std::chrono::system_clock::now();
     auto state = std::make_shared<StateRef>(Reserved{});
     const bool inserted = this->queryStates.emplace(queryId, state).second;

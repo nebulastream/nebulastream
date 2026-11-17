@@ -15,6 +15,7 @@
 #pragma once
 #include <chrono>
 #include <cstddef>
+#include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -139,6 +140,21 @@ struct PipelineStop : EventBase
     PipelineId pipelineId = INVALID<PipelineId>;
 };
 
+/// The query's sink applied backpressure, so the query's sources do not read until the sink releases it.
+struct BackpressureApplied : EventBase
+{
+    BackpressureApplied(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, std::move(queryId)) { }
+
+    BackpressureApplied() = default;
+};
+
+struct BackpressureReleased : EventBase
+{
+    BackpressureReleased(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, std::move(queryId)) { }
+
+    BackpressureReleased() = default;
+};
+
 using Event = std::variant<
     TaskExecutionStart,
     TaskEmit,
@@ -149,7 +165,9 @@ using Event = std::variant<
     QueryStart,
     QueryStopRequest,
     QueryStop,
-    QueryFail>;
+    QueryFail,
+    BackpressureApplied,
+    BackpressureReleased>;
 
 struct QueryEngineStatisticListener
 {
