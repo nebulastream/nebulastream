@@ -148,6 +148,9 @@ port keeps the plans of pinned operators running:
   sender attaches to the existing network source;
 - a pinned and a placed operator on the same worker are connected by a channel on that worker.
 
+**Shortcut:** the query engine runs exactly one sink per local plan. If the operators placed on a worker would form a plan with several
+outgoing edges (shared sub-plans), the addition fails and the query is redeployed holistically.
+
 ### Placement amendment phase
 
 The phase follows the original: for every compacted change log entry it computes the plans at which the reconfiguration marker is

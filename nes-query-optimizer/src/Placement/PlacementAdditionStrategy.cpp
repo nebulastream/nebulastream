@@ -422,6 +422,13 @@ PlacementAdditionResult PlacementAdditionStrategy::updateGlobalExecutionPlan(
             }
         }
         INVARIANT(not roots.empty(), "The new plan {} of query {} does not send its results anywhere", planId, queryId);
+        if (roots.size() > 1)
+        {
+            /// Shortcut: the query engine runs exactly one sink per local plan. Operators on the same worker with several outgoing edges
+            /// (shared sub-plans) are not split into several plans.
+            throw PlacementFailure(
+                "The new plan {} of query {} would have {} sinks, but a plan can only have one", planId, queryId, roots.size());
+        }
         DecomposedQueryPlan plan{
             .id = planId,
             .version = version,
