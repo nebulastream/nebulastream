@@ -77,6 +77,12 @@ jobs:
 
       - name: Build via devShell
         run: |
+          # Start the sccache daemon before ninja launches its first wave of compiles.
+          # Without a running daemon every compile in that wave spawns its own server.
+          # Each of those servers checks the remote cache before it can see that another one already owns the port.
+          # The slowest of them overruns the startup wait of the client and fails the build.
+          # Showing the stats does not start the daemon.
+          "$SCCACHE_BIN" --start-server
           "$SCCACHE_BIN" --show-stats
           ./.nix/nix-cmake.sh --build cmake-build-nix -j"$(nproc)" -- -k 0
           "$SCCACHE_BIN" --show-stats

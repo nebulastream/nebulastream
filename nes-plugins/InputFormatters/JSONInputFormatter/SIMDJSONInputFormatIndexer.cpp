@@ -93,7 +93,7 @@ namespace
 
 /// Config fields of the JSON input formatter, shared by getConfigSchema (declaration) and
 /// SIMDJSONInputFormatterConfig::fromConfig (typed extraction).
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<char> TUPLE_DELIMITER_FIELD{
     Identifier::parse("TUPLE_DELIMITER"),
     R"(A single byte delimiter to separate tuples. You can use \ to write out for example \n or \t .)",
@@ -114,7 +114,7 @@ const ConfigField<char> TUPLE_DELIMITER_FIELD{
     },
     '\n',
     "\\n"};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

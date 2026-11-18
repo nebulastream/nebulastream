@@ -68,6 +68,7 @@ void throwWithoutCleanup()
     throw std::runtime_error("invoke failed without cleanup");
 }
 
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization) test fixture
 nautilus::NautilusFunction nestedThrowingFunction{
     "nested_throwing_function",
     []

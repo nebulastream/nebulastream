@@ -203,7 +203,7 @@ public:
         const auto trailingSpanningTupleBuffers = std::span(stagedBuffers);
         processSpanningTuple(trailingSpanningTupleBuffers, tlIndexPhaseResult.trailingSpanningTuple, indexer);
         assignTrailingRawBufferIndex(indexer.indexRawBuffer(
-            {std::bit_cast<const char*>(tlIndexPhaseResult.trailingSpanningTuple.data()),
+            {reinterpret_cast<const char*>(tlIndexPhaseResult.trailingSpanningTuple.data()),
              tlIndexPhaseResult.trailingSpanningTuple.size()}));
     }
 
@@ -219,7 +219,8 @@ public:
         allocateForLeadingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple);
         processSpanningTuple(leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, indexer);
         assignLeadingRawBufferIndex(indexer.indexRawBuffer(
-            {std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()), tlIndexPhaseResult.leadingSpanningTuple.size()}));
+            {reinterpret_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()),
+             tlIndexPhaseResult.leadingSpanningTuple.size()}));
     }
 
     static size_t
@@ -241,13 +242,13 @@ private:
     {
         tlIndexPhaseResult.hasLeadingSpanningTupleBool = true;
         auto byteSpan = arenaRef.allocateMemory(sizeOfLeadingSpanningTuple);
-        tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(reinterpret_cast<char*>(byteSpan.data()), byteSpan.size());
     }
 
     static void allocateForTrailingSpanningTuple(Arena& arenaRef, const size_t sizeOfTrailingSpanningTuple)
     {
         auto byteSpan = arenaRef.allocateMemory(sizeOfTrailingSpanningTuple);
-        tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(reinterpret_cast<char*>(byteSpan.data()), byteSpan.size());
     }
 };
 

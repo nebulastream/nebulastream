@@ -46,6 +46,11 @@ Using `libstdc++` leads to better resolution of debug symbols on Linux, using CL
 > We currently do not provide pre-built `libstdc++` development images for ARM architectures.  
 > However, you can build them locally by using the `-l` flag with the installation script.
 
+> [!NOTE]
+> Pre-built development images do not include debug builds of the dependencies, to keep them small.
+> A Debug build of NebulaStream then links the release builds of the dependencies, so you cannot step through their code with full debug information.
+> If you need that, build the image locally by using the `-l` flag with the installation script. This is slower, but includes the debug builds.
+
 
 > [!NOTE]
 > All commands need to be run from the **root of the git repository**!

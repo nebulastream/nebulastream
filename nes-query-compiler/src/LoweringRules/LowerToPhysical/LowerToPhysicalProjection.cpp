@@ -99,18 +99,28 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
     auto bufferSize = conf.pageSize;
-    auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
-    auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan,
-        inputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
-        std::nullopt,
-        std::nullopt,
-        PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
-    auto child = scanWrapper;
+    std::shared_ptr<PhysicalOperatorWrapper> child;
+    std::shared_ptr<PhysicalOperatorWrapper> leaf;
+    /// Create a scan if this projection was placed directly after the source.
+    /// Any other projection does not receive a scan here, otherwise we might create an unnecessary pipeline.
+    /// Scans needed for UNION are inserted in the Pipelining-Phase already.
+    if (projection->getChild().tryGetAs<SourceDescriptorLogicalOperator>())
+    {
+        auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
+        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
+            scan,
+            inputSchema,
+            outputSchema,
+            memoryLayoutType,
+            memoryLayoutType,
+            std::nullopt,
+            std::nullopt,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN);
+
+        child = scanWrapper;
+        leaf = scanWrapper;
+    }
 
     auto fieldMappingTrait = traitSet.get<FieldMappingTrait>();
     for (const auto& [fieldName, function] : projection->getProjections())
@@ -120,6 +130,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
         auto physicalFunction
             = QueryCompilation::FunctionProvider::lowerFunction(function, *projection->getChild()->getTraitSet().get<FieldMappingTrait>());
         auto physicalOperator = MapPhysicalOperator(std::move(targetName).value(), physicalFunction);
+
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,
             inputSchema,
@@ -129,9 +140,13 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
             std::nullopt,
             std::nullopt,
             PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
-            std::vector{child});
-    }
+            child == nullptr ? std::vector<std::shared_ptr<PhysicalOperatorWrapper>>{} : std::vector{child});
 
-    return {.root = child, .leaves = {scanWrapper}};
+        if (leaf == nullptr)
+        {
+            leaf = child;
+        }
+    }
+    return {.root = child, .leaves = {leaf}};
 }
 }

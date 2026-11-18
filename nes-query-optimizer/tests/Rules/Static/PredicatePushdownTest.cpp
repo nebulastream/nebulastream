@@ -14,10 +14,12 @@
 
 #include <array>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
@@ -39,6 +41,7 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Static/PredicatePushdownRule.hpp>
+#include <Schema/Schema.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -57,6 +60,61 @@ public:
     static void SetUpTestSuite() { Logger::setupLogging("PredicatePushdownTest.log", LogLevel::LOG_DEBUG); }
 
     OptimizerTestUtils utils;
+
+    /// Builds sink < selection(left_value >= 0 AND right_value < 0) < join(joinType) < (source, source),
+    /// applies predicate pushdown, and returns the operator directly below the sink.
+    LogicalOperator pushBeyondJoinOfType(const JoinLogicalOperator::JoinType joinType)
+    {
+        auto sourceLeft = utils.createSource("join_left", {"left_value", "left_id", "left_ts"});
+        auto sourceRight = utils.createSource("join_right", {"right_value", "right_id", "right_ts"});
+
+        auto joinFunction = EqualsLogicalFunction{
+            FieldAccessLogicalFunction{sourceLeft.getOutputSchema()[Identifier::parse("left_id")].value()},
+            FieldAccessLogicalFunction{sourceRight.getOutputSchema()[Identifier::parse("right_id")].value()}};
+
+        auto join = JoinLogicalOperator::create(
+            std::array<LogicalOperator, 2>{sourceLeft, sourceRight},
+            joinFunction,
+            Windowing::TimeBasedWindowType{Windowing::TumblingWindow{Windowing::TimeMeasure{0}}},
+            joinType,
+            JoinTimeCharacteristic{});
+
+        auto predicate = AndLogicalFunction{
+            GreaterEqualsLogicalFunction{
+                FieldAccessLogicalFunction{join.getOutputSchema()[Identifier::parse("left_value")].value()},
+                ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}},
+            LessLogicalFunction{
+                FieldAccessLogicalFunction{join.getOutputSchema()[Identifier::parse("right_value")].value()},
+                ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}}};
+
+        auto selection = SelectionLogicalOperator::create(join, predicate);
+        /// The fields of a null-supplying side are nullable in the join's output schema.
+        const bool leftNullable
+            = joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+        const bool rightNullable
+            = joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+        const auto sinkField = [](const std::string& name, const bool nullable)
+        {
+            return UnqualifiedUnboundField{
+                Identifier::parse(name),
+                DataType{DataType::Type::UINT64, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE}};
+        };
+        const Schema<UnqualifiedUnboundField, Ordered> sinkSchema{std::vector{
+            sinkField("left_id", leftNullable),
+            sinkField("left_value", leftNullable),
+            sinkField("left_ts", leftNullable),
+            sinkField("right_id", rightNullable),
+            sinkField("right_value", rightNullable),
+            sinkField("right_ts", rightNullable),
+            sinkField("start", false),
+            sinkField("end", false)}};
+        auto sink = utils.createSink(selection, "join", sinkSchema);
+        auto pushed = PredicatePushdownRule{}.apply(utils.createPlan(sink));
+
+        auto root = pushed.getRootOperators().at(0);
+        EXPECT_TRUE(root.tryGetAs<SinkLogicalOperator>());
+        return root.getChildren().at(0);
+    }
 };
 }
 
@@ -238,6 +296,66 @@ TEST_F(PredicatePushdownTest, ValidatePushBeyondJoin)
     ASSERT_TRUE(rightOp1.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<LessLogicalFunction>());
     auto rightOp2 = rightOp1.getChildren().at(0);
     ASSERT_TRUE(rightOp2.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(PredicatePushdownTest, InnerJoinPushesPredicatesIntoBothInputs)
+{
+    /// AFTER: sink < join < (selection(left_value >= 0) < source), (selection(right_value < 0) < source)
+    auto join = pushBeyondJoinOfType(JoinLogicalOperator::JoinType::INNER_JOIN);
+    ASSERT_TRUE(join.tryGetAs<JoinLogicalOperator>());
+    auto left = join.getChildren().at(0);
+    ASSERT_TRUE(left.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(left.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<GreaterEqualsLogicalFunction>());
+    ASSERT_TRUE(left.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+    auto right = join.getChildren().at(1);
+    ASSERT_TRUE(right.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(right.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<LessLogicalFunction>());
+    ASSERT_TRUE(right.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(PredicatePushdownTest, LeftOuterJoinPushesOnlyLeftPredicates)
+{
+    /// The right side is null-supplying, so its predicate must stay above the join.
+    /// AFTER: sink < selection(right_value < 0) < join < (selection(left_value >= 0) < source), (source)
+    auto selection = pushBeyondJoinOfType(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
+    ASSERT_TRUE(selection.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(selection.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<LessLogicalFunction>());
+    auto join = selection.getChildren().at(0);
+    ASSERT_TRUE(join.tryGetAs<JoinLogicalOperator>());
+    auto left = join.getChildren().at(0);
+    ASSERT_TRUE(left.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(left.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<GreaterEqualsLogicalFunction>());
+    ASSERT_TRUE(left.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+    ASSERT_TRUE(join.getChildren().at(1).tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(PredicatePushdownTest, RightOuterJoinPushesOnlyRightPredicates)
+{
+    /// The left side is null-supplying, so its predicate must stay above the join.
+    /// AFTER: sink < selection(left_value >= 0) < join < (source), (selection(right_value < 0) < source)
+    auto selection = pushBeyondJoinOfType(JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN);
+    ASSERT_TRUE(selection.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(selection.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<GreaterEqualsLogicalFunction>());
+    auto join = selection.getChildren().at(0);
+    ASSERT_TRUE(join.tryGetAs<JoinLogicalOperator>());
+    ASSERT_TRUE(join.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+    auto right = join.getChildren().at(1);
+    ASSERT_TRUE(right.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(right.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<LessLogicalFunction>());
+    ASSERT_TRUE(right.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(PredicatePushdownTest, FullOuterJoinPushesNoPredicates)
+{
+    /// Both sides are null-supplying, so all predicates must stay above the join.
+    /// AFTER: sink < selection(left_value >= 0 AND right_value < 0) < join < (source), (source)
+    auto selection = pushBeyondJoinOfType(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN);
+    ASSERT_TRUE(selection.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(selection.tryGetAs<SelectionLogicalOperator>().value()->getPredicate().tryGetAs<AndLogicalFunction>());
+    auto join = selection.getChildren().at(0);
+    ASSERT_TRUE(join.tryGetAs<JoinLogicalOperator>());
+    ASSERT_TRUE(join.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+    ASSERT_TRUE(join.getChildren().at(1).tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
 TEST_F(PredicatePushdownTest, ValidatePushBeyondUnion)

@@ -33,7 +33,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<StreamJoinStrategy> JOIN_STRATEGY{
     Identifier::parse("join_strategy"),
     "Join Strategy"
@@ -54,7 +54,7 @@ const ConfigField<StreamJoinStrategy> JOIN_STRATEGY{
     },
     StreamJoinStrategy::OPTIMIZER_CHOOSES,
     "OPTIMIZER_CHOOSES"};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

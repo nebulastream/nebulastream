@@ -27,7 +27,7 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -94,13 +94,15 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// to its tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), whose tier-0 backends are
     /// intentionally not built into our nautilus package and which would also conflict with the thread model above.
     options.setOption("engine.backend", std::string("mlir"));
-    switch (pipelineQueryPlan->getExecutionMode())
+    const auto executionConfiguration = pipelineQueryPlan->getExecutionConfiguration();
+    switch (executionConfiguration.getExecutionMode())
     {
-        case ExecutionMode::COMPILER: {
+        case ExecutionConfiguration::ExecutionMode::COMPILER: {
             options.setOption("engine.Compilation", true);
+            options.setOption("mlir.inline_invoke_calls", executionConfiguration.isNautilusInliningEnabled());
             break;
         }
-        case ExecutionMode::INTERPRETER: {
+        case ExecutionConfiguration::ExecutionMode::INTERPRETER: {
             options.setOption("engine.Compilation", false);
             break;
         }
@@ -133,10 +135,12 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
             break;
     }
     options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
+    /// perf jitdump records for `perf inject --jit`; this also makes nautilus resolve callee names, unless set below.
+    options.setOption("perf", nautilusPerf);
     /// Resolving the name of every invoked runtime function costs a dladdr lookup (~1 ms each in our binaries), which is about
     /// half of the tracing time (nebulastream/nautilus#491). Callees are bound by address, so names only matter for readable IR
     /// dumps. Needs a nautilus version that knows the option; older versions ignore it.
-    options.setOption("engine.resolveFunctionNames", dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
+    options.setOption("engine.resolveFunctionNames", nautilusPerf || dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
     /// Disable all of nautilus' pure optimization IR passes: MLIR/LLVM perform the same optimizations, and the nautilus passes
     /// scale poorly with the size of our pipelines (nebulastream/nautilus#492). The passes the backend depends on (no-throw
     /// inference and exception-region preparation) cannot be disabled and keep running.

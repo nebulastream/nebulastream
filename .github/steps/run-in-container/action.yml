@@ -2,6 +2,7 @@ name: Run Command in Container
 description: |
   Runs script or command directly in a development container. The container is mounted in the current working directory
   and uses the current user. sccache environment variables are forwarded into the container.
+  The command is inserted into a single quoted string, so it must not contain single quotes.
 
 inputs:
   image_name:
@@ -34,7 +35,8 @@ runs:
              "${MOUNT_ARGS[@]}" \
              -v "$(pwd):$(pwd)" -e "HOME=$(pwd)" --workdir "$(pwd)" -u "$(id -u):$(id -g)" \
              -e SCCACHE_BUCKET -e SCCACHE_ENDPOINT -e SCCACHE_REGION -e SCCACHE_S3_USE_SSL \
-             -e SCCACHE_STARTUP_TIMEOUT -e SCCACHE_IDLE_TIMEOUT \
+             -e SCCACHE_IDLE_TIMEOUT \
              -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+             -e NES_PRUNE_DOCKER_BUILD_CACHE \
              ${{inputs.image_name}} \
               /usr/bin/bash -e -c '${{inputs.run}}'

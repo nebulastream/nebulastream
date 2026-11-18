@@ -74,6 +74,7 @@ jobs:
     needs: [ fetch-current-main-commit, get-dev-images ]
     name: "Check format"
     uses: ./.github/workflows/format.yml
+    secrets: inherit
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
@@ -82,6 +83,7 @@ jobs:
 
   stress-test:
     uses: ./.github/workflows/execute_query.yml
+    secrets: inherit
     needs: [ get-dev-images ]
     with:
       head_sha: ${{ github.event.pull_request.head.ref }}

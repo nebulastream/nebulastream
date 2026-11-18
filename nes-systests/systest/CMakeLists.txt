@@ -95,7 +95,7 @@ find_package(reflectcpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
-target_link_libraries(nes-systest-lib PUBLIC nes-schema nes-frontend-embedded-lib nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE nes-input-formatters argparse::argparse tcp_source_plugin_library)
+target_link_libraries(nes-systest-lib PUBLIC nes-schema nes-frontend-embedded-lib nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE nes-input-formatters argparse::argparse)
 target_include_directories(nes-systest-lib PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
@@ -135,13 +135,11 @@ endif ()
 set(SYSTEST_EXCLUDE_GROUPS_NLJ ${SYSTEST_EXCLUDE_GROUPS} NestedLoopIntensive HashJoinOnly)
 set(SYSTEST_EXCLUDE_GROUPS_NLJ_COMPILER ${SYSTEST_EXCLUDE_GROUPS_COMPILER} NestedLoopIntensive HashJoinOnly)
 
-# Memory budget for every systest invocation that runs the join tests. The outer-join tests hold far more unpooled state
-# than the rest of the suite: they keep one ChainedHashMap per build side per worker thread alive for every open slice,
-# and a 1 s tumbling window over the 10,000-row outer-join inputs opens a lot of slices at once. That overruns the
-# 128 MiB unpooled share the default budget leaves. Only the unpooled share is short, so grow just that and keep the
-# pooled share at the default 128 MiB (32,768 operator buffers), i.e. no extra memory is reserved up front.
-set(SYSTEST_JOIN_TOTAL_MEMORY_BYTES 805306368) # 128 MiB pooled (1/6) + 640 MiB unpooled (5/6)
-set(SYSTEST_JOIN_UNPOOLED_FRACTION 0.8333333)
+# Memory budget for every systest invocation that runs the join tests. The outer-join tests keep one ChainedHashMap per
+# build side per worker thread alive for every open slice,
+# and a 1 s tumbling window over the 10,000-row outer-join inputs opens a lot of slices at once.
+set(SYSTEST_JOIN_TOTAL_MEMORY_BYTES 805306368) # 614 MiB pooled + 154 MiB unpooled
+set(SYSTEST_JOIN_UNPOOLED_FRACTION 0.2)
 
 # Add code coverage if enabled
 if (CODE_COVERAGE)
@@ -177,13 +175,17 @@ if (NOT CODE_COVERAGE)
                 COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_sliceCache_${enableSliceCache} --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
         set_tests_properties(systest_compiler_sliceCache_${enableSliceCache} PROPERTIES LABELS "Systest" PROCESSORS 4)
     endforeach ()
-
     # Benchmarking mode (-b) drives the runner sequentially and writes BenchmarkResults.json. Without this target the only -b
     # coverage is systest_large_benchmark_*, which is gated behind ENABLE_LARGE_TESTS.
     ExternalData_Add_Test(test-data
             NAME systest_benchmark_small
             COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/benchmark_small --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_benchmark_small PROPERTIES LABELS "Systest" PROCESSORS 4)
+
+    ExternalData_Add_Test(test-data
+            NAME systest_compiler_without_inlining
+            COMMAND systest --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_without_inlining --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=1 --worker.default_query_execution.execution_mode=COMPILER --worker.default_query_execution.nautilus_inlining=FALSE)
+    set_tests_properties(systest_compiler_without_inlining PROPERTIES LABELS "Systest" PROCESSORS 1)
 endif (NOT CODE_COVERAGE)
 
 
@@ -192,11 +194,10 @@ if (ENABLE_LARGE_TESTS)
 
     # Memory budget for the in-process large systests, split into a pooled and an unpooled share.
     # The unpooled pool (hash maps, paged vectors, var-sized data) is bounded so a runaway query fails cleanly instead of
-    # OOM-killing the worker. Sized so the pooled share keeps ~2,000,000 operator buffers (the previous setting) while
-    # leaving 64 GiB for unpooled state; raise it if a future large test legitimately needs more memory.
-    set(LARGE_TEST_TOTAL_MEMORY_BYTES 76911476736 CACHE STRING
-            "Memory budget (bytes) for the in-process large systests: 8 GiB pooled (2,000,000 * 4096) + 64 GiB unpooled")
-    set(LARGE_TEST_UNPOOLED_FRACTION 0.8935) # 68719476736 / 76911476736
+    # OOM-killing the worker.
+    set(LARGE_TEST_TOTAL_MEMORY_BYTES 34359738368 CACHE STRING
+            "Memory budget (bytes) for the in-process large systests: 24 GiB pooled + 8 GiB unpooled")
+    set(LARGE_TEST_UNPOOLED_FRACTION 0.25)
 
     set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
     ExternalData_Add_Test(test-data

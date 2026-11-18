@@ -14,24 +14,14 @@
 
 #include <Runner/DataStaging.hpp>
 
-#include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include <memory>
-#include <stop_token>
 #include <string>
-#include <thread>
-#include <utility>
-#include <variant>
 #include <vector>
 
 #include <Model/RunnableTestFile.hpp>
-#include <Rewriter/Constants.hpp>
-#include <Rewriter/SourceRewriting.hpp>
 #include <Util/Files.hpp>
-#include <Util/Overloaded.hpp>
 #include <ErrorHandling.hpp>
-#include <TCPDataServer.hpp>
 
 namespace NES
 {
@@ -53,41 +43,18 @@ void writeInlineData(const InlineData& data)
     }
 }
 
-RunningServer serve(ServedData data)
+std::vector<std::string> stage(const RunnableTestFile& runnable)
 {
-    /// The server binds in its constructor, so the port in the options is the one that the source connects to.
-    auto server = std::visit(
-        [](auto&& content) { return std::make_unique<TCPDataServer>(std::forward<decltype(content)>(content)); }, std::move(data.content));
-    const auto port = server->getPort();
-
-    return {
-        .thread = std::jthread{[owned = std::move(server)](const std::stop_token& stopToken) { owned->run(stopToken); }},
-        .options
-        = {SourceOption{.group = Sql::Source, .key = Sql::SocketHost, .value = "localhost"},
-           SourceOption{.group = Sql::Source, .key = Sql::SocketPort, .value = int64_t{port}},
-           /// The test data sets are small, so a source would otherwise wait on a partial buffer for rows that never come.
-           SourceOption{.group = Sql::Source, .key = Sql::FlushIntervalMs, .value = int64_t{100}}}};
-}
-
-StagedSetup stage(const RunnableTestFile& runnable)
-{
-    StagedSetup staged;
-    for (auto setup : runnable.setupStatements)
+    std::vector<std::string> sql;
+    for (const auto& setup : runnable.setupStatements)
     {
-        std::visit(
-            Overloaded{
-                [](const PlainStatement&) { },
-                [](const StatementWithInlineData& withInline) { writeInlineData(withInline.data); },
-                [&](StatementWithServedData& withServed)
-                {
-                    auto [thread, options] = serve(std::move(withServed.data));
-                    withServed.sql = addSourceOptions(withServed.sql, options);
-                    staged.servers.push_back(std::move(thread));
-                }},
-            setup);
-        staged.sql.push_back(getSqlOf(setup));
+        if (setup.inlineData.has_value())
+        {
+            writeInlineData(*setup.inlineData);
+        }
+        sql.push_back(setup.sql);
     }
-    return staged;
+    return sql;
 }
 
 }

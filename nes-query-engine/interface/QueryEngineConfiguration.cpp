@@ -32,7 +32,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<uint64_t> NUMBER_OF_WORKER_THREADS{
     Identifier::parse("number_of_worker_threads"),
     "Number of worker threads used within the QueryEngine",
@@ -65,7 +65,7 @@ const ConfigField<uint64_t> ADMISSION_QUEUE_SIZE{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{1000}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

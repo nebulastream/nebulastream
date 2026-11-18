@@ -51,7 +51,7 @@ public:
     [[nodiscard]] const ExplicitAny& getConfig() const;
 
     /// Defaults to NATIVE: a sink without an output formatter forwards buffers unformatted.
-    /// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTBEGIN(bugprone-throwing-static-initialization)
     static inline auto TYPE_FIELD = ConfigField<Identifier>{
         Identifier::parse("TYPE"),
         "The type of the output form",
@@ -64,7 +64,7 @@ public:
 
     static inline Schema<QualifiedErasedConfigField, Ordered> configSchema
         = createConfigSchema(Identifier::parse("OUTPUT_FORMATTER"), TYPE_FIELD, VALUE_SERIALIZERS);
-    /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+    /// NOLINTEND(bugprone-throwing-static-initialization)
 
 private:
     friend struct Unreflector<OutputFormatterDescriptor>;

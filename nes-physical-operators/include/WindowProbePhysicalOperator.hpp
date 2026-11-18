@@ -36,6 +36,10 @@ public:
     /// Therefore, any setup to the operator handler should ONLY happen in the WindowProbePhysicalOperator.
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
 
+    /// Acts as the scan of the probe pipeline: copies the buffer metadata into the execution context and opens the child.
+    /// Buffers without records only carry a watermark, so the probe-specific logic runs only for buffers with records.
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const final;
+
     /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
@@ -45,6 +49,9 @@ public:
     void setChild(PhysicalOperator child) override;
 
 protected:
+    /// Processes one emitted window. The record buffer contains at least one record.
+    virtual void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const = 0;
+
     std::optional<PhysicalOperator> child;
     OperatorHandlerId operatorHandlerId;
     WindowMetaData windowMetaData;

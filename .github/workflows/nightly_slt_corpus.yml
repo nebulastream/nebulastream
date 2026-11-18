@@ -51,7 +51,7 @@ jobs:
           images: |
             nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
-          docker_password: ${{ secrets.DOCKER_SECRET }}
+          docker_password: ${{ secrets.DOCKER_PULL_SECRET }}
 
       - uses: ./.github/steps/run-in-container
         name: Build systest

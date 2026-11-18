@@ -113,7 +113,7 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
         case DataType::Type::CHAR:
             return ConstantCharValueFunction(parseConstantValue<char>(stringValue));
         case DataType::Type::VARSIZED: {
-            return ConstantValueVariableSizePhysicalFunction(std::bit_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
+            return ConstantValueVariableSizePhysicalFunction(reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
         };
         case DataType::Type::UNDEFINED: {
             throw UnknownPhysicalType("the UNKNOWN type is not supported");

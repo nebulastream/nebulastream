@@ -172,6 +172,8 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
         EXPECT_FALSE(ctrl->wasClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        /// Worker threads may reorder buffers, so wait for the identifiable buffer before injecting more. The sink order is then fixed.
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -208,9 +210,9 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
         ExpectStats::QueryStopRequest(0),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
-        ExpectStats::TaskExecutionStart(8),
-        ExpectStats::TaskExecutionComplete(8),
-        ExpectStats::TaskEmit(4));
+        ExpectStats::TaskExecutionStart(10), /// (4 data buffers + EoS watermark buffer) * (P1 + Sink)
+        ExpectStats::TaskExecutionComplete(10),
+        ExpectStats::TaskEmit(5));
 
     test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
@@ -223,6 +225,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
         ASSERT_TRUE(ctrl->waitUntilOpened());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -238,7 +241,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     test.stop();
 
     auto buffers = sinkCtrl->takeBuffers();
-    EXPECT_EQ(buffers.size(), 4);
+    EXPECT_EQ(buffers.size(), 5); /// 4 data buffers + EoS watermark buffer
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
@@ -278,12 +281,12 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
         EXPECT_FALSE(ctrl->wasClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
         /// Race between Source Data and System Stop
-        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         test.stopQuery(test.queryId(0));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -323,11 +326,11 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
         EXPECT_FALSE(ctrl->waitUntilClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
-        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectError("Source Failed");
         ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
@@ -970,10 +973,6 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
 
     test.start();
     {
-        /// instruct DataGenerator to emit failure for source 0 after 3 tuple buffer
-        DataGenerator<FailAfter<3, 0>> dataGenerator;
-        dataGenerator.start(sourcesCtrls);
-
         /// start all queries
         for (auto& query : queryPlans)
         {
@@ -981,6 +980,11 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
             test.startQuery(std::move(query));
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
+
+        /// Source activity can precede the Running notification, so a query could fail before reporting Running.
+        /// Only generate data once every query has reported Running.
+        DataGenerator<FailAfter<3, 0>> dataGenerator;
+        dataGenerator.start(sourcesCtrls);
 
         /// Expect Query 1 to be terminated by the failure.
         ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -1118,7 +1122,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
 template <typename T>
 auto IsInInclusiveRange(T lo, T hi)
 {
-    return ::testing::AllOf(::testing::Ge((lo)), ::testing::Le((hi)));
+    return ::testing::AllOf(::testing::Ge(lo), ::testing::Le(hi));
 }
 
 TEST_F(QueryEngineTest, singleQueryWithPipelineFailure)
@@ -1279,8 +1283,8 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSink)
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(1), /// Sink
         ExpectStats::PipelineStop(1),
-        ExpectStats::TaskExecutionStart(4), ///  Sink + Sink* repeatCount
-        ExpectStats::TaskExecutionComplete(4),
+        ExpectStats::TaskExecutionStart(5), ///  Sink + Sink* repeatCount + Sink (EoS watermark buffer, never repeated)
+        ExpectStats::TaskExecutionComplete(5),
         ExpectStats::TaskEmit(3)); /// (Source Emits to P1) not counted, (Sink emits to Sink) * repeatCount
 
     {
@@ -1313,9 +1317,9 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingPipeline)
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(2), /// P1 + Sink
         ExpectStats::PipelineStop(2),
-        ExpectStats::TaskExecutionStart(5), /// P1* repeatCount + Sink
-        ExpectStats::TaskExecutionComplete(5),
-        ExpectStats::TaskEmit(4)); /// (Source Emits to P1) not counted, (P1 emits to P1) * repeatCount, P1 emits to Sink
+        ExpectStats::TaskExecutionStart(7), /// P1 + P1 * repeatCount + Sink + (P1 + Sink) for the EoS watermark buffer
+        ExpectStats::TaskExecutionComplete(7),
+        ExpectStats::TaskEmit(5)); /// (Source Emits to P1) not counted, (P1 emits to P1) * repeatCount, P1 emits to Sink twice
     /// NOLINTEND(readability-magic-numbers)
     {
         test.start();
@@ -1347,9 +1351,9 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSinkDuringQueryStop)
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(2), /// P1 + Sink
         ExpectStats::PipelineStop(5), /// P1 + (Sink * Repeated) + Sink
-        ExpectStats::TaskExecutionStart(2), /// P1* repeatCount + Sink
-        ExpectStats::TaskExecutionComplete(2), /// P1 + Sink
-        ExpectStats::TaskEmit(1)); /// P1 emits to Sink
+        ExpectStats::TaskExecutionStart(4), /// (data buffer + EoS watermark buffer) * (P1 + Sink)
+        ExpectStats::TaskExecutionComplete(4),
+        ExpectStats::TaskEmit(2)); /// P1 emits both buffers to Sink
     /// NOLINTEND(readability-magic-numbers)
 
     {
@@ -1383,9 +1387,9 @@ TEST_F(QueryEngineTest, SingleQueryWithMultipleSinksDuringQueryStopOneIsRepeated
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(3), /// P1 + Sink1 + Sink2
         ExpectStats::PipelineStop(5), /// P1 + (Sink1 * Repeated) + Sink1 + Sink2
-        ExpectStats::TaskExecutionStart(3), /// Sink1 + Sink2
-        ExpectStats::TaskExecutionComplete(3), /// P1 + Sink1 + Sink2
-        ExpectStats::TaskEmit(2)); /// P1 emits to Sink1 and Sink2
+        ExpectStats::TaskExecutionStart(6), /// (data buffer + EoS watermark buffer) * (P1 + Sink1 + Sink2)
+        ExpectStats::TaskExecutionComplete(6),
+        ExpectStats::TaskEmit(4)); /// P1 emits both buffers to Sink1 and Sink2
     /// NOLINTEND(readability-magic-numbers)
 
     {
@@ -1452,10 +1456,6 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
 
     test.start();
     {
-        /// instruct DataGenerator to emit failure for source 0 after 3 tuple buffer
-        DataGenerator dataGenerator;
-        dataGenerator.start(sourcesCtrls);
-
         /// start all queries
         for (auto& query : queryPlans)
         {
@@ -1463,6 +1463,11 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
             test.startQuery(std::move(query));
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
+
+        /// Source activity can precede the Running notification, so a query could fail before reporting Running.
+        /// Only generate data once every query has reported Running.
+        DataGenerator dataGenerator;
+        dataGenerator.start(sourcesCtrls);
 
         /// Expect all other queries to have failed
         for (size_t idx = 1; auto& query : queryPlans | std::ranges::views::drop(1))

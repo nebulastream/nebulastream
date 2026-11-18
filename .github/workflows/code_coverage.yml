@@ -48,17 +48,27 @@ jobs:
           images: |
             nebulastream/nes-ci:${{ inputs.dev_image_tag }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
-          docker_password: ${{ secrets.DOCKER_SECRET }}
+          docker_password: ${{ secrets.DOCKER_PULL_SECRET }}
       - name: Build coverage and export as lcov
         uses: ./.github/steps/run-in-container
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
           run: |
             cmake -DCODE_COVERAGE=ON -DENABLE_DOCKER_TESTS=ON -B build
+            # Start the sccache daemon before ninja launches its first wave of compiles.
+            # Without a running daemon every compile in that wave spawns its own server.
+            # Each of those servers checks the remote cache before it can see that another one already owns the port.
+            # The slowest of them overruns the startup wait of the client and fails the build.
+            sccache --start-server
             cmake --build build -j -- -k 0
             cmake --build build --target ccov-all-export
-      - uses: codecov/codecov-action@v7
-        with:
+      # The action does not retry a connection reset while it downloads the codecov CLI,
+      # so one dropped connection would otherwise fail the job after the whole coverage build.
+      - name: Upload coverage to Codecov
+        id: codecov
+        continue-on-error: true
+        uses: codecov/codecov-action@v7
+        with: &codecov-upload
           slug: nebulastream/nebulastream
           fail_ci_if_error: true
           files: build/ccov/coverage.lcov
@@ -66,3 +76,7 @@ jobs:
           override_branch: ${{ inputs.branch-name }}
           override_commit: ${{ inputs.head_sha }}
           report_type: coverage
+      - name: Retry the Codecov upload
+        if: steps.codecov.outcome == 'failure'
+        uses: codecov/codecov-action@v7
+        with: *codecov-upload

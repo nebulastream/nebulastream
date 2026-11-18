@@ -15,9 +15,10 @@
 use super::control::*;
 use crate::channel::Communication;
 use crate::protocol::*;
-use crate::sender::channel::{ChannelCommand, ChannelCommandQueue};
+use crate::sender::channel::{ChannelCommand, ChannelCommandQueue, ChannelFailed};
 use async_channel::TrySendError;
 use std::marker::PhantomData;
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::runtime::Runtime;
@@ -83,6 +84,7 @@ impl Default for SenderConfig {
 pub struct SenderChannel {
     queue: ChannelCommandQueue,
     pending_flush: Mutex<Option<oneshot::Receiver<bool>>>,
+    failed: ChannelFailed,
 }
 
 /// Result of a non-blocking send operation on a `SenderChannel`.
@@ -167,6 +169,12 @@ impl SenderChannel {
             }
             Err(TryRecvError::Closed) => Err("Network Service Closed".into()),
         }
+    }
+
+    /// Returns true if the channel failed permanently, e.g. because a buffer could not be sent.
+    /// Buffers which were still queued or awaiting acknowledgment are lost.
+    pub fn has_failed(&self) -> bool {
+        self.failed.load(Ordering::Acquire)
     }
 
     /// Closes this channel and propagates the close signal to the `ReceiverChannel`.
@@ -334,10 +342,9 @@ impl<C: Communication + 'static> NetworkService<C> {
                 let communication = communication.clone();
                 async move {
                     debug!("Starting sender network service");
-                    debug!(
-                        "sender network service stopped: {:?}",
-                        network_sender_dispatcher(this_connection, listener, communication).await
-                    );
+                    let result =
+                        network_sender_dispatcher(this_connection, listener, communication).await;
+                    debug!("sender network service stopped: {:?}", result);
                 }
             }
             .instrument(info_span!("sender", this = %this_connection)),
@@ -397,10 +404,11 @@ impl<C: Communication + 'static> NetworkService<C> {
         };
 
         // Receive the internal queue handle for the data channel
-        let internal = rx.blocking_recv().map_err(|_| "Network Service Closed")?;
+        let (internal, failed) = rx.blocking_recv().map_err(|_| "Network Service Closed")?;
         Ok(SenderChannel {
             queue: internal,
             pending_flush: Default::default(),
+            failed,
         })
     }
 

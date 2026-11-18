@@ -75,6 +75,13 @@ The CI will create a development image based on the latest set of dependencies a
 Lastly, the dependency image is used to build the development image, which contains additional tools we use in our CI or
 during daily development (e.g., clang-format, clang-tidy, gdb, ...).
 
+By default, the `dependency` image includes debug and release builds of all dependencies. The CI skips the debug builds
+by setting the `RELEASE_ONLY_DEPENDENCIES=true` build argument, because some GitHub-hosted runners do not have the disk
+for them. All images on Docker Hub, which `scripts/install-local-docker-environment.sh` uses by default, are therefore
+release-only, and Debug builds of NebulaStream link the release builds of the dependencies. To get the debug builds,
+build the images locally with `scripts/install-local-docker-environment.sh -l`, or build the dependencies without Docker.
+The image tag only depends on the dependency hash, so it does not show which of the two an image is.
+
 ## Continuous Integration
 
 The CI is aware of NebulaStreams dependency management. The PR CI Job detects changes to folders relevant to dependency
@@ -139,6 +146,12 @@ The Paho MQTT C and C++ ports apply a libc++ compatibility patch. Paho's C++ cli
 `std::basic_string<unsigned char>`, which requires `std::char_traits<unsigned char>`. libc++ no longer provides this
 non-standard specialization; the standard only mandates it for `char`, `wchar_t`, `char8_t`, `char16_t`, and
 `char32_t`. The patch stores the data as `char` instead, allowing the MQTT dependencies to build with libc++.
+
+The Paho MQTT C port (vcpkg and nix) additionally carries the fix from upstream PR
+[#1706](https://github.com/eclipse-paho/paho.mqtt.c/pull/1706) for
+[#1622](https://github.com/eclipse-paho/paho.mqtt.c/issues/1622): a QoS 1/2 publish that fails with `SOCKET_ERROR` frees
+its payload although the stored publication already owns it, so the payload is freed a second time when the session is
+cleaned up. Drop the patch once a Paho release contains the fix.
 
 ### Nautilus
 

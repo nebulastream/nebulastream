@@ -178,3 +178,14 @@ else ()
         message(STATUS "Inference tests disabled (user override)")
     endif ()
 endif ()
+
+# The connection-test runner uses uv in a sibling container of the same development image,
+# so a uv on PATH here means the runner has one too.
+find_program(UV_EXECUTABLE uv)
+if (UV_EXECUTABLE STREQUAL "UV_EXECUTABLE-NOTFOUND")
+    set(ENABLE_CONN_TESTS OFF)
+    message(STATUS "Connection tests disabled: uv not found (the development image ships it)")
+else ()
+    set(ENABLE_CONN_TESTS ON)
+    message(STATUS "Connection tests enabled: ${UV_EXECUTABLE}")
+endif ()

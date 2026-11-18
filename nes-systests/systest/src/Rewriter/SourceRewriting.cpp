@@ -15,11 +15,9 @@
 #include <Rewriter/SourceRewriting.hpp>
 
 #include <algorithm>
-#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -40,17 +38,6 @@
 
 namespace NES
 {
-namespace
-{
-
-/// Returns whether a source of this type reads over a connection instead of from a file.
-/// Such a source takes an endpoint instead of a path, and needs a server sending its data while it reads.
-bool readsFromSocket(const std::string_view sourceType)
-{
-    return Sql::sameName(sourceType, Sql::Tcp);
-}
-
-}
 
 SourceRewriter::SourceRewriter(const RewriteContext& context, const PrefixedNames& names) : context{context}, names{names}
 {
@@ -68,55 +55,24 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
             declaration.definition->getText());
     }
 
-    if (declaration.attached.has_value() and readsFromSocket(declaration.definition->type->getText())
-        and (declaresOption(declared, Sql::Source, Sql::SocketHost) or declaresOption(declared, Sql::Source, Sql::SocketPort)))
-    {
-        throw TestException(
-            "A source with attached data must not choose its socket endpoint, because a server sends it that data: {}",
-            declaration.definition->getText());
-    }
-
     const auto sourceNumber = ordinal++;
 
-    /// The file that the source itself opens, which goes into its options.
+    /// The file that the source opens: the attached file, or the CSV that the rewriter plans for the inline rows.
     std::optional<std::filesystem::path> dataFile;
-    /// The file whose bytes feed the source, whether it opens the file or a server sends the content.
-    /// A measurement counts what a source reads, and it reads the same bytes either way.
-    std::optional<std::filesystem::path> inputFile;
     std::optional<InlineData> inlineData;
-    std::optional<ServedData> servedData;
     /// A source that produces its own data (e.g., Generator) takes neither.
     if (declaration.attached.has_value())
     {
-        if (readsFromSocket(declaration.definition->type->getText()))
-        {
-            /// A server sends the source its data, so no file goes into the options.
-            std::visit(
-                Overloaded{
-                    [&](InlineRows&& inlined) { servedData = ServedData{.content = std::move(inlined.rows)}; },
-                    [&](const AttachedFile& attachedFile)
-                    {
-                        auto file = context.testDataDir / attachedFile.path;
-                        inputFile = file;
-                        servedData = ServedData{.content = std::move(file)};
-                    }},
-                std::move(*declaration.attached));
-        }
-        else
-        {
-            /// The source opens the attached file itself, or the CSV that the rewriter plans for the inline rows.
-            std::visit(
-                Overloaded{
-                    [&](InlineRows&& inlined)
-                    {
-                        auto file = context.sourceDataFile(sourceNumber);
-                        inlineData = InlineData{.path = file, .rows = std::move(inlined.rows)};
-                        dataFile = std::move(file);
-                    },
-                    [&](const AttachedFile& attachedFile) { dataFile = context.testDataDir / attachedFile.path; }},
-                std::move(*declaration.attached));
-            inputFile = dataFile;
-        }
+        std::visit(
+            Overloaded{
+                [&](InlineRows&& inlined)
+                {
+                    auto file = context.sourceDataFile(sourceNumber);
+                    inlineData = InlineData{.path = file, .rows = std::move(inlined).rows};
+                    dataFile = std::move(file);
+                },
+                [&](const AttachedFile& attachedFile) { dataFile = context.testDataDir / attachedFile.path; }},
+            std::move(*declaration.attached));
     }
 
     const auto setClause = renderSetClauseFor(parse, declared, dataFile);
@@ -124,20 +80,8 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     /// The rewriter prefixes first, because the SET clause replaces what the test declared, and a later edit wins over an earlier one.
     prefixNames(parse, rewriter, names);
     insertSetClause(rewriter, declaration.definition, setClause);
-    auto sql = rewriter.getText();
-    auto statement = [&]() -> SetupStatement
-    {
-        if (inlineData.has_value())
-        {
-            return StatementWithInlineData{.sql = std::move(sql), .data = std::move(*inlineData)};
-        }
-        if (servedData.has_value())
-        {
-            return StatementWithServedData{.sql = std::move(sql), .data = std::move(*servedData)};
-        }
-        return PlainStatement{.sql = std::move(sql)};
-    }();
-    return RewrittenSource{.statement = std::move(statement), .inputFile = std::move(inputFile)};
+    return RewrittenSource{
+        .statement = SetupStatement{.sql = rewriter.getText(), .inlineData = std::move(inlineData)}, .inputFile = std::move(dataFile)};
 }
 
 /// The host pins the source to one worker, because an omitted host resolves to the worker that responds,
@@ -204,38 +148,6 @@ void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter
             rewriter.insertAfter(source->parameters->getStop(), fmt::format(", {}", Sql::optionList(missing)));
         }
     }
-}
-
-std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options)
-{
-    SqlParse parse{sql};
-    auto* definition = findFirst<AntlrSQLParser::CreatePhysicalSourceDefinitionContext>(parse.tree());
-    if (definition == nullptr)
-    {
-        throw TestException("Only a physical source takes source options, but this statement declares something else: {}", sql);
-    }
-
-    auto* declared = declaredOptions(definition);
-    std::vector<std::string> merged;
-    for (const auto& [group, key, value] : options)
-    {
-        if (not declaresOption(declared, group, key))
-        {
-            merged.push_back(
-                std::visit(
-                    Overloaded{
-                        [&](const std::string& text) { return Sql::option(group, key, text); },
-                        [&](const int64_t number) { return Sql::literalOption(group, key, std::to_string(number)); }},
-                    value));
-        }
-    }
-    if (const auto declaredText = parse.getTextOf(declared); not declaredText.empty())
-    {
-        merged.push_back(declaredText);
-    }
-    antlr4::TokenStreamRewriter rewriter{&parse.tokenStream()};
-    insertSetClause(rewriter, definition, Sql::setClause(Sql::optionList(merged)));
-    return rewriter.getText();
 }
 
 }

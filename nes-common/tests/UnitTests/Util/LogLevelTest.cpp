@@ -46,7 +46,7 @@ TEST_F(LogLevelTest, suppressUnusedWarningDoesNotEvaluateArguments)
 
 TEST_F(LogLevelTest, testLogLevel)
 {
-#if defined(NES_BENCHMARKS_NATIVE_MODE)
+#ifdef NES_BENCHMARKS_NATIVE_MODE
     GTEST_SKIP() << "Skipping log emission in native benchmark builds";
 #endif
     constexpr auto filePath = "LogLevelTest.log";

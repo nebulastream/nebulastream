@@ -76,11 +76,12 @@ find_package(spdlog     CONFIG REQUIRED)
 find_package(yaml-cpp   CONFIG REQUIRED)
 find_package(folly      CONFIG REQUIRED)
 find_package(boost_url CONFIG REQUIRED)
+find_package(reflectcpp CONFIG REQUIRED)
 
 find_package(PkgConfig)
 pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
 
-target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid nes-logger-bindings)
+target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid reflectcpp::reflectcpp nes-logger-bindings)
 target_link_rust_lib(nes-common spdlog_bindings)
 
 add_subdirectory(rust/spdlog-bindings)

@@ -1,0 +1,9 @@
+-- A TCP source with a mixed-type schema, so the tests' write and read-back are checked beyond a single UINT8 column.
+CREATE LOGICAL SOURCE multi_input (id INT32 NOT NULL, label VARSIZED NOT NULL, ratio FLOAT64 NOT NULL);
+
+CREATE PHYSICAL SOURCE FOR multi_input TYPE TCP SET (
+    'localhost' AS "SOURCE".SOCKET_HOST,
+    9000        AS "SOURCE".SOCKET_PORT,
+    100         AS "SOURCE".FLUSH_INTERVAL_MS,
+    'JSON'      AS INPUT_FORMATTER."TYPE"
+);

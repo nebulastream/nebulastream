@@ -280,10 +280,26 @@ Visitor::DownResult pushBeyondJoin(
     /// * and the remaining predicates.
     /// The predicates only accessing the left or right child are pushed accordingly
     /// and the remaining predicates are applied.
+    ///
+    /// Pushing a predicate into a join input is only correct if that input is preserved by the join.
+    /// An outer join emits a NULL-padded row for every unmatched tuple of its preserved side(s).
+    /// Filtering the null-supplying side before the join turns matched rows into such NULL-padded rows,
+    /// whereas the same filter above the join removes them. Thus:
+    /// * INNER (and CARTESIAN_PRODUCT): both inputs may receive predicates,
+    /// * LEFT: only the left (preserved) input may receive predicates,
+    /// * RIGHT: only the right (preserved) input may receive predicates,
+    /// * FULL: no input may receive predicates.
+    /// Predicates that may not be pushed stay in a selection above the join.
 
     std::vector<LogicalFunction> leftPushable;
     std::vector<LogicalFunction> rightPushable;
     std::vector<LogicalFunction> nonPushable;
+
+    const auto joinType = op->getJoinType();
+    const bool leftIsNullSupplying
+        = joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+    const bool rightIsNullSupplying
+        = joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
 
     const auto [left, right] = op->getBothChildren();
 
@@ -297,11 +313,11 @@ Visitor::DownResult pushBeyondJoin(
         const bool allInLeft = std::ranges::all_of(filteredOn, [&](const Field& field) { return leftFields.contains(field); });
         const bool allInRight = std::ranges::all_of(filteredOn, [&](const Field& field) { return rightFields.contains(field); });
 
-        if (allInLeft && !allInRight)
+        if (allInLeft && !allInRight && !leftIsNullSupplying)
         {
             leftPushable.emplace_back(predicate);
         }
-        else if (allInRight && !allInLeft)
+        else if (allInRight && !allInLeft && !rightIsNullSupplying)
         {
             rightPushable.emplace_back(predicate);
         }

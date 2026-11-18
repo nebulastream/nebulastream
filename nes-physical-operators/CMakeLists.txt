@@ -42,3 +42,4 @@ target_link_libraries(nes-physical-operators PRIVATE nes-rust-timestamp-bindings
 target_link_rust_lib(nes-physical-operators nes_rust_timestamp)
 
 add_tests_if_enabled(tests)
+nautilus_inline(nes-physical-operators)

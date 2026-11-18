@@ -16,13 +16,16 @@ use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
+use std::io;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
 use tokio::sync::oneshot;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
-use tracing::{Instrument, Span, debug, info, info_span, trace, warn};
+use tracing::{Instrument, Span, debug, error, info, info_span, trace, warn};
 
 use super::control::*;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -40,6 +43,9 @@ enum ChannelHandlerStatus {
     ClosedBySoftwareButFailedToPropagate(Error),
     /// The channel was cancelled via the cancellation token.
     Cancelled,
+    /// A buffer can never be sent (e.g. it exceeds the maximum frame size). Retrying would block the channel
+    /// forever, so the channel is terminated and marked as failed, which fails the sending sink.
+    Failed(Error),
 }
 
 /// Establishes a network connection and performs channel identification handshake.
@@ -102,6 +108,15 @@ pub(super) enum ChannelCommand {
 }
 pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
 pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
+/// Set once the channel failed permanently. Distinguishes a failure from a regularly closed channel.
+pub(super) type ChannelFailed = Arc<AtomicBool>;
+
+/// Closes the queue and drops all commands the terminated handler will never process.
+/// Closing alone keeps them alive, so a queued `Flush` would never be answered and its caller would wait forever.
+fn close_and_drain(queue: &ChannelCommandQueueListener) {
+    queue.close();
+    while queue.try_recv().is_ok() {}
+}
 
 /// Core event loop handler for a sender-side data channel.
 ///
@@ -282,6 +297,21 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     wait_for_ack.insert(sequence_number, buffer).is_none(),
                     "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was sent via a single channel."
                 );
+            }
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    io::ErrorKind::InvalidData | io::ErrorKind::InvalidInput
+                ) =>
+            {
+                // The encoding is deterministic, so retrying can never succeed.
+                return Err(ErrorOrStatus::Status(ChannelHandlerStatus::Failed(
+                    format!(
+                        "Buffer {sequence_number:?} ({} bytes) cannot be sent: {e}",
+                        buffer.data.len()
+                    )
+                    .into(),
+                )));
             }
             Err(_) => {
                 // feed() failed — buffer stays in pending_writes for retry
@@ -537,6 +567,13 @@ pub(super) fn create_channel_handler(
                     return;
                 };
 
+                // Has to be set before the queue is closed: Whoever observes the closed queue must also see the failure.
+                if let ChannelHandlerStatus::Failed(_) = status {
+                    pending_channel.failed.store(true, Ordering::Release);
+                }
+                // The channel will not be restarted. This makes `try_send_data` return `Closed` and `flush` return an error.
+                close_and_drain(&pending_channel.queue);
+
                 match status {
                     ChannelHandlerStatus::ClosedByOtherSide => {
                         info!("Channel Closed by other side.");
@@ -551,6 +588,10 @@ pub(super) fn create_channel_handler(
                     }
                     ChannelHandlerStatus::Cancelled => {
                         info!("Channel Closed by cancellation.");
+                        return;
+                    }
+                    ChannelHandlerStatus::Failed(e) => {
+                        error!("Channel failed permanently, failing the sender: {e}");
                         return;
                     }
                 }

@@ -46,6 +46,9 @@ jobs:
     timeout-minutes: 1440 # 24 hours
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER_NAME }}
+        password: ${{ secrets.DOCKER_PULL_SECRET }}
       volumes:
         - test-file-cache:/test-file-cache
       env:
@@ -82,6 +85,11 @@ jobs:
         run: |
           set -o pipefail
           cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+          # Start the sccache daemon before ninja launches its first wave of compiles.
+          # Without a running daemon every compile in that wave spawns its own server.
+          # Each of those servers checks the remote cache before it can see that another one already owns the port.
+          # The slowest of them overruns the startup wait of the client and fails the build.
+          sccache --start-server
           cmake --build build -j -- -k 0
 
           build/nes-single-node-worker/nes-single-node-worker -- --data_address=localhost:9090 > worker.log 2>&1 &

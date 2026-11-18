@@ -200,6 +200,7 @@ jobs:
             STDLIB=${{matrix.stdlib}}
             SANITIZER=${{matrix.sanitizer}}
             VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
+            RELEASE_ONLY_DEPENDENCIES=true
           context: .
           file: docker/dependency/Dependency.dockerfile
           secrets: |

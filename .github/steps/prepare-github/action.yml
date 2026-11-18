@@ -76,6 +76,11 @@ runs:
         sudo rm -rf /usr/local/lib/android
         sudo rm -rf /opt/ghc
         sudo rm -rf /opt/hostedtoolcache/CodeQL
+        # Some GitHub-hosted runners have a much smaller disk. This must not run on self-hosted machines, which keep their software.
+        if [ "$RUNNER_ENVIRONMENT" = "github-hosted" ]; then
+          sudo rm -rf /usr/share/swift /usr/local/.ghcup /usr/local/julia* /opt/google/chrome /opt/microsoft/msedge \
+            /usr/local/share/chromium /opt/hostedtoolcache
+        fi
         df -h
         for pid in "${pids[@]}"; do
           wait "$pid"

@@ -29,6 +29,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <openvino/core/model.hpp>
 #include <openvino/core/shape.hpp>
 #include <openvino/core/type/element_type.hpp>
 #include <openvino/core/type/float16.hpp>
@@ -41,11 +42,14 @@ namespace NES
 
 namespace
 {
-/// Process-wide OpenVINO runtime: one `ov::Core` and the models compiled from it, behind one
+/// Process-wide OpenVINO runtime: one `ov::Core` and the models read from it, behind one
 /// lock. The core, its cache, and the mutex share a single lifetime and are torn down together at process exit.
 ///
-/// Every worker thread running the same operator calls `setup` with the same model, and
-/// `read_model`/`compile_model` takes seconds for a large one, so a compiled model is cached and reused across threads.
+/// Every worker thread running the same operator calls `setup` with the same model, and `read_model` takes seconds
+/// for a large one, so the parsed model is cached and reused across threads.
+///
+/// Each worker thread still compiles its own model: a compiled model holds one graph per stream and an inference
+/// locks its graph, so worker threads sharing one compiled model would run their inferences one after another.
 class OpenVinoRuntime
 {
 public:
@@ -55,10 +59,23 @@ public:
         return runtime;
     }
 
-    ov::CompiledModel getOrCompile(const CompiledModel& model)
+    ov::CompiledModel compile(const CompiledModel& model)
     {
         const std::scoped_lock lock(mutex);
+        /// Without pinning disabled, OpenVINO pins every worker thread that runs an inference to the same core.
+        return core.compile_model(
+            getOrRead(model),
+            "CPU",
+            ov::hint::execution_mode(ov::hint::ExecutionMode::ACCURACY),
+            ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY),
+            ov::hint::enable_cpu_pinning(false));
+    }
 
+private:
+    OpenVinoRuntime() = default;
+
+    std::shared_ptr<ov::Model> getOrRead(const CompiledModel& model)
+    {
         /// The payload buffer is ref-counted and shared by every copy of a model, so its address identifies the model.
         /// An entry whose `weak_ptr` locks to the same buffer is a hit, and one whose `weak_ptr` has expired
         /// belongs to a model that has been destroyed.
@@ -73,7 +90,7 @@ public:
             }
             if (pinned.get() == payloadOwner)
             {
-                return entry->compiled;
+                return entry->model;
             }
             ++entry;
         }
@@ -96,24 +113,15 @@ public:
         auto openVinoModel = core.read_model(modelXml, weights);
         openVinoModel->reshape(modelInputShape);
 
-        auto compiledModel = core.compile_model(
-            openVinoModel,
-            "CPU",
-            ov::hint::execution_mode(ov::hint::ExecutionMode::ACCURACY),
-            ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
-
-        cache.push_back(CacheEntry{.payload = backendModel.modelGraph.buffer, .compiled = compiledModel});
-        return compiledModel;
+        cache.push_back(CacheEntry{.payload = backendModel.modelGraph.buffer, .model = openVinoModel});
+        return openVinoModel;
     }
-
-private:
-    OpenVinoRuntime() = default;
 
     struct CacheEntry
     {
         /// NOLINTNEXTLINE(modernize-avoid-c-arrays) mirrors the model payload's array buffer
         std::weak_ptr<const std::byte[]> payload;
-        ov::CompiledModel compiled;
+        std::shared_ptr<ov::Model> model;
     };
 
     ov::Core core;
@@ -124,7 +132,7 @@ private:
 
 RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
 {
-    auto compiledModel = OpenVinoRuntime::instance().getOrCompile(model);
+    compiledModel = OpenVinoRuntime::instance().compile(model);
 
     inferRequest = compiledModel.create_infer_request();
     inputElementType = compiledModel.input(0).get_element_type();

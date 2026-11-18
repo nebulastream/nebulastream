@@ -29,7 +29,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<uint64_t> SENDER_QUEUE_SIZE{
     Identifier::parse("sender_queue_size"),
     "Default size of the sender software queue per network channel. May be overridden per NetworkSink.",
@@ -64,7 +64,7 @@ const ConfigField<uint64_t> RECEIVER_IO_THREADS{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{1}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

@@ -31,6 +31,12 @@ pub mod ffi {
         Full,
     }
 
+    enum FlushResult {
+        Flushed,
+        Pending,
+        Failed,
+    }
+
     struct SerializedTupleBufferHeader {
         sequence_number: u64,
         origin_id: u64,
@@ -109,7 +115,7 @@ pub mod ffi {
         ) -> Result<Box<SenderDataChannel>>;
 
         fn close_sender_channel(channel: Box<SenderDataChannel>);
-        fn flush_sender_channel(channel: &SenderDataChannel) -> bool;
+        fn flush_sender_channel(channel: &SenderDataChannel) -> FlushResult;
         fn send_buffer(
             channel: &SenderDataChannel,
             metadata: SerializedTupleBufferHeader,
@@ -480,9 +486,14 @@ fn send_buffer(
         TrySendDataResult::Closed(_) => ffi::SendResult::Closed,
     }
 }
-fn flush_sender_channel(channel: &SenderDataChannel) -> bool {
-    // If the channel has been closed, we pretend it has been flushed
-    channel.chan.flush().unwrap_or(true)
+fn flush_sender_channel(channel: &SenderDataChannel) -> ffi::FlushResult {
+    match channel.chan.flush() {
+        Ok(true) => ffi::FlushResult::Flushed,
+        Ok(false) => ffi::FlushResult::Pending,
+        Err(_) if channel.chan.has_failed() => ffi::FlushResult::Failed,
+        // If the channel has been closed, we pretend it has been flushed
+        Err(_) => ffi::FlushResult::Flushed,
+    }
 }
 
 // CXX requires the usage of Boxed types

@@ -142,6 +142,14 @@ nes_cleanup_leaked_resources() {
   docker images "${filter_args[@]}" -q | xargs -r docker image rm -f 2>/dev/null || true
 }
 
+# Each image build adds a copy of its binary to the Docker build cache, which CI cannot afford.
+# Opt-in, because this removes the whole build cache of the Docker daemon, which others may use.
+nes_prune_build_cache() {
+  if [ "${NES_PRUNE_DOCKER_BUILD_CACHE:-}" = "true" ]; then
+    docker builder prune -af > /dev/null
+  fi
+}
+
 # Build a worker-style image (FROM $NES_RUNTIME_BASE_IMAGE, COPY <bin>, ENTRYPOINT <bin>).
 # Exports the resulting image tag under the env var named in arg1.
 nes_build_runtime_image() {
@@ -160,6 +168,7 @@ nes_build_runtime_image() {
     ENTRYPOINT ["$container_bin"]
 EOF
   rm -rf "$ctx"
+  nes_prune_build_cache
   export "$image_var=$image_tag"
 }
 
@@ -180,6 +189,7 @@ nes_build_app_image() {
     COPY $container_bin /usr/bin
 EOF
   rm -rf "$ctx"
+  nes_prune_build_cache
   export "$image_var=$image_tag"
 }
 

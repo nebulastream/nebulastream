@@ -448,7 +448,7 @@ void insertAndIterateProperty(TestUtils::EngineMode mode)
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize, *rc::gen::arbitrary<bool>()};
 
     std::vector<TestUtils::AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -495,7 +495,7 @@ void insertAndReadByIndexProperty(TestUtils::EngineMode mode)
         *oversizedBudget);
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize, *rc::gen::arbitrary<bool>()};
 
     std::vector<TestUtils::AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -545,7 +545,8 @@ void concatMoveProperty(TestUtils::EngineMode mode)
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
         const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
-        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode, pageBufferSize);
+        /// No inline records, as the vectors are concatenated below.
+        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode, pageBufferSize, false);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
             auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
@@ -598,7 +599,8 @@ void concatCopyProperty(TestUtils::EngineMode mode)
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
         const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
-        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode, pageBufferSize);
+        /// No inline records, as the vectors are concatenated below.
+        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode, pageBufferSize, false);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
             auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
@@ -683,7 +685,7 @@ void insertOversizedVarSizedProperty(TestUtils::EngineMode mode)
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, bufferSize};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, bufferSize, *rc::gen::arbitrary<bool>()};
 
     /// genAnyVec's own draw for the VARSIZED field is immediately overwritten below with a guaranteed-oversized
     /// value, so it's kept on the small path (zero budget) to avoid wasting pooled-buffer draws before that.
@@ -806,7 +808,8 @@ TEST(PagedVectorTest, oversizedVarSizedThrowsWhenUnpooledUnavailable)
         std::make_shared<NesDefaultMemoryAllocator>())};
 
     const std::vector<DataType> fieldTypes{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}};
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, bufferManager, TestUtils::EngineMode::Interpreter, bufferSize};
+    /// No inline records, so the main buffer stays a small unpooled buffer as before.
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, bufferManager, TestUtils::EngineMode::Interpreter, bufferSize, false};
 
     TestUtils::AnyVec record;
     /// oversized -> unpooled fallback -> nullopt -> throw

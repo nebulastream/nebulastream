@@ -29,7 +29,7 @@
 #include <GeneratorRate.hpp>
 #include <GeneratorSource.hpp>
 
-/// NOLINTBEGIN(readability-magic-numbers,cert-msc51-cpp,bugprone-unchecked-optional-access) -- test values, deterministic seeds, and gtest ASSERT_TRUE guards are intentional
+/// NOLINTBEGIN(readability-magic-numbers,bugprone-random-generator-seed,bugprone-unchecked-optional-access) -- test values, deterministic seeds, and gtest ASSERT_TRUE guards are intentional
 
 namespace NES
 {
@@ -43,6 +43,7 @@ class SequenceFieldTest : public ::testing::Test
 TEST_F(SequenceFieldTest, generateUint64Sequence)
 {
     GeneratorFields::SequenceField field("SEQUENCE UINT64 0 5 1");
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng(42U);
     std::ostringstream oss;
 
@@ -61,6 +62,7 @@ TEST_F(SequenceFieldTest, generateUint64Sequence)
 TEST_F(SequenceFieldTest, generateInt32Sequence)
 {
     GeneratorFields::SequenceField field("SEQUENCE INT32 10 15 2");
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng(42U);
     std::ostringstream oss;
 
@@ -79,6 +81,7 @@ TEST_F(SequenceFieldTest, generateInt32Sequence)
 TEST_F(SequenceFieldTest, sequenceStopsAtEnd)
 {
     GeneratorFields::SequenceField field("SEQUENCE UINT64 0 3 1");
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng(42U);
     std::ostringstream oss;
 
@@ -113,6 +116,7 @@ class NormalDistributionFieldTest : public ::testing::Test
 TEST_F(NormalDistributionFieldTest, generateFloat64Values)
 {
     GeneratorFields::NormalDistributionField field("NORMAL_DISTRIBUTION FLOAT64 0.0 1.0");
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng(42U);
     std::ostringstream oss;
 
@@ -123,6 +127,7 @@ TEST_F(NormalDistributionFieldTest, generateFloat64Values)
 TEST_F(NormalDistributionFieldTest, generateInt64Values)
 {
     GeneratorFields::NormalDistributionField field("NORMAL_DISTRIBUTION INT64 100 0.5");
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng(42U);
     std::ostringstream oss;
 
@@ -144,6 +149,25 @@ TEST_F(NormalDistributionFieldTest, validateInvalidSchemaLineThrows)
     EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION FLOAT64 0.0 -1.0"), Exception);
 }
 
+TEST_F(NormalDistributionFieldTest, validateRejectsConfigsConstructionCannotHandle)
+{
+    /// Output types without a normal or binomial distribution
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION BOOLEAN 1 1"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION CHAR 1 1"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION VARSIZED 1 1"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INVALID 1 1"), Exception);
+    /// Mean does not fit the output type
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION UINT8 300 0.5"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION UINT32 -1 0.5"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION FLOAT32 1e60 1.0"), Exception);
+    /// Negative number of binomial trials
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INT32 -5 0.5"), Exception);
+    /// Binomial success probability outside [0, 1]
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INT32 10 1.5"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INT32 10 nan"), Exception);
+    EXPECT_NO_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION UINT8 255 1"));
+}
+
 /// --- RandomStrField Tests ---
 
 class RandomStrFieldTest : public ::testing::Test
@@ -153,6 +177,7 @@ class RandomStrFieldTest : public ::testing::Test
 TEST_F(RandomStrFieldTest, generateStringWithinBounds)
 {
     GeneratorFields::RandomStrField field("RANDOMSTR 5 10");
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng(42U);
     std::ostringstream oss;
 
@@ -166,7 +191,9 @@ TEST_F(RandomStrFieldTest, generateDeterministicWithSameSeed)
 {
     GeneratorFields::RandomStrField field1("RANDOMSTR 5 10");
     GeneratorFields::RandomStrField field2("RANDOMSTR 5 10");
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng1(42U);
+    /// NOLINTNEXTLINE(bugprone-random-generator-seed) deterministic test input
     std::mt19937 rng2(42U);
     std::ostringstream oss1;
     std::ostringstream oss2;
@@ -303,7 +330,7 @@ TEST_F(GeneratorTest, mixedFieldTypesProduceCorrectDelimiters)
     generator.generateTuple(oss);
     const auto output = oss.str();
     /// Should have exactly one comma (two fields) and end with newline
-    EXPECT_EQ(std::count(output.begin(), output.end(), ','), 1);
+    EXPECT_EQ(std::ranges::count(output, ','), 1);
     EXPECT_EQ(output.back(), '\n');
 }
 
@@ -456,4 +483,4 @@ TEST(ConfigParametersGeneratorTest, validRateConfigIsAccepted)
 
 }
 
-/// NOLINTEND(readability-magic-numbers,cert-msc51-cpp,bugprone-unchecked-optional-access)
+/// NOLINTEND(readability-magic-numbers,bugprone-random-generator-seed,bugprone-unchecked-optional-access)

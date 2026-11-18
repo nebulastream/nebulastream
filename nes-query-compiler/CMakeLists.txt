@@ -15,6 +15,8 @@
 add_library(nes-query-compiler-interface interface/QueryExecutionConfiguration.cpp interface/SliceCacheConfiguration.cpp interface/BloomFilterConfiguration.cpp)
 target_include_directories(nes-query-compiler-interface PUBLIC interface)
 target_link_libraries(nes-query-compiler-interface PUBLIC nes-configurations)
+# Lets the nautilus_inlining option default to whether the inlining pass was applied at build time.
+target_compile_definitions(nes-query-compiler-interface PRIVATE NES_NAUTILUS_INLINING_ACTIVE=$<IF:$<BOOL:${NES_NAUTILUS_INLINING_ACTIVE}>,true,false>)
 
 # Declare the library up front so create_runtime_registry can attach the glue sub-library;
 # sources are added below once src/ has registered them.

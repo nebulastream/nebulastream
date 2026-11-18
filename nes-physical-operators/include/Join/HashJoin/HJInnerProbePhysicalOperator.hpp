@@ -43,12 +43,13 @@ public:
         ChainedHashMapConfig leftHashMapBasedOptions,
         ChainedHashMapConfig rightHashMapBasedOptions);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
         return joinType == JoinLogicalOperator::JoinType::INNER_JOIN || joinType == JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT;
     }
+
+protected:
+    void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 };
 
 }

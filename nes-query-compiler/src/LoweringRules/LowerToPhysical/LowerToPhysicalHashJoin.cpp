@@ -405,7 +405,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         leftTupleLayout,
         leftHashMapConfig,
         std::move(leftKeyFunctions),
-        std::move(sliceStoreRefLeft)};
+        std::move(sliceStoreRefLeft),
+        conf.tupleBufferInlining};
     const HJBuildPhysicalOperator rightBuildOperator{
         handlerId,
         JoinBuildSideType::Right,
@@ -413,7 +414,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         rightTupleLayout,
         rightHashMapConfig,
         std::move(rightKeyFunctions),
-        std::move(sliceStoreRefRight)};
+        std::move(sliceStoreRefRight),
+        conf.tupleBufferInlining};
 
     /// Creating the hash join probe — select inner or outer probe based on join type
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, physicalOutputSchema);

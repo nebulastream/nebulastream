@@ -44,7 +44,7 @@ namespace NES
 
 namespace
 {
-/// NOLINTBEGIN(cert-err58-cpp,bugprone-throwing-static-initialization)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> SOCKET_HOST{Identifier::parse("SOCKET_HOST"), "The TCP server host"};
 
 const ConfigField<uint32_t> SOCKET_PORT{
@@ -82,7 +82,7 @@ const ConfigField<size_t> MAX_QUEUED_BUFFERS{
             .and_then(narrowConfigValue<int64_t, size_t, std::numeric_limits<size_t>::max(), 1>);
     },
     size_t{16}};
-/// NOLINTEND(cert-err58-cpp,bugprone-throwing-static-initialization)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 }
 
 Schema<QualifiedErasedConfigField, Ordered> TCPSink::getConfigSchema()

@@ -39,6 +39,7 @@ VersionInfo versionInfo(const std::string_view binaryName)
         "  built:          {}\n"
         "  build:          {}\n"
         "  sanitizer:      {}\n"
+        "  inlining:       {}\n"
         "  compiler:       {}\n"
         "  compiler flags: {}\n"
         "  stdlib:         {}\n"
@@ -50,6 +51,7 @@ VersionInfo versionInfo(const std::string_view binaryName)
         BuildInfo::timestamp,
         BuildInfo::buildType,
         BuildInfo::sanitizer,
+        BuildInfo::nautilusInlining,
         BuildInfo::compiler,
         BuildInfo::compilerFlags,
         BuildInfo::stdlib,

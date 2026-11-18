@@ -56,6 +56,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
+    failIfOutOfOrder(ctx, timestamp);
     const auto hashMapBuffer
         = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
     const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBuffer.asArg());

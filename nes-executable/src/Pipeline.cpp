@@ -27,7 +27,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -59,7 +59,8 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
 
     constexpr std::string_view kNoMode = "None";
 
-    const std::string_view modeName = pipeline.getExecutionMode() ? magic_enum::enum_name(*pipeline.getExecutionMode()) : kNoMode;
+    const auto executionConfiguration = pipeline.getExecutionConfiguration();
+    const std::string_view modeName = executionConfiguration ? magic_enum::enum_name(executionConfiguration->getExecutionMode()) : kNoMode;
 
     fmt::format_to(
         std::back_inserter(buf), "{}Pipeline(ID({}), Provider({}))\n", indentStr, pipeline.getPipelineId().getRawValue(), modeName);
@@ -199,9 +200,9 @@ std::ostream& operator<<(std::ostream& os, const Pipeline& p)
     return os;
 }
 
-std::optional<ExecutionMode> Pipeline::getExecutionMode() const
+std::optional<ExecutionConfiguration> Pipeline::getExecutionConfiguration() const
 {
-    return executionMode;
+    return executionConfiguration;
 }
 
 const PhysicalOperator& Pipeline::getRootOperator() const
@@ -224,9 +225,9 @@ std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& Pipelin
     return operatorHandlers;
 }
 
-void Pipeline::setExecutionMode(ExecutionMode mode)
+void Pipeline::setExecutionConfiguration(ExecutionConfiguration executionConfiguration)
 {
-    executionMode = mode;
+    this->executionConfiguration = std::move(executionConfiguration);
 }
 
 void Pipeline::setRootOperator(const PhysicalOperator& op)

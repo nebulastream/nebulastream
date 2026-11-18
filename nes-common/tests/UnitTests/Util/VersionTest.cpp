@@ -35,6 +35,7 @@ TEST(VersionTest, versionInfoContainsAllFields)
     EXPECT_THAT(output, testing::HasSubstr("built:"));
     EXPECT_THAT(output, testing::HasSubstr("build:"));
     EXPECT_THAT(output, testing::HasSubstr("sanitizer:"));
+    EXPECT_THAT(output, testing::HasSubstr("inlining:"));
     EXPECT_THAT(output, testing::HasSubstr("compiler:"));
     EXPECT_THAT(output, testing::HasSubstr("compiler flags:"));
     EXPECT_THAT(output, testing::HasSubstr("stdlib:"));

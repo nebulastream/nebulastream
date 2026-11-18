@@ -47,7 +47,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> CHANNEL{
     Identifier::parse("CHANNEL"),
     "UUID of the network channel",
@@ -107,7 +107,7 @@ const ConfigField<size_t> RECEIVER_QUEUE_SIZE{
                 });
     },
     size_t{0}};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

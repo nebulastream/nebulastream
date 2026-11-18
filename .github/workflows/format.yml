@@ -21,6 +21,9 @@ jobs:
     runs-on: [ self-hosted, linux, Build, x64 ]
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER_NAME }}
+        password: ${{ secrets.DOCKER_PULL_SECRET }}
       options: --user root
       env:
         GH_TOKEN: ${{ github.token }}

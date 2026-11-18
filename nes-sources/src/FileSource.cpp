@@ -15,7 +15,6 @@
 #include <FileSource.hpp>
 
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <expected>
 #include <filesystem>
@@ -48,7 +47,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::filesystem::path> FILE_PATH{
     Identifier::parse("FILE_PATH"),
     "Path to the file to be read",
@@ -57,7 +56,7 @@ const ConfigField<std::filesystem::path> FILE_PATH{
         return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
             .transform([](const auto& val) { return std::filesystem::path{val}; });
     }};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
@@ -77,11 +76,10 @@ FileSource::FileSource(const FileSourceConfig& config) : filePath(config.filePat
 
 void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
-    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
+    this->inputFile = std::ifstream(this->filePath, std::ios::binary);
     if (not this->inputFile)
     {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
+        throw CannotOpenSource("could not open {}: {}", this->filePath, getErrorMessageFromERRNO());
     }
 }
 

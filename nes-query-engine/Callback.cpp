@@ -159,7 +159,7 @@ void CallbackOwner::setCallback(absl::AnyInvocable<void()> callback)
 {
     if (ref)
     {
-        const std::lock_guard lock(ref->mutex);
+        const std::scoped_lock lock(ref->mutex);
         ref->callback = std::move(callback);
     }
 }

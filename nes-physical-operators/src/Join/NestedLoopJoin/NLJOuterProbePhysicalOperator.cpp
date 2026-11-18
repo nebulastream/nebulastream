@@ -123,10 +123,8 @@ void NLJOuterProbePhysicalOperator::performNullFillProbe(
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity) outer join dispatches by task type and handles multiple slices
-void NLJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void NLJOuterProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
-
     /// Parse trigger buffer
     const auto triggerRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto windowInfoRef = getMemberRef(triggerRef, &EmittedNLJWindowTrigger::windowInfo);

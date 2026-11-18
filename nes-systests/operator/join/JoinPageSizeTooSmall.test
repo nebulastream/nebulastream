@@ -4,20 +4,20 @@
 #              failing at a precondition inside the build at runtime.
 # groups: [Join, HashJoinOnly]
 
-# 16 UINT64 fields make a 128 byte tuple, which does not fit on a 128 byte page once the 8 byte page header is taken
-# off. The page size still holds several hash map entries (~36 bytes each), so lowering reaches the paged vector check
-# rather than failing earlier on the entriesPerPage invariant.
-GlobalConfiguration worker.default_query_execution.page_size: [128]
+# 32 UINT64 fields make a 256 byte tuple, which does not fit on a 256 byte page (the smallest allowed page size) once the
+# 8 byte page header is taken off. The page size still holds several hash map entries (~36 bytes each), so lowering reaches
+# the paged vector check rather than failing earlier on the entriesPerPage invariant.
+GlobalConfiguration worker.default_query_execution.page_size: [256]
 
-CREATE LOGICAL SOURCE wideStream(id UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, f01 UINT64 NOT NULL, f02 UINT64 NOT NULL, f03 UINT64 NOT NULL, f04 UINT64 NOT NULL, f05 UINT64 NOT NULL, f06 UINT64 NOT NULL, f07 UINT64 NOT NULL, f08 UINT64 NOT NULL, f09 UINT64 NOT NULL, f10 UINT64 NOT NULL, f11 UINT64 NOT NULL, f12 UINT64 NOT NULL, f13 UINT64 NOT NULL, f14 UINT64 NOT NULL);
+CREATE LOGICAL SOURCE wideStream(id UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, f01 UINT64 NOT NULL, f02 UINT64 NOT NULL, f03 UINT64 NOT NULL, f04 UINT64 NOT NULL, f05 UINT64 NOT NULL, f06 UINT64 NOT NULL, f07 UINT64 NOT NULL, f08 UINT64 NOT NULL, f09 UINT64 NOT NULL, f10 UINT64 NOT NULL, f11 UINT64 NOT NULL, f12 UINT64 NOT NULL, f13 UINT64 NOT NULL, f14 UINT64 NOT NULL, f15 UINT64 NOT NULL, f16 UINT64 NOT NULL, f17 UINT64 NOT NULL, f18 UINT64 NOT NULL, f19 UINT64 NOT NULL, f20 UINT64 NOT NULL, f21 UINT64 NOT NULL, f22 UINT64 NOT NULL, f23 UINT64 NOT NULL, f24 UINT64 NOT NULL, f25 UINT64 NOT NULL, f26 UINT64 NOT NULL, f27 UINT64 NOT NULL, f28 UINT64 NOT NULL, f29 UINT64 NOT NULL, f30 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR wideStream TYPE File;
 ATTACH INLINE
-1,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+1,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
-CREATE LOGICAL SOURCE wideStream2(id2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, g01 UINT64 NOT NULL, g02 UINT64 NOT NULL, g03 UINT64 NOT NULL, g04 UINT64 NOT NULL, g05 UINT64 NOT NULL, g06 UINT64 NOT NULL, g07 UINT64 NOT NULL, g08 UINT64 NOT NULL, g09 UINT64 NOT NULL, g10 UINT64 NOT NULL, g11 UINT64 NOT NULL, g12 UINT64 NOT NULL, g13 UINT64 NOT NULL, g14 UINT64 NOT NULL);
+CREATE LOGICAL SOURCE wideStream2(id2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, g01 UINT64 NOT NULL, g02 UINT64 NOT NULL, g03 UINT64 NOT NULL, g04 UINT64 NOT NULL, g05 UINT64 NOT NULL, g06 UINT64 NOT NULL, g07 UINT64 NOT NULL, g08 UINT64 NOT NULL, g09 UINT64 NOT NULL, g10 UINT64 NOT NULL, g11 UINT64 NOT NULL, g12 UINT64 NOT NULL, g13 UINT64 NOT NULL, g14 UINT64 NOT NULL, g15 UINT64 NOT NULL, g16 UINT64 NOT NULL, g17 UINT64 NOT NULL, g18 UINT64 NOT NULL, g19 UINT64 NOT NULL, g20 UINT64 NOT NULL, g21 UINT64 NOT NULL, g22 UINT64 NOT NULL, g23 UINT64 NOT NULL, g24 UINT64 NOT NULL, g25 UINT64 NOT NULL, g26 UINT64 NOT NULL, g27 UINT64 NOT NULL, g28 UINT64 NOT NULL, g29 UINT64 NOT NULL, g30 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR wideStream2 TYPE File;
 ATTACH INLINE
-1,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+1,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 # The tuples never reach the build: lowering the hash join rejects the page size first.
 SELECT * FROM (SELECT * FROM wideStream) INNER JOIN (SELECT * FROM wideStream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO Checksum();

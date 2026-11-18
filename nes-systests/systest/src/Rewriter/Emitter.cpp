@@ -110,7 +110,7 @@ void Emitter::emitCreate(ClassifiedCreate create, const bool submitsDeclaredSink
                 /// A logical source needs only its identifiers prefixed.
                 antlr4::TokenStreamRewriter rewriter{&create.parse->tokenStream()};
                 prefixNames(*create.parse, rewriter, declarations.names);
-                runnable.setupStatements.emplace_back(PlainStatement{.sql = rewriter.getText()});
+                runnable.setupStatements.emplace_back(SetupStatement{.sql = rewriter.getText(), .inlineData = std::nullopt});
             },
             [&](PhysicalSourceDeclaration&& declaration)
             {
@@ -132,13 +132,14 @@ void Emitter::emitCreate(ClassifiedCreate create, const bool submitsDeclaredSink
                 if (submitsDeclaredSinks)
                 {
                     runnable.setupStatements.emplace_back(
-                        PlainStatement{.sql = sinkRewriter.declaredSinkStatement(*create.parse, declaration.definition)});
+                        SetupStatement{
+                            .sql = sinkRewriter.declaredSinkStatement(*create.parse, declaration.definition), .inlineData = std::nullopt});
                 }
             }},
         std::move(create.declaration));
 }
 
-PlainStatement Emitter::modelStatement(SqlParse& parse, const ModelDeclaration& declaration) const
+SetupStatement Emitter::modelStatement(SqlParse& parse, const ModelDeclaration& declaration) const
 {
     antlr4::TokenStreamRewriter rewriter{&parse.tokenStream()};
     prefixNames(parse, rewriter, declarations.names);
@@ -147,7 +148,7 @@ PlainStatement Emitter::modelStatement(SqlParse& parse, const ModelDeclaration& 
     {
         rewriter.replace(declaration.definition->modelPath, Sql::stringLiteral((context.testDataDir / declared).string()));
     }
-    return PlainStatement{.sql = rewriter.getText()};
+    return SetupStatement{.sql = rewriter.getText(), .inlineData = std::nullopt};
 }
 
 Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQueryId id, const std::string_view resultDiscriminator)

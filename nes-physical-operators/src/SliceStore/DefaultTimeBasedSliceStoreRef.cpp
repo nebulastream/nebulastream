@@ -63,9 +63,11 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     INVARIANT(slices.size() == 1, "Expected exactly one slice for the given timestamp, but got {}", slices.size());
 
     /// Use the data structure extractor to get the operator-specific data structure, then store its pointer for usage in nautilus
+    /// The order is important: the extractor can throw, which would leave the entry in an inconsistent state if it was already updated.
+    const auto dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId, *bufferProvider);
     entryToReplace->sliceStart = slices[0]->getSliceStart().getRawValue();
     entryToReplace->sliceEnd = slices[0]->getSliceEnd().getRawValue();
-    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId, *bufferProvider);
+    entryToReplace->dataStructure = dataStructure;
 }
 
 DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(

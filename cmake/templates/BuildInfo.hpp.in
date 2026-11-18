@@ -30,6 +30,8 @@ inline constexpr std::string_view timestamp = "@NES_BUILD_TIMESTAMP@";
 inline constexpr std::string_view buildType = "@NES_BUILD_TYPE@";
 /// Enabled sanitizer (none, address, thread, undefined).
 inline constexpr std::string_view sanitizer = "@NES_BUILD_SANITIZER@";
+/// Whether the nautilus inlining pass was applied (enabled, disabled).
+inline constexpr std::string_view nautilusInlining = "@NES_BUILD_NAUTILUS_INLINING@";
 /// Compiler id and version.
 inline constexpr std::string_view compiler = "@NES_BUILD_COMPILER@";
 /// Effective C++ compiler flags configured for nes-common and the active build type.

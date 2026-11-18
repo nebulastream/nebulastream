@@ -23,6 +23,9 @@ jobs:
       # TODO #401 Investigate rootless docker containers
       options: --user root
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER_NAME }}
+        password: ${{ secrets.DOCKER_PULL_SECRET }}
     steps:
       - uses: actions/checkout@v5
         with:

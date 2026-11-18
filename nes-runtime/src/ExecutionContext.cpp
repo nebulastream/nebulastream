@@ -34,6 +34,7 @@
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <inline.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 
@@ -90,7 +91,7 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
 }
 
-void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
+NAUTILUS_INLINE void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 

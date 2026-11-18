@@ -1121,9 +1121,9 @@ workers:
     catch (const Exception& e)
     {
         EXPECT_EQ(e.code(), ErrorCode::PlacementFailure);
-        EXPECT_TRUE(std::string_view(e.what()).find("topology is not connected") != std::string_view::npos)
+        EXPECT_TRUE(std::string_view(e.what()).contains("topology is not connected"))
             << "Expected 'topology is not connected' in: " << e.what();
-        EXPECT_TRUE(std::string_view(e.what()).find("No path from source worker") != std::string_view::npos)
+        EXPECT_TRUE(std::string_view(e.what()).contains("No path from source worker"))
             << "Expected 'No path from source worker' in: " << e.what();
     }
 }
@@ -1165,8 +1165,7 @@ workers:
     catch (const Exception& e)
     {
         EXPECT_EQ(e.code(), ErrorCode::PlacementFailure);
-        EXPECT_TRUE(std::string_view(e.what()).find("capacity constraints") != std::string_view::npos)
-            << "Expected 'capacity constraints' in: " << e.what();
+        EXPECT_TRUE(std::string_view(e.what()).contains("capacity constraints")) << "Expected 'capacity constraints' in: " << e.what();
     }
 }
 

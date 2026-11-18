@@ -38,6 +38,9 @@ HASH_PATHS=(
   scripts/hash_dependencies.sh
   Cargo.toml
   Cargo.lock
+  # The development image ships the Python dependencies.
+  pyproject.toml
+  uv.lock
 )
 
 # Find all files, convert CRLF to LF on-the-fly, then hash

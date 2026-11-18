@@ -34,29 +34,40 @@ struct QueryExecutionConfiguration
 
     QueryExecutionConfiguration(
         ExecutionMode executionMode,
+        bool nautilusInlining,
         uint64_t numberOfPartitions,
         uint64_t pageSize,
         uint64_t numberOfRecordsPerKey,
         uint64_t operatorBufferSize,
+        bool tupleBufferInlining,
         SliceCacheConfiguration sliceCacheConfiguration,
-        BloomFilterConfiguration bloomFilterConfiguration)
+        BloomFilterConfiguration bloomFilterConfiguration,
+        bool nautilusPerf = false)
         : executionMode(executionMode)
+        , nautilusInlining(nautilusInlining)
         , numberOfPartitions(numberOfPartitions)
         , pageSize(pageSize)
         , numberOfRecordsPerKey(numberOfRecordsPerKey)
         , operatorBufferSize(operatorBufferSize)
+        , tupleBufferInlining(tupleBufferInlining)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
+        , nautilusPerf(nautilusPerf)
     {
     }
 
     ExecutionMode executionMode;
+    bool nautilusInlining;
     uint64_t numberOfPartitions;
     uint64_t pageSize;
     uint64_t numberOfRecordsPerKey;
     uint64_t operatorBufferSize;
+    bool tupleBufferInlining;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
+    /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can
+    /// walk through and name their frames.
+    bool nautilusPerf;
 
     static QueryExecutionConfiguration fromConfig(const InstantiatedConfig& config);
 };

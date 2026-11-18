@@ -19,15 +19,20 @@
 #include <ostream>
 #include <ranges>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Pipeline.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
 
-PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, ExecutionMode executionMode) : queryId(id), executionMode(executionMode) { };
+PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, ExecutionConfiguration executionConfiguration)
+    : queryId(std::move(std::move(id))), executionConfiguration(std::move(executionConfiguration))
+{
+}
 
 static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indentLevel)
 {
@@ -66,9 +71,9 @@ QueryId PipelinedQueryPlan::getQueryId() const
     return queryId;
 }
 
-ExecutionMode PipelinedQueryPlan::getExecutionMode() const
+ExecutionConfiguration PipelinedQueryPlan::getExecutionConfiguration() const
 {
-    return executionMode;
+    return executionConfiguration;
 }
 
 const std::vector<std::shared_ptr<Pipeline>>& PipelinedQueryPlan::getPipelines() const
@@ -78,7 +83,7 @@ const std::vector<std::shared_ptr<Pipeline>>& PipelinedQueryPlan::getPipelines()
 
 void PipelinedQueryPlan::addPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
-    pipeline->setExecutionMode(executionMode);
+    pipeline->setExecutionConfiguration(executionConfiguration);
     pipelines.push_back(pipeline);
 }
 

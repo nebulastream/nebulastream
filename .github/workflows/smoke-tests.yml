@@ -20,6 +20,7 @@ concurrency:
 jobs:
   check-format:
     uses: ./.github/workflows/format.yml
+    secrets: inherit
     with:
       head_sha:          ${{ inputs.head_sha }}
       dev_image_tag:     ${{ inputs.dev_image_tag }}
@@ -29,6 +30,9 @@ jobs:
     name: "Build and test"
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER_NAME }}
+        password: ${{ secrets.DOCKER_PULL_SECRET }}
       env:
         MOLD_JOBS: 1
         SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}

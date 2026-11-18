@@ -175,7 +175,7 @@ std::expected<char, Exception> parseDelimiter(const ConfigLiteral& literal)
 
 /// Config fields of the CSV input formatter, shared by getConfigSchema (declaration) and
 /// CSVInputFormatterConfig::fromConfig (typed extraction).
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<bool> ALLOW_COMMAS_IN_STRINGS{
     Identifier::parse("ALLOW_COMMAS_IN_STRINGS"), "A boolean indicating whether there can be commas in varsized fields.", true};
 
@@ -184,7 +184,7 @@ const ConfigField<char> TUPLE_DELIMITER{
 
 const ConfigField<char> FIELD_DELIMITER{
     Identifier::parse("FIELD_DELIMITER"), "A single character by which to delimit fields.", parseDelimiter, ','};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 

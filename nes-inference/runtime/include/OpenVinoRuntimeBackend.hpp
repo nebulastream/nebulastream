@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <openvino/core/shape.hpp>
 #include <openvino/core/type/element_type.hpp>
+#include <openvino/runtime/compiled_model.hpp>
 #include <openvino/runtime/infer_request.hpp>
 #include <Model.hpp>
 #include <RuntimeBackend.hpp>
@@ -30,6 +31,8 @@ public:
     void infer(std::byte* inputBuffer, size_t inputBufferSize, std::byte* outputBuffer, size_t outputBufferSize) override;
 
 private:
+    /// Owned by this worker thread alone, so its inferences never wait on another thread's (see `OpenVinoRuntime`).
+    ov::CompiledModel compiledModel;
     ov::InferRequest inferRequest;
     ov::element::Type inputElementType;
     ov::Shape inputShape;

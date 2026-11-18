@@ -54,7 +54,7 @@ namespace NES
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> DATA_ENDPOINT{
     Identifier::parse("DATA_ENDPOINT"), "The data-plane host:port of the worker with corresponding network source."};
 
@@ -77,7 +77,7 @@ const ConfigField<size_t> MAX_PENDING_ACKS{
     { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
     size_t{0}};
 
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
@@ -143,12 +143,21 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
     {
         INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
 
-        /// Check if the sender network service has pending buffers to send
-        /// If yes, keep the pipeline alive by emitting an empty buffer
-        if (!flush_sender_channel(*this->channel.value()))
+        switch (flush_sender_channel(*this->channel.value()))
         {
-            pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
-            return;
+            case FlushResult::Flushed: {
+                break;
+            }
+            case FlushResult::Pending: {
+                /// The sender network service has pending buffers to send, keep the pipeline alive by emitting an empty buffer
+                pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
+                return;
+            }
+            case FlushResult::Failed: {
+                /// Already sent buffers are lost. Stopping regularly would silently drop them.
+                this->closed = true;
+                throw CannotWriteToSink("NetworkSink channel failed permanently");
+            }
         }
     }
 
@@ -207,7 +216,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
-                throw CannotWriteToSink("NetworkSink was closed by the other side");
+                throw CannotWriteToSink("NetworkSink channel was closed by the other side or failed permanently");
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());

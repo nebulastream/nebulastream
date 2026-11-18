@@ -45,9 +45,7 @@ ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const 
 
 bool ConcatLogicalFunction::operator==(const ConcatLogicalFunction& rhs) const
 {
-    const bool simpleMatch = left == rhs.left and right == rhs.right;
-    const bool commutativeMatch = left == rhs.right and right == rhs.left;
-    return simpleMatch or commutativeMatch;
+    return left == rhs.left and right == rhs.right;
 }
 
 std::string ConcatLogicalFunction::explain(ExplainVerbosity verbosity) const

@@ -61,6 +61,16 @@ public:
 /// The storage space contains individual key-value pairs. It does not support variable length keys or values for now.
 /// For keys, one could project them beforehand to a fixed length representation, e.g., uin64_t, and then use the newly mapped key.
 ///
+/// Buffer structure:
+/// The first page of each space is a child of the hash map buffer and holds the following pages of that space as its children.
+/// main buffer (header, entry space, bloom filter)
+/// ├── child[storageSpaceIndex]: storage page 0
+/// │     ├── child 0: storage page 1
+/// │     └── child n-1: storage page n
+/// └── child[varSizedSpaceIndex]: var sized page 0
+///       ├── child 0: var sized page 1
+///       └── child m-1: var sized page m
+///
 /// IMPORTANT — differences from std::unordered_map:
 /// 1. This hash map is *NOT* thread safe and allows for no concurrent accesses, as it does not use any locking, atomics or synchronization primitives.
 /// 2. This hash map does not clear the content of the entry. So it is up to the user to initialize values correctly.
@@ -136,14 +146,8 @@ public:
     /// caller is a traced invoke proxy. Requires a non-zero bloomBytes: a disabled filter has no area.
     [[nodiscard]] uint64_t* getBloomFilterMemArea(uint64_t numberOfChains, uint64_t bloomBytes);
 
-    /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
-    /// view and without using its access methods
-    [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
-
     /// HashMapSlice magic numbers
     static constexpr auto VALID_CHM = 82543427462775423;
-    static constexpr auto FIXED_STORAGE_SPACE_BUFFER_SIZE = 4;
-    static constexpr auto VARSIZED_STORAGE_SPACE_BUFFER_SIZE = 4;
 
 protected:
     void appendPage(AbstractBufferProvider* bufferProvider, uint64_t pageSize);

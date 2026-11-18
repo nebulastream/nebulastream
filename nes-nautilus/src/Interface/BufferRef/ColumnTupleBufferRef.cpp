@@ -46,7 +46,7 @@ Record ColumnTupleBufferRef::readRecord(
     const auto access = FieldAccess::createFieldAccesses(
         fields,
         [bufferAddress, &recordIndex](const auto& field)
-        { return FieldAccess{field.name, field.type, bufferAddress + (recordIndex * field.dataTypeSize + field.columnOffset)}; },
+        { return FieldAccess{field.name, field.type, bufferAddress + ((recordIndex * field.dataTypeSize) + field.columnOffset)}; },
         [&projections](const auto& field) { return includesField(projections, field.name); });
     return readRecordFields(access, getRecordBufferLoad(recordBuffer));
 }
@@ -66,7 +66,7 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
         const auto access = FieldAccess::createFieldAccesses(
             fields,
             [bufferAddress, recordIndex](const auto& field)
-            { return FieldAccess{field.name, field.type, bufferAddress + (recordIndex * field.dataTypeSize + field.columnOffset)}; });
+            { return FieldAccess{field.name, field.type, bufferAddress + ((recordIndex * field.dataTypeSize) + field.columnOffset)}; });
         writeRecordFields(access, rec, getRecordBufferStore(recordBuffer, bufferProvider));
         writtenRecords = 1;
         successful = true;

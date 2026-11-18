@@ -14,12 +14,14 @@
 
 #include <SourceThread.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <exception>
 #include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <tuple>
@@ -54,6 +56,17 @@ SourceThread::SourceThread(
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
+/// Returns nullopt iff stop was requested.
+static std::optional<TupleBuffer> getBufferUnlessStopped(AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken)
+{
+    std::optional<TupleBuffer> buffer;
+    while (!buffer && !stopToken.stop_requested())
+    {
+        buffer = bufferProvider.getBufferWithTimeout(std::chrono::milliseconds(25));
+    }
+    return buffer;
+}
+
 namespace
 {
 void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBuffer& buffer)
@@ -61,8 +74,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
     /// set the origin id for this source
     buffer.setOriginId(originId);
     /// set the creation timestamp
-    buffer.setCreationTimestampInMS(Timestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+    buffer.setCreationTimestampInMS(Timestamp::nowInMilliseconds());
     /// Set the sequence number of this buffer.
     /// A data source generates a monotonic increasing sequence number
     buffer.setSequenceNumber(sequenceNumber);
@@ -113,12 +125,8 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
-        std::optional<TupleBuffer> emptyBuffer;
-        while (!emptyBuffer && !stopToken.stop_requested())
-        {
-            emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
-        }
-        if (stopToken.stop_requested())
+        auto emptyBuffer = getBufferUnlessStopped(*bufferProvider, stopToken);
+        if (!emptyBuffer)
         {
             return {SourceImplementationTermination::StopRequested};
         }
@@ -162,6 +170,10 @@ void dataSourceThread(
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         }
+        else
+        {
+            sequenceNumberGenerator = std::max(sequenceNumberGenerator, static_cast<size_t>(buffer.getSequenceNumber().getRawValue() + 1));
+        }
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
 
@@ -169,12 +181,25 @@ void dataSourceThread(
     cpptrace::try_catch(
         [&]()
         {
-            result.set_value_at_thread_exit(
-                dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
-            if (!stopToken.stop_requested())
+            const auto termination = dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, bufferProvider, dataEmit);
+            if (termination.result == SourceImplementationTermination::EndOfStream)
             {
-                emit(originId, SourceReturnType::EoS{}, stopToken);
+                /// A stop request must be able to interrupt every wait of the source thread, as the owner joins it after requesting stop.
+                /// A stopped query does not need the final watermark or the EoS.
+                if (auto watermarkBuffer = getBufferUnlessStopped(*bufferProvider, stopToken))
+                {
+                    watermarkBuffer->setNumberOfTuples(0);
+                    addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator), *watermarkBuffer);
+                    watermarkBuffer->setWatermark(Timestamp{Timestamp::INFINITE_VALUE});
+                    /// A watermark-only buffer is regular data and must pass through execute before EoS.
+                    if (emit(originId, SourceReturnType::Data{std::move(*watermarkBuffer)}, stopToken)
+                        == SourceReturnType::EmitResult::SUCCESS)
+                    {
+                        emit(originId, SourceReturnType::EoS{}, stopToken);
+                    }
+                }
             }
+            result.set_value_at_thread_exit(termination);
         },
         [&](NES::Exception& e)
         {

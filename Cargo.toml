@@ -38,7 +38,7 @@ pin-project = "1.1.10"
 serde = { version = "1.0.217", features = ["derive"] }
 tokio = { version = "1.52.0", features = ["macros", "rt-multi-thread", "sync", "net", "io-util", "time"] }
 tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
-tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor", "json", "serde_json"] }
+tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor"] }
 tokio-stream = "0.1.17"
 tokio-util = { version = "0.7.13", features = ["codec"] }
 tracing = "0.1.44"

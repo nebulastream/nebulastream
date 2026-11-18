@@ -35,34 +35,13 @@ struct InlineData
     bool operator==(const InlineData& other) const = default;
 };
 
-/// The data for a TCP source, sent by an in-process TCP server.
-/// The runner learns the port only once that server binds, so it adds the endpoint to the statement afterwards.
-struct ServedData
-{
-    std::variant<std::vector<std::string>, std::filesystem::path> content;
-};
-
-/// A setup statement the runner submits as is: sink, model and logical source DDL, and a physical source with no data to stage.
-struct PlainStatement
+/// A CREATE statement that the runner submits before the test cases.
+struct SetupStatement
 {
     std::string sql;
+    /// Set only for a physical source declared with `ATTACH INLINE`.
+    std::optional<InlineData> inlineData;
 };
-
-struct StatementWithInlineData
-{
-    std::string sql;
-    InlineData data;
-};
-
-struct StatementWithServedData
-{
-    std::string sql;
-    ServedData data;
-};
-
-using SetupStatement = std::variant<PlainStatement, StatementWithInlineData, StatementWithServedData>;
-
-[[nodiscard]] const std::string& getSqlOf(const SetupStatement& statement);
 
 struct RewrittenQuery
 {

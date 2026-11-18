@@ -271,7 +271,8 @@ void MedianAggregationPhysicalFunction::reset(
             {
                 /// initialize paged vector buffer
                 auto pagedVectorBuffer = pagedVectorBufferOpt.value();
-                PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize);
+                /// No inline records, as the median combines vectors via copyPagesFrom.
+                PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize, false);
                 auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
                 return childBufferIndex.getRawValue();
             }

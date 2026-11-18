@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <QueryId.hpp>
@@ -34,7 +34,7 @@ class PhysicalPlanBuilder final
 public:
     explicit PhysicalPlanBuilder(QueryId id);
     void addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink);
-    void setExecutionMode(ExecutionMode mode);
+    void setExecutionConfiguration(ExecutionConfiguration executionConfiguration);
     void setOperatorBufferSize(uint64_t bufferSize);
 
     /// R-value as finalize should be called once at the end, with a move() to 'build' the plan.
@@ -43,7 +43,7 @@ public:
 private:
     QueryId queryId;
     Roots sinks;
-    ExecutionMode executionMode;
+    ExecutionConfiguration executionConfiguration;
     uint64_t operatorBufferSize{};
 
     /// Used internally to flip the plan from sink->source tstatic o source->sink

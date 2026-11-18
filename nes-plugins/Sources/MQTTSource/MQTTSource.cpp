@@ -73,7 +73,7 @@ std::optional<std::chrono::milliseconds> parseFlushingInterval(int64_t flushingI
     return std::chrono::milliseconds(flushingIntervalMs);
 }
 
-/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> SERVER_URI{Identifier::parse("SERVER_URI"), "The MQTT broker URI"};
 
 const ConfigField<std::string> CLIENT_ID{
@@ -113,7 +113,7 @@ const ConfigField<std::string> IMPLICIT_MESSAGE_DELIMITER{
     Identifier::parse("IMPLICIT_MESSAGE_DELIMITER"), "Delimiter appended to each received message", std::string{"\n"}};
 
 const ConfigField<bool> LOG_MESSAGES{Identifier::parse("LOG_MESSAGES"), "Log received messages", false};
-/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+/// NOLINTEND(bugprone-throwing-static-initialization)
 }
 
 Schema<QualifiedErasedConfigField, Ordered> MQTTSource::getConfigSchema()

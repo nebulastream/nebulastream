@@ -14,7 +14,7 @@
 
 use super::control::*;
 use crate::protocol::*;
-use futures::SinkExt;
+use futures::{FutureExt, SinkExt};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -40,6 +40,23 @@ enum ChannelHandlerStatus {
 }
 pub(super) type DataQueue = async_channel::Sender<TupleBuffer>;
 
+/// Acks are tiny messages. Flushing each of them separately costs one syscall per received buffer, so they are batched: an ack is
+/// only fed into the writer and flushed once the reader has nothing immediately available (the sender is then waiting for acks),
+/// before blocking on a full data queue, or after this many acks, which keeps the sender's window moving under sustained load.
+const MAX_UNFLUSHED_ACKS: usize = 16;
+
+/// Flushes the acks fed into `writer`. Returns `Ok(false)` if the flush was cancelled.
+async fn flush_acks<W: AsyncWrite + Unpin>(
+    cancellation_token: &CancellationToken,
+    writer: &mut DataChannelReceiverWriter<W>,
+) -> Result<bool> {
+    let Some(result) = cancellation_token.run_until_cancelled(writer.flush()).await else {
+        return Ok(false);
+    };
+    result?;
+    Ok(true)
+}
+
 async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     cancellation_token: CancellationToken,
     buffer_queue: &mut DataQueue,
@@ -47,6 +64,7 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     mut connection_writer: DataChannelReceiverWriter<W>,
 ) -> Result<ChannelHandlerStatus> {
     let mut pending_buffer: Option<TupleBuffer> = None;
+    let mut unflushed_acks = 0;
     loop {
         // First: Push received data to the registered channel. The channel handler will not receive
         // further data from the network if the registered channel cannot accept it. This implements
@@ -55,6 +73,13 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
         // amount of accidental backpressure
         if let Some(pending_buffer) = pending_buffer.take() {
             let sequence = pending_buffer.sequence();
+            // About to (possibly) block on a full queue: don't hold back the acks of the buffers that were already accepted.
+            if unflushed_acks > 0 && buffer_queue.is_full() {
+                if !flush_acks(&cancellation_token, &mut connection_writer).await? {
+                    return Ok(ChannelHandlerStatus::Cancelled);
+                }
+                unflushed_acks = 0;
+            }
             select! {
                 _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
                 write_queue_result = buffer_queue.send(pending_buffer) => {
@@ -62,13 +87,20 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                         Ok(_) => {
                             trace!("accepted data for sequence number {sequence:?}.");
                             // The registered channel has accepted the data, acknowledge the sequence
-                            // number.
-                            let Some(result) = cancellation_token.run_until_cancelled(connection_writer.send(DataChannelResponse::AckData(sequence))).await else {
+                            // number. The ack is only fed here and flushed in batches, see `MAX_UNFLUSHED_ACKS`.
+                            let Some(result) = cancellation_token.run_until_cancelled(connection_writer.feed(DataChannelResponse::AckData(sequence))).await else {
                                 return Ok(ChannelHandlerStatus::Cancelled);
                             };
                             // TODO: What should we do with the information that the sequence number
                             //       should have been acknowledged?
-                            result?
+                            result?;
+                            unflushed_acks += 1;
+                            if unflushed_acks >= MAX_UNFLUSHED_ACKS {
+                                if !flush_acks(&cancellation_token, &mut connection_writer).await? {
+                                    return Ok(ChannelHandlerStatus::Cancelled);
+                                }
+                                unflushed_acks = 0;
+                            }
                         },
                         Err(_) => {
                             // The registered channel has closed the `queue`. This implicitly closes
@@ -94,30 +126,43 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
         }
 
         // If all data has been pushed to the registered channel, the DataChannel waits for new data
-        // from the other side.
-        select! {
-            _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
-            _ = tokio::time::sleep(Duration::from_secs(10)) => {
-                warn!("No data received from sender for 10 seconds");
-            },
-            request = connection_reader.next() => pending_buffer = {
-                // Reader next could fail if the connection aborts, in which case the channel fails,
-                // but will be retried after a delay. See @create_channel_handler
-                match request.ok_or("Connection Lost")?.map_err(|e| e)? {
-                    // Received data will be pushed to the registered channel on the next iteration
-                    DataChannelRequest::Data(buffer) => {
-                        trace!("received data for sequence number {:?}.", buffer.sequence());
-                        Some(buffer)
+        // from the other side. If the next frame is already available, keep going without flushing the
+        // batched acks. Otherwise the sender has nothing more to send until it sees them, so flush first.
+        let request = match connection_reader.next().now_or_never() {
+            Some(request) => request,
+            None => {
+                if unflushed_acks > 0 {
+                    if !flush_acks(&cancellation_token, &mut connection_writer).await? {
+                        return Ok(ChannelHandlerStatus::Cancelled);
+                    }
+                    unflushed_acks = 0;
+                }
+                select! {
+                    _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
+                    _ = tokio::time::sleep(Duration::from_secs(10)) => {
+                        warn!("No data received from sender for 10 seconds");
+                        continue;
                     },
-                    // The other side has closed the channel. This is propagated to the registered
-                    // channel by closing the queue, which will interrupt any blocking reads.
-                    // Returning `ClosedByOtherSide` will not cause any retries.
-                    DataChannelRequest::Close => {
-                        return Ok(ChannelHandlerStatus::ClosedByOtherSide);
-                    },
+                    request = connection_reader.next() => request,
                 }
             }
-        }
+        };
+
+        // Reader next could fail if the connection aborts, in which case the channel fails,
+        // but will be retried after a delay. See @create_channel_handler
+        pending_buffer = match request.ok_or("Connection Lost")?.map_err(|e| e)? {
+            // Received data will be pushed to the registered channel on the next iteration
+            DataChannelRequest::Data(buffer) => {
+                trace!("received data for sequence number {:?}.", buffer.sequence());
+                Some(buffer)
+            }
+            // The other side has closed the channel. This is propagated to the registered
+            // channel by closing the queue, which will interrupt any blocking reads.
+            // Returning `ClosedByOtherSide` will not cause any retries.
+            DataChannelRequest::Close => {
+                return Ok(ChannelHandlerStatus::ClosedByOtherSide);
+            }
+        };
     }
 }
 

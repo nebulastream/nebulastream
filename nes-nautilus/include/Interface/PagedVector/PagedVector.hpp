@@ -27,9 +27,18 @@
 namespace NES
 {
 
-/// This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages.
+/// This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages, optionally
+/// preceded by inline records in the main buffer (see init).
 /// Entries consume a fixed size, which has to be smaller than the page size. Each page can contain page_size/entry_size entries.
 /// Additionally to the fixed data types, this PagedVector also supports variable sized data by attaching child buffers to the pages.
+///
+/// Buffer structure:
+/// main buffer (header, inline records)
+/// ├── child 0 .. k-1: var sized data of the inline records
+/// ├── child k (firstPageChildIndex): page 0 (header, records)
+/// │     └── children: var sized data of its records
+/// └── child k+n-1: page n-1
+///
 /// To read and write records to the PagedVector, the PagedVectorRef class should ONLY be used.
 class PagedVector
 {
@@ -69,7 +78,11 @@ public:
     static constexpr auto VALID_PV = 8254372433832867;
     static constexpr auto INVALID_PV = 0;
 
-    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize);
+    /// @param inlineRecords stores the first records in the main buffer behind the header, instead of a page. The main buffer then acts
+    /// like a page in front of the first one, which saves a buffer for vectors with few records. The records of a vector with inline
+    /// records cannot be moved or copied to another vector. Child buffers of the inline records (var sized data) are children of the main
+    /// buffer, in front of the pages.
+    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize, bool inlineRecords);
     static PagedVector load(const TupleBuffer& buffer);
 
     /// @brief Appends a new page to the pages vector if the last page is full.
@@ -87,11 +100,19 @@ public:
 
     [[nodiscard]] uint64_t getStatus() const;
     [[nodiscard]] uint64_t getTotalNumberOfRecords() const;
+    /// @brief Counts one record that was written to the main buffer or the last page. Writers have to call this for every record they add.
+    void incrementNumberOfRecords();
     [[nodiscard]] uint64_t getNumberOfPages() const;
     /// @brief Returns the size of the buffer for each one of the paged vector's pages.
     [[nodiscard]] uint64_t getPageBufferSize() const;
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getPageCapacity() const;
+    /// @brief The number of records that fit into the main buffer behind the header, 0 if the vector has no inline page.
+    [[nodiscard]] uint64_t getInlineCapacity() const;
+    /// @brief The child index of a page in the main buffer
+    [[nodiscard]] ChildBufferIndex getPageChildIndex(uint64_t pageIndex) const;
+    /// @brief The address of the record at `indexInPage` in `page`, which is either one of the pages or the main buffer.
+    [[nodiscard]] int8_t* getRecordAddress(const TupleBuffer& page, uint64_t indexInPage) const;
     [[nodiscard]] bool isEmpty() const;
     /// @brief Returns the size of the paged vector's main buffer (header) in bytes
     [[nodiscard]] static uint64_t getMainBufferSize();
@@ -103,9 +124,15 @@ private:
     {
         uint64_t status;
         uint64_t numPages;
+        /// Number of records in the main buffer and all pages, which saves loading pages to count them.
+        uint64_t numRecords = 0;
         uint64_t pageBufferSize;
         uint64_t pageCapacity;
         uint64_t tupleSize;
+        /// Number of records that are stored behind the header of the main buffer. Pages only hold the records after these.
+        uint64_t inlineCapacity = 0;
+        /// The child index of the first page in the main buffer, as the children in front of it belong to the inline records.
+        uint64_t firstPageChildIndex = 0;
 
         Header(uint64_t numPages, uint64_t bufferSize, uint64_t tupleSize)
             : numPages(numPages), pageBufferSize(bufferSize), tupleSize(tupleSize)

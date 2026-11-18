@@ -395,7 +395,7 @@ EOF
   done
 
   grep "Backpressure" worker-2/singleNodeWorker.log
-  grep "NetworkSink was closed by the other side" worker-2/singleNodeWorker.log
+  grep "NetworkSink channel was closed by the other side or failed permanently" worker-2/singleNodeWorker.log
   grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
 
   run docker_nes_cli status $query_id
@@ -473,6 +473,19 @@ EOF
   setup_distributed tests/good/3-nodes.yaml
   run docker_nes_cli start
   [ "$status" -eq 0 ]
+}
+
+@test "oversized last buffer fails the query" {
+  setup_distributed tests/good/oversized-buffer.yaml
+
+  run docker_nes_cli -t tests/good/oversized-buffer.yaml start
+  [ "$status" -eq 0 ]
+  query_id=$output
+
+  wait_until_status tests/good/oversized-buffer.yaml Failed "$query_id"
+
+  grep "cannot be sent" worker-2/singleNodeWorker.log
+  grep "NetworkSink channel failed permanently" worker-2/singleNodeWorker.log
 }
 
 @test "placement fails with reversed downstream edges" {
