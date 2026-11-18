@@ -325,7 +325,14 @@ int main(int argc, char** argv)
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
 #endif
-        NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
+        NES::TopologyStatementHandler topologyStatementHandler{
+            queryManager,
+            workerCatalog,
+            NES::TopologyChangeConfiguration{
+                .sourceCatalog = sourceCatalog,
+                .sinkCatalog = sinkCatalog,
+                .network = queryOptimizerConfig.network,
+                .placement = NES::IncrementalPlacementConfiguration{}}};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
         auto queryOptimizer
             = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);

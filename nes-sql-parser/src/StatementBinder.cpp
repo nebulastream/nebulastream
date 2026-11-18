@@ -292,6 +292,15 @@ public:
             .outputs = std::move(outputSchemaExp).value()};
     }
 
+    /// Keywords of the topology change statements are parsed as identifiers to not reserve them.
+    static void expectKeyword(AntlrSQLParser::IdentifierContext* identifier, const std::string_view keyword)
+    {
+        if (toUpperCase(identifier->getText()) != keyword)
+        {
+            throw InvalidStatement("Expected {} but got {}", keyword, identifier->getText());
+        }
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -650,6 +659,28 @@ public:
             if (auto* const explainStatementAST = statementAST->explainStatement())
             {
                 return bindExplainStatement(explainStatementAST);
+            }
+            if (auto* const alterWorkerAST = statementAST->alterWorkerStatement(); alterWorkerAST != nullptr)
+            {
+                if (alterWorkerAST->add != nullptr)
+                {
+                    expectKeyword(alterWorkerAST->add, "ADD");
+                }
+                expectKeyword(alterWorkerAST->downstreamKeyword, "DOWNSTREAM");
+                return AlterWorkerStatement{
+                    .host = URI(bindStringLiteral(alterWorkerAST->host)).toString(),
+                    .downstream = URI(bindStringLiteral(alterWorkerAST->downstream)).toString(),
+                    .addLink = alterWorkerAST->add != nullptr};
+            }
+            if (auto* const topologyChangeAST = statementAST->topologyChangeStatement(); topologyChangeAST != nullptr)
+            {
+                if (auto* const beginAST = dynamic_cast<AntlrSQLParser::BeginTopologyChangeContext*>(topologyChangeAST))
+                {
+                    expectKeyword(beginAST->topologyKeyword, "TOPOLOGY");
+                    expectKeyword(beginAST->changeKeyword, "CHANGE");
+                    return BeginTopologyChangeStatement{};
+                }
+                return CommitTopologyChangeStatement{};
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {

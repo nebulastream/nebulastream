@@ -26,12 +26,15 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <QueryManager/IncrementalPlacementRequest.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Pointers.hpp>
@@ -39,6 +42,8 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <QueryOptimizerNetworkConfiguration.hpp>
+#include <TopologyChangeEvent.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -126,6 +131,28 @@ struct DropWorkerStatementResult
     Host host;
 };
 
+struct AlterWorkerStatementResult
+{
+    Host host;
+    Host downstream;
+    bool addLink;
+    /// Inside a topology change the link change waits for COMMIT.
+    bool pending;
+    size_t numberOfAffectedQueries;
+    size_t numberOfFailedAmendments;
+};
+
+struct BeginTopologyChangeStatementResult
+{
+};
+
+struct CommitTopologyChangeStatementResult
+{
+    size_t numberOfChanges;
+    size_t numberOfAffectedQueries;
+    size_t numberOfFailedAmendments;
+};
+
 struct ExplainQueryStatementResult
 {
     std::string explainString;
@@ -157,6 +184,9 @@ using StatementResult = std::variant<
     CreateSinkStatementResult,
     DropWorkerStatementResult,
     CreateWorkerStatementResult,
+    AlterWorkerStatementResult,
+    BeginTopologyChangeStatementResult,
+    CommitTopologyChangeStatementResult,
     WorkerStatusStatementResult,
     ShowVersionStatementResult,
     CreateModelStatementResult,
@@ -264,18 +294,40 @@ public:
     std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
 };
 
+/// What the TopologyStatementHandler needs to re-place the queries affected by a topology change (ISQP/ISQD).
+struct TopologyChangeConfiguration
+{
+    SharedPtr<SourceCatalog> sourceCatalog;
+    SharedPtr<SinkCatalog> sinkCatalog;
+    QueryOptimizerNetworkConfiguration network;
+    IncrementalPlacementConfiguration placement;
+};
+
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;
     SharedPtr<WorkerCatalog> workerCatalog;
+    std::optional<TopologyChangeConfiguration> topologyChangeConfiguration;
+    /// The link changes of the open topology change, if any.
+    std::optional<std::vector<TopologyChangeEvent>> pendingTopologyChange;
+
+    std::expected<IncrementalPlacementResult, Exception> applyTopologyChange(const std::vector<TopologyChangeEvent>& events);
 
 public:
     TopologyStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog);
+    /// Also supports topology changes, which re-place the affected queries.
+    TopologyStatementHandler(
+        SharedPtr<QueryManager> queryManager,
+        SharedPtr<WorkerCatalog> workerCatalog,
+        TopologyChangeConfiguration topologyChangeConfiguration);
 
     std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
     std::expected<ShowVersionStatementResult, Exception> operator()(const ShowVersionStatement& statement);
     std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
     std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
+    std::expected<AlterWorkerStatementResult, Exception> operator()(const AlterWorkerStatement& statement);
+    std::expected<BeginTopologyChangeStatementResult, Exception> operator()(const BeginTopologyChangeStatement& statement);
+    std::expected<CommitTopologyChangeStatementResult, Exception> operator()(const CommitTopologyChangeStatement& statement);
 };
 
 template <typename HandlerT>

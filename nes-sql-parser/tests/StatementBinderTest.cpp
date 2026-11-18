@@ -1018,6 +1018,36 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).maxOperators, 32U);
 }
 
+TEST_F(StatementBinderTest, AlterWorkerStatementTest)
+{
+    const auto added = binder->parseAndBindSingle("ALTER WORKER 'leaf:8080' ADD DOWNSTREAM 'base:8080'");
+    ASSERT_TRUE(added.has_value()) << "Statement could not be parsed" << added.error();
+    ASSERT_TRUE(std::holds_alternative<AlterWorkerStatement>(*added));
+    EXPECT_EQ(std::get<AlterWorkerStatement>(*added).host, "leaf:8080");
+    EXPECT_EQ(std::get<AlterWorkerStatement>(*added).downstream, "base:8080");
+    EXPECT_TRUE(std::get<AlterWorkerStatement>(*added).addLink);
+
+    const auto dropped = binder->parseAndBindSingle("ALTER WORKER 'leaf:8080' DROP DOWNSTREAM 'base:8080'");
+    ASSERT_TRUE(dropped.has_value()) << "Statement could not be parsed" << dropped.error();
+    EXPECT_FALSE(std::get<AlterWorkerStatement>(*dropped).addLink);
+
+    EXPECT_FALSE(binder->parseAndBindSingle("ALTER WORKER 'leaf:8080' REMOVE DOWNSTREAM 'base:8080'").has_value());
+    EXPECT_FALSE(binder->parseAndBindSingle("ALTER WORKER 'leaf:8080' ADD UPSTREAM 'base:8080'").has_value());
+    /// The keywords of the statement are not reserved: DOWNSTREAM is still an option of CREATE WORKER.
+    EXPECT_TRUE(binder->parseAndBindSingle("CREATE WORKER 'leaf:8080' SET ('leaf:9090' AS DATA, 'base:8080' AS DOWNSTREAM)").has_value());
+}
+
+TEST_F(StatementBinderTest, TopologyChangeStatementTest)
+{
+    const auto begin = binder->parseAndBindSingle("BEGIN TOPOLOGY CHANGE");
+    ASSERT_TRUE(begin.has_value()) << "Statement could not be parsed" << begin.error();
+    EXPECT_TRUE(std::holds_alternative<BeginTopologyChangeStatement>(*begin));
+    const auto commit = binder->parseAndBindSingle("COMMIT");
+    ASSERT_TRUE(commit.has_value()) << "Statement could not be parsed" << commit.error();
+    EXPECT_TRUE(std::holds_alternative<CommitTopologyChangeStatement>(*commit));
+    EXPECT_FALSE(binder->parseAndBindSingle("BEGIN TOPOLOGY UPDATE").has_value());
+}
+
 TEST_F(StatementBinderTest, CreateLogicalQueryPlanRejectsNonQueryStatements)
 {
     EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("CREATE WORKER 'localhost:8080';"), Exception);

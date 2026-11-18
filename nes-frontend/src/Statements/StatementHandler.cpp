@@ -528,6 +528,96 @@ std::expected<DropWorkerStatementResult, Exception> TopologyStatementHandler::op
     return std::unexpected(UnknownWorker(": '{}'", statement.host));
 }
 
+TopologyStatementHandler::TopologyStatementHandler(
+    SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog, TopologyChangeConfiguration topologyChangeConfiguration)
+    : queryManager(std::move(queryManager))
+    , workerCatalog(std::move(workerCatalog))
+    , topologyChangeConfiguration(std::move(topologyChangeConfiguration))
+{
+}
+
+std::expected<IncrementalPlacementResult, Exception>
+TopologyStatementHandler::applyTopologyChange(const std::vector<TopologyChangeEvent>& events)
+{
+    if (not topologyChangeConfiguration.has_value())
+    {
+        return std::unexpected(InvalidStatement("This frontend does not support topology changes"));
+    }
+    try
+    {
+        IncrementalPlacementRequest request(
+            *queryManager,
+            copyPtr(workerCatalog),
+            QueryDecomposer(
+                copyPtr(workerCatalog),
+                copyPtr(topologyChangeConfiguration->sourceCatalog),
+                copyPtr(topologyChangeConfiguration->sinkCatalog)),
+            topologyChangeConfiguration->network,
+            topologyChangeConfiguration->placement);
+        return request.execute(events);
+    }
+    catch (const Exception& exception)
+    {
+        return std::unexpected(exception);
+    }
+}
+
+std::expected<AlterWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const AlterWorkerStatement& statement)
+{
+    const auto upstream = Host(statement.host);
+    const auto downstream = Host(statement.downstream);
+    const TopologyChangeEvent event = statement.addLink
+        ? TopologyChangeEvent{AddLinkEvent{.upstream = upstream, .downstream = downstream}}
+        : TopologyChangeEvent{RemoveLinkEvent{.upstream = upstream, .downstream = downstream}};
+    AlterWorkerStatementResult result{
+        .host = upstream,
+        .downstream = downstream,
+        .addLink = statement.addLink,
+        .pending = pendingTopologyChange.has_value(),
+        .numberOfAffectedQueries = 0,
+        .numberOfFailedAmendments = 0};
+    if (pendingTopologyChange.has_value())
+    {
+        pendingTopologyChange->emplace_back(event);
+        return result;
+    }
+    return applyTopologyChange({event}).transform(
+        [&result](const IncrementalPlacementResult& placement)
+        {
+            result.numberOfAffectedQueries = placement.numberOfAffectedQueries;
+            result.numberOfFailedAmendments = placement.numberOfFailedAmendments;
+            return result;
+        });
+}
+
+std::expected<BeginTopologyChangeStatementResult, Exception> TopologyStatementHandler::operator()(const BeginTopologyChangeStatement&)
+{
+    if (pendingTopologyChange.has_value())
+    {
+        return std::unexpected(InvalidStatement("A topology change is already in progress"));
+    }
+    pendingTopologyChange.emplace();
+    return BeginTopologyChangeStatementResult{};
+}
+
+std::expected<CommitTopologyChangeStatementResult, Exception> TopologyStatementHandler::operator()(const CommitTopologyChangeStatement&)
+{
+    if (not pendingTopologyChange.has_value())
+    {
+        return std::unexpected(InvalidStatement("COMMIT without BEGIN TOPOLOGY CHANGE"));
+    }
+    const auto events = std::move(*pendingTopologyChange);
+    pendingTopologyChange.reset();
+    return applyTopologyChange(events).transform(
+        [&events](const IncrementalPlacementResult& placement)
+        {
+            return CommitTopologyChangeStatementResult{
+                .numberOfChanges = events.size(),
+                .numberOfAffectedQueries = placement.numberOfAffectedQueries,
+                .numberOfFailedAmendments = placement.numberOfFailedAmendments};
+        });
+}
+
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
 {
     if (not statement.id.has_value())

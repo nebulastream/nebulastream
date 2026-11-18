@@ -428,6 +428,52 @@ struct StatementOutputAssembler<DropWorkerStatementResult>
 };
 
 template <>
+struct StatementOutputAssembler<AlterWorkerStatementResult>
+{
+    using OutputRowType = std::tuple<Host, Host, std::string, std::string, uint64_t, uint64_t>;
+
+    auto convert(const AlterWorkerStatementResult& result)
+    {
+        return std::make_pair(
+            std::to_array<std::string_view>({"worker", "downstream", "change", "state", "affected_queries", "failed_amendments"}),
+            std::vector{std::make_tuple(
+                result.host,
+                result.downstream,
+                std::string(result.addLink ? "ADD" : "DROP"),
+                std::string(result.pending ? "PENDING" : "APPLIED"),
+                static_cast<uint64_t>(result.numberOfAffectedQueries),
+                static_cast<uint64_t>(result.numberOfFailedAmendments))});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<BeginTopologyChangeStatementResult>
+{
+    using OutputRowType = std::tuple<std::string>;
+
+    auto convert(const BeginTopologyChangeStatementResult&)
+    {
+        return std::make_pair(std::to_array<std::string_view>({"topology_change"}), std::vector{std::make_tuple(std::string("BEGIN"))});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<CommitTopologyChangeStatementResult>
+{
+    using OutputRowType = std::tuple<uint64_t, uint64_t, uint64_t>;
+
+    auto convert(const CommitTopologyChangeStatementResult& result)
+    {
+        return std::make_pair(
+            std::to_array<std::string_view>({"changes", "affected_queries", "failed_amendments"}),
+            std::vector{std::make_tuple(
+                static_cast<uint64_t>(result.numberOfChanges),
+                static_cast<uint64_t>(result.numberOfAffectedQueries),
+                static_cast<uint64_t>(result.numberOfFailedAmendments))});
+    }
+};
+
+template <>
 struct StatementOutputAssembler<WorkerStatusStatementResult>
 {
     using OutputRowType = WorkerStatusOutputRowType;

@@ -58,7 +58,15 @@ singleStatement: statement ';'? EOF;
 
 terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
-statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
+statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement | alterWorkerStatement
+    | topologyChangeStatement;
+
+/// Topology changes (ISQP): a link change outside of a topology change is applied right away, inside it is applied with all other changes
+/// of the topology change on COMMIT. ADD, DOWNSTREAM, TOPOLOGY and CHANGE are matched as identifiers and checked by the binder, so they do
+/// not become reserved words (e.g., DOWNSTREAM is an option of CREATE WORKER).
+alterWorkerStatement: ALTER WORKER host=STRING (add=identifier | DROP) downstreamKeyword=identifier downstream=STRING;
+topologyChangeStatement: BEGIN topologyKeyword=identifier changeKeyword=identifier #beginTopologyChange
+    | COMMIT #commitTopologyChange;
 
 explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
 explainStages: explainStage (',' explainStage)*;
@@ -652,6 +660,9 @@ SOURCE : 'SOURCE';
 LOGICAL: 'LOGICAL' | 'logical';
 PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
+ALTER: 'ALTER';
+BEGIN: 'BEGIN';
+COMMIT: 'COMMIT';
 SINK : 'SINK';
 VERSION : 'VERSION' | 'version';
 

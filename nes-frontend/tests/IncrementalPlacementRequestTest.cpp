@@ -38,9 +38,11 @@
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 #include <Schema/Schema.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -247,6 +249,52 @@ TEST_F(IncrementalPlacementRequestTest, OperatorReplacement)
 
     waitForStop(*queryManager, queryId);
     expectEveryTupleExactlyOnce();
+}
+
+/// The statements of the REPL: link changes inside a topology change are applied together on COMMIT.
+TEST_F(IncrementalPlacementRequestTest, TopologyChangeStatements)
+{
+    setUpCluster("-statements", 0);
+    const auto queryManager = createQueryManager();
+    TopologyStatementHandler handler(
+        queryManager,
+        copyPtr(workerCatalog),
+        TopologyChangeConfiguration{
+            .sourceCatalog = copyPtr(sourceCatalog),
+            .sinkCatalog = copyPtr(sinkCatalog),
+            .network = defaultConfiguration<QueryOptimizerConfiguration>().network,
+            .placement = IncrementalPlacementConfiguration{.drainTimeout = std::chrono::seconds(30)}});
+    EXPECT_FALSE(handler(CommitTopologyChangeStatement{}).has_value()) << "COMMIT without BEGIN";
+
+    const auto queryId = startQuery(*queryManager, "SELECT * FROM stream INTO snk");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    ASSERT_TRUE(handler(BeginTopologyChangeStatement{}).has_value());
+    EXPECT_FALSE(handler(BeginTopologyChangeStatement{}).has_value()) << "nested topology change";
+    const auto dropped
+        = handler(AlterWorkerStatement{.host = host("leaf").getRawValue(), .downstream = host("base1").getRawValue(), .addLink = false});
+    ASSERT_TRUE(dropped.has_value());
+    EXPECT_TRUE(dropped->pending);
+    EXPECT_TRUE(workerCatalog->getTopology().hasLink(host("leaf"), host("base1"))) << "applied before COMMIT";
+    ASSERT_TRUE(
+        handler(AlterWorkerStatement{.host = host("leaf").getRawValue(), .downstream = host("base2").getRawValue(), .addLink = true})
+            .has_value());
+    const auto committed = handler(CommitTopologyChangeStatement{});
+    ASSERT_TRUE(committed.has_value()) << committed.error();
+    EXPECT_EQ(committed->numberOfChanges, 2U);
+    EXPECT_EQ(committed->numberOfAffectedQueries, 1U);
+    EXPECT_EQ(committed->numberOfFailedAmendments, 0U);
+    EXPECT_EQ(queryManager->getGlobalExecutionPlan().getDecomposedQueryPlans(queryId, host("base2")).size(), 1U);
+
+    waitForStop(*queryManager, queryId);
+    expectEveryTupleExactlyOnce();
+
+    /// Outside of a topology change, a link change is applied right away.
+    const auto direct
+        = handler(AlterWorkerStatement{.host = host("leaf").getRawValue(), .downstream = host("base1").getRawValue(), .addLink = true});
+    ASSERT_TRUE(direct.has_value());
+    EXPECT_FALSE(direct->pending);
+    EXPECT_TRUE(workerCatalog->getTopology().hasLink(host("leaf"), host("base1")));
 }
 
 /// The join on base1 moves to the cloud when the leaf moves to base2. The old join is updated and drained: it sends its state to the new

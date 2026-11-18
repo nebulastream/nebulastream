@@ -201,10 +201,30 @@ struct DropWorkerStatement
     std::string host;
 };
 
+/// `ALTER WORKER 'host' ADD|DROP DOWNSTREAM 'downstream'`: adds or removes the topology link host -> downstream.
+struct AlterWorkerStatement
+{
+    std::string host;
+    std::string downstream;
+    bool addLink;
+};
+
+/// `BEGIN TOPOLOGY CHANGE`: the following link changes are applied together on `COMMIT` (a batch of topology changes in ISQP).
+struct BeginTopologyChangeStatement
+{
+};
+
+struct CommitTopologyChangeStatement
+{
+};
+
 using Statement = std::variant<
     WorkerStatusStatement,
     CreateWorkerStatement,
     DropWorkerStatement,
+    AlterWorkerStatement,
+    BeginTopologyChangeStatement,
+    CommitTopologyChangeStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,

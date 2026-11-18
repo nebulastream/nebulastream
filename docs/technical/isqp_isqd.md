@@ -257,3 +257,23 @@ plane but needs neither files nor an extra query.
 decomposed query plan, as a plan has a single state migration channel. A move that would need more fails the change log entry and the
 query is redeployed holistically. Old and new worker must use the same buffer size. The old and the new join wait for each other for at
 most `NLJOperatorHandler::STATE_MIGRATION_TIMEOUT`.
+
+### Statements
+
+Topology changes are issued in the REPL:
+
+```sql
+ALTER WORKER 'leaf:8080' DROP DOWNSTREAM 'base1:8080';   -- applied right away, as a batch of one change
+
+BEGIN TOPOLOGY CHANGE;                                   -- the following changes form one batch (ISQP)
+ALTER WORKER 'leaf:8080' DROP DOWNSTREAM 'base1:8080';
+ALTER WORKER 'leaf:8080' ADD DOWNSTREAM 'base2:8080';
+COMMIT;                                                  -- applies the batch and amends the affected queries
+```
+
+The `TopologyStatementHandler` collects the link changes of an open topology change and runs one `IncrementalPlacementRequest` on
+`COMMIT`. Workers are added and removed with the existing `CREATE WORKER` and `DROP WORKER` statements, which do not trigger an
+amendment.
+
+**Deviation:** the original receives topology changes through the coordinator's REST API (`/topology/...`) and batches them in an
+`ISQPRequest`. The port has no REST API; the statements play this role.
