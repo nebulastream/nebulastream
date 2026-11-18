@@ -274,6 +274,12 @@ std::vector<TupleBuffer> NLJOperatorHandler::serializeState(AbstractBufferProvid
 
     const auto storeState = sliceAndWindowStore->getMigratedState();
     const auto triggeredUpTo = highestTriggeredWatermark.load();
+    NES_DEBUG(
+        "Join with output origin {} triggered up to {}, build progress:{}, probe progress:{}",
+        outputOriginId,
+        triggeredUpTo,
+        watermarkProcessorBuild->getCurrentStatus(),
+        watermarkProcessorProbe->getCurrentStatus());
     writer.write(storeState.nextSequenceNumber);
     writer.write(storeState.lastForwardedWatermark.getRawValue());
     writer.write(triggeredUpTo);
@@ -291,6 +297,12 @@ std::vector<TupleBuffer> NLJOperatorHandler::serializeState(AbstractBufferProvid
     for (const auto& slice : pendingSlices)
     {
         slice->combinePagedVectors();
+        NES_DEBUG(
+            "Migrating slice [{}, {}) with {} left and {} right tuples",
+            slice->getSliceStart(),
+            slice->getSliceEnd(),
+            slice->getNumberOfTuplesLeft(),
+            slice->getNumberOfTuplesRight());
         writer.write(slice->getSliceStart().getRawValue());
         writer.write(slice->getSliceEnd().getRawValue());
         for (const auto side : {JoinBuildSideType::Left, JoinBuildSideType::Right})
@@ -333,8 +345,8 @@ void NLJOperatorHandler::restoreState(const std::vector<TupleBuffer>& state, Abs
         const auto tupleSizeRight = reader.read();
         auto right = reader.readTree();
         auto slice = std::make_shared<NLJSlice>(bufferProvider, sliceStart, sliceEnd, numberOfWorkerThreads, tupleSizeLeft, tupleSizeRight);
-        slice->setCombinedPagedVector(JoinBuildSideType::Left, std::move(left));
-        slice->setCombinedPagedVector(JoinBuildSideType::Right, std::move(right));
+        slice->addMigratedPagedVector(JoinBuildSideType::Left, std::move(left));
+        slice->addMigratedPagedVector(JoinBuildSideType::Right, std::move(right));
         const auto restored = sliceAndWindowStore->getSlicesOrCreate(
             sliceStart, [&slice](SliceStart, SliceEnd) -> std::vector<std::shared_ptr<Slice>> { return {slice}; });
         INVARIANT(restored.size() == 1 and restored.front() == slice, "A migrated slice must not exist in the new join yet");

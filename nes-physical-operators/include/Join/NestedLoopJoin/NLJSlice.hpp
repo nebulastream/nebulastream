@@ -67,12 +67,15 @@ public:
 
     /// Returns the main buffer of the combined PagedVector of a side; `combinePagedVectors` must have been called.
     [[nodiscard]] const TupleBuffer& getCombinedPagedVector(JoinBuildSideType joinBuildSide) const;
-    /// Replaces the PagedVector at 0th index of a side with a migrated one (ISQD).
-    void setCombinedPagedVector(JoinBuildSideType joinBuildSide, TupleBuffer pagedVector);
+    /// Adds a migrated PagedVector to a side (ISQD). It is kept apart from the PagedVectors of the worker threads, because it may contain
+    /// partially filled pages that appending to would corrupt, and is combined with them before probing.
+    void addMigratedPagedVector(JoinBuildSideType joinBuildSide, TupleBuffer pagedVector);
 
 private:
     std::vector<TupleBuffer> leftPagedVectorBuffers;
     std::vector<TupleBuffer> rightPagedVectorBuffers;
+    std::vector<TupleBuffer> migratedLeftPagedVectorBuffers;
+    std::vector<TupleBuffer> migratedRightPagedVectorBuffers;
     std::mutex combinePagedVectorsMutex;
 };
 

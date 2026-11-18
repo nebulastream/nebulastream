@@ -72,28 +72,30 @@ NLJSlice::NLJSlice(
 
 uint64_t NLJSlice::getNumberOfTuplesLeft() const
 {
+    const auto count = [](uint64_t sum, const TupleBuffer& buf)
+    {
+        auto pagedVector = PagedVector::load(buf);
+        return sum + pagedVector.getTotalNumberOfRecords();
+    };
     return std::accumulate(
-        leftPagedVectorBuffers.begin(),
-        leftPagedVectorBuffers.end(),
-        0,
-        [](uint64_t sum, const TupleBuffer& buf)
-        {
-            auto pagedVector = PagedVector::load(buf);
-            return sum + pagedVector.getTotalNumberOfRecords();
-        });
+        migratedLeftPagedVectorBuffers.begin(),
+        migratedLeftPagedVectorBuffers.end(),
+        std::accumulate(leftPagedVectorBuffers.begin(), leftPagedVectorBuffers.end(), uint64_t{0}, count),
+        count);
 }
 
 uint64_t NLJSlice::getNumberOfTuplesRight() const
 {
+    const auto count = [](uint64_t sum, const TupleBuffer& buf)
+    {
+        auto pagedVector = PagedVector::load(buf);
+        return sum + pagedVector.getTotalNumberOfRecords();
+    };
     return std::accumulate(
-        rightPagedVectorBuffers.begin(),
-        rightPagedVectorBuffers.end(),
-        0,
-        [](uint64_t sum, const TupleBuffer& buf)
-        {
-            auto pagedVector = PagedVector::load(buf);
-            return sum + pagedVector.getTotalNumberOfRecords();
-        });
+        migratedRightPagedVectorBuffers.begin(),
+        migratedRightPagedVectorBuffers.end(),
+        std::accumulate(rightPagedVectorBuffers.begin(), rightPagedVectorBuffers.end(), uint64_t{0}, count),
+        count);
 }
 
 NAUTILUS_INLINE const TupleBuffer* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
@@ -159,6 +161,20 @@ void NLJSlice::combinePagedVectors()
         }
         rightPagedVectorBuffers.erase(rightPagedVectorBuffers.begin() + 1, rightPagedVectorBuffers.end());
     }
+
+    /// Migrated PagedVectors are appended last; no worker thread writes to the combined PagedVector anymore.
+    for (auto [migrated, combined] :
+         {std::pair{&migratedLeftPagedVectorBuffers, &leftPagedVectorBuffers},
+          std::pair{&migratedRightPagedVectorBuffers, &rightPagedVectorBuffers}})
+    {
+        for (const auto& migratedBuffer : *migrated)
+        {
+            auto combinedPagedVector = PagedVector::load(combined->front());
+            auto migratedPagedVector = PagedVector::load(migratedBuffer);
+            combinedPagedVector.movePagesFrom(migratedPagedVector);
+        }
+        migrated->clear();
+    }
 }
 
 const TupleBuffer& NLJSlice::getCombinedPagedVector(const JoinBuildSideType joinBuildSide) const
@@ -166,9 +182,11 @@ const TupleBuffer& NLJSlice::getCombinedPagedVector(const JoinBuildSideType join
     return joinBuildSide == JoinBuildSideType::Left ? leftPagedVectorBuffers.front() : rightPagedVectorBuffers.front();
 }
 
-void NLJSlice::setCombinedPagedVector(const JoinBuildSideType joinBuildSide, TupleBuffer pagedVector)
+void NLJSlice::addMigratedPagedVector(const JoinBuildSideType joinBuildSide, TupleBuffer pagedVector)
 {
-    (joinBuildSide == JoinBuildSideType::Left ? leftPagedVectorBuffers : rightPagedVectorBuffers).front() = std::move(pagedVector);
+    const std::scoped_lock lock(combinePagedVectorsMutex);
+    (joinBuildSide == JoinBuildSideType::Left ? migratedLeftPagedVectorBuffers : migratedRightPagedVectorBuffers)
+        .emplace_back(std::move(pagedVector));
 }
 
 }
