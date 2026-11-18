@@ -14,7 +14,9 @@
 
 #include <Sinks/FileSink.hpp>
 
+#include <cerrno>
 #include <cstdint>
+#include <cstring>
 #include <expected>
 #include <filesystem>
 #include <fstream>
@@ -22,6 +24,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <unordered_map>
 #include <utility>
@@ -68,6 +71,15 @@ const ConfigField<std::filesystem::path> FILE_PATH{
 const ConfigField<bool> APPEND{
     Identifier::parse("APPEND"), "A boolean, where TRUE indicates to append to the specified file, and false to overwrite it.", false};
 /// NOLINTEND(bugprone-throwing-static-initialization)
+
+/// A failed write (e.g. ENOSPC) only sets failbit/badbit on the stream. Without this check the query would complete with an empty or truncated file.
+void throwIfStreamFailed(const std::ofstream& stream, const std::filesystem::path& filePath, const std::string_view operation)
+{
+    if (stream.fail())
+    {
+        throw CannotWriteToSink("Could not {} output file: filePath={}, errno={}", operation, filePath, std::strerror(errno));
+    }
+}
 
 }
 
@@ -153,6 +165,7 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
             element = iterator.getNextElement();
         }
         wlocked->flush();
+        throwIfStreamFailed(*wlocked, outputFilePath, "write to");
     }
 }
 
@@ -162,6 +175,7 @@ void FileSink::stop(PipelineExecutionContext&)
     const auto stream = outputFileStream.wlock();
     stream->flush();
     stream->close();
+    throwIfStreamFailed(*stream, outputFilePath, "close");
 }
 
 }
