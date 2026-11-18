@@ -58,6 +58,7 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `DeploymentContext`, `DeploymentUnit`, `ReconfigurationMarkerUnit` | same names in `DeploymentContext.hpp`                            |
 | `BasePlacementAdditionStrategy` (`performPathSelection`, `computeDecomposedQueryPlans`, `addNetworkOperators`, `updateExecutionNodes`) | `PlacementAdditionStrategy` |
 | `QueryPlacementAmendmentPhase` (incremental and holistic), `computeReconfigurationMarkerDeploymentUnit` | `QueryPlacementAmendmentPhase` |
+| `ReconfigurationMarker`, `ReconfigurationMarkerEvent`, `{Drain,Update,UpdateAndDrain}QueryMetadata` | `ReconfigurationMarker` with `{Drain,Update,UpdateAndDrain}QueryMetadata` in nes-common |
 
 ### Worker capacity
 
@@ -156,3 +157,13 @@ drained, i.e., they emit their windows when the marker arrives instead of handin
 
 **Deviation (holistic baseline):** the original's holistic mode re-places the operators with its placement strategies and redeploys all
 plans. The port removes all plans of the query and places and decomposes the query from scratch with the initial placement.
+
+### Reconfiguration marker
+
+**Deviation:** the original keys the marker events by decomposed query plan id and version and serializes the marker with protobuf. The
+workers of the current code base only know the ids of their local queries, so the events are keyed by local query id; the frontend
+translates its decomposed query plans when it builds the marker. The marker is serialized as JSON with reflect-cpp, because it is sent both
+over gRPC and in-band over the data channels, and nes-common does not depend on the generated protobuf code.
+
+The drain events carry the outgoing channels whose receiving plan keeps running (see placement removal). The update-and-drain event does
+not name a new version of the plan to start, as the state migration query is deployed separately (see state migration).

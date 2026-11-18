@@ -20,22 +20,11 @@
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <GlobalExecutionPlan.hpp>
 
 namespace NES
 {
-
-/// A network sink of an updated decomposed query plan that connects to a new receiver (the original's NetworkSinkUpdateInfo).
-struct NetworkSinkUpdate
-{
-    /// The channel the sink currently sends over. It identifies the sink within its plan.
-    std::string oldChannel;
-    std::string newChannel;
-    /// Data address of the worker that receives the new channel.
-    std::string newDataEndpoint;
-
-    bool operator==(const NetworkSinkUpdate&) const = default;
-};
 
 /// What a placement amendment changes for one decomposed query plan (the original's DeploymentContext).
 /// The state of the plan says what happens: MarkedForDeployment (deploy a new plan), MarkedForRedeployment (update a running plan to the
