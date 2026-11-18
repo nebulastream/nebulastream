@@ -67,3 +67,9 @@ add_e2e_test(
     BATS_FILE repl/tests/distributed.bats
     DOCKER_COMPOSE
 )
+
+add_e2e_test(
+    NAME isqd-repl-tests
+    BATS_FILE repl/tests/isqd.bats
+    DOCKER_COMPOSE
+)

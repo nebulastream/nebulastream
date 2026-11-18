@@ -1,0 +1,18 @@
+# Topology of the ISQP/ISQD tests. The links are created by the CREATE WORKER statements of the tests:
+# leaf-1 ---> base-1 ---> sink-node
+# leaf-2 ---/  base-2 --/
+workers:
+  - host: "sink-node:8080"
+    data_address: "sink-node:9090"
+
+  - host: "base-1:8080"
+    data_address: "base-1:9090"
+
+  - host: "base-2:8080"
+    data_address: "base-2:9090"
+
+  - host: "leaf-1:8080"
+    data_address: "leaf-1:9090"
+
+  - host: "leaf-2:8080"
+    data_address: "leaf-2:9090"

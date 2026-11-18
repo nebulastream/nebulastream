@@ -1,0 +1,15 @@
+-- The selection is placed on base-1, which has a single slot; moving leaf-1 to base-2 re-places it.
+CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA);
+CREATE WORKER 'base-1:8080' SET ('base-1:9090' AS DATA, 1 AS MAX_OPERATORS, 'sink-node:8080' AS DOWNSTREAM);
+CREATE WORKER 'base-2:8080' SET ('base-2:9090' AS DATA, 1 AS MAX_OPERATORS, 'sink-node:8080' AS DOWNSTREAM);
+CREATE WORKER 'leaf-1:8080' SET ('leaf-1:9090' AS DATA, 0 AS MAX_OPERATORS, 'base-1:8080' AS DOWNSTREAM);
+CREATE LOGICAL SOURCE stream(id UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
+       'ALL' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' AS INPUT_FORMATTER."TYPE",
+       'leaf-1:8080' AS "SOURCE"."HOST",
+       'emit_rate 1000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 5000 1' AS "SOURCE".GENERATOR_SCHEMA);
+CREATE SINK snk(ID UINT64) TYPE File SET('out.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT, 'sink-node:8080' AS "SINK"."HOST");
+SELECT * FROM stream WHERE id >= 0 INTO snk SET ('isqd-stateless' AS "QUERY"."ID");
