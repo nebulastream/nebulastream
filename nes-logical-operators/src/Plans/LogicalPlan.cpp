@@ -56,6 +56,16 @@ void LogicalPlan::setOriginalSql(const std::string& sql)
     originalSql = sql;
 }
 
+const std::set<std::string>& LogicalPlan::getSkippedOptimizerRules() const
+{
+    return skippedOptimizerRules;
+}
+
+void LogicalPlan::setSkippedOptimizerRules(std::set<std::string> rules)
+{
+    skippedOptimizerRules = std::move(rules);
+}
+
 std::vector<LogicalOperator> LogicalPlan::getRootOperators() const
 {
     return rootOperators;
@@ -75,12 +85,16 @@ LogicalPlan& LogicalPlan::operator=(const LogicalPlan& other)
         queryId = other.queryId;
         originalSql = other.originalSql;
         rootOperators = other.rootOperators;
+        skippedOptimizerRules = other.skippedOptimizerRules;
     }
     return *this;
 }
 
 LogicalPlan::LogicalPlan(LogicalPlan&& other) noexcept
-    : queryId(std::move(other.queryId)), rootOperators(std::move(other.rootOperators)), originalSql(std::move(other.originalSql))
+    : queryId(std::move(other.queryId))
+    , rootOperators(std::move(other.rootOperators))
+    , originalSql(std::move(other.originalSql))
+    , skippedOptimizerRules(std::move(other.skippedOptimizerRules))
 {
 }
 
@@ -91,6 +105,7 @@ LogicalPlan& LogicalPlan::operator=(LogicalPlan&& other) noexcept
         queryId = other.queryId;
         rootOperators = std::move(other.rootOperators);
         originalSql = std::move(other.originalSql);
+        skippedOptimizerRules = std::move(other.skippedOptimizerRules);
     }
     return *this;
 }

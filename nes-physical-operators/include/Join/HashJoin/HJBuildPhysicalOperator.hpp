@@ -43,13 +43,16 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
         ChainedHashMapConfig hashMapConfig,
         std::vector<PhysicalFunction> keyFunctions,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef);
+        std::unique_ptr<SliceStoreRef> sliceStoreRef,
+        bool keepNullKeys = false);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     ChainedHashMapConfig hashMapConfig;
     /// Extracts the key fields out of an incoming record. Operator logic, not hash map metadata, hence not in the config.
     std::vector<PhysicalFunction> keyFunctions;
+    /// This side is preserved by an outer join: a tuple with a NULL key matches nothing, but is still emitted, NULL-filled.
+    bool keepNullKeys;
 };
 
 }

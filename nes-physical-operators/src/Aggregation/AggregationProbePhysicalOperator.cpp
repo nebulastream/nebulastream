@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
+#include <NullValue.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -186,6 +187,22 @@ void AggregationProbePhysicalOperator::probeWindow(ExecutionContext& executionCt
         }
     }
 
+    /// A window without tuples (registered as empty window, see recordOnEmptyWindow) still emits one record.
+    if (recordOnEmptyWindow.has_value())
+    {
+        if (numberOfHashMaps == 0)
+        {
+            Record defaultRecord;
+            for (const auto& [field, type, isCount] : *recordOnEmptyWindow)
+            {
+                defaultRecord.write(field, isCount ? VarVal{nautilus::val<uint64_t>(0)}.castToType(type.type) : makeNullVarVal(type));
+            }
+            defaultRecord.write(windowMetaData.startField.getFullyQualifiedName(), windowStart.convertToValue());
+            defaultRecord.write(windowMetaData.endField.getFullyQualifiedName(), windowEnd.convertToValue());
+            executeChild(executionCtx, defaultRecord);
+        }
+    }
+
     /// The probe has consumed the emitted aggregation window (its per-thread hash maps were combined into the final hash map
     /// above), so destroy it here to release the child buffers it holds.
     nautilus::invoke(
@@ -204,10 +221,12 @@ AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
     ChainedHashMapConfig hashMapConfig,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
     const OperatorHandlerId operatorHandlerId,
-    WindowMetaData windowMetaData)
+    WindowMetaData windowMetaData,
+    std::optional<std::vector<EmptyWindowField>> recordOnEmptyWindow)
     : WindowProbePhysicalOperator(operatorHandlerId, std::move(windowMetaData))
     , aggregationPhysicalFunctions(std::move(aggregationPhysicalFunctions))
     , hashMapConfig(std::move(hashMapConfig))
+    , recordOnEmptyWindow(std::move(recordOnEmptyWindow))
 {
 }
 }

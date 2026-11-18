@@ -27,6 +27,7 @@
 #include <absl/functional/any_invocable.h>
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
+#include <PhysicalQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
@@ -43,6 +44,11 @@ class QuerySubmissionBackend
 public:
     virtual ~QuerySubmissionBackend() = default;
     [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
+    /// A query planned down to physical operators (see PhysicalQuery). Only a worker in this process can run one.
+    [[nodiscard]] virtual std::expected<QueryId, Exception> start(PhysicalQuery query)
+    {
+        return std::unexpected{QueryStartFailed("this worker backend cannot run physical queries ({})", query.queryId)};
+    }
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
@@ -107,11 +113,19 @@ class QueryManager
     QueryManagerState state;
     QueryManagerBackends backends;
 
+    /// Registers a started query and waits until its local queries left the Registered state.
+    std::expected<DistributedQueryId, std::vector<Exception>> awaitStarted(
+        const DistributedQueryId& id,
+        std::unordered_map<Host, std::vector<QueryId>> localQueries,
+        std::chrono::steady_clock::time_point queryStartTimestamp);
+
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
     /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
     [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
+    /// A query planned down to physical operators and placed: each worker starts its part.
+    [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(PlacedPhysicalQuery query);
     std::expected<void, std::vector<Exception>> stop(const DistributedQueryId& query);
     [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query) const;
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;

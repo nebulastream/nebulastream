@@ -39,6 +39,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Functions/BooleanFunctions/AndPhysicalFunction.hpp>
 #include <Join/JoinTriggerStrategy.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJInnerProbePhysicalOperator.hpp>
@@ -127,6 +128,11 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
+    /// The nested-loop join evaluates the whole condition per pair, so residual functions are simply part of it.
+    for (const auto& residual : join->getResidualFunctions())
+    {
+        joinFunction = AndPhysicalFunction(joinFunction, QueryCompilation::FunctionProvider::lowerFunction(residual, combinedFieldMapping));
+    }
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftInputSchema);
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightInputSchema);
     const uint64_t tupleSizeLeft = getSizeInBytes(leftTupleLayout->getSchema());

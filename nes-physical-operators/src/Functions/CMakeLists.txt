@@ -25,6 +25,7 @@ add_subdirectory(BooleanFunctions)
 
 add_source_files(nes-physical-operators
         ConcatPhysicalFunction.cpp
+        NullValuePhysicalFunction.cpp
         OctetLengthPhysicalFunction.cpp
         CharLengthPhysicalFunction.cpp
         FromBase64PhysicalFunction.cpp
@@ -42,6 +43,7 @@ add_registry_entry(PhysicalFunction CastToUnixTimestamp KEY CastToUnixTs)
 add_registry_entry(PhysicalFunction CastVarSizedToNumeric KEY VarSizedToNumeric)
 add_registry_entry(PhysicalFunction CharLength KEY CHAR_LENGTH)
 add_registry_entry(PhysicalFunction Concat)
+add_registry_entry(PhysicalFunction NullValue)
 add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Day_Of)
 add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Month_Of)
 add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Year_Of)

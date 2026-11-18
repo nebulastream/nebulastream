@@ -1,0 +1,77 @@
+%YAML 1.2
+---
+urn: extension:nebulastream:unsigned_integers
+description: >
+  Comparisons and modulus of the unsigned integers of extension:io.substrait:unsigned_integers, which declares the
+  types and their arithmetic. Both operands have the same type: Unsigned.java rejects mixing signed and unsigned values.
+scalar_functions:
+  - name: "equal"
+    impls:
+      - args: [{value: "u!u8"}, {value: "u!u8"}]
+        return: boolean
+      - args: [{value: "u!u16"}, {value: "u!u16"}]
+        return: boolean
+      - args: [{value: "u!u32"}, {value: "u!u32"}]
+        return: boolean
+      - args: [{value: "u!u64"}, {value: "u!u64"}]
+        return: boolean
+  - name: "not_equal"
+    impls:
+      - args: [{value: "u!u8"}, {value: "u!u8"}]
+        return: boolean
+      - args: [{value: "u!u16"}, {value: "u!u16"}]
+        return: boolean
+      - args: [{value: "u!u32"}, {value: "u!u32"}]
+        return: boolean
+      - args: [{value: "u!u64"}, {value: "u!u64"}]
+        return: boolean
+  - name: "lt"
+    impls:
+      - args: [{value: "u!u8"}, {value: "u!u8"}]
+        return: boolean
+      - args: [{value: "u!u16"}, {value: "u!u16"}]
+        return: boolean
+      - args: [{value: "u!u32"}, {value: "u!u32"}]
+        return: boolean
+      - args: [{value: "u!u64"}, {value: "u!u64"}]
+        return: boolean
+  - name: "lte"
+    impls:
+      - args: [{value: "u!u8"}, {value: "u!u8"}]
+        return: boolean
+      - args: [{value: "u!u16"}, {value: "u!u16"}]
+        return: boolean
+      - args: [{value: "u!u32"}, {value: "u!u32"}]
+        return: boolean
+      - args: [{value: "u!u64"}, {value: "u!u64"}]
+        return: boolean
+  - name: "gt"
+    impls:
+      - args: [{value: "u!u8"}, {value: "u!u8"}]
+        return: boolean
+      - args: [{value: "u!u16"}, {value: "u!u16"}]
+        return: boolean
+      - args: [{value: "u!u32"}, {value: "u!u32"}]
+        return: boolean
+      - args: [{value: "u!u64"}, {value: "u!u64"}]
+        return: boolean
+  - name: "gte"
+    impls:
+      - args: [{value: "u!u8"}, {value: "u!u8"}]
+        return: boolean
+      - args: [{value: "u!u16"}, {value: "u!u16"}]
+        return: boolean
+      - args: [{value: "u!u32"}, {value: "u!u32"}]
+        return: boolean
+      - args: [{value: "u!u64"}, {value: "u!u64"}]
+        return: boolean
+  - name: "modulus"
+    impls:
+      - args: [{value: "u!u8"}, {value: "u!u8"}]
+        return: u!u8
+      - args: [{value: "u!u16"}, {value: "u!u16"}]
+        return: u!u16
+      - args: [{value: "u!u32"}, {value: "u!u32"}]
+        return: u!u32
+      - args: [{value: "u!u64"}, {value: "u!u64"}]
+        return: u!u64

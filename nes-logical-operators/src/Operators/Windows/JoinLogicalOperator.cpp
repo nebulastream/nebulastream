@@ -97,11 +97,13 @@ JoinLogicalOperator::JoinLogicalOperator(
     LogicalFunction joinFunction,
     Windowing::TimeBasedWindowType windowType,
     JoinType joinType,
-    JoinTimeCharacteristic timeCharacteristics)
+    JoinTimeCharacteristic timeCharacteristics,
+    std::vector<LogicalFunction> residualFunctions)
     : ManagedByOperator(std::move(self))
     , windowType(std::move(windowType))
     , joinType(joinType)
     , joinFunction(std::move(joinFunction))
+    , residualFunctions(std::move(residualFunctions))
     , timestampFields(std::move(timeCharacteristics))
 {
 }
@@ -112,22 +114,28 @@ JoinLogicalOperator::JoinLogicalOperator(
     LogicalFunction joinFunction,
     Windowing::TimeBasedWindowType windowType,
     const JoinType joinType,
-    JoinTimeCharacteristic timeCharacteristics)
+    JoinTimeCharacteristic timeCharacteristics,
+    std::vector<LogicalFunction> residualFunctions)
     : ManagedByOperator(std::move(self))
     , windowType(std::move(windowType))
     , joinType(joinType)
     , children(std::move(children))
     , joinFunction(std::move(joinFunction))
+    , residualFunctions(std::move(residualFunctions))
     , timestampFields(std::move(timeCharacteristics))
 {
     inferLocalSchema();
 }
 
 TypedLogicalOperator<JoinLogicalOperator> JoinLogicalOperator::create(
-    LogicalFunction joinFunction, Windowing::TimeBasedWindowType windowType, JoinType joinType, JoinTimeCharacteristic timeCharacteristics)
+    LogicalFunction joinFunction,
+    Windowing::TimeBasedWindowType windowType,
+    JoinType joinType,
+    JoinTimeCharacteristic timeCharacteristics,
+    std::vector<LogicalFunction> residualFunctions)
 {
     return TypedLogicalOperator<JoinLogicalOperator>{
-        std::move(joinFunction), std::move(windowType), joinType, std::move(timeCharacteristics)};
+        std::move(joinFunction), std::move(windowType), joinType, std::move(timeCharacteristics), std::move(residualFunctions)};
 }
 
 TypedLogicalOperator<JoinLogicalOperator> JoinLogicalOperator::create(
@@ -135,10 +143,16 @@ TypedLogicalOperator<JoinLogicalOperator> JoinLogicalOperator::create(
     LogicalFunction joinFunction,
     Windowing::TimeBasedWindowType windowType,
     JoinType joinType,
-    JoinTimeCharacteristic timeCharacteristics)
+    JoinTimeCharacteristic timeCharacteristics,
+    std::vector<LogicalFunction> residualFunctions)
 {
     return TypedLogicalOperator<JoinLogicalOperator>{
-        std::move(children), std::move(joinFunction), std::move(windowType), joinType, std::move(timeCharacteristics)};
+        std::move(children),
+        std::move(joinFunction),
+        std::move(windowType),
+        joinType,
+        std::move(timeCharacteristics),
+        std::move(residualFunctions)};
 }
 
 std::string_view JoinLogicalOperator::getName() const noexcept
@@ -149,25 +163,32 @@ std::string_view JoinLogicalOperator::getName() const noexcept
 bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 {
     return getWindowType() == rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and outputSchema == rhs.outputSchema
-        and getTraitSet() == rhs.getTraitSet() && joinType == rhs.joinType and timestampFields == rhs.timestampFields;
+        and getTraitSet() == rhs.getTraitSet() && joinType == rhs.joinType and timestampFields == rhs.timestampFields
+        and residualFunctions == rhs.residualFunctions;
 }
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     const auto joinTypeName = std::string(magic_enum::enum_name(joinType));
+    const auto residual = residualFunctions.empty()
+        ? std::string{}
+        : fmt::format(
+              ", residual: {}",
+              fmt::join(residualFunctions | std::views::transform([&](const auto& function) { return function.explain(verbosity); }), " AND "));
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join(opId: {}, type: {}, windowType: {}, joinFunction: {}, windowMetadata: (startField: {}, endField: {}), traitSet: {})",
+            "Join(opId: {}, type: {}, windowType: {}, joinFunction: {}{}, windowMetadata: (startField: {}, endField: {}), traitSet: {})",
             id,
             joinTypeName,
             getWindowType(),
             getJoinFunction().explain(verbosity),
+            residual,
             startEndFields.at(0),
             startEndFields.at(1),
             traitSet.explain(verbosity));
     }
-    return fmt::format("Join({}, {})", joinTypeName, getJoinFunction().explain(verbosity));
+    return fmt::format("Join({}, {}{})", joinTypeName, getJoinFunction().explain(verbosity), residual);
 }
 
 JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const
@@ -214,6 +235,10 @@ void JoinLogicalOperator::inferLocalSchema()
         this->timestampFields);
 
     this->joinFunction = this->joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
+    for (auto& residual : this->residualFunctions)
+    {
+        residual = residual.withInferredDataType(inputSchemaOrCollisions.value());
+    }
 
     /// For outer joins, the fields of the side that may be unmatched become nullable in the output schema.
     const bool leftNullable = (joinType == JoinType::OUTER_RIGHT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
@@ -333,6 +358,11 @@ LogicalFunction JoinLogicalOperator::getJoinFunction() const
     return joinFunction;
 }
 
+const std::vector<LogicalFunction>& JoinLogicalOperator::getResidualFunctions() const
+{
+    return residualFunctions;
+}
+
 JoinTimeCharacteristic JoinLogicalOperator::getJoinTimeCharacteristics() const
 {
     return timestampFields;
@@ -347,7 +377,8 @@ Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(
             .joinFunction = op->getJoinFunction(),
             .windowType = op->getWindowType(),
             .timestampFields = op->getJoinTimeCharacteristics(),
-            .joinType = op->getJoinType()});
+            .joinType = op->getJoinType(),
+            .residualFunctions = op->getResidualFunctions()});
 }
 
 Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))
@@ -357,11 +388,16 @@ Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::Unreflector(ContextType 
 TypedLogicalOperator<JoinLogicalOperator>
 Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [operatorId, joinFunction, windowType, timestampFields, joinType]
+    auto [operatorId, joinFunction, windowType, timestampFields, joinType, residualFunctions]
         = context.unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
     auto foundChildren = plan->getChildrenFor(operatorId, context);
     return JoinLogicalOperator::create(
-        std::array{foundChildren.at(0), foundChildren.at(1)}, std::move(joinFunction), windowType, joinType, std::move(timestampFields));
+        std::array{foundChildren.at(0), foundChildren.at(1)},
+        std::move(joinFunction),
+        windowType,
+        joinType,
+        std::move(timestampFields),
+        std::move(residualFunctions));
 }
 
 }
@@ -372,6 +408,7 @@ std::size_t std::hash<NES::JoinLogicalOperator>::operator()(const NES::JoinLogic
         NES::Hash{},
         joinLogicalOperator.joinType,
         joinLogicalOperator.joinFunction,
+        joinLogicalOperator.residualFunctions,
         joinLogicalOperator.windowType,
         joinLogicalOperator.timestampFields,
         joinLogicalOperator.startEndFields);

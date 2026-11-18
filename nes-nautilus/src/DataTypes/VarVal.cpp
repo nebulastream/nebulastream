@@ -364,6 +364,11 @@ VarVal VarVal::operator/(const VarVal& other) const
                     const auto newValue = nautilus::select(leftIsNull or rightIsNull, ResultType{0}, lhsVal / safeDenominator);
                     return VarVal{newValue, true, leftIsNull or rightIsNull};
                 }
+                /// Without this check, an integer divide by zero crashes the worker (SIGFPE) instead of failing the query.
+                if (rhsVal == RHS{0})
+                {
+                    nautilus::invoke(+[] { throw ArithmeticalError("Can not divide by zero!"); });
+                }
                 return VarVal{lhsVal / rhsVal, false, false};
             }
             else
@@ -401,6 +406,11 @@ VarVal VarVal::operator%(const VarVal& other) const
                     using ResultType = decltype(lhsVal % rhsVal);
                     const auto newValue = nautilus::select(leftIsNull or rightIsNull, ResultType{0}, lhsVal % safeDenominator);
                     return VarVal{newValue, true, leftIsNull or rightIsNull};
+                }
+                /// Without this check, an integer modulo by zero crashes the worker (SIGFPE) instead of failing the query.
+                if (rhsVal == RHS{0})
+                {
+                    nautilus::invoke(+[] { throw ArithmeticalError("Can not modulo by zero!"); });
                 }
                 return VarVal{lhsVal % rhsVal, false, false};
             }

@@ -67,11 +67,13 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     GroupingKeyType groupingKey,
     std::vector<ProjectedAggregation> aggregationFunctions,
     Windowing::TimeBasedWindowType windowType,
-    Windowing::TimeCharacteristic timeCharacteristic)
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const bool emitsOnEmptyInput)
     : ManagedByOperator(std::move(self))
     , windowType(std::move(windowType))
     , groupingKeys(std::move(groupingKey))
     , aggregationFunctions(std::move(aggregationFunctions))
+    , emitOnEmptyInput(emitsOnEmptyInput)
     , timestampField(std::move(timeCharacteristic))
 {
 }
@@ -82,12 +84,14 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     GroupingKeyType groupingKey,
     std::vector<ProjectedAggregation> aggregationFunctions,
     Windowing::TimeBasedWindowType windowType,
-    Windowing::TimeCharacteristic timeCharacteristic)
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const bool emitsOnEmptyInput)
     : ManagedByOperator(std::move(self))
     , child(std::move(child))
     , windowType(std::move(windowType))
     , groupingKeys(std::move(groupingKey))
     , aggregationFunctions(std::move(aggregationFunctions))
+    , emitOnEmptyInput(emitsOnEmptyInput)
     , timestampField(std::move(timeCharacteristic))
 {
     inferLocalSchema();
@@ -97,10 +101,11 @@ TypedLogicalOperator<WindowedAggregationLogicalOperator> WindowedAggregationLogi
     GroupingKeyType groupingKey,
     std::vector<ProjectedAggregation> aggregationFunctions,
     Windowing::TimeBasedWindowType windowType,
-    Windowing::TimeCharacteristic timeCharacteristic)
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const bool emitsOnEmptyInput)
 {
     return TypedLogicalOperator<WindowedAggregationLogicalOperator>{
-        std::move(groupingKey), std::move(aggregationFunctions), std::move(windowType), std::move(timeCharacteristic)};
+        std::move(groupingKey), std::move(aggregationFunctions), std::move(windowType), std::move(timeCharacteristic), emitsOnEmptyInput};
 }
 
 TypedLogicalOperator<WindowedAggregationLogicalOperator> WindowedAggregationLogicalOperator::create(
@@ -108,10 +113,21 @@ TypedLogicalOperator<WindowedAggregationLogicalOperator> WindowedAggregationLogi
     GroupingKeyType groupingKey,
     std::vector<ProjectedAggregation> aggregationFunctions,
     Windowing::TimeBasedWindowType windowType,
-    Windowing::TimeCharacteristic timeCharacteristic)
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const bool emitsOnEmptyInput)
 {
     return TypedLogicalOperator<WindowedAggregationLogicalOperator>{
-        std::move(child), std::move(groupingKey), std::move(aggregationFunctions), std::move(windowType), std::move(timeCharacteristic)};
+        std::move(child),
+        std::move(groupingKey),
+        std::move(aggregationFunctions),
+        std::move(windowType),
+        std::move(timeCharacteristic),
+        emitsOnEmptyInput};
+}
+
+bool WindowedAggregationLogicalOperator::emitsOnEmptyInput() const
+{
+    return emitOnEmptyInput;
 }
 
 bool operator==(
@@ -194,22 +210,24 @@ std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosi
         auto windowType = getWindowType();
         auto windowAggregation = getWindowAggregation();
         return fmt::format(
-            "WINDOW AGGREGATION(opId: {}, {}, window type: {})",
+            "WINDOW AGGREGATION(opId: {}, {}, window type: {}{})",
             id,
             fmt::join(
                 std::views::transform(
                     windowAggregation,
                     [&](const auto& agg) { return fmt::format("{} as {}", agg.name, agg.function->explain(verbosity)); }),
                 ", "),
-            windowType);
+            windowType,
+            emitOnEmptyInput ? ", emits on empty input" : "");
     }
     auto windowAggregation = getWindowAggregation();
     return fmt::format(
-        "WINDOW AGG({})",
+        "WINDOW AGG({}){}",
         fmt::join(
             std::views::transform(
                 windowAggregation, [&](const auto& agg) { return fmt::format("{} as {}", agg.name, agg.function->explain(verbosity)); }),
-            ", "));
+            ", "),
+        emitOnEmptyInput ? " emits on empty input" : "");
 }
 
 bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLogicalOperator& rhs) const
@@ -257,7 +275,7 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
     }
 
     return windowType == rhs.windowType && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet
-        && timestampField == rhs.timestampField && startEndFields == rhs.startEndFields;
+        && timestampField == rhs.timestampField && startEndFields == rhs.startEndFields && emitOnEmptyInput == rhs.emitOnEmptyInput;
 }
 
 WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema() const
@@ -426,7 +444,8 @@ Reflected Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::o
             .windowType = op->getWindowType(),
             .groupingKeys = op->getGroupingKeysWithName(),
             .aggregations = op->getWindowAggregation(),
-            .timestampField = op->getCharacteristic()});
+            .timestampField = op->getCharacteristic(),
+            .emitsOnEmptyInput = op->emitsOnEmptyInput()});
 }
 
 Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
@@ -436,14 +455,14 @@ Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::Unreflect
 TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
     const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [id, windowType, keys, aggregations, timestampField]
+    auto [id, windowType, keys, aggregations, timestampField, emitsOnEmptyInput]
         = context.unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
     auto children = plan->getChildrenFor(id, context);
     if (children.size() != 1)
     {
         throw CannotDeserialize("WindowedAggregationLogicalOperator must have exactly one child, but got {}", children.size());
     }
-    return WindowedAggregationLogicalOperator::create(children.at(0), keys, aggregations, windowType, timestampField);
+    return WindowedAggregationLogicalOperator::create(children.at(0), keys, aggregations, windowType, timestampField, emitsOnEmptyInput);
 }
 
 }
@@ -456,7 +475,8 @@ std::size_t std::hash<NES::WindowedAggregationLogicalOperator>::operator()(
         windowedAggregationLogicalOperator.windowType,
         windowedAggregationLogicalOperator.timestampField,
         windowedAggregationLogicalOperator.groupingKeys,
-        windowedAggregationLogicalOperator.aggregationFunctions);
+        windowedAggregationLogicalOperator.aggregationFunctions,
+        windowedAggregationLogicalOperator.emitOnEmptyInput);
 }
 
 std::size_t std::hash<NES::WindowedAggregationLogicalOperator::ProjectedAggregation>::operator()(

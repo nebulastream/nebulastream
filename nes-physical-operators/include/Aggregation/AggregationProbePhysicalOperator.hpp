@@ -15,9 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
+#include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -26,6 +29,15 @@
 namespace NES
 {
 
+/// One output field of the record that a window without tuples emits (SQL semantics of an aggregation without GROUP BY).
+struct EmptyWindowField
+{
+    Record::RecordFieldIdentifier field;
+    DataType type;
+    /// COUNT is 0 over no tuples, every other aggregation NULL.
+    bool isCount;
+};
+
 class AggregationProbePhysicalOperator final : public WindowProbePhysicalOperator
 {
 public:
@@ -33,7 +45,8 @@ public:
         ChainedHashMapConfig hashMapConfig,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         OperatorHandlerId operatorHandlerId,
-        WindowMetaData windowMetaData);
+        WindowMetaData windowMetaData,
+        std::optional<std::vector<EmptyWindowField>> recordOnEmptyWindow = std::nullopt);
 
 protected:
     void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -41,6 +54,9 @@ protected:
 private:
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     ChainedHashMapConfig hashMapConfig;
+    /// Set for aggregations without keys: a window without tuples emits one record (counts 0, everything else NULL)
+    /// instead of nothing, see WindowedAggregationLogicalOperator::emitsOnEmptyInput.
+    std::optional<std::vector<EmptyWindowField>> recordOnEmptyWindow;
 };
 
 }

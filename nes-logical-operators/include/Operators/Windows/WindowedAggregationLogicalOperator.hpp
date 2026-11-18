@@ -81,7 +81,8 @@ public:
         GroupingKeyType groupingKey,
         std::vector<ProjectedAggregation> aggregationFunctions,
         Windowing::TimeBasedWindowType windowType,
-        Windowing::TimeCharacteristic timeCharacteristic);
+        Windowing::TimeCharacteristic timeCharacteristic,
+        bool emitsOnEmptyInput = false);
 
     WindowedAggregationLogicalOperator(
         WeakLogicalOperator self,
@@ -89,22 +90,29 @@ public:
         GroupingKeyType groupingKey,
         std::vector<ProjectedAggregation> aggregationFunctions,
         Windowing::TimeBasedWindowType windowType,
-        Windowing::TimeCharacteristic timeCharacteristic);
+        Windowing::TimeCharacteristic timeCharacteristic,
+        bool emitsOnEmptyInput = false);
 
     static TypedLogicalOperator<WindowedAggregationLogicalOperator> create(
         GroupingKeyType groupingKey,
         std::vector<ProjectedAggregation> aggregationFunctions,
         Windowing::TimeBasedWindowType windowType,
-        Windowing::TimeCharacteristic timeCharacteristic);
+        Windowing::TimeCharacteristic timeCharacteristic,
+        bool emitsOnEmptyInput = false);
 
     static TypedLogicalOperator<WindowedAggregationLogicalOperator> create(
         LogicalOperator child,
         GroupingKeyType groupingKey,
         std::vector<ProjectedAggregation> aggregationFunctions,
         Windowing::TimeBasedWindowType windowType,
-        Windowing::TimeCharacteristic timeCharacteristic);
+        Windowing::TimeCharacteristic timeCharacteristic,
+        bool emitsOnEmptyInput = false);
 
     [[nodiscard]] bool isKeyed() const;
+
+    /// SQL semantics of an aggregation without GROUP BY: a window without any tuple still emits one record, with counts of 0
+    /// and NULL for every other aggregation. Only for aggregations without keys.
+    [[nodiscard]] bool emitsOnEmptyInput() const;
 
 
     [[nodiscard]] std::vector<ProjectedAggregation> getWindowAggregation() const;
@@ -145,6 +153,7 @@ private:
     Windowing::TimeBasedWindowType windowType;
     GroupingKeyType groupingKeys;
     std::vector<ProjectedAggregation> aggregationFunctions;
+    bool emitOnEmptyInput = false;
 
     void inferLocalSchema();
     /// Set during schema inference
@@ -202,5 +211,6 @@ struct ReflectedWindowAggregationLogicalOperator
     WindowedAggregationLogicalOperator::GroupingKeyType groupingKeys;
     std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> aggregations;
     Windowing::TimeCharacteristic timestampField;
+    bool emitsOnEmptyInput = false;
 };
 }

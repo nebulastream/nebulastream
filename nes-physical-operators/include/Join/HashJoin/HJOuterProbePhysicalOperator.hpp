@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/NautilusBuffer.hpp>
@@ -51,7 +52,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         ChainedHashMapConfig leftHashMapBasedOptions,
-        ChainedHashMapConfig rightHashMapBasedOptions);
+        ChainedHashMapConfig rightHashMapBasedOptions,
+        std::optional<PhysicalFunction> residualFunction = std::nullopt);
 
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
@@ -74,6 +76,7 @@ private:
         const ChainedHashMapConfig& outerHashMapConfig,
         const ChainedHashMapConfig& innerHashMapConfig,
         const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
+        const std::shared_ptr<PagedVectorTupleLayout>& innerTupleLayout,
         const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,

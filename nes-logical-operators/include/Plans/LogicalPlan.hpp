@@ -19,6 +19,7 @@
 #include <optional>
 #include <ostream>
 #include <ranges>
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -57,10 +58,16 @@ public:
     void setOriginalSql(const std::string& sql);
     void setQueryId(QueryId id);
 
+    /// Names of optimizer rules whose rewrites the plan's producer already performed (e.g. Calcite), so the rule-based
+    /// optimizer does not run them.
+    [[nodiscard]] const std::set<std::string>& getSkippedOptimizerRules() const;
+    void setSkippedOptimizerRules(std::set<std::string> rules);
+
 private:
     QueryId queryId = INVALID_QUERY_ID;
     std::vector<LogicalOperator> rootOperators;
     std::string originalSql; /// Holds the original SQL string
+    std::set<std::string> skippedOptimizerRules;
 };
 
 /// Get all parent operators of the target operator

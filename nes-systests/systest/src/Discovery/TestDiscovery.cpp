@@ -220,6 +220,28 @@ TestName deriveNameFor(
     return testNameFromRelativePath(file.lexically_relative(namingRoot.parent_path()));
 }
 
+/// `# calcite` on a line of its own before the first statement.
+bool readCalcitePragma(const DiscoveredTestFile& testfile)
+{
+    if (std::ifstream ifstream(testfile.file); ifstream.is_open())
+    {
+        std::string line;
+        while (std::getline(ifstream, line))
+        {
+            const auto trimmed = std::string_view(line).substr(0, line.find_last_not_of(" \t\r") + 1);
+            if (trimmed == "# calcite")
+            {
+                return true;
+            }
+            if (not trimmed.empty() and not trimmed.starts_with('#'))
+            {
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
 std::vector<TestGroup> readGroups(const DiscoveredTestFile& testfile)
 {
     constexpr auto groupsPrefix = std::string_view{"# groups:"};
@@ -266,7 +288,7 @@ std::vector<TestGroup> readGroups(const DiscoveredTestFile& testfile)
 }
 
 DiscoveredTestFile::DiscoveredTestFile(const std::filesystem::path& file, TestName testName, std::unordered_set<SystestQueryId> queryFilter)
-    : file(weakly_canonical(file)), testName(std::move(testName)), queryFilter(std::move(queryFilter)), groups(readGroups(*this)) { };
+    : file(weakly_canonical(file)), testName(std::move(testName)), queryFilter(std::move(queryFilter)), groups(readGroups(*this)), calcite(readCalcitePragma(*this)) { };
 
 namespace
 {

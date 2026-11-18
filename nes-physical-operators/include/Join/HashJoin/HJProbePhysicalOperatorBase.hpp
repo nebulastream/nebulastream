@@ -16,9 +16,11 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/TimestampRef.hpp>
@@ -51,7 +53,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         ChainedHashMapConfig leftHashMapConfig,
-        ChainedHashMapConfig rightHashMapConfig);
+        ChainedHashMapConfig rightHashMapConfig,
+        std::optional<PhysicalFunction> residualFunction = std::nullopt);
 
 protected:
     /// Match-pairs probe: iterates all left hash maps against all right hash maps and emits joined records.
@@ -65,8 +68,16 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
+    /// Whether a key of the entry is NULL. Such an entry only exists on the preserved side of an outer join (see
+    /// HJBuildPhysicalOperator) and never matches: the hash map groups NULL keys together, but NULL = NULL is not true.
+    [[nodiscard]] static nautilus::val<bool>
+    keyContainsNull(const ChainedHashMapRef::ChainedEntryRef& entryRef, const ChainedHashMapConfig& hashMapConfig);
+
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout, rightTupleLayout;
     ChainedHashMapConfig leftHashMapConfig, rightHashMapConfig;
+    /// The hash map only matches keys. Pairs with equal keys must also satisfy this condition (the join's residual
+    /// functions), if there is one; the join function itself is never evaluated.
+    std::optional<PhysicalFunction> residualFunction;
 };
 
 }

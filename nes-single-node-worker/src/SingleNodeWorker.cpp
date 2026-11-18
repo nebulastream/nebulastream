@@ -125,6 +125,33 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
     std::unreachable();
 }
 
+std::expected<QueryId, Exception> SingleNodeWorker::startQuery(PhysicalQuery query) noexcept
+{
+    CPPTRACE_TRY
+    {
+        /// As for a logical plan: a local query id, keeping a distributed query id if there is one.
+        if (query.queryId.getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
+        {
+            auto localId = LocalQueryId(generateUUID());
+            query.queryId = query.queryId.isDistributed() ? QueryId::create(localId, query.queryId.getDistributedQueryId())
+                                                          : QueryId::createLocal(localId);
+        }
+        const LogContext context("queryId", query.queryId);
+        NES_INFO("Registering physical query {}", query.queryId);
+        listener->onEvent(SubmitQuerySystemEvent{query.queryId, "physical query"});
+        const DumpMode dumpMode(configuration.workerConfiguration.dumpQueryCompilationIR, configuration.workerConfiguration.dumpGraph);
+        auto result = compiler->compileQuery(query, dumpMode);
+        INVARIANT(result, "expected successful query compilation or exception, but got nothing");
+        nodeEngine->startQuery(query.queryId, std::move(result));
+        return query.queryId;
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected(wrapExternalException());
+    }
+    std::unreachable();
+}
+
 std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noexcept
 {
     CPPTRACE_TRY

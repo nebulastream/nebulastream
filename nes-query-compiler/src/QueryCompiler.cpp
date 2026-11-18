@@ -20,6 +20,8 @@
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Phases/PipeliningPhase.hpp>
+#include <PhysicalQuery.hpp>
+#include <PipelinedQueryPlan.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -34,5 +36,10 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
+}
+
+std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(const PhysicalQuery& query, const DumpMode dumpCompilationResult)
+{
+    return LowerToCompiledQueryPlanPhase(dumpCompilationResult).apply(query.pipelines(query.queryId, defaultQueryExecution));
 }
 }

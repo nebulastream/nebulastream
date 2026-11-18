@@ -25,6 +25,7 @@
 
 #include <fmt/format.h>
 
+#include <Calcite/CalcitePlanner.hpp>
 #include <Config/Config.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -117,8 +118,13 @@ struct SystestBinder::Impl
 
     /// Id includes the partition key: partitions repeat query numbers, and the coordinator rejects duplicate ids.
     [[nodiscard]] BoundTestFile
-    bind(const std::span<const std::string> setupSql, const std::span<const RewrittenTestCase> testCases, const std::string& partitionKey)
+    bind(
+        const std::span<const std::string> setupSql,
+        const std::span<const RewrittenTestCase> testCases,
+        const std::string& partitionKey,
+        const OriginalNames* calciteSources)
     {
+        this->calciteSources = calciteSources;
         BoundTestFile bound;
         for (const auto& sql : setupSql)
         {
@@ -202,7 +208,16 @@ private:
     /// The query id correlates the statement with its answer.
     [[nodiscard]] BoundPlan optimizeInto(const std::string& sql, const std::string& queryId) const
     {
-        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
+        auto plan = [&]
+        {
+            if (calciteSources == nullptr)
+            {
+                return AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
+            }
+            /// Test files hold finite inputs, so unwindowed joins and aggregations run over the whole input.
+            const auto [query, sinkClause] = Calcite::splitSink(sql);
+            return Calcite::plan(query, sinkClause, *sourceCatalog, Calcite::plannerAddress(), /*finiteInputs=*/true, *calciteSources);
+        }();
         plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
         auto optimized = queryOptimizer.optimize(plan);
         auto schema = getSinkOutputSchema(optimized);
@@ -222,6 +237,8 @@ private:
 
     /// One catalog set for the whole run, which the rewriter's prefixing keeps collision-free.
     std::shared_ptr<SourceCatalog> sourceCatalog;
+    /// Set while binding a `# calcite` file, see bind.
+    const OriginalNames* calciteSources = nullptr;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
     SharedPtr<WorkerCatalog> workerCatalog;
@@ -238,9 +255,12 @@ SystestBinder::SystestBinder(const SystestConfiguration& config) : impl{std::mak
 }
 
 BoundTestFile SystestBinder::bind(
-    const std::span<const std::string> setupSql, const std::span<const RewrittenTestCase> testCases, const std::string& partitionKey)
+    const std::span<const std::string> setupSql,
+    const std::span<const RewrittenTestCase> testCases,
+    const std::string& partitionKey,
+    const OriginalNames* calciteSources)
 {
-    return impl->bind(setupSql, testCases, partitionKey);
+    return impl->bind(setupSql, testCases, partitionKey, calciteSources);
 }
 
 SystestBinder::~SystestBinder() = default;

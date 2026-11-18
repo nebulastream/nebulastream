@@ -38,6 +38,7 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/BooleanFunctions/AndPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -313,6 +314,15 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
+    /// The hash map matches keys from the join function only; the residual functions are checked on every key match.
+    std::optional<PhysicalFunction> physicalResidualFunction;
+    for (const auto& residual : join->getResidualFunctions())
+    {
+        auto lowered = QueryCompilation::FunctionProvider::lowerFunction(residual, combinedFieldMapping);
+        physicalResidualFunction = physicalResidualFunction.has_value()
+            ? PhysicalFunction{AndPhysicalFunction(*physicalResidualFunction, std::move(lowered))}
+            : std::move(lowered);
+    }
     const auto inputOriginIds = join.getChildren()
         | std::views::transform(
                                     [](const auto& child)
@@ -405,7 +415,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         leftTupleLayout,
         leftHashMapConfig,
         std::move(leftKeyFunctions),
-        std::move(sliceStoreRefLeft)};
+        std::move(sliceStoreRefLeft),
+        /*keepNullKeys=*/currentJoinType == JT::OUTER_LEFT_JOIN or currentJoinType == JT::OUTER_FULL_JOIN};
     const HJBuildPhysicalOperator rightBuildOperator{
         handlerId,
         JoinBuildSideType::Right,
@@ -413,7 +424,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         rightTupleLayout,
         rightHashMapConfig,
         std::move(rightKeyFunctions),
-        std::move(sliceStoreRefRight)};
+        std::move(sliceStoreRefRight),
+        /*keepNullKeys=*/currentJoinType == JT::OUTER_RIGHT_JOIN or currentJoinType == JT::OUTER_FULL_JOIN};
 
     /// Creating the hash join probe — select inner or outer probe based on join type
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, physicalOutputSchema);
@@ -470,7 +482,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             leftTupleLayout,
             rightTupleLayout,
             leftHashMapConfig,
-            rightHashMapConfig));
+            rightHashMapConfig,
+            physicalResidualFunction));
     }
     else
     {
@@ -484,7 +497,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             leftTupleLayout,
             rightTupleLayout,
             leftHashMapConfig,
-            rightHashMapConfig));
+            rightHashMapConfig,
+            physicalResidualFunction));
     }
 
     std::shared_ptr<PhysicalOperatorWrapper> leftLeaf = leftBuildWrapper;

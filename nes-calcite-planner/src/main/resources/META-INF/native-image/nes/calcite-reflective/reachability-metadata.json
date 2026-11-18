@@ -1,0 +1,1364 @@
+{
+  "reflection": [
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$2",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$3",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$AbstractBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$AbstractRexCallImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ArgMinMaxImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ArrayConcatImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ArrayItemImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$BinaryImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$BitCountMySQLImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$BitOpImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$CastImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ClassifierImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$CoalesceImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$CollectImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ConcatImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ContainsSubstrImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ConvertImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$CountImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$CountWinImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$DatetimeArithmeticImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$DefaultImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$DenseRankImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$DistinctFromImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ExtractImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$FirstLastValueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$FirstValueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$FloorImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$FormatDatetimeImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$FusionImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$GroupingImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$HopImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IntersectionImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsDistinctFromImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsFalseImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsNotDistinctFromImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsNotFalseImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsNotNullImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsNotTrueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsNullImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$IsTrueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ItemImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$JsonArrayAggImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$JsonObjectAggImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$JsonQueryImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$JsonValueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LagImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LastDayImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LastImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LastValueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LeadImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LeadLagImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ListaggImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LiteralAggImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LogImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LogicalAndImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LogicalNotImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$LogicalOrImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$MethodImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$MinMaxImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ModeImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$NotImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$NotJsonImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$NthValueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$NtileImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$NullAs",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$PeriodNameImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$PiImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$QuantifyCollectionImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$RankImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ReflectiveImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ReinterpretImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ReplaceImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$RexCallImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$RowNumberImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$SafeArithmeticImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$SessionImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$SingleValueImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$SortArrayImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$StringToMapImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$SumImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$SystemFunctionImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$TimestampAddImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$TimestampDiffImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ToCharPgImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ToTimestampPgImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$TranslateImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$TrimImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$TumbleImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$UnaryImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$UserDefinedAggReflectiveImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.RexImpTable$ValueConstructorImplementor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.avatica.AvaticaClientRuntimeException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.avatica.AvaticaConnection$CallableWithoutException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.avatica.AvaticaSqlException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.avatica.MissingResultsException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.avatica.NoSuchConnectionException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.avatica.NoSuchStatementException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.avatica.remote.AvaticaRuntimeException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.jdbc.SqlTimeoutException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.linq4j.EnumerableDefaults$BothValuesAreNullException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.plan.RelOptPlanner$CannotPlanException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.plan.volcano.VolcanoTimeoutException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.InvalidRelException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.CyclicMetadataException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rex.RexUtil$ExpressionNormalizer$SubExprExistsException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rex.RexUtil$ForwardRefFinder$IllegalForwardRefException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.CalciteContextException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.CalciteException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$2",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$BaseMessage",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$BooleanProp",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$BuiltinMethod",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$Default",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$DoubleProp",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$Element",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$EmptyPropertyAccessor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$ExInst",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$ExInstWithCause",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$Inst",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$IntProp",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$MyPropertyResourceBundle",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$NoDefaultValueException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$Prop",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$PropertiesAccessor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$Property",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$PropertyAccessor",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$Resource",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$ShadowResourceBundle",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$StringProp",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.runtime.Resources$Validation",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.SqlParseException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.ddl.ParseException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.impl.ParseException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.validate.CyclicDefinitionException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.validate.SqlValidatorException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$AdjustProjectForCountAggregateRule",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$AdjustProjectForCountAggregateRule$AdjustProjectForCountAggregateRuleConfig",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$CorDef",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$CorRef",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$CorelMap",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$CorelMapBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$CorelMapBuilder$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$DecorrelateRexShuttle",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$Frame",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$RemoveCorrelationForScalarAggregateRule",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$RemoveCorrelationForScalarAggregateRule$RemoveCorrelationForScalarAggregateRuleConfig",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$RemoveCorrelationForScalarProjectRule",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$RemoveCorrelationForScalarProjectRule$RemoveCorrelationForScalarProjectRuleConfig",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$RemoveCorrelationRexShuttle",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$RemoveSingleAggregateRule",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator$RemoveSingleAggregateRule$RemoveSingleAggregateRuleConfig",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer$2",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer$3",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer$4",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer$5",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer$TrimResult",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.tools.RelConversionException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.tools.ValidationException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.util.CalciteParserException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.util.CalciteValidatorException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.util.ControlFlowException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.util.mapping.Mappings$NoElementException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.util.mapping.Mappings$TooManyElementsException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    }
+  ]
+}

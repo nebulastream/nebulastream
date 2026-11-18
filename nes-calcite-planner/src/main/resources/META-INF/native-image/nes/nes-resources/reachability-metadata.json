@@ -1,0 +1,10 @@
+{
+  "resources": [
+    {
+      "glob": "nes_unsigned_integers.yaml"
+    },
+    {
+      "glob": "substrait/extensions/*.yaml"
+    }
+  ]
+}

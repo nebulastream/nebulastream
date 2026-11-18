@@ -16,6 +16,7 @@
 #include <Phases/RuleBasedOptimizer.hpp>
 
 #include <memory>
+#include <string>
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
@@ -68,8 +69,14 @@ RuleBasedOptimizer::RuleBasedOptimizer(
 
 LogicalPlan RuleBasedOptimizer::optimize(LogicalPlan plan) const
 {
+    const auto skipped = plan.getSkippedOptimizerRules();
     for (const auto& rule : ruleSequence)
     {
+        if (skipped.contains(std::string{rule.getName()}))
+        {
+            NES_DEBUG("skipping optimizer rule {}, the plan's producer already applied it", rule.getName());
+            continue;
+        }
         plan = rule.apply(std::move(plan));
     }
     return plan;

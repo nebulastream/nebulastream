@@ -233,7 +233,12 @@ Visitor::DownResult pushBeyondJoin(const TypedLogicalOperator<JoinLogicalOperato
         }
     }
 
-    for (const auto& field : getAccessedFields(predicate))
+    auto predicateFields = getAccessedFields(predicate);
+    for (const auto& residual : op->getResidualFunctions())
+    {
+        std::ranges::copy(getAccessedFields(residual), std::inserter(predicateFields, predicateFields.end()));
+    }
+    for (const auto& field : predicateFields)
     {
         if (field.getProducedBy() == left)
         {

@@ -216,6 +216,8 @@ class SourceStatementHandler final : public StatementHandler<SourceStatementHand
 public:
     SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy);
 
+    [[nodiscard]] const SourceCatalog& getSourceCatalog() const { return *sourceCatalog; }
+
     std::expected<CreateLogicalSourceStatementResult, Exception> operator()(const CreateLogicalSourceStatement& statement);
     std::expected<CreatePhysicalSourceStatementResult, Exception> operator()(const CreatePhysicalSourceStatement& statement);
     std::expected<ShowLogicalSourcesStatementResult, Exception> operator()(const ShowLogicalSourcesStatement& statement) const;
@@ -227,6 +229,12 @@ public:
 class SinkStatementHandler final : public StatementHandler<SinkStatementHandler>
 {
     std::shared_ptr<SinkCatalog> sinkCatalog;
+
+public:
+    /// For frontends that bind sinks themselves, e.g. the Calcite frontend's physical plans.
+    [[nodiscard]] const SinkCatalog& getSinkCatalog() const { return *sinkCatalog; }
+
+private:
     HostPolicy hostPolicy;
 
 public:
@@ -248,6 +256,8 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
 public:
     explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
+    /// A query planned down to physical operators and placed (e.g. by the Calcite frontend): not optimized.
+    std::expected<QueryStatementResult, Exception> startPhysical(PlacedPhysicalQuery query);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
@@ -271,6 +281,7 @@ class TopologyStatementHandler final : public StatementHandler<TopologyStatement
 
 public:
     TopologyStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog);
+    [[nodiscard]] const WorkerCatalog& getWorkerCatalog() const { return *workerCatalog; }
 
     std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
     std::expected<ShowVersionStatementResult, Exception> operator()(const ShowVersionStatement& statement);

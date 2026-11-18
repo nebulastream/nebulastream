@@ -59,6 +59,18 @@ namespace NES
 {
 namespace
 {
+/// Whether every path from the operator down to a source passes a watermark assigner. Under a union, one input can
+/// already have an assigner (e.g. one feeding an inner window) while the other has none.
+bool everyPathHasWatermarkAssigner(const LogicalOperator& op)
+{
+    if (op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>() or op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
+    {
+        return true;
+    }
+    const auto children = op.getChildren();
+    return not children.empty() and std::ranges::all_of(children, everyPathHasWatermarkAssigner);
+}
+
 LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot)
 {
     auto root = newRoot.withChildrenUnsafe(plan.getRootOperators());
@@ -103,7 +115,8 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
     const Windowing::TimeBasedWindowType& windowType,
     std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> windowAggs,
     std::vector<UnboundFieldAccessLogicalFunction> onKeys,
-    Windowing::TimeCharacteristic timeCharacteristic)
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const bool emitsOnEmptyInput)
 {
     PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
 
@@ -120,7 +133,7 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
     return promoteOperatorToRoot(
         queryPlan,
         WindowedAggregationLogicalOperator::create(
-            std::move(keysWithNames), std::move(windowAggs), windowType, std::move(timeCharacteristic)));
+            std::move(keysWithNames), std::move(windowAggs), windowType, std::move(timeCharacteristic), emitsOnEmptyInput));
 }
 
 LogicalPlan LogicalPlanBuilder::addUnion(LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan)
@@ -137,7 +150,8 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     Windowing::TimeBasedWindowType windowType,
     JoinLogicalOperator::JoinType joinType,
     Windowing::TimeCharacteristic leftCharacteristic,
-    Windowing::TimeCharacteristic rightCharacteristic)
+    Windowing::TimeCharacteristic rightCharacteristic,
+    std::vector<LogicalFunction> residualFunctions)
 {
     /// check if query contain watermark assigner, and add if missing (as default behaviour)
     leftLogicalPlan = checkAndAddWatermarkAssigner(leftLogicalPlan, leftCharacteristic);
@@ -152,7 +166,8 @@ LogicalPlan LogicalPlanBuilder::addJoin(
 
     NES_TRACE("LogicalPlanBuilder: add join operator to query plan");
     leftLogicalPlan = addBinaryOperatorAndUpdateSource(
-        JoinLogicalOperator::create(joinFunction, std::move(windowType), joinType, std::move(joinTimeCharacteristicOpt).value()),
+        JoinLogicalOperator::create(
+            joinFunction, std::move(windowType), joinType, std::move(joinTimeCharacteristicOpt).value(), std::move(residualFunctions)),
         leftLogicalPlan,
         rightLogicalPlan);
     return leftLogicalPlan;
@@ -184,8 +199,8 @@ LogicalPlan LogicalPlanBuilder::addAnonymousSink(
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)
 {
     NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
-    if (getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(queryPlan).empty()
-        and getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(queryPlan).empty())
+    /// A window needs a watermark on every input; checking only for some assigner in the plan misses a union input without one.
+    if (not std::ranges::all_of(queryPlan.getRootOperators(), everyPathHasWatermarkAssigner))
     {
         return std::visit(
             [&queryPlan](const auto& unboundBound)

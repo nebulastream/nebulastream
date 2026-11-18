@@ -19,6 +19,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
+#include <PhysicalQuery.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation
@@ -42,6 +43,8 @@ public:
     explicit QueryCompiler(QueryExecutionConfiguration defaultQueryExecution) : defaultQueryExecution(std::move(defaultQueryExecution)) { };
 
     std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
+    /// A query planned down to its pipelines (see PhysicalQuery): only code generation.
+    std::unique_ptr<CompiledQueryPlan> compileQuery(const PhysicalQuery& query, DumpMode dumpCompilationResult);
 
 private:
     QueryExecutionConfiguration defaultQueryExecution;

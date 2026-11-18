@@ -119,7 +119,9 @@ void AggregationOperatorHandler::triggerSlices(
         tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
-        tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
+        /// The probe skips buffers without records (watermark-only buffers). A window without any tuple (registered as empty
+        /// window, see WindowSlicesStoreInterface::registerEmptyWindow) must still reach it, so it counts as one record.
+        tupleBuffer.setNumberOfTuples(allHashMapBuffers.empty() ? 1 : totalNumberOfTuples);
         tupleBuffer.setCreationTimestampInMS(Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 

@@ -417,6 +417,27 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     std::unreachable();
 }
 
+std::expected<QueryStatementResult, Exception> QueryStatementHandler::startPhysical(PlacedPhysicalQuery query)
+{
+    CPPTRACE_TRY
+    {
+        return queryManager->start(std::move(query))
+            .transform([](DistributedQueryId distQueryId) { return QueryStatementResult{std::move(distQueryId)}; })
+            .transform_error(
+                [](auto vecOfErrors)
+                {
+                    return QueryStartFailed(
+                        "Could not start query: {}",
+                        fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+                });
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
 TopologyStatementHandler::TopologyStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog)
     : queryManager(std::move(queryManager)), workerCatalog(std::move(workerCatalog))
 {

@@ -37,6 +37,8 @@ struct RewriteContext
     std::filesystem::path testDataDir;
     Host sourceHost;
     Host sinkHost;
+    /// The file's queries are in Calcite's SQL dialect (`# calcite`): only their sink clause is rewritten.
+    bool calcite = false;
 
     /// The suffix distinguishes the queries of one test file, so no two overwrite each other's results.
     /// For test file key `Filter` and suffix `3`: `<workingDir>/Filter_3.csv`.

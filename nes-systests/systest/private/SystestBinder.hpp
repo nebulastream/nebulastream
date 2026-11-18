@@ -63,8 +63,12 @@ public:
     /// The statements before the rejected one stay in the catalogs.
     /// Other partitions can still be bound afterwards, because the rewriter prefixes each partition's names.
     /// An unbindable test case yields an error entry, not a throw: a test may expect that error.
-    [[nodiscard]] BoundTestFile
-    bind(std::span<const std::string> setupSql, std::span<const RewrittenTestCase> testCases, const std::string& partitionKey);
+    /// calciteSources: plan the queries with Calcite, offering it the file's sources under their declared names.
+    [[nodiscard]] BoundTestFile bind(
+        std::span<const std::string> setupSql,
+        std::span<const RewrittenTestCase> testCases,
+        const std::string& partitionKey,
+        const OriginalNames* calciteSources = nullptr);
 
     ~SystestBinder();
 

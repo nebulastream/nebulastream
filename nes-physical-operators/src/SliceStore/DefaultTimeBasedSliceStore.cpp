@@ -126,9 +126,11 @@ TriggerableWindows DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const 
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
         /// As the windows are sorted, we can simply increment the sequence number here.
         const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
+        /// The entry is created even without slices: a registered empty window is triggered, too.
+        auto& windowSlices = windowsToSlices[{.windowInfo = windowInfo, .sequenceNumber = newSequenceNumber}];
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            windowsToSlices[{.windowInfo = windowInfo, .sequenceNumber = newSequenceNumber}].emplace_back(slice);
+            windowSlices.emplace_back(slice);
         }
     }
 
@@ -220,6 +222,12 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
 
     /// Now we can remove/call destructor on every slice without still holding the lock
     slicesToDelete.clear();
+}
+
+void DefaultTimeBasedSliceStore::registerEmptyWindow(const WindowInfo windowInfo)
+{
+    const auto numberOfExpectedSlices = sliceAssigner.getWindowSize() / sliceAssigner.getWindowSlide();
+    windows.wlock()->try_emplace(windowInfo, numberOfExpectedSlices);
 }
 
 void DefaultTimeBasedSliceStore::deleteState()

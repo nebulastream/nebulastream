@@ -16,6 +16,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
+#include <expected>
+#include <optional>
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
@@ -31,6 +34,7 @@
 #include <vector>
 #include <unistd.h>
 
+#include <Calcite/CalcitePlanner.hpp>
 #include <DataTypes/UnboundSchema.hpp> /// NOLINT(misc-include-cleaner)
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -372,8 +376,109 @@ struct Repl::Impl
         return query;
     }
 
+    void printResult(const NES::StatementResult& result, const NES::StatementOutputFormat format)
+    {
+        switch (format)
+        {
+            case NES::StatementOutputFormat::TEXT:
+                std::cout << std::visit(
+                    [](const auto& statementResult)
+                    {
+                        return toText(
+                            StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult));
+                    },
+                    result);
+                break;
+            case NES::StatementOutputFormat::JSON:
+                std::cout << std::visit(
+                    [](const auto& statementResult)
+                    {
+                        return rfl::json::write(
+                            NES::rowsToJsonArray(
+                                NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(
+                                    statementResult),
+                                NES::ReflectionContext{}));
+                    },
+                    result)
+                          << "\n";
+        }
+        std::flush(std::cout);
+    }
+
+    /// Prototype: "CALCITE [EXPLAIN [VERBOSE]] <query> INTO <sink or File(...)>;" plans <query> with Apache Calcite (nes-calcite-planner service at
+    /// $NES_CALCITE_PLANNER, default localhost:50061) instead of the ANTLR parser.
+    static std::optional<std::string_view> stripKeyword(std::string_view statement, const std::string_view keyword)
+    {
+        const auto start = statement.find_first_not_of(" \t\r\n");
+        if (start == std::string_view::npos or statement.size() < start + keyword.size() + 1)
+        {
+            return std::nullopt;
+        }
+        statement.remove_prefix(start);
+        const bool matches = std::ranges::equal(
+            statement.substr(0, keyword.size()), keyword, [](const char lhs, const char rhs) { return std::toupper(lhs) == rhs; });
+        if (not matches or not std::isspace(static_cast<unsigned char>(statement.at(keyword.size()))))
+        {
+            return std::nullopt;
+        }
+        return statement.substr(keyword.size());
+    }
+
+    bool executeCalciteQuery(const std::string_view statement)
+    {
+        /// NOLINTNEXTLINE(fuchsia-trailing-return)
+        auto result = [&]() -> std::expected<NES::StatementResult, NES::Exception>
+        {
+            try
+            {
+                auto explainQuery = stripKeyword(statement, "EXPLAIN");
+                const auto verbose = explainQuery ? stripKeyword(*explainQuery, "VERBOSE") : std::nullopt;
+                if (verbose)
+                {
+                    explainQuery = verbose;
+                }
+                auto [sql, sink] = Calcite::splitSink(explainQuery.value_or(statement));
+                if (Calcite::physicalPlans() and not explainQuery)
+                {
+                    /// Physical operators, placed by Calcite: neither our optimizer nor our placement, only compilation.
+                    return queryStatementHandler->startPhysical(Calcite::planPhysical(
+                        sql,
+                        sink,
+                        sourceStatementHandler.getSourceCatalog(),
+                        sinkStatementHandler.getSinkCatalog(),
+                        topologyStatementHandler.getWorkerCatalog(),
+                        Calcite::plannerAddress(),
+                        Calcite::finiteInputs()));
+                }
+                auto plan = Calcite::plan(
+                    sql, sink, sourceStatementHandler.getSourceCatalog(), Calcite::plannerAddress(), Calcite::finiteInputs());
+                if (explainQuery)
+                {
+                    return queryStatementHandler->apply(ExplainQueryStatement{
+                        .plan = std::move(plan), .explainFormat = verbose ? ExplainFormat::Verbose : ExplainFormat::Visual});
+                }
+                return queryStatementHandler->apply(QueryStatement{.plan = std::move(plan), .id = std::nullopt});
+            }
+            catch (const NES::Exception& exception)
+            {
+                return std::unexpected{exception};
+            }
+        }();
+        if (not result.has_value())
+        {
+            handleError(std::move(result.error()));
+            return false;
+        }
+        printResult(result.value(), defaultOutputFormat);
+        return true;
+    }
+
     bool executeQuery(const std::string& query)
     {
+        if (const auto calciteQuery = stripKeyword(query, "CALCITE"))
+        {
+            return executeCalciteQuery(*calciteQuery);
+        }
         auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
         auto parseResult = managedParser->parseMultiple();
         if (not parseResult.has_value())
@@ -426,31 +531,7 @@ struct Repl::Impl
                 handleError(std::move(result.error()));
                 continue;
             }
-            switch (getOutputFormat(bindingResult.value()).value_or(defaultOutputFormat))
-            {
-                case NES::StatementOutputFormat::TEXT:
-                    std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
-                            return toText(
-                                StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult));
-                        },
-                        result.value());
-                    break;
-                case NES::StatementOutputFormat::JSON:
-                    std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
-                            return rfl::json::write(
-                                NES::rowsToJsonArray(
-                                    NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(
-                                        statementResult),
-                                    NES::ReflectionContext{}));
-                        },
-                        result.value())
-                              << "\n";
-            }
-            std::flush(std::cout);
+            printResult(result.value(), getOutputFormat(bindingResult.value()).value_or(defaultOutputFormat));
         }
         return true;
     }

@@ -1,0 +1,40 @@
+# calcite
+# name: calcite/Unsupported.test
+# description: What the Calcite frontend cannot run fails with UnsupportedQuery (2008) instead of being dropped or approximated
+# groups: [Calcite]
+
+CREATE LOGICAL SOURCE t(a INT64, b INT64);
+CREATE PHYSICAL SOURCE FOR t TYPE File;
+ATTACH INLINE
+1,2
+3,4
+
+# We cannot sort.
+SELECT a FROM t ORDER BY a INTO File();
+----
+ERROR 2008
+
+SELECT a FROM t LIMIT 1 INTO File();
+----
+ERROR 2008
+
+# We have no exact DECIMAL type.
+SELECT a * 1.5 FROM t INTO File();
+----
+ERROR 2008
+
+# ORDER BY in an IN subquery cannot change the result; Calcite drops it.
+SELECT a FROM t WHERE a IN (SELECT a FROM t ORDER BY a) INTO File();
+----
+1
+3
+
+# Without GROUP BY, an aggregation over no rows still has a row: SUM is NULL ...
+SELECT SUM(a) FROM t WHERE a > 100 INTO File();
+----
+NULL
+
+# ... and COUNT is 0.
+SELECT COUNT(*) FROM t WHERE a > 100 INTO File();
+----
+0

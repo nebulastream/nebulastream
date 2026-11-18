@@ -1,0 +1,1037 @@
+{
+  "reflection": [
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdAllPredicates",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdCollation",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdColumnOrigins",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdColumnUniqueness",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdDistinctRowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdDistribution",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdExplainVisibility",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdExpressionLineage",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdFunctionalDependency",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdInputFieldsUsed",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdLowerBoundCost",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMaxRowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMeasure",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMemory",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMinRowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdNodeTypes",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdParallelism",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPercentageOriginalRows",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPopulationSize",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPredicates",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdRowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdSelectivity",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdSize",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdTableReferences",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdUniqueKeys",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdUtil",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$All",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$AllPredicates",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$AllPredicates$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Distribution",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Distribution$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExpressionLineage",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExpressionLineage$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$FunctionalDependency",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$FunctionalDependency$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$InputFieldsUsed",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$InputFieldsUsed$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$LowerBoundCost",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$LowerBoundCost$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Measure",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Measure$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Memory",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Memory$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NodeTypes",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NodeTypes$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Parallelism",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Parallelism$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PercentageOriginalRows",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PercentageOriginalRows$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PopulationSize",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PopulationSize$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Size",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Size$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$TableReferences",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$TableReferences$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$UniqueKeys",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$UniqueKeys$Handler",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$All"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$AllPredicates"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$AllPredicates$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Distribution"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Distribution$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ExpressionLineage"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ExpressionLineage$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$FunctionalDependency"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$FunctionalDependency$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$InputFieldsUsed"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$InputFieldsUsed$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$LowerBoundCost"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$LowerBoundCost$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Measure"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Measure$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Memory"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Memory$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$NodeTypes"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$NodeTypes$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Parallelism"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Parallelism$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$PercentageOriginalRows"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$PercentageOriginalRows$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$PopulationSize"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$PopulationSize$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Size"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Size$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$TableReferences"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$TableReferences$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$UniqueKeys"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$UniqueKeys$Handler"
+        ]
+      }
+    }
+  ]
+}

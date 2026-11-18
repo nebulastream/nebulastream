@@ -75,7 +75,8 @@ public:
         LogicalFunction joinFunction,
         Windowing::TimeBasedWindowType windowType,
         JoinType joinType,
-        JoinTimeCharacteristic timeCharacteristics);
+        JoinTimeCharacteristic timeCharacteristics,
+        std::vector<LogicalFunction> residualFunctions = {});
 
     explicit JoinLogicalOperator(
         WeakLogicalOperator self,
@@ -83,25 +84,31 @@ public:
         LogicalFunction joinFunction,
         Windowing::TimeBasedWindowType windowType,
         JoinType joinType,
-        JoinTimeCharacteristic timeCharacteristics);
+        JoinTimeCharacteristic timeCharacteristics,
+        std::vector<LogicalFunction> residualFunctions = {});
 
     static TypedLogicalOperator<JoinLogicalOperator> create(
         LogicalFunction joinFunction,
         Windowing::TimeBasedWindowType windowType,
         JoinType joinType,
-        JoinTimeCharacteristic timeCharacteristics);
+        JoinTimeCharacteristic timeCharacteristics,
+        std::vector<LogicalFunction> residualFunctions = {});
 
     static TypedLogicalOperator<JoinLogicalOperator> create(
         std::array<LogicalOperator, 2> children,
         LogicalFunction joinFunction,
         Windowing::TimeBasedWindowType windowType,
         JoinType joinType,
-        JoinTimeCharacteristic timeCharacteristics);
+        JoinTimeCharacteristic timeCharacteristics,
+        std::vector<LogicalFunction> residualFunctions = {});
 
     static std::optional<JoinTimeCharacteristic> createJoinTimeCharacteristic(
         const std::array<std::variant<Windowing::UnboundTimeCharacteristic, Windowing::BoundTimeCharacteristic>, 2>& timestampFields);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
+    /// Conditions a pair must also satisfy, beyond the join function. A hash join takes its key from the join function
+    /// and evaluates these on every key match; a nested-loop join evaluates them together with the join function.
+    [[nodiscard]] const std::vector<LogicalFunction>& getResidualFunctions() const;
     [[nodiscard]] Windowing::TimeBasedWindowType getWindowType() const;
     [[nodiscard]] const UnqualifiedUnboundField& getStartField() const;
     [[nodiscard]] const UnqualifiedUnboundField& getEndField() const;
@@ -134,6 +141,7 @@ private:
     JoinType joinType;
     std::optional<std::array<LogicalOperator, 2>> children;
     LogicalFunction joinFunction;
+    std::vector<LogicalFunction> residualFunctions;
 
     void inferLocalSchema();
     /// Set during schema inference
@@ -180,6 +188,7 @@ struct ReflectedJoinLogicalOperator
     Windowing::TimeBasedWindowType windowType;
     JoinTimeCharacteristic timestampFields;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
+    std::vector<LogicalFunction> residualFunctions;
 };
 }
 }

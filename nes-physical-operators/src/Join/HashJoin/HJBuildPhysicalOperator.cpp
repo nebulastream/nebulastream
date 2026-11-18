@@ -77,9 +77,9 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         record.write(fieldIdentifier, value);
     }
 
-    /// If any key field is null, we need to skip it from inserting the tuple in the hash table, as the tuple will never be included
-    /// in the result set. This is the case as an inner join requires all join conditions to be TRUE (i.e., no NULL values in the join fields).
-    if (not containsNullInKey)
+    /// A tuple with a NULL key matches nothing, as a join condition with NULL is not TRUE. Unless an outer join preserves this
+    /// side, it is never in the result, so it is not stored; otherwise it is, and the probe emits it NULL-filled.
+    if (keepNullKeys or not containsNullInKey)
     {
         /// Finding or creating the entry for the provided record
         const auto hashMapEntry = hashMap.findOrCreateEntry(
@@ -137,11 +137,13 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
     ChainedHashMapConfig hashMapConfig,
     std::vector<PhysicalFunction> keyFunctions,
-    std::unique_ptr<SliceStoreRef> sliceStoreRef)
+    std::unique_ptr<SliceStoreRef> sliceStoreRef,
+    const bool keepNullKeys)
     : StreamJoinBuildPhysicalOperator{
           operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
+    , keepNullKeys(keepNullKeys)
 {
 }
 

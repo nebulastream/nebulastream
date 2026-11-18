@@ -13,6 +13,7 @@
 */
 
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
+#include <NullValue.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -42,10 +43,6 @@
 namespace NES
 {
 
-namespace
-{
-/// Returns a typed null VarVal for the given DataType. Used in NULL-fill record construction
-/// for outer join unmatched tuples.
 VarVal makeNullVarVal(const DataType& dataType)
 {
     const auto nullFlag = nautilus::val<bool>{true};
@@ -82,7 +79,6 @@ VarVal makeNullVarVal(const DataType& dataType)
     }
     std::unreachable();
 }
-} /// anonymous namespace
 
 StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
     const OperatorHandlerId operatorHandlerId, PhysicalFunction joinFunction, WindowMetaData windowMetaData, JoinSchema joinSchema)

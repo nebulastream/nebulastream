@@ -44,6 +44,7 @@
 #include <Interface/Record.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -200,6 +201,22 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
+    /// SQL semantics of an aggregation without GROUP BY: the first window is triggered even without tuples, and the probe
+    /// then emits counts of 0 and NULL for every other aggregation.
+    std::optional<std::vector<EmptyWindowField>> recordOnEmptyWindow;
+    if (aggregation->emitsOnEmptyInput())
+    {
+        PRECONDITION(not aggregation->isKeyed(), "Only aggregations without keys emit on empty input");
+        recordOnEmptyWindow.emplace();
+        for (const auto& projected : aggregation->getWindowAggregation())
+        {
+            recordOnEmptyWindow->push_back(
+                {.field = projected.name,
+                 .type = projected.function->getAggregateType(),
+                 .isCount = projected.function.tryGetAs<CountAggregationLogicalFunction>().has_value()});
+        }
+        sliceAndWindowStore->registerEmptyWindow(WindowInfo{0, windowType.getSize().getTime()});
+    }
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider) -> const TupleBuffer*
         {
@@ -215,7 +232,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         });
     const AggregationBuildPhysicalOperator build{
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
-    const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
+    const AggregationProbePhysicalOperator probe{
+        hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData, std::move(recordOnEmptyWindow)};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(
         *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore));

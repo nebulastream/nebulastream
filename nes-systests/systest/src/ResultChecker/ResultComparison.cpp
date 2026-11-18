@@ -125,6 +125,9 @@ private:
 using ExpectedResultField = ResultCheckStrongType<std::string, struct ExpectedResultFields_>;
 using ActualResultField = ResultCheckStrongType<std::string, struct ActualResultFields_>;
 
+/// Separates the fields of a normalized result line (see ResultTuples); a value may contain spaces, e.g. a string.
+constexpr char FIELD_SEPARATOR = '\x1f';
+
 template <typename FieldType, typename Tag>
 class ResultTuple
 {
@@ -133,13 +136,18 @@ public:
 
     [[nodiscard]] size_t size() const { return tuple.size(); }
 
-    friend std::ostream& operator<<(std::ostream& os, const ResultTuple& resultTuple) { return os << resultTuple.tuple; }
+    friend std::ostream& operator<<(std::ostream& os, const ResultTuple& resultTuple)
+    {
+        auto printable = resultTuple.tuple;
+        std::ranges::replace(printable, FIELD_SEPARATOR, ' ');
+        return os << printable;
+    }
 
     [[nodiscard]] const std::string& getRawValue() const { return tuple; }
 
     [[nodiscard]] std::vector<FieldType> getFields() const
     {
-        return tuple | std::views::split(' ')
+        return tuple | std::views::split(FIELD_SEPARATOR)
             | std::views::transform([](auto&& range) { return FieldType(std::string(range.begin(), range.end())); })
             | std::ranges::to<std::vector>();
     }
@@ -156,8 +164,8 @@ void sortOnFields(std::vector<std::string>& results, const std::vector<size_t>& 
         {
             for (const size_t fieldIdx : fieldIdxs)
             {
-                const auto lhsField = std::string_view((lhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
-                const auto rhsField = std::string_view((rhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
+                const auto lhsField = std::string_view((lhs | std::views::split(FIELD_SEPARATOR) | std::views::drop(fieldIdx)).front());
+                const auto rhsField = std::string_view((rhs | std::views::split(FIELD_SEPARATOR) | std::views::drop(fieldIdx)).front());
 
                 if (lhsField == rhsField)
                 {
@@ -177,24 +185,21 @@ public:
     explicit ResultTuples(std::vector<std::string> results, const std::vector<size_t>& expectedResultsFieldSortIdxs)
         : results(std::move(results))
     {
-        /// An empty column becomes NULL, so it has a value to compare.
+        /// Fields are separated by commas (CSV), or, in a line without commas, by spaces. Separated by commas, a field may
+        /// contain spaces, e.g. a string; an empty one becomes NULL, so it has a value to compare.
         for (auto& line : this->results)
         {
-            auto tokens = line | std::views::split(',')
-                | std::views::transform(
-                              [](auto&& rng)
-                              {
-                                  const std::string token(rng.begin(), rng.end());
-                                  return token.empty() ? std::string{"NULL"} : token;
-                              })
+            const char separator = line.contains(',') ? ',' : ' ';
+            auto fields = line | std::views::split(separator)
+                | std::views::transform([](auto&& range) { return std::string(trimWhiteSpaces(std::string_view(range.begin(), range.end()))); })
                 | std::ranges::to<std::vector>();
-            line = fmt::format("{}", fmt::join(tokens, ","));
+            if (separator == ' ')
+            {
+                std::erase_if(fields, [](const std::string& field) { return field.empty(); });
+            }
+            std::ranges::for_each(fields, [](std::string& field) { field = field.empty() ? "NULL" : field; });
+            line = fmt::format("{}", fmt::join(fields, std::string_view{&FIELD_SEPARATOR, 1}));
         }
-
-        /// Both sides may separate fields with commas, so both drop them.
-        /// Double spaces go too, because a single space separates the fields.
-        std::ranges::for_each(this->results, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
-        std::ranges::for_each(this->results, removeDoubleSpaces);
 
         sortOnFields(this->results, expectedResultsFieldSortIdxs);
     }

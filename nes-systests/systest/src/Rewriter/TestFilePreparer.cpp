@@ -127,7 +127,8 @@ std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFil
                 .workingDir = workingDir,
                 .testDataDir = testDataDir,
                 .sourceHost = defaultSourceHost,
-                .sinkHost = defaultSinkHost});
+                .sinkHost = defaultSinkHost,
+                .calcite = testFile.calcite});
         nameOwners.claim(runnable.originalNames, testFile.file);
         rewritten.push_back(RunnablePartition{.overrides = std::move(overrides), .file = std::move(runnable)});
     }

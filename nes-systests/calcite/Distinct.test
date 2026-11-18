@@ -1,0 +1,37 @@
+# calcite
+# name: calcite/Distinct.test
+# description: Aggregations of distinct values under the Calcite frontend (Calcite groups by the values first)
+# groups: [Calcite]
+
+CREATE LOGICAL SOURCE t(g INT64, a INT64, b INT64);
+CREATE PHYSICAL SOURCE FOR t TYPE File;
+ATTACH INLINE
+1,10,1
+1,10,2
+1,20,2
+2,30,3
+2,30,3
+2,,4
+
+SELECT COUNT(DISTINCT a) FROM t INTO File();
+----
+3
+
+SELECT COUNT(DISTINCT a), SUM(DISTINCT b) FROM t INTO File();
+----
+3,10
+
+SELECT g, COUNT(DISTINCT a), MAX(b) FROM t GROUP BY g INTO File();
+----
+1,2,2
+2,1,4
+
+SELECT g, COUNT(DISTINCT a), COUNT(DISTINCT b), COUNT(*) FROM t GROUP BY g INTO File();
+----
+1,2,2,3
+2,1,2,3
+
+SELECT DISTINCT g FROM t INTO File();
+----
+1
+2

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Retain: before and after Pipelines.finish</title>
+<style>
+  body { font: 15px/1.45 system-ui, sans-serif; color: #111827; margin: 24px auto; max-width: 1180px; padding: 0 16px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  code, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+  pre.sql { font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; background: #eef2ff; padding: 10px 12px; border-radius: 6px; white-space: pre-wrap; }
+  .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 18px; }
+  .column h2 { font-size: 16px; margin: 0 0 4px; }
+  .column p.sub { margin: 0 0 12px; color: #6b7280; font-size: 13px; }
+  .op { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 8px; padding: 8px 10px; }
+  .op.retain { border: 2px dashed #b8590a; background: #fff7ed; }
+  .op.gone { border: 2px dashed #d1d5db; background: #fafafa; color: #9ca3af; }
+  .op .name { font-weight: 700; }
+  .op .name.start { color: #1f5fbf; } .op .name.end { color: #b8590a; } .op .name.mid { color: #4b5563; } .op .name.helper { color: #b8590a; }
+  .op .what { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+  .row { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .row .label { color: #6b7280; font-size: 12px; margin-right: 2px; }
+  .f { font: 12px ui-monospace, Menlo, Consolas, monospace; border-radius: 999px; padding: 1px 9px; border: 1px solid; }
+  .f b { font-weight: 700; margin-right: 4px; }
+  .f.id { background: #dbeafe; border-color: #1d4ed8; }
+  .f.val { background: #dcfce7; border-color: #15803d; }
+  .f.ts { background: #f3e8ff; border-color: #7e22ce; }
+  .f.f0 { background: #fef3c7; border-color: #b45309; }
+  .f.f1 { background: #ffe4e6; border-color: #be123c; }
+  .f.off { opacity: .35; text-decoration: line-through; }
+  .arrow { text-align: center; color: #9ca3af; font-size: 18px; line-height: 1; margin: 3px 0; }
+  .note { font-size: 13px; color: #374151; margin-top: 6px; }
+  .note.retain { color: #9a3412; }
+  .key { margin-top: 26px; border-top: 1px solid #e5e7eb; padding-top: 14px; }
+  table { border-collapse: collapse; font-size: 14px; }
+  td, th { border: 1px solid #e5e7eb; padding: 4px 10px; text-align: left; }
+  th { background: #f9fafb; }
+  .origin { margin-top: 18px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; background: #fcfcfd; }
+  .origin h2 { font-size: 17px; margin: 0 0 8px; }
+  .origin h3 { font-size: 15px; margin: 14px 0 6px; }
+  pre.plan { font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; background: #f3f4f6; padding: 10px 12px; border-radius: 6px; overflow-x: auto; margin: 0; }
+  .hl1 { background: #fde68a; } .hl2 { background: #bfdbfe; }
+  .lowering { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 8px; }
+  .lowering .case { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; background: white; }
+  .lowering .case h4 { margin: 0 0 6px; font-size: 14px; }
+  .rule { font-size: 13px; color: #374151; margin: 6px 0; }
+</style></head><body>
+<h1>What <code>Retain</code> does, and where it goes</h1>
+<pre class="sql">SELECT id + 1 AS a, CASE WHEN val > 30 THEN val ELSE NULL END AS b
+FROM (SELECT * FROM events UNION ALL SELECT * FROM events2) WHERE id &lt; 3</pre>
+<p>One branch of the union (<code>events</code>), with data flowing from top to bottom. Each pill is a field of the row
+that an operator passes on; <b>$n</b> is its position, by which the operators above refer to it.
+The other two branches (the two physical sources of <code>events2</code>) look the same.</p>
+
+
+<div class="origin">
+  <h2>Where <code>Retain</code> comes from</h2>
+  <h3>1. Calcite's logical plan has two projections</h3>
+  <p class="rule">This is the plan before the physical step (planner step "types made explicit for NebulaStream"). A
+  <code>LogicalProject</code> computes a list of expressions over its input row; its output row is exactly that list,
+  and the operator above it refers to the output by position.</p>
+<pre class="plan"><span class="hl1">LogicalProject(a=[+($0, 1)], b=[CASE(&gt;($1, 30), $1, null)])</span>     <i>&lt;- the query's SELECT list</i>
+  LogicalUnion(all=[true])
+    <span class="hl2">LogicalProject(id=[$0], val=[$1])</span>                         <i>&lt;- SELECT * narrowed to the columns used</i>
+      LogicalFilter(condition=[&lt;($0, 3)])
+        LogicalTableScan(table=[[events]])
+    <span class="hl2">LogicalProject(id=[$0], val=[$1])</span>
+      LogicalFilter(condition=[&lt;($0, 3)])
+        LogicalTableScan(table=[[events2]])</pre>
+  <p class="rule">The lower projections come from <code>SELECT *</code>: Calcite's field trimmer removed <code>ts</code>,
+  which the outer query never reads.</p>
+
+  <h3>2. The projection rule lowers each <code>LogicalProject</code> into maps and a <code>Retain</code></h3>
+  <p class="rule"><code>NesPhysical.ProjectionRule</code>, one of the converter rules that turn Calcite's logical
+  operators into ours. Our <code>Map</code> can only append one computed field, so per expression of the projection:
+  a plain column reference (<code>$0</code>) needs no operator, the field is simply kept; a computed value becomes a
+  <code>Map</code> that appends it. Then a <code>Retain</code> lists the positions that form the projection's output row.</p>
+  <div class="lowering">
+    <div class="case"><h4><span class="hl1">a = $0 + 1, b = CASE …</span> (input row: ID, VAL)</h4>
+      <div class="op"><span class="name mid">Map</span> <span class="what">CALCITE_F0 := $0 + 1</span>
+        <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f f0"><b>$2</b>F0</span></div></div>
+      <div class="arrow">↓</div>
+      <div class="op"><span class="name mid">Map</span> <span class="what">CALCITE_F1 := CASE …</span>
+        <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f f0"><b>$2</b>F0</span><span class="f f1"><b>$3</b>F1</span></div></div>
+      <div class="arrow">↓</div>
+      <div class="op retain"><span class="name helper">Retain</span> <span class="what">[2, 3]</span>
+        <div class="row"><span class="label">row</span><span class="f f0"><b>$0</b>F0</span><span class="f f1"><b>$1</b>F1</span></div>
+        <div class="note retain">= the projection's output row (a, b)</div></div>
+    </div>
+    <div class="case"><h4><span class="hl2">id = $0, val = $1</span> (input row: ID, VAL, TS)</h4>
+      <div class="rule">Both are plain column references: no <code>Map</code>.</div>
+      <div class="op retain"><span class="name helper">Retain</span> <span class="what">[0, 1]</span>
+        <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts off">TS</span></div>
+        <div class="note retain">= the projection's output row (id, val)</div></div>
+    </div>
+  </div>
+  <p class="rule">(The union rule adds one more case: if a union input has a field of another type than the union, it casts
+  it with a <code>Map</code> and uses a <code>Retain</code> to put the cast field in its place. Not needed in this query.)</p>
+
+  <h3>3. Why it is needed, and why it disappears</h3>
+  <p class="rule">Without the <code>Retain</code>, the operators above a projection would see the input row with the
+  computed fields appended, at other positions than the plan says. The <code>Retain</code> keeps the positions right while
+  Calcite plans. But no engine operator can drop fields except the <code>Emit</code> at the end of a pipeline, so
+  <code>Pipelines.finish</code> folds each <code>Retain</code> into that <code>Emit</code> and renumbers the field
+  references in between. The rest of this page shows that for one branch.</p>
+</div>
+
+<div class="columns">
+  <!-- before -->
+  <div class="column">
+    <h2>Calcite's choice (before <code>Pipelines.finish</code>)</h2>
+    <p class="sub">A projection is maps plus a <code>Retain</code>: positions stay what the logical plan expects.</p>
+
+    <div class="op"><span class="name start">Scan</span> <span class="what">parses events (CSV)</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts"><b>$2</b>TS</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name mid">Selection</span> <span class="what">$0 &lt; 3</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts"><b>$2</b>TS</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op retain"><span class="name helper">Retain</span> <span class="what">[0, 1]</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts off">TS</span></div>
+      <div class="note retain">The union branch only needs ID and VAL: TS is dropped.</div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name helper">UnionAll</span> <span class="what">(with the two events2 branches)</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name mid">Map</span> <span class="what">CALCITE_F0 := $0 + 1</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f f0"><b>$2</b>F0</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name mid">Map</span> <span class="what">CALCITE_F1 := CASE WHEN $1 &gt; 30 THEN $1 ELSE NULL END</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f f0"><b>$2</b>F0</span><span class="f f1"><b>$3</b>F1</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op retain"><span class="name helper">Retain</span> <span class="what">[2, 3]</span>
+      <div class="row"><span class="label">row</span><span class="f id off">ID</span><span class="f val off">VAL</span><span class="f f0"><b>$0</b>F0</span><span class="f f1"><b>$1</b>F1</span></div>
+      <div class="note retain">The query outputs only the two computed values.</div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name end">Emit</span> <span class="what">fields [0, 1], in the sink's format</span>
+      <div class="row"><span class="label">writes</span><span class="f f0">F0</span><span class="f f1">F1</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name start">Sink</span> <span class="what">a, b</span></div>
+  </div>
+
+  <!-- after -->
+  <div class="column">
+    <h2>After <code>Pipelines.finish</code> (what the engine runs)</h2>
+    <p class="sub">No <code>Retain</code>: the record keeps every field until the <code>Emit</code>, which writes only the kept ones.</p>
+
+    <div class="op"><span class="name start">Scan</span> <span class="what">parses events (CSV)</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts"><b>$2</b>TS</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name mid">Selection</span> <span class="what">$0 &lt; 3</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts"><b>$2</b>TS</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op gone"><span class="name">Retain [0, 1]</span> — gone
+      <div class="note">TS stays in the record; nobody reads it, and the Emit does not write it.</div></div>
+    <div class="arrow">↓</div>
+    <div class="op gone"><span class="name">UnionAll</span> — gone
+      <div class="note">The maps and the emit below are copied into each of the three branches.</div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name mid">Map</span> <span class="what">CALCITE_F0 := $0 + 1</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts"><b>$2</b>TS</span><span class="f f0"><b>$3</b>F0</span></div>
+      <div class="note">Appended after TS: F0 moves from $2 to $3. <code>$0</code> still is ID, so the expression is unchanged.</div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name mid">Map</span> <span class="what">CALCITE_F1 := CASE WHEN $1 &gt; 30 THEN $1 ELSE NULL END</span>
+      <div class="row"><span class="label">row</span><span class="f id"><b>$0</b>ID</span><span class="f val"><b>$1</b>VAL</span><span class="f ts"><b>$2</b>TS</span><span class="f f0"><b>$3</b>F0</span><span class="f f1"><b>$4</b>F1</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="op gone"><span class="name">Retain [2, 3]</span> — gone, folded into the Emit below</div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name end">Emit</span> <span class="what">fields [3, 4], in the sink's format</span>
+      <div class="row"><span class="label">writes</span><span class="f f0">F0</span><span class="f f1">F1</span>
+        <span class="label">&nbsp;not written:</span><span class="f id off">ID</span><span class="f val off">VAL</span><span class="f ts off">TS</span></div>
+      <div class="note">Was fields [0, 1] of the Retain's row: renumbered to where F0 and F1 are now.</div></div>
+    <div class="arrow">↓</div>
+    <div class="op"><span class="name start">Sink</span> <span class="what">a, b</span></div>
+  </div>
+</div>
+
+<div class="key">
+  <b>How the renumbering works.</b> For every operator, <code>Pipelines.finish</code> tracks where each field of the old
+  row is in the new one, and rewrites the field references above it:
+  <table style="margin-top:8px">
+    <tr><th>field</th><th>before (Retain's row)</th><th>after (record at the Emit)</th></tr>
+    <tr><td>ID</td><td>$0, then dropped</td><td>$0, not written</td></tr>
+    <tr><td>VAL</td><td>$1, then dropped</td><td>$1, not written</td></tr>
+    <tr><td>TS</td><td>dropped by the first Retain</td><td>$2, not written</td></tr>
+    <tr><td>CALCITE_F0 (a)</td><td>$2 → $0</td><td>$3, written first</td></tr>
+    <tr><td>CALCITE_F1 (b)</td><td>$3 → $1</td><td>$4, written second</td></tr>
+  </table>
+</div>
+</body></html>

@@ -72,7 +72,8 @@ public:
         const Windowing::TimeBasedWindowType& windowType,
         std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> windowAggs,
         std::vector<UnboundFieldAccessLogicalFunction> onKeys,
-        Windowing::TimeCharacteristic timeCharacteristic);
+        Windowing::TimeCharacteristic timeCharacteristic,
+        bool emitsOnEmptyInput = false);
 
     /// @brief UnionOperator to combine two query plans
     /// @param leftLogicalPlan the left query plan to combine by the union
@@ -85,6 +86,7 @@ public:
     /// @param rightLogicalPlan the right query plan to combine by the join
     /// @param joinFunction set of join Functions
     /// @param windowType Window definition.
+    /// @param residualFunctions conditions evaluated on every pair that satisfies the join function (see JoinLogicalOperator)
     /// @return the updated queryPlan
     static LogicalPlan addJoin(
         LogicalPlan leftLogicalPlan,
@@ -93,7 +95,8 @@ public:
         Windowing::TimeBasedWindowType windowType,
         JoinLogicalOperator::JoinType joinType,
         Windowing::TimeCharacteristic leftCharacteristic,
-        Windowing::TimeCharacteristic rightCharacteristic);
+        Windowing::TimeCharacteristic rightCharacteristic,
+        std::vector<LogicalFunction> residualFunctions = {});
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 

@@ -95,5 +95,9 @@ public:
 
     /// Returns the window size
     [[nodiscard]] virtual uint64_t getWindowSize() const = 0;
+
+    /// Registers a window that is triggered even if no slice is ever created for it, i.e. if no tuple arrives.
+    /// The trigger then carries no slices.
+    virtual void registerEmptyWindow(WindowInfo windowInfo) = 0;
 };
 }

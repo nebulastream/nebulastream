@@ -14,6 +14,8 @@
 
 #include <Rewriter/Emitter.hpp>
 
+#include <Calcite/CalcitePlanner.hpp>
+
 #include <algorithm>
 #include <filesystem>
 #include <iterator>
@@ -71,6 +73,7 @@ Emitter::Emitter(const RewriteContext& context, Declarations declarations)
     runnable.name = context.name;
     runnable.key = context.testFileKey.value();
     runnable.originalNames = this->declarations.names.collectOriginalNames();
+    runnable.calcite = context.calcite;
 }
 
 RunnableTestFile Emitter::emit(ClassifiedTestFile classified) &&
@@ -151,6 +154,41 @@ PlainStatement Emitter::modelStatement(SqlParse& parse, const ModelDeclaration& 
 }
 
 Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQueryId id, const std::string_view resultDiscriminator)
+{
+    if (context.calcite)
+    {
+        return emitCalciteSelect(sql, id, resultDiscriminator);
+    }
+    return emitNesSelect(sql, id, resultDiscriminator);
+}
+
+/// Calcite's dialect is not ours, so the query itself stays as written; its sources are offered to Calcite under their
+/// declared names (see SystestBinder). Only the sink clause after INTO is ours: it is rewritten like any other sink, as
+/// part of a dummy query in our dialect.
+Emitter::RewrittenSql
+Emitter::emitCalciteSelect(const std::string& sql, const SystestQueryId id, const std::string_view resultDiscriminator)
+{
+    std::pair<std::string, std::string> querySink;
+    try
+    {
+        querySink = Calcite::splitSink(sql);
+    }
+    catch (const Exception&)
+    {
+        return RewrittenSql{.sql = sql, .resultFile = std::nullopt, .inputFiles = {}};
+    }
+    const auto& [query, sinkClause] = querySink;
+    const auto dummyQuery = std::string{"SELECT * FROM CALCITE_SINK_REWRITE INTO "};
+    auto rewritten = emitNesSelect(dummyQuery + sinkClause, id, resultDiscriminator);
+    if (not rewritten.sql.starts_with(dummyQuery))
+    {
+        return RewrittenSql{.sql = sql, .resultFile = std::nullopt, .inputFiles = {}};
+    }
+    rewritten.sql = fmt::format("{} INTO {}", query, rewritten.sql.substr(dummyQuery.size()));
+    return rewritten;
+}
+
+Emitter::RewrittenSql Emitter::emitNesSelect(const std::string& sql, const SystestQueryId id, const std::string_view resultDiscriminator)
 {
     std::unique_ptr<SqlParse> parse;
     try

@@ -1,0 +1,58 @@
+# calcite
+# name: calcite/Basic.test
+# description: Queries in Calcite's SQL dialect, planned by the nes-calcite-planner service
+# groups: [Calcite]
+
+CREATE LOGICAL SOURCE events(id UINT64 NOT NULL, val UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR events TYPE File;
+ATTACH INLINE
+1,10,1000
+2,20,1100
+3,30,1200
+1,40,2000
+2,50,2100
+
+CREATE LOGICAL SOURCE others(id UINT64 NOT NULL, label UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR others TYPE File;
+ATTACH INLINE
+1,100,1050
+2,200,1150
+1,300,2050
+
+CREATE SINK filtered(id UINT64 NOT NULL, v2 UINT64 NOT NULL) TYPE File;
+CREATE SINK sums(window_start UINT64 NOT NULL, window_end UINT64 NOT NULL, id UINT64 NOT NULL, s UINT64) TYPE File;
+CREATE SINK joined(id UINT64 NOT NULL, val UINT64 NOT NULL, label UINT64 NOT NULL) TYPE File;
+CREATE SINK counts(c INT64 NOT NULL) TYPE File;
+
+SELECT id, val * 2 AS v2 FROM events WHERE val > 20 INTO filtered;
+----
+3,60
+1,80
+2,100
+
+SELECT window_start, window_end, id, SUM(val) AS s
+FROM TABLE(TUMBLE(TABLE events, DESCRIPTOR(ts), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id INTO sums;
+----
+1000,2000,1,10
+1000,2000,2,20
+1000,2000,3,30
+2000,3000,1,40
+2000,3000,2,50
+
+# No window: with finite inputs this joins the whole input, emitting once the inputs end.
+SELECT e.id, e.val, o.label FROM events e JOIN others o ON e.id = o.id WHERE e.val < 50 INTO joined;
+----
+1,10,100
+1,10,300
+1,40,100
+1,40,300
+2,20,200
+
+SELECT COUNT(*) AS c FROM events WHERE id IN (SELECT id FROM others) INTO counts;
+----
+4
+
+WITH big AS (SELECT * FROM events WHERE val >= 30) SELECT COUNT(*) AS c FROM big INTO counts;
+----
+3

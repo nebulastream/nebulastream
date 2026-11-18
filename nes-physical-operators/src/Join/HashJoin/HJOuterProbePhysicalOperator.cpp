@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -73,7 +74,8 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
     ChainedHashMapConfig leftHashMapBasedOptions,
-    ChainedHashMapConfig rightHashMapBasedOptions)
+    ChainedHashMapConfig rightHashMapBasedOptions,
+    std::optional<PhysicalFunction> residualFunction)
     : HJProbePhysicalOperatorBase(
           operatorHandlerId,
           std::move(joinFunction),
@@ -82,7 +84,8 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
           std::move(leftTupleLayout),
           std::move(rightTupleLayout),
           std::move(leftHashMapBasedOptions),
-          std::move(rightHashMapBasedOptions))
+          std::move(rightHashMapBasedOptions),
+          std::move(residualFunction))
 {
 }
 
@@ -95,6 +98,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     const ChainedHashMapConfig& outerHashMapConfig,
     const ChainedHashMapConfig& innerHashMapConfig,
     const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
+    const std::shared_ptr<PagedVectorTupleLayout>& innerTupleLayout,
     const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,
@@ -123,6 +127,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
 
                 matched = matched or (innerHashMap.findEntry(outerEntryRef.entryRef) != nullptr);
             }
+            matched = matched and not keyContainsNull(outerEntryRef, outerHashMapConfig);
             if (!matched)
             {
                 /// Emit unmatched outer tuples with NULL-filled inner fields
@@ -131,6 +136,46 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
                     const auto outerRecord = *outerIt;
                     auto nullRecord = createNullFilledJoinedRecord(outerRecord, windowStart, windowEnd, outerFields, nullSideSchema);
                     executeChild(executionCtx, nullRecord);
+                }
+            }
+            else if (residualFunction.has_value())
+            {
+                /// The key matched, but with a residual a tuple only counts as matched if one of the inner tuples with that key
+                /// also satisfies it. Decided per outer tuple, like the nested-loop join does.
+                const auto innerFields = getOrderedFieldNames(innerTupleLayout->getSchema());
+                for (auto outerIt = outerPagedVector.begin(); outerIt != outerPagedVector.end(); ++outerIt)
+                {
+                    const auto outerRecord = *outerIt;
+                    nautilus::val<bool> residualMatched{false};
+                    for (nautilus::val<uint64_t> innerIdx = 0; innerIdx < innerNumberOfHashMaps; ++innerIdx)
+                    {
+                        auto innerHashMapBuffer = recordBufferRef.getChild(innerOffset + innerIdx);
+                        ChainedHashMapRef innerHashMap{innerHashMapBuffer, innerHashMapConfig};
+                        if (const auto innerEntry = innerHashMap.findEntry(outerEntryRef.entryRef); innerEntry != nullptr)
+                        {
+                            const ChainedHashMapRef::ChainedEntryRef innerEntryRef{
+                                static_cast<nautilus::val<ChainedHashMapEntry*>>(innerEntry),
+                                innerHashMapBuffer,
+                                innerHashMapConfig.fieldKeys,
+                                innerHashMapConfig.fieldValues};
+                            const PagedVectorRef innerPagedVector = loadEntryPagedVector(innerEntryRef, innerTupleLayout);
+                            for (auto innerIt = innerPagedVector.begin(); innerIt != innerPagedVector.end(); ++innerIt)
+                            {
+                                const auto innerRecord = *innerIt;
+                                auto joinedRecord
+                                    = createJoinedRecord(outerRecord, innerRecord, windowStart, windowEnd, outerFields, innerFields);
+                                if (residualFunction->execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena))
+                                {
+                                    residualMatched = true;
+                                }
+                            }
+                        }
+                    }
+                    if (!residualMatched)
+                    {
+                        auto nullRecord = createNullFilledJoinedRecord(outerRecord, windowStart, windowEnd, outerFields, nullSideSchema);
+                        executeChild(executionCtx, nullRecord);
+                    }
                 }
             }
         }
@@ -173,6 +218,7 @@ void HJOuterProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, R
                 leftHashMapConfig,
                 rightHashMapConfig,
                 leftTupleLayout,
+                rightTupleLayout,
                 joinSchema.rightSchema,
                 executionCtx,
                 windowStart,
@@ -192,6 +238,7 @@ void HJOuterProbePhysicalOperator::probeWindow(ExecutionContext& executionCtx, R
                 rightHashMapConfig,
                 leftHashMapConfig,
                 rightTupleLayout,
+                leftTupleLayout,
                 joinSchema.leftSchema,
                 executionCtx,
                 windowStart,

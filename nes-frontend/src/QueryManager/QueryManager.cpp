@@ -180,6 +180,55 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
         return std::unexpected(exceptions);
     }
 
+    return awaitStarted(id, std::move(localQueries), queryStartTimestamp);
+}
+
+std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(PlacedPhysicalQuery query)
+{
+    const auto id = uniqueDistributedQueryId(state);
+    const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
+    std::unordered_map<Host, std::vector<QueryId>> localQueries;
+    std::vector<Exception> exceptions;
+    for (auto& [host, part] : query)
+    {
+        if (not backends.contains(host))
+        {
+            exceptions.emplace_back(QueryStartFailed("the physical query was placed on {}, which is not a worker", host));
+            break;
+        }
+        part.queryId = QueryId::createDistributed(id);
+        const auto result = backends.at(host).start(std::move(part));
+        if (not result)
+        {
+            exceptions.emplace_back(result.error());
+            break;
+        }
+        localQueries[host].emplace_back(*result);
+    }
+    if (not exceptions.empty())
+    {
+        /// As for logical plans: stop the parts that started, as their network sinks would wait for their receivers forever.
+        for (const auto& [host, started] : localQueries)
+        {
+            for (const auto& localQueryId : started)
+            {
+                if (const auto result = backends.at(host).stop(localQueryId); not result)
+                {
+                    NES_WARNING("Could not stop local query {} on {} while unwinding a failed start: {}", localQueryId, host, result.error());
+                }
+            }
+        }
+        return std::unexpected{std::move(exceptions)};
+    }
+    return awaitStarted(id, std::move(localQueries), queryStartTimestamp);
+}
+
+std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::awaitStarted(
+    const DistributedQueryId& id,
+    std::unordered_map<Host, std::vector<QueryId>> localQueries,
+    [[maybe_unused]] const std::chrono::steady_clock::time_point queryStartTimestamp)
+{
+    std::vector<Exception> exceptions;
     this->state.queries.emplace(id, std::move(localQueries));
 
     /// Poll until all local queries have advanced past Registered, so the caller can immediately

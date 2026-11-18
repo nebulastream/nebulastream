@@ -1,0 +1,306 @@
+syntax = "proto3";
+
+package nes.calcite;
+
+option java_package = "nes.calcite.proto";
+option java_multiple_files = true;
+
+import "substrait/algebra.proto";
+
+// Plans a single SELECT query with Calcite and returns it as a Substrait plan.
+// Invalid or unsupported queries fail with status INVALID_ARGUMENT and a readable message.
+service CalcitePlanner {
+  rpc Plan(PlanRequest) returns (PlanResponse);
+}
+
+enum FieldType {
+  FIELD_TYPE_UNSPECIFIED = 0;
+  INT8 = 1;
+  INT16 = 2;
+  INT32 = 3;
+  INT64 = 4;
+  // Calcite and Substrait have no unsigned types: unsigned fields are widened to the next signed
+  // type (UINT64 -> i64). The caller re-infers the real types from its own source schemas.
+  UINT8 = 5;
+  UINT16 = 6;
+  UINT32 = 7;
+  UINT64 = 8;
+  FLOAT32 = 9;
+  FLOAT64 = 10;
+  BOOLEAN = 11;
+  CHAR = 12;
+  VARSIZED = 13;
+  // Event-time field (milliseconds), appears in Substrait as precision_timestamp<3>. Fields used in DESCRIPTOR(...)
+  // are treated as TIMESTAMP_MS automatically, because TUMBLE/HOP only accept timestamps.
+  TIMESTAMP_MS = 14;
+}
+
+message Field {
+  string name = 1;
+  FieldType type = 2;
+  bool nullable = 3;
+}
+
+message Source {
+  string name = 1;
+  repeated Field fields = 2;
+  // For physical plans (PlanRequest.physical): the physical sources of this logical source.
+  repeated PhysicalSource physical_sources = 3;
+}
+
+message PhysicalSource {
+  uint64 id = 1;
+  // The names of the fields the source emits, in the order of Source.fields, as our engine names them.
+  repeated string field_names = 2;
+  // The worker the source runs on. Required with PlanRequest.topology.
+  string host = 3;
+}
+
+// A worker of the topology, for placing a physical plan.
+message Worker {
+  string host = 1;
+  // How many operators the worker can run; 0: no limit.
+  uint64 max_operators = 2;
+  // The workers it can send data to.
+  repeated string downstream = 3;
+}
+
+message PlanRequest {
+  string sql = 1;
+  repeated Source sources = 2;
+  // All sources are finite (e.g. test tables). Joins and aggregations without a window then get a GLOBAL window that
+  // spans the whole input and fires at the end of the stream. Without it, they are rejected.
+  bool finite_inputs = 3;
+  // Plan down to physical operators (PhysicalOperator payloads), which the engine instantiates without optimizing.
+  bool physical = 4;
+  // Physical plans: place the pipelines on these workers (see Placement). Without a topology, the plan is not placed and
+  // runs on one worker.
+  repeated Worker topology = 5;
+  // The worker the sink runs on. Required with topology.
+  string sink_host = 6;
+  // For inspection: add a graph to each step, and the plan after each rule of the rule-based steps (PlanStep.rules).
+  bool detailed_steps = 7;
+}
+
+message PlanResponse {
+  // Serialized substrait.Plan.
+  bytes substrait_plan = 1;
+  // Calcite's optimized plan, for debugging only.
+  string explain = 2;
+  // Set instead of the plan when the query is invalid or unsupported. Only the native library uses it; the service
+  // fails the call instead.
+  string error = 3;
+  // The error is a valid query that NebulaStream cannot run (yet), rather than an invalid one.
+  bool unsupported = 4;
+  // The plan after each step of the planner, in order; for inspection only.
+  repeated PlanStep steps = 5;
+}
+
+message PlanStep {
+  string name = 1;
+  // Calcite's plan after the step (RelOptUtil.toString).
+  string plan = 2;
+  // With detailed_steps: the plan as a Graphviz graph (DOT).
+  string dot = 3;
+  // With detailed_steps, for a step that applies rules: the plan after each rule that changed it, in order.
+  repeated RuleApplication rules = 4;
+  // Who does the step: Calcite, our code, or rules (Calcite's and ours) that we selected.
+  string origin = 5;
+}
+
+message RuleApplication {
+  string rule = 1;
+  string plan = 2;
+  // The changed operator is highlighted.
+  string dot = 3;
+  // The rule is ours (package nes.calcite), not one of Calcite's.
+  bool ours = 4;
+}
+
+// Payload (google.protobuf.Any) of the Substrait ExtensionSingleRel emitted for a windowed aggregation,
+// i.e. Aggregate(GROUP BY window_start/window_end, ...) over TUMBLE/HOP.
+//
+// Field indices refer to the input relation. Output columns are, in order:
+//   window_start, window_end, group_keys..., aggregates...
+message WindowAggregate {
+  enum Kind {
+    TUMBLING = 0;
+    SLIDING = 1;
+    // One window over the whole (finite) input, firing at the end of the stream; only with finite_inputs.
+    // size_ms, slide_ms and the time fields are unused.
+    GLOBAL = 2;
+  }
+
+  enum Function {
+    SUM = 0;
+    COUNT = 1;
+    MIN = 2;
+    MAX = 3;
+    AVG = 4;
+  }
+
+  message Aggregate {
+    Function function = 1;
+    // Unset for COUNT(*).
+    optional uint32 field = 2;
+    // Calcite's result type (SqlTypeName, e.g. BIGINT, DOUBLE) and nullability. The result is cast to it, because our
+    // aggregations type their results differently (e.g. an unsigned COUNT, a DOUBLE AVG of integers).
+    string type = 3;
+    bool nullable = 4;
+  }
+
+  Kind kind = 1;
+  uint32 time_field = 2;
+  uint64 size_ms = 3;
+  // Equal to size_ms for tumbling windows.
+  uint64 slide_ms = 4;
+  repeated uint32 group_keys = 5;
+  repeated Aggregate aggregates = 6;
+  // GLOBAL without group keys: like SQL, emit one row (counts 0, every other aggregation NULL) even if no row arrives.
+  bool emit_on_empty_input = 7;
+}
+
+// Payload (google.protobuf.Any) of the Substrait ExtensionMultiRel emitted for a windowed join of two streams, i.e.
+// Join(TUMBLE|HOP(left), TUMBLE|HOP(right)) ON left.window_start = right.window_start AND ... .
+//
+// Inputs: [left, right]. Output columns are, in order: window_start, window_end, left columns..., right columns...
+message WindowJoin {
+  enum Type {
+    INNER = 0;
+    LEFT = 1;
+    RIGHT = 2;
+    FULL = 3;
+  }
+
+  // HASH_JOIN if the join has at least one leftField = rightField key; NESTED_LOOP_JOIN otherwise.
+  enum Implementation {
+    HASH_JOIN = 0;
+    NESTED_LOOP_JOIN = 1;
+  }
+
+  WindowAggregate.Kind kind = 1;
+  uint64 size_ms = 2;
+  uint64 slide_ms = 3;
+  // Index into the left / right input.
+  uint32 left_time_field = 4;
+  uint32 right_time_field = 5;
+  Type type = 6;
+  Implementation implementation = 7;
+  // Over the concatenated inputs [left columns..., right columns...]; the window equalities are already removed.
+  // For HASH_JOIN only the leftField = rightField keys, for NESTED_LOOP_JOIN the whole condition.
+  // Unset if the streams are joined on the window alone.
+  substrait.Expression condition = 8;
+  // HASH_JOIN only: the rest of the condition, evaluated on every pair whose keys match.
+  repeated substrait.Expression residual = 9;
+}
+
+// One physical operator of a physical plan (PlanRequest.physical), the detail of a Substrait extension relation. The
+// planner decides everything, including the pipelines; the engine instantiates each operator as described. Expressions
+// refer to the operator's input by position (Substrait field references); field names are the engine's physical names.
+message PhysicalOperator {
+  message Field {
+    string name = 1;
+    FieldType type = 2;
+    bool nullable = 3;
+  }
+  // SourceScan: reads a physical source; its rows have the given origin. A pipeline of its own.
+  message SourceScan {
+    uint64 physical_source_id = 1;
+    uint64 origin_id = 2;
+  }
+  // Scan: starts a pipeline. Reads the buffers of its inputs as rows of the output schema, field by field in order.
+  // parses_source: its input is a SourceScan, whose raw data (e.g. CSV) it parses into the output schema. Several inputs
+  // (e.g. UNION ALL) all end in an Emit of the same layout.
+  message Scan {
+    bool parses_source = 1;
+  }
+  // Selection: passes the rows for which the predicate is true.
+  message Selection {
+    substrait.Expression predicate = 1;
+  }
+  // Map: computes the expression into the field, which it appends to the row.
+  message Map {
+    string field = 1;
+    substrait.Expression expression = 2;
+  }
+  // Emit: ends a pipeline. Writes the output schema's fields of the row, in this order. for_sink: in the output format of
+  // the sink that follows.
+  message Emit {
+    bool for_sink = 1;
+  }
+  // Sink: the query's sink (the statement's INTO clause). A pipeline of its own.
+  message Sink {}
+  // NetworkSink: sends the buffers of its input over the channel to downstream_host. A pipeline of its own; it ends the
+  // part of a placed plan that runs on one worker.
+  message NetworkSink {
+    string channel = 1;
+    string downstream_host = 2;
+  }
+  // NetworkSource: receives the buffers of the channel from upstream_host, in the native format. The rows keep the
+  // origins, sequence numbers and watermarks they had upstream; origin_id is the first of them. A pipeline of its own.
+  message NetworkSource {
+    string channel = 1;
+    string upstream_host = 2;
+    uint64 origin_id = 3;
+  }
+
+  // WatermarkAssigner: sets the watermark of each buffer from the event time in time_field (milliseconds).
+  message WatermarkAssigner {
+    uint32 time_field = 1;
+  }
+  // One aggregation of a window: the function over the input's field (unset for COUNT(*)); its result has the type of
+  // the probe's output field. include_nulls: COUNT(*) counts rows with NULL in the field.
+  message WindowAggregation {
+    WindowAggregate.Function function = 1;
+    optional uint32 field = 2;
+    bool include_nulls = 3;
+  }
+  // The window of a WindowBuild and its WindowProbe, which share its state (the handler).
+  message Window {
+    // Identifies the shared state within the plan.
+    uint32 handler = 1;
+    WindowAggregate.Kind kind = 2;
+    uint64 size_ms = 3;
+    uint64 slide_ms = 4;
+  }
+  // WindowBuild: ends a pipeline. Adds each row to the state of its window: groups by key_fields, aggregates as given.
+  // Fields are positions in its input; the probe's output schema names the keys and results and gives their types.
+  message WindowBuild {
+    Window window = 1;
+    uint32 time_field = 2;
+    repeated uint32 key_fields = 3;
+    repeated WindowAggregation aggregations = 4;
+    // The output schema of the probe, whose state this build fills.
+    repeated Field probe_schema = 5;
+  }
+  // WindowProbe: starts a pipeline. Emits a row per window and key when the window closes: window start, window end,
+  // keys, aggregation results (output_schema). Its inputs are the WindowBuilds of its window.
+  message WindowProbe {
+    Window window = 1;
+    uint64 output_origin_id = 2;
+    // The origins of the rows that the builds receive: their watermarks close the windows.
+    repeated uint64 input_origin_ids = 3;
+    // As in its first input (a WindowBuild), whose input gives the argument types.
+    repeated WindowAggregation aggregations = 4;
+  }
+
+  repeated Field output_schema = 1;
+  // The pipeline the operator belongs to; a pipeline's operators form a chain from its first operator.
+  uint32 pipeline = 2;
+  // Placed plans: the worker that runs the operator. A placed plan has one Substrait root per worker part: the Sink, or a
+  // NetworkSink.
+  string host = 3;
+  oneof operator {
+    SourceScan source_scan = 10;
+    Scan scan = 11;
+    Selection selection = 12;
+    Map map = 13;
+    Emit emit = 14;
+    Sink sink = 15;
+    NetworkSink network_sink = 16;
+    NetworkSource network_source = 17;
+    WatermarkAssigner watermark_assigner = 18;
+    WindowBuild window_build = 19;
+    WindowProbe window_probe = 20;
+  }
+}

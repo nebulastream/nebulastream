@@ -363,7 +363,8 @@ void SystestParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (toLowerCase(line).starts_with(toLowerCase(QueryToken)))
+    /// WITH: common table expressions, which only `# calcite` files can plan.
+    if (const auto lower = toLowerCase(line); lower.starts_with(toLowerCase(QueryToken)) or lower.starts_with("with "))
     {
         return TokenType::QUERY;
     }

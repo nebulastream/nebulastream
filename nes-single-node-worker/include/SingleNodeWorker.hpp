@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <PhysicalQuery.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <Util/Pointers.hpp>
@@ -66,6 +67,8 @@ public:
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the started query
     [[nodiscard]] std::expected<QueryId, Exception> startQuery(LogicalPlan plan) noexcept;
+    /// A query planned down to physical operators (e.g. by the Calcite frontend): it is only pipelined and compiled.
+    [[nodiscard]] std::expected<QueryId, Exception> startQuery(PhysicalQuery query) noexcept;
 
     /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query

@@ -1,0 +1,4399 @@
+{
+  "reflection": [
+    {
+      "type": "com.fasterxml.jackson.databind.deser.Deserializers[]"
+    },
+    {
+      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.fasterxml.jackson.databind.ser.Serializers[]"
+    },
+    {
+      "type": "com.google.common.util.concurrent.AbstractFutureState",
+      "fields": [
+        {
+          "name": "listenersField"
+        },
+        {
+          "name": "valueField"
+        },
+        {
+          "name": "waitersField"
+        }
+      ]
+    },
+    {
+      "type": "com.google.common.util.concurrent.AbstractFutureState$Waiter",
+      "fields": [
+        {
+          "name": "next"
+        },
+        {
+          "name": "thread"
+        }
+      ]
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FeatureSet"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions",
+      "methods": [
+        {
+          "name": "getEditionDefaultsList",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTargetsCount",
+          "parameterTypes": []
+        },
+        {
+          "name": "getUninterpretedOptionList",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasCtype",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasDebugRedact",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasDeprecated",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasFeatureSupport",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasFeatures",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasJstype",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasLazy",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasPacked",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasRetention",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasUnverifiedLazy",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasWeak",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions$Builder"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions$CType"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions$EditionDefault"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions$FeatureSupport"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions$JSType"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions$OptionRetention"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$FieldOptions$OptionTargetType"
+    },
+    {
+      "type": "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+    },
+    {
+      "type": "com.google.protobuf.ExtensionRegistry",
+      "methods": [
+        {
+          "name": "getEmptyRegistry",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$AggregateFunction",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$AggregateFunction$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$AggregateFunction$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setImpls",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$AggregateFunctionVariant",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$AggregateFunctionVariant$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$AggregateFunctionVariant$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setArgs",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setDecomposability",
+          "parameterTypes": [
+            "io.substrait.extension.SimpleExtension$Decomposability"
+          ]
+        },
+        {
+          "name": "setDeprecated",
+          "parameterTypes": [
+            "java.util.Optional"
+          ]
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setIntermediate",
+          "parameterTypes": [
+            "io.substrait.function.TypeExpression"
+          ]
+        },
+        {
+          "name": "setNullability",
+          "parameterTypes": [
+            "io.substrait.extension.SimpleExtension$Nullability"
+          ]
+        },
+        {
+          "name": "setOptions",
+          "parameterTypes": [
+            "java.util.Map"
+          ]
+        },
+        {
+          "name": "setOrdered",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        },
+        {
+          "name": "setReturnType",
+          "parameterTypes": [
+            "io.substrait.function.TypeExpression"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$DeprecationStatus",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$DeprecationStatus$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$DeprecationStatus$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setReason",
+          "parameterTypes": [
+            "java.util.Optional"
+          ]
+        },
+        {
+          "name": "setSince",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$EnumArgument",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$EnumArgument$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$EnumArgument$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setOptions",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ExtensionSignatures",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$ExtensionSignatures$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ExtensionSignatures$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setAggregates",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setScalars",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setTypes",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setUrn",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setWindows",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$Option",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$Option$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$Option$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.util.Optional"
+          ]
+        },
+        {
+          "name": "setValues",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ScalarFunction",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$ScalarFunction$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ScalarFunction$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setImpls",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ScalarFunctionVariant",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$ScalarFunctionVariant$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ScalarFunctionVariant$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setArgs",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setDeprecated",
+          "parameterTypes": [
+            "java.util.Optional"
+          ]
+        },
+        {
+          "name": "setNullability",
+          "parameterTypes": [
+            "io.substrait.extension.SimpleExtension$Nullability"
+          ]
+        },
+        {
+          "name": "setOptions",
+          "parameterTypes": [
+            "java.util.Map"
+          ]
+        },
+        {
+          "name": "setReturnType",
+          "parameterTypes": [
+            "io.substrait.function.TypeExpression"
+          ]
+        },
+        {
+          "name": "setVariadic",
+          "parameterTypes": [
+            "java.util.Optional"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$Type",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$Type$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$Type$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.util.Optional"
+          ]
+        },
+        {
+          "name": "setName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setStructure",
+          "parameterTypes": [
+            "java.util.Optional"
+          ]
+        },
+        {
+          "name": "setUrn",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ValueArgument",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$ValueArgument$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$ValueArgument$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setConstant",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setValue",
+          "parameterTypes": [
+            "io.substrait.function.ParameterizedType"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$VariadicBehavior",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$VariadicBehavior$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$VariadicBehavior$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setMin",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$WindowFunction",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$WindowFunction$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$WindowFunction$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setImpls",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$WindowFunctionVariant",
+      "methods": [
+        {
+          "name": "fromJson",
+          "parameterTypes": [
+            "io.substrait.extension.ImmutableSimpleExtension$WindowFunctionVariant$Json"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.ImmutableSimpleExtension$WindowFunctionVariant$Json",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setArgs",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setDecomposability",
+          "parameterTypes": [
+            "io.substrait.extension.SimpleExtension$Decomposability"
+          ]
+        },
+        {
+          "name": "setNullability",
+          "parameterTypes": [
+            "io.substrait.extension.SimpleExtension$Nullability"
+          ]
+        },
+        {
+          "name": "setOptions",
+          "parameterTypes": [
+            "java.util.Map"
+          ]
+        },
+        {
+          "name": "setReturnType",
+          "parameterTypes": [
+            "io.substrait.function.TypeExpression"
+          ]
+        },
+        {
+          "name": "setWindowType",
+          "parameterTypes": [
+            "io.substrait.extension.SimpleExtension$WindowType"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$AggregateFunction"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$AggregateFunctionVariant"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$Argument"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$Decomposability"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$DeprecationStatus"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$EnumArgument"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$ExtensionSignatures"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$Function"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$Nullability"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$Option"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$ScalarFunction"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$ScalarFunctionVariant"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$Type"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$TypeArgument"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$ValueArgument"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$VariadicBehavior"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$VariadicBehavior$ParameterConsistency"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$WindowFunction"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$WindowFunctionVariant"
+    },
+    {
+      "type": "io.substrait.extension.SimpleExtension$WindowType"
+    },
+    {
+      "type": "io.substrait.proto.Expression"
+    },
+    {
+      "type": "java.lang.Boolean",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "getBoolean",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Class",
+      "methods": [
+        {
+          "name": "isRecord",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Comparable"
+    },
+    {
+      "type": "java.lang.Iterable"
+    },
+    {
+      "type": "java.lang.Math"
+    },
+    {
+      "type": "java.lang.Number"
+    },
+    {
+      "type": "java.lang.Object"
+    },
+    {
+      "type": "java.lang.String"
+    },
+    {
+      "type": "java.lang.System"
+    },
+    {
+      "type": "java.lang.invoke.VarHandle"
+    },
+    {
+      "type": "java.math.BigDecimal"
+    },
+    {
+      "type": "java.nio.ByteBuffer"
+    },
+    {
+      "type": "java.sql.Date"
+    },
+    {
+      "type": "java.sql.ResultSet"
+    },
+    {
+      "type": "java.sql.Timestamp"
+    },
+    {
+      "type": "java.util.Arrays"
+    },
+    {
+      "type": "java.util.Collection"
+    },
+    {
+      "type": "java.util.Collections"
+    },
+    {
+      "type": "java.util.Comparator"
+    },
+    {
+      "type": "java.util.Iterator"
+    },
+    {
+      "type": "java.util.List"
+    },
+    {
+      "type": "java.util.Map"
+    },
+    {
+      "type": "java.util.Objects"
+    },
+    {
+      "type": "java.util.TimeZone"
+    },
+    {
+      "type": "java.util.UUID"
+    },
+    {
+      "type": "java.util.function.BiPredicate"
+    },
+    {
+      "type": "java.util.function.Consumer"
+    },
+    {
+      "type": "java.util.function.Function"
+    },
+    {
+      "type": "java.util.function.Predicate"
+    },
+    {
+      "type": "libcore.io.Memory"
+    },
+    {
+      "type": "nes.calcite.proto.WindowAggregate",
+      "methods": [
+        {
+          "name": "getAggregatesList",
+          "parameterTypes": []
+        },
+        {
+          "name": "getEmitOnEmptyInput",
+          "parameterTypes": []
+        },
+        {
+          "name": "getGroupKeysList",
+          "parameterTypes": []
+        },
+        {
+          "name": "getKindValue",
+          "parameterTypes": []
+        },
+        {
+          "name": "getSizeMs",
+          "parameterTypes": []
+        },
+        {
+          "name": "getSlideMs",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTimeField",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "nes.calcite.proto.WindowAggregate$Aggregate",
+      "methods": [
+        {
+          "name": "getField",
+          "parameterTypes": []
+        },
+        {
+          "name": "getFunctionValue",
+          "parameterTypes": []
+        },
+        {
+          "name": "getNullable",
+          "parameterTypes": []
+        },
+        {
+          "name": "getType",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasField",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "nes.calcite.proto.WindowAggregate$Aggregate$Builder"
+    },
+    {
+      "type": "nes.calcite.proto.WindowAggregate$Builder"
+    },
+    {
+      "type": "nes.calcite.proto.WindowAggregate$Function"
+    },
+    {
+      "type": "nes.calcite.proto.WindowAggregate$Kind"
+    },
+    {
+      "type": "nes.calcite.proto.WindowJoin",
+      "methods": [
+        {
+          "name": "getImplementationValue",
+          "parameterTypes": []
+        },
+        {
+          "name": "getKindValue",
+          "parameterTypes": []
+        },
+        {
+          "name": "getLeftTimeField",
+          "parameterTypes": []
+        },
+        {
+          "name": "getResidualList",
+          "parameterTypes": []
+        },
+        {
+          "name": "getRightTimeField",
+          "parameterTypes": []
+        },
+        {
+          "name": "getSizeMs",
+          "parameterTypes": []
+        },
+        {
+          "name": "getSlideMs",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTypeValue",
+          "parameterTypes": []
+        },
+        {
+          "name": "hasCondition",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "nes.calcite.proto.WindowJoin$Builder"
+    },
+    {
+      "type": "nes.calcite.proto.WindowJoin$Implementation"
+    },
+    {
+      "type": "nes.calcite.proto.WindowJoin$Type"
+    },
+    {
+      "type": "org.apache.calcite.DataContext"
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.AggregateLambdaFactory"
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.BasicAggregateLambdaFactory"
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.BasicLazyAccumulator"
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.EnumUtils"
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.LazyAggregateLambdaFactory"
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.MatchUtils"
+    },
+    {
+      "type": "org.apache.calcite.adapter.enumerable.SourceSorter"
+    },
+    {
+      "type": "org.apache.calcite.adapter.java.ReflectiveSchema"
+    },
+    {
+      "type": "org.apache.calcite.adapter.jdbc.JdbcSchema"
+    },
+    {
+      "type": "org.apache.calcite.avatica.util.DateTimeUtils"
+    },
+    {
+      "type": "org.apache.calcite.interpreter.Context"
+    },
+    {
+      "type": "org.apache.calcite.interpreter.Row"
+    },
+    {
+      "type": "org.apache.calcite.interpreter.Scalar"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.AbstractEnumerable"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.Enumerable"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.EnumerableDefaults"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.Enumerator"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.ExtendedEnumerable"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.Linq4j"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.MemoryFactory$Memory"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.Queryable"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.function.Function0"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.function.Function1"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.function.Functions"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.tree.Primitive"
+    },
+    {
+      "type": "org.apache.calcite.linq4j.tree.UnsignedType"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$AllPredicates",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$AllPredicates$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "collations",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getColumnOrigins",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getCumulativeCost",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getDistinctRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.util.ImmutableBitSet",
+            "org.apache.calcite.rex.RexNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Distribution",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Distribution$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "isVisibleInExplain",
+          "parameterTypes": [
+            "org.apache.calcite.sql.SqlExplainLevel"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExpressionLineage",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$ExpressionLineage$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$FunctionalDependency",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$FunctionalDependency$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$InputFieldsUsed",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$InputFieldsUsed$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$LowerBoundCost",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$LowerBoundCost$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Measure",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Measure$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Memory",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Memory$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getMinRowCount",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NodeTypes",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NodeTypes$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getNonCumulativeCost",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Parallelism",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Parallelism$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PercentageOriginalRows",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PercentageOriginalRows$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PopulationSize",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$PopulationSize$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getPredicates",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getRowCount",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getSelectivity",
+          "parameterTypes": [
+            "org.apache.calcite.rex.RexNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Size",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$Size$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$TableReferences",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$TableReferences$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$UniqueKeys",
+      "fields": [
+        {
+          "name": "DEF"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.BuiltInMetadata$UniqueKeys$Handler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.Metadata"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdAllPredicates"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdCollation",
+      "methods": [
+        {
+          "name": "collations",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "collations",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Filter",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "collations",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Project",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "collations",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.TableScan",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "collations",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Values",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdColumnOrigins",
+      "methods": [
+        {
+          "name": "getColumnOrigins",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdColumnUniqueness",
+      "methods": [
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        },
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Aggregate",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        },
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Filter",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        },
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Join",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        },
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Project",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        },
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.SetOp",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        },
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.TableScan",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        },
+        {
+          "name": "areColumnsUnique",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Values",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdDistinctRowCount",
+      "methods": [
+        {
+          "name": "getDistinctRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "org.apache.calcite.rex.RexNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdDistribution"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdExplainVisibility",
+      "methods": [
+        {
+          "name": "isVisibleInExplain",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.sql.SqlExplainLevel"
+          ]
+        },
+        {
+          "name": "isVisibleInExplain",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.TableScan",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.sql.SqlExplainLevel"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdExpressionLineage"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdFunctionalDependency"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdInputFieldsUsed"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdLowerBoundCost"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMaxRowCount",
+      "methods": [
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Aggregate",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Filter",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Join",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Project",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.TableScan",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Union",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMaxRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Values",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMeasure"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMemory"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdMinRowCount",
+      "methods": [
+        {
+          "name": "getMinRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Filter",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getMinRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Project",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdNodeTypes"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdParallelism"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPercentageOriginalRows",
+      "methods": [
+        {
+          "name": "getCumulativeCost",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getNonCumulativeCost",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPercentageOriginalRows$RelMdCumulativeCost"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPercentageOriginalRows$RelMdNonCumulativeCost"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPercentageOriginalRows$RelMdPercentageOriginalRowsHandler"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPopulationSize"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdPredicates",
+      "methods": [
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Aggregate",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Filter",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Join",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Project",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.TableScan",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Union",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getPredicates",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Values",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdRowCount",
+      "methods": [
+        {
+          "name": "getRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Aggregate",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Filter",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Join",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Project",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.TableScan",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        },
+        {
+          "name": "getRowCount",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Values",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdSelectivity",
+      "methods": [
+        {
+          "name": "getSelectivity",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.rex.RexNode"
+          ]
+        },
+        {
+          "name": "getSelectivity",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Join",
+            "org.apache.calcite.rel.metadata.RelMetadataQuery",
+            "org.apache.calcite.rex.RexNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdSize"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdTableReferences"
+    },
+    {
+      "type": "org.apache.calcite.rel.metadata.RelMdUniqueKeys"
+    },
+    {
+      "type": "org.apache.calcite.runtime.ArrayBindable"
+    },
+    {
+      "type": "org.apache.calcite.runtime.BinarySearch"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Bindable"
+    },
+    {
+      "type": "org.apache.calcite.runtime.CompressionFunctions"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Enumerables"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Enumerables$Emitter"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Feature",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.util.Locale",
+            "java.lang.reflect.Method",
+            "java.lang.Object[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.runtime.FlatLists"
+    },
+    {
+      "type": "org.apache.calcite.runtime.FunctionContexts"
+    },
+    {
+      "type": "org.apache.calcite.runtime.JsonFunctions"
+    },
+    {
+      "type": "org.apache.calcite.runtime.JsonFunctions$StatefulFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Matcher"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Matcher$Builder"
+    },
+    {
+      "type": "org.apache.calcite.runtime.PairList$Helper"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Pattern$PatternBuilder"
+    },
+    {
+      "type": "org.apache.calcite.runtime.RandomFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.ResultSetEnumerable"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SortedMultiMap"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SpatialTypeFunctions"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$DateFormatFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$DateFormatFunctionPg"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$DateParseFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$LikeFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$ParseUrlFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$PosixRegexFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$RegexFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$SimilarEscapeFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.SqlFunctions$SimilarFunction"
+    },
+    {
+      "type": "org.apache.calcite.runtime.UrlFunctions"
+    },
+    {
+      "type": "org.apache.calcite.runtime.Utilities"
+    },
+    {
+      "type": "org.apache.calcite.runtime.XmlFunctions"
+    },
+    {
+      "type": "org.apache.calcite.runtime.variant.VariantNull"
+    },
+    {
+      "type": "org.apache.calcite.runtime.variant.VariantSqlValue"
+    },
+    {
+      "type": "org.apache.calcite.runtime.variant.VariantValue"
+    },
+    {
+      "type": "org.apache.calcite.schema.ModifiableTable"
+    },
+    {
+      "type": "org.apache.calcite.schema.QueryableTable"
+    },
+    {
+      "type": "org.apache.calcite.schema.ScannableTable"
+    },
+    {
+      "type": "org.apache.calcite.schema.Schema"
+    },
+    {
+      "type": "org.apache.calcite.schema.SchemaPlus"
+    },
+    {
+      "type": "org.apache.calcite.schema.Schemas"
+    },
+    {
+      "type": "org.apache.calcite.sql.SqlNode[]"
+    },
+    {
+      "type": "org.apache.calcite.sql.fun.SqlLibraryOperators",
+      "fields": [
+        {
+          "name": "ACOSD"
+        },
+        {
+          "name": "ACOSH"
+        },
+        {
+          "name": "ADD_MONTHS"
+        },
+        {
+          "name": "AGE"
+        },
+        {
+          "name": "AGGREGATE"
+        },
+        {
+          "name": "ARRAY"
+        },
+        {
+          "name": "ARRAYS_OVERLAP"
+        },
+        {
+          "name": "ARRAYS_ZIP"
+        },
+        {
+          "name": "ARRAY_AGG"
+        },
+        {
+          "name": "ARRAY_APPEND"
+        },
+        {
+          "name": "ARRAY_COMPACT"
+        },
+        {
+          "name": "ARRAY_CONCAT"
+        },
+        {
+          "name": "ARRAY_CONCAT_AGG"
+        },
+        {
+          "name": "ARRAY_CONTAINS"
+        },
+        {
+          "name": "ARRAY_DISTINCT"
+        },
+        {
+          "name": "ARRAY_EXCEPT"
+        },
+        {
+          "name": "ARRAY_INSERT"
+        },
+        {
+          "name": "ARRAY_INTERSECT"
+        },
+        {
+          "name": "ARRAY_JOIN"
+        },
+        {
+          "name": "ARRAY_LENGTH"
+        },
+        {
+          "name": "ARRAY_MAX"
+        },
+        {
+          "name": "ARRAY_MIN"
+        },
+        {
+          "name": "ARRAY_POSITION"
+        },
+        {
+          "name": "ARRAY_PREPEND"
+        },
+        {
+          "name": "ARRAY_REMOVE"
+        },
+        {
+          "name": "ARRAY_REPEAT"
+        },
+        {
+          "name": "ARRAY_REVERSE"
+        },
+        {
+          "name": "ARRAY_SIZE"
+        },
+        {
+          "name": "ARRAY_SLICE"
+        },
+        {
+          "name": "ARRAY_TO_STRING"
+        },
+        {
+          "name": "ARRAY_UNION"
+        },
+        {
+          "name": "ASIND"
+        },
+        {
+          "name": "ASINH"
+        },
+        {
+          "name": "ATAND"
+        },
+        {
+          "name": "ATANH"
+        },
+        {
+          "name": "BASE64"
+        },
+        {
+          "name": "BIN"
+        },
+        {
+          "name": "BITAND_AGG"
+        },
+        {
+          "name": "BITOR_AGG"
+        },
+        {
+          "name": "BIT_COUNT_BIG_QUERY"
+        },
+        {
+          "name": "BIT_COUNT_MYSQL"
+        },
+        {
+          "name": "BIT_GET"
+        },
+        {
+          "name": "BIT_LENGTH"
+        },
+        {
+          "name": "BOOLAND_AGG"
+        },
+        {
+          "name": "BOOLOR_AGG"
+        },
+        {
+          "name": "BOOL_AND"
+        },
+        {
+          "name": "BOOL_OR"
+        },
+        {
+          "name": "CEIL_BIG_QUERY"
+        },
+        {
+          "name": "CHAR"
+        },
+        {
+          "name": "CHR"
+        },
+        {
+          "name": "CODE_POINTS_TO_BYTES"
+        },
+        {
+          "name": "CODE_POINTS_TO_STRING"
+        },
+        {
+          "name": "COMPRESS"
+        },
+        {
+          "name": "CONCAT2"
+        },
+        {
+          "name": "CONCAT_FUNCTION"
+        },
+        {
+          "name": "CONCAT_FUNCTION_WITH_NULL"
+        },
+        {
+          "name": "CONCAT_WS"
+        },
+        {
+          "name": "CONCAT_WS_MSSQL"
+        },
+        {
+          "name": "CONCAT_WS_POSTGRESQL"
+        },
+        {
+          "name": "CONCAT_WS_SPARK"
+        },
+        {
+          "name": "CONTAINS_SUBSTR"
+        },
+        {
+          "name": "CONVERT_ORACLE"
+        },
+        {
+          "name": "CONVERT_TIMEZONE"
+        },
+        {
+          "name": "COSD"
+        },
+        {
+          "name": "COSH"
+        },
+        {
+          "name": "COTH"
+        },
+        {
+          "name": "COUNTIF"
+        },
+        {
+          "name": "CRC32"
+        },
+        {
+          "name": "CSC"
+        },
+        {
+          "name": "CSCH"
+        },
+        {
+          "name": "CURRENT_DATETIME"
+        },
+        {
+          "name": "DATE"
+        },
+        {
+          "name": "DATEADD"
+        },
+        {
+          "name": "DATEDIFF"
+        },
+        {
+          "name": "DATEPART"
+        },
+        {
+          "name": "DATETIME"
+        },
+        {
+          "name": "DATETIME_ADD"
+        },
+        {
+          "name": "DATETIME_DIFF"
+        },
+        {
+          "name": "DATETIME_SUB"
+        },
+        {
+          "name": "DATETIME_TRUNC"
+        },
+        {
+          "name": "DATE_ADD"
+        },
+        {
+          "name": "DATE_ADD_SPARK"
+        },
+        {
+          "name": "DATE_DIFF"
+        },
+        {
+          "name": "DATE_FROM_UNIX_DATE"
+        },
+        {
+          "name": "DATE_PART"
+        },
+        {
+          "name": "DATE_SUB"
+        },
+        {
+          "name": "DATE_SUB_SPARK"
+        },
+        {
+          "name": "DATE_TRUNC"
+        },
+        {
+          "name": "DAYNAME"
+        },
+        {
+          "name": "DECODE"
+        },
+        {
+          "name": "DIFFERENCE"
+        },
+        {
+          "name": "ENDSWITH"
+        },
+        {
+          "name": "ENDS_WITH"
+        },
+        {
+          "name": "EXISTS"
+        },
+        {
+          "name": "EXISTS_NODE"
+        },
+        {
+          "name": "EXTRACT_VALUE"
+        },
+        {
+          "name": "EXTRACT_XML"
+        },
+        {
+          "name": "FACTORIAL"
+        },
+        {
+          "name": "FIND_IN_SET"
+        },
+        {
+          "name": "FLOOR_BIG_QUERY"
+        },
+        {
+          "name": "FORMAT_DATE"
+        },
+        {
+          "name": "FORMAT_DATETIME"
+        },
+        {
+          "name": "FORMAT_NUMBER"
+        },
+        {
+          "name": "FORMAT_TIME"
+        },
+        {
+          "name": "FORMAT_TIMESTAMP"
+        },
+        {
+          "name": "FROM_BASE32"
+        },
+        {
+          "name": "FROM_BASE64"
+        },
+        {
+          "name": "FROM_HEX"
+        },
+        {
+          "name": "GETBIT"
+        },
+        {
+          "name": "GREATEST"
+        },
+        {
+          "name": "GREATEST_PG"
+        },
+        {
+          "name": "GROUP_CONCAT"
+        },
+        {
+          "name": "HEX"
+        },
+        {
+          "name": "HYPOT"
+        },
+        {
+          "name": "IF"
+        },
+        {
+          "name": "IFNULL"
+        },
+        {
+          "name": "ILIKE"
+        },
+        {
+          "name": "INFIX_CAST"
+        },
+        {
+          "name": "INSTR"
+        },
+        {
+          "name": "IS_INF"
+        },
+        {
+          "name": "IS_NAN"
+        },
+        {
+          "name": "JSON_DEPTH"
+        },
+        {
+          "name": "JSON_INSERT"
+        },
+        {
+          "name": "JSON_KEYS"
+        },
+        {
+          "name": "JSON_LENGTH"
+        },
+        {
+          "name": "JSON_PRETTY"
+        },
+        {
+          "name": "JSON_REMOVE"
+        },
+        {
+          "name": "JSON_REPLACE"
+        },
+        {
+          "name": "JSON_SET"
+        },
+        {
+          "name": "JSON_STORAGE_SIZE"
+        },
+        {
+          "name": "JSON_TYPE"
+        },
+        {
+          "name": "LEAST"
+        },
+        {
+          "name": "LEAST_PG"
+        },
+        {
+          "name": "LEFT"
+        },
+        {
+          "name": "LEN"
+        },
+        {
+          "name": "LENGTH"
+        },
+        {
+          "name": "LEVENSHTEIN"
+        },
+        {
+          "name": "LOG"
+        },
+        {
+          "name": "LOG1P"
+        },
+        {
+          "name": "LOG2"
+        },
+        {
+          "name": "LOGICAL_AND"
+        },
+        {
+          "name": "LOGICAL_OR"
+        },
+        {
+          "name": "LOG_MYSQL"
+        },
+        {
+          "name": "LOG_POSTGRES"
+        },
+        {
+          "name": "LPAD"
+        },
+        {
+          "name": "LTRIM"
+        },
+        {
+          "name": "MAP"
+        },
+        {
+          "name": "MAP_CONCAT"
+        },
+        {
+          "name": "MAP_CONTAINS_KEY"
+        },
+        {
+          "name": "MAP_ENTRIES"
+        },
+        {
+          "name": "MAP_FROM_ARRAYS"
+        },
+        {
+          "name": "MAP_FROM_ENTRIES"
+        },
+        {
+          "name": "MAP_KEYS"
+        },
+        {
+          "name": "MAP_VALUES"
+        },
+        {
+          "name": "MAX_BY"
+        },
+        {
+          "name": "MD5"
+        },
+        {
+          "name": "MIN_BY"
+        },
+        {
+          "name": "MONTHNAME"
+        },
+        {
+          "name": "MSSQL_CONVERT"
+        },
+        {
+          "name": "NOT_ILIKE"
+        },
+        {
+          "name": "NOT_RLIKE"
+        },
+        {
+          "name": "NULL_SAFE_EQUAL"
+        },
+        {
+          "name": "NVL"
+        },
+        {
+          "name": "NVL2"
+        },
+        {
+          "name": "OFFSET"
+        },
+        {
+          "name": "ORDINAL"
+        },
+        {
+          "name": "PARSE_DATE"
+        },
+        {
+          "name": "PARSE_DATETIME"
+        },
+        {
+          "name": "PARSE_TIME"
+        },
+        {
+          "name": "PARSE_TIMESTAMP"
+        },
+        {
+          "name": "PARSE_URL"
+        },
+        {
+          "name": "PERCENTILE_CONT2"
+        },
+        {
+          "name": "PERCENTILE_DISC2"
+        },
+        {
+          "name": "POW"
+        },
+        {
+          "name": "POWER_PG"
+        },
+        {
+          "name": "RANDOM"
+        },
+        {
+          "name": "REGEXP"
+        },
+        {
+          "name": "REGEXP_CONTAINS"
+        },
+        {
+          "name": "REGEXP_EXTRACT"
+        },
+        {
+          "name": "REGEXP_EXTRACT_ALL"
+        },
+        {
+          "name": "REGEXP_INSTR"
+        },
+        {
+          "name": "REGEXP_LIKE"
+        },
+        {
+          "name": "REGEXP_REPLACE_2"
+        },
+        {
+          "name": "REGEXP_REPLACE_3"
+        },
+        {
+          "name": "REGEXP_REPLACE_4"
+        },
+        {
+          "name": "REGEXP_REPLACE_5"
+        },
+        {
+          "name": "REGEXP_REPLACE_5_ORACLE"
+        },
+        {
+          "name": "REGEXP_REPLACE_6"
+        },
+        {
+          "name": "REGEXP_REPLACE_BIG_QUERY_3"
+        },
+        {
+          "name": "REGEXP_REPLACE_PG_3"
+        },
+        {
+          "name": "REGEXP_REPLACE_PG_4"
+        },
+        {
+          "name": "REGEXP_SUBSTR"
+        },
+        {
+          "name": "REPEAT"
+        },
+        {
+          "name": "REVERSE"
+        },
+        {
+          "name": "REVERSE_SPARK"
+        },
+        {
+          "name": "RIGHT"
+        },
+        {
+          "name": "RLIKE"
+        },
+        {
+          "name": "RPAD"
+        },
+        {
+          "name": "RTRIM"
+        },
+        {
+          "name": "SAFE_ADD"
+        },
+        {
+          "name": "SAFE_CAST"
+        },
+        {
+          "name": "SAFE_DIVIDE"
+        },
+        {
+          "name": "SAFE_MULTIPLY"
+        },
+        {
+          "name": "SAFE_NEGATE"
+        },
+        {
+          "name": "SAFE_OFFSET"
+        },
+        {
+          "name": "SAFE_ORDINAL"
+        },
+        {
+          "name": "SAFE_SUBTRACT"
+        },
+        {
+          "name": "SEC"
+        },
+        {
+          "name": "SECH"
+        },
+        {
+          "name": "SHA1"
+        },
+        {
+          "name": "SHA256"
+        },
+        {
+          "name": "SHA512"
+        },
+        {
+          "name": "SIND"
+        },
+        {
+          "name": "SINH"
+        },
+        {
+          "name": "SORT_ARRAY"
+        },
+        {
+          "name": "SOUNDEX"
+        },
+        {
+          "name": "SOUNDEX_SPARK"
+        },
+        {
+          "name": "SPACE"
+        },
+        {
+          "name": "SPLIT"
+        },
+        {
+          "name": "SPLIT_PART"
+        },
+        {
+          "name": "STARTSWITH"
+        },
+        {
+          "name": "STARTS_WITH"
+        },
+        {
+          "name": "STRCMP"
+        },
+        {
+          "name": "STRING_AGG"
+        },
+        {
+          "name": "STRING_TO_ARRAY"
+        },
+        {
+          "name": "STRPOS"
+        },
+        {
+          "name": "STR_TO_MAP"
+        },
+        {
+          "name": "SUBSTRING_INDEX"
+        },
+        {
+          "name": "SUBSTR_BIG_QUERY"
+        },
+        {
+          "name": "SUBSTR_MYSQL"
+        },
+        {
+          "name": "SUBSTR_ORACLE"
+        },
+        {
+          "name": "SUBSTR_POSTGRESQL"
+        },
+        {
+          "name": "SYSDATE"
+        },
+        {
+          "name": "SYSTIMESTAMP"
+        },
+        {
+          "name": "TAND"
+        },
+        {
+          "name": "TANH"
+        },
+        {
+          "name": "TIME"
+        },
+        {
+          "name": "TIMESTAMP"
+        },
+        {
+          "name": "TIMESTAMP_ADD2"
+        },
+        {
+          "name": "TIMESTAMP_DIFF3"
+        },
+        {
+          "name": "TIMESTAMP_MICROS"
+        },
+        {
+          "name": "TIMESTAMP_MILLIS"
+        },
+        {
+          "name": "TIMESTAMP_SECONDS"
+        },
+        {
+          "name": "TIMESTAMP_SUB"
+        },
+        {
+          "name": "TIMESTAMP_TRUNC"
+        },
+        {
+          "name": "TIME_ADD"
+        },
+        {
+          "name": "TIME_DIFF"
+        },
+        {
+          "name": "TIME_SUB"
+        },
+        {
+          "name": "TIME_TRUNC"
+        },
+        {
+          "name": "TO_BASE32"
+        },
+        {
+          "name": "TO_BASE64"
+        },
+        {
+          "name": "TO_CHAR"
+        },
+        {
+          "name": "TO_CHAR_PG"
+        },
+        {
+          "name": "TO_CODE_POINTS"
+        },
+        {
+          "name": "TO_DATE"
+        },
+        {
+          "name": "TO_DATE_PG"
+        },
+        {
+          "name": "TO_HEX"
+        },
+        {
+          "name": "TO_TIMESTAMP"
+        },
+        {
+          "name": "TO_TIMESTAMP_PG"
+        },
+        {
+          "name": "TRANSLATE3"
+        },
+        {
+          "name": "TRUNC_BIG_QUERY"
+        },
+        {
+          "name": "TRY_CAST"
+        },
+        {
+          "name": "UNIX_DATE"
+        },
+        {
+          "name": "UNIX_MICROS"
+        },
+        {
+          "name": "UNIX_MILLIS"
+        },
+        {
+          "name": "UNIX_SECONDS"
+        },
+        {
+          "name": "UN_BASE64"
+        },
+        {
+          "name": "URL_DECODE"
+        },
+        {
+          "name": "URL_ENCODE"
+        },
+        {
+          "name": "XML_TRANSFORM"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.sql.fun.SqlStdOperatorTable",
+      "fields": [
+        {
+          "name": "ABS"
+        },
+        {
+          "name": "ACOS"
+        },
+        {
+          "name": "ALL_EQ"
+        },
+        {
+          "name": "ALL_GE"
+        },
+        {
+          "name": "ALL_GT"
+        },
+        {
+          "name": "ALL_LE"
+        },
+        {
+          "name": "ALL_LT"
+        },
+        {
+          "name": "ALL_NE"
+        },
+        {
+          "name": "AND"
+        },
+        {
+          "name": "ANY_VALUE"
+        },
+        {
+          "name": "APPROX_COUNT_DISTINCT"
+        },
+        {
+          "name": "ARGUMENT_ASSIGNMENT"
+        },
+        {
+          "name": "ARG_MAX"
+        },
+        {
+          "name": "ARG_MIN"
+        },
+        {
+          "name": "ARRAY_QUERY"
+        },
+        {
+          "name": "ARRAY_VALUE_CONSTRUCTOR"
+        },
+        {
+          "name": "AS"
+        },
+        {
+          "name": "ASCII"
+        },
+        {
+          "name": "ASIN"
+        },
+        {
+          "name": "ATAN"
+        },
+        {
+          "name": "ATAN2"
+        },
+        {
+          "name": "AVG"
+        },
+        {
+          "name": "BETWEEN"
+        },
+        {
+          "name": "BITAND"
+        },
+        {
+          "name": "BITAND_OPERATOR"
+        },
+        {
+          "name": "BITCOUNT"
+        },
+        {
+          "name": "BITNOT"
+        },
+        {
+          "name": "BITOR"
+        },
+        {
+          "name": "BITXOR"
+        },
+        {
+          "name": "BITXOR_OPERATOR"
+        },
+        {
+          "name": "BIT_AND"
+        },
+        {
+          "name": "BIT_LEFT_SHIFT"
+        },
+        {
+          "name": "BIT_OR"
+        },
+        {
+          "name": "BIT_XOR"
+        },
+        {
+          "name": "CARDINALITY"
+        },
+        {
+          "name": "CASE"
+        },
+        {
+          "name": "CAST"
+        },
+        {
+          "name": "CBRT"
+        },
+        {
+          "name": "CEIL"
+        },
+        {
+          "name": "CHARACTER_LENGTH"
+        },
+        {
+          "name": "CHAR_LENGTH"
+        },
+        {
+          "name": "CHECKED_DIVIDE"
+        },
+        {
+          "name": "CHECKED_DIVIDE_INTEGER"
+        },
+        {
+          "name": "CHECKED_MINUS"
+        },
+        {
+          "name": "CHECKED_MULTIPLY"
+        },
+        {
+          "name": "CHECKED_PLUS"
+        },
+        {
+          "name": "CHECKED_UNARY_MINUS"
+        },
+        {
+          "name": "CLASSIFIER"
+        },
+        {
+          "name": "COALESCE"
+        },
+        {
+          "name": "COLLECT"
+        },
+        {
+          "name": "COLLECTION_TABLE"
+        },
+        {
+          "name": "COLON"
+        },
+        {
+          "name": "COLUMN_LIST"
+        },
+        {
+          "name": "CONCAT"
+        },
+        {
+          "name": "CONTAINS"
+        },
+        {
+          "name": "CONVERT"
+        },
+        {
+          "name": "COS"
+        },
+        {
+          "name": "COT"
+        },
+        {
+          "name": "COUNT"
+        },
+        {
+          "name": "COVAR_POP"
+        },
+        {
+          "name": "COVAR_SAMP"
+        },
+        {
+          "name": "CUBE"
+        },
+        {
+          "name": "CUME_DIST"
+        },
+        {
+          "name": "CURRENT_CATALOG"
+        },
+        {
+          "name": "CURRENT_DATE"
+        },
+        {
+          "name": "CURRENT_PATH"
+        },
+        {
+          "name": "CURRENT_ROLE"
+        },
+        {
+          "name": "CURRENT_SCHEMA"
+        },
+        {
+          "name": "CURRENT_TIME"
+        },
+        {
+          "name": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "CURRENT_USER"
+        },
+        {
+          "name": "CURRENT_VALUE"
+        },
+        {
+          "name": "CURSOR"
+        },
+        {
+          "name": "DATETIME_PLUS"
+        },
+        {
+          "name": "DAYOFMONTH"
+        },
+        {
+          "name": "DAYOFWEEK"
+        },
+        {
+          "name": "DAYOFYEAR"
+        },
+        {
+          "name": "DEFAULT"
+        },
+        {
+          "name": "DEGREES"
+        },
+        {
+          "name": "DENSE_RANK"
+        },
+        {
+          "name": "DESC"
+        },
+        {
+          "name": "DESCRIPTOR"
+        },
+        {
+          "name": "DIVIDE"
+        },
+        {
+          "name": "DIVIDE_INTEGER"
+        },
+        {
+          "name": "DOT"
+        },
+        {
+          "name": "ELEMENT"
+        },
+        {
+          "name": "ELEMENT_SLICE"
+        },
+        {
+          "name": "EQUALS"
+        },
+        {
+          "name": "ESCAPE"
+        },
+        {
+          "name": "EVERY"
+        },
+        {
+          "name": "EXCEPT"
+        },
+        {
+          "name": "EXCEPT_ALL"
+        },
+        {
+          "name": "EXISTS"
+        },
+        {
+          "name": "EXP"
+        },
+        {
+          "name": "EXPLICIT_TABLE"
+        },
+        {
+          "name": "EXTEND"
+        },
+        {
+          "name": "EXTRACT"
+        },
+        {
+          "name": "FILTER"
+        },
+        {
+          "name": "FINAL"
+        },
+        {
+          "name": "FIRST"
+        },
+        {
+          "name": "FIRST_VALUE"
+        },
+        {
+          "name": "FLOOR"
+        },
+        {
+          "name": "FUSION"
+        },
+        {
+          "name": "GREATER_THAN"
+        },
+        {
+          "name": "GREATER_THAN_OR_EQUAL"
+        },
+        {
+          "name": "GROUPING"
+        },
+        {
+          "name": "GROUPING_ID"
+        },
+        {
+          "name": "GROUPING_SETS"
+        },
+        {
+          "name": "GROUP_ID"
+        },
+        {
+          "name": "HISTOGRAM_AGG"
+        },
+        {
+          "name": "HISTOGRAM_FIRST_VALUE"
+        },
+        {
+          "name": "HISTOGRAM_LAST_VALUE"
+        },
+        {
+          "name": "HISTOGRAM_MAX"
+        },
+        {
+          "name": "HISTOGRAM_MIN"
+        },
+        {
+          "name": "HOP"
+        },
+        {
+          "name": "HOP_END"
+        },
+        {
+          "name": "HOP_OLD"
+        },
+        {
+          "name": "HOP_START"
+        },
+        {
+          "name": "HOUR"
+        },
+        {
+          "name": "IGNORE_NULLS"
+        },
+        {
+          "name": "IMMEDIATELY_PRECEDES"
+        },
+        {
+          "name": "IMMEDIATELY_SUCCEEDS"
+        },
+        {
+          "name": "IN"
+        },
+        {
+          "name": "INITCAP"
+        },
+        {
+          "name": "INTERSECT"
+        },
+        {
+          "name": "INTERSECTION"
+        },
+        {
+          "name": "INTERSECT_ALL"
+        },
+        {
+          "name": "INTERVAL"
+        },
+        {
+          "name": "IS_A_SET"
+        },
+        {
+          "name": "IS_DIFFERENT_FROM"
+        },
+        {
+          "name": "IS_DISTINCT_FROM"
+        },
+        {
+          "name": "IS_EMPTY"
+        },
+        {
+          "name": "IS_FALSE"
+        },
+        {
+          "name": "IS_JSON_ARRAY"
+        },
+        {
+          "name": "IS_JSON_OBJECT"
+        },
+        {
+          "name": "IS_JSON_SCALAR"
+        },
+        {
+          "name": "IS_JSON_VALUE"
+        },
+        {
+          "name": "IS_NOT_A_SET"
+        },
+        {
+          "name": "IS_NOT_DISTINCT_FROM"
+        },
+        {
+          "name": "IS_NOT_EMPTY"
+        },
+        {
+          "name": "IS_NOT_FALSE"
+        },
+        {
+          "name": "IS_NOT_JSON_ARRAY"
+        },
+        {
+          "name": "IS_NOT_JSON_OBJECT"
+        },
+        {
+          "name": "IS_NOT_JSON_SCALAR"
+        },
+        {
+          "name": "IS_NOT_JSON_VALUE"
+        },
+        {
+          "name": "IS_NOT_NULL"
+        },
+        {
+          "name": "IS_NOT_TRUE"
+        },
+        {
+          "name": "IS_NOT_UNKNOWN"
+        },
+        {
+          "name": "IS_NULL"
+        },
+        {
+          "name": "IS_TRUE"
+        },
+        {
+          "name": "IS_UNKNOWN"
+        },
+        {
+          "name": "ITEM"
+        },
+        {
+          "name": "JSON_ARRAY"
+        },
+        {
+          "name": "JSON_ARRAYAGG"
+        },
+        {
+          "name": "JSON_DEPTH"
+        },
+        {
+          "name": "JSON_EXISTS"
+        },
+        {
+          "name": "JSON_INSERT"
+        },
+        {
+          "name": "JSON_KEYS"
+        },
+        {
+          "name": "JSON_LENGTH"
+        },
+        {
+          "name": "JSON_OBJECT"
+        },
+        {
+          "name": "JSON_OBJECTAGG"
+        },
+        {
+          "name": "JSON_PRETTY"
+        },
+        {
+          "name": "JSON_QUERY"
+        },
+        {
+          "name": "JSON_REMOVE"
+        },
+        {
+          "name": "JSON_REPLACE"
+        },
+        {
+          "name": "JSON_SET"
+        },
+        {
+          "name": "JSON_STORAGE_SIZE"
+        },
+        {
+          "name": "JSON_TYPE"
+        },
+        {
+          "name": "JSON_TYPE_OPERATOR"
+        },
+        {
+          "name": "JSON_VALUE"
+        },
+        {
+          "name": "JSON_VALUE_EXPRESSION"
+        },
+        {
+          "name": "LAG"
+        },
+        {
+          "name": "LAST"
+        },
+        {
+          "name": "LAST_DAY"
+        },
+        {
+          "name": "LAST_VALUE"
+        },
+        {
+          "name": "LATERAL"
+        },
+        {
+          "name": "LEAD"
+        },
+        {
+          "name": "LEFTSHIFT"
+        },
+        {
+          "name": "LESS_THAN"
+        },
+        {
+          "name": "LESS_THAN_OR_EQUAL"
+        },
+        {
+          "name": "LIKE"
+        },
+        {
+          "name": "LISTAGG"
+        },
+        {
+          "name": "LITERAL_CHAIN"
+        },
+        {
+          "name": "LN"
+        },
+        {
+          "name": "LOCALTIME"
+        },
+        {
+          "name": "LOCALTIMESTAMP"
+        },
+        {
+          "name": "LOG10"
+        },
+        {
+          "name": "LOWER"
+        },
+        {
+          "name": "MAP_QUERY"
+        },
+        {
+          "name": "MAP_VALUE_CONSTRUCTOR"
+        },
+        {
+          "name": "MATCH_NUMBER"
+        },
+        {
+          "name": "MAX"
+        },
+        {
+          "name": "MEMBER_OF"
+        },
+        {
+          "name": "MIN"
+        },
+        {
+          "name": "MINUS"
+        },
+        {
+          "name": "MINUS_DATE"
+        },
+        {
+          "name": "MINUTE"
+        },
+        {
+          "name": "MOD"
+        },
+        {
+          "name": "MODE"
+        },
+        {
+          "name": "MONTH"
+        },
+        {
+          "name": "MULTIPLY"
+        },
+        {
+          "name": "MULTISET_EXCEPT"
+        },
+        {
+          "name": "MULTISET_EXCEPT_DISTINCT"
+        },
+        {
+          "name": "MULTISET_INTERSECT"
+        },
+        {
+          "name": "MULTISET_INTERSECT_DISTINCT"
+        },
+        {
+          "name": "MULTISET_QUERY"
+        },
+        {
+          "name": "MULTISET_UNION"
+        },
+        {
+          "name": "MULTISET_UNION_DISTINCT"
+        },
+        {
+          "name": "MULTISET_VALUE"
+        },
+        {
+          "name": "NEGATED_POSIX_REGEX_CASE_INSENSITIVE"
+        },
+        {
+          "name": "NEGATED_POSIX_REGEX_CASE_SENSITIVE"
+        },
+        {
+          "name": "NEW"
+        },
+        {
+          "name": "NEXT"
+        },
+        {
+          "name": "NEXT_VALUE"
+        },
+        {
+          "name": "NOT"
+        },
+        {
+          "name": "NOT_BETWEEN"
+        },
+        {
+          "name": "NOT_EQUALS"
+        },
+        {
+          "name": "NOT_IN"
+        },
+        {
+          "name": "NOT_LIKE"
+        },
+        {
+          "name": "NOT_SIMILAR_TO"
+        },
+        {
+          "name": "NOT_SUBMULTISET_OF"
+        },
+        {
+          "name": "NTH_VALUE"
+        },
+        {
+          "name": "NTILE"
+        },
+        {
+          "name": "NULLIF"
+        },
+        {
+          "name": "NULLS_FIRST"
+        },
+        {
+          "name": "NULLS_LAST"
+        },
+        {
+          "name": "OCTET_LENGTH"
+        },
+        {
+          "name": "OR"
+        },
+        {
+          "name": "OVER"
+        },
+        {
+          "name": "OVERLAPS"
+        },
+        {
+          "name": "OVERLAY"
+        },
+        {
+          "name": "PATTERN_ALTER"
+        },
+        {
+          "name": "PATTERN_CONCAT"
+        },
+        {
+          "name": "PATTERN_EXCLUDE"
+        },
+        {
+          "name": "PATTERN_PERMUTE"
+        },
+        {
+          "name": "PATTERN_QUANTIFIER"
+        },
+        {
+          "name": "PERCENTILE_CONT"
+        },
+        {
+          "name": "PERCENTILE_DISC"
+        },
+        {
+          "name": "PERCENT_RANK"
+        },
+        {
+          "name": "PERCENT_REMAINDER"
+        },
+        {
+          "name": "PERIOD_EQUALS"
+        },
+        {
+          "name": "PI"
+        },
+        {
+          "name": "PLUS"
+        },
+        {
+          "name": "POSITION"
+        },
+        {
+          "name": "POSIX_REGEX_CASE_INSENSITIVE"
+        },
+        {
+          "name": "POSIX_REGEX_CASE_SENSITIVE"
+        },
+        {
+          "name": "POWER"
+        },
+        {
+          "name": "PRECEDES"
+        },
+        {
+          "name": "PREV"
+        },
+        {
+          "name": "PROCEDURE_CALL"
+        },
+        {
+          "name": "QUANTIFY_OPERATORS"
+        },
+        {
+          "name": "QUARTER"
+        },
+        {
+          "name": "RADIANS"
+        },
+        {
+          "name": "RAND"
+        },
+        {
+          "name": "RAND_INTEGER"
+        },
+        {
+          "name": "RANK"
+        },
+        {
+          "name": "REGR_COUNT"
+        },
+        {
+          "name": "REGR_SXX"
+        },
+        {
+          "name": "REGR_SYY"
+        },
+        {
+          "name": "REINTERPRET"
+        },
+        {
+          "name": "REPLACE"
+        },
+        {
+          "name": "RESPECT_NULLS"
+        },
+        {
+          "name": "ROLLUP"
+        },
+        {
+          "name": "ROUND"
+        },
+        {
+          "name": "ROW"
+        },
+        {
+          "name": "ROW_NUMBER"
+        },
+        {
+          "name": "RUNNING"
+        },
+        {
+          "name": "SCALAR_QUERY"
+        },
+        {
+          "name": "SEARCH"
+        },
+        {
+          "name": "SECOND"
+        },
+        {
+          "name": "SESSION"
+        },
+        {
+          "name": "SESSION_END"
+        },
+        {
+          "name": "SESSION_OLD"
+        },
+        {
+          "name": "SESSION_START"
+        },
+        {
+          "name": "SESSION_USER"
+        },
+        {
+          "name": "SET_SEMANTICS_TABLE"
+        },
+        {
+          "name": "SIGN"
+        },
+        {
+          "name": "SIMILAR_TO"
+        },
+        {
+          "name": "SIN"
+        },
+        {
+          "name": "SINGLE_VALUE"
+        },
+        {
+          "name": "SLICE"
+        },
+        {
+          "name": "SOME"
+        },
+        {
+          "name": "SOME_EQ"
+        },
+        {
+          "name": "SOME_GE"
+        },
+        {
+          "name": "SOME_GT"
+        },
+        {
+          "name": "SOME_LE"
+        },
+        {
+          "name": "SOME_LT"
+        },
+        {
+          "name": "SOME_NE"
+        },
+        {
+          "name": "SQRT"
+        },
+        {
+          "name": "STDDEV"
+        },
+        {
+          "name": "STDDEV_POP"
+        },
+        {
+          "name": "STDDEV_SAMP"
+        },
+        {
+          "name": "STRUCT_ACCESS"
+        },
+        {
+          "name": "SUBMULTISET_OF"
+        },
+        {
+          "name": "SUBSTRING"
+        },
+        {
+          "name": "SUCCEEDS"
+        },
+        {
+          "name": "SUM"
+        },
+        {
+          "name": "SUM0"
+        },
+        {
+          "name": "SYMMETRIC_BETWEEN"
+        },
+        {
+          "name": "SYMMETRIC_NOT_BETWEEN"
+        },
+        {
+          "name": "SYSTEM_USER"
+        },
+        {
+          "name": "TABLESAMPLE"
+        },
+        {
+          "name": "TAN"
+        },
+        {
+          "name": "THROW"
+        },
+        {
+          "name": "TIMESTAMP_ADD"
+        },
+        {
+          "name": "TIMESTAMP_DIFF"
+        },
+        {
+          "name": "TRANSLATE"
+        },
+        {
+          "name": "TRIM"
+        },
+        {
+          "name": "TRUNCATE"
+        },
+        {
+          "name": "TUMBLE"
+        },
+        {
+          "name": "TUMBLE_END"
+        },
+        {
+          "name": "TUMBLE_OLD"
+        },
+        {
+          "name": "TUMBLE_START"
+        },
+        {
+          "name": "TYPEOF"
+        },
+        {
+          "name": "UNARY_MINUS"
+        },
+        {
+          "name": "UNARY_PLUS"
+        },
+        {
+          "name": "UNION"
+        },
+        {
+          "name": "UNION_ALL"
+        },
+        {
+          "name": "UNIQUE"
+        },
+        {
+          "name": "UNNEST"
+        },
+        {
+          "name": "UNNEST_WITH_ORDINALITY"
+        },
+        {
+          "name": "UPPER"
+        },
+        {
+          "name": "USER"
+        },
+        {
+          "name": "VALUES"
+        },
+        {
+          "name": "VARIANCE"
+        },
+        {
+          "name": "VARIANTNULL"
+        },
+        {
+          "name": "VAR_POP"
+        },
+        {
+          "name": "VAR_SAMP"
+        },
+        {
+          "name": "WEEK"
+        },
+        {
+          "name": "WITHIN_DISTINCT"
+        },
+        {
+          "name": "WITHIN_GROUP"
+        },
+        {
+          "name": "YEAR"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.sql.pretty.SqlPrettyWriter"
+    },
+    {
+      "type": "org.apache.calcite.sql.util.ReflectiveSqlOperatorTable",
+      "fields": [
+        {
+          "name": "IS_NAME"
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelDecorrelator",
+      "methods": [
+        {
+          "name": "decorrelateRel",
+          "parameterTypes": [
+            "org.apache.calcite.rel.RelNode",
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "name": "decorrelateRel",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalAggregate",
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "name": "decorrelateRel",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalCorrelate",
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "name": "decorrelateRel",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalFilter",
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "name": "decorrelateRel",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalJoin",
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "name": "decorrelateRel",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalProject",
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "name": "decorrelateRel",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalTableFunctionScan",
+            "boolean",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.RelFieldTrimmer",
+      "methods": [
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Aggregate",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        },
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Filter",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        },
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Join",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        },
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.Project",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        },
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.SetOp",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        },
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.core.TableScan",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        },
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalTableFunctionScan",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        },
+        {
+          "name": "trimFields",
+          "parameterTypes": [
+            "org.apache.calcite.rel.logical.LogicalValues",
+            "org.apache.calcite.util.ImmutableBitSet",
+            "java.util.Set"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable",
+      "methods": [
+        {
+          "name": "convertBetween",
+          "parameterTypes": [
+            "org.apache.calcite.sql2rel.SqlRexContext",
+            "org.apache.calcite.sql.fun.SqlBetweenOperator",
+            "org.apache.calcite.sql.SqlCall"
+          ]
+        },
+        {
+          "name": "convertCall",
+          "parameterTypes": [
+            "org.apache.calcite.sql2rel.SqlRexContext",
+            "org.apache.calcite.sql.SqlCall"
+          ]
+        },
+        {
+          "name": "convertCase",
+          "parameterTypes": [
+            "org.apache.calcite.sql2rel.SqlRexContext",
+            "org.apache.calcite.sql.fun.SqlCase"
+          ]
+        },
+        {
+          "name": "convertFunction",
+          "parameterTypes": [
+            "org.apache.calcite.sql2rel.SqlRexContext",
+            "org.apache.calcite.sql.SqlFunction",
+            "org.apache.calcite.sql.SqlCall"
+          ]
+        },
+        {
+          "name": "convertWindowFunction",
+          "parameterTypes": [
+            "org.apache.calcite.sql2rel.SqlRexContext",
+            "org.apache.calcite.sql.SqlWindowTableFunction",
+            "org.apache.calcite.sql.SqlCall"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.apache.calcite.util.ImmutableIntList"
+    },
+    {
+      "type": "org.robolectric.Robolectric"
+    },
+    {
+      "type": "org.slf4j.nop.NOPServiceProvider"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en_US"
+    },
+    {
+      "type": "sun.util.resources.cldr.CalendarData"
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$AllPredicates$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Collation$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnOrigin$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ColumnUniqueness$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$CumulativeCost$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$DistinctRowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Distribution$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ExplainVisibility$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$ExpressionLineage$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$FunctionalDependency$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$InputFieldsUsed$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$LowerBoundCost$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MaxRowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Measure$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Memory$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$MinRowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$NodeTypes$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$NonCumulativeCost$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Parallelism$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$PercentageOriginalRows$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$PopulationSize$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Predicates$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$RowCount$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Selectivity$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$Size$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$TableReferences$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.rel.metadata.BuiltInMetadata$UniqueKeys$Handler"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.apache.calcite.runtime.CalciteResource"
+        ]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
+    },
+    {
+      "glob": "saffron.properties"
+    },
+    {
+      "glob": "substrait/extensions/functions_aggregate_approx.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_aggregate_generic.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_arithmetic.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_arithmetic_decimal.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_boolean.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_comparison.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_datetime.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_list.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_logarithmic.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_rounding.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_rounding_decimal.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_set.yaml"
+    },
+    {
+      "glob": "substrait/extensions/functions_string.yaml"
+    },
+    {
+      "glob": "substrait/extensions/unsigned_integers.yaml"
+    }
+  ]
+}

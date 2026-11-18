@@ -1,0 +1,82 @@
+# calcite
+# name: calcite/Null.test
+# description: NULL literals under the Calcite frontend; Calcite types each NULL by its context
+# groups: [Calcite]
+
+CREATE LOGICAL SOURCE t(a INT64, b INT64);
+CREATE PHYSICAL SOURCE FOR t TYPE File;
+ATTACH INLINE
+1,10
+2,20
+3,
+
+SELECT a, a + NULL FROM t INTO File();
+----
+1,NULL
+2,NULL
+3,NULL
+
+SELECT a, CAST(NULL AS INTEGER) FROM t WHERE a = 1 INTO File();
+----
+1,NULL
+
+# CASE without ELSE is ELSE NULL.
+SELECT a, CASE WHEN a > 1 THEN b END FROM t INTO File();
+----
+1,NULL
+2,20
+3,NULL
+
+SELECT a, NULLIF(a, 2) FROM t INTO File();
+----
+1,1
+2,NULL
+3,3
+
+SELECT a, COALESCE(b, a) FROM t INTO File();
+----
+1,10
+2,20
+3,3
+
+SELECT a, CASE WHEN a = 1 THEN NULL ELSE b END FROM t INTO File();
+----
+1,NULL
+2,20
+3,NULL
+
+# A comparison with NULL is never true.
+SELECT a FROM t WHERE a = NULL INTO File();
+----
+
+SELECT a FROM t WHERE a IN (1, NULL) INTO File();
+----
+1
+
+SELECT a FROM t WHERE NOT a IN (1, NULL) INTO File();
+----
+
+CREATE LOGICAL SOURCE u(a INT64, b INT64);
+CREATE PHYSICAL SOURCE FOR u TYPE File;
+ATTACH INLINE
+2,0
+3,0
+4,0
+
+# INTERSECT and EXCEPT count each side with COUNT(CASE WHEN ... THEN 1 END), i.e. with NULL.
+SELECT a FROM t INTERSECT SELECT a FROM u INTO File();
+----
+2
+3
+
+SELECT a FROM t EXCEPT SELECT a FROM u INTO File();
+----
+1
+
+# Without context a NULL has no type; NULL < NULL is still NULL, so NOT (NULL < NULL) keeps no row.
+SELECT a FROM t WHERE NOT NULL < NULL INTO File();
+----
+
+SELECT a, NULL IS NULL FROM t WHERE a = 1 INTO File();
+----
+1,1

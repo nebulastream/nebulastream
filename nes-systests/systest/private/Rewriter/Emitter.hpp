@@ -57,6 +57,8 @@ private:
     void emitTestCases(std::vector<TestCaseStatement> testCases);
 
     [[nodiscard]] RewrittenSql emitSelect(const std::string& sql, SystestQueryId id, std::string_view resultDiscriminator);
+    [[nodiscard]] RewrittenSql emitNesSelect(const std::string& sql, SystestQueryId id, std::string_view resultDiscriminator);
+    [[nodiscard]] RewrittenSql emitCalciteSelect(const std::string& sql, SystestQueryId id, std::string_view resultDiscriminator);
     void emitCreate(ClassifiedCreate create, bool submitsDeclaredSinks);
     void emitQuery(SelectStatement query);
     void emitExplain(ExplainStatement explain);

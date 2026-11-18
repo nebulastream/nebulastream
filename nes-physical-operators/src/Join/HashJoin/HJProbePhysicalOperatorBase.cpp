@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -47,12 +48,14 @@ HJProbePhysicalOperatorBase::HJProbePhysicalOperatorBase(
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
     ChainedHashMapConfig leftHashMapConfig,
-    ChainedHashMapConfig rightHashMapConfig)
+    ChainedHashMapConfig rightHashMapConfig,
+    std::optional<PhysicalFunction> residualFunction)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), std::move(windowMetaData), std::move(joinSchema))
     , leftTupleLayout(std::move(leftTupleLayout))
     , rightTupleLayout(std::move(rightTupleLayout))
     , leftHashMapConfig(std::move(leftHashMapConfig))
     , rightHashMapConfig(std::move(rightHashMapConfig))
+    , residualFunction(std::move(residualFunction))
 {
 }
 
@@ -105,6 +108,10 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                 auto rightItStart = rightPagedVector.begin();
                 auto rightItEnd = rightPagedVector.end();
 
+                if (keyContainsNull(rightEntryRef, rightHashMapConfig))
+                {
+                    continue;
+                }
                 if (const auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef); leftEntry != nullptr)
                 {
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
@@ -122,13 +129,33 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                             const auto rightRecord = *rightIt;
                             auto joinedRecord
                                 = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
-                            executeChild(executionCtx, joinedRecord);
+                            if (not residualFunction.has_value())
+                            {
+                                executeChild(executionCtx, joinedRecord);
+                            }
+                            else if (residualFunction->execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena))
+                            {
+                                executeChild(executionCtx, joinedRecord);
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+
+nautilus::val<bool>
+HJProbePhysicalOperatorBase::keyContainsNull(const ChainedHashMapRef::ChainedEntryRef& entryRef, const ChainedHashMapConfig& hashMapConfig)
+{
+    nautilus::val<bool> containsNull{false};
+    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(hashMapConfig.fieldKeys))
+    {
+        const auto key = entryRef.getKey(fieldIdentifier);
+        containsNull = containsNull or (key.isNullable() and key.isNull());
+    }
+    return containsNull;
 }
 
 }
