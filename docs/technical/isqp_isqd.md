@@ -277,3 +277,18 @@ amendment.
 
 **Deviation:** the original receives topology changes through the coordinator's REST API (`/topology/...`) and batches them in an
 `ISQPRequest`. The port has no REST API; the statements play this role.
+
+## Tests
+
+- Placement (nes-query-optimizer/tests/Placement): decomposition bookkeeping, global execution plan, pinned operators, incremental
+  bottom-up placement, placement removal and addition, amendment phase (incremental, holistic, state migration of a moved join).
+- Topology links, change log and shared query plan, worker catalog capacities and locks (nes-distributed/tests).
+- Reconfiguration marker serialization (nes-common), reconfiguration state (nes-executable), network sink reconfiguration (nes-sinks),
+  draining sources and network sources (nes-sources), marker framing, detach and redirect of channels (nes-network,
+  `reconfiguration_tests.rs`), engine marker injection (nes-query-engine).
+- NLJ state serialization, restore and transfer over a channel (nes-physical-operators, `NLJStateMigrationTest`).
+- `IncrementalPlacementRequestTest` (nes-frontend): embedded workers in one process run a query while a leaf moves; every result must
+  arrive exactly once. Covers a path change, a re-placed operator, a union, a moved join with state migration, parallel amendments
+  (optimistic and pessimistic) and the topology change statements.
+- Docker Compose (`nes-frontend/apps/repl/tests/isqd.bats`, ctest `isqd-repl-tests`, label `DockerCompose`): the REPL drives five gRPC
+  workers in containers; a re-placed selection and a moved join must produce every result exactly once.
