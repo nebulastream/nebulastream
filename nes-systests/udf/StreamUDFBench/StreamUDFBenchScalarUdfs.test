@@ -1,0 +1,388 @@
+# name: udf/StreamUDFBench/StreamUDFBenchScalarUdfs.test
+# description: Each UDFBench scalar UDF in one simple query on the StreamUDFBench tiny dataset, with the UDFs in each execution:
+# OUT_OF_PROCESS, IN_PROCESS and INLINE. The queries only exercise the UDFs. They are not StreamUDFBench queries.
+# UDFs: nes-systests/udf/pyudfs/StreamUDFBench/scalar/<name>.py (UDFBench files, unchanged) via udfbench_scalar.py, and for INLINE
+# via udfbench_scalar_inline.py, which Codon can compile. Data: nes-systests/testdata/large/streamudfbench/tiny (ExternalData).
+# The expected results are those of the UDFBench functions under CPython, applied to each row in Python.
+# groups: [StreamUDFBench, PythonUdf, large]
+
+CREATE LOGICAL SOURCE artifacts(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/query2json_3M.csv
+
+
+# --- EXECUTION OUT_OF_PROCESS ---
+CREATE FUNCTION addnoise_oop (val INT32) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.addnoise';
+CREATE FUNCTION clean_oop (val VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.clean';
+CREATE FUNCTION cleandate_oop (pubdate VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.cleandate';
+CREATE FUNCTION converttoeuro_oop (x FLOAT64, y VARSIZED) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.converttoeuro';
+CREATE FUNCTION extractclass_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractclass';
+CREATE FUNCTION extractcode_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractcode';
+CREATE FUNCTION extractday_oop (arg VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractday';
+CREATE FUNCTION extractfunder_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractfunder';
+CREATE FUNCTION extractid_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractid';
+CREATE FUNCTION extractmonth_oop (arg VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractmonth';
+CREATE FUNCTION extractprojectid_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractprojectid';
+CREATE FUNCTION extractyear_oop (arg VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractyear';
+CREATE FUNCTION filterstopwords_oop (words VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.filterstopwords';
+CREATE FUNCTION frequentterms_oop (input VARSIZED, N INT64) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.frequentterms';
+CREATE FUNCTION jaccard_oop (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jaccard';
+CREATE FUNCTION jpack_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jpack';
+CREATE FUNCTION jsoncount_oop (jval VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsoncount';
+CREATE FUNCTION jsonparse_oop (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsonparse';
+CREATE FUNCTION jsort_oop (jval VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsort';
+CREATE FUNCTION jsortvalues_oop (jval VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsortvalues';
+CREATE FUNCTION keywords_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.keywords';
+CREATE FUNCTION log_10_oop (x FLOAT64) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.log_10';
+CREATE FUNCTION lowerize_oop (val VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.lowerize';
+CREATE FUNCTION removeshortterms_oop (jval VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.removeshortterms';
+CREATE FUNCTION stem_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.stem';
+
+SELECT id FROM artifacts WHERE addnoise_oop(authors) > FLOAT64(-1000.0) INTO Checksum();
+----
+47919 174369468
+
+SELECT id, clean_oop(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 262835702
+
+SELECT id, cleandate_oop(date) AS r FROM artifacts INTO Checksum();
+----
+48448 205632237
+
+SELECT id, converttoeuro_oop(amount, currency) AS r FROM artifact_charges INTO Checksum();
+----
+448 1787873
+
+SELECT id, extractclass_oop(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 338800898
+
+SELECT id, extractcode_oop(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractday_oop(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181955664
+
+SELECT id, extractfunder_oop(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 396368862
+
+SELECT id, extractid_oop(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractmonth_oop(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181348715
+
+SELECT id, extractprojectid_oop(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 318820139
+
+SELECT id, extractyear_oop(date) AS r FROM artifacts INTO Checksum();
+----
+48448 188118858
+
+SELECT id, filterstopwords_oop(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1007785841
+
+SELECT id, frequentterms_oop(abstract, INT64(5)) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 100299983
+
+SELECT id, jaccard_oop(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 64983328
+
+SELECT id, jpack_oop(title) AS r FROM artifacts INTO Checksum();
+----
+48448 691382596
+
+SELECT id, jsoncount_oop(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 62347253
+
+SELECT id, jsonparse_oop(id, 'doi') AS r FROM query2json INTO Checksum();
+----
+23294 286664167
+
+SELECT id, jsort_oop(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, jsortvalues_oop(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, keywords_oop(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1193827570
+
+SELECT id, log_10_oop(amount) AS r FROM artifact_charges INTO Checksum();
+----
+448 1815707
+
+SELECT id, lowerize_oop(title) AS r FROM artifacts INTO Checksum();
+----
+48448 585633644
+
+SELECT id, removeshortterms_oop(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 255206502
+
+SELECT id, stem_oop(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1074975864
+
+# --- EXECUTION IN_PROCESS ---
+CREATE FUNCTION addnoise_ip (val INT32) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.addnoise';
+CREATE FUNCTION clean_ip (val VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.clean';
+CREATE FUNCTION cleandate_ip (pubdate VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.cleandate';
+CREATE FUNCTION converttoeuro_ip (x FLOAT64, y VARSIZED) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.converttoeuro';
+CREATE FUNCTION extractclass_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractclass';
+CREATE FUNCTION extractcode_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractcode';
+CREATE FUNCTION extractday_ip (arg VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractday';
+CREATE FUNCTION extractfunder_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractfunder';
+CREATE FUNCTION extractid_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractid';
+CREATE FUNCTION extractmonth_ip (arg VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractmonth';
+CREATE FUNCTION extractprojectid_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractprojectid';
+CREATE FUNCTION extractyear_ip (arg VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractyear';
+CREATE FUNCTION filterstopwords_ip (words VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.filterstopwords';
+CREATE FUNCTION frequentterms_ip (input VARSIZED, N INT64) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.frequentterms';
+CREATE FUNCTION jaccard_ip (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jaccard';
+CREATE FUNCTION jpack_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jpack';
+CREATE FUNCTION jsoncount_ip (jval VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsoncount';
+CREATE FUNCTION jsonparse_ip (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsonparse';
+CREATE FUNCTION jsort_ip (jval VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsort';
+CREATE FUNCTION jsortvalues_ip (jval VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsortvalues';
+CREATE FUNCTION keywords_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.keywords';
+CREATE FUNCTION log_10_ip (x FLOAT64) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.log_10';
+CREATE FUNCTION lowerize_ip (val VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.lowerize';
+CREATE FUNCTION removeshortterms_ip (jval VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.removeshortterms';
+CREATE FUNCTION stem_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.stem';
+
+SELECT id FROM artifacts WHERE addnoise_ip(authors) > FLOAT64(-1000.0) INTO Checksum();
+----
+47919 174369468
+
+SELECT id, clean_ip(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 262835702
+
+SELECT id, cleandate_ip(date) AS r FROM artifacts INTO Checksum();
+----
+48448 205632237
+
+SELECT id, converttoeuro_ip(amount, currency) AS r FROM artifact_charges INTO Checksum();
+----
+448 1787873
+
+SELECT id, extractclass_ip(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 338800898
+
+SELECT id, extractcode_ip(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractday_ip(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181955664
+
+SELECT id, extractfunder_ip(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 396368862
+
+SELECT id, extractid_ip(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractmonth_ip(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181348715
+
+SELECT id, extractprojectid_ip(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 318820139
+
+SELECT id, extractyear_ip(date) AS r FROM artifacts INTO Checksum();
+----
+48448 188118858
+
+SELECT id, filterstopwords_ip(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1007785841
+
+SELECT id, frequentterms_ip(abstract, INT64(5)) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 100299983
+
+SELECT id, jaccard_ip(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 64983328
+
+SELECT id, jpack_ip(title) AS r FROM artifacts INTO Checksum();
+----
+48448 691382596
+
+SELECT id, jsoncount_ip(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 62347253
+
+SELECT id, jsonparse_ip(id, 'doi') AS r FROM query2json INTO Checksum();
+----
+23294 286664167
+
+SELECT id, jsort_ip(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, jsortvalues_ip(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, keywords_ip(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1193827570
+
+SELECT id, log_10_ip(amount) AS r FROM artifact_charges INTO Checksum();
+----
+448 1815707
+
+SELECT id, lowerize_ip(title) AS r FROM artifacts INTO Checksum();
+----
+48448 585633644
+
+SELECT id, removeshortterms_ip(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 255206502
+
+SELECT id, stem_ip(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1074975864
+
+# --- EXECUTION INLINE ---
+CREATE FUNCTION addnoise_inline (val INT32) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.addnoise';
+CREATE FUNCTION clean_inline (val VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.clean';
+CREATE FUNCTION cleandate_inline (pubdate VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.cleandate';
+CREATE FUNCTION converttoeuro_inline (x FLOAT64, y VARSIZED) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.converttoeuro';
+CREATE FUNCTION extractclass_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractclass';
+CREATE FUNCTION extractcode_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractcode';
+CREATE FUNCTION extractday_inline (arg VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractday';
+CREATE FUNCTION extractfunder_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractfunder';
+CREATE FUNCTION extractid_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractid';
+CREATE FUNCTION extractmonth_inline (arg VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractmonth';
+CREATE FUNCTION extractprojectid_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractprojectid';
+CREATE FUNCTION extractyear_inline (arg VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractyear';
+CREATE FUNCTION filterstopwords_inline (words VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.filterstopwords';
+CREATE FUNCTION frequentterms_inline (input VARSIZED, N INT64) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.frequentterms';
+CREATE FUNCTION jaccard_inline (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jaccard';
+CREATE FUNCTION jpack_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
+CREATE FUNCTION jsoncount_inline (jval VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
+CREATE FUNCTION jsonparse_inline (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
+CREATE FUNCTION jsort_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsort';
+CREATE FUNCTION jsortvalues_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsortvalues';
+CREATE FUNCTION keywords_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.keywords';
+CREATE FUNCTION log_10_inline (x FLOAT64) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.log_10';
+CREATE FUNCTION lowerize_inline (val VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
+CREATE FUNCTION removeshortterms_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
+CREATE FUNCTION stem_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
+
+# Not in this section, as Codon does not give the CPython results:
+# - clean: len() counts bytes, so short non-ASCII words such as 'Á.' stay
+# - filterstopwords: lower() of the first character is ASCII-only, so non-ASCII stop words stay
+# - frequentterms: lower() is ASCII-only, and terms with equal counts come in another order
+# - jaccard: does not compile: type(x) == list
+# - jpack: split() does not split at Unicode spaces such as U+2009
+# - jsonparse: fails at run time: a None result of a function annotated -> str
+# - keywords: the regular expression \w matches ASCII only
+# - lowerize: lower() is ASCII-only
+# - removeshortterms: len() counts bytes, so short non-ASCII words such as 'Á.' stay
+# - stem: does not compile: name 'ccy_exp' cannot be captured
+
+SELECT id FROM artifacts WHERE addnoise_inline(authors) > FLOAT64(-1000.0) INTO Checksum();
+----
+47919 174369468
+
+SELECT id, cleandate_inline(date) AS r FROM artifacts INTO Checksum();
+----
+48448 205632237
+
+SELECT id, converttoeuro_inline(amount, currency) AS r FROM artifact_charges INTO Checksum();
+----
+448 1787873
+
+SELECT id, extractclass_inline(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 338800898
+
+SELECT id, extractcode_inline(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractday_inline(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181955664
+
+SELECT id, extractfunder_inline(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 396368862
+
+SELECT id, extractid_inline(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractmonth_inline(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181348715
+
+SELECT id, extractprojectid_inline(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 318820139
+
+SELECT id, extractyear_inline(date) AS r FROM artifacts INTO Checksum();
+----
+48448 188118858
+
+SELECT id, jsoncount_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 62347253
+
+SELECT id, jsort_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, jsortvalues_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, log_10_inline(amount) AS r FROM artifact_charges INTO Checksum();
+----
+448 1815707
