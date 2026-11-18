@@ -190,7 +190,7 @@ PlacementRemovalResult PlacementRemovalStrategy::updateGlobalExecutionPlan(
         auto plan = globalExecutionPlan.getDecomposedQueryPlan(queryId, planId);
         INVARIANT(plan.has_value(), "Decomposed query plan {} of query {} does not exist", planId, queryId);
         DeploymentContext context{
-            .plan = *plan, .oldVersion = plan->version, .forMigration = false, .sinkUpdates = {}, .detachedChannels = {}};
+            .plan = *plan, .oldVersion = plan->version, .sinkUpdates = {}, .detachedChannels = {}, .stateMigrationChannels = {}};
         for (const auto& placed : channels)
         {
             if (placed.upstreamPlan == planId and not drainedPlans.contains(placed.downstreamPlan))

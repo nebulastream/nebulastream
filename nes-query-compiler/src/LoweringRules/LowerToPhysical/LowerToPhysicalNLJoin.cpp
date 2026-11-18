@@ -50,6 +50,7 @@
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Schema/Schema.hpp>
@@ -59,6 +60,7 @@
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
+#include <Traits/StateMigrationTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -191,6 +193,14 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
 
     auto handler
         = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    if (const auto stateMigration = traitSet.tryGet<StateMigrationTrait>())
+    {
+        handler->setIncomingStateMigration(
+            StateMigrationChannel{
+                .channel = stateMigration.value()->channel,
+                .senderDataEndpoint = "",
+                .receiverDataEndpoint = stateMigration.value()->receiverDataEndpoint});
+    }
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};

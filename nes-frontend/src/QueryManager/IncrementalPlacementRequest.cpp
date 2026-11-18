@@ -88,7 +88,8 @@ ReconfigurationMarker DeploymentPhase::computeReconfigurationMarker(const Deploy
             case DecomposedQueryPlanState::MarkedForUpdateAndDrain:
                 marker.addReconfigurationEvent(
                     *context.plan.localQueryId,
-                    UpdateAndDrainQueryMetadata{.detachedChannels = context.detachedChannels, .stateMigrationChannels = {}});
+                    UpdateAndDrainQueryMetadata{
+                        .detachedChannels = context.detachedChannels, .stateMigrationChannels = context.stateMigrationChannels});
                 break;
             default:
                 break;
@@ -136,8 +137,7 @@ DeploymentPhase::execute(const DistributedQueryId& queryId, const DeploymentUnit
         }
         context.plan.localQueryId = result->getLocalQueryId();
         globalExecutionPlan.setLocalQueryId(queryId, context.plan.id, result->getLocalQueryId());
-        globalExecutionPlan.setState(
-            queryId, context.plan.id, context.forMigration ? DecomposedQueryPlanState::Migrating : DecomposedQueryPlanState::Running);
+        globalExecutionPlan.setState(queryId, context.plan.id, DecomposedQueryPlanState::Running);
     }
 
     /// 3. Inject the reconfiguration marker at the marker units. It reaches the other affected plans over the data channels.

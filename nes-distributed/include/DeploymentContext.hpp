@@ -35,13 +35,13 @@ struct DeploymentContext
     DecomposedQueryPlan plan;
     /// The version that currently runs on the worker, for plans that are updated or drained.
     std::optional<DecomposedQueryPlanVersion> oldVersion;
-    /// The plan belongs to an ad-hoc state migration query.
-    bool forMigration = false;
     /// For updated plans: the network sinks that connect to a new receiver.
     std::vector<NetworkSinkUpdate> sinkUpdates;
     /// For drained plans: the outgoing channels whose receiving plan keeps running. Their network sinks detach instead of forwarding the
     /// reconfiguration marker, so a new sender can attach to the receiver.
     std::vector<std::string> detachedChannels;
+    /// For plans that are updated and drained: the channels over which their stateful operators send their state.
+    std::vector<StateMigrationChannel> stateMigrationChannels;
 };
 
 /// A decomposed query plan at which the reconfiguration marker is injected (the original's ReconfigurationMarkerUnit).
@@ -53,7 +53,7 @@ struct ReconfigurationMarkerUnit
     auto operator<=>(const ReconfigurationMarkerUnit&) const = default;
 };
 
-/// A stateful operator that moves to another worker. Its state is migrated by an ad-hoc state migration query.
+/// A stateful operator that moves to another worker. The old instance sends its state to the new one over a dedicated channel.
 struct StateMigration
 {
     OperatorId operatorId{INVALID_OPERATOR_ID};

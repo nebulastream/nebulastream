@@ -14,6 +14,9 @@
 
 #include <Placement/QueryPlacementAmendmentPhase.hpp>
 
+#include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -23,6 +26,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Placement/BottomUpPlacement.hpp>
@@ -31,10 +35,14 @@
 #include <Placement/PlacementRemovalStrategy.hpp>
 #include <Placement/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
+#include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
+#include <Traits/StateMigrationTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/UUID.hpp>
 #include <ChangeLog.hpp>
 #include <DeploymentContext.hpp>
 #include <ErrorHandling.hpp>
@@ -46,6 +54,55 @@
 
 namespace NES
 {
+
+namespace
+{
+size_t countJoins(const LogicalPlan& plan)
+{
+    size_t joins = 0;
+    for (const auto& root : plan.getRootOperators())
+    {
+        for (const auto& op : BFSRange(root))
+        {
+            joins += op.tryGetAs<JoinLogicalOperator>().has_value() ? 1 : 0;
+        }
+    }
+    return joins;
+}
+
+/// Adds the trait to the join of the plan. Shortcut (documented): the old and the new plan host exactly one join each, so the plan's
+/// only state migration channel belongs to its join. Otherwise the change log entry fails and the query is re-placed holistically.
+LogicalPlan withStateMigrationTrait(const LogicalPlan& plan, const StateMigrationTrait& trait, const size_t joinsInOldPlan)
+{
+    if (joinsInOldPlan != 1 or countJoins(plan) != 1)
+    {
+        throw PlacementFailure("State migration supports one join per decomposed query plan");
+    }
+    std::function<LogicalOperator(const LogicalOperator&)> rewrite = [&](const LogicalOperator& op) -> LogicalOperator
+    {
+        if (op.tryGetAs<JoinLogicalOperator>().has_value())
+        {
+            auto traitSet = op.getTraitSet();
+            traitSet.insert(trait);
+            return op.withTraitSet(std::move(traitSet));
+        }
+        const auto children = op.getChildren();
+        const auto containsJoin = std::ranges::any_of(
+            children,
+            [](const auto& child)
+            {
+                return std::ranges::any_of(
+                    BFSRange(child), [](const auto& node) { return node.template tryGetAs<JoinLogicalOperator>().has_value(); });
+            });
+        if (not containsJoin)
+        {
+            return op;
+        }
+        return op.withChildren(children | std::views::transform(rewrite) | std::ranges::to<std::vector>());
+    };
+    return plan.withRootOperators(plan.getRootOperators() | std::views::transform(rewrite) | std::ranges::to<std::vector>());
+}
+}
 
 QueryPlacementAmendmentPhase::QueryPlacementAmendmentPhase(
     GlobalExecutionPlan& globalExecutionPlan,
@@ -254,8 +311,34 @@ DeploymentUnit QueryPlacementAmendmentPhase::executeIncrementally(SharedQueryPla
                 {
                     continue;
                 }
-                const auto newPlan = globalExecutionPlan.findDecomposedQueryPlanHosting(queryId, operatorId);
-                INVARIANT(newPlan.has_value(), "Re-placed operator {} of query {} is not hosted by any plan", operatorId, queryId);
+                /// The old plan still hosts the operator until it is drained, so look for the new plan on the new worker.
+                const auto plansOnNewWorker = globalExecutionPlan.getDecomposedQueryPlans(queryId, *newWorker);
+                const auto newPlan
+                    = std::ranges::find_if(plansOnNewWorker, [&](const auto& plan) { return plan.hostedOperators.contains(operatorId); });
+                INVARIANT(
+                    newPlan != plansOnNewWorker.end(),
+                    "Re-placed operator {} of query {} is not hosted by any plan on {}",
+                    operatorId,
+                    queryId,
+                    *newWorker);
+                const auto implementation
+                    = getTrait<JoinImplementationTypeTrait>(sharedQueryPlan.getGraph().getOperator(operatorId).getTraitSet());
+                if (not implementation.has_value() or implementation.value()->implementationType != JoinImplementation::NESTED_LOOP_JOIN)
+                {
+                    /// Shortcut (same as the original): only the state of nested loop joins is migrated.
+                    NES_WARNING(
+                        "Join {} of query {} moves to {}, but only nested loop joins migrate their state. Its state is lost",
+                        operatorId,
+                        queryId,
+                        *newWorker);
+                    continue;
+                }
+                const auto windowType = sharedQueryPlan.getGraph().getOperator(operatorId).getAs<JoinLogicalOperator>()->getWindowType();
+                if (windowType.getSize() != windowType.getSlide())
+                {
+                    /// Shortcut (documented): a slice of a sliding window may belong to triggered and pending windows.
+                    throw PlacementFailure("State migration supports joins over tumbling windows only");
+                }
                 deploymentUnit.stateMigrations.emplace_back(
                     StateMigration{
                         .operatorId = operatorId,
@@ -263,8 +346,22 @@ DeploymentUnit QueryPlacementAmendmentPhase::executeIncrementally(SharedQueryPla
                         .oldPlan = oldPlan.id,
                         .newWorker = *newWorker,
                         .newPlan = newPlan->id});
+                /// The old join sends its state over a dedicated channel to the new join (see StateMigrationTransfer).
+                const auto oldWorker = workerCatalog->getWorker(oldPlan.worker);
+                const auto newWorkerInfo = workerCatalog->getWorker(*newWorker);
+                INVARIANT(oldWorker.has_value() and newWorkerInfo.has_value(), "Workers of a state migration must be known");
+                const StateMigrationChannel channel{
+                    .channel = UUIDToString(generateUUID()),
+                    .senderDataEndpoint = oldWorker->dataAddress,
+                    .receiverDataEndpoint = newWorkerInfo->dataAddress};
+                auto& newContext = deploymentContexts.at(newPlan->id);
+                newContext.plan.plan = withStateMigrationTrait(
+                    newContext.plan.plan, StateMigrationTrait{channel.channel, channel.receiverDataEndpoint}, countJoins(oldPlan.plan));
+                globalExecutionPlan.addOrUpdateDecomposedQueryPlan(queryId, newContext.plan);
+
                 auto& context = deploymentContexts.at(oldPlan.id);
                 context.plan.state = DecomposedQueryPlanState::MarkedForUpdateAndDrain;
+                context.stateMigrationChannels.emplace_back(channel);
                 globalExecutionPlan.setState(queryId, oldPlan.id, DecomposedQueryPlanState::MarkedForUpdateAndDrain);
                 NES_DEBUG("Stateful operator {} of query {} moves from {} to {}", operatorId, queryId, oldPlan.worker, *newWorker);
             }
@@ -319,7 +416,11 @@ DeploymentUnit QueryPlacementAmendmentPhase::executeHolistically(SharedQueryPlan
         plan.state = DecomposedQueryPlanState::MarkedForMigration;
         deploymentUnit.deploymentRemovalContexts.emplace_back(
             DeploymentContext{
-                .plan = std::move(plan), .oldVersion = oldVersion, .forMigration = false, .sinkUpdates = {}, .detachedChannels = {}});
+                .plan = std::move(plan),
+                .oldVersion = oldVersion,
+                .sinkUpdates = {},
+                .detachedChannels = {},
+                .stateMigrationChannels = {}});
     }
     const auto& graph = sharedQueryPlan.getGraph();
     for (const auto& operatorId : graph.getAllOperators())
@@ -350,7 +451,11 @@ DeploymentUnit QueryPlacementAmendmentPhase::executeHolistically(SharedQueryPlan
         globalExecutionPlan.addOrUpdateDecomposedQueryPlan(queryId, newPlan);
         deploymentUnit.deploymentAdditionContexts.emplace_back(
             DeploymentContext{
-                .plan = std::move(newPlan), .oldVersion = std::nullopt, .forMigration = false, .sinkUpdates = {}, .detachedChannels = {}});
+                .plan = std::move(newPlan),
+                .oldVersion = std::nullopt,
+                .sinkUpdates = {},
+                .detachedChannels = {},
+                .stateMigrationChannels = {}});
     }
     sharedQueryPlan = SharedQueryPlan(queryId, distributedPlan.getGlobalPlan(), placement);
     sharedQueryPlan.setStatus(SharedQueryPlanStatus::Processed);

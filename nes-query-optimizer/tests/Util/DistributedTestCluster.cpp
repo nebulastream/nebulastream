@@ -110,12 +110,14 @@ void DistributedTestCluster::addSink(const std::string& name, const std::vector<
 
 DistributedLogicalPlan DistributedTestCluster::optimize(const std::string& sql) const
 {
-    const QueryOptimizer optimizer(
-        defaultConfiguration<QueryOptimizerConfiguration>(),
-        copyPtr(sourceCatalog),
-        copyPtr(sinkCatalog),
-        copyPtr(workerCatalog),
-        modelCatalog);
+    return optimize(sql, defaultConfiguration<QueryOptimizerConfiguration>().joinStrategy);
+}
+
+DistributedLogicalPlan DistributedTestCluster::optimize(const std::string& sql, const StreamJoinStrategy joinStrategy) const
+{
+    auto configuration = defaultConfiguration<QueryOptimizerConfiguration>();
+    configuration.joinStrategy = joinStrategy;
+    const QueryOptimizer optimizer(configuration, copyPtr(sourceCatalog), copyPtr(sinkCatalog), copyPtr(workerCatalog), modelCatalog);
     return optimizer.optimize(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql));
 }
 

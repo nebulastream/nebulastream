@@ -23,6 +23,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -47,6 +48,7 @@ public:
     void addSink(const std::string& name, const std::vector<std::string>& fields, const std::string& host);
 
     [[nodiscard]] DistributedLogicalPlan optimize(const std::string& sql) const;
+    [[nodiscard]] DistributedLogicalPlan optimize(const std::string& sql, StreamJoinStrategy joinStrategy) const;
 
     SharedPtr<WorkerCatalog> workerCatalog;
     SharedPtr<SourceCatalog> sourceCatalog;

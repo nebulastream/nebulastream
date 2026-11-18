@@ -24,6 +24,9 @@
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Placement/QueryDecomposition.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Traits/StateMigrationTrait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -147,7 +150,8 @@ TEST_F(StatefulAmendmentTest, MovedJoinGetsStateMigration)
     cluster.addSink("snk", {"start", "end", "ts0", "id0", "ts1", "id1"}, "cloud:1");
     const auto plan = cluster.optimize(
         "SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO "
-        "snk");
+        "snk",
+        StreamJoinStrategy::NESTED_LOOP_JOIN);
 
     const DistributedQueryId queryId{"q"};
     GlobalExecutionPlan globalExecutionPlan;
@@ -185,11 +189,26 @@ TEST_F(StatefulAmendmentTest, MovedJoinGetsStateMigration)
     EXPECT_THAT(migration.oldWorker, Eq(Host("base1:1")));
     EXPECT_THAT(migration.oldPlan, Eq(oldJoinPlan));
     EXPECT_THAT(migration.newWorker, Eq(Host("cloud:1")));
-    EXPECT_THAT(globalExecutionPlan.findDecomposedQueryPlanHosting(queryId, join)->id, Eq(migration.newPlan));
     const auto oldContext
         = std::ranges::find(unit.deploymentAdditionContexts, oldJoinPlan, [](const auto& context) { return context.plan.id; });
     ASSERT_NE(oldContext, unit.deploymentAdditionContexts.end());
     EXPECT_THAT(oldContext->plan.state, Eq(DecomposedQueryPlanState::MarkedForUpdateAndDrain));
+
+    /// The old join sends its state over the channel, the join of the new plan receives it at the data address of the cloud.
+    ASSERT_THAT(oldContext->stateMigrationChannels, SizeIs(1));
+    const auto& channel = oldContext->stateMigrationChannels.front();
+    EXPECT_THAT(channel.senderDataEndpoint, Eq(cluster.workerCatalog->getWorker(Host("base1:1"))->dataAddress));
+    EXPECT_THAT(channel.receiverDataEndpoint, Eq(cluster.workerCatalog->getWorker(Host("cloud:1"))->dataAddress));
+    const auto newPlan = globalExecutionPlan.getDecomposedQueryPlan(queryId, migration.newPlan);
+    ASSERT_TRUE(newPlan.has_value());
+    EXPECT_THAT(newPlan->worker, Eq(Host("cloud:1")));
+    EXPECT_TRUE(newPlan->hostedOperators.contains(join));
+    const auto newJoins = getOperatorByType<JoinLogicalOperator>(newPlan->plan);
+    ASSERT_THAT(newJoins, SizeIs(1));
+    const auto trait = getTrait<StateMigrationTrait>(newJoins.front().getTraitSet());
+    ASSERT_TRUE(trait.has_value());
+    EXPECT_THAT(trait.value()->channel, Eq(channel.channel));
+    EXPECT_THAT(trait.value()->receiverDataEndpoint, Eq(channel.receiverDataEndpoint));
 }
 
 }

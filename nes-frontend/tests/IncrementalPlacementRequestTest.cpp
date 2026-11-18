@@ -22,7 +22,9 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <ranges>
 #include <set>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <utility>
@@ -43,6 +45,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <nes-network-bindings/lib.h>
 #include <BaseUnitTest.hpp>
@@ -127,14 +130,14 @@ public:
         return std::make_shared<QueryManager>(copyPtr(workerCatalog), createEmbeddedBackend(std::move(resolveWorker)));
     }
 
-    DistributedQueryId startQuery(QueryManager& queryManager, const std::string& sql)
+    DistributedQueryId startQuery(
+        QueryManager& queryManager,
+        const std::string& sql,
+        const StreamJoinStrategy joinStrategy = defaultConfiguration<QueryOptimizerConfiguration>().joinStrategy)
     {
-        const QueryOptimizer optimizer(
-            defaultConfiguration<QueryOptimizerConfiguration>(),
-            copyPtr(sourceCatalog),
-            copyPtr(sinkCatalog),
-            copyPtr(workerCatalog),
-            modelCatalog);
+        auto configuration = defaultConfiguration<QueryOptimizerConfiguration>();
+        configuration.joinStrategy = joinStrategy;
+        const QueryOptimizer optimizer(configuration, copyPtr(sourceCatalog), copyPtr(sinkCatalog), copyPtr(workerCatalog), modelCatalog);
         auto started = queryManager.start(optimizer.optimize(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql)));
         EXPECT_TRUE(started.has_value());
         return started.value_or(DistributedQueryId(DistributedQueryId::INVALID));
@@ -193,6 +196,12 @@ public:
         EXPECT_GE(distinct.size(), NUMBER_OF_TUPLES);
     }
 
+    static std::vector<uint64_t> missingIds(const std::set<uint64_t>& ids, const uint64_t maxId)
+    {
+        return std::views::iota(uint64_t{0}, maxId + 1) | std::views::filter([&](const auto id) { return not ids.contains(id); })
+            | std::ranges::to<std::vector>();
+    }
+
     static constexpr uint64_t NUMBER_OF_TUPLES = 4000;
     std::string prefix;
     std::filesystem::path outputFile;
@@ -238,6 +247,122 @@ TEST_F(IncrementalPlacementRequestTest, OperatorReplacement)
 
     waitForStop(*queryManager, queryId);
     expectEveryTupleExactlyOnce();
+}
+
+/// The join on base1 moves to the cloud when the leaf moves to base2. The old join is updated and drained: it sends its state to the new
+/// join, which restores it before it processes data. Every pair of matching tuples is in the output exactly once.
+TEST_F(IncrementalPlacementRequestTest, JoinStateMigration)
+{
+    setUpCluster("-join", 3);
+    workerCatalog->addWorker(host("leaf2"), "leaf2-join:9090", CapacityKind::Limited{0}, {host("base1")});
+    const Schema<UnqualifiedUnboundField, Ordered> schema{UnqualifiedUnboundField{Identifier::parse("id2"), DataType::Type::UINT64}};
+    const auto logicalSource = sourceCatalog->addLogicalSource(Identifier::parse("stream2"), schema);
+    ASSERT_TRUE(logicalSource.has_value());
+    ASSERT_TRUE(sourceCatalog
+                    ->addPhysicalSource(
+                        *logicalSource,
+                        Identifier::parse("Generator"),
+                        host("leaf2"),
+                        {{Identifier::parse("stop_generator_when_sequence_finishes"), "ALL"},
+                         {Identifier::parse("seed"), "1"},
+                         {Identifier::parse("generator_rate_type"), "FIXED"},
+                         {Identifier::parse("generator_rate_config"), "emit_rate 2000"},
+                         {Identifier::parse("generator_schema"), fmt::format("SEQUENCE UINT64 0 {} 1", NUMBER_OF_TUPLES)}},
+                        {{Identifier::parse("type"), "CSV"}})
+                    .has_value());
+    const Schema<UnqualifiedUnboundField, Ordered> joinSchema{
+        UnqualifiedUnboundField{Identifier::parse("start"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse("end"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse("id2"), DataType::Type::UINT64}};
+    ASSERT_TRUE(sinkCatalog
+                    ->addSinkDescriptor(
+                        Identifier::parse("snkJoin"),
+                        joinSchema,
+                        Identifier::parse("File"),
+                        host("cloud"),
+                        {{Identifier::parse("FILE_PATH"), outputFile.string()}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}},
+                        {})
+                    .has_value());
+
+    const auto queryManager = createQueryManager();
+    const auto queryId = startQuery(
+        *queryManager,
+        "SELECT start, end, id, id2 FROM (SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = id2 "
+        "WINDOW TUMBLING (id, id2, size 100 ms)) INTO snkJoin",
+        StreamJoinStrategy::NESTED_LOOP_JOIN);
+    ASSERT_EQ(queryManager->getGlobalExecutionPlan().getDecomposedQueryPlans(queryId, host("base1")).size(), 1U);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    const auto result = moveLeafToBase2(*queryManager, true);
+    EXPECT_EQ(result.numberOfFailedAmendments, 0U);
+
+    waitForStop(*queryManager, queryId);
+    /// The third column is the id of the left side; every id joins with exactly one tuple of the right side.
+    std::ifstream file(outputFile);
+    std::string line;
+    std::multiset<uint64_t> ids;
+    while (std::getline(file, line))
+    {
+        std::vector<uint64_t> values;
+        std::istringstream fields(line);
+        for (std::string field; std::getline(fields, field, ',');)
+        {
+            if (not field.empty() and std::isdigit(static_cast<unsigned char>(field.front())))
+            {
+                values.emplace_back(std::stoull(field));
+            }
+        }
+        if (values.size() == 4)
+        {
+            EXPECT_EQ(values[2], values[3]);
+            ids.insert(values[2]);
+        }
+    }
+    const std::set<uint64_t> distinct(ids.begin(), ids.end());
+    EXPECT_EQ(distinct.size(), ids.size()) << "duplicates in the output";
+    EXPECT_GE(distinct.size(), NUMBER_OF_TUPLES);
+    EXPECT_THAT(missingIds(distinct, *distinct.rbegin()), ::testing::IsEmpty());
+}
+
+/// Both inputs of a union move off base1: the union is re-placed in the cloud. Unlike the join, it has no state to migrate.
+TEST_F(IncrementalPlacementRequestTest, UnionReplacement)
+{
+    setUpCluster("-union", 3);
+    workerCatalog->addWorker(host("leaf2"), "leaf2-union:9090", CapacityKind::Limited{0}, {host("base1")});
+    const Schema<UnqualifiedUnboundField, Ordered> schema{UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64}};
+    const auto logicalSource = sourceCatalog->addLogicalSource(Identifier::parse("stream2"), schema);
+    ASSERT_TRUE(logicalSource.has_value());
+    ASSERT_TRUE(
+        sourceCatalog
+            ->addPhysicalSource(
+                *logicalSource,
+                Identifier::parse("Generator"),
+                host("leaf2"),
+                {{Identifier::parse("stop_generator_when_sequence_finishes"), "ALL"},
+                 {Identifier::parse("seed"), "1"},
+                 {Identifier::parse("generator_rate_type"), "FIXED"},
+                 {Identifier::parse("generator_rate_config"), "emit_rate 2000"},
+                 {Identifier::parse("generator_schema"), fmt::format("SEQUENCE UINT64 {} {} 1", NUMBER_OF_TUPLES, 2 * NUMBER_OF_TUPLES)}},
+                {{Identifier::parse("type"), "CSV"}})
+            .has_value());
+    const auto queryManager = createQueryManager();
+    const auto queryId = startQuery(*queryManager, "SELECT * FROM stream WHERE id >= 0 UNION SELECT * FROM stream2 WHERE id >= 0 INTO snk");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    const auto result = moveLeafToBase2(*queryManager, true);
+    EXPECT_EQ(result.numberOfFailedAmendments, 0U);
+    waitForStop(*queryManager, queryId);
+    std::ifstream file(outputFile);
+    std::string line;
+    std::set<uint64_t> ids;
+    while (std::getline(file, line))
+    {
+        if (not line.empty() and std::isdigit(static_cast<unsigned char>(line.front())))
+        {
+            ids.insert(std::stoull(line));
+        }
+    }
+    EXPECT_THAT(missingIds(ids, (2 * NUMBER_OF_TUPLES) - 1), ::testing::IsEmpty());
 }
 
 /// Two queries on two leaves that move in the same batch are amended in parallel, synchronized optimistically or pessimistically.

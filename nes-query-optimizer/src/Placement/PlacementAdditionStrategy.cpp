@@ -398,7 +398,7 @@ PlacementAdditionResult PlacementAdditionStrategy::updateGlobalExecutionPlan(
                 auto plan = globalExecutionPlan.getDecomposedQueryPlan(queryId, upstreamPlanId);
                 INVARIANT(plan.has_value(), "Decomposed query plan {} of query {} does not exist", upstreamPlanId, queryId);
                 DeploymentContext context{
-                    .plan = *plan, .oldVersion = plan->version, .forMigration = false, .sinkUpdates = {}, .detachedChannels = {}};
+                    .plan = *plan, .oldVersion = plan->version, .sinkUpdates = {}, .detachedChannels = {}, .stateMigrationChannels = {}};
                 context.plan.version = version;
                 context.plan.state = DecomposedQueryPlanState::MarkedForRedeployment;
                 it = contexts.emplace(upstreamPlanId, std::move(context)).first;
@@ -450,7 +450,11 @@ PlacementAdditionResult PlacementAdditionStrategy::updateGlobalExecutionPlan(
         contexts.emplace(
             planId,
             DeploymentContext{
-                .plan = std::move(plan), .oldVersion = std::nullopt, .forMigration = false, .sinkUpdates = {}, .detachedChannels = {}});
+                .plan = std::move(plan),
+                .oldVersion = std::nullopt,
+                .sinkUpdates = {},
+                .detachedChannels = {},
+                .stateMigrationChannels = {}});
     }
     for (auto& [worker, plan] : forwardingPlans)
     {
@@ -459,7 +463,11 @@ PlacementAdditionResult PlacementAdditionStrategy::updateGlobalExecutionPlan(
         contexts.emplace(
             planId,
             DeploymentContext{
-                .plan = std::move(plan), .oldVersion = std::nullopt, .forMigration = false, .sinkUpdates = {}, .detachedChannels = {}});
+                .plan = std::move(plan),
+                .oldVersion = std::nullopt,
+                .sinkUpdates = {},
+                .detachedChannels = {},
+                .stateMigrationChannels = {}});
     }
     for (const auto& context : contexts | std::views::values)
     {

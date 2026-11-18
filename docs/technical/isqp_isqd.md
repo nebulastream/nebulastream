@@ -63,6 +63,8 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `ISQPRequest`, `ISQPEvents` (`AddNode`, `RemoveNode`, `AddLink`, `RemoveLink`) | `IncrementalPlacementRequest`, `TopologyChangeEvent` |
 | `PlacementAmendmentInstance`, `DeploymentPhase`, `updateReconfigurationMarker` | `PlacementAmendmentInstance`, `DeploymentPhase`, `DeploymentPhase::computeReconfigurationMarker` |
 | `PlacementAmendmentHandler`, `PlacementAmendmentMode` (OPTIMISTIC/PESSIMISTIC), topology node locks | `PlacementAmendmentHandler`, `PlacementAmendmentMode`, `LockedWorkers`, `WorkerCatalog::tryLockWorker` |
+| `StreamJoinOperatorHandler::serializeOperatorHandlerForMigration`, `recreateOperatorHandlerFromFile` | `NLJOperatorHandler::serializeState`, `restoreState` |
+| State migration query (`handleMigrationPlacement`, file source, file sink, migration path) | `StateMigrationTransfer` (dedicated channel between the old and the new join), `StateMigrationTrait` |
 
 ### Worker capacity
 
@@ -172,8 +174,8 @@ workers of the current code base only know the ids of their local queries, so th
 translates its decomposed query plans when it builds the marker. The marker is serialized as JSON with reflect-cpp, because it is sent both
 over gRPC and in-band over the data channels, and nes-common does not depend on the generated protobuf code.
 
-The drain events carry the outgoing channels whose receiving plan keeps running (see placement removal). The update-and-drain event does
-not name a new version of the plan to start, as the state migration query is deployed separately (see state migration).
+The drain events carry the outgoing channels whose receiving plan keeps running (see placement removal). The update-and-drain event
+additionally carries the state migration channels of the plan (see state migration).
 
 ### Worker: marker handling
 
@@ -229,3 +231,29 @@ the capacity of the workers:
 
 **Deviation:** the original locks topology nodes, which also protects the topology structure. In the port, topology changes are applied
 before the amendments start, so only the slots and the worker locks are synchronized.
+
+### State migration
+
+When a join moves to another worker, the amendment phase records a `StateMigration`, marks the old plan `MarkedForUpdateAndDrain` and
+creates a state migration channel: the update-and-drain event of the old plan names the channel and both data addresses, and the join of
+the new plan gets a `StateMigrationTrait` with the channel. When the old plan stops after the marker, its join serializes its state and
+sends it (`NLJOperatorHandler::stop`). The new join receives and restores it in its `start`; the query engine starts the sources of a
+query only after all of its pipelines started, so the new join processes no data before its state is restored, like the original, which
+reads the state file when the new operator starts.
+
+The state contains the progress of the build and probe watermark processors (sequence number and watermark per origin), the counters of
+the slice store (next window sequence number, last forwarded watermark), the highest triggered watermark, and the tuples of every slice
+of a window that was not triggered yet. The new join continues the sequence numbers of its inputs and its output, so the downstream plan
+that keeps running sees a gapless stream. Migrated tuples are kept in an extra paged vector per slice side that no worker thread appends
+to (appending assumes that all pages but the last are full, which does not hold for combined paged vectors).
+
+**Deviation:** the original deploys an ad-hoc state migration query: a source on the old worker reads the state file written by the old
+operator, network operators ship it along a path, and a sink on the new worker writes the state file for the new operator. The port sends
+the state over one dedicated network channel directly from the old to the new join. The transfer stays worker-to-worker over the data
+plane but needs neither files nor an extra query.
+
+**Shortcuts (same as the original):** only nested loop joins migrate their state; a moved hash join loses its state (logged as a warning).
+**Additional shortcuts:** only tumbling windows (a slice of a sliding window may belong to triggered and pending windows), and one join per
+decomposed query plan, as a plan has a single state migration channel. A move that would need more fails the change log entry and the
+query is redeployed holistically. Old and new worker must use the same buffer size. The old and the new join wait for each other for at
+most `NLJOperatorHandler::STATE_MIGRATION_TIMEOUT`.
