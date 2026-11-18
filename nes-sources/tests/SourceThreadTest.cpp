@@ -14,8 +14,10 @@
 
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <concepts>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -25,6 +27,7 @@
 #include <ranges>
 #include <source_location>
 #include <stop_token>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -92,6 +95,133 @@ protected:
 private:
     Timestamp watermark;
     bool emitted = false;
+};
+
+/// Delivers one buffer, then a reconfiguration marker.
+class MarkerSource final : public Source
+{
+public:
+    explicit MarkerSource(std::string marker) : marker(std::move(marker)) { }
+
+    void open(std::shared_ptr<AbstractBufferProvider>) override { }
+
+    void close() override { }
+
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer&, const std::stop_token&) override
+    {
+        if (emitted)
+        {
+            return FillTupleBufferResult::marker(marker);
+        }
+        emitted = true;
+        return FillTupleBufferResult::withBytes(DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    }
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override { return str << "MarkerSource"; }
+
+private:
+    std::string marker;
+    bool emitted = false;
+};
+
+/// Blocks in fillTupleBuffer until it is interrupted. It cannot drain by itself, so a drain has to interrupt it.
+class BlockingSource final : public Source
+{
+public:
+    void open(std::shared_ptr<AbstractBufferProvider>) override { }
+
+    void close() override { }
+
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer&, const std::stop_token& stopToken) override
+    {
+        entered = true;
+        std::mutex mutex;
+        std::condition_variable_any interrupted;
+        std::unique_lock lock(mutex);
+        interrupted.wait(lock, stopToken, [] { return false; });
+        wasInterrupted = true;
+        return FillTupleBufferResult::eos();
+    }
+
+    /// Waits until the source thread blocks in fillTupleBuffer.
+    [[nodiscard]] bool waitUntilEntered() const
+    {
+        const auto deadline = std::chrono::steady_clock::now() + DEFAULT_LONG_TIMEOUT;
+        while (!entered)
+        {
+            if (std::chrono::steady_clock::now() > deadline)
+            {
+                return false;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        return true;
+    }
+
+    std::atomic_bool entered = false;
+    std::atomic_bool wasInterrupted = false;
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override { return str << "BlockingSource"; }
+};
+
+/// Ends its stream by itself when drained: it delivers its remaining buffers, then EoS. Optionally, it blocks after the remaining
+/// buffers until it is interrupted.
+class SelfDrainingSource final : public Source
+{
+public:
+    SelfDrainingSource(size_t remainingBuffers, bool blockAfterRemainingBuffers)
+        : remainingBuffers(remainingBuffers), blockAfterRemainingBuffers(blockAfterRemainingBuffers)
+    {
+    }
+
+    void open(std::shared_ptr<AbstractBufferProvider>) override { }
+
+    void close() override { }
+
+    [[nodiscard]] bool drain() override
+    {
+        drained = true;
+        return true;
+    }
+
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer&, const std::stop_token& stopToken) override
+    {
+        while (!drained)
+        {
+            if (stopToken.stop_requested())
+            {
+                wasInterrupted = true;
+                return FillTupleBufferResult::eos();
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        if (remainingBuffers > 0)
+        {
+            --remainingBuffers;
+            return FillTupleBufferResult::withBytes(DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+        }
+        if (blockAfterRemainingBuffers)
+        {
+            std::mutex mutex;
+            std::condition_variable_any interrupted;
+            std::unique_lock lock(mutex);
+            interrupted.wait(lock, stopToken, [] { return false; });
+            wasInterrupted = true;
+        }
+        return FillTupleBufferResult::eos();
+    }
+
+    std::atomic_bool drained = false;
+    std::atomic_bool wasInterrupted = false;
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override { return str << "SelfDrainingSource"; }
+
+private:
+    size_t remainingBuffers;
+    bool blockAfterRemainingBuffers;
 };
 
 }
@@ -563,5 +693,139 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
     EXPECT_TRUE(control->wasDestroyed());
 }
 
+std::shared_ptr<BufferManager> createDrainTestBufferManager()
+{
+    return BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
+}
+
+SourceReturnType::EmitFunction recordingEmit(RecordingEmitFunction& recorder)
+{
+    return [&recorder](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+    {
+        recorder(originId, std::move(ret));
+        return SourceReturnType::EmitResult::SUCCESS;
+    };
+}
+
+/// Verifies that the recorded events end with the final watermark and a `Drained` with the given marker.
+void verify_drained(
+    RecordingEmitFunction& recorder, const std::string& marker, std::source_location location = std::source_location::current())
+{
+    const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_drained");
+    const auto events = recorder.recordedEmits.lock();
+    ASSERT_GE(events->size(), 2);
+    const auto* finalWatermark = std::get_if<SourceReturnType::Data>(&events->at(events->size() - 2));
+    ASSERT_NE(finalWatermark, nullptr);
+    EXPECT_EQ(finalWatermark->buffer.getWatermark(), Timestamp{Timestamp::INFINITE_VALUE});
+    const auto* drained = std::get_if<SourceReturnType::Drained>(&events->back());
+    ASSERT_NE(drained, nullptr) << "Last event was not a `Drained` event";
+    EXPECT_EQ(drained->marker, marker);
+}
+
+/// A marker from the source ends the stream like an EoS, but is reported as a drain.
+TEST_F(SourceThreadTest, MarkerFromSourceIsReportedAsDrained)
+{
+    auto bm = createDrainTestBufferManager();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    RecordingEmitFunction recorder(*bm);
+    SourceThread sourceThread(std::move(backpressureListener), INITIAL<OriginId>, bm, std::make_unique<MarkerSource>("marker 9"));
+    verify_non_blocking_start(sourceThread, recordingEmit(recorder));
+    wait_for_emits(recorder, 3);
+    verify_non_blocking_stop(sourceThread);
+
+    verify_drained(recorder, "marker 9");
+    const auto events = recorder.recordedEmits.lock();
+    ASSERT_EQ(events->size(), 3);
+    const auto* data = std::get_if<SourceReturnType::Data>(&events->at(0));
+    ASSERT_NE(data, nullptr);
+    EXPECT_EQ(data->buffer.getSequenceNumber(), INITIAL_SEQ_NUMBER);
+    EXPECT_EQ(
+        std::get<SourceReturnType::Data>(events->at(1)).buffer.getSequenceNumber(), SequenceNumber(INITIAL_SEQ_NUMBER.getRawValue() + 1));
+}
+
+/// A source which cannot drain by itself is interrupted, but unlike a stop, the source thread emits the final watermark and `Drained`.
+TEST_F(SourceThreadTest, DrainInterruptsSourceWhichCannotDrainByItself)
+{
+    auto bm = createDrainTestBufferManager();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    RecordingEmitFunction recorder(*bm);
+    auto source = std::make_unique<BlockingSource>();
+    auto* sourcePtr = source.get();
+    SourceThread sourceThread(std::move(backpressureListener), INITIAL<OriginId>, bm, std::move(source));
+    verify_non_blocking_start(sourceThread, recordingEmit(recorder));
+    ASSERT_TRUE(sourcePtr->waitUntilEntered());
+
+    EXPECT_TRUE(sourceThread.drain("marker 3"));
+    wait_for_emits(recorder, 2);
+    EXPECT_TRUE(sourcePtr->wasInterrupted);
+    verify_non_blocking_stop(sourceThread);
+
+    verify_drained(recorder, "marker 3");
+    EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(2));
+}
+
+/// A source which drains by itself is not interrupted: it delivers its remaining data before the stream ends.
+TEST_F(SourceThreadTest, SourceWhichDrainsByItselfDeliversItsRemainingData)
+{
+    auto bm = createDrainTestBufferManager();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    RecordingEmitFunction recorder(*bm);
+    auto source = std::make_unique<SelfDrainingSource>(2, false);
+    auto* sourcePtr = source.get();
+    SourceThread sourceThread(std::move(backpressureListener), INITIAL<OriginId>, bm, std::move(source));
+    verify_non_blocking_start(sourceThread, recordingEmit(recorder));
+
+    EXPECT_TRUE(sourceThread.drain("marker 5"));
+    wait_for_emits(recorder, 4);
+    verify_non_blocking_stop(sourceThread);
+
+    EXPECT_TRUE(sourcePtr->drained);
+    EXPECT_FALSE(sourcePtr->wasInterrupted);
+    verify_drained(recorder, "marker 5");
+    const auto events = recorder.recordedEmits.lock();
+    ASSERT_EQ(events->size(), 4);
+    EXPECT_EQ(std::get<SourceReturnType::Data>(events->at(0)).buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    EXPECT_EQ(std::get<SourceReturnType::Data>(events->at(1)).buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+}
+
+/// Only the first drain is accepted.
+TEST_F(SourceThreadTest, SecondDrainIsRejected)
+{
+    auto bm = createDrainTestBufferManager();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    RecordingEmitFunction recorder(*bm);
+    SourceThread sourceThread(std::move(backpressureListener), INITIAL<OriginId>, bm, std::make_unique<BlockingSource>());
+    verify_non_blocking_start(sourceThread, recordingEmit(recorder));
+
+    EXPECT_TRUE(sourceThread.drain("marker 1"));
+    EXPECT_FALSE(sourceThread.drain("marker 2"));
+    wait_for_emits(recorder, 2);
+    verify_non_blocking_stop(sourceThread);
+
+    verify_drained(recorder, "marker 1");
+}
+
+/// A stop while the source is still draining wins: a stopped query needs neither the final watermark nor `Drained`.
+TEST_F(SourceThreadTest, StopDuringDrainIsNotReportedAsDrained)
+{
+    auto bm = createDrainTestBufferManager();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    RecordingEmitFunction recorder(*bm);
+    SourceThread sourceThread(std::move(backpressureListener), INITIAL<OriginId>, bm, std::make_unique<SelfDrainingSource>(1, true));
+    verify_non_blocking_start(sourceThread, recordingEmit(recorder));
+
+    EXPECT_TRUE(sourceThread.drain("marker 4"));
+    wait_for_emits(recorder, 1);
+    verify_non_blocking_stop(sourceThread);
+
+    const auto events = recorder.recordedEmits.lock();
+    ASSERT_EQ(events->size(), 1);
+    EXPECT_TRUE(std::holds_alternative<SourceReturnType::Data>(events->at(0)));
+}
 
 }

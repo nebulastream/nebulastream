@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <string>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -58,6 +59,11 @@ public:
 
     /// Tries to stop the source within a given timeout.
     [[nodiscard]] NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) const;
+
+    /// Ends the stream of the source because its query is drained by a reconfiguration marker (the serialized `marker`): the source emits
+    /// the data that belongs to the drained query, the final watermark and `SourceReturnType::Drained`. Returns false if the source was
+    /// already asked to drain.
+    bool drain(const std::string& marker) const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
 

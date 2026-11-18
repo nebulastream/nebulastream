@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <expected>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <ostream>
 #include <stop_token>
@@ -66,6 +67,10 @@ public:
     void open(std::shared_ptr<AbstractBufferProvider> provider) override;
     void close() override;
 
+    /// Detaches the receiver channel: the sender keeps all data which has not been received yet. The data which has already been
+    /// received belongs to the drained query and is still delivered, then the stream ends.
+    [[nodiscard]] bool drain() override;
+
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
@@ -75,7 +80,11 @@ public:
 private:
     std::string channelId;
     size_t receiverQueueSize;
+    /// Protects `channel` and `drainRequested` against a concurrent `drain()`. The source thread does not lock while it receives, as it
+    /// is the only one to change `channel`.
+    std::mutex drainMutex;
     std::optional<rust::Box<ReceiverDataChannel>> channel;
+    bool drainRequested = false;
     rust::Box<ReceiverNetworkService> receiverServer;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 };

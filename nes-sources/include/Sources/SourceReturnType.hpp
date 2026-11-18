@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -38,6 +39,13 @@ struct EoS
 {
 };
 
+/// Like EoS, but the stream ended because the query of the source is drained by a reconfiguration marker (ISQD).
+struct Drained
+{
+    /// The serialized reconfiguration marker.
+    std::string marker;
+};
+
 enum class TryStopResult : uint8_t
 {
     SUCCESS,
@@ -51,7 +59,7 @@ enum class EmitResult : uint8_t
     STOP_REQUESTED,
 };
 
-using SourceReturnType = std::variant<Error, Data, EoS>;
+using SourceReturnType = std::variant<Error, Data, EoS, Drained>;
 using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token&)>;
 
 }

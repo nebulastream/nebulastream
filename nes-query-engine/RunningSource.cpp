@@ -93,6 +93,13 @@ SourceReturnType::EmitFunction emitFunction(
                     controller.initializeSourceStop(queryId, sourceId, source);
                     return SourceReturnType::EmitResult::SUCCESS;
                 },
+                [&]([[maybe_unused]] const SourceReturnType::Drained& drained)
+                {
+                    /// A drained source ends its stream gracefully, like an end of stream.
+                    ENGINE_LOG_DEBUG("Source with OriginId {} was drained by a reconfiguration marker for query {}", sourceId, queryId);
+                    controller.initializeSourceStop(queryId, sourceId, source);
+                    return SourceReturnType::EmitResult::SUCCESS;
+                },
                 [&](SourceReturnType::Error error)
                 {
                     controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex));

@@ -123,6 +123,7 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
             Overloaded{
                 [&](SourceReturnType::Data data) { resultBuffers.emplace_back(std::move(data.buffer)); },
                 [](SourceReturnType::EoS) { NES_DEBUG("Reached EoS in source"); },
+                [](const SourceReturnType::Drained&) { NES_DEBUG("Source was drained"); },
                 [](SourceReturnType::Error error) { throw std::move(error.ex); }},
             std::move(returnType));
         return SourceReturnType::EmitResult::SUCCESS;

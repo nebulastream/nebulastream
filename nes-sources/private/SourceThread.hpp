@@ -19,8 +19,10 @@
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <stop_token>
+#include <string>
 #include <thread>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -39,13 +41,28 @@ struct SourceImplementationTermination
     enum : uint8_t
     {
         StopRequested,
-        EndOfStream
+        EndOfStream,
+        /// The query of the source is drained by the reconfiguration marker `marker`.
+        Drained
     } result;
+
+    std::string marker = {}; ///NOLINT(readability-redundant-member-init) Allows initializing results without a marker
 
     friend std::ostream& operator<<(std::ostream& os, const SourceImplementationTermination& obj)
     {
         return os << magic_enum::enum_name(obj.result);
     }
+};
+
+/// A drain request, shared between the SourceThread and the thread running the source.
+struct SourceDrainRequest
+{
+    /// Set once by the first drain. `requested` is set after `marker`, so a thread that observes `requested` also sees the marker.
+    std::atomic_bool requested = false;
+    mutable std::mutex mutex;
+    std::string marker;
+    /// Interrupts a source which cannot end its stream by itself.
+    std::stop_source interrupt;
 };
 
 /// The sourceThread starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
@@ -83,6 +100,11 @@ public:
     /// Attempts to terminate the source within the timeout
     [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout);
 
+    /// Ends the stream of the source because its query is drained. Unlike a stop, the source thread emits the final watermark and
+    /// `SourceReturnType::Drained` once the source has delivered all data which belongs to the drained query.
+    /// Returns false if the source was already asked to drain.
+    bool drain(const std::string& marker);
+
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getOriginId() const;
 
@@ -94,6 +116,7 @@ protected:
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
+    std::shared_ptr<SourceDrainRequest> drainRequest = std::make_shared<SourceDrainRequest>();
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

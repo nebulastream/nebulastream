@@ -140,8 +140,27 @@ void NetworkSource::open(std::shared_ptr<AbstractBufferProvider> provider)
         .max_pending_acks = 0,
         .receiver_queue_size = static_cast<uint32_t>(receiverQueueSize),
     };
-    this->channel = register_receiver_channel(*receiverServer, rust::String(channelId), options);
+    auto registeredChannel = register_receiver_channel(*receiverServer, rust::String(channelId), options);
     NES_DEBUG("Receiver channel registered: {}", channelId);
+    const std::scoped_lock lock(drainMutex);
+    this->channel = std::move(registeredChannel);
+    if (drainRequested)
+    {
+        NES_DEBUG("Receiver channel {} was drained before it was opened, detaching it", channelId);
+        detach_receiver_channel(**this->channel);
+    }
+}
+
+bool NetworkSource::drain()
+{
+    const std::scoped_lock lock(drainMutex);
+    drainRequested = true;
+    if (channel.has_value())
+    {
+        NES_DEBUG("Detaching receiver channel {} for drain", channelId);
+        detach_receiver_channel(**channel);
+    }
+    return true;
 }
 
 Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
@@ -153,13 +172,16 @@ Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer& tupleB
     /// If the source is requested to shutdown the network channel is closed, which will interrupt the call to receive_buffer.
     const std::stop_callback callback(stopToken, [this] { interrupt_receive(**channel); });
 
-    switch (receive_buffer(**channel, builder).kind)
+    const auto result = receive_buffer(**channel, builder);
+    switch (result.kind)
     {
         case ReceiveKind::Buffer:
             return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples()); /// Received one buffer
-        case ReceiveKind::Marker:
-            /// The sender closes the channel right after a reconfiguration marker, so the marker ends the stream. Handling the marker
-            /// follows with the reconfiguration support of the sources.
+        case ReceiveKind::Marker: {
+            /// The sender closes the channel right after a reconfiguration marker, so the marker ends the stream.
+            NES_DEBUG("Receiver channel {} received a reconfiguration marker", channelId);
+            return FillTupleBufferResult::marker(std::string(result.marker.begin(), result.marker.end()));
+        }
         case ReceiveKind::Closed:
             /// The queue was closed.
             /// The SourceThread logic will figure out if the queue was closed by an external source (i.e. the other side of the network
@@ -171,8 +193,10 @@ Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer& tupleB
 
 void NetworkSource::close()
 {
+    const std::scoped_lock lock(drainMutex);
     PRECONDITION(channel.has_value(), "Network Source was closed multiple times or never opened");
     close_receiver_channel(std::move(*channel));
+    channel.reset();
     NES_DEBUG("Receiver channel closed: {}", channelId);
 }
 
