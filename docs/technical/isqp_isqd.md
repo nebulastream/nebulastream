@@ -56,6 +56,7 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | Placement addition strategies (`BottomUpStrategy`, …) placing operators between pinned operators | `BottomUpOperatorPlacer::placeIncrementally` (the ILP-based bottom-up placement with fixed operators) |
 | `PlacementRemovalStrategy`                                | `PlacementRemovalStrategy`                                                |
 | `DeploymentContext`, `DeploymentUnit`, `ReconfigurationMarkerUnit` | same names in `DeploymentContext.hpp`                            |
+| `BasePlacementAdditionStrategy` (`performPathSelection`, `computeDecomposedQueryPlans`, `addNetworkOperators`, `updateExecutionNodes`) | `PlacementAdditionStrategy` |
 
 ### Worker capacity
 
@@ -121,3 +122,21 @@ or drains it as a whole. A plan that hosts both re-placed operators and operator
 (`DeploymentContext::detachedChannels`). The receiving plan keeps its network source and a new sender attaches to it. In the original,
 the downstream plan of a removed chain is replaced by a new plan with a new id, which (a) loses the state of the stateful operators in that
 plan and (b) never terminates if the plan has inputs that are not affected by the change, as no marker arrives on them.
+
+### Placement addition
+
+The addition follows the steps of the original's `BasePlacementAdditionStrategy`: path selection, placement of the operators to be placed,
+computation of the new decomposed query plans (connected operators on the same worker), insertion of network operators along topology
+paths (with forwarding plans on intermediate workers), and validation of the occupied slots.
+
+**Deviation (path selection):** the original selects one path per pinned upstream worker before placing. The port passes all workers on
+paths between the pinned workers to the ILP-based bottom-up placement, the only placement strategy of the current code base, and lets it
+choose.
+
+**Deviation (pinned plans):** the original merges the new operators into the plans of the pinned operators and redeploys those plans. The
+port keeps the plans of pinned operators running:
+- a pinned upstream operator's plan is updated in place: its network sink connects to the first hop of the new chain
+  (`MarkedForRedeployment` with a `NetworkSinkUpdate`, marker action Update);
+- a pinned downstream operator's plan does not change: the last hop of the new chain reuses the channel of the removed chain, so the new
+  sender attaches to the existing network source;
+- a pinned and a placed operator on the same worker are connected by a channel on that worker.
