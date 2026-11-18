@@ -19,7 +19,8 @@
 //! runs the configured workloads against an in-process coordinator and a set of fake workers,
 //! and asserts invariants at the end.
 //!
-//! Trials run on a worker thread under a wall-clock timeout so a stuck simulation cannot hang the whole test binary.
+//! Each trial runs on its own thread under a limit of simulated time, so a stuck simulation fails at the same point for the same seed.
+//! A wall-clock watchdog aborts the whole process if a trial stops returning to the scheduler, which the time limit cannot see.
 //! Every failure prints its seed, which `MADSIM_TEST_SEED=...` replays.
 //! The binary also runs unit trials of the harness itself.
 //!
@@ -64,6 +65,7 @@ use {
     std::fs::{self, DirEntry},
     std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
     std::path::Path,
+    std::process,
     std::sync::mpsc::{self, RecvTimeoutError},
     std::thread,
     std::time::{Duration, SystemTime, UNIX_EPOCH},
@@ -73,6 +75,11 @@ use {
 
 #[cfg(all(madsim, not(tokio_unstable)))]
 compile_error!("build the simulation with RUSTFLAGS=\"--cfg madsim --cfg tokio_unstable\"");
+
+/// Simulated time that the checks get after the trial's timeout.
+/// It is longer than the harness's reply timeout, so a stuck statement fails with its own message first.
+#[cfg(madsim)]
+const CHECK_TIME_BUDGET: Duration = Duration::from_secs(60);
 
 #[cfg(madsim)]
 const DEFAULT_WALL_TIMEOUT_SECS: u64 = 90;
@@ -173,6 +180,12 @@ fn discover_trials() -> Vec<Trial> {
     trials
 }
 
+/// The trial runs on a fresh thread, because std's hash keys and tokio's random generator are per thread
+/// and must not depend on the trials that ran before.
+/// The runtime panics once simulated time passes the trial's timeout plus the check budget.
+/// That limit is checked between scheduler steps, so it misses tasks that wake each other without letting time pass.
+/// The wall-clock watchdog catches those and aborts the process,
+/// because the stuck thread cannot be stopped and would keep a CPU busy for the remaining trials.
 #[cfg(madsim)]
 fn run_trial(name: &str, cfg: TrialConfig, seed: u64, wall_timeout: Duration) {
     let trial_name = name.to_string();
@@ -181,14 +194,15 @@ fn run_trial(name: &str, cfg: TrialConfig, seed: u64, wall_timeout: Duration) {
         .name(format!("sim-{name}"))
         .spawn(move || {
             let result = catch_unwind(AssertUnwindSafe(|| {
-                let rt = Runtime::with_seed_and_config(seed, Config::default());
+                let mut rt = Runtime::with_seed_and_config(seed, Config::default());
+                rt.set_time_limit(Duration::from_secs(cfg.timeout) + CHECK_TIME_BUDGET);
                 build_seeded_tokio_runtime(seed).block_on(unconstrained(async {
                     rt.block_on(runner::run(&trial_name, &cfg));
                 }));
             }));
             let _ = tx.send(result);
         })
-        .expect("failed to spawn trial worker thread");
+        .expect("failed to spawn trial thread");
 
     match rx.recv_timeout(wall_timeout) {
         Ok(Ok(())) => {}
@@ -197,12 +211,17 @@ fn run_trial(name: &str, cfg: TrialConfig, seed: u64, wall_timeout: Duration) {
             resume_unwind(payload);
         }
         Err(RecvTimeoutError::Timeout) => {
-            print_repro(name, seed, &format!("TIMED OUT after {wall_timeout:?}"));
-            panic!("trial {name} exceeded wall-clock timeout of {wall_timeout:?}");
+            print_repro(
+                name,
+                seed,
+                &format!("TIMED OUT after {wall_timeout:?} of wall-clock time"),
+            );
+            eprintln!("aborting: the stuck trial thread cannot be stopped");
+            process::abort();
         }
         Err(RecvTimeoutError::Disconnected) => {
-            print_repro(name, seed, "ABORTED (worker disconnected)");
-            panic!("trial {name} worker thread disconnected without sending a result");
+            print_repro(name, seed, "ABORTED (trial thread disconnected)");
+            panic!("trial {name} thread disconnected without sending a result");
         }
     }
 }
