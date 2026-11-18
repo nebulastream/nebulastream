@@ -34,3 +34,4 @@ if (ENABLE_INFERENCE_TESTS)
 endif ()
 
 add_nes_physical_operator_test(StreamJoinProbePhysicalOperatorTest StreamJoinProbePhysicalOperatorTest.cpp)
+add_nes_physical_operator_test(nlj-state-migration-test NLJStateMigrationTest.cpp)

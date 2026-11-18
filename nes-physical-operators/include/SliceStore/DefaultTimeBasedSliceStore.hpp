@@ -65,6 +65,8 @@ public:
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
+    [[nodiscard]] MigratedState getMigratedState() const override;
+    void restoreCounters(SequenceNumber::Underlying nextSequenceNumber, Timestamp lastForwardedWatermark) override;
     std::span<std::byte>
     allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
 

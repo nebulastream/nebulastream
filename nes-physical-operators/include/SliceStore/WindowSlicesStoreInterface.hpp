@@ -95,5 +95,18 @@ public:
 
     /// Returns the window size
     [[nodiscard]] virtual uint64_t getWindowSize() const = 0;
+
+    /// The state of the store that is migrated with an operator (ISQD): its slices, the next sequence number for windows and watermarks,
+    /// and the last forwarded watermark.
+    struct MigratedState
+    {
+        std::vector<std::shared_ptr<Slice>> slices;
+        SequenceNumber::Underlying nextSequenceNumber;
+        Timestamp lastForwardedWatermark;
+    };
+
+    [[nodiscard]] virtual MigratedState getMigratedState() const = 0;
+    /// Restores the counters of a migrated state. The slices are restored with `getSlicesOrCreate`.
+    virtual void restoreCounters(SequenceNumber::Underlying nextSequenceNumber, Timestamp lastForwardedWatermark) = 0;
 };
 }

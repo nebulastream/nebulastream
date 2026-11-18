@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <utility>
 #include <vector>
@@ -257,6 +258,25 @@ std::unique_ptr<SliceStoreRef> DefaultTimeBasedSliceStore::createSliceStoreRef(
     DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator)
 {
     return std::make_unique<DefaultTimeBasedSliceStoreRef>(sliceCacheConfiguration, this, std::move(extractor), std::move(creator));
+}
+
+WindowSlicesStoreInterface::MigratedState DefaultTimeBasedSliceStore::getMigratedState() const
+{
+    /// The windows lock guards the last forwarded watermark and orders the sequence numbers.
+    const auto lockedWindows = windows.rlock();
+    const auto lockedSlices = slices.rlock();
+    return MigratedState{
+        .slices = *lockedSlices | std::views::values | std::ranges::to<std::vector>(),
+        .nextSequenceNumber = sequenceNumber.load(),
+        .lastForwardedWatermark = lastForwardedWatermark};
+}
+
+void DefaultTimeBasedSliceStore::restoreCounters(
+    const SequenceNumber::Underlying nextSequenceNumber, const Timestamp lastForwardedWatermark)
+{
+    const auto lockedWindows = windows.wlock();
+    sequenceNumber = nextSequenceNumber;
+    this->lastForwardedWatermark = lastForwardedWatermark;
 }
 
 }

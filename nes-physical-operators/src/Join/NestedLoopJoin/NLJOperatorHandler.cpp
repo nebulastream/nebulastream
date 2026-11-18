@@ -16,9 +16,12 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
+#include <span>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -26,11 +29,14 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -117,6 +123,221 @@ void NLJOperatorHandler::emitSlicesToProbe(
     new (tupleBuffer.getAvailableMemoryArea().data()) EmittedNLJWindowTrigger{windowInfo, leftSliceEnds, rightSliceEnds, probeTaskType};
 
     pipelineCtx->emitBuffer(tupleBuffer);
+}
+
+namespace
+{
+constexpr uint64_t NLJ_STATE_MAGIC = 0x4e4c4a5354415445; /// "NLJSTATE"
+
+/// Writes 64-bit values into flat buffers, appending a new buffer whenever one is full.
+class FlatStateWriter
+{
+public:
+    explicit FlatStateWriter(AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { }
+
+    void write(const uint64_t value) { writeBytes(std::as_bytes(std::span{&value, 1})); }
+
+    void writeBytes(std::span<const std::byte> bytes)
+    {
+        while (not bytes.empty())
+        {
+            if (buffers.empty() or buffers.back().getNumberOfTuples() == buffers.back().getBufferSize())
+            {
+                buffers.emplace_back(bufferProvider.getBufferBlocking());
+                buffers.back().setNumberOfTuples(0);
+            }
+            auto& buffer = buffers.back();
+            const auto used = buffer.getNumberOfTuples();
+            const auto chunk = std::min<size_t>(bytes.size(), buffer.getBufferSize() - used);
+            std::memcpy(buffer.getAvailableMemoryArea<std::byte>().data() + used, bytes.data(), chunk);
+            buffer.setNumberOfTuples(used + chunk);
+            bytes = bytes.subspan(chunk);
+        }
+    }
+
+    /// Writes a buffer with all of its child buffers, depth first.
+    void writeTree(const TupleBuffer& buffer)
+    {
+        write(buffer.getBufferSize());
+        write(buffer.getNumberOfTuples());
+        write(buffer.getNumberOfChildBuffers());
+        writeBytes(buffer.getAvailableMemoryArea<const std::byte>());
+        for (uint32_t child = 0; child < buffer.getNumberOfChildBuffers(); ++child)
+        {
+            writeTree(buffer.loadChildBuffer(ChildBufferIndex(child)));
+        }
+    }
+
+    std::vector<TupleBuffer> buffers;
+
+private:
+    AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+};
+
+class FlatStateReader
+{
+public:
+    FlatStateReader(const std::vector<TupleBuffer>& buffers, AbstractBufferProvider& bufferProvider)
+        : buffers(buffers), bufferProvider(bufferProvider)
+    {
+    }
+
+    uint64_t read()
+    {
+        uint64_t value = 0;
+        readBytes(std::as_writable_bytes(std::span{&value, 1}));
+        return value;
+    }
+
+    void readBytes(std::span<std::byte> bytes)
+    {
+        while (not bytes.empty())
+        {
+            if (bufferIndex >= buffers.size())
+            {
+                throw CannotDeserialize("The migrated join state ends unexpectedly");
+            }
+            const auto& buffer = buffers.at(bufferIndex);
+            const auto available = buffer.getNumberOfTuples() - offset;
+            const auto chunk = std::min<size_t>(bytes.size(), available);
+            std::memcpy(bytes.data(), buffer.getAvailableMemoryArea<const std::byte>().data() + offset, chunk);
+            offset += chunk;
+            bytes = bytes.subspan(chunk);
+            if (offset == buffer.getNumberOfTuples())
+            {
+                ++bufferIndex;
+                offset = 0;
+            }
+        }
+    }
+
+    TupleBuffer readTree()
+    {
+        const auto bufferSize = read();
+        const auto numberOfTuples = read();
+        const auto numberOfChildren = read();
+        auto buffer = bufferProvider.getUnpooledBuffer(bufferSize);
+        if (not buffer.has_value())
+        {
+            throw CannotAllocateBuffer("{}B for the migrated join state were requested", bufferSize);
+        }
+        readBytes(buffer->getAvailableMemoryArea<std::byte>().subspan(0, bufferSize));
+        buffer->setNumberOfTuples(numberOfTuples);
+        for (uint64_t child = 0; child < numberOfChildren; ++child)
+        {
+            auto childBuffer = readTree();
+            const auto index = buffer->storeChildBuffer(childBuffer);
+            INVARIANT(index == ChildBufferIndex(child), "Child buffers of the migrated join state must keep their order");
+        }
+        return std::move(*buffer);
+    }
+
+private:
+    const std::vector<TupleBuffer>& buffers; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    size_t bufferIndex = 0;
+    size_t offset = 0;
+};
+
+void writeProcessorState(FlatStateWriter& writer, const std::vector<MultiOriginWatermarkProcessor::OriginState>& state)
+{
+    writer.write(state.size());
+    for (const auto& [origin, sequenceNumber, watermark] : state)
+    {
+        writer.write(origin.getRawValue());
+        writer.write(sequenceNumber);
+        writer.write(watermark);
+    }
+}
+
+std::vector<MultiOriginWatermarkProcessor::OriginState> readProcessorState(FlatStateReader& reader)
+{
+    std::vector<MultiOriginWatermarkProcessor::OriginState> state(reader.read());
+    for (auto& [origin, sequenceNumber, watermark] : state)
+    {
+        origin = OriginId(reader.read());
+        sequenceNumber = reader.read();
+        watermark = reader.read();
+    }
+    return state;
+}
+}
+
+std::vector<TupleBuffer> NLJOperatorHandler::serializeState(AbstractBufferProvider& bufferProvider) const
+{
+    FlatStateWriter writer(bufferProvider);
+    writer.write(NLJ_STATE_MAGIC);
+    writeProcessorState(writer, watermarkProcessorBuild->getState());
+    writeProcessorState(writer, watermarkProcessorProbe->getState());
+
+    const auto storeState = sliceAndWindowStore->getMigratedState();
+    const auto triggeredUpTo = highestTriggeredWatermark.load();
+    writer.write(storeState.nextSequenceNumber);
+    writer.write(storeState.lastForwardedWatermark.getRawValue());
+    writer.write(triggeredUpTo);
+
+    /// Slices of windows that were already triggered are not migrated, the new join would trigger them again.
+    std::vector<std::shared_ptr<NLJSlice>> pendingSlices;
+    for (const auto& slice : storeState.slices)
+    {
+        if (slice->getSliceEnd().getRawValue() > triggeredUpTo)
+        {
+            pendingSlices.emplace_back(std::dynamic_pointer_cast<NLJSlice>(slice));
+        }
+    }
+    writer.write(pendingSlices.size());
+    for (const auto& slice : pendingSlices)
+    {
+        slice->combinePagedVectors();
+        writer.write(slice->getSliceStart().getRawValue());
+        writer.write(slice->getSliceEnd().getRawValue());
+        for (const auto side : {JoinBuildSideType::Left, JoinBuildSideType::Right})
+        {
+            const auto& pagedVector = slice->getCombinedPagedVector(side);
+            writer.write(PagedVector::load(pagedVector).getTupleSize());
+            writer.writeTree(pagedVector);
+        }
+    }
+    NES_DEBUG(
+        "Serialized the state of the join with output origin {}: {} slices in {} buffers",
+        outputOriginId,
+        pendingSlices.size(),
+        writer.buffers.size());
+    return std::move(writer.buffers);
+}
+
+void NLJOperatorHandler::restoreState(const std::vector<TupleBuffer>& state, AbstractBufferProvider& bufferProvider)
+{
+    PRECONDITION(numberOfWorkerThreads > 0, "The join must be started before its state is restored");
+    FlatStateReader reader(state, bufferProvider);
+    if (reader.read() != NLJ_STATE_MAGIC)
+    {
+        throw CannotDeserialize("The migrated state is not the state of a nested loop join");
+    }
+    watermarkProcessorBuild->restoreState(readProcessorState(reader));
+    watermarkProcessorProbe->restoreState(readProcessorState(reader));
+    const auto nextSequenceNumber = reader.read();
+    const auto lastForwardedWatermark = Timestamp(reader.read());
+    highestTriggeredWatermark = reader.read();
+    sliceAndWindowStore->restoreCounters(nextSequenceNumber, lastForwardedWatermark);
+
+    const auto numberOfSlices = reader.read();
+    for (uint64_t index = 0; index < numberOfSlices; ++index)
+    {
+        const auto sliceStart = SliceStart(reader.read());
+        const auto sliceEnd = SliceEnd(reader.read());
+        const auto tupleSizeLeft = reader.read();
+        auto left = reader.readTree();
+        const auto tupleSizeRight = reader.read();
+        auto right = reader.readTree();
+        auto slice = std::make_shared<NLJSlice>(bufferProvider, sliceStart, sliceEnd, numberOfWorkerThreads, tupleSizeLeft, tupleSizeRight);
+        slice->setCombinedPagedVector(JoinBuildSideType::Left, std::move(left));
+        slice->setCombinedPagedVector(JoinBuildSideType::Right, std::move(right));
+        const auto restored = sliceAndWindowStore->getSlicesOrCreate(
+            sliceStart, [&slice](SliceStart, SliceEnd) -> std::vector<std::shared_ptr<Slice>> { return {slice}; });
+        INVARIANT(restored.size() == 1 and restored.front() == slice, "A migrated slice must not exist in the new join yet");
+    }
+    NES_DEBUG("Restored the state of the join with output origin {}: {} slices", outputOriginId, numberOfSlices);
 }
 
 }

@@ -98,4 +98,30 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
     return Timestamp(minimalWatermark);
 }
 
+std::vector<MultiOriginWatermarkProcessor::OriginState> MultiOriginWatermarkProcessor::getState() const
+{
+    std::vector<OriginState> state;
+    for (const auto& [origin, processor] : std::views::zip(origins, watermarkProcessors))
+    {
+        state.emplace_back(
+            OriginState{
+                .origin = origin, .sequenceNumber = processor->getCurrentSequenceNumber(), .watermark = processor->getCurrentValue()});
+    }
+    return state;
+}
+
+void MultiOriginWatermarkProcessor::restoreState(const std::vector<OriginState>& state) const
+{
+    for (const auto& originState : state)
+    {
+        for (const auto& [origin, processor] : std::views::zip(origins, watermarkProcessors))
+        {
+            if (origin == originState.origin)
+            {
+                processor->restore(originState.sequenceNumber, originState.watermark);
+            }
+        }
+    }
+}
+
 }

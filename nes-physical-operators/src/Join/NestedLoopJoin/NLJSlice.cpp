@@ -160,4 +160,15 @@ void NLJSlice::combinePagedVectors()
         rightPagedVectorBuffers.erase(rightPagedVectorBuffers.begin() + 1, rightPagedVectorBuffers.end());
     }
 }
+
+const TupleBuffer& NLJSlice::getCombinedPagedVector(const JoinBuildSideType joinBuildSide) const
+{
+    return joinBuildSide == JoinBuildSideType::Left ? leftPagedVectorBuffers.front() : rightPagedVectorBuffers.front();
+}
+
+void NLJSlice::setCombinedPagedVector(const JoinBuildSideType joinBuildSide, TupleBuffer pagedVector)
+{
+    (joinBuildSide == JoinBuildSideType::Left ? leftPagedVectorBuffers : rightPagedVectorBuffers).front() = std::move(pagedVector);
+}
+
 }

@@ -65,6 +65,11 @@ public:
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
 
+    /// Returns the main buffer of the combined PagedVector of a side; `combinePagedVectors` must have been called.
+    [[nodiscard]] const TupleBuffer& getCombinedPagedVector(JoinBuildSideType joinBuildSide) const;
+    /// Replaces the PagedVector at 0th index of a side with a migrated one (ISQD).
+    void setCombinedPagedVector(JoinBuildSideType joinBuildSide, TupleBuffer pagedVector);
+
 private:
     std::vector<TupleBuffer> leftPagedVectorBuffers;
     std::vector<TupleBuffer> rightPagedVectorBuffers;

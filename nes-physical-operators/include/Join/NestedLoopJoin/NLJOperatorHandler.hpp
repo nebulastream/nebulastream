@@ -23,7 +23,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 
@@ -70,6 +72,15 @@ public:
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const override;
+
+    /// Serializes the state that is migrated with the join (ISQD): the progress of the watermark processors, the counters of the slice
+    /// store, and the tuples of every slice of a window that has not been triggered yet. The state is a sequence of flat tuple buffers
+    /// without child buffers, so it can be sent over network channels; every buffer stores its payload size as its number of tuples.
+    /// Shortcut: only tumbling windows are supported, as a slice of a sliding window may belong to triggered and pending windows.
+    [[nodiscard]] std::vector<TupleBuffer> serializeState(AbstractBufferProvider& bufferProvider) const;
+
+    /// Restores a migrated state into this handler before it processes any data. `start` must have been called.
+    void restoreState(const std::vector<TupleBuffer>& state, AbstractBufferProvider& bufferProvider);
 
 private:
     void emitSlicesToProbe(

@@ -117,6 +117,20 @@ public:
         return value.value.load(std::memory_order_relaxed);
     }
 
+    /// @brief Returns the current sequence number, i.e., the highest sequence number up to which all sequence numbers have been seen.
+    [[nodiscard]] SequenceNumber::Underlying getCurrentSequenceNumber() const { return currentSeq.load(); }
+
+    /// @brief Restores the queue to a state in which all sequence numbers up to `sequenceNumber` have been seen and `value` is the current
+    /// value. Used to migrate the state of an operator (ISQD). Must not be called concurrently with any other method.
+    void restore(SequenceNumber::Underlying sequenceNumber, T value)
+    {
+        auto block = std::make_shared<Block>(sequenceNumber / BlockSize);
+        block->log[sequenceNumber % BlockSize].seq.store(sequenceNumber, std::memory_order::relaxed);
+        block->log[sequenceNumber % BlockSize].value.store(value, std::memory_order::relaxed);
+        std::atomic_store(&head, block);
+        currentSeq = sequenceNumber;
+    }
+
 private:
     /// @brief Emplace a value T to the specific location of the passed sequence number
     ///

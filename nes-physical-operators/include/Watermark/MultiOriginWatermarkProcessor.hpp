@@ -42,6 +42,19 @@ public:
 
     std::string getCurrentStatus();
 
+    /// The progress of one origin: all sequence numbers up to `sequenceNumber` have been seen and `watermark` is its watermark.
+    struct OriginState
+    {
+        OriginId origin{INVALID_ORIGIN_ID};
+        SequenceNumber::Underlying sequenceNumber;
+        Timestamp::Underlying watermark;
+    };
+
+    /// Returns the progress of every origin, used to migrate the state of an operator (ISQD).
+    [[nodiscard]] std::vector<OriginState> getState() const;
+    /// Restores the progress of the given origins. Must not be called concurrently with any other method.
+    void restoreState(const std::vector<OriginState>& state) const;
+
 private:
     const std::vector<OriginId> origins;
     std::vector<std::shared_ptr<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors;
