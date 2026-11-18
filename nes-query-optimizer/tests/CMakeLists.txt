@@ -19,5 +19,6 @@ endfunction()
 
 add_subdirectory(Rules)
 add_subdirectory(Util)
+add_subdirectory(Placement)
 
 add_nes_optimizer_test(PlanRewriteUtilsTest PlanRewriteUtilsTest.cpp)

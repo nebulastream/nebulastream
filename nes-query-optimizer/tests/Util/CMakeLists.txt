@@ -13,3 +13,7 @@
 add_library(nes-query-optimizer-test-utils-lib OptimizerTestUtils.cpp)
 target_include_directories(nes-query-optimizer-test-utils-lib PUBLIC . ${CMAKE_SOURCE_DIR}/nes-query-optimizer/tests)
 target_link_libraries(nes-query-optimizer-test-utils-lib PUBLIC nes-common PRIVATE nes-query-optimizer nes-logical-operators nes-test-util)
+
+add_library(nes-distributed-test-cluster-lib DistributedTestCluster.cpp)
+target_include_directories(nes-distributed-test-cluster-lib PUBLIC .)
+target_link_libraries(nes-distributed-test-cluster-lib PUBLIC nes-query-optimizer nes-distributed PRIVATE nes-sql-parser nes-inference nes-test-util)

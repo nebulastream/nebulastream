@@ -48,6 +48,8 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | Operator properties `PINNED_WORKER_ID`, operator state    | `SharedQueryPlan::getPinnedWorker`, `getOperatorState`                     |
 | Parent links of mutable operator nodes                    | `OperatorGraph` over the immutable logical operators                      |
 | `ChangeLog`, `ChangeLogEntry`                             | `ChangeLog`, `ChangeLogEntry`                                             |
+| Network operator properties `UPSTREAM_LOGICAL_OPERATOR_ID`, `DOWNSTREAM_LOGICAL_OPERATOR_ID`, `CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS` | `NetworkChannel` recorded by the `QueryDecomposer` (one per hop) |
+| Operator property `PLACED_DECOMPOSED_PLAN_ID`             | Hosted operators per local plan recorded by the `QueryDecomposer`         |
 
 ### Worker capacity
 
@@ -70,3 +72,11 @@ microsecond overwrite each other. The port uses a logical timestamp.
 in the order of their pointer addresses. For chains of three or more operators, the result depends on the memory layout. The port drops
 an operator iff an operator of the other entry is more upstream (for the upstream operators) or more downstream (for the downstream
 operators).
+
+### Operator identity
+
+**Deviation:** the original identifies the operators of the decomposed query plans by the operator ids of the global plan. The current
+logical operators get a new id whenever they are copied with a modification (e.g., `withChildren`, `withInferredSchema`), and
+`withOperatorId` is reserved for the serialization. The operators in the local plans therefore have other ids than in the global plan.
+Instead, the decomposition records which operators of the global plan each local plan hosts, and the network channels between local
+plans (identified by their channel id, which is part of the network source and sink configuration).

@@ -57,19 +57,43 @@ namespace
 struct DecompositionContext
 {
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
+    /// The operators of the placed plan that each local plan hosts, in the same order as `plansByNode`.
+    std::unordered_map<NetworkTopology::NodeId, std::vector<std::vector<OperatorId>>> hostedOperatorsByNode;
+    std::vector<NES::NetworkChannel> channels;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
     SharedPtr<const SourceCatalog> sourceCatalog;
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
 
-    void addPlanToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId)
+    /// Adds a local plan and returns its index among the local plans of the node. The channels in `incomingChannels` deliver to network
+    /// sources of the plan.
+    size_t addPlanToNode(
+        LogicalOperator op,
+        const NetworkTopology::NodeId& nodeId,
+        std::vector<OperatorId> hostedOperators,
+        const std::vector<size_t>& incomingChannels)
     {
-        plansByNode[nodeId].emplace_back(INVALID_QUERY_ID, std::vector{std::move(op)});
+        auto& plans = plansByNode[nodeId];
+        plans.emplace_back(INVALID_QUERY_ID, std::vector{std::move(op)});
+        hostedOperatorsByNode[nodeId].emplace_back(std::move(hostedOperators));
+        const auto planIndex = plans.size() - 1;
+        for (const auto channel : incomingChannels)
+        {
+            channels.at(channel).downstreamPlanIndex = planIndex;
+        }
+        return planIndex;
     }
 };
 
-struct NetworkChannel
+/// The operators of the placed plan that end up in one local plan, and the channels that deliver to its network sources.
+struct Fragment
+{
+    std::vector<OperatorId> operators;
+    std::vector<size_t> incomingChannels;
+};
+
+struct ChannelHop
 {
     ChannelId id{ChannelId::INVALID};
     LogicalOperator upstreamOp;
@@ -79,7 +103,7 @@ struct NetworkChannel
 
 using Bridge = std::pair<LogicalOperator, LogicalOperator>;
 
-Bridge connect(const DecompositionContext& context, const NetworkChannel& channel)
+Bridge connect(const DecompositionContext& context, const ChannelHop& channel)
 {
     /// Look up connection (data-plane) addresses for the upstream and downstream nodes.
     /// Network sources/sinks use the data-plane address for actual data transfer,
@@ -151,9 +175,15 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor.value())->withTraitSet(upstreamTs).withInferredSchema()};
 }
 
+/// Connects `op`, the root of `fragment` on `startNode`, with its downstream operator on `endNode`. Returns the network source on
+/// `endNode` and adds the channel of the last hop to `downstreamFragment`.
 LogicalOperator createNetworkChannel(
     DecompositionContext& context,
     const LogicalOperator& op,
+    Fragment fragment,
+    Fragment& downstreamFragment,
+    const OperatorId upstreamOperatorId,
+    const OperatorId downstreamOperatorId,
     const NetworkTopology::NodeId& startNode,
     const NetworkTopology::NodeId& endNode)
 {
@@ -172,19 +202,32 @@ LogicalOperator createNetworkChannel(
         const auto& upstreamNode = path.at(i);
         const auto& downstreamNode = path.at(i + 1);
 
+        const auto channelId = ChannelId(generateUUID());
         auto [networkSource, networkSink] = connect(
-            context,
-            NetworkChannel{
-                .id = ChannelId(generateUUID()), .upstreamOp = currentOp, .upstreamNode = upstreamNode, .downstreamNode = downstreamNode});
+            context, ChannelHop{.id = channelId, .upstreamOp = currentOp, .upstreamNode = upstreamNode, .downstreamNode = downstreamNode});
 
-        context.addPlanToNode(std::move(networkSink), upstreamNode);
+        /// Only the first hop hosts operators of the placed plan, the other hops are forwarding plans that receive over the previous hop.
+        const auto planIndex = context.addPlanToNode(
+            std::move(networkSink),
+            upstreamNode,
+            i == 0 ? std::move(fragment.operators) : std::vector<OperatorId>{},
+            i == 0 ? fragment.incomingChannels : std::vector{context.channels.size() - 1});
+        context.channels.emplace_back(
+            NES::NetworkChannel{
+                .id = channelId.getRawValue(),
+                .upstreamWorker = upstreamNode,
+                .downstreamWorker = downstreamNode,
+                .upstreamOperatorId = upstreamOperatorId,
+                .downstreamOperatorId = downstreamOperatorId,
+                .upstreamPlanIndex = planIndex,
+                .downstreamPlanIndex = 0});
         currentOp = networkSource;
     }
-
+    downstreamFragment.incomingChannels.emplace_back(context.channels.size() - 1);
     return currentOp;
 }
 
-LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op);
+LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op, Fragment& fragment);
 
 NetworkTopology::NodeId getPlacementFor(const LogicalOperator& op)
 {
@@ -192,28 +235,30 @@ NetworkTopology::NodeId getPlacementFor(const LogicalOperator& op)
     return placementTrait->onNode;
 }
 
-LogicalOperator assignOperator(DecompositionContext& context, const LogicalOperator& op, const LogicalOperator& child)
+/// `fragment` collects the operators of the placed plan that end up in the same local plan as `op`.
+LogicalOperator assignOperator(DecompositionContext& context, const LogicalOperator& op, const LogicalOperator& child, Fragment& fragment)
 {
-    auto assignedChild = decomposePlanRecursive(context, child);
-
     const auto opNode = getPlacementFor(op);
     const auto childNode = getPlacementFor(child);
 
     if (opNode == childNode)
     {
-        return assignedChild;
+        return decomposePlanRecursive(context, child, fragment);
     }
-    return createNetworkChannel(context, assignedChild, childNode, opNode);
+    Fragment childFragment;
+    auto assignedChild = decomposePlanRecursive(context, child, childFragment);
+    return createNetworkChannel(context, assignedChild, std::move(childFragment), fragment, child.getId(), op.getId(), childNode, opNode);
 }
 
-LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op)
+LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op, Fragment& fragment)
 {
+    fragment.operators.emplace_back(op.getId());
     std::vector<LogicalOperator> assignedChildren;
     assignedChildren.reserve(op.getChildren().size());
 
     for (const auto& child : op.getChildren())
     {
-        assignedChildren.emplace_back(assignOperator(context, op, child));
+        assignedChildren.emplace_back(assignOperator(context, op, child, fragment));
     }
 
     return op.withChildren({std::move(assignedChildren)});
@@ -236,13 +281,16 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
 
     DecompositionContext context{
         .plansByNode = {},
+        .hostedOperatorsByNode = {},
+        .channels = {},
         .config = configuration,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};
 
-    auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front()).withInferredSchema();
-    context.addPlanToNode(root, getPlacementFor(root));
+    Fragment rootFragment;
+    auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front(), rootFragment).withInferredSchema();
+    context.addPlanToNode(root, getPlacementFor(root), std::move(rootFragment.operators), rootFragment.incomingChannels);
 
     for (const auto& [node, plans] : context.plansByNode)
     {
@@ -252,7 +300,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
         }
     }
 
-    return {std::move(context.plansByNode), placedPlan};
+    return {std::move(context.plansByNode), placedPlan, std::move(context.channels), std::move(context.hostedOperatorsByNode)};
 }
 
 }
