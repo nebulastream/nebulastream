@@ -301,7 +301,8 @@ NetworkOperators QueryDecomposer::createNetworkOperators(
     return {.source = std::move(source), .sink = std::move(sink)};
 }
 
-DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
+DistributedLogicalPlan
+QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration) const
 {
     PRECONDITION(placedPlan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
     PRECONDITION(

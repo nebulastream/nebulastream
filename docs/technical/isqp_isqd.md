@@ -57,6 +57,7 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `PlacementRemovalStrategy`                                | `PlacementRemovalStrategy`                                                |
 | `DeploymentContext`, `DeploymentUnit`, `ReconfigurationMarkerUnit` | same names in `DeploymentContext.hpp`                            |
 | `BasePlacementAdditionStrategy` (`performPathSelection`, `computeDecomposedQueryPlans`, `addNetworkOperators`, `updateExecutionNodes`) | `PlacementAdditionStrategy` |
+| `QueryPlacementAmendmentPhase` (incremental and holistic), `computeReconfigurationMarkerDeploymentUnit` | `QueryPlacementAmendmentPhase` |
 
 ### Worker capacity
 
@@ -116,7 +117,9 @@ link, are removed. Their forwarding plans and the plans hosting re-placed operat
 
 **Deviation:** the original removes operators from the plans and redeploys the remaining plan as a new version. The current query
 engine cannot change a running plan, so the port keeps a plan, updates only the receivers of its network sinks (see placement addition),
-or drains it as a whole. A plan that hosts both re-placed operators and operators that stay cannot be reconfigured incrementally.
+or drains it as a whole. If a plan hosts both operators to be re-placed and operators that stay, the amendment phase re-places the
+operators that stay as well and pins their neighbours instead (`expandToWholePlans`). Sources in such a plan stay on their worker but are
+restarted in a new plan.
 
 **Deviation:** a drained plan detaches from receiving plans that keep running instead of forwarding the reconfiguration marker to them
 (`DeploymentContext::detachedChannels`). The receiving plan keeps its network source and a new sender attaches to it. In the original,
@@ -140,3 +143,16 @@ port keeps the plans of pinned operators running:
 - a pinned downstream operator's plan does not change: the last hop of the new chain reuses the channel of the removed chain, so the new
   sender attaches to the existing network source;
 - a pinned and a placed operator on the same worker are connected by a channel on that worker.
+
+### Placement amendment phase
+
+The phase follows the original: for every compacted change log entry it computes the plans at which the reconfiguration marker is
+injected (Cond-1: plans of the pinned upstream operators; Cond-2: the first plan after a removed link, as the marker cannot travel over
+it), runs the placement removal and addition, and records state migrations for stateful operators that moved. Failed entries are recorded
+again and the query becomes `PartiallyProcessed`.
+
+**Shortcut (same as the original):** only joins are considered stateful. Other stateful operators that move (window aggregations) are
+drained, i.e., they emit their windows when the marker arrives instead of handing their state over.
+
+**Deviation (holistic baseline):** the original's holistic mode re-places the operators with its placement strategies and redeploys all
+plans. The port removes all plans of the query and places and decomposes the query from scratch with the initial placement.

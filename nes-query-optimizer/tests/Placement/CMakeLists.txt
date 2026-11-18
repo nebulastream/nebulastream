@@ -22,3 +22,4 @@ add_nes_placement_test(incremental-placement-utils-test IncrementalPlacementUtil
 add_nes_placement_test(incremental-bottom-up-placement-test IncrementalBottomUpPlacementTest.cpp)
 add_nes_placement_test(placement-removal-strategy-test PlacementRemovalStrategyTest.cpp)
 add_nes_placement_test(placement-addition-strategy-test PlacementAdditionStrategyTest.cpp)
+add_nes_placement_test(query-placement-amendment-phase-test QueryPlacementAmendmentPhaseTest.cpp)

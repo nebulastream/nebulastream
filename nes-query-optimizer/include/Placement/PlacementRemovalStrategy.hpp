@@ -46,8 +46,8 @@ struct PlacementRemovalResult
 /// no longer valid, are drained (MarkedForMigration). The operators to be re-placed become ToBePlaced and release their slots.
 ///
 /// Deviation: the original removes the operators from the plans and gives the remaining plan a new version. The current query engine
-/// cannot change a running plan, so a plan is either kept, or drained as a whole. A plan that hosts both operators to be re-placed and
-/// operators that stay cannot be reconfigured incrementally; the removal throws a PlacementFailure for it.
+/// cannot change a running plan, so a plan is either kept, or drained as a whole. The amendment phase re-places all operators of a plan
+/// that hosts operators to be re-placed; the removal throws a PlacementFailure if it still gets a partially affected plan.
 class PlacementRemovalStrategy
 {
 public:

@@ -16,4 +16,5 @@ add_source_files(nes-query-optimizer
         PlacementAdditionStrategy.cpp
         PlacementRemovalStrategy.cpp
         QueryDecomposition.cpp
+        QueryPlacementAmendmentPhase.cpp
 )

@@ -50,7 +50,7 @@ public:
         SharedPtr<const SourceCatalog> sourceCatalog,
         SharedPtr<const SinkCatalog> sinkCatalog);
 
-    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& networkConfiguration);
+    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& networkConfiguration) const;
 
     /// Creates the network sink on `upstreamWorker` (with `upstreamOperator` as its child) and the network source on `downstreamWorker` of
     /// the channel `channelId`. The incremental placement of ISQP uses this to connect re-placed operators.
