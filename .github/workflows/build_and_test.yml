@@ -86,9 +86,12 @@ jobs:
             sccache --show-stats
             sccache --stop-server
 
+      # The workflow comes from the PR's merge ref, but the checkout is the PR head. A branch that predates this
+      # action does not contain it, and a failing diagnostic step would skip all later tests.
       - uses: ./.github/steps/report-disk-usage
         name: Disk Usage After Build
         if: ${{ !cancelled() }}
+        continue-on-error: true
 
       - uses: ./.github/steps/run-in-container
         name: Run Unit Tests
@@ -102,6 +105,7 @@ jobs:
       - uses: ./.github/steps/report-disk-usage
         name: Disk Usage After Unit Tests
         if: ${{ !cancelled() && matrix.run_unit }}
+        continue-on-error: true
 
       - uses: ./.github/steps/run-in-container
         name: Run System Tests
@@ -115,6 +119,7 @@ jobs:
       - uses: ./.github/steps/report-disk-usage
         name: Disk Usage After System Tests
         if: ${{ !cancelled() && matrix.run_systest }}
+        continue-on-error: true
 
       - uses: ./.github/steps/run-in-container
         name: Run Docker Tests
@@ -131,6 +136,7 @@ jobs:
       - uses: ./.github/steps/report-disk-usage
         name: Disk Usage After Docker Tests
         if: ${{ !cancelled() && matrix.run_docker }}
+        continue-on-error: true
 
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v5
