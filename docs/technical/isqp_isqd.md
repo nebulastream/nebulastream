@@ -44,6 +44,10 @@ Shortcuts that the original takes and that the port takes as well are listed und
 |-----------------------------------------------------------|---------------------------------------------------------------------------|
 | `Topology::addTopologyNodeAsChild`, `removeTopologyNodeAsChild`, `findAllDownstreamNodes` | `NetworkTopology::addLink`, `removeLink`, `findAllDownstreamNodes`, mirrored in `WorkerCatalog` |
 | `TopologyNode::occupySlots`, `releaseSlots`               | `WorkerCatalog::tryOccupySlots`, `releaseSlots`, `getAvailableSlots`      |
+| `SharedQueryPlan` (one per merged query)                 | `SharedQueryPlan` (one per distributed query, no query merging)            |
+| Operator properties `PINNED_WORKER_ID`, operator state    | `SharedQueryPlan::getPinnedWorker`, `getOperatorState`                     |
+| Parent links of mutable operator nodes                    | `OperatorGraph` over the immutable logical operators                      |
+| `ChangeLog`, `ChangeLogEntry`                             | `ChangeLog`, `ChangeLogEntry`                                             |
 
 ### Worker capacity
 
@@ -53,3 +57,16 @@ The original occupies the slots of a topology node for every placed operator, bo
 single query (`BottomUpOperatorPlacer`). The systests rely on this, as they run many queries concurrently on capacity-limited workers.
 The slots of the initial placement are still accounted for (`WorkerCatalog::occupySlots`, unchecked), but only the placement amendment
 of ISQP enforces the remaining capacity (`tryOccupySlots`). The remaining capacity never drops below zero.
+
+### Shared query plan and change log
+
+**Deviation:** the current code base does not merge queries, so every distributed query has its own shared query plan and the shared
+query id is the distributed query id. Queries placed by the initial placement start as `Deployed` with all operators `Placed`.
+
+**Fixed issue:** the original keys change log entries by the wall-clock time in microseconds, so two entries recorded in the same
+microsecond overwrite each other. The port uses a logical timestamp.
+
+**Fixed issue:** when compacting two entries, the original merges their pinned operators by erasing from both sets while iterating them
+in the order of their pointer addresses. For chains of three or more operators, the result depends on the memory layout. The port drops
+an operator iff an operator of the other entry is more upstream (for the upstream operators) or more downstream (for the downstream
+operators).

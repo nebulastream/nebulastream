@@ -11,8 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-distributed
+        ChangeLog.cpp
         DistributedQuery.cpp
         DistributedQueryIdGenerator.cpp
         NetworkTopology.cpp
+        OperatorGraph.cpp
+        SharedQueryPlan.cpp
         WorkerCatalog.cpp
 )
