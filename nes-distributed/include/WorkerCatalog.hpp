@@ -54,6 +54,12 @@ public:
         const std::vector<Host>& downstream,
         Schema<LiteralConfigValue, Ordered> config = {}); /// NOLINT(fuchsia-default-arguments-declarations)
     std::optional<WorkerConfig> removeWorker(const Host& hostAddr);
+
+    /// Adds the topology link upstream -> downstream. Throws InvalidTopology if the link is invalid (see NetworkTopology::addLink).
+    void addLink(const Host& upstream, const Host& downstream);
+
+    /// Removes the topology link upstream -> downstream. Returns false if the link does not exist.
+    bool removeLink(const Host& upstream, const Host& downstream);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const Host& hostAddr) const;
     [[nodiscard]] size_t size() const;
     [[nodiscard]] std::vector<WorkerConfig> getAllWorkers() const;

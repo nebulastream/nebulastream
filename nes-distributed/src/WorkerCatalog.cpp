@@ -74,6 +74,24 @@ std::optional<WorkerConfig> WorkerCatalog::removeWorker(const Host& hostAddr)
     return std::nullopt;
 }
 
+void WorkerCatalog::addLink(const Host& upstream, const Host& downstream)
+{
+    topology.addLink(upstream, downstream);
+    workers.at(upstream).downstream.emplace_back(downstream);
+    ++version;
+}
+
+bool WorkerCatalog::removeLink(const Host& upstream, const Host& downstream)
+{
+    if (not topology.removeLink(upstream, downstream))
+    {
+        return false;
+    }
+    std::erase(workers.at(upstream).downstream, downstream);
+    ++version;
+    return true;
+}
+
 [[nodiscard]] std::optional<WorkerConfig> WorkerCatalog::getWorker(const Host& hostAddr) const
 {
     if (workers.contains(hostAddr))

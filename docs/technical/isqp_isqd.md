@@ -1,0 +1,45 @@
+# Incremental Stream Query Placement (ISQP) and Deployment (ISQD)
+
+This document describes the port of ISQP and ISQD onto the current NebulaStream code base.
+The original implementation is a research prototype on top of a heavily outdated NebulaStream version (coordinator, `GlobalExecutionPlan`,
+ZMQ network stack, `nes-runtime` reconfiguration messages):
+
+- ISQP: *Incremental Stream Query Placement in Massively Distributed and Volatile Infrastructures* (ICDE 2025).
+- ISQD: *Incremental Stream Query Deployment under Continuous Infrastructure Changes in the Cloud-Edge Continuum* (PVLDB 19(2), 2025).
+
+The port stays as close as possible to the original ideas and code structure.
+Where the current code base forces a different solution, or where the original has a logical issue, this document says so
+in the sections **Deviation** and **Fixed issue**.
+Shortcuts that the original takes and that the port takes as well are listed under **Shortcut**.
+
+## Core ideas
+
+**ISQP** re-places only the operators that are invalidated by a batch of topology changes:
+
+1. Topology change events (node added/removed, link added/removed) and query events (added/removed) are processed as a batch.
+2. For every removed link, the affected queries and the *pinned* upstream and downstream operators are computed.
+   Upstream operators that still run and downstream operators that are still reachable stay where they are.
+   Only the operators between them are re-placed.
+3. The re-placement is recorded in a change log per query. Overlapping change log entries are compacted.
+4. The placement amendment removes the invalid placements and places the operators again between the pinned operators.
+5. Affected queries are processed in parallel. Concurrent amendments synchronize on the worker capacities either optimistically (OCC)
+   or pessimistically (strict 2PL on the topology nodes of the selected path).
+
+**ISQD** deploys the result of the amendment incrementally:
+
+1. The deployment context computer gives every affected decomposed query plan (DQP) a state: to be deployed, to be updated, to be
+   drained, or to be updated and drained (state migration).
+2. A stateful operator that moves gets an ad-hoc state migration query: a source on the old worker reads the operator state, the regular
+   network channels carry it to the new worker, where it initializes the operator.
+3. New DQPs are deployed first. Then a reconfiguration marker, a map from `(DQP, version)` to an action, is injected at the affected
+   upstream DQPs and flows downstream through the data channels like a punctuation:
+   - **Drain**: flush the in-flight tuples, then terminate.
+   - **Update**: switch to the new version of the DQP (the network sinks connect to their new receivers).
+   - **Update and drain**: hand the state of the stateful operators over to the migration query, then terminate.
+4. Upstream DQPs that lost their downstream connection buffer their output and replay it once they are reconnected.
+
+## Mapping to the current code base
+
+| Original                                                  | Port                                                                      |
+|-----------------------------------------------------------|---------------------------------------------------------------------------|
+| `Topology::addTopologyNodeAsChild`, `removeTopologyNodeAsChild`, `findAllDownstreamNodes` | `NetworkTopology::addLink`, `removeLink`, `findAllDownstreamNodes`, mirrored in `WorkerCatalog` |

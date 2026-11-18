@@ -14,7 +14,9 @@
 
 #include <NetworkTopology.hpp>
 
+#include <algorithm>
 #include <functional>
+#include <iterator>
 #include <ostream>
 #include <ranges>
 #include <unordered_map>
@@ -122,6 +124,61 @@ void NetworkTopology::removeNode(const NodeId& id)
     }
 
     dag.erase(id);
+}
+
+void NetworkTopology::addLink(const NodeId& upstream, const NodeId& downstream)
+{
+    if (upstream == downstream)
+    {
+        throw InvalidTopology("Cannot link [{}] to itself", upstream);
+    }
+    if (not dag.contains(upstream) or not dag.contains(downstream))
+    {
+        throw InvalidTopology("Cannot link [{}] to [{}]: both nodes must be part of the topology", upstream, downstream);
+    }
+    if (hasLink(upstream, downstream))
+    {
+        throw InvalidTopology("The link [{}] -> [{}] already exists", upstream, downstream);
+    }
+    if (findAllDownstreamNodes(downstream).contains(upstream))
+    {
+        throw InvalidTopology("Adding the link [{}] -> [{}] would create a cycle in the topology", upstream, downstream);
+    }
+    dag.at(upstream).downstreamNodes.emplace_back(downstream);
+    dag.at(downstream).upstreamNodes.emplace_back(upstream);
+}
+
+bool NetworkTopology::removeLink(const NodeId& upstream, const NodeId& downstream)
+{
+    if (not hasLink(upstream, downstream))
+    {
+        return false;
+    }
+    std::erase(dag.at(upstream).downstreamNodes, downstream);
+    std::erase(dag.at(downstream).upstreamNodes, upstream);
+    return true;
+}
+
+bool NetworkTopology::hasLink(const NodeId& upstream, const NodeId& downstream) const
+{
+    const auto it = dag.find(upstream);
+    return it != dag.end() && std::ranges::contains(it->second.downstreamNodes, downstream);
+}
+
+std::unordered_set<NetworkTopology::NodeId> NetworkTopology::findAllDownstreamNodes(const NodeId& node) const
+{
+    std::unordered_set<NodeId> reachable;
+    std::vector<NodeId> stack = getDownstreamNodesOf(node);
+    while (not stack.empty())
+    {
+        auto current = stack.back();
+        stack.pop_back();
+        if (reachable.insert(current).second)
+        {
+            std::ranges::copy(getDownstreamNodesOf(current), std::back_inserter(stack));
+        }
+    }
+    return reachable;
 }
 
 std::vector<NetworkTopology::NodeId> NetworkTopology::getUpstreamNodesOf(const NodeId& node) const

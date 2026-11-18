@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <ostream>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT(misc-include-cleaner)
@@ -68,6 +69,18 @@ public:
 
     void addNode(const Node::Id& id, const std::vector<Node::Id>& downstreamNodes);
     void removeNode(const Node::Id& id);
+
+    /// Adds the directed link upstream -> downstream between two existing nodes.
+    /// Throws InvalidTopology if a node is unknown, the link already exists, is a self-link, or would create a cycle.
+    void addLink(const NodeId& upstream, const NodeId& downstream);
+
+    /// Removes the directed link upstream -> downstream. Returns false if the link does not exist.
+    bool removeLink(const NodeId& upstream, const NodeId& downstream);
+
+    [[nodiscard]] bool hasLink(const NodeId& upstream, const NodeId& downstream) const;
+
+    /// Returns all nodes that can be reached from `node` by following downstream links. `node` itself is not part of the result.
+    [[nodiscard]] std::unordered_set<NodeId> findAllDownstreamNodes(const NodeId& node) const;
 
     [[nodiscard]] std::vector<NodeId> getUpstreamNodesOf(const NodeId& node) const;
     [[nodiscard]] std::vector<NodeId> getDownstreamNodesOf(const NodeId& node) const;

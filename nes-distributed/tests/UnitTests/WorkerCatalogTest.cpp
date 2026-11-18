@@ -268,6 +268,29 @@ TEST_F(WorkerCatalogTest, TopologyDiamondRemoveIntermediateNode)
     EXPECT_THAT(paths, SizeIs(1));
 }
 
+/// Links can be changed at runtime. Every change bumps the version and keeps the worker's downstream list in sync with the topology.
+TEST_F(WorkerCatalogTest, AddAndRemoveLink)
+{
+    WorkerCatalog catalog;
+    const auto cloud = Host("cloud:9090");
+    const auto base1 = Host("base1:9090");
+    const auto base2 = Host("base2:9090");
+    const auto leaf = Host("leaf:9090");
+    catalog.addWorker(cloud, "cloud:4321", CapacityKind::Unlimited{}, {});
+    catalog.addWorker(base1, "base1:4321", CapacityKind::Unlimited{}, {cloud});
+    catalog.addWorker(base2, "base2:4321", CapacityKind::Unlimited{}, {cloud});
+    catalog.addWorker(leaf, "leaf:4321", CapacityKind::Unlimited{}, {base1});
+
+    const auto versionBefore = catalog.getVersion();
+    EXPECT_TRUE(catalog.removeLink(leaf, base1));
+    EXPECT_FALSE(catalog.removeLink(leaf, base1));
+    catalog.addLink(leaf, base2);
+    EXPECT_THAT(catalog.getVersion(), Eq(versionBefore + 2));
+    EXPECT_THAT(catalog.getWorker(leaf)->downstream, ElementsAre(base2));
+    EXPECT_TRUE(catalog.getTopology().hasLink(leaf, base2));
+    EXPECT_THROW(catalog.addLink(leaf, base2), Exception);
+    EXPECT_THAT(catalog.getVersion(), Eq(versionBefore + 2));
+}
 }
 
 /// NOLINTEND(google-build-using-namespace, readability-identifier-length, bugprone-unchecked-optional-access, readability-magic-numbers)

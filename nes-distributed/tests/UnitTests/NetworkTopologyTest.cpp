@@ -184,6 +184,58 @@ TEST_F(NetworkTopologyTest, NoCycleDag)
     EXPECT_NO_THROW(topology.addNode(a, {b, c}));
     EXPECT_THAT(topology, SizeIs(4));
 }
+
+/// A leaf that changes its parent (the mobility case of ISQP): remove one link and add another one.
+TEST_F(NetworkTopologyTest, ReconnectLeafToOtherParent)
+{
+    auto topology = NetworkTopology{};
+    const auto cloud = Host("cloud");
+    const auto base1 = Host("base1");
+    const auto base2 = Host("base2");
+    const auto leaf = Host("leaf");
+    topology.addNode(cloud, {});
+    topology.addNode(base1, {cloud});
+    topology.addNode(base2, {cloud});
+    topology.addNode(leaf, {base1});
+
+    EXPECT_TRUE(topology.removeLink(leaf, base1));
+    EXPECT_FALSE(topology.hasLink(leaf, base1));
+    EXPECT_THAT(topology.getUpstreamNodesOf(base1), IsEmpty());
+    EXPECT_THAT(topology.findAllDownstreamNodes(leaf), IsEmpty());
+
+    topology.addLink(leaf, base2);
+    EXPECT_TRUE(topology.hasLink(leaf, base2));
+    EXPECT_THAT(topology.getUpstreamNodesOf(base2), ElementsAre(leaf));
+    EXPECT_THAT(topology.findAllDownstreamNodes(leaf), UnorderedElementsAre(base2, cloud));
+}
+
+TEST_F(NetworkTopologyTest, RemoveMissingLink)
+{
+    auto topology = NetworkTopology{};
+    const auto a = Host("a");
+    const auto b = Host("b");
+    topology.addNode(a, {});
+    topology.addNode(b, {});
+    EXPECT_FALSE(topology.removeLink(a, b));
+}
+
+TEST_F(NetworkTopologyTest, InvalidLinks)
+{
+    auto topology = NetworkTopology{};
+    const auto a = Host("a");
+    const auto b = Host("b");
+    const auto c = Host("c");
+    topology.addNode(c, {});
+    topology.addNode(b, {c});
+    topology.addNode(a, {b});
+    EXPECT_THROW(topology.addLink(a, a), Exception);
+    EXPECT_THROW(topology.addLink(a, Host("unknown")), Exception);
+    EXPECT_THROW(topology.addLink(a, b), Exception) << "duplicate link";
+    EXPECT_THROW(topology.addLink(c, a), Exception) << "cycle c -> a -> b -> c";
+    EXPECT_FALSE(topology.hasLink(c, a));
+    EXPECT_NO_THROW(topology.addLink(a, c));
+    EXPECT_THAT(topology.findAllDownstreamNodes(a), UnorderedElementsAre(b, c));
+}
 }
 
 /// NOLINTEND(google-build-using-namespace, readability-identifier-length)
