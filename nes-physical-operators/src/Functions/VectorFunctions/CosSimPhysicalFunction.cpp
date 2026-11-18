@@ -28,7 +28,6 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <val.hpp>
 
 namespace NES
 {
@@ -42,36 +41,37 @@ CosSimPhysicalFunction::CosSimPhysicalFunction(
 
 namespace
 {
-/// Native function called via nautilus::invoke.
 /// Takes raw pointers and byte lengths for vector 1 and vector 2.
-double computeCosineSimilarity(int8_t* inputPtr1, uint64_t inputSize1, int8_t* inputPtr2, uint64_t inputSize2)
+double computeCosineSimilarity(const int8_t* inputPtr1, const uint64_t inputSize1, const int8_t* inputPtr2, const uint64_t inputSize2)
 {
     const auto* vector1 = reinterpret_cast<const float*>(inputPtr1);
     const auto* vector2 = reinterpret_cast<const float*>(inputPtr2);
     const uint64_t dim1 = inputSize1 / sizeof(float);
     const uint64_t dim2 = inputSize2 / sizeof(float);
 
-    double dot = 0.0, norm1 = 0.0, norm2 = 0.0;
+    double dot = 0.0;
+    double norm1 = 0.0;
+    double norm2 = 0.0;
 
     for (uint64_t i = 0; i < dim1 && i < dim2; ++i)
     {
-        const auto v1 = static_cast<double>(vector1[i]);
-        const auto v2 = static_cast<double>(vector2[i]);
-        dot += v1 * v2;
-        norm1 += v1 * v1;
-        norm2 += v2 * v2;
+        const auto vectorElement1 = static_cast<double>(vector1[i]);
+        const auto vectorElement2 = static_cast<double>(vector2[i]);
+        dot += vectorElement1 * vectorElement2;
+        norm1 += vectorElement1 * vectorElement1;
+        norm2 += vectorElement2 * vectorElement2;
     }
     /// Following steps are a padding.
     /// Elements of the shorter vector are assumed to be 0.
     for (uint64_t i = dim1; i < dim2; ++i)
     {
-        const auto v2 = static_cast<double>(vector2[i]);
-        norm2 += v2 * v2;
+        const auto vectorElement2 = static_cast<double>(vector2[i]);
+        norm2 += vectorElement2 * vectorElement2;
     }
     for (uint64_t i = dim2; i < dim1; ++i)
     {
-        const auto v1 = static_cast<double>(vector1[i]);
-        norm1 += v1 * v1;
+        const auto vectorElement1 = static_cast<double>(vector1[i]);
+        norm1 += vectorElement1 * vectorElement1;
     }
 
     /// This is more numerically stable than sqrt(norm1 * norm2).
