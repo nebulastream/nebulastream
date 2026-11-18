@@ -346,6 +346,24 @@ void addModuleInitializationPrologue(llvm::Module& module, const std::string& sy
         "nes_codon_ensure_module_initialized", llvm::FunctionType::get(llvm::Type::getVoidTy(context), {pointerType, pointerType}, false));
     llvm::IRBuilder<> builder(&*entryPoint->getEntryBlock().getFirstInsertionPt());
     builder.CreateCall(ensureInitialized, {initializer, initialized});
+
+    /// The initializer and the top-level code of each module (%_import_<module>_<n>_call) run once per pipeline, so they are
+    /// not optimized: a large literal at module level, e.g. a set of 3800 strings, becomes one basic block of 15000
+    /// instructions, on which the LLVM optimizations and the instruction scheduler take tens of seconds.
+    const auto skipOptimization = [](llvm::Function& function)
+    {
+        function.removeFnAttr(llvm::Attribute::AlwaysInline);
+        function.addFnAttr(llvm::Attribute::NoInline);
+        function.addFnAttr(llvm::Attribute::OptimizeNone);
+    };
+    skipOptimization(*initializer);
+    for (auto& function : module)
+    {
+        if (!function.isDeclaration() && function.getName().starts_with("%_import_"))
+        {
+            skipOptimization(function);
+        }
+    }
 }
 
 double elapsedMilliseconds(const std::chrono::steady_clock::time_point start, const std::chrono::steady_clock::time_point end)

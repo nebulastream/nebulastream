@@ -604,9 +604,10 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
 {
     static const std::unordered_set<std::string_view> BannedFunctions{
         "seq_alloc_uncollectable", "seq_alloc_atomic_uncollectable", "seq_register_finalizer"};
-    /// The libc character classification and case mapping functions Codon's str methods call; stateless, resolved from the process.
+    /// The libc character classification and case mapping functions Codon's str methods call, and modf, which numpy's
+    /// module initialization calls and the LLVM optimizations remove elsewhere; stateless, resolved from the process.
     static const std::unordered_set<std::string_view> AllowedProcessFunctions{
-        "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower"};
+        "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower", "modf"};
     const auto pluginFunctions = getCodonPluginNativeSymbols();
 
     const auto* entryPoint = module.getFunction(symbol);
