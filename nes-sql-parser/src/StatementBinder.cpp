@@ -53,7 +53,6 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Util/URI.hpp>
 #include <ErrorHandling.hpp>
 
 #include <DataTypes/UnboundField.hpp>
@@ -168,7 +167,7 @@ public:
                 const Literal* literalOpt = std::get_if<Literal>(&it->second);
                 if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
                 {
-                    return URI(std::get<std::string>(*literalOpt)).toString();
+                    return std::get<std::string>(*literalOpt);
                 }
                 throw InvalidQuerySyntax("DATA must be a string literal");
             }
@@ -188,7 +187,7 @@ public:
                            const Literal* literalOpt = std::get_if<Literal>(&value);
                            if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
                            {
-                               return URI(std::get<std::string>(*literalOpt)).toString();
+                               return std::get<std::string>(*literalOpt);
                            }
                            throw InvalidQuerySyntax("DOWNSTREAM must be a string literal");
                        })
@@ -197,7 +196,7 @@ public:
 
 
         return CreateWorkerStatement{
-            .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
+            .host = bindStringLiteral(workerDefAST->hostaddr),
             .dataAddress = std::move(dataAddress),
             .maxOperators = maxOperators,
             .downstream = downStreams,

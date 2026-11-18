@@ -1018,6 +1018,18 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).maxOperators, 32U);
 }
 
+TEST_F(StatementBinderTest, CreateWorkerStatementTakesIpAddresses)
+{
+    const auto statement = binder->parseAndBindSingle(
+        R"(CREATE WORKER '127.0.0.1:8080' SET ('127.0.0.1:9090' AS "DATA", '127.0.0.2:9090' AS "DOWNSTREAM"))");
+    ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
+    ASSERT_TRUE(std::holds_alternative<CreateWorkerStatement>(*statement));
+    EXPECT_EQ(std::get<CreateWorkerStatement>(*statement).host, "127.0.0.1:8080");
+    EXPECT_EQ(std::get<CreateWorkerStatement>(*statement).dataAddress, "127.0.0.1:9090");
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).downstream.size(), 1U);
+    EXPECT_EQ(std::get<CreateWorkerStatement>(*statement).downstream.front(), "127.0.0.2:9090");
+}
+
 TEST_F(StatementBinderTest, CreateLogicalQueryPlanRejectsNonQueryStatements)
 {
     EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("CREATE WORKER 'localhost:8080';"), Exception);
