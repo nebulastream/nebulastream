@@ -474,6 +474,68 @@ TEST_F(VarValTest, nullPropagationArithmetic)
     EXPECT_TRUE(static_cast<bool>(resultDiv2.isNull()));
 }
 
+TEST_F(VarValTest, floatToIntegerCastSaturates)
+{
+    constexpr auto infinity = std::numeric_limits<double>::infinity();
+    constexpr auto nan = std::numeric_limits<double>::quiet_NaN();
+
+    const auto notNull = [](const double value) { return VarVal{nautilus::val<double>(value)}; };
+    const auto nullable
+        = [](const double value, const bool isNull) { return VarVal{nautilus::val<double>(value), true, nautilus::val<bool>{isNull}}; };
+    const auto asInt32 = [](const VarVal& value) { return value.getRawValueAs<nautilus::val<int32_t>>(); };
+    const auto asInt64 = [](const VarVal& value) { return value.getRawValueAs<nautilus::val<int64_t>>(); };
+    const auto asUInt64 = [](const VarVal& value) { return value.getRawValueAs<nautilus::val<uint64_t>>(); };
+    const auto castInt32 = [&](const double value) { return notNull(value).castToType(DataType::Type::INT32); };
+
+    EXPECT_EQ(asInt32(castInt32(1.9)), 1);
+    EXPECT_EQ(asInt32(castInt32(-1.9)), -1);
+    EXPECT_EQ(asInt32(castInt32(2147483647.0)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(castInt32(-2147483648.0)), std::numeric_limits<int32_t>::min());
+
+    EXPECT_EQ(asInt32(castInt32(2147483648.0)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(castInt32(1e300)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(castInt32(infinity)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(castInt32(-2147483649.0)), std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(asInt32(castInt32(-1e300)), std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(asInt32(castInt32(-infinity)), std::numeric_limits<int32_t>::min());
+
+    const auto notNullNan = castInt32(nan);
+    EXPECT_EQ(asInt32(notNullNan), 0);
+    EXPECT_FALSE(notNullNan.isNullable());
+    EXPECT_FALSE(static_cast<bool>(notNullNan.isNull()));
+
+    const auto nullableNan = nullable(nan, false).castToType(DataType::Type::INT32);
+    EXPECT_TRUE(nullableNan.isNullable());
+    EXPECT_TRUE(static_cast<bool>(nullableNan.isNull()));
+    const auto nullableInf = nullable(infinity, false).castToType(DataType::Type::INT32);
+    EXPECT_FALSE(static_cast<bool>(nullableInf.isNull()));
+    EXPECT_EQ(asInt32(nullableInf), std::numeric_limits<int32_t>::max());
+    EXPECT_TRUE(static_cast<bool>(nullable(1.0, true).castToType(DataType::Type::INT32).isNull()));
+
+    const auto floatInf = VarVal{nautilus::val<float>(std::numeric_limits<float>::infinity())}.castToType(DataType::Type::INT32);
+    EXPECT_EQ(asInt32(floatInf), std::numeric_limits<int32_t>::max());
+
+    EXPECT_EQ(asInt64(notNull(9223372036854775808.0).castToType(DataType::Type::INT64)), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(asInt64(notNull(-9223372036854775808.0).castToType(DataType::Type::INT64)), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(asInt64(notNull(4611686018427387904.0).castToType(DataType::Type::INT64)), 4611686018427387904LL);
+    EXPECT_EQ(asUInt64(notNull(18446744073709551616.0).castToType(DataType::Type::UINT64)), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(asUInt64(notNull(infinity).castToType(DataType::Type::UINT64)), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(asUInt64(notNull(1e19).castToType(DataType::Type::UINT64)), 10000000000000000000ULL);
+    EXPECT_EQ(asUInt64(notNull(-1e300).castToType(DataType::Type::UINT64)), uint64_t{0});
+    EXPECT_EQ(asUInt64(notNull(-0.0).castToType(DataType::Type::UINT64)), uint64_t{0});
+
+    EXPECT_EQ(notNull(300.0).castToType(DataType::Type::UINT8).getRawValueAs<nautilus::val<uint8_t>>(), uint8_t{255});
+    EXPECT_EQ(notNull(-5.0).castToType(DataType::Type::UINT8).getRawValueAs<nautilus::val<uint8_t>>(), uint8_t{0});
+    EXPECT_EQ(notNull(-1000.0).castToType(DataType::Type::INT8).getRawValueAs<nautilus::val<int8_t>>(), int8_t{-128});
+    EXPECT_EQ(notNull(1e9).castToType(DataType::Type::INT16).getRawValueAs<nautilus::val<int16_t>>(), int16_t{32767});
+    EXPECT_EQ(notNull(70000.0).castToType(DataType::Type::UINT16).getRawValueAs<nautilus::val<uint16_t>>(), uint16_t{65535});
+    EXPECT_EQ(notNull(nan).castToType(DataType::Type::UINT32).getRawValueAs<nautilus::val<uint32_t>>(), uint32_t{0});
+    EXPECT_EQ(notNull(1e9).castToType(DataType::Type::CHAR).getRawValueAs<nautilus::val<char>>(), std::numeric_limits<char>::max());
+    EXPECT_EQ(notNull(nan).castToType(DataType::Type::CHAR).getRawValueAs<nautilus::val<char>>(), char{0});
+
+    EXPECT_EQ(asInt32(VarVal{nautilus::val<int64_t>(5)}.castToType(DataType::Type::INT32)), 5);
+}
+
 TEST_F(VarValTest, nullPropagationComparison)
 {
     const VarVal nullVal{nautilus::val<int32_t>(0), true, nautilus::val<bool>{true}};
