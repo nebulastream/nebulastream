@@ -20,11 +20,14 @@
 #include <ranges>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/Overloaded.hpp>
+#include <ErrorHandling.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -68,6 +71,7 @@ std::optional<WorkerConfig> WorkerCatalog::removeWorker(const Host& hostAddr)
     if (const auto node = workers.extract(hostAddr); not node.empty())
     {
         topology.removeNode(hostAddr);
+        occupiedSlots.erase(hostAddr);
         ++version;
         return std::move(node.mapped());
     }
@@ -90,6 +94,57 @@ bool WorkerCatalog::removeLink(const Host& upstream, const Host& downstream)
     std::erase(workers.at(upstream).downstream, downstream);
     ++version;
     return true;
+}
+
+bool WorkerCatalog::tryOccupySlots(const Host& host, const size_t slots)
+{
+    PRECONDITION(workers.contains(host), "Cannot occupy slots of unknown worker {}", host);
+    const auto available = getAvailableSlots(host);
+    if (const auto* limited = std::get_if<CapacityKind::Limited>(&available); limited != nullptr && limited->value < slots)
+    {
+        return false;
+    }
+    occupiedSlots[host] += slots;
+    return true;
+}
+
+void WorkerCatalog::occupySlots(const Host& host, const size_t slots)
+{
+    PRECONDITION(workers.contains(host), "Cannot occupy slots of unknown worker {}", host);
+    occupiedSlots[host] += slots;
+}
+
+bool WorkerCatalog::releaseSlots(const Host& host, const size_t slots)
+{
+    const auto it = occupiedSlots.find(host);
+    const size_t occupied = it == occupiedSlots.end() ? 0 : it->second;
+    if (occupied < slots)
+    {
+        return false;
+    }
+    if (slots > 0)
+    {
+        it->second -= slots;
+    }
+    return true;
+}
+
+size_t WorkerCatalog::getOccupiedSlots(const Host& host) const
+{
+    const auto it = occupiedSlots.find(host);
+    return it == occupiedSlots.end() ? 0 : it->second;
+}
+
+Capacity WorkerCatalog::getAvailableSlots(const Host& host) const
+{
+    PRECONDITION(workers.contains(host), "Cannot compute the available slots of unknown worker {}", host);
+    const auto occupied = getOccupiedSlots(host);
+    return std::visit(
+        Overloaded{
+            [](const CapacityKind::Unlimited& unlimited) -> Capacity { return unlimited; },
+            [occupied](const CapacityKind::Limited& limited) -> Capacity
+            { return CapacityKind::Limited{limited.value > occupied ? limited.value - occupied : 0}; }},
+        workers.at(host).maxOperators);
 }
 
 [[nodiscard]] std::optional<WorkerConfig> WorkerCatalog::getWorker(const Host& hostAddr) const

@@ -43,3 +43,13 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | Original                                                  | Port                                                                      |
 |-----------------------------------------------------------|---------------------------------------------------------------------------|
 | `Topology::addTopologyNodeAsChild`, `removeTopologyNodeAsChild`, `findAllDownstreamNodes` | `NetworkTopology::addLink`, `removeLink`, `findAllDownstreamNodes`, mirrored in `WorkerCatalog` |
+| `TopologyNode::occupySlots`, `releaseSlots`               | `WorkerCatalog::tryOccupySlots`, `releaseSlots`, `getAvailableSlots`      |
+
+### Worker capacity
+
+The original occupies the slots of a topology node for every placed operator, both for the holistic and the incremental placement.
+
+**Deviation:** the initial (holistic) placement keeps the current semantics, where the capacity of a worker limits the operators of a
+single query (`BottomUpOperatorPlacer`). The systests rely on this, as they run many queries concurrently on capacity-limited workers.
+The slots of the initial placement are still accounted for (`WorkerCatalog::occupySlots`, unchecked), but only the placement amendment
+of ISQP enforces the remaining capacity (`tryOccupySlots`). The remaining capacity never drops below zero.

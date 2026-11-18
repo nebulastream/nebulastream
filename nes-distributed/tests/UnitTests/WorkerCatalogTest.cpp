@@ -291,6 +291,33 @@ TEST_F(WorkerCatalogTest, AddAndRemoveLink)
     EXPECT_THROW(catalog.addLink(leaf, base2), Exception);
     EXPECT_THAT(catalog.getVersion(), Eq(versionBefore + 2));
 }
+
+/// Slots are occupied and released per worker; a limited worker rejects an occupation that exceeds its remaining capacity.
+TEST_F(WorkerCatalogTest, OccupyAndReleaseSlots)
+{
+    WorkerCatalog catalog;
+    const auto limited = Host("limited:9090");
+    const auto unlimited = Host("unlimited:9090");
+    catalog.addWorker(limited, "limited:4321", CapacityKind::Limited{3}, {});
+    catalog.addWorker(unlimited, "unlimited:4321", CapacityKind::Unlimited{}, {});
+
+    EXPECT_TRUE(catalog.tryOccupySlots(limited, 2));
+    EXPECT_FALSE(catalog.tryOccupySlots(limited, 2));
+    EXPECT_THAT(catalog.getOccupiedSlots(limited), Eq(2U));
+    EXPECT_THAT(std::get<CapacityKind::Limited>(catalog.getAvailableSlots(limited)).value, Eq(1U));
+    EXPECT_TRUE(catalog.tryOccupySlots(limited, 1));
+    EXPECT_THAT(std::get<CapacityKind::Limited>(catalog.getAvailableSlots(limited)).value, Eq(0U));
+
+    /// The initial placement may exceed the capacity, the available slots never become negative.
+    catalog.occupySlots(limited, 2);
+    EXPECT_THAT(std::get<CapacityKind::Limited>(catalog.getAvailableSlots(limited)).value, Eq(0U));
+    EXPECT_FALSE(catalog.releaseSlots(limited, 6));
+    EXPECT_TRUE(catalog.releaseSlots(limited, 5));
+    EXPECT_THAT(catalog.getOccupiedSlots(limited), Eq(0U));
+
+    EXPECT_TRUE(catalog.tryOccupySlots(unlimited, 1000));
+    EXPECT_TRUE(std::holds_alternative<CapacityKind::Unlimited>(catalog.getAvailableSlots(unlimited)));
+}
 }
 
 /// NOLINTEND(google-build-using-namespace, readability-identifier-length, bugprone-unchecked-optional-access, readability-magic-numbers)
