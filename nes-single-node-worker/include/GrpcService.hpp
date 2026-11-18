@@ -32,6 +32,7 @@ public:
     grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest*, StartQueryReply*) override;
 
     grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
+    grpc::Status AddReconfigurationMarker(grpc::ServerContext*, const ReconfigurationMarkerRequest*, ReconfigurationMarkerReply*) override;
 
     grpc::Status RequestQueryStatus(grpc::ServerContext*, const QueryStatusRequest*, QueryStatusReply*) override;
 

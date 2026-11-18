@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <Util/Pointers.hpp>
@@ -70,6 +71,10 @@ public:
     /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query
     std::expected<void, Exception> stopQuery(QueryId queryId) noexcept;
+
+    /// Injects a reconfiguration marker of ISQD into a running local query (the original's NodeEngine::addReconfigureMarker).
+    /// Returns false if the marker has no new event for the query.
+    [[nodiscard]] std::expected<bool, Exception> addReconfigurationMarker(QueryId queryId, const ReconfigurationMarker& marker) noexcept;
 
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;

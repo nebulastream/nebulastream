@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/BufferManager.hpp>
 
 #include <Sources/SourceProvider.hpp>
@@ -50,6 +51,8 @@ public:
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
     void stopQuery(QueryId queryId);
+    /// Injects a reconfiguration marker into a running query. Returns false if the marker has no new event for the query.
+    bool injectReconfigurationMarker(QueryId queryId, const ReconfigurationMarker& marker);
 
     [[nodiscard]] std::shared_ptr<BufferManager> getBufferManager() { return bufferManager; }
 

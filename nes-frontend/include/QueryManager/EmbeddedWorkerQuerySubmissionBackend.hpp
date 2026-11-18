@@ -52,6 +52,7 @@ public:
     EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, const WorkerConfigResolver& resolveWorkerConfiguration);
     [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     std::expected<void, Exception> stop(QueryId) override;
+    std::expected<bool, Exception> addReconfigurationMarker(QueryId, const ReconfigurationMarker&) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
     [[nodiscard]] std::expected<VersionInfo, Exception> version() const override;

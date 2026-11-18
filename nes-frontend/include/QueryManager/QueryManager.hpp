@@ -23,6 +23,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
 #include <DistributedLogicalPlan.hpp>
@@ -44,6 +45,8 @@ public:
     virtual ~QuerySubmissionBackend() = default;
     [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
+    /// Injects a reconfiguration marker of ISQD into a running local query. Returns false if the marker has no new event for the query.
+    virtual std::expected<bool, Exception> addReconfigurationMarker(QueryId, const ReconfigurationMarker&) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
     [[nodiscard]] virtual std::expected<VersionInfo, Exception> version() const = 0;

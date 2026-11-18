@@ -20,6 +20,8 @@ import "google/protobuf/empty.proto";
 service WorkerRPCService {
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
+  /// Injects a reconfiguration marker of ISQD into a running local query.
+  rpc AddReconfigurationMarker (ReconfigurationMarkerRequest) returns (ReconfigurationMarkerReply) {}
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
@@ -40,6 +42,17 @@ message StartQueryReply {
 
 message StopQueryRequest {
     NES.SerializableQueryId queryId = 1;
+}
+
+message ReconfigurationMarkerRequest {
+    NES.SerializableQueryId queryId = 1;
+    /// The serialized reconfiguration marker.
+    bytes marker = 2;
+}
+
+message ReconfigurationMarkerReply {
+    /// False if the marker has no new event for the query.
+    bool hasEvent = 1;
 }
 
 enum QueryState {

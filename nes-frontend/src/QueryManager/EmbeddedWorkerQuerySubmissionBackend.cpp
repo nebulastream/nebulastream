@@ -55,6 +55,17 @@ struct StopQuery
     QueryId id;
 };
 
+struct AddReconfigurationMarker
+{
+    QueryId id;
+    ReconfigurationMarker marker;
+};
+
+struct AddReconfigurationMarkerReply
+{
+    std::expected<bool, Exception> reply;
+};
+
 struct QueryStatusQuery
 {
     QueryId id;
@@ -85,10 +96,11 @@ struct WorkerStatusReply
     std::expected<WorkerStatus, Exception> reply;
 };
 
-using Request = std::variant<Stop, StartQuery, StopQuery, QueryStatusQuery, WorkerStatusQuery>;
+using Request = std::variant<Stop, StartQuery, StopQuery, AddReconfigurationMarker, QueryStatusQuery, WorkerStatusQuery>;
 /// `std::monostate` first so the variant is default-constructible — needed because
 /// folly's `dequeue(T&)` writes into an existing slot. It is never actually pushed.
-using Reply = std::variant<std::monostate, StartQueryReply, StopQueryReply, QueryStatusReply, WorkerStatusReply>;
+using Reply
+    = std::variant<std::monostate, StartQueryReply, StopQueryReply, AddReconfigurationMarkerReply, QueryStatusReply, WorkerStatusReply>;
 }
 
 /// All shared state between callers and the single worker thread lives here:
@@ -117,6 +129,11 @@ public:
     std::expected<QueryId, Exception> start(LogicalPlan plan) { return submit<StartQueryReply>(StartQuery{.plan = std::move(plan)}); }
 
     std::expected<void, Exception> stop(QueryId id) { return submit<StopQueryReply>(StopQuery{.id = std::move(id)}); }
+
+    std::expected<bool, Exception> addReconfigurationMarker(QueryId id, ReconfigurationMarker marker)
+    {
+        return submit<AddReconfigurationMarkerReply>(AddReconfigurationMarker{.id = std::move(id), .marker = std::move(marker)});
+    }
 
     std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId id) const
     {
@@ -159,6 +176,8 @@ private:
                     [](Stop) -> Reply { std::unreachable(); },
                     [&](StartQuery& request) -> Reply { return StartQueryReply{.reply = worker.startQuery(std::move(request.plan))}; },
                     [&](const StopQuery& request) -> Reply { return StopQueryReply{.reply = worker.stopQuery(request.id)}; },
+                    [&](const AddReconfigurationMarker& request) -> Reply
+                    { return AddReconfigurationMarkerReply{.reply = worker.addReconfigurationMarker(request.id, request.marker)}; },
                     [&](const QueryStatusQuery& request) -> Reply { return QueryStatusReply{.reply = worker.getQueryStatus(request.id)}; },
                     [&](const WorkerStatusQuery& request) -> Reply
                     { return WorkerStatusReply{.reply = worker.getWorkerStatus(request.after)}; },
@@ -214,6 +233,12 @@ std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(Lo
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
 {
     return channel->stop(queryId);
+}
+
+std::expected<bool, Exception>
+EmbeddedWorkerQuerySubmissionBackend::addReconfigurationMarker(QueryId queryId, const ReconfigurationMarker& marker)
+{
+    return channel->addReconfigurationMarker(queryId, marker);
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const

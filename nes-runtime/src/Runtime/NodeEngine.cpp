@@ -65,6 +65,13 @@ void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> 
     queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
 }
 
+bool NodeEngine::injectReconfigurationMarker(QueryId queryId, const ReconfigurationMarker& marker)
+{
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    NES_INFO("Injecting reconfiguration marker {} into {}", marker.getId(), queryId);
+    return queryEngine->injectReconfigurationMarker(queryId, marker);
+}
+
 void NodeEngine::stopQuery(QueryId queryId)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");

@@ -188,6 +188,27 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
+std::expected<bool, Exception> GRPCQuerySubmissionBackend::addReconfigurationMarker(QueryId queryId, const ReconfigurationMarker& marker)
+{
+    grpc::ClientContext context;
+    ReconfigurationMarkerRequest request;
+    *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
+    request.set_marker(marker.serialize());
+    ReconfigurationMarkerReply reply;
+
+    const auto status = stub->AddReconfigurationMarker(&context, request, &reply);
+    if (status.ok())
+    {
+        NES_DEBUG("Added reconfiguration marker {} to query {} on node {}.", marker.getId(), queryId, workerConfig.host);
+        return reply.hasevent();
+    }
+    return std::unexpected{NES::UnknownException(
+        "Adding reconfiguration marker failed. Status: {}\nMessage: {}\nDetail: {}",
+        magic_enum::enum_name(status.error_code()),
+        status.error_message(),
+        status.error_details())};
+}
+
 BackendProvider createGRPCBackend()
 {
     return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
