@@ -60,7 +60,8 @@ struct RunningQueryPlanNode
         std::unique_ptr<ExecutablePipelineStage> stage,
         std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef,
-        CallbackRef setupCallback);
+        CallbackRef setupCallback,
+        std::shared_ptr<ReconfigurationState> reconfigurationState);
 
 
     ~RunningQueryPlanNode();
@@ -70,12 +71,14 @@ struct RunningQueryPlanNode
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<ExecutablePipelineStage> stage,
         std::function<void(Exception)> unregisterWithError,
-        CallbackRef planRef)
+        CallbackRef planRef,
+        std::shared_ptr<ReconfigurationState> reconfigurationState)
         : id(id)
         , successors(std::move(successors))
         , stage(std::move(stage))
         , unregisterWithError(std::move(unregisterWithError))
         , planRef(std::move(planRef))
+        , reconfigurationState(std::move(reconfigurationState))
     {
     }
 
@@ -90,6 +93,8 @@ struct RunningQueryPlanNode
 
     std::function<void(Exception)> unregisterWithError;
     CallbackRef planRef;
+    /// The reconfiguration state of the query, shared by all of its nodes.
+    std::shared_ptr<ReconfigurationState> reconfigurationState;
 };
 
 struct QueryLifetimeListener

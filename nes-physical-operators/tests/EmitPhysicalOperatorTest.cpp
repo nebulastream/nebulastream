@@ -103,6 +103,10 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             operatorHandlers = &opHandlers;
         }
 
+        [[nodiscard]] ReconfigurationState& getReconfigurationState() override { return reconfigurationState; }
+
+        ReconfigurationState reconfigurationState{LocalQueryId(LocalQueryId::INVALID)};
+
         MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {

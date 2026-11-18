@@ -155,6 +155,7 @@ struct TestPipelineExecutionContext : PipelineExecutionContext
     MOCK_METHOD((std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&), getOperatorHandlers, (), (override));
     MOCK_METHOD(void, setOperatorHandlers, ((std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&)), (override));
     MOCK_METHOD(bool, emitBuffer, (const TupleBuffer&, ContinuationPolicy), (override));
+    MOCK_METHOD(ReconfigurationState&, getReconfigurationState, (), (override));
 };
 
 struct TerminatePipelineArgs
@@ -444,10 +445,20 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
 
     /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a setup task has been submitted
     const auto testQid = randomQueryId();
-    auto sink = RunningQueryPlanNode::create(testQid, PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef);
+    const auto reconfigurationState = std::make_shared<ReconfigurationState>(testQid.getLocalQueryId());
+    auto sink = RunningQueryPlanNode::create(
+        testQid, PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef, reconfigurationState);
     EXPECT_THAT(*setups, testing::SizeIs(1));
     auto pipeline = RunningQueryPlanNode::create(
-        testQid, PipelineId(2), emitter, {std::move(sink)}, std::move(stage1), [](auto) { }, std::move(expirationRef), std::move(setupRef));
+        testQid,
+        PipelineId(2),
+        emitter,
+        {std::move(sink)},
+        std::move(stage1),
+        [](auto) { },
+        std::move(expirationRef),
+        std::move(setupRef),
+        reconfigurationState);
     EXPECT_THAT(*setups, testing::SizeIs(2));
 
     /// Run all setup tasks.

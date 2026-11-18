@@ -23,6 +23,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryId.hpp>
+#include <ReconfigurationState.hpp>
 
 namespace NES
 {
@@ -40,6 +41,8 @@ struct ExecutableQueryPlan
     QueryId queryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<SourceWithSuccessor> sources;
+    /// The reconfiguration state of the query, shared by all of its pipelines.
+    std::shared_ptr<ReconfigurationState> reconfigurationState;
     friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan);
 };
 }

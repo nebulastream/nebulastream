@@ -103,7 +103,10 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
 
 ExecutableQueryPlan::ExecutableQueryPlan(
     QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources)
-    : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
+    : queryId(queryId)
+    , pipelines(std::move(pipelines))
+    , sources(std::move(instantiatedSources))
+    , reconfigurationState(std::make_shared<ReconfigurationState>(queryId.getLocalQueryId()))
 {
 }
 }

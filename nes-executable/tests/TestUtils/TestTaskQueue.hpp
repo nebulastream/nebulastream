@@ -110,8 +110,11 @@ public:
 
     void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override;
 
+    [[nodiscard]] ReconfigurationState& getReconfigurationState() override { return reconfigurationState; }
+
     WorkerThreadId workerThreadId;
     PipelineId pipelineId;
+    ReconfigurationState reconfigurationState{LocalQueryId(LocalQueryId::INVALID)};
 
 private:
     std::function<void()> repeatTaskCallback;

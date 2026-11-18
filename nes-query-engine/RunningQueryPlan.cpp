@@ -88,10 +88,18 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     std::unique_ptr<ExecutablePipelineStage> stage,
     std::function<void(Exception)> unregisterWithError,
     CallbackRef planRef,
-    CallbackRef setupCallback)
+    CallbackRef setupCallback,
+    std::shared_ptr<ReconfigurationState> reconfigurationState)
 {
+    PRECONDITION(reconfigurationState != nullptr, "A pipeline requires the reconfiguration state of its query");
     auto node = std::shared_ptr<RunningQueryPlanNode>(
-        new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(unregisterWithError), std::move(planRef)),
+        new RunningQueryPlanNode(
+            pipelineId,
+            std::move(successors),
+            std::move(stage),
+            std::move(unregisterWithError),
+            std::move(planRef),
+            std::move(reconfigurationState)),
         RunningQueryPlanNodeDeleter{.emitter = emitter, .queryId = queryId});
     emitter.emitPipelineStart(
         queryId,
@@ -155,7 +163,8 @@ std::
             std::move(pipeline->stage),
             unregisterWithError,
             terminationCallbackRef,
-            pipelineSetupCallbackRef);
+            pipelineSetupCallbackRef,
+            queryPlan.reconfigurationState);
         pipelines.emplace_back(node);
         cache[pipeline] = std::move(node);
         return cache[pipeline];

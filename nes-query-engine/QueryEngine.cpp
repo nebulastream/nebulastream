@@ -209,6 +209,8 @@ struct DefaultPEC final : PipelineExecutionContext
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+    /// Kept alive by the node of the pipeline, which outlives the execution context.
+    ReconfigurationState* reconfigurationState;
 
 #ifndef NO_ASSERT
     bool wasRepeated = false;
@@ -218,6 +220,7 @@ struct DefaultPEC final : PipelineExecutionContext
         size_t numberOfThreads,
         WorkerThreadId threadId,
         PipelineId pipelineId,
+        ReconfigurationState& reconfigurationState,
         std::shared_ptr<AbstractBufferProvider> bm,
         std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
         std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
@@ -227,7 +230,14 @@ struct DefaultPEC final : PipelineExecutionContext
         , numberOfThreads(numberOfThreads)
         , threadId(threadId)
         , pipelineId(pipelineId)
+        , reconfigurationState(&reconfigurationState)
     {
+    }
+
+    [[nodiscard]] ReconfigurationState& getReconfigurationState() override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return *reconfigurationState;
     }
 
     [[nodiscard]] WorkerThreadId getWorkerThreadId() const override
@@ -494,6 +504,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            *pipeline->reconfigurationState,
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
@@ -560,6 +571,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            *pipeline->reconfigurationState,
             pool.bufferProvider,
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
@@ -639,6 +651,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         pool.numberOfThreads(),
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
+        *stopPipelineTask.pipeline->reconfigurationState,
         pool.bufferProvider,
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {

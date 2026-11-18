@@ -17,3 +17,7 @@ target_link_libraries(nes-executable-test-utils PUBLIC nes-executable nes-memory
 add_nes_test(backpressure-channel-test BackpressureChannelTest.cpp)
 target_include_directories(backpressure-channel-test PRIVATE ${CMAKE_SOURCE_DIR}/nes-common/tests/Util/include)
 target_link_libraries(backpressure-channel-test nes-executable nes-common)
+
+add_nes_test(reconfiguration-state-test ReconfigurationStateTest.cpp)
+target_include_directories(reconfiguration-state-test PRIVATE ${CMAKE_SOURCE_DIR}/nes-common/tests/Util/include)
+target_link_libraries(reconfiguration-state-test nes-executable nes-common)

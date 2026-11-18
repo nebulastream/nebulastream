@@ -22,6 +22,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <ReconfigurationState.hpp>
 
 namespace NES
 {
@@ -60,5 +61,8 @@ public:
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
     virtual void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) = 0;
+
+    /// Returns the reconfiguration state of the query the pipeline belongs to. It is shared by all pipelines of the query.
+    [[nodiscard]] virtual ReconfigurationState& getReconfigurationState() = 0;
 };
 }
