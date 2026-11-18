@@ -117,7 +117,10 @@ def main():
                     # Ignore patch files in our vcpkg & nix ports, and the vendored corrosion tree
                     ":!vcpkg/vcpkg-registry/**/*.patch",
                     ":!.nix/**/patches/*.patch",
-                    ":!cmake/corrosion"
+                    ":!cmake/corrosion",
+                    # Ignore the documents that describe the TODO marker: their examples have no issue number.  NO_TODO_CHECK
+                    ":!AGENTS.md",
+                    ":!docs/standards/comment_guidelines.md"
                     ])
 
     added_lines = get_added_lines_from_diff(diff)
