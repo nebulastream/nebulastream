@@ -15,6 +15,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <limits>
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -339,6 +340,95 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
             this->value); \
     }
 
+namespace
+{
+/// Raises the ArithmeticalError at query runtime, also from compiled code
+template <bool IsModulo>
+void raiseDivisorIsZero()
+{
+    nautilus::invoke(+[] { throw ArithmeticalError(IsModulo ? "Can not modulo by zero!" : "Can not divide by zero!"); });
+}
+
+template <bool IsModulo>
+void raiseMinByMinusOne()
+{
+    nautilus::invoke(+[] { throw ArithmeticalError(IsModulo ? "Can not modulo MIN by -1!" : "Can not divide MIN by -1!"); });
+}
+
+/// Integer division and remainder trap in hardware (SIGFPE) on a zero divisor and on MIN / -1. Both must surface as a query error
+/// instead of killing the worker. Returns the denominator that is safe to divide by:
+///  - NOT NULL integers: throws ArithmeticalError for a zero divisor and for MIN / -1, otherwise returns the divisor unchanged.
+///  - nullable integers: throws for a non-null zero divisor and for non-null MIN / -1. A NULL operand holds arbitrary raw bits, so
+///    the divisor is replaced by 1 whenever the raw operands would trap, and the (discarded) division can not fault.
+///  - other operand types (floating point): a zero divisor throws only for nullable operands, as before.
+template <bool IsModulo, typename LHS, typename RHS>
+RHS makeSafeDenominator(
+    const LHS& lhsVal,
+    const RHS& rhsVal,
+    const bool nullable,
+    const nautilus::val<bool>& leftIsNull,
+    const nautilus::val<bool>& rightIsNull)
+{
+    using LhsBasic = typename LHS::basic_type;
+    using RhsBasic = typename RHS::basic_type;
+    if constexpr (not(std::is_integral_v<LhsBasic> and std::is_integral_v<RhsBasic>))
+    {
+        if (nullable)
+        {
+            if (rhsVal == RHS{0} and not rightIsNull)
+            {
+                raiseDivisorIsZero<IsModulo>();
+            }
+            return nautilus::select(rhsVal == RHS{0}, RHS{1}, rhsVal);
+        }
+        return rhsVal;
+    }
+    else
+    {
+        /// MIN / -1 needs two signed operands, the dividend being the minimum of the (promoted) result type. Operands narrower than int are
+        /// promoted to int, so e.g. INT8_MIN / -1 = 128 is representable and does not trap. With an unsigned operand the result is unsigned.
+        using ResultBasic = typename decltype(lhsVal / rhsVal)::basic_type;
+        constexpr bool canOverflow = std::is_signed_v<LhsBasic> and std::is_signed_v<RhsBasic> and std::is_signed_v<ResultBasic>
+            and std::numeric_limits<LhsBasic>::min() == std::numeric_limits<ResultBasic>::min();
+
+        const auto isZero = rhsVal == RHS{0};
+        if (nullable)
+        {
+            if (isZero and not rightIsNull)
+            {
+                raiseDivisorIsZero<IsModulo>();
+            }
+            if constexpr (canOverflow)
+            {
+                const auto isOverflow = lhsVal == LHS{std::numeric_limits<LhsBasic>::min()} and rhsVal == RHS{-1};
+                if (isOverflow and not(leftIsNull or rightIsNull))
+                {
+                    raiseMinByMinusOne<IsModulo>();
+                }
+                return nautilus::select(isZero or isOverflow, RHS{1}, rhsVal);
+            }
+            else
+            {
+                return nautilus::select(isZero, RHS{1}, rhsVal);
+            }
+        }
+
+        if (isZero)
+        {
+            raiseDivisorIsZero<IsModulo>();
+        }
+        if constexpr (canOverflow)
+        {
+            if (lhsVal == LHS{std::numeric_limits<LhsBasic>::min()} and rhsVal == RHS{-1})
+            {
+                raiseMinByMinusOne<IsModulo>();
+            }
+        }
+        return rhsVal;
+    }
+}
+}
+
 /// With div, we might have a problem if we divide by 0 even though the VarVal is null. To handle this special case,
 /// we create a custom method for this and do not use the #define for the other binary operators
 VarVal VarVal::operator/(const VarVal& other) const
@@ -351,20 +441,15 @@ VarVal VarVal::operator/(const VarVal& other) const
         {
             if constexpr (requires(LHS l, RHS r) { l / r; })
             {
+                const auto safeDenominator
+                    = makeSafeDenominator<false>(lhsVal, rhsVal, leftIsNullable or rightIsNullable, leftIsNull, rightIsNull);
                 if (leftIsNullable or rightIsNullable)
                 {
-                    if (rhsVal == RHS{0} and not rightIsNull)
-                    {
-                        nautilus::invoke(+[] { throw ArithmeticalError("Can not divide by zero!"); });
-                    }
-
-                    /// Using safe denominator if it is zero and rhs is null
-                    const auto safeDenominator = nautilus::select(rhsVal == RHS{0}, RHS{1}, rhsVal);
                     using ResultType = decltype(lhsVal / rhsVal);
                     const auto newValue = nautilus::select(leftIsNull or rightIsNull, ResultType{0}, lhsVal / safeDenominator);
                     return VarVal{newValue, true, leftIsNull or rightIsNull};
                 }
-                return VarVal{lhsVal / rhsVal, false, false};
+                return VarVal{lhsVal / safeDenominator, false, false};
             }
             else
             {
@@ -389,20 +474,15 @@ VarVal VarVal::operator%(const VarVal& other) const
         {
             if constexpr (requires(LHS l, RHS r) { l % r; })
             {
+                const auto safeDenominator
+                    = makeSafeDenominator<true>(lhsVal, rhsVal, leftIsNullable or rightIsNullable, leftIsNull, rightIsNull);
                 if (leftIsNullable or rightIsNullable)
                 {
-                    if (rhsVal == RHS{0} and not rightIsNull)
-                    {
-                        nautilus::invoke(+[] { throw ArithmeticalError("Can not modulo by zero!"); });
-                    }
-
-                    /// Using safe denominator if it is zero and rhs is null
-                    const auto safeDenominator = nautilus::select(rhsVal == RHS{0}, RHS{1}, rhsVal);
                     using ResultType = decltype(lhsVal % rhsVal);
                     const auto newValue = nautilus::select(leftIsNull or rightIsNull, ResultType{0}, lhsVal % safeDenominator);
                     return VarVal{newValue, true, leftIsNull or rightIsNull};
                 }
-                return VarVal{lhsVal % rhsVal, false, false};
+                return VarVal{lhsVal % safeDenominator, false, false};
             }
             else
             {
