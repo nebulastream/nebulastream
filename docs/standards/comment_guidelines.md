@@ -423,3 +423,45 @@ When code and comment disagree, and you do not know why, find out which one is w
 
 Keep a comment next to the code that it explains.
 A reason written forty lines away isn't read, and it isn't updated when the code changes.
+
+## Optional: Automatic Review in Claude Code
+
+`scripts/comment_review_hook.py` is a Stop hook for Claude Code.
+It is not active unless you enable it, and other tools such as Codex or Cursor do not run it.
+
+When an agent finishes a change, the hook counts the comment lines that the change adds:
+
+- **5 to 49 lines:** the hook asks the agent to reread its own comments against `AGENTS.md` and to fix them.
+- **50 lines or more:** the hook asks the agent to start a subagent.
+  The subagent reads this guide and the diff without the context of the agent that wrote the code, and returns its findings.
+  The agent applies them and reports what it changed.
+  Expect one to two extra minutes for such a change.
+
+The hook looks only at uncommitted changes to files that the agent edited in the session.
+It does not see a file that was changed by a shell command, or work that was committed before the agent stopped.
+
+To enable it, add this to `.claude/settings.local.json` in your checkout:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/scripts/comment_review_hook.py\"; [ -f \"$f\" ] && python3 \"$f\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The command does nothing on a branch that does not have the script yet.
+Three environment variables change its behavior:
+
+- `NES_COMMENT_REVIEW_MIN`: the number of lines from which the agent rereads its comments (default 5).
+- `NES_COMMENT_REVIEW_SUBAGENT_MIN`: the number of lines from which a subagent reviews them (default 50).
+- `NES_COMMENT_REVIEW_MODEL`: the model of the subagent (default `sonnet`).
