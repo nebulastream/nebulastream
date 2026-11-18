@@ -341,7 +341,7 @@ int main(int argc, char** argv)
             defaultOutputFormat,
             interactiveMode,
             SignalHandler::terminationToken());
-        replClient.run();
+        const int replExitCode = replClient.run();
 
         bool hasError = false;
         const auto exitStopToken = SignalHandler::terminationToken();
@@ -383,7 +383,7 @@ int main(int argc, char** argv)
         {
             return 1;
         }
-        return 0;
+        return replExitCode;
     }
     CPPTRACE_CATCH(...)
     {

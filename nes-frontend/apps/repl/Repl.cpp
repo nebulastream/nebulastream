@@ -61,7 +61,7 @@ struct Repl::Impl
     bool interactiveMode = true;
     ErrorBehaviour errorBehaviour;
     StatementOutputFormat defaultOutputFormat;
-    unsigned int exitCode = 0;
+    int exitCode = 0;
 
     /// Commands
     static constexpr const char* HELP_CMD = "help";
@@ -226,7 +226,9 @@ struct Repl::Impl
             exitCode = 1;
         }
         NES_ERROR("Error encountered: {}", error.what());
-        std::cout << fmt::format("Error encountered: {}", error.what());
+        /// Messages built via the EXCEPTION macros already end in '\n'; others (e.g. wrapped std::exceptions) do not.
+        const std::string_view message = error.what();
+        std::cout << "Error encountered: " << message << (message.ends_with('\n') ? "" : "\n");
     }
 
     void clearScreen() const
@@ -455,7 +457,7 @@ struct Repl::Impl
         return true;
     }
 
-    void run()
+    int run()
     {
         if (interactiveMode)
         {
@@ -488,7 +490,7 @@ struct Repl::Impl
                     if (result == nullptr)
                     {
                         /// EoF reached
-                        return;
+                        return exitCode;
                     }
 
                     input = result;
@@ -547,6 +549,10 @@ struct Repl::Impl
                 {
                     throw;
                 }
+                if (errorBehaviour == ErrorBehaviour::CONTINUE_AND_FAIL)
+                {
+                    exitCode = 1;
+                }
                 std::cout << "Error: " << e.what() << "\n";
             }
         }
@@ -555,6 +561,7 @@ struct Repl::Impl
         {
             rx->history_save(".nebuli_history");
         }
+        return exitCode;
     }
 };
 
@@ -584,9 +591,9 @@ Repl::Repl(
 {
 }
 
-void Repl::run()
+int Repl::run()
 {
-    impl->run();
+    return impl->run();
 }
 
 Repl::~Repl() = default;

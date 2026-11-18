@@ -77,6 +77,24 @@ setup()         { nes_offline_setup; }
   grep "invalid query syntax" nes-repl.log
 }
 
+@test "CONTINUE_AND_FAIL runs later statements and exits non-zero" {
+  run $NES_REPL -f JSON -e CONTINUE_AND_FAIL <<'EOT'
+SELECT * FROM NOSUCHSOURCE INTO Void('localhost:8080' AS "SINK"."HOST");
+CREATE LOGICAL SOURCE afterfailure(a UINT64);
+EOT
+  [ "$status" -ne 0 ]
+  [[ "$output" == *$'Error encountered: unknown source name; NOSUCHSOURCE\n[{'*'"AFTERFAILURE"'* ]]
+}
+
+@test "CONTINUE_AND_FAIL exits non-zero after a syntax error" {
+  run $NES_REPL -f JSON -e CONTINUE_AND_FAIL <<'EOT'
+SELECT val_1 + AS x FROM ENDLESS INTO Void();
+CREATE LOGICAL SOURCE afterfailure(a UINT64);
+EOT
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'"AFTERFAILURE"'* ]]
+}
+
 @test "Fail on invalid optimizer config name" {
   run $NES_REPL -- --optimizer.test_invalid_config_name=INVALID
   [ "$status" -ne 0 ]

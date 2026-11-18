@@ -47,7 +47,8 @@ public:
         StatementOutputFormat defaultOutputFormat,
         bool interactiveMode,
         std::stop_token stopToken);
-    void run();
+    /// Returns the process exit code: non-zero if a statement failed under CONTINUE_AND_FAIL.
+    [[nodiscard]] int run();
     ~Repl();
 };
 
