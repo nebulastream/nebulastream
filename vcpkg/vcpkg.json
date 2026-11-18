@@ -57,6 +57,7 @@
         },
         "pcre2",
         "re2",
+        "utf8proc",
         {
           "name": "nanoarrow",
           "features": [

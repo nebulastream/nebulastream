@@ -315,22 +315,20 @@ CREATE FUNCTION lowerize_inline (val VARSIZED) RETURNS VARSIZED EXECUTION INLINE
 CREATE FUNCTION removeshortterms_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
 CREATE FUNCTION stem_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
 
-# Not in this section, as Codon does not give the CPython results:
-# - clean: len() counts bytes, so short non-ASCII words such as 'Á.' stay
-# - filterstopwords: lower() of the first character is ASCII-only, so non-ASCII stop words stay
-# - frequentterms: lower() is ASCII-only, and terms with equal counts come in another order
+# Not in this section, as Codon cannot compile or run them, or gives other results:
+# - frequentterms: among terms with equal counts, Counter and heapq.nlargest choose other terms than in CPython
 # - jaccard: does not compile: type(x) == list
-# - jpack: split() does not split at Unicode spaces such as U+2009
 # - jsonparse: fails at run time: a None result of a function annotated -> str
-# - keywords: the regular expression \w matches ASCII only
-# - lowerize: lower() is ASCII-only
-# - removeshortterms: len() counts bytes, so short non-ASCII words such as 'Á.' stay
 # - stem: does not compile: name 'ccy_exp' cannot be captured
 
 # Rejected: addnoise imports random inside the function, which NES rejects for INLINE.
 SELECT id FROM artifacts WHERE addnoise_inline(authors) > FLOAT64(-1000.0) INTO Checksum();
 ----
 ERROR QueryCompilerError
+
+SELECT id, clean_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 262835702
 
 SELECT id, cleandate_inline(date) AS r FROM artifacts INTO Checksum();
 ----
@@ -372,6 +370,14 @@ SELECT id, extractyear_inline(date) AS r FROM artifacts INTO Checksum();
 ----
 48448 188118858
 
+SELECT id, filterstopwords_inline(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1007785841
+
+SELECT id, jpack_inline(title) AS r FROM artifacts INTO Checksum();
+----
+48448 691382596
+
 SELECT id, jsoncount_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
 ----
 16699 62347253
@@ -384,6 +390,18 @@ SELECT id, jsortvalues_inline(authorlist) AS r FROM artifact_authorlists INTO Ch
 ----
 16699 267026111
 
+SELECT id, keywords_inline(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1193827570
+
 SELECT id, log_10_inline(amount) AS r FROM artifact_charges INTO Checksum();
 ----
 448 1815707
+
+SELECT id, lowerize_inline(title) AS r FROM artifacts INTO Checksum();
+----
+48448 585633644
+
+SELECT id, removeshortterms_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 255206502

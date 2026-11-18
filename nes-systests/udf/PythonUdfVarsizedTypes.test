@@ -186,21 +186,29 @@ SELECT type_name_oop('abc') AS r FROM binary INTO FILE();
 str
 
 # --- EXECUTION INLINE ---
-# Codon's str holds raw bytes and is not validated, so unlike the Python modes, a str counts bytes and accepts invalid UTF-8.
-# Codon reads the annotations of the function when it compiles it. BYTES does not change what it passes.
+# A str counts code points and must hold valid UTF-8, as in the Python modes (unicode plugin, nes_compat.codon).
+# Only the declaration decides, as in the Python modes: an argument declared with BYTES arrives as bytes, any other as a str.
 CREATE FUNCTION text_length_inline (x VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.text_length';
 CREATE FUNCTION byte_length_inline (x VARSIZED BYTES) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.byte_length';
 CREATE FUNCTION optional_byte_length_inline (x VARSIZED BYTES) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.optional_byte_length';
 CREATE FUNCTION echo_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.echo_bytes';
 CREATE FUNCTION describe_inline (x VARSIZED BYTES, y VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.describe';
+CREATE FUNCTION type_name_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.type_name';
+CREATE FUNCTION type_name_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.type_name';
+CREATE FUNCTION body_type_name_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return type(x).__name__
+$python$;
+CREATE FUNCTION body_type_name_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return type(x).__name__
+$python$;
 
 SELECT text_length_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
-2
+1
 
 SELECT text_length_inline(FROM_BASE64(b)) AS r FROM binary INTO FILE();
 ----
-1
+ERROR 3007
 
 SELECT byte_length_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
 ----
@@ -221,6 +229,36 @@ SELECT TO_BASE64(echo_bytes_inline(FROM_BASE64(b))) AS r FROM binary INTO FILE()
 SELECT describe_inline(FROM_BASE64(b), 'abc') AS r FROM binary INTO FILE();
 ----
 1/abc
+
+SELECT describe_inline('abc', 'def') AS r FROM binary INTO FILE();
+----
+3/def
+
+SELECT byte_length_inline(FROM_BASE64(b)) AS r FROM binary INTO FILE();
+----
+1
+
+# BYTES also applies to a function without annotations and to a body
+SELECT type_name_bytes_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+bytes
+
+SELECT body_type_name_bytes_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+bytes
+
+SELECT type_name_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+str
+
+SELECT body_type_name_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+str
+
+# Without BYTES, a value that is not valid UTF-8 is an error, also for a body
+SELECT body_type_name_inline(FROM_BASE64(b)) AS r FROM binary INTO FILE();
+----
+ERROR 3007
 
 
 # --- CHAR ---

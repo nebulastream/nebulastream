@@ -408,9 +408,9 @@ def _utf8_width(lead: int) -> int:
 
 
 def _code_point_count(text: str) -> int:
-    """Python measures strings in code points; Codon's len(str) counts UTF-8 bytes."""
+    """The number of code points. len() counts them too (unicode plugin), but this module works on the bytes."""
     count = 0
-    for i in range(len(text)):
+    for i in range(text.len):
         if (int(text.ptr[i]) & 0xC0) != 0x80:
             count += 1
     return count
@@ -419,9 +419,9 @@ def _code_point_count(text: str) -> int:
 def _code_points(text: str) -> List[str]:
     result = List[str]()
     i = 0
-    while i < len(text):
-        width = min(_utf8_width(int(text.ptr[i])), len(text) - i)
-        result.append(text[i:i + width])
+    while i < text.len:
+        width = min(_utf8_width(int(text.ptr[i])), text.len - i)
+        result.append(str(text.ptr + i, width))
         i += width
     return result
 
@@ -503,7 +503,7 @@ def loads(source: str) -> Value:
     error_pointer = Ptr[byte]()
     error_size = i64(0)
     status = nes_json_parse(
-        source.ptr, i64(len(source)),
+        source.ptr, i64(source.len),
         __ptr__(ints_pointer), __ptr__(reals_pointer), __ptr__(node_count),
         __ptr__(text_pointer), __ptr__(text_size),
         __ptr__(error_pointer), __ptr__(error_size))
@@ -521,7 +521,7 @@ def _unicode_escape(code: int) -> str:
 def _quote(text: str) -> str:
     out = ['"']
     i = 0
-    while i < len(text):
+    while i < text.len:
         lead = int(text.ptr[i])
         if lead < 0x80:
             if lead == 34:
@@ -541,10 +541,10 @@ def _quote(text: str) -> str:
             elif lead < 0x20 or lead == 0x7F:
                 out.append(_unicode_escape(lead))
             else:
-                out.append(text[i:i + 1])
+                out.append(str(text.ptr + i, 1))
             i += 1
             continue
-        width = min(_utf8_width(lead), len(text) - i)
+        width = min(_utf8_width(lead), text.len - i)
         code = lead & (0x1F if width == 2 else (0x0F if width == 3 else 0x07))
         for j in range(1, width):
             code = (code << 6) | (int(text.ptr[i + j]) & 0x3F)

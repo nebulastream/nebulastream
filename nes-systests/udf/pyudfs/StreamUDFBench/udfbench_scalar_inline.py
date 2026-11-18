@@ -20,10 +20,8 @@ Codon enforces the annotations of the arguments (`str`, `int`, `float`), so a NU
 functions. Each entry point returns for None what the UDFBench function returns for None under CPython: None, or "[]" (jsort,
 jsortvalues, removeshortterms) and 0.0 (log_10), which their `except` gives.
 
-Some UDFs do not give the CPython results under Codon, see the INLINE section of StreamUDFBenchScalarUdfs.test: Codon strings are
-bytes, so lower(), split(), len() and the regular expressions treat non-ASCII text differently, and Codon cannot compile some of
-the code. NES rejects addnoise for INLINE, because it imports random inside the function. Their entry points are here all the
-same.
+Codon cannot compile or run some of the UDFs, see the INLINE section of StreamUDFBenchScalarUdfs.test, and NES rejects addnoise
+for INLINE, because it imports random inside the function. Their entry points are here all the same.
 """
 
 from StreamUDFBench.scalar.addnoise import addnoise as _addnoise

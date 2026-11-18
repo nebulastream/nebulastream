@@ -256,12 +256,15 @@ std::pair<std::string, std::string> splitLeadingImports(const std::string_view b
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+/// A VARSIZED or CHAR argument declared with BYTES reaches the body as bytes (nes_compat.codon). Any other VARSIZED argument
+/// reaches it as a str, which must hold valid UTF-8, as in the Python executions: the str methods work on code points.
 std::string createPythonUdfSource(
     const std::string& symbol,
     const std::vector<std::string>& parameterNames,
     const std::string_view body,
     const std::vector<DataType>& argumentTypes,
-    const DataType& returnType)
+    const DataType& returnType,
+    const std::vector<uint64_t>& bytesArguments)
 {
     PRECONDITION(parameterNames.size() == argumentTypes.size(), "Python UDF argument type and parameter name counts differ");
 
@@ -272,7 +275,9 @@ std::string createPythonUdfSource(
     bodyArguments.reserve(parameterNames.size());
     for (size_t index = 0; index < parameterNames.size(); ++index)
     {
-        const auto pythonType = pythonTypeName(argumentTypes[index]);
+        const bool isText = argumentTypes[index].type == DataType::Type::VARSIZED || argumentTypes[index].type == DataType::Type::CHAR;
+        const bool asBytes = isText && std::ranges::contains(bytesArguments, index);
+        const auto pythonType = asBytes ? std::string{"bytes"} : pythonTypeName(argumentTypes[index]);
         parameters.emplace_back(
             fmt::format(
                 "{}: {}{}{}",
@@ -284,27 +289,25 @@ std::string createPythonUdfSource(
         {
             abiParameters.emplace_back(fmt::format("_arg{}_ptr: Ptr[byte]", index));
             abiParameters.emplace_back(fmt::format("_arg{}_size: i64", index));
+            const auto value = fmt::format("{}(str(_arg{}_ptr, int(_arg{}_size)))", asBytes ? "bytes" : "_nes_text", index, index);
             if (argumentTypes[index].nullable)
             {
                 abiParameters.emplace_back(fmt::format("_arg{}_is_null: u8", index));
                 bodyArguments.emplace_back(
-                    fmt::format(
-                        "Optional[str]() if bool(_arg{}_is_null) else Optional[str](str(_arg{}_ptr, int(_arg{}_size)))",
-                        index,
-                        index,
-                        index,
-                        index));
+                    fmt::format("Optional[{}]() if bool(_arg{}_is_null) else Optional[{}]({})", pythonType, index, pythonType, value));
             }
             else
             {
-                bodyArguments.emplace_back(fmt::format("str(_arg{}_ptr, int(_arg{}_size))", index, index));
+                bodyArguments.emplace_back(value);
             }
         }
         else
         {
             abiParameters.emplace_back(fmt::format("_arg{}: {}", index, codonTypeName(argumentTypes[index])));
-            /// A CHAR crosses the ABI as its byte and reaches the body as a one-character str.
-            const auto converter = argumentTypes[index].type == DataType::Type::CHAR ? std::string{"_nes_char_str"} : pythonType;
+            /// A CHAR crosses the ABI as its byte and reaches the body as a one-character str, or with BYTES as one byte.
+            const auto converter = argumentTypes[index].type == DataType::Type::CHAR
+                ? std::string{asBytes ? "_nes_char_bytes" : "_nes_char_str"}
+                : pythonType;
             if (argumentTypes[index].nullable)
             {
                 abiParameters.emplace_back(fmt::format("_arg{}_is_null: u8", index));
@@ -333,13 +336,19 @@ std::string createPythonUdfSource(
         "class UdfErrorHolder:\n"
         "    error_ptr: Ptr[byte]\n"
         "    error_size: i64\n\n"
+        "from nes_compat import _nes_check_utf8\n\n"
+        "def _nes_text(value: str) -> str:\n"
+        "    _nes_check_utf8(value)\n"
+        "    return value\n\n"
         "def _nes_char_str(value: u8) -> str:\n"
         "    _data = Ptr[byte](1)\n"
         "    _data[0] = byte(int(value))\n"
         "    return str(_data, 1)\n\n"
+        "def _nes_char_bytes(value: u8) -> bytes:\n"
+        "    return bytes(_nes_char_str(value))\n\n"
         "def _nes_char_byte(value: str) -> u8:\n"
-        "    if len(value) != 1:\n"
-        "        raise ValueError(f\"a CHAR UDF must return one byte, not {{len(value)}}\")\n"
+        "    if value.len != 1:\n"
+        "        raise ValueError(f\"a CHAR UDF must return one byte, not {{value.len}}\")\n"
         "    return u8(int(value.ptr[0]))\n\n"
         "def {}({}) -> {}{}{}:\n{}\n@export\n",
         bodySymbol,
@@ -379,7 +388,7 @@ std::string createPythonUdfSource(
             source += "            _result_is_null[0] = u8(0)\n";
             source += "            _result_value = str(_result_value)\n";
             source += "            _result_ptr[0] = _result_value.ptr\n";
-            source += "            _result_size[0] = i64(len(_result_value))\n";
+            source += "            _result_size[0] = i64(_result_value.len)\n";
         }
         else if (returnType.type == DataType::Type::BOOLEAN)
         {
@@ -404,7 +413,7 @@ std::string createPythonUdfSource(
     {
         source += fmt::format("        _result_value = str({}({}))\n", bodySymbol, join(bodyArguments));
         source += "        _result_ptr[0] = _result_value.ptr\n";
-        source += "        _result_size[0] = i64(len(_result_value))\n";
+        source += "        _result_size[0] = i64(_result_value.len)\n";
     }
     else if (returnType.type == DataType::Type::BOOLEAN)
     {
@@ -420,7 +429,7 @@ std::string createPythonUdfSource(
     }
     source += "    except Exception as _exception:\n";
     source += "        _message = str(_exception)\n";
-    source += "        _error[0] = UdfErrorHolder(_message.ptr, i64(len(_message)))\n";
+    source += "        _error[0] = UdfErrorHolder(_message.ptr, i64(_message.len))\n";
     source += "        _status = i8(1)\n";
     source += "    return _status\n";
     return source;
@@ -725,7 +734,8 @@ CompiledPythonUdf compilePythonUdf(
     const std::string& body,
     const std::vector<DataType>& argumentTypes,
     const DataType& returnType,
-    const std::vector<std::string>& importPaths)
+    const std::vector<std::string>& importPaths,
+    const std::vector<uint64_t>& bytesArguments)
 {
     static std::mutex codonCompilerMutex;
     const auto mutexWaitStart = std::chrono::steady_clock::now();
@@ -738,7 +748,9 @@ CompiledPythonUdf compilePythonUdf(
         loadCodonPlugin(codonPluginPath(NES_CODON_COMPAT_PLUGIN_PATH));
         loadCodonPlugin(codonPluginPath(NES_CODON_JSON_PLUGIN_PATH));
         loadCodonPlugin(codonPluginPath(NES_CODON_RE_PLUGIN_PATH));
-        const auto source = createPythonUdfSource(std::string{CachedPythonUdfSymbol}, parameterNames, body, argumentTypes, returnType);
+        loadCodonPlugin(codonPluginPath(NES_CODON_UNICODE_PLUGIN_PATH));
+        const auto source
+            = createPythonUdfSource(std::string{CachedPythonUdfSymbol}, parameterNames, body, argumentTypes, returnType, bytesArguments);
         const auto cacheKey = codonCacheKey(source, importPaths);
         const auto cacheDirectory = codonCacheDirectory();
         const auto cacheName = fmt::format("{:016x}", std::hash<std::string>{}(cacheKey));
@@ -1214,7 +1226,8 @@ PythonPhysicalFunction::PythonPhysicalFunction(
     std::vector<PhysicalFunction> arguments,
     std::vector<DataType> argumentTypes,
     DataType returnType,
-    const std::vector<std::string>& importPaths)
+    const std::vector<std::string>& importPaths,
+    const std::vector<uint64_t>& bytesArguments)
     : arguments(std::move(arguments))
     , argumentTypes(std::move(argumentTypes))
     , returnType(returnType)
@@ -1222,7 +1235,7 @@ PythonPhysicalFunction::PythonPhysicalFunction(
 {
     PRECONDITION(this->arguments.size() == this->argumentTypes.size(), "Python UDF argument and type counts differ");
     PRECONDITION(!this->arguments.empty(), "Python UDF requires at least one argument");
-    auto compiledUdf = compilePythonUdf(symbolName, parameterNames, body, this->argumentTypes, returnType, importPaths);
+    auto compiledUdf = compilePythonUdf(symbolName, parameterNames, body, this->argumentTypes, returnType, importPaths, bytesArguments);
     llvmBitcode = std::move(compiledUdf.pipelineBitcode);
     interpreterLlvmBitcode = std::move(compiledUdf.interpreterBitcode);
 }

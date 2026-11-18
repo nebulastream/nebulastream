@@ -204,15 +204,19 @@ class Match:
     def __getitem__(self, g):
         return self._get_match(g, self.re.groups)
 
+    # NES: the spans hold byte offsets, and positions count code points, as in CPython.
+    def _position(self, offset: int) -> int:
+        return offset if offset < 0 else self.string._nes_index(offset)
+
     def start(self, group = 0):
-        return self._get_group(group, self.re.groups).start
+        return self._position(self._get_group(group, self.re.groups).start)
 
     def end(self, group = 0):
-        return self._get_group(group, self.re.groups).end
+        return self._position(self._get_group(group, self.re.groups).end)
 
     def span(self, group = 0):
         start, end = self._get_group(group, self.re.groups)
-        return start, end
+        return self._position(start), self._position(end)
 
     def _split(template: str):
         backslash = '\\'
@@ -285,9 +289,7 @@ class Match:
                         while k < n and k - i <= 4 and '0' <= s[k] <= '7':
                             k += 1
                         code = int(s[i+1:k], 8)
-                        p = Ptr[byte](1)
-                        p[0] = byte(code)
-                        r.append(str(p, 1))
+                        r.append(chr(code))  # NES: the code point, not a byte
                         i = k - 1
                 elif c.isalpha():
                     raise error(f"bad escape \\{c} at position {i}")
@@ -377,43 +379,51 @@ class Pattern:
                 d[name] = i
         return d
 
+    # NES: pos and endpos count code points. The natives take byte offsets.
+    def _positions(string: str, pos: Optional[int], endpos: Optional[int]) -> Tuple[int, int]:
+        n = len(string)
+        posx = 0 if pos is None else max(0, min(pos.__val__(), n))
+        endposx = n if endpos is None else max(0, min(endpos.__val__(), n))
+        return posx, endposx
+
     def _match_one(self, anchor: int, string: str, pos: Optional[int], endpos: Optional[int]):
-        posx = 0 if pos is None else max(0, min(pos.__val__(), len(string)))
-        endposx = len(string) if endpos is None else max(0, min(endpos.__val__(), len(string)))
+        posx, endposx = Pattern._positions(string, pos, endpos)
 
         if posx > endposx:
             return None
 
-        spans = seq_re_match(self._re, anchor, string, posx, endposx)
+        spans = seq_re_match(self._re, anchor, string, string._nes_offset(posx), string._nes_offset(endposx))
         if not spans[0]:
             return None
 
         return Match(spans, posx, endposx, self, string)
 
     def _match(self, anchor: int, string: str, pos: Optional[int], endpos: Optional[int]):
-        posx = 0 if pos is None else max(0, min(pos.__val__(), len(string)))
-        endposx = len(string) if endpos is None else max(0, min(endpos.__val__(), len(string)))
+        posx, endposx = Pattern._positions(string, pos, endpos)
 
         if posx > endposx:
             return
 
+        # NES: the loop works on byte offsets.
+        offset = string._nes_offset(posx)
+        end_offset = string._nes_offset(endposx)
         while True:
-            spans = seq_re_match(self._re, anchor, string, posx, endposx)
+            spans = seq_re_match(self._re, anchor, string, offset, end_offset)
 
             if not spans[0]:
                 break
 
             yield Match(spans, posx, endposx, self, string)
 
-            if posx == endposx:
+            if offset == end_offset:
                 break
 
-            elif posx == spans[0][1]:
+            elif offset == spans[0][1]:
                 # We matched the empty string at pos and would be stuck, so in order
-                # to make forward progress, increment the bytes offset.
-                posx += 1
+                # to make forward progress, move to the next code point.
+                offset += string._nes_char_length(offset)
             else:
-                posx = spans[0][1]
+                offset = spans[0][1]
 
     def search(self, string: str, pos: Optional[int] = None, endpos: Optional[int] = None):
         return self._match_one(_ANCHOR_NONE, string, pos, endpos)
@@ -440,11 +450,12 @@ class Pattern:
         for match in self.finditer(string):
             if (maxsplit > 0 and numsplit >= maxsplit):
                 break
-            pieces.append(string[end:match.start()])
+            # NES: byte offsets, as the spans hold them.
+            pieces.append(string._slice(end, match._spans[0].start))
             pieces.extend(cb(match))
-            end = match.end()
+            end = match._spans[0].end
             numsplit += 1
-        pieces.append(string[end:])
+        pieces.append(string._slice(end, string.len))
         return pieces, numsplit
 
     def split(self, string: str, maxsplit: int = 0):

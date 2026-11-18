@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -37,7 +38,8 @@ public:
         std::vector<PhysicalFunction> arguments,
         std::vector<DataType> argumentTypes,
         DataType returnType,
-        const std::vector<std::string>& importPaths);
+        const std::vector<std::string>& importPaths,
+        const std::vector<uint64_t>& bytesArguments);
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
     void setupSelf(CompilationContext& compilationContext) const;

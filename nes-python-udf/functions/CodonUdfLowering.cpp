@@ -48,13 +48,11 @@ InlineUdfSource buildCodonUdfCall(const UdfDescriptor& descriptor, const std::ve
     for (size_t index = 0; index < inputTypes.size(); ++index)
     {
         call.parameterNames.emplace_back(fmt::format("_p{}", index));
-        /// Codon reads the entry point's annotations when it compiles the call, to tell if a VARSIZED or CHAR value is meant as str
-        /// or as bytes. BYTES in the declaration does not change that.
-        const auto isText = inputTypes[index].type == DataType::Type::VARSIZED || inputTypes[index].type == DataType::Type::CHAR;
-        entryArguments.emplace_back(isText ? fmt::format("_nes_argument(_nes_udf_entry, {0}, _p{0})", index) : fmt::format("_p{}", index));
+        /// The parameters are bytes or str as the declaration says (BYTES), see createPythonUdfSource.
+        entryArguments.emplace_back(fmt::format("_p{}", index));
     }
     call.body = fmt::format(
-        "from {} import {} as _nes_udf_entry\nfrom nes_compat import _nes_argument, _nes_result\n"
+        "from {} import {} as _nes_udf_entry\nfrom nes_compat import _nes_result\n"
         "return _nes_result(_nes_udf_entry({}))",
         entrypoint->first,
         entrypoint->second,
@@ -98,9 +96,14 @@ PhysicalFunction CodonUdfLowering::createCodon(UdfLoweringRegistryArguments argu
     const auto importPaths = codonImportPaths(arguments.importPaths);
     const auto source
         = arguments.udf.getSource().has_value() ? *arguments.udf.getSource() : buildCodonUdfCall(arguments.udf, arguments.inputTypes);
-    return PhysicalFunction{
-        PythonPhysicalFunction(
-            source.parameterNames, source.body, arguments.childFunctions, arguments.inputTypes, arguments.outputType, importPaths)}
+    return PhysicalFunction{PythonPhysicalFunction(
+                                source.parameterNames,
+                                source.body,
+                                arguments.childFunctions,
+                                arguments.inputTypes,
+                                arguments.outputType,
+                                importPaths,
+                                arguments.udf.getBytesArguments())}
         .withSetupChildren(std::move(arguments.childFunctions));
 }
 

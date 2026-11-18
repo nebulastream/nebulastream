@@ -38,13 +38,14 @@ extern "C" void* seq_alloc_atomic(size_t size);
 struct NesRegexPattern
 {
     std::unique_ptr<re2::RE2> re2;
-    /// Set only when RE2 rejected the pattern and PCRE2 accepted it.
+    /// Set when PCRE2 accepted the pattern and RE2 rejected it or cannot match it as CPython does (\w and the like).
     std::unique_ptr<pcre2_code, decltype(&pcre2_code_free)> pcre2{nullptr, &pcre2_code_free};
 };
 
 namespace
 {
 /// Flag bits of Codon's re module.
+constexpr int64_t ascii = 1 << 0;
 constexpr int64_t ignoreCase = 1 << 2;
 constexpr int64_t multiLine = 1 << 4;
 constexpr int64_t dotAll = 1 << 5;
@@ -57,17 +58,18 @@ re2::RE2::Options toRe2Options(const int64_t flags)
 {
     re2::RE2::Options options;
     options.set_log_errors(false);
-    options.set_encoding(re2::RE2::Options::Encoding::EncodingLatin1);
+    options.set_encoding(re2::RE2::Options::Encoding::EncodingUTF8);
     options.set_case_sensitive((flags & ignoreCase) == 0);
     options.set_one_line((flags & multiLine) == 0);
     options.set_dot_nl((flags & dotAll) != 0);
     return options;
 }
 
-/// Byte mode without PCRE2_UTF, matching RE2's Latin-1 encoding above.
+/// UTF-8, as RE2 above. Without re.ASCII, \w, \d, \s and \b use the Unicode properties (PCRE2_UCP), as in CPython.
 uint32_t toPcre2Options(const int64_t flags)
 {
-    uint32_t options = 0;
+    uint32_t options = PCRE2_UTF;
+    options |= (flags & ascii) == 0 ? PCRE2_UCP : 0;
     options |= (flags & ignoreCase) != 0 ? PCRE2_CASELESS : 0;
     options |= (flags & multiLine) != 0 ? PCRE2_MULTILINE : 0;
     options |= (flags & dotAll) != 0 ? PCRE2_DOTALL : 0;
@@ -86,16 +88,125 @@ SeqStr copyToUdf(const std::string_view value)
     return {static_cast<int64_t>(value.size()), data};
 }
 
+/// Whether the pattern uses \w, \W, \d, \D, \s, \S, \b, \B or \Z. RE2 matches the classes with ASCII only, CPython
+/// with Unicode, and RE2 has no \Z.
+bool usesUnicodeClasses(const std::string_view pattern)
+{
+    for (size_t position = 0; position + 1 < pattern.size(); ++position)
+    {
+        if (pattern[position] != '\\')
+        {
+            continue;
+        }
+        if (std::string_view{"wWdDsSbBZ"}.find(pattern[position + 1]) != std::string_view::npos)
+        {
+            return true;
+        }
+        ++position; /// skip the escaped character, e.g. the second backslash of a double backslash.
+    }
+    return false;
+}
+
+/// Rewrites the classes whose CPython meaning PCRE2 does not have:
+/// - CPython's \w is a letter, a number or '_' (str.isalnum()). PCRE2's Unicode \w also matches combining marks.
+/// - CPython's \s is str.isspace(), which includes \x1c to \x1f. PCRE2's Unicode \s does not.
+/// - \b and \B follow \w.
+/// - CPython's \Z is the end of the string, PCRE2's \z. PCRE2's \Z also matches before a final newline.
+/// With re.ASCII, \w, \s, \b and \B stay as they are. Inside a character class, \w and \s become the members of the set;
+/// \W and \S stay PCRE2's there.
+std::string withCPythonClasses(const std::string_view pattern, const bool unicodeClasses)
+{
+    constexpr std::string_view word = "\\p{L}\\p{N}_";
+    constexpr std::string_view space = "\\s\\x{1c}-\\x{1f}";
+    const std::string wordClass = "[" + std::string{word} + "]";
+    std::string result;
+    bool inClass = false;
+    for (size_t position = 0; position < pattern.size(); ++position)
+    {
+        const char character = pattern[position];
+        if (character == '\\' && position + 1 < pattern.size())
+        {
+            const char escaped = pattern[++position];
+            if (escaped == 'Z' && !inClass)
+            {
+                result += "\\z";
+            }
+            else if (unicodeClasses && inClass && escaped == 'w')
+            {
+                result += word;
+            }
+            else if (unicodeClasses && inClass && escaped == 's')
+            {
+                result += space;
+            }
+            else if (unicodeClasses && !inClass && (escaped == 'w' || escaped == 'W'))
+            {
+                result += escaped == 'w' ? wordClass : "[^" + std::string{word} + "]";
+            }
+            else if (unicodeClasses && !inClass && (escaped == 's' || escaped == 'S'))
+            {
+                result += (escaped == 's' ? "[" : "[^") + std::string{space} + "]";
+            }
+            else if (unicodeClasses && !inClass && escaped == 'b')
+            {
+                result += "(?:(?<=" + wordClass + ")(?!" + wordClass + ")|(?<!" + wordClass + ")(?=" + wordClass + "))";
+            }
+            else if (unicodeClasses && !inClass && escaped == 'B')
+            {
+                result += "(?:(?<=" + wordClass + ")(?=" + wordClass + ")|(?<!" + wordClass + ")(?!" + wordClass + "))";
+            }
+            else
+            {
+                result += '\\';
+                result += escaped;
+            }
+            continue;
+        }
+        result += character;
+        if (!inClass && character == '[')
+        {
+            inClass = true;
+            /// A ']' right after '[' or '[^' is a member of the class.
+            if (position + 1 < pattern.size() && pattern[position + 1] == '^')
+            {
+                result += pattern[++position];
+            }
+            if (position + 1 < pattern.size() && pattern[position + 1] == ']')
+            {
+                result += pattern[++position];
+            }
+        }
+        else if (inClass && character == ']')
+        {
+            inClass = false;
+        }
+    }
+    return result;
+}
+
 std::unique_ptr<NesRegexPattern> compile(const std::string& pattern, const int64_t flags)
 {
     auto compiled = std::make_unique<NesRegexPattern>();
-    compiled->re2 = std::make_unique<re2::RE2>(pattern, toRe2Options(flags));
-    if (!compiled->re2->ok())
+    /// RE2 matches \w and the like with ASCII only, so PCRE2 with Unicode properties takes such patterns.
+    const bool needsUnicodeClasses = (flags & ascii) == 0 && usesUnicodeClasses(pattern);
+    compiled->re2 = std::make_unique<re2::RE2>(needsUnicodeClasses ? std::string{"(?!)"} : pattern, toRe2Options(flags));
+    if (needsUnicodeClasses || !compiled->re2->ok())
     {
         int errorCode = 0;
         PCRE2_SIZE errorOffset = 0;
+        const auto pcre2Pattern = withCPythonClasses(pattern, (flags & ascii) == 0);
         compiled->pcre2.reset(pcre2_compile(
-            reinterpret_cast<PCRE2_SPTR>(pattern.data()), pattern.size(), toPcre2Options(flags), &errorCode, &errorOffset, nullptr));
+            reinterpret_cast<PCRE2_SPTR>(pcre2Pattern.data()),
+            pcre2Pattern.size(),
+            toPcre2Options(flags),
+            &errorCode,
+            &errorOffset,
+            nullptr));
+        if (!compiled->pcre2 && needsUnicodeClasses)
+        {
+            /// PCRE2 rejected the pattern: RE2 reports the error, or matches with ASCII classes.
+            compiled->re2 = std::make_unique<re2::RE2>(pattern, toRe2Options(flags));
+        }
     }
     return compiled;
 }
