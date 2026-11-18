@@ -26,8 +26,7 @@ use controller::remote::worker_rpc_service::{
     QueryMetrics, QueryStatusRequest, StartQueryRequest, StopQueryRequest, WorkerStatusRequest,
 };
 use libtest_mimic::Trial;
-use madsim::Config;
-use madsim::runtime::{Handle, Runtime};
+use madsim::runtime::Handle;
 use madsim::task::NodeId;
 use model::ConnectorKind;
 use model::identifier::{QueryFragmentId, QueryId, SinkId, SourceId};
@@ -41,7 +40,8 @@ use model::worker::endpoint::{DEFAULT_DATA_PORT, DEFAULT_HOST_PORT, NetworkAddr}
 use model::worker::{self, DesiredWorkerState, WorkerState};
 use std::collections::{BTreeSet, HashSet};
 use std::hash::Hash;
-use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+use std::thread;
 use std::time::Duration;
 use toml::de::Error as TomlError;
 use tonic::{Code, Request};
@@ -130,8 +130,17 @@ fn build_trial(name: &str, test: fn()) -> Trial {
     })
 }
 
-fn simulate<T>(seed: u64, body: impl Future<Output = T>) -> T {
-    Runtime::with_seed_and_config(seed, Config::default()).block_on(body)
+/// Runs `body` like a trial: on a fresh thread, so the result for a seed does not depend on
+/// the unit trials that ran before on libtest-mimic's reused threads.
+/// A panic in `body` is raised again on the caller's thread.
+/// `body` builds the future on that thread, so the future does not have to be `Send`.
+fn simulate<T: Send, F: Future<Output = T>>(seed: u64, body: impl FnOnce() -> F + Send) -> T {
+    thread::scope(|scope| {
+        scope
+            .spawn(|| crate::run_seeded(seed, None, body()))
+            .join()
+            .unwrap_or_else(|payload| resume_unwind(payload))
+    })
 }
 
 fn panics(f: impl FnOnce()) -> bool {
@@ -375,7 +384,7 @@ fn invariant_stopped_or_failed_by_drop() {
 }
 
 fn model_orders_prerequisites() {
-    simulate(0, async {
+    simulate(0, || async {
         let mut model = ModelState::default();
         let mut sent = Vec::new();
         loop {
@@ -421,7 +430,7 @@ fn model_places_source_and_sink() {
     let workers = [1, 2, 3, 4].map(build_addr);
     let [source_host, sink_host, ..] = &workers;
     for seed in 0..SEEDS {
-        simulate(seed, async {
+        simulate(seed, || async {
             let mut model = build_model(&workers.iter().collect::<Vec<_>>());
             model.observe(StatementResult::CreatedPhysicalSource(build_source_row(
                 source_host.clone(),
@@ -470,7 +479,7 @@ fn model_places_source_and_sink() {
 fn model_spares_source_and_sink() {
     let (source_host, sink_host, spare) = (build_addr(1), build_addr(2), build_addr(3));
     for seed in 0..SEEDS {
-        simulate(seed, async {
+        simulate(seed, || async {
             let mut model = build_model(&[&source_host, &sink_host, &spare]);
             model.observe(StatementResult::CreatedPhysicalSource(build_source_row(
                 source_host.clone(),
@@ -495,7 +504,7 @@ fn model_spares_source_and_sink() {
 }
 
 fn model_reserves_hosts() {
-    simulate(0, async {
+    simulate(0, || async {
         let a = build_addr(1);
         let mut model = build_model(&[&a]);
         model.observe(StatementResult::CreatedLogicalSource(logical::Model {
@@ -532,7 +541,7 @@ fn model_reserves_hosts() {
 }
 
 fn model_drops_only_active_queries() {
-    simulate(0, async {
+    simulate(0, || async {
         let (a, b) = (build_addr(1), build_addr(2));
         let mut model = build_model(&[&a, &b]);
         model.observe(build_created_query(1, &[(10, &a)]));
@@ -550,7 +559,7 @@ fn model_drops_only_active_queries() {
 fn model_drops_by_id() {
     let (a, b) = (build_addr(1), build_addr(2));
     for seed in 0..SEEDS {
-        simulate(seed, async {
+        simulate(seed, || async {
             let mut model = build_model(&[&a, &b]);
             model.observe(build_created_query(1, &[(10, &a)]));
             model.observe(build_created_query(2, &[(20, &b)]));
@@ -571,7 +580,7 @@ fn model_drops_by_id() {
 }
 
 fn model_reserves_queries() {
-    simulate(0, async {
+    simulate(0, || async {
         let a = build_addr(1);
         let mut model = build_model(&[&a]);
         model.observe(build_created_query(1, &[(10, &a)]));
@@ -826,7 +835,7 @@ async fn list_active_fragments(worker: &WorkerService, after: u64) -> Vec<(i64, 
 
 fn worker_lists_by_state() {
     for seed in 0..SEEDS {
-        simulate(seed, async {
+        simulate(seed, || async {
             let worker = WorkerService::new();
             start_fragment(&worker, FRAGMENT).await.unwrap();
             let mut seen = Vec::new();
@@ -889,7 +898,7 @@ fn worker_lists_by_state() {
 
 fn worker_stops_before_running() {
     for seed in 0..SEEDS {
-        simulate(seed, async {
+        simulate(seed, || async {
             let worker = WorkerService::new();
             start_fragment(&worker, FRAGMENT).await.unwrap();
             stop_fragment(&worker, FRAGMENT).await.unwrap();
@@ -908,7 +917,7 @@ fn worker_stops_before_running() {
 }
 
 fn worker_rejects_invalid_requests() {
-    simulate(0, async {
+    simulate(0, || async {
         let worker = WorkerService::new();
         assert_eq!(stop_fragment(&worker, FRAGMENT).await, Err(Code::NotFound));
         assert_eq!(
@@ -938,7 +947,7 @@ fn worker_rejects_invalid_requests() {
 }
 
 fn harness_tracks_workers() {
-    simulate(0, async {
+    simulate(0, || async {
         let harness = Harness::start();
         let mut model = ModelState::default();
         for _ in 0..2 {
@@ -977,7 +986,7 @@ fn harness_tracks_workers() {
 
 fn workload_keeps_offsets_in_window() {
     for seed in 0..SEEDS {
-        simulate(seed, async {
+        simulate(seed, || async {
             let offsets = pick_offsets(10, 7);
             assert_eq!(offsets.len(), 10, "seed {seed}");
             assert!(offsets.is_sorted(), "seed {seed}: offsets out of order");
@@ -987,7 +996,7 @@ fn workload_keeps_offsets_in_window() {
             );
         });
     }
-    simulate(0, async {
+    simulate(0, || async {
         assert!(pick_offsets(0, 7).is_empty());
         assert_eq!(pick_offsets(3, 0), vec![Duration::ZERO; 3]);
     });
@@ -996,7 +1005,7 @@ fn workload_keeps_offsets_in_window() {
 fn workload_picks_victims() {
     assert!(panics(|| drop(pick_victims(&[], 0.5))));
     for seed in 0..SEEDS {
-        simulate(seed, async {
+        simulate(seed, || async {
             let nodes: Vec<NodeId> = (0..5)
                 .map(|_| Handle::current().create_node().build().id())
                 .collect();

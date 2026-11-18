@@ -180,8 +180,7 @@ fn discover_trials() -> Vec<Trial> {
     trials
 }
 
-/// The trial runs on a fresh thread, because std's hash keys and tokio's random generator are per thread
-/// and must not depend on the trials that ran before.
+/// The trial runs on a fresh thread, see `run_seeded`.
 /// The runtime panics once simulated time passes the trial's timeout plus the check budget.
 /// That limit is checked between scheduler steps, so it misses tasks that wake each other without letting time pass.
 /// The wall-clock watchdog catches those and aborts the process,
@@ -194,11 +193,11 @@ fn run_trial(name: &str, cfg: TrialConfig, seed: u64, wall_timeout: Duration) {
         .name(format!("sim-{name}"))
         .spawn(move || {
             let result = catch_unwind(AssertUnwindSafe(|| {
-                let mut rt = Runtime::with_seed_and_config(seed, Config::default());
-                rt.set_time_limit(Duration::from_secs(cfg.timeout) + CHECK_TIME_BUDGET);
-                build_seeded_tokio_runtime(seed).block_on(unconstrained(async {
-                    rt.block_on(runner::run(&trial_name, &cfg));
-                }));
+                run_seeded(
+                    seed,
+                    Some(Duration::from_secs(cfg.timeout) + CHECK_TIME_BUDGET),
+                    runner::run(&trial_name, &cfg),
+                );
             }));
             let _ = tx.send(result);
         })
@@ -224,6 +223,19 @@ fn run_trial(name: &str, cfg: TrialConfig, seed: u64, wall_timeout: Duration) {
             panic!("trial {name} thread disconnected without sending a result");
         }
     }
+}
+
+/// Runs `body` in a madsim runtime with the given seed, inside a tokio runtime with the same seed.
+/// Call it only on a thread that has not run a simulation or hashed a value before:
+/// madsim seeds std's hash keys and tokio seeds its random generator once per thread,
+/// so on a reused thread the result for a seed depends on what ran before on that thread.
+#[cfg(madsim)]
+fn run_seeded<F: Future>(seed: u64, time_limit: Option<Duration>, body: F) -> F::Output {
+    let mut rt = Runtime::with_seed_and_config(seed, Config::default());
+    if let Some(limit) = time_limit {
+        rt.set_time_limit(limit);
+    }
+    build_seeded_tokio_runtime(seed).block_on(unconstrained(async { rt.block_on(body) }))
 }
 
 /// A tokio runtime that only seeds the trial thread's tokio random generator.
