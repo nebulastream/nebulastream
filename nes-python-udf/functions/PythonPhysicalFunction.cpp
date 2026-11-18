@@ -666,6 +666,11 @@ std::string codonPluginPath(const std::string& builtPath)
 /// one entry in the Codon cache.
 constexpr std::string_view CachedPythonUdfSymbol = "__nes_python_udf_cached";
 
+/// The Codon cache is disabled: its key does not contain the modules that the UDF imports, so a cached UDF does not see changes
+/// to them. Such a change can also add an import inside a function, which compileWithCodon rejects, but a cache hit skips
+/// compileWithCodon. The cache directory still holds the generated source, which the debug information refers to.
+constexpr bool codonCacheEnabled = false;
+
 std::filesystem::path codonCacheDirectory()
 {
     /// NOLINTNEXTLINE(concurrency-mt-unsafe)
@@ -745,11 +750,14 @@ CompiledPythonUdf compilePythonUdf(
 
         /// The key is compared in full, so a hash collision is a cache miss.
         std::optional<CodonCompilationResult> codonResult;
-        auto codonBitcode = readFile(keyPath) == cacheKey ? readFile(bitcodePath) : std::nullopt;
+        auto codonBitcode = codonCacheEnabled && readFile(keyPath) == cacheKey ? readFile(bitcodePath) : std::nullopt;
         if (!codonBitcode)
         {
             codonResult = compileWithCodon(sourcePath, source, std::string{CachedPythonUdfSymbol}, importPaths);
             codonBitcode = codonResult->llvmBitcode;
+        }
+        if (codonResult && codonCacheEnabled)
+        {
             try
             {
                 /// The key is written last: it marks the entry as complete.
