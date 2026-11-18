@@ -73,7 +73,7 @@ const ConfigField<bool> APPEND{
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 /// A failed write (e.g. ENOSPC) only sets failbit/badbit on the stream. Without this check the query would complete with an empty or truncated file.
-void throwIfStreamFailed(const std::ofstream& stream, const std::filesystem::path& filePath, const std::string_view operation)
+void throwIfStreamFailed(const std::ofstream& stream, const std::string& filePath, const std::string_view operation)
 {
     if (stream.fail())
     {
