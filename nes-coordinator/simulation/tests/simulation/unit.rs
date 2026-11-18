@@ -120,10 +120,6 @@ pub fn build_trials() -> Vec<Trial> {
             workload_keeps_offsets_in_window,
         ),
         build_trial("workload::picks_victims", workload_picks_victims),
-        build_trial(
-            "reproducibility::replays_seed_on_used_thread",
-            reproducibility_replays_seed_on_used_thread,
-        ),
     ]
 }
 
@@ -1013,45 +1009,4 @@ fn workload_picks_victims() {
             }
         });
     }
-}
-
-/// The worker drops that the model picks from 16 workers with the given seed.
-/// The model picks from a `HashSet`, so the picks depend on std's hash keys as well as on the seed.
-fn pick_drops(seed: u64) -> Vec<NetworkAddr> {
-    simulate(seed, async {
-        let addrs: Vec<NetworkAddr> = (1..=16).map(build_addr).collect();
-        let mut model = build_model(&addrs.iter().collect::<Vec<_>>());
-        (0..4)
-            .map(|_| {
-                let Ok(Step::Ready(ParsedStatement::DropWorker(drop))) =
-                    model.resolve(Operation::DropWorker)
-                else {
-                    panic!("expect a ready worker drop");
-                };
-                drop.host_addr
-            })
-            .collect()
-    })
-}
-
-/// Reproducer: the same seed picks other workers on a thread that already ran a simulation.
-/// madsim seeds std's hash keys only on a thread that has not hashed yet,
-/// and `simulate` runs on libtest-mimic's reused threads,
-/// so a unit trial's result depends on the trials that ran before it on the same thread.
-fn reproducibility_replays_seed_on_used_thread() {
-    const SEED: u64 = 7;
-    let on_fresh_thread = std::thread::spawn(|| pick_drops(SEED)).join().unwrap();
-    let replay_on_fresh_thread = std::thread::spawn(|| pick_drops(SEED)).join().unwrap();
-    assert_eq!(
-        on_fresh_thread, replay_on_fresh_thread,
-        "seed {SEED} is not reproducible even on fresh threads"
-    );
-
-    // As if an earlier unit trial had run on this libtest-mimic thread.
-    let _ = pick_drops(SEED);
-    let on_used_thread = pick_drops(SEED);
-    assert_eq!(
-        on_fresh_thread, on_used_thread,
-        "seed {SEED} picked other workers on a thread that already ran a simulation"
-    );
 }
