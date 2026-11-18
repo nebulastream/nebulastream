@@ -158,6 +158,11 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
                 this->closed = true;
                 throw CannotWriteToSink("NetworkSink channel failed permanently");
             }
+            case FlushResult::Detached: {
+                /// The receiver left while the sink stops. Nobody redirects the channel anymore, so the buffers it keeps are lost.
+                this->closed = true;
+                throw CannotWriteToSink("NetworkSink channel was detached by the other side while stopping");
+            }
         }
     }
 
@@ -209,14 +214,15 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             *channel.value(), metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children));
         switch (sendResult)
         {
-            case SendResult::Closed: {
+            case SendResult::Closed:
+            case SendResult::Detached: {
                 /// Future buffers are voided.
                 this->closed = true;
                 [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer, backpressureController);
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
-                throw CannotWriteToSink("NetworkSink channel was closed by the other side or failed permanently");
+                throw CannotWriteToSink("NetworkSink channel was closed or detached by the other side or failed permanently");
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());

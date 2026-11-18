@@ -15,7 +15,10 @@
 use super::control::*;
 use crate::channel::Communication;
 use crate::protocol::*;
-use crate::sender::channel::{ChannelCommand, ChannelCommandQueue, ChannelFailed};
+pub use crate::sender::channel::Termination;
+use crate::sender::channel::{
+    ChannelCommand, ChannelCommandQueue, ChannelFailed, SharedChannel, lock_shared,
+};
 use async_channel::TrySendError;
 use std::marker::PhantomData;
 use std::sync::atomic::Ordering;
@@ -85,6 +88,8 @@ pub struct SenderChannel {
     queue: ChannelCommandQueue,
     pending_flush: Mutex<Option<oneshot::Receiver<bool>>>,
     failed: ChannelFailed,
+    shared: SharedChannel,
+    controller: NetworkServiceController,
 }
 
 /// Result of a non-blocking send operation on a `SenderChannel`.
@@ -95,6 +100,9 @@ pub enum TrySendDataResult {
     Full(TupleBuffer),
     /// The channel is closed. The buffer is returned to the caller.
     Closed(TupleBuffer),
+    /// The receiver has detached and the channel waits for a redirect to a new receiver. The buffer is
+    /// returned to the caller, which has to keep it until the channel has been redirected.
+    Detached(TupleBuffer),
 }
 impl SenderChannel {
     /// Attempts to send a tuple buffer through this channel without blocking.
@@ -110,6 +118,10 @@ impl SenderChannel {
     /// unbounded memory growth. The buffer is returned so it can be retried later
     /// or handled appropriately.
     pub fn try_send_data(&self, buffer: TupleBuffer) -> TrySendDataResult {
+        // Buffers which are already in the queue are sent after the redirect, before the ones the caller keeps.
+        if self.is_detached() {
+            return TrySendDataResult::Detached(buffer);
+        }
         let result = self.queue.try_send(ChannelCommand::Data(buffer));
         match result {
             Ok(()) => TrySendDataResult::Ok,
@@ -177,6 +189,56 @@ impl SenderChannel {
         self.failed.load(Ordering::Acquire)
     }
 
+    /// Returns true while the receiver has detached and the channel waits for `redirect`.
+    pub fn is_detached(&self) -> bool {
+        lock_shared(&self.shared).parked.is_some()
+    }
+
+    /// Connects a detached channel to the channel `channel` on the receiver `connection`. Buffers which the old
+    /// receiver has not acknowledged are sent first, followed by the buffers in the queue.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the channel is not detached or the network service has been shut down.
+    pub fn redirect(
+        &self,
+        connection: ConnectionIdentifier,
+        channel: ChannelIdentifier,
+    ) -> Result<()> {
+        let mut shared = lock_shared(&self.shared);
+        let Some(mut pending_channel) = shared.parked.take() else {
+            return Err("Channel is not detached".into());
+        };
+        pending_channel.id = channel;
+        if let Err(async_channel::SendError(NetworkServiceControlCommand::RedirectChannel(
+            _,
+            pending_channel,
+        ))) = self
+            .controller
+            .send_blocking(NetworkServiceControlCommand::RedirectChannel(
+                connection,
+                pending_channel,
+            ))
+        {
+            shared.parked = Some(pending_channel);
+            return Err("Network Service Closed".into());
+        }
+        Ok(())
+    }
+
+    /// Like `close`, but sends a reconfiguration marker before ending the stream.
+    pub fn close_with_marker(self, marker: MarkerPayload) -> bool {
+        lock_shared(&self.shared).termination = Termination::MarkerAndClose(marker);
+        self.queue.close()
+    }
+
+    /// Closes this channel without ending the stream: the receiver keeps its channel registered, so another
+    /// sender can attach to it.
+    pub fn detach(self) -> bool {
+        lock_shared(&self.shared).termination = Termination::Detach;
+        self.queue.close()
+    }
+
     /// Closes this channel and propagates the close signal to the `ReceiverChannel`.
     ///
     /// This method initiates graceful shutdown of the channel. The channel handler
@@ -192,6 +254,15 @@ impl SenderChannel {
     /// not whether the close signal was successfully propagated to the receiver.
     pub fn close(self) -> bool {
         self.queue.close()
+    }
+}
+
+impl Drop for SenderChannel {
+    fn drop(&mut self) {
+        // A parked channel references the shared state, which references the parked channel. Nobody can redirect
+        // the channel anymore, so the cycle is broken here.
+        let parked = lock_shared(&self.shared).parked.take();
+        drop(parked);
     }
 }
 
@@ -404,11 +475,14 @@ impl<C: Communication + 'static> NetworkService<C> {
         };
 
         // Receive the internal queue handle for the data channel
-        let (internal, failed) = rx.blocking_recv().map_err(|_| "Network Service Closed")?;
+        let (internal, failed, shared) =
+            rx.blocking_recv().map_err(|_| "Network Service Closed")?;
         Ok(SenderChannel {
             queue: internal,
             pending_flush: Default::default(),
             failed,
+            shared,
+            controller: self.controller.clone(),
         })
     }
 

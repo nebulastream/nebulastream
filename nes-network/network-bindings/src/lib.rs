@@ -29,12 +29,31 @@ pub mod ffi {
         Ok,
         Closed,
         Full,
+        /// The receiver has detached. The caller keeps the buffer until the channel has been redirected.
+        Detached,
     }
 
     enum FlushResult {
         Flushed,
         Pending,
         Failed,
+        /// The receiver has detached. Data is kept until the channel has been redirected.
+        Detached,
+    }
+
+    enum ReceiveKind {
+        /// A buffer was received and written to the builder.
+        Buffer,
+        /// A reconfiguration marker was received. The stream ends after the marker.
+        Marker,
+        /// The stream has ended, or the channel was closed or detached locally.
+        Closed,
+    }
+
+    struct ReceiveResult {
+        kind: ReceiveKind,
+        /// The serialized reconfiguration marker. Only set if `kind` is `Marker`.
+        marker: Vec<u8>,
     }
 
     struct SerializedTupleBufferHeader {
@@ -102,8 +121,9 @@ pub mod ffi {
         fn receive_buffer(
             receiver_channel: &ReceiverDataChannel,
             builder: Pin<&mut TupleBufferBuilder>,
-        ) -> Result<bool>;
+        ) -> Result<ReceiveResult>;
         fn interrupt_receive(receiver_channel: &ReceiverDataChannel);
+        fn detach_receiver_channel(receiver_channel: &ReceiverDataChannel);
 
         fn close_receiver_channel(channel: Box<ReceiverDataChannel>);
 
@@ -115,6 +135,13 @@ pub mod ffi {
         ) -> Result<Box<SenderDataChannel>>;
 
         fn close_sender_channel(channel: Box<SenderDataChannel>);
+        fn close_sender_channel_with_marker(channel: Box<SenderDataChannel>, marker: &[u8]);
+        fn detach_sender_channel(channel: Box<SenderDataChannel>);
+        fn redirect_sender_channel(
+            channel: &SenderDataChannel,
+            connection_identifier: String,
+            channel_identifier: String,
+        ) -> Result<()>;
         fn flush_sender_channel(channel: &SenderDataChannel) -> FlushResult;
         fn send_buffer(
             channel: &SenderDataChannel,
@@ -369,17 +396,27 @@ fn register_receiver_channel(
 ///
 /// # Returns
 ///
-/// - `Ok(true)`: A buffer was successfully received and the builder was populated
-/// - `Ok(false)`: The channel was closed (no more data available)
+/// - `Ok(Buffer)`: A buffer was successfully received and the builder was populated
+/// - `Ok(Marker)`: A reconfiguration marker was received; the stream ends after the marker
+/// - `Ok(Closed)`: The channel was closed (no more data available)
 /// - `Err(_)`: An error occurred while receiving the buffer
 fn receive_buffer(
     receiver_channel: &ReceiverDataChannel,
     mut buffer_builder: Pin<&mut ffi::TupleBufferBuilder>,
-) -> Result<bool, Box<dyn Error>> {
+) -> Result<ffi::ReceiveResult, Box<dyn Error>> {
     let buffer = match receiver_channel.chan.receive() {
         ReceiverChannelResult::Ok(buffer) => buffer,
+        ReceiverChannelResult::Marker(marker) => {
+            return Ok(ffi::ReceiveResult {
+                kind: ffi::ReceiveKind::Marker,
+                marker,
+            });
+        }
         ReceiverChannelResult::Closed => {
-            return Ok(false);
+            return Ok(ffi::ReceiveResult {
+                kind: ffi::ReceiveKind::Closed,
+                marker: Vec::new(),
+            });
         }
         ReceiverChannelResult::Error(e) => {
             return Err(format!("Error while receiving buffer: {}", e).into());
@@ -404,7 +441,10 @@ fn receive_buffer(
         buffer_builder.as_mut().addChildBuffer(child_buffer);
     }
 
-    Ok(true)
+    Ok(ffi::ReceiveResult {
+        kind: ffi::ReceiveKind::Buffer,
+        marker: Vec::new(),
+    })
 }
 
 // The `interrupt_receive` and `close_receiver_channel` are identical because,
@@ -413,6 +453,13 @@ fn receive_buffer(
 // And closing the channel is the easiest option to interrupt a pending `receive_buffer`.
 fn interrupt_receive(channel: &ReceiverDataChannel) {
     channel.chan.close();
+}
+
+/// Leaves the channel without consuming further data: the sender keeps every buffer that has not been handed
+/// to the receiver yet. Buffers which already arrived can still be received, then `receive_buffer` returns
+/// `Closed`.
+fn detach_receiver_channel(channel: &ReceiverDataChannel) {
+    channel.chan.detach();
 }
 
 // CXX requires the usage of Boxed types
@@ -484,9 +531,13 @@ fn send_buffer(
         TrySendDataResult::Ok => ffi::SendResult::Ok,
         TrySendDataResult::Full(_) => ffi::SendResult::Full,
         TrySendDataResult::Closed(_) => ffi::SendResult::Closed,
+        TrySendDataResult::Detached(_) => ffi::SendResult::Detached,
     }
 }
 fn flush_sender_channel(channel: &SenderDataChannel) -> ffi::FlushResult {
+    if channel.chan.is_detached() {
+        return ffi::FlushResult::Detached;
+    }
     match channel.chan.flush() {
         Ok(true) => ffi::FlushResult::Flushed,
         Ok(false) => ffi::FlushResult::Pending,
@@ -500,4 +551,33 @@ fn flush_sender_channel(channel: &SenderDataChannel) -> ffi::FlushResult {
 #[allow(clippy::boxed_local)]
 fn close_sender_channel(channel: Box<SenderDataChannel>) {
     channel.chan.close();
+}
+
+/// Sends a reconfiguration marker and closes the channel. The caller flushes the channel first.
+// CXX requires the usage of Boxed types
+#[allow(clippy::boxed_local)]
+fn close_sender_channel_with_marker(channel: Box<SenderDataChannel>, marker: &[u8]) {
+    channel.chan.close_with_marker(marker.to_vec());
+}
+
+/// Closes the channel without ending the stream, so another sender can attach to the receiver.
+/// The caller flushes the channel first.
+// CXX requires the usage of Boxed types
+#[allow(clippy::boxed_local)]
+fn detach_sender_channel(channel: Box<SenderDataChannel>) {
+    channel.chan.detach();
+}
+
+/// Connects a channel whose receiver has detached to the channel `channel_identifier` on `connection_identifier`.
+fn redirect_sender_channel(
+    channel: &SenderDataChannel,
+    connection_identifier: String,
+    channel_identifier: String,
+) -> Result<(), String> {
+    let connection = ConnectionIdentifier::from_str(connection_identifier.as_str())
+        .map_err(|e| e.to_string())?;
+    channel
+        .chan
+        .redirect(connection, channel_identifier)
+        .map_err(|e| e.to_string())
 }

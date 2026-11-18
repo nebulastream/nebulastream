@@ -153,15 +153,20 @@ Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer& tupleB
     /// If the source is requested to shutdown the network channel is closed, which will interrupt the call to receive_buffer.
     const std::stop_callback callback(stopToken, [this] { interrupt_receive(**channel); });
 
-    if (receive_buffer(**channel, builder))
+    switch (receive_buffer(**channel, builder).kind)
     {
-        return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples()); /// Received one buffer
+        case ReceiveKind::Buffer:
+            return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples()); /// Received one buffer
+        case ReceiveKind::Marker:
+            /// The sender closes the channel right after a reconfiguration marker, so the marker ends the stream. Handling the marker
+            /// follows with the reconfiguration support of the sources.
+        case ReceiveKind::Closed:
+            /// The queue was closed.
+            /// The SourceThread logic will figure out if the queue was closed by an external source (i.e. the other side of the network
+            /// connection) or because of a stop_request.
+            return FillTupleBufferResult::eos(); /// End of Stream
     }
-
-    /// Receive Buffer has failed, which means that the queue was closed.
-    /// The SourceThread logic will figure out if the queue was closed by an external source (i.e. the other side of the network connection)
-    /// or because of a stop_request.
-    return FillTupleBufferResult::eos(); /// End of Stream
+    std::unreachable();
 }
 
 void NetworkSource::close()

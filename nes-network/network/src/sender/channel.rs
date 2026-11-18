@@ -43,6 +43,9 @@ enum ChannelHandlerStatus {
     ClosedBySoftwareButFailedToPropagate(Error),
     /// The channel was cancelled via the cancellation token.
     Cancelled,
+    /// The receiver sent a Detach message: it left the channel without ending the stream. The buffers it has not
+    /// acknowledged, followed by the buffers which were not sent yet, in the order they have to be sent.
+    DetachedByOtherSide(VecDeque<TupleBuffer>),
     /// A buffer can never be sent (e.g. it exceeds the maximum frame size). Retrying would block the channel
     /// forever, so the channel is terminated and marked as failed, which fails the sending sink.
     Failed(Error),
@@ -111,6 +114,37 @@ pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCom
 /// Set once the channel failed permanently. Distinguishes a failure from a regularly closed channel.
 pub(super) type ChannelFailed = Arc<AtomicBool>;
 
+/// How the software side ends the channel once it closes the command queue.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub enum Termination {
+    /// End the stream.
+    #[default]
+    Close,
+    /// Send a reconfiguration marker, then end the stream.
+    MarkerAndClose(MarkerPayload),
+    /// Leave the channel without ending the stream, so another sender can attach to the receiver.
+    Detach,
+}
+
+/// State shared between a `SenderChannel` and the tasks that drive it.
+#[derive(Default)]
+pub(super) struct SharedChannelState {
+    pub termination: Termination,
+    /// Set while the receiver has detached. The channel keeps its command queue and waits for a redirect to a
+    /// new receiver. Holding the `PendingChannel` here creates a reference cycle, which `SenderChannel` breaks
+    /// when it is dropped.
+    pub parked: Option<PendingChannel>,
+    /// Buffers which have to be sent before anything from the command queue once the channel is connected again.
+    pub carry_over: VecDeque<TupleBuffer>,
+}
+pub(super) type SharedChannel = Arc<std::sync::Mutex<SharedChannelState>>;
+
+pub(super) fn lock_shared(shared: &SharedChannel) -> std::sync::MutexGuard<'_, SharedChannelState> {
+    shared
+        .lock()
+        .expect("BUG: Nothing should panic while holding the lock")
+}
+
 /// Closes the queue and drops all commands the terminated handler will never process.
 /// Closing alone keeps them alive, so a queued `Flush` would never be answered and its caller would wait forever.
 fn close_and_drain(queue: &ChannelCommandQueueListener) {
@@ -152,7 +186,10 @@ fn close_and_drain(queue: &ChannelCommandQueueListener) {
 pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     cancellation_token: CancellationToken,
     pending_writes: VecDeque<TupleBuffer>,
-    wait_for_ack: HashMap<OriginSequenceNumber, TupleBuffer>,
+    /// Sent buffers awaiting acknowledgment, with the index of the send. The index restores the send order if
+    /// the receiver detaches.
+    wait_for_ack: HashMap<OriginSequenceNumber, (u64, TupleBuffer)>,
+    next_send_index: u64,
     writer: DataChannelSenderWriter<W>,
     reader: DataChannelSenderReader<R>,
     queue: ChannelCommandQueueListener,
@@ -172,11 +209,13 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         reader: DataChannelSenderReader<R>,
         writer: DataChannelSenderWriter<W>,
         max_pending_acks: usize,
+        carry_over: VecDeque<TupleBuffer>,
     ) -> Self {
         Self {
             cancellation_token,
-            pending_writes: Default::default(),
+            pending_writes: carry_over,
             wait_for_ack: Default::default(),
+            next_send_index: 0,
             reader,
             writer,
             queue,
@@ -224,8 +263,22 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     ChannelHandlerStatus::ClosedByOtherSide,
                 ));
             }
+            DataChannelResponse::Detach => {
+                info!("Channel detached by receiver");
+                let mut unacknowledged: Vec<_> =
+                    self.wait_for_ack.drain().map(|(_, v)| v).collect();
+                unacknowledged.sort_unstable_by_key(|(index, _)| *index);
+                let mut carry_over: VecDeque<_> = unacknowledged
+                    .into_iter()
+                    .map(|(_, buffer)| buffer)
+                    .collect();
+                carry_over.append(&mut self.pending_writes);
+                return Err(ErrorOrStatus::Status(
+                    ChannelHandlerStatus::DetachedByOtherSide(carry_over),
+                ));
+            }
             DataChannelResponse::NAckData(seq) => {
-                if let Some(write) = self.wait_for_ack.remove(&seq) {
+                if let Some((_, write)) = self.wait_for_ack.remove(&seq) {
                     warn!("NAck for {seq:?}");
                     self.pending_writes.push_back(write);
                 } else {
@@ -273,7 +326,8 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         cancel_token: &CancellationToken,
         writer: &mut DataChannelSenderWriter<W>,
         pending_writes: &mut VecDeque<TupleBuffer>,
-        wait_for_ack: &mut HashMap<OriginSequenceNumber, TupleBuffer>,
+        wait_for_ack: &mut HashMap<OriginSequenceNumber, (u64, TupleBuffer)>,
+        next_send_index: &mut u64,
     ) -> InternalResult<()> {
         let Some(buffer) = pending_writes.front() else {
             return Ok(());
@@ -293,8 +347,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             Ok(()) => {
                 // feed() succeeded — now move to wait_for_ack
                 let buffer = pending_writes.pop_front().expect("BUG: was front");
+                let index = *next_send_index;
+                *next_send_index += 1;
                 assert!(
-                    wait_for_ack.insert(sequence_number, buffer).is_none(),
+                    wait_for_ack
+                        .insert(sequence_number, (index, buffer))
+                        .is_none(),
                     "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was sent via a single channel."
                 );
             }
@@ -389,7 +447,8 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
             let should_read_from_software = self.wait_for_ack.len() < self.max_pending_acks;
-            let should_read_from_other_side = !self.wait_for_ack.is_empty();
+            // The receiver may detach at any time, also while nothing is awaiting acknowledgment.
+            let should_read_from_other_side = true;
             let should_send_pending = !self.pending_writes.is_empty();
 
             // When there's nothing left to send, flush the codec buffer so the
@@ -405,7 +464,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 request = Self::read_from_software(&self.cancellation_token, &mut self.queue), if should_read_from_software => {
                     self.handle_request(request?).await?;
                 },
-                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
+                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack, &mut self.next_send_index), if should_send_pending => {
                     send_result?;
                 },
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {
@@ -432,7 +491,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// - `ClosedBySoftware`: Close signal successfully sent
     /// - `ClosedBySoftwareButFailedToPropagate(e)`: Sending failed (e.g., network down)
     /// - `Cancelled`: Cancellation token triggered during close attempt
-    async fn run(&mut self) -> Result<ChannelHandlerStatus> {
+    async fn run(
+        &mut self,
+        termination: impl FnOnce() -> Termination,
+    ) -> Result<ChannelHandlerStatus> {
         let status = match self
             .run_internal()
             .await
@@ -444,9 +506,29 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
 
         // Fixup the ClosedBySoftwareButFailedToPropagate created in read_from_software
         if let ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(_) = status {
+            let termination = termination();
+            if !self.pending_writes.is_empty() || !self.wait_for_ack.is_empty() {
+                warn!(
+                    "Channel terminates ({termination:?}) with unacknowledged data (pending: {}, wait_for_ack: {})",
+                    self.pending_writes.len(),
+                    self.wait_for_ack.len()
+                );
+            }
+            let send_termination = async {
+                match termination {
+                    Termination::Close => self.writer.send(DataChannelRequest::Close).await,
+                    Termination::MarkerAndClose(payload) => {
+                        self.writer
+                            .feed(DataChannelRequest::Marker(payload))
+                            .await?;
+                        self.writer.send(DataChannelRequest::Close).await
+                    }
+                    Termination::Detach => self.writer.send(DataChannelRequest::Detach).await,
+                }
+            };
             let Some(result) = self
                 .cancellation_token
-                .run_until_cancelled(self.writer.send(DataChannelRequest::Close))
+                .run_until_cancelled(send_termination)
                 .await
             else {
                 return Ok(ChannelHandlerStatus::Cancelled);
@@ -503,14 +585,20 @@ async fn channel_handler(
         }
     };
 
+    // Buffers left over from a receiver which detached are sent first.
+    let carry_over = std::mem::take(&mut lock_shared(&pending_channel.shared).carry_over);
     let mut handler = ChannelHandler::new(
         pending_channel.cancellation,
         pending_channel.queue,
         reader,
         writer,
         pending_channel.max_pending_acks,
+        carry_over,
     );
-    handler.run().await
+    let shared = pending_channel.shared;
+    handler
+        .run(|| lock_shared(&shared).termination.clone())
+        .await
 }
 
 /// Spawns a channel handler task with automatic error recovery.
@@ -567,6 +655,19 @@ pub(super) fn create_channel_handler(
                     return;
                 };
 
+                if let ChannelHandlerStatus::DetachedByOtherSide(carry_over) = status {
+                    // The command queue stays open. Once it is full, the software side sees backpressure until the
+                    // channel is redirected to a new receiver.
+                    info!(
+                        "Channel detached by receiver. Parking it with {} unacknowledged buffers until it is redirected.",
+                        carry_over.len()
+                    );
+                    let mut shared = lock_shared(&pending_channel.shared);
+                    shared.carry_over = carry_over;
+                    shared.parked = Some(pending_channel.clone());
+                    return;
+                }
+
                 // Has to be set before the queue is closed: Whoever observes the closed queue must also see the failure.
                 if let ChannelHandlerStatus::Failed(_) = status {
                     pending_channel.failed.store(true, Ordering::Release);
@@ -593,6 +694,9 @@ pub(super) fn create_channel_handler(
                     ChannelHandlerStatus::Failed(e) => {
                         error!("Channel failed permanently, failing the sender: {e}");
                         return;
+                    }
+                    ChannelHandlerStatus::DetachedByOtherSide(_) => {
+                        unreachable!("handled above")
                     }
                 }
             }

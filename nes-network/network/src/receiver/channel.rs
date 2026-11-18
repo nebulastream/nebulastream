@@ -28,6 +28,12 @@ pub(super) type Error = Box<dyn std::error::Error + Send + Sync>;
 enum ChannelHandlerStatus {
     /// The channel handler has received a ChannelClose message from the other side.
     ClosedByOtherSide,
+    /// The other side has left the channel without ending the stream. The channel is registered again, so a
+    /// new sender can attach to it.
+    DetachedByOtherSide,
+    /// The software side has detached the channel. The other side was told via `Detach` that every buffer
+    /// which has not been acknowledged remains with it.
+    DetachedBySoftware,
     /// The channel handler has noticed that the DataQueue has been closed, which indicates that
     /// the software side wants to terminate the connection. The ChannelHandler has propagated this
     /// to the other side.
@@ -38,7 +44,21 @@ enum ChannelHandlerStatus {
     /// NetworkService shutdown or the control connection stopped.
     Cancelled,
 }
-pub(super) type DataQueue = async_channel::Sender<TupleBuffer>;
+
+/// An item handed from the network to the software side.
+#[derive(Debug)]
+pub enum ReceivedItem {
+    Buffer(TupleBuffer),
+    /// A reconfiguration marker. It is followed by the end of the stream.
+    Marker(MarkerPayload),
+}
+
+pub(super) type DataQueue = async_channel::Sender<ReceivedItem>;
+
+/// How long the receiver keeps reading (and discarding) frames after it has sent a `Detach`. The sender stops
+/// after seeing the `Detach`. Reading until then keeps the sender's writes from failing, which would otherwise
+/// make it reconnect instead of noticing the `Detach`.
+const DETACH_LINGER: Duration = Duration::from_secs(5);
 
 /// Acks are tiny messages. Flushing each of them separately costs one syscall per received buffer, so they are batched: an ack is
 /// only fed into the writer and flushed once the reader has nothing immediately available (the sender is then waiting for acks),
@@ -57,22 +77,64 @@ async fn flush_acks<W: AsyncWrite + Unpin>(
     Ok(true)
 }
 
+/// Tells the other side that this side detaches, and discards frames until the other side has stopped.
+/// Acks which have been fed but not flushed are flushed together with the `Detach`, so the sender knows
+/// exactly which buffers have been consumed.
+async fn detach<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
+    cancellation_token: &CancellationToken,
+    connection_reader: &mut DataChannelReceiverReader<R>,
+    connection_writer: &mut DataChannelReceiverWriter<W>,
+) -> Result<ChannelHandlerStatus> {
+    let Some(result) = cancellation_token
+        .run_until_cancelled(connection_writer.send(DataChannelResponse::Detach))
+        .await
+    else {
+        return Ok(ChannelHandlerStatus::Cancelled);
+    };
+    result?;
+
+    let linger = async {
+        while let Some(Ok(request)) = connection_reader.next().await {
+            trace!("discarding {request:?} after detach");
+        }
+    };
+    select! {
+        _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
+        _ = tokio::time::timeout(DETACH_LINGER, linger) => {},
+    }
+    Ok(ChannelHandlerStatus::DetachedBySoftware)
+}
+
 async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     cancellation_token: CancellationToken,
+    detach_token: CancellationToken,
     buffer_queue: &mut DataQueue,
     mut connection_reader: DataChannelReceiverReader<R>,
     mut connection_writer: DataChannelReceiverWriter<W>,
 ) -> Result<ChannelHandlerStatus> {
-    let mut pending_buffer: Option<TupleBuffer> = None;
+    let mut pending_item: Option<ReceivedItem> = None;
     let mut unflushed_acks = 0;
     loop {
+        if detach_token.is_cancelled() {
+            // A pending item has not been acknowledged, so it remains with the sender.
+            return detach(
+                &cancellation_token,
+                &mut connection_reader,
+                &mut connection_writer,
+            )
+            .await;
+        }
         // First: Push received data to the registered channel. The channel handler will not receive
         // further data from the network if the registered channel cannot accept it. This implements
         // backpressure.
         // The `queue` is capable of buffering a limited amount of data, which should reduce the
         // amount of accidental backpressure
-        if let Some(pending_buffer) = pending_buffer.take() {
-            let sequence = pending_buffer.sequence();
+        if let Some(pending_item) = pending_item.take() {
+            // Markers are not acknowledged, only data is.
+            let sequence = match &pending_item {
+                ReceivedItem::Buffer(buffer) => Some(buffer.sequence()),
+                ReceivedItem::Marker(_) => None,
+            };
             // About to (possibly) block on a full queue: don't hold back the acks of the buffers that were already accepted.
             if unflushed_acks > 0 && buffer_queue.is_full() {
                 if !flush_acks(&cancellation_token, &mut connection_writer).await? {
@@ -82,9 +144,15 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
             }
             select! {
                 _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
-                write_queue_result = buffer_queue.send(pending_buffer) => {
+                // The pending item is dropped without being acknowledged.
+                _ = detach_token.cancelled() => continue,
+                write_queue_result = buffer_queue.send(pending_item) => {
                     match write_queue_result {
                         Ok(_) => {
+                            let Some(sequence) = sequence else {
+                                trace!("accepted marker.");
+                                continue;
+                            };
                             trace!("accepted data for sequence number {sequence:?}.");
                             // The registered channel has accepted the data, acknowledge the sequence
                             // number. The ack is only fed here and flushed in batches, see `MAX_UNFLUSHED_ACKS`.
@@ -139,6 +207,7 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                 }
                 select! {
                     _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
+                    _ = detach_token.cancelled() => continue,
                     _ = tokio::time::sleep(Duration::from_secs(10)) => {
                         warn!("No data received from sender for 10 seconds");
                         continue;
@@ -150,11 +219,30 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
 
         // Reader next could fail if the connection aborts, in which case the channel fails,
         // but will be retried after a delay. See @create_channel_handler
-        pending_buffer = match request.ok_or("Connection Lost")?.map_err(|e| e)? {
+        pending_item = match request.ok_or("Connection Lost")?.map_err(|e| e)? {
             // Received data will be pushed to the registered channel on the next iteration
             DataChannelRequest::Data(buffer) => {
                 trace!("received data for sequence number {:?}.", buffer.sequence());
-                Some(buffer)
+                Some(ReceivedItem::Buffer(buffer))
+            }
+            // The marker is handed to the software side like data. The sender closes the channel next.
+            DataChannelRequest::Marker(marker) => {
+                info!(
+                    "received a reconfiguration marker of {} bytes.",
+                    marker.len()
+                );
+                Some(ReceivedItem::Marker(marker))
+            }
+            // The other side leaves without ending the stream. The acks of everything that has been accepted
+            // have to reach the sender before the channel can be handed to a new sender, otherwise these buffers
+            // would be sent twice.
+            DataChannelRequest::Detach => {
+                if unflushed_acks > 0
+                    && !flush_acks(&cancellation_token, &mut connection_writer).await?
+                {
+                    return Ok(ChannelHandlerStatus::Cancelled);
+                }
+                return Ok(ChannelHandlerStatus::DetachedByOtherSide);
             }
             // The other side has closed the channel. This is propagated to the registered
             // channel by closing the queue, which will interrupt any blocking reads.
@@ -173,6 +261,7 @@ pub(super) fn create_channel_handler<
     channel_id: ChannelIdentifier,
     mut buffer_queue: DataQueue,
     channel_cancellation_token: CancellationToken,
+    detach_token: CancellationToken,
     control: NetworkingServiceController,
 ) -> oneshot::Sender<(DataChannelReceiverReader<R>, DataChannelReceiverWriter<W>)> {
     let (tx, rx) = oneshot::channel();
@@ -180,7 +269,14 @@ pub(super) fn create_channel_handler<
         let channel = channel_id.clone();
         async move {
             // Channel is waiting for connection.
-            let channel_opened = channel_cancellation_token.run_until_cancelled(rx).await;
+            let channel_opened = select! {
+                channel_opened = channel_cancellation_token.run_until_cancelled(rx) => channel_opened,
+                // Nothing has been received on this channel yet, so there is nothing to tell the other side.
+                _ = detach_token.cancelled() => {
+                    info!("Channel detached before a sender attached.");
+                    return;
+                }
+            };
 
             let Some(channel_opened) = channel_opened else {
                 // Channel got canceled
@@ -194,6 +290,7 @@ pub(super) fn create_channel_handler<
 
             let channel_handler_result = channel_handler(
                 channel_cancellation_token.clone(),
+                detach_token.clone(),
                 &mut buffer_queue,
                 connection_reader,
                 connection_writer,
@@ -209,6 +306,7 @@ pub(super) fn create_channel_handler<
                             channel,
                             buffer_queue,
                             channel_cancellation_token,
+                            detach_token,
                         ))
                         .await
                         .expect("ReceiverServer should not have closed while a channel is active");
@@ -219,6 +317,23 @@ pub(super) fn create_channel_handler<
             match status {
                 ChannelHandlerStatus::ClosedByOtherSide => {
                     info!("Channel Closed by other side.");
+                    return;
+                }
+                ChannelHandlerStatus::DetachedByOtherSide => {
+                    // Like a retry, but without an error: the channel waits for the next sender.
+                    info!("Channel detached by other side. Waiting for a new sender.");
+                    let _ = control
+                        .send(NetworkServiceControlCommand::RetryChannel(
+                            channel,
+                            buffer_queue,
+                            channel_cancellation_token,
+                            detach_token,
+                        ))
+                        .await;
+                    return;
+                }
+                ChannelHandlerStatus::DetachedBySoftware => {
+                    info!("Channel detached by software.");
                     return;
                 }
                 ChannelHandlerStatus::ClosedBySoftware => {

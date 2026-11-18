@@ -14,7 +14,8 @@
 
 use super::SenderConfig;
 use super::channel::{
-    ChannelCommandQueue, ChannelCommandQueueListener, ChannelFailed, create_channel_handler,
+    ChannelCommandQueue, ChannelCommandQueueListener, ChannelFailed, SharedChannel,
+    create_channel_handler,
 };
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
@@ -51,7 +52,12 @@ pub(super) struct PendingChannel {
     pub max_pending_acks: usize,
     /// Set by the channel handler if the channel failed permanently
     pub failed: ChannelFailed,
+    /// State shared with the software-facing `SenderChannel`
+    pub shared: SharedChannel,
 }
+
+/// What `RegisterChannel` hands back to the software side.
+pub(super) type RegisteredChannel = (ChannelCommandQueue, ChannelFailed, SharedChannel);
 
 /// Control commands sent to the network service dispatcher.
 ///
@@ -64,9 +70,12 @@ pub(super) enum NetworkServiceControlCommand {
     RegisterChannel(
         ConnectionIdentifier,
         ChannelIdentifier,
-        oneshot::Sender<(ChannelCommandQueue, ChannelFailed)>,
+        oneshot::Sender<RegisteredChannel>,
         SenderConfig,
     ),
+    /// Attach a parked channel (its receiver has detached) to a new receiver. The channel's id has already
+    /// been set to the channel identifier on the new receiver.
+    RedirectChannel(ConnectionIdentifier, PendingChannel),
 }
 
 /// Control commands sent to a connection handler.
@@ -84,9 +93,11 @@ pub(super) enum NetworkingConnectionControlCommand {
     /// The SenderConfig provides queue sizing and flow control parameters.
     RegisterChannel(
         ChannelIdentifier,
-        oneshot::Sender<(ChannelCommandQueue, ChannelFailed)>,
+        oneshot::Sender<RegisteredChannel>,
         SenderConfig,
     ),
+    /// Attach an existing channel, which was redirected from another connection, to this connection.
+    AttachChannel(PendingChannel),
     /// Retry establishing a channel after a failure. This reuses the existing
     /// cancellation token and command queue from the failed attempt.
     RetryChannel(PendingChannel),
@@ -445,6 +456,7 @@ async fn connection_handler<C: Communication + 'static>(
                 let (sender, queue) = async_channel::bounded(config.sender_queue_size);
                 let channel_cancellation = CancellationToken::new();
                 let failed = ChannelFailed::default();
+                let shared = SharedChannel::default();
 
                 let pending_channel = PendingChannel {
                     id: channel,
@@ -452,6 +464,7 @@ async fn connection_handler<C: Communication + 'static>(
                     queue,
                     max_pending_acks: config.max_pending_acks,
                     failed: failed.clone(),
+                    shared: shared.clone(),
                 };
 
                 tokio::spawn(
@@ -466,7 +479,20 @@ async fn connection_handler<C: Communication + 'static>(
                 );
 
                 active_channel.add_token(channel_cancellation);
-                let _ = response.send((sender, failed));
+                let _ = response.send((sender, failed, shared));
+            }
+            NetworkingConnectionControlCommand::AttachChannel(pending_channel) => {
+                active_channel.add_token(pending_channel.cancellation.clone());
+                tokio::spawn(
+                    attempt_channel_registration(
+                        this_connection.clone(),
+                        pending_channel,
+                        channel_registration_request_handler.clone(),
+                        controller.clone(),
+                        communication.clone(),
+                    )
+                    .in_current_span(),
+                );
             }
             NetworkingConnectionControlCommand::RetryChannel(pending_channel) => {
                 tokio::spawn(
@@ -543,33 +569,44 @@ pub(super) async fn network_sender_dispatcher(
         (ScopedTask<()>, NetworkingConnectionController),
     > = HashMap::default();
 
-    // Consume `RegisterChannel` requests from the worker and dispatch them to a dedicated handler
-    while let Ok(NetworkServiceControlCommand::RegisterChannel(
-        target_connection,
-        channel,
-        tx,
-        channel_config,
-    )) = control.recv().await
-    {
-        // if the new channel is on a connection, which has not yet been created, a new connection
-        // handler is created before submitting the channel registration to the connection handler
-        let (_, controller) = connections.entry(target_connection.clone()).or_insert({
-            info!("Creating connection to {}", target_connection);
-            let (task, controller) = create_connection_handler(
-                this_connection.clone(),
-                target_connection.clone(),
-                communication.clone(),
-            );
-            (task, controller)
-        });
+    // Consume requests from the worker and dispatch them to a dedicated handler
+    while let Ok(command) = control.recv().await {
+        let target_connection = match &command {
+            NetworkServiceControlCommand::RegisterChannel(target_connection, ..)
+            | NetworkServiceControlCommand::RedirectChannel(target_connection, _) => {
+                target_connection.clone()
+            }
+        };
+        // if the channel is on a connection, which has not yet been created, a new connection
+        // handler is created before submitting the channel to the connection handler
+        let (_, controller) = connections
+            .entry(target_connection.clone())
+            .or_insert_with(|| {
+                info!("Creating connection to {}", target_connection);
+                let (task, controller) = create_connection_handler(
+                    this_connection.clone(),
+                    target_connection.clone(),
+                    communication.clone(),
+                );
+                (task, controller)
+            });
+
+        let connection_command = match command {
+            NetworkServiceControlCommand::RegisterChannel(_, channel, tx, channel_config) => {
+                NetworkingConnectionControlCommand::RegisterChannel(channel, tx, channel_config)
+            }
+            NetworkServiceControlCommand::RedirectChannel(_, pending_channel) => {
+                info!(
+                    "Redirecting channel to '{}' on {}",
+                    pending_channel.id, target_connection
+                );
+                NetworkingConnectionControlCommand::AttachChannel(pending_channel)
+            }
+        };
 
         // Dispatch the request to the correct connection handler
         controller
-            .send(NetworkingConnectionControlCommand::RegisterChannel(
-                channel,
-                tx,
-                channel_config,
-            ))
+            .send(connection_command)
             .await
             // The Connection Controller should never terminate but instead attempt
             // to reconnect. The only reason a connection controller would terminate is

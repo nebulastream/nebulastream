@@ -19,3 +19,6 @@ pub mod protocol;
 pub mod receiver;
 pub mod sender;
 mod util;
+
+#[cfg(test)]
+mod reconfiguration_tests;

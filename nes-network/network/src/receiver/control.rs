@@ -20,6 +20,7 @@ use futures::SinkExt;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::select;
 use tokio::sync::RwLock;
 use tokio::sync::oneshot;
 use tokio::sync::oneshot::Sender;
@@ -30,11 +31,28 @@ use tracing::{Instrument, Span, error, info, info_span, warn};
 pub(super) type Result<T> = std::result::Result<T, Error>;
 pub(super) type Error = Box<dyn std::error::Error + Send + Sync>;
 pub(super) enum NetworkServiceControlCommand {
-    RetryChannel(ChannelIdentifier, DataQueue, CancellationToken),
-    RegisterChannel(ChannelIdentifier, DataQueue, Sender<()>),
+    /// Puts a channel back into the registered channels after its sender failed or detached.
+    /// The second token is the channel's detach token.
+    RetryChannel(
+        ChannelIdentifier,
+        DataQueue,
+        CancellationToken,
+        CancellationToken,
+    ),
+    /// Registers a new channel. The tokens are the channel's detach token and a token which is cancelled once
+    /// the software side has dropped the channel.
+    RegisterChannel(
+        ChannelIdentifier,
+        DataQueue,
+        CancellationToken,
+        CancellationToken,
+        Sender<()>,
+    ),
 }
 pub(super) type NetworkingServiceController = async_channel::Sender<NetworkServiceControlCommand>;
-type RegisteredChannels = Arc<RwLock<HashMap<ChannelIdentifier, (DataQueue, CancellationToken)>>>;
+/// Registered channels with their data queue, cancellation token and detach token.
+type RegisteredChannels =
+    Arc<RwLock<HashMap<ChannelIdentifier, (DataQueue, CancellationToken, CancellationToken)>>>;
 type PendingChannels<R, W> = Arc<
     RwLock<
         HashMap<
@@ -127,9 +145,18 @@ impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
         channel_identifier: ChannelIdentifier,
         data_queue: DataQueue,
         cancellation_token: CancellationToken,
+        detach_token: CancellationToken,
     ) {
+        if detach_token.is_cancelled() {
+            // Dropping the data queue ends the stream for the software side.
+            info!("Channel '{channel_identifier}' was detached, it is not registered again");
+            return;
+        }
         let mut lock = self.registered_channels.write().await;
-        let replaced = lock.insert(channel_identifier, (data_queue, cancellation_token));
+        let replaced = lock.insert(
+            channel_identifier,
+            (data_queue, cancellation_token, detach_token),
+        );
         lock.retain(|_, v| !v.1.is_cancelled());
 
         assert!(
@@ -140,11 +167,22 @@ impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
     async fn take_registered_channel(
         &self,
         channel_identifier: &ChannelIdentifier,
-    ) -> Option<(DataQueue, CancellationToken)> {
+    ) -> Option<(DataQueue, CancellationToken, CancellationToken)> {
         self.registered_channels
             .write()
             .await
             .remove(channel_identifier)
+    }
+
+    /// Removes the channel if it waits for a sender although it has been detached.
+    async fn remove_detached_channel(&self, channel_identifier: &ChannelIdentifier) {
+        let mut lock = self.registered_channels.write().await;
+        if lock
+            .get(channel_identifier)
+            .is_some_and(|(_, _, detach_token)| detach_token.is_cancelled())
+        {
+            lock.remove(channel_identifier);
+        }
     }
 
     async fn take_pending_channel(
@@ -198,7 +236,11 @@ async fn control_socket_handler<
             ControlChannelRequest::ChannelRequest(channel) => {
                 // The data channel needs to be registered beforehand, which is done by the software
                 // side via the NetworkingServiceController, which is exposed to the NetworkService.
-                let Some((emit, token)) = state.take_registered_channel(&channel).await else {
+                let Some((emit, token, detach_token)) = state
+                    .take_registered_channel(&channel)
+                    .await
+                    .filter(|(_, _, detach_token)| !detach_token.is_cancelled())
+                else {
                     // If the channel has not been registered yet, which is plausible because network sources and sinks
                     // are started without synchronization, the ChannelRequest is denied. Usually the other side will
                     // retry.
@@ -217,8 +259,13 @@ async fn control_socket_handler<
                 // side. The Reader/Writer pair is transferred to the ChannelHandler once the other
                 // side attempts to connect. This is handled after Connection Identification within
                 // @socket_listener.
-                let attach_to_channel =
-                    create_channel_handler(channel.clone(), emit, token, control.clone());
+                let attach_to_channel = create_channel_handler(
+                    channel.clone(),
+                    emit,
+                    token,
+                    detach_token,
+                    control.clone(),
+                );
 
                 state
                     .add_pending_channel(
@@ -376,11 +423,37 @@ pub(super) async fn create_control_socket_handler(
             // Software wants to register a new channel. The channel is registered in the controller state.
             // Future ChannelRequests with the `ChannelIdentifier` will be accepted by the @control_socket_handler,
             // and the DataChannel will be associated with the emit_fn
-            Ok(NetworkServiceControlCommand::RegisterChannel(ident, emit_fn, response)) => {
+            Ok(NetworkServiceControlCommand::RegisterChannel(
+                ident,
+                emit_fn,
+                detach_token,
+                dropped_token,
+                response,
+            )) => {
                 let token = CancellationToken::new();
                 state
-                    .add_registered_channel(ident, emit_fn, token.clone())
+                    .add_registered_channel(
+                        ident.clone(),
+                        emit_fn,
+                        token.clone(),
+                        detach_token.clone(),
+                    )
                     .await;
+
+                // A channel which is detached while it waits for a sender has no channel handler that could
+                // notice. Remove it, so the software side sees the end of the stream.
+                tokio::spawn({
+                    let state = state.clone();
+                    let token = token.clone();
+                    async move {
+                        select! {
+                            _ = token.cancelled() => {},
+                            _ = dropped_token.cancelled() => {},
+                            _ = detach_token.cancelled() => state.remove_detached_channel(&ident).await,
+                        }
+                    }
+                    .in_current_span()
+                });
 
                 if response.send(()).is_err() {
                     token.cancel();
@@ -390,8 +463,10 @@ pub(super) async fn create_control_socket_handler(
             // A DataChannel has been ungracefully terminated, no software request nor stop request
             // from the other side. The channel requested a retry and will be placed back in the
             // registered channel list, where future ChannelRequests can reopen the channel.
-            Ok(NetworkServiceControlCommand::RetryChannel(ident, emit_fn, token)) => {
-                state.add_registered_channel(ident, emit_fn, token).await;
+            Ok(NetworkServiceControlCommand::RetryChannel(ident, emit_fn, token, detach_token)) => {
+                state
+                    .add_registered_channel(ident, emit_fn, token, detach_token)
+                    .await;
             }
         };
     }

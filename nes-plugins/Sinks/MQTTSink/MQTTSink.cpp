@@ -237,9 +237,10 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
                 }
                 return;
             }
-            case SendResult::Closed: {
+            case SendResult::Closed:
+            case SendResult::Detached: {
                 /// tryPublish() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
-                INVARIANT(false, "tryPublish unexpectedly returned SendResult::Closed");
+                INVARIANT(false, "tryPublish unexpectedly returned SendResult::Closed or SendResult::Detached");
             }
         }
     }

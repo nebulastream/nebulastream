@@ -19,19 +19,26 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
+use tokio_util::sync::{CancellationToken, DropGuard};
 use tracing::{Instrument, error, info_span, warn};
 
+use super::channel::ReceivedItem;
 use super::control::*;
 
 /// Timeout for graceful tokio runtime shutdown
 const RUNTIME_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(1);
 
 pub struct ReceiverChannel {
-    queue: async_channel::Receiver<TupleBuffer>,
+    queue: async_channel::Receiver<ReceivedItem>,
+    detach_token: CancellationToken,
+    /// Tells the network service that the software side has dropped the channel.
+    _dropped: DropGuard,
 }
 
 pub enum ReceiverChannelResult {
     Ok(TupleBuffer),
+    /// A reconfiguration marker. The stream ends after the marker.
+    Marker(MarkerPayload),
     Closed,
     Error(Error),
 }
@@ -39,11 +46,20 @@ impl ReceiverChannel {
     pub fn close(&self) {
         self.queue.close();
     }
+
+    /// Leaves the channel without consuming further data. The sender is told that every buffer which has not
+    /// been handed to the data queue remains with it. Buffers which are already in the data queue can still be
+    /// received; `receive` returns `Closed` once they have been consumed.
+    pub fn detach(&self) {
+        self.detach_token.cancel();
+    }
+
     pub fn receive(&self) -> ReceiverChannelResult {
-        let Ok(buffer) = self.queue.recv_blocking() else {
-            return ReceiverChannelResult::Closed;
-        };
-        ReceiverChannelResult::Ok(buffer)
+        match self.queue.recv_blocking() {
+            Ok(ReceivedItem::Buffer(buffer)) => ReceiverChannelResult::Ok(buffer),
+            Ok(ReceivedItem::Marker(marker)) => ReceiverChannelResult::Marker(marker),
+            Err(_) => ReceiverChannelResult::Closed,
+        }
     }
 }
 
@@ -111,12 +127,16 @@ impl<C: Communication + 'static> NetworkService<C> {
         data_queue_size: usize,
     ) -> Result<ReceiverChannel> {
         let (data_queue_sender, data_queue_receiver) = async_channel::bounded(data_queue_size);
+        let detach_token = CancellationToken::new();
+        let dropped_token = CancellationToken::new();
         let (tx, rx) = oneshot::channel();
         let Ok(_) = self
             .sender
             .send_blocking(NetworkServiceControlCommand::RegisterChannel(
                 channel,
                 data_queue_sender,
+                detach_token.clone(),
+                dropped_token.clone(),
                 tx,
             ))
         else {
@@ -126,6 +146,8 @@ impl<C: Communication + 'static> NetworkService<C> {
             .map_err(|_| "Networking Service was stopped")?;
         Ok(ReceiverChannel {
             queue: data_queue_receiver,
+            detach_token,
+            _dropped: dropped_token.drop_guard(),
         })
     }
 
