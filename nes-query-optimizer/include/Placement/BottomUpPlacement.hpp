@@ -13,10 +13,14 @@
 */
 #pragma once
 
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
@@ -32,5 +36,14 @@ public:
     explicit BottomUpOperatorPlacer(SharedPtr<const WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog)) { }
 
     void apply(LogicalPlan& logicalPlan);
+
+    /// Places the operators of a placed plan that are not part of `fixedPlacement` (the placement addition of ISQP). The fixed operators
+    /// keep their worker and do not occupy additional slots. The other operators are placed on the candidate workers within their
+    /// available slots; workers without an entry in `availableSlots` have no free slot. Returns the workers of the placed operators.
+    [[nodiscard]] std::unordered_map<OperatorId, Host> placeIncrementally(
+        const LogicalPlan& logicalPlan,
+        const std::unordered_map<OperatorId, Host>& fixedPlacement,
+        const std::unordered_set<Host>& candidateWorkers,
+        const std::unordered_map<Host, Capacity>& availableSlots) const;
 };
 }

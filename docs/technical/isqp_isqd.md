@@ -53,6 +53,7 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `GlobalExecutionPlan` (execution nodes with decomposed query plans) | `GlobalExecutionPlan` (decomposed query plans and channels per query) |
 | `DecomposedQueryIdWithVersion`, DQP `QueryState`          | `DecomposedQueryId`, `DecomposedQueryPlanVersion`, `DecomposedQueryPlanState` |
 | `findNetworkOperatorsForLink`, `findUpstreamAndDownstreamPinnedOperators` (`IncrementalPlacementUtils`) | same names in `Placement/IncrementalPlacementUtils` |
+| Placement addition strategies (`BottomUpStrategy`, …) placing operators between pinned operators | `BottomUpOperatorPlacer::placeIncrementally` (the ILP-based bottom-up placement with fixed operators) |
 
 ### Worker capacity
 

@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <string>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -27,6 +30,13 @@ namespace NES
 
 struct QueryOptimizerNetworkConfiguration;
 using ChannelId = NESStrongUUIDType<struct ChannelId_>;
+
+/// The network source and sink of a network channel. The sink has the upstream operator as its child.
+struct NetworkOperators
+{
+    LogicalOperator source;
+    LogicalOperator sink;
+};
 
 class QueryDecomposer
 {
@@ -41,6 +51,15 @@ public:
         SharedPtr<const SinkCatalog> sinkCatalog);
 
     DistributedLogicalPlan decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& networkConfiguration);
+
+    /// Creates the network sink on `upstreamWorker` (with `upstreamOperator` as its child) and the network source on `downstreamWorker` of
+    /// the channel `channelId`. The incremental placement of ISQP uses this to connect re-placed operators.
+    [[nodiscard]] NetworkOperators createNetworkOperators(
+        const std::string& channelId,
+        const LogicalOperator& upstreamOperator,
+        const Host& upstreamWorker,
+        const Host& downstreamWorker,
+        const QueryOptimizerNetworkConfiguration& networkConfiguration) const;
 };
 
 }

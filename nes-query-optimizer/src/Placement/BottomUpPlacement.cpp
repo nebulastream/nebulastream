@@ -24,6 +24,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -267,11 +268,20 @@ void addExactlyOneNodeConstraint(PlacementModel& model, const LogicalPlan& logic
 }
 
 /// Constraint: Node capacity limits
+/// Operators that keep their worker during an incremental placement. They already occupy their slots.
+struct FixedOperators
+{
+    std::unordered_map<OperatorId, NetworkTopology::NodeId> placement;
+    /// The workers on which the other operators may be placed.
+    std::unordered_set<NetworkTopology::NodeId> candidates;
+};
+
 void addCapacityConstraints(
     PlacementModel& model,
     const LogicalPlan& logicalPlan,
     const NetworkTopology& topology,
-    const std::unordered_map<NetworkTopology::NodeId, Capacity>& maxOperators)
+    const std::unordered_map<NetworkTopology::NodeId, Capacity>& maxOperators,
+    const std::optional<FixedOperators>& fixed)
 {
     for (const auto& nodeId : topology | std::views::keys)
     {
@@ -285,7 +295,8 @@ void addCapacityConstraints(
                     for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
                     {
                         index.push_back(model.operatorPlacementMatrix.at({op.getId(), nodeId}));
-                        value.push_back(static_cast<double>(operatorCapacityDemand(op)));
+                        const bool isFixed = fixed.has_value() && fixed->placement.contains(op.getId());
+                        value.push_back(isFixed ? 0.0 : static_cast<double>(operatorCapacityDemand(op)));
                     }
                     checkError(
                         Highs_addRow(
@@ -354,6 +365,29 @@ void addConnectivityConstraints(PlacementModel& model, const LogicalPlan& logica
     }
 }
 
+/// Constraint: during an incremental placement, fixed operators keep their worker and the other operators are placed on candidate workers
+void addFixedPlacementConstraints(
+    PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology, const FixedOperators& fixed)
+{
+    for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
+    {
+        if (const auto it = fixed.placement.find(op.getId()); it != fixed.placement.end())
+        {
+            const auto var = model.operatorPlacementMatrix.at({op.getId(), it->second});
+            checkError(Highs_changeColBounds(model.highs, var, 1.0, 1.0), model.highs);
+            continue;
+        }
+        for (const auto& nodeId : topology | std::views::keys)
+        {
+            if (not fixed.candidates.contains(nodeId))
+            {
+                const auto var = model.operatorPlacementMatrix.at({op.getId(), nodeId});
+                checkError(Highs_changeColBounds(model.highs, var, 0.0, 0.0), model.highs);
+            }
+        }
+    }
+}
+
 /// Objective: minimize the sum of distances for all operator placements to their descendant sources
 void addDistanceObjective(PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology)
 {
@@ -414,7 +448,8 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> extractPl
 std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlacement(
     const LogicalPlan& logicalPlan,
     const NetworkTopology& topology,
-    const std::unordered_map<NetworkTopology::NodeId, Capacity>& maxOperators)
+    const std::unordered_map<NetworkTopology::NodeId, Capacity>& maxOperators,
+    const std::optional<FixedOperators>& fixed)
 {
     auto model = createPlacementModel();
     SCOPE_EXIT
@@ -424,7 +459,11 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
 
     addPlacementVariables(model, logicalPlan, topology);
     addExactlyOneNodeConstraint(model, logicalPlan, topology);
-    addCapacityConstraints(model, logicalPlan, topology, maxOperators);
+    addCapacityConstraints(model, logicalPlan, topology, maxOperators, fixed);
+    if (fixed.has_value())
+    {
+        addFixedPlacementConstraints(model, logicalPlan, topology, *fixed);
+    }
     addSourcePlacementConstraints(model, logicalPlan);
     addSinkPlacementConstraint(model, logicalPlan);
     addConnectivityConstraints(model, logicalPlan, topology);
@@ -444,13 +483,42 @@ void BottomUpOperatorPlacer::apply(LogicalPlan& logicalPlan)
                                 { return {nodeId, workerCatalog->getWorker(nodeId).value().maxOperators}; })
         | std::ranges::to<std::unordered_map<NetworkTopology::NodeId, Capacity>>();
 
-    const auto placement = solvePlacement(logicalPlan, topology, maxOperators);
+    const auto placement = solvePlacement(logicalPlan, topology, maxOperators, std::nullopt);
 
     if (!placement)
     {
         throw PlacementFailure("Placement is not possible under the given capacity constraints");
     }
     logicalPlan = LogicalPlan(logicalPlan.getQueryId(), {addPlacementTrait(logicalPlan.getRootOperators().front(), *placement)});
+}
+
+std::unordered_map<OperatorId, Host> BottomUpOperatorPlacer::placeIncrementally(
+    const LogicalPlan& logicalPlan,
+    const std::unordered_map<OperatorId, Host>& fixedPlacement,
+    const std::unordered_set<Host>& candidateWorkers,
+    const std::unordered_map<Host, Capacity>& availableSlots) const
+{
+    const auto topology = workerCatalog->getTopology();
+    validatePlan(topology, logicalPlan);
+    validateConnectivity(topology, logicalPlan);
+
+    const auto capacities = topology | std::views::keys
+        | std::views::transform(
+                                [&](const auto& nodeId) -> std::pair<NetworkTopology::NodeId, Capacity>
+                                {
+                                    const auto it = availableSlots.find(nodeId);
+                                    return {nodeId, it != availableSlots.end() ? it->second : Capacity{CapacityKind::Limited{0}}};
+                                })
+        | std::ranges::to<std::unordered_map<NetworkTopology::NodeId, Capacity>>();
+
+    auto placement
+        = solvePlacement(logicalPlan, topology, capacities, FixedOperators{.placement = fixedPlacement, .candidates = candidateWorkers});
+    if (!placement)
+    {
+        throw PlacementFailure("Incremental placement is not possible under the given capacity and path constraints");
+    }
+    std::erase_if(*placement, [&](const auto& entry) { return fixedPlacement.contains(entry.first); });
+    return *placement;
 }
 
 }

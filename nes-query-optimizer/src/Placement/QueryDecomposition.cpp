@@ -103,14 +103,19 @@ struct ChannelHop
 
 using Bridge = std::pair<LogicalOperator, LogicalOperator>;
 
-Bridge connect(const DecompositionContext& context, const ChannelHop& channel)
+Bridge createBridge(
+    const WorkerCatalog& workerCatalog,
+    const SourceCatalog& sourceCatalog,
+    const SinkCatalog& sinkCatalog,
+    const QueryOptimizerNetworkConfiguration& config,
+    const ChannelHop& channel)
 {
     /// Look up connection (data-plane) addresses for the upstream and downstream nodes.
     /// Network sources/sinks use the data-plane address for actual data transfer,
     /// while the Host (gRPC address) is only used for management.
-    const auto downstreamWorker = context.workerCatalog->getWorker(channel.downstreamNode);
+    const auto downstreamWorker = workerCatalog.getWorker(channel.downstreamNode);
     INVARIANT(downstreamWorker.has_value(), "Downstream worker {} not found in catalog", channel.downstreamNode);
-    const auto upstreamWorker = context.workerCatalog->getWorker(channel.upstreamNode);
+    const auto upstreamWorker = workerCatalog.getWorker(channel.upstreamNode);
     INVARIANT(upstreamWorker.has_value(), "Upstream worker {} not found in catalog", channel.upstreamNode);
 
     const auto& downstreamData = downstreamWorker->dataAddress;
@@ -118,9 +123,9 @@ Bridge connect(const DecompositionContext& context, const ChannelHop& channel)
 
     auto sourceConfig = std::unordered_map<Identifier, std::string>{
         {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
-    if (context.config.receiverQueueSize.has_value())
+    if (config.receiverQueueSize.has_value())
     {
-        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string((*context.config.receiverQueueSize)));
+        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string((*config.receiverQueueSize)));
     }
 
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
@@ -129,25 +134,25 @@ Bridge connect(const DecompositionContext& context, const ChannelHop& channel)
         {Identifier::parse("data_endpoint"), downstreamData},
         {Identifier::parse("output_format"), "NATIVE"}};
 
-    if (context.config.maxPendingAcks.has_value())
+    if (config.maxPendingAcks.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("max_pending_acks"), std::to_string((*context.config.maxPendingAcks)));
+        sinkConfig.emplace(Identifier::parse("max_pending_acks"), std::to_string((*config.maxPendingAcks)));
     }
-    if (context.config.senderQueueSize.has_value())
+    if (config.senderQueueSize.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("sender_queue_size"), std::to_string((*context.config.senderQueueSize)));
+        sinkConfig.emplace(Identifier::parse("sender_queue_size"), std::to_string((*config.senderQueueSize)));
     }
-    if (context.config.backpressureUpperThreshold.has_value())
+    if (config.backpressureUpperThreshold.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("backpressure_upper_threshold"), std::to_string((*context.config.backpressureUpperThreshold)));
+        sinkConfig.emplace(Identifier::parse("backpressure_upper_threshold"), std::to_string((*config.backpressureUpperThreshold)));
     }
-    if (context.config.backpressureLowerThreshold.has_value())
+    if (config.backpressureLowerThreshold.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("backpressure_lower_threshold"), std::to_string((*context.config.backpressureLowerThreshold)));
+        sinkConfig.emplace(Identifier::parse("backpressure_lower_threshold"), std::to_string((*config.backpressureLowerThreshold)));
     }
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-    const auto networkSourceDescriptorOpt = context.sourceCatalog->getAnonymousSource(
+    const auto networkSourceDescriptorOpt = sourceCatalog.getAnonymousSource(
         Identifier::parse("Network"),
         orderedUpstreamSchema,
         Host(channel.downstreamNode.getRawValue()),
@@ -156,7 +161,7 @@ Bridge connect(const DecompositionContext& context, const ChannelHop& channel)
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
-    auto networkSinkDescriptor = context.sinkCatalog->getAnonymousSink(
+    auto networkSinkDescriptor = sinkCatalog.getAnonymousSink(
         orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
@@ -173,6 +178,11 @@ Bridge connect(const DecompositionContext& context, const ChannelHop& channel)
     return Bridge{
         SourceDescriptorLogicalOperator::create(networkSourceDescriptor)->withTraitSet(downstreamTs),
         SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor.value())->withTraitSet(upstreamTs).withInferredSchema()};
+}
+
+Bridge connect(const DecompositionContext& context, const ChannelHop& channel)
+{
+    return createBridge(*context.workerCatalog, *context.sourceCatalog, *context.sinkCatalog, context.config, channel);
 }
 
 /// Connects `op`, the root of `fragment` on `startNode`, with its downstream operator on `endNode`. Returns the network source on
@@ -269,6 +279,26 @@ QueryDecomposer::QueryDecomposer(
     SharedPtr<const WorkerCatalog> workerCatalog, SharedPtr<const SourceCatalog> sourceCatalog, SharedPtr<const SinkCatalog> sinkCatalog)
     : workerCatalog(std::move(workerCatalog)), sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
 {
+}
+
+NetworkOperators QueryDecomposer::createNetworkOperators(
+    const std::string& channelId,
+    const LogicalOperator& upstreamOperator,
+    const Host& upstreamWorker,
+    const Host& downstreamWorker,
+    const QueryOptimizerNetworkConfiguration& configuration) const
+{
+    auto [source, sink] = createBridge(
+        *workerCatalog,
+        *sourceCatalog,
+        *sinkCatalog,
+        configuration,
+        ChannelHop{
+            .id = ChannelId(channelId),
+            .upstreamOp = upstreamOperator,
+            .upstreamNode = upstreamWorker,
+            .downstreamNode = downstreamWorker});
+    return {.source = std::move(source), .sink = std::move(sink)};
 }
 
 DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
