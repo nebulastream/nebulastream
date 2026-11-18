@@ -49,6 +49,8 @@ See [Architecture.md](Architecture.md).
 A scenario is a connector-agnostic function in the shared catalog
 (`runner/src/conntest_runner/scenarios.py`). A connector opts in through its `conn-test/scenarios.py`
 and supplies the binding: which config(s) and the expected outcome.
+A binding can also pass keyword arguments to the loader's constructor,
+for a config whose data the loader must seed differently from the connector's other configs.
 
 | Scenario | What it proves |
 |---|---|

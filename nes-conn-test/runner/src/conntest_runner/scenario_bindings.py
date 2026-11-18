@@ -25,8 +25,9 @@ def _error(code: int | str | None) -> str:
     return "OK" if code is None else f"ERROR {code}"
 
 
-def round_trip_1_buffer(*globs: str) -> Scenario:
-    return Scenario("round_trip_1_buffer", configs=list(globs))
+def round_trip_1_buffer(*globs: str, loader_args: dict[str, object] | None = None) -> Scenario:
+    """``loader_args`` are for a config whose data the loader must seed differently from the connector's other configs."""
+    return Scenario("round_trip_1_buffer", configs=list(globs), loader_args=loader_args)
 
 
 def round_trip_n_buffers(*globs: str, n_buffers: int | None = None) -> Scenario:
