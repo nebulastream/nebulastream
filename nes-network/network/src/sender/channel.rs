@@ -305,10 +305,14 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 ) =>
             {
                 // The encoding is deterministic, so retrying can never succeed.
+                // The frame holds the main buffer and all child buffers, so report both sizes.
+                let child_bytes: usize = buffer.child_buffers.iter().map(Vec::len).sum();
                 return Err(ErrorOrStatus::Status(ChannelHandlerStatus::Failed(
                     format!(
-                        "Buffer {sequence_number:?} ({} bytes) cannot be sent: {e}",
-                        buffer.data.len()
+                        "Buffer {sequence_number:?} ({} bytes: {} bytes data, {child_bytes} bytes in {} child buffers) cannot be sent: {e}",
+                        buffer.data.len() + child_bytes,
+                        buffer.data.len(),
+                        buffer.child_buffers.len()
                     )
                     .into(),
                 )));
