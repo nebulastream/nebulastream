@@ -52,6 +52,7 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | Operator property `PLACED_DECOMPOSED_PLAN_ID`             | Hosted operators per local plan recorded by the `QueryDecomposer`         |
 | `GlobalExecutionPlan` (execution nodes with decomposed query plans) | `GlobalExecutionPlan` (decomposed query plans and channels per query) |
 | `DecomposedQueryIdWithVersion`, DQP `QueryState`          | `DecomposedQueryId`, `DecomposedQueryPlanVersion`, `DecomposedQueryPlanState` |
+| `findNetworkOperatorsForLink`, `findUpstreamAndDownstreamPinnedOperators` (`IncrementalPlacementUtils`) | same names in `Placement/IncrementalPlacementUtils` |
 
 ### Worker capacity
 
@@ -89,3 +90,16 @@ plans (identified by their channel id, which is part of the network source and s
 The port keeps them per query: there are no execution nodes in the current code base, and a placement amendment only changes the plans of
 its own query. The topology nodes that the original locks for its pessimistic mode are the workers of the `WorkerCatalog`.
 Each decomposed query plan remembers the id of the local query that runs it on its worker.
+
+### Pinned operators
+
+The computation follows the original: the upstream operator of every channel using a removed link stays pinned. If the worker of its
+downstream operator is still reachable from the worker of the upstream operator, the downstream operator stays pinned as well.
+Otherwise, a breadth-first search over the downstream operators pins the closest operators on reachable workers; the operators in between
+are re-placed and their other upstream operators are pinned.
+
+**Fixed issue:** the original repeats the reachability computation in a busy loop until it acquires read locks on all topology nodes.
+The port computes reachability on a snapshot of the topology, so no locks and no retries are needed.
+
+**Shortcut (same as the original):** the upstream operators are assumed to keep running, which only holds as long as only leaf workers
+change their parent.

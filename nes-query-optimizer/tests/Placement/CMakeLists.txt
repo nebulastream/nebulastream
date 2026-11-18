@@ -17,3 +17,4 @@ endfunction()
 
 add_nes_placement_test(query-decomposition-test QueryDecompositionTest.cpp)
 add_nes_placement_test(global-execution-plan-test GlobalExecutionPlanTest.cpp)
+add_nes_placement_test(incremental-placement-utils-test IncrementalPlacementUtilsTest.cpp)
