@@ -327,9 +327,10 @@ CREATE FUNCTION stem_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE E
 # - removeshortterms: len() counts bytes, so short non-ASCII words such as 'Á.' stay
 # - stem: does not compile: name 'ccy_exp' cannot be captured
 
+# Rejected: addnoise imports random inside the function, which NES rejects for INLINE.
 SELECT id FROM artifacts WHERE addnoise_inline(authors) > FLOAT64(-1000.0) INTO Checksum();
 ----
-47919 174369468
+ERROR QueryCompilerError
 
 SELECT id, cleandate_inline(date) AS r FROM artifacts INTO Checksum();
 ----

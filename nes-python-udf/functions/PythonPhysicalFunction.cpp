@@ -227,7 +227,10 @@ std::string indentPythonBody(const std::string_view body)
 
 /// Splits the body's leading import statements off so they run at module scope. Codon then executes the imported modules'
 /// top-level code once in the module initializer (see addModuleInitializationPrologue in PythonUdfFilesystem.cpp) rather than lazily during the
-/// first invocation, whose arena does not outlive it.
+/// first invocation, whose arena does not outlive it. An import after another statement stays in the body, and Codon
+/// rejects the UDF (see rejectFunctionLocalImports in PythonUdfFilesystem.cpp).
+/// Blank lines before and between the imports are skipped: a body written as `AS $python$` and a newline starts with one.
+/// The imports may be indented, as the body may be indented as a whole; they move to module scope without the indentation.
 std::pair<std::string, std::string> splitLeadingImports(const std::string_view body)
 {
     std::string imports;
@@ -236,15 +239,20 @@ std::pair<std::string, std::string> splitLeadingImports(const std::string_view b
     {
         const auto lineEnd = body.find('\n', position);
         const auto line = body.substr(position, lineEnd == std::string_view::npos ? std::string_view::npos : lineEnd - position);
-        if (!line.starts_with("import ") && !line.starts_with("from "))
+        const auto statementStart = line.find_first_not_of(" \t\r");
+        const auto statement = statementStart == std::string_view::npos ? std::string_view{} : line.substr(statementStart);
+        if (!statement.empty() && !statement.starts_with("import ") && !statement.starts_with("from "))
         {
             break;
         }
-        imports.append(line).append("\n");
+        if (!statement.empty())
+        {
+            imports.append(statement).append("\n");
+        }
         position = lineEnd == std::string_view::npos ? body.size() : lineEnd + 1;
     }
     auto remaining = std::string{body.substr(position)};
-    return {std::move(imports), remaining.empty() ? std::string{"pass"} : std::move(remaining)};
+    return {std::move(imports), remaining.find_first_not_of(" \t\r\n") == std::string::npos ? std::string{"pass"} : std::move(remaining)};
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity)

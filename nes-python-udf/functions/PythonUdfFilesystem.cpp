@@ -22,6 +22,8 @@
 #include <ios>
 #include <memory>
 #include <ratio>
+#include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -31,9 +33,15 @@
 #include <codon/cir/llvm/optimize.h>
 #include <codon/compiler/compiler.h>
 #include <codon/parser/ast/node.h>
+#include <codon/parser/ast/stmt.h>
+#include <codon/parser/cache.h>
 #include <codon/parser/common.h>
+#include <codon/parser/peg/peg.h>
+#include <codon/parser/visitors/visitor.h>
+#include <fmt/format.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
@@ -123,7 +131,6 @@ public:
         return ResourceFilesystem::canonical(path);
     }
 
-private:
     /// A module loaded from a configured UDF import path, as opposed to Codon's stdlib or a plugin module.
     [[nodiscard]] bool isUdfModule(const path_t& path) const
     {
@@ -137,8 +144,149 @@ private:
             });
     }
 
+private:
     std::vector<std::filesystem::path> udfDirectories;
 };
+
+/// Finds import statements inside function bodies. `from C import` declares an external C function and imports no module.
+class FunctionLocalImportFinder final : public codon::ast::CallbackASTVisitor<bool, bool>
+{
+public:
+    struct LocalImport
+    {
+        std::string function;
+        int line;
+    };
+
+    bool transform(codon::ast::Expr* expression) override
+    {
+        if (expression != nullptr)
+        {
+            expression->accept(*this);
+        }
+        return true;
+    }
+
+    bool transform(codon::ast::Stmt* statement) override
+    {
+        if (statement != nullptr)
+        {
+            statement->accept(*this);
+        }
+        return true;
+    }
+
+    void visit(codon::ast::FunctionStmt* statement) override
+    {
+        functions.push_back(statement->getName());
+        CallbackASTVisitor::visit(statement);
+        functions.pop_back();
+    }
+
+    void visit(codon::ast::ImportStmt* statement) override
+    {
+        if (functions.empty())
+        {
+            return;
+        }
+        if (const auto* from = codon::ast::cast<codon::ast::IdExpr>(statement->getFrom()); from != nullptr && from->getValue() == "C")
+        {
+            return;
+        }
+        imports.push_back({.function = functions.back(), .line = statement->getSrcInfo().line});
+    }
+
+    [[nodiscard]] const std::vector<LocalImport>& found() const { return imports; }
+
+private:
+    std::vector<std::string> functions;
+    std::vector<LocalImport> imports;
+};
+
+/// The functions in the LLVM module, as (source file, function name) from their debug information. Codon emits a function
+/// only if the program uses it.
+using CompiledFunctions = std::set<std::pair<std::string, std::string>>;
+
+CompiledFunctions compiledFunctions(const llvm::Module& module)
+{
+    CompiledFunctions functions;
+    for (const auto& function : module)
+    {
+        if (const auto* subprogram = function.getSubprogram(); subprogram != nullptr && !function.isDeclaration())
+        {
+            const auto path
+                = (std::filesystem::path{subprogram->getDirectory().str()} / subprogram->getFilename().str()).lexically_normal();
+            functions.emplace(path.string(), subprogram->getName().str());
+        }
+    }
+    return functions;
+}
+
+/// Codon names a method or a nested function with a prefix, e.g. `Scalar.addnoise`. A match on the last part may also match
+/// another function of the same name in the file, which only rejects more UDFs.
+bool isCompiled(const CompiledFunctions& functions, const std::string& file, const std::string& function)
+{
+    const auto path = std::filesystem::path{file}.lexically_normal().string();
+    return std::ranges::any_of(
+        functions,
+        [&](const auto& compiled)
+        {
+            const auto& [compiledFile, name] = compiled;
+            if (compiledFile != path || !name.ends_with(function))
+            {
+                return false;
+            }
+            const auto prefixLength = name.size() - function.size();
+            return prefixLength == 0 || name[prefixLength - 1] == '.' || name[prefixLength - 1] == ':';
+        });
+}
+
+/// An INLINE UDF must import modules at file level. Codon runs the top-level code of a module that a function imports at the
+/// first call of that function. NES runs that call with the per-invocation arena, which it reuses, so the module's globals
+/// would point into memory that later calls overwrite. A module imported at file level runs in the module initializer,
+/// whose allocations NES keeps (see addModuleInitializationPrologue).
+/// The check reads the source, not the LLVM IR: Codon emits no import for a function-local import of a module that is
+/// already imported, so the IR cannot show every function-local import. The IR only tells which functions the UDF uses:
+/// an unused function of an imported module does not cause a rejection.
+void rejectFunctionLocalImports(
+    codon::ast::Cache& cache, const CompiledFunctions& functions, const std::string& file, const std::string& source)
+{
+    auto statement = codon::ast::parseCode(&cache, file, source);
+    if (!statement)
+    {
+        /// Codon parsed the module already, so this does not happen. The compilation reports parse errors.
+        llvm::consumeError(statement.takeError());
+        return;
+    }
+    FunctionLocalImportFinder finder;
+    finder.transform(*statement);
+    const auto used
+        = std::ranges::find_if(finder.found(), [&](const auto& localImport) { return isCompiled(functions, file, localImport.function); });
+    if (used == finder.found().end())
+    {
+        return;
+    }
+    const auto lines = splitIntoLines(source);
+    const auto& [function, line] = *used;
+    const auto text = line >= 1 && static_cast<size_t>(line) <= lines.size() ? lines[static_cast<size_t>(line) - 1] : std::string{};
+    const auto trimmed = text.substr(std::min(text.find_first_not_of(" \t"), text.size()));
+    throw std::runtime_error(
+        fmt::format(
+            "Python UDF for EXECUTION INLINE imports a module inside function '{}' ({}:{}: {}). Import the module at the top of the "
+            "file. Codon would initialize a module imported inside a function at the first call, in memory that NES reuses.",
+            function,
+            file,
+            line,
+            trimmed));
+}
+
+std::string readFile(const std::filesystem::path& path)
+{
+    const std::ifstream file{path, std::ios::binary};
+    std::ostringstream content;
+    content << file.rdbuf();
+    return content.str();
+}
 
 /// codon::ast::Cache allocates the vector that owns every AST node with `new` and has no destructor, so destroying a
 /// codon::Compiler leaves the whole parsed program (stdlib and imported modules included) allocated. The member is
@@ -250,6 +398,15 @@ CodonCompilationResult compileWithCodon(
     if (auto error = compiler.compile())
     {
         throw std::runtime_error("Could not compile Python UDF: " + llvm::toString(std::move(error)));
+    }
+    const auto functions = compiledFunctions(*compiler.getLLVMVisitor()->getModule());
+    rejectFunctionLocalImports(*compiler.getCache(), functions, sourcePath, source);
+    for (const auto& [name, module] : compiler.getCache()->imports)
+    {
+        if (!module.filename.empty() && module.filename != sourcePath && filesystem->isUdfModule(module.filename))
+        {
+            rejectFunctionLocalImports(*compiler.getCache(), functions, module.filename, readFile(module.filename));
+        }
     }
     addModuleInitializationPrologue(*compiler.getLLVMVisitor()->getModule(), entrySymbol);
     const auto optimizeStart = std::chrono::steady_clock::now();

@@ -1,0 +1,90 @@
+# name: udf/CodonFunctionLocalImport.test
+# description: EXECUTION INLINE rejects a UDF that uses a function with an import statement in its body, also when the module
+# is imported at file level too. Codon would initialize a module imported inside a function at the first call, in the
+# per-invocation arena, which NES reuses. A function that the UDF does not use does not cause a rejection.
+# UDFs: nes-systests/udf/pyudfs/codon_imports*.py
+# groups: [PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE numbers(a INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1,x
+2,"y,z"
+
+CREATE FUNCTION import_inside (x INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'codon_imports.import_inside';
+CREATE FUNCTION import_in_branch (x INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'codon_imports.import_in_branch';
+CREATE FUNCTION import_math_inside_and_at_file_level (x INT64) RETURNS INT64 EXECUTION INLINE
+    ENTRYPOINT 'codon_imports.import_inside_and_at_file_level';
+CREATE FUNCTION import_random_inside_and_at_file_level (x INT64) RETURNS INT64 EXECUTION INLINE
+    ENTRYPOINT 'codon_imports_both.import_inside_and_at_file_level';
+CREATE FUNCTION helper_with_import_inside (x INT64) RETURNS INT64 EXECUTION INLINE
+    ENTRYPOINT 'codon_imports.helper_with_import_inside';
+CREATE FUNCTION file_level_import (x INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'codon_imports.file_level_import';
+CREATE FUNCTION helper_with_file_level_import (x INT64) RETURNS INT64 EXECUTION INLINE
+    ENTRYPOINT 'codon_imports.helper_with_file_level_import';
+CREATE FUNCTION no_import (s VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'codon_imports.no_import';
+
+# Rejected: the import is in the function body.
+SELECT import_inside(a) AS r FROM numbers INTO file();
+----
+ERROR QueryCompilerError
+
+# Rejected: the import is in a branch of the function body.
+SELECT import_in_branch(a) AS r FROM numbers INTO file();
+----
+ERROR QueryCompilerError
+
+# Rejected: the function imports math, which the module imports at file level too.
+SELECT import_math_inside_and_at_file_level(a) AS r FROM numbers INTO file();
+----
+ERROR QueryCompilerError
+
+# Rejected: the function imports random, which the module imports at file level too.
+SELECT import_random_inside_and_at_file_level(a) AS r FROM numbers INTO file();
+----
+ERROR QueryCompilerError
+
+# Rejected: the UDF calls a function of another module that imports in its body.
+SELECT helper_with_import_inside(a) AS r FROM numbers INTO file();
+----
+ERROR QueryCompilerError
+
+# Accepted: the module imports math at file level. It also imports codon_imports_lazy, but the UDF does not use plus_noise.
+SELECT file_level_import(a) AS r FROM numbers INTO file();
+----
+1
+2
+
+# Accepted: the UDF calls a function of another module that imports at file level.
+SELECT helper_with_file_level_import(a) AS r FROM numbers INTO file();
+----
+2
+3
+
+# Accepted: the UDF imports nothing and uses only builtins.
+SELECT no_import(s) AS r FROM numbers INTO file();
+----
+1
+2
+
+# Rejected: an import after the first statement of an inline UDF body stays in the function body.
+CREATE FUNCTION inline_body_import_inside (x INT64) RETURNS INT64 EXECUTION INLINE AS $python$
+y = x + 1
+import random
+return y + random.randint(0, 0)
+$python$;
+
+SELECT inline_body_import_inside(a) AS r FROM numbers INTO file();
+----
+ERROR QueryCompilerError
+
+# Accepted: NES moves the leading imports of an inline UDF body to file level.
+CREATE FUNCTION inline_body_leading_import (x INT64) RETURNS INT64 EXECUTION INLINE AS $python$
+import random
+return x + random.randint(0, 0)
+$python$;
+
+SELECT inline_body_leading_import(a) AS r FROM numbers INTO file();
+----
+1
+2

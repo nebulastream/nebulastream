@@ -22,13 +22,9 @@ jsortvalues, removeshortterms) and 0.0 (log_10), which their `except` gives.
 
 Some UDFs do not give the CPython results under Codon, see the INLINE section of StreamUDFBenchScalarUdfs.test: Codon strings are
 bytes, so lower(), split(), len() and the regular expressions treat non-ASCII text differently, and Codon cannot compile some of
-the code. Their entry points are here all the same.
+the code. NES rejects addnoise for INLINE, because it imports random inside the function. Their entry points are here all the
+same.
 """
-
-# addnoise imports random inside the function. Codon then creates the state of random at the first call, in the arena of
-# that call, which NES reuses later, and the next call reads overwritten memory. Imported here, random is created when the
-# module is initialized, in memory that NES keeps.
-import random  # noqa: F401
 
 from StreamUDFBench.scalar.addnoise import addnoise as _addnoise
 from StreamUDFBench.scalar.clean import clean as _clean
