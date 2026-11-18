@@ -184,3 +184,25 @@ worker_timeout() {
   worker_timeout 5s -- --grpc=127.0.0.1:0 --worker.unpooled_memory_fraction=0.0
   [ "$status" -eq 124 ] # stays alive
 }
+
+@test "worker ignores SIGPIPE" {
+  [ -d /proc/self ] || skip "requires procfs"
+
+  "$NES_WORKER" --grpc=127.0.0.1:0 >/dev/null 2>&1 3>&- &
+  local worker_pid=$!
+
+  local i
+  for i in $(seq 1 100); do
+    grep -q "Server listening on port" singleNodeWorker.log 2>/dev/null && break
+    sleep 0.2
+  done
+  grep "Server listening on port" singleNodeWorker.log
+
+  local sig_ign
+  sig_ign=$(awk '/^SigIgn:/ {print $2}' "/proc/$worker_pid/status")
+
+  kill -TERM "$worker_pid"
+  wait "$worker_pid" || true
+
+  [ $(( 0x$sig_ign & 0x1000 )) -ne 0 ] # SIGPIPE is signal 13, bit 12 of the mask
+}
