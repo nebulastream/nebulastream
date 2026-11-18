@@ -51,7 +51,16 @@ std::optional<ReconfigurationMetadata> ReconfigurationState::recordMarker(const 
             {
                 for (const auto& sinkUpdate : update.networkSinkUpdates)
                 {
-                    locked->sinkUpdates.insert_or_assign(sinkUpdate.oldChannel, sinkUpdate);
+                    const auto handler = locked->sinkUpdateHandlers.find(sinkUpdate.oldChannel);
+                    if (handler == locked->sinkUpdateHandlers.end())
+                    {
+                        locked->pendingSinkUpdates.insert_or_assign(sinkUpdate.oldChannel, std::pair{sinkUpdate, marker});
+                        continue;
+                    }
+                    auto [owner, sinkHandler] = std::move(handler->second);
+                    locked->sinkUpdateHandlers.erase(handler);
+                    const auto newChannel = sinkHandler(sinkUpdate, marker);
+                    locked->sinkUpdateHandlers.insert_or_assign(newChannel, std::pair{owner, std::move(sinkHandler)});
                 }
             },
             [&](const auto&)
@@ -100,17 +109,24 @@ ChannelTermination ReconfigurationState::getChannelTermination(const std::string
     return std::ranges::contains(detachedChannels, channelId) ? ChannelTermination::Detach : ChannelTermination::ForwardMarker;
 }
 
-std::optional<NetworkSinkUpdate> ReconfigurationState::takeSinkUpdate(const std::string& channelId)
+void ReconfigurationState::registerSinkUpdateHandler(const std::string& channelId, const void* owner, SinkUpdateHandler handler)
 {
     auto locked = internal.wlock();
-    const auto it = locked->sinkUpdates.find(channelId);
-    if (it == locked->sinkUpdates.end())
+    auto channel = channelId;
+    /// Apply the updates recorded before the sink registered, possibly several in a row.
+    for (auto pending = locked->pendingSinkUpdates.find(channel); pending != locked->pendingSinkUpdates.end();
+         pending = locked->pendingSinkUpdates.find(channel))
     {
-        return std::nullopt;
+        const auto [update, marker] = std::move(pending->second);
+        locked->pendingSinkUpdates.erase(pending);
+        channel = handler(update, marker);
     }
-    auto update = std::move(it->second);
-    locked->sinkUpdates.erase(it);
-    return update;
+    locked->sinkUpdateHandlers.insert_or_assign(channel, std::pair{owner, std::move(handler)});
+}
+
+void ReconfigurationState::unregisterSinkUpdateHandlers(const void* owner)
+{
+    std::erase_if(internal.wlock()->sinkUpdateHandlers, [owner](const auto& entry) { return entry.second.first == owner; });
 }
 
 std::ostream& operator<<(std::ostream& os, const ChannelTermination termination)

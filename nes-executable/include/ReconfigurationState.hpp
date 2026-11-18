@@ -14,12 +14,15 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <ostream>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -62,10 +65,22 @@ public:
     /// How the network sink of the channel ends the channel when the query terminates.
     [[nodiscard]] ChannelTermination getChannelTermination(const std::string& channelId) const;
 
-    /// Takes the pending update of the network sink of the channel, if any.
-    [[nodiscard]] std::optional<NetworkSinkUpdate> takeSinkUpdate(const std::string& channelId);
+    /// Connects a network sink to a new receiver and returns the channel it sends over afterwards. The marker is the update marker.
+    using SinkUpdateHandler = std::function<std::string(const NetworkSinkUpdate&, const ReconfigurationMarker&)>;
+
+    /// Registers the network sink `owner` sending over the channel. An update of the sink is handed to the handler as soon as it is
+    /// recorded, on the thread recording it, like the original delivers the reconfiguration to the sink right away. Updates recorded before
+    /// the sink registered are handed over during the registration. The handler must not call into the reconfiguration state.
+    void registerSinkUpdateHandler(const std::string& channelId, const void* owner, SinkUpdateHandler handler);
+    /// Once this returns, no handler of `owner` runs or will run.
+    void unregisterSinkUpdateHandlers(const void* owner);
 
     [[nodiscard]] const LocalQueryId& getLocalQueryId() const { return localQueryId; }
+
+    /// The query was stopped. A network sink waiting for a new receiver stops waiting and drops its buffered data.
+    void markStopped() { stopped = true; }
+
+    [[nodiscard]] bool isStopped() const { return stopped; }
 
 private:
     struct Internal
@@ -73,11 +88,13 @@ private:
         std::set<std::string> recordedMarkers;
         std::optional<ReconfigurationMarker> drainMarker;
         std::optional<ReconfigurationMetadata> drainEvent;
-        /// Pending network sink updates, keyed by the channel the sink currently sends over.
-        std::unordered_map<std::string, NetworkSinkUpdate> sinkUpdates;
+        /// Network sink updates without a registered sink, keyed by the channel the sink currently sends over.
+        std::unordered_map<std::string, std::pair<NetworkSinkUpdate, ReconfigurationMarker>> pendingSinkUpdates;
+        std::unordered_map<std::string, std::pair<const void*, SinkUpdateHandler>> sinkUpdateHandlers;
     };
 
     LocalQueryId localQueryId;
+    std::atomic_bool stopped = false;
     folly::Synchronized<Internal> internal;
 };
 

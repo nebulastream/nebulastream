@@ -59,6 +59,7 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `BasePlacementAdditionStrategy` (`performPathSelection`, `computeDecomposedQueryPlans`, `addNetworkOperators`, `updateExecutionNodes`) | `PlacementAdditionStrategy` |
 | `QueryPlacementAmendmentPhase` (incremental and holistic), `computeReconfigurationMarkerDeploymentUnit` | `QueryPlacementAmendmentPhase` |
 | `ReconfigurationMarker`, `ReconfigurationMarkerEvent`, `{Drain,Update,UpdateAndDrain}QueryMetadata` | `ReconfigurationMarker` with `{Drain,Update,UpdateAndDrain}QueryMetadata` in nes-common |
+| `NetworkSink::reconfigure` (`ConnectToNewReceiver`, marker handling), `BufferStorage` | `NetworkSink::connectToNewReceiver`, `NetworkSink::stop` with `ReconfigurationState`, buffering while the receiver is detached |
 
 ### Worker capacity
 
@@ -167,3 +168,19 @@ over gRPC and in-band over the data channels, and nes-common does not depend on 
 
 The drain events carry the outgoing channels whose receiving plan keeps running (see placement removal). The update-and-drain event does
 not name a new version of the plan to start, as the state migration query is deployed separately (see state migration).
+
+### Worker: marker handling
+
+A marker reaches a local query either injected by the coordinator (`QueryEngine::injectReconfigurationMarker`) or over a channel (a
+network source ends its stream with it). The query records it in its `ReconfigurationState`:
+- **Drain / update and drain:** all sources of the query end their stream (network sources detach their receiver, so their sender keeps
+  the data the query did not take). When the pipelines terminate, each network sink forwards the marker to receivers that are drained as
+  well and detaches from receivers that keep running.
+- **Update:** the network sinks of the query connect to their new receivers right away. If the old receiver still consumes, the sink
+  sends everything to it, followed by the marker, then opens the new channel. If the old receiver detached (it was drained by an injected
+  marker, Cond-2), the parked channel is redirected and the new receiver gets the kept data first.
+
+**Deviation:** the original buffers in the network sink's `BufferStorage` after a `StartBuffering` RPC sent before the topology change.
+The port buffers implicitly: a sink whose receiver detached keeps its data (in the parked sender channel and its backpressure handler)
+until the update redirects it. No separate buffering RPC is needed, as the coordinator injects the marker into the plan after a removed
+link, which detaches it from the upstream sender.

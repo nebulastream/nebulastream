@@ -22,6 +22,7 @@
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ranges>
 #include <thread>
 #include <utility>
@@ -289,8 +290,8 @@ TEST_F(QueryEngineTest, injectedDrainMarkerDrainsTheQuery)
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
-/// An update marker keeps the query running and leaves the sink updates in the reconfiguration state. A marker without an event for the
-/// query is ignored.
+/// An update marker keeps the query running and hands the sink updates to the network sinks of the query. A marker without an event for
+/// the query is ignored.
 TEST_F(QueryEngineTest, injectedUpdateMarkerKeepsTheQueryRunning)
 {
     TestingHarness test;
@@ -320,7 +321,17 @@ TEST_F(QueryEngineTest, injectedUpdateMarkerKeepsTheQueryRunning)
         EXPECT_FALSE(test.qm->injectReconfigurationMarker(test.queryId(0), unrelated));
         EXPECT_TRUE(test.qm->injectReconfigurationMarker(test.queryId(0), update));
         EXPECT_FALSE(ctrl->wasClosed());
-        EXPECT_TRUE(reconfigurationState->takeSinkUpdate("old").has_value());
+        std::optional<NetworkSinkUpdate> applied;
+        reconfigurationState->registerSinkUpdateHandler(
+            "old",
+            &applied,
+            [&](const NetworkSinkUpdate& sinkUpdate, const ReconfigurationMarker&)
+            {
+                applied = sinkUpdate;
+                return sinkUpdate.newChannel;
+            });
+        EXPECT_THAT(applied, ::testing::Optional(::testing::Field(&NetworkSinkUpdate::newChannel, "new")));
+        reconfigurationState->unregisterSinkUpdateHandlers(&applied);
         EXPECT_FALSE(test.qm->injectReconfigurationMarker(QueryId::createLocal(LocalQueryId(generateUUID())), update));
 
         test.stopQuery(test.queryId(0));

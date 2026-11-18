@@ -14,7 +14,9 @@
 
 #include <ReconfigurationState.hpp>
 
+#include <string>
 #include <variant>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -68,18 +70,38 @@ TEST_F(ReconfigurationStateTest, DrainDecidesChannelTermination)
     EXPECT_THAT(state.getDrainMarker(), ::testing::Optional(marker));
 }
 
-TEST_F(ReconfigurationStateTest, UpdatesAreTakenOnce)
+/// An update is handed to the registered sink right away and the sink is then known under its new channel. An update recorded before the
+/// sink registered is handed over during the registration.
+TEST_F(ReconfigurationStateTest, UpdatesAreHandedToTheSink)
 {
-    auto marker = ReconfigurationMarker::create();
-    marker.addReconfigurationEvent(
-        query, UpdateQueryMetadata{.networkSinkUpdates = {{.oldChannel = "old", .newChannel = "new", .newDataEndpoint = "base2:9090"}}});
-    ASSERT_TRUE(state.recordMarker(marker).has_value());
+    std::vector<std::string> applied;
+    auto handler = [&](const NetworkSinkUpdate& update, const ReconfigurationMarker&)
+    {
+        applied.emplace_back(update.newChannel);
+        return update.newChannel;
+    };
+    auto update = [&](const std::string& oldChannel, const std::string& newChannel)
+    {
+        auto marker = ReconfigurationMarker::create();
+        marker.addReconfigurationEvent(
+            query,
+            UpdateQueryMetadata{.networkSinkUpdates = {{.oldChannel = oldChannel, .newChannel = newChannel, .newDataEndpoint = "w:1"}}});
+        return marker;
+    };
+
+    ASSERT_TRUE(state.recordMarker(update("c1", "c2")).has_value());
+    EXPECT_THAT(applied, IsEmpty());
     EXPECT_THAT(state.getDrainMarker(), Eq(std::nullopt));
-    EXPECT_THAT(state.takeSinkUpdate("other"), Eq(std::nullopt));
-    const auto update = state.takeSinkUpdate("old");
-    ASSERT_TRUE(update.has_value());
-    EXPECT_THAT(update->newChannel, Eq("new"));
-    EXPECT_THAT(state.takeSinkUpdate("old"), Eq(std::nullopt));
+    const int owner = 0;
+    state.registerSinkUpdateHandler("c1", &owner, handler);
+    EXPECT_THAT(applied, ElementsAre("c2"));
+
+    ASSERT_TRUE(state.recordMarker(update("c2", "c3")).has_value());
+    EXPECT_THAT(applied, ElementsAre("c2", "c3"));
+
+    state.unregisterSinkUpdateHandlers(&owner);
+    ASSERT_TRUE(state.recordMarker(update("c3", "c4")).has_value());
+    EXPECT_THAT(applied, ElementsAre("c2", "c3"));
 }
 
 }

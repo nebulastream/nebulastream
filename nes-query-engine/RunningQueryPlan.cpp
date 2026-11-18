@@ -311,6 +311,7 @@ RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
     auto lock = runningQueryPlan->internal.lock();
     auto& internal = *lock;
     internal.stopping = true;
+    internal.qep->reconfigurationState->markStopped();
 
     return {
         std::make_unique<StoppingQueryPlan>(

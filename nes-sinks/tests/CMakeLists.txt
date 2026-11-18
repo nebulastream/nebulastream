@@ -12,3 +12,6 @@
 
 add_nes_test(backpressure-handler-test BackpressureHandlerTest.cpp)
 target_link_libraries(backpressure-handler-test nes-sinks)
+
+add_nes_test(network-sink-test NetworkSinkTest.cpp)
+target_link_libraries(network-sink-test nes-sinks nes-sources)

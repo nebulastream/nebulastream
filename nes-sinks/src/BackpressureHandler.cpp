@@ -109,4 +109,18 @@ bool BackpressureHandler::empty() const
     return stateLock.rlock()->buffered.empty();
 }
 
+size_t BackpressureHandler::clear(BackpressureController& backpressureController)
+{
+    auto state = stateLock.wlock();
+    const auto dropped = state->buffered.size() + (state->pending.has_value() ? 1 : 0);
+    state->buffered.clear();
+    state->pending.reset();
+    if (state->hasBackpressure)
+    {
+        backpressureController.releasePressure();
+        state->hasBackpressure = false;
+    }
+    return dropped;
+}
+
 }

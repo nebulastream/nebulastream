@@ -20,10 +20,12 @@
 #include <expected>
 #include <optional>
 #include <ostream>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -36,6 +38,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <ReconfigurationState.hpp>
 
 namespace NES
 {
@@ -85,6 +88,11 @@ protected:
     std::ostream& toString(std::ostream& str) const override;
 
 private:
+    /// Connects the sink to a new receiver (ISQD marker action Update, the original's ConnectToNewReceiver). If the old receiver still
+    /// consumes, the sink sends everything to it, followed by the update marker, and then opens the new channel. If the old receiver
+    /// detached, the parked channel is redirected and the data it kept is sent to the new receiver first. Returns the new channel id.
+    std::string connectToNewReceiver(const NetworkSinkUpdate& update, const ReconfigurationMarker& marker);
+
     size_t tupleSize;
     folly::Synchronized<std::vector<TupleBuffer>> bufferBacklog;
     BackpressureHandler backpressureHandler;
@@ -96,6 +104,12 @@ private:
     size_t senderQueueSize;
     size_t maxPendingAcks;
     std::atomic_bool closed;
+    /// The receiver has detached. The sender keeps the data and the sink buffers new data until it is connected to a new receiver.
+    std::atomic_bool detached;
+    /// Protects the channel and its receiver: sending holds it shared, connecting to a new receiver and stopping hold it exclusively.
+    std::shared_mutex channelMutex;
+    /// The reconfiguration state of the query, which outlives the sink. Set in `start`.
+    ReconfigurationState* reconfigurationState = nullptr;
 };
 
 }

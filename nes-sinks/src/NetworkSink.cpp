@@ -14,14 +14,17 @@
 
 #include <Sinks/NetworkSink.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <shared_mutex>
 #include <span>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -29,6 +32,7 @@
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -47,6 +51,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <ReconfigurationState.hpp>
 
 namespace NES
 {
@@ -117,16 +122,115 @@ NetworkSink::NetworkSink(
 {
 }
 
-void NetworkSink::start(PipelineExecutionContext&)
+namespace
 {
-    this->server = sender_instance(thisConnection);
-    const NetworkServiceOptions options{
+NetworkServiceOptions senderOptions(const size_t senderQueueSize, const size_t maxPendingAcks)
+{
+    return NetworkServiceOptions{
         .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
         .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
         .receiver_queue_size = 0,
     };
-    this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+}
+
+constexpr auto FLUSH_POLL_INTERVAL = std::chrono::milliseconds(1);
+constexpr auto FLUSH_TIMEOUT = std::chrono::seconds(60);
+
+rust::Slice<const uint8_t> asBytes(const std::string& string)
+{
+    return {reinterpret_cast<const uint8_t*>(string.data()), string.size()}; ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+}
+}
+
+void NetworkSink::start(PipelineExecutionContext& pec)
+{
+    this->server = sender_instance(thisConnection);
+    this->channel
+        = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), senderOptions(senderQueueSize, maxPendingAcks));
     NES_DEBUG("Sender channel registered: {} (SENDER_QUEUE_SIZE: {}, MAX_PENDING_ACKS: {})", channelId, senderQueueSize, maxPendingAcks);
+    reconfigurationState = &pec.getReconfigurationState();
+    reconfigurationState->registerSinkUpdateHandler(
+        channelId,
+        this,
+        [this](const NetworkSinkUpdate& update, const ReconfigurationMarker& marker) { return connectToNewReceiver(update, marker); });
+}
+
+std::string NetworkSink::connectToNewReceiver(const NetworkSinkUpdate& update, const ReconfigurationMarker& marker)
+{
+    const std::unique_lock lock(channelMutex);
+    if (closed or not channel)
+    {
+        NES_WARNING("Sender channel {} is closed and cannot connect to channel {}", channelId, update.newChannel);
+        return channelId;
+    }
+    if (update.oldChannel != channelId)
+    {
+        NES_WARNING("Sender channel {} received an update for channel {}", channelId, update.oldChannel);
+    }
+
+    /// Everything the old receiver accepts belongs to the old path. Wait until it was sent, unless the old receiver left.
+    if (not detached)
+    {
+        const auto deadline = std::chrono::steady_clock::now() + FLUSH_TIMEOUT;
+        for (auto flushed = false; not flushed;)
+        {
+            switch (flush_sender_channel(*channel.value()))
+            {
+                case FlushResult::Flushed:
+                    flushed = true;
+                    break;
+                case FlushResult::Detached:
+                    detached = true;
+                    flushed = true;
+                    break;
+                case FlushResult::Failed:
+                    closed = true;
+                    throw CannotWriteToSink("NetworkSink channel {} failed permanently while connecting to a new receiver", channelId);
+                case FlushResult::Pending:
+                    if (std::chrono::steady_clock::now() > deadline)
+                    {
+                        throw CannotWriteToSink("NetworkSink channel {} could not be flushed within {}", channelId, FLUSH_TIMEOUT);
+                    }
+                    std::this_thread::sleep_for(FLUSH_POLL_INTERVAL);
+                    break;
+            }
+        }
+    }
+
+    if (detached)
+    {
+        try
+        {
+            redirect_sender_channel(*channel.value(), rust::String(update.newDataEndpoint), rust::String(update.newChannel));
+        }
+        catch (const rust::Error& error)
+        {
+            closed = true;
+            throw CannotWriteToSink("NetworkSink channel {} could not be redirected to {}: {}", channelId, update.newChannel, error.what());
+        }
+        detached = false;
+        NES_INFO("Redirected Sender channel {} to channel {} on {}", channelId, update.newChannel, update.newDataEndpoint);
+    }
+    else
+    {
+        /// The old receiver gets the marker after all data that took the old path.
+        const auto serializedMarker = marker.serialize();
+        close_sender_channel_with_marker(*std::move(this->channel), asBytes(serializedMarker));
+        this->channel = register_sender_channel(
+            *server.value(),
+            rust::String(update.newDataEndpoint),
+            rust::String(update.newChannel),
+            senderOptions(senderQueueSize, maxPendingAcks));
+        NES_INFO(
+            "Sender channel {} sent marker {} and connected to channel {} on {}",
+            channelId,
+            marker.getId(),
+            update.newChannel,
+            update.newDataEndpoint);
+    }
+    channelId = update.newChannel;
+    connectionAddr = update.newDataEndpoint;
+    return channelId;
 }
 
 void NetworkSink::stop(PipelineExecutionContext& pec)
@@ -139,8 +243,23 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
         return;
     }
 
+    /// No update may connect the sink to a new receiver while it stops. Unregister before locking the channel, as the reconfiguration state
+    /// holds its lock while it hands an update to the sink.
+    auto& state = pec.getReconfigurationState();
+    state.unregisterSinkUpdateHandlers(this);
+    const std::unique_lock lock(channelMutex);
+    const auto termination = state.getChannelTermination(channelId);
+
     if (!closed)
     {
+        if (detached)
+        {
+            /// The receiver left and nobody connects the sink to a new receiver anymore, as its query ends.
+            const auto dropped = backpressureHandler.clear(backpressureController);
+            NES_WARNING("Receiver of Sender channel {} detached and the sink stops, dropping {} buffered buffers", channelId, dropped);
+            close_sender_channel(*std::move(this->channel));
+            return;
+        }
         INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
 
         switch (flush_sender_channel(*this->channel.value()))
@@ -159,21 +278,41 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
                 throw CannotWriteToSink("NetworkSink channel failed permanently");
             }
             case FlushResult::Detached: {
-                /// The receiver left while the sink stops. Nobody redirects the channel anymore, so the buffers it keeps are lost.
-                this->closed = true;
-                throw CannotWriteToSink("NetworkSink channel was detached by the other side while stopping");
+                /// The receiver left while the sink stops: it was drained before this query. The data it did not take is lost.
+                NES_WARNING("Receiver of Sender channel {} detached while the sink stops", channelId);
+                close_sender_channel(*std::move(this->channel));
+                return;
             }
         }
     }
 
-    NES_DEBUG("Closing Sender channel {}", channelId);
-    close_sender_channel(*std::move(this->channel));
-    NES_DEBUG("Sender channel {} closed", channelId);
+    /// A drained query forwards its marker to receivers that are drained as well and detaches from receivers that keep running.
+    switch (termination)
+    {
+        case ChannelTermination::ForwardMarker: {
+            const auto marker = state.getDrainMarker();
+            INVARIANT(marker.has_value(), "A drained query has a drain marker");
+            NES_DEBUG("Closing Sender channel {} with reconfiguration marker {}", channelId, marker->getId());
+            const auto serializedMarker = marker->serialize();
+            close_sender_channel_with_marker(*std::move(this->channel), asBytes(serializedMarker));
+            return;
+        }
+        case ChannelTermination::Detach: {
+            NES_DEBUG("Detaching Sender channel {}", channelId);
+            detach_sender_channel(*std::move(this->channel));
+            return;
+        }
+        case ChannelTermination::Close: {
+            NES_DEBUG("Closing Sender channel {}", channelId);
+            close_sender_channel(*std::move(this->channel));
+            NES_DEBUG("Sender channel {} closed", channelId);
+            return;
+        }
+    }
 }
 
 void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
 {
-    PRECONDITION(channel, "Sender channel is not initialized");
     PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");
 
     if (closed)
@@ -181,6 +320,25 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         NES_WARNING("Sink is closed dropping buffer: {}-{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
         return;
     }
+
+    /// While the sink connects to a new receiver, it keeps the data and retries later instead of blocking the worker thread.
+    const std::shared_lock lock(channelMutex, std::try_to_lock);
+    if (detached and pec.getReconfigurationState().isStopped())
+    {
+        /// Nobody connects the sink to a new receiver anymore. Ending the retries lets the stopped query terminate.
+        const auto dropped = backpressureHandler.clear(backpressureController) + 1;
+        NES_WARNING("Sender channel {} waits for a new receiver, but its query was stopped. Dropping {} buffers", channelId, dropped);
+        return;
+    }
+    if (not lock.owns_lock() or detached)
+    {
+        if (const auto emit = backpressureHandler.onFull(inputBuffer, backpressureController))
+        {
+            pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
+        }
+        return;
+    }
+    PRECONDITION(channel, "Sender channel is not initialized");
 
     auto currentBuffer = std::optional(inputBuffer);
     while (currentBuffer)
@@ -214,15 +372,27 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             *channel.value(), metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children));
         switch (sendResult)
         {
-            case SendResult::Closed:
-            case SendResult::Detached: {
+            case SendResult::Closed: {
                 /// Future buffers are voided.
                 this->closed = true;
                 [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer, backpressureController);
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
-                throw CannotWriteToSink("NetworkSink channel was closed or detached by the other side or failed permanently");
+                throw CannotWriteToSink("NetworkSink channel was closed by the other side or failed permanently");
+            }
+            case SendResult::Detached: {
+                /// The receiver was drained (ISQD). The sender keeps the data it did not take, and the sink buffers new data, until the
+                /// sink is connected to a new receiver.
+                if (not detached.exchange(true))
+                {
+                    NES_INFO("Receiver of Sender channel {} detached, buffering until the sink is connected to a new receiver", channelId);
+                }
+                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                {
+                    pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
+                }
+                return;
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
