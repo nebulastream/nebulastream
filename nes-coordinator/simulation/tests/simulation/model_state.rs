@@ -260,8 +260,11 @@ impl ModelState {
 
     fn drop_query(&mut self) -> Result<Step> {
         let qid = self
-            .get_queries(QueryStatus::Active)
-            .map(|(id, _)| id)
+            .queries
+            .iter()
+            // Regression: only dropped queries are skipped, so a failed query can be picked.
+            .filter(|(_, query)| query.status != QueryStatus::Dropped)
+            .map(|(&id, _)| id)
             // A concurrent drop of the same query would fail the model on its second reply.
             .filter(|id| !self.leaving_queries.contains(id))
             .choose(&mut thread_rng())
