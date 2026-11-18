@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <deque>
 #include <map>
+#include <optional>
 #include <ranges>
 #include <set>
 #include <string>
@@ -32,6 +33,7 @@
 #include <DeploymentContext.hpp>
 #include <ErrorHandling.hpp>
 #include <GlobalExecutionPlan.hpp>
+#include <PlacementAmendmentMode.hpp>
 #include <SharedQueryPlan.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -61,8 +63,9 @@ std::set<OperatorId> getOperatorsToProcess(
     return operatorsToProcess;
 }
 
-PlacementRemovalStrategy::PlacementRemovalStrategy(GlobalExecutionPlan& globalExecutionPlan, WorkerCatalog& workerCatalog)
-    : globalExecutionPlan(globalExecutionPlan), workerCatalog(workerCatalog)
+PlacementRemovalStrategy::PlacementRemovalStrategy(
+    GlobalExecutionPlan& globalExecutionPlan, WorkerCatalog& workerCatalog, const PlacementAmendmentMode mode)
+    : globalExecutionPlan(globalExecutionPlan), workerCatalog(workerCatalog), mode(mode)
 {
 }
 
@@ -165,6 +168,12 @@ PlacementRemovalResult PlacementRemovalStrategy::updateGlobalExecutionPlan(
     for (const auto& operatorId : removedOperators)
     {
         releasedSlots[pinnedWorkerOf(operatorId)] += getOperatorCapacityDemand(graph.getOperator(operatorId));
+    }
+    /// Pessimistic mode: lock the workers whose slots are released (strict 2PL); the locks are held until the removal is done.
+    std::optional<LockedWorkers> lockedWorkers;
+    if (mode == PlacementAmendmentMode::Pessimistic)
+    {
+        lockedWorkers.emplace(LockedWorkers::lock(workerCatalog, releasedSlots | std::views::keys | std::ranges::to<std::set>()));
     }
     for (const auto& [worker, slots] : releasedSlots)
     {

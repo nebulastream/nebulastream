@@ -53,7 +53,8 @@ public:
                    copyPtr(cluster.workerCatalog),
                    decomposer,
                    defaultConfiguration<QueryOptimizerConfiguration>().network,
-                   incremental)
+                   incremental,
+                   PlacementAmendmentMode::Optimistic)
             .execute(*sharedQueryPlan);
     }
 
@@ -173,7 +174,8 @@ TEST_F(StatefulAmendmentTest, MovedJoinGetsStateMigration)
                           copyPtr(cluster.workerCatalog),
                           decomposer,
                           defaultConfiguration<QueryOptimizerConfiguration>().network,
-                          true)
+                          true,
+                          PlacementAmendmentMode::Optimistic)
                           .execute(sharedQueryPlan);
 
     EXPECT_THAT(sharedQueryPlan.getStatus(), Eq(SharedQueryPlanStatus::Processed));

@@ -54,12 +54,16 @@ public:
     Amendment amend(const PinnedOperators& pinned)
     {
         const auto version = globalExecutionPlan.getNextVersion();
-        auto removal = PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog)
+        auto removal = PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog, PlacementAmendmentMode::Optimistic)
                            .updateGlobalExecutionPlan(*sharedQueryPlan, pinned.upstreamOperators, pinned.downstreamOperators, version);
         const QueryDecomposer decomposer(copyPtr(cluster.workerCatalog), copyPtr(cluster.sourceCatalog), copyPtr(cluster.sinkCatalog));
         auto addition
             = PlacementAdditionStrategy(
-                  globalExecutionPlan, copyPtr(cluster.workerCatalog), decomposer, defaultConfiguration<QueryOptimizerConfiguration>().network)
+                  globalExecutionPlan,
+                  copyPtr(cluster.workerCatalog),
+                  decomposer,
+                  defaultConfiguration<QueryOptimizerConfiguration>().network,
+                  PlacementAmendmentMode::Optimistic)
                   .updateGlobalExecutionPlan(*sharedQueryPlan, pinned.upstreamOperators, pinned.downstreamOperators, version, removal);
         return {.removal = std::move(removal), .addition = std::move(addition)};
     }

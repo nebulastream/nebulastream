@@ -16,9 +16,11 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -42,11 +44,18 @@ class WorkerCatalog
     std::unordered_map<Host, WorkerConfig> workers;
     /// Number of operator slots occupied by the operators placed on a worker (the original's TopologyNode::occupySlots).
     std::unordered_map<Host, size_t> occupiedSlots;
+    /// Workers locked by a pessimistic placement amendment (the original's TopologyNode locks).
+    std::unordered_set<Host> lockedWorkers;
+    /// Protects the occupied slots and the locks, which concurrent placement amendments of ISQP change. Topology changes are applied
+    /// before the amendments start.
+    mutable std::mutex slotMutex;
     NetworkTopology topology;
     uint64_t version = 0;
 
 public:
     WorkerCatalog() = default;
+    WorkerCatalog(const WorkerCatalog& other);
+    WorkerCatalog& operator=(const WorkerCatalog&) = delete;
     explicit WorkerCatalog(const std::vector<WorkerConfig>& workers);
 
     bool addWorker(
@@ -84,6 +93,14 @@ public:
     /// Returns the remaining capacity of the worker, i.e., its capacity minus the occupied slots.
     [[nodiscard]] Capacity getAvailableSlots(const Host& host) const;
 
+    /// Locks the worker for a pessimistic placement amendment (strict 2PL). Returns false if another amendment holds the lock.
+    [[nodiscard]] bool tryLockWorker(const Host& host);
+    void unlockWorker(const Host& host);
+
+private:
+    [[nodiscard]] Capacity getAvailableSlotsLocked(const Host& host) const;
+
+public:
     /// Every change to the workerCatalog increments the version. This allows other components to check if the catalog has changed.
     [[nodiscard]] uint64_t getVersion() const;
 };

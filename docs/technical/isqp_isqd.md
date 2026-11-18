@@ -62,6 +62,7 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `NetworkSink::reconfigure` (`ConnectToNewReceiver`, marker handling), `BufferStorage` | `NetworkSink::connectToNewReceiver`, `NetworkSink::stop` with `ReconfigurationState`, buffering while the receiver is detached |
 | `ISQPRequest`, `ISQPEvents` (`AddNode`, `RemoveNode`, `AddLink`, `RemoveLink`) | `IncrementalPlacementRequest`, `TopologyChangeEvent` |
 | `PlacementAmendmentInstance`, `DeploymentPhase`, `updateReconfigurationMarker` | `PlacementAmendmentInstance`, `DeploymentPhase`, `DeploymentPhase::computeReconfigurationMarker` |
+| `PlacementAmendmentHandler`, `PlacementAmendmentMode` (OPTIMISTIC/PESSIMISTIC), topology node locks | `PlacementAmendmentHandler`, `PlacementAmendmentMode`, `LockedWorkers`, `WorkerCatalog::tryLockWorker` |
 
 ### Worker capacity
 
@@ -214,3 +215,17 @@ timeout). The original removes them right after injecting the marker.
 **Deviation:** a source drained by a marker emits no final watermark, unlike a source at the end of its stream. The stream continues over
 the new path; a final watermark would advance the watermark of the downstream operators to infinity, and its sequence number would collide
 with the data that arrives over the new path.
+
+### Concurrent amendments
+
+As in the original, the affected queries of a request are amended in parallel by a pool of threads
+(`IncrementalPlacementConfiguration::placementAmendmentThreadCount`; one thread processes them serially). The amendments synchronize on
+the capacity of the workers:
+- **Optimistic (OCC):** the placement uses a snapshot of the available slots; afterwards the slots are occupied atomically per worker. If
+  a concurrent amendment took them, the addition fails and the query is redeployed holistically (see request processing).
+- **Pessimistic (strict 2PL):** the removal locks the workers whose slots it releases, the addition locks all candidate workers before
+  placing. Locks are acquired in a fixed order with try-lock and exponential back-off, like the original, and released after the slots are
+  occupied.
+
+**Deviation:** the original locks topology nodes, which also protects the topology structure. In the port, topology changes are applied
+before the amendments start, so only the slots and the worker locks are synchronized.

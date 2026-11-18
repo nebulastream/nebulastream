@@ -52,7 +52,7 @@ TEST_F(PlacementRemovalStrategyTest, DrainsPlanOfReplacedOperator)
 
     const auto pinned = moveLeaf("leaf1:1");
     const auto version = globalExecutionPlan.getNextVersion();
-    const auto result = PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog)
+    const auto result = PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog, PlacementAmendmentMode::Optimistic)
                             .updateGlobalExecutionPlan(*sharedQueryPlan, pinned.upstreamOperators, pinned.downstreamOperators, version);
 
     ASSERT_THAT(result.deploymentContexts, SizeIs(1));
@@ -88,7 +88,7 @@ TEST_F(PlacementRemovalStrategyTest, DrainsForwardingPlanOfRemovedLink)
     EXPECT_THAT(pinned.upstreamOperators, ElementsAre(sourceOn("leaf3:1")));
     EXPECT_THAT(pinned.downstreamOperators, ElementsAre(sink));
     const auto result
-        = PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog)
+        = PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog, PlacementAmendmentMode::Optimistic)
               .updateGlobalExecutionPlan(
                   *sharedQueryPlan, pinned.upstreamOperators, pinned.downstreamOperators, globalExecutionPlan.getNextVersion());
 
@@ -107,7 +107,7 @@ TEST_F(PlacementRemovalStrategyTest, RejectsPartiallyAffectedPlan)
 
     const auto pinned = moveLeaf("leaf1:1");
     EXPECT_THROW(
-        (void)PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog)
+        (void)PlacementRemovalStrategy(globalExecutionPlan, *cluster.workerCatalog, PlacementAmendmentMode::Optimistic)
             .updateGlobalExecutionPlan(
                 *sharedQueryPlan, pinned.upstreamOperators, pinned.downstreamOperators, globalExecutionPlan.getNextVersion()),
         Exception);

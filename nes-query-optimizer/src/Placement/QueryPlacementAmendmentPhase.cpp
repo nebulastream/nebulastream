@@ -52,12 +52,14 @@ QueryPlacementAmendmentPhase::QueryPlacementAmendmentPhase(
     SharedPtr<WorkerCatalog> workerCatalog,
     const QueryDecomposer& decomposer,
     QueryOptimizerNetworkConfiguration networkConfiguration,
-    const bool enableIncrementalPlacement)
+    const bool enableIncrementalPlacement,
+    const PlacementAmendmentMode mode)
     : globalExecutionPlan(globalExecutionPlan)
     , workerCatalog(std::move(workerCatalog))
     , decomposer(decomposer)
     , networkConfiguration(std::move(networkConfiguration))
     , enableIncrementalPlacement(enableIncrementalPlacement)
+    , mode(mode)
 {
 }
 
@@ -230,14 +232,15 @@ DeploymentUnit QueryPlacementAmendmentPhase::executeIncrementally(SharedQueryPla
                 [&](auto op) { return sharedQueryPlan.getOperatorState(op) != OperatorState::Removed; });
 
             /// P1: placement removal, P2: placement addition.
-            const auto removal = PlacementRemovalStrategy(globalExecutionPlan, *workerCatalog)
+            const auto removal = PlacementRemovalStrategy(globalExecutionPlan, *workerCatalog, mode)
                                      .updateGlobalExecutionPlan(sharedQueryPlan, upstreamOperators, downstreamOperators, version);
             for (const auto& [planId, context] : removal.deploymentContexts)
             {
                 deploymentContexts.insert_or_assign(planId, context);
             }
-            const auto addition = PlacementAdditionStrategy(globalExecutionPlan, copyPtr(workerCatalog), decomposer, networkConfiguration)
-                                      .updateGlobalExecutionPlan(sharedQueryPlan, upstreamOperators, downstreamOperators, version, removal);
+            const auto addition
+                = PlacementAdditionStrategy(globalExecutionPlan, copyPtr(workerCatalog), decomposer, networkConfiguration, mode)
+                      .updateGlobalExecutionPlan(sharedQueryPlan, upstreamOperators, downstreamOperators, version, removal);
             for (const auto& [planId, context] : addition.deploymentContexts)
             {
                 deploymentContexts.insert_or_assign(planId, context);

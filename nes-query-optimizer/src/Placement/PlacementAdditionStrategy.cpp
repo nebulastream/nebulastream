@@ -42,6 +42,7 @@
 #include <ErrorHandling.hpp>
 #include <GlobalExecutionPlan.hpp>
 #include <NetworkTopology.hpp>
+#include <PlacementAmendmentMode.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <SharedQueryPlan.hpp>
@@ -55,11 +56,13 @@ PlacementAdditionStrategy::PlacementAdditionStrategy(
     GlobalExecutionPlan& globalExecutionPlan,
     SharedPtr<WorkerCatalog> workerCatalog,
     const QueryDecomposer& decomposer,
-    QueryOptimizerNetworkConfiguration networkConfiguration)
+    QueryOptimizerNetworkConfiguration networkConfiguration,
+    const PlacementAmendmentMode mode)
     : globalExecutionPlan(globalExecutionPlan)
     , workerCatalog(std::move(workerCatalog))
     , decomposer(decomposer)
     , networkConfiguration(std::move(networkConfiguration))
+    , mode(mode)
 {
 }
 
@@ -144,6 +147,12 @@ PlacementAdditionResult PlacementAdditionStrategy::updateGlobalExecutionPlan(
         std::ranges::transform(pinnedUpstreamOperators, std::inserter(upstreamWorkers, upstreamWorkers.end()), workerOf);
         std::ranges::transform(pinnedDownstreamOperators, std::inserter(downstreamWorkers, downstreamWorkers.end()), workerOf);
         const auto candidates = selectCandidateWorkers(topology, upstreamWorkers, downstreamWorkers);
+        /// Pessimistic mode: lock the workers of the selected path before placing; the locks are released after occupying the slots.
+        std::optional<LockedWorkers> lockedWorkers;
+        if (mode == PlacementAmendmentMode::Pessimistic)
+        {
+            lockedWorkers.emplace(LockedWorkers::lock(*workerCatalog, std::set(candidates.begin(), candidates.end())));
+        }
 
         std::unordered_map<OperatorId, Host> fixedPlacement;
         for (const auto& operatorId : graph.getAllOperators())

@@ -19,6 +19,7 @@
 #include <expected>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -114,6 +115,9 @@ class QueryManager
     QueryManagerState state;
     QueryManagerBackends backends;
     SharedPtr<WorkerCatalog> workerCatalog;
+    /// Protects the queries and the backends against the concurrent deployments of parallel placement amendments. Calls to the workers
+    /// are made without holding it.
+    mutable std::recursive_mutex mutex;
 
     /// Registers the placement of a started query with the global execution plan, if the plan was placed and decomposed.
     void registerPlacement(
@@ -150,7 +154,7 @@ public:
     [[nodiscard]] std::expected<bool, Exception>
     addReconfigurationMarker(const Host& worker, const QueryId& localQuery, const ReconfigurationMarker& marker);
 
-    [[nodiscard]] bool hasWorker(const Host& worker) const { return backends.contains(worker); }
+    [[nodiscard]] bool hasWorker(const Host& worker) const;
 };
 
 }

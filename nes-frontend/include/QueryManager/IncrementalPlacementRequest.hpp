@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <expected>
+#include <functional>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Placement/QueryDecomposition.hpp>
@@ -24,6 +25,7 @@
 #include <Util/Pointers.hpp>
 #include <DeploymentContext.hpp>
 #include <ErrorHandling.hpp>
+#include <PlacementAmendmentMode.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <TopologyChangeEvent.hpp>
 #include <WorkerCatalog.hpp>
@@ -38,6 +40,10 @@ struct IncrementalPlacementConfiguration
     bool enableIncrementalPlacement = true;
     /// How long the deployment waits for the drained plans of a query to terminate before it gives up tracking them.
     std::chrono::milliseconds drainTimeout = std::chrono::seconds(60);
+    /// How concurrent amendments synchronize on the worker capacities.
+    PlacementAmendmentMode placementAmendmentMode = PlacementAmendmentMode::Optimistic;
+    /// Number of threads amending affected queries in parallel. One processes the queries serially (HSQD-like).
+    size_t placementAmendmentThreadCount = 1;
 };
 
 /// Deploys the result of a placement amendment of one query (the original's DeploymentPhase).
@@ -85,6 +91,21 @@ private:
     const QueryDecomposer& decomposer; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     QueryOptimizerNetworkConfiguration networkConfiguration;
     IncrementalPlacementConfiguration configuration;
+};
+
+/// Amends the affected queries of a request in parallel with a pool of threads (the original's PlacementAmendmentHandler).
+class PlacementAmendmentHandler
+{
+public:
+    explicit PlacementAmendmentHandler(size_t numberOfThreads);
+
+    /// Runs the amendment of every query and returns the results in the order of the queries.
+    std::vector<PlacementAmendmentResult> process(
+        const std::vector<DistributedQueryId>& queries,
+        const std::function<PlacementAmendmentResult(const DistributedQueryId&)>& amend) const;
+
+private:
+    size_t numberOfThreads;
 };
 
 struct IncrementalPlacementResult

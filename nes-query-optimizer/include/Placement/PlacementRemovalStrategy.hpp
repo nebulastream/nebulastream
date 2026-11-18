@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <DeploymentContext.hpp>
 #include <GlobalExecutionPlan.hpp>
+#include <PlacementAmendmentMode.hpp>
 #include <SharedQueryPlan.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -51,7 +52,7 @@ struct PlacementRemovalResult
 class PlacementRemovalStrategy
 {
 public:
-    PlacementRemovalStrategy(GlobalExecutionPlan& globalExecutionPlan, WorkerCatalog& workerCatalog);
+    PlacementRemovalStrategy(GlobalExecutionPlan& globalExecutionPlan, WorkerCatalog& workerCatalog, PlacementAmendmentMode mode);
 
     PlacementRemovalResult updateGlobalExecutionPlan(
         SharedQueryPlan& sharedQueryPlan,
@@ -62,6 +63,7 @@ public:
 private:
     GlobalExecutionPlan& globalExecutionPlan; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     WorkerCatalog& workerCatalog; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    PlacementAmendmentMode mode;
 };
 
 /// Returns the operators from the pinned upstream to the pinned downstream operators, both included.

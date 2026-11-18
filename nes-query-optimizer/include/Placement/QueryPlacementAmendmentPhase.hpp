@@ -20,6 +20,7 @@
 #include <ChangeLog.hpp>
 #include <DeploymentContext.hpp>
 #include <GlobalExecutionPlan.hpp>
+#include <PlacementAmendmentMode.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <SharedQueryPlan.hpp>
 #include <WorkerCatalog.hpp>
@@ -43,7 +44,8 @@ public:
         SharedPtr<WorkerCatalog> workerCatalog,
         const QueryDecomposer& decomposer,
         QueryOptimizerNetworkConfiguration networkConfiguration,
-        bool enableIncrementalPlacement);
+        bool enableIncrementalPlacement,
+        PlacementAmendmentMode mode);
 
     /// Holistic mode replaces the shared query plan, as the query gets new operators.
     DeploymentUnit execute(SharedQueryPlan& sharedQueryPlan);
@@ -64,6 +66,7 @@ private:
     const QueryDecomposer& decomposer; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     QueryOptimizerNetworkConfiguration networkConfiguration;
     bool enableIncrementalPlacement;
+    PlacementAmendmentMode mode;
 };
 
 }

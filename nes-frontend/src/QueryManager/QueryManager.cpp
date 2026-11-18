@@ -290,20 +290,25 @@ void QueryManager::registerPlacement(
 
 std::expected<QueryId, Exception> QueryManager::startLocalQuery(const DistributedQueryId& query, const Host& worker, LogicalPlan plan)
 {
-    const auto it = state.queries.find(query);
-    if (it == state.queries.end())
+    QuerySubmissionBackend* backend = nullptr;
     {
-        return std::unexpected(QueryNotFound("Query {} is not known to the QueryManager", query));
-    }
-    if (not backends.contains(worker))
-    {
-        return std::unexpected(UnknownWorker("{}", worker));
+        const std::scoped_lock lock(mutex);
+        if (not state.queries.contains(query))
+        {
+            return std::unexpected(QueryNotFound("Query {} is not known to the QueryManager", query));
+        }
+        if (not backends.contains(worker))
+        {
+            return std::unexpected(UnknownWorker("{}", worker));
+        }
+        backend = &backends.at(worker);
     }
     plan.setQueryId(QueryId::createDistributed(query));
-    auto result = backends.at(worker).start(std::move(plan));
+    auto result = backend->start(std::move(plan));
     if (result)
     {
-        it->second.addLocalQuery(worker, *result);
+        const std::scoped_lock lock(mutex);
+        state.queries.at(query).addLocalQuery(worker, *result);
     }
     return result;
 }
@@ -311,15 +316,21 @@ std::expected<QueryId, Exception> QueryManager::startLocalQuery(const Distribute
 std::expected<void, Exception> QueryManager::stopLocalQuery(const DistributedQueryId& query, const Host& worker, const QueryId& localQuery)
 {
     removeLocalQuery(query, worker, localQuery);
-    if (not backends.contains(worker))
+    QuerySubmissionBackend* backend = nullptr;
     {
-        return std::unexpected(UnknownWorker("{}", worker));
+        const std::scoped_lock lock(mutex);
+        if (not backends.contains(worker))
+        {
+            return std::unexpected(UnknownWorker("{}", worker));
+        }
+        backend = &backends.at(worker);
     }
-    return backends.at(worker).stop(localQuery);
+    return backend->stop(localQuery);
 }
 
 void QueryManager::removeLocalQuery(const DistributedQueryId& query, const Host& worker, const QueryId& localQuery)
 {
+    const std::scoped_lock lock(mutex);
     if (const auto it = state.queries.find(query); it != state.queries.end())
     {
         it->second.removeLocalQuery(worker, localQuery);
@@ -328,21 +339,37 @@ void QueryManager::removeLocalQuery(const DistributedQueryId& query, const Host&
 
 std::expected<LocalQueryStatusSnapshot, Exception> QueryManager::localQueryStatus(const Host& worker, const QueryId& localQuery) const
 {
-    if (not backends.contains(worker))
+    const QuerySubmissionBackend* backend = nullptr;
     {
-        return std::unexpected(UnknownWorker("{}", worker));
+        const std::scoped_lock lock(mutex);
+        if (not backends.contains(worker))
+        {
+            return std::unexpected(UnknownWorker("{}", worker));
+        }
+        backend = &backends.at(worker);
     }
-    return backends.at(worker).status(localQuery);
+    return backend->status(localQuery);
 }
 
 std::expected<bool, Exception>
 QueryManager::addReconfigurationMarker(const Host& worker, const QueryId& localQuery, const ReconfigurationMarker& marker)
 {
-    if (not backends.contains(worker))
+    QuerySubmissionBackend* backend = nullptr;
     {
-        return std::unexpected(UnknownWorker("{}", worker));
+        const std::scoped_lock lock(mutex);
+        if (not backends.contains(worker))
+        {
+            return std::unexpected(UnknownWorker("{}", worker));
+        }
+        backend = &backends.at(worker);
     }
-    return backends.at(worker).addReconfigurationMarker(localQuery, marker);
+    return backend->addReconfigurationMarker(localQuery, marker);
+}
+
+bool QueryManager::hasWorker(const Host& worker) const
+{
+    const std::scoped_lock lock(mutex);
+    return backends.contains(worker);
 }
 
 std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManager::status(const DistributedQueryId& queryId) const

@@ -17,6 +17,7 @@ add_source_files(nes-distributed
         GlobalExecutionPlan.cpp
         NetworkTopology.cpp
         OperatorGraph.cpp
+        PlacementAmendmentMode.cpp
         SharedQueryPlan.cpp
         WorkerCatalog.cpp
 )

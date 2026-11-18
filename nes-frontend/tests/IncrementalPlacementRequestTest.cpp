@@ -48,6 +48,7 @@
 #include <BaseUnitTest.hpp>
 #include <DistributedQuery.hpp>
 #include <ModelCatalog.hpp>
+#include <PlacementAmendmentMode.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <TopologyChangeEvent.hpp>
@@ -239,4 +240,78 @@ TEST_F(IncrementalPlacementRequestTest, OperatorReplacement)
     expectEveryTupleExactlyOnce();
 }
 
+/// Two queries on two leaves that move in the same batch are amended in parallel, synchronized optimistically or pessimistically.
+class ConcurrentIncrementalPlacementTest : public IncrementalPlacementRequestTest,
+                                           public ::testing::WithParamInterface<PlacementAmendmentMode>
+{
+};
+
+TEST_P(ConcurrentIncrementalPlacementTest, ParallelAmendments)
+{
+    const auto mode = GetParam();
+    const auto suffix = mode == PlacementAmendmentMode::Optimistic ? std::string("-occ") : std::string("-2pl");
+    setUpCluster(suffix, 2);
+    workerCatalog->addWorker(host("leaf2"), "leaf2" + suffix + ":9090", CapacityKind::Limited{0}, {host("base1")});
+    const Schema<UnqualifiedUnboundField, Ordered> schema{UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64}};
+    const auto logicalSource = sourceCatalog->addLogicalSource(Identifier::parse("stream2"), schema);
+    ASSERT_TRUE(logicalSource.has_value());
+    ASSERT_TRUE(sourceCatalog
+                    ->addPhysicalSource(
+                        *logicalSource,
+                        Identifier::parse("Generator"),
+                        host("leaf2"),
+                        {{Identifier::parse("stop_generator_when_sequence_finishes"), "ALL"},
+                         {Identifier::parse("seed"), "1"},
+                         {Identifier::parse("generator_rate_type"), "FIXED"},
+                         {Identifier::parse("generator_rate_config"), "emit_rate 2000"},
+                         {Identifier::parse("generator_schema"), fmt::format("SEQUENCE UINT64 0 {} 1", NUMBER_OF_TUPLES)}},
+                        {{Identifier::parse("type"), "CSV"}})
+                    .has_value());
+    auto secondOutput = std::filesystem::temp_directory_path() / ("isqd-" + UUIDToString(generateUUID()) + ".csv");
+    ASSERT_TRUE(sinkCatalog
+                    ->addSinkDescriptor(
+                        Identifier::parse("snk2"),
+                        schema,
+                        Identifier::parse("File"),
+                        host("cloud"),
+                        {{Identifier::parse("FILE_PATH"), secondOutput.string()}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}},
+                        {})
+                    .has_value());
+
+    const auto queryManager = createQueryManager();
+    const auto first = startQuery(*queryManager, "SELECT * FROM stream WHERE id >= 0 INTO snk");
+    const auto second = startQuery(*queryManager, "SELECT * FROM stream2 WHERE id >= 0 INTO snk2");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    IncrementalPlacementRequest request(
+        *queryManager,
+        copyPtr(workerCatalog),
+        QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog)),
+        defaultConfiguration<QueryOptimizerConfiguration>().network,
+        IncrementalPlacementConfiguration{
+            .enableIncrementalPlacement = true,
+            .drainTimeout = std::chrono::seconds(30),
+            .placementAmendmentMode = mode,
+            .placementAmendmentThreadCount = 2});
+    const auto result = request.execute(
+        {RemoveLinkEvent{.upstream = host("leaf"), .downstream = host("base1")},
+         AddLinkEvent{.upstream = host("leaf"), .downstream = host("base2")},
+         RemoveLinkEvent{.upstream = host("leaf2"), .downstream = host("base1")},
+         AddLinkEvent{.upstream = host("leaf2"), .downstream = host("base2")}});
+    EXPECT_EQ(result.numberOfAffectedQueries, 2U);
+    EXPECT_EQ(result.numberOfFailedAmendments, 0U);
+    /// Both selections need a slot on base2 or in the cloud; base2 has two.
+    EXPECT_LE(workerCatalog->getOccupiedSlots(host("base2")), 2U);
+
+    waitForStop(*queryManager, first);
+    waitForStop(*queryManager, second);
+    expectEveryTupleExactlyOnce();
+    std::swap(outputFile, secondOutput);
+    expectEveryTupleExactlyOnce();
+    std::swap(outputFile, secondOutput);
+    std::filesystem::remove(secondOutput);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Modes, ConcurrentIncrementalPlacementTest, ::testing::Values(PlacementAmendmentMode::Optimistic, PlacementAmendmentMode::Pessimistic));
 }

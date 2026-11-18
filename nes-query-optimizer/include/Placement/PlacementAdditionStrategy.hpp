@@ -22,6 +22,7 @@
 #include <Util/Pointers.hpp>
 #include <DeploymentContext.hpp>
 #include <GlobalExecutionPlan.hpp>
+#include <PlacementAmendmentMode.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <SharedQueryPlan.hpp>
 #include <WorkerCatalog.hpp>
@@ -41,7 +42,8 @@ struct PlacementAdditionResult
 /// 1. Path selection: the candidate workers are the workers on paths from the workers of the pinned upstream operators to the workers of
 ///    the pinned downstream operators.
 /// 2. The operators to be placed are placed with the incremental bottom-up placement. Their slots are occupied afterwards; if a worker
-///    has no free slot anymore, the addition fails (optimistic validation).
+///    has no free slot anymore, the addition fails (optimistic mode). In pessimistic mode, the candidate workers are locked during the
+///    placement (strict 2PL).
 /// 3. Connected operators on the same worker form a new decomposed query plan (MarkedForDeployment).
 /// 4. Every logical edge from or to a placed operator, and every edge whose channel chain was removed, is connected by a new chain of
 ///    network channels with forwarding plans on intermediate workers.
@@ -59,7 +61,8 @@ public:
         GlobalExecutionPlan& globalExecutionPlan,
         SharedPtr<WorkerCatalog> workerCatalog,
         const QueryDecomposer& decomposer,
-        QueryOptimizerNetworkConfiguration networkConfiguration);
+        QueryOptimizerNetworkConfiguration networkConfiguration,
+        PlacementAmendmentMode mode);
 
     PlacementAdditionResult updateGlobalExecutionPlan(
         SharedQueryPlan& sharedQueryPlan,
@@ -73,6 +76,7 @@ private:
     SharedPtr<WorkerCatalog> workerCatalog;
     const QueryDecomposer& decomposer; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     QueryOptimizerNetworkConfiguration networkConfiguration;
+    PlacementAmendmentMode mode;
 };
 
 }

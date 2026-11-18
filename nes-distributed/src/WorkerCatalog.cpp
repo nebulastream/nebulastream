@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -71,6 +72,7 @@ std::optional<WorkerConfig> WorkerCatalog::removeWorker(const Host& hostAddr)
     if (const auto node = workers.extract(hostAddr); not node.empty())
     {
         topology.removeNode(hostAddr);
+        const std::scoped_lock lock(slotMutex);
         occupiedSlots.erase(hostAddr);
         ++version;
         return std::move(node.mapped());
@@ -96,10 +98,17 @@ bool WorkerCatalog::removeLink(const Host& upstream, const Host& downstream)
     return true;
 }
 
+WorkerCatalog::WorkerCatalog(const WorkerCatalog& other) : workers(other.workers), topology(other.topology), version(other.version)
+{
+    const std::scoped_lock lock(other.slotMutex);
+    occupiedSlots = other.occupiedSlots;
+}
+
 bool WorkerCatalog::tryOccupySlots(const Host& host, const size_t slots)
 {
     PRECONDITION(workers.contains(host), "Cannot occupy slots of unknown worker {}", host);
-    const auto available = getAvailableSlots(host);
+    const std::scoped_lock lock(slotMutex);
+    const auto available = getAvailableSlotsLocked(host);
     if (const auto* limited = std::get_if<CapacityKind::Limited>(&available); limited != nullptr && limited->value < slots)
     {
         return false;
@@ -111,6 +120,7 @@ bool WorkerCatalog::tryOccupySlots(const Host& host, const size_t slots)
 void WorkerCatalog::occupySlots(const Host& host, const size_t slots)
 {
     PRECONDITION(workers.contains(host), "Cannot occupy slots of unknown worker {}", host);
+    const std::scoped_lock lock(slotMutex);
     occupiedSlots[host] += slots;
 }
 
@@ -121,6 +131,7 @@ bool WorkerCatalog::releaseSlots(const Host& host, const size_t slots)
         /// The worker was removed from the topology, so are its slots.
         return true;
     }
+    const std::scoped_lock lock(slotMutex);
     const auto it = occupiedSlots.find(host);
     const size_t occupied = it == occupiedSlots.end() ? 0 : it->second;
     if (occupied < slots)
@@ -136,14 +147,34 @@ bool WorkerCatalog::releaseSlots(const Host& host, const size_t slots)
 
 size_t WorkerCatalog::getOccupiedSlots(const Host& host) const
 {
+    const std::scoped_lock lock(slotMutex);
     const auto it = occupiedSlots.find(host);
     return it == occupiedSlots.end() ? 0 : it->second;
 }
 
 Capacity WorkerCatalog::getAvailableSlots(const Host& host) const
 {
+    const std::scoped_lock lock(slotMutex);
+    return getAvailableSlotsLocked(host);
+}
+
+bool WorkerCatalog::tryLockWorker(const Host& host)
+{
+    const std::scoped_lock lock(slotMutex);
+    return lockedWorkers.insert(host).second;
+}
+
+void WorkerCatalog::unlockWorker(const Host& host)
+{
+    const std::scoped_lock lock(slotMutex);
+    lockedWorkers.erase(host);
+}
+
+Capacity WorkerCatalog::getAvailableSlotsLocked(const Host& host) const
+{
     PRECONDITION(workers.contains(host), "Cannot compute the available slots of unknown worker {}", host);
-    const auto occupied = getOccupiedSlots(host);
+    const auto it = occupiedSlots.find(host);
+    const size_t occupied = it == occupiedSlots.end() ? 0 : it->second;
     return std::visit(
         Overloaded{
             [](const CapacityKind::Unlimited& unlimited) -> Capacity { return unlimited; },

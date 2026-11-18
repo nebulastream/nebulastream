@@ -15,9 +15,12 @@
 #include <QueryManager/IncrementalPlacementRequest.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <expected>
+#include <functional>
 #include <iterator>
+#include <ranges>
 #include <set>
 #include <thread>
 #include <utility>
@@ -243,7 +246,8 @@ PlacementAmendmentResult PlacementAmendmentInstance::execute(const DistributedQu
                                   copyPtr(workerCatalog),
                                   decomposer,
                                   networkConfiguration,
-                                  configuration.enableIncrementalPlacement)
+                                  configuration.enableIncrementalPlacement,
+                                  configuration.placementAmendmentMode)
                                   .execute(sharedQueryPlan);
         if (configuration.enableIncrementalPlacement and sharedQueryPlan.getStatus() == SharedQueryPlanStatus::PartiallyProcessed)
         {
@@ -251,7 +255,12 @@ PlacementAmendmentResult PlacementAmendmentInstance::execute(const DistributedQu
             /// send another request for this query, so the query is redeployed holistically to keep it valid.
             NES_WARNING("The incremental amendment of query {} failed partially, redeploying it holistically", queryId);
             deploymentUnit = QueryPlacementAmendmentPhase(
-                                 queryManager.getGlobalExecutionPlan(), copyPtr(workerCatalog), decomposer, networkConfiguration, false)
+                                 queryManager.getGlobalExecutionPlan(),
+                                 copyPtr(workerCatalog),
+                                 decomposer,
+                                 networkConfiguration,
+                                 false,
+                                 configuration.placementAmendmentMode)
                                  .execute(sharedQueryPlan);
         }
         result.placementTime = elapsedSince(placementStart);
@@ -277,6 +286,33 @@ PlacementAmendmentResult PlacementAmendmentInstance::execute(const DistributedQu
         sharedQueryPlan.setStatus(SharedQueryPlanStatus::Failed);
     }
     return result;
+}
+
+PlacementAmendmentHandler::PlacementAmendmentHandler(const size_t numberOfThreads) : numberOfThreads(std::max<size_t>(numberOfThreads, 1))
+{
+}
+
+std::vector<PlacementAmendmentResult> PlacementAmendmentHandler::process(
+    const std::vector<DistributedQueryId>& queries, const std::function<PlacementAmendmentResult(const DistributedQueryId&)>& amend) const
+{
+    std::vector<PlacementAmendmentResult> results(queries.size());
+    std::atomic<size_t> next = 0;
+    auto worker = [&]
+    {
+        for (auto index = next++; index < queries.size(); index = next++)
+        {
+            results.at(index) = amend(queries.at(index));
+        }
+    };
+    {
+        std::vector<std::jthread> threads;
+        for (size_t thread = 1; thread < std::min(numberOfThreads, queries.size()); ++thread)
+        {
+            threads.emplace_back(worker);
+        }
+        worker();
+    }
+    return results;
 }
 
 IncrementalPlacementRequest::IncrementalPlacementRequest(
