@@ -189,6 +189,23 @@ NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<Que
 {
 }
 
+void NES::DistributedQuery::addLocalQuery(const Host& host, QueryId localQuery)
+{
+    localQueries[host].emplace_back(std::move(localQuery));
+}
+
+void NES::DistributedQuery::removeLocalQuery(const Host& host, const QueryId& localQuery)
+{
+    if (const auto it = localQueries.find(host); it != localQueries.end())
+    {
+        std::erase(it->second, localQuery);
+        if (it->second.empty())
+        {
+            localQueries.erase(it);
+        }
+    }
+}
+
 std::ostream& NES::operator<<(std::ostream& os, const DistributedQuery& query)
 {
     std::vector<std::string> entries;

@@ -14,6 +14,7 @@
 
 #include <QueryManager/QueryManager.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -27,9 +28,16 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Placement/BottomUpPlacement.hpp>
+#include <Placement/IncrementalPlacementUtils.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Traits/PlacementTrait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current_macros.hpp>
@@ -37,8 +45,10 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <GlobalExecutionPlan.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
+#include <SharedQueryPlan.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -68,17 +78,6 @@ std::expected<DistributedQuery, Exception> QueryManager::getQuery(const Distribu
     return it->second;
 }
 
-std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>>
-QueryManager::QueryManagerBackends::createBackends(const std::vector<WorkerConfig>& workers, BackendProvider& provider)
-{
-    std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>> backends;
-    for (const auto& workerConfig : workers)
-    {
-        backends.emplace(workerConfig.host, provider(workerConfig));
-    }
-    return backends;
-}
-
 QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
     : workerCatalog(std::move(workerCatalog)), backendProvider(std::move(provider))
 {
@@ -86,12 +85,12 @@ QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state)
-    : state(std::move(state)), backends(std::move(workerCatalog), std::move(provider))
+    : state(std::move(state)), backends(copyPtr(workerCatalog), std::move(provider)), workerCatalog(std::move(workerCatalog))
 {
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
-    : backends(std::move(workerCatalog), std::move(provider))
+    : backends(copyPtr(workerCatalog), std::move(provider)), workerCatalog(std::move(workerCatalog))
 {
 }
 
@@ -104,7 +103,20 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     if (currentVersion != cachedWorkerCatalogVersion)
     {
         NES_DEBUG("WorkerCatalog version changed from {} to {}, rebuilding backends", cachedWorkerCatalogVersion, currentVersion);
-        backends = createBackends(workerCatalog->getAllWorkers(), backendProvider);
+        /// Only add and remove the backends of added and removed workers: topology changes of ISQP change the version as well, and
+        /// recreating a backend would restart an embedded worker with all of its queries.
+        const auto workers = workerCatalog->getAllWorkers();
+        std::erase_if(
+            backends,
+            [&](const auto& entry)
+            { return std::ranges::none_of(workers, [&](const auto& worker) { return worker.host == entry.first; }); });
+        for (const auto& worker : workers)
+        {
+            if (not backends.contains(worker.host))
+            {
+                backends.emplace(worker.host, backendProvider(worker));
+            }
+        }
         cachedWorkerCatalogVersion = currentVersion;
     }
 }
@@ -180,6 +192,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
         return std::unexpected(exceptions);
     }
 
+    registerPlacement(id, plan, localQueries);
     this->state.queries.emplace(id, std::move(localQueries));
 
     /// Poll until all local queries have advanced past Registered, so the caller can immediately
@@ -239,6 +252,97 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
         id,
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - queryStartTimestamp));
     return id;
+}
+
+void QueryManager::registerPlacement(
+    const DistributedQueryId& id, const DistributedLogicalPlan& plan, const std::unordered_map<Host, std::vector<QueryId>>& localQueries)
+{
+    const auto& globalPlan = plan.getGlobalPlan();
+    const bool placed = std::ranges::all_of(
+        globalPlan.getRootOperators(),
+        [](const auto& root)
+        {
+            return std::ranges::all_of(
+                BFSRange(root), [](const LogicalOperator& op) { return hasTrait<PlacementTrait>(op.getTraitSet()); });
+        });
+    const bool decomposed = std::ranges::any_of(plan, [&](const auto& entry) { return not plan.getHostedOperators(entry.first).empty(); });
+    if (not placed or not decomposed)
+    {
+        NES_DEBUG("Query {} was not placed and decomposed by the optimizer, ISQP does not track it", id);
+        return;
+    }
+    const auto planIds = state.globalExecutionPlan->addQuery(id, plan);
+    for (const auto& [host, ids] : planIds)
+    {
+        for (size_t index = 0; index < ids.size(); ++index)
+        {
+            state.globalExecutionPlan->setLocalQueryId(id, ids.at(index), localQueries.at(host).at(index).getLocalQueryId());
+        }
+    }
+    auto& sharedQueryPlan
+        = state.sharedQueryPlans.insert_or_assign(id, SharedQueryPlan(id, globalPlan, getPlacement(globalPlan))).first->second;
+    for (const auto& operatorId : sharedQueryPlan.getGraph().getAllOperators())
+    {
+        workerCatalog->occupySlots(
+            *sharedQueryPlan.getPinnedWorker(operatorId), getOperatorCapacityDemand(sharedQueryPlan.getGraph().getOperator(operatorId)));
+    }
+}
+
+std::expected<QueryId, Exception> QueryManager::startLocalQuery(const DistributedQueryId& query, const Host& worker, LogicalPlan plan)
+{
+    const auto it = state.queries.find(query);
+    if (it == state.queries.end())
+    {
+        return std::unexpected(QueryNotFound("Query {} is not known to the QueryManager", query));
+    }
+    if (not backends.contains(worker))
+    {
+        return std::unexpected(UnknownWorker("{}", worker));
+    }
+    plan.setQueryId(QueryId::createDistributed(query));
+    auto result = backends.at(worker).start(std::move(plan));
+    if (result)
+    {
+        it->second.addLocalQuery(worker, *result);
+    }
+    return result;
+}
+
+std::expected<void, Exception> QueryManager::stopLocalQuery(const DistributedQueryId& query, const Host& worker, const QueryId& localQuery)
+{
+    removeLocalQuery(query, worker, localQuery);
+    if (not backends.contains(worker))
+    {
+        return std::unexpected(UnknownWorker("{}", worker));
+    }
+    return backends.at(worker).stop(localQuery);
+}
+
+void QueryManager::removeLocalQuery(const DistributedQueryId& query, const Host& worker, const QueryId& localQuery)
+{
+    if (const auto it = state.queries.find(query); it != state.queries.end())
+    {
+        it->second.removeLocalQuery(worker, localQuery);
+    }
+}
+
+std::expected<LocalQueryStatusSnapshot, Exception> QueryManager::localQueryStatus(const Host& worker, const QueryId& localQuery) const
+{
+    if (not backends.contains(worker))
+    {
+        return std::unexpected(UnknownWorker("{}", worker));
+    }
+    return backends.at(worker).status(localQuery);
+}
+
+std::expected<bool, Exception>
+QueryManager::addReconfigurationMarker(const Host& worker, const QueryId& localQuery, const ReconfigurationMarker& marker)
+{
+    if (not backends.contains(worker))
+    {
+        return std::unexpected(UnknownWorker("{}", worker));
+    }
+    return backends.at(worker).addReconfigurationMarker(localQuery, marker);
 }
 
 std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManager::status(const DistributedQueryId& queryId) const
@@ -350,6 +454,21 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(const Distributed
     if (not exceptions.empty())
     {
         return std::unexpected{exceptions};
+    }
+    /// A stopped query is no longer reconfigured by ISQP and releases its slots.
+    if (const auto it = state.sharedQueryPlans.find(queryId); it != state.sharedQueryPlans.end())
+    {
+        const auto& graph = it->second.getGraph();
+        for (const auto& operatorId : graph.getAllOperators())
+        {
+            if (const auto worker = it->second.getPinnedWorker(operatorId))
+            {
+                [[maybe_unused]] const auto released
+                    = workerCatalog->releaseSlots(*worker, getOperatorCapacityDemand(graph.getOperator(operatorId)));
+            }
+        }
+        state.sharedQueryPlans.erase(it);
+        state.globalExecutionPlan->removeQuery(queryId);
     }
     NES_DEBUG("Stopping query {} was successful.", queryId);
     /// Stopped queries stay registered so that their terminal status can still be queried.

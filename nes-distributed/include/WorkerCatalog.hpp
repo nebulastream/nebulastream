@@ -75,7 +75,8 @@ public:
     /// placement, which keeps its own capacity semantics.
     void occupySlots(const Host& host, size_t slots);
 
-    /// Releases `slots` operator slots of the worker. Returns false and releases nothing if fewer slots are occupied.
+    /// Releases `slots` operator slots of the worker. Returns false and releases nothing if fewer slots are occupied. Releasing slots of
+    /// a removed worker succeeds.
     [[nodiscard]] bool releaseSlots(const Host& host, size_t slots);
 
     [[nodiscard]] size_t getOccupiedSlots(const Host& host) const;

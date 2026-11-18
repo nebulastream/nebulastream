@@ -18,3 +18,6 @@ target_include_directories(distributed-planning-test
 
 add_nes_test(grpc-query-submission-backend-test GRPCQuerySubmissionBackendTest.cpp)
 target_link_libraries(grpc-query-submission-backend-test nes-frontend-lib)
+
+add_nes_test(incremental-placement-request-test IncrementalPlacementRequestTest.cpp)
+target_link_libraries(incremental-placement-request-test nes-frontend-embedded-lib)

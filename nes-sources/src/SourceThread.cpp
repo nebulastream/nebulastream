@@ -213,8 +213,18 @@ void dataSourceThread(
                 dataSourceThreadRoutine(interrupt.get_token(), std::move(backpressureListener), *source, bufferProvider, dataEmit),
                 stopToken,
                 *drainRequest);
-            if (termination.result == SourceImplementationTermination::EndOfStream
-                || termination.result == SourceImplementationTermination::Drained)
+            if (termination.result == SourceImplementationTermination::Drained)
+            {
+                /// The stream continues in another query after the reconfiguration (ISQD), so a drained source does not emit a final
+                /// watermark: it would advance the watermark of the downstream operators to infinity, and its sequence number would collide
+                /// with the data that reaches them over the new path.
+                if (not stopToken.stop_requested())
+                {
+                    NES_DEBUG("Source {} was drained by a reconfiguration marker", originId);
+                    emit(originId, SourceReturnType::Drained{.marker = termination.marker}, stopToken);
+                }
+            }
+            else if (termination.result == SourceImplementationTermination::EndOfStream)
             {
                 /// A stop request must be able to interrupt every wait of the source thread, as the owner joins it after requesting stop.
                 /// A stopped query does not need the final watermark or the EoS.
@@ -227,15 +237,7 @@ void dataSourceThread(
                     if (emit(originId, SourceReturnType::Data{std::move(*watermarkBuffer)}, stopToken)
                         == SourceReturnType::EmitResult::SUCCESS)
                     {
-                        if (termination.result == SourceImplementationTermination::Drained)
-                        {
-                            NES_DEBUG("Source {} was drained by a reconfiguration marker", originId);
-                            emit(originId, SourceReturnType::Drained{.marker = termination.marker}, stopToken);
-                        }
-                        else
-                        {
-                            emit(originId, SourceReturnType::EoS{}, stopToken);
-                        }
+                        emit(originId, SourceReturnType::EoS{}, stopToken);
                     }
                 }
             }

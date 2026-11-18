@@ -60,6 +60,8 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `QueryPlacementAmendmentPhase` (incremental and holistic), `computeReconfigurationMarkerDeploymentUnit` | `QueryPlacementAmendmentPhase` |
 | `ReconfigurationMarker`, `ReconfigurationMarkerEvent`, `{Drain,Update,UpdateAndDrain}QueryMetadata` | `ReconfigurationMarker` with `{Drain,Update,UpdateAndDrain}QueryMetadata` in nes-common |
 | `NetworkSink::reconfigure` (`ConnectToNewReceiver`, marker handling), `BufferStorage` | `NetworkSink::connectToNewReceiver`, `NetworkSink::stop` with `ReconfigurationState`, buffering while the receiver is detached |
+| `ISQPRequest`, `ISQPEvents` (`AddNode`, `RemoveNode`, `AddLink`, `RemoveLink`) | `IncrementalPlacementRequest`, `TopologyChangeEvent` |
+| `PlacementAmendmentInstance`, `DeploymentPhase`, `updateReconfigurationMarker` | `PlacementAmendmentInstance`, `DeploymentPhase`, `DeploymentPhase::computeReconfigurationMarker` |
 
 ### Worker capacity
 
@@ -184,3 +186,28 @@ network source ends its stream with it). The query records it in its `Reconfigur
 The port buffers implicitly: a sink whose receiver detached keeps its data (in the parked sender channel and its backpressure handler)
 until the update redirects it. No separate buffering RPC is needed, as the coordinator injects the marker into the plan after a removed
 link, which detaches it from the upstream sender.
+
+### Request processing and deployment
+
+The `QueryManager` of the frontend plays the role of the coordinator: it keeps the global execution plan and the shared query plans of the
+queries it started. An `IncrementalPlacementRequest` applies a batch of topology events, finds the queries affected by every removed
+link, marks the operators to re-place, and runs a `PlacementAmendmentInstance` per affected query. The `DeploymentPhase` starts the new
+plans, injects the reconfiguration marker at the marker units and removes the drained plans once they terminated.
+
+**Deviation:** the original's request also batches query additions and removals. The frontend adds and removes queries with their own
+statements, so a request only contains topology events.
+
+**Fixed issue:** the original handles a removed node by pairing its upstream and downstream nodes and looking for channels between them.
+The channels run through the removed node, so none are found and nothing is re-placed. The port handles a removed node like the removal of
+the links from its upstream nodes; the operators on the removed node are unreachable and get re-placed. Plans on the removed node cannot
+be drained and are dropped.
+
+**Deviation:** if the incremental amendment of a query fails partially, the original records the failed change log entries and retries them
+with the next request. The frontend may not send another request for the query, so the port redeploys the query holistically instead.
+
+**Deviation:** the deployment phase waits until the drained plans terminated before it removes them from the global execution plan (with a
+timeout). The original removes them right after injecting the marker.
+
+**Deviation:** a source drained by a marker emits no final watermark, unlike a source at the end of its stream. The stream continues over
+the new path; a final watermark would advance the watermark of the downstream operators to infinity, and its sequence number would collide
+with the data that arrives over the new path.

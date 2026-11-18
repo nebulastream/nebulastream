@@ -133,6 +133,10 @@ public:
 
     const auto& getLocalQueries() { return localQueries; }
 
+    /// A placement amendment of ISQP adds and removes local queries of a running distributed query.
+    void addLocalQuery(const Host& host, QueryId localQuery);
+    void removeLocalQuery(const Host& host, const QueryId& localQuery);
+
     bool operator==(const DistributedQuery& other) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);

@@ -116,6 +116,11 @@ void WorkerCatalog::occupySlots(const Host& host, const size_t slots)
 
 bool WorkerCatalog::releaseSlots(const Host& host, const size_t slots)
 {
+    if (not workers.contains(host))
+    {
+        /// The worker was removed from the topology, so are its slots.
+        return true;
+    }
     const auto it = occupiedSlots.find(host);
     const size_t occupied = it == occupiedSlots.end() ? 0 : it->second;
     if (occupied < slots)

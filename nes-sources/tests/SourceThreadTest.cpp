@@ -712,19 +712,23 @@ SourceReturnType::EmitFunction recordingEmit(RecordingEmitFunction& recorder)
     };
 }
 
-/// Verifies that the recorded events end with the final watermark and a `Drained` with the given marker.
+/// Verifies that the recorded events end with a `Drained` with the given marker. Unlike an end of stream, a drain emits no final watermark.
 void verify_drained(
     RecordingEmitFunction& recorder, const std::string& marker, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_drained");
     const auto events = recorder.recordedEmits.lock();
-    ASSERT_GE(events->size(), 2);
-    const auto* finalWatermark = std::get_if<SourceReturnType::Data>(&events->at(events->size() - 2));
-    ASSERT_NE(finalWatermark, nullptr);
-    EXPECT_EQ(finalWatermark->buffer.getWatermark(), Timestamp{Timestamp::INFINITE_VALUE});
+    ASSERT_GE(events->size(), 1);
     const auto* drained = std::get_if<SourceReturnType::Drained>(&events->back());
     ASSERT_NE(drained, nullptr) << "Last event was not a `Drained` event";
     EXPECT_EQ(drained->marker, marker);
+    for (const auto& event : *events)
+    {
+        if (const auto* data = std::get_if<SourceReturnType::Data>(&event))
+        {
+            EXPECT_NE(data->buffer.getWatermark(), Timestamp{Timestamp::INFINITE_VALUE}) << "A drained source emitted a final watermark";
+        }
+    }
 }
 
 /// A marker from the source ends the stream like an EoS, but is reported as a drain.
@@ -735,20 +739,18 @@ TEST_F(SourceThreadTest, MarkerFromSourceIsReportedAsDrained)
     RecordingEmitFunction recorder(*bm);
     SourceThread sourceThread(std::move(backpressureListener), INITIAL<OriginId>, bm, std::make_unique<MarkerSource>("marker 9"));
     verify_non_blocking_start(sourceThread, recordingEmit(recorder));
-    wait_for_emits(recorder, 3);
+    wait_for_emits(recorder, 2);
     verify_non_blocking_stop(sourceThread);
 
     verify_drained(recorder, "marker 9");
     const auto events = recorder.recordedEmits.lock();
-    ASSERT_EQ(events->size(), 3);
+    ASSERT_EQ(events->size(), 2);
     const auto* data = std::get_if<SourceReturnType::Data>(&events->at(0));
     ASSERT_NE(data, nullptr);
     EXPECT_EQ(data->buffer.getSequenceNumber(), INITIAL_SEQ_NUMBER);
-    EXPECT_EQ(
-        std::get<SourceReturnType::Data>(events->at(1)).buffer.getSequenceNumber(), SequenceNumber(INITIAL_SEQ_NUMBER.getRawValue() + 1));
 }
 
-/// A source which cannot drain by itself is interrupted, but unlike a stop, the source thread emits the final watermark and `Drained`.
+/// A source which cannot drain by itself is interrupted, but unlike a stop, the source thread emits `Drained`.
 TEST_F(SourceThreadTest, DrainInterruptsSourceWhichCannotDrainByItself)
 {
     auto bm = createDrainTestBufferManager();
@@ -761,12 +763,12 @@ TEST_F(SourceThreadTest, DrainInterruptsSourceWhichCannotDrainByItself)
     ASSERT_TRUE(sourcePtr->waitUntilEntered());
 
     EXPECT_TRUE(sourceThread.drain("marker 3"));
-    wait_for_emits(recorder, 2);
+    wait_for_emits(recorder, 1);
     EXPECT_TRUE(sourcePtr->wasInterrupted);
     verify_non_blocking_stop(sourceThread);
 
     verify_drained(recorder, "marker 3");
-    EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(2));
+    EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(1));
 }
 
 /// A source which drains by itself is not interrupted: it delivers its remaining data before the stream ends.
@@ -781,14 +783,14 @@ TEST_F(SourceThreadTest, SourceWhichDrainsByItselfDeliversItsRemainingData)
     verify_non_blocking_start(sourceThread, recordingEmit(recorder));
 
     EXPECT_TRUE(sourceThread.drain("marker 5"));
-    wait_for_emits(recorder, 4);
+    wait_for_emits(recorder, 3);
     verify_non_blocking_stop(sourceThread);
 
     EXPECT_TRUE(sourcePtr->drained);
     EXPECT_FALSE(sourcePtr->wasInterrupted);
     verify_drained(recorder, "marker 5");
     const auto events = recorder.recordedEmits.lock();
-    ASSERT_EQ(events->size(), 4);
+    ASSERT_EQ(events->size(), 3);
     EXPECT_EQ(std::get<SourceReturnType::Data>(events->at(0)).buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     EXPECT_EQ(std::get<SourceReturnType::Data>(events->at(1)).buffer.getNumberOfTuples(), DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
 }
@@ -804,7 +806,7 @@ TEST_F(SourceThreadTest, SecondDrainIsRejected)
 
     EXPECT_TRUE(sourceThread.drain("marker 1"));
     EXPECT_FALSE(sourceThread.drain("marker 2"));
-    wait_for_emits(recorder, 2);
+    wait_for_emits(recorder, 1);
     verify_non_blocking_stop(sourceThread);
 
     verify_drained(recorder, "marker 1");

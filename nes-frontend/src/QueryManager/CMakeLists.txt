@@ -12,6 +12,7 @@
 
 add_source_files(nes-query-manager-grpc
         GRPCQuerySubmissionBackend.cpp
+        IncrementalPlacementRequest.cpp
         QueryManager.cpp
 )
 

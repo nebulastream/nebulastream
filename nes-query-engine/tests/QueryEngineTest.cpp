@@ -286,7 +286,7 @@ TEST_F(QueryEngineTest, injectedDrainMarkerDrainsTheQuery)
 
     EXPECT_THAT(reconfigurationState->getDrainMarker(), ::testing::Optional(marker));
     auto buffers = sinkCtrl->takeBuffers();
-    ASSERT_EQ(buffers.size(), 2); /// 1 data buffer + final watermark buffer
+    ASSERT_EQ(buffers.size(), 1); /// 1 data buffer, a drained source emits no final watermark
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
