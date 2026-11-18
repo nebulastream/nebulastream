@@ -27,11 +27,13 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Ranges.hpp>
+#include <Util/UUID.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
@@ -243,6 +245,89 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_EQ(buffers.size(), 5); /// 4 data buffers + EoS watermark buffer
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+}
+
+/// A drain marker injected into a query drains its sources: the query stops after its pipelines processed the data that was emitted before
+/// the marker, and its pipelines see the marker in the reconfiguration state of the query.
+TEST_F(QueryEngineTest, injectedDrainMarkerDrainsTheQuery)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    const auto reconfigurationState = query->reconfigurationState;
+
+    auto ctrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+
+    auto marker = ReconfigurationMarker::create();
+    marker.addReconfigurationEvent(test.queryId(0).getLocalQueryId(), DrainQueryMetadata{.detachedChannels = {}});
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(ctrl->waitUntilOpened());
+        ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
+
+        EXPECT_TRUE(test.qm->injectReconfigurationMarker(test.queryId(0), marker));
+        EXPECT_FALSE(test.qm->injectReconfigurationMarker(test.queryId(0), marker)) << "the marker was already injected";
+    }
+    ASSERT_TRUE(sinkCtrl->waitForStop());
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+    test.stop();
+
+    EXPECT_THAT(reconfigurationState->getDrainMarker(), ::testing::Optional(marker));
+    auto buffers = sinkCtrl->takeBuffers();
+    ASSERT_EQ(buffers.size(), 2); /// 1 data buffer + final watermark buffer
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+}
+
+/// An update marker keeps the query running and leaves the sink updates in the reconfiguration state. A marker without an event for the
+/// query is ignored.
+TEST_F(QueryEngineTest, injectedUpdateMarkerKeepsTheQueryRunning)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto sink = builder.addSink({source});
+    auto query = test.addNewQuery(std::move(builder));
+    const auto reconfigurationState = query->reconfigurationState;
+
+    auto ctrl = test.sourceControls[source];
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+
+    auto update = ReconfigurationMarker::create();
+    update.addReconfigurationEvent(
+        test.queryId(0).getLocalQueryId(),
+        UpdateQueryMetadata{.networkSinkUpdates = {{.oldChannel = "old", .newChannel = "new", .newDataEndpoint = "worker:9090"}}});
+    auto unrelated = ReconfigurationMarker::create();
+    unrelated.addReconfigurationEvent(LocalQueryId(generateUUID()), DrainQueryMetadata{});
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(ctrl->waitUntilOpened());
+
+        EXPECT_FALSE(test.qm->injectReconfigurationMarker(test.queryId(0), unrelated));
+        EXPECT_TRUE(test.qm->injectReconfigurationMarker(test.queryId(0), update));
+        EXPECT_FALSE(ctrl->wasClosed());
+        EXPECT_TRUE(reconfigurationState->takeSinkUpdate("old").has_value());
+        EXPECT_FALSE(test.qm->injectReconfigurationMarker(QueryId::createLocal(LocalQueryId(generateUUID())), update));
+
+        test.stopQuery(test.queryId(0));
+    }
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+    test.stop();
 }
 
 /// System Stop: Meaning the Query was stopped internally from the query manager via the stop query

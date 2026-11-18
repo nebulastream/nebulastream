@@ -16,10 +16,12 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <folly/Synchronized.h>
 #include <Callback.hpp>
 #include <ErrorHandling.hpp>
@@ -139,6 +141,11 @@ struct RunningQueryPlan final
     /// 1. Not notify any listeners. `onDestruction` will not be called.
     /// 2. Pipelines are not terminated, just destroyed.
     static std::unique_ptr<ExecutableQueryPlan> dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
+
+    /// Injects a reconfiguration marker into the query (the original's NodeEngine::addReconfigureMarker) and returns the event of the
+    /// query, or nothing if the marker has no event for the query or was already recorded. A drain or update-and-drain event drains all
+    /// sources of the query: they end their stream with the marker. An update event is applied by the network sinks.
+    std::optional<ReconfigurationMetadata> injectReconfigurationMarker(const ReconfigurationMarker& marker);
 
     /// Destroying a RunningQueryPlan will:
     /// 1. Will invoke listeners!

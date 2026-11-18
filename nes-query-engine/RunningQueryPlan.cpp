@@ -23,8 +23,10 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <absl/functional/any_invocable.h>
@@ -268,7 +270,8 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                             },
                             [listener](const Exception& exception) { listener->onFailure(exception); },
                             controller,
-                            emitter));
+                            emitter,
+                            internal.qep->reconfigurationState));
                 }
                 /// release lock
             }
@@ -277,6 +280,27 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
         });
 
     return {std::move(runningPlan), pipelineSetupCallbackRef};
+}
+
+std::optional<ReconfigurationMetadata> RunningQueryPlan::injectReconfigurationMarker(const ReconfigurationMarker& marker)
+{
+    const auto lock = internal.lock();
+    auto event = lock->qep->reconfigurationState->recordMarker(marker);
+    if (not event.has_value())
+    {
+        ENGINE_LOG_DEBUG("Reconfiguration marker {} has no new event for query {}", marker.getId(), lock->qep->queryId);
+        return std::nullopt;
+    }
+    if (not std::holds_alternative<UpdateQueryMetadata>(*event))
+    {
+        const auto serialized = marker.serialize();
+        for (const auto& [originId, source] : lock->sources)
+        {
+            ENGINE_LOG_DEBUG("Draining source {} of query {} with marker {}", originId, lock->qep->queryId, marker.getId());
+            source->drain(serialized);
+        }
+    }
+    return event;
 }
 
 std::pair<std::unique_ptr<StoppingQueryPlan>, absl::AnyInvocable<void()>>

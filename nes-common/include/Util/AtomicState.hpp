@@ -57,6 +57,19 @@ struct AtomicState
         return std::holds_alternative<State>(state);
     }
 
+    /// Applies `function` to the current state, if it is a `State`, without leaving the state. Returns true if `function` was applied.
+    template <typename State, typename Function>
+    bool applyIfIs(Function&& function)
+    {
+        std::scoped_lock lock(mutex);
+        if (!std::holds_alternative<State>(state))
+        {
+            return false;
+        }
+        std::forward<Function>(function)(std::get<State>(state));
+        return true;
+    }
+
 private:
     template <typename FromState, typename ToState>
     bool tryTransitionLocked(const std::function<ToState(FromState&&)>& transitionFunction)

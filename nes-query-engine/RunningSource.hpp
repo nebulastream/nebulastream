@@ -21,6 +21,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
+#include <ReconfigurationState.hpp>
 
 namespace NES
 {
@@ -47,7 +48,8 @@ public:
         std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped,
         std::function<void(Exception)> onSourceFailure,
         QueryLifetimeController& controller,
-        WorkEmitter& emitter);
+        WorkEmitter& emitter,
+        std::shared_ptr<ReconfigurationState> reconfigurationState);
 
     RunningSource(const RunningSource& other) = delete;
     RunningSource& operator=(const RunningSource& other) = delete;
@@ -62,6 +64,9 @@ public:
 
     /// Calls the underlying `tryStop`
     [[nodiscard]] SourceReturnType::TryStopResult tryStop() const;
+
+    /// Drains the underlying source with the serialized reconfiguration marker. Returns false if it was already drained.
+    bool drain(const std::string& marker) const;
 
 private:
     RunningSource(

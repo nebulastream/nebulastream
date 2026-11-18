@@ -184,6 +184,8 @@ public:
         WorkEmitter& emitter);
     void stopQuery(QueryId queryId);
 
+    bool injectReconfigurationMarker(QueryId queryId, const ReconfigurationMarker& marker);
+
     void clear()
     {
         const std::scoped_lock lock(mutex);
@@ -821,6 +823,13 @@ QueryEngine::QueryEngine(
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
+/// NOLINTNEXTLINE Intentionally non-const
+bool QueryEngine::injectReconfigurationMarker(const QueryId queryId, const ReconfigurationMarker& marker)
+{
+    ENGINE_LOG_INFO("Injecting reconfiguration marker {} into Query {}", marker.getId(), queryId);
+    return queryCatalog->injectReconfigurationMarker(queryId, marker);
+}
+
 void QueryEngine::stop(QueryId queryId)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
@@ -994,6 +1003,26 @@ void QueryCatalog::start(
             "not transition into running until the callback is dropped.");
         RunningQueryPlan::dispose(std::move(runningQueryPlan));
     }
+}
+
+bool QueryCatalog::injectReconfigurationMarker(const QueryId id, const ReconfigurationMarker& marker)
+{
+    const std::scoped_lock lock(mutex);
+    const auto it = queryStates.find(id);
+    if (it == queryStates.end())
+    {
+        ENGINE_LOG_WARNING(
+            "Attempting to inject a reconfiguration marker into query {} failed. Query was not submitted to the engine.", id);
+        return false;
+    }
+    bool hasEvent = false;
+    if (!it->second->applyIfIs<Running>([&](Running& running)
+                                        { hasEvent = running.plan->injectReconfigurationMarker(marker).has_value(); }))
+    {
+        ENGINE_LOG_WARNING("Attempting to inject a reconfiguration marker into query {} failed. Query is not running.", id);
+        return false;
+    }
+    return hasEvent;
 }
 
 void QueryCatalog::stopQuery(QueryId id)

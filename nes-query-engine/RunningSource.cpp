@@ -27,6 +27,7 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
@@ -46,11 +47,18 @@ SourceReturnType::EmitFunction emitFunction(
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
-    WorkEmitter& emitter)
+    WorkEmitter& emitter,
+    std::shared_ptr<ReconfigurationState> reconfigurationState)
 {
     auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
         std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
-    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
+    return [&controller,
+            successors = std::move(successors),
+            source,
+            &emitter,
+            queryId,
+            availableBuffer = std::move(availableBuffer),
+            reconfigurationState = std::move(reconfigurationState)](
                const OriginId sourceId,
                SourceReturnType::SourceReturnType event,
                const std::stop_token& stopToken) -> SourceReturnType::EmitResult
@@ -93,10 +101,27 @@ SourceReturnType::EmitFunction emitFunction(
                     controller.initializeSourceStop(queryId, sourceId, source);
                     return SourceReturnType::EmitResult::SUCCESS;
                 },
-                [&]([[maybe_unused]] const SourceReturnType::Drained& drained)
+                [&](const SourceReturnType::Drained& drained)
                 {
-                    /// A drained source ends its stream gracefully, like an end of stream.
+                    /// A drained source ends its stream gracefully, like an end of stream. The marker that ended the stream of a network
+                    /// source decides how the query terminates once all of its sources have ended.
                     ENGINE_LOG_DEBUG("Source with OriginId {} was drained by a reconfiguration marker for query {}", sourceId, queryId);
+                    try
+                    {
+                        if (not reconfigurationState->recordMarker(ReconfigurationMarker::deserialize(drained.marker)).has_value()
+                            and not reconfigurationState->getDrainMarker().has_value())
+                        {
+                            ENGINE_LOG_WARNING(
+                                "Source with OriginId {} of query {} was ended by a reconfiguration marker without an event for the query",
+                                sourceId,
+                                queryId);
+                        }
+                    }
+                    catch (const Exception& exception)
+                    {
+                        controller.initializeSourceFailure(queryId, sourceId, source, exception);
+                        return SourceReturnType::EmitResult::SUCCESS;
+                    }
                     controller.initializeSourceStop(queryId, sourceId, source);
                     return SourceReturnType::EmitResult::SUCCESS;
                 },
@@ -134,15 +159,18 @@ std::shared_ptr<RunningSource> RunningSource::create(
     std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped,
     std::function<void(Exception)> onSourceFailure,
     QueryLifetimeController& controller,
-    WorkEmitter& emitter)
+    WorkEmitter& emitter,
+    std::shared_ptr<ReconfigurationState> reconfigurationState)
 {
+    PRECONDITION(reconfigurationState != nullptr, "A source requires the reconfiguration state of its query");
     const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+        runningSource->source->start(emitFunction(
+            queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter, std::move(reconfigurationState)));
     }
     return runningSource;
 }
@@ -186,6 +214,12 @@ SourceReturnType::TryStopResult RunningSource::tryStop() const
 {
     const std::scoped_lock lock(mutex);
     return this->source->tryStop(std::chrono::milliseconds(0));
+}
+
+bool RunningSource::drain(const std::string& marker) const
+{
+    const std::scoped_lock lock(mutex);
+    return this->source->drain(marker);
 }
 
 void RunningSource::fail(Exception exception) const
