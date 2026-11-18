@@ -106,6 +106,7 @@ class Scenario:
     A bare glob in ``configs`` expects OK.
     ``args`` holds the arguments of one scenario, such as the flush interval that a config sets.
     The framework passes them to the scenario as ``ctx.args`` without reading them.
+    ``loader_args`` holds keyword arguments of the loader's constructor, which the framework passes the same way.
     """
 
     def __init__(
@@ -117,6 +118,7 @@ class Scenario:
         outcome: str = "OK",
         n_buffers: int | None = None,
         args: dict[str, object] | None = None,
+        loader_args: dict[str, object] | None = None,
     ) -> None:
         specs: list[ConfigSpec] = []
         for entry in configs or []:
@@ -128,11 +130,12 @@ class Scenario:
         self.configs = specs
         self.n_buffers = n_buffers
         self.args = args or {}
+        self.loader_args = loader_args or {}
 
     def __repr__(self) -> str:
         return (
             f"Scenario(name={self.name!r}, configs={self.configs!r}, "
-            f"n_buffers={self.n_buffers!r}, args={self.args!r})"
+            f"n_buffers={self.n_buffers!r}, args={self.args!r}, loader_args={self.loader_args!r})"
         )
 
 
