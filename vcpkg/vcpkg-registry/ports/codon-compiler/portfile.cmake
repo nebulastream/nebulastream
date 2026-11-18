@@ -12,17 +12,12 @@
 
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
-        REPO exaloop/codon
-        REF f1cd7006ad659a80852fd6de25885a0c639c94dc
-        SHA512 89feb7ce0530252c1202a425c98d3bac2ece2ce34abb8326da424ed93e790430ba15cc0ef7d7f3a7f174796afa3576bcb8ff265ec0d75bd91dc006134b0fd2c1
-        HEAD_REF develop
-        PATCHES
-        0001-build-compiler-only-with-llvm-21.patch
-        0002-configurable-llvm-optimization.patch
-        0003-fix-int64-min-unary-negation.patch
-        0004-avoid-null-zero-length-memory-operations.patch
-        0005-port-to-llvm-22.patch
-        0006-fix-fmt-formatter-specialization-order.patch
+        # NebulaStream's fork of Codon: the former port patches as commits, and a token-based parser
+        # (codon/parser/tok), on the branch nebulastream.
+        REPO ls-1801/codon
+        REF 15a59a69ca2851fd4913fa65906a8df89a4a26c7
+        SHA512 89c4b5e59eb44af0de53b363476c504e73c91cc9ac17105bee055bb824b377b9857800eeaca0f3fb79352126ffcc02a828202a230e71b452f27944625e95ac04
+        HEAD_REF nebulastream
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
