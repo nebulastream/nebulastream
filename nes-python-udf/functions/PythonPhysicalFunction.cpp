@@ -328,7 +328,12 @@ std::string createPythonUdfSource(
     }
 
     const auto bodySymbol = symbol + "_body";
-    const auto pythonResultType = pythonTypeName(returnType);
+    /// A VARSIZED or CHAR result may be a str or bytes, as in the Python executions, so the body has no return annotation and
+    /// Codon infers its type. _nes_result_bytes takes the bytes of either and rejects other types when Codon compiles it.
+    const bool textResult = returnType.type == DataType::Type::VARSIZED || returnType.type == DataType::Type::CHAR;
+    const auto returnAnnotation = textResult
+        ? std::string{}
+        : fmt::format(" -> {}{}{}", returnType.nullable ? "Optional[" : "", pythonTypeName(returnType), returnType.nullable ? "]" : "");
     const auto [imports, functionBody] = splitLeadingImports(body);
     auto source = imports;
     source += fmt::format(
@@ -346,16 +351,23 @@ std::string createPythonUdfSource(
         "    return str(_data, 1)\n\n"
         "def _nes_char_bytes(value: u8) -> bytes:\n"
         "    return bytes(_nes_char_str(value))\n\n"
+        "def _nes_result_bytes(value) -> str:\n"
+        "    if isinstance(value, Optional[str]) or isinstance(value, Optional[bytes]):\n"
+        "        return _nes_result_bytes(value.__val__())\n"
+        "    elif isinstance(value, str):\n"
+        "        return value\n"
+        "    elif isinstance(value, bytes):\n"
+        "        return value._value\n"
+        "    else:\n"
+        "        compile_error(\"a VARSIZED or CHAR UDF must return str or bytes\")\n\n"
         "def _nes_char_byte(value: str) -> u8:\n"
         "    if value.len != 1:\n"
         "        raise ValueError(f\"a CHAR UDF must return one byte, not {{value.len}}\")\n"
         "    return u8(int(value.ptr[0]))\n\n"
-        "def {}({}) -> {}{}{}:\n{}\n@export\n",
+        "def {}({}){}:\n{}\n@export\n",
         bodySymbol,
         join(parameters),
-        returnType.nullable ? "Optional[" : "",
-        pythonResultType,
-        returnType.nullable ? "]" : "",
+        returnAnnotation,
         indentPythonBody(functionBody));
 
     const auto abiResultType = returnType.type == DataType::Type::BOOLEAN ? std::string{"u8"} : codonTypeName(returnType);
@@ -386,9 +398,9 @@ std::string createPythonUdfSource(
             source += "            _result_size[0] = i64(0)\n";
             source += "        else:\n";
             source += "            _result_is_null[0] = u8(0)\n";
-            source += "            _result_value = str(_result_value)\n";
-            source += "            _result_ptr[0] = _result_value.ptr\n";
-            source += "            _result_size[0] = i64(_result_value.len)\n";
+            source += "            _result_bytes = _nes_result_bytes(_result_value)\n";
+            source += "            _result_ptr[0] = _result_bytes.ptr\n";
+            source += "            _result_size[0] = i64(_result_bytes.len)\n";
         }
         else if (returnType.type == DataType::Type::BOOLEAN)
         {
@@ -400,7 +412,7 @@ std::string createPythonUdfSource(
         {
             source += "        else:\n";
             source += "            _result_is_null[0] = u8(0)\n";
-            source += "            _result[0] = _nes_char_byte(str(_result_value))\n";
+            source += "            _result[0] = _nes_char_byte(_nes_result_bytes(_result_value))\n";
         }
         else
         {
@@ -411,7 +423,7 @@ std::string createPythonUdfSource(
     }
     else if (returnType.type == DataType::Type::VARSIZED)
     {
-        source += fmt::format("        _result_value = str({}({}))\n", bodySymbol, join(bodyArguments));
+        source += fmt::format("        _result_value = _nes_result_bytes({}({}))\n", bodySymbol, join(bodyArguments));
         source += "        _result_ptr[0] = _result_value.ptr\n";
         source += "        _result_size[0] = i64(_result_value.len)\n";
     }
@@ -421,7 +433,7 @@ std::string createPythonUdfSource(
     }
     else if (returnType.type == DataType::Type::CHAR)
     {
-        source += fmt::format("        _result[0] = _nes_char_byte(str({}({})))\n", bodySymbol, join(bodyArguments));
+        source += fmt::format("        _result[0] = _nes_char_byte(_nes_result_bytes({}({})))\n", bodySymbol, join(bodyArguments));
     }
     else
     {

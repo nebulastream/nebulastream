@@ -260,6 +260,44 @@ SELECT body_type_name_inline(FROM_BASE64(b)) AS r FROM binary INTO FILE();
 ----
 ERROR 3007
 
+# A body returns str or bytes for a VARSIZED result, as in the Python modes
+CREATE FUNCTION body_echo_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return x
+$python$;
+CREATE FUNCTION body_bytes_or_none_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    if len(x) > 1:
+        return None
+    return x + x
+$python$;
+CREATE FUNCTION body_encode_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return (x + "!").encode()
+$python$;
+CREATE FUNCTION body_text_or_none_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    if len(x) > 1:
+        return None
+    return x + "?"
+$python$;
+
+SELECT TO_BASE64(body_echo_bytes_inline(FROM_BASE64(b))) AS r FROM binary INTO FILE();
+----
+/w==
+
+SELECT TO_BASE64(body_bytes_or_none_inline(FROM_BASE64(b))) AS r FROM binary INTO FILE();
+----
+//8=
+
+SELECT body_bytes_or_none_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+NULL
+
+SELECT body_encode_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+ä!
+
+SELECT body_text_or_none_inline(FROM_BASE64(b)) AS r FROM text INTO FILE();
+----
+ä?
+
 
 # --- CHAR ---
 # A CHAR is one byte. It arrives like a one-byte VARSIZED value, as a one-character str or with BYTES as bytes, and a CHAR result is a
@@ -350,6 +388,9 @@ CREATE FUNCTION too_long_inline (x CHAR) RETURNS CHAR EXECUTION INLINE ENTRYPOIN
 CREATE FUNCTION body_upper_inline (x CHAR) RETURNS CHAR EXECUTION INLINE AS $python$
     return x.upper()
 $python$;
+CREATE FUNCTION body_char_bytes_inline (x CHAR BYTES) RETURNS CHAR EXECUTION INLINE AS $python$
+    return x.upper()
+$python$;
 
 SELECT char_code_inline(c) AS r FROM chars INTO FILE();
 ----
@@ -370,6 +411,12 @@ SELECT next_char_inline(c) AS r, char_from_bytes_inline(c) AS s, body_upper_inli
 ----
 b,a,A
 [,Z,Z
+
+# A body returns str or bytes for a CHAR result
+SELECT body_char_bytes_inline(c) AS r FROM chars INTO FILE();
+----
+A
+Z
 
 SELECT too_long_inline(c) AS r FROM chars INTO FILE();
 ----
