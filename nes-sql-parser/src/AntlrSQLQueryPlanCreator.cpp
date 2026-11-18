@@ -23,6 +23,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -156,6 +157,17 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
             const std::string tokenName = std::string(lexer.getVocabulary().getSymbolicName(timebase));
             throw InvalidQuerySyntax("Unknown time unit: {}", tokenName);
     }
+}
+
+/// Rejects values that do not fit into an int or are not positive instead of letting std::stoi throw a non-NES exception.
+static int parsePositiveWindowParameter(const std::string_view parameter, const std::string_view text)
+{
+    const auto parsed = from_chars<int>(text);
+    if (not parsed or *parsed <= 0)
+    {
+        throw InvalidQuerySyntax("Window {} must be a positive integer that fits into an int, got {}", parameter, text);
+    }
+    return *parsed;
 }
 
 static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction, LogicalFunction rightFunction, const uint64_t tokenType)
@@ -947,7 +959,7 @@ void AntlrSQLQueryPlanCreator::exitSizeParameter(AntlrSQLParser::SizeParameterCo
     {
         throw InvalidQuerySyntax("SizeParameter must have 'size', a number, and a time unit.");
     }
-    helpers.top().size = std::stoi(context->children.at(1)->getText());
+    helpers.top().size = parsePositiveWindowParameter("SIZE", context->children.at(1)->getText());
     AntlrSQLBaseListener::exitSizeParameter(context);
 }
 
@@ -957,7 +969,7 @@ void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyP
     {
         throw InvalidQuerySyntax("AdvancebyParameter must have 'ADVANCE BY', a number, and a time unit.");
     }
-    helpers.top().advanceBy = std::stoi(context->children.at(2)->getText());
+    helpers.top().advanceBy = parsePositiveWindowParameter("ADVANCE BY", context->children.at(2)->getText());
     AntlrSQLBaseListener::exitAdvancebyParameter(context);
 }
 
@@ -1435,7 +1447,13 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
 
 void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)
 {
-    helpers.top().minimumCount = std::stoi(context->getText());
+    const auto minimumCount = from_chars<int>(context->getText());
+    if (not minimumCount)
+    {
+        throw InvalidQuerySyntax(
+            "The minimum size of a THRESHOLD window must be an integer that fits into an int, got {}", context->getText());
+    }
+    helpers.top().minimumCount = minimumCount;
 }
 
 void AntlrSQLQueryPlanCreator::enterAnonymousSource(AntlrSQLParser::AnonymousSourceContext* context)

@@ -1037,6 +1037,46 @@ TEST_F(StatementBinderTest, ShowVersionStatementTest)
     ASSERT_FALSE(binder->parseAndBindSingle("SHOW VERSION WHERE NAME = 'worker'").has_value());
 }
 
+TEST_F(StatementBinderTest, WindowParametersRejectOverflowingAndZeroValues)
+{
+    for (const auto* window :
+         {"TUMBLING(SIZE 99999999999 MS)",
+          "TUMBLING(SIZE 0 MS)",
+          "TUMBLING(SIZE 2147483648 MS)",
+          "SLIDING(ts, SIZE 1000 MS, ADVANCE BY 99999999999 MS)",
+          "SLIDING(ts, SIZE 1000 MS, ADVANCE BY 0 MS)",
+          "SLIDING(ts, SIZE 99999999999 MS, ADVANCE BY 10 MS)",
+          "SLIDING(ts, SIZE 0 MS, ADVANCE BY 10 MS)"})
+    {
+        const auto query = fmt::format("SELECT SUM(a) AS s FROM (SELECT * FROM s1) WINDOW {} INTO sink", window);
+        try
+        {
+            AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+            ADD_FAILURE() << "expected InvalidQuerySyntax for " << window;
+        }
+        catch (const Exception& exception)
+        {
+            EXPECT_EQ(exception.code(), ErrorCode::InvalidQuerySyntax) << window;
+            EXPECT_TRUE(std::string{exception.what()}.contains("must be a positive integer that fits into an int")) << exception.what();
+        }
+    }
+}
+
+TEST_F(StatementBinderTest, ThresholdMinimumCountRejectsOverflow)
+{
+    const std::string query = "SELECT SUM(a) AS s FROM (SELECT * FROM s1) WINDOW THRESHOLD(a > 1, 99999999999) INTO sink";
+    try
+    {
+        AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+        ADD_FAILURE() << "expected InvalidQuerySyntax";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::InvalidQuerySyntax);
+        EXPECT_TRUE(std::string{exception.what()}.contains("fits into an int")) << exception.what();
+    }
+}
+
 TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT OUTER JOIN (SELECT * FROM s2) "
