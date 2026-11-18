@@ -54,6 +54,8 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `DecomposedQueryIdWithVersion`, DQP `QueryState`          | `DecomposedQueryId`, `DecomposedQueryPlanVersion`, `DecomposedQueryPlanState` |
 | `findNetworkOperatorsForLink`, `findUpstreamAndDownstreamPinnedOperators` (`IncrementalPlacementUtils`) | same names in `Placement/IncrementalPlacementUtils` |
 | Placement addition strategies (`BottomUpStrategy`, …) placing operators between pinned operators | `BottomUpOperatorPlacer::placeIncrementally` (the ILP-based bottom-up placement with fixed operators) |
+| `PlacementRemovalStrategy`                                | `PlacementRemovalStrategy`                                                |
+| `DeploymentContext`, `DeploymentUnit`, `ReconfigurationMarkerUnit` | same names in `DeploymentContext.hpp`                            |
 
 ### Worker capacity
 
@@ -104,3 +106,18 @@ The port computes reachability on a snapshot of the topology, so no locks and no
 
 **Shortcut (same as the original):** the upstream operators are assumed to keep running, which only holds as long as only leaf workers
 change their parent.
+
+### Placement removal
+
+The removal processes the operators between the pinned operators of a change log entry. Operators to be re-placed release their slots and
+become `ToBePlaced`; operators to be removed become `Removed`. Channel chains from or to a re-placed operator, and chains using a removed
+link, are removed. Their forwarding plans and the plans hosting re-placed operators are drained (`MarkedForMigration`).
+
+**Deviation:** the original removes operators from the plans and redeploys the remaining plan as a new version. The current query
+engine cannot change a running plan, so the port keeps a plan, updates only the receivers of its network sinks (see placement addition),
+or drains it as a whole. A plan that hosts both re-placed operators and operators that stay cannot be reconfigured incrementally.
+
+**Deviation:** a drained plan detaches from receiving plans that keep running instead of forwarding the reconfiguration marker to them
+(`DeploymentContext::detachedChannels`). The receiving plan keeps its network source and a new sender attaches to it. In the original,
+the downstream plan of a removed chain is replaced by a new plan with a new id, which (a) loses the state of the stateful operators in that
+plan and (b) never terminates if the plan has inputs that are not affected by the change, as no marker arrives on them.

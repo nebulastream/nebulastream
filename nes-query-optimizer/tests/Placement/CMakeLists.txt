@@ -13,9 +13,11 @@
 function(add_nes_placement_test)
     add_nes_optimizer_test(${ARGN})
     target_link_libraries(${ARGV0} nes-distributed-test-cluster-lib)
+    target_include_directories(${ARGV0} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 endfunction()
 
 add_nes_placement_test(query-decomposition-test QueryDecompositionTest.cpp)
 add_nes_placement_test(global-execution-plan-test GlobalExecutionPlanTest.cpp)
 add_nes_placement_test(incremental-placement-utils-test IncrementalPlacementUtilsTest.cpp)
 add_nes_placement_test(incremental-bottom-up-placement-test IncrementalBottomUpPlacementTest.cpp)
+add_nes_placement_test(placement-removal-strategy-test PlacementRemovalStrategyTest.cpp)

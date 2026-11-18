@@ -13,5 +13,6 @@
 add_source_files(nes-query-optimizer
         BottomUpPlacement.cpp
         IncrementalPlacementUtils.cpp
+        PlacementRemovalStrategy.cpp
         QueryDecomposition.cpp
 )

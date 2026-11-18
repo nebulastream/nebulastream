@@ -13,10 +13,12 @@
 */
 #pragma once
 
+#include <cstddef>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <WorkerCatalog.hpp>
@@ -24,6 +26,9 @@
 
 namespace NES
 {
+
+/// Number of operator slots an operator occupies on its worker. Sources and sinks do not occupy a slot.
+size_t getOperatorCapacityDemand(const LogicalOperator& op);
 
 /// Placement that traverses the topology from bottom-to-top based on the given capacities of the nodes.
 /// This does not change the structure of the plan in any way, it only assigns placement traits with node placements to the given

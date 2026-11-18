@@ -49,9 +49,7 @@
 
 namespace NES
 {
-namespace
-{
-size_t operatorCapacityDemand(const LogicalOperator& op)
+size_t getOperatorCapacityDemand(const LogicalOperator& op)
 {
     if (op.tryGetAs<SourceDescriptorLogicalOperator>())
     {
@@ -62,6 +60,13 @@ size_t operatorCapacityDemand(const LogicalOperator& op)
         return 0;
     }
     return 1;
+}
+
+namespace
+{
+size_t operatorCapacityDemand(const LogicalOperator& op)
+{
+    return getOperatorCapacityDemand(op);
 }
 
 LogicalOperator addPlacementTrait(const LogicalOperator& op, const std::unordered_map<OperatorId, NetworkTopology::NodeId>& placement)
