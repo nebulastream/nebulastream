@@ -131,8 +131,11 @@ void ExecutionContext::setLocalOperatorState(const OperatorId operatorId, std::u
 
 static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
 {
-    auto handlers = pipelineCtx->getOperatorHandlers();
-    return handlers[index].get();
+    /// Called per pipeline invocation, so read the map in place: copying it allocates and bumps every handler's reference count.
+    const auto& handlers = pipelineCtx->getOperatorHandlers();
+    const auto handler = handlers.find(index);
+    INVARIANT(handler != handlers.end(), "No operator handler registered for the requested handler id");
+    return handler->second.get();
 }
 
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const
