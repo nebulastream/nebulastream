@@ -16,3 +16,4 @@ function(add_nes_placement_test)
 endfunction()
 
 add_nes_placement_test(query-decomposition-test QueryDecompositionTest.cpp)
+add_nes_placement_test(global-execution-plan-test GlobalExecutionPlanTest.cpp)

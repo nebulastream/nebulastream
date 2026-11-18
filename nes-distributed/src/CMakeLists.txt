@@ -14,6 +14,7 @@ add_source_files(nes-distributed
         ChangeLog.cpp
         DistributedQuery.cpp
         DistributedQueryIdGenerator.cpp
+        GlobalExecutionPlan.cpp
         NetworkTopology.cpp
         OperatorGraph.cpp
         SharedQueryPlan.cpp

@@ -50,6 +50,8 @@ Shortcuts that the original takes and that the port takes as well are listed und
 | `ChangeLog`, `ChangeLogEntry`                             | `ChangeLog`, `ChangeLogEntry`                                             |
 | Network operator properties `UPSTREAM_LOGICAL_OPERATOR_ID`, `DOWNSTREAM_LOGICAL_OPERATOR_ID`, `CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS` | `NetworkChannel` recorded by the `QueryDecomposer` (one per hop) |
 | Operator property `PLACED_DECOMPOSED_PLAN_ID`             | Hosted operators per local plan recorded by the `QueryDecomposer`         |
+| `GlobalExecutionPlan` (execution nodes with decomposed query plans) | `GlobalExecutionPlan` (decomposed query plans and channels per query) |
+| `DecomposedQueryIdWithVersion`, DQP `QueryState`          | `DecomposedQueryId`, `DecomposedQueryPlanVersion`, `DecomposedQueryPlanState` |
 
 ### Worker capacity
 
@@ -80,3 +82,10 @@ logical operators get a new id whenever they are copied with a modification (e.g
 `withOperatorId` is reserved for the serialization. The operators in the local plans therefore have other ids than in the global plan.
 Instead, the decomposition records which operators of the global plan each local plan hosts, and the network channels between local
 plans (identified by their channel id, which is part of the network source and sink configuration).
+
+### Global execution plan
+
+**Deviation:** the original keeps the decomposed query plans per execution node and locks execution nodes during a placement amendment.
+The port keeps them per query: there are no execution nodes in the current code base, and a placement amendment only changes the plans of
+its own query. The topology nodes that the original locks for its pessimistic mode are the workers of the `WorkerCatalog`.
+Each decomposed query plan remembers the id of the local query that runs it on its worker.
