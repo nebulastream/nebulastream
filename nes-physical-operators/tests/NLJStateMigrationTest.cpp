@@ -17,21 +17,27 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/JoinTriggerStrategy.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
 #include <gtest/gtest.h>
+#include <nes-network-bindings/lib.h>
+#include <rust/cxx.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -68,7 +74,7 @@ struct MinimalPipelineExecutionContext final : PipelineExecutionContext
 
     std::shared_ptr<BufferManager> bufferManager;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlers;
-    ReconfigurationState reconfigurationState{LocalQueryId(LocalQueryId::INVALID)};
+    ReconfigurationState reconfigurationState{LocalQueryId(generateUUID())};
 };
 
 constexpr uint64_t WINDOW_SIZE = 1000;
@@ -137,6 +143,42 @@ TEST_F(NLJStateMigrationTest, RestoresSlicesAndProgress)
     }
     const auto counters = newJoin->getSliceAndWindowStore().getMigratedState();
     EXPECT_GT(counters.nextSequenceNumber, oldJoin->getSliceAndWindowStore().getMigratedState().nextSequenceNumber);
+}
+
+/// The old instance sends its state over a dedicated channel when it is updated and drained, the new instance receives it at start.
+TEST_F(NLJStateMigrationTest, MigratesStateOverTheNetwork)
+{
+    enable_memcom();
+    const NetworkServiceOptions options{
+        .sender_queue_size = 64, .max_pending_acks = 16, .receiver_queue_size = 16, .sender_io_threads = 1, .receiver_io_threads = 1};
+    init_receiver_service(rust::String("new-worker:1"), rust::String("new-worker"), options);
+    init_sender_service(rust::String("old-worker:1"), rust::String("old-worker"), options);
+    const StateMigrationChannel channel{
+        .channel = "migration", .senderDataEndpoint = "old-worker:1", .receiverDataEndpoint = "new-worker:1"};
+
+    const auto oldJoin = createHandler();
+    oldJoin->start(pec);
+    const CreateNewNLJSliceArgs sliceArgs(*bufferManager, TUPLE_SIZE, TUPLE_SIZE);
+    for (const auto timestamp : {Timestamp(10), Timestamp(1500)})
+    {
+        (void)oldJoin->getSliceAndWindowStore().getSlicesOrCreate(timestamp, oldJoin->getCreateNewSlicesFunction(sliceArgs));
+    }
+
+    MinimalPipelineExecutionContext newPec{bufferManager};
+    const auto newJoin = createHandler();
+    newJoin->setIncomingStateMigration(channel);
+    std::jthread newWorker([&] { newJoin->start(newPec); });
+
+    auto marker = ReconfigurationMarker::create();
+    marker.addReconfigurationEvent(
+        pec.reconfigurationState.getLocalQueryId(),
+        UpdateAndDrainQueryMetadata{.detachedChannels = {}, .stateMigrationChannels = {channel}});
+    ASSERT_TRUE(pec.reconfigurationState.recordMarker(marker).has_value());
+    oldJoin->stop(QueryTerminationType::Graceful, pec);
+    newWorker.join();
+
+    EXPECT_TRUE(newJoin->getSliceAndWindowStore().getSliceBySliceEnd(SliceEnd(1000)).has_value());
+    EXPECT_TRUE(newJoin->getSliceAndWindowStore().getSliceBySliceEnd(SliceEnd(2000)).has_value());
 }
 
 TEST_F(NLJStateMigrationTest, RejectsOtherState)

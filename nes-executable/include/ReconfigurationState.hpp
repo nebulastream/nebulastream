@@ -62,6 +62,9 @@ public:
     /// True if the query is drained and hands the state of its stateful operators over to a state migration query.
     [[nodiscard]] bool isUpdateAndDrain() const;
 
+    /// The update-and-drain event of the query, if it is drained by one.
+    [[nodiscard]] std::optional<UpdateAndDrainQueryMetadata> getUpdateAndDrainEvent() const;
+
     /// How the network sink of the channel ends the channel when the query terminates.
     [[nodiscard]] ChannelTermination getChannelTermination(const std::string& channelId) const;
 

@@ -18,5 +18,6 @@ add_source_files(nes-physical-operators
         StreamJoinBuildPhysicalOperator.cpp
         StreamJoinOperatorHandler.cpp
         StreamJoinProbePhysicalOperator.cpp
+        StateMigrationTransfer.cpp
 )
 

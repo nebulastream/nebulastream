@@ -372,7 +372,7 @@ TEST_F(NetworkSinkTest, DrainDetachesFromReceiversThatKeepRunning)
     send(*sink, pec, 1, 2);
 
     auto marker = ReconfigurationMarker::create();
-    marker.addReconfigurationEvent(localQueryId, UpdateAndDrainQueryMetadata{.detachedChannels = {"c"}});
+    marker.addReconfigurationEvent(localQueryId, UpdateAndDrainQueryMetadata{.detachedChannels = {"c"}, .stateMigrationChannels = {}});
     ASSERT_TRUE(reconfigurationState.recordMarker(marker).has_value());
     stopSink(*sink, pec);
     EXPECT_EQ(receive(*source, *bufferManager, 2), range(1, 2));

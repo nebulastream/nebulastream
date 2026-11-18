@@ -86,6 +86,16 @@ std::optional<ReconfigurationMarker> ReconfigurationState::getDrainMarker() cons
     return internal.rlock()->drainMarker;
 }
 
+std::optional<UpdateAndDrainQueryMetadata> ReconfigurationState::getUpdateAndDrainEvent() const
+{
+    const auto locked = internal.rlock();
+    if (not locked->drainEvent.has_value() or not std::holds_alternative<UpdateAndDrainQueryMetadata>(*locked->drainEvent))
+    {
+        return std::nullopt;
+    }
+    return std::get<UpdateAndDrainQueryMetadata>(*locked->drainEvent);
+}
+
 bool ReconfigurationState::isUpdateAndDrain() const
 {
     const auto locked = internal.rlock();

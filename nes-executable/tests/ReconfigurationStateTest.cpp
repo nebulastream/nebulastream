@@ -57,9 +57,10 @@ TEST_F(ReconfigurationStateTest, IgnoresMarkersWithoutEventAndDuplicates)
 TEST_F(ReconfigurationStateTest, DrainDecidesChannelTermination)
 {
     auto marker = ReconfigurationMarker::create();
-    marker.addReconfigurationEvent(query, UpdateAndDrainQueryMetadata{.detachedChannels = {"detached"}});
+    marker.addReconfigurationEvent(query, UpdateAndDrainQueryMetadata{.detachedChannels = {"detached"}, .stateMigrationChannels = {}});
     ASSERT_TRUE(state.recordMarker(marker).has_value());
     EXPECT_TRUE(state.isUpdateAndDrain());
+    EXPECT_TRUE(state.getUpdateAndDrainEvent().has_value());
     EXPECT_THAT(state.getChannelTermination("detached"), Eq(ChannelTermination::Detach));
     EXPECT_THAT(state.getChannelTermination("other"), Eq(ChannelTermination::ForwardMarker));
 

@@ -57,7 +57,11 @@ TEST_F(ReconfigurationMarkerTest, SerializationRoundtrip)
 {
     auto marker = ReconfigurationMarker::create();
     marker.addReconfigurationEvent(LocalQueryId(generateUUID()), DrainQueryMetadata{.detachedChannels = {"c1", "c2"}});
-    marker.addReconfigurationEvent(LocalQueryId(generateUUID()), UpdateAndDrainQueryMetadata{.detachedChannels = {"c3"}});
+    marker.addReconfigurationEvent(
+        LocalQueryId(generateUUID()),
+        UpdateAndDrainQueryMetadata{
+            .detachedChannels = {"c3"},
+            .stateMigrationChannels = {StateMigrationChannel{.channel = "m", .senderDataEndpoint = "a:1", .receiverDataEndpoint = "b:2"}}});
     marker.addReconfigurationEvent(
         LocalQueryId(generateUUID()),
         UpdateQueryMetadata{.networkSinkUpdates = {{.oldChannel = "c0", .newChannel = "c4", .newDataEndpoint = "base2:9090"}}});

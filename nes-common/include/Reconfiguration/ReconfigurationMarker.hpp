@@ -58,12 +58,26 @@ struct UpdateQueryMetadata
     bool operator==(const UpdateQueryMetadata&) const = default;
 };
 
+/// The network channel over which a stateful operator hands its state to its new instance (ISQD state migration).
+struct StateMigrationChannel
+{
+    std::string channel;
+    /// Data address of the worker that sends the state (the old instance).
+    std::string senderDataEndpoint;
+    /// Data address of the worker that receives the state (the new instance).
+    std::string receiverDataEndpoint;
+
+    bool operator==(const StateMigrationChannel&) const = default;
+};
+
 /// Update and drain: hand the state of the stateful operators over to the state migration query, then terminate (the original's
 /// UpdateAndDrainQueryMetadata).
 struct UpdateAndDrainQueryMetadata
 {
     /// See DrainQueryMetadata::detachedChannels.
     std::vector<std::string> detachedChannels;
+    /// The channels over which the stateful operators of the plan send their state. Shortcut: one stateful operator (a join) per plan.
+    std::vector<StateMigrationChannel> stateMigrationChannels;
 
     bool operator==(const UpdateAndDrainQueryMetadata&) const = default;
 };

@@ -87,7 +87,8 @@ ReconfigurationMarker DeploymentPhase::computeReconfigurationMarker(const Deploy
                 break;
             case DecomposedQueryPlanState::MarkedForUpdateAndDrain:
                 marker.addReconfigurationEvent(
-                    *context.plan.localQueryId, UpdateAndDrainQueryMetadata{.detachedChannels = context.detachedChannels});
+                    *context.plan.localQueryId,
+                    UpdateAndDrainQueryMetadata{.detachedChannels = context.detachedChannels, .stateMigrationChannels = {}});
                 break;
             default:
                 break;

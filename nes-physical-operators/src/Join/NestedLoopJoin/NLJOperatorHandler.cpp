@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Join/StateMigrationTransfer.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -40,6 +41,7 @@
 #include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <ReconfigurationState.hpp>
 
 namespace NES
 {
@@ -338,6 +340,41 @@ void NLJOperatorHandler::restoreState(const std::vector<TupleBuffer>& state, Abs
         INVARIANT(restored.size() == 1 and restored.front() == slice, "A migrated slice must not exist in the new join yet");
     }
     NES_DEBUG("Restored the state of the join with output origin {}: {} slices", outputOriginId, numberOfSlices);
+}
+
+void NLJOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext)
+{
+    WindowBasedOperatorHandler::start(pipelineExecutionContext);
+    if (incomingStateMigration.has_value())
+    {
+        NES_INFO("Join with output origin {} waits for its state on channel {}", outputOriginId, incomingStateMigration->channel);
+        const auto bufferProvider = pipelineExecutionContext.getBufferManager();
+        const auto state = StateMigrationTransfer::receive(
+            incomingStateMigration->channel, incomingStateMigration->receiverDataEndpoint, *bufferProvider, STATE_MIGRATION_TIMEOUT);
+        restoreState(state, *bufferProvider);
+    }
+}
+
+void NLJOperatorHandler::stop(const QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext)
+{
+    if (const auto event = pipelineExecutionContext.getReconfigurationState().getUpdateAndDrainEvent();
+        queryTerminationType == QueryTerminationType::Graceful and event.has_value() and not event->stateMigrationChannels.empty())
+    {
+        /// Shortcut: one stateful operator per plan, so the plan's only migration channel belongs to this join.
+        const auto& channel = event->stateMigrationChannels.front();
+        NES_INFO(
+            "Join with output origin {} sends its state on channel {} to {}",
+            outputOriginId,
+            channel.channel,
+            channel.receiverDataEndpoint);
+        StateMigrationTransfer::send(
+            channel.channel,
+            channel.senderDataEndpoint,
+            channel.receiverDataEndpoint,
+            serializeState(*pipelineExecutionContext.getBufferManager()),
+            STATE_MIGRATION_TIMEOUT);
+    }
+    WindowBasedOperatorHandler::stop(queryTerminationType, pipelineExecutionContext);
 }
 
 }
