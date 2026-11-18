@@ -226,24 +226,42 @@ struct EmittedTask
     ::testing::AssertionResult handle(KeyT stage)
     {
         Args task;
+        if (auto result = take(stage, task); !result)
         {
-            std::unique_lock lock(mutex);
-            if (!arguments.contains(stage))
-            {
-                auto result = addCondition.wait_for(lock, DEFAULT_AWAIT_TIMEOUT, [this, stage]() { return arguments.contains(stage); });
-                if (!result)
-                {
-                    return testing::AssertionFailure() << "Timeout waiting for " << stage << " terminations.";
-                }
-            }
-            task = std::move(arguments[stage]);
-            arguments.erase(stage);
+            return result;
         }
-
         return executeEmittedTask(std::move(task));
     }
 
+    /// Drops the task the way a worker thread skips it (e.g., during engine termination): only the completion callback runs.
+    ::testing::AssertionResult skip(KeyT stage)
+    {
+        Args task;
+        if (auto result = take(stage, task); !result)
+        {
+            return result;
+        }
+        task.callback.callOnComplete();
+        return ::testing::AssertionSuccess();
+    }
+
 private:
+    ::testing::AssertionResult take(KeyT stage, Args& task)
+    {
+        std::unique_lock lock(mutex);
+        if (!arguments.contains(stage))
+        {
+            auto result = addCondition.wait_for(lock, DEFAULT_AWAIT_TIMEOUT, [this, stage]() { return arguments.contains(stage); });
+            if (!result)
+            {
+                return testing::AssertionFailure() << "Timeout waiting for " << stage << " terminations.";
+            }
+        }
+        task = std::move(arguments[stage]);
+        arguments.erase(stage);
+        return ::testing::AssertionSuccess();
+    }
+
     template <typename... Arguments>
     requires(std::constructible_from<Args, Arguments...>)
     void add(KeyT key, Arguments&&... args)
@@ -651,6 +669,85 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
     EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
     EXPECT_FALSE(srcCtrl->wasOpened());
     EXPECT_FALSE(srcCtrl->wasClosed());
+}
+
+/// a worker that terminates skips pending pipeline setup tasks, which drops their setup callback references
+/// without starting the pipelines. The sources must not start: their data would reach a pipeline whose stage was never started.
+/// The skipped pipeline must not be stopped, the started sink must be.
+TEST_F(QueryPlanTest, SkippedPipelineSetupDoesNotStartSources)
+{
+    Testing::TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto srcCtrl = test.sourceControls[source];
+
+    TestQueryLifetimeController controller;
+    TestWorkEmitter emitter;
+
+    auto setups = Setups::setup(stdv::values(test.stages), emitter);
+    auto terminations = Terminations::setup(std::vector{test.stages[sink]}, emitter);
+
+    auto listener = std::make_shared<TestQueryLifetimeListener>();
+    EXPECT_CALL(*listener, onDestruction()).Times(1);
+    EXPECT_CALL(*listener, onRunning()).Times(0);
+
+    std::unique_ptr<StoppingQueryPlan> stopping;
+    {
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(randomQueryId(), std::move(queryPlan), controller, emitter, listener));
+        EXPECT_TRUE(setups->waitForTasks(2));
+        EXPECT_TRUE(setups->handle(test.stages[sink]));
+        EXPECT_TRUE(setups->skip(test.stages[pipeline]));
+
+        absl::AnyInvocable<void()> cleanup;
+        std::tie(stopping, cleanup) = RunningQueryPlan::stop(std::move(runningQueryPlan));
+        cleanup();
+    }
+
+    EXPECT_TRUE(terminations->handle(test.stages[sink]));
+    EXPECT_THAT(*terminations, ::testing::IsEmpty());
+    EXPECT_FALSE(test.pipelineControls[pipeline]->wasStopped());
+
+    EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
+    EXPECT_FALSE(srcCtrl->wasOpened());
+}
+
+/// if every pipeline setup is skipped, releasing the never started sources ends the query. Like the query engine, the
+/// listener disposes the RunningQueryPlan when the query ends, which happens while the setup callback runs.
+TEST_F(QueryPlanTest, SkippedSetupOfAllPipelinesEndsTheQuery)
+{
+    Testing::TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto srcCtrl = test.sourceControls[source];
+
+    TestQueryLifetimeController controller;
+    TestWorkEmitter emitter;
+
+    auto setups = Setups::setup(stdv::values(test.stages), emitter);
+
+    std::unique_ptr<RunningQueryPlan> runningQueryPlan;
+    auto listener = std::make_shared<TestQueryLifetimeListener>();
+    EXPECT_CALL(*listener, onRunning()).Times(0);
+    EXPECT_CALL(*listener, onDestruction()).WillOnce([&runningQueryPlan] { RunningQueryPlan::dispose(std::move(runningQueryPlan)); });
+
+    runningQueryPlan = dropRef(RunningQueryPlan::start(randomQueryId(), std::move(queryPlan), controller, emitter, listener));
+    EXPECT_TRUE(setups->waitForTasks(2));
+    EXPECT_TRUE(setups->skip(test.stages[pipeline]));
+    EXPECT_TRUE(setups->skip(test.stages[sink]));
+
+    EXPECT_EQ(runningQueryPlan, nullptr) << "The query did not end";
+    if (runningQueryPlan)
+    {
+        RunningQueryPlan::dispose(std::move(runningQueryPlan));
+    }
+    EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
+    EXPECT_FALSE(srcCtrl->wasOpened());
 }
 
 TEST_F(QueryPlanTest, RefCountTestSourceEoS)
