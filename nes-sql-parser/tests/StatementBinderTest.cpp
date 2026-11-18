@@ -1078,6 +1078,21 @@ TEST_F(StatementBinderTest, ThresholdMinimumCountRejectsOverflow)
     }
 }
 
+TEST_F(StatementBinderTest, ThresholdMinimumCountRejectsZero)
+{
+    const std::string query = "SELECT SUM(a) AS s FROM (SELECT * FROM s1) WINDOW THRESHOLD(a > 1, 0) INTO sink";
+    try
+    {
+        AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+        ADD_FAILURE() << "expected InvalidQuerySyntax";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::InvalidQuerySyntax);
+        EXPECT_TRUE(std::string{exception.what()}.contains("must be a positive integer that fits into an int")) << exception.what();
+    }
+}
+
 TEST_F(StatementBinderTest, WindowParametersAcceptBoundaryValues)
 {
     for (const auto* window :

@@ -1448,10 +1448,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
 void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)
 {
     const auto minimumCount = from_chars<int>(context->getText());
-    if (not minimumCount)
+    if (not minimumCount or *minimumCount <= 0)
     {
         throw InvalidQuerySyntax(
-            "The minimum size of a THRESHOLD window must be an integer that fits into an int, got {}", context->getText());
+            "The minimum size of a THRESHOLD window must be a positive integer that fits into an int, got {}", context->getText());
     }
     helpers.top().minimumCount = minimumCount;
 }
