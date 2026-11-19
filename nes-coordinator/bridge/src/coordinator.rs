@@ -20,7 +20,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
-use controller::in_process::WorkerFactory;
+use controller::worker_client::in_process::EmbeddedWorkerLauncher;
 use coordinator::start_with_runtime;
 use model::database::StateBackend;
 use model::error::{CodedError, ErrorCode};
@@ -35,7 +35,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::error::{FfiError, query_failure, query_failures};
 use crate::planner::FfiSqlPlanner;
-use crate::worker::BridgeWorkerFactory;
+use crate::worker::BridgeWorkerLauncher;
 
 #[cxx::bridge(namespace = "NES::Bridge")]
 pub(crate) mod ffi {
@@ -178,12 +178,12 @@ impl Coordinator {
             optimizer_config: optimizer_config.to_string(),
             default_host: default_host.clone(),
         });
-        let factory: Option<Arc<dyn WorkerFactory>> = match mode {
-            ffi::WorkerMode::Embedded => Some(Arc::new(BridgeWorkerFactory)),
+        let launcher: Option<Arc<dyn EmbeddedWorkerLauncher>> = match mode {
+            ffi::WorkerMode::Embedded => Some(Arc::new(BridgeWorkerLauncher)),
             _ => None,
         };
 
-        let sender = start_with_runtime(&runtime, state_backend, planner, factory)?;
+        let sender = start_with_runtime(&runtime, state_backend, planner, launcher)?;
         Ok(Self {
             client: Client::new(sender),
             runtime,

@@ -40,7 +40,6 @@ struct WorkerBridge
 };
 
 struct BridgeError;
-struct QueryFragmentStatus;
 
 /// cxx cannot call a constructor, so Rust creates a worker through this function.
 /// A failure is thrown, and Rust receives its message without the error code.
@@ -53,9 +52,13 @@ BridgeError validate_worker_config(rust::Str configJson);
 /// No worker is started for it, because every worker in this process is the build that this binary was linked with.
 rust::String worker_version();
 
-/// The three functions below control one query fragment on the worker.
+/// The two functions below control one query fragment on the worker.
 /// A failure is returned in the error struct.
-BridgeError start_query_fragment(WorkerBridge& bridge, rust::Slice<const uint8_t> serializedFragment);
-BridgeError stop_query_fragment(WorkerBridge& bridge, int64_t id);
-QueryFragmentStatus get_query_fragment_status(WorkerBridge& bridge, int64_t id);
+/// Like the calls of the worker's gRPC service, they may run concurrently with each other and with the status below.
+BridgeError start_query_fragment(const WorkerBridge& bridge, rust::Slice<const uint8_t> serializedFragment);
+BridgeError stop_query_fragment(const WorkerBridge& bridge, int64_t id);
+
+/// The serialized `WorkerStatusResponse` that the worker's gRPC service returns for the same request.
+/// A failure is thrown.
+rust::Vec<uint8_t> get_worker_status(const WorkerBridge& bridge, uint64_t afterMs);
 }

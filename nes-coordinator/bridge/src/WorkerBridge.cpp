@@ -19,7 +19,6 @@
 #include <expected>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <utility>
 
@@ -31,12 +30,12 @@
 #include <BridgeConfig.hpp>
 #include <BridgeError.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryStatus.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <Version.hpp>
+#include <WorkerStatus.hpp>
 
 /// Makes the workers of this process exchange data through memory (memcom) instead of over the network.
 /// The function is exported by the Rust network crate.
@@ -55,23 +54,6 @@ SingleNodeWorkerConfiguration workerConfigFromJson(const rust::Str configJson)
         throw InvalidConfigParameter("{}", config.error());
     }
     return std::move(*config);
-}
-
-/// The state is passed to Rust as a number, and Rust reads it with the numbering of the proto enum.
-static_assert(static_cast<int>(QueryStatus::Registered) == static_cast<int>(::QueryState::Registered));
-static_assert(static_cast<int>(QueryStatus::Started) == static_cast<int>(::QueryState::Started));
-static_assert(static_cast<int>(QueryStatus::Running) == static_cast<int>(::QueryState::Running));
-static_assert(static_cast<int>(QueryStatus::Stopped) == static_cast<int>(::QueryState::Stopped));
-static_assert(static_cast<int>(QueryStatus::Failed) == static_cast<int>(::QueryState::Failed));
-
-/// A cxx struct cannot hold an optional, so a time that is not set is passed as 0.
-uint64_t millisecondsOrZero(const std::optional<std::chrono::system_clock::time_point>& time)
-{
-    return time
-        .transform(
-            [](const std::chrono::system_clock::time_point& point)
-            { return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(point.time_since_epoch()).count()); })
-        .value_or(0);
 }
 }
 
@@ -101,7 +83,7 @@ rust::String worker_version()
     return rust::String{versionInfo(SingleNodeWorkerBinaryName).getRawValue()};
 }
 
-BridgeError start_query_fragment(WorkerBridge& bridge, const rust::Slice<const uint8_t> serializedFragment)
+BridgeError start_query_fragment(const WorkerBridge& bridge, const rust::Slice<const uint8_t> serializedFragment)
 {
     return catchAsBridgeError(
         [&]
@@ -115,41 +97,24 @@ BridgeError start_query_fragment(WorkerBridge& bridge, const rust::Slice<const u
         });
 }
 
-BridgeError stop_query_fragment(WorkerBridge& bridge, const int64_t id)
+BridgeError stop_query_fragment(const WorkerBridge& bridge, const int64_t id)
 {
     return catchAsBridgeError([&] { return bridge.worker->stopQuery(QueryId{id}); });
 }
 
-QueryFragmentStatus get_query_fragment_status(WorkerBridge& bridge, const int64_t id)
+rust::Vec<uint8_t> get_worker_status(const WorkerBridge& bridge, const uint64_t afterMs)
 {
-    return catchAsBridgeError(
-        [&]
-        {
-            return bridge.worker->getQueryStatus(QueryId{id})
-                .transform(
-                    [](const LocalQueryStatusSnapshot& snapshot)
-                    {
-                        return QueryFragmentStatus{
-                            .error = {},
-                            .found = true,
-                            .state = static_cast<int32_t>(snapshot.state),
-                            .start_ms = millisecondsOrZero(snapshot.metrics.start),
-                            .stop_ms = millisecondsOrZero(snapshot.metrics.stop),
-                            .query_error = snapshot.metrics.error.transform(toBridgeError).value_or(BridgeError{})};
-                    })
-                .or_else(
-                    [](const Exception& error) -> std::expected<QueryFragmentStatus, Exception>
-                    {
-                        /// The coordinator polls this call, and a worker that does not know the query is a normal result.
-                        /// It is reported as a field, so that no stack trace is rendered on every poll.
-                        if (error.code() == ErrorCode::QueryNotFound)
-                        {
-                            return QueryFragmentStatus{
-                                .error = {}, .found = false, .state = 0, .start_ms = 0, .stop_ms = 0, .query_error = {}};
-                        }
-                        return std::unexpected{error};
-                    });
-        });
+    WorkerStatusResponse response;
+    serializeWorkerStatus(
+        bridge.worker->getWorkerStatus(std::chrono::system_clock::time_point{std::chrono::milliseconds{afterMs}}), &response);
+    const auto bytes = response.SerializeAsString();
+    rust::Vec<uint8_t> serialized;
+    serialized.reserve(bytes.size());
+    for (const char byte : bytes)
+    {
+        serialized.push_back(static_cast<uint8_t>(byte));
+    }
+    return serialized;
 }
 
 }
