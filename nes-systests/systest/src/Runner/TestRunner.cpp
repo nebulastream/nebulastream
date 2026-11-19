@@ -115,8 +115,8 @@ void TestRunner::setUp(std::vector<RunnablePartition> partitions)
         }
         try
         {
-            auto [setupSql, staged] = stage(runnable);
-            auto [testCases] = binder.bind(setupSql, runnable.testCases, runnable.key);
+            auto [setupSql, expectedErrors, staged] = stage(runnable);
+            auto [testCases] = binder.bind(setupSql, expectedErrors, runnable.testCases, runnable.key);
             std::ranges::move(staged, std::back_inserter(servers));
             setUpPartitions.push_back(SetUpPartition{.partition = std::move(partition), .testCases = std::move(testCases)});
         }

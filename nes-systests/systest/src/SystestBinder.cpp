@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
@@ -102,7 +103,8 @@ struct SystestBinder::Impl
         , sourceCatalog{std::make_shared<SourceCatalog>()}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
-        , udfCatalog{std::make_shared<UdfCatalog>()}
+        /// The frontend setting for the modules that Inline UDFs import: the test data's python_udf directory.
+        , udfCatalog{std::make_shared<UdfCatalog>(std::vector<std::string>{(std::filesystem::path{config.testDataDir} / "python_udf").string()})}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
@@ -125,7 +127,11 @@ struct SystestBinder::Impl
 
     /// Id includes the partition key: partitions repeat query numbers, and the coordinator rejects duplicate ids.
     [[nodiscard]] BoundTestFile
-    bind(const std::span<const std::string> setupSql, const std::span<const RewrittenTestCase> testCases, const std::string& partitionKey)
+    bind(
+        const std::span<const std::string> setupSql,
+        const std::span<const std::optional<ExpectedError>> expectedErrors,
+        const std::span<const RewrittenTestCase> testCases,
+        const std::string& partitionKey)
     {
         /// UDF names are not prefixed per test file, so each file starts from an empty UDF catalog.
         for (const auto& udfName : udfCatalog->getUdfNames())
@@ -139,9 +145,9 @@ struct SystestBinder::Impl
             setenv("NES_UDF_PATH", SYSTEST_PY_UDF_PATH, /*overwrite=*/1);
         }
         BoundTestFile bound;
-        for (const auto& sql : setupSql)
+        for (const auto& [sql, expectedError] : std::views::zip(setupSql, expectedErrors))
         {
-            writeToCatalogs(sql);
+            writeToCatalogs(sql, expectedError);
         }
 
         bound.testCases.reserve(testCases.size());
@@ -166,7 +172,7 @@ struct SystestBinder::Impl
     }
 
 private:
-    void writeToCatalogs(const std::string& sql)
+    void writeToCatalogs(const std::string& sql, const std::optional<ExpectedError>& expectedError)
     {
         const auto binding = bindStatement(sql);
         std::visit(
@@ -175,19 +181,40 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
-                [&](const CreateFunctionStatement& statement) { createFunction(statement); },
+                [&](const CreateFunctionStatement& statement) { createFunction(statement, expectedError); },
                 [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
             binding);
     }
 
     /// Resolves a relative `.so` path against the test data directory before the handler registers the function.
-    void createFunction(CreateFunctionStatement statement)
+    /// A function that must not register (e.g. it does not compile) is checked against the expected error and not registered.
+    void createFunction(CreateFunctionStatement statement, const std::optional<ExpectedError>& expectedError)
     {
         if (const std::filesystem::path path{statement.path}; !path.empty() && path.is_relative())
         {
             statement.path = (testDataDir / path).string();
         }
-        throwOnError(udfHandler(statement));
+        auto result = udfHandler(statement);
+        if (!expectedError.has_value())
+        {
+            throwOnError(std::move(result));
+            return;
+        }
+        if (result.has_value())
+        {
+            throw TestException("CREATE FUNCTION {} should fail with error {}, but it succeeded", statement.name, expectedError->code);
+        }
+        const auto& error = result.error();
+        if (error.code() != expectedError->code
+            || (expectedError->message.has_value() && !std::string_view{error.what()}.contains(*expectedError->message)))
+        {
+            throw TestException(
+                "CREATE FUNCTION {} should fail with error {} \"{}\", but failed with: {}",
+                statement.name,
+                expectedError->code,
+                expectedError->message.value_or(""),
+                error.what());
+        }
     }
 
     [[nodiscard]] Statement bindStatement(const std::string& sql) const
@@ -271,9 +298,12 @@ SystestBinder::SystestBinder(const SystestConfiguration& config) : impl{std::mak
 }
 
 BoundTestFile SystestBinder::bind(
-    const std::span<const std::string> setupSql, const std::span<const RewrittenTestCase> testCases, const std::string& partitionKey)
+    const std::span<const std::string> setupSql,
+    const std::span<const std::optional<ExpectedError>> expectedErrors,
+    const std::span<const RewrittenTestCase> testCases,
+    const std::string& partitionKey)
 {
-    return impl->bind(setupSql, testCases, partitionKey);
+    return impl->bind(setupSql, expectedErrors, testCases, partitionKey);
 }
 
 SystestBinder::~SystestBinder() = default;

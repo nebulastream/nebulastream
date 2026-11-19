@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <optional>
+#include <Model/Expectation.hpp>
 #include <string>
 #include <thread>
 #include <vector>
@@ -45,6 +47,8 @@ struct StagedSetup
 {
     /// The CREATE statements in file order, each served source with the endpoint its server bound.
     std::vector<std::string> sql;
+    /// For each statement, the error it must fail with, if any.
+    std::vector<std::optional<ExpectedError>> expectedErrors;
     /// Must outlive every query reading from them.
     std::vector<std::jthread> servers;
 };

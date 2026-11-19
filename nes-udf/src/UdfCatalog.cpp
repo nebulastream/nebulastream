@@ -25,6 +25,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
+#include <UdfCompilerRegistry.hpp>
 #include <UdfDescriptor.hpp>
 
 namespace NES
@@ -93,6 +94,15 @@ void UdfCatalog::registerUdf(
         returnType,
         execution,
         language};
+    /// Compiled once here instead of for each call in a query. A build without Python UDFs has no compiler; the worker then
+    /// reports that it cannot execute the UDF.
+    if (execution == UdfExecution::Inline && language == UdfLanguage::Python)
+    {
+        if (const auto compile = UdfCompilerRegistry::instance().find("Codon"))
+        {
+            descriptor.compiled = (*compile)(UdfCompilerRegistryArguments{.udf = descriptor, .importPaths = importPaths});
+        }
+    }
     catalog.registerEntry(std::move(name), std::move(descriptor));
 }
 

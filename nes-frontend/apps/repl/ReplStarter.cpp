@@ -176,6 +176,11 @@ int main(int argc, char** argv)
             .choices("FAIL_FAST", "RECOVER", "CONTINUE_AND_FAIL")
             .help(
                 "Fail and return non-zero exit code on first error, ignore error and continue, or continue and return non-zero exit code");
+        program.add_argument("--udf-import-path")
+            .append()
+            .default_value(std::vector<std::string>{})
+            .help("A directory in which INLINE Python UDFs find the modules they import, besides NES_UDF_PATH. May be repeated. "
+                  "The UDFs are compiled when they are registered (CREATE FUNCTION).");
         program.add_argument("-f").default_value("TEXT").choices("TEXT", "JSON").help("Output format");
         /// Worker/optimizer config in one schema: the frontend optimizer config
         /// (optimizer.*) and, with the embedded engine, the worker subtree.
@@ -276,7 +281,7 @@ int main(int argc, char** argv)
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
-        auto udfCatalog = std::make_shared<NES::UdfCatalog>();
+        auto udfCatalog = std::make_shared<NES::UdfCatalog>(program.get<std::vector<std::string>>("--udf-import-path"));
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
             sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};

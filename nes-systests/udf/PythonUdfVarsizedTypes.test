@@ -186,6 +186,8 @@ SELECT type_name_oop('abc') AS r FROM binary INTO FILE();
 str
 
 # --- EXECUTION INLINE ---
+# An INLINE body receives an argument as declared: Optional unless NOT NULL. The type names below are those of NOT NULL
+# arguments.
 # A str counts code points and must hold valid UTF-8, as in the Python modes (unicode plugin, nes_compat.codon).
 # Only the declaration decides, as in the Python modes: an argument declared with BYTES arrives as bytes, any other as a str.
 CREATE FUNCTION text_length_inline (x VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.text_length';
@@ -193,12 +195,12 @@ CREATE FUNCTION byte_length_inline (x VARSIZED BYTES) RETURNS INT64 EXECUTION IN
 CREATE FUNCTION optional_byte_length_inline (x VARSIZED BYTES) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'varsized_types.optional_byte_length';
 CREATE FUNCTION echo_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.echo_bytes';
 CREATE FUNCTION describe_inline (x VARSIZED BYTES, y VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.describe';
-CREATE FUNCTION type_name_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.type_name';
-CREATE FUNCTION type_name_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.type_name';
-CREATE FUNCTION body_type_name_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+CREATE FUNCTION type_name_bytes_inline (x VARSIZED NOT NULL BYTES) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.type_name';
+CREATE FUNCTION type_name_inline (x VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'varsized_types.type_name';
+CREATE FUNCTION body_type_name_inline (x VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE AS $python$
     return type(x).__name__
 $python$;
-CREATE FUNCTION body_type_name_bytes_inline (x VARSIZED BYTES) RETURNS VARSIZED EXECUTION INLINE AS $python$
+CREATE FUNCTION body_type_name_bytes_inline (x VARSIZED NOT NULL BYTES) RETURNS VARSIZED EXECUTION INLINE AS $python$
     return type(x).__name__
 $python$;
 

@@ -53,6 +53,8 @@ struct ModelDeclaration
 struct FunctionDeclaration
 {
     AntlrSQLParser::CreateFunctionDefinitionContext* definition;
+    /// Set if registering the function must fail with this error, e.g. because it does not compile.
+    std::optional<ExpectedError> expectedError = std::nullopt;
 };
 
 using CreateDeclaration

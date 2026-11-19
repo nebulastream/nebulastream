@@ -25,6 +25,7 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <string_view>
 #include <unordered_set>
 #include <utility>
@@ -228,7 +229,18 @@ void SystestParser::parse()
         {
             case TokenType::CREATE: {
                 auto [query, testData] = expectCreateStatement();
-                onCreateCallback(query, testData);
+                std::optional<ErrorExpectation> expectedError;
+                if (!testData.has_value() && peekToken() == TokenType::RESULT_DELIMITER)
+                {
+                    std::ignore = getNextToken();
+                    if (peekToken() != TokenType::ERROR_EXPECTATION)
+                    {
+                        throw SLTUnexpectedToken("a CREATE statement can only expect an error, but got: {}", lines[currentLine]);
+                    }
+                    std::ignore = getNextToken();
+                    expectedError = expectError();
+                }
+                onCreateCallback(query, testData, expectedError);
                 break;
             }
             case TokenType::QUERY: {

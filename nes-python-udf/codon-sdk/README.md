@@ -23,4 +23,4 @@ Every `.codon` and `.py` file below `CODON_PATH` is embedded under its relative 
 
 Native symbols require declarations from the headers passed through `NATIVE_SYMBOL_HEADERS`. Only the descriptor entry point is exported from the shared object; native function addresses are carried in the descriptor and remain local to the plugin.
 
-The extension does not link against NebulaStream. At runtime, NES loads its descriptor with `dlopen(RTLD_LOCAL)`, exposes its embedded modules to Codon's resource filesystem, admits its declared functions during LLVM-module validation, and explicitly registers their descriptor-provided addresses with the pipeline JIT.
+The extension does not link against NebulaStream. At runtime, NES loads its descriptor with `dlopen(RTLD_LAZY | RTLD_LOCAL)` (also in processes that only compile UDFs and lack the `seq_*` host ABI), exposes its embedded modules to Codon's resource filesystem, admits its declared functions during LLVM-module validation, and explicitly registers their descriptor-provided addresses with the pipeline JIT.

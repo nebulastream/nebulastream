@@ -289,7 +289,11 @@ SELECT id, stem_ip(abstract) AS r FROM artifact_abstracts INTO Checksum();
 16845 1074975864
 
 # --- EXECUTION INLINE ---
+# Rejected: addnoise imports random inside the function, which NES rejects for INLINE.
 CREATE FUNCTION addnoise_inline (val INT32) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.addnoise';
+----
+ERROR QueryCompilerError
+
 CREATE FUNCTION clean_inline (val VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.clean';
 CREATE FUNCTION cleandate_inline (pubdate VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.cleandate';
 CREATE FUNCTION converttoeuro_inline (x FLOAT64, y VARSIZED) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.converttoeuro';
@@ -303,7 +307,11 @@ CREATE FUNCTION extractprojectid_inline (input VARSIZED) RETURNS VARSIZED EXECUT
 CREATE FUNCTION extractyear_inline (arg VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractyear';
 CREATE FUNCTION filterstopwords_inline (words VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.filterstopwords';
 CREATE FUNCTION frequentterms_inline (input VARSIZED, N INT64) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.frequentterms';
+# Does not compile: type(x) == list
 CREATE FUNCTION jaccard_inline (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jaccard';
+----
+ERROR QueryCompilerError
+
 CREATE FUNCTION jpack_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
 CREATE FUNCTION jsoncount_inline (jval VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
 CREATE FUNCTION jsonparse_inline (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
@@ -313,18 +321,14 @@ CREATE FUNCTION keywords_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLI
 CREATE FUNCTION log_10_inline (x FLOAT64) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.log_10';
 CREATE FUNCTION lowerize_inline (val VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
 CREATE FUNCTION removeshortterms_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
+# Does not compile: name 'ccy_exp' cannot be captured
 CREATE FUNCTION stem_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
+----
+ERROR QueryCompilerError
 
 # Not in this section, as Codon cannot compile or run them, or gives other results:
 # - frequentterms: among terms with equal counts, Counter and heapq.nlargest choose other terms than in CPython
-# - jaccard: does not compile: type(x) == list
 # - jsonparse: fails at run time: a None result of a function annotated -> str
-# - stem: does not compile: name 'ccy_exp' cannot be captured
-
-# Rejected: addnoise imports random inside the function, which NES rejects for INLINE.
-SELECT id FROM artifacts WHERE addnoise_inline(authors) > FLOAT64(-1000.0) INTO Checksum();
-----
-ERROR QueryCompilerError
 
 SELECT id, clean_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
 ----

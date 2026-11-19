@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <UdfDescriptor.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
@@ -32,14 +33,9 @@ struct PythonUdfInterpreterExecutable;
 class PythonPhysicalFunction final
 {
 public:
+    /// `compiled` is the UDF as Codon compiled it for `argumentTypes` and `returnType`.
     PythonPhysicalFunction(
-        const std::vector<std::string>& parameterNames,
-        const std::string& body,
-        std::vector<PhysicalFunction> arguments,
-        std::vector<DataType> argumentTypes,
-        DataType returnType,
-        const std::vector<std::string>& importPaths,
-        const std::vector<uint64_t>& bytesArguments);
+        const CompiledInlineUdf& compiled, std::vector<PhysicalFunction> arguments, std::vector<DataType> argumentTypes, DataType returnType);
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
     void setupSelf(CompilationContext& compilationContext) const;

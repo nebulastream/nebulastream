@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -27,17 +28,30 @@
 namespace NES
 {
 
-/// Stores registered scalar UDFs keyed by name; only validated metadata (path, entry point, signature) --
-/// loading the `.so` is deferred to worker-side lowering. Storage/lookup is delegated to NamedCatalog.
+/// Stores registered scalar UDFs keyed by name: validated metadata (path, entry point, signature), and for Inline UDFs the
+/// code that the compiler produced at registration (see UdfCompilerRegistry). Loading the `.so` of an InProcess UDF is
+/// deferred to worker-side lowering. Storage/lookup is delegated to NamedCatalog.
 ///
 /// Not thread-safe — registration is serialized through DDL statement handling, mirroring ModelCatalog.
 class UdfCatalog
 {
     NamedCatalog<UdfDescriptor> catalog;
+    std::vector<std::string> importPaths;
 
 public:
+    UdfCatalog() = default;
+
+    /// `importPaths`: where the compiler of Inline UDFs looks for the modules they import, besides NES_UDF_PATH.
+    explicit UdfCatalog(std::vector<std::string> importPaths) : importPaths(std::move(importPaths)) { }
+
+    /// Applies to UDFs registered from now on.
+    void setImportPaths(std::vector<std::string> paths) { importPaths = std::move(paths); }
+
+    [[nodiscard]] const std::vector<std::string>& getImportPaths() const { return importPaths; }
+
     /// `path` is the bridge `.so` for InProcess UDFs and unused (empty) for Inline UDFs, whose `entrypoint` names an
-    /// importable "module.function" that the compiler resolves at lowering time.
+    /// importable "module.function". An Inline UDF is compiled here; a compile error is thrown, and the UDF is not registered.
+    /// Later changes to the modules it imports do not affect it until it is registered again.
     void registerUdf(
         std::string name,
         std::filesystem::path path,

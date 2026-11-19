@@ -64,7 +64,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&)
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&)
         { createCallbackCalled = true; });
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
@@ -145,7 +145,7 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
 
     parser.registerOnCreateCallback(
-        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData, const std::optional<SystestParser::ErrorExpectation>&)
         {
             if (query.starts_with("CREATE LOGICAL SOURCE"))
             {
@@ -253,7 +253,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
 
     parser.registerOnCreateCallback(
-        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData, const std::optional<SystestParser::ErrorExpectation>&)
         {
             if (query.starts_with("CREATE LOGICAL SOURCE"))
             {
@@ -366,7 +366,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
 
     parser.registerOnCreateCallback(
-        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData, const std::optional<SystestParser::ErrorExpectation>&)
         {
             if (query.starts_with("CREATE LOGICAL SOURCE"))
             {
@@ -433,7 +433,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
         });
 
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&) { });
 
     parser.registerOnErrorExpectationCallback(
         [&errorCallbackCalled, &expectErrorMessage, &expectErrorCode](
@@ -471,7 +471,7 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
 
     parser.registerOnCreateCallback(
-        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData, const std::optional<SystestParser::ErrorExpectation>&)
         {
             if (query.starts_with("CREATE LOGICAL SOURCE"))
             {

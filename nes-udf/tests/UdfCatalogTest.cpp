@@ -19,6 +19,7 @@
 #include <string>
 #include <system_error>
 #include <vector>
+#include <unistd.h>
 
 #include <gtest/gtest.h>
 
@@ -42,24 +43,39 @@ DataType dt(const DataType::Type type)
 
 }
 
-/// Owns a real on-disk placeholder .so: registration only checks the path exists, so an empty file suffices.
+/// Owns a real on-disk placeholder .so: registration only checks the path exists, so an empty file suffices. Also owns a
+/// directory with the Python module `discount` (and the package `pkg.discount`), which Inline UDFs import when the catalog
+/// compiles them at registration.
 /// NOLINTNEXTLINE(misc-use-internal-linkage)
 class UdfCatalogTest : public ::testing::Test
 {
 protected:
     std::filesystem::path libPath;
+    std::filesystem::path moduleDirectory;
 
     void SetUp() override
     {
         libPath = std::filesystem::temp_directory_path() / "nes_udf_catalog_test_lib.so";
         std::ofstream{libPath} << "placeholder";
+        /// Per process and test: ctest runs the tests in parallel.
+        moduleDirectory = std::filesystem::temp_directory_path()
+            / ("nes_udf_catalog_test_modules_" + std::to_string(::getpid()) + "_"
+               + ::testing::UnitTest::GetInstance()->current_test_info()->name());
+        std::filesystem::create_directories(moduleDirectory / "pkg");
+        const auto* const module = "def apply_discount(price: float) -> float:\n    return price * 0.9\n";
+        std::ofstream{moduleDirectory / "discount.py"} << module;
+        std::ofstream{moduleDirectory / "pkg" / "__init__.py"} << "";
+        std::ofstream{moduleDirectory / "pkg" / "discount.py"} << module;
     }
 
     void TearDown() override
     {
         std::error_code errorCode;
         std::filesystem::remove(libPath, errorCode);
+        std::filesystem::remove_all(moduleDirectory, errorCode);
     }
+
+    [[nodiscard]] UdfCatalog catalogWithModules() const { return UdfCatalog{{moduleDirectory.string()}}; }
 };
 
 TEST_F(UdfCatalogTest, RegistersAndFindsUdf)
@@ -168,13 +184,27 @@ TEST_F(UdfCatalogTest, DescriptorSurvivesReflectionRoundTrip)
 
 TEST_F(UdfCatalogTest, RegistersCodonUdfWithoutLibraryPath)
 {
-    UdfCatalog catalog;
+    auto catalog = catalogWithModules();
     ASSERT_NO_THROW(catalog.registerUdf(
         "discount", {}, "discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Inline));
     const auto descriptor = catalog.load("discount");
     EXPECT_EQ(descriptor.getExecution(), UdfExecution::Inline);
     EXPECT_EQ(descriptor.getEntrypoint(), "discount.apply_discount");
     EXPECT_TRUE(descriptor.getPath().empty());
+    /// Compiled at registration.
+    ASSERT_TRUE(descriptor.getCompiled().has_value());
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_FALSE(descriptor.getCompiled()->pipelineBitcode.empty());
+}
+
+TEST_F(UdfCatalogTest, RejectsCodonUdfWhoseModuleIsMissing)
+{
+    UdfCatalog catalog;
+    ASSERT_EXCEPTION_ERRORCODE(
+        catalog.registerUdf(
+            "missing", {}, "no_such_module.f", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Inline),
+        NES::ErrorCode::QueryCompilerError);
+    EXPECT_FALSE(catalog.hasUdf("missing"));
 }
 
 TEST_F(UdfCatalogTest, InProcessUdfKeepsInProcessExecution)
@@ -204,7 +234,7 @@ TEST_F(UdfCatalogTest, RejectsCodonUdfWithoutArguments)
 
 TEST_F(UdfCatalogTest, CodonDescriptorSurvivesReflectionRoundTrip)
 {
-    UdfCatalog catalog;
+    auto catalog = catalogWithModules();
     catalog.registerUdf(
         "discount", {}, "pkg.discount.apply_discount", {dt(DataType::Type::FLOAT64)}, dt(DataType::Type::FLOAT64), UdfExecution::Inline);
     const auto original = catalog.load("discount");

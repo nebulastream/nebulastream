@@ -14,6 +14,8 @@
 
 #include <UdfDescriptor.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -118,12 +120,84 @@ struct ReflectedUdfDescriptor
     std::optional<DataType> returnType;
     std::optional<UdfExecution> execution;
     std::optional<UdfLanguage> language;
+    std::optional<std::string> compiledSymbol;
+    /// Base64, because the plan is serialized as JSON.
+    std::optional<std::string> compiledPipelineBitcode;
+    std::optional<std::string> compiledInterpreterBitcode;
 };
+
+constexpr std::string_view base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+std::string encodeBase64(const std::string_view data)
+{
+    std::string encoded;
+    encoded.reserve(((data.size() + 2) / 3) * 4);
+    for (size_t position = 0; position < data.size(); position += 3)
+    {
+        const auto remaining = data.size() - position;
+        uint32_t chunk = static_cast<uint8_t>(data[position]) << 16U;
+        if (remaining > 1)
+        {
+            chunk |= static_cast<uint8_t>(data[position + 1]) << 8U;
+        }
+        if (remaining > 2)
+        {
+            chunk |= static_cast<uint8_t>(data[position + 2]);
+        }
+        encoded.push_back(base64Alphabet[(chunk >> 18U) & 0x3FU]);
+        encoded.push_back(base64Alphabet[(chunk >> 12U) & 0x3FU]);
+        encoded.push_back(remaining > 1 ? base64Alphabet[(chunk >> 6U) & 0x3FU] : '=');
+        encoded.push_back(remaining > 2 ? base64Alphabet[chunk & 0x3FU] : '=');
+    }
+    return encoded;
+}
+
+std::string decodeBase64(const std::string_view encoded)
+{
+    if (encoded.size() % 4 != 0)
+    {
+        throw NES::CannotDeserialize("Failed to deserialize the bitcode of a compiled UDF: invalid base64 length");
+    }
+    std::string decoded;
+    decoded.reserve((encoded.size() / 4) * 3);
+    for (size_t position = 0; position < encoded.size(); position += 4)
+    {
+        uint32_t chunk = 0;
+        size_t padding = 0;
+        for (size_t offset = 0; offset < 4; ++offset)
+        {
+            const auto character = encoded[position + offset];
+            chunk <<= 6U;
+            if (character == '=')
+            {
+                ++padding;
+                continue;
+            }
+            const auto value = base64Alphabet.find(character);
+            if (value == std::string_view::npos)
+            {
+                throw NES::CannotDeserialize("Failed to deserialize the bitcode of a compiled UDF: invalid base64 character");
+            }
+            chunk |= static_cast<uint32_t>(value);
+        }
+        decoded.push_back(static_cast<char>((chunk >> 16U) & 0xFFU));
+        if (padding < 2)
+        {
+            decoded.push_back(static_cast<char>((chunk >> 8U) & 0xFFU));
+        }
+        if (padding < 1)
+        {
+            decoded.push_back(static_cast<char>(chunk & 0xFFU));
+        }
+    }
+    return decoded;
+}
 }
 
 Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, const ReflectionContext& context) const
 {
     const auto& source = descriptor.getSource();
+    const auto& compiled = descriptor.getCompiled();
     return context.reflect(
         detail::ReflectedUdfDescriptor{
             .name = std::make_optional(descriptor.getName()),
@@ -135,7 +209,11 @@ Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, 
             .bytesArguments = std::make_optional(descriptor.getBytesArguments()),
             .returnType = std::make_optional(descriptor.getReturnType()),
             .execution = std::make_optional(descriptor.getExecution()),
-            .language = std::make_optional(descriptor.getLanguage())});
+            .language = std::make_optional(descriptor.getLanguage()),
+            .compiledSymbol = compiled.has_value() ? std::make_optional(compiled->symbol) : std::nullopt,
+            .compiledPipelineBitcode = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->pipelineBitcode)) : std::nullopt,
+            .compiledInterpreterBitcode
+            = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->interpreterBitcode)) : std::nullopt});
 }
 
 UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -153,6 +231,14 @@ UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const
             .parameterNames = std::move(reflected.sourceParameterNames).value_or(std::vector<std::string>{}),
             .body = std::move(reflected.sourceBody).value()};
     }
+    std::optional<CompiledInlineUdf> compiled;
+    if (reflected.compiledSymbol.has_value())
+    {
+        compiled = CompiledInlineUdf{
+            .symbol = std::move(reflected.compiledSymbol).value(),
+            .pipelineBitcode = detail::decodeBase64(reflected.compiledPipelineBitcode.value_or("")),
+            .interpreterBitcode = detail::decodeBase64(reflected.compiledInterpreterBitcode.value_or(""))};
+    }
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the reflected form.
     return UdfDescriptor{
         std::move(reflected.name).value(),
@@ -163,7 +249,8 @@ UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const
         std::move(reflected.bytesArguments).value_or(std::vector<uint64_t>{}),
         std::move(reflected.returnType).value(),
         reflected.execution.value_or(UdfExecution::InProcess),
-        reflected.language.value_or(UdfLanguage::Python)};
+        reflected.language.value_or(UdfLanguage::Python),
+        std::move(compiled)};
 }
 
 }

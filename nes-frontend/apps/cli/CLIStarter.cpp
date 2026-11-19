@@ -805,7 +805,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
     const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
-    auto udfCatalog = std::make_shared<NES::UdfCatalog>();
+    auto udfCatalog = std::make_shared<NES::UdfCatalog>(program.get<std::vector<std::string>>("--udf-import-path"));
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
@@ -848,7 +848,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
     auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
-    auto udfCatalog = std::make_shared<NES::UdfCatalog>();
+    auto udfCatalog = std::make_shared<NES::UdfCatalog>(program.get<std::vector<std::string>>("--udf-import-path"));
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
@@ -912,6 +912,11 @@ int main(int argc, char** argv)
         using argparse::ArgumentParser;
         ArgumentParser program("nebucli");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
+        program.add_argument("--udf-import-path")
+            .append()
+            .default_value(std::vector<std::string>{})
+            .help("A directory in which INLINE Python UDFs find the modules they import, besides NES_UDF_PATH. May be repeated. "
+                  "The UDFs are compiled when they are registered (CREATE FUNCTION).");
         program.add_argument("-t").help(
             "Path to the topology file, or '-' to read from stdin. "
             "Resolution order: 1) -t flag, 2) NES_TOPOLOGY_FILE env, 3) topology.yaml/topology.yml in working directory");

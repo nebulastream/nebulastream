@@ -34,6 +34,18 @@ namespace
 /// The test file format allows an ATTACH after any CREATE, because the parser matches line prefixes and never reads the statement.
 CreateDeclaration classify(const SqlParse& parse, CreateStatement create)
 {
+    if (auto* function = findFirst<AntlrSQLParser::CreateFunctionDefinitionContext>(parse.tree()))
+    {
+        if (create.attach.has_value())
+        {
+            throw TestException("ATTACH supplies the data of a physical source, but this statement declares something else: {}", create.sql);
+        }
+        return FunctionDeclaration{.definition = function, .expectedError = std::move(create.expectedError)};
+    }
+    if (create.expectedError.has_value())
+    {
+        throw TestException("only a CREATE FUNCTION can expect an error: {}", create.sql);
+    }
     if (auto* physicalSource = findFirst<AntlrSQLParser::CreatePhysicalSourceDefinitionContext>(parse.tree()))
     {
         return PhysicalSourceDeclaration{.definition = physicalSource, .attached = std::move(create.attach)};
@@ -54,10 +66,6 @@ CreateDeclaration classify(const SqlParse& parse, CreateStatement create)
     if (auto* model = findFirst<AntlrSQLParser::CreateModelDefinitionContext>(parse.tree()))
     {
         return ModelDeclaration{.definition = model};
-    }
-    if (auto* function = findFirst<AntlrSQLParser::CreateFunctionDefinitionContext>(parse.tree()))
-    {
-        return FunctionDeclaration{.definition = function};
     }
     throw TestException("Unsupported CREATE statement: {}", create.sql);
 }

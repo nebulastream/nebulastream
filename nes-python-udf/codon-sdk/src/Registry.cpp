@@ -69,7 +69,9 @@ void loadCodonPlugin(const std::filesystem::path& path)
     }
 
     ::dlerror();
-    void* handle = ::dlopen(normalizedPath.c_str(), RTLD_NOW | RTLD_LOCAL);
+    /// Lazy: a process that only compiles UDFs, e.g. a frontend at CREATE FUNCTION, reads the plugin's modules but never calls
+    /// its native functions, and has no host ABI (seq_*) that they import. The worker resolves those at the first call.
+    void* handle = ::dlopen(normalizedPath.c_str(), RTLD_LAZY | RTLD_LOCAL);
     if (handle == nullptr)
     {
         throw std::runtime_error(dlError("Could not load Codon plugin", normalizedPath));

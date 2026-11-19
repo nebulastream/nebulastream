@@ -75,7 +75,7 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
     const std::string str = sourceIn + "\n";
 
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData, const std::optional<SystestParser::ErrorExpectation>&)
         {
             isCreateCallbackCalled = true;
             ASSERT_FALSE(testData.has_value());
@@ -108,7 +108,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
             queryCallbackCalled = true;
         });
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&) { FAIL(); });
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId)
                                           { receivedResultTuples = std::move(resultTuples); });
 
@@ -137,7 +137,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
             /// nop
         });
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&) { FAIL(); });
 
     parser.loadString(str);
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
@@ -174,7 +174,7 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
         });
 
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&) { });
 
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
                                           { FAIL() << "Result tuple callback should not be called for a differential query test."; });
@@ -225,7 +225,7 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
                                           { FAIL() << "Result tuple callback should not be called for a differential query test."; });
 
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&) { });
 
     parser.registerOnErrorExpectationCallback(
         [](const SystestParser::ErrorExpectation&, SystestQueryId)
@@ -295,7 +295,7 @@ SELECT id FROM stream INTO sink;
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId)
                                           { receivedResultBlocks.push_back(std::move(resultTuples)); });
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&) { FAIL(); });
 
     parser.loadString(std::string(TestContent));
     EXPECT_NO_THROW(parser.parse());
@@ -390,7 +390,7 @@ SELECT producedPower, timestamp FROM source INTO we;
     std::string receivedQuery;
     parser.registerOnQueryCallback([&](const std::string& queryOut, SystestQueryId) { receivedQuery = queryOut; });
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&, const std::optional<SystestParser::ErrorExpectation>&) { });
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&& tuples, SystestQueryId) { (void)std::move(tuples); });
 
     parser.loadString(std::string(TestContent));

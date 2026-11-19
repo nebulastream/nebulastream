@@ -126,7 +126,9 @@ public:
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
     using DifferentialQueryBlockCallback
         = std::function<void(std::string, std::string, SystestQueryId correspondingQueryId, SystestQueryId diffQueryId)>;
-    using CreateCallback = std::function<void(std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>)>;
+    /// The last argument is the error that a CREATE FUNCTION expects (`----` and `ERROR <code>` after the statement).
+    using CreateCallback = std::function<void(
+        std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>, std::optional<ErrorExpectation>)>;
     using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
 

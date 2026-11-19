@@ -85,7 +85,10 @@ struct PendingQuery
 class TestFileBuilder
 {
 public:
-    void addCreate(std::string sql, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> attach)
+    void addCreate(
+        std::string sql,
+        std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> attach,
+        std::optional<SystestParser::ErrorExpectation> expectedError)
     {
         std::optional<AttachedData> attached;
         if (attach.has_value())
@@ -94,7 +97,12 @@ public:
                 ? AttachedData{InlineRows{.rows = std::move(attach->second)}}
                 : AttachedData{AttachedFile{.path = std::filesystem::path{attach->second.front()}}};
         }
-        statements.emplace_back(CreateStatement{.sql = std::move(sql), .attach = std::move(attached)});
+        std::optional<ExpectedError> expected;
+        if (expectedError.has_value())
+        {
+            expected = ExpectedError{.code = expectedError->code, .message = std::move(expectedError->message)};
+        }
+        statements.emplace_back(CreateStatement{.sql = std::move(sql), .attach = std::move(attached), .expectedError = std::move(expected)});
     }
 
     void addGlobalOverrides(const std::vector<ConfigurationOverride>& line) { overrides.addGlobal(line); }
@@ -174,8 +182,11 @@ ParsedTestFile buildTestFile(SystestParser& parser, const std::filesystem::path&
 {
     TestFileBuilder builder;
 
-    parser.registerOnCreateCallback([&](std::string sql, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> attach)
-                                    { builder.addCreate(std::move(sql), std::move(attach)); });
+    parser.registerOnCreateCallback(
+        [&](std::string sql,
+            std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> attach,
+            std::optional<SystestParser::ErrorExpectation> expectedError)
+        { builder.addCreate(std::move(sql), std::move(attach), std::move(expectedError)); });
 
     parser.registerOnQueryCallback([&](std::string sql, SystestQueryId) { builder.beginQuery(std::move(sql)); });
 

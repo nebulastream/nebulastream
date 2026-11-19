@@ -2,7 +2,6 @@
 # description: Imports a user-provided Codon module from a configured Python UDF search path
 # groups: [Function, PythonUDF, CompilerOnly]
 
-GlobalConfiguration worker.default_query_execution.python_udf_import_paths: [TESTDATA/python_udf]
 
 CREATE LOGICAL SOURCE numbers(a UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR numbers TYPE File;

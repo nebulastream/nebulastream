@@ -14,7 +14,8 @@
 
 #include <CodonUdfLowering.hpp>
 
-#include <algorithm>
+#include <atomic>
+#include <ranges>
 #include <cstddef>
 #include <cstdlib>
 #include <string>
@@ -27,83 +28,42 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <PythonPhysicalFunction.hpp>
+#include <PythonUdfCompiler.hpp>
 #include <UdfDescriptor.hpp>
 #include <UdfLoweringRegistry.hpp>
 
 namespace NES
 {
-namespace
-{
-/// A UDF named by its entry point, expressed as the inline function the Codon path compiles: the ENTRYPOINT module is
-/// imported and called from a generated body. A nullable argument reaches the entry point as Optional[T], like any body.
-InlineUdfSource buildCodonUdfCall(const UdfDescriptor& descriptor, const std::vector<DataType>& inputTypes)
-{
-    const auto entrypoint = splitEntrypoint(descriptor.getEntrypoint());
-    INVARIANT(entrypoint.has_value(), "Codon UDF '{}' has no 'module.function' entry point", descriptor.getName());
-    INVARIANT(
-        inputTypes.size() == descriptor.getArgTypes().size(), "UDF '{}' called with a wrong number of arguments", descriptor.getName());
-
-    InlineUdfSource call;
-    std::vector<std::string> entryArguments;
-    for (size_t index = 0; index < inputTypes.size(); ++index)
-    {
-        call.parameterNames.emplace_back(fmt::format("_p{}", index));
-        /// The parameters are bytes or str as the declaration says (BYTES), see createPythonUdfSource.
-        entryArguments.emplace_back(fmt::format("_p{}", index));
-    }
-    call.body = fmt::format(
-        "from {} import {} as _nes_udf_entry\nfrom nes_compat import _nes_result\n"
-        "return _nes_result(_nes_udf_entry({}))",
-        entrypoint->first,
-        entrypoint->second,
-        fmt::join(entryArguments, ", "));
-    return call;
-}
-
-/// Where Codon looks for the ENTRYPOINT module: the configured python_udf_import_paths plus NES_UDF_PATH, the module
-/// search path the CPython bridge uses, so a single directory of UDF modules serves every backend.
-std::vector<std::string> codonImportPaths(const std::vector<std::string>& configured)
-{
-    auto paths = configured;
-    const auto* const udfPath = std::getenv("NES_UDF_PATH"); /// NOLINT(concurrency-mt-unsafe)
-    if (udfPath == nullptr)
-    {
-        return paths;
-    }
-    const std::string_view remaining{udfPath};
-    size_t begin = 0;
-    while (begin <= remaining.size())
-    {
-        const auto end = remaining.find(':', begin);
-        const auto directory = std::string{remaining.substr(begin, end == std::string_view::npos ? std::string_view::npos : end - begin)};
-        if (!directory.empty() && std::ranges::find(paths, directory) == paths.end())
-        {
-            paths.push_back(directory);
-        }
-        if (end == std::string_view::npos)
-        {
-            break;
-        }
-        begin = end + 1;
-    }
-    return paths;
-}
-}
-
 PhysicalFunction CodonUdfLowering::createCodon(UdfLoweringRegistryArguments arguments)
 {
     INVARIANT(arguments.outputType.nullable, "UDF call results are nullable");
-    const auto importPaths = codonImportPaths(arguments.importPaths);
-    const auto source
-        = arguments.udf.getSource().has_value() ? *arguments.udf.getSource() : buildCodonUdfCall(arguments.udf, arguments.inputTypes);
-    return PhysicalFunction{PythonPhysicalFunction(
-                                source.parameterNames,
-                                source.body,
-                                arguments.childFunctions,
-                                arguments.inputTypes,
-                                arguments.outputType,
-                                importPaths,
-                                arguments.udf.getBytesArguments())}
+    const auto& udf = arguments.udf;
+    /// A UDF from the catalog was compiled when it was registered (UdfCatalog::registerUdf); its entry point takes nullable
+    /// arguments and returns a nullable result (CodonUdfCompiler). Others, e.g. defined in code, are compiled here for the
+    /// types of this call.
+    if (const auto& compiled = udf.getCompiled())
+    {
+        auto argumentTypes = udf.getArgTypes();
+        for (auto& type : argumentTypes)
+        {
+            type.nullable = true;
+        }
+        return PhysicalFunction{PythonPhysicalFunction(*compiled, arguments.childFunctions, std::move(argumentTypes), arguments.outputType)}
+            .withSetupChildren(std::move(arguments.childFunctions));
+    }
+    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+    static std::atomic_uint64_t nextLoweredUdfId = 0;
+    const auto source = udf.getSource().has_value() ? *udf.getSource() : codonUdfSource(udf, arguments.inputTypes);
+    const auto compiled = compilePythonUdf(
+        fmt::format("__nes_python_udf_lowered_{}", nextLoweredUdfId.fetch_add(1)),
+        source.parameterNames,
+        source.body,
+        arguments.inputTypes,
+        arguments.outputType,
+        codonImportPaths(arguments.importPaths),
+        udf.getBytesArguments(),
+        arguments.inputTypes | std::views::transform([](const DataType& type) { return type.nullable; }) | std::ranges::to<std::vector>());
+    return PhysicalFunction{PythonPhysicalFunction(compiled, arguments.childFunctions, arguments.inputTypes, arguments.outputType)}
         .withSetupChildren(std::move(arguments.childFunctions));
 }
 

@@ -329,7 +329,11 @@ public:
         std::vector<std::string> parameterNames;
         for (auto* const argField : functionDefAST->functionArgField())
         {
-            argTypes.push_back(bindDataType(argField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+            /// Like a column, an argument is nullable unless declared NOT NULL. An Inline UDF receives a nullable argument as
+            /// Optional (None for NULL); for NULL in a NOT NULL argument it returns NULL without running.
+            argTypes.push_back(bindDataType(
+                argField->typeDefinition(),
+                argField->nullableDefinition() == nullptr ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
             parameterNames.emplace_back(bindIdentifier(argField->name->strictIdentifier()).getOriginalString());
             if (argField->representation == nullptr)
             {

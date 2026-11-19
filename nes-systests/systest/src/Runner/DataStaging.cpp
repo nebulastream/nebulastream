@@ -86,6 +86,8 @@ StagedSetup stage(const RunnableTestFile& runnable)
                 }},
             setup);
         staged.sql.push_back(getSqlOf(setup));
+        const auto* plain = std::get_if<PlainStatement>(&setup);
+        staged.expectedErrors.push_back(plain != nullptr ? plain->expectedError : std::nullopt);
     }
     return staged;
 }

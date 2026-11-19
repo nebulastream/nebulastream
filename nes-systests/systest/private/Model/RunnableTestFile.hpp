@@ -46,6 +46,8 @@ struct ServedData
 struct PlainStatement
 {
     std::string sql;
+    /// Set if the statement must fail with this error (a CREATE FUNCTION that does not compile).
+    std::optional<ExpectedError> expectedError = std::nullopt;
 };
 
 struct StatementWithInlineData

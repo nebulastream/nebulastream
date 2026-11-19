@@ -69,6 +69,18 @@ struct InlineUdfSource
     bool operator==(const InlineUdfSource&) const = default;
 };
 
+/// An Inline UDF that the catalog compiled when it was registered: LLVM bitcode of the function for the query pipeline
+/// and for the interpreter. Its entry points are `symbol` and the interpreter's variant of it; the worker gives each call
+/// its own name. It travels with the plan, so the worker does not compile the UDF again.
+struct CompiledInlineUdf
+{
+    std::string symbol;
+    std::string pipelineBitcode;
+    std::string interpreterBitcode;
+
+    bool operator==(const CompiledInlineUdf&) const = default;
+};
+
 /// A registered scalar UDF: name, language, where it executes, path to the `.so` exposing the UDF C ABI (InProcess only;
 /// empty otherwise), the code to run (an entry point inside the `.so`, e.g. "module.function", or an inline source), and the
 /// declared signature. No public constructor -- only reachable through `UdfCatalog::registerUdf` (which validates),
@@ -85,6 +97,7 @@ class UdfDescriptor
     DataType returnType;
     UdfExecution execution;
     UdfLanguage language;
+    std::optional<CompiledInlineUdf> compiled;
 
     UdfDescriptor(
         std::string name,
@@ -95,7 +108,8 @@ class UdfDescriptor
         std::vector<uint64_t> bytesArguments,
         DataType returnType,
         UdfExecution execution,
-        UdfLanguage language)
+        UdfLanguage language,
+        std::optional<CompiledInlineUdf> compiled = std::nullopt)
         : name(std::move(name))
         , path(std::move(path))
         , entrypoint(std::move(entrypoint))
@@ -105,6 +119,7 @@ class UdfDescriptor
         , returnType(returnType)
         , execution(execution)
         , language(language)
+        , compiled(std::move(compiled))
     {
     }
 
@@ -146,6 +161,9 @@ public:
     [[nodiscard]] UdfExecution getExecution() const { return execution; }
 
     [[nodiscard]] UdfLanguage getLanguage() const { return language; }
+
+    /// Set for an Inline UDF that the catalog compiled at registration.
+    [[nodiscard]] const std::optional<CompiledInlineUdf>& getCompiled() const { return compiled; }
 
     bool operator==(const UdfDescriptor&) const = default;
 };

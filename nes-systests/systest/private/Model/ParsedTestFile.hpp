@@ -44,6 +44,8 @@ struct CreateStatement
 {
     std::string sql;
     std::optional<AttachedData> attach;
+    /// Set if the statement must fail with this error (only CREATE FUNCTION).
+    std::optional<ExpectedError> expectedError = std::nullopt;
 };
 
 struct SelectStatement

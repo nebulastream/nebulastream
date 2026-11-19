@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <Model/Expectation.hpp>
 #include <expected>
 #include <optional>
 #include <span>
@@ -64,7 +65,11 @@ public:
     /// Other partitions can still be bound afterwards, because the rewriter prefixes each partition's names.
     /// An unbindable test case yields an error entry, not a throw: a test may expect that error.
     [[nodiscard]] BoundTestFile
-    bind(std::span<const std::string> setupSql, std::span<const RewrittenTestCase> testCases, const std::string& partitionKey);
+    bind(
+        std::span<const std::string> setupSql,
+        std::span<const std::optional<ExpectedError>> expectedErrors,
+        std::span<const RewrittenTestCase> testCases,
+        const std::string& partitionKey);
 
     ~SystestBinder();
 
