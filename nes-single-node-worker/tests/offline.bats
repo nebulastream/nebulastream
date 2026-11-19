@@ -191,15 +191,13 @@ worker_timeout() {
   "$NES_WORKER" --grpc=127.0.0.1:0 >/dev/null 2>&1 3>&- &
   local worker_pid=$!
 
+  local sig_ign=0
   local i
   for i in $(seq 1 100); do
-    grep -q "Server listening on port" singleNodeWorker.log 2>/dev/null && break
+    sig_ign=$(awk '/^SigIgn:/ {print $2}' "/proc/$worker_pid/status")
+    [ $(( 0x$sig_ign & 0x1000 )) -ne 0 ] && break
     sleep 0.2
   done
-  grep "Server listening on port" singleNodeWorker.log
-
-  local sig_ign
-  sig_ign=$(awk '/^SigIgn:/ {print $2}' "/proc/$worker_pid/status")
 
   kill -TERM "$worker_pid"
   wait "$worker_pid" || true
