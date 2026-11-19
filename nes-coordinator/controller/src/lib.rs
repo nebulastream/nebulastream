@@ -12,36 +12,29 @@
     limitations under the License.
 */
 
-//! Reconciliation hierarchy: one task per catalog row whose observed state has to move toward its desired state.
-//! The controller runs one task per active worker,
-//! and each worker task runs one task per fragment that is assigned to its worker.
-//! A worker task is aborted when its row is marked for removal.
+//! Reconciliation: one loop per worker that moves the worker and its fragments toward the state that the catalog wants.
 //! The catalog is the only authority, so a restart resumes from the state that the previous process left behind.
 //!
-//! The loop is level-triggered: a periodic tick re-reads the catalog regardless of notifications.
+//! The loops are level-triggered: a periodic tick re-reads the catalog regardless of notifications.
 //! Watch channels coalesce change signals into wake-ups, which lower latency.
 //! A missed wake-up only delays the reaction until the next poll.
 
-use crate::config::POLL_INTERVAL;
-use crate::in_process::{InProcessBackend, WorkerFactory};
-use crate::remote::RemoteBackend;
-use crate::util::buggify::buggify;
-use crate::util::reconcile::{Reconciler, reconcile_loop};
-use crate::util::task_map::TaskMap;
-use crate::worker_task::{WorkerTask, stop_removed_fragments};
+use crate::config::{EMBEDDED_REPORT_INTERVAL, POLL_INTERVAL, REMOTE_REPORT_INTERVAL};
+use crate::in_process::WorkerFactory;
+use crate::worker_task::WorkerTask;
 use model::database::Database;
 use model::worker;
 use model::worker::endpoint::NetworkAddr;
-use model::worker::{DesiredWorkerState, WorkerTransition};
-use sea_orm::ActiveModelTrait;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::watch;
+use tokio::task::JoinHandle;
 use tracing::{Instrument, info, info_span, warn};
 
 mod config;
 pub mod in_process;
-pub mod query_fragment;
 pub mod remote;
+mod report;
 mod version;
 mod worker_task;
 
@@ -54,7 +47,8 @@ pub struct Controller {
     db: Database,
     intent_rx: watch::Receiver<()>,
     state_tx: watch::Sender<()>,
-    workers: TaskMap<NetworkAddr>,
+    /// A loop ends once its worker is recorded as removed, and a worker that becomes actionable again gets a new one.
+    workers: HashMap<NetworkAddr, JoinHandle<()>>,
     factory: Option<Arc<dyn WorkerFactory>>,
 }
 
@@ -78,88 +72,72 @@ impl Controller {
             db,
             intent_rx,
             state_tx,
-            workers: TaskMap::new(),
+            workers: HashMap::new(),
             factory,
         }
     }
 
-    /// Returns once the sender of the catalog-change signal is dropped.
-    /// Outside madsim, a panic in a worker or fragment task is raised again here.
+    /// Returns once the sender of the catalog-change signal is dropped, and the worker loops end with it.
+    /// Outside madsim, a panic in a worker loop is raised again here.
     pub async fn run(mut self) {
         info!("starting");
-        let mut intent_rx = self.intent_rx.clone();
-        reconcile_loop(&mut self, &mut intent_rx, POLL_INTERVAL, None).await;
-    }
-
-    fn spawn_task(&mut self, worker_model: worker::Model) {
-        let addr = worker_model.host_addr.clone();
-        let intent_rx = self.intent_rx.clone();
-        let state_tx = self.state_tx.clone();
-        let db = self.db.clone();
-        // The reconcile pass calls this every tick for every active worker,
-        // so the task is built only when the address is not tracked yet.
-        if let Some(factory) = self.factory.clone() {
-            let span = info_span!("embedded_worker", addr = %addr);
-            self.workers.spawn_if_untracked(addr, move || {
-                let backend = InProcessBackend::new(factory, worker_model.clone());
-                WorkerTask::new(worker_model, backend, db, intent_rx, state_tx)
-                    .run()
-                    .instrument(span)
-            });
-        } else {
-            let span = info_span!("remote_worker", addr = %addr);
-            self.workers.spawn_if_untracked(addr, move || {
-                WorkerTask::new(worker_model, RemoteBackend, db, intent_rx, state_tx)
-                    .run()
-                    .instrument(span)
-            });
+        let mut poll = tokio::time::interval(POLL_INTERVAL);
+        loop {
+            tokio::select! {
+                change = self.intent_rx.changed() => if change.is_err() { return; },
+                _ = poll.tick() => {}
+            }
+            self.join_finished().await;
+            match worker::Entity::actionable(&self.db).await {
+                Ok(workers) => {
+                    for worker in workers {
+                        if !self.workers.contains_key(&worker.host_addr) {
+                            let task = self.spawn_task(worker.clone());
+                            self.workers.insert(worker.host_addr, task);
+                        }
+                    }
+                }
+                Err(e) => warn!(error = ?e, "failed to fetch workers"),
+            }
         }
     }
-}
 
-impl Reconciler for Controller {
-    type Key = NetworkAddr;
-
-    fn tasks(&mut self) -> &mut TaskMap<NetworkAddr> {
-        &mut self.workers
+    async fn join_finished(&mut self) {
+        let finished: Vec<NetworkAddr> = self
+            .workers
+            .iter()
+            .filter(|(_, task)| task.is_finished())
+            .map(|(addr, _)| addr.clone())
+            .collect();
+        for addr in finished {
+            if let Some(task) = self.workers.remove(&addr)
+                && let Err(err) = task.await
+            {
+                // A madsim join error has no panic payload.
+                #[cfg(not(madsim))]
+                if err.is_panic() {
+                    std::panic::resume_unwind(err.into_panic());
+                }
+                warn!(%addr, error = %err, "worker task failed");
+            }
+        }
     }
 
-    async fn reconcile(&mut self) {
-        let workers = match worker::Entity::actionable(&self.db).await {
-            Ok(workers) => workers,
-            Err(e) => {
-                warn!(error = ?e, "failed to fetch workers");
-                return;
-            }
-        };
-
-        for worker in workers {
-            match worker.desired_state {
-                DesiredWorkerState::Active => {
-                    self.spawn_task(worker);
-                }
-                DesiredWorkerState::Removed => {
-                    info!(addr = %worker.host_addr, "aborting task");
-                    self.workers.abort(&worker.host_addr);
-                    // Connecting to an in-process backend creates a new worker, which does not run the old fragments,
-                    // so only a remote worker has fragments to stop.
-                    if self.factory.is_none() {
-                        let (db, addr) = (self.db.clone(), worker.host_addr.clone());
-                        tokio::spawn(async move {
-                            stop_removed_fragments(&RemoteBackend, &db, &addr).await;
-                        });
-                    }
-                    if buggify() {
-                        continue;
-                    }
-                    let mut update: worker::ActiveModel = worker.into();
-                    update.apply_transition(WorkerTransition::Removed);
-                    if let Err(e) = update.save(&self.db).await {
-                        // The worker stays actionable, so the next tick retries it.
-                        warn!(error = %e, "failed to update worker");
-                    }
-                }
-            }
+    fn spawn_task(&self, worker: worker::Model) -> JoinHandle<()> {
+        let addr = worker.host_addr.clone();
+        let (db, state_tx) = (self.db.clone(), self.state_tx.clone());
+        let intent_rx = self.intent_rx.clone();
+        if let Some(factory) = self.factory.clone() {
+            let span = info_span!("embedded_worker", addr = %addr);
+            let connect = move || in_process::connect(factory.clone(), worker.clone());
+            let task = WorkerTask::new(addr, connect, EMBEDDED_REPORT_INTERVAL, db, state_tx);
+            tokio::spawn(task.run(intent_rx).instrument(span))
+        } else {
+            let span = info_span!("remote_worker", addr = %addr);
+            let target = addr.clone();
+            let connect = move || remote::connect(target.clone());
+            let task = WorkerTask::new(addr, connect, REMOTE_REPORT_INTERVAL, db, state_tx);
+            tokio::spawn(task.run(intent_rx).instrument(span))
         }
     }
 }

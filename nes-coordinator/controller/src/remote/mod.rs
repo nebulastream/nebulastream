@@ -16,14 +16,11 @@
 
 mod client;
 
-use crate::config::{CONNECT_TIMEOUT, HEALTH_CHECK_INTERVAL, RPC_TIMEOUT};
-use crate::worker_task::{ActiveFragments, Backend};
+use crate::config::{CONNECT_TIMEOUT, RPC_TIMEOUT};
 use anyhow::Context;
 use client::RemoteTransport;
-use model::identifier::QueryFragmentId;
 use model::worker::endpoint::NetworkAddr;
-use std::time::Duration;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::Endpoint;
 use tracing::warn;
 
 #[allow(
@@ -51,84 +48,20 @@ impl worker_rpc_service::nes::SerializableQueryId {
     }
 }
 
-#[allow(
-    clippy::pedantic,
-    clippy::nursery,
-    clippy::result_large_err,
-    reason = "generated code"
-)]
-pub mod health_proto {
-    tonic::include_proto!("grpc.health.v1");
-}
-
-use health_proto::health_check_response::ServingStatus;
-use health_proto::health_client::HealthClient;
 pub use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
 
+/// The channel dials again on the next call after the worker went away, so a connection is made once per worker loop.
 #[tracing::instrument(level = "info")]
-async fn connect(addr: &NetworkAddr) -> anyhow::Result<Channel> {
+pub(crate) async fn connect(addr: NetworkAddr) -> anyhow::Result<RemoteTransport> {
     let endpoint = Endpoint::from_shared(format!("http://{addr}"))
         .with_context(|| format!("failed to connect to {addr}"))?
         .connect_timeout(CONNECT_TIMEOUT)
         .timeout(RPC_TIMEOUT);
 
-    endpoint
+    let channel = endpoint
         .connect()
         .await
         .inspect_err(|e| warn!(%addr, error = %e, "worker unreachable"))
-        .with_context(|| format!("failed to connect to {addr}"))
-}
-
-pub(crate) struct RemoteBackend;
-
-impl Backend for RemoteBackend {
-    type Transport = RemoteTransport;
-
-    const HEARTBEAT: Option<Duration> = Some(HEALTH_CHECK_INTERVAL);
-
-    async fn connect(&self, addr: &NetworkAddr) -> anyhow::Result<RemoteTransport> {
-        Ok(RemoteTransport::new(connect(addr).await?, addr.clone()))
-    }
-
-    async fn healthy(&self, transport: &RemoteTransport) -> bool {
-        HealthClient::new(transport.channel().clone())
-            .check(health_proto::HealthCheckRequest::default())
-            .await
-            .is_ok_and(|response| response.into_inner().status == ServingStatus::Serving as i32)
-    }
-
-    async fn active_fragments(
-        &self,
-        transport: &RemoteTransport,
-        after: u64,
-    ) -> anyhow::Result<ActiveFragments> {
-        let request = worker_rpc_service::WorkerStatusRequest {
-            after_unix_timestamp_in_milli_seconds: after,
-        };
-        let reply = transport
-            .client()
-            .request_status(request)
-            .await?
-            .into_inner();
-        let fragments = reply
-            .active_queries
-            .into_iter()
-            .filter_map(|query| {
-                let id = query.query_id.as_ref().and_then(|id| id.fragment_id());
-                // A query whose local id is not a fragment id was not started by the controller,
-                // so it is left out and never stopped as an orphan.
-                if id.is_none() {
-                    warn!(query_id = ?query.query_id, "worker lists an active query without a fragment id");
-                }
-                Some((
-                    QueryFragmentId::new(id?),
-                    query.started_unix_timestamp_in_milli_seconds,
-                ))
-            })
-            .collect();
-        Ok(ActiveFragments {
-            fragments,
-            until: reply.until_unix_timestamp_in_milli_seconds,
-        })
-    }
+        .with_context(|| format!("failed to connect to {addr}"))?;
+    Ok(RemoteTransport::new(channel, addr))
 }

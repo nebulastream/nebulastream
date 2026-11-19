@@ -17,10 +17,7 @@ fn main() {
 
     tonic_build::configure()
         .compile_protos(
-            &[
-                "../../grpc/SingleNodeWorkerRPCService.proto",
-                "../../grpc/health.proto",
-            ],
+            &["../../grpc/SingleNodeWorkerRPCService.proto"],
             &["../../grpc"],
         )
         .expect("failed to compile proto files");

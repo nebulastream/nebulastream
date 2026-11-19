@@ -20,7 +20,7 @@ use crate::identifier::QueryId;
 use crate::worker::endpoint::NetworkAddr;
 use sea_orm::Set;
 use sea_orm::entity::prelude::*;
-use sea_orm::{ActiveValue, DerivePartialModel, FromJsonQueryResult, NotSet, QuerySelect};
+use sea_orm::{ActiveValue, DerivePartialModel, FromJsonQueryResult, NotSet};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use thiserror::Error;
@@ -40,6 +40,7 @@ pub enum QueryFragmentError {
 pub struct ActionableFragment {
     pub id: QueryFragmentId,
     pub query_id: QueryId,
+    pub current_state: QueryFragmentState,
     pub desired_state: DesiredQueryFragmentState,
 }
 
@@ -157,7 +158,7 @@ impl ActiveModelBehavior for ActiveModel {
 /// A terminal transition may also set the start timestamp,
 /// because a short fragment can finish before it was ever observed running.
 /// Whether the step from the current state is legal is checked by a database trigger, not here.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QueryFragmentTransition {
     Pending,
     Started,
@@ -287,30 +288,6 @@ impl Model {
 }
 
 impl Entity {
-    /// Fragments on the given worker that the worker-removal trigger failed.
-    pub async fn failed_by_worker_removal(
-        conn: &impl ConnectionTrait,
-        host: &NetworkAddr,
-    ) -> Result<Vec<QueryFragmentId>, DbErr> {
-        let rows: Vec<(QueryFragmentId, Option<QueryFragmentError>)> = Entity::find()
-            .select_only()
-            .column(Column::Id)
-            .column(Column::Error)
-            .filter(Column::HostAddr.eq(host.clone()))
-            .filter(Column::CurrentState.eq(QueryFragmentState::Failed))
-            .into_tuple()
-            .all(conn)
-            .await?;
-        Ok(rows
-            .into_iter()
-            .filter(|(_, error)| {
-                // The message that the worker-removal trigger writes.
-                matches!(error, Some(QueryFragmentError::Transport { msg }) if msg == "worker removed")
-            })
-            .map(|(id, _)| id)
-            .collect())
-    }
-
     /// Non-terminal fragments on the given worker with an observed state that differs from their target,
     /// meaning the fragments that the per-worker controller still has to reconcile.
     pub async fn actionable(

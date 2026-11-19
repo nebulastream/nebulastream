@@ -60,23 +60,21 @@ flowchart TB
         Planner[SQL Planner]
         Catalog[(Catalog)]
         Controller[Controller]
-        WorkerTasks[Worker Tasks]
-        FragmentTasks[Query Fragment Tasks]
+        WorkerLoops[Worker Loops]
 
         Handler <-->|Plan raw SQL| Planner
         Handler -->|Commit desired state| Catalog
         Catalog -->|Read desired state| Controller
-        Controller -->|Manage workers| WorkerTasks
-        WorkerTasks -->|Manage assigned fragments| FragmentTasks
+        Controller -->|Manage workers| WorkerLoops
 
-        FragmentTasks -.->|Persist observed state| Catalog
+        WorkerLoops -.->|Persist observed state| Catalog
         Catalog -.->|Resolve waiting requests| Handler
     end
 
     Worker[Workers]
 
     Request --> Handler
-    FragmentTasks <-->|Start, stop, and read status| Worker
+    WorkerLoops <-->|Start, stop, and read status| Worker
 ```
 
 The request handler accepts raw SQL or an already parsed coordinator statement.  
@@ -84,9 +82,9 @@ For raw SQL, it invokes the SQL planner, which uses catalog information to produ
 The request handler applies the result in one catalog transaction and records the desired state.  
 It then returns immediately or waits for the catalog to satisfy the requested condition.
 
-The controller starts the reconciliation process by reading the desired state from the catalog and managing the corresponding worker tasks.  
-Each worker task manages the query fragments assigned to its worker.  
-The fragment tasks drive the fragment lifecycle and persist observed state changes in the catalog.  
+The controller starts the reconciliation process by reading the desired state from the catalog and running one loop per worker.  
+Each loop compares the worker's status report with the fragments that the catalog assigns to the worker,
+starts and stops fragments, and persists observed state changes in the catalog.  
 These changes allow the request handler to resolve waiting requests.  
 The catalog derives the overall query state from the observed states of its fragments.
 
@@ -122,7 +120,7 @@ It also defines the desired and observed states used to manage workers and query
 ### [Controller](controller/README.md)
 
 The `controller` crate reconciles the catalog with the workers.
-It manages the task hierarchy for workers and query fragments and supports remote and embedded worker transports.
+It runs one loop per worker and supports remote and embedded worker transports.
 
 ### [Request Handler](request-handler/README.md)
 

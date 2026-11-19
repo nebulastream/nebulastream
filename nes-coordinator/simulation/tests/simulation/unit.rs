@@ -24,6 +24,7 @@ use controller::remote::worker_rpc_service::nes::{SerializableQueryId, Serializa
 use controller::remote::worker_rpc_service::worker_rpc_service_server::WorkerRpcService;
 use controller::remote::worker_rpc_service::{
     QueryMetrics, QueryStatusRequest, StartQueryRequest, StopQueryRequest, WorkerStatusRequest,
+    WorkerStatusResponse,
 };
 use libtest_mimic::Trial;
 use madsim::Config;
@@ -814,7 +815,7 @@ async fn get_fragment_status(
     ))
 }
 
-async fn list_active_fragments(worker: &WorkerService, after: u64) -> Vec<(i64, Option<u64>)> {
+async fn request_status(worker: &WorkerService, after: u64) -> WorkerStatusResponse {
     worker
         .request_status(Request::new(WorkerStatusRequest {
             after_unix_timestamp_in_milli_seconds: after,
@@ -822,15 +823,32 @@ async fn list_active_fragments(worker: &WorkerService, after: u64) -> Vec<(i64, 
         .await
         .unwrap()
         .into_inner()
+}
+
+fn fragment_id(id: Option<&SerializableQueryId>) -> i64 {
+    id.and_then(SerializableQueryId::fragment_id).unwrap()
+}
+
+async fn list_active_fragments(worker: &WorkerService, after: u64) -> Vec<(i64, Option<u64>)> {
+    request_status(worker, after)
+        .await
         .active_queries
         .into_iter()
         .map(|q| {
-            let id = q
-                .query_id
-                .as_ref()
-                .and_then(SerializableQueryId::fragment_id);
-            (id.unwrap(), q.started_unix_timestamp_in_milli_seconds)
+            (
+                fragment_id(q.query_id.as_ref()),
+                q.started_unix_timestamp_in_milli_seconds,
+            )
         })
+        .collect()
+}
+
+async fn list_terminated_fragments(worker: &WorkerService, after: u64) -> Vec<i64> {
+    request_status(worker, after)
+        .await
+        .terminated_queries
+        .into_iter()
+        .map(|q| fragment_id(q.query_id.as_ref()))
         .collect()
 }
 
@@ -848,17 +866,13 @@ fn worker_lists_by_state() {
                 }
                 let (state, metrics) = get_fragment_status(&worker, FRAGMENT).await.unwrap();
                 let listed = list_active_fragments(&worker, 0).await;
+                // The requested time filters only stopped fragments.
                 match state {
-                    WorkerQueryState::Started => {
+                    WorkerQueryState::Registered | WorkerQueryState::Started => {
                         assert_eq!(listed, [(FRAGMENT, None)], "seed {seed}");
-                        let started = metrics.start_unix_time_in_ms.unwrap();
                         assert_eq!(
-                            list_active_fragments(&worker, started).await,
+                            list_active_fragments(&worker, u64::MAX).await,
                             [(FRAGMENT, None)],
-                            "seed {seed}"
-                        );
-                        assert!(
-                            list_active_fragments(&worker, started + 1).await.is_empty(),
                             "seed {seed}"
                         );
                     }
@@ -866,16 +880,27 @@ fn worker_lists_by_state() {
                         let running = metrics.running_unix_time_in_ms.unwrap();
                         assert_eq!(listed, [(FRAGMENT, Some(running))], "seed {seed}");
                         assert_eq!(
-                            list_active_fragments(&worker, running).await,
+                            list_active_fragments(&worker, running + 1).await,
                             [(FRAGMENT, Some(running))],
                             "seed {seed}"
                         );
+                    }
+                    WorkerQueryState::Stopped => {
+                        assert!(listed.is_empty(), "seed {seed}");
+                        let stopped = metrics.stop_unix_time_in_ms.unwrap();
+                        assert_eq!(
+                            list_terminated_fragments(&worker, stopped).await,
+                            [FRAGMENT],
+                            "seed {seed}"
+                        );
                         assert!(
-                            list_active_fragments(&worker, running + 1).await.is_empty(),
+                            list_terminated_fragments(&worker, stopped + 1)
+                                .await
+                                .is_empty(),
                             "seed {seed}"
                         );
                     }
-                    other => assert!(listed.is_empty(), "seed {seed}: {other:?} is listed"),
+                    other => panic!("seed {seed}: unexpected state {other:?}"),
                 }
                 if seen.last() != Some(&state) {
                     seen.push(state);

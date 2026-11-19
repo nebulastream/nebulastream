@@ -13,6 +13,3 @@
 */
 
 pub(crate) mod buggify;
-pub(crate) mod poly_join_set;
-pub(crate) mod reconcile;
-pub(crate) mod task_map;

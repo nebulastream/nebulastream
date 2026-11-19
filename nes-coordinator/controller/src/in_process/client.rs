@@ -13,24 +13,17 @@
 */
 
 use super::{InProcessWorker, run_blocking};
-use crate::config::EMBEDDED_FRAGMENT_POLL_INTERVAL;
-use crate::query_fragment::{CallError, RawStatus, Transport};
+use crate::remote::worker_rpc_service::WorkerStatusResponse;
 use crate::remote::worker_rpc_service::nes::SerializableQueryPlan;
+use crate::worker_task::{CallError, Transport};
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::QueryFragmentError;
 use std::sync::Arc;
-use std::time::Duration;
 
 /// A call to a worker in this process never fails transiently.
-/// An unknown id is state, not failure:
-/// the status log is append-only and gets its first entry before any work is queued,
-/// so the id was never started there.
 fn classify(error: QueryFragmentError) -> CallError {
     match &error {
-        QueryFragmentError::Internal(coded) if coded.code == ErrorCode::QueryNotFound => {
-            CallError::NotFound
-        }
         QueryFragmentError::Internal(coded) if coded.code == ErrorCode::QueryAlreadyRegistered => {
             CallError::AlreadyExists
         }
@@ -64,10 +57,6 @@ impl InProcessTransport {
 }
 
 impl Transport for InProcessTransport {
-    fn poll_interval(&self) -> Duration {
-        EMBEDDED_FRAGMENT_POLL_INTERVAL
-    }
-
     async fn start(&self, plan: SerializableQueryPlan) -> Result<(), CallError> {
         let prepared = prost::Message::encode_to_vec(&plan);
         let worker = self.worker.clone();
@@ -80,9 +69,9 @@ impl Transport for InProcessTransport {
         call(move || worker.stop_query_fragment(id)).await
     }
 
-    async fn status(&self, id: QueryFragmentId) -> Result<RawStatus, CallError> {
+    async fn report(&self, after: u64) -> anyhow::Result<WorkerStatusResponse> {
         let worker = self.worker.clone();
-        let id = *id;
-        call(move || worker.get_query_fragment_status(id)).await
+        let bytes = run_blocking(move || worker.worker_status(after)).await??;
+        Ok(prost::Message::decode(bytes.as_slice())?)
     }
 }

@@ -33,7 +33,7 @@ See the [model README](../model/README.md) for the catalog’s operations and tr
 For embedded deployments, the bridge connects the Rust controller to C++ workers running in the same process.  
 It provides access to worker creation and the operations needed to start, stop, and inspect query fragments.  
 The bridge passes the controller’s start, stop, and status requests to the embedded C++ worker, then returns the worker’s results to the controller.  
-The task hierarchy and worker communication behavior are described in the [controller README](../controller/README.md).
+The worker loops and worker communication behavior are described in the [controller README](../controller/README.md).
 
 ## Results and Errors
 

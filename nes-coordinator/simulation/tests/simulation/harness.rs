@@ -19,7 +19,7 @@
 //! Statements and fault primitives are harness methods.
 //! The simulator injects the faults.
 
-use crate::worker::{HealthServer, HealthService, WorkerRpcServiceServer, WorkerService};
+use crate::worker::{WorkerRpcServiceServer, WorkerService};
 use anyhow::Result;
 use controller::remote::WorkerRpcServiceClient;
 use controller::remote::worker_rpc_service::{WorkerStatusRequest, WorkerStatusResponse};
@@ -140,7 +140,6 @@ impl Harness {
             .init(move || async move {
                 Server::builder()
                     .add_service(WorkerRpcServiceServer::new(WorkerService::new()))
-                    .add_service(HealthServer::new(HealthService))
                     .serve(SocketAddr::from((Ipv4Addr::UNSPECIFIED, DEFAULT_HOST_PORT)))
                     .await
                     .expect("worker could not be started");
