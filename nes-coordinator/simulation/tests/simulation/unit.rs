@@ -268,6 +268,7 @@ fn build_query_row(id: i64) -> query::Model {
         id: QueryId::new(id),
         name: None,
         sql: String::new(),
+        global_plan: Vec::new(),
         state: QueryState::Running,
         start_timestamp: None,
         stop_timestamp: None,
@@ -397,7 +398,7 @@ fn model_orders_prerequisites() {
                         ParsedStatement::CreateLogicalSource(create) => (
                             "logical",
                             StatementResult::CreatedLogicalSource(logical::Model {
-                                name: create.name,
+                                name: create.name.into(),
                                 schema: Default::default(),
                             }),
                         ),
