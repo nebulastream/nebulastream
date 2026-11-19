@@ -383,7 +383,7 @@ TEST_F(QueryEngineTest, multiSourceFailureReportsFailureOnce)
         {
             (void)ctrl2->injectError("Source 2 Failed");
         }
-        catch (const Exception&)
+        catch (const Exception&) /// NOLINT(bugprone-empty-catch) the source is already stopped by the first failure's teardown
         {
         }
 
