@@ -67,6 +67,8 @@ Each step has a timeout of 30 s, and the runner kills a harness that exceeds the
 Neither can be configured: both only break stalls, so a longer one would only make a failing test slower.
 Stopping a source has the step timeout too. A connector that ignores the stop request fails the step with `StepTimeout`,
 and the harness then exits with code 3, because the stuck source thread still uses its state.
+At the end of a test, the harness stops a source that is still running when the runner closes the channel,
+so the runner waits 40 s for the harness to exit before it kills it.
 The bytes of each FILL go to the file in `--observed-path`, where the runner reads them back.
 
 ## One round trip
