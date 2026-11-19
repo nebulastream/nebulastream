@@ -19,23 +19,24 @@ use std::time::Duration;
 /// How long the controller waits between catalog reads when no wake-up arrives.
 pub(crate) const POLL_INTERVAL: Duration = Duration::from_secs(5);
 
-/// How long a worker loop waits between status reports of a remote worker.
+/// How long a worker loop waits between status requests to a remote worker.
 /// A shorter interval detects state changes sooner and adds network traffic.
-pub(crate) const REMOTE_REPORT_INTERVAL: Duration = Duration::from_secs(5);
+pub(crate) const REMOTE_STATUS_INTERVAL: Duration = Duration::from_secs(5);
 
 /// The same wait for an in-process worker.
-/// The report is an FFI call, so it costs almost nothing.
-pub(crate) const EMBEDDED_REPORT_INTERVAL: Duration = Duration::from_millis(50);
+/// The status request is an FFI call, so it costs almost nothing.
+pub(crate) const EMBEDDED_STATUS_INTERVAL: Duration = Duration::from_millis(50);
 
 /// Minimum time between two catalog writes that only mark running fragments as observed.
 pub(crate) const OBSERVATION_WRITE_INTERVAL: Duration = Duration::from_secs(1);
 
 /// Failed starts in a row at which a fragment fails.
-/// A failed start is repeated at the next report, so a remote fragment fails after a few minutes of failing starts.
-pub(crate) const MAX_CONSECUTIVE_FAILURES: u32 = 40;
+/// A failed start is repeated after one status interval, so a remote fragment fails after a few minutes of failing starts.
+pub(crate) const MAX_FAILED_STARTS: usize = 40;
 
-/// Missed reports in a row at which a worker counts as unreachable, and a removed worker is given up.
-pub(crate) const HEALTH_CHECK_MAX_MISSES: u32 = 3;
+/// Failed status requests in a row at which a worker counts as unreachable, and a removed worker is given up.
+/// A failed request, including a failed connect, is repeated after one status interval.
+pub(crate) const MAX_FAILED_STATUS_REQUESTS: usize = 3;
 
 pub(crate) const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 

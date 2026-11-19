@@ -12,104 +12,97 @@
     limitations under the License.
 */
 
-use crate::remote::worker_rpc_service;
-use crate::remote::worker_rpc_service::WorkerStatusResponse;
+use super::WorkerRpcServiceClient;
+use crate::calls::{CallError, Transport};
 use crate::remote::worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
-use crate::worker_task::{CallError, Transport};
+use crate::remote::worker_rpc_service::{
+    StartQueryRequest, StopQueryRequest, WorkerStatusRequest, WorkerStatusResponse,
+};
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::QueryFragmentError;
 use model::worker::endpoint::NetworkAddr;
 use tonic::transport::Channel;
+use tonic::{Code, Status};
 use tracing::warn;
-
-use super::WorkerRpcServiceClient;
 
 #[derive(Clone)]
 pub(crate) struct RemoteTransport {
     channel: Channel,
-    host_addr: NetworkAddr,
+    addr: NetworkAddr,
 }
 
 impl RemoteTransport {
-    pub(crate) const fn new(channel: Channel, host_addr: NetworkAddr) -> Self {
-        Self { channel, host_addr }
-    }
-
-    fn client(&self) -> WorkerRpcServiceClient<Channel> {
-        WorkerRpcServiceClient::new(self.channel.clone())
-    }
-
-    fn call_error(&self, status: &tonic::Status) -> CallError {
-        warn!(?status, "rpc error");
-        classify(&self.host_addr, status)
+    pub(crate) const fn new(channel: Channel, addr: NetworkAddr) -> Self {
+        Self { channel, addr }
     }
 }
 
 impl Transport for RemoteTransport {
     #[tracing::instrument(level = "debug", skip(self, plan))]
     async fn start(&self, plan: SerializableQueryPlan) -> Result<(), CallError> {
-        let req = worker_rpc_service::StartQueryRequest {
-            query_plan: Some(plan),
-        };
-        self.client()
-            .start_query(req)
+        WorkerRpcServiceClient::new(self.channel.clone())
+            .start_query(StartQueryRequest {
+                query_plan: Some(plan),
+            })
             .await
             .map(|_| ())
-            .map_err(|status| self.call_error(&status))
+            .map_err(|status| {
+                warn!(?status, "rpc error");
+                classify(&self.addr, &status)
+            })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn stop(&self, id: QueryFragmentId) -> Result<(), CallError> {
-        let req = worker_rpc_service::StopQueryRequest {
-            query_id: Some(SerializableQueryId::from_fragment_id(*id)),
-        };
-        self.client()
-            .stop_query(req)
+        WorkerRpcServiceClient::new(self.channel.clone())
+            .stop_query(StopQueryRequest {
+                query_id: Some(SerializableQueryId::from_fragment_id(*id)),
+            })
             .await
             .map(|_| ())
-            .map_err(|status| self.call_error(&status))
+            .map_err(|status| {
+                warn!(?status, "rpc error");
+                classify(&self.addr, &status)
+            })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn report(&self, after: u64) -> anyhow::Result<WorkerStatusResponse> {
-        let request = worker_rpc_service::WorkerStatusRequest {
+    async fn get_status(&self, after: u64) -> anyhow::Result<WorkerStatusResponse> {
+        let request = WorkerStatusRequest {
             after_unix_timestamp_in_milli_seconds: after,
         };
-        Ok(self.client().request_status(request).await?.into_inner())
+        Ok(WorkerRpcServiceClient::new(self.channel.clone())
+            .request_status(request)
+            .await?
+            .into_inner())
     }
 }
 
-fn classify(addr: &NetworkAddr, status: &tonic::Status) -> CallError {
-    let code = reported_code(status);
-    if status.code() == tonic::Code::AlreadyExists {
-        CallError::AlreadyExists
-    } else if retryable(status.code()) {
-        CallError::Transient(QueryFragmentError::Transport {
+fn classify(addr: &NetworkAddr, status: &Status) -> CallError {
+    match status.code() {
+        Code::AlreadyExists => CallError::AlreadyExists,
+        code if is_retryable(code) => CallError::Transient(QueryFragmentError::Transport {
             msg: format!("gRPC error at '{addr}': {status}"),
-        })
-    } else {
-        CallError::Failed(QueryFragmentError::Internal(CodedError::relayed(
-            code.unwrap_or(ErrorCode::UnknownException),
+        }),
+        _ => CallError::Permanent(QueryFragmentError::Internal(CodedError::relayed(
+            get_reported_code(status).unwrap_or(ErrorCode::UnknownException),
             status.message().to_string(),
-            meta_str(status, "trace"),
-        )))
+            get_metadata(status, "trace"),
+        ))),
     }
 }
 
 /// Codes that mean the call could not complete for now, not that the request failed.
 /// `UNKNOWN` is excluded because it does not tell whether the failure is temporary.
-const fn retryable(code: tonic::Code) -> bool {
+const fn is_retryable(code: Code) -> bool {
     matches!(
         code,
-        tonic::Code::Unavailable
-            | tonic::Code::DeadlineExceeded
-            | tonic::Code::Aborted
-            | tonic::Code::Cancelled
+        Code::Unavailable | Code::DeadlineExceeded | Code::Aborted | Code::Cancelled
     )
 }
 
-fn meta_str(status: &tonic::Status, key: &str) -> String {
+fn get_metadata(status: &Status, key: &str) -> String {
     status
         .metadata()
         .get(key)
@@ -119,23 +112,11 @@ fn meta_str(status: &tonic::Status, key: &str) -> String {
 }
 
 /// The code that the worker attached to a failed call, if it attached one.
-fn reported_code(status: &tonic::Status) -> Option<ErrorCode> {
-    meta_str(status, "code")
+fn get_reported_code(status: &Status) -> Option<ErrorCode> {
+    get_metadata(status, "code")
         .parse::<u16>()
         .ok()
         .map(ErrorCode::from_code)
-}
-
-impl From<&worker_rpc_service::Error> for QueryFragmentError {
-    fn from(err: &worker_rpc_service::Error) -> Self {
-        let code =
-            u16::try_from(err.code).map_or(ErrorCode::UnknownException, ErrorCode::from_code);
-        Self::Internal(CodedError::relayed(
-            code,
-            err.message.clone(),
-            err.stack_trace.clone(),
-        ))
-    }
 }
 
 #[cfg(test)]
@@ -143,52 +124,37 @@ mod tests {
     use super::*;
     use tonic::metadata::MetadataValue;
 
-    fn classify(status: &tonic::Status) -> CallError {
+    fn classify(status: &Status) -> CallError {
         super::classify(&NetworkAddr::new("worker", 8080).unwrap(), status)
     }
 
-    fn with_code(code: ErrorCode) -> tonic::Status {
-        let mut status = tonic::Status::internal("failed");
-        status.metadata_mut().insert(
-            "code",
-            MetadataValue::try_from((code as u16).to_string()).unwrap(),
-        );
-        status
-    }
-
     #[test]
-    fn transport_trouble_is_retryable_and_an_application_error_is_not() {
+    fn retryable_codes() {
         for status in [
-            tonic::Status::unavailable("down"),
-            tonic::Status::deadline_exceeded("slow"),
-            tonic::Status::cancelled("timeout expired"),
+            Status::unavailable("down"),
+            Status::deadline_exceeded("slow"),
+            Status::cancelled("timeout expired"),
         ] {
             assert!(matches!(
                 classify(&status),
                 CallError::Transient(QueryFragmentError::Transport { .. })
             ));
         }
-        for status in [
-            tonic::Status::internal("bug"),
-            tonic::Status::unknown("unclear"),
-        ] {
-            assert!(matches!(classify(&status), CallError::Failed(_)));
+        for status in [Status::internal("bug"), Status::unknown("unclear")] {
+            assert!(matches!(classify(&status), CallError::Permanent(_)));
         }
-    }
-
-    #[test]
-    fn only_the_already_exists_status_counts_as_already_exists() {
         assert!(matches!(
-            classify(&tonic::Status::already_exists("known id")),
+            classify(&Status::already_exists("known id")),
             CallError::AlreadyExists
         ));
     }
 
     #[test]
-    fn a_terminal_error_keeps_the_code_that_the_worker_reported() {
-        let CallError::Failed(QueryFragmentError::Internal(coded)) =
-            classify(&with_code(ErrorCode::QueryCompilerError))
-        else {
+    fn failed_keeps_worker_code() {
+        let mut status = Status::internal("failed");
+        let code = MetadataValue::from(ErrorCode::QueryCompilerError as u16);
+        status.metadata_mut().insert("code", code);
+        let CallError::Permanent(QueryFragmentError::Internal(coded)) = classify(&status) else {
             panic!("expected an internal error");
         };
         assert_eq!(coded.code, ErrorCode::QueryCompilerError);

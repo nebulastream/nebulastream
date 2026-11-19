@@ -13,7 +13,7 @@
 */
 
 use crate::config::VERSION_TIMEOUT;
-use crate::in_process::WorkerFactory;
+use crate::in_process::EmbeddedWorkerLauncher;
 use crate::remote::WorkerRpcServiceClient;
 use futures::future::join_all;
 use model::worker;
@@ -26,22 +26,22 @@ use tracing::debug;
 /// Reads the build of each given worker concurrently, in the given order.
 /// A worker that does not answer within the version timeout is reported unreachable.
 /// In-process workers all run the build that this binary was linked with, so none is contacted.
-pub async fn worker_versions(
+pub async fn get_worker_versions(
     workers: Vec<worker::Model>,
-    embedded: Option<Arc<dyn WorkerFactory>>,
+    embedded: Option<Arc<dyn EmbeddedWorkerLauncher>>,
 ) -> Vec<WorkerVersion> {
-    if let Some(factory) = embedded {
-        let version = factory.version();
+    if let Some(launcher) = embedded {
+        let version = launcher.version();
         return workers
             .into_iter()
             .map(|worker| WorkerVersion::reported(worker.host_addr, version.clone()))
             .collect();
     }
 
-    join_all(workers.into_iter().map(|w| worker_version(w.host_addr))).await
+    join_all(workers.into_iter().map(|w| get_worker_version(w.host_addr))).await
 }
 
-async fn worker_version(addr: NetworkAddr) -> WorkerVersion {
+async fn get_worker_version(addr: NetworkAddr) -> WorkerVersion {
     match request_version(&addr).await {
         Ok(version) => WorkerVersion::reported(addr, version),
         Err(err) => {
@@ -52,7 +52,7 @@ async fn worker_version(addr: NetworkAddr) -> WorkerVersion {
 }
 
 async fn request_version(addr: &NetworkAddr) -> anyhow::Result<String> {
-    let dial_and_request = async {
+    let connect_and_request = async {
         let channel = Endpoint::from_shared(format!("http://{addr}"))?
             .connect_timeout(VERSION_TIMEOUT)
             .connect()
@@ -62,8 +62,8 @@ async fn request_version(addr: &NetworkAddr) -> anyhow::Result<String> {
             .await?;
         anyhow::Ok(response.into_inner().version)
     };
-    // The endpoint bounds only the dial, so this timeout also bounds the request.
-    tokio::time::timeout(VERSION_TIMEOUT, dial_and_request)
+    // The endpoint bounds only the connect, so this timeout also bounds the request.
+    tokio::time::timeout(VERSION_TIMEOUT, connect_and_request)
         .await
         .map_err(|_| anyhow::anyhow!("timed out after {VERSION_TIMEOUT:?}"))?
 }

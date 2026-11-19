@@ -13,35 +13,36 @@
 */
 
 //! The policy that brings a worker in line with the catalog, without I/O:
-//! a worker's status report and its wanted catalog rows go in, and the calls and catalog writes come out.
+//! a worker's status and its managed catalog rows go in, and the calls and catalog writes come out.
 
-use crate::remote::worker_rpc_service::WorkerStatusResponse;
 use crate::remote::worker_rpc_service::nes::SerializableQueryId;
+use crate::remote::worker_rpc_service::{Error, WorkerStatusResponse};
 use chrono::{DateTime, Utc};
+use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::{
-    ActionableFragment, DesiredQueryFragmentState, QueryFragmentError, QueryFragmentState,
+    DesiredQueryFragmentState, ManagedFragment, QueryFragmentError, QueryFragmentState,
     QueryFragmentTransition,
 };
 use std::collections::BTreeMap;
 
 /// The fragments that a worker runs, and those that terminated since the requested time.
 /// A fragment that the worker does not know is absent.
-#[derive(Debug, Default)]
-pub(crate) struct WorkerReport {
-    pub fragments: BTreeMap<QueryFragmentId, Reported>,
-    /// The worker's time of the report in milliseconds since the Unix epoch.
+#[derive(Debug)]
+pub(crate) struct WorkerStatus {
+    pub fragments: BTreeMap<QueryFragmentId, FragmentStatus>,
+    /// The worker's status in milliseconds since the Unix epoch.
     pub until: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum Reported {
+pub(crate) enum FragmentStatus {
     /// Accepted and still compiling or starting.
-    Starting,
+    Started,
     Running {
-        since: DateTime<Utc>,
+        start: DateTime<Utc>,
     },
-    /// Without an error, the fragment finished or was stopped; the worker reports both the same way.
+    /// Without an error, the fragment finished or was stopped; the worker lists both the same way.
     Terminated {
         start: Option<DateTime<Utc>>,
         stop: DateTime<Utc>,
@@ -50,39 +51,35 @@ pub(crate) enum Reported {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) enum Action {
+pub(crate) enum Correction {
     Start(QueryFragmentId),
     Stop(QueryFragmentId),
     Record(QueryFragmentId, QueryFragmentTransition),
 }
 
-impl From<WorkerStatusResponse> for WorkerReport {
+impl From<WorkerStatusResponse> for WorkerStatus {
     fn from(response: WorkerStatusResponse) -> Self {
-        // A query whose id is not a fragment id was not started by the controller,
-        // so it is left out and never stopped as an orphan.
-        let fragment_id = |id: Option<SerializableQueryId>| {
-            id.as_ref()
-                .and_then(SerializableQueryId::fragment_id)
-                .map(QueryFragmentId::new)
-        };
+        // The controller did not start a query with an id that is not a fragment id, so it is left out and never stopped as an orphan.
+        let get_fragment_id =
+            |id: Option<SerializableQueryId>| id?.get_fragment_id().map(QueryFragmentId::new);
         let active = response.active_queries.into_iter().filter_map(|query| {
-            let reported =
-                query
-                    .started_unix_timestamp_in_milli_seconds
-                    .map_or(Reported::Starting, |since| Reported::Running {
-                        since: to_datetime(since),
-                    });
-            Some((fragment_id(query.query_id)?, reported))
+            let fragment = query
+                .started_unix_timestamp_in_milli_seconds
+                .map(to_datetime)
+                .map_or(FragmentStatus::Started, |start| FragmentStatus::Running {
+                    start,
+                });
+            Some((get_fragment_id(query.query_id)?, fragment))
         });
         let terminated = response.terminated_queries.into_iter().filter_map(|query| {
-            let reported = Reported::Terminated {
+            let fragment = FragmentStatus::Terminated {
                 start: query
                     .started_unix_timestamp_in_milli_seconds
                     .map(to_datetime),
                 stop: to_datetime(query.terminated_unix_timestamp_in_milli_seconds),
                 error: query.error.as_ref().map(QueryFragmentError::from),
             };
-            Some((fragment_id(query.query_id)?, reported))
+            Some((get_fragment_id(query.query_id)?, fragment))
         });
         Self {
             fragments: active.chain(terminated).collect(),
@@ -91,295 +88,259 @@ impl From<WorkerStatusResponse> for WorkerReport {
     }
 }
 
+impl From<&Error> for QueryFragmentError {
+    fn from(err: &Error) -> Self {
+        let code =
+            u16::try_from(err.code).map_or(ErrorCode::UnknownException, ErrorCode::from_code);
+        Self::Internal(CodedError::relayed(
+            code,
+            err.message.clone(),
+            err.stack_trace.clone(),
+        ))
+    }
+}
+
 fn to_datetime(ms: u64) -> DateTime<Utc> {
-    DateTime::from_timestamp_millis(i64::try_from(ms).unwrap_or(i64::MAX)).unwrap_or_default()
+    i64::try_from(ms)
+        .ok()
+        .and_then(DateTime::from_timestamp_millis)
+        .unwrap_or_default()
 }
 
-/// `wanted` holds the worker's non-terminal catalog rows.
-/// A reported state is recorded only when it is ahead of the row's state,
-/// so a late or reordered report never moves a row back.
-pub(crate) fn decide(report: &WorkerReport, wanted: &[ActionableFragment]) -> Vec<Action> {
-    let mut actions = Vec::new();
-    for row in wanted {
-        let stop = row.desired_state == DesiredQueryFragmentState::Stopped;
-        let Some(reported) = report.fragments.get(&row.id) else {
-            actions.push(if stop {
-                Action::Record(
-                    row.id,
-                    QueryFragmentTransition::Stopped {
-                        start_timestamp: None,
-                        stop_timestamp: to_datetime(report.until),
-                    },
-                )
-            } else {
-                Action::Start(row.id)
-            });
-            continue;
+/// Returns the starts, stops and catalog writes that bring the worker in line with `managed`, its non-terminal catalog rows.
+/// A state from the status is recorded only when it is ahead of the row's state, so a late or reordered status never moves a row back.
+pub(crate) fn reconcile(
+    status: &WorkerStatus,
+    managed_fragments: &[ManagedFragment],
+) -> Vec<Correction> {
+    let mut corrections = Vec::new();
+    for managed_fragment in managed_fragments {
+        let should_stop = managed_fragment.desired_state == DesiredQueryFragmentState::Stopped;
+        let fragment = match status.fragments.get(&managed_fragment.id) {
+            Some(fragment) => fragment.clone(),
+            None if should_stop => FragmentStatus::Terminated {
+                start: None,
+                stop: to_datetime(status.until),
+                error: None,
+            },
+            None => {
+                corrections.push(Correction::Start(managed_fragment.id));
+                continue;
+            }
         };
-        let (ahead, live) = match reported {
-            Reported::Starting => (row.current_state < QueryFragmentState::Started, true),
-            Reported::Running { .. } => (row.current_state < QueryFragmentState::Running, true),
-            Reported::Terminated { .. } => (true, false),
+        let live = !matches!(fragment, FragmentStatus::Terminated { .. });
+        let transition = match fragment {
+            FragmentStatus::Started => (managed_fragment.current_state
+                < QueryFragmentState::Started)
+                .then_some(QueryFragmentTransition::Started),
+            FragmentStatus::Running { start } => (managed_fragment.current_state
+                < QueryFragmentState::Running)
+                .then_some(QueryFragmentTransition::Running {
+                    start_timestamp: start,
+                }),
+            FragmentStatus::Terminated {
+                start: start_timestamp,
+                stop: stop_timestamp,
+                error: Some(error),
+            } => Some(QueryFragmentTransition::Failed {
+                start_timestamp,
+                stop_timestamp,
+                error,
+            }),
+            FragmentStatus::Terminated {
+                start: start_timestamp,
+                stop: stop_timestamp,
+                error: None,
+            } if should_stop => Some(QueryFragmentTransition::Stopped {
+                start_timestamp,
+                stop_timestamp,
+            }),
+            FragmentStatus::Terminated {
+                start: start_timestamp,
+                stop: stop_timestamp,
+                error: None,
+            } => Some(QueryFragmentTransition::Completed {
+                start_timestamp,
+                stop_timestamp,
+            }),
         };
-        if ahead {
-            actions.push(Action::Record(row.id, transition(reported, stop)));
-        }
-        if stop && live {
-            actions.push(Action::Stop(row.id));
+        corrections.extend(
+            transition.map(|transition| Correction::Record(managed_fragment.id, transition)),
+        );
+        if live && should_stop {
+            corrections.push(Correction::Stop(managed_fragment.id));
         }
     }
-    let orphans = report.fragments.iter().filter(|(id, reported)| {
-        !matches!(reported, Reported::Terminated { .. }) && !wanted.iter().any(|row| row.id == **id)
+    let orphans = status.fragments.iter().filter(|(id, fragment)| {
+        !matches!(fragment, FragmentStatus::Terminated { .. })
+            && !managed_fragments.iter().any(|row| row.id == **id)
     });
-    actions.extend(orphans.map(|(id, _)| Action::Stop(*id)));
-    actions
-}
-
-fn transition(reported: &Reported, stop: bool) -> QueryFragmentTransition {
-    match reported.clone() {
-        Reported::Starting => QueryFragmentTransition::Started,
-        Reported::Running { since } => QueryFragmentTransition::Running {
-            start_timestamp: since,
-        },
-        Reported::Terminated {
-            start,
-            stop: stop_timestamp,
-            error: Some(error),
-        } => QueryFragmentTransition::Failed {
-            start_timestamp: start,
-            stop_timestamp,
-            error,
-        },
-        Reported::Terminated {
-            start,
-            stop: stop_timestamp,
-            error: None,
-        } if stop => QueryFragmentTransition::Stopped {
-            start_timestamp: start,
-            stop_timestamp,
-        },
-        Reported::Terminated {
-            start,
-            stop: stop_timestamp,
-            error: None,
-        } => QueryFragmentTransition::Completed {
-            start_timestamp: start,
-            stop_timestamp,
-        },
-    }
+    corrections.extend(orphans.map(|(id, _)| Correction::Stop(*id)));
+    corrections
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::remote::worker_rpc_service::Error;
     use crate::remote::worker_rpc_service::worker_status_response::{ActiveQuery, TerminatedQuery};
-    use DesiredQueryFragmentState::{Completed as WantCompleted, Stopped as WantStopped};
+    use Correction::{Record, Start, Stop};
+    use DesiredQueryFragmentState::{Completed as DesiredCompleted, Stopped as DesiredStopped};
     use QueryFragmentState::{Pending, Running, Started};
-    use model::identifier::QueryId;
+    use QueryFragmentTransition as Transition;
 
-    const ID: i64 = 7;
-    const UNTIL: u64 = 9_000;
-
-    fn id(value: i64) -> QueryFragmentId {
-        QueryFragmentId::new(value)
-    }
-
-    fn at(ms: u64) -> DateTime<Utc> {
-        to_datetime(ms)
-    }
-
-    fn row(
-        current_state: QueryFragmentState,
-        desired_state: DesiredQueryFragmentState,
-    ) -> ActionableFragment {
-        ActionableFragment {
-            id: id(ID),
-            query_id: QueryId::new(1),
-            current_state,
-            desired_state,
-        }
-    }
-
-    fn report(fragments: &[(i64, Reported)]) -> WorkerReport {
-        WorkerReport {
-            fragments: fragments.iter().map(|(i, r)| (id(*i), r.clone())).collect(),
-            until: UNTIL,
-        }
-    }
-
-    fn running() -> Reported {
-        Reported::Running { since: at(1_000) }
-    }
-
-    fn terminated(error: Option<QueryFragmentError>) -> Reported {
-        Reported::Terminated {
-            start: Some(at(1_000)),
-            stop: at(2_000),
+    /// The rows of the state table in the controller README for a fragment with a catalog row.
+    #[test]
+    #[allow(clippy::too_many_lines, reason = "one case per row of the state table")]
+    fn state_table() {
+        let id = QueryFragmentId::new(1);
+        let (start, stop, until) = (to_datetime(1), to_datetime(2), 3);
+        let running = FragmentStatus::Running { start };
+        let terminated = |error| FragmentStatus::Terminated {
+            start: Some(start),
+            stop,
             error,
-        }
-    }
-
-    fn crashed() -> QueryFragmentError {
-        QueryFragmentError::Transport {
-            msg: "crashed".to_string(),
-        }
-    }
-
-    type Case = (
-        &'static str,
-        QueryFragmentState,
-        DesiredQueryFragmentState,
-        Option<Reported>,
-        Vec<Action>,
-    );
-
-    fn check(cases: Vec<Case>) {
-        for (name, current, desired, reported, expected) in cases {
-            let fragments: Vec<_> = reported.into_iter().map(|r| (ID, r)).collect();
-            let actions = decide(&report(&fragments), &[row(current, desired)]);
-            assert_eq!(actions, expected, "{name}");
-        }
-    }
-
-    fn record(transition: QueryFragmentTransition) -> Action {
-        Action::Record(id(ID), transition)
-    }
-
-    /// The rows of the state table in the controller README for a fragment that the worker does not know or runs.
-    #[test]
-    fn rows_for_an_unknown_or_live_fragment() {
-        use Action::{Start, Stop};
-        check(vec![
+        };
+        let error = QueryFragmentError::Transport { msg: String::new() };
+        let cases = [
+            (Pending, DesiredCompleted, None, vec![Start(id)]),
+            (Running, DesiredCompleted, None, vec![Start(id)]),
             (
-                "unknown, wanted running",
-                Pending,
-                WantCompleted,
-                None,
-                vec![Start(id(ID))],
-            ),
-            (
-                "unknown after a start",
-                Running,
-                WantCompleted,
-                None,
-                vec![Start(id(ID))],
-            ),
-            (
-                "unknown, wanted stopped",
                 Started,
-                WantStopped,
+                DesiredStopped,
                 None,
-                vec![record(QueryFragmentTransition::Stopped {
-                    start_timestamp: None,
-                    stop_timestamp: at(UNTIL),
-                })],
+                vec![Record(
+                    id,
+                    Transition::Stopped {
+                        start_timestamp: None,
+                        stop_timestamp: to_datetime(until),
+                    },
+                )],
             ),
             (
-                "starting, ahead",
                 Pending,
-                WantCompleted,
-                Some(Reported::Starting),
-                vec![record(QueryFragmentTransition::Started)],
+                DesiredCompleted,
+                Some(FragmentStatus::Started),
+                vec![Record(id, Transition::Started)],
             ),
             (
-                "starting, behind",
-                Running,
-                WantCompleted,
-                Some(Reported::Starting),
+                Started,
+                DesiredCompleted,
+                Some(FragmentStatus::Started),
                 vec![],
             ),
             (
-                "running, ahead",
-                Started,
-                WantCompleted,
-                Some(running()),
-                vec![record(QueryFragmentTransition::Running {
-                    start_timestamp: at(1_000),
-                })],
-            ),
-            (
-                "running, recorded",
                 Running,
-                WantCompleted,
-                Some(running()),
+                DesiredCompleted,
+                Some(FragmentStatus::Started),
                 vec![],
             ),
             (
-                "starting, ahead, wanted stopped",
+                Started,
+                DesiredCompleted,
+                Some(running.clone()),
+                vec![Record(
+                    id,
+                    Transition::Running {
+                        start_timestamp: start,
+                    },
+                )],
+            ),
+            (
                 Pending,
-                WantStopped,
-                Some(Reported::Starting),
-                vec![record(QueryFragmentTransition::Started), Stop(id(ID))],
+                DesiredStopped,
+                Some(FragmentStatus::Started),
+                vec![Record(id, Transition::Started), Stop(id)],
             ),
+            (Running, DesiredStopped, Some(running), vec![Stop(id)]),
             (
-                "running, recorded, wanted stopped",
                 Running,
-                WantStopped,
-                Some(running()),
-                vec![Stop(id(ID))],
-            ),
-        ]);
-    }
-
-    /// The row of the state table in the controller README for a terminated fragment.
-    #[test]
-    fn rows_for_a_terminated_fragment() {
-        check(vec![
-            (
-                "wanted running",
-                Running,
-                WantCompleted,
+                DesiredCompleted,
                 Some(terminated(None)),
-                vec![record(QueryFragmentTransition::Completed {
-                    start_timestamp: Some(at(1_000)),
-                    stop_timestamp: at(2_000),
-                })],
+                vec![Record(
+                    id,
+                    Transition::Completed {
+                        start_timestamp: Some(start),
+                        stop_timestamp: stop,
+                    },
+                )],
             ),
             (
-                "wanted stopped",
                 Running,
-                WantStopped,
+                DesiredStopped,
                 Some(terminated(None)),
-                vec![record(QueryFragmentTransition::Stopped {
-                    start_timestamp: Some(at(1_000)),
-                    stop_timestamp: at(2_000),
-                })],
+                vec![Record(
+                    id,
+                    Transition::Stopped {
+                        start_timestamp: Some(start),
+                        stop_timestamp: stop,
+                    },
+                )],
             ),
             (
-                "with an error",
                 Pending,
-                WantStopped,
-                Some(terminated(Some(crashed()))),
-                vec![record(QueryFragmentTransition::Failed {
-                    start_timestamp: Some(at(1_000)),
-                    stop_timestamp: at(2_000),
-                    error: crashed(),
-                })],
+                DesiredStopped,
+                Some(terminated(Some(error.clone()))),
+                vec![Record(
+                    id,
+                    Transition::Failed {
+                        start_timestamp: Some(start),
+                        stop_timestamp: stop,
+                        error,
+                    },
+                )],
             ),
-        ]);
+        ];
+        for (current_state, desired_state, fragment, expected) in cases {
+            let status = WorkerStatus {
+                fragments: fragment.iter().map(|f| (id, f.clone())).collect(),
+                until,
+            };
+            let managed = [ManagedFragment {
+                id,
+                current_state,
+                desired_state,
+            }];
+            assert_eq!(
+                reconcile(&status, &managed),
+                expected,
+                "{current_state:?} {desired_state:?} {fragment:?}"
+            );
+        }
     }
 
     /// The last row of the state table in the controller README.
     #[test]
-    fn an_active_fragment_that_is_not_wanted_is_stopped() {
-        let fragments = [
-            (1, Reported::Starting),
-            (2, running()),
-            (3, terminated(None)),
-        ];
-        assert_eq!(
-            decide(&report(&fragments), &[]),
-            vec![Action::Stop(id(1)), Action::Stop(id(2))]
-        );
+    fn unmanaged_fragment_stopped() {
+        let id = QueryFragmentId::new;
+        let status = WorkerStatus {
+            fragments: BTreeMap::from([
+                (id(1), FragmentStatus::Started),
+                (
+                    id(2),
+                    FragmentStatus::Running {
+                        start: to_datetime(1),
+                    },
+                ),
+                (
+                    id(3),
+                    FragmentStatus::Terminated {
+                        start: None,
+                        stop: to_datetime(2),
+                        error: None,
+                    },
+                ),
+            ]),
+            until: 3,
+        };
+        assert_eq!(reconcile(&status, &[]), vec![Stop(id(1)), Stop(id(2))]);
     }
 
     #[test]
-    fn a_report_lists_active_and_terminated_fragments_by_fragment_id() {
+    fn status_from_response() {
         let query_id = |value| Some(SerializableQueryId::from_fragment_id(value));
         let response = WorkerStatusResponse {
             after_unix_timestamp_in_milli_seconds: 0,
-            until_unix_timestamp_in_milli_seconds: UNTIL,
+            until_unix_timestamp_in_milli_seconds: 3,
             active_queries: vec![
                 ActiveQuery {
                     query_id: query_id(1),
@@ -387,36 +348,42 @@ mod tests {
                 },
                 ActiveQuery {
                     query_id: query_id(2),
-                    started_unix_timestamp_in_milli_seconds: Some(1_000),
+                    started_unix_timestamp_in_milli_seconds: Some(1),
                 },
                 ActiveQuery {
-                    query_id: query_id(0),
+                    query_id: Some(SerializableQueryId {
+                        local_query_id: "5f0c2a8e-3b1d-4c7a-9e2f-6d8b1a4c0e37".to_string(),
+                        distributed_query_id: String::new(),
+                    }),
                     started_unix_timestamp_in_milli_seconds: None,
                 },
             ],
             terminated_queries: vec![TerminatedQuery {
                 query_id: query_id(3),
-                started_unix_timestamp_in_milli_seconds: None,
-                terminated_unix_timestamp_in_milli_seconds: 2_000,
-                error: Some(Error {
-                    code: 1,
-                    message: "crashed".to_string(),
-                    ..Default::default()
-                }),
+                started_unix_timestamp_in_milli_seconds: Some(1),
+                terminated_unix_timestamp_in_milli_seconds: 2,
+                error: Some(Error::default()),
             }],
         };
-        let report = WorkerReport::from(response);
-        assert_eq!(report.until, UNTIL);
+        let status = WorkerStatus::from(response);
+        let id = QueryFragmentId::new;
+        assert_eq!(status.until, 3);
         assert_eq!(
-            report.fragments.len(),
+            status.fragments.len(),
             3,
             "a query without a fragment id is left out"
         );
-        assert_eq!(report.fragments[&id(1)], Reported::Starting);
-        assert_eq!(report.fragments[&id(2)], running());
+        assert_eq!(status.fragments[&id(1)], FragmentStatus::Started);
+        assert_eq!(
+            status.fragments[&id(2)],
+            FragmentStatus::Running {
+                start: to_datetime(1)
+            }
+        );
         assert!(matches!(
-            &report.fragments[&id(3)],
-            Reported::Terminated { start: None, error: Some(_), stop } if *stop == at(2_000)
+            &status.fragments[&id(3)],
+            FragmentStatus::Terminated { start: Some(start), error: Some(_), stop }
+                if *start == to_datetime(1) && *stop == to_datetime(2)
         ));
     }
 }

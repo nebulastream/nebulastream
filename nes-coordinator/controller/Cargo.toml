@@ -29,6 +29,7 @@ chrono.workspace = true
 futures.workspace = true
 sea-orm.workspace = true
 serde_json.workspace = true
+tokio-retry2.workspace = true
 
 [build-dependencies]
 tonic-build.workspace = true

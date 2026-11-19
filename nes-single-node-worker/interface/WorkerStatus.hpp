@@ -17,6 +17,7 @@
 #include <chrono>
 #include <optional>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <ErrorHandling.hpp>
@@ -55,7 +56,7 @@ struct WorkerStatus
 };
 
 /// Take `until` before the snapshots.
-/// A query that terminates while they are taken is then listed again by a status whose `after` is this `until`.
+/// A query that terminates while they are taken is then listed again by the next status, which takes this `until` as its `after`.
 WorkerStatus buildWorkerStatus(
     const std::vector<LocalQueryStatusSnapshot>& snapshots,
     std::chrono::system_clock::time_point after,

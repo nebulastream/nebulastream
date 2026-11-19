@@ -12,291 +12,215 @@
     limitations under the License.
 */
 
-use crate::config::{
-    HEALTH_CHECK_MAX_MISSES, MAX_CONSECUTIVE_FAILURES, OBSERVATION_WRITE_INTERVAL,
-};
-use crate::remote::worker_rpc_service::WorkerStatusResponse;
-use crate::remote::worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
-use crate::report::{Action, Reported, WorkerReport, decide};
-use crate::util::buggify::buggify;
-use chrono::Utc;
-use futures::StreamExt;
-use futures::future::{BoxFuture, join_all};
-use futures::stream::FuturesUnordered;
+use crate::buggify::buggify;
+use crate::calls::{Call, CallError, InFlightCalls, Transport};
+use crate::config::{MAX_FAILED_STATUS_REQUESTS, OBSERVATION_WRITE_INTERVAL};
+use crate::reconcile::{Correction, FragmentStatus, WorkerStatus, reconcile};
+use anyhow::Context;
+use futures::FutureExt;
+use futures::future::BoxFuture;
 use model::database::Database;
-use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
-use model::query::query_fragment::{
-    self, ActionableFragment, QueryFragmentError, QueryFragmentTransition,
-};
+use model::query::query_fragment::{self, ManagedFragment, QueryFragmentTransition};
 use model::worker::endpoint::NetworkAddr;
-use model::worker::{self, DesiredWorkerState, WorkerTransition};
-use sea_orm::sea_query::Expr;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, QueryFilter, Unchanged};
-use std::collections::{HashMap, HashSet};
-use std::future::Future;
-use std::ops::ControlFlow;
+use model::worker::{self, DesiredWorkerState, WorkerState, WorkerTransition};
+use sea_orm::{ActiveModelTrait, DbErr, EntityTrait, Unchanged};
+use std::mem;
+use std::ops::ControlFlow::{self, Break, Continue};
 use std::time::Duration;
-use tokio::sync::watch;
-use tokio::time::{Instant, MissedTickBehavior};
+use tokio::sync::{OnceCell, watch};
+use tokio::time::{Instant, interval};
+use tokio_retry2::strategy::FixedInterval;
+use tokio_retry2::{Retry, RetryError};
 use tracing::{debug, error, info, warn};
 
-/// A failed worker call, classified by what the loop does next.
-pub(crate) enum CallError {
-    /// The worker already accepted a start for the fragment's id.
-    AlreadyExists,
-    /// Repeating the call may succeed.
-    Transient(QueryFragmentError),
-    /// Repeating the call cannot succeed, so a failed start fails the fragment.
-    Failed(QueryFragmentError),
+type Connect<T> = Box<dyn Fn() -> BoxFuture<'static, anyhow::Result<T>> + Send + Sync>;
+
+/// The transport from a successful connect is kept for the life of the loop, so an in-process worker is launched once.
+struct Connection<T> {
+    connect: Connect<T>,
+    transport: OnceCell<T>,
 }
 
-/// The calls that a worker loop makes to its worker.
-pub(crate) trait Transport: Clone + Send + Sync + 'static {
-    fn start(
-        &self,
-        plan: SerializableQueryPlan,
-    ) -> impl Future<Output = Result<(), CallError>> + Send;
+impl<T: Transport> Connection<T> {
+    /// Repeats a failed request after `retry_delay`, and returns `None` once several requests in a row failed.
+    async fn get_status(&self, after: u64, retry_delay: Duration) -> Option<(T, WorkerStatus)> {
+        let delays = FixedInterval::new(retry_delay).take(MAX_FAILED_STATUS_REQUESTS - 1);
+        Retry::spawn(delays, || self.try_get_status(after))
+            .await
+            .ok()
+    }
 
-    fn stop(&self, id: QueryFragmentId) -> impl Future<Output = Result<(), CallError>> + Send;
-
-    /// Lists every active fragment, and the fragments that terminated at or after `after`, in the worker's milliseconds.
-    fn report(
+    async fn try_get_status(
         &self,
         after: u64,
-    ) -> impl Future<Output = anyhow::Result<WorkerStatusResponse>> + Send;
+    ) -> Result<(T, WorkerStatus), RetryError<anyhow::Error>> {
+        let status = async {
+            let transport = self
+                .transport
+                .get_or_try_init(|| (self.connect)())
+                .await
+                .context("connect failed")?;
+            let response = transport.get_status(after).await?;
+            anyhow::Ok((transport.clone(), response.into()))
+        };
+        status.await.map_err(|err| {
+            warn!(error = %format_args!("{err:#}"), "status request failed");
+            RetryError::transient(err)
+        })
+    }
 }
 
-type StartResult = (QueryFragmentId, Result<(), CallError>);
-
 /// Keeps one worker in line with the catalog.
-/// Each pass reads the worker's report and its wanted rows, and applies the actions that the policy derives from them.
-/// Only what the report and the catalog cannot tell is kept between passes.
-pub(crate) struct WorkerTask<T, C> {
+/// Each round reads the worker's status and its managed rows, and applies the corrections that the policy derives from them.
+/// Only what the status and the catalog cannot tell is kept between rounds.
+pub(crate) struct WorkerLoop<T> {
     addr: NetworkAddr,
-    connect: C,
-    transport: Option<T>,
-    interval: Duration,
+    connection: Connection<T>,
+    poll_interval: Duration,
     db: Database,
     state_tx: watch::Sender<()>,
-    /// The next report lists the fragments that terminated at or after this worker time.
+    /// The next status lists the fragments that terminated at or after this worker time.
     after: u64,
-    /// Failed reports in a row, including failed connects.
-    missed: u32,
-    /// A fragment is never started again while an earlier start for it is in flight.
-    starting: HashSet<QueryFragmentId>,
-    /// The starts that the last pass decided on, which the loop then spawns.
-    new_starts: Vec<QueryFragmentId>,
-    failed_starts: HashMap<QueryFragmentId, u32>,
     observed_at: Option<Instant>,
 }
 
-impl<T, C, F> WorkerTask<T, C>
-where
-    T: Transport,
-    C: Fn() -> F + Send + Sync,
-    F: Future<Output = anyhow::Result<T>> + Send,
-{
-    /// The transport from a successful connect is kept for the life of the task,
-    /// so an in-process worker is created once.
-    pub(crate) fn new(
+impl<T: Transport> WorkerLoop<T> {
+    pub(crate) fn new<C, F>(
         addr: NetworkAddr,
         connect: C,
-        interval: Duration,
+        poll_interval: Duration,
         db: Database,
         state_tx: watch::Sender<()>,
-    ) -> Self {
+    ) -> Self
+    where
+        C: Fn() -> F + Send + Sync + 'static,
+        F: Future<Output = anyhow::Result<T>> + Send + 'static,
+    {
         Self {
             addr,
-            connect,
-            transport: None,
-            interval,
+            connection: Connection {
+                connect: Box::new(move || connect().boxed()),
+                transport: OnceCell::new(),
+            },
+            poll_interval,
             db,
             state_tx,
             after: 0,
-            missed: 0,
-            starting: HashSet::new(),
-            new_starts: Vec::new(),
-            failed_starts: HashMap::new(),
             observed_at: None,
         }
     }
 
     /// Returns once the catalog-change sender is dropped, or once the worker is recorded as removed.
     pub(crate) async fn run(mut self, mut intent_rx: watch::Receiver<()>) {
-        let mut poll = tokio::time::interval(self.interval);
-        poll.set_missed_tick_behavior(MissedTickBehavior::Delay);
-        // Starts run as their own tasks, so a long compile delays neither the reports nor the stops.
-        let mut starts = FuturesUnordered::new();
+        let mut poll = interval(self.poll_interval);
+        let mut in_flight = InFlightCalls::new(self.db.clone(), self.poll_interval);
         loop {
+            tokio::select! {
+                changed = intent_rx.changed() => if changed.is_err() { return; },
+                _ = poll.tick() => {}
+                Some((call, result)) = in_flight.join_next() => match call {
+                    Call::Start(id) => {
+                        match result {
+                            Ok(()) => {}
+                            // An earlier start reached the worker, but its reply was lost.
+                            // The status did not list the fragment, so it may have terminated before the time from which the status listed terminations.
+                            // From zero, the next status lists every termination again.
+                            Err(CallError::AlreadyExists) => self.after = 0,
+                            Err(CallError::Transient(err) | CallError::Permanent(err)) => {
+                                error!(fragment = %id, error = %err, "start failed for good");
+                                let _ = self
+                                    .record(id, QueryFragmentTransition::failed_now(err))
+                                    .await;
+                            }
+                        }
+                    }
+                    // The next round that still finds the fragment listed repeats a failed stop.
+                    // A round after every stop would repeat it without pause while the worker winds the fragment down.
+                    Call::Stop(_) => continue,
+                },
+            }
             poll.reset();
-            if self.pass().await.is_break() {
+            if self.run_round(&mut in_flight).await.is_break() {
                 return;
-            }
-            for id in std::mem::take(&mut self.new_starts) {
-                starts.push(self.spawn_start(id));
-            }
-            loop {
-                tokio::select! {
-                    change = intent_rx.changed() => {
-                        if change.is_err() { return; }
-                        // An unreachable worker is asked again only on the poll tick,
-                        // so a burst of catalog changes does not use up its missed reports at once.
-                        if self.missed == 0 { break; }
-                    }
-                    _ = poll.tick() => break,
-                    Some((id, result)) = starts.next() => {
-                        if self.finish_start(id, result).await { break; }
-                    }
-                }
             }
         }
     }
 
-    async fn pass(&mut self) -> ControlFlow<()> {
+    async fn run_round(&mut self, calls: &mut InFlightCalls) -> ControlFlow<()> {
         if buggify() {
-            return ControlFlow::Continue(());
+            return Continue(());
         }
         let worker = match worker::Entity::find_by_id(self.addr.clone())
             .one(&self.db)
             .await
         {
+            Ok(Some(worker))
+                if worker.desired_state == DesiredWorkerState::Removed
+                    && worker.current_state == WorkerState::Removed =>
+            {
+                info!("removed");
+                return Break(());
+            }
             Ok(Some(worker)) => worker,
-            Ok(None) => return ControlFlow::Break(()),
+            Ok(None) => return Break(()),
             Err(err) => {
                 warn!(error = %err, "could not read the worker");
-                return ControlFlow::Continue(());
+                return Continue(());
             }
         };
-        let removed = worker.desired_state == DesiredWorkerState::Removed;
-        // Read the report before the wanted rows.
-        // Then an active fragment without a wanted row has a terminal row or none, and neither changes again.
+        // Read the status before the managed rows.
+        // Then an active fragment without a managed row has a terminal row or none, and neither changes again.
         // In the other order, a fragment that was created and started between the two reads would be stopped.
-        let Some(report) = self.report().await else {
-            self.missed += 1;
-            if self.missed < HEALTH_CHECK_MAX_MISSES {
-                return ControlFlow::Continue(());
-            }
-            // A removed worker that does not report is given up, and its fragments may keep running.
-            if removed {
-                return self.mark_removed(&worker).await;
-            }
-            self.mark(&worker, WorkerTransition::Unreachable).await;
-            return ControlFlow::Continue(());
-        };
-        self.missed = 0;
-        let live = |reported: &Reported| !matches!(reported, Reported::Terminated { .. });
-        if removed && !report.fragments.values().any(live) {
-            return self.mark_removed(&worker).await;
+        let status = self
+            .connection
+            .get_status(self.after, self.poll_interval)
+            .await;
+        if let Some(transition) = transition(&worker, status.as_ref().map(|(_, status)| status)) {
+            self.record_worker(&worker, transition).await;
         }
-        if !removed {
-            self.mark(&worker, WorkerTransition::Active).await;
+        if let Some((transport, status)) = status {
+            self.reconcile_fragments(&transport, &status, calls).await;
         }
-        // The removal of a worker fails all its fragments in the catalog, so a removed worker has none wanted.
-        let wanted = match query_fragment::Entity::actionable(&self.db, &self.addr).await {
-            Ok(wanted) => wanted,
-            Err(err) => {
-                warn!(error = %err, "could not load the wanted fragments");
-                return ControlFlow::Continue(());
-            }
+        Continue(())
+    }
+
+    async fn reconcile_fragments(
+        &mut self,
+        transport: &T,
+        status: &WorkerStatus,
+        calls: &mut InFlightCalls,
+    ) {
+        // The removal of a worker fails all its fragments in the catalog, so a removed worker has none managed.
+        let Ok(managed) = query_fragment::Entity::get_managed(&self.db, &self.addr)
+            .await
+            .inspect_err(|err| warn!(error = %err, "could not load the managed fragments"))
+        else {
+            return;
         };
-        self.failed_starts
-            .retain(|id, _| wanted.iter().any(|row| row.id == *id));
-        let mut stops = Vec::new();
-        let mut recorded_all = true;
-        for action in decide(&report, &wanted) {
-            match action {
-                Action::Start(id) => {
-                    if self.starting.insert(id) {
-                        self.new_starts.push(id);
+        let previous = mem::replace(&mut self.after, status.until);
+        for correction in reconcile(status, &managed) {
+            match correction {
+                Correction::Start(id) => calls.spawn(transport, Call::Start(id)),
+                Correction::Stop(id) => calls.spawn(transport, Call::Stop(id)),
+                // A termination that was not recorded must stay in the next status.
+                Correction::Record(id, transition) => {
+                    if self.record(id, transition).await.is_err() {
+                        self.after = previous;
                     }
                 }
-                Action::Stop(id) => stops.push(id),
-                Action::Record(id, transition) => recorded_all &= self.record(id, transition).await,
             }
         }
-        if let Some(transport) = &self.transport {
-            // The transport logs a failed stop, and the next report shows whether it took effect.
-            join_all(stops.into_iter().map(|id| transport.stop(id))).await;
-        }
-        // A termination that was not recorded must stay in the next report.
-        if recorded_all {
-            self.after = report.until;
-        }
-        self.mark_observed(&report, &wanted).await;
-        ControlFlow::Continue(())
+        self.mark_observed(status, &managed).await;
     }
 
-    async fn report(&mut self) -> Option<WorkerReport> {
-        if self.transport.is_none() {
-            match (self.connect)().await {
-                Ok(transport) => self.transport = Some(transport),
-                Err(err) => {
-                    warn!(error = %format_args!("{err:#}"), "connect failed");
-                    return None;
-                }
-            }
-        }
-        match self.transport.as_ref()?.report(self.after).await {
-            Ok(response) => Some(response.into()),
-            Err(err) => {
-                warn!(error = %format_args!("{err:#}"), "report failed");
-                None
-            }
-        }
-    }
-
-    fn spawn_start(&self, id: QueryFragmentId) -> BoxFuture<'static, StartResult> {
-        let task = tokio::spawn(start(self.transport.clone(), self.db.clone(), id));
-        Box::pin(async move {
-            let result = task.await.unwrap_or_else(|err| {
-                Err(CallError::Failed(QueryFragmentError::Internal(
-                    CodedError::new(ErrorCode::UnknownException, err),
-                )))
-            });
-            (id, result)
-        })
-    }
-
-    /// Returns whether the next pass should run now.
-    /// After a retryable failure it waits for the poll tick, so a failing start is not repeated in a tight loop.
-    async fn finish_start(&mut self, id: QueryFragmentId, result: Result<(), CallError>) -> bool {
-        self.starting.remove(&id);
-        let error = match result {
-            Ok(()) => None,
-            // An earlier start whose reply was lost reached the worker.
-            // The report should have listed the fragment, so it may have missed its termination;
-            // the next report lists every termination again.
-            Err(CallError::AlreadyExists) => {
-                self.after = 0;
-                None
-            }
-            Err(CallError::Transient(err)) => {
-                warn!(fragment = %id, error = %err, "start failed");
-                let failures = self.failed_starts.entry(id).or_default();
-                *failures += 1;
-                if *failures < MAX_CONSECUTIVE_FAILURES {
-                    return false;
-                }
-                Some(QueryFragmentError::Transport {
-                    msg: format!("retry budget exhausted, last error: {err}"),
-                })
-            }
-            Err(CallError::Failed(err)) => Some(err),
-        };
-        self.failed_starts.remove(&id);
-        if let Some(err) = error {
-            error!(fragment = %id, error = %err, "start failed for good");
-            self.record(id, QueryFragmentTransition::failed_now(err))
-                .await;
-        }
-        true
-    }
-
-    /// Returns whether the write succeeded.
-    /// A failed write is logged and repeated by a later pass,
-    /// because the row's state, or another writer's change to it, decides again.
-    async fn record(&self, id: QueryFragmentId, transition: QueryFragmentTransition) -> bool {
+    /// A failed write is logged and not repeated here,
+    /// because a later round derives the write again from its own status and the row's state at that time.
+    async fn record(
+        &self,
+        id: QueryFragmentId,
+        transition: QueryFragmentTransition,
+    ) -> Result<(), DbErr> {
         debug!(fragment = %id, ?transition, "record");
         let mut update = query_fragment::ActiveModel {
             id: Unchanged(id),
@@ -306,105 +230,217 @@ where
         let written = if buggify() {
             Err(DbErr::Custom("buggify: write failed".to_string()))
         } else {
-            update.update(&self.db).await.map(|_| ())
+            update.update(&self.db).await
         };
         if let Err(err) = written {
             warn!(fragment = %id, error = %err, "could not record the fragment state");
-            return false;
+            return Err(err);
         }
         // The simulation drops some wake-ups, so it checks that the periodic poll alone advances every watcher.
         if !buggify() {
             let _ = self.state_tx.send(());
         }
-        true
+        Ok(())
     }
 
-    /// Refreshes the time at which the worker last reported each running fragment.
+    /// Refreshes the time at which the worker last listed each running fragment.
     /// A request that waits for fresh state compares this time with its submission.
-    async fn mark_observed(&mut self, report: &WorkerReport, wanted: &[ActionableFragment]) {
+    async fn mark_observed(&mut self, status: &WorkerStatus, managed: &[ManagedFragment]) {
         if self
             .observed_at
             .is_some_and(|at| at.elapsed() < OBSERVATION_WRITE_INTERVAL)
         {
             return;
         }
-        let running = wanted
+        let running: Vec<QueryFragmentId> = managed
             .iter()
             .map(|row| row.id)
-            .filter(|id| matches!(report.fragments.get(id), Some(Reported::Running { .. })));
-        let running: Vec<QueryFragmentId> = running.collect();
+            .filter(|id| {
+                matches!(
+                    status.fragments.get(id),
+                    Some(FragmentStatus::Running { .. })
+                )
+            })
+            .collect();
         if running.is_empty() {
             return;
         }
         self.observed_at = Some(Instant::now());
-        let update = query_fragment::Entity::update_many()
-            .col_expr(
-                query_fragment::Column::LastObservedAt,
-                Expr::value(Utc::now()),
-            )
-            .filter(query_fragment::Column::Id.is_in(running))
-            .exec(&self.db)
-            .await;
-        if let Err(err) = update {
+        if let Err(err) = query_fragment::Entity::mark_observed(&self.db, running).await {
             warn!(error = %err, "could not mark the running fragments as observed");
+            return;
         }
+        let _ = self.state_tx.send(());
     }
 
-    async fn mark_removed(&self, worker: &worker::Model) -> ControlFlow<()> {
-        if self.mark(worker, WorkerTransition::Removed).await {
-            info!("removed");
-            ControlFlow::Break(())
-        } else {
-            ControlFlow::Continue(())
-        }
-    }
-
-    /// Returns whether the worker's row has the given state afterwards.
-    async fn mark(&self, worker: &worker::Model, transition: WorkerTransition) -> bool {
-        if worker.current_state == transition.state() {
-            return true;
+    /// A failed write is logged, and a later round derives the transition again.
+    async fn record_worker(&self, worker: &worker::Model, transition: WorkerTransition) {
+        if worker.current_state == transition.get_state() {
+            return;
         }
         let mut update: worker::ActiveModel = worker.clone().into();
         update.apply_transition(transition);
         if buggify() {
             warn!("buggify: worker update failed");
-            return false;
+            return;
         }
         info!(?transition, "worker");
-        update
-            .update(&self.db)
-            .await
-            .inspect_err(|err| warn!(error = %err, "failed to update worker"))
-            .is_ok()
+        if let Err(err) = update.update(&self.db).await {
+            warn!(error = %err, "failed to update worker");
+            return;
+        }
+        // A wait on a fragment of this worker can depend on the worker's state.
+        let _ = self.state_tx.send(());
     }
 }
 
-/// A deleted row has nothing to start.
-async fn start<T: Transport>(
-    transport: Option<T>,
-    db: Database,
-    id: QueryFragmentId,
-) -> Result<(), CallError> {
-    let transient = |msg: String| CallError::Transient(QueryFragmentError::Transport { msg });
-    let transport = transport.ok_or_else(|| transient("not connected".to_string()))?;
-    let row = query_fragment::Entity::find_by_id(id)
-        .one(&db)
-        .await
-        .map_err(|err| transient(err.to_string()))?;
-    let Some(row) = row else {
-        return Ok(());
-    };
-    transport.start(plan_for(id, &row.plan)?).await
+fn transition(worker: &worker::Model, status: Option<&WorkerStatus>) -> Option<WorkerTransition> {
+    match (worker.desired_state, status) {
+        (DesiredWorkerState::Active, None) => Some(WorkerTransition::Unreachable),
+        (DesiredWorkerState::Active, Some(_)) => Some(WorkerTransition::Active),
+        // A removed worker that does not answer is given up, and its fragments may keep running.
+        (DesiredWorkerState::Removed, None) => Some(WorkerTransition::Removed),
+        (DesiredWorkerState::Removed, Some(status)) => status
+            .fragments
+            .values()
+            .all(|fragment| matches!(fragment, FragmentStatus::Terminated { .. }))
+            .then_some(WorkerTransition::Removed),
+    }
 }
 
-// The stored plan has no id, and the worker identifies the plan by the fragment's id.
-fn plan_for(id: QueryFragmentId, plan: &[u8]) -> Result<SerializableQueryPlan, CallError> {
-    let mut query_plan: SerializableQueryPlan = prost::Message::decode(plan).map_err(|e| {
-        CallError::Failed(QueryFragmentError::Internal(CodedError::new(
-            ErrorCode::UnknownException,
-            format!("failed to decode stored query plan: {e}"),
-        )))
-    })?;
-    query_plan.query_id = Some(SerializableQueryId::from_fragment_id(*id));
-    Ok(query_plan)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::remote::worker_rpc_service::WorkerStatusResponse;
+    use crate::remote::worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
+    use crate::remote::worker_rpc_service::worker_status_response::ActiveQuery;
+    use futures::future::ready;
+    use model::worker::WorkerState;
+    use sea_orm::ConnectionTrait;
+    use std::sync::{Arc, Mutex};
+
+    #[derive(Clone, Default)]
+    struct Fake {
+        active: Arc<Mutex<Vec<i64>>>,
+        stops: Arc<Mutex<Vec<QueryFragmentId>>>,
+    }
+
+    impl Transport for Fake {
+        async fn start(&self, _: SerializableQueryPlan) -> Result<(), CallError> {
+            Ok(())
+        }
+
+        async fn stop(&self, id: QueryFragmentId) -> Result<(), CallError> {
+            self.stops.lock().unwrap().push(id);
+            Ok(())
+        }
+
+        async fn get_status(&self, _: u64) -> anyhow::Result<WorkerStatusResponse> {
+            let active = self.active.lock().unwrap().clone();
+            let active_queries = active.into_iter().map(|id| ActiveQuery {
+                query_id: Some(SerializableQueryId::from_fragment_id(id)),
+                started_unix_timestamp_in_milli_seconds: Some(1_000),
+            });
+            Ok(WorkerStatusResponse {
+                active_queries: active_queries.collect(),
+                ..Default::default()
+            })
+        }
+    }
+
+    fn addr() -> NetworkAddr {
+        NetworkAddr::new("worker", 8080).unwrap()
+    }
+
+    async fn build_loop(
+        desired_state: &str,
+        fake: Option<Fake>,
+    ) -> (WorkerLoop<Fake>, InFlightCalls, watch::Receiver<()>) {
+        let db = Database::for_test().await;
+        db.execute_unprepared(&format!(
+            "INSERT INTO worker (host_addr, data_addr, desired_state) \
+             VALUES ('worker:8080', 'worker:9090', '{desired_state}')"
+        ))
+        .await
+        .unwrap();
+        let connect = move || ready(fake.clone().ok_or_else(|| anyhow::anyhow!("down")));
+        let (state_tx, state_rx) = watch::channel(());
+        let poll_interval = Duration::from_millis(1);
+        let calls = InFlightCalls::new(db.clone(), poll_interval);
+        let worker_loop = WorkerLoop::new(addr(), connect, poll_interval, db, state_tx);
+        (worker_loop, calls, state_rx)
+    }
+
+    async fn get_state(worker_loop: &WorkerLoop<Fake>) -> WorkerState {
+        worker::Entity::find_by_id(addr())
+            .one(&worker_loop.db)
+            .await
+            .unwrap()
+            .unwrap()
+            .current_state
+    }
+
+    #[tokio::test]
+    async fn active_once() {
+        let (mut worker_loop, mut calls, mut state_rx) =
+            build_loop("Active", Some(Fake::default())).await;
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        assert_eq!(get_state(&worker_loop).await, WorkerState::Active);
+        assert!(state_rx.has_changed().unwrap());
+        state_rx.mark_unchanged();
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        assert!(!state_rx.has_changed().unwrap());
+    }
+
+    #[tokio::test]
+    async fn observed_notifies() {
+        let fake = Fake::default();
+        let (mut worker_loop, mut calls, mut state_rx) =
+            build_loop("Active", Some(fake.clone())).await;
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        state_rx.mark_unchanged();
+        worker_loop
+            .db
+            .execute_unprepared(
+                "INSERT INTO query (sql, global_plan) VALUES ('', x''); \
+                 INSERT INTO query_fragment (query_id, host_addr, plan, num_operators, has_source, current_state) \
+                 VALUES (1, 'worker:8080', x'', 0, false, 'Running')",
+            )
+            .await
+            .unwrap();
+        fake.active.lock().unwrap().push(1);
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        assert!(state_rx.has_changed().unwrap());
+    }
+
+    #[tokio::test]
+    async fn unreachable() {
+        let (mut worker_loop, mut calls, _state_rx) = build_loop("Active", None).await;
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        assert_eq!(get_state(&worker_loop).await, WorkerState::Unreachable);
+    }
+
+    #[tokio::test]
+    async fn removed_once_idle() {
+        let fake = Fake::default();
+        fake.active.lock().unwrap().push(1);
+        let (mut worker_loop, mut calls, _state_rx) =
+            build_loop("Removed", Some(fake.clone())).await;
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        assert!(calls.join_next().await.is_some());
+        assert_eq!(*fake.stops.lock().unwrap(), vec![QueryFragmentId::new(1)]);
+        assert_eq!(get_state(&worker_loop).await, WorkerState::Pending);
+        fake.active.lock().unwrap().clear();
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        assert_eq!(get_state(&worker_loop).await, WorkerState::Removed);
+        assert!(worker_loop.run_round(&mut calls).await.is_break());
+    }
+
+    #[tokio::test]
+    async fn removed_unreachable() {
+        let (mut worker_loop, mut calls, _state_rx) = build_loop("Removed", None).await;
+        assert!(worker_loop.run_round(&mut calls).await.is_continue());
+        assert_eq!(get_state(&worker_loop).await, WorkerState::Removed);
+        assert!(worker_loop.run_round(&mut calls).await.is_break());
+    }
 }

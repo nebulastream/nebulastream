@@ -16,10 +16,12 @@
 #include <optional>
 #include <vector>
 
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 #include <Identifiers/Identifiers.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <WorkerStatus.hpp>
 
@@ -29,17 +31,22 @@ namespace NES
 {
 namespace
 {
-const std::chrono::system_clock::time_point origin{1000s};
+constexpr std::chrono::system_clock::time_point origin{1000s};
+
+QueryId createQueryId(const int value)
+{
+    return QueryId::createLocal(LocalQueryId{fmt::format("00000000-0000-0000-0000-{:012}", value)});
+}
 
 LocalQueryStatusSnapshot
-active(const QueryId queryId, const QueryStatus state, const std::optional<std::chrono::system_clock::time_point> running)
+active(const QueryId& queryId, const QueryStatus state, const std::optional<std::chrono::system_clock::time_point> running)
 {
     return {
         .queryId = queryId, .state = state, .metrics = {.start = origin, .running = running, .stop = std::nullopt, .error = std::nullopt}};
 }
 
 LocalQueryStatusSnapshot
-terminated(const QueryId queryId, const std::chrono::system_clock::time_point stop, const std::optional<Exception>& error)
+terminated(const QueryId& queryId, const std::chrono::system_clock::time_point stop, const std::optional<Exception>& error)
 {
     return {
         .queryId = queryId,
@@ -49,42 +56,37 @@ terminated(const QueryId queryId, const std::chrono::system_clock::time_point st
 }
 
 /// NOLINTBEGIN(readability-magic-numbers,bugprone-unchecked-optional-access)
-TEST(WorkerStatusTest, QueryThatStartedBeforeAfterIsStillActive)
+TEST(WorkerStatusTest, ActiveAndTerminatedQueries)
 {
     const auto status = buildWorkerStatus(
-        {active(QueryId{1}, QueryStatus::Running, origin),
-         active(QueryId{2}, QueryStatus::Started, std::nullopt),
-         active(QueryId{3}, QueryStatus::Registered, std::nullopt)},
+        {active(createQueryId(1), QueryStatus::Running, origin),
+         active(createQueryId(2), QueryStatus::Started, std::nullopt),
+         active(createQueryId(3), QueryStatus::Registered, std::nullopt),
+         terminated(createQueryId(4), origin + 5s, std::nullopt),
+         terminated(createQueryId(5), origin + 10s, std::nullopt),
+         terminated(createQueryId(6), origin + 15s, QueryInvalid("crashed")),
+         {.queryId = createQueryId(7),
+          .state = QueryStatus::Failed,
+          .metrics = {.start = origin, .running = std::nullopt, .stop = origin + 15s, .error = QueryInvalid("compile")}}},
         origin + 10s,
         origin + 20s);
 
     ASSERT_EQ(status.activeQueries.size(), 3);
-    EXPECT_EQ(status.activeQueries[0].queryId, QueryId{1});
+    EXPECT_EQ(status.activeQueries[0].queryId, createQueryId(1));
     EXPECT_EQ(status.activeQueries[0].started, origin);
-    EXPECT_EQ(status.activeQueries[1].queryId, QueryId{2});
+    EXPECT_EQ(status.activeQueries[1].queryId, createQueryId(2));
     EXPECT_FALSE(status.activeQueries[1].started.has_value());
-    EXPECT_EQ(status.activeQueries[2].queryId, QueryId{3});
-    EXPECT_TRUE(status.terminatedQueries.empty());
-    EXPECT_EQ(status.after, origin + 10s);
-    EXPECT_EQ(status.until, origin + 20s);
-}
-
-TEST(WorkerStatusTest, OnlyQueriesThatTerminatedAtOrAfterAfterAreListed)
-{
-    const auto status = buildWorkerStatus(
-        {terminated(QueryId{1}, origin + 5s, std::nullopt),
-         terminated(QueryId{2}, origin + 10s, std::nullopt),
-         terminated(QueryId{3}, origin + 15s, QueryInvalid("crashed"))},
-        origin + 10s,
-        origin + 20s);
-
-    EXPECT_TRUE(status.activeQueries.empty());
-    ASSERT_EQ(status.terminatedQueries.size(), 2);
-    EXPECT_EQ(status.terminatedQueries[0].queryId, QueryId{2});
+    EXPECT_EQ(status.activeQueries[2].queryId, createQueryId(3));
+    ASSERT_EQ(status.terminatedQueries.size(), 3);
+    EXPECT_EQ(status.terminatedQueries[0].queryId, createQueryId(5));
     EXPECT_EQ(status.terminatedQueries[0].terminated, origin + 10s);
     EXPECT_FALSE(status.terminatedQueries[0].error.has_value());
-    EXPECT_EQ(status.terminatedQueries[1].queryId, QueryId{3});
+    EXPECT_EQ(status.terminatedQueries[1].queryId, createQueryId(6));
     EXPECT_TRUE(status.terminatedQueries[1].error.has_value());
+    EXPECT_EQ(status.terminatedQueries[2].queryId, createQueryId(7));
+    EXPECT_FALSE(status.terminatedQueries[2].started.has_value());
+    EXPECT_EQ(status.after, origin + 10s);
+    EXPECT_EQ(status.until, origin + 20s);
 }
 
 /// NOLINTEND(readability-magic-numbers,bugprone-unchecked-optional-access)

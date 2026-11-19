@@ -450,6 +450,7 @@ dependencies = [
  "sea-orm",
  "serde_json",
  "tokio",
+ "tokio-retry2",
  "tonic",
  "tonic-build",
  "tracing",

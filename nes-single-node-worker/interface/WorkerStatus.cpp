@@ -20,10 +20,12 @@
 #include <optional>
 #include <ranges>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
+
 #include <cpptrace/basic.hpp>
 #include <fmt/format.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -50,9 +52,9 @@ WorkerStatus buildWorkerStatus(
             case QueryStatus::Stopped:
             case QueryStatus::Failed:
                 INVARIANT(metrics.stop.has_value(), "If query has terminated, it should have a stop timestamp");
-                if (metrics.stop.value() >= after)
+                if (const auto stop = metrics.stop.value(); stop >= after)
                 {
-                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
+                    status.terminatedQueries.emplace_back(queryId, metrics.running, stop, metrics.error);
                 }
                 break;
         }

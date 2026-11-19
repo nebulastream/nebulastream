@@ -48,22 +48,20 @@ impl worker_rpc_service::nes::SerializableQueryId {
     }
 
     #[must_use]
-    pub fn fragment_id(&self) -> Option<i64> {
+    pub fn get_fragment_id(&self) -> Option<i64> {
         self.local_query_id.parse().ok()
     }
 }
 
 pub use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
 
-/// The channel dials again on the next call after the worker went away, so a connection is made once per worker loop.
+/// The channel reconnects on the next call after the worker went away, so a connection is made once per worker loop.
 #[tracing::instrument(level = "info")]
 pub(crate) async fn connect(addr: NetworkAddr) -> anyhow::Result<RemoteTransport> {
-    let endpoint = Endpoint::from_shared(format!("http://{addr}"))
+    let channel = Endpoint::from_shared(format!("http://{addr}"))
         .with_context(|| format!("failed to connect to {addr}"))?
         .connect_timeout(CONNECT_TIMEOUT)
-        .timeout(RPC_TIMEOUT);
-
-    let channel = endpoint
+        .timeout(RPC_TIMEOUT)
         .connect()
         .await
         .inspect_err(|e| warn!(%addr, error = %e, "worker unreachable"))
