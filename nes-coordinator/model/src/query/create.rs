@@ -26,6 +26,9 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, Query
 use serde::Deserialize;
 use std::collections::BTreeSet;
 
+/// Registers a query with its fragments, and links it to the sources and sinks that it uses.
+/// Fails with `QueryInvalid` when the query has no fragment, no source or no sink.
+/// The anonymous and internal sources and sinks among the ids become owned by the query.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CreateQuery {

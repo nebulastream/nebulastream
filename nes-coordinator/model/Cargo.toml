@@ -27,9 +27,7 @@ anyhow.workspace = true
 tokio.workspace = true
 sqlx.workspace = true
 sea-orm-migration.workspace = true
-# Test-support only: gated behind the `testing` feature (and enabled for this
-# crate's own tests via the dev-dependency below), so the property-test
-# generators and Arbitrary impls do not ship in a production build.
+# Optional, so that the property-test generators and Arbitrary impls do not ship in a production build.
 proptest = { workspace = true, optional = true }
 proptest-derive = { workspace = true, optional = true }
 migration.workspace = true

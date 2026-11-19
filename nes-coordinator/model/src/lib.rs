@@ -18,12 +18,12 @@
 //!
 //! # Data model
 //!
-//! Each entity is one module under `src/`, with a SeaORM entity in its `mod.rs`.
+//! Each table has a SeaORM entity in its own module.
 //! The main entities and their relationships:
 //!
 //! ```mermaid
 //! erDiagram
-//!     logical_source  ||--o{ physical_source : binds
+//!     logical_source  |o--o{ physical_source : binds
 //!     worker          ||--o{ physical_source : hosts
 //!     worker          ||--o{ sink            : hosts
 //!     worker          ||--o{ query_fragment  : hosts
@@ -32,12 +32,13 @@
 //!     query           ||--o{ query_sink      : references
 //!     physical_source ||--o{ query_source    : "referenced by"
 //!     sink            ||--o{ query_sink      : "referenced by"
+//!     query           |o--o{ physical_source : owns
+//!     query           |o--o{ sink            : owns
 //!     worker          ||..o{ network_link    : "endpoint (no FK)"
 //! ```
 //!
-//! The diagram is not exhaustive:
-//! `ml_model`, for example, is a standalone entity with no relationships,
-//! and more catalog objects will be added over time.
+//! The diagram is not exhaustive.
+//! `ml_model`, for example, is a standalone entity with no relationships.
 //!
 //! # Statements and requests
 //!
@@ -49,17 +50,16 @@
 //!
 //! # CRUD operations
 //!
-//! Each entity module has sibling `create.rs` / `get.rs` / `drop.rs` files with its request types.
+//! Each entity module holds the request types that create, read, and drop its rows.
 //! Every request implements [`Execute`], which runs it within a connection or transaction.
-//! Read and delete requests also implement [`IntoCondition`] to build their row filter.
+//! Most read and delete requests also implement [`IntoCondition`] to build their row filter.
 //!
 //! # Triggers
 //!
-//! Invariants that span rows are enforced in the database,
-//! by SQL triggers defined in the `migration` crate. They:
+//! SQL triggers in the `migration` crate enforce the invariants that span rows:
 //!
 //! - validate query and fragment state transitions (illegal ones abort);
-//! - derive a query's state, start/stop timestamps, and per-host errors from its fragments;
+//! - derive a query's state, its start and stop timestamps, and the error of its first failed fragment;
 //! - debit a worker's `max_operators` when a fragment is placed,
 //!   and credit it back when the fragment ends;
 //! - stop a query's fragments when it fails, fail a removed worker's fragments,
@@ -84,14 +84,14 @@ use sea_orm::{Condition, ConnectionTrait};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-/// Builds the row filter applied by read and delete requests.
-/// Each optional field becomes one predicate AND-ed into the condition,
-/// so an empty request matches all rows.
+/// Builds the row filter that read and delete requests apply.
+/// Each optional field becomes one predicate that is AND-ed into the condition,
+/// so an empty request matches all rows, except that a drop of sources or sinks matches only Shared ones.
 pub trait IntoCondition {
     fn to_condition(&self) -> Condition;
 }
 
-/// Runs a filtered read for any entity whose request builds a condition.
+/// Runs a filtered read for any entity with a request that builds a condition.
 pub(crate) async fn get_all<E>(
     filter: &impl IntoCondition,
     conn: &impl ConnectionTrait,
@@ -118,9 +118,8 @@ where
 
 /// Single entry point for every catalog request.
 ///
-/// Atomicity is the caller's responsibility:
-/// multistep implementations issue several inserts in sequence
-/// and will leave partial state on failure if given a raw connection.
+/// NOTE: Atomicity is the caller's responsibility.
+/// Multistep implementations issue several inserts in sequence and leave partial state on failure if given a raw connection.
 /// Callers that need atomicity must pass a transaction handle.
 /// Several requests can share one:
 /// ```ignore
@@ -142,9 +141,8 @@ pub trait Execute {
 pub enum ConnectorKind {
     /// User-managed and outlives any single query.
     Shared,
-    /// Owned by exactly one query and cleaned up with it.
+    /// Created for one query and deleted together with it.
     Anonymous,
-    /// Like anonymous, but reserved for system-generated connectors such as `NetworkSource`,
-    /// which are hidden from user-facing listings.
+    /// Like anonymous, but reserved for system-generated connectors such as `NetworkSource`.
     Internal,
 }

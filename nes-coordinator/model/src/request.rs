@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-//! Requests submitted to the coordinator, wrapping [`statements`](crate::statement) or raw SQL.
+//! Requests to the coordinator.
+//! A request holds a [`statement`](crate::statement) or raw SQL.
 
 use crate::query::{GetQuery, QueryWithFragments};
 use crate::statement::{ParsedStatement, StatementResult};
@@ -21,6 +22,7 @@ use std::fmt::Debug;
 use std::time::Duration;
 use tokio::sync::oneshot;
 
+/// A statement for the coordinator, and the channel for its reply.
 /// The reply channel is created together with the request so no caller can forget to supply one.
 pub struct Request {
     pub statement: Statement,
@@ -52,7 +54,7 @@ pub enum Statement {
     /// SQL text, not yet parsed.
     Sql(String),
     Parsed(ParsedStatement),
-    /// A read of queries whose reply is held back until the condition holds or the timeout passes.
+    /// A read of queries with a reply that is held back as the [`Wait`] describes.
     /// Its result is [`StatementResult::Watched`].
     Watch(GetQuery, Wait),
 }

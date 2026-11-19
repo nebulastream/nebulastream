@@ -23,6 +23,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
+/// Fails with `UnknownWorker` when no worker has the host address.
 #[derive(Debug, Clone, Deserialize)]
 pub struct GetWorkerStatus {
     pub host_addr: NetworkAddr,

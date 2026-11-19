@@ -25,6 +25,7 @@ use serde::Deserialize;
 
 use super::Model;
 
+/// Registers a worker at its host address, with links to the given peers.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CreateWorker {
@@ -33,8 +34,9 @@ pub struct CreateWorker {
     pub max_operators: Option<i32>,
     pub peers: Vec<NetworkAddr>,
     pub config: serde_json::Value,
-    /// Return the existing row instead of erroring when a matching one already exists,
+    /// Return the existing worker instead of erroring when its host address is already registered,
     /// as with SQL `CREATE ... IF NOT EXISTS`.
+    /// Whatever this flag says, a removed worker is registered again, and a worker that is still being removed fails the request.
     #[serde(default)]
     pub if_not_exists: bool,
 }

@@ -25,7 +25,7 @@ pub const DEFAULT_HOST_PORT: u16 = 8080;
 #[cfg(any(test, feature = "testing"))]
 pub const DEFAULT_DATA_PORT: u16 = 9090;
 
-/// A host and port used to identify and reach a worker.
+/// A host and port that identify and reach a worker.
 /// The host may be a hostname, which is why this is not a socket address.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NetworkAddr {
@@ -76,10 +76,9 @@ impl fmt::Display for NetworkAddr {
 impl FromStr for NetworkAddr {
     type Err = String;
 
-    /// Accepts `host:port` (hostname or IPv4)
-    /// and the bracketed form `[host]:port` required for IPv6 literals.
-    /// A bare host that itself contains a colon (an unbracketed IPv6 address) is rejected,
-    /// not split at its last colon.
+    /// Accepts a hostname or IPv4 host as `host:port`, and an IPv6 host only in brackets:
+    /// `localhost:8080`, `1.2.3.4:9090` and `[::1]:8080` parse,
+    /// while `::1:8080` is rejected, not split at its last colon.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (host, port_str) = if let Some(rest) = s.strip_prefix('[') {
             let close = rest.find(']').ok_or("Missing closing ']' in address")?;

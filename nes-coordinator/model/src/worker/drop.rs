@@ -22,6 +22,7 @@ use serde::Deserialize;
 
 /// Sets the worker's target state to `Removed` and keeps the row.
 /// A trigger then fails every non-terminal fragment on the worker.
+/// Returns `None` when no worker has the host address.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DropWorker {

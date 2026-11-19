@@ -34,6 +34,7 @@ pub enum QueryFragmentError {
     Transport { msg: String },
 }
 
+/// A fragment that the controller still has to move to its desired state, with only the columns that the controller reads.
 #[derive(Clone, Debug, PartialEq, Eq, DerivePartialModel)]
 #[sea_orm(entity = "Entity", from_query_result)]
 pub struct ActionableFragment {
@@ -113,7 +114,7 @@ impl Related<crate::worker::Entity> for Entity {
 
 #[async_trait::async_trait]
 impl ActiveModelBehavior for ActiveModel {
-    /// Rejects a save whose state would leave a required column NULL:
+    /// Rejects a save that would leave a column NULL that the new state requires:
     /// running needs a start timestamp, terminal needs a stop timestamp, and failed also needs an error.
     async fn before_save<C>(self, _db: &C, _insert: bool) -> Result<Self, DbErr>
     where
@@ -130,9 +131,8 @@ impl ActiveModelBehavior for ActiveModel {
                 Err(DbErr::Custom(msg.into()))
             }
         };
+        // NOTE: `Set(None)` counts as set, so checking only whether the column is set persists a NULL that the state forbids.
         // A nullable column counts as provided only when this save writes a value into it.
-        // Checking only whether the column is set would accept `Set(None)`
-        // and persist a NULL that the state forbids.
         match state {
             QueryFragmentState::Pending | QueryFragmentState::Started => {}
             QueryFragmentState::Running => ensure(
@@ -210,6 +210,7 @@ impl QueryFragmentTransition {
 }
 
 impl ActiveModel {
+    /// A terminal transition without a start timestamp keeps the start timestamp that the row already has.
     pub fn apply_transition(&mut self, transition: QueryFragmentTransition) {
         match transition {
             QueryFragmentTransition::Pending => {
@@ -286,7 +287,7 @@ impl Model {
 }
 
 impl Entity {
-    /// Fragments on `host` that the worker-removal trigger failed.
+    /// Fragments on the given worker that the worker-removal trigger failed.
     pub async fn failed_by_worker_removal(
         conn: &impl ConnectionTrait,
         host: &NetworkAddr,
@@ -303,13 +304,14 @@ impl Entity {
         Ok(rows
             .into_iter()
             .filter(|(_, error)| {
+                // The message that the worker-removal trigger writes.
                 matches!(error, Some(QueryFragmentError::Transport { msg }) if msg == "worker removed")
             })
             .map(|(id, _)| id)
             .collect())
     }
 
-    /// Non-terminal fragments on `host` whose observed state differs from their target,
+    /// Non-terminal fragments on the given worker with an observed state that differs from their target,
     /// meaning the fragments that the per-worker controller still has to reconcile.
     pub async fn actionable(
         conn: &impl ConnectionTrait,
@@ -330,6 +332,8 @@ impl Entity {
     }
 }
 
+/// One fragment of a query to create.
+/// Its operators count against the capacity of the worker that hosts it.
 #[derive(Clone, Debug, Deserialize)]
 pub struct CreateQueryFragment {
     pub host_addr: NetworkAddr,
@@ -360,8 +364,8 @@ impl CreateQueryFragment {
 /// Observed lifecycle state of a fragment.
 /// The initial variant is the column default at insert time;
 /// later values are written when the worker reports a state change.
-/// The declaration order matches lifecycle progression (Pending < Started < Running < terminal),
-/// which the test walker relies on to skip already-reached states.
+/// NOTE: The declaration order matches lifecycle progression (Pending < Started < Running < terminal),
+/// and the state-walk tests rely on it to skip states that were already reached.
 ///
 /// Which transitions are legal is enforced by a database trigger, which is the authority;
 /// keep it in sync when adding or reordering a state.
@@ -397,7 +401,8 @@ pub enum QueryFragmentState {
 #[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 #[strum(serialize_all = "PascalCase")]
 pub enum DesiredQueryFragmentState {
-    /// Run until the input ends. The column default for a new fragment.
+    /// Run until the input ends.
+    /// The column default for a new fragment.
     Completed,
     /// Stop at the current position.
     /// Set by a query stop or drop, and by the trigger that stops the fragments of a failed query.
@@ -413,15 +418,19 @@ impl QueryFragmentState {
 impl TryFrom<i32> for QueryFragmentState {
     type Error = i32;
 
-    /// Maps the worker's proto `QueryState` enum to the state of a fragment.
-    /// Proto: Registered=0, Started=1, Running=2, Stopped=3, Failed=4.
-    /// Registered maps to Started.
-    /// Proto Started is an internal worker detail, so both Started and Running map to Running.
+    /// Maps the worker's proto `QueryState` enum to the state of a fragment:
+    /// ```text
+    /// Registered (0)  Started
+    /// Started (1)     Running
+    /// Running (2)     Running
+    /// Stopped (3)     Completed
+    /// Failed (4)      Failed
+    /// ```
+    /// Proto Started is an internal worker detail, so it reads as Running.
     ///
-    /// Proto has no `Completed`:
-    /// the worker reports Stopped (3) for a fragment that finished on its own and for one that was stopped.
-    /// It is decoded as `Completed` here,
-    /// and the controller records it as `Stopped` when the fragment's desired state is Stopped.
+    /// NOTE: Proto has no `Completed`:
+    /// the worker reports Stopped for a fragment that finished on its own and for one that was stopped.
+    /// The controller records it as `Stopped` when the fragment's desired state is Stopped.
     ///
     /// An unknown value means that the worker uses a newer or incompatible protocol.
     /// It is returned as the error so the caller can handle it instead of crashing the coordinator.

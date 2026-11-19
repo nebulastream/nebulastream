@@ -21,6 +21,8 @@ use anyhow::Result;
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
+/// Reads the queries that match every set field.
+/// The fragments of each query are read only when `with_fragments` is set.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GetQuery {

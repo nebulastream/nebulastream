@@ -35,7 +35,7 @@ use proptest::strategy::Strategy;
 use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
-/// A concrete source placed on a worker and bound to a logical source.
+/// A concrete source placed on a worker.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "physical_source")]
 pub struct Model {
@@ -127,8 +127,17 @@ mod tests {
         // neither logical source nor worker exist
         let missing = code_of(req.physical.execute(&db).await);
         assert_eq!(missing, Some(ErrorCode::UnknownSourceName));
+        let anonymous = CreateAnonymousSource {
+            source_type: req.physical.source_type.clone(),
+            source_config: req.physical.source_config.clone(),
+            parser_config: req.physical.parser_config.clone(),
+            host_addr: req.physical.host_addr.clone(),
+            internal: false,
+        };
+        let unplaced = code_of(anonymous.execute(&db).await);
+        assert_eq!(unplaced, Some(ErrorCode::UnknownWorker));
 
-        // only logical source exists
+        // Only the logical source exists, and the missing worker is also reported as an unknown source name.
         req.logical.execute(&db).await.unwrap();
         let missing = code_of(req.physical.execute(&db).await);
         assert_eq!(missing, Some(ErrorCode::UnknownSourceName));
@@ -186,7 +195,7 @@ mod tests {
         };
         assert_eq!(retry.execute(&db).await.unwrap(), original);
 
-        // Same (logical, host, type) but a different config is a distinct source.
+        // A different source config, parser config or source type makes a distinct source.
         let variant = serde_json::json!({ "variant": 1 });
         let changed = [
             CreatePhysicalSource {

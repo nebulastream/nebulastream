@@ -37,18 +37,20 @@ use sea_orm::ConnectionTrait;
 
 /// A CRUD operation that a client issues to the coordinator.
 /// Running a variant yields the matching `StatementResult` variant.
-/// `ExplainQuery` already holds its text, so running it does not touch the catalog.
-/// `GetWorkerVersion` needs the workers themselves, so running it against the catalog returns an error.
 #[derive(Clone, Debug, serde::Deserialize)]
 #[serde(tag = "tag")]
 pub enum ParsedStatement {
     CreateWorker(CreateWorker),
     GetWorker(GetWorker),
     WorkerStatus(GetWorkerStatus),
+    /// NOTE: Running it against the catalog returns an error, because only the workers know their versions.
     GetWorkerVersion(GetWorkerVersion),
     DropWorker(DropWorker),
     CreateQuery(CreateQuery),
-    ExplainQuery { explanation: String },
+    /// Already holds its text, so running it does not touch the catalog.
+    ExplainQuery {
+        explanation: String,
+    },
     GetQuery(GetQuery),
     StopQuery(StopQuery),
     DropQuery(DropQuery),
@@ -107,6 +109,7 @@ impl ParsedStatement {
         Ok(response)
     }
 
+    /// Runs the statement on the given connection without opening a transaction of its own.
     pub async fn execute_on(self, conn: &impl ConnectionTrait) -> Result<StatementResult> {
         match self {
             ParsedStatement::CreateWorker(stmt) => {

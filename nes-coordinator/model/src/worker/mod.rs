@@ -48,7 +48,8 @@ pub enum WorkerState {
     Removed,
 }
 
-/// Target state. The controller moves the observed state toward it.
+/// Target state.
+/// The controller moves the observed state toward it.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Display, EnumIter, Serialize, Deserialize, DeriveActiveEnum,
 )]
@@ -126,9 +127,8 @@ impl WorkerTransition {
 
 impl ActiveModel {
     /// Records the worker's observed state, as reported by the controller.
-    /// Unlike a fragment's state, no trigger checks the transition:
-    /// the controller is the only writer, and every state is reachable,
-    /// since a worker can recover from unreachable and a removed address can be registered again.
+    /// Unlike a fragment's state, no trigger checks the transition, because every state is reachable:
+    /// a worker can recover from unreachable, and registering a removed address again resets it to Pending.
     pub fn apply_transition(&mut self, transition: WorkerTransition) {
         self.current_state = sea_orm::Set(transition.state());
     }
@@ -137,7 +137,7 @@ impl ActiveModel {
 impl Entity {
     /// The workers that the controller still has to reconcile:
     /// every worker targeted as `Active`,
-    /// and every worker whose observed state has not yet converged on its target.
+    /// and every worker with an observed state that has not yet converged on its target.
     pub async fn actionable(conn: &impl ConnectionTrait) -> Result<Vec<Model>, DbErr> {
         Entity::find()
             .filter(
@@ -421,6 +421,7 @@ mod tests {
         let db = Database::for_test().await;
         let (_, fragments) = setup(&db, &mut req).await;
         let (_, fragments) = walk_all(&fragments, terminal_state, &db).await;
+        // Saving a terminal fragment again must not release its capacity a second time.
         for fragment in &fragments {
             let again = fragment.with_state(terminal_state);
             again.update(&db).await.unwrap();

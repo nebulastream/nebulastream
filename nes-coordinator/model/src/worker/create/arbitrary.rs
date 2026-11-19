@@ -28,8 +28,8 @@ impl Arbitrary for CreateWorker {
             option::of(0..=1024i32),
         )
             .prop_map(|(host_addr, data_port, max_operators)| {
-                // Generated ports are at most 65534 (range 1024..65535),
-                // so +1 is always a valid, distinct u16.
+                // The schema rejects a worker with equal host and data addresses.
+                // Generated ports are at most 65534, so the next port is still a valid u16.
                 let data_port = if data_port == host_addr.port() {
                     data_port + 1
                 } else {
@@ -67,6 +67,8 @@ impl CreateWorker {
                         host_addr: at(i, endpoint::DEFAULT_HOST_PORT),
                         data_addr: at(i, endpoint::DEFAULT_DATA_PORT),
                         max_operators,
+                        // Bit j of the link mask links this worker to worker j.
+                        // Links only point to later workers, so the topology has no cycles.
                         peers: (i + 1..rows.len())
                             .filter(|j| links >> j & 1 == 1)
                             .map(|j| at(j, endpoint::DEFAULT_HOST_PORT))

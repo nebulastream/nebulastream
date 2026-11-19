@@ -411,7 +411,6 @@ mod tests {
             }
         };
 
-        // Fail every fragment in turn, each with its own message.
         for (idx, frag) in fragments.iter().enumerate() {
             let mut update: query_fragment::ActiveModel = frag.clone().into();
             update.apply_transition(QueryFragmentTransition::failed_now(error(idx)));
@@ -443,6 +442,7 @@ mod tests {
 
         assert!(source.clone().exec(&db).await.is_err());
         assert!(sink.clone().exec(&db).await.is_err());
+        // A drop matches only shared sources and sinks, so for the other kinds it matches nothing and succeeds.
         let shared = req.kind == ConnectorKind::Shared;
         let rejected = shared.then_some(ErrorCode::CatalogWriteRejected);
         assert_eq!(
@@ -460,6 +460,7 @@ mod tests {
     #[proptest(async = "tokio")]
     async fn queries_do_not_affect_each_other(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
+        // The second query reuses the fragments of the first, so the workers need room for them twice.
         req.workers.iter_mut().for_each(|w| w.max_operators = None);
         let (first, first_fragments) = setup(&db, &mut req).await;
         let second = CreateQuery {

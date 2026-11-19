@@ -20,6 +20,8 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
+/// Deletes the shared sinks that match every set field and returns the deleted rows.
+/// Fails with `CatalogWriteRejected` and deletes nothing while a non-terminal query uses a matched sink.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DropSink {
@@ -35,9 +37,7 @@ impl DropSink {
 
 impl IntoCondition for DropSink {
     fn to_condition(&self) -> Condition {
-        // Only Shared rows are user-droppable.
-        // Query-owned (anonymous/internal) sinks are deleted automatically with their owning query,
-        // so they are never touched here.
+        // Query-owned sinks are deleted with their query, so a user drop never matches them.
         Condition::all()
             .add(Column::Kind.eq(ConnectorKind::Shared))
             .add_option(self.name.clone().map(|v| Column::Name.eq(v)))

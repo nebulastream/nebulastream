@@ -22,6 +22,7 @@ use sea_orm::ActiveValue::{NotSet, Set};
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
+/// Creates a shared sink that queries refer to by name.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CreateSink {
@@ -77,6 +78,8 @@ impl Execute for CreateSink {
     }
 }
 
+/// Creates a sink without a name for a single query.
+/// Creating the query with this sink's id makes the query its owner.
 #[derive(Clone, Debug)]
 pub struct CreateAnonymousSink {
     pub sink_type: String,

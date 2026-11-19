@@ -44,9 +44,8 @@ impl Table {
     }
 
     fn row(&mut self, mut cells: Vec<String>) {
-        // A mismatch means a table function fell out of sync with its column list.
-        // Flag it in debug builds,
-        // and resize in release builds so we don't crash.
+        // A mismatch means that a table function and its column list differ.
+        // Debug builds assert, and release builds pad or cut the row so that rendering does not panic.
         debug_assert_eq!(cells.len(), self.headers.len());
         cells.resize(self.headers.len(), String::new());
         self.rows.push(cells);
@@ -55,8 +54,7 @@ impl Table {
 
 impl fmt::Display for Table {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Width is measured in characters instead of bytes.
-        // Multibyte UTF-8 content still lines up with the borders.
+        // Counting characters, not bytes, keeps multibyte UTF-8 content aligned with the borders.
         let mut widths: Vec<usize> = self.headers.iter().map(|h| h.chars().count()).collect();
         for row in &self.rows {
             for (i, cell) in row.iter().enumerate() {

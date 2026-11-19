@@ -19,6 +19,8 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
+/// Deletes the matching logical sources and returns the deleted rows.
+/// Fails with `CatalogWriteRejected` while a physical source is bound to a matched logical source.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DropLogicalSource {

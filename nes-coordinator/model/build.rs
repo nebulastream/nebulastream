@@ -21,13 +21,15 @@ use std::path::Path;
 const DEFINITIONS: &str = "../../nes-common/include/ExceptionDefinitions.inc";
 
 /// Reads one entry, or nothing when the line is a comment, a guard or blank.
+/// `EXCEPTION(UnsupportedQuery, 2008, "specified query is (currently) not supported") /// comment`
+/// gives `("UnsupportedQuery", 2008, "specified query is (currently) not supported")`.
 fn parse_entry(line: &str) -> Option<(String, u16, String)> {
     let rest = line.trim().strip_prefix("EXCEPTION(")?;
-    let body = rest.split_once(')')?.0;
-    let mut parts = body.splitn(3, ',');
+    let (head, quoted) = rest.split_once('"')?;
+    let text = quoted.split_once('"')?.0.to_string();
+    let mut parts = head.split(',');
     let name = parts.next()?.trim().to_string();
     let code = parts.next()?.trim().parse().ok()?;
-    let text = parts.next()?.trim().trim_matches('"').to_string();
     Some((name, code, text))
 }
 

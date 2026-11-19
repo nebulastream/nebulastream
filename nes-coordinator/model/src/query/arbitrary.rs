@@ -25,7 +25,7 @@ use proptest::strategy::BoxedStrategy;
 use sea_orm::Iterable;
 
 /// Test fixture that bundles a `CreateQuery` with every catalog row that it depends on.
-/// The `setup` helpers insert them in dependency order.
+/// The test setup inserts them in dependency order.
 #[derive(Debug, Clone)]
 pub struct CreateQueryWithRefs {
     pub workers: Vec<CreateWorker>,
@@ -40,6 +40,7 @@ pub struct CreateQueryWithRefs {
 impl Arbitrary for CreateQueryWithRefs {
     type Parameters = ();
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        // The link mask of the topology generator has 32 bits.
         const MAX_WORKERS: usize = 32;
         const MAX_NUM_FRAGMENTS: usize = 16;
         const MAX_OPERATORS_PER_FRAGMENT: i32 = 12;
@@ -93,6 +94,7 @@ impl Arbitrary for CreateQueryWithRefs {
                             }
                         })
                         .collect();
+                    // A query needs a source, so the first fragment always hosts one.
                     fragments[0].has_source = true;
 
                     let sink_host = sink_fragment.get(&fragments).host_addr.clone();

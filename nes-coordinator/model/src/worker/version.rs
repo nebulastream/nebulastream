@@ -49,8 +49,8 @@ impl GetWorkerVersion {
 impl IntoCondition for GetWorkerVersion {
     fn to_condition(&self) -> Condition {
         // Every worker is contacted, whatever state the catalog last recorded for it.
-        // A worker that is registered but not yet up is exactly the one a caller wants to see,
-        // and reporting that it could not be reached says that, while leaving it out says nothing.
+        // This includes a worker that is registered but not yet up.
+        // Its entry reports that it could not be reached, and leaving it out would hide that.
         Condition::all().add_option(self.host_addr.clone().map(|v| Column::HostAddr.eq(v)))
     }
 }
@@ -68,7 +68,7 @@ impl Execute for GetWorkerVersion {
 /// One worker's version, or the reason why it could not be reached.
 ///
 /// An unreachable worker does not fail the request, so the versions of the other workers are still returned.
-/// Exactly one of the two is set.
+/// The constructors set exactly one of the two.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct WorkerVersion {
     pub worker: NetworkAddr,

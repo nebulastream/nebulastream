@@ -31,7 +31,6 @@ use std::time::Duration;
 // SQLite serializes writers, so a big pool is not useful.
 const SQLITE_MIN_CONNECTIONS: u32 = 1;
 const SQLITE_MAX_CONNECTIONS: u32 = 8;
-// Wait up to 5s for a write lock.
 const SQLITE_BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Where the catalog is stored.
@@ -103,12 +102,10 @@ impl Database {
                     .synchronous(SqliteSynchronous::Normal)
                     .busy_timeout(SQLITE_BUSY_TIMEOUT);
 
-                // In-memory SQLite is per-connection:
+                // NOTE: In-memory SQLite is per connection:
                 // a second connection would see an empty, separate database.
-                // Hard-cap the pool at one.
-                // Do not close idle or old connections either:
-                // if the pool ever replaced that one connection,
-                // the replacement would open a fresh, empty database and the catalog would be lost.
+                // The pool therefore holds exactly one connection and never closes it,
+                // because a replacement would open a fresh, empty database and the catalog would be lost.
                 let pool = SqlitePoolOptions::new()
                     .min_connections(SQLITE_MIN_CONNECTIONS)
                     .max_connections(SQLITE_MIN_CONNECTIONS)
@@ -170,10 +167,9 @@ impl Database {
         Ok(Migrator::up(&self.conn, None).await?)
     }
 
-    /// Begin an immediate transaction.
+    /// Begins a transaction that holds the write lock from its start, also when it only reads.
     /// A deferred `BEGIN` acquires the write lock only on the first write,
-    /// which fails with `SQLITE_BUSY_SNAPSHOT` (517)
-    /// when a concurrent reader holds a stale WAL snapshot.
+    /// which fails with `SQLITE_BUSY_SNAPSHOT` (517) when another connection committed after this transaction first read.
     /// `BEGIN IMMEDIATE` acquires the lock upfront, so `busy_timeout` handles contention instead.
     pub async fn begin(&self) -> Result<DatabaseTransaction, DbErr> {
         // The ORM only issues a deferred `BEGIN`,

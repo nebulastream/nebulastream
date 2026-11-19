@@ -20,6 +20,8 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
+/// Deletes the shared physical sources that match every set field and returns the deleted rows.
+/// Fails with `CatalogWriteRejected` and deletes nothing while a non-terminal query uses a matched source.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DropPhysicalSource {
@@ -45,9 +47,7 @@ impl DropPhysicalSource {
 
 impl IntoCondition for DropPhysicalSource {
     fn to_condition(&self) -> Condition {
-        // Only Shared rows are user-droppable.
-        // Query-owned (anonymous/internal) sources are deleted automatically with their owning query,
-        // so they are never touched here.
+        // Query-owned sources are deleted with their query, so a user drop never matches them.
         Condition::all()
             .add(Column::Kind.eq(ConnectorKind::Shared))
             .add_option(self.id.map(|v| Column::Id.eq(v)))

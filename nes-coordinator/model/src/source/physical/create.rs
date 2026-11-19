@@ -21,6 +21,7 @@ use sea_orm::ActiveValue::{NotSet, Set};
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
+/// Creates a shared physical source on a worker, bound to a logical source.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CreatePhysicalSource {
@@ -34,8 +35,8 @@ pub struct CreatePhysicalSource {
     pub source_config: serde_json::Value,
     #[serde(default)]
     pub parser_config: serde_json::Value,
-    /// Return the existing row instead of erroring when a matching one already exists
-    /// (matched on the full definition), as with SQL `CREATE ... IF NOT EXISTS`.
+    /// Return the existing row instead of erroring when a matching one already exists (matched on the full definition),
+    /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
     pub if_not_exists: bool,
 }
@@ -75,8 +76,8 @@ impl Execute for CreatePhysicalSource {
             }
         }
         // A physical source refers to a logical source and to a worker.
-        // The logical source is what a statement usually gets wrong,
-        // so a missing reference is reported as an unknown source name.
+        // A missing reference usually means a wrong logical source name,
+        // so it is reported as an unknown source name.
         Ok(ActiveModel::from(self.clone())
             .insert(conn)
             .await
@@ -87,6 +88,8 @@ impl Execute for CreatePhysicalSource {
     }
 }
 
+/// Creates a source without a logical source for a single query.
+/// Creating the query with this source's id makes the query its owner.
 #[derive(Clone, Debug)]
 pub struct CreateAnonymousSource {
     pub source_type: String,
@@ -118,13 +121,13 @@ impl From<CreateAnonymousSource> for ActiveModel {
 impl Execute for CreateAnonymousSource {
     type Response = Model;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
-        // Same error mapping as the shared create above.
+        // An anonymous source has no logical source, so the worker is the only reference that it can miss.
         Ok(ActiveModel::from(self.clone())
             .insert(conn)
             .await
             .map_err(catalog_write(
                 ErrorCode::SourceAlreadyExists,
-                ErrorCode::UnknownSourceName,
+                ErrorCode::UnknownWorker,
             ))?)
     }
 }

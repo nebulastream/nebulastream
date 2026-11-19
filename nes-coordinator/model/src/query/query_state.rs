@@ -17,8 +17,7 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 
 /// Lifecycle state of a query.
-/// Never written by the application directly:
-/// a trigger derives it from the states of its fragments after every fragment state change,
+/// A trigger derives it from the states of the query's fragments after every fragment state change,
 /// and a second trigger rejects illegal transitions.
 #[derive(
     Clone,
