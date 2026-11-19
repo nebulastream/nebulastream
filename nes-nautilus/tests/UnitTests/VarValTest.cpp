@@ -19,6 +19,8 @@
 #include <limits>
 #include <ostream>
 #include <sstream>
+#include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -30,6 +32,7 @@
 #include <gtest/gtest.h>
 #include <nautilus/std/sstream.h>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
@@ -472,6 +475,185 @@ TEST_F(VarValTest, nullPropagationArithmetic)
     /// 5 / NULL = NULL
     const auto resultDiv2 = nonNull / nullVal;
     EXPECT_TRUE(static_cast<bool>(resultDiv2.isNull()));
+}
+
+namespace
+{
+/// Expects `operation` to fail with an ArithmeticalError (3013) carrying `message` instead of trapping in hardware.
+template <typename Operation>
+void expectArithmeticalError(const Operation& operation, const std::string_view message)
+{
+    try
+    {
+        std::ignore = operation();
+        FAIL() << "Expected an ArithmeticalError: " << message;
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::ArithmeticalError);
+        EXPECT_NE(std::string_view{exception.what()}.find(message), std::string_view::npos) << exception.what();
+    }
+}
+
+template <typename Operation>
+void expectDivideByZero(const Operation& operation)
+{
+    expectArithmeticalError(operation, "Can not divide by zero!");
+}
+
+template <typename Operation>
+void expectModuloByZero(const Operation& operation)
+{
+    expectArithmeticalError(operation, "Can not modulo by zero!");
+}
+
+template <typename Operation>
+void expectDivideMinByMinusOne(const Operation& operation)
+{
+    expectArithmeticalError(operation, "Can not divide MIN by -1!");
+}
+
+template <typename Operation>
+void expectModuloMinByMinusOne(const Operation& operation)
+{
+    expectArithmeticalError(operation, "Can not modulo MIN by -1!");
+}
+
+constexpr int dividend = 5;
+
+template <typename T>
+VarVal notNull(const T value)
+{
+    return VarVal{nautilus::val<T>(value)};
+}
+
+template <typename T>
+VarVal nullable(const T value, const bool isNull)
+{
+    return VarVal{nautilus::val<T>(value), true, nautilus::val<bool>{isNull}};
+}
+}
+
+TEST_F(VarValTest, divisionByZeroNotNullThrows)
+{
+    expectDivideByZero([] { return notNull<int8_t>(dividend) / notNull<int8_t>(0); });
+    expectDivideByZero([] { return notNull<int32_t>(dividend) / notNull<int32_t>(0); });
+    expectDivideByZero([] { return notNull<int64_t>(dividend) / notNull<int64_t>(0); });
+    expectDivideByZero([] { return notNull<uint8_t>(dividend) / notNull<uint8_t>(0); });
+    expectDivideByZero([] { return notNull<uint64_t>(dividend) / notNull<uint64_t>(0); });
+    expectDivideByZero([] { return notNull<int32_t>(dividend) / notNull<uint64_t>(0); });
+    expectModuloByZero([] { return notNull<int32_t>(dividend) % notNull<int32_t>(0); });
+    expectModuloByZero([] { return notNull<int64_t>(dividend) % notNull<int64_t>(0); });
+    expectModuloByZero([] { return notNull<uint8_t>(dividend) % notNull<uint8_t>(0); });
+    expectModuloByZero([] { return notNull<uint64_t>(dividend) % notNull<uint64_t>(0); });
+    expectModuloByZero([] { return notNull<uint32_t>(dividend) % notNull<int8_t>(0); });
+}
+
+TEST_F(VarValTest, divisionByZeroNullableThrows)
+{
+    expectDivideByZero([] { return nullable<int32_t>(dividend, false) / nullable<int32_t>(0, false); });
+    expectDivideByZero([] { return notNull<int32_t>(dividend) / nullable<int32_t>(0, false); });
+    expectModuloByZero([] { return nullable<uint64_t>(dividend, false) % notNull<uint64_t>(0); });
+    expectModuloByZero([] { return nullable<int8_t>(dividend, false) % nullable<int8_t>(0, false); });
+    expectDivideByZero([] { return nullable<uint32_t>(dividend, false) / nullable<uint32_t>(0, false); });
+    expectDivideByZero([] { return nullable<uint64_t>(dividend, false) / notNull<uint64_t>(0); });
+    expectModuloByZero([] { return nullable<uint32_t>(dividend, false) % nullable<uint32_t>(0, false); });
+    expectModuloByZero([] { return notNull<uint64_t>(dividend) % nullable<uint64_t>(0, false); });
+    expectDivideByZero([] { return notNull<int16_t>(dividend) / notNull<int16_t>(0); });
+    expectModuloByZero([] { return notNull<int16_t>(dividend) % notNull<int16_t>(0); });
+    expectDivideByZero([] { return nullable<int16_t>(dividend, false) / nullable<int16_t>(0, false); });
+    expectModuloByZero([] { return nullable<int16_t>(dividend, false) % nullable<int16_t>(0, false); });
+}
+
+TEST_F(VarValTest, divisionOfNullByNonNullZeroThrows)
+{
+    expectDivideByZero([] { return nullable<int32_t>(dividend, true) / nullable<int32_t>(0, false); });
+    expectModuloByZero([] { return nullable<int32_t>(dividend, true) % notNull<int32_t>(0); });
+}
+
+TEST_F(VarValTest, divisionMixedWidthsOfMinByMinusOne)
+{
+    /// INT32_MIN / INT8(-1) is computed as INT32 and does not fit
+    expectDivideMinByMinusOne([] { return notNull<int32_t>(std::numeric_limits<int32_t>::min()) / notNull<int8_t>(-1); });
+    expectModuloMinByMinusOne([] { return notNull<int32_t>(std::numeric_limits<int32_t>::min()) % notNull<int8_t>(-1); });
+    /// INT32_MIN / INT64(-1) is computed as INT64 and fits
+    const auto widened = notNull<int32_t>(std::numeric_limits<int32_t>::min()) / notNull<int64_t>(-1);
+    EXPECT_EQ(widened.getRawValueAs<nautilus::val<int64_t>>(), -static_cast<int64_t>(std::numeric_limits<int32_t>::min()));
+    /// Nullable INT8: a zero divisor throws, INT8_MIN / -1 is representable after promotion
+    expectDivideByZero([] { return nullable<int8_t>(dividend, false) / nullable<int8_t>(0, false); });
+    const auto promoted = nullable<int8_t>(std::numeric_limits<int8_t>::min(), false) / nullable<int8_t>(-1, false);
+    EXPECT_EQ(promoted.getRawValueAs<nautilus::val<int32_t>>(), int32_t{128});
+}
+
+TEST_F(VarValTest, divisionByNullZeroIsNull)
+{
+    /// A NULL divisor holds arbitrary raw bits (here 0); the result is NULL and must not fail.
+    const auto quotient = notNull<int32_t>(dividend) / nullable<int32_t>(0, true);
+    EXPECT_TRUE(static_cast<bool>(quotient.isNull()));
+    const auto remainder = nullable<int32_t>(dividend, false) % nullable<int32_t>(0, true);
+    EXPECT_TRUE(static_cast<bool>(remainder.isNull()));
+}
+
+TEST_F(VarValTest, divisionOfMinByMinusOneThrows)
+{
+    expectDivideMinByMinusOne([] { return notNull<int32_t>(std::numeric_limits<int32_t>::min()) / notNull<int32_t>(-1); });
+    expectDivideMinByMinusOne([] { return notNull<int64_t>(std::numeric_limits<int64_t>::min()) / notNull<int64_t>(-1); });
+    expectModuloMinByMinusOne([] { return notNull<int32_t>(std::numeric_limits<int32_t>::min()) % notNull<int32_t>(-1); });
+    expectModuloMinByMinusOne([] { return notNull<int64_t>(std::numeric_limits<int64_t>::min()) % notNull<int64_t>(-1); });
+    expectDivideMinByMinusOne([] { return nullable<int64_t>(std::numeric_limits<int64_t>::min(), false) / nullable<int64_t>(-1, false); });
+    expectModuloMinByMinusOne([] { return nullable<int32_t>(std::numeric_limits<int32_t>::min(), false) % notNull<int32_t>(-1); });
+    expectModuloMinByMinusOne([] { return nullable<int64_t>(std::numeric_limits<int64_t>::min(), false) % nullable<int64_t>(-1, false); });
+}
+
+TEST_F(VarValTest, divisionOfNullMinByMinusOneIsNull)
+{
+    /// The raw bits of a NULL operand can be MIN / -1; the discarded division must not trap and the result is NULL.
+    const auto quotient = nullable<int64_t>(std::numeric_limits<int64_t>::min(), true) / notNull<int64_t>(-1);
+    EXPECT_TRUE(static_cast<bool>(quotient.isNull()));
+    const auto remainder = nullable<int32_t>(std::numeric_limits<int32_t>::min(), true) % nullable<int32_t>(-1, false);
+    EXPECT_TRUE(static_cast<bool>(remainder.isNull()));
+}
+
+TEST_F(VarValTest, divisionNeighboursOfGuardedCasesStillWork)
+{
+    constexpr auto minI64 = std::numeric_limits<int64_t>::min();
+    /// INT8_MIN / -1 and INT16_MIN / -1 are promoted to int and are representable
+    const auto promotedI8 = notNull<int8_t>(std::numeric_limits<int8_t>::min()) / notNull<int8_t>(-1);
+    EXPECT_EQ(promotedI8.getRawValueAs<nautilus::val<int32_t>>(), int32_t{128});
+    const auto promotedI16 = notNull<int16_t>(std::numeric_limits<int16_t>::min()) / notNull<int16_t>(-1);
+    EXPECT_EQ(promotedI16.getRawValueAs<nautilus::val<int32_t>>(), int32_t{32768});
+    const auto promotedI16Remainder = notNull<int16_t>(std::numeric_limits<int16_t>::min()) % notNull<int16_t>(-1);
+    EXPECT_EQ(promotedI16Remainder.getRawValueAs<nautilus::val<int32_t>>(), int32_t{0});
+    const auto nullableI16 = nullable<int16_t>(std::numeric_limits<int16_t>::min(), false) / nullable<int16_t>(-1, false);
+    EXPECT_EQ(nullableI16.getRawValueAs<nautilus::val<int32_t>>(), int32_t{32768});
+    const auto nullableI16Remainder = nullable<int16_t>(std::numeric_limits<int16_t>::min(), false) % nullable<int16_t>(-1, false);
+    EXPECT_EQ(nullableI16Remainder.getRawValueAs<nautilus::val<int32_t>>(), int32_t{0});
+    const auto minByOne = notNull<int64_t>(minI64) / notNull<int64_t>(1);
+    EXPECT_EQ(minByOne.getRawValueAs<nautilus::val<int64_t>>(), minI64);
+    const auto plusOne = notNull<int64_t>(minI64 + 1) / notNull<int64_t>(-1);
+    EXPECT_EQ(plusOne.getRawValueAs<nautilus::val<int64_t>>(), std::numeric_limits<int64_t>::max());
+    const auto remainder = notNull<int64_t>(minI64) % notNull<int64_t>(2);
+    EXPECT_EQ(remainder.getRawValueAs<nautilus::val<int64_t>>(), 0);
+    const auto unsignedQuotient = notNull<uint64_t>(std::numeric_limits<uint64_t>::max()) / notNull<uint64_t>(1);
+    EXPECT_EQ(unsignedQuotient.getRawValueAs<nautilus::val<uint64_t>>(), std::numeric_limits<uint64_t>::max());
+    const auto nullableQuotient = nullable<int32_t>(-9, false) / nullable<int32_t>(3, false);
+    EXPECT_EQ(nullableQuotient.getRawValueAs<nautilus::val<int32_t>>(), int32_t{-3});
+    EXPECT_FALSE(static_cast<bool>(nullableQuotient.isNull()));
+}
+
+TEST_F(VarValTest, floatingPointDivisionByZeroNotNullIsUnchanged)
+{
+    constexpr auto infinity = std::numeric_limits<double>::infinity();
+    const auto positiveInfinity = notNull<double>(5.0) / notNull<double>(0.0);
+    EXPECT_TRUE(static_cast<bool>(positiveInfinity.getRawValueAs<nautilus::val<double>>() == infinity));
+    const auto negativeInfinity = notNull<double>(-5.0) / notNull<double>(0.0);
+    EXPECT_TRUE(static_cast<bool>(negativeInfinity.getRawValueAs<nautilus::val<double>>() == -infinity));
+    const auto notANumber = notNull<double>(0.0) / notNull<double>(0.0);
+    const auto notANumberValue = notANumber.getRawValueAs<nautilus::val<double>>();
+    EXPECT_TRUE(static_cast<bool>(notANumberValue != notANumberValue));
+    const auto floatInfinity = notNull<float>(5.0F) / notNull<float>(0.0F);
+    EXPECT_TRUE(static_cast<bool>(floatInfinity.getRawValueAs<nautilus::val<float>>() == std::numeric_limits<float>::infinity()));
+    EXPECT_FALSE(positiveInfinity.isNullable());
 }
 
 TEST_F(VarValTest, nullPropagationComparison)
