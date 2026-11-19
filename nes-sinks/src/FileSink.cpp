@@ -70,6 +70,7 @@ const ConfigField<std::filesystem::path> FILE_PATH{
 
 const ConfigField<bool> APPEND{
     Identifier::parse("APPEND"), "A boolean, where TRUE indicates to append to the specified file, and false to overwrite it.", false};
+
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 /// A failed write (e.g. ENOSPC) only sets failbit/badbit on the stream. Without this check the query would complete with an empty or truncated file.
