@@ -34,7 +34,7 @@ flowchart TB
 ```
 
 Tasks are keyed by worker address or query fragment identifier.  
-At most one task for a given key runs at a time.
+At most one task for a given key is tracked at a time.
 
 ## Worker Tasks
 
@@ -47,7 +47,7 @@ The top-level controller reads actionable worker rows and handles them according
 A worker task connects to its worker, records whether it is active or unreachable, and manages the fragments assigned to it.  
 After a remote connection is lost, the task discards its fragment tasks, marks the worker unreachable, and enters the connection loop again.  
 The next successful connection reconstructs fragment tasks from the catalog.  
-While connected, the task also stops every fragment that the worker runs but that has no non-terminal row for this worker in the catalog.
+While connected to a remote worker, the task also stops every fragment that the worker runs but that has no non-terminal row for this worker in the catalog.
 
 ## Query Fragment Tasks
 
@@ -57,12 +57,12 @@ It can then request a stop or the fragment's current status.
 
 The fragment task chooses its next action from the desired and observed states:
 
-| Desired state | Observed state | Action |
-| --- | --- | --- |
-| Completed | Pending | Start the fragment |
-| Completed | Started or Running | Read its status |
-| Stopped | Any non-terminal state | Request a stop and read its status; request the stop again while the fragment is reported live |
-| Completed or Stopped | Completed, Stopped, or Failed | Finish the task |
+| Desired state        | Observed state                | Action                                                                                         |
+|----------------------|-------------------------------|------------------------------------------------------------------------------------------------|
+| Completed            | Pending                       | Start the fragment                                                                             |
+| Completed            | Started or Running            | Read its status, and start it again if the worker does not know it                             |
+| Stopped              | Any non-terminal state        | Request a stop and read its status; request the stop again while the status is non-terminal    |
+| Completed or Stopped | Completed, Stopped, or Failed | Finish the task                                                                                |
 
 The controller keeps the catalog synchronized with the fragment states that workers report.
 

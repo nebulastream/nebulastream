@@ -55,7 +55,6 @@ pub(crate) trait Backend: Send + Sync + 'static {
     ) -> impl Future<Output = anyhow::Result<ActiveFragments>> + Send;
 }
 
-/// A worker's list of active fragments.
 /// Times are the worker's clock in milliseconds since the Unix epoch.
 pub(crate) struct ActiveFragments {
     /// Each fragment with the time since which the worker lists it, if the worker reports one.
@@ -86,7 +85,8 @@ fn next_after(active: &ActiveFragments, after: u64) -> u64 {
 /// and returns the `after` of the next call.
 /// A per-fragment task ends once its fragment is recorded as terminal,
 /// so a start that takes effect after that point is only visible in the worker's own list.
-/// Nothing is remembered between calls: a stop that fails is repeated because the fragment is listed again.
+/// Failed stops are not remembered.
+/// A stop that fails is repeated because the returned `after` keeps the fragment in the next list.
 pub(crate) async fn stop_orphans<B: Backend>(
     backend: &B,
     transport: &B::Transport,
@@ -101,7 +101,7 @@ pub(crate) async fn stop_orphans<B: Backend>(
             return after;
         }
     };
-    // Read the worker before the catalog.
+    // NOTE: Read the worker before the catalog.
     // Then a listed fragment without a non-terminal row has a terminal row or none, and neither changes again.
     // In the other order, a fragment that was created and started between the two reads would be stopped.
     let wanted: HashSet<QueryFragmentId> = match query_fragment::Entity::actionable(db, addr).await
@@ -126,6 +126,7 @@ pub(crate) async fn stop_orphans<B: Backend>(
 
 /// Stops the fragments that a worker's removal failed in the catalog, on the removed worker itself.
 /// The removal also aborts the worker's task, so nothing else stops them.
+/// Gives up after a fixed deadline and only logs failures, so fragments on an unreachable worker keep running.
 pub(crate) async fn stop_removed_fragments<B: Backend>(
     backend: &B,
     db: &Database,
@@ -191,6 +192,9 @@ impl<B: Backend> WorkerTask<B> {
         }
     }
 
+    /// Returns once the catalog-change sender is dropped,
+    /// and fails only when the worker's state cannot be written to the catalog.
+    /// A failed connect or a lost link is retried.
     pub(crate) async fn run(mut self) -> anyhow::Result<()> {
         let mut marked_unreachable = false;
         loop {
@@ -216,6 +220,8 @@ impl<B: Backend> WorkerTask<B> {
             let mut intent_rx = self.intent_rx.clone();
             let exit = reconcile_loop(&mut self, &mut intent_rx, POLL_INTERVAL, B::HEARTBEAT).await;
             self.link = None;
+            // Dropping the fragment tasks aborts them.
+            // The next connection rebuilds them from the catalog.
             self.fragments = QueryFragmentTasks::new();
             match exit {
                 Exit::Shutdown => return Ok(()),

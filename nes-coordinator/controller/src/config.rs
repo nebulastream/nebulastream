@@ -19,7 +19,7 @@ use std::time::Duration;
 /// How long a reconciliation loop waits between catalog reads when no wake-up arrives.
 pub(crate) const POLL_INTERVAL: Duration = Duration::from_secs(5);
 
-/// How often a worker's active fragments are compared with the catalog.
+/// How often a remote worker's active fragments are compared with the catalog.
 /// A fragment that has no non-terminal row for the worker can run for about this long before it is stopped.
 pub(crate) const ORPHAN_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 
@@ -37,7 +37,6 @@ pub(crate) const RETRY_INTERVAL: Duration = Duration::from_secs(2);
 /// How long a failed task keeps its key, so a failing task is not restarted in a tight loop.
 pub(crate) const TASK_RESPAWN_DELAY: Duration = Duration::from_secs(2);
 
-/// Deadline for stopping the fragments of a removed worker.
 pub(crate) const REMOVED_WORKER_STOP_DEADLINE: Duration = Duration::from_secs(5);
 
 /// Minimum time between two catalog writes of an unchanged status.
@@ -45,7 +44,7 @@ pub(crate) const OBSERVATION_WRITE_INTERVAL: Duration = Duration::from_secs(1);
 
 /// Retryable failures in a row at which a fragment fails.
 /// Every failure costs at most the RPC deadline and the retry delay,
-/// so a fragment fails after about two and a half minutes of failing calls.
+/// so a fragment fails after at most about two and a half minutes of failing calls.
 pub(crate) const MAX_CONSECUTIVE_FAILURES: u32 = 40;
 
 pub(crate) const HEALTH_CHECK_INTERVAL: Duration = Duration::from_secs(5);

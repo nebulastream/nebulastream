@@ -52,7 +52,6 @@ async fn call<T: Send + 'static>(
         .map_err(classify)
 }
 
-/// The transport to a worker in this process.
 #[derive(Clone)]
 pub(crate) struct InProcessTransport {
     worker: Arc<dyn InProcessWorker>,

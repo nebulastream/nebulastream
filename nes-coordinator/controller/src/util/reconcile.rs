@@ -32,6 +32,7 @@ pub(crate) trait Reconciler {
 
     fn tasks(&mut self) -> &mut TaskMap<Self::Key>;
     fn reconcile(&mut self) -> impl Future<Output = ()> + Send;
+    /// Probed on each heartbeat; `false` ends the loop because the link is lost.
     fn alive(&mut self) -> impl Future<Output = bool> + Send {
         async { true }
     }
@@ -42,6 +43,9 @@ pub(crate) enum Exit {
     LinkLost,
 }
 
+/// Reconciles once on entry, then after every catalog-change signal, poll tick, and joined child task.
+/// Returns once the signal's sender is dropped or the link is lost.
+/// Outside madsim, a child task's panic is raised again here.
 pub(crate) async fn reconcile_loop(
     reconciler: &mut impl Reconciler,
     intent_rx: &mut watch::Receiver<()>,
@@ -49,6 +53,8 @@ pub(crate) async fn reconcile_loop(
     heartbeat: Option<Duration>,
 ) -> Exit {
     let mut poll = tokio::time::interval(poll_interval);
+    // The first tick of an interval completes without waiting.
+    // Taking it here puts the first poll-driven pass one interval after the initial pass below.
     poll.tick().await;
     let mut heartbeat = heartbeat.map(tokio::time::interval);
     reconciler.reconcile().await;
@@ -60,6 +66,7 @@ pub(crate) async fn reconcile_loop(
                     Err(e) if e.is_cancelled() => {}
                     #[cfg(not(madsim))]
                     Err(e) => std::panic::resume_unwind(e.into_panic()),
+                    // A madsim join error carries no panic payload, so the panic can only be logged.
                     #[cfg(madsim)]
                     Err(e) => warn!(error = ?e, "task failed"),
                 }

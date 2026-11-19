@@ -14,6 +14,23 @@
 
 //! The state machine of one fragment, without I/O:
 //! the caller passes in the desired state and the worker's replies, and gets back the next action.
+//!
+//! Desired Completed:
+//!     Pending --start--> Started --status--> Running --status--> Completed, Stopped, or Failed
+//!        ^                  |                   |
+//!        +---- status: id unknown to worker ----+
+//! A status may skip states, e.g. from Started straight to Completed.
+//! A status that finds Started or Running is read again after the poll wait.
+//!
+//! Desired Stopped, from any non-terminal state:
+//!     --stop--> stop sent --status--> Stopped or Failed
+//!                  ^           |
+//!                  +---stop----+   while the status reports a non-terminal state
+//! The stop is sent again after the poll wait if the status found Started or Running, and with no wait if it found Pending.
+//! A stop or status of an id unknown to the worker records Stopped.
+//!
+//! In both, a retryable failure repeats the call after the retry wait until the failures in a row reach the limit,
+//! and a permanent error, or a reply that a working worker never sends, records Failed.
 
 use super::{CallError, RawStatus};
 use crate::config::{MAX_CONSECUTIVE_FAILURES, OBSERVATION_WRITE_INTERVAL, RETRY_INTERVAL};
@@ -94,7 +111,7 @@ pub(super) struct QueryFragmentLifecycle {
     /// A stop was sent and no status has been read since.
     /// A fragment that a status read still reports live therefore gets the stop again after the poll wait.
     stop_sent: bool,
-    /// Consecutive retryable failures; the fragment fails when they reach the limit.
+    /// Consecutive retryable failures.
     failures: u32,
     poll_interval: Duration,
     wait_due: Duration,
@@ -126,6 +143,7 @@ impl QueryFragmentLifecycle {
         })
     }
 
+    /// Returns a pending wait only once, so the caller must finish the wait before asking again.
     pub(super) fn next(&mut self) -> LifecycleAction {
         if self.current.is_terminal() {
             return LifecycleAction::Done;
@@ -144,6 +162,7 @@ impl QueryFragmentLifecycle {
         LifecycleAction::Call(call)
     }
 
+    /// The caller must write the returned step to the catalog, because the lifecycle already counts it as written.
     pub(super) fn apply(&mut self, reply: WorkerReply, now: DateTime<Utc>) -> LifecycleStep {
         self.wait_due = Duration::ZERO;
         let outcome = outcome(reply, self.desired, now);
@@ -199,6 +218,7 @@ impl QueryFragmentLifecycle {
         step
     }
 
+    /// A changed desired state cancels a pending wait.
     pub(super) fn set_desired(&mut self, desired: DesiredQueryFragmentState) {
         if desired != self.desired {
             self.wait_due = Duration::ZERO;
@@ -285,12 +305,14 @@ fn unix_ms_to_datetime(ms: u64) -> DateTime<Utc> {
 }
 
 /// Fails with the state value if it is not one of this build's states.
+/// A completion reported while a stop is desired counts as stopped.
 fn status_to_transition(
     raw: RawStatus,
     desired: DesiredQueryFragmentState,
     now: DateTime<Utc>,
 ) -> Result<QueryFragmentTransition, i32> {
     let reported = QueryFragmentState::try_from(raw.state)?;
+    // The worker reports the same state for a fragment that finished and one that was stopped.
     let state = if reported == QueryFragmentState::Completed
         && desired == DesiredQueryFragmentState::Stopped
     {
@@ -354,6 +376,7 @@ pub(super) mod tests {
         })
     }
 
+    /// The state converts only from its wire value, so a small range is searched for the value that maps to it.
     fn wire(state: QueryFragmentState) -> i32 {
         (0..16)
             .find(|value| QueryFragmentState::try_from(*value) == Ok(state))
@@ -591,6 +614,8 @@ pub(super) mod tests {
     }
 
     #[test]
+    /// Each round stops one failure short of the limit.
+    /// The last failure fails the fragment unless every success in between refilled the budget.
     fn every_kind_of_success_refills_the_budget() {
         let mut lifecycle = lifecycle(Started, WantCompleted);
         let busy = || WorkerReply::Status(Err(transient("worker busy")));
