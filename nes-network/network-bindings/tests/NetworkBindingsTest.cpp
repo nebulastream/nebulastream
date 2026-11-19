@@ -43,15 +43,22 @@ public:
     explicit NoUnpooledBufferProvider(std::shared_ptr<NES::AbstractBufferProvider> inner) : inner(std::move(inner)) { }
 
     NES::BufferManagerType getBufferManagerType() const override { return inner->getBufferManagerType(); }
+
     size_t getBufferSize() const override { return inner->getBufferSize(); }
+
     size_t getNumOfPooledBuffers() const override { return inner->getNumOfPooledBuffers(); }
+
     size_t getNumOfUnpooledBuffers() const override { return inner->getNumOfUnpooledBuffers(); }
+
     NES::TupleBuffer getBufferBlocking() override { return inner->getBufferBlocking(); }
+
     std::optional<NES::TupleBuffer> getBufferNoBlocking() override { return inner->getBufferNoBlocking(); }
+
     std::optional<NES::TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout) override
     {
         return inner->getBufferWithTimeout(timeout);
     }
+
     std::optional<NES::TupleBuffer> getUnpooledBuffer(size_t) override { return std::nullopt; }
 
 private:
@@ -61,7 +68,7 @@ private:
 
 TEST(NetworkBindingsTest, ReceiveBufferReturnsErrorWhenChildBufferCannotBeAllocated)
 {
-    const std::string connectionAddr = "tcp://127.0.0.1:18090";
+    const std::string connectionAddr = "127.0.0.1:18090";
     const std::string channelId = "child-buffer-allocation-failure";
     const NetworkServiceOptions options{
         .sender_queue_size = 4, .max_pending_acks = 4, .receiver_queue_size = 4, .sender_io_threads = 1, .receiver_io_threads = 1};
