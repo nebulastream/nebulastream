@@ -60,6 +60,7 @@ impl Arbitrary for CreateQueryWithRefs {
             NAME,
             any::<Index>(),
             proptest::option::of(NAME),
+            vec(any::<u8>(), 0..8),
         )
             .prop_map(
                 |(
@@ -71,6 +72,7 @@ impl Arbitrary for CreateQueryWithRefs {
                     sink_name,
                     sink_fragment,
                     name,
+                    global_plan,
                 )| {
                     // Track each worker's remaining `max_operators` so generated fixtures stay within it;
                     // otherwise the insert is rejected.
@@ -101,6 +103,7 @@ impl Arbitrary for CreateQueryWithRefs {
                     let sql = format!("SELECT * FROM {} INTO {};", logical_source.name, sink_name);
                     let query = CreateQuery {
                         name,
+                        global_plan,
                         ..CreateQuery::new(sql).with_fragments(fragments)
                     };
                     CreateQueryWithRefs {

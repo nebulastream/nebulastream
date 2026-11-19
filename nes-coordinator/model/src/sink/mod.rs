@@ -80,9 +80,9 @@ impl ActiveModelBehavior for ActiveModel {}
 pub(crate) struct SinkWithRefs {
     pub(crate) worker: CreateWorker,
     #[strategy(("[a-zA-Z]{1,10}", "[A-Za-z]{1,10}").prop_map(move |(name, sink_type)| CreateSink {
-        name,
+        name: name.parse().unwrap(),
         host_addr: #worker.host_addr.clone(),
-        sink_type,
+        sink_type: sink_type.parse().unwrap(),
         schema: Default::default(),
         config: Default::default(),
         if_not_exists: false,
@@ -106,13 +106,13 @@ mod tests {
 
         req.worker.execute(&db).await.unwrap();
         let created = req.sink.execute(&db).await.unwrap();
-        assert_eq!(created.name, Some(req.sink.name.clone()));
-        assert_eq!(created.sink_type, req.sink.sink_type);
+        assert_eq!(created.name.as_deref(), Some(&*req.sink.name));
+        assert_eq!(created.sink_type, *req.sink.sink_type);
         let taken = code_of(req.sink.execute(&db).await);
         assert_eq!(taken, Some(ErrorCode::SinkAlreadyExists));
 
         let sinks = GetSink::all()
-            .with_name(req.sink.name)
+            .with_name(req.sink.name.to_string())
             .execute(&db)
             .await
             .unwrap();
@@ -127,7 +127,7 @@ mod tests {
         req.sink.execute(&db).await.unwrap();
 
         let dropped = (DropSink {
-            name: Some(req.sink.name.clone()),
+            name: Some(req.sink.name.to_string()),
             id: None,
         })
         .execute(&db)
@@ -136,7 +136,7 @@ mod tests {
         assert_eq!(dropped.len(), 1);
 
         let remaining = GetSink::all()
-            .with_name(req.sink.name.clone())
+            .with_name(req.sink.name.to_string())
             .execute(&db)
             .await
             .unwrap();
@@ -151,17 +151,21 @@ mod tests {
         let original = req.sink.execute(&db).await.unwrap();
 
         let mut retry = CreateSink {
-            schema: serde_json::json!({"different": "schema"}),
-            config: serde_json::json!({"different": "config"}),
+            schema: serde_json::json!({"different": "schema"})
+                .try_into()
+                .unwrap(),
+            config: serde_json::json!({"different": "config"})
+                .try_into()
+                .unwrap(),
             if_not_exists: true,
             ..req.sink
         };
         assert_eq!(retry.execute(&db).await.unwrap(), original);
 
-        retry.name.push_str("_");
+        retry.name = format!("{}_", retry.name).parse().unwrap();
         let new = retry.execute(&db).await.unwrap();
         assert_ne!(new.id, original.id);
-        assert_eq!(new.name, Some(retry.name));
+        assert_eq!(new.name.as_deref(), Some(&*retry.name));
 
         let all = GetSink::all().execute(&db).await.unwrap();
         assert_eq!(all.len(), 2);
@@ -173,7 +177,7 @@ mod tests {
         req.worker.execute(db).await.unwrap();
         let first = req.sink.execute(db).await.unwrap();
         let second = CreateSink {
-            name: format!("{}_", req.sink.name),
+            name: format!("{}_", req.sink.name).parse().unwrap(),
             ..req.sink.clone()
         };
         let second = second.execute(db).await.unwrap();
@@ -193,7 +197,7 @@ mod tests {
             ..GetSink::all()
         };
         assert_eq!(
-            get(GetSink::all().with_name(req.sink.name)).await,
+            get(GetSink::all().with_name(req.sink.name.to_string())).await,
             [first.clone()]
         );
         assert_eq!(

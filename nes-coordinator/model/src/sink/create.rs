@@ -16,6 +16,7 @@ use super::{ActiveModel, Column, Entity as SinkEntity, Model};
 use crate::ConnectorKind;
 use crate::Execute;
 use crate::error::{ErrorCode, catalog_write};
+use crate::name::{CanonicalName, Config, Schema};
 use crate::worker::endpoint::NetworkAddr;
 use anyhow::{Context, Result};
 use sea_orm::ActiveValue::{NotSet, Set};
@@ -26,12 +27,12 @@ use serde::Deserialize;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CreateSink {
-    pub name: String,
+    pub name: CanonicalName,
     pub host_addr: NetworkAddr,
-    pub sink_type: String,
-    pub schema: serde_json::value::Value,
+    pub sink_type: CanonicalName,
+    pub schema: Schema,
     #[serde(default)]
-    pub config: serde_json::Value,
+    pub config: Config,
     /// Return the existing row instead of erroring when a matching one already exists,
     /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
@@ -42,11 +43,11 @@ impl From<CreateSink> for ActiveModel {
     fn from(req: CreateSink) -> Self {
         Self {
             id: NotSet,
-            name: Set(Some(req.name)),
+            name: Set(Some(req.name.into())),
             host_addr: Set(req.host_addr),
-            sink_type: Set(req.sink_type),
-            schema: Set(req.schema),
-            config: Set(req.config),
+            sink_type: Set(req.sink_type.into()),
+            schema: Set(req.schema.into()),
+            config: Set(req.config.into()),
             kind: Set(ConnectorKind::Shared),
             query_id: NotSet,
         }
@@ -58,7 +59,7 @@ impl Execute for CreateSink {
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
         if self.if_not_exists {
             let existing = SinkEntity::find()
-                .filter(Column::Name.eq(&self.name))
+                .filter(Column::Name.eq(self.name.to_string()))
                 .one(conn)
                 .await
                 .context("failed to load sink")?;
@@ -82,9 +83,9 @@ impl Execute for CreateSink {
 /// Creating the query with this sink's id makes the query its owner.
 #[derive(Clone, Debug)]
 pub struct CreateAnonymousSink {
-    pub sink_type: String,
-    pub schema: serde_json::value::Value,
-    pub config: serde_json::Value,
+    pub sink_type: CanonicalName,
+    pub schema: Schema,
+    pub config: Config,
     pub host_addr: NetworkAddr,
     pub internal: bool,
 }
@@ -95,9 +96,9 @@ impl From<CreateAnonymousSink> for ActiveModel {
             id: NotSet,
             name: Set(None),
             host_addr: Set(req.host_addr),
-            sink_type: Set(req.sink_type),
-            schema: Set(req.schema),
-            config: Set(req.config),
+            sink_type: Set(req.sink_type.into()),
+            schema: Set(req.schema.into()),
+            config: Set(req.config.into()),
             kind: Set(if req.internal {
                 ConnectorKind::Internal
             } else {

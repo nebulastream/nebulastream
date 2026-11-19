@@ -111,12 +111,15 @@ mod tests {
         req.physical.execute(&db).await.unwrap();
 
         let sources = GetPhysicalSource::all()
-            .with_logical_source(req.logical.name.clone())
+            .with_logical_source(req.logical.name.to_string())
             .execute(&db)
             .await
             .unwrap();
         assert_eq!(sources.len(), 1);
-        assert_eq!(sources[0].logical_source, Some(req.logical.name));
+        assert_eq!(
+            sources[0].logical_source.as_deref(),
+            Some(&*req.logical.name)
+        );
         assert_eq!(sources[0].host_addr, req.worker.host_addr);
         assert_eq!(sources[0].source_type, req.physical.source_type);
     }
@@ -154,7 +157,7 @@ mod tests {
         req.worker.execute(&db).await.unwrap();
         req.physical.execute(&db).await.unwrap();
 
-        let drop = DropLogicalSource::all().with_name(req.logical.name);
+        let drop = DropLogicalSource::all().with_name(req.logical.name.to_string());
         let blocked = code_of(drop.execute(&db).await);
         assert_eq!(blocked, Some(ErrorCode::CatalogWriteRejected));
     }
@@ -170,7 +173,7 @@ mod tests {
         assert!(unmatched.execute(&db).await.unwrap().is_empty());
 
         let matching = if by_logical {
-            DropPhysicalSource::all().with_logical_source(req.logical.name)
+            DropPhysicalSource::all().with_logical_source(req.logical.name.to_string())
         } else {
             DropPhysicalSource::all().with_id(created.id)
         };
@@ -196,7 +199,7 @@ mod tests {
         assert_eq!(retry.execute(&db).await.unwrap(), original);
 
         // A different source config, parser config or source type makes a distinct source.
-        let variant = serde_json::json!({ "variant": 1 });
+        let variant: crate::name::Config = serde_json::json!({ "variant": 1 }).try_into().unwrap();
         let changed = [
             CreatePhysicalSource {
                 source_config: variant.clone(),
@@ -207,7 +210,7 @@ mod tests {
                 ..retry.clone()
             },
             CreatePhysicalSource {
-                source_type: format!("{}X", retry.source_type),
+                source_type: format!("{}X", retry.source_type).parse().unwrap(),
                 ..retry.clone()
             },
         ];
@@ -222,7 +225,7 @@ mod tests {
     async fn filters_select_one_of_several(req: PhysicalSourceWithRefs, internal: bool) {
         let db = &Database::for_test().await;
         let other_logical = CreateLogicalSource {
-            name: format!("{}_", req.logical.name),
+            name: format!("{}_", req.logical.name).parse().unwrap(),
             ..req.logical.clone()
         };
         req.logical.execute(db).await.unwrap();
@@ -246,7 +249,7 @@ mod tests {
 
         let get = |request: GetPhysicalSource| async move { request.execute(db).await.unwrap() };
         let all = GetPhysicalSource::all;
-        let by_logical = all().with_logical_source(req.logical.name.clone());
+        let by_logical = all().with_logical_source(req.logical.name.to_string());
         assert_eq!(get(by_logical).await, [first.clone()]);
         assert_eq!(get(all().with_id(second.id)).await, [second.clone()]);
         assert_eq!(
@@ -258,7 +261,8 @@ mod tests {
             3
         );
 
-        let by_logical = DropPhysicalSource::all().with_logical_source(req.logical.name);
+        let by_logical =
+            DropPhysicalSource::all().with_logical_source(req.logical.name.to_string());
         assert_eq!(by_logical.execute(db).await.unwrap(), [first]);
         assert_eq!(
             DropPhysicalSource::all().execute(db).await.unwrap(),
@@ -295,7 +299,7 @@ pub(crate) struct PhysicalSourceWithRefs {
     #[strategy("[A-Za-z]{1,10}".prop_map(move |source_type| CreatePhysicalSource {
         logical_source: #logical.name.clone(),
         host_addr: #worker.host_addr.clone(),
-        source_type,
+        source_type: source_type.parse().unwrap(),
         source_config: Default::default(),
         parser_config: Default::default(),
         if_not_exists: false,

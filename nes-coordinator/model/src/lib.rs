@@ -71,6 +71,7 @@ pub mod error;
 mod format;
 pub mod identifier;
 pub mod ml_model;
+pub mod name;
 pub mod query;
 pub mod request;
 pub mod sink;

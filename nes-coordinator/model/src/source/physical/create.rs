@@ -13,6 +13,7 @@
 */
 
 use crate::error::{ErrorCode, catalog_write};
+use crate::name::{CanonicalName, Config};
 use crate::source::physical::{ActiveModel, Column, Entity, Model};
 use crate::worker::endpoint::NetworkAddr;
 use crate::{ConnectorKind, Execute};
@@ -26,15 +27,15 @@ use serde::Deserialize;
 #[serde(deny_unknown_fields)]
 pub struct CreatePhysicalSource {
     #[serde(alias = "logical")]
-    pub logical_source: String,
+    pub logical_source: CanonicalName,
     #[serde(alias = "host")]
     pub host_addr: NetworkAddr,
     #[serde(alias = "type")]
-    pub source_type: String,
+    pub source_type: CanonicalName,
     #[serde(default)]
-    pub source_config: serde_json::Value,
+    pub source_config: Config,
     #[serde(default)]
-    pub parser_config: serde_json::Value,
+    pub parser_config: Config,
     /// Return the existing row instead of erroring when a matching one already exists (matched on the full definition),
     /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
@@ -45,11 +46,11 @@ impl From<CreatePhysicalSource> for ActiveModel {
     fn from(req: CreatePhysicalSource) -> Self {
         Self {
             id: NotSet,
-            logical_source: Set(Some(req.logical_source)),
+            logical_source: Set(Some(req.logical_source.into())),
             host_addr: Set(req.host_addr),
-            source_type: Set(req.source_type),
-            source_config: Set(req.source_config),
-            parser_config: Set(req.parser_config),
+            source_type: Set(req.source_type.into()),
+            source_config: Set(req.source_config.into()),
+            parser_config: Set(req.parser_config.into()),
             kind: Set(ConnectorKind::Shared),
             query_id: NotSet,
         }
@@ -64,11 +65,15 @@ impl Execute for CreatePhysicalSource {
             // two sources that agree on those three but differ in config are distinct
             // (for example two FILE sources that read different paths).
             let existing = Entity::find()
-                .filter(Column::LogicalSource.eq(&self.logical_source))
+                .filter(Column::LogicalSource.eq(self.logical_source.to_string()))
                 .filter(Column::HostAddr.eq(self.host_addr.to_string()))
-                .filter(Column::SourceType.eq(&self.source_type))
-                .filter(Column::SourceConfig.eq(self.source_config.clone()))
-                .filter(Column::ParserConfig.eq(self.parser_config.clone()))
+                .filter(Column::SourceType.eq(self.source_type.to_string()))
+                .filter(
+                    Column::SourceConfig.eq(serde_json::Value::from(self.source_config.clone())),
+                )
+                .filter(
+                    Column::ParserConfig.eq(serde_json::Value::from(self.parser_config.clone())),
+                )
                 .one(conn)
                 .await?;
             if let Some(existing) = existing {
@@ -92,9 +97,9 @@ impl Execute for CreatePhysicalSource {
 /// Creating the query with this source's id makes the query its owner.
 #[derive(Clone, Debug)]
 pub struct CreateAnonymousSource {
-    pub source_type: String,
-    pub source_config: serde_json::Value,
-    pub parser_config: serde_json::Value,
+    pub source_type: CanonicalName,
+    pub source_config: Config,
+    pub parser_config: Config,
     pub host_addr: NetworkAddr,
     pub internal: bool,
 }
@@ -105,9 +110,9 @@ impl From<CreateAnonymousSource> for ActiveModel {
             id: NotSet,
             logical_source: Set(None),
             host_addr: Set(req.host_addr),
-            source_type: Set(req.source_type),
-            source_config: Set(req.source_config),
-            parser_config: Set(req.parser_config),
+            source_type: Set(req.source_type.into()),
+            source_config: Set(req.source_config.into()),
+            parser_config: Set(req.parser_config.into()),
             kind: Set(if req.internal {
                 ConnectorKind::Internal
             } else {

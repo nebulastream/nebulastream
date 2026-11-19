@@ -20,8 +20,8 @@ impl Arbitrary for CreateLogicalSource {
     fn arbitrary_with(_: ()) -> Self::Strategy {
         "[a-z][a-z0-9_]{2,29}"
             .prop_map(|name| Self {
-                name,
-                schema: serde_json::json!({}),
+                name: name.parse().unwrap(),
+                schema: serde_json::json!({}).try_into().unwrap(),
                 if_not_exists: false,
             })
             .boxed()

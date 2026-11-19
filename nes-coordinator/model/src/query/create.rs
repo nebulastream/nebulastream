@@ -36,6 +36,8 @@ pub struct CreateQuery {
     pub name: Option<String>,
     pub sql: String,
     #[serde(default)]
+    pub global_plan: Vec<u8>,
+    #[serde(default)]
     pub fragments: Vec<CreateQueryFragment>,
     /// Each source that the query reads, listed once.
     /// A query can read one source more than once (a union of a stream with itself, for example),
@@ -52,6 +54,7 @@ impl CreateQuery {
         Self {
             name: None,
             sql,
+            global_plan: Vec::new(),
             fragments: Vec::new(),
             source_ids: BTreeSet::new(),
             sink_ids: BTreeSet::new(),
@@ -75,6 +78,7 @@ impl From<CreateQuery> for ActiveModel {
             id: NotSet,
             name: Set(req.name),
             sql: Set(req.sql),
+            global_plan: Set(req.global_plan),
             state: NotSet,
             start_timestamp: NotSet,
             stop_timestamp: NotSet,

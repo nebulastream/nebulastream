@@ -49,6 +49,11 @@ pub struct Model {
     pub id: QueryId,
     pub name: Option<String>,
     pub sql: String,
+    /// The optimized plan before placement, as protobuf bytes.
+    /// A query that loses a worker can be placed again from it without planning its SQL again.
+    #[sea_orm(column_type = "VarBinary(StringLen::None)")]
+    #[serde(skip)]
+    pub global_plan: Vec<u8>,
     pub state: QueryState,
     pub start_timestamp: Option<chrono::DateTime<chrono::Utc>>,
     pub stop_timestamp: Option<chrono::DateTime<chrono::Utc>>,
@@ -99,7 +104,7 @@ pub async fn setup_refs(db: &crate::database::Database, req: &mut CreateQueryWit
             let source = CreatePhysicalSource {
                 logical_source: req.logical_source.name.clone(),
                 host_addr: fragment.host_addr.clone(),
-                source_type: req.connector_type.clone(),
+                source_type: req.connector_type.parse().unwrap(),
                 source_config: Default::default(),
                 parser_config: Default::default(),
                 if_not_exists: false,
@@ -107,7 +112,7 @@ pub async fn setup_refs(db: &crate::database::Database, req: &mut CreateQueryWit
             source.execute(db).await
         } else {
             let source = CreateAnonymousSource {
-                source_type: req.connector_type.clone(),
+                source_type: req.connector_type.parse().unwrap(),
                 source_config: Default::default(),
                 parser_config: Default::default(),
                 host_addr: fragment.host_addr.clone(),
@@ -119,9 +124,9 @@ pub async fn setup_refs(db: &crate::database::Database, req: &mut CreateQueryWit
     }
     let sink = if shared {
         let sink = CreateSink {
-            name: req.sink_name.clone(),
+            name: req.sink_name.parse().unwrap(),
             host_addr: req.sink_host.clone(),
-            sink_type: req.connector_type.clone(),
+            sink_type: req.connector_type.parse().unwrap(),
             schema: Default::default(),
             config: Default::default(),
             if_not_exists: false,
@@ -129,7 +134,7 @@ pub async fn setup_refs(db: &crate::database::Database, req: &mut CreateQueryWit
         sink.execute(db).await
     } else {
         let sink = CreateAnonymousSink {
-            sink_type: req.connector_type.clone(),
+            sink_type: req.connector_type.parse().unwrap(),
             schema: Default::default(),
             config: Default::default(),
             host_addr: req.sink_host.clone(),
@@ -238,6 +243,7 @@ mod tests {
         let (created, fragments) = setup(&db, &mut req).await;
         assert_eq!(created.name, req.query.name);
         assert_eq!(created.sql, req.query.sql);
+        assert_eq!(created.global_plan, req.query.global_plan);
         assert_eq!(created.state, QueryState::Pending);
         assert!(created.error.is_none());
         assert!(created.start_timestamp.is_none());

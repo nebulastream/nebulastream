@@ -66,7 +66,7 @@ mod tests {
         assert_eq!(created.schema, req.schema);
 
         let sources = GetLogicalSource::all()
-            .with_name(req.name.clone())
+            .with_name(req.name.to_string())
             .execute(&db)
             .await
             .unwrap();
@@ -78,16 +78,16 @@ mod tests {
     async fn filters_select_one_of_several(req: CreateLogicalSource) {
         let db = Database::for_test().await;
         let other = CreateLogicalSource {
-            name: format!("{}_", req.name),
+            name: format!("{}_", req.name).parse().unwrap(),
             ..req.clone()
         };
         let first = req.execute(&db).await.unwrap();
         let second = other.execute(&db).await.unwrap();
         assert_eq!(GetLogicalSource::all().execute(&db).await.unwrap().len(), 2);
 
-        let named = GetLogicalSource::all().with_name(req.name.clone());
+        let named = GetLogicalSource::all().with_name(req.name.to_string());
         assert_eq!(named.execute(&db).await.unwrap(), [first.clone()]);
-        let named = DropLogicalSource::all().with_name(req.name);
+        let named = DropLogicalSource::all().with_name(req.name.to_string());
         assert_eq!(named.execute(&db).await.unwrap(), [first]);
         assert_eq!(
             DropLogicalSource::all().execute(&db).await.unwrap(),
@@ -104,13 +104,15 @@ mod tests {
         let taken = code_of(req.execute(&db).await);
         assert_eq!(taken, Some(ErrorCode::SourceAlreadyExists));
         let retry = CreateLogicalSource {
-            schema: serde_json::json!({"different": "schema"}),
+            schema: serde_json::json!({"different": "schema"})
+                .try_into()
+                .unwrap(),
             if_not_exists: true,
             ..req.clone()
         };
         assert_eq!(retry.execute(&db).await.unwrap(), created);
         DropLogicalSource::all()
-            .with_name(req.name.clone())
+            .with_name(req.name.to_string())
             .execute(&db)
             .await
             .unwrap();

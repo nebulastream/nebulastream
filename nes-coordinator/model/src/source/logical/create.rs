@@ -14,10 +14,10 @@
 
 use crate::Execute;
 use crate::error::{ErrorCode, catalog_write};
+use crate::name::{CanonicalName, Schema};
 use crate::source::logical::{ActiveModel, Entity, Model};
 use anyhow::{Context, Result};
 use sea_orm::ActiveValue::Set;
-use sea_orm::entity::prelude::*;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
 use serde::Deserialize;
 
@@ -25,8 +25,8 @@ use serde::Deserialize;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CreateLogicalSource {
-    pub name: String,
-    pub schema: Json,
+    pub name: CanonicalName,
+    pub schema: Schema,
     /// Return the existing row instead of erroring when a matching one already exists,
     /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
@@ -39,8 +39,8 @@ mod arbitrary;
 impl From<CreateLogicalSource> for ActiveModel {
     fn from(req: CreateLogicalSource) -> Self {
         Self {
-            name: Set(req.name),
-            schema: Set(req.schema),
+            name: Set(req.name.into()),
+            schema: Set(req.schema.into()),
         }
     }
 }
@@ -49,7 +49,7 @@ impl Execute for CreateLogicalSource {
     type Response = Model;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
         if self.if_not_exists
-            && let Some(existing) = Entity::find_by_id(&self.name)
+            && let Some(existing) = Entity::find_by_id(self.name.to_string())
                 .one(conn)
                 .await
                 .context("failed to fetch existing logical source")?
