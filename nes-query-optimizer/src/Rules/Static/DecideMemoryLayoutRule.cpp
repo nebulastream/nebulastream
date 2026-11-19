@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -29,6 +28,7 @@
 #include <Rules/PlanVisitor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -37,10 +37,11 @@ namespace NES
 
 namespace
 {
-PlanVisitor<>::UpResult decideMemoryLayout(const LogicalOperator& op, const std::vector<LogicalOperator>& children)
+PlanVisitor<>::UpResult
+decideMemoryLayout(const LogicalOperator& op, const std::vector<LogicalOperator>& children, const MemoryLayoutType memoryLayout)
 {
     auto traitSet = op.getTraitSet();
-    tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    tryInsert(traitSet, MemoryLayoutTypeTrait{memoryLayout});
     return op.withChildren(children).withTraitSet(std::move(traitSet));
 }
 }
@@ -51,17 +52,22 @@ std::set<std::type_index> DecideMemoryLayoutRule::needs() const
     return {typeid(FixedPlanStructureBarrier)};
 }
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const
 {
-    PlanVisitor<> visitor{decideMemoryLayout};
+    PlanVisitor<> visitor{[this](const LogicalOperator& op, const std::vector<LogicalOperator>& children)
+                          { return decideMemoryLayout(op, children, this->memoryLayout); }};
     return visitor.apply(queryPlan);
 }
 
-/// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType DecideMemoryLayoutRule::create(PlanRuleRegistryArguments)
+bool DecideMemoryLayoutRule::operator==(const DecideMemoryLayoutRule& other) const
 {
-    return DecideMemoryLayoutRule{};
+    return this->memoryLayout == other.memoryLayout;
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType DecideMemoryLayoutRule::create(PlanRuleRegistryArguments arguments)
+{
+    return DecideMemoryLayoutRule{arguments.defaultQueryOptimization.memoryLayout};
 }
 
 }

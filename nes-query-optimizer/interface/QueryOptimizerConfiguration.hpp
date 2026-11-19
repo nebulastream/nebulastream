@@ -19,6 +19,7 @@
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 
 namespace NES
@@ -37,12 +38,14 @@ struct QueryOptimizerConfiguration
 
     QueryOptimizerConfiguration() = delete;
 
-    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, QueryOptimizerNetworkConfiguration network)
-        : joinStrategy(joinStrategy), network(network)
+    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, MemoryLayoutType memoryLayout, QueryOptimizerNetworkConfiguration network)
+        : joinStrategy(joinStrategy), memoryLayout(memoryLayout), network(network)
     {
     }
 
     StreamJoinStrategy joinStrategy;
+    /// Memory Layout is determined via the config for now.
+    MemoryLayoutType memoryLayout;
     QueryOptimizerNetworkConfiguration network;
 
     static QueryOptimizerConfiguration fromConfig(const InstantiatedConfig& config);

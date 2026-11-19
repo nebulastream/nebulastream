@@ -20,20 +20,31 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
 
-/// Decides what memory layout should be used per operator. For now, we use row-layout across all operators.
+/// Decides what memory layout should be used per operator.
+/// For now, the optimizer configuration decides the memory layout (`optimizer.memory_layout`).
+/// There currently is no heuristic involved in the choice of the memory layout. ROW_LAYOUT is the default.
 class DecideMemoryLayoutRule
 {
 public:
     static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
+
+    explicit DecideMemoryLayoutRule(const MemoryLayoutType memoryLayout) : memoryLayout(memoryLayout) { }
+
     static constexpr std::string_view NAME = "DecideMemoryLayoutRule";
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
     [[nodiscard]] std::set<std::type_index> needs() const;
+
+    bool operator==(const DecideMemoryLayoutRule& other) const;
+
+private:
+    MemoryLayoutType memoryLayout;
 };
 
 static_assert(RuleConcept<DecideMemoryLayoutRule, LogicalPlan>);

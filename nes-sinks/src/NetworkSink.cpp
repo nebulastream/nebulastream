@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -39,11 +40,13 @@
 #include <rust/cxx.h>
 
 #include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -53,7 +56,6 @@ namespace NES
 
 namespace
 {
-
 /// NOLINTBEGIN(bugprone-throwing-static-initialization)
 const ConfigField<std::string> DATA_ENDPOINT{
     Identifier::parse("DATA_ENDPOINT"), "The data-plane host:port of the worker with corresponding network source."};
@@ -77,8 +79,37 @@ const ConfigField<size_t> MAX_PENDING_ACKS{
     { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
     size_t{0}};
 
+const ConfigField<MemoryLayoutType> MEMORY_LAYOUT{
+    Identifier::parse("MEMORY_LAYOUT"),
+    "Memory layout of the buffers handed to this sink [ROW_LAYOUT|COLUMNAR_LAYOUT]. Set by the optimizer.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<MemoryLayoutType, Exception>
+                {
+                    if (const auto parsed = EnumWrapper{value}.asEnum<MemoryLayoutType>())
+                    {
+                        return *parsed;
+                    }
+                    return std::unexpected{
+                        InvalidConfigParameter("Invalid memory layout, must be ROW_LAYOUT or COLUMNAR_LAYOUT: {}", value)};
+                });
+    },
+    MemoryLayoutType::ROW_LAYOUT,
+    "ROW_LAYOUT"};
+
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
+
+size_t getLastFieldSizeInBytes(const Schema<UnqualifiedUnboundField, Ordered>& schema)
+{
+    if (std::ranges::empty(schema))
+    {
+        return 0;
+    }
+    return std::ranges::prev(std::ranges::end(schema))->getDataType().getSizeInBytesWithNull();
+}
 }
 
 Schema<QualifiedErasedConfigField, Ordered> NetworkSink::getConfigSchema()
@@ -90,6 +121,7 @@ Schema<QualifiedErasedConfigField, Ordered> NetworkSink::getConfigSchema()
         CHANNEL,
         SENDER_QUEUE_SIZE,
         MAX_PENDING_ACKS,
+        MEMORY_LAYOUT,
         SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD,
         SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD);
 }
@@ -101,13 +133,17 @@ std::expected<NetworkSinkConfig, Exception> NetworkSinkConfig::fromConfig(const 
         .bind = config.get(BIND),
         .channel = config.get(CHANNEL),
         .senderQueueSize = config.get(SENDER_QUEUE_SIZE),
-        .maxPendingAcks = config.get(MAX_PENDING_ACKS)};
+        .maxPendingAcks = config.get(MAX_PENDING_ACKS),
+        .memoryLayout = config.get(MEMORY_LAYOUT)};
 }
 
 NetworkSink::NetworkSink(
     BackpressureController backpressureController, const NetworkSinkConfig& config, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , tupleSize(getSizeInBytes(*NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
+    , lastFieldSize(
+          getLastFieldSizeInBytes(*NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
+    , memoryLayout(config.memoryLayout)
     , backpressureHandler(sinkDescriptor.getBackpressureUpperThreshold(), sinkDescriptor.getBackpressureLowerThreshold())
     , channelId(config.channel)
     , connectionAddr(config.dataEndpoint)
@@ -202,8 +238,8 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             children.emplace_back(childPayload);
         }
 
-        std::span usedBufferMemory(
-            currentBuffer->getAvailableMemoryArea<const uint8_t>().data(), currentBuffer->getNumberOfTuples() * tupleSize);
+        const auto bufferMemory = currentBuffer->getAvailableMemoryArea<const uint8_t>();
+        const auto usedBufferMemory = bufferMemory.subspan(0, getNumberOfUsedBytes(*currentBuffer));
         /// Set data and send over the network
         const auto sendResult = send_buffer(
             *channel.value(), metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children));
@@ -233,6 +269,25 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             }
         }
     }
+}
+
+size_t NetworkSink::getNumberOfUsedBytes(const TupleBuffer& buffer) const
+{
+    const auto numberOfTuples = buffer.getNumberOfTuples();
+    switch (memoryLayout)
+    {
+        case MemoryLayoutType::ROW_LAYOUT:
+            /// Tuples are stored one after another, so all bytes after the last tuple are unused.
+            return numberOfTuples * tupleSize;
+        case MemoryLayoutType::COLUMNAR_LAYOUT: {
+            /// Every column has a fixed starting offset within the buffer.
+            /// There might be some unsed bytes in between columns that we sadly cannot remove without greater effort.
+            /// However, we are able to cut off every byte starting from offsetOfLastField + numberOfTuples * lastFieldSize.
+            const auto capacity = buffer.getBufferSize() / tupleSize;
+            return ((tupleSize - lastFieldSize) * capacity) + (numberOfTuples * lastFieldSize);
+        }
+    }
+    std::unreachable();
 }
 
 std::ostream& NetworkSink::toString(std::ostream& str) const

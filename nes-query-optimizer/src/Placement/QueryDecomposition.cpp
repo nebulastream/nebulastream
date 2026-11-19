@@ -40,6 +40,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
@@ -99,11 +100,14 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string((*context.config.receiverQueueSize)));
     }
 
+    /// Pass memory layout into NetworkSink config. Network transmits native tuple buffers, so it needs to know the layout of them.
+    const auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
         {Identifier::parse("channel"), channel.id.getRawValue()},
         {Identifier::parse("bind"), upstreamData},
         {Identifier::parse("data_endpoint"), downstreamData},
-        {Identifier::parse("output_format"), "NATIVE"}};
+        {Identifier::parse("output_format"), "NATIVE"},
+        {Identifier::parse("memory_layout"), std::string{magic_enum::enum_name(memoryLayout->memoryLayout)}}};
 
     if (context.config.maxPendingAcks.has_value())
     {
@@ -137,7 +141,6 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
-    auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
     const auto ts = channel.upstreamOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(PlacementTrait); }) | std::ranges::to<TraitSet>();
     auto upstreamTs = ts;

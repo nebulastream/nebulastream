@@ -28,7 +28,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -43,6 +42,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
@@ -107,20 +107,37 @@ protected:
     SinkDescriptor sinkDescriptor;
 };
 
-/// Source → Sink. Verify all operators get ROW_LAYOUT.
+/// Source → Sink. Verify all operators get the configured layout.
 TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
 {
     const auto sourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto sinkOp = SinkLogicalOperator::create(sourceOp, sinkDescriptor);
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
 
-    const auto result = DecideMemoryLayoutRule{}.apply(plan);
+    const auto result = DecideMemoryLayoutRule{MemoryLayoutType::ROW_LAYOUT}.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {
         ASSERT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>());
         const auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
         EXPECT_TRUE(trait->memoryLayout == MemoryLayoutType::ROW_LAYOUT);
+    }
+}
+
+/// Source → Sink. Verify all operators get the configured layout.
+TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsColumnarLayout)
+{
+    const auto sourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
+    const auto sinkOp = SinkLogicalOperator::create(sourceOp, sinkDescriptor);
+    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
+
+    const auto result = DecideMemoryLayoutRule{MemoryLayoutType::COLUMNAR_LAYOUT}.apply(plan);
+
+    for (const auto& op : BFSRange(result.getRootOperators()[0]))
+    {
+        ASSERT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>());
+        const auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
+        EXPECT_TRUE(trait->memoryLayout == MemoryLayoutType::COLUMNAR_LAYOUT);
     }
 }
 
@@ -145,7 +162,7 @@ TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
     const auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
 
-    const auto result = DecideMemoryLayoutRule{}.apply(plan);
+    const auto result = DecideMemoryLayoutRule{MemoryLayoutType::ROW_LAYOUT}.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {

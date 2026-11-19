@@ -22,16 +22,10 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/MemoryLayoutType.hpp>
 
 namespace NES
 {
-
-/// Enum to identify the memory layout in which we want to represent the schema physically.
-enum class MemoryLayoutType : uint8_t
-{
-    ROW_LAYOUT = 0,
-    COLUMNAR_LAYOUT = 1
-};
 
 /// Lowers a schema and its memory layout type to a specific TupleBufferRef
 /// In case we provide the ref for an emit operator right before a sink, output formatting might be neccessary (CSV, JSON).

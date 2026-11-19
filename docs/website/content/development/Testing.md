@@ -157,7 +157,7 @@ GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096, 
 The example above executes the whole file twice, once with each buffer size.
 Any worker configuration option can be set this way.
 The available options are numerous and change over time, so we do not enumerate them here.
-For the full set of keys, defaults, and accepted values, e.g., `default_query_optimization.join_strategy` (`HASH_JOIN` or `NESTED_LOOP_JOIN`), see the worker configuration definitions starting at `nes-runtime/interface/Configuration/WorkerConfiguration.hpp`.
+For the full set of keys, defaults, and accepted values, e.g., `default_query_optimization.join_strategy` (`HASH_JOIN` or `NESTED_LOOP_JOIN`) or `default_query_optimization.memory_layout` (`ROW_LAYOUT` or `COLUMNAR_LAYOUT`), see the worker configuration definitions starting at `nes-runtime/interface/Configuration/WorkerConfiguration.hpp`.
 
 ### Sources
 Sources are created via SQL statements.

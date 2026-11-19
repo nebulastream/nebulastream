@@ -35,7 +35,6 @@
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -79,17 +78,13 @@ namespace NES
 namespace
 {
 std::vector<std::shared_ptr<AggregationPhysicalFunction>>
-getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const QueryExecutionConfiguration& configuration)
+getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logicalOperator)
 {
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
 
-    const auto memoryLayoutTypeTrait = logicalOperator.getChild()->getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
     auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
-    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize, physicalInputSchema, memoryLayoutType);
 
     for (const auto& descriptor : aggregationDescriptors)
     {
@@ -146,7 +141,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto handlerId = getNextOperatorHandlerId();
     auto timeFunction = TimeFunction::create(std::get<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic()));
     auto windowType = aggregation->getWindowType();
-    auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
+    auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation);
 
     const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
     const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);

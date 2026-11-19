@@ -33,6 +33,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <Util/TypeTraits.hpp>
 #include <ErrorHandling.hpp>
 
@@ -107,11 +108,12 @@ class FieldView;
 
 using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
 
-/// Entry point. Holds schema config.
+/// Entry point. Holds schema config and the memory layout the buffers.
 class TestTupleBuffer
 {
 public:
-    explicit TestTupleBuffer(TestSchema schema);
+    /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations) Row Layouts are the default for the test, few exceptions exist.
+    explicit TestTupleBuffer(TestSchema schema, MemoryLayoutType layout = MemoryLayoutType::ROW_LAYOUT);
 
     /// Wraps an existing TupleBuffer for schema-aware access.
     /// bufferProvider required for VARSIZED (string) field support.
@@ -120,6 +122,7 @@ public:
 
 private:
     TestSchema schema;
+    MemoryLayoutType layout;
 };
 
 /// View over a TupleBuffer. Supports append and indexed record access.

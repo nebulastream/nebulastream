@@ -39,6 +39,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -224,13 +225,13 @@ std::optional<FieldValue> varValToFieldValue(const VarVal& value, const DataType
 
 /// ---- TestTupleBuffer ----
 
-TestTupleBuffer::TestTupleBuffer(TestSchema schema) : schema(std::move(schema))
+TestTupleBuffer::TestTupleBuffer(TestSchema schema, const MemoryLayoutType layout) : schema(std::move(schema)), layout(layout)
 {
 }
 
 TestTupleBufferView TestTupleBuffer::open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider)
 {
-    auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, layout);
 
     TestTupleBufferView view;
     view.impl = std::make_shared<TestTupleBufferView::Impl>(

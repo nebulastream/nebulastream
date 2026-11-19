@@ -30,6 +30,7 @@
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <folly/Synchronized.h>
 #include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
@@ -52,6 +53,8 @@ struct NetworkSinkConfig
     size_t senderQueueSize;
     /// Per-channel max pending acks override. 0 means use the worker-level default.
     size_t maxPendingAcks;
+    /// Layout of the buffers this sink receives. Needed to decide which bytes of a buffer must be sent.
+    MemoryLayoutType memoryLayout;
 
     static std::expected<NetworkSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
@@ -85,7 +88,15 @@ protected:
     std::ostream& toString(std::ostream& str) const override;
 
 private:
+    /// Get number of leading bytes of the tuple buffer that carry record data and therefore have to be sent over the network.
+    /// The remaining bytes may be cut off.
+    [[nodiscard]] size_t getNumberOfUsedBytes(const TupleBuffer& buffer) const;
+
+private:
     size_t tupleSize;
+    /// Size of the last field of the schema. Needed to calculate the offset of the last needed byte in a tuple buffer with columnar layout.
+    size_t lastFieldSize;
+    MemoryLayoutType memoryLayout;
     folly::Synchronized<std::vector<TupleBuffer>> bufferBacklog;
     BackpressureHandler backpressureHandler;
     std::optional<rust::Box<SenderNetworkService>> server;

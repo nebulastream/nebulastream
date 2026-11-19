@@ -23,6 +23,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
@@ -54,18 +55,40 @@ const ConfigField<StreamJoinStrategy> JOIN_STRATEGY{
     },
     StreamJoinStrategy::OPTIMIZER_CHOOSES,
     "OPTIMIZER_CHOOSES"};
+
+const ConfigField<MemoryLayoutType> MEMORY_LAYOUT{
+    Identifier::parse("memory_layout"),
+    "Memory layout within tuple buffers."
+    "[ROW_LAYOUT|COLUMNAR_LAYOUT].",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<MemoryLayoutType, Exception>
+                {
+                    if (const auto parsed = EnumWrapper{value}.asEnum<MemoryLayoutType>())
+                    {
+                        return *parsed;
+                    }
+                    return std::unexpected{
+                        InvalidConfigParameter("Invalid memory layout, must be ROW_LAYOUT or COLUMNAR_LAYOUT: {}", value)};
+                });
+    },
+    MemoryLayoutType::ROW_LAYOUT,
+    "ROW_LAYOUT"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("optimizer"), JOIN_STRATEGY, QueryOptimizerNetworkConfiguration::getConfigSchema());
+    return createConfigSchema(
+        Identifier::parse("optimizer"), JOIN_STRATEGY, MEMORY_LAYOUT, QueryOptimizerNetworkConfiguration::getConfigSchema());
 }
 
 QueryOptimizerConfiguration QueryOptimizerConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(JOIN_STRATEGY), QueryOptimizerNetworkConfiguration::fromConfig(config)};
+    return {config.get(JOIN_STRATEGY), config.get(MEMORY_LAYOUT), QueryOptimizerNetworkConfiguration::fromConfig(config)};
 }
 
 }

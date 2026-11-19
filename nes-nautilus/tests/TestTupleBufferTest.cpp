@@ -12,13 +12,16 @@
     limitations under the License.
 */
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <initializer_list>
 #include <memory>
 #include <numbers>
 #include <optional>
 #include <string>
+#include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -28,6 +31,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <TestTupleBuffer.hpp>
@@ -433,6 +437,65 @@ TEST_F(TestTupleBufferTest, NullableVarsizedRoundTrip)
     ASSERT_EQ(view.getNumberOfTuples(), 2);
     EXPECT_EQ(view[0]["s"].as<std::optional<std::string>>(), std::optional<std::string>{"hello"});
     EXPECT_FALSE(view[1]["s"].as<std::optional<std::string>>().has_value());
+}
+
+/// Columnar layout: Fixed-sized, nullable and VARSIZED fields round-trip through the ColumnTupleBufferRef.
+TEST_F(TestTupleBufferTest, ColumnarLayoutMixedFieldsRoundTrip)
+{
+    auto schema = Testing::TestSchema{
+        UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::INT64},
+        UnqualifiedUnboundField{Identifier::parse("flag"), DataType::Type::BOOLEAN},
+        UnqualifiedUnboundField{Identifier::parse("f64"), DataType{DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE}},
+        UnqualifiedUnboundField{Identifier::parse("label"), DataType::Type::VARSIZED}};
+    Testing::TestTupleBuffer ttb(schema, MemoryLayoutType::COLUMNAR_LAYOUT);
+
+    auto buffer = bufferManager->getBufferBlocking();
+    auto view = ttb.open(buffer, bufferManager.get());
+
+    view.append(int64_t{1}, true, 1.5, std::string("first"));
+    view.append(int64_t{2}, false, std::nullopt, std::string("second"));
+    view.append(int64_t{3}, true, 3.5, std::string("third"));
+
+    ASSERT_EQ(view.getNumberOfTuples(), 3);
+    EXPECT_EQ(view[0]["id"].as<int64_t>(), 1);
+    EXPECT_EQ(view[0]["flag"].as<bool>(), true);
+    EXPECT_EQ(view[0]["f64"].as<std::optional<double>>(), std::optional<double>{1.5});
+    EXPECT_EQ(view[0]["label"].as<std::string>(), "first");
+    EXPECT_EQ(view[1]["id"].as<int64_t>(), 2);
+    EXPECT_EQ(view[1]["flag"].as<bool>(), false);
+    EXPECT_FALSE(view[1]["f64"].as<std::optional<double>>().has_value());
+    EXPECT_EQ(view[1]["label"].as<std::string>(), "second");
+    EXPECT_EQ(view[2]["id"].as<int64_t>(), 3);
+    EXPECT_EQ(view[2]["flag"].as<bool>(), true);
+    EXPECT_EQ(view[2]["f64"].as<std::optional<double>>(), std::optional<double>{3.5});
+    EXPECT_EQ(view[2]["label"].as<std::string>(), "third");
+}
+
+/// Columnar layout places the values of one field back to back: The value of field1 of tuple i lives at byte i * sizeof(field1) of the tuple buffer.
+TEST_F(TestTupleBufferTest, ColumnarLayoutStoresFieldsColumnMajor)
+{
+    auto schema = Testing::TestSchema{
+        UnqualifiedUnboundField{Identifier::parse("a"), DataType::Type::INT64},
+        UnqualifiedUnboundField{Identifier::parse("b"), DataType::Type::INT32}};
+    Testing::TestTupleBuffer ttb(schema, MemoryLayoutType::COLUMNAR_LAYOUT);
+
+    auto buffer = bufferManager->getBufferBlocking();
+    auto view = ttb.open(buffer);
+    view.append(int64_t{10}, int32_t{100});
+    view.append(int64_t{20}, int32_t{200});
+    view.append(int64_t{30}, int32_t{300});
+
+    const auto bytes = std::as_const(buffer).getAvailableMemoryArea<std::byte>();
+    constexpr auto tupleSize = sizeof(int64_t) + sizeof(int32_t);
+    const auto capacity = POOLED_BUFFER_SIZE / tupleSize;
+
+    std::array<int64_t, 3> columnA{};
+    std::memcpy(columnA.data(), bytes.data(), sizeof(columnA));
+    EXPECT_EQ(columnA, (std::array<int64_t, 3>{10, 20, 30}));
+
+    std::array<int32_t, 3> columnB{};
+    std::memcpy(columnB.data(), bytes.data() + (capacity * sizeof(int64_t)), sizeof(columnB));
+    EXPECT_EQ(columnB, (std::array<int32_t, 3>{100, 200, 300}));
 }
 
 /// NOLINTEND(readability-magic-numbers)

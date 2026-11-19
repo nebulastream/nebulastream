@@ -18,15 +18,15 @@
 #include <string>
 #include <string_view>
 #include <typeinfo>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
+#include <Util/MemoryLayoutType.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
 
-/// Struct that stores the memory layout type as traits. For now, we simply choose a row layout all the time
+/// Struct that stores the memory layout type as traits. The layout is chosen by the DecideMemoryLayoutRule.
 struct MemoryLayoutTypeTrait final
 {
     static constexpr std::string_view NAME = "MemoryLayoutType";

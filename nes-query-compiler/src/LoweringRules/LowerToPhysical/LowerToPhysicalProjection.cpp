@@ -98,7 +98,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    auto bufferSize = conf.pageSize;
+    const auto bufferSize = conf.operatorBufferSize;
 
     std::shared_ptr<PhysicalOperatorWrapper> child;
     std::shared_ptr<PhysicalOperatorWrapper> leaf;
