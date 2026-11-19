@@ -43,6 +43,8 @@ _HARNESS_STEP_TIMEOUT_S = 30.0
 # Four times the step timeout, because a stuck OPEN takes twice the step timeout.
 # So a stuck step replies with the harness's StepTimeout, which says which step, before the deadline kills the harness.
 _TEST_DEADLINE_S = 4 * _HARNESS_STEP_TIMEOUT_S
+# Above the step timeout, because on EOF the harness stops a running source with that timeout.
+_END_SESSION_TIMEOUT_S = _HARNESS_STEP_TIMEOUT_S + 10.0
 
 
 @dataclass(frozen=True)
@@ -117,10 +119,22 @@ class _HarnessProc:
         self.proc.wait(timeout=10)
 
     def end_session(self) -> None:
-        """The harness's session loop returns on EOF, so the harness shuts down gracefully."""
+        """The harness's session loop returns on EOF, so the harness shuts down gracefully.
+
+        A harness that is still running after the timeout is killed, and the error says so.
+        """
         with contextlib.suppress(OSError):
             self.conn.close()
-        self.proc.wait(timeout=10)
+        try:
+            self.proc.wait(timeout=_END_SESSION_TIMEOUT_S)
+        except subprocess.TimeoutExpired as e:
+            self.proc.kill()
+            self.proc.wait()
+            raise HarnessError(
+                name="ExitTimeout",
+                phase="end",
+                message=f"the harness did not exit within {_END_SESSION_TIMEOUT_S} s after EOF and was killed",
+            ) from e
 
 
 class _Stepper:
@@ -186,14 +200,16 @@ class _Stepper:
 
     def cleanup(self) -> None:
         self._deadline.cancel()
-        if self._proc is not None:
-            self._proc.end_session()
+        try:
+            if self._proc is not None:
+                self._proc.end_session()
+        finally:
             self._proc = None
-        with contextlib.suppress(OSError):
-            self._server.close()
-        shutil.rmtree(self._dir, ignore_errors=True)
-        if self._log is not None:
-            self._log.close()
+            with contextlib.suppress(OSError):
+                self._server.close()
+            shutil.rmtree(self._dir, ignore_errors=True)
+            if self._log is not None:
+                self._log.close()
 
     def __enter__(self) -> Self:
         return self
