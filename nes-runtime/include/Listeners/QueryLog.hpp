@@ -63,10 +63,10 @@ struct QueryLog : AbstractQueryStatusListener
 
     /// Adds the first entry of a query and returns true.
     /// Returns false and changes nothing if the query already has entries.
-    /// The check and the insert happen under one lock, so only one of several concurrent calls for a query returns true.
+    /// Of several concurrent calls for one query, only one returns true.
     [[nodiscard]] bool registerQuery(const QueryId& queryId, std::chrono::system_clock::time_point timestamp);
     /// Removes all entries of a query.
-    /// This is for a query whose start failed before the engine received it.
+    /// This is for a query that failed to start before the engine received it.
     void removeQuery(const QueryId& queryId);
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;

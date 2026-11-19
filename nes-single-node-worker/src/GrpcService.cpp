@@ -88,6 +88,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", truncateForGrpcMetadata(exception.what()));
     context->AddTrailingMetadata("trace", truncateForGrpcMetadata(formatStacktrace(exception.trace(), false)));
+    /// A distinct status lets a coordinator that repeated a start tell an accepted earlier start from a failure.
     const auto status = exception.code() == ErrorCode::QueryAlreadyRegistered ? grpc::ALREADY_EXISTS : grpc::INTERNAL;
     return {status, truncateForGrpcMetadata(exception.what())};
 }

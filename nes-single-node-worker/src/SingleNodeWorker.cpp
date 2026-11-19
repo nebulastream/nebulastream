@@ -117,7 +117,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         {
             throw QueryAlreadyRegistered("{}", queryId);
         }
-        /// A query that could not be compiled or handed to the engine was never started, so a later start may try again.
+        /// A query that failed to compile or to reach the engine was never started, so a later start request can start it.
         SCOPE_FAIL
         {
             nodeEngine->getQueryLog()->removeQuery(queryId);
