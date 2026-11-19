@@ -304,7 +304,7 @@ int main(const int argc, const char* argv[])
     }
     CPPTRACE_CATCH(...)
     {
-        NES::tryLogCurrentException();
+        NES::tryLogCurrentException(NES::ConfigErrorOrigin::UserInput);
         return NES::getCurrentErrorCode();
     }
 }

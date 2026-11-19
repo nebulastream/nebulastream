@@ -135,6 +135,11 @@ std::string formatLogMessage(const std::exception& e)
 
 void tryLogCurrentException()
 {
+    tryLogCurrentException(ConfigErrorOrigin::Internal);
+}
+
+void tryLogCurrentException(const ConfigErrorOrigin configErrorOrigin)
+{
     /// Log the concise error headline (code + message) BEFORE resolving the stacktrace. Symbolizing a trace against a
     /// large, statically linked binary can take many seconds; emitting the headline first guarantees the error marker
     /// reaches the log even if the process is terminated (e.g. a `timeout` SIGKILL) part-way through symbolization.
@@ -150,9 +155,19 @@ void tryLogCurrentException()
         {
             fmt::print(stderr, "{}\n", headline);
         }
+        /// A config value rejected at startup is user input, not a defect: the headline above already names the
+        /// offending key and the valid options, and a trace through the config parser tells the user nothing. Skipping
+        /// it also keeps the process from spending ~10s (and a lot of memory) symbolizing this binary just to reject a
+        /// typo, which otherwise makes a bad CLI flag look like a hang. Only the caller can say the error came from
+        /// user input: these codes are also raised for internal bugs, and there the trace is the only diagnostic.
+        const auto isRejectedUserInput = configErrorOrigin == ConfigErrorOrigin::UserInput
+            && (e.code() == ErrorCode::InvalidConfigParameter || e.code() == ErrorCode::CannotLoadConfig);
         if constexpr (logWithStacktrace)
         {
-            NES_ERROR("{}{}", ansiColorReset, formatStacktrace(e.trace(), true))
+            if (!isRejectedUserInput)
+            {
+                NES_ERROR("{}{}", ansiColorReset, formatStacktrace(e.trace(), true))
+            }
         }
     }
     catch (const std::exception& e)

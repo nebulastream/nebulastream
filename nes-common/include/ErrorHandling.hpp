@@ -178,9 +178,22 @@ inline std::string formatStacktrace(const cpptrace::stacktrace& stacktrace, cons
 
 #endif
 
-/// @brief This function is used to log the current exception.
+/// Selects whether a config error is reported with its stack trace. Only a program's outermost
+/// handler can tell the two apart; see tryLogCurrentException for why the code alone cannot.
+enum class ConfigErrorOrigin : uint8_t
+{
+    Internal, /// keep the stack trace
+    UserInput, /// startup rejected what the user passed: report it without a trace
+};
+
+/// @brief This function is used to log the current exception. Equivalent to
+/// tryLogCurrentException(ConfigErrorOrigin::Internal).
 /// @warning This function should be used only in a catch block.
 void tryLogCurrentException();
+
+/// @brief This function is used to log the current exception.
+/// @warning This function should be used only in a catch block.
+void tryLogCurrentException(ConfigErrorOrigin configErrorOrigin);
 
 /// Wrapped as UnknownException
 Exception wrapExternalException();
