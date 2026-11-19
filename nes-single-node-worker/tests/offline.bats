@@ -188,7 +188,7 @@ worker_timeout() {
 @test "worker ignores SIGPIPE" {
   [ -d /proc/self ] || skip "requires procfs"
 
-  setsid "$NES_WORKER" --grpc=127.0.0.1:0 >worker.out 2>&1 </dev/null 3>&- &
+  setsid "$NES_WORKER" -- --grpc=127.0.0.1:0>worker.out 2>&1 </dev/null 3>&- &
   local worker_pid=$!
 
   local i
