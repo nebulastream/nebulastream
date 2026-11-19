@@ -75,7 +75,9 @@ impl SpdlogLayer {
     }
 }
 
-// Helper to extract the message field
+/// Renders an event as its message followed by each other field as ` name=value`.
+/// E.g., `info!(from = %"Started", to = 3, "transition")` renders as `transition from=Started to=3`.
+/// An event without a message renders only its fields, e.g. `key=7`.
 #[derive(Default)]
 struct MessageExtractor {
     message: String,
