@@ -603,9 +603,9 @@ Each function entry requires:
   module in the directories of `--udf-import-path` and `NES_UDF_PATH`; later changes to the module take effect when the
   function is registered again.
 - `args` - Ordered list of arguments with name and type (names are documentation only; arguments match by position). As
-  in a schema, an argument is NOT NULL unless it sets `nullable: true`. An `INLINE` function receives a nullable argument as
-  `Optional[T]` (`None` for NULL); for NULL in a NOT NULL argument its result is NULL and it does not run. (In
-  `CREATE FUNCTION`, an argument is nullable unless declared `NOT NULL`, as a column.)
+  in a schema, an argument is NOT NULL unless it sets `nullable: true`. A function receives a nullable argument as `None`
+  for NULL (`Optional[T]` for `INLINE`). For NULL in a NOT NULL argument, the result is NULL and the function does not run,
+  in every execution. (In `CREATE FUNCTION`, an argument is nullable unless declared `NOT NULL`, as a column.)
 - `returns` - Return type (a UDF result is always nullable)
 
 Each entry may also set:

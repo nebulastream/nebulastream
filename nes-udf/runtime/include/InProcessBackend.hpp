@@ -67,6 +67,8 @@ public:
         std::vector<int> argTypeCodes;
         /// For each argument, if the function receives it as bytes; the bridge gets this as UDF_AS_BYTES in the type code.
         std::vector<bool> bytesArguments;
+        /// For each argument, if it is declared NOT NULL; the bridge gets this as UDF_NOT_NULL in the type code.
+        std::vector<bool> notNullArguments;
         int returnTypeCode = 0;
     };
 

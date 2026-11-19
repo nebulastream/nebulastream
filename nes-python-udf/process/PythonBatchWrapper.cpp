@@ -928,6 +928,8 @@ generatePythonBatchWrapper(const ArrowBufferRef& layout, const std::vector<UdfPr
         /// The columns the call iterates over, and what it passes for each parameter: a value of a column, or a constant.
         std::vector<std::string> columns;
         std::vector<std::string> parameters;
+        /// The column variables of NOT NULL arguments: a NULL in one of them gives a NULL result without a call.
+        std::vector<std::string> notNullChecks;
         for (const auto& [argumentIndex, argument] : std::views::enumerate(call.arguments))
         {
             if (!argument.field.has_value())
@@ -955,11 +957,17 @@ generatePythonBatchWrapper(const ArrowBufferRef& layout, const std::vector<UdfPr
                 columns.push_back(readColumn(*argument.field, field, ""));
             }
             parameters.push_back(fmt::format("x{}", columns.size() - 1));
+            if (argument.notNull && field.type.nullable)
+            {
+                notNullChecks.push_back(fmt::format("x{} is None", columns.size() - 1));
+            }
         }
 
         const auto& result = fields.at(call.resultField);
         INVARIANT(result.type.nullable, "The result column of UDF '{}' must be nullable", call.name);
-        const auto invocation = fmt::format("_udf_{}({})", callIndex, fmt::join(parameters, ", "));
+        const auto udfCall = fmt::format("_udf_{}({})", callIndex, fmt::join(parameters, ", "));
+        const auto invocation
+            = notNullChecks.empty() ? udfCall : fmt::format("(None if {} else {})", fmt::join(notNullChecks, " or "), udfCall);
         if (columns.empty())
         {
             body += fmt::format("    r = [{} for _ in range(n)]\n", invocation);

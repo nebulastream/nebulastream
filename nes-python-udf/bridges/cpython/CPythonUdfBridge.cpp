@@ -103,6 +103,7 @@ struct UdfCtx
     std::string functionName;
     std::vector<int> argTypes;
     std::vector<char> bytesParameters; /* for each argument, if a VARSIZED or CHAR value stays raw bytes (declared with BYTES) */
+    std::vector<char> notNullParameters; /* for each argument, if it is declared NOT NULL: None in it gives None without a call */
     int returnType = 0;
     PyObject* argumentSchema = nullptr; /* pa.Schema of the struct of argument columns */
     PyObject* argumentTypeList = nullptr; /* list of the argument type codes */
@@ -399,17 +400,61 @@ char* fetchPythonError()
     return dupString(out);
 }
 
-/* Sets the argument types of `description` from the type codes of the ABI, and which arguments the function receives as bytes
- * from UDF_AS_BYTES in them. */
+/* Sets the argument types of `description` from the type codes of the ABI, which arguments the function receives as bytes
+ * from UDF_AS_BYTES in them, and which are NOT NULL from UDF_NOT_NULL. */
 void setArgumentTypes(UdfCtx& description, const int* codes, const int argc)
 {
     description.argTypes.resize(static_cast<size_t>(argc));
     description.bytesParameters.resize(static_cast<size_t>(argc));
+    description.notNullParameters.resize(static_cast<size_t>(argc));
     for (int i = 0; i < argc; ++i)
     {
-        description.argTypes[static_cast<size_t>(i)] = codes[i] & ~UDF_AS_BYTES;
+        description.argTypes[static_cast<size_t>(i)] = codes[i] & ~(UDF_AS_BYTES | UDF_NOT_NULL);
         description.bytesParameters[static_cast<size_t>(i)] = static_cast<char>((codes[i] & UDF_AS_BYTES) != 0);
+        description.notNullParameters[static_cast<size_t>(i)] = static_cast<char>((codes[i] & UDF_NOT_NULL) != 0);
     }
+}
+
+/* Takes ownership of `function` and returns a new reference to the function that the bridge calls: `function` itself, or, with
+ * NOT NULL arguments, `def guarded(a0, a1): return None if a0 is None else function(a0, a1)`. So the row, batch and fused paths
+ * skip the call for NULL in a NOT NULL argument. nullptr with a Python error set on failure. GIL held. */
+PyObject* guardNotNull(PyObject* function, const UdfCtx& ctx)
+{
+    std::string parameters;
+    std::string checks;
+    for (size_t i = 0; i < ctx.notNullParameters.size(); ++i)
+    {
+        const std::string name = "a" + std::to_string(i);
+        parameters += (i == 0 ? "" : ", ") + name;
+        if (ctx.notNullParameters[i] != 0)
+        {
+            checks += (checks.empty() ? "" : " or ") + name + " is None";
+        }
+    }
+    if (function == nullptr || checks.empty())
+    {
+        return function;
+    }
+    const std::string source = "def guarded(" + parameters + "):\n    return None if " + checks + " else function(" + parameters + ")\n";
+    PyObject* globals = PyDict_New();
+    if (globals == nullptr || PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins()) != 0
+        || PyDict_SetItemString(globals, "function", function) != 0)
+    {
+        Py_XDECREF(globals);
+        Py_DECREF(function);
+        return nullptr;
+    }
+    Py_DECREF(function);
+    PyObject* defined = PyRun_String(source.c_str(), Py_file_input, globals, globals);
+    PyObject* guarded = nullptr;
+    if (defined != nullptr)
+    {
+        guarded = PyDict_GetItemString(globals, "guarded"); /* borrowed */
+        Py_XINCREF(guarded);
+        Py_DECREF(defined);
+    }
+    Py_DECREF(globals);
+    return guarded;
 }
 
 /* Defines BatchSource once. Returns false with a Python error set if that fails, e.g. without pyarrow. GIL held. */
@@ -463,6 +508,15 @@ UdfInstance* registerCallable(PyObject* function, UdfCtx description, char** err
         return nullptr;
     }
 
+    function = guardNotNull(function, description);
+    if (function == nullptr)
+    {
+        if (errormessage != nullptr)
+        {
+            *errormessage = fetchPythonError();
+        }
+        return nullptr;
+    }
     auto* ctx = new UdfCtx(std::move(description));
     ctx->id = g_nextId++;
     ctx->callable = function; /* transfer ownership */
@@ -483,7 +537,7 @@ PyObject* loadCallable(const UdfCtx& ctx)
         }
         PyObject* function = PyObject_GetAttrString(module, ctx.entrypoint.substr(dot + 1).c_str());
         Py_DECREF(module);
-        return function;
+        return guardNotNull(function, ctx);
     }
     PyObject* globals = PyDict_New();
     if (globals == nullptr || PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins()) != 0)
@@ -500,7 +554,7 @@ PyObject* loadCallable(const UdfCtx& ctx)
         Py_DECREF(defined);
     }
     Py_DECREF(globals);
-    return function;
+    return guardNotNull(function, ctx);
 }
 
 /* The function of `ctx` in the interpreter the thread is attached to: the registered one in the main interpreter, loaded once per

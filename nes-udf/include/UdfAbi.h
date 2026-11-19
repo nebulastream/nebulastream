@@ -105,6 +105,10 @@ enum UdfTypeCode /// NOLINT(performance-enum-size) C has no fixed underlying enu
 /// initialize_udf_from_source) if the function receives it as raw bytes instead of text: BYTES in CREATE FUNCTION.
 #define UDF_AS_BYTES 256
 
+/// Set in the type code of an argument (only in arg_type_codes of initialize_udf and initialize_udf_from_source) if it is declared
+/// NOT NULL: for a NULL value in it, the bridge returns NULL without calling the function.
+#define UDF_NOT_NULL 512
+
 /// Return status of execute_udf_row and execute_udf_batch. NULL-ness of a row's result is a separate out-parameter flag.
 enum UdfStatus /// NOLINT(performance-enum-size) C has no fixed underlying enum types before C23
 {

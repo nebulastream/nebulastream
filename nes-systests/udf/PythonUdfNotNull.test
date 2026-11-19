@@ -1,0 +1,53 @@
+# name: udf/PythonUdfNotNull.test
+# description: A NULL in an argument declared NOT NULL gives a NULL result without a call, in each execution. A nullable argument
+# reaches the function as None.
+# groups: [PythonUdf, PythonUdfProcess]
+
+CREATE LOGICAL SOURCE values(id INT64 NOT NULL, x INT64, s VARSIZED);
+CREATE PHYSICAL SOURCE FOR values TYPE File;
+ATTACH INLINE
+1,5,a
+2,,b
+3,7,
+
+# --- EXECUTION OUT_OF_PROCESS ---
+CREATE FUNCTION strict_oop (x INT64 NOT NULL, s VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
+    return "x=" + str(x) + " s=" + str(s)
+$python$;
+CREATE FUNCTION lenient_oop (x INT64, s VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS AS $python$
+    return "x=" + str(x) + " s=" + str(s)
+$python$;
+
+SELECT id, strict_oop(x, s) AS strict, lenient_oop(x, s) AS lenient FROM values INTO FILE();
+----
+1,x=5 s=a,x=5 s=a
+2,NULL,x=None s=b
+3,x=7 s=None,x=7 s=None
+
+# --- EXECUTION IN_PROCESS ---
+CREATE FUNCTION strict_ip (x INT64 NOT NULL, s VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS AS $python$
+    return "x=" + str(x) + " s=" + str(s)
+$python$;
+CREATE FUNCTION lenient_ip (x INT64, s VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS AS $python$
+    return "x=" + str(x) + " s=" + str(s)
+$python$;
+
+SELECT id, strict_ip(x, s) AS strict, lenient_ip(x, s) AS lenient FROM values INTO FILE();
+----
+1,x=5 s=a,x=5 s=a
+2,NULL,x=None s=b
+3,x=7 s=None,x=7 s=None
+
+# --- EXECUTION INLINE ---
+CREATE FUNCTION strict_inline (x INT64 NOT NULL, s VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return "x=" + str(x) + " s=" + str(s)
+$python$;
+CREATE FUNCTION lenient_inline (x INT64, s VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return "x=" + str(x) + " s=" + str(s)
+$python$;
+
+SELECT id, strict_inline(x, s) AS strict, lenient_inline(x, s) AS lenient FROM values INTO FILE();
+----
+1,x=5 s=a,x=5 s=a
+2,NULL,x=None s=b
+3,x=7 s=None,x=7 s=None

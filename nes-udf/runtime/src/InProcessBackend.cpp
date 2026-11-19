@@ -280,6 +280,10 @@ UdfInstance* InProcessBackend::initialize(const BridgeLibrary& bridge) const
         {
             argTypeCodes[i] |= UDF_AS_BYTES;
         }
+        if (definition.notNullArguments.at(i))
+        {
+            argTypeCodes[i] |= UDF_NOT_NULL;
+        }
     }
     if (definition.entrypoint.empty())
     {
@@ -650,6 +654,8 @@ std::shared_ptr<UdfBackend> UdfBackend::create(const UdfDescriptor& descriptor, 
         | std::ranges::to<std::vector>();
     definition.bytesArguments = std::views::iota(uint64_t{0}, static_cast<uint64_t>(descriptor.getArgTypes().size()))
         | std::views::transform([&](const uint64_t position) { return descriptor.isBytesArgument(position); })
+        | std::ranges::to<std::vector<bool>>();
+    definition.notNullArguments = descriptor.getArgTypes() | std::views::transform([](const auto& type) { return !type.nullable; })
         | std::ranges::to<std::vector<bool>>();
     definition.returnTypeCode = toUdfTypeCode(descriptor.getReturnType().type);
     if (const auto& source = descriptor.getSource())

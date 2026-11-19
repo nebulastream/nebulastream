@@ -32,6 +32,8 @@ struct UdfProcessArgument
     std::string constantType;
     /// If a VARSIZED or CHAR argument reaches the function as bytes instead of str (declared with BYTES).
     bool bytes = false;
+    /// If the argument is declared NOT NULL: for a NULL value in it, the result is NULL without a call.
+    bool notNull = false;
 };
 
 /// What a process needs to know about a UDF call. The query decomposer describes the calls of a UDF operator with it, and the
