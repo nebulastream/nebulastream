@@ -26,7 +26,6 @@ use tracing::{debug, warn};
 
 pub(super) use super::WorkerRpcServiceClient;
 
-/// The transport to a worker behind a socket.
 #[derive(Clone)]
 pub(crate) struct RemoteTransport {
     channel: Channel,

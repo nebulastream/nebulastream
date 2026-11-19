@@ -135,6 +135,7 @@ impl<T: Transport> QueryFragmentTask<T> {
         if self.fragment.current_state != prev {
             debug!(from = %prev, to = %self.fragment.current_state, "transition");
         }
+        // The simulation drops some wake-ups, so it checks that the periodic poll alone advances every watcher.
         if !buggify() {
             let _ = self.state_tx.send(());
         }
@@ -220,6 +221,7 @@ mod tests {
         db: Database,
         query_id: QueryId,
         desired_tx: Arc<watch::Sender<DesiredQueryFragmentState>>,
+        /// After this many calls, waits the delay, then stops the query in the catalog and sends the stopped desired state to the task.
         stop_after: Option<(usize, Duration)>,
     }
 
@@ -284,6 +286,7 @@ mod tests {
         }
     }
 
+    /// Never answers, so a spawned task stays tracked while the test inspects the task set.
     struct Silent;
 
     impl Transport for Silent {
@@ -584,6 +587,7 @@ mod tests {
             WorkerReply::Stop(Ok(())),
             status(QueryFragmentState::Completed, Some(1_000), Some(3_000)),
         ]);
+        // The poll wait is far longer than the test may run, so finishing in time shows that the stop cut the wait short.
         script.poll = Duration::from_secs(30);
         script.stop_after = Some((2, Duration::from_millis(100)));
         let started = Instant::now();

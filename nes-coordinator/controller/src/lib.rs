@@ -48,12 +48,11 @@ mod worker_task;
 pub use version::worker_versions;
 pub(crate) mod util;
 
+/// Moves every worker in the catalog, and the fragments assigned to it, toward its desired state.
 /// Runs each worker in this process when a worker factory is given, and over gRPC otherwise.
 pub struct Controller {
     db: Database,
-    /// Signals that the catalog may have changed.
     intent_rx: watch::Receiver<()>,
-    /// Signals that observed state advanced, so a watcher need not wait for its next poll.
     state_tx: watch::Sender<()>,
     workers: TaskMap<NetworkAddr>,
     factory: Option<Arc<dyn WorkerFactory>>,
@@ -66,6 +65,8 @@ impl std::fmt::Debug for Controller {
 }
 
 impl Controller {
+    /// `intent_rx` signals that the catalog may have changed.
+    /// `state_tx` is signaled whenever observed state advances, so a watcher need not wait for its next poll.
     #[must_use]
     pub fn new(
         db: Database,
@@ -83,6 +84,7 @@ impl Controller {
     }
 
     /// Returns once the sender of the catalog-change signal is dropped.
+    /// Outside madsim, a panic in a worker or fragment task is raised again here.
     pub async fn run(mut self) {
         info!("starting");
         let mut intent_rx = self.intent_rx.clone();
@@ -139,6 +141,8 @@ impl Reconciler for Controller {
                 DesiredWorkerState::Removed => {
                     info!(addr = %worker.host_addr, "aborting task");
                     self.workers.abort(&worker.host_addr);
+                    // Connecting to an in-process backend creates a new worker, which does not run the old fragments,
+                    // so only a remote worker has fragments to stop.
                     if self.factory.is_none() {
                         let (db, addr) = (self.db.clone(), worker.host_addr.clone());
                         tokio::spawn(async move {

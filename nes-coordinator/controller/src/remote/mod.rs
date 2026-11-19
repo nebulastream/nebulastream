@@ -50,7 +50,6 @@ impl worker_rpc_service::nes::SerializableQueryId {
         }
     }
 
-    /// The fragment id in a wire id, or `None` for a wire id that does not hold one.
     #[must_use]
     pub fn fragment_id(&self) -> Option<i64> {
         self.local_query_id.parse().ok()
@@ -121,6 +120,8 @@ impl Backend for RemoteBackend {
             .into_iter()
             .filter_map(|query| {
                 let id = query.query_id.as_ref().and_then(|id| id.fragment_id());
+                // A query whose local id is not a fragment id was not started by the controller,
+                // so it is left out and never stopped as an orphan.
                 if id.is_none() {
                     warn!(query_id = ?query.query_id, "worker lists an active query without a fragment id");
                 }

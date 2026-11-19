@@ -49,6 +49,9 @@ impl QueryFragmentTasks {
         &mut self.tasks
     }
 
+    /// Spawns a task for each actionable fragment row of this worker that has none,
+    /// and passes a changed desired state to a task that already runs.
+    /// `make_transport` is called once per spawned task.
     pub(crate) async fn reconcile_from_catalog<T: Transport + 'static>(
         &mut self,
         db: &Database,
@@ -102,7 +105,6 @@ impl QueryFragmentTasks {
 
 /// A failed worker call, classified by what the fragment lifecycle does next.
 pub(crate) enum CallError {
-    /// The worker has no record of the fragment id.
     NotFound,
     /// The worker already accepted a start for the fragment's id.
     AlreadyExists,

@@ -23,7 +23,8 @@ use std::sync::Arc;
 use tonic::transport::Endpoint;
 use tracing::debug;
 
-/// The build of each given worker, read concurrently.
+/// Reads the build of each given worker concurrently, in the given order.
+/// A worker that does not answer within the version timeout is reported unreachable.
 /// In-process workers all run the build that this binary was linked with, so none is contacted.
 pub async fn worker_versions(
     workers: Vec<worker::Model>,
@@ -61,6 +62,7 @@ async fn request_version(addr: &NetworkAddr) -> anyhow::Result<String> {
             .await?;
         anyhow::Ok(response.into_inner().version)
     };
+    // The endpoint bounds only the dial, so this timeout also bounds the request.
     tokio::time::timeout(VERSION_TIMEOUT, dial_and_request)
         .await
         .map_err(|_| anyhow::anyhow!("timed out after {VERSION_TIMEOUT:?}"))?

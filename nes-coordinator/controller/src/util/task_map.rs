@@ -20,8 +20,9 @@ use std::hash::Hash;
 use tokio::task::JoinError;
 use tracing::error;
 
-/// At most one running task per key.
+/// At most one tracked task per key.
 /// A finished task frees its key when it is joined; a task that returned an error first holds it for the respawn delay.
+/// Aborting a task frees its key without waiting for the task to end, so the aborted task may still be finishing when a new one starts.
 pub(crate) struct TaskMap<K> {
     tasks: JoinSet<K>,
     handles: HashMap<K, AbortHandle>,
@@ -36,9 +37,8 @@ impl<K: Eq + Hash + Clone + Send + 'static> TaskMap<K> {
     }
 
     /// Completed tasks are identified by their return value (the key),
-    /// since the madsim stand-in has no task ids.
-    /// A panicking task returns no key, so its entry stays tracked,
-    /// and the reconcile loop re-raises the panic instead of spawning the key again.
+    /// since the madsim stand-in of the join set returns no task id with a result.
+    /// A panicking task returns no key, so its entry stays tracked and the key is not spawned again.
     pub(crate) fn spawn_if_untracked<C, F, E>(&mut self, key: K, make_task: C)
     where
         K: Display,
@@ -113,6 +113,7 @@ mod tests {
     async fn a_failed_task_holds_its_key_for_the_respawn_delay() {
         let mut tasks = TaskMap::new();
         let start = std::time::Instant::now();
+        // The task logs its error and still returns its key, so the join succeeds.
         tasks.spawn_if_untracked(1, || async { Err::<(), _>("failed") });
         assert!(
             tasks
