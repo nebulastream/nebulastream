@@ -22,20 +22,16 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
-#include <functional>
 #include <memory>
-#include <mutex>
 #include <ratio>
 #include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <NESCodonPlugin/Registry.hpp>
-#include <PythonUdfRuntime.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <codon/cir/llvm/optimize.h>
 #include <codon/compiler/compiler.h>
@@ -57,9 +53,6 @@
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
-#include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
-#include <llvm/ExecutionEngine/Orc/LLJIT.h>
-#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/IRBuilder.h>
@@ -70,7 +63,6 @@
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/IPO/GlobalDCE.h>
 
@@ -458,197 +450,6 @@ private:
     codon::ast::TranslateContext translateContext;
 };
 
-/// The addresses of the global variables of the Codon base state in the base JIT (see CodonBaseJit), process-wide.
-std::mutex& baseGlobalMutex()
-{
-    static std::mutex mutex;
-    return mutex;
-}
-
-std::unordered_map<std::string, void*>& baseGlobalAddresses()
-{
-    static std::unordered_map<std::string, void*> addresses;
-    return addresses;
-}
-
-/// Base cells run their top-level code once for the worker, so their uncollectable allocations live as long as the
-/// worker. NES rejects these functions only in UDF code, which would leak at each call.
-void* allocateBaseUncollectable(const size_t size)
-{
-    return std::calloc(1, std::max<size_t>(size, 1)); /// NOLINT(cppcoreguidelines-no-malloc)
-}
-
-void registerBaseFinalizer(void* /*object*/, void* /*finalizer*/)
-{
-}
-
-/// Compiles the cells of the Codon base state (the stdlib and the modules that earlier UDFs imported) once for the worker
-/// and runs their top-level code once. UDF modules then use these global variables instead of copies, so a UDF module
-/// does not hold the top-level code of the base state, which is more than half of the code of a numpy UDF. Functions are
-/// compiled lazily: only those that the top-level code calls.
-class CodonBaseJit
-{
-public:
-    CodonBaseJit()
-    {
-        llvm::InitializeNativeTarget();
-        llvm::InitializeNativeTargetAsmPrinter();
-        /// Top-level code runs once, and Nautilus compiles it without optimization too (it is optnone in UDF modules).
-        auto targetMachine = llvm::orc::JITTargetMachineBuilder::detectHost();
-        if (!targetMachine)
-        {
-            throw std::runtime_error("Could not detect the host for the Codon base JIT: " + llvm::toString(targetMachine.takeError()));
-        }
-        targetMachine->setCodeGenOptLevel(llvm::CodeGenOptLevel::None);
-        auto created = llvm::orc::LLLazyJITBuilder().setJITTargetMachineBuilder(std::move(*targetMachine)).create();
-        if (!created)
-        {
-            throw std::runtime_error("Could not create the JIT of the Codon base state: " + llvm::toString(created.takeError()));
-        }
-        jit = std::move(*created);
-        /// Raw Codon IR keeps generators as coroutine intrinsics, which code generation cannot lower: run LLVM's O0 pipeline,
-        /// which lowers them and inlines always-inline functions, on each part before it is compiled.
-        jit->getIRTransformLayer().setTransform(
-            [](llvm::orc::ThreadSafeModule module, const llvm::orc::MaterializationResponsibility&) -> llvm::Expected<llvm::orc::ThreadSafeModule>
-            {
-                module.withModuleDo(
-                    [](llvm::Module& part)
-                    {
-                        llvm::LoopAnalysisManager loopAnalysisManager;
-                        llvm::FunctionAnalysisManager functionAnalysisManager;
-                        llvm::CGSCCAnalysisManager cgsccAnalysisManager;
-                        llvm::ModuleAnalysisManager moduleAnalysisManager;
-                        llvm::PassBuilder passBuilder;
-                        passBuilder.registerModuleAnalyses(moduleAnalysisManager);
-                        passBuilder.registerCGSCCAnalyses(cgsccAnalysisManager);
-                        passBuilder.registerFunctionAnalyses(functionAnalysisManager);
-                        passBuilder.registerLoopAnalyses(loopAnalysisManager);
-                        passBuilder.crossRegisterProxies(
-                            loopAnalysisManager, functionAnalysisManager, cgsccAnalysisManager, moduleAnalysisManager);
-                        passBuilder.buildO0DefaultPipeline(llvm::OptimizationLevel::O0).run(part, moduleAnalysisManager);
-                    });
-                return std::move(module);
-            });
-        llvm::orc::SymbolMap symbols;
-        const auto add = [&](const std::string& name, void* address)
-        {
-            symbols[jit->mangleAndIntern(name)]
-                = llvm::orc::ExecutorSymbolDef{llvm::orc::ExecutorAddr::fromPtr(address), llvm::JITSymbolFlags::Exported};
-        };
-        for (const auto& [name, address] : getPythonUdfRuntimeSymbols())
-        {
-            add(std::string{name}, address);
-        }
-        for (const auto& [name, address] : getCodonPluginNativeSymbols())
-        {
-            add(name, address);
-        }
-        add("seq_alloc_uncollectable", reinterpret_cast<void*>(&allocateBaseUncollectable));
-        add("seq_alloc_atomic_uncollectable", reinterpret_cast<void*>(&allocateBaseUncollectable));
-        add("seq_register_finalizer", reinterpret_cast<void*>(&registerBaseFinalizer));
-        auto& library = jit->getMainJITDylib();
-        if (auto error = library.define(llvm::orc::absoluteSymbols(std::move(symbols))))
-        {
-            throw std::runtime_error("Could not define the symbols of the Codon base JIT: " + llvm::toString(std::move(error)));
-        }
-        auto process = llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(jit->getDataLayout().getGlobalPrefix());
-        if (!process)
-        {
-            throw std::runtime_error("Could not search the process for the Codon base JIT: " + llvm::toString(process.takeError()));
-        }
-        library.addGenerator(std::move(*process));
-    }
-
-    /// Adds a base cell (its module, which declares what it uses of earlier cells), runs its top-level code and records
-    /// the addresses of its global variables.
-    void addCell(const std::string& bitcode, const std::string& initializerName, const std::function<void(llvm::Module&)>& prepare)
-    {
-        auto context = std::make_unique<llvm::LLVMContext>();
-        auto parsed = llvm::parseBitcodeFile(llvm::MemoryBufferRef{bitcode, "nes-codon-base-cell"}, *context);
-        if (!parsed)
-        {
-            throw std::runtime_error("Could not read a Codon base cell: " + llvm::toString(parsed.takeError()));
-        }
-        auto module = std::move(*parsed);
-        prepare(*module);
-        if (const auto* dumpDirectory = std::getenv("NES_TMP_DUMP_BASECELL")) /// TEMPORARY debugging
-        {
-            const auto prepared = writeBitcode(*module);
-            std::ofstream{fmt::format("{}/{}.bc", dumpDirectory, initializerName), std::ios::binary}.write(prepared.data(), static_cast<std::streamsize>(prepared.size()));
-        }
-        if (auto* initializer = module->getFunction(initializerName); initializer != nullptr)
-        {
-            initializer->setLinkage(llvm::GlobalValue::ExternalLinkage);
-        }
-        std::vector<std::string> globals;
-        std::size_t threadLocals = 0;
-        for (const auto& global : module->globals())
-        {
-            if (global.isDeclaration() || global.isConstant() || !global.hasName() || global.getName().starts_with("llvm.")
-                || global.hasLocalLinkage())
-            {
-                continue;
-            }
-            if (global.isThreadLocal())
-            {
-                ++threadLocals;
-                continue;
-            }
-            globals.push_back(global.getName().str());
-        }
-        if (auto error = jit->addLazyIRModule(llvm::orc::ThreadSafeModule{std::move(module), std::move(context)}))
-        {
-            throw std::runtime_error("Could not add a Codon base cell to the JIT: " + llvm::toString(std::move(error)));
-        }
-        const auto run = std::chrono::steady_clock::now();
-        auto initializer = jit->lookup(initializerName);
-        if (!initializer)
-        {
-            throw std::runtime_error("Could not compile the top-level code of a Codon base cell: " + llvm::toString(initializer.takeError()));
-        }
-        initialized.push_back(std::make_unique<uint8_t>(0));
-        ensureInitialized()(initializer->toPtr<void (*)()>(), initialized.back().get());
-        const auto lookup = std::chrono::steady_clock::now();
-        std::unordered_map<std::string, void*> addresses;
-        for (const auto& name : globals)
-        {
-            auto address = jit->lookup(name);
-            if (!address)
-            {
-                throw std::runtime_error("Could not find a global variable of a Codon base cell: " + llvm::toString(address.takeError()));
-            }
-            addresses.emplace(name, address->toPtr<void*>());
-        }
-        fprintf(
-            stderr,
-            "TMPBASEJIT cell %s: compile and run %.0f ms, %zu globals in %.0f ms, %zu thread-local globals skipped\n",
-            initializerName.c_str(),
-            elapsedMilliseconds(run, lookup),
-            addresses.size(),
-            elapsedMilliseconds(lookup, std::chrono::steady_clock::now()),
-            threadLocals);
-        const std::scoped_lock lock{baseGlobalMutex()};
-        baseGlobalAddresses().merge(addresses);
-    }
-
-private:
-    /// Runs top-level code once with allocations that live as long as the worker (PythonUdfRuntime.cpp).
-    static void (*ensureInitialized())(void (*)(), uint8_t*)
-    {
-        for (const auto& [name, address] : getPythonUdfRuntimeSymbols())
-        {
-            if (name == "nes_codon_ensure_module_initialized")
-            {
-                return reinterpret_cast<void (*)(void (*)(), uint8_t*)>(address);
-            }
-        }
-        throw std::runtime_error("The NES runtime lacks nes_codon_ensure_module_initialized");
-    }
-
-    std::unique_ptr<llvm::orc::LLLazyJIT> jit;
-    std::vector<std::unique_ptr<uint8_t>> initialized;
-};
-
 /// Rejects imports inside functions, makes the entry point run the initializer once, and optimizes the module.
 void finishCodonModule(
     llvm::Module& module,
@@ -735,12 +536,6 @@ public:
         baseInitializers.push_back(initializer->getName().str());
         baseCellSymbols.push_back(definedSymbols(*stdlib.module));
         baseBitcode = writeBitcode(*stdlib.module);
-        /// TEMPORARY switch (experiment E63): NES_TMP_BASE_JIT=0 runs the base top-level code in each UDF module instead.
-        if (const auto* setting = std::getenv("NES_TMP_BASE_JIT"); setting == nullptr || std::string_view{setting} != "0")
-        {
-            baseJit = std::make_unique<CodonBaseJit>();
-            baseJit->addCell(baseBitcode, baseInitializers.back(), &allocateVtablesPersistently);
-        }
         markBase();
     }
 
@@ -898,15 +693,10 @@ private:
         compiler->getPassManager()->run(compiler->getModule());
         const OwnedLlvmModule owned{compiler->getLLVMVisitor()->takeModule(compiler->getModule())};
         auto symbols = definedSymbols(*owned.module);
-        const auto cellBitcode = baseJit != nullptr ? writeBitcode(*owned.module) : std::string{};
         linkBase(*owned.module, *owned.context, llvm::Linker::Flags::None);
         baseInitializers.push_back(codon::ir::LLVMVisitor::getNameForFunction(cell));
         baseCellSymbols.push_back(std::move(symbols));
         baseBitcode = writeBitcode(*owned.module);
-        if (baseJit != nullptr)
-        {
-            baseJit->addCell(cellBitcode, baseInitializers.back(), &allocateVtablesPersistently);
-        }
         markBase();
     }
 
@@ -980,23 +770,14 @@ private:
         const OwnedLlvmModule owned{compiler->getLLVMVisitor()->takeModule(compiler->getModule())};
         const auto tTake = std::chrono::steady_clock::now();
         auto& module = owned.module;
-        /// With the base JIT, the base top-level code already ran: the module neither links nor calls it.
-        const auto initializers = baseJit != nullptr ? std::size_t{0} : declareUsedBaseInitializers(*module);
+        const auto initializers = declareUsedBaseInitializers(*module);
         linkBase(*module, *owned.context, llvm::Linker::Flags::LinkOnlyNeeded);
         const auto tLink = std::chrono::steady_clock::now();
         const auto cellName = codon::ir::LLVMVisitor::getNameForFunction(cell);
-        std::vector<std::size_t> needed;
-        if (baseJit != nullptr)
+        auto needed = neededBaseCells(*module, initializers, cellName, entrySymbol);
+        if (std::getenv("NES_TMP_SKIP_BASE_INIT") != nullptr) /// TEMPORARY: measures LLVM without base top-level code
         {
-            useBaseGlobals(*module);
-        }
-        else
-        {
-            needed = neededBaseCells(*module, initializers, cellName, entrySymbol);
-            if (std::getenv("NES_TMP_SKIP_BASE_INIT") != nullptr) /// TEMPORARY: measures LLVM without base top-level code
-            {
-                needed = {0};
-            }
+            needed = {0};
         }
         fprintf(stderr, "TMPTIME passes %.0f take %.0f link %.0f cells %zu/%zu/%zu funcs %zu\n", elapsedMilliseconds(compileStart, tPasses), elapsedMilliseconds(tPasses, tTake), elapsedMilliseconds(tTake, tLink), needed.size(), initializers, baseInitializers.size(), module->size());
         allocateVtablesPersistently(*module);
@@ -1310,23 +1091,6 @@ private:
         return cells;
     }
 
-    /// Turns the global variables of the base state, which the link copied into the module, into declarations of those in
-    /// the base JIT, whose addresses NES registers with the query compiler (getCodonBaseGlobalSymbols).
-    static void useBaseGlobals(llvm::Module& module)
-    {
-        const std::scoped_lock lock{baseGlobalMutex()};
-        const auto& addresses = baseGlobalAddresses();
-        for (auto& global : module.globals())
-        {
-            if (!global.isDeclaration() && addresses.contains(global.getName().str()))
-            {
-                global.setInitializer(nullptr);
-                global.setLinkage(llvm::GlobalValue::ExternalLinkage);
-                global.setComdat(nullptr);
-            }
-        }
-    }
-
     /// The initializer of a UDF: the top-level code of the stdlib, of the base cells that it needs, then of the UDF's cell.
     llvm::Function* createInitializer(llvm::Module& module, const std::vector<std::size_t>& baseCells, const std::string& cellName) const
     {
@@ -1369,14 +1133,7 @@ private:
     std::set<std::string> baseTypes;
     std::set<std::string> baseImports;
     std::unique_ptr<CodonStateSnapshot> snapshot;
-    std::unique_ptr<CodonBaseJit> baseJit;
 };
-}
-
-std::unordered_map<std::string, void*> getCodonBaseGlobalSymbols()
-{
-    const std::scoped_lock lock{baseGlobalMutex()};
-    return baseGlobalAddresses();
 }
 
 CodonCompilationResult compileWithCodon(
