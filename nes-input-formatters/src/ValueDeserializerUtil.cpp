@@ -15,6 +15,7 @@
 #include <ValueDeserializerUtil.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -28,9 +29,14 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include <DataTypes/VarVal.hpp>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ValueDeserializer.hpp>
 #include <ValueDeserializerRegistry.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -80,5 +86,31 @@ std::unique_ptr<ValueDeserializer> provideValueDeserializer(const std::string& d
         return (*deserializerFactory)(arguments);
     }
     throw UnknownValueDeserializerType("Unknown Value Deserializer: {}", deserializerType);
+}
+
+LazyFieldDeserializer::LazyFieldDeserializer(
+    const std::string& deserializerKey,
+    const ValueDeserializerConfig& config,
+    const std::vector<std::string>& nullValues,
+    const nautilus::val<Arena*>& arena)
+    : valueDeserializer(provideValueDeserializer(deserializerKey, config)), nullValues(&nullValues), arena(arena)
+{
+}
+
+VarVal LazyFieldDeserializer::deserialize(const nautilus::val<int8_t*>& ptr, const nautilus::val<uint64_t>& size) const
+{
+    return valueDeserializer->deserializeToVarVal(ptr, size, *nullValues, ArenaRef{arena});
+}
+
+VarVal createLazyFieldValue(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& deserializerKey,
+    const ValueDeserializerConfig& config,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena)
+{
+    auto deserializer = std::make_shared<const LazyFieldDeserializer>(deserializerKey, config, nullValues, arena.getArena());
+    return VarVal{LazyValueData{fieldAddress, fieldSize, std::move(deserializer)}, config.nullable, nautilus::val<bool>{false}};
 }
 }
