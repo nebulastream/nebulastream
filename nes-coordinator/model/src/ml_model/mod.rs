@@ -103,8 +103,8 @@ mod tests {
         let db = Database::for_test().await;
         let created = req.execute(&db).await.unwrap();
         let taken = code_of(req.execute(&db).await);
-        // A name that is taken is the caller's error,
-        // so it reports itself rather than reporting that some write did not go through.
+        // A taken name is the caller's error,
+        // so it has its own code, not the generic code of a rejected write.
         assert_eq!(taken, Some(ErrorCode::ModelAlreadyExists));
         let retry = CreateMlModel {
             input_schema: serde_json::json!({"different": "schema"}),

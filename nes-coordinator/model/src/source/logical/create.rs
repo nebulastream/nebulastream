@@ -59,7 +59,7 @@ impl Execute for CreateLogicalSource {
         ActiveModel::from(self.clone())
             .insert(conn)
             .await
-            // A logical source refers to nothing, so a reference cannot be what the write broke.
+            // A logical source has no foreign keys, so the write cannot fail on a missing reference.
             .map_err(catalog_write(
                 ErrorCode::SourceAlreadyExists,
                 ErrorCode::CatalogWriteRejected,

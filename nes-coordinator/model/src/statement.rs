@@ -37,7 +37,8 @@ use sea_orm::ConnectionTrait;
 
 /// A CRUD operation that a client issues to the coordinator.
 /// Running a variant yields the matching `StatementResult` variant.
-/// `ExplainQuery` holds finished text, and `GetWorkerVersion` needs the workers, so `execute_on` returns an error for it.
+/// `ExplainQuery` already holds its text, so running it does not touch the catalog.
+/// `GetWorkerVersion` needs the workers themselves, so running it against the catalog returns an error.
 #[derive(Clone, Debug, serde::Deserialize)]
 #[serde(tag = "tag")]
 pub enum ParsedStatement {
@@ -65,7 +66,7 @@ pub enum ParsedStatement {
     DropMlModel(DropMlModel),
 }
 
-/// Typed result paired one-to-one with each `ParsedStatement` variant.
+/// The result of running a statement.
 #[derive(Clone, Debug, serde::Serialize)]
 pub enum StatementResult {
     CreatedLogicalSource(logical::Model),
@@ -94,14 +95,11 @@ pub enum StatementResult {
 }
 
 impl ParsedStatement {
-    /// Run each statement of the client inside a transaction.
-    /// This avoids all kinds of anomalies, like data races and partial writes.
-    /// Also includes triggers within the same transaction, if any are defined.
-    /// Example: a `SELECT ...` SQL statement (wrapped in `CreateQuery`) does multiple related
-    /// DB operations like writing to the query, query_fragment, query_source, query_sink tables.
-    /// Moreover, it consumes operator slots on the workers where fragments are placed on.
-    /// Transactions protect us against any kind of intermediate failure or concurrent update,
-    /// like another operation releasing worker capacities at the same time we are consuming them.
+    /// Runs the statement and the triggers that it fires in one transaction.
+    /// A statement can write several rows: creating a query writes the query, its fragments and their links,
+    /// and takes operator slots on the workers.
+    /// A failure part way through leaves none of these rows behind,
+    /// and no concurrent statement changes the same slots in between.
     pub async fn execute_with(self, db: &Database) -> Result<StatementResult> {
         let txn = db.begin().await?;
         let response = self.execute_on(&txn).await?;

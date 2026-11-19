@@ -78,8 +78,8 @@ impl FromStr for NetworkAddr {
 
     /// Accepts `host:port` (hostname or IPv4)
     /// and the bracketed form `[host]:port` required for IPv6 literals.
-    /// A bare host that itself contains a colon (an unbracketed IPv6 address) is rejected
-    /// rather than mis-split on its last colon.
+    /// A bare host that itself contains a colon (an unbracketed IPv6 address) is rejected,
+    /// not split at its last colon.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (host, port_str) = if let Some(rest) = s.strip_prefix('[') {
             let close = rest.find(']').ok_or("Missing closing ']' in address")?;

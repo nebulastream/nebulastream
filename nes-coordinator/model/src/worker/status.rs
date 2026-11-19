@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The read request that returns a worker together with the fragments
-//! currently placed on it.
+//! The read request that returns a worker together with the fragments currently placed on it.
 
 use crate::Execute;
 use crate::error::{CodedError, ErrorCode};

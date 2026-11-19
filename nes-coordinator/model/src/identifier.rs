@@ -13,7 +13,7 @@
 */
 
 //! Strong id types over `i64`.
-//! This way, id's of different entities cannot be mixed up at compile time.
+//! Ids of different entities have different types, so the compiler rejects a mix-up.
 
 use sea_orm::sea_query::{ArrayType, Nullable, ValueType, ValueTypeErr};
 use sea_orm::{ColIdx, ColumnType, DbErr, QueryResult, TryFromU64, TryGetError, TryGetable, Value};
@@ -22,7 +22,7 @@ use std::fmt;
 use std::ops::Deref;
 
 /// Defines one id type.
-/// It is serialized and stored as a plain i64 (we use i64 since this is what most DBs give you!)
+/// It is serialized and stored as a plain i64, the type of SQLite's integer primary keys.
 macro_rules! define_id {
     ($name:ident) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -79,7 +79,7 @@ macro_rules! define_id {
 
         impl TryGetable for $name {
             fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
-                // Through the trait, a NULL stays a null error, which an optional id decodes as None.
+                // Delegating to i64 keeps a NULL as `TryGetError::Null`, which an optional id decodes as `None`.
                 i64::try_get_by(res, index).map(Self)
             }
         }

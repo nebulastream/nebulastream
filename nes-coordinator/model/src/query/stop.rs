@@ -31,8 +31,7 @@ use super::get::GetQuery;
 /// A stopped query stays in the catalog.
 ///
 /// The returned queries reflect their state at stop time, so they are usually still running.
-/// A caller that waits for the stop to finish
-/// receives the queries in their final, reconciled state instead.
+/// A caller that waits for the stop to finish receives the queries in their final, reconciled state instead.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct StopQuery {

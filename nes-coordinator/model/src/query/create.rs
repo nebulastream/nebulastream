@@ -34,13 +34,12 @@ pub struct CreateQuery {
     pub sql: String,
     #[serde(default)]
     pub fragments: Vec<CreateQueryFragment>,
-    /// The sources that this query reads, and the sinks that it writes into, each listed once.
-    /// A query may read one source more than once (a union of a stream with itself, for example),
-    /// and the plan records every one of those reads.
-    /// The link table answers which sources a query uses rather than how often it reads each one,
-    /// so a set is what is stored here.
+    /// Each source that the query reads, listed once.
+    /// A query can read one source more than once (a union of a stream with itself, for example),
+    /// but the link table records which sources a query uses, not how often it reads each one.
     #[serde(default)]
     pub source_ids: BTreeSet<SourceId>,
+    /// Each sink that the query writes into, listed once.
     #[serde(default)]
     pub sink_ids: BTreeSet<SinkId>,
 }

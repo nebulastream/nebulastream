@@ -58,14 +58,13 @@
 //! Invariants that span rows are enforced in the database,
 //! by SQL triggers defined in the `migration` crate. They:
 //!
-//! - validate query and query-query_fragment state transitions (illegal ones abort);
+//! - validate query and fragment state transitions (illegal ones abort);
 //! - derive a query's state, start/stop timestamps, and per-host errors from its fragments;
-//! - debit a worker's `max_operators` when a query_fragment is placed
-//!   and credit it back when the query_fragment ends;
+//! - debit a worker's `max_operators` when a fragment is placed,
+//!   and credit it back when the fragment ends;
 //! - stop a query's fragments when it fails, fail a removed worker's fragments,
-//!   and delete query-owned sources and sinks when their last query is deleted.
-//!
-//! Worker state is not validated: the controller writes the observed state and the model trusts it.
+//!   and delete a dropped query once all of its fragments have terminated;
+//! - reject the drop of a source or sink that a non-terminal query uses.
 
 pub mod database;
 pub mod error;
@@ -118,7 +117,6 @@ where
 }
 
 /// Single entry point for every catalog request.
-/// Implementors take any connection-like handle and produce a typed response.
 ///
 /// Atomicity is the caller's responsibility:
 /// multistep implementations issue several inserts in sequence
@@ -146,7 +144,7 @@ pub enum ConnectorKind {
     Shared,
     /// Owned by exactly one query and cleaned up with it.
     Anonymous,
-    /// Like anonymous, but reserved for system-generated connectors like `NetworkSource`
-    /// that are hidden from user-facing listings.
+    /// Like anonymous, but reserved for system-generated connectors such as `NetworkSource`,
+    /// which are hidden from user-facing listings.
     Internal,
 }

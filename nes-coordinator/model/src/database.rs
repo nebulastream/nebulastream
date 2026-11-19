@@ -29,12 +29,12 @@ use std::str::FromStr;
 use std::time::Duration;
 
 // SQLite serializes writers, so a big pool is not useful.
-// Keep one connection open, cap the file pool at 8.
 const SQLITE_MIN_CONNECTIONS: u32 = 1;
 const SQLITE_MAX_CONNECTIONS: u32 = 8;
 // Wait up to 5s for a write lock.
 const SQLITE_BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
+/// Where the catalog is stored.
 #[derive(Debug)]
 pub enum StateBackend {
     /// In-process and non-persistent: all state is lost when the process exits.
@@ -92,6 +92,7 @@ impl ConnectionTrait for Database {
 }
 
 impl Database {
+    /// Connects to the catalog without bringing its schema up to date.
     pub async fn with(backend: StateBackend) -> Result<Self> {
         match backend {
             StateBackend::Memory => {

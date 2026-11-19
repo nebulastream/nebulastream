@@ -14,8 +14,9 @@
 
 //! The read request that reports which build each worker runs.
 //!
-//! A version is not stored in the catalog, so answering means asking the workers themselves.
-//! This request only selects which ones to ask; the asking happens where the worker connections are.
+//! A version is not stored in the catalog, so only the workers themselves can report it.
+//! This request selects the workers to contact,
+//! and the component that holds the worker connections requests their versions.
 
 use crate::Execute;
 use crate::worker::endpoint::NetworkAddr;
@@ -47,7 +48,7 @@ impl GetWorkerVersion {
 
 impl IntoCondition for GetWorkerVersion {
     fn to_condition(&self) -> Condition {
-        // Every worker is asked, whatever state the catalog last recorded for it.
+        // Every worker is contacted, whatever state the catalog last recorded for it.
         // A worker that is registered but not yet up is exactly the one a caller wants to see,
         // and reporting that it could not be reached says that, while leaving it out says nothing.
         Condition::all().add_option(self.host_addr.clone().map(|v| Column::HostAddr.eq(v)))
@@ -55,7 +56,7 @@ impl IntoCondition for GetWorkerVersion {
 }
 
 impl Execute for GetWorkerVersion {
-    /// The workers to ask, not their versions.
+    /// The workers to contact, not their versions.
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
         crate::get_all::<worker::Entity>(self, conn)
@@ -64,10 +65,9 @@ impl Execute for GetWorkerVersion {
     }
 }
 
-/// What one worker answered when asked for its version.
+/// One worker's version, or the reason why it could not be reached.
 ///
-/// A worker that could not be reached reports why instead of a version,
-/// so one unreachable worker does not hide what the others answered.
+/// An unreachable worker does not fail the request, so the versions of the other workers are still returned.
 /// Exactly one of the two is set.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct WorkerVersion {

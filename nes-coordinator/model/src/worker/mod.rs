@@ -66,7 +66,7 @@ pub struct Model {
     pub host_addr: NetworkAddr,
     #[sea_orm(unique)]
     pub data_addr: NetworkAddr,
-    /// How many more operators this worker can host, decremented by each query_fragment placement.
+    /// How many more operators this worker can host, decremented by each fragment placement.
     /// `None` means unbounded, so the arithmetic is skipped.
     pub max_operators: Option<i32>,
     #[sea_orm(column_type = "JsonBinary")]
@@ -126,8 +126,8 @@ impl WorkerTransition {
 
 impl ActiveModel {
     /// Records the worker's observed state, as reported by the controller.
-    /// Worker state is trusted, not validated against a transition graph like a query query_fragment's:
-    /// the controller is the sole writer, and every state is reachable,
+    /// Unlike a fragment's state, no trigger checks the transition:
+    /// the controller is the only writer, and every state is reachable,
     /// since a worker can recover from unreachable and a removed address can be registered again.
     pub fn apply_transition(&mut self, transition: WorkerTransition) {
         self.current_state = sea_orm::Set(transition.state());
@@ -479,9 +479,9 @@ mod tests {
         assert_eq!(rejected, Some(ErrorCode::UnknownWorker));
         for f in &after {
             assert_eq!(f.current_state, QueryFragmentState::Failed);
-            // Cascade-failed fragments must have the same stop timestamp and error
-            // as fragments failed through the application path.
-            // Otherwise the per-host error aggregation below skips them without any error.
+            // The worker-removal trigger must set a stop timestamp and an error,
+            // like the application does when it fails a fragment.
+            // Without the error, the query's error below is not derived from these fragments.
             assert!(
                 f.stop_timestamp.is_some(),
                 "cascade-failed fragment missing stop_timestamp"

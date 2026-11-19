@@ -68,7 +68,7 @@ impl Execute for CreateSink {
         ActiveModel::from(self.clone())
             .insert(conn)
             .await
-            // A sink refers to the worker that it is placed on, which is the only reference it can miss.
+            // A sink refers to the worker that it is placed on, which is the only reference that it can miss.
             .map_err(catalog_write(
                 ErrorCode::SinkAlreadyExists,
                 ErrorCode::UnknownWorker,

@@ -40,7 +40,8 @@ use query_state::QueryState;
 use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
-/// A submitted query. It owns a set of fragments, sources, and sinks.
+/// A submitted query.
+/// It owns its fragments, and its anonymous and internal sources and sinks.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query")]
 pub struct Model {
@@ -72,7 +73,7 @@ impl Related<query_fragment::Entity> for Entity {
 impl ActiveModelBehavior for ActiveModel {}
 
 /// A query row and its fragment rows.
-/// Every query read and create returns this shape; the fragments are empty when a read did not ask for them.
+/// Every query read and create returns this shape; the fragments are empty unless the read includes them.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct QueryWithFragments {
     pub query: Model,
@@ -317,7 +318,8 @@ mod tests {
                     .all(|f| f.desired_state == DesiredQueryFragmentState::Stopped)
             );
         }
-        // The controller writes the last state change like this one, and the write still returns its row.
+        // The controller records the last fragment's stop like this.
+        // The write still returns its row, although the trigger deletes the query and the fragment with it.
         last.with_state(QueryFragmentState::Stopped)
             .update(&db)
             .await
@@ -409,7 +411,7 @@ mod tests {
             }
         };
 
-        // Fail every query_fragment in turn, each with its own message.
+        // Fail every fragment in turn, each with its own message.
         for (idx, frag) in fragments.iter().enumerate() {
             let mut update: query_fragment::ActiveModel = frag.clone().into();
             update.apply_transition(QueryFragmentTransition::failed_now(error(idx)));

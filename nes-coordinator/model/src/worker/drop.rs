@@ -20,8 +20,8 @@ use sea_orm::sea_query::Expr;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
-/// Soft removal: sets the target state to `Removed` rather than deleting the row.
-/// Any active fragments on the worker are then failed automatically.
+/// Sets the worker's target state to `Removed` and keeps the row.
+/// A trigger then fails every non-terminal fragment on the worker.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DropWorker {

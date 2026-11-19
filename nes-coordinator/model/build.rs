@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-//! Generates the Rust view of the project's error codes from the same list the
-//! C++ enum is generated from, so the two cannot name different numbers.
+//! Generates the Rust error codes from the list that the C++ enum is generated from,
+//! so a code has the same number on both sides.
 
 use std::path::Path;
 
-/// The list of every error the system defines, as `EXCEPTION(Name, code, "text")` entries.
+/// Every error that the system defines, as `EXCEPTION(Name, code, "text")` entries.
 const DEFINITIONS: &str = "../../nes-common/include/ExceptionDefinitions.inc";
 
 /// Reads one entry, or nothing when the line is a comment, a guard or blank.
@@ -45,9 +45,8 @@ fn main() {
     let mut out = String::from(
         "// Generated from ExceptionDefinitions.inc by build.rs. Do not edit.\n\
          \n\
-         /// An error the system defines, identified by the code it reports.\n\
-         /// Generated from the list the C++ `ErrorCode` enum is generated from, so a code means\n\
-         /// the same thing on both sides of the bridge.\n\
+         /// An error that the system defines, identified by its code.\n\
+         /// The C++ `ErrorCode` enum is generated from the same list, so a code means the same thing on both sides of the bridge.\n\
          #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]\n\
          #[repr(u16)]\n\
          #[allow(dead_code, clippy::doc_markdown)]\n\
@@ -60,9 +59,9 @@ fn main() {
 
     out.push_str(
         "impl ErrorCode {\n\
-         \x20   /// The code a number stands for.\n\
-         \x20   /// A number this list does not define reads as `UnknownException`, which cannot happen while\n\
-         \x20   /// both sides are generated from the same file and is reported rather than assumed away.\n\
+         \x20   /// The error with this code.\n\
+         \x20   /// A number outside the list becomes `UnknownException`.\n\
+         \x20   /// That cannot happen while both sides are generated from the same file, but it is reported, not assumed away.\n\
          \x20   #[must_use]\n\
          \x20   pub const fn from_code(code: u16) -> Self {\n\
          \x20       match code {\n",

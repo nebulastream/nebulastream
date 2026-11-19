@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-//! The query-query_fragment entity and its lifecycle types.
+//! The query fragment entity and its lifecycle types.
 
 use crate::error::CodedError;
 use crate::identifier::QueryFragmentId;
@@ -25,7 +25,7 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use thiserror::Error;
 
-/// Why a query_fragment failed: an error inside the worker, or a failure to reach it.
+/// Why a fragment failed: an error inside the worker, or a failure to reach it.
 #[derive(Debug, Clone, Error, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub enum QueryFragmentError {
     #[error("Internal worker error; code: {}, msg: {}, stacktrace: {}", .0.code as u16, .0.msg, .0.trace)]
@@ -42,7 +42,7 @@ pub struct ActionableFragment {
     pub desired_state: DesiredQueryFragmentState,
 }
 
-/// The failure that ended a query: the first query_fragment that failed, and where it ran.
+/// The failure that ended a query: the first fragment that failed, and where it ran.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct QueryError {
     pub host_addr: NetworkAddr,
@@ -56,8 +56,8 @@ impl std::fmt::Display for QueryError {
 }
 
 /// One execution unit of a query, placed on a single worker.
-/// The worker's `max_operators` is decremented on insert
-/// and restored automatically once the query_fragment reaches a terminal state.
+/// Triggers decrement the worker's `max_operators` on insert,
+/// and restore it once the fragment terminates or is deleted.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query_fragment")]
 pub struct Model {
@@ -113,9 +113,8 @@ impl Related<crate::worker::Entity> for Entity {
 
 #[async_trait::async_trait]
 impl ActiveModelBehavior for ActiveModel {
-    /// Reject saves whose declared state would leave required columns unset
-    /// (running needs a start timestamp; terminal needs a stop timestamp; failed also needs an error).
-    /// Avoids inserting rows with surprising NULLs.
+    /// Rejects a save whose state would leave a required column NULL:
+    /// running needs a start timestamp, terminal needs a stop timestamp, and failed also needs an error.
     async fn before_save<C>(self, _db: &C, _insert: bool) -> Result<Self, DbErr>
     where
         C: ConnectionTrait,
@@ -154,10 +153,9 @@ impl ActiveModelBehavior for ActiveModel {
     }
 }
 
-/// The state to move a query_fragment to, with the columns that state requires
-/// (a start or stop timestamp, an error).
-/// A terminal transition may also bring the start timestamp,
-/// because a short query_fragment can finish before it was ever observed running.
+/// The state to move a fragment to, with the columns that the state requires.
+/// A terminal transition may also set the start timestamp,
+/// because a short fragment can finish before it was ever observed running.
 /// Whether the step from the current state is legal is checked by a database trigger, not here.
 #[derive(Debug, Clone)]
 pub enum QueryFragmentTransition {
@@ -359,10 +357,10 @@ impl CreateQueryFragment {
     }
 }
 
-/// Observed lifecycle state of a query_fragment.
+/// Observed lifecycle state of a fragment.
 /// The initial variant is the column default at insert time;
 /// later values are written when the worker reports a state change.
-/// The declaration order matches lifecycle progression (initial < registered < running < terminal),
+/// The declaration order matches lifecycle progression (Pending < Started < Running < terminal),
 /// which the test walker relies on to skip already-reached states.
 ///
 /// Which transitions are legal is enforced by a database trigger, which is the authority;
@@ -399,9 +397,10 @@ pub enum QueryFragmentState {
 #[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 #[strum(serialize_all = "PascalCase")]
 pub enum DesiredQueryFragmentState {
-    /// Run until the input ends. The column default for a new query_fragment.
+    /// Run until the input ends. The column default for a new fragment.
     Completed,
-    /// Stop at the current position. Set by a query drop and by the query-failed cascade trigger.
+    /// Stop at the current position.
+    /// Set by a query stop or drop, and by the trigger that stops the fragments of a failed query.
     Stopped,
 }
 
@@ -414,19 +413,18 @@ impl QueryFragmentState {
 impl TryFrom<i32> for QueryFragmentState {
     type Error = i32;
 
-    /// Maps the worker's proto `QueryState` enum to the coordinator's query_fragment state.
+    /// Maps the worker's proto `QueryState` enum to the state of a fragment.
     /// Proto: Registered=0, Started=1, Running=2, Stopped=3, Failed=4.
     /// Registered maps to Started.
     /// Proto Started is an internal worker detail, so both Started and Running map to Running.
     ///
     /// Proto has no `Completed`:
-    /// the worker reports the same value (3)
-    /// for a query_fragment that finished on its own and one that was told to stop.
-    /// It is decoded as `Completed` here;
-    /// the controller later records it as `Stopped` instead when the query_fragment was asked to stop.
+    /// the worker reports Stopped (3) for a fragment that finished on its own and for one that was stopped.
+    /// It is decoded as `Completed` here,
+    /// and the controller records it as `Stopped` when the fragment's desired state is Stopped.
     ///
-    /// An unrecognized value means the worker speaks a newer or incompatible protocol;
-    /// it is returned as the error so the caller can handle it instead of crashing the coordinator.
+    /// An unknown value means that the worker uses a newer or incompatible protocol.
+    /// It is returned as the error so the caller can handle it instead of crashing the coordinator.
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(QueryFragmentState::Started),

@@ -22,7 +22,7 @@ use serde::Deserialize;
 use super::get::GetQuery;
 
 /// Stops the matched queries and marks them dropped.
-/// The catalog deletes a dropped query, its fragments, and the sources and sinks it owns
+/// The catalog deletes a dropped query, its fragments, and the sources and sinks that it owns
 /// once every fragment has terminated, in this transaction if that is already the case.
 ///
 /// The returned queries reflect their state at drop time.

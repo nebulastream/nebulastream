@@ -31,7 +31,7 @@ pub struct CodedError {
     #[serde(with = "code_number")]
     pub code: ErrorCode,
     pub msg: String,
-    /// A C++ failure's stacktrace, empty for an error from rust.
+    /// A C++ failure's stacktrace, empty for an error from Rust.
     pub trace: String,
 }
 
@@ -65,7 +65,7 @@ mod code_number {
     }
 }
 
-/// Why the database/catalog refused a write.
+/// Why the catalog rejected a write.
 enum Violation {
     /// A row with that key is already there.
     Duplicate,
@@ -92,12 +92,12 @@ fn violation(err: &DbErr) -> Option<Violation> {
     None
 }
 
-/// Why a catalog write failed, which decides whether writing again can help.
+/// Why a catalog write failed, and so whether writing again can help.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WriteFailure {
     /// The row no longer exists.
     RowGone,
-    /// A trigger, a constraint or a model hook refused the row, so writing it again fails the same way.
+    /// A trigger, a constraint or a model hook rejected the row, so writing it again fails the same way.
     Rejected,
     /// The write may succeed later, for example when the database is busy or a connection is lost.
     Transient,
@@ -165,8 +165,6 @@ mod tests {
     use super::{CodedError, ErrorCode, WriteFailure, classify_write};
     use sea_orm::{DbErr, RuntimeErr};
 
-    /// The numbers are the contract with C++, so a few are pinned.
-    /// A change here means the shared list changed and the C++ side changed with it.
     #[test]
     fn a_failed_write_is_classified_by_whether_retrying_can_help() {
         assert_eq!(
@@ -183,6 +181,8 @@ mod tests {
         );
     }
 
+    /// The numbers are the contract with C++, so a few are pinned.
+    /// A change here means the shared list changed and the C++ side changed with it.
     #[test]
     fn codes_match_shared_list() {
         assert_eq!(ErrorCode::PlacementFailure as u16, 2300);

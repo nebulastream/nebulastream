@@ -24,8 +24,7 @@ use proptest::sample::{Index, select};
 use proptest::strategy::BoxedStrategy;
 use sea_orm::Iterable;
 
-/// Test fixture that bundles a `CreateQuery` with every catalog row that it depends on
-/// (workers, logical source, physical sources, sink).
+/// Test fixture that bundles a `CreateQuery` with every catalog row that it depends on.
 /// The `setup` helpers insert them in dependency order.
 #[derive(Debug, Clone)]
 pub struct CreateQueryWithRefs {
@@ -74,7 +73,7 @@ impl Arbitrary for CreateQueryWithRefs {
                 )| {
                     // Track each worker's remaining `max_operators` so generated fixtures stay within it;
                     // otherwise the insert is rejected.
-                    // The per-query_fragment cap keeps test cases small.
+                    // The per-fragment cap keeps test cases small.
                     let mut remaining: Vec<i32> = workers
                         .iter()
                         .map(|worker| worker.max_operators.unwrap_or(i32::MAX))

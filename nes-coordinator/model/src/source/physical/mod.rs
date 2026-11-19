@@ -186,8 +186,7 @@ mod tests {
         };
         assert_eq!(retry.execute(&db).await.unwrap(), original);
 
-        // Same (logical, host, type) but a different config is a distinct source
-        // (for example two FILE sources that read different paths).
+        // Same (logical, host, type) but a different config is a distinct source.
         let variant = serde_json::json!({ "variant": 1 });
         let changed = [
             CreatePhysicalSource {
