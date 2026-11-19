@@ -21,6 +21,9 @@ compile. The source file stays as it is. Each rewrite keeps the result of the UD
 - The test `if x:` (also `while x:`, `... if x else ...` and `not x`) of a variable becomes `x is not None and x`. Numba
   0.68.1 raises TypeError for the truth value of an optional string that is None.
 - `type(x) == list` (also tuple, dict, str) becomes `isinstance(x, list)`. Numba does not compare types.
+- In a function that asks a JSON value for its kind (is_list(), is_dict(), ...), json.loads(x) becomes json_value(x)
+  (json_value_ext).
+- A plain Python function of the UDF's module that the UDF calls (a helper) is compiled with this front end too.
 - A global set or frozenset of strings becomes a sorted string blob with an offset array, and `x in s` / `x not in s`
   becomes a binary search on it (Numba does not freeze sets as constants, and freezes tuples only up to 1000 items).
 """
@@ -31,6 +34,8 @@ import textwrap
 
 import numba
 import numpy
+
+from nes_numba_ext.json_value_ext import json_value
 
 from numba.core.extending import register_jitable
 
@@ -72,6 +77,24 @@ class _TypeComparisons(ast.NodeTransformer):
                 and right.id in ("list", "tuple", "dict", "str"):
             call = ast.Call(func=ast.Name(id="isinstance", ctx=ast.Load()), args=[left.args[0], right], keywords=[])
             return ast.copy_location(call, node)
+        return node
+
+
+_KIND_METHODS = {"is_null", "is_bool", "is_int", "is_float", "is_number", "is_str", "is_list", "is_dict"}
+
+
+def _asks_json_kind(function):
+    return any(isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in _KIND_METHODS
+               for node in ast.walk(function))
+
+
+class _JsonValues(ast.NodeTransformer):
+    def visit_Call(self, node):
+        self.generic_visit(node)
+        target = node.func
+        if isinstance(target, ast.Attribute) and target.attr == "loads" and isinstance(target.value, ast.Name) \
+                and target.value.id == "json":
+            node.func = ast.copy_location(ast.Name(id="_nes_json_value", ctx=ast.Load()), target)
         return node
 
 
@@ -208,8 +231,11 @@ def _hoist_imports(function, imports):
             _hoist_imports(node, imports)
 
 
-def njit(function):
+def njit(function, _compiled=None):
     """numba.njit of `function` after the rewrites above."""
+    compiled = {} if _compiled is None else _compiled
+    if function in compiled:
+        return compiled[function]
     tree = ast.parse(textwrap.dedent(inspect.getsource(function)))
     definition = tree.body[0]
     imports = []
@@ -218,12 +244,22 @@ def njit(function):
     _EmptyLists().visit(definition)
     _OptionalTruth().visit(definition)
     _TypeComparisons().visit(definition)
+    if _asks_json_kind(definition):
+        _JsonValues().visit(definition)
     lifted = []
     _lift(definition, lifted)
     sets = {name for name, value in function.__globals__.items() if _is_string_set(value)}
     namespace = {name: _freeze(value) if name in sets else value for name, value in function.__globals__.items()}
     namespace["_nes_frozen_contains"] = _frozen_contains
     namespace["_nes_empty_string_list"] = _empty_string_list
+    namespace["_nes_json_value"] = json_value
+    # Helpers: plain functions of the UDF's module that it uses, compiled with this front end. A placeholder in `compiled`
+    # stops a cycle; Numba resolves the name at compile time, after every helper is in the namespace.
+    compiled[function] = None
+    for name in _loaded_names(definition):
+        value = namespace.get(name)
+        if inspect.isfunction(value) and value is not function and value.__module__ == function.__module__:
+            namespace[name] = njit(value, compiled)
     for node in lifted + [definition]:
         _SetMembership(sets).visit(node)
     for node in imports:
@@ -233,4 +269,5 @@ def njit(function):
         exec(compile(ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[])), inspect.getsourcefile(function), "exec"), namespace)
         namespace[node.name] = numba.njit(namespace[node.name])
     exec(compile(ast.fix_missing_locations(ast.Module(body=[definition], type_ignores=[])), inspect.getsourcefile(function), "exec"), namespace)
-    return numba.njit(namespace[definition.name])
+    compiled[function] = numba.njit(namespace[definition.name])
+    return compiled[function]

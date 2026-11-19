@@ -12,7 +12,8 @@
 """Compiles the unchanged UDFBench scalar UDFs with Numba (nopython mode, with the nes_numba_ext extensions) and checks
 them against CPython on the tiny StreamUDFBench data.
 
-Usage: run.py [UDF ...]. Prints one JSON line per UDF: compile time (wall and CPU), rows checked, mismatches with the first
+Usage: run.py [--adapted] [UDF ...]. With --adapted, it compiles the functions of udfbench_scalar_inline_adapted.py instead
+(addnoise, jaccard and jsonparse by default) and checks them against the unchanged UDFBench functions under CPython. Prints one JSON line per UDF: compile time (wall and CPU), rows checked, mismatches with the first
 ones, the time of one pass over all checked rows with Numba and with CPython (the fastest of REPEATS passes, calls from
 Python included), and the error if the UDF does not compile. Rows with a NULL argument are skipped: the query result is NULL for them.
 addnoise draws random numbers; its results are only checked to be floats.
@@ -40,14 +41,16 @@ def same(expected, got):
     return expected == got and type(expected) is type(got)
 
 
-def check(name):
+def check(name, adapted=False):
     source, columns, kinds = udfs.UDFS[name]
-    signature = [types.none] + [TYPES[kind] for kind in kinds]
+    signature = ([] if adapted else [types.none]) + [TYPES[kind] for kind in kinds]
     if name == "frequentterms":
         signature.append(types.int64)
-    function = udfs.function(name)
+    reference = udfs.function(name)
+    function = udfs.adapted_function(name) if adapted else reference
     dispatcher = nes_numba_ext.njit(function)
-    result = {"udf": name, "numba": numba.__version__}
+    self_arguments = () if adapted else (None,)
+    result = {"udf": name, "numba": numba.__version__, "adapted": adapted}
     wall, cpu = time.perf_counter(), time.process_time()
     try:
         dispatcher.compile(tuple(signature))
@@ -63,11 +66,11 @@ def check(name):
             continue
         checked += 1
         try:
-            expected = function(None, *row)
+            expected = reference(None, *row)
         except Exception as error:  # noqa: BLE001
             expected = f"raises {type(error).__name__}"
         try:
-            got = dispatcher(None, *row)
+            got = dispatcher(*self_arguments, *row)
         except Exception as error:  # noqa: BLE001
             got = f"raises {type(error).__name__}"
         ok = isinstance(got, float) if name == "addnoise" and expected is not None else same(expected, got)
@@ -78,12 +81,13 @@ def check(name):
     result.update(rows=checked, mismatches=mismatches, examples=examples)
     rows = [row for row in udfs.inputs(name) if all(value is not None for value in row)]
     for key, call in (("numba_pass_ms", dispatcher), ("cpython_pass_ms", function)):
+        call = (lambda target: lambda *row: target(*self_arguments, *row))(call)
         best = math.inf
         for _ in range(REPEATS):
             start = time.perf_counter()
             for row in rows:
                 try:
-                    call(None, *row)
+                    call(*row)
                 except Exception:  # noqa: BLE001, S110 - a raising row costs time like any other row
                     pass
             best = min(best, time.perf_counter() - start)
@@ -92,5 +96,8 @@ def check(name):
 
 
 if __name__ == "__main__":
-    for udf in sys.argv[1:] or list(udfs.UDFS):
-        print(json.dumps(check(udf)), flush=True)
+    arguments = sys.argv[1:]
+    adapted = "--adapted" in arguments
+    names = [argument for argument in arguments if argument != "--adapted"]
+    for udf in names or list(udfs.ADAPTED if adapted else udfs.UDFS):
+        print(json.dumps(check(udf, adapted)), flush=True)

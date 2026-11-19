@@ -12,5 +12,5 @@
 """Numba extensions that let the unchanged UDFBench scalar UDFs compile in nopython mode, as the NES Codon plugins do for
 Codon: json for arrays of strings, re for literal patterns, int(str), and collections.Counter with heapq.nlargest."""
 
-from nes_numba_ext import builtins_ext, collections_ext, json_ext, re_ext  # noqa: F401
+from nes_numba_ext import builtins_ext, collections_ext, json_ext, json_value_ext, re_ext  # noqa: F401
 from nes_numba_ext.frontend import njit  # noqa: F401

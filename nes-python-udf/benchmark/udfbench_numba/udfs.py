@@ -102,3 +102,13 @@ def function(name):
     """The unchanged UDFBench function."""
     module = __import__(f"StreamUDFBench.scalar.{name}", fromlist=[name])
     return getattr(module, name)
+
+
+# The UDFs of udfbench_scalar_inline_adapted.py, which take no `self`.
+ADAPTED = ("addnoise", "jaccard", "jsonparse")
+
+
+def adapted_function(name):
+    """The adapted function of udfbench_scalar_inline_adapted.py."""
+    module = __import__("StreamUDFBench.udfbench_scalar_inline_adapted", fromlist=[name])
+    return getattr(module, name)
