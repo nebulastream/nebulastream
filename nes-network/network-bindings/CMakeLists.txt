@@ -21,3 +21,6 @@ target_include_directories(nes-network-bindings
         PUBLIC include
 )
 target_link_libraries(nes-network-bindings PUBLIC nes-memory nes-common nes-network-interface)
+target_link_rust_lib(nes-network-bindings nes_network_bindings)
+
+add_tests_if_enabled(tests)
