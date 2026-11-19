@@ -29,6 +29,7 @@
 #include <exception>
 #include <limits>
 #include <mutex>
+#include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
@@ -40,6 +41,7 @@
 #include <fmt/format.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <PythonUdfAbi.hpp>
 
 /// Codon runtime ABI: pointers passed as integers, LEB128 decoding loops, and the C symbol table handed to Codon.
 /// NOLINTBEGIN(performance-no-int-to-ptr,cppcoreguidelines-avoid-do-while,modernize-avoid-c-arrays,clang-analyzer-core.NullDereference,cppcoreguidelines-pro-type-reinterpret-cast,cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-avoid-non-const-global-variables,readability-magic-numbers,hicpp-signed-bitwise,readability-identifier-naming)
@@ -619,12 +621,12 @@ std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols()
         {.name = "isspace", .address = reinterpret_cast<void*>(static_cast<int (*)(int)>(&::isspace))},
         {.name = "isupper", .address = reinterpret_cast<void*>(static_cast<int (*)(int)>(&::isupper))},
     };
+    /// The compiler validates UDFs against PythonUdfRuntimeSymbolNames, so the table must define exactly those names.
+    static const bool matchesAbi = std::ranges::equal(
+        std::span{symbols} | std::views::transform([](const PythonUdfRuntimeSymbol& symbol) { return symbol.name; }),
+        PythonUdfRuntimeSymbolNames);
+    INVARIANT(matchesAbi, "The Python UDF runtime symbols differ from PythonUdfRuntimeSymbolNames");
     return symbols;
-}
-
-bool isPythonUdfRuntimeSymbol(const std::string_view name)
-{
-    return std::ranges::any_of(getPythonUdfRuntimeSymbols(), [name](const auto& symbol) { return symbol.name == name; });
 }
 }
 

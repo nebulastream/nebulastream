@@ -22,37 +22,21 @@ INTO file();
 ----
 10000
 
-CREATE LOGICAL SOURCE rejected_numbers(n UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR rejected_numbers TYPE File;
-ATTACH INLINE
-1
-
+# Rejected at registration: an uncollectable allocation would outlive the UDF invocation.
 CREATE FUNCTION udf_2 (n UINT64) RETURNS UINT64 EXECUTION INLINE AS $python$
     from internal.gc import add_roots, alloc_uncollectable
     allocation = alloc_uncollectable(8)
     add_roots(allocation, allocation)
     return n
 $python$;
-
-SELECT udf_2(n) AS result
-FROM rejected_numbers
-INTO file();
 ----
 ERROR QueryCompilerError
 
-CREATE LOGICAL SOURCE unsupported_runtime(n UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR unsupported_runtime TYPE File;
-ATTACH INLINE
-1
-
+# Rejected at registration: sleep needs a runtime function that NES does not provide to UDFs.
 CREATE FUNCTION udf_3 (n UINT64) RETURNS UINT64 EXECUTION INLINE AS $python$
 from time import sleep
 sleep(0.0)
 return n
 $python$;
-
-SELECT udf_3(n) AS result
-FROM unsupported_runtime
-INTO file();
 ----
 ERROR QueryCompilerError

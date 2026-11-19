@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -44,6 +45,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/Error.h>
@@ -52,6 +54,7 @@
 #include <llvm/Transforms/IPO/StripDeadPrototypes.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <ErrorHandling.hpp>
+#include <PythonUdfAbi.hpp>
 #include <PythonUdfFilesystem.hpp>
 #include <UdfBridgeRegistry.hpp>
 #include <UdfDescriptor.hpp>
@@ -602,6 +605,64 @@ std::filesystem::path pythonUdfSourceDirectory()
 
 }
 
+void validatePythonUdfModule(const llvm::Module& module, const std::string& symbol)
+{
+    static const std::unordered_set<std::string_view> BannedFunctions{
+        "seq_alloc_uncollectable", "seq_alloc_atomic_uncollectable", "seq_register_finalizer"};
+    /// The libc character classification and case mapping functions Codon's str methods call, and modf, which numpy's
+    /// module initialization calls and the LLVM optimizations remove elsewhere; stateless, resolved from the process.
+    static const std::unordered_set<std::string_view> AllowedProcessFunctions{
+        "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower", "modf"};
+    const auto pluginFunctions = getCodonPluginNativeSymbols();
+
+    const auto* entryPoint = module.getFunction(symbol);
+    if (entryPoint == nullptr || entryPoint->isDeclaration())
+    {
+        throw QueryCompilerError("Codon did not emit exported function '{}'", symbol);
+    }
+
+    std::vector<std::string> unsupportedExternalFunctions;
+    for (const auto& function : module.functions())
+    {
+        const std::string_view name{function.getName().data(), function.getName().size()};
+        if (BannedFunctions.contains(name) || name.starts_with("GC_") || name.starts_with("seq_gc_"))
+        {
+            throw QueryCompilerError(
+                "Python UDF uses unsupported Codon runtime function '{}'; allocations escaping the UDF invocation and direct "
+                "garbage-collector access are not supported",
+                name);
+        }
+        if (function.isDeclaration() && !name.starts_with("llvm.") && !AllowedProcessFunctions.contains(name)
+            && !std::ranges::contains(PythonUdfRuntimeSymbolNames, name) && !pluginFunctions.contains(std::string{name}))
+        {
+            unsupportedExternalFunctions.emplace_back(name);
+        }
+    }
+    if (!unsupportedExternalFunctions.empty())
+    {
+        std::ranges::sort(unsupportedExternalFunctions);
+        throw QueryCompilerError(
+            "Python UDF requires unsupported external functions {}; only the NES Codon compatibility ABI is available",
+            join(unsupportedExternalFunctions));
+    }
+    for (const auto& global : module.globals())
+    {
+        if (global.isDeclaration() && !global.getName().starts_with("llvm."))
+        {
+            throw QueryCompilerError(
+                "Python UDF requires unsupported external global '{}'; only the NES Codon compatibility ABI is available",
+                global.getName().str());
+        }
+    }
+
+    std::string verificationMessage;
+    llvm::raw_string_ostream verificationStream(verificationMessage);
+    if (llvm::verifyModule(module, &verificationStream))
+    {
+        throw QueryCompilerError("Codon emitted an invalid LLVM module: {}", verificationMessage);
+    }
+}
+
 void loadCodonPlugins()
 {
     loadCodonPlugin(codonPluginPath(NES_CODON_BLAS_PLUGIN_PATH));
@@ -651,7 +712,9 @@ CompiledInlineUdf compilePythonUdf(
         addPythonUdfInterpreterAdapter(*pipelineModule, symbol, argumentTypes, returnType);
         auto interpreterModule = llvm::CloneModule(*pipelineModule);
         internalizePythonUdfModule(*pipelineModule, symbol);
+        validatePythonUdfModule(*pipelineModule, symbol);
         internalizePythonUdfModule(*interpreterModule, interpreterSymbolName(symbol));
+        validatePythonUdfModule(*interpreterModule, interpreterSymbolName(symbol));
 
         const auto bitcodeStart = std::chrono::steady_clock::now();
         auto pipelineBitcode = writeBitcode(*pipelineModule);

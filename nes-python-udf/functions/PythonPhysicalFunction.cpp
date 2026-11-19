@@ -118,79 +118,6 @@ static_assert(offsetof(PythonUdfAbiValue, size) == sizeof(int8_t*));
 static_assert(offsetof(PythonUdfAbiValue, isNull) == sizeof(int8_t*) + sizeof(uint64_t));
 static_assert(sizeof(PythonUdfAbiValue) == sizeof(int8_t*) + (2 * sizeof(uint64_t)));
 
-/// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-std::string join(const std::vector<std::string>& values, const std::string_view delimiter = ", ")
-{
-    std::string result;
-    for (const auto& value : values)
-    {
-        if (!result.empty())
-        {
-            result += delimiter;
-        }
-        result += value;
-    }
-    return result;
-}
-
-void validatePythonUdfModule(const llvm::Module& module, const std::string& symbol)
-{
-    static const std::unordered_set<std::string_view> BannedFunctions{
-        "seq_alloc_uncollectable", "seq_alloc_atomic_uncollectable", "seq_register_finalizer"};
-    /// The libc character classification and case mapping functions Codon's str methods call, and modf, which numpy's
-    /// module initialization calls and the LLVM optimizations remove elsewhere; stateless, resolved from the process.
-    static const std::unordered_set<std::string_view> AllowedProcessFunctions{
-        "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower", "modf"};
-    const auto pluginFunctions = getCodonPluginNativeSymbols();
-
-    const auto* entryPoint = module.getFunction(symbol);
-    if (entryPoint == nullptr || entryPoint->isDeclaration())
-    {
-        throw QueryCompilerError("Codon did not emit exported function '{}'", symbol);
-    }
-
-    std::vector<std::string> unsupportedExternalFunctions;
-    for (const auto& function : module.functions())
-    {
-        const std::string_view name{function.getName().data(), function.getName().size()};
-        if (BannedFunctions.contains(name) || name.starts_with("GC_") || name.starts_with("seq_gc_"))
-        {
-            throw QueryCompilerError(
-                "Python UDF uses unsupported Codon runtime function '{}'; allocations escaping the UDF invocation and direct "
-                "garbage-collector access are not supported",
-                name);
-        }
-        if (function.isDeclaration() && !name.starts_with("llvm.") && !AllowedProcessFunctions.contains(name)
-            && !isPythonUdfRuntimeSymbol(name) && !pluginFunctions.contains(std::string{name}))
-        {
-            unsupportedExternalFunctions.emplace_back(name);
-        }
-    }
-    if (!unsupportedExternalFunctions.empty())
-    {
-        std::ranges::sort(unsupportedExternalFunctions);
-        throw QueryCompilerError(
-            "Python UDF requires unsupported external functions {}; only the NES Codon compatibility ABI is available",
-            join(unsupportedExternalFunctions));
-    }
-    for (const auto& global : module.globals())
-    {
-        if (global.isDeclaration() && !global.getName().starts_with("llvm."))
-        {
-            throw QueryCompilerError(
-                "Python UDF requires unsupported external global '{}'; only the NES Codon compatibility ABI is available",
-                global.getName().str());
-        }
-    }
-
-    std::string verificationMessage;
-    llvm::raw_string_ostream verificationStream(verificationMessage);
-    if (llvm::verifyModule(module, &verificationStream))
-    {
-        throw QueryCompilerError("Codon emitted an invalid LLVM module: {}", verificationMessage);
-    }
-}
-
 std::string writeBitcode(const llvm::Module& module)
 {
     llvm::SmallVector<char, 0> bitcode;
@@ -216,6 +143,7 @@ std::string renameEntryPoint(const std::string& bitcode, const std::string& from
         throw QueryCompilerError("The compiled Python UDF has no entry point '{}'", from);
     }
     entryPoint->setName(to);
+    /// Checked again here: the frontend that compiled it may come from another build.
     validatePythonUdfModule(module, to);
     return writeBitcode(module);
 }

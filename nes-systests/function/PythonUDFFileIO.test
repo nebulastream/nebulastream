@@ -9,16 +9,13 @@ CREATE PHYSICAL SOURCE FOR trigger TYPE File;
 ATTACH INLINE
 1
 
+# Rejected at registration: file access needs libc functions that the NES runtime does not provide to UDFs.
 CREATE FUNCTION udf_1 (id UINT64) RETURNS VARSIZED EXECUTION INLINE AS $python$
     file = open("TESTDATA/python_udf/file_input.txt", "r")
     contents = file.read()
     file.close()
     return contents
 $python$;
-
-SELECT udf_1(id) AS contents
-FROM trigger
-INTO file();
 ----
 ERROR QueryCompilerError
 
@@ -31,3 +28,8 @@ CREATE FUNCTION udf_2 (id UINT64) RETURNS VARSIZED EXECUTION INLINE AS $python$
 $python$;
 ----
 ERROR QueryCompilerError
+
+# The rejected registrations above are the test. Systest checks them when it runs the file, which needs a query.
+SELECT id FROM trigger INTO file();
+----
+1

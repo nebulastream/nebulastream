@@ -20,8 +20,18 @@
 #include <DataTypes/DataType.hpp>
 #include <UdfDescriptor.hpp>
 
+namespace llvm
+{
+class Module;
+}
+
 namespace NES
 {
+
+/// Throws QueryCompilerError unless the module defines `symbol` and calls only what the worker provides: the functions of
+/// PythonUdfRuntimeSymbolNames, the native functions of the loaded Codon plugins, and LLVM intrinsics. compilePythonUdf
+/// checks this, and the worker checks it again before it runs bitcode that another process compiled.
+void validatePythonUdfModule(const llvm::Module& module, const std::string& symbol);
 
 /// Loads the Codon plugins that NES ships (once per process): Codon reads their modules when it compiles a UDF, and the
 /// worker needs their native functions for a compiled UDF that calls them, also if another process compiled it.

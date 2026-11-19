@@ -44,5 +44,4 @@ struct PythonUdfRuntimeSymbol
 
 void activatePythonUdfArena(Arena* arena);
 std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols();
-bool isPythonUdfRuntimeSymbol(std::string_view name);
 }
