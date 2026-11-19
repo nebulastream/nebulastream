@@ -68,6 +68,11 @@ for a config whose data the loader must seed or read back differently from the c
 | `silent_link` | both | Deliver every row although nothing flows on the open connection for 15 s between the first and the second half of the data. |
 | `connection_lost` | source | End the stream, or fail with the declared error, when the connection is cut for good after the data has arrived, and not hang. |
 | `crash_recovery` | source | Open in a fresh process after the harness was killed with SIGKILL after the first half of the data, while the service may still hold the killed connector's connection or session, and read the second half. Where the second half starts is the service's read position, not the connector's. |
+| `backpressure` | sink | Apply backpressure while the backend reads nothing, so that the engine holds back the source, and deliver every row once the backend reads again. |
+| `stop_while_blocked` | sink | Give up on the data that it holds when STOP comes while the backend reads nothing, so that STOP returns within the step timeout. |
+| `shutdown_while_blocked` | sink | Let the engine destroy it without STOP while the backend reads nothing, as when a worker shuts down, without waiting for the backend. The harness must exit before the case's deadline. |
+| `reconnect` | sink | Connect again after the connection is cut and restored between the first and the second half of the data, and deliver the second half. |
+| `reconnect_timeout` | sink | Fail with the declared error once its reconnect timeout ends, when the connection is cut for good between the first and the second half of the data. |
 
 A source's data is compared as it is read.
 A sink's is compared after it has stopped, with what its loader reads back from the service.
@@ -76,11 +81,16 @@ The catalog function writes only the ideal path.
 `run_case` enforces the declared outcome: an `OK` binding must complete cleanly,
 an `ERROR <code>` binding must raise a connector error with that code,
 and a harness-origin error (infrastructure failure, step timeout) always fails.
+A `LOSS` binding must complete cleanly too, but its read-back may miss or repeat the rows that were in flight at a fault,
+as with a sink that has no acknowledgements of its own.
+Every row that arrives must still be one that was written, and the last row must arrive, which shows that the connector recovered.
 
-`slow_link`, `silent_link` and `connection_lost` route the connector through a toxiproxy container
+`slow_link`, `silent_link`, `connection_lost` and the sink-only scenarios route the connector through a toxiproxy container
 (`runner/toxiproxy.compose.yaml`, controlled by `conntest_runner/link.py`),
 which joins the stack only for a connector that binds one of them.
 The loader still reaches the service directly, so a fault affects only the connector's connection.
+The runner and toxiproxy containers bound their socket buffers to 64 KB,
+so a link on which the backend reads nothing fills after about 150 KB, whatever the host's autotuning.
 
 Data comes from one deterministic generator.
 It generates rows for the schema that the harness bound from the config and returned in its `BIND` reply.

@@ -97,6 +97,7 @@ class Got:
     A FILL reply has no row counts, because the data is checked from the ``--observed-path`` file.
     ``partial_read_ms`` lists how long each read that returned a partly filled buffer took during a FILL.
     ``n_buffers`` is how many buffers a sink's START made from its input, which WRITE then hands to the sink.
+    ``backpressure`` says whether the sink applied backpressure during a WRITE_UNTIL_BACKPRESSURE.
     ``schema`` is the schema that a BIND bound, empty in every other reply.
     ``step_timeout_ms`` is the harness's step timeout, which only a BIND reports.
     """
@@ -104,6 +105,7 @@ class Got:
     eos: bool = False
     partial_read_ms: tuple[int, ...] = ()
     n_buffers: int = 0
+    backpressure: bool = False
     schema: tuple[NativeColumn, ...] = ()
     step_timeout_ms: int = 0
 
@@ -140,6 +142,7 @@ def read_reply(line: str) -> Got:
             eos=bool(j.get("eos", False)),
             partial_read_ms=tuple(int(ms) for ms in j.get("partial_read_ms", [])),
             n_buffers=int(j.get("n_buffers", 0)),
+            backpressure=bool(j.get("backpressure", False)),
             schema=tuple((str(c["name"]), str(c["type"]), bool(c["nullable"])) for c in j.get("schema", [])),
             step_timeout_ms=int(j.get("step_timeout_ms", 0)),
         )

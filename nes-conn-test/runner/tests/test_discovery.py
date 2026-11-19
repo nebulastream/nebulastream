@@ -145,6 +145,7 @@ def test_multiple_services_fails_fast(tmp_path: Path) -> None:
     ("outcome", "expected"),
     [
         ("OK", Expectation(ok=True)),
+        ("LOSS", Expectation(ok=True, loss=True)),
         ("ERROR 1000", Expectation(ok=False, code=1000)),
         # A symbolic name resolves through the .inc table.
         ("ERROR CannotOpenSource", Expectation(ok=False, code=4002)),
@@ -240,7 +241,11 @@ def _constructors(module: ModuleType) -> set[str]:
 def test_every_catalog_scenario_has_a_constructor() -> None:
     assert _constructors(source_bindings) | _constructors(sink_bindings) == set(scenario_names())
     # The arguments without a default, so that the loop can call every constructor.
-    required = {"bad_endpoint": {"error": 4002}, "partial_buffer_held": {"flush_interval_ms": 2000}}
+    required = {
+        "bad_endpoint": {"error": 4002},
+        "partial_buffer_held": {"flush_interval_ms": 2000},
+        "reconnect_timeout": {"error": 4004},
+    }
     for module in (source_bindings, sink_bindings):
         for name in _constructors(module):
             assert getattr(module, name)("basic.nesql", **required.get(name, {})).name == name

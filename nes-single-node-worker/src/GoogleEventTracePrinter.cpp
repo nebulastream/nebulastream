@@ -313,6 +313,34 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         taskEmit.threadId.getRawValue(),
                         timestampToMicroseconds(taskEmit.timestamp));
                 },
+                [&](const BackpressureApplied& applied)
+                {
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"cat":"query","name":"Backpressure (Query {})","ph":"B","pid":{},"tid":{},"ts":{}}})x",
+                        applied.queryId,
+                        pid,
+                        applied.threadId.getRawValue(),
+                        timestampToMicroseconds(applied.timestamp));
+                    activeBackpressure.insert_or_assign(applied.queryId, applied.threadId);
+                },
+                [&](const BackpressureReleased& released)
+                {
+                    auto it = activeBackpressure.find(released.queryId);
+                    const uint64_t originalTid
+                        = (it != activeBackpressure.end()) ? it->second.getRawValue() : released.threadId.getRawValue();
+
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"cat":"query","name":"Backpressure (Query {})","ph":"E","pid":{},"tid":{},"ts":{}}})x",
+                        released.queryId,
+                        pid,
+                        originalTid,
+                        timestampToMicroseconds(released.timestamp));
+                    activeBackpressure.erase(released.queryId);
+                },
                 [&](const TaskExpired& taskExpired)
                 {
                     printComma();

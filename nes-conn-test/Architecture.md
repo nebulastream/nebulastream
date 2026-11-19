@@ -82,12 +82,15 @@ A sink session (`--mode=sink`) has its own commands:
 BIND                     bind the config and reply with its bound schema, as for a source
 START                    pack the input's records into buffers and run a query from the harness's source into a new sink; the reply has `n_buffers`
 WRITE <n_buffers>        release the next <n_buffers> buffers to the source, and reply once the sink has finished them
+WRITE_UNTIL_BACKPRESSURE <n_buffers>
+                         the same, but reply as soon as the sink applies backpressure; the reply's `backpressure` says whether it did
 STOP                     stop the query, which stops the sink once it has finished every buffer that it received
 ```
 
 The query has the sink as its only pipeline, and `--threads` sets the engine's worker threads.
 The harness learns from the engine's statistic events when the sink has finished a buffer:
 a sink task that completes without repeating itself.
+The engine reports in the same events when the sink applies backpressure, so no step measures time.
 A failed query fails the step with the sink's error, which the engine reports unchanged.
 A session that ends without STOP destroys the engine with the query still running, as a worker that shuts down does.
 After a step timed out, an engine thread may still be in the sink, so the harness exits with code 3 when the session ends.
