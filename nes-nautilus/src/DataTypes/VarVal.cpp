@@ -15,6 +15,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <limits>
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -115,8 +116,68 @@ VarVal::operator bool() const
     return retValue;
 }
 
+namespace
+{
+/// Converts a floating point value to the integer type Int with defined behavior (a plain static_cast is undefined for NaN, infinity and
+/// values outside the range of Int): values beyond the range of Int, including +-infinity, saturate to the minimum or maximum of Int,
+/// fractional values truncate towards zero, and NaN becomes 0. The caller decides whether NaN is a NULL.
+/// The static_cast only ever sees an in-range value, so neither the interpreter nor the compiled code evaluates an undefined conversion.
+template <typename Int>
+nautilus::val<Int> saturatingFloatToInt(const nautilus::val<double>& value, const nautilus::val<bool>& isNan)
+{
+    /// For 64 bit types the maximum rounds up to 2^63 or 2^64, which is out of range, hence the inclusive comparison.
+    const nautilus::val<double> lowest{static_cast<double>(std::numeric_limits<Int>::min())};
+    const nautilus::val<double> highest{static_cast<double>(std::numeric_limits<Int>::max())};
+    const auto tooHigh = value >= highest;
+    const auto tooLow = value <= lowest;
+    const auto convertible = nautilus::select(tooHigh or tooLow or isNan, nautilus::val<double>{0.0}, value);
+    const auto converted = static_cast<nautilus::val<Int>>(convertible);
+    return nautilus::select(
+        tooHigh,
+        nautilus::val<Int>{std::numeric_limits<Int>::max()},
+        nautilus::select(tooLow, nautilus::val<Int>{std::numeric_limits<Int>::min()}, converted));
+}
+}
+
 VarVal VarVal::castToType(const DataType::Type type) const
 {
+    /// Float to integer: saturate out of range values and infinity, NaN becomes NULL for nullable values and 0 for NOT NULL values.
+    if (std::holds_alternative<nautilus::val<float>>(value) or std::holds_alternative<nautilus::val<double>>(value))
+    {
+        const auto floatToInt = [&]<typename Int>() -> VarVal
+        {
+            const auto asDouble = getRawValueAs<nautilus::val<double>>();
+            /// NaN is the only value for which neither comparison holds.
+            const nautilus::val<double> zero{0.0};
+            const auto isNan = not(asDouble <= zero or asDouble > zero);
+            const auto newNull = nullable ? (null or isNan) : null;
+            return {saturatingFloatToInt<Int>(asDouble, isNan), nullable, newNull};
+        };
+        switch (type)
+        {
+            case DataType::Type::CHAR:
+                return floatToInt.operator()<char>();
+            case DataType::Type::INT8:
+                return floatToInt.operator()<int8_t>();
+            case DataType::Type::INT16:
+                return floatToInt.operator()<int16_t>();
+            case DataType::Type::INT32:
+                return floatToInt.operator()<int32_t>();
+            case DataType::Type::INT64:
+                return floatToInt.operator()<int64_t>();
+            case DataType::Type::UINT8:
+                return floatToInt.operator()<uint8_t>();
+            case DataType::Type::UINT16:
+                return floatToInt.operator()<uint16_t>();
+            case DataType::Type::UINT32:
+                return floatToInt.operator()<uint32_t>();
+            case DataType::Type::UINT64:
+                return floatToInt.operator()<uint64_t>();
+            default:
+                break;
+        }
+    }
+
     switch (type)
     {
         case DataType::Type::CHAR: {

@@ -474,6 +474,164 @@ TEST_F(VarValTest, nullPropagationArithmetic)
     EXPECT_TRUE(static_cast<bool>(resultDiv2.isNull()));
 }
 
+namespace
+{
+template <typename FloatT>
+VarVal notNullFloat(const FloatT value)
+{
+    return VarVal{nautilus::val<FloatT>(value)};
+}
+
+template <typename FloatT>
+VarVal nullableFloat(const FloatT value, const bool isNull)
+{
+    return VarVal{nautilus::val<FloatT>(value), true, nautilus::val<bool>{isNull}};
+}
+
+nautilus::val<int32_t> asInt32(const VarVal& value)
+{
+    return value.getRawValueAs<nautilus::val<int32_t>>();
+}
+
+nautilus::val<int64_t> asInt64(const VarVal& value)
+{
+    return value.getRawValueAs<nautilus::val<int64_t>>();
+}
+
+nautilus::val<uint64_t> asUInt64(const VarVal& value)
+{
+    return value.getRawValueAs<nautilus::val<uint64_t>>();
+}
+}
+
+TEST_F(VarValTest, floatToIntegerCastInRangeTruncates)
+{
+    const auto castInt32 = [](const double value) { return notNullFloat(value).castToType(DataType::Type::INT32); };
+
+    EXPECT_EQ(asInt32(castInt32(1.9)), 1);
+    EXPECT_EQ(asInt32(castInt32(-1.9)), -1);
+    EXPECT_EQ(asInt32(castInt32(2147483647.0)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(castInt32(-2147483648.0)), std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(asInt32(notNullFloat(1.9F).castToType(DataType::Type::INT32)), 1);
+    EXPECT_EQ(asInt32(notNullFloat(-1.9F).castToType(DataType::Type::INT32)), -1);
+    EXPECT_EQ(asInt32(VarVal{nautilus::val<int64_t>(5)}.castToType(DataType::Type::INT32)), 5);
+}
+
+TEST_F(VarValTest, floatToInt32CastSaturatesLargeValues)
+{
+    const auto castInt32 = [](const double value) { return notNullFloat(value).castToType(DataType::Type::INT32); };
+
+    EXPECT_EQ(asInt32(castInt32(2147483648.0)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(castInt32(1e300)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(castInt32(-2147483649.0)), std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(asInt32(castInt32(-1e300)), std::numeric_limits<int32_t>::min());
+}
+
+TEST_F(VarValTest, floatToInt32CastSaturatesLargeFloatValues)
+{
+    EXPECT_EQ(asInt32(notNullFloat(2147483648.0F).castToType(DataType::Type::INT32)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(notNullFloat(1e30F).castToType(DataType::Type::INT32)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asInt32(notNullFloat(-1e30F).castToType(DataType::Type::INT32)), std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(asInt64(notNullFloat(1e30F).castToType(DataType::Type::INT64)), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(asInt64(notNullFloat(-1e30F).castToType(DataType::Type::INT64)), std::numeric_limits<int64_t>::min());
+}
+
+TEST_F(VarValTest, floatToIntegerCastSaturatesPositiveInfinity)
+{
+    constexpr auto infinity = std::numeric_limits<double>::infinity();
+
+    EXPECT_EQ(asInt32(notNullFloat(infinity).castToType(DataType::Type::INT32)), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(asUInt64(notNullFloat(infinity).castToType(DataType::Type::UINT64)), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(
+        asInt32(notNullFloat(std::numeric_limits<float>::infinity()).castToType(DataType::Type::INT32)),
+        std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(
+        asInt64(notNullFloat(std::numeric_limits<float>::infinity()).castToType(DataType::Type::INT64)),
+        std::numeric_limits<int64_t>::max());
+}
+
+TEST_F(VarValTest, floatToIntegerCastSaturatesNegativeInfinity)
+{
+    constexpr auto infinity = std::numeric_limits<double>::infinity();
+
+    EXPECT_EQ(asInt32(notNullFloat(-infinity).castToType(DataType::Type::INT32)), std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(asUInt64(notNullFloat(-infinity).castToType(DataType::Type::UINT64)), uint64_t{0});
+    EXPECT_EQ(
+        asInt32(notNullFloat(-std::numeric_limits<float>::infinity()).castToType(DataType::Type::INT32)),
+        std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(
+        asInt64(notNullFloat(-std::numeric_limits<float>::infinity()).castToType(DataType::Type::INT64)),
+        std::numeric_limits<int64_t>::min());
+}
+
+TEST_F(VarValTest, floatToIntegerCastNotNullNanBecomesZero)
+{
+    constexpr auto nan = std::numeric_limits<double>::quiet_NaN();
+    constexpr auto floatNan = std::numeric_limits<float>::quiet_NaN();
+
+    const auto notNullNan = notNullFloat(nan).castToType(DataType::Type::INT32);
+    EXPECT_EQ(asInt32(notNullNan), 0);
+    EXPECT_FALSE(notNullNan.isNullable());
+    EXPECT_FALSE(static_cast<bool>(notNullNan.isNull()));
+
+    const auto notNullFloatNan = notNullFloat(floatNan).castToType(DataType::Type::INT32);
+    EXPECT_EQ(asInt32(notNullFloatNan), 0);
+    EXPECT_FALSE(notNullFloatNan.isNullable());
+    EXPECT_FALSE(static_cast<bool>(notNullFloatNan.isNull()));
+
+    EXPECT_EQ(asInt64(notNullFloat(floatNan).castToType(DataType::Type::INT64)), 0);
+    EXPECT_EQ(notNullFloat(nan).castToType(DataType::Type::UINT32).getRawValueAs<nautilus::val<uint32_t>>(), uint32_t{0});
+    EXPECT_EQ(notNullFloat(nan).castToType(DataType::Type::CHAR).getRawValueAs<nautilus::val<char>>(), char{0});
+}
+
+TEST_F(VarValTest, floatToIntegerCastNullableNanBecomesNull)
+{
+    constexpr auto nan = std::numeric_limits<double>::quiet_NaN();
+    constexpr auto floatNan = std::numeric_limits<float>::quiet_NaN();
+
+    const auto nullableNan = nullableFloat(nan, false).castToType(DataType::Type::INT32);
+    EXPECT_TRUE(nullableNan.isNullable());
+    EXPECT_TRUE(static_cast<bool>(nullableNan.isNull()));
+
+    const auto nullableFloatNan = nullableFloat(floatNan, false).castToType(DataType::Type::INT32);
+    EXPECT_TRUE(nullableFloatNan.isNullable());
+    EXPECT_TRUE(static_cast<bool>(nullableFloatNan.isNull()));
+}
+
+TEST_F(VarValTest, floatToIntegerCastNullablePreservesNullAndSaturates)
+{
+    constexpr auto infinity = std::numeric_limits<double>::infinity();
+
+    const auto nullableInf = nullableFloat(infinity, false).castToType(DataType::Type::INT32);
+    EXPECT_FALSE(static_cast<bool>(nullableInf.isNull()));
+    EXPECT_EQ(asInt32(nullableInf), std::numeric_limits<int32_t>::max());
+    EXPECT_TRUE(static_cast<bool>(nullableFloat(1.0, true).castToType(DataType::Type::INT32).isNull()));
+}
+
+TEST_F(VarValTest, floatToInt64AndUInt64CastSaturatesAtBoundaries)
+{
+    constexpr auto infinity = std::numeric_limits<double>::infinity();
+
+    EXPECT_EQ(asInt64(notNullFloat(9223372036854775808.0).castToType(DataType::Type::INT64)), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(asInt64(notNullFloat(-9223372036854775808.0).castToType(DataType::Type::INT64)), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(asInt64(notNullFloat(4611686018427387904.0).castToType(DataType::Type::INT64)), 4611686018427387904LL);
+    EXPECT_EQ(asUInt64(notNullFloat(18446744073709551616.0).castToType(DataType::Type::UINT64)), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(asUInt64(notNullFloat(infinity).castToType(DataType::Type::UINT64)), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(asUInt64(notNullFloat(1e19).castToType(DataType::Type::UINT64)), 10000000000000000000ULL);
+    EXPECT_EQ(asUInt64(notNullFloat(-1e300).castToType(DataType::Type::UINT64)), uint64_t{0});
+    EXPECT_EQ(asUInt64(notNullFloat(-0.0).castToType(DataType::Type::UINT64)), uint64_t{0});
+}
+
+TEST_F(VarValTest, floatToSmallIntegerCastSaturates)
+{
+    EXPECT_EQ(notNullFloat(300.0).castToType(DataType::Type::UINT8).getRawValueAs<nautilus::val<uint8_t>>(), uint8_t{255});
+    EXPECT_EQ(notNullFloat(-5.0).castToType(DataType::Type::UINT8).getRawValueAs<nautilus::val<uint8_t>>(), uint8_t{0});
+    EXPECT_EQ(notNullFloat(-1000.0).castToType(DataType::Type::INT8).getRawValueAs<nautilus::val<int8_t>>(), int8_t{-128});
+    EXPECT_EQ(notNullFloat(1e9).castToType(DataType::Type::INT16).getRawValueAs<nautilus::val<int16_t>>(), int16_t{32767});
+    EXPECT_EQ(notNullFloat(70000.0).castToType(DataType::Type::UINT16).getRawValueAs<nautilus::val<uint16_t>>(), uint16_t{65535});
+    EXPECT_EQ(notNullFloat(1e9).castToType(DataType::Type::CHAR).getRawValueAs<nautilus::val<char>>(), std::numeric_limits<char>::max());
+}
+
 TEST_F(VarValTest, nullPropagationComparison)
 {
     const VarVal nullVal{nautilus::val<int32_t>(0), true, nautilus::val<bool>{true}};
