@@ -21,8 +21,10 @@ compile. The source file stays as it is. Each rewrite keeps the result of the UD
 - The test `if x:` (also `while x:`, `... if x else ...` and `not x`) of a variable becomes `x is not None and x`. Numba
   0.68.1 raises TypeError for the truth value of an optional string that is None.
 - `type(x) == list` (also tuple, dict, str) becomes `isinstance(x, list)`. Numba does not compare types.
-- In a function that asks a JSON value for its kind (is_list(), is_dict(), ...), json.loads(x) becomes json_value(x)
-  (json_value_ext).
+- In a function that asks a JSON value for its kind (is_list(), is_dict(), ..., or isinstance(x, list) or dict), json.loads(x)
+  becomes json_value(x) (json_value_ext), `for item in data` over such a value becomes a loop over its indices, and each
+  `return x` of the UDF becomes `return result_text(x)`. A jitted wrapper raises TypeError for a value that is not a string,
+  outside the UDF's own try/except, and returns the text otherwise, as NES's entry code does with a VARSIZED result.
 - A plain Python function of the UDF's module that the UDF calls (a helper) is compiled with this front end too.
 - A global set or frozenset of strings becomes a sorted string blob with an offset array, and `x in s` / `x not in s`
   becomes a binary search on it (Numba does not freeze sets as constants, and freezes tuples only up to 1000 items).
@@ -35,7 +37,7 @@ import textwrap
 import numba
 import numpy
 
-from nes_numba_ext.json_value_ext import json_value
+from nes_numba_ext.json_value_ext import json_value, result_text
 
 from numba.core.extending import register_jitable
 
@@ -84,8 +86,61 @@ _KIND_METHODS = {"is_null", "is_bool", "is_int", "is_float", "is_number", "is_st
 
 
 def _asks_json_kind(function):
-    return any(isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in _KIND_METHODS
-               for node in ast.walk(function))
+    for node in ast.walk(function):
+        if not isinstance(node, ast.Call):
+            continue
+        if isinstance(node.func, ast.Attribute) and node.func.attr in _KIND_METHODS:
+            return True
+        if isinstance(node.func, ast.Name) and node.func.id == "isinstance" and len(node.args) == 2 \
+                and isinstance(node.args[1], ast.Name) and node.args[1].id in ("list", "dict"):
+            return True
+    return False
+
+
+class _JsonLoops(ast.NodeTransformer):
+    """`for item in data:` over a parsed JSON value becomes `for _nes_i in range(len(data)): item = data[_nes_i]`."""
+
+    def __init__(self, names):
+        self.names = names
+        self.count = 0
+
+    def visit_For(self, node):
+        self.generic_visit(node)
+        if not (isinstance(node.iter, ast.Name) and node.iter.id in self.names):
+            return node
+        index = f"_nes_i{self.count}"
+        self.count += 1
+        length = ast.Call(func=ast.Name(id="len", ctx=ast.Load()), args=[ast.Name(id=node.iter.id, ctx=ast.Load())], keywords=[])
+        element = ast.Assign(targets=[node.target],
+                             value=ast.Subscript(value=ast.Name(id=node.iter.id, ctx=ast.Load()),
+                                                 slice=ast.Name(id=index, ctx=ast.Load()), ctx=ast.Load()))
+        loop = ast.For(target=ast.Name(id=index, ctx=ast.Store()),
+                       iter=ast.Call(func=ast.Name(id="range", ctx=ast.Load()), args=[length], keywords=[]),
+                       body=[element] + node.body, orelse=node.orelse)
+        return ast.copy_location(loop, node)
+
+
+def _json_value_names(function):
+    """Names assigned the result of json_value(...) in `function`."""
+    return {target.id for node in ast.walk(function) if isinstance(node, ast.Assign)
+            and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == "_nes_json_value"
+            for target in node.targets if isinstance(target, ast.Name)}
+
+
+def _wrap_returns(function):
+    """`return x` becomes `return _nes_result_text(x)` in `function`, not in functions nested in it. The function gets an
+    explicit `return None` at its end, where Python returns None when it runs past the last statement."""
+    function.body.append(ast.Return(value=ast.Constant(None)))
+    stack = list(function.body)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.Lambda)):
+            continue
+        if isinstance(node, ast.Return):
+            value = node.value if node.value is not None else ast.Constant(None)
+            node.value = ast.Call(func=ast.Name(id="_nes_result_text", ctx=ast.Load()), args=[value], keywords=[])
+        stack.extend(ast.iter_child_nodes(node))
 
 
 class _JsonValues(ast.NodeTransformer):
@@ -231,8 +286,23 @@ def _hoist_imports(function, imports):
             _hoist_imports(node, imports)
 
 
+def _checked(udf, parameters):
+    """A jitted function with `parameters` that calls `udf` (whose returns give result_text pairs) and raises for a failed
+    conversion."""
+    names = ", ".join(parameters)
+    source = (f"def checked({names}):\n"
+              f"    converted, value = udf({names})\n"
+              "    if not converted:\n"
+              "        raise TypeError('a VARSIZED UDF must return bytes or str')\n"
+              "    return value\n")
+    namespace = {"udf": udf}
+    exec(source, namespace)
+    return numba.njit(namespace["checked"])
+
+
 def njit(function, _compiled=None):
     """numba.njit of `function` after the rewrites above."""
+    is_udf = _compiled is None
     compiled = {} if _compiled is None else _compiled
     if function in compiled:
         return compiled[function]
@@ -240,12 +310,17 @@ def njit(function, _compiled=None):
     definition = tree.body[0]
     imports = []
     _hoist_imports(definition, imports)
+    # Decided on the source as written: _TypeComparisons below turns type(x) == list into isinstance.
+    uses_json_values = _asks_json_kind(definition)
     _GeneratorsToLists().visit(definition)
     _EmptyLists().visit(definition)
     _OptionalTruth().visit(definition)
     _TypeComparisons().visit(definition)
-    if _asks_json_kind(definition):
+    if uses_json_values:
         _JsonValues().visit(definition)
+        _JsonLoops(_json_value_names(definition)).visit(definition)
+        if is_udf:
+            _wrap_returns(definition)
     lifted = []
     _lift(definition, lifted)
     sets = {name for name, value in function.__globals__.items() if _is_string_set(value)}
@@ -253,6 +328,7 @@ def njit(function, _compiled=None):
     namespace["_nes_frozen_contains"] = _frozen_contains
     namespace["_nes_empty_string_list"] = _empty_string_list
     namespace["_nes_json_value"] = json_value
+    namespace["_nes_result_text"] = result_text
     # Helpers: plain functions of the UDF's module that it uses, compiled with this front end. A placeholder in `compiled`
     # stops a cycle; Numba resolves the name at compile time, after every helper is in the namespace.
     compiled[function] = None
@@ -270,4 +346,6 @@ def njit(function, _compiled=None):
         namespace[node.name] = numba.njit(namespace[node.name])
     exec(compile(ast.fix_missing_locations(ast.Module(body=[definition], type_ignores=[])), inspect.getsourcefile(function), "exec"), namespace)
     compiled[function] = numba.njit(namespace[definition.name])
+    if is_udf and uses_json_values:
+        return _checked(compiled[function], [argument.arg for argument in definition.args.args])
     return compiled[function]

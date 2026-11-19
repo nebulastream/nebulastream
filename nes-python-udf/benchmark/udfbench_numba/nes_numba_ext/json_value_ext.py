@@ -10,7 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A JSON value for nopython mode, with the interface of the Value of NES's Codon json plugin: is_null(), is_bool(), is_int(),
-is_float(), is_str(), is_list(), is_dict(), len(), [int] for an array, [str] and `in` for an object, and str().
+is_float(), is_str(), is_list(), is_dict(), len(), [int] for an array, [str], get() and `in` for an object, str(), and
+isinstance(value, list) (also dict, str, int, float, bool), which checks the kind at run time.
+
+get() returns a value also for a missing member, which acts as None (is_null(), str() "None"): Numba cannot unify a structref
+with None. result_text(value) is what NES's entry code does with a VARSIZED result (__nes_str__ in the Codon plugin):
+(True, the text) for a string, (True, None) for null or a missing member, and (False, None) for any other kind, for which
+the caller raises TypeError outside the UDF, so that the UDF's own `except` does not catch it. Any other value v gives
+(True, v).
 
 json_value(text) parses `text` into flat arrays of nodes. A value is the arrays and the index of a node, so a member or an
 element shares the arrays of its document. The front end (frontend.njit) calls json_value in place of json.loads in a UDF that
@@ -46,6 +53,14 @@ class JsonValue(structref.StructRefProxy):
 # kinds, starts, ends: the kind of each node and where its text is (for a string: its index in `strings`). firsts, nexts: the
 # first child of an array or object and the next sibling. keys: for a member of an object, the node of its key, else -1.
 structref.define_proxy(JsonValue, JsonValueType, ["text", "kinds", "starts", "ends", "firsts", "nexts", "keys", "strings", "index"])
+
+
+@register_jitable
+def _kind(value):
+    """The kind of `value`; a missing member (index -1, from get) is NULL, as dict.get gives None for it."""
+    if value.index < 0:
+        return NULL
+    return value.kinds[value.index]
 
 
 @register_jitable
@@ -191,7 +206,7 @@ def json_value(text):
 def _kind_check(kind, second=-1):
     def method(value):
         def implementation(value):
-            found = value.kinds[value.index]
+            found = _kind(value)
             return found == kind or found == second
         return implementation
     return method
@@ -216,7 +231,7 @@ def _member_node(value, key):
 def _len(value):
     if isinstance(value, JsonValueType):
         def implementation(value):
-            kind = value.kinds[value.index]
+            kind = _kind(value)
             if kind == STRING:
                 return len(value.strings[value.starts[value.index]])
             if kind != ARRAY and kind != OBJECT:
@@ -237,7 +252,7 @@ def _getitem(value, key):
         return None
     if isinstance(key, types.Integer):
         def by_index(value, key):
-            if value.kinds[value.index] != ARRAY:
+            if _kind(value) != ARRAY:
                 raise TypeError("object is not subscriptable by int")
             child = value.firsts[value.index]
             position = 0
@@ -250,7 +265,7 @@ def _getitem(value, key):
         return by_index
     if isinstance(key, (types.UnicodeType, types.StringLiteral)):
         def by_key(value, key):
-            if value.kinds[value.index] != OBJECT:
+            if _kind(value) != OBJECT:
                 raise TypeError("object is not subscriptable by str")
             child = _member_node(value, key)
             if child < 0:
@@ -264,7 +279,7 @@ def _getitem(value, key):
 def _contains(value, item):
     if isinstance(value, JsonValueType) and isinstance(item, (types.UnicodeType, types.StringLiteral)):
         def implementation(value, item):
-            kind = value.kinds[value.index]
+            kind = _kind(value)
             if kind == OBJECT:
                 return _member_node(value, item) >= 0
             if kind == STRING:
@@ -286,7 +301,7 @@ def _contains(value, item):
 def _str(value):
     if isinstance(value, JsonValueType):
         def implementation(value):
-            kind = value.kinds[value.index]
+            kind = _kind(value)
             if kind == STRING:
                 return value.strings[value.starts[value.index]]
             if kind == NULL:
@@ -298,3 +313,48 @@ def _str(value):
             raise ValueError("str() of a JSON array or object is not supported")
         return implementation
     return None
+
+
+@overload_method(JsonValueType, "get")
+def _get(value, key):
+    def implementation(value, key):
+        if _kind(value) != OBJECT:
+            raise AttributeError("object has no attribute 'get'")
+        return _at(value, _member_node(value, key))
+    return implementation
+
+
+_ISINSTANCE_KINDS = {list: (ARRAY,), dict: (OBJECT,), str: (STRING,), bool: (BOOL,), int: (INT, BOOL), float: (FLOAT,)}
+
+
+@overload(isinstance)
+def _isinstance(value, kind):
+    if not isinstance(value, JsonValueType):
+        return None
+    target = kind.typing_key if isinstance(kind, types.Function) else getattr(kind, "instance_type", None)
+    if isinstance(kind, types.NumberClass):
+        target = {types.int64: int, types.float64: float, types.boolean: bool}.get(kind.instance_type)
+    wanted = _ISINSTANCE_KINDS.get(target)
+    if wanted is None:
+        return None
+    first, second = wanted[0], wanted[-1]
+    return lambda value, kind: _kind(value) == first or _kind(value) == second
+
+
+def result_text(value):
+    """See the module docstring; Python fallback for completeness."""
+    return True, value
+
+
+@overload(result_text)
+def _result_text(value):
+    if isinstance(value, JsonValueType):
+        def implementation(value):
+            kind = _kind(value)
+            if kind == STRING:
+                return True, value.strings[value.starts[value.index]]
+            if kind == NULL:
+                return True, None
+            return False, None
+        return implementation
+    return lambda value: (True, value)
