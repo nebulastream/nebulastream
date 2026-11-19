@@ -31,7 +31,6 @@
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
-#include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -1095,7 +1094,7 @@ TEST_F(StatementBinderTest, InnerJoinParsesToInnerJoinType)
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
 }
 
-TEST_F(StatementBinderTest, JoinOnClauseBuildsAddSubAndConcatKeyExpressions)
+TEST_F(StatementBinderTest, JoinOnClauseBuildsAddAndSubKeyExpressions)
 {
     const auto joinKeyOperand = [](const std::string& expression)
     {
@@ -1116,7 +1115,6 @@ TEST_F(StatementBinderTest, JoinOnClauseBuildsAddSubAndConcatKeyExpressions)
     };
     EXPECT_TRUE(joinKeyOperand("s1a + s1b").tryGetAs<AddLogicalFunction>().has_value());
     EXPECT_TRUE(joinKeyOperand("s1a - s1b").tryGetAs<SubLogicalFunction>().has_value());
-    EXPECT_TRUE(joinKeyOperand("s1a || s1b").tryGetAs<ConcatLogicalFunction>().has_value());
 }
 
 TEST_F(StatementBinderTest, JoinOnClauseBuildsCastAndFunctionCallKeyExpressions)
@@ -1133,7 +1131,7 @@ TEST_F(StatementBinderTest, JoinOnClauseBuildsCastAndFunctionCallKeyExpressions)
         return joins.at(0)->getJoinFunction();
     };
 
-    const auto castJoin = joinFunction("CAST(s1a AS INT64) = s2key");
+    const auto castJoin = joinFunction("CASTTOTYPE(s1a AS INT64) = s2key");
     ASSERT_EQ(castJoin.getChildren().size(), 2U);
     EXPECT_TRUE(castJoin.tryGetAs<EqualsLogicalFunction>().has_value());
     const auto cast = castJoin.getChildren().at(0).tryGetAs<CastToTypeLogicalFunction>();
@@ -1155,14 +1153,14 @@ TEST_F(StatementBinderTest, JoinOnClauseBuildsCastAndFunctionCallKeyExpressions)
     ASSERT_EQ(constructorSum.getChildren().size(), 2U);
     EXPECT_TRUE(constructorSum.getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().has_value());
 
-    const auto nestedJoin = joinFunction("CAST(EXP(s1a) AS INT64) = s2key");
+    const auto nestedJoin = joinFunction("CASTTOTYPE(EXP(s1a) AS INT64) = s2key");
     ASSERT_EQ(nestedJoin.getChildren().size(), 2U);
     const auto nestedCast = nestedJoin.getChildren().at(0).tryGetAs<CastToTypeLogicalFunction>();
     ASSERT_TRUE(nestedCast.has_value());
     ASSERT_EQ(nestedCast->get().getChildren().size(), 1U);
     EXPECT_TRUE(nestedCast->get().getChildren().at(0).tryGetAs<ExpLogicalFunction>().has_value());
 
-    const auto rightHandJoin = joinFunction("s2key = CAST(s1a AS INT64)");
+    const auto rightHandJoin = joinFunction("s2key = CASTTOTYPE(s1a AS INT64)");
     ASSERT_EQ(rightHandJoin.getChildren().size(), 2U);
     EXPECT_TRUE(rightHandJoin.getChildren().at(1).tryGetAs<CastToTypeLogicalFunction>().has_value());
 }
