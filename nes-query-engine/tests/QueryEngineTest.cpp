@@ -35,6 +35,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
@@ -343,6 +344,55 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_GE(buffers.size(), 1) << "Expected at least one buffer";
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+}
+
+TEST_F(QueryEngineTest, multiSourceFailureReportsFailureOnce)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source1 = builder.addSource();
+    auto source2 = builder.addSource();
+    auto sink = builder.addSink({builder.addPipeline({source1, source2})});
+    auto query = test.addNewQuery(std::move(builder));
+
+    auto ctrl1 = test.sourceControls[source1];
+    auto ctrl2 = test.sourceControls[source2];
+    auto sinkCtrl = test.sinkControls[sink];
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
+    EXPECT_CALL(*test.status, logSourceTermination(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .Times(::testing::AnyNumber())
+        .WillRepeatedly(::testing::Return(true));
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+
+        ASSERT_TRUE(ctrl1->waitUntilOpened());
+        ASSERT_TRUE(ctrl2->waitUntilOpened());
+
+        ctrl1->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl2->injectData(identifiableData(2), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
+
+        /// The second injection races the teardown caused by the first failure. If source 2 is already stopped, injectError throws
+        /// and this run does not produce a second failure report.
+        ASSERT_TRUE(ctrl1->injectError("Source 1 Failed"));
+        try
+        {
+            (void)ctrl2->injectError("Source 2 Failed");
+        }
+        catch (const Exception&)
+        {
+        }
+
+        ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+
+    ASSERT_TRUE(ctrl1->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl2->waitUntilDestroyed());
 }
 
 /// Shutdown of the Query Engine will `HardStop` all query plans.

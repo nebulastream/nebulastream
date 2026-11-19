@@ -874,8 +874,8 @@ void QueryCatalog::start(
                 /// We want to avoid running destructors and callbacks while holding the atomic transition lock.
                 /// So we move the queryplan out of the lock and dispose (if there exists one)
                 std::optional<std::variant<std::unique_ptr<RunningQueryPlan>, std::unique_ptr<StoppingQueryPlan>>> toDispose{};
-                /// Regardless of its current state the query should move into the Terminated::Failed state.
-                locked->transition(
+                /// Any non-terminal state moves into Terminated::Failed. An already terminated query keeps its first terminal state.
+                const auto didTransition = locked->transition(
                     [](Reserved&&)
                     {
                         ENGINE_LOG_DEBUG("Query was stopped before all pipeline starts were submitted");
@@ -895,8 +895,7 @@ void QueryCatalog::start(
                     {
                         toDispose = std::move(stopping.plan);
                         return Terminated{Terminated::TerminationReason::Failed};
-                    },
-                    [](Terminated&&) { return Terminated{Terminated::TerminationReason::Failed}; });
+                    });
 
                 /// Dispose after the transition (lock released) to avoid deadlock
                 if (toDispose)
@@ -904,10 +903,13 @@ void QueryCatalog::start(
                     std::visit([]<typename T>(T&& plan) { T::element_type::dispose(std::forward<T>(plan)); }, std::move(toDispose).value());
                 }
 
-                exception.what() += fmt::format(" in Query {}.", queryId);
-                ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
-                listener->logQueryFailure(queryId, std::move(exception), timestamp);
-                statistic->onEvent(QueryFail(ThreadPool::WorkerThread::id, queryId));
+                if (didTransition)
+                {
+                    exception.what() += fmt::format(" in Query {}.", queryId);
+                    ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
+                    listener->logQueryFailure(queryId, std::move(exception), timestamp);
+                    statistic->onEvent(QueryFail(ThreadPool::WorkerThread::id, queryId));
+                }
             }
         }
 
