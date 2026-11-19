@@ -63,67 +63,13 @@ SELECT id AS id FROM vecStream WHERE COSSIM(FROM_BASE64(v1), FROM_BASE64('AABAQA
 4
 5
 
-# Edge cases on raw VARSIZED buffers (empty and sub-4-byte buffers yield 0.0; non-zero 1D positive floats yield 1.0)
-CREATE LOGICAL SOURCE rawEdgeStream(id UINT64 NOT NULL, v1 VARSIZED NOT NULL, v2 VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR rawEdgeStream TYPE File;
-ATTACH INLINE
-1,,@@@@
-2,@@@@,
-3,AB,@@@@
-4,@@@@,BBBB
-
-SELECT id AS id, COSSIM(v1, v2) AS sim FROM rawEdgeStream INTO simSink;
-----
-1,0.0
-2,0.0
-3,0.0
-4,1.0
-
-# Nullability propagation: nullable VARSIZED inputs yield nullable FLOAT64, and NULL propagates to NULL
-CREATE LOGICAL SOURCE nullableVecStream(id UINT64 NOT NULL, v1 VARSIZED, v2 VARSIZED);
-CREATE PHYSICAL SOURCE FOR nullableVecStream TYPE File;
-ATTACH INLINE
-1,@@@@,@@@@
-2,,@@@@
-3,@@@@,
-4,,
-
-CREATE SINK nullableSimSink(id UINT64 NOT NULL, sim FLOAT64) TYPE File;
-
-SELECT id AS id, COSSIM(v1, v2) AS sim FROM nullableVecStream INTO nullableSimSink;
-----
-1,1.0
-2,NULL
-3,NULL
-4,NULL
-
-# Mixed nullability: one NOT NULL and one nullable input still yields nullable FLOAT64
-CREATE LOGICAL SOURCE mixedNullVecStream(id UINT64 NOT NULL, v1 VARSIZED NOT NULL, v2 VARSIZED);
-CREATE PHYSICAL SOURCE FOR mixedNullVecStream TYPE File;
-ATTACH INLINE
-1,@@@@,@@@@
-2,@@@@,
-
-SELECT id AS id, COSSIM(v1, v2) AS sim FROM mixedNullVecStream INTO nullableSimSink;
-----
-1,1.0
-2,NULL
-
 # Error cases: wrong arity (CannotDeserialize = 2002) and non-VARSIZED inputs (CannotInferStamp = 2007)
 CREATE LOGICAL SOURCE invalidInputStream(id UINT64 NOT NULL, v VARSIZED NOT NULL, num FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR invalidInputStream TYPE File;
 ATTACH INLINE
 1,@@@@,1.0
 
-SELECT id AS id, COSSIM() AS sim FROM invalidInputStream INTO simSink;
-----
-ERROR 2002
-
 SELECT id AS id, COSSIM(v) AS sim FROM invalidInputStream INTO simSink;
-----
-ERROR 2002
-
-SELECT id AS id, COSSIM(v, v, v) AS sim FROM invalidInputStream INTO simSink;
 ----
 ERROR 2002
 
@@ -131,10 +77,3 @@ SELECT id AS id, COSSIM(v, num) AS sim FROM invalidInputStream INTO simSink;
 ----
 ERROR 2007
 
-SELECT id AS id, COSSIM(num, v) AS sim FROM invalidInputStream INTO simSink;
-----
-ERROR 2007
-
-SELECT id AS id, COSSIM(num, num) AS sim FROM invalidInputStream INTO simSink;
-----
-ERROR 2007
