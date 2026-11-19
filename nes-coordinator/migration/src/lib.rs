@@ -20,8 +20,7 @@ use sea_orm_migration::prelude::*;
 mod m20260204_185834_init;
 mod triggers;
 
-/// SeaORM migrator for the catalog.
-/// Runs when the coordinator starts to create the schema and its triggers.
+/// Runs when the coordinator opens the catalog, to create the schema and its triggers.
 #[derive(Debug)]
 pub struct Migrator;
 

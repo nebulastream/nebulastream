@@ -118,7 +118,6 @@ The `migration` and `model` crates work with the same catalog at different level
 `migration` defines how catalog data is stored and which rules the database enforces, while `model` provides the Rust types and operations for reading and changing that data. 
 
 Changes to catalog tables and columns must be reflected in both crates.  
-`migration` defines the database structure, while `model` provides the corresponding Rust types and read and write operations.  
 By contrast, adding an operation that uses data already stored in the catalog only requires a `model` change.  
 For example, an operation that retrieves failed queries can use the existing query state and does not need a migration.
 

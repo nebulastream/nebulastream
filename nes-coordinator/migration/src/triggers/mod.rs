@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-//! Database trigger definitions organized by migration.
-//!
-//! Each migration that defines triggers has a submodule here containing
-//! the SQL files for each supported database backend.
+//! Trigger definitions, with one submodule per migration that defines triggers
+//! and one SQL file per supported database backend.
 
 pub mod m20260204_185834_init;

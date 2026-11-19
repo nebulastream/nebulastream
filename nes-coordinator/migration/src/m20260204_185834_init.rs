@@ -13,7 +13,6 @@
 */
 
 //! The initial catalog migration: creates every table, index, and trigger in the data model.
-//! For the reasoning behind the schema design, see the model crate.
 
 use crate::triggers::m20260204_185834_init as triggers;
 use crate::{drop_tables, ensure_no_tables};
@@ -54,9 +53,7 @@ impl MigrationTrait for Migration {
             }
         }
 
-        // Create tables in FK dependency order: parents first (LogicalSource, Worker, Query),
-        // then tables that reference them, then pure join tables.
-        // `down` drops in reverse.
+        // Parents first, then the tables that reference them, then the join tables.
         for table in [
             logical_source_table(),
             worker_table(),
@@ -88,9 +85,6 @@ impl MigrationTrait for Migration {
             manager.get_connection().execute_unprepared(sql).await?;
         }
 
-        // Drop children before parents (reverse topological order).
-        // SQLite ignores DROP TABLE ... CASCADE and enforces foreign keys,
-        // so dropping a parent while a child still references it fails on a non-empty catalog.
         drop_tables!(
             manager,
             QuerySource,
@@ -230,7 +224,6 @@ fn query_table() -> TableCreateStatement {
         .col(ColumnDef::new(Query::StartTimestamp).date_time().null())
         .col(ColumnDef::new(Query::StopTimestamp).date_time().null())
         .col(ColumnDef::new(Query::Error).json_binary().null())
-        // A dropped query is deleted once every fragment has terminated.
         .col(ColumnDef::new(Query::Dropped).boolean().not_null().default(false))
         .to_owned()
 }
@@ -338,7 +331,7 @@ fn indexes() -> Vec<IndexCreateStatement> {
         MigrationIndex::create().table(PhysicalSource::Table).name("idx_physical_source_logical_source")
             .col(PhysicalSource::LogicalSource)
             .and_where(Expr::col(PhysicalSource::LogicalSource).is_not_null()).to_owned(),
-        // Deleting a query deletes the sources and sinks it owns
+        // Deleting a query deletes the sources and sinks that it owns
         MigrationIndex::create().table(PhysicalSource::Table).name("idx_physical_source_query_id")
             .col(PhysicalSource::QueryId)
             .and_where(Expr::col(PhysicalSource::QueryId).is_not_null()).to_owned(),

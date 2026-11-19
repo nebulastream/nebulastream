@@ -105,12 +105,12 @@ END;
 --   1. Recompute query.state from the multiset of query_fragment states.
 --      Rule order matters: any Failed query_fragment fails the query;
 --      otherwise any Pending query_fragment keeps it Pending;
---      otherwise the 'all-in-{X}' rules fall through to the most advanced reachable state.
+--      otherwise the remaining rules, checked in order, pick the most advanced state that covers every query_fragment.
 --      COALESCE preserves the previous state when no rule fires.
 --   2. Propagate timestamps: start = MIN(query_fragment.start), stop = MAX(query_fragment.stop).
 --      Each is written only once the derived query state can have it,
 --      so no timestamp leaks into an earlier state.
---   3. If the query ended up Failed and carries no error yet,
+--   3. If the query ended up Failed and has no error yet,
 --      copy the first failed query_fragment's error and host onto it, as a {host_addr, error} JSON object.
 --      The earliest stop_timestamp is the first failure; a later one is a consequence of it
 --      (the other query_fragments being stopped, or a worker removed), so the assignment is final.
@@ -196,12 +196,10 @@ CREATE TRIGGER IF NOT EXISTS cascade_worker_removed_to_query_fragments
 BEGIN
     UPDATE query_fragment
     SET current_state = 'Failed',
-        -- SQLite has no datetime type:
-        -- the column is declared date_time() and sea-orm stores DateTime<Utc> values as ISO-8601 text,
-        -- so the trigger writes the same encoding
-        -- and the derive trigger's MIN/MAX text comparison stays chronological.
-        -- CURRENT_TIMESTAMP would emit a value with a space separator and no offset,
-        -- which does not compare correctly against app-written timestamps.
+        -- SQLite has no datetime type, and sea-orm stores DateTime<Utc> values as ISO-8601 text.
+        -- The trigger writes the same encoding, so the MIN/MAX text comparison in the derive trigger stays chronological.
+        -- CURRENT_TIMESTAMP has a space separator and no offset,
+        -- so it does not compare correctly against the timestamps that the application writes.
         stop_timestamp = strftime('%Y-%m-%dT%H:%M:%f', 'now') || '+00:00',
         error = json_object('Transport', json_object('msg', 'worker removed'))
     WHERE host_addr = NEW.host_addr
@@ -209,7 +207,7 @@ BEGIN
 END;
 
 -- A dropped query is deleted once none of its fragments can run any more,
--- and the foreign keys delete its fragments, its links, and the sources and sinks it owns.
+-- and the foreign keys delete its fragments, its links, and the sources and sinks that it owns.
 -- The query state is not enough: a query is Failed while its other fragments are still being stopped.
 -- The trigger fires when the query is marked, which deletes a query that has already terminated,
 -- and on every fragment state change, because the derive trigger above always sets the state.
@@ -225,7 +223,7 @@ BEGIN
     DELETE FROM query WHERE id = NEW.id;
 END;
 
--- Refuse to drop a physical source while any non-terminal query still references it;
+-- Reject the drop of a physical source while any non-terminal query still references it;
 -- the query would otherwise keep running with a dangling source id.
 -- Wait for the query to finish, or drop it first.
 CREATE TRIGGER IF NOT EXISTS prevent_physical_source_drop_with_active_queries
