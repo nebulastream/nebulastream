@@ -786,6 +786,7 @@ private:
 
         const auto optimizeStart = std::chrono::steady_clock::now();
         keepOnlyWhatEntryUses(*module, entrySymbol);
+        const auto tDce = std::chrono::steady_clock::now();
         {
             std::size_t instructions = 0;
             std::size_t functions = 0;
@@ -795,6 +796,84 @@ private:
                 instructions += function.getInstructionCount();
             }
             fprintf(stderr, "TMPTIME after-dce functions %zu instructions %zu\n", functions, instructions);
+            /// TEMPORARY: instructions only the initializer reaches, against those the entry reaches without it, and the
+            /// number of debug records.
+            const auto reach = [&](const llvm::Function* start, const llvm::Function* stop)
+            {
+                std::set<const llvm::Function*> seen;
+                std::vector<const llvm::Value*> open{start};
+                std::set<const llvm::Value*> visited{start};
+                while (!open.empty())
+                {
+                    const auto* value = open.back();
+                    open.pop_back();
+                    if (const auto* function = llvm::dyn_cast<llvm::Function>(value))
+                    {
+                        if (function == stop || function->isDeclaration())
+                        {
+                            continue;
+                        }
+                        seen.insert(function);
+                        for (const auto& instruction : llvm::instructions(*function))
+                        {
+                            for (const auto& operand : instruction.operands())
+                            {
+                                if (llvm::isa<llvm::Constant>(operand.get()) && visited.insert(operand.get()).second)
+                                {
+                                    open.push_back(operand.get());
+                                }
+                            }
+                        }
+                    }
+                    else if (const auto* constant = llvm::dyn_cast<llvm::Constant>(value); constant != nullptr && !llvm::isa<llvm::GlobalVariable>(constant))
+                    {
+                        for (const auto& operand : constant->operands())
+                        {
+                            if (visited.insert(operand.get()).second)
+                            {
+                                open.push_back(operand.get());
+                            }
+                        }
+                    }
+                }
+                return seen;
+            };
+            const auto* initializerFunction = module->getFunction("nes_codon_udf_initializer");
+            const auto fromEntry = reach(module->getFunction(entrySymbol), initializerFunction);
+            const auto fromInitializer = initializerFunction != nullptr ? reach(initializerFunction, nullptr) : std::set<const llvm::Function*>{};
+            std::size_t entryInstructions = 0;
+            std::size_t initOnlyInstructions = 0;
+            std::size_t debugRecords = 0;
+            for (const auto* function : fromEntry)
+            {
+                entryInstructions += function->getInstructionCount();
+            }
+            for (const auto* function : fromInitializer)
+            {
+                initOnlyInstructions += fromEntry.contains(function) ? 0 : function->getInstructionCount();
+            }
+            for (auto& function : *module)
+            {
+                for (auto& instruction : llvm::instructions(function))
+                {
+                    debugRecords += static_cast<std::size_t>(std::distance(instruction.getDbgRecordRange().begin(), instruction.getDbgRecordRange().end()));
+                }
+            }
+            fprintf(stderr, "TMPSIZE entry %zu init-only %zu debug-records %zu\n", entryInstructions, initOnlyInstructions, debugRecords);
+            if (std::getenv("NES_TMP_INIT_OPTNONE") != nullptr) /// TEMPORARY (experiment E62)
+            {
+                for (const auto* function : fromInitializer)
+                {
+                    if (!fromEntry.contains(function))
+                    {
+                        auto* mutableFunction = const_cast<llvm::Function*>(function); /// NOLINT
+                        mutableFunction->removeFnAttr(llvm::Attribute::AlwaysInline);
+                        mutableFunction->removeFnAttr(llvm::Attribute::InlineHint);
+                        mutableFunction->addFnAttr(llvm::Attribute::OptimizeNone);
+                        mutableFunction->addFnAttr(llvm::Attribute::NoInline);
+                    }
+                }
+            }
         }
         /// One O1 run, not Codon's release setting (two O3 runs): Nautilus links the UDF into the pipeline and optimizes it
         /// again with O3. Codon's own passes (AllocationRemover, AllocationHoister) run only here and already run at O1;
@@ -802,7 +881,8 @@ private:
         auto optimizationOptions = codon::ir::LLVMOptimizationOptions::release();
         optimizationOptions.level = llvm::OptimizationLevel::O1;
         optimizationOptions.runs = 1;
-        optimizationOptions.preserveDebugInfo = true;
+        /// TEMPORARY (experiment E62): NES_TMP_CODON_DEBUGINFO=0 strips the debug information before the optimization.
+        optimizationOptions.preserveDebugInfo = std::getenv("NES_TMP_CODON_DEBUGINFO") == nullptr || std::string{std::getenv("NES_TMP_CODON_DEBUGINFO")} != "0";
         /// TEMPORARY (experiment E61): none, o3x2, o1-nocodon, or an LLVM pass pipeline in textual form.
         const std::string variant = std::getenv("NES_TMP_CODON_PIPELINE") != nullptr ? std::getenv("NES_TMP_CODON_PIPELINE") : "";
         if (variant == "o3x2")
@@ -818,10 +898,17 @@ private:
         {
             optimizationOptions.pipeline = variant;
         }
+        if (const auto* dumpDirectory = std::getenv("NES_TMP_DUMP_PREOPT")) /// TEMPORARY (experiment E62)
+        {
+            const auto bitcode = writeBitcode(*module);
+            std::ofstream{fmt::format("{}/{}.bc", dumpDirectory, entrySymbol), std::ios::binary}.write(bitcode.data(), static_cast<std::streamsize>(bitcode.size()));
+        }
+        const auto tOpt0 = std::chrono::steady_clock::now();
         if (variant != "none")
         {
             codon::ir::optimize(module.get(), optimizationOptions);
         }
+        fprintf(stderr, "TMPSPLIT dce %.0f instrumentation %.0f codon-optimize %.0f\n", elapsedMilliseconds(optimizeStart, tDce), elapsedMilliseconds(tDce, tOpt0), elapsedMilliseconds(tOpt0, std::chrono::steady_clock::now()));
         const auto optimizeEnd = std::chrono::steady_clock::now();
         return {
             .llvmBitcode = writeBitcode(*module),
