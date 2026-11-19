@@ -24,6 +24,7 @@
 #include <vector>
 #include <Util/Reflection.hpp>
 #include <gtest/gtest.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -272,6 +273,44 @@ TEST(ReflectionTest, Unsigned32BitAboveIntMax)
     const auto reflected = context.reflect(unsignedInput);
     const auto deserialized = context.unreflect<uint32_t>(reflected);
     EXPECT_EQ(deserialized, unsignedInput);
+}
+
+#define EXPECT_CANNOT_DESERIALIZE(expression) \
+    try \
+    { \
+        expression; \
+        ADD_FAILURE() << "Expected CannotDeserialize, but nothing was thrown"; \
+    } \
+    catch (const Exception& exception) \
+    { \
+        EXPECT_EQ(exception.code(), ErrorCode::CannotDeserialize); \
+    }
+
+TEST(ReflectionTest, NarrowIntegerOutOfRangeThrows)
+{
+    const ReflectionContext context{};
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<int8_t>(context.reflect(int64_t{1000})));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<int8_t>(context.reflect(int64_t{128})));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<int8_t>(context.reflect(int64_t{-129})));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<uint8_t>(context.reflect(int64_t{256})));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<uint8_t>(context.reflect(int64_t{-1})));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<uint32_t>(context.reflect(int64_t{-1})));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<uint32_t>(context.reflect(int64_t{1} << 32)));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<int32_t>(context.reflect(int64_t{1} << 40)));
+    EXPECT_CANNOT_DESERIALIZE((void)context.unreflect<int32_t>(context.reflect(-(int64_t{1} << 32))));
+}
+
+TEST(ReflectionTest, NarrowIntegerInRangeRoundTrips)
+{
+    const ReflectionContext context{};
+    EXPECT_EQ(context.unreflect<int8_t>(context.reflect(std::numeric_limits<int8_t>::min())), std::numeric_limits<int8_t>::min());
+    EXPECT_EQ(context.unreflect<int8_t>(context.reflect(std::numeric_limits<int8_t>::max())), std::numeric_limits<int8_t>::max());
+    EXPECT_EQ(context.unreflect<uint8_t>(context.reflect(std::numeric_limits<uint8_t>::max())), std::numeric_limits<uint8_t>::max());
+    EXPECT_EQ(context.unreflect<uint8_t>(context.reflect(uint8_t{0})), uint8_t{0});
+    EXPECT_EQ(context.unreflect<int16_t>(context.reflect(std::numeric_limits<int16_t>::min())), std::numeric_limits<int16_t>::min());
+    EXPECT_EQ(context.unreflect<int32_t>(context.reflect(std::numeric_limits<int32_t>::max())), std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(context.unreflect<int32_t>(context.reflect(std::numeric_limits<int32_t>::min())), std::numeric_limits<int32_t>::min());
+    EXPECT_EQ(context.unreflect<uint64_t>(context.reflect(std::numeric_limits<uint64_t>::max())), std::numeric_limits<uint64_t>::max());
 }
 
 TEST(ReflectionTest, VariantWithUnsigned32BitAboveIntMax)
