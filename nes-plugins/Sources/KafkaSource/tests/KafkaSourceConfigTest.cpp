@@ -186,7 +186,7 @@ TEST(KafkaSourceConfigTest, ConsumerConfCarriesTheOptions)
     };
     EXPECT_EQ(value("bootstrap.servers"), "localhost:9092");
     EXPECT_EQ(value("group.id"), "nes");
-    EXPECT_EQ(value("auto.offset.reset"), "earliest");
+    EXPECT_EQ(value("auto.offset.reset"), "smallest");
     EXPECT_EQ(value("enable.auto.commit"), "false");
 }
 }
