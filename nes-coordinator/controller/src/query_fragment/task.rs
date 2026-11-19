@@ -321,7 +321,7 @@ mod tests {
         .await
         .unwrap();
         CreateLogicalSource {
-            name: "src".to_string(),
+            name: "src".parse().unwrap(),
             schema: Default::default(),
             if_not_exists: false,
         }
@@ -329,9 +329,9 @@ mod tests {
         .await
         .unwrap();
         let source = CreatePhysicalSource {
-            logical_source: "src".to_string(),
+            logical_source: "src".parse().unwrap(),
             host_addr: host.clone(),
-            source_type: "File".to_string(),
+            source_type: "File".parse().unwrap(),
             source_config: Default::default(),
             parser_config: Default::default(),
             if_not_exists: false,
@@ -340,9 +340,9 @@ mod tests {
         .await
         .unwrap();
         let sink = CreateSink {
-            name: "snk".to_string(),
+            name: "snk".parse().unwrap(),
             host_addr: host.clone(),
-            sink_type: "File".to_string(),
+            sink_type: "File".parse().unwrap(),
             schema: Default::default(),
             config: Default::default(),
             if_not_exists: false,
@@ -353,6 +353,7 @@ mod tests {
         CreateQuery {
             name: None,
             sql: "SELECT * FROM src INTO snk".to_string(),
+            global_plan: vec![],
             fragments: vec![CreateQueryFragment {
                 host_addr: host.clone(),
                 plan: vec![],
