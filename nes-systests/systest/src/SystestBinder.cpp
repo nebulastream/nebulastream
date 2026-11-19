@@ -80,6 +80,16 @@ Schema<UnqualifiedUnboundField, Ordered> getSinkOutputSchema(const DistributedLo
     return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor->getSchema());
 }
 
+/// Mirrors the output formatters, of which only JSON writes no header.
+bool sinkWritesHeader(const DistributedLogicalPlan& plan)
+{
+    const auto sinkOperator = plan.getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
+    INVARIANT(sinkOperator.has_value(), "The optimized plan should have a sink operator");
+    const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
+    INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
+    return descriptor->getOutputFormatterDescriptor().getOutputFormatterType() != Identifier::parse("JSON");
+}
+
 template <typename T>
 void throwOnError(std::expected<T, Exception> result)
 {
@@ -206,7 +216,8 @@ private:
         plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
         auto optimized = queryOptimizer.optimize(plan);
         auto schema = getSinkOutputSchema(optimized);
-        return BoundPlan{.plan = std::move(optimized), .sinkOutputSchema = std::move(schema)};
+        const auto writesHeader = sinkWritesHeader(optimized);
+        return BoundPlan{.plan = std::move(optimized), .sinkOutputSchema = std::move(schema), .sinkWritesHeader = writesHeader};
     }
 
     [[nodiscard]] std::string runExplain(const std::string& sql) const

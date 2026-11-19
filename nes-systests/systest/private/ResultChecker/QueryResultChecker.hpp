@@ -30,6 +30,8 @@ struct QueryResultCheck
 {
     std::filesystem::path resultFile;
     Schema<UnqualifiedUnboundField, Ordered> expectedSchema;
+    /// Whether the output format writes a schema header in front of the rows.
+    bool hasHeader = true;
     std::vector<std::string> expectedTuples;
 
     /// Fails when the output file is missing, and otherwise when its schema or its tuples differ from the expected ones.

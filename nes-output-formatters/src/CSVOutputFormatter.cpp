@@ -19,7 +19,9 @@
 #include <cstring>
 #include <expected>
 #include <memory>
+#include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -34,6 +36,7 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <std/cstring.h>
 
 #include <Identifiers/Identifier.hpp>
@@ -90,13 +93,15 @@ const ConfigField<std::string> FIELD_DELIMITER{
 
 const ConfigField<std::string> TUPLE_DELIMITER{
     Identifier::parse("TUPLE_DELIMITER"), "A string to be used for delimiting tuples.", std::string{"\n"}};
+
+const ConfigField<std::string> HEADER_FORMAT{Identifier::parse("HEADER_FORMAT"), "Header format of fields", "{NAME}:{TYPE}:{NULLABLE}"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> CSVOutputFormatter::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("CSV_OUTPUT_FORMATTER"), QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
+    return createConfigSchema(Identifier::parse("CSV_OUTPUT_FORMATTER"), QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER, HEADER_FORMAT);
 }
 
 std::expected<CSVOutputFormatterConfig, Exception> CSVOutputFormatterConfig::fromConfig(const InstantiatedConfig& config)
@@ -105,7 +110,8 @@ std::expected<CSVOutputFormatterConfig, Exception> CSVOutputFormatterConfig::fro
         .quoteStrings = config.get(QUOTE_STRINGS),
         .fieldDelimiter = config.get(FIELD_DELIMITER),
         .tupleDelimiter = config.get(TUPLE_DELIMITER),
-        .valueSerializers = config.get(OutputFormatterDescriptor::VALUE_SERIALIZERS)};
+        .valueSerializers = config.get(OutputFormatterDescriptor::VALUE_SERIALIZERS),
+        .headerFormat = config.get(HEADER_FORMAT)};
 }
 
 CSVOutputFormatter::CSVOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const CSVOutputFormatterConfig& config)
@@ -113,6 +119,7 @@ CSVOutputFormatter::CSVOutputFormatter(const std::vector<Record::RecordFieldIden
     , fieldDelimiter(config.fieldDelimiter)
     , tupleDelimiter(config.tupleDelimiter)
     , quoteStrings(config.quoteStrings)
+    , headerFormat(config.headerFormat)
 {
     serializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
     serializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
@@ -213,6 +220,34 @@ std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)
 std::unique_ptr<OutputFormatter> CSVOutputFormatter::provideFormatter(OutputFormatterRegistryArguments arguments)
 {
     return std::make_unique<CSVOutputFormatter>(arguments.fieldNames, arguments.descriptor.getConfig().getAs<CSVOutputFormatterConfig>());
+}
+
+std::optional<std::string> CSVOutputFormatter::getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema) const
+{
+    PRECONDITION(!std::ranges::empty(schema), "Encountered schema without fields.");
+
+    return fmt::format(
+        "{}\n",
+        fmt::join(
+            schema
+                | std::views::transform(
+                    [this](const auto& field)
+                    {
+                        const Identifier& identifier = field.getFullyQualifiedName();
+
+                        return fmt::format(
+                            fmt::runtime(headerFormat),
+                            fmt::arg(
+                                "NAME",
+                                identifier.isCaseSensitive() ? fmt::format(R"("{}")", identifier.asCanonicalString())
+                                                             : identifier.asCanonicalString()),
+                            fmt::arg("TYPE", magic_enum::enum_name(field.getDataType().type)),
+                            fmt::arg(
+                                "NULLABLE",
+                                magic_enum::enum_name(
+                                    field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE)));
+                    }),
+            fieldDelimiter));
 }
 
 }

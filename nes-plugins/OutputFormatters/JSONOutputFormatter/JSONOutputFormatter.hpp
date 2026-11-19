@@ -78,6 +78,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
 
+    std::optional<std::string> getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema) const override;
+
 private:
     std::vector<std::string> canonicalFieldNames;
 };

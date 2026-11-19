@@ -129,7 +129,11 @@ Verdict checkRows(const StatementOutcome& outcome, const RewrittenQuery& query, 
     }
     INVARIANT(outcome.sinkOutputSchema.has_value(), "a query that ran has a bound plan and so a sink schema");
     return runCheck(
-        QueryResultCheck{.resultFile = *query.resultFile, .expectedSchema = *outcome.sinkOutputSchema, .expectedTuples = expected.rows});
+        QueryResultCheck{
+            .resultFile = *query.resultFile,
+            .expectedSchema = *outcome.sinkOutputSchema,
+            .hasHeader = outcome.sinkWritesHeader,
+            .expectedTuples = expected.rows});
 }
 
 Verdict checkQuery(const StatementOutcome& outcome, const RewrittenQuery& query)
@@ -158,7 +162,12 @@ Verdict checkDifferential(const std::span<const StatementOutcome> outcomes, cons
     {
         return std::unexpected{Mismatch{"the second half of the differential block never ran"}};
     }
-    return runCheck(DifferentialCheck{.firstResultFile = block.firstResultFile, .secondResultFile = block.secondResultFile});
+    return runCheck(
+        DifferentialCheck{
+            .firstResultFile = block.firstResultFile,
+            .secondResultFile = block.secondResultFile,
+            .firstHasHeader = outcomes[0].sinkWritesHeader,
+            .secondHasHeader = outcomes[1].sinkWritesHeader});
 }
 
 }
