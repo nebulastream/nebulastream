@@ -45,9 +45,9 @@ use tracing::{debug, instrument};
 
 type Fragments = Arc<RwLock<HashMap<i64, Fragment>>>;
 
-/// Upper bounds of the waits between a fragment's state changes.
-/// The simulator only switches tasks at an await, so without a wait, a state change would happen at the same instant as the reply.
-/// The start bound covers two of the controller's 5 s status reads.
+// Upper bounds of the waits between a fragment's state changes.
+// The simulator only switches tasks at an await, so without a wait, a state change would happen at the same instant as the reply.
+// The start bound covers two of the controller's status reads of a fragment.
 const MAX_START_DELAY: Duration = Duration::from_secs(10);
 const MAX_RUNNING_DELAY: Duration = Duration::from_secs(2);
 const MAX_STOP_DELAY: Duration = Duration::from_secs(2);
@@ -57,7 +57,7 @@ fn pick_delay(max: Duration) -> Duration {
 }
 
 /// How long a slow handler waits.
-/// The upper part of the range exceeds the controller's 2 s deadline for one call,
+/// The upper part of the range exceeds the controller's deadline for one call,
 /// so the controller repeats a call that may already have taken effect.
 fn pick_slow_reply_delay() -> Duration {
     Duration::from_millis(thread_rng().gen_range(1000..=4000))
@@ -66,7 +66,7 @@ fn pick_slow_reply_delay() -> Duration {
 fn extract_fragment_id(req_id: Option<&SerializableQueryId>) -> i64 {
     req_id
         .and_then(SerializableQueryId::fragment_id)
-        .expect("request carries a fragment id")
+        .expect("the request has a fragment id")
 }
 
 /// A fragment exists from its start call on.
@@ -116,7 +116,7 @@ fn current_timestamp_ms() -> u64 {
     u64::try_from(since_epoch.as_millis()).unwrap_or(u64::MAX)
 }
 
-/// Moves a fragment from one state to the next and records the time of the change.
+/// Moves the fragment to `to` if it is in one of the `from` states, records the time of the change, and returns whether it moved.
 /// A fragment in any other state stays as it is, so a stop that happened in the meantime is kept.
 fn advance(fragments: &Fragments, id: i64, from: &[QueryState], to: QueryState) -> bool {
     let mut map = fragments.write().unwrap();
@@ -131,6 +131,7 @@ fn advance(fragments: &Fragments, id: i64, from: &[QueryState], to: QueryState) 
     true
 }
 
+/// Reports the worker as serving, and fails a check as unavailable under buggify.
 pub struct HealthService;
 
 #[tonic::async_trait]
@@ -148,6 +149,7 @@ impl Health for HealthService {
     }
 }
 
+/// The fragments are in memory, so a restarted worker has none.
 pub struct WorkerService {
     fragments: Fragments,
 }
@@ -231,8 +233,8 @@ impl WorkerRpcService for WorkerService {
         }
         let id = extract_fragment_id(request.get_ref().query_id.as_ref());
 
-        // An unknown fragment is reported, so the caller learns that nothing was stopped
-        // and that a start with an unknown outcome may still take effect.
+        // An unknown fragment is reported,
+        // so the reply tells the caller that nothing was stopped and that a start with an unknown outcome may still take effect.
         // A repeated stop is accepted.
         let state = self.fragments.read().unwrap().get(&id).map(|f| f.state);
         match state {
@@ -312,9 +314,10 @@ impl WorkerRpcService for WorkerService {
         let after = request.get_ref().after_unix_timestamp_in_milli_seconds;
         let fragments = self.fragments.read().unwrap();
 
-        // Like the real worker, the list leaves out a registered fragment.
-        // It filters a started fragment by its start time and lists it without a time.
-        // It filters a running fragment by the time it began to run and lists it with that time.
+        // NOTE: Like the real worker, the list leaves out a registered fragment,
+        // and lists a started or running fragment only if it entered that state at or after the requested time.
+        // For a request after 100: Started at 120 is listed without a time, Running since 150 is listed with 150,
+        // and Running since 90 is left out.
         let active_queries = fragments
             .iter()
             .filter_map(|(&id, fragment)| {

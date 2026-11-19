@@ -14,7 +14,7 @@
 
 //! Assertions that a trial runs once the simulation has quiesced.
 //!
-//! An invariant compares one piece of model state against what the coordinator or the workers report,
+//! Each invariant compares one piece of model state against what the coordinator or the workers report, or against a configured minimum,
 //! and panics on mismatch.
 
 use crate::harness::Harness;
@@ -29,6 +29,7 @@ use model::worker::{GetWorker, WorkerState};
 use std::collections::HashSet;
 use tracing::info;
 
+/// Run only after the workloads have finished and the system has had time to recover.
 pub async fn check_all(harness: &Harness, model: &ModelState, min_failed_queries: usize) {
     check_active_catalog_fragments(harness, model).await;
     check_dropped_catalog_queries(harness, model).await;
@@ -61,8 +62,9 @@ async fn get_catalog_fragments(
     queries.into_iter().flat_map(|row| row.fragments).collect()
 }
 
+/// Whether the fragment terminated in a state that the model accepts.
 /// A fragment ends as Stopped unless its worker was removed first, which fails it.
-/// The model does not know which of the two happened first.
+/// The model does not record which of the two happened first.
 pub fn is_stopped_or_failed_by_drop(fragment: &query_fragment::Model, model: &ModelState) -> bool {
     match fragment.current_state {
         QueryFragmentState::Stopped => true,
@@ -116,7 +118,7 @@ async fn check_active_catalog_fragments(harness: &Harness, model: &ModelState) {
 }
 
 /// Every dropped query has terminated and is deleted.
-/// The worker check below shows that its fragments were stopped on the workers.
+/// The check of the fragments that workers report shows that its fragments were stopped on the workers.
 async fn check_dropped_catalog_queries(harness: &Harness, model: &ModelState) {
     const NAME: &str = "dropped_catalog_queries";
     let left: Vec<_> = get_catalog_queries(harness, model.dropped_queries())
@@ -130,7 +132,7 @@ async fn check_dropped_catalog_queries(harness: &Harness, model: &ModelState) {
     );
 }
 
-/// A query that ran on a dropped worker is Failed, and each of its fragments is Stopped or Failed on a dropped worker.
+/// A query that ran on a dropped worker is Failed.
 async fn check_failed_catalog_queries(harness: &Harness, model: &ModelState) {
     const NAME: &str = "failed_catalog_queries";
     let queries = get_catalog_queries(harness, model.failed_queries()).await;
@@ -170,14 +172,12 @@ async fn check_active_worker_fragments(harness: &Harness, model: &ModelState) {
     );
 }
 
-/// Catalog workers marked Active match the model's active workers.
 async fn check_active_catalog_workers(harness: &Harness, model: &ModelState) {
     const NAME: &str = "active_catalog_workers";
     let active = get_catalog_workers(harness, WorkerState::Active).await;
     assert_eq!(&active, model.active_workers(), "{NAME}: set mismatch");
 }
 
-/// Catalog workers marked Removed match the model's dropped workers.
 async fn check_dropped_catalog_workers(harness: &Harness, model: &ModelState) {
     const NAME: &str = "dropped_catalog_workers";
     let removed = get_catalog_workers(harness, WorkerState::Removed).await;

@@ -19,7 +19,6 @@
 //! The controller and the fake worker have buggify points.
 //! While buggify is on, a point fires at random but seed-reproducible moments and runs its fault, such as an early error or a slow reply.
 //! This reaches failure paths that are otherwise rare.
-//! A trial enables it at the start and disables it partway through, so the system can recover before the final checks.
 
 use crate::config::TrialConfig;
 use crate::harness::Harness;
@@ -39,6 +38,8 @@ use tracing_subscriber::fmt::time::uptime;
     clippy::await_holding_refcell_ref,
     reason = "the model is only mutated while workloads run, the checks run after all of them finished, and madsim is single-threaded"
 )]
+/// Panics if a check fails.
+/// Logging is off unless `RUST_LOG` sets a filter.
 pub async fn run(name: &str, cfg: &TrialConfig) {
     init_tracing();
 

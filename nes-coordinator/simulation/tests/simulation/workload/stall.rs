@@ -15,8 +15,8 @@
 //! Failure-injection workload that pauses random nodes for a window and resumes them.
 //!
 //! A paused node still exists from the network's point of view but makes no progress.
-//! This tests whether the controller's RPC and probe timeouts fire and its reconciliation resumes once the node comes back,
-//! rather than staying stuck in an intermediate state.
+//! This tests whether the controller's RPC and probe timeouts fire and its reconciliation continues once the node resumes,
+//! instead of staying stuck in an intermediate state.
 
 use crate::harness::Harness;
 use crate::workload::pick_victims;
@@ -25,6 +25,7 @@ use std::time::Duration;
 use tokio::time::Instant;
 use tracing::info;
 
+/// Only workers that exist at `begin` can be paused.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct StallWorkload {

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+//! Declares the cfgs that the simulation build sets through RUSTFLAGS, so that rustc does not warn about them as unknown.
+
 fn main() {
     println!("cargo::rustc-check-cfg=cfg(madsim)");
     println!("cargo::rustc-check-cfg=cfg(tokio_unstable)");

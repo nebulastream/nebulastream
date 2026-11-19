@@ -92,7 +92,7 @@ strum = { version = "0.26", features = ["derive"] }
 test-strategy = "0.4.5"
 thiserror = "2.0"
 tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time"] }
-# The real tokio under a second name, for members whose `tokio` is the madsim facade.
+# The real tokio under a second name, for members that use the madsim facade as `tokio`.
 tokio-real = { version = "1.52.0", package = "tokio", features = ["rt"] }
 tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor"] }

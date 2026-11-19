@@ -14,13 +14,10 @@
 
 //! Simulation test entry point.
 //!
-//! Each `.toml` file under `tests/simulation/configs` defines one or more deterministic trials.
-//! A trial picks a seed, builds a fresh madsim runtime,
-//! runs the configured workloads against an in-process coordinator and a set of fake workers,
-//! and asserts invariants at the end.
-//!
-//! Trials run on a worker thread under a wall-clock timeout so a stuck simulation cannot hang the whole test binary.
-//! Every failure prints its seed, which `MADSIM_TEST_SEED=...` replays.
+//! Each `.toml` file under `tests/simulation/configs` defines one or more trials.
+//! Every trial gets its own seed and a fresh madsim runtime,
+//! and runs on a separate thread under a wall-clock timeout, so a stuck simulation cannot hang the whole test binary.
+//! Every failed config trial prints its seed, which `MADSIM_TEST_SEED=...` replays.
 //! The binary also runs unit trials of the harness itself.
 //!
 //! The crate has to compile without madsim (clippy, normal builds, tooling),
@@ -74,6 +71,7 @@ use {
 #[cfg(all(madsim, not(tokio_unstable)))]
 compile_error!("build the simulation with RUSTFLAGS=\"--cfg madsim --cfg tokio_unstable\"");
 
+/// `SIM_WALL_TIMEOUT_SECS` overrides it.
 #[cfg(madsim)]
 const DEFAULT_WALL_TIMEOUT_SECS: u64 = 90;
 
@@ -98,8 +96,8 @@ fn main() {
 /// Sets the process-wide hash keys of `ahash` from a fixed seed, before any trial runs.
 /// `ahash` reads them once per process from the system's entropy source,
 /// which the simulator replaces with the seeded random stream of the running trial.
-/// Otherwise the first trial to hash a value would spend part of its stream on the keys,
-/// and every later trial would inherit keys that depend on that trial's seed.
+/// Otherwise the first trial to hash a value would use part of its stream for the keys,
+/// and every later trial would get keys that depend on that trial's seed.
 #[cfg(madsim)]
 fn init_process_wide_hash_keys() {
     Runtime::with_seed_and_config(0, Config::default()).block_on(async {
@@ -153,8 +151,7 @@ fn discover_trials() -> Vec<Trial> {
                 .unwrap_or_else(|e| panic!("invalid trial in {}: {e}", path.display()));
             let name = format!("{stem}::{}", cfg.title);
 
-            // No seed pinned: derive one per trial from the wall clock.
-            // Trials can start in the same nanosecond, so xor in the trial index times a large odd constant to keep seeds distinct.
+            // Two seeds can be derived in the same nanosecond, so xor in the trial index times a large odd constant to keep seeds distinct.
             let seed = env_seed.unwrap_or_else(|| {
                 let nanos = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
@@ -211,10 +208,10 @@ fn run_trial(name: &str, cfg: TrialConfig, seed: u64, wall_timeout: Duration) {
 /// Nothing is spawned on it.
 /// The simulator replaces tokio's runtime, but `select!` and watch channels are still tokio's own,
 /// and they pick branches and waiter slots from a per-thread generator.
-/// Tokio seeds that generator from a process-wide counter, so without this a trial would behave differently
-/// depending on how many trials started before it in the process.
+/// Tokio seeds that generator from a process-wide counter,
+/// so without this a trial would behave differently depending on how many trials started before it in the process.
 /// The only public way to seed it is a runtime's seed, which needs `--cfg tokio_unstable`.
-/// The trial has to run without tokio's cooperative budget inside this context,
+/// NOTE: The trial has to run without tokio's cooperative budget inside this context,
 /// because nothing resets the budget between the simulator's task polls.
 #[cfg(madsim)]
 fn build_seeded_tokio_runtime(seed: u64) -> TokioRuntime {

@@ -14,8 +14,8 @@
 
 //! TOML schema for simulation trial configs.
 //!
-//! A test file in `tests/simulation/configs` holds one or more trial entries.
-//! Each entry pins simulator behavior (timeout, buggify) and lists the workloads to run, each selected by its `name` key.
+//! A config file holds one or more `[[test]]` tables, each with its `[[test.workload]]` tables.
+//! TODO #2286: generate trials instead of writing each one by hand.
 
 use crate::workload::Workload;
 use anyhow::{Result, ensure};
@@ -28,19 +28,20 @@ pub struct TrialFile {
     pub trials: Vec<TrialConfig>,
 }
 
-/// One trial.
 /// `timeout`, `buggify_until` and every `begin` and `end` are seconds of simulated time since the trial started.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TrialConfig {
     pub title: String,
     /// When the checks run.
+    /// The configs leave at least 45 s after the last fault workload ends,
+    /// so the coordinator reaches every worker again and every fragment of an active query is Running before the checks.
     pub timeout: u64,
     /// Buggify is on from the start until this time.
     /// Without the key it stays off.
     pub buggify_until: Option<u64>,
-    /// The trial fails if worker drops failed fewer queries than this,
-    /// so it cannot pass without having dropped a worker that ran a fragment.
+    /// The trial fails if worker drops failed fewer queries than this.
+    /// With a value above zero, the trial cannot pass without having dropped a worker that ran a fragment.
     #[serde(default)]
     pub min_failed_queries: usize,
     #[serde(rename = "workload")]
@@ -48,7 +49,7 @@ pub struct TrialConfig {
 }
 
 impl TrialConfig {
-    /// The checks run at the timeout, so a workload that is still active then leaves the system no time to recover.
+    /// A workload or buggify that is still active at the timeout leaves the system no time to recover.
     pub fn validate(&self) -> Result<()> {
         for workload in &self.workloads {
             workload.validate(&self.title, self.timeout)?;

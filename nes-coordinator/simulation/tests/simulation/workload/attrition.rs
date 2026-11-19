@@ -14,9 +14,8 @@
 
 //! Failure-injection workload that kills nodes and later restarts them.
 //!
-//! The share `kill_rate` of the workers is picked at random (at least one), and all victims are killed at the same instant.
-//! Restarts happen after random delays inside the configured restart window,
-//! so the system sees a correlated outage followed by a staggered recovery, which is harder than losing one node at a time.
+//! All victims are killed at the same instant and restarted after random delays,
+//! so the outage is correlated and the recovery is staggered, which is harder to handle than the loss of one node at a time.
 
 use crate::harness::Harness;
 use crate::workload::pick_victims;
@@ -26,6 +25,7 @@ use std::time::Duration;
 use tokio::time::Instant;
 use tracing::info;
 
+/// The restart delays are seconds after the kill, not after the start of the trial.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AttritionWorkload {
@@ -61,7 +61,6 @@ impl AttritionWorkload {
             .collect();
         restarts.sort_by_key(|&(_, delay)| delay);
 
-        // Kill every victim before the first restart sleep, so the outage is correlated.
         for &(id, _) in &restarts {
             info!("{}: kill {id}", Self::NAME);
             harness.kill(id);
