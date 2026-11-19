@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-//! A worker's version is not known at registration, because clients register workers, so it is read from the worker.
-
 use crate::config::VERSION_TIMEOUT;
 use crate::in_process::WorkerFactory;
 use crate::remote::WorkerRpcServiceClient;

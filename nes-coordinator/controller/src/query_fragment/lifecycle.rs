@@ -54,8 +54,10 @@ pub(super) enum LifecycleAction {
     Done,
 }
 
+/// What a reply changes in the fragment's catalog row.
 pub(super) struct LifecycleStep {
     pub transition: Option<QueryFragmentTransition>,
+    /// Whether to update the time at which the worker last reported on the fragment.
     pub observed: bool,
 }
 
@@ -90,7 +92,7 @@ pub(super) struct QueryFragmentLifecycle {
     current: QueryFragmentState,
     desired: DesiredQueryFragmentState,
     /// A stop was sent and no status has been read since.
-    /// A status read clears it, so a fragment that is still reported live gets the stop again after the poll wait.
+    /// A fragment that a status read still reports live therefore gets the stop again after the poll wait.
     stop_sent: bool,
     /// Consecutive retryable failures; the fragment fails when they reach the limit.
     failures: u32,
@@ -233,7 +235,8 @@ fn outcome(
         WorkerReply::Start(Ok(()) | Err(CallError::AlreadyExists)) => {
             WorkerRpcOutcome::Transition(QueryFragmentTransition::Started)
         }
-        // Only a start can find the id already accepted, so a working worker never sends this reply to a stop or a status read.
+        // Only a start can find the id already accepted,
+        // so a working worker never sends this reply to a stop or a status read.
         WorkerReply::Stop(Err(CallError::AlreadyExists))
         | WorkerReply::Status(Err(CallError::AlreadyExists)) => {
             WorkerRpcOutcome::Failed(QueryFragmentError::Internal(CodedError::new(
@@ -250,7 +253,7 @@ fn outcome(
             )))
         }
         WorkerReply::Stop(Ok(())) => WorkerRpcOutcome::StopAccepted,
-        // The worker not knowing the fragment only says that it does not run there now.
+        // A stop of an unknown id only means that the fragment does not run there now.
         // An earlier start with an unknown outcome can still take effect afterwards;
         // the per-worker comparison of active fragments with the catalog stops it then.
         WorkerReply::Stop(Err(CallError::NotFound)) => WorkerRpcOutcome::Transition(stopped()),
@@ -281,7 +284,7 @@ fn unix_ms_to_datetime(ms: u64) -> DateTime<Utc> {
     DateTime::from_timestamp_millis(i64::try_from(ms).unwrap_or(i64::MAX)).unwrap_or_default()
 }
 
-/// Fails with the state value if this build does not know it.
+/// Fails with the state value if it is not one of this build's states.
 fn status_to_transition(
     raw: RawStatus,
     desired: DesiredQueryFragmentState,

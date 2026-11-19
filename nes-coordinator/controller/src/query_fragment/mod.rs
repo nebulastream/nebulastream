@@ -30,6 +30,8 @@ use std::time::Duration;
 use tokio::sync::watch;
 use tracing::{Instrument, info_span, warn};
 
+/// The fragment tasks of one worker.
+/// A running task receives later changes of its row's desired state through a watch channel.
 pub(crate) struct QueryFragmentTasks {
     tasks: TaskMap<QueryFragmentId>,
     desired_txs: HashMap<QueryFragmentId, watch::Sender<DesiredQueryFragmentState>>,
@@ -82,6 +84,7 @@ impl QueryFragmentTasks {
             let transport = make_transport();
             self.tasks.spawn_if_untracked(row.id, move || {
                 async move {
+                    // The listing has no plan, so the task reads the full row.
                     let Some(fragment) =
                         query_fragment::Entity::find_by_id(row.id).one(&db).await?
                     else {
@@ -105,10 +108,11 @@ pub(crate) enum CallError {
     AlreadyExists,
     /// Repeating the call may succeed.
     Transient(QueryFragmentError),
+    /// Repeating the call cannot succeed, so the fragment fails.
     Failed(QueryFragmentError),
 }
 
-/// A fragment status reported by the worker, before the state is decoded.
+/// A fragment's status as the worker reports it, before its state is decoded.
 #[derive(Debug)]
 pub struct RawStatus {
     pub state: i32,

@@ -82,6 +82,7 @@ impl Controller {
         }
     }
 
+    /// Returns once the sender of the catalog-change signal is dropped.
     pub async fn run(mut self) {
         info!("starting");
         let mut intent_rx = self.intent_rx.clone();

@@ -55,7 +55,8 @@ pub(crate) trait Backend: Send + Sync + 'static {
     ) -> impl Future<Output = anyhow::Result<ActiveFragments>> + Send;
 }
 
-/// A worker's list of active fragments. Times are the worker's clock in milliseconds since the Unix epoch.
+/// A worker's list of active fragments.
+/// Times are the worker's clock in milliseconds since the Unix epoch.
 pub(crate) struct ActiveFragments {
     /// Each fragment with the time since which the worker lists it, if the worker reports one.
     pub fragments: Vec<(QueryFragmentId, Option<u64>)>,
@@ -64,12 +65,14 @@ pub(crate) struct ActiveFragments {
 }
 
 /// The `after` of the next listing.
-/// It must not pass a fragment that is still active, because the worker would stop listing that fragment,
-/// and a fragment that the catalog stops wanting later would then run unseen.
+/// It must not pass the start of a fragment that is still active,
+/// because the worker would leave that fragment out of later lists,
+/// and the fragment would keep running unseen once its row became terminal.
 fn next_after(active: &ActiveFragments, after: u64) -> u64 {
     if active.fragments.is_empty() {
         return active.until;
     }
+    // `None` orders before every time, so one fragment without a start time keeps the previous value.
     active
         .fragments
         .iter()
@@ -79,7 +82,7 @@ fn next_after(active: &ActiveFragments, after: u64) -> u64 {
         .unwrap_or(after)
 }
 
-/// Stops every fragment that the worker runs although the catalog does not want it there,
+/// Stops every fragment that the worker runs but that has no non-terminal row for this worker in the catalog,
 /// and returns the `after` of the next call.
 /// A per-fragment task ends once its fragment is recorded as terminal,
 /// so a start that takes effect after that point is only visible in the worker's own list.
@@ -98,9 +101,9 @@ pub(crate) async fn stop_orphans<B: Backend>(
             return after;
         }
     };
-    // The worker is read before the catalog.
-    // A fragment that was active then and is not wanted now has a terminal row or none, which is final.
-    // In the other order, a fragment created and started between the two reads would be stopped.
+    // Read the worker before the catalog.
+    // Then a listed fragment without a non-terminal row has a terminal row or none, and neither changes again.
+    // In the other order, a fragment that was created and started between the two reads would be stopped.
     let wanted: HashSet<QueryFragmentId> = match query_fragment::Entity::actionable(db, addr).await
     {
         Ok(rows) => rows.iter().map(|row| row.id).collect(),
@@ -121,7 +124,8 @@ pub(crate) async fn stop_orphans<B: Backend>(
     next_after(&active, after)
 }
 
-/// Removing a worker fails its fragments in the catalog and aborts its task, so nothing else stops them on the worker.
+/// Stops the fragments that a worker's removal failed in the catalog, on the removed worker itself.
+/// The removal also aborts the worker's task, so nothing else stops them.
 pub(crate) async fn stop_removed_fragments<B: Backend>(
     backend: &B,
     db: &Database,
@@ -151,6 +155,7 @@ pub(crate) async fn stop_removed_fragments<B: Backend>(
     }
 }
 
+/// Holds the link to one worker and runs a task for each of its fragments.
 pub(crate) struct WorkerTask<B: Backend> {
     worker: worker::Model,
     backend: B,

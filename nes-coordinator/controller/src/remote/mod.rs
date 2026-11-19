@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-//! Runs the fragments of a worker in another process over gRPC.
+//! Reaches a worker in another process over gRPC.
 
 mod client;
 
@@ -40,10 +40,8 @@ pub mod worker_rpc_service {
 }
 
 impl worker_rpc_service::nes::SerializableQueryId {
-    /// The wire format has two string ids
-    /// while the coordinator identifies fragments by one integer.
-    /// Put the integer in the local id, rendered as a decimal string,
-    /// until the wire format itself moves to an integer id.
+    /// The wire format has two string ids, while the coordinator identifies a fragment by one integer.
+    /// The integer becomes the local id as a decimal string, and the distributed id stays empty.
     #[must_use]
     pub fn from_fragment_id(id: i64) -> Self {
         Self {
@@ -52,7 +50,7 @@ impl worker_rpc_service::nes::SerializableQueryId {
         }
     }
 
-    /// Reverse of the constructor above; an id that did not come from a fragment id parses to `None`.
+    /// The fragment id in a wire id, or `None` for a wire id that does not hold one.
     #[must_use]
     pub fn fragment_id(&self) -> Option<i64> {
         self.local_query_id.parse().ok()

@@ -23,7 +23,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 /// A call to a worker in this process never fails transiently.
-/// An unknown id is state, not failure: the status log is append-only and gets its first entry before any work is queued,
+/// An unknown id is state, not failure:
+/// the status log is append-only and gets its first entry before any work is queued,
 /// so the id was never started there.
 fn classify(error: QueryFragmentError) -> CallError {
     match &error {
