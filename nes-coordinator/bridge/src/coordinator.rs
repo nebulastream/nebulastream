@@ -285,7 +285,19 @@ impl Coordinator {
 
 /// The outcome of a wait for completion that did not complete.
 fn failed_wait(error: &anyhow::Error) -> ffi::StatementOutcome {
-    // A query that terminates without completing is reported as failed, and its row records the failure that ended it.
+    // A stopped query has no failure recorded, so it ends the wait as cancelled instead.
+    if let Some(stopped @ EarlyTermination { row, .. }) = error.downcast_ref()
+        && row.query.state == QueryState::Stopped
+    {
+        let cancelled = CodedError::new(ErrorCode::QueryWaitCancelled, stopped);
+        return ffi::StatementOutcome::of_query(
+            &row.query,
+            ffi::BridgeError::from(&cancelled),
+            vec![ffi::BridgeError::from(&cancelled)],
+            String::new(),
+        );
+    }
+    // A query that fails without completing is reported as failed, and its row records the failure that ended it.
     if let Some(EarlyTermination { row, .. }) = error.downcast_ref() {
         return ffi::StatementOutcome::of_query(
             &row.query,

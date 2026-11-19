@@ -124,8 +124,14 @@ Identifier Identifier::parse(std::string value)
 
 Identifier Identifier::fromCanonical(std::string canonicalValue)
 {
-    PRECONDITION(!canonicalValue.empty(), "Invalid identifier, cannot be empty");
-    PRECONDITION(!canonicalValue.contains('.'), "Invalid identifier, cannot contain dot: {}", canonicalValue);
+    if (canonicalValue.empty())
+    {
+        throw InvalidIdentifier("Cannot be empty");
+    }
+    if (canonicalValue.contains('.') or canonicalValue.contains('"'))
+    {
+        throw InvalidIdentifier("Cannot contain a dot or a quote: {}", canonicalValue);
+    }
     return Identifier{fmt::format("\"{}\"", canonicalValue), canonicalValue, true};
 }
 

@@ -26,6 +26,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -98,6 +99,15 @@ TEST_F(IdentifierTest, NotParseInvalidIdentifier)
     EXPECT_FALSE(identifier2.has_value());
     EXPECT_FALSE(identifier2.has_value());
     EXPECT_FALSE(identifier4.has_value());
+}
+
+/// A name read back from the catalog is input, so an invalid one is reported instead of failing a precondition.
+TEST_F(IdentifierTest, FromCanonicalRejectsAnInvalidName)
+{
+    ASSERT_EXCEPTION_ERRORCODE(Identifier::fromCanonical(""), ErrorCode::InvalidIdentifier);
+    ASSERT_EXCEPTION_ERRORCODE(Identifier::fromCanonical("A.B"), ErrorCode::InvalidIdentifier);
+    ASSERT_EXCEPTION_ERRORCODE(Identifier::fromCanonical("A\"B"), ErrorCode::InvalidIdentifier);
+    EXPECT_EQ(Identifier::fromCanonical("Foo").asCanonicalString(), "Foo");
 }
 
 TEST_F(IdentifierTest, ParseCorrectInsensitiveList)

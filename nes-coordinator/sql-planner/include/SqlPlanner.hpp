@@ -44,10 +44,12 @@ struct PlannedFragment
 
 /// What the planner returns for one SQL statement.
 /// The statement is sent to the coordinator as JSON.
-/// The fragments are only filled for a query.
+/// The global plan and the fragments are only filled for a query.
 struct PlanOutput
 {
     CoordinatorStatement statement;
+    /// The optimized plan before placement, kept so that the query can be placed again.
+    std::optional<LogicalPlan> globalPlan;
     std::vector<PlannedFragment> fragments;
 };
 

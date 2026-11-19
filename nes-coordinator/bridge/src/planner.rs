@@ -36,6 +36,9 @@ pub(crate) mod ffi {
         error: BridgeError,
         /// The statement for the coordinator to execute, as JSON.
         statement_json: String,
+        /// The optimized plan of a query before placement, as protobuf bytes.
+        /// Empty for every other statement.
+        global_plan: Vec<u8>,
         /// The per-worker plans of a query, each as protobuf bytes.
         /// Empty for every other statement.
         fragments: Vec<PlannedQueryFragment>,
@@ -103,6 +106,7 @@ impl SqlPlanner for FfiSqlPlanner {
         let mut statement: ParsedStatement = serde_json::from_str(&planned.statement_json)?;
 
         if let ParsedStatement::CreateQuery(ref mut q) = statement {
+            q.global_plan = planned.global_plan;
             q.fragments = planned
                 .fragments
                 .into_iter()

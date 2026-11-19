@@ -23,6 +23,7 @@
 
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <nes-coordinator-bridge/catalog.h>
 #include <nes-coordinator-bridge/planner.h>
@@ -39,6 +40,20 @@ namespace NES::Bridge
 {
 namespace
 {
+/// The coordinator stores each plan and sends a fragment's plan to the worker unchanged.
+/// It never reads a plan, so the plans are passed as the protobuf bytes that the worker takes.
+rust::Vec<uint8_t> serialize(const LogicalPlan& plan)
+{
+    const auto bytes = QueryPlanSerializationUtil::serializeQueryPlan(plan).SerializeAsString();
+    rust::Vec<uint8_t> planBytes;
+    planBytes.reserve(bytes.size());
+    for (const auto byte : bytes)
+    {
+        planBytes.push_back(static_cast<uint8_t>(byte));
+    }
+    return planBytes;
+}
+
 PlannedStatement
 planStatement(const PlanningTransaction& ctx, const rust::Str sql, const rust::Str optimizerConfig, const rust::Str defaultHost)
 {
@@ -49,25 +64,16 @@ planStatement(const PlanningTransaction& ctx, const rust::Str sql, const rust::S
     }
     /// The coordinator passes an empty string when it has no default host.
     const auto defaultHostOpt = defaultHost.empty() ? std::nullopt : std::optional{Host{std::string{defaultHost}}};
-    const auto [statement, fragments]
+    const auto [statement, globalPlan, fragments]
         = SqlPlanner{std::make_shared<CatalogBridge>(ctx, defaultHostOpt), *config, defaultHostOpt}.plan(std::string{sql});
 
-    /// The coordinator stores the plan of each fragment and sends it to the worker unchanged.
-    /// It never reads a plan, so the plans are passed as the protobuf bytes that the worker takes.
     rust::Vec<PlannedQueryFragment> serializedFragments;
     for (const auto& [host, plan, numOperators, hasSource] : fragments)
     {
-        const auto bytes = QueryPlanSerializationUtil::serializeQueryPlan(plan).SerializeAsString();
-        rust::Vec<uint8_t> planBytes;
-        planBytes.reserve(bytes.size());
-        for (const auto byte : bytes)
-        {
-            planBytes.push_back(static_cast<uint8_t>(byte));
-        }
         serializedFragments.push_back(
             PlannedQueryFragment{
                 .host_addr = rust::String{host.getRawValue()},
-                .plan = std::move(planBytes),
+                .plan = serialize(plan),
                 .num_operators = numOperators,
                 .has_source = hasSource,
             });
@@ -77,6 +83,7 @@ planStatement(const PlanningTransaction& ctx, const rust::Str sql, const rust::S
         /// A failure does not reach this line: it is thrown, and the function below puts it into this field.
         .error = {},
         .statement_json = rust::String{rfl::json::write(statement)},
+        .global_plan = globalPlan.transform(serialize).value_or(rust::Vec<uint8_t>{}),
         .fragments = std::move(serializedFragments),
     };
 }
