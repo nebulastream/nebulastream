@@ -1,0 +1,40 @@
+# name: benchmark/PythonUdfInlinePasses.test
+# description: INLINE (Codon) UDFs that allocate per row, sized for one worker thread (about 10-20 s each), to compare which
+# LLVM passes Codon must run before Nautilus optimizes the pipeline. Inputs as in benchmark/PythonUdf.test.
+# groups: [benchmark, large, PythonUdf]
+
+CREATE LOGICAL SOURCE rows30m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows30m TYPE File;
+ATTACH FILE udf/udf_bench.csv
+
+CREATE LOGICAL SOURCE rows1m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows1m TYPE File;
+ATTACH FILE udf/udf_bench_1m.csv
+
+# One new string per row
+CREATE FUNCTION upper_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return x.upper()
+$python$;
+
+# A list and four strings per row
+CREATE FUNCTION chunks_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    return "-".join(sorted([x[i:i + 4] for i in range(0, len(x), 4)]))
+$python$;
+
+# UDFBench clean: string splitting and joining
+CREATE FUNCTION clean_inline (x VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.clean';
+
+# Two small numpy arrays per row
+CREATE FUNCTION score_inline (a INT64, b INT64) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'cb_numpy.score';
+
+SELECT *, upper_inline(s) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, chunks_inline(s) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, clean_inline(s) AS r FROM rows1m INTO Void();
+----
+
+SELECT *, score_inline(id, id) AS r FROM rows30m INTO Void();
+----

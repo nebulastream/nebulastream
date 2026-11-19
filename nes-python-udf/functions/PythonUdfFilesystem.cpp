@@ -803,7 +803,25 @@ private:
         optimizationOptions.level = llvm::OptimizationLevel::O1;
         optimizationOptions.runs = 1;
         optimizationOptions.preserveDebugInfo = true;
-        codon::ir::optimize(module.get(), optimizationOptions);
+        /// TEMPORARY (experiment E61): none, o3x2, o1-nocodon, or an LLVM pass pipeline in textual form.
+        const std::string variant = std::getenv("NES_TMP_CODON_PIPELINE") != nullptr ? std::getenv("NES_TMP_CODON_PIPELINE") : "";
+        if (variant == "o3x2")
+        {
+            optimizationOptions.level = llvm::OptimizationLevel::O3;
+            optimizationOptions.runs = 2;
+        }
+        else if (variant == "o1-nocodon")
+        {
+            optimizationOptions.codonPasses = false;
+        }
+        else if (!variant.empty() && variant != "none")
+        {
+            optimizationOptions.pipeline = variant;
+        }
+        if (variant != "none")
+        {
+            codon::ir::optimize(module.get(), optimizationOptions);
+        }
         const auto optimizeEnd = std::chrono::steady_clock::now();
         return {
             .llvmBitcode = writeBitcode(*module),
