@@ -22,6 +22,7 @@
 #include <sstream>
 #include <stop_token>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <pthread.h>
@@ -183,6 +184,9 @@ int main(const int argc, const char* argv[])
         return 0;
     }
     NES::setupSignalHandlers();
+    /// A write to a socket whose peer closed the connection raises SIGPIPE, which would kill the whole worker.
+    /// Ignore it so that the write fails with EPIPE and the error can be handled.
+    std::ignore = ::signal(SIGPIPE, SIG_IGN);
     sigset_t terminationSignals{};
     if (!blockTerminationSignals(terminationSignals))
     {
