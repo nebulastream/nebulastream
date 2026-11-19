@@ -12,11 +12,15 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cstddef>
 #include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <fmt/format.h>
@@ -33,6 +37,8 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Overloaded.hpp>
+#include <Util/Ranges.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
@@ -91,6 +97,57 @@ std::string getValueReport(const Type type, const std::string& expected, const s
     return getRowReport(createSchema({{"v", type}}), {expected}, {actual});
 }
 
+ResultDiff diffRowsOf(
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const std::vector<std::string>& expectedRows,
+    const std::vector<std::string>& actualRows)
+{
+    return diffResults(schema, expectedRows, schema, actualRows);
+}
+
+/// Lists what the comparison decided for each row in report order, without the layout of the report.
+/// Each entry is `=` matched, `-` missing, `+` unexpected, `!` wrong field count or `~` partial match, then the row's text.
+std::vector<std::string> describeRows(const ResultDiff& diff)
+{
+    return diff.rows
+        | std::views::transform(
+               [](const RowDiff& row)
+               {
+                   return std::visit(
+                       Overloaded{
+                           [](const Matched& matched) { return "= " + matched.expected.text; },
+                           [](const Missing& missing) { return "- " + missing.expected.text; },
+                           [](const Unexpected& unexpected) { return "+ " + unexpected.actual.text; },
+                           [](const WrongFieldCount& wrongFieldCount) { return "! " + wrongFieldCount.expected.text; },
+                           [](const PartialMatch& partialMatch) { return "~ " + partialMatch.expected.text; }},
+                       row);
+               })
+        | std::ranges::to<std::vector>();
+}
+
+/// Lists every expected field that matches no actual field after `-`, then every actual field that matches no expected field after `+`.
+std::vector<std::string> describeSchemas(const ResultDiff& diff)
+{
+    std::vector<std::string> fields;
+    for (const auto& [field, type] : std::views::zip(diff.expectedSchema, diff.alignment.matchedTypes))
+    {
+        if (not type.has_value())
+        {
+            fields.push_back(fmt::format("- {}", field.getFullyQualifiedName()));
+        }
+    }
+    for (const auto& [column, field] : diff.actualSchema | views::enumerate)
+    {
+        if (std::ranges::contains(diff.alignment.unexpectedColumns, static_cast<size_t>(column)))
+        {
+            fields.push_back(fmt::format("+ {}", field.getFullyQualifiedName()));
+        }
+    }
+    return fields;
+}
+
+using Lines = std::vector<std::string>;
+
 std::string formatField(const std::string_view name, const std::string_view type)
 {
     return fmt::format("QualifiedUnboundField: (name: {}, type: DataType(type: {} nullable: false))", name, type);
@@ -140,8 +197,8 @@ TEST_F(ResultComparisonTest, TwoEmptyResultsMatch)
 TEST_F(ResultComparisonTest, ListsEveryRowWhenOneSideIsEmpty)
 {
     const auto schema = createSchema({{"a", Type::UINT64}});
-    EXPECT_EQ(getRowReport(schema, {"3", "12"}, {}), formatRowMismatch("12 | __\n3 | _"));
-    EXPECT_EQ(getRowReport(schema, {}, {"3", "12"}), formatRowMismatch("__ | 12\n_ | 3"));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"3", "12"}, {})), Lines({"- 12", "- 3"}));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {}, {"3", "12"})), Lines({"+ 12", "+ 3"}));
 }
 
 TEST_F(ResultComparisonTest, IgnoresRowOrder)
@@ -153,8 +210,8 @@ TEST_F(ResultComparisonTest, IgnoresRowOrder)
 TEST_F(ResultComparisonTest, ComparesRowsAsAMultiset)
 {
     const auto schema = createSchema({{"a", Type::UINT64}});
-    EXPECT_EQ(getRowReport(schema, {"1", "1"}, {"1"}), formatRowMismatch("1 | 1\n1 | _"));
-    EXPECT_EQ(getRowReport(schema, {"1"}, {"1", "1"}), formatRowMismatch("1 | 1\n_ | 1"));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"1", "1"}, {"1"})), Lines({"= 1", "- 1"}));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"1"}, {"1", "1"})), Lines({"= 1", "+ 1"}));
 }
 
 TEST_F(ResultComparisonTest, SortsRowsAsTextInTheReport)
@@ -165,7 +222,7 @@ TEST_F(ResultComparisonTest, SortsRowsAsTextInTheReport)
 TEST_F(ResultComparisonTest, SkipsTheSmallerRowOfAMismatchingPair)
 {
     const auto schema = createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}});
-    EXPECT_EQ(getRowReport(schema, {"1 2", "1 1"}, {"1 1", "1 3"}), formatRowMismatch("1 1 | 1 1\n1 2 | ___\n___ | 1 3"));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"1 2", "1 1"}, {"1 1", "1 3"})), Lines({"= 1 1", "- 1 2", "+ 1 3"}));
 }
 
 TEST_F(ResultComparisonTest, TreatsCommasAndRunsOfSpacesAsOneSeparator)
@@ -179,11 +236,9 @@ TEST_F(ResultComparisonTest, TreatsCommasAndRunsOfSpacesAsOneSeparator)
 TEST_F(ResultComparisonTest, CountsALeadingOrTrailingSpaceAsAnEmptyField)
 {
     const auto schema = createSchema({{"a", Type::UINT64}});
-    EXPECT_EQ(
-        getRowReport(schema, {" 1"}, {"1"}),
-        formatRowMismatch(" 1 | Too many expected fields (expected sink schema has: 1, but got 2)\n_ | 1"));
-    EXPECT_EQ(getRowReport(schema, {"1"}, {"1 "}), formatRowMismatch("1 | 1"));
-    EXPECT_EQ(getRowReport(schema, {"1"}, {" 1"}), formatRowMismatch("__ |  1\n1 | _"));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {" 1"}, {"1"})), Lines({"!  1", "+ 1"}));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"1"}, {"1 "})), Lines({"~ 1"}));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"1"}, {" 1"})), Lines({"+  1", "- 1"}));
 }
 
 TEST_F(ResultComparisonTest, ReadsAnEmptyCommaSeparatedColumnAsNull)
@@ -198,106 +253,106 @@ TEST_F(ResultComparisonTest, ReadsAnEmptyCommaSeparatedColumnAsNull)
 TEST_F(ResultComparisonTest, DoesNotReadAnEmptySpaceSeparatedColumnAsNull)
 {
     EXPECT_EQ(
-        getRowReport(createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}, {"c", Type::UINT64}}), {"1  3"}, {"1 NULL 3"}),
-        formatRowMismatch("1 3 | Not enough expected fields (expected sink schema has: 3, but got 2)\n________ | 1 NULL 3"));
+        describeRows(diffRowsOf(createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}, {"c", Type::UINT64}}), {"1  3"}, {"1 NULL 3"})),
+        Lines({"! 1 3", "+ 1 NULL 3"}));
 }
 
 TEST_F(ResultComparisonTest, MatchesNullOnlyWithNullInAnyCase)
 {
-    EXPECT_EQ(getValueReport(Type::UINT64, "NULL", "null"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "null", "NULL"), "");
-    EXPECT_EQ(getValueReport(Type::BOOLEAN, "NULL", "nUlL"), "");
-    EXPECT_EQ(getValueReport(Type::UINT64, "NULL", "0"), formatRowMismatch("_ | 0\nNULL | ____"));
-    EXPECT_EQ(getValueReport(Type::UINT64, "0", "NULL"), formatRowMismatch("0 | _\n____ | NULL"));
+    EXPECT_TRUE(compareValue(Type::UINT64, "NULL", "null"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "null", "NULL"));
+    EXPECT_TRUE(compareValue(Type::BOOLEAN, "NULL", "nUlL"));
+    EXPECT_FALSE(compareValue(Type::UINT64, "NULL", "0"));
+    EXPECT_FALSE(compareValue(Type::UINT64, "0", "NULL"));
 }
 
 TEST_F(ResultComparisonTest, SortsNullByItsTextBeforeMatchingItInAnyCase)
 {
     const auto schema = createSchema({{"s", Type::VARSIZED}, {"n", Type::UINT64}});
-    EXPECT_EQ(getRowReport(schema, {",1", "a,2"}, {"null,1", "a,2"}), formatRowMismatch("NULL 1 | ______\na 2 | a 2\n______ | null 1"));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {",1", "a,2"}, {"null,1", "a,2"})), Lines({"- NULL 1", "= a 2", "+ null 1"}));
 }
 
 TEST_F(ResultComparisonTest, ComparesIntegersAsText)
 {
-    EXPECT_EQ(getValueReport(Type::UINT64, "01", "1"), formatRowMismatch("01 | __\n_ | 1"));
-    EXPECT_EQ(getValueReport(Type::INT8, "+1", "1"), formatRowMismatch("+1 | __\n_ | 1"));
+    EXPECT_FALSE(compareValue(Type::UINT64, "01", "1"));
+    EXPECT_FALSE(compareValue(Type::INT8, "+1", "1"));
 }
 
 TEST_F(ResultComparisonTest, ComparesFloatsWithinARelativeEpsilonOfTheSum)
 {
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1.0", "1.00002"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1.0", "1.000021"), formatRowMismatch("1.0 | ___\n________ | 1.000021"));
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "-1.0", "-1.00002"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1000000", "1000020"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "0.000001", "-0.000001"), formatRowMismatch("_________ | -0.000001\n0.000001 | ________"));
-    EXPECT_EQ(getValueReport(Type::FLOAT32, "1.0", "1.00002"), "");
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "1.0", "1.00002"));
+    EXPECT_FALSE(compareValue(Type::FLOAT64, "1.0", "1.000021"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "-1.0", "-1.00002"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "1000000", "1000020"));
+    EXPECT_FALSE(compareValue(Type::FLOAT64, "0.000001", "-0.000001"));
+    EXPECT_TRUE(compareValue(Type::FLOAT32, "1.0", "1.00002"));
 }
 
 TEST_F(ResultComparisonTest, ComparesFloatsWhoseSumOverflowsAgainstTheLargestDouble)
 {
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1e308", "1.00001e308"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1e308", "1.5e308"), formatRowMismatch("_______ | 1.5e308\n1e308 | _____"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "1e308", "1.00001e308"));
+    EXPECT_FALSE(compareValue(Type::FLOAT64, "1e308", "1.5e308"));
 }
 
 TEST_F(ResultComparisonTest, ComparesFloatsByValueWhenTheTextDiffers)
 {
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1", "1.0"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1e1", "10.0"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "inf", "INF"), "");
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "1", "1.0"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "1e1", "10.0"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "inf", "INF"));
 }
 
 TEST_F(ResultComparisonTest, ComparesAFloatWithZeroAlmostExactly)
 {
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "-0.0", "0.0"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "0", "0.0000001"), formatRowMismatch("0 | _\n_________ | 0.0000001"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "-0.0", "0.0"));
+    EXPECT_FALSE(compareValue(Type::FLOAT64, "0", "0.0000001"));
 }
 
 TEST_F(ResultComparisonTest, ComparesTwoSubnormalFloatsAgainstAnAbsoluteBound)
 {
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "0x1p-1070", "0x1p-1069"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "0x1p-1030", "0x1p-1029"), formatRowMismatch("_________ | 0x1p-1029\n0x1p-1030 | _________"));
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "0x1p-1070", "0x1p-1069"));
+    EXPECT_FALSE(compareValue(Type::FLOAT64, "0x1p-1030", "0x1p-1029"));
 }
 
 TEST_F(ResultComparisonTest, SortsSignedZerosApartBeforeMatchingThem)
 {
     EXPECT_EQ(
-        getRowReport(createSchema({{"f", Type::FLOAT64}}), {"-0.0", "-1.0"}, {"0.0", "-1.0"}),
-        formatRowMismatch("-0.0 | ____\n-1.0 | -1.0\n___ | 0.0"));
+        describeRows(diffRowsOf(createSchema({{"f", Type::FLOAT64}}), {"-0.0", "-1.0"}, {"0.0", "-1.0"})),
+        Lines({"- -0.0", "= -1.0", "+ 0.0"}));
 }
 
 TEST_F(ResultComparisonTest, ParsesOnlyTheNumericPrefixOfAFloat)
 {
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "1.0abc", "1.0"), "");
+    EXPECT_TRUE(compareValue(Type::FLOAT64, "1.0abc", "1.0"));
 }
 
 TEST_F(ResultComparisonTest, NeverMatchesTwoNansThatDifferAsText)
 {
     EXPECT_EQ(getValueReport(Type::FLOAT64, "nan", "nan"), "");
-    EXPECT_EQ(getValueReport(Type::FLOAT64, "nan", "NaN"), formatRowMismatch("___ | NaN\nnan | ___"));
+    EXPECT_FALSE(compareValue(Type::FLOAT64, "nan", "NaN"));
 }
 
 TEST_F(ResultComparisonTest, ThrowsOnAFloatWithoutANumericPrefix)
 {
     const auto schema = createSchema({{"f", Type::FLOAT64}});
-    EXPECT_THROW(getRowReport(schema, {"abc"}, {"1.0"}), std::invalid_argument);
-    EXPECT_THROW(getRowReport(schema, {"1.0"}, {"abc"}), std::invalid_argument);
+    EXPECT_THROW(std::ignore = compareValue(Type::FLOAT64, "abc", "1.0"), std::invalid_argument);
+    EXPECT_THROW(std::ignore = compareValue(Type::FLOAT64, "1.0", "abc"), std::invalid_argument);
     EXPECT_EQ(getRowReport(schema, {"abc"}, {"abc"}), "");
 }
 
 TEST_F(ResultComparisonTest, ThrowsOnADecimalFloatOutsideTheNormalRange)
 {
     const auto schema = createSchema({{"f", Type::FLOAT64}});
-    EXPECT_THROW(getRowReport(schema, {"1e-310"}, {"2e-310"}), std::out_of_range);
-    EXPECT_THROW(getRowReport(schema, {"1.0"}, {"1e309"}), std::out_of_range);
+    EXPECT_THROW(std::ignore = compareValue(Type::FLOAT64, "1e-310", "2e-310"), std::out_of_range);
+    EXPECT_THROW(std::ignore = compareValue(Type::FLOAT64, "1.0", "1e309"), std::out_of_range);
     EXPECT_EQ(getRowReport(schema, {"1e-310"}, {"1e-310"}), "");
 }
 
 TEST_F(ResultComparisonTest, ReadsBooleansAsWordsOrIntegers)
 {
-    EXPECT_EQ(getValueReport(Type::BOOLEAN, "False", "0"), "");
-    EXPECT_EQ(getValueReport(Type::BOOLEAN, "2", "1"), "");
-    EXPECT_EQ(getValueReport(Type::BOOLEAN, "-1", "true"), "");
-    EXPECT_EQ(getValueReport(Type::BOOLEAN, "true", "0"), formatRowMismatch("_ | 0\ntrue | ____"));
+    EXPECT_TRUE(compareValue(Type::BOOLEAN, "False", "0"));
+    EXPECT_TRUE(compareValue(Type::BOOLEAN, "2", "1"));
+    EXPECT_TRUE(compareValue(Type::BOOLEAN, "-1", "true"));
+    EXPECT_FALSE(compareValue(Type::BOOLEAN, "true", "0"));
 }
 
 TEST_F(ResultComparisonTest, StopsOnABooleanThatIsNeitherWordNorInteger)
@@ -305,20 +360,18 @@ TEST_F(ResultComparisonTest, StopsOnABooleanThatIsNeitherWordNorInteger)
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     const auto schema = createSchema({{"b", Type::BOOLEAN}});
     EXPECT_EQ(getRowReport(schema, {"yes"}, {"yes"}), "");
-    EXPECT_DEATH_DEBUG(getRowReport(schema, {"yes"}, {"true"}), "");
+    EXPECT_DEATH_DEBUG(std::ignore = compareValue(Type::BOOLEAN, "yes", "true"), "");
 }
 
 TEST_F(ResultComparisonTest, ComparesTextExactly)
 {
-    EXPECT_EQ(getValueReport(Type::VARSIZED, "abc", "ABC"), formatRowMismatch("___ | ABC\nabc | ___"));
-    EXPECT_EQ(getValueReport(Type::CHAR, "a", "A"), formatRowMismatch("_ | A\na | _"));
+    EXPECT_FALSE(compareValue(Type::VARSIZED, "abc", "ABC"));
+    EXPECT_FALSE(compareValue(Type::CHAR, "a", "A"));
 }
 
 TEST_F(ResultComparisonTest, SplitsTextOnSpacesAndCommas)
 {
-    EXPECT_EQ(
-        getRowReport(createSchema({{"s", Type::VARSIZED}}), {"a b,c"}, {"a c"}),
-        formatRowMismatch("a b c | Too many expected fields (expected sink schema has: 1, but got 3)\n___ | a c"));
+    EXPECT_EQ(describeRows(diffRowsOf(createSchema({{"s", Type::VARSIZED}}), {"a b,c"}, {"a c"})), Lines({"! a b c", "+ a c"}));
 }
 
 TEST_F(ResultComparisonTest, ThrowsOnAnUndefinedFieldWhoseTextDiffers)
@@ -326,7 +379,7 @@ TEST_F(ResultComparisonTest, ThrowsOnAnUndefinedFieldWhoseTextDiffers)
     const auto schema
         = createSchema(std::vector<std::pair<std::string, DataType>>{{"u", DataType{Type::UNDEFINED, DataType::NULLABLE::NOT_NULLABLE}}});
     EXPECT_EQ(getRowReport(schema, {"1"}, {"1"}), "");
-    ASSERT_EXCEPTION_ERRORCODE(getRowReport(schema, {"1"}, {"2"}), ErrorCode::UnknownDataType);
+    ASSERT_EXCEPTION_ERRORCODE(std::ignore = compareValue(Type::UNDEFINED, "1", "2"), ErrorCode::UnknownDataType);
 }
 
 TEST_F(ResultComparisonTest, ListsAPairThatMatchesByValueWithBothTexts)
@@ -336,29 +389,25 @@ TEST_F(ResultComparisonTest, ListsAPairThatMatchesByValueWithBothTexts)
 
 TEST_F(ResultComparisonTest, ChecksTheFieldCountOfAnExpectedRowAgainstTheExpectedSchema)
 {
-    const auto fieldA = formatField("A", "UINT64");
-    const auto fieldB = formatField("B", "UINT64");
-    EXPECT_EQ(
-        getReport(createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}}), {"1"}, createSchema({{"a", Type::UINT64}}), {"2"}),
-        formatSchemaAndRowMismatch(
-            {fmt::format("{}, {} != {}", fieldA, fieldB, fieldA), formatMissingField(fieldB)},
-            "1 | Not enough expected fields (expected sink schema has: 2, but got 1)\n_ | 2"));
+    const auto diff
+        = diffResults(createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}}), {"1"}, createSchema({{"a", Type::UINT64}}), {"2"});
+    EXPECT_EQ(describeSchemas(diff), Lines({"- B"}));
+    EXPECT_EQ(describeRows(diff), Lines({"! 1", "+ 2"}));
+    EXPECT_EQ(std::get<WrongFieldCount>(diff.rows.front()).fieldCount, 2UZ);
 }
 
 TEST_F(ResultComparisonTest, ChecksTheFieldCountOnlyOfAPairedRowWhoseTextDiffers)
 {
     const auto schema = createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}});
-    EXPECT_EQ(getRowReport(schema, {"1"}, {}), formatRowMismatch("1 | _"));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"1"}, {})), Lines({"- 1"}));
     EXPECT_EQ(getRowReport(schema, {"1"}, {"1"}), "");
 }
 
 TEST_F(ResultComparisonTest, SortsTheMissingValueOfAShortRowAsEmpty)
 {
     const auto schema = createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}});
-    EXPECT_EQ(
-        getRowReport(schema, {"1 2", "1"}, {"1 2"}),
-        formatRowMismatch("1 | Not enough expected fields (expected sink schema has: 2, but got 1)\n1 2 | 1 2"));
-    EXPECT_EQ(getRowReport(schema, {}, {"1 2", "1"}), formatRowMismatch("_ | 1\n___ | 1 2"));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {"1 2", "1"}, {"1 2"})), Lines({"! 1", "= 1 2"}));
+    EXPECT_EQ(describeRows(diffRowsOf(schema, {}, {"1 2", "1"})), Lines({"+ 1", "+ 1 2"}));
     EXPECT_EQ(getRowReport(schema, {"1", "1 2"}, {"1 2", "1"}), "");
 }
 
@@ -380,47 +429,55 @@ TEST_F(ResultComparisonTest, ThrowsOnAnActualRowShorterThanTheUnexpectedFields)
 
 TEST_F(ResultComparisonTest, ReadsAnEmptyRowAsNoFields)
 {
-    EXPECT_EQ(getRowReport(createSchema({{"a", Type::UINT64}}), {}, {""}), formatRowMismatch(" | "));
-    EXPECT_EQ(
-        getRowReport(createSchema({{"a", Type::UINT64}}), {""}, {"1"}),
-        formatRowMismatch(" | Not enough expected fields (expected sink schema has: 1, but got 0)\n_ | 1"));
+    EXPECT_EQ(describeRows(diffRowsOf(createSchema({{"a", Type::UINT64}}), {}, {""})), Lines({"+ "}));
+    EXPECT_EQ(describeRows(diffRowsOf(createSchema({{"a", Type::UINT64}}), {""}, {"1"})), Lines({"! ", "+ 1"}));
 }
 
 TEST_F(ResultComparisonTest, ComparesNamesCaseSensitivelyOnlyWhenTheExpectedNameIsQuoted)
 {
     EXPECT_EQ(getReport(createSchema({{"Id", Type::UINT64}}), {}, createSchema({{"\"Id\"", Type::UINT64}}), {}), "");
     EXPECT_EQ(getReport(createSchema({{"\"ID\"", Type::UINT64}}), {}, createSchema({{"id", Type::UINT64}}), {}), "");
-
-    const auto quoted = formatField("Id", "UINT64");
-    const auto unquoted = formatField("ID", "UINT64");
     EXPECT_EQ(
-        getReport(createSchema({{"\"Id\"", Type::UINT64}}), {}, createSchema({{"Id", Type::UINT64}}), {}),
-        formatSchemaMismatch({fmt::format("{} != {}", quoted, unquoted), formatMissingField(quoted), formatUnexpectedField(unquoted)}));
+        describeSchemas(diffResults(createSchema({{"\"Id\"", Type::UINT64}}), {}, createSchema({{"Id", Type::UINT64}}), {})),
+        Lines({"- Id", "+ ID"}));
 }
 
 TEST_F(ResultComparisonTest, ReportsAFieldWhoseTypeDiffers)
 {
-    const auto expectedField = formatField("ID", "UINT64");
-    const auto actualField = formatField("ID", "INT64");
-    EXPECT_EQ(
-        getReport(createSchema({{"id", Type::UINT64}}), {"1"}, createSchema({{"id", Type::INT64}}), {"2"}),
-        formatSchemaAndRowMismatch(
-            {fmt::format("{} != {}", expectedField, actualField), formatMissingField(expectedField), formatUnexpectedField(actualField)},
-            "1 _ | _ 2"));
+    const auto diff = diffResults(createSchema({{"id", Type::UINT64}}), {"1"}, createSchema({{"id", Type::INT64}}), {"2"});
+    EXPECT_EQ(describeSchemas(diff), Lines({"- ID", "+ ID"}));
+    EXPECT_EQ(describeRows(diff), Lines({"~ 1"}));
 }
 
 TEST_F(ResultComparisonTest, ReportsAFieldWhoseNullabilityDiffers)
 {
-    const auto expectedField = formatField("ID", "UINT64");
-    const std::string actualField{"QualifiedUnboundField: (name: ID, type: DataType(type: UINT64 nullable: true))"};
+    const auto diff = diffResults(
+        createSchema({{"id", Type::UINT64}}),
+        {"1"},
+        createSchema(
+            std::vector<std::pair<std::string, DataType>>{
+                {"id", DataTypeProvider::provideDataType(Type::UINT64, DataType::NULLABLE::IS_NULLABLE)}}),
+        {"1"});
+    EXPECT_EQ(describeSchemas(diff), Lines({"- ID", "+ ID"}));
+    EXPECT_TRUE(diff.rowsMatch());
+}
+
+TEST_F(ResultComparisonTest, ReportsTheFieldCountOfAnExpectedRow)
+{
     EXPECT_EQ(
-        getReport(
-            createSchema({{"id", Type::UINT64}}),
-            {"1"},
-            createSchema(
-                std::vector<std::pair<std::string, DataType>>{
-                    {"id", DataTypeProvider::provideDataType(Type::UINT64, DataType::NULLABLE::IS_NULLABLE)}}),
-            {"1"}),
+        getRowReport(createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}}), {"1", "1 2 3"}, {"1 2"}),
+        formatRowMismatch(
+            "1 | Not enough expected fields (expected sink schema has: 2, but got 1)\n"
+            "1 2 3 | Too many expected fields (expected sink schema has: 2, but got 3)\n"
+            "___ | 1 2"));
+}
+
+TEST_F(ResultComparisonTest, ReportsASchemaMismatchAboveMatchingRows)
+{
+    const auto expectedField = formatField("ID", "UINT64");
+    const auto actualField = formatField("ID", "INT64");
+    EXPECT_EQ(
+        getReport(createSchema({{"id", Type::UINT64}}), {"1"}, createSchema({{"id", Type::INT64}}), {"1"}),
         formatSchemaMismatch(
             {fmt::format("{} != {}", expectedField, actualField), formatMissingField(expectedField), formatUnexpectedField(actualField)}));
 }
@@ -454,31 +511,20 @@ TEST_F(ResultComparisonTest, FillsTheColumnsOfAMissingFieldWithPlaceholders)
 
 TEST_F(ResultComparisonTest, ReportsSwappedFieldsAsMissingAndUnexpected)
 {
-    const auto fieldA = formatField("A", "UINT64");
-    const auto fieldB = formatField("B", "UINT64");
-    EXPECT_EQ(
-        getReport(
-            createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}}),
-            {"1 2"},
-            createSchema({{"b", Type::UINT64}, {"a", Type::UINT64}}),
-            {"2 1"}),
-        formatSchemaAndRowMismatch(
-            {fmt::format("{}, {} != {}, {}", fieldA, fieldB, fieldB, fieldA),
-             formatMissingField(fieldA),
-             formatMissingField(fieldB),
-             formatUnexpectedField(fieldB),
-             formatUnexpectedField(fieldA)},
-            "1 2 _ _ | _ _ 2 1"));
+    const auto diff = diffResults(
+        createSchema({{"a", Type::UINT64}, {"b", Type::UINT64}}),
+        {"1 2"},
+        createSchema({{"b", Type::UINT64}, {"a", Type::UINT64}}),
+        {"2 1"});
+    EXPECT_EQ(describeSchemas(diff), Lines({"- A", "- B", "+ B", "+ A"}));
+    EXPECT_EQ(describeRows(diff), Lines({"~ 1 2"}));
 }
 
 TEST_F(ResultComparisonTest, KeepsTheInputOrderWhenNoFieldMatches)
 {
-    const auto fieldA = formatField("A", "UINT64");
-    const auto fieldB = formatField("B", "UINT64");
-    EXPECT_EQ(
-        getReport(createSchema({{"a", Type::UINT64}}), {"2", "1"}, createSchema({{"b", Type::UINT64}}), {"1", "2"}),
-        formatSchemaAndRowMismatch(
-            {fmt::format("{} != {}", fieldA, fieldB), formatMissingField(fieldA), formatUnexpectedField(fieldB)}, "2 _ | _ 1\n1 _ | _ 2"));
+    const auto diff = diffResults(createSchema({{"a", Type::UINT64}}), {"2", "1"}, createSchema({{"b", Type::UINT64}}), {"1", "2"});
+    EXPECT_EQ(describeSchemas(diff), Lines({"- A", "+ B"}));
+    EXPECT_EQ(describeRows(diff), Lines({"~ 2", "~ 1"}));
 }
 
 }

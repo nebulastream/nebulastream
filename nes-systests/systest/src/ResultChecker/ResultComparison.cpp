@@ -26,6 +26,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <fmt/format.h>
@@ -37,6 +38,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Overloaded.hpp>
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
@@ -45,18 +47,6 @@ namespace NES
 {
 namespace
 {
-struct SchemaAlignment
-{
-    std::vector<std::optional<DataType::Type>> matchedTypes;
-    std::vector<size_t> unexpectedColumns;
-};
-
-struct Row
-{
-    std::string text;
-    std::vector<std::string> values;
-};
-
 enum class Advance : uint8_t
 {
     Expected,
@@ -67,8 +57,7 @@ enum class Advance : uint8_t
 struct RowStep
 {
     Advance advance;
-    std::string line;
-    bool matches;
+    RowDiff diff;
 };
 
 /// The expected side is the schema that the test declared for the sink, and the actual side is the header that the sink wrote.
@@ -119,29 +108,26 @@ std::vector<size_t> getMatchedColumns(const SchemaAlignment& alignment)
         | std::ranges::to<std::vector>();
 }
 
-std::vector<std::string> diffSchemas(
-    const SchemaAlignment& alignment,
-    const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema,
-    const Schema<UnqualifiedUnboundField, Ordered>& actualSchema)
+std::vector<std::string> formatSchemaLines(const ResultDiff& diff)
 {
     std::vector<std::string> lines;
-    for (const auto& [expectedField, type] : std::views::zip(expectedSchema, alignment.matchedTypes))
+    for (const auto& [expectedField, type] : std::views::zip(diff.expectedSchema, diff.alignment.matchedTypes))
     {
         if (not type.has_value())
         {
             lines.push_back(fmt::format("- '{}' is missing from actual result schema.", expectedField));
         }
     }
-    for (const auto& [column, actualField] : actualSchema | views::enumerate)
+    for (const auto& [column, actualField] : diff.actualSchema | views::enumerate)
     {
-        if (std::ranges::contains(alignment.unexpectedColumns, static_cast<size_t>(column)))
+        if (std::ranges::contains(diff.alignment.unexpectedColumns, static_cast<size_t>(column)))
         {
             lines.push_back(fmt::format("+ '{}' is unexpected field in actual result schema.", actualField));
         }
     }
     if (not lines.empty())
     {
-        lines.insert(lines.begin(), fmt::format("{} != {}", fmt::join(expectedSchema, ", "), fmt::join(actualSchema, ", ")));
+        lines.insert(lines.begin(), fmt::format("{} != {}", fmt::join(diff.expectedSchema, ", "), fmt::join(diff.actualSchema, ", ")));
     }
     return lines;
 }
@@ -149,23 +135,25 @@ std::vector<std::string> diffSchemas(
 /// An empty column becomes NULL, so it has a value to compare.
 /// Both sides may separate fields with commas, so both drop them.
 /// Double spaces go too, because a single space separates the fields.
-Row normalizeRow(const std::string& row)
+template <typename RowType>
+RowType normalizeRow(const std::string& row)
 {
     auto text = row | std::views::split(',')
         | std::views::transform([](const auto& part) { return part.empty() ? std::string_view{"NULL"} : std::string_view{part}; })
         | std::views::join_with(' ') | std::ranges::to<std::string>();
     removeDoubleSpaces(text);
     auto values = text | std::views::split(' ') | std::ranges::to<std::vector<std::string>>();
-    return Row{.text = std::move(text), .values = std::move(values)};
+    return RowType{.text = std::move(text), .values = std::move(values)};
 }
 
-std::vector<Row> sortRows(std::vector<Row> rows, const std::vector<size_t>& sortColumns)
+template <typename RowType>
+std::vector<RowType> sortRows(std::vector<RowType> rows, const std::vector<size_t>& sortColumns)
 {
-    const auto getSortValue = [](const Row& row, const size_t column)
+    const auto getSortValue = [](const RowType& row, const size_t column)
     { return column < row.values.size() ? std::string_view{row.values.at(column)} : std::string_view{}; };
     std::ranges::sort(
         rows,
-        [&sortColumns, &getSortValue](const Row& lhs, const Row& rhs)
+        [&sortColumns, &getSortValue](const RowType& lhs, const RowType& rhs)
         {
             return std::ranges::lexicographical_compare(
                 sortColumns,
@@ -175,6 +163,12 @@ std::vector<Row> sortRows(std::vector<Row> rows, const std::vector<size_t>& sort
                 [&rhs, &getSortValue](const size_t column) { return getSortValue(rhs, column); });
         });
     return rows;
+}
+
+template <typename RowType>
+std::vector<RowType> prepareRows(const std::vector<std::string>& rows, const std::vector<size_t>& sortColumns)
+{
+    return sortRows(rows | std::views::transform(normalizeRow<RowType>) | std::ranges::to<std::vector>(), sortColumns);
 }
 
 /// Reads a boolean written either as an integer, where anything but 0 is true, or as `true` or `false`.
@@ -218,9 +212,8 @@ bool compareFloat(const std::string& expected, const std::string& actual)
     return withinEpsilon;
 }
 
-/// Compares two field values as text of the given type.
-/// An integer or a string compares exactly, and a float within a relative epsilon, because the text of a float is not stable.
-/// NULL matches only NULL.
+}
+
 bool compareValue(const DataType::Type type, const std::string& expected, const std::string& actual)
 {
     const auto expectedIsNull = toLowerCase(expected) == "null";
@@ -257,22 +250,24 @@ bool compareValue(const DataType::Type type, const std::string& expected, const 
     std::unreachable();
 }
 
+namespace
+{
 std::string formatPair(const std::string_view expected, const std::string_view actual)
 {
     return fmt::format("{} | {}", expected, actual);
 }
 
-std::string formatMissingRow(const Row& expected)
+std::string formatMissingRow(const ExpectedRow& expected)
 {
     return formatPair(expected.text, std::string(expected.text.size(), '_'));
 }
 
-std::string formatUnexpectedRow(const Row& actual)
+std::string formatUnexpectedRow(const ActualRow& actual)
 {
     return formatPair(std::string(actual.text.size(), '_'), actual.text);
 }
 
-std::string formatFieldCountMismatch(const Row& expected, const size_t columnCount)
+std::string formatFieldCountMismatch(const ExpectedRow& expected, const size_t columnCount)
 {
     return formatPair(
         expected.text,
@@ -283,7 +278,7 @@ std::string formatFieldCountMismatch(const Row& expected, const size_t columnCou
             expected.values.size()));
 }
 
-std::string formatAlignedRow(const SchemaAlignment& alignment, const Row& expected, const Row& actual)
+std::string formatAlignedRow(const SchemaAlignment& alignment, const ExpectedRow& expected, const ActualRow& actual)
 {
     std::vector<std::string_view> expectedValues;
     std::vector<std::string_view> actualValues;
@@ -300,16 +295,30 @@ std::string formatAlignedRow(const SchemaAlignment& alignment, const Row& expect
     return formatPair(fmt::to_string(fmt::join(expectedValues, " ")), fmt::to_string(fmt::join(actualValues, " ")));
 }
 
+std::string formatRow(const SchemaAlignment& alignment, const RowDiff& row)
+{
+    return std::visit(
+        Overloaded{
+            [](const Matched& matched) { return formatPair(matched.expected.text, matched.actual.text); },
+            [](const Missing& missing) { return formatMissingRow(missing.expected); },
+            [](const Unexpected& unexpected) { return formatUnexpectedRow(unexpected.actual); },
+            [](const WrongFieldCount& wrongFieldCount)
+            { return formatFieldCountMismatch(wrongFieldCount.expected, wrongFieldCount.fieldCount); },
+            [&alignment](const PartialMatch& partialMatch)
+            { return formatAlignedRow(alignment, partialMatch.expected, partialMatch.actual); }},
+        row);
+}
+
 /// Equal text matches before the field count is checked, so an expected row with the wrong field count still matches identical output.
-RowStep compareRow(const SchemaAlignment& alignment, const Row& expected, const Row& actual)
+RowStep compareRow(const SchemaAlignment& alignment, const ExpectedRow& expected, const ActualRow& actual)
 {
     if (expected.text == actual.text)
     {
-        return RowStep{.advance = Advance::Both, .line = formatPair(expected.text, actual.text), .matches = true};
+        return RowStep{.advance = Advance::Both, .diff = Matched{.expected = expected, .actual = actual}};
     }
     if (const auto columnCount = alignment.matchedTypes.size(); expected.values.size() != columnCount)
     {
-        return RowStep{.advance = Advance::Expected, .line = formatFieldCountMismatch(expected, columnCount), .matches = false};
+        return RowStep{.advance = Advance::Expected, .diff = WrongFieldCount{.expected = expected, .fieldCount = columnCount}};
     }
     if (const auto valuesMatch = std::ranges::all_of(
             alignment.matchedTypes | views::enumerate,
@@ -320,31 +329,27 @@ RowStep compareRow(const SchemaAlignment& alignment, const Row& expected, const 
             });
         not valuesMatch)
     {
-        return expected.text < actual.text ? RowStep{.advance = Advance::Expected, .line = formatMissingRow(expected), .matches = false}
-                                           : RowStep{.advance = Advance::Actual, .line = formatUnexpectedRow(actual), .matches = false};
+        return expected.text < actual.text ? RowStep{.advance = Advance::Expected, .diff = Missing{.expected = expected}}
+                                           : RowStep{.advance = Advance::Actual, .diff = Unexpected{.actual = actual}};
     }
     if (std::ranges::all_of(alignment.matchedTypes, [](const auto& type) { return type.has_value(); })
         and expected.values.size() == actual.values.size())
     {
-        return RowStep{.advance = Advance::Both, .line = formatPair(expected.text, actual.text), .matches = true};
+        return RowStep{.advance = Advance::Both, .diff = Matched{.expected = expected, .actual = actual}};
     }
-    return RowStep{.advance = Advance::Both, .line = formatAlignedRow(alignment, expected, actual), .matches = false};
+    return RowStep{.advance = Advance::Both, .diff = PartialMatch{.expected = expected, .actual = actual}};
 }
 
-/// The report lists the matching rows too, so a mismatch shows the rows around it.
-/// A walk without a mismatch returns no lines.
-std::vector<std::string>
-diffRows(const SchemaAlignment& alignment, const std::vector<Row>& expectedRows, const std::vector<Row>& actualRows)
+std::vector<RowDiff>
+diffRows(const SchemaAlignment& alignment, const std::vector<ExpectedRow>& expectedRows, const std::vector<ActualRow>& actualRows)
 {
-    std::vector<std::string> lines;
-    bool allMatch = true;
+    std::vector<RowDiff> rows;
     auto expected = std::ranges::subrange{expectedRows};
     auto actual = std::ranges::subrange{actualRows};
     while (not expected.empty() and not actual.empty())
     {
-        auto [advance, line, matches] = compareRow(alignment, expected.front(), actual.front());
-        lines.push_back(std::move(line));
-        allMatch = allMatch and matches;
+        auto [advance, diff] = compareRow(alignment, expected.front(), actual.front());
+        rows.push_back(std::move(diff));
         if (advance != Advance::Actual)
         {
             expected.advance(1);
@@ -354,31 +359,51 @@ diffRows(const SchemaAlignment& alignment, const std::vector<Row>& expectedRows,
             actual.advance(1);
         }
     }
-    lines.append_range(expected | std::views::transform(formatMissingRow));
-    lines.append_range(actual | std::views::transform(formatUnexpectedRow));
-    if (allMatch and expected.empty() and actual.empty())
-    {
-        return {};
-    }
-    return lines;
+    rows.append_range(expected | std::views::transform([](const ExpectedRow& row) { return RowDiff{Missing{.expected = row}}; }));
+    rows.append_range(actual | std::views::transform([](const ActualRow& row) { return RowDiff{Unexpected{.actual = row}}; }));
+    return rows;
+}
 }
 
-Verdict buildVerdict(const std::vector<std::string>& schemaLines, const std::vector<std::string>& rowLines)
+bool ResultDiff::schemasMatch() const
+{
+    return alignment.unexpectedColumns.empty()
+        and std::ranges::all_of(alignment.matchedTypes, [](const auto& type) { return type.has_value(); });
+}
+
+bool ResultDiff::rowsMatch() const
+{
+    return std::ranges::all_of(rows, [](const RowDiff& row) { return std::holds_alternative<Matched>(row); });
+}
+
+ResultDiff diffResults(
+    const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema,
+    const std::vector<std::string>& expectedRows,
+    const Schema<UnqualifiedUnboundField, Ordered>& actualSchema,
+    const std::vector<std::string>& actualRows)
+{
+    auto alignment = alignSchemas(expectedSchema, actualSchema);
+    const auto sortColumns = getMatchedColumns(alignment);
+    auto rows = diffRows(alignment, prepareRows<ExpectedRow>(expectedRows, sortColumns), prepareRows<ActualRow>(actualRows, sortColumns));
+    return ResultDiff{
+        .expectedSchema = expectedSchema, .actualSchema = actualSchema, .alignment = std::move(alignment), .rows = std::move(rows)};
+}
+
+std::string renderReport(const ResultDiff& diff)
 {
     static constexpr std::string_view SchemaMismatchHeader = "Schema Mismatch\n"
                                                              "---------------";
     static constexpr std::string_view ResultMismatchHeader = "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
                                                              "-------------------------------------------------";
-    if (schemaLines.empty() and rowLines.empty())
-    {
-        return Success{};
-    }
     const auto schemaBlock
-        = schemaLines.empty() ? std::string{} : fmt::format("{}\n{}\n\n", SchemaMismatchHeader, fmt::join(schemaLines, "\n"));
-    const auto rowBlock
-        = rowLines.empty() ? std::string{"All Results match"} : fmt::format("{}\n{}", ResultMismatchHeader, fmt::join(rowLines, "\n"));
-    return std::unexpected{Mismatch{schemaBlock + rowBlock}};
-}
+        = diff.schemasMatch() ? std::string{} : fmt::format("{}\n{}\n\n", SchemaMismatchHeader, fmt::join(formatSchemaLines(diff), "\n"));
+    if (diff.rowsMatch())
+    {
+        return schemaBlock + "All Results match";
+    }
+    const auto rowLines = diff.rows | std::views::transform([&diff](const RowDiff& row) { return formatRow(diff.alignment, row); })
+        | std::ranges::to<std::vector>();
+    return schemaBlock + fmt::format("{}\n{}", ResultMismatchHeader, fmt::join(rowLines, "\n"));
 }
 
 Verdict compareResults(
@@ -387,13 +412,12 @@ Verdict compareResults(
     const Schema<UnqualifiedUnboundField, Ordered>& actualSchema,
     const std::vector<std::string>& actualRows)
 {
-    const auto alignment = alignSchemas(expectedSchema, actualSchema);
-    const auto sortColumns = getMatchedColumns(alignment);
-    const auto prepareRows = [&sortColumns](const std::vector<std::string>& rows)
-    { return sortRows(rows | std::views::transform(normalizeRow) | std::ranges::to<std::vector>(), sortColumns); };
-    const auto expected = prepareRows(expectedRows);
-    const auto actual = prepareRows(actualRows);
-    return buildVerdict(diffSchemas(alignment, expectedSchema, actualSchema), diffRows(alignment, expected, actual));
+    const auto diff = diffResults(expectedSchema, expectedRows, actualSchema, actualRows);
+    if (diff.schemasMatch() and diff.rowsMatch())
+    {
+        return Success{};
+    }
+    return std::unexpected{Mismatch{renderReport(diff)}};
 }
 
 }
