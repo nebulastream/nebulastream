@@ -1491,4 +1491,40 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     }
     test.stop();
 }
+
+/// A stop that directly follows a start can be executed by another worker thread before the start.
+/// The stop must still take effect: every query has to terminate, whether its start was executed or not.
+TEST_F(QueryEngineTest, StopRightAfterStartIsNotLost)
+{
+    constexpr size_t numberOfQueries = 200;
+    TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfQueries);
+
+    std::vector<std::unique_ptr<ExecutableQueryPlan>> queryPlans;
+    for (size_t i = 0; i < numberOfQueries; i++)
+    {
+        auto builder = test.buildNewQuery();
+        builder.addSink({builder.addPipeline({builder.addSource()})});
+        queryPlans.push_back(test.addNewQuery(std::move(builder)));
+
+        /// Depending on how far the start got before the stop, the query was started, is running, or neither.
+        const auto queryId = test.queryId(i);
+        EXPECT_CALL(*test.status, logQueryStatusChange(queryId, QueryStatus::Started, ::testing::_)).Times(::testing::AtMost(1));
+        EXPECT_CALL(*test.status, logQueryStatusChange(queryId, QueryStatus::Running, ::testing::_)).Times(::testing::AtMost(1));
+        EXPECT_CALL(*test.status, logSourceTermination(queryId, ::testing::_, ::testing::_, ::testing::_)).Times(::testing::AtMost(1));
+        test.expectQueryStatusEvents(queryId, {QueryStatus::Stopped});
+    }
+
+    test.start();
+    for (auto& plan : queryPlans)
+    {
+        const auto queryId = plan->queryId;
+        test.startQuery(std::move(plan));
+        test.stopQuery(queryId);
+    }
+    for (size_t i = 0; i < numberOfQueries; i++)
+    {
+        ASSERT_TRUE(test.waitForQepTermination(test.queryId(i), DEFAULT_LONG_AWAIT_TIMEOUT)) << "The stop of query " << i << " was lost";
+    }
+    test.stop();
+}
 }

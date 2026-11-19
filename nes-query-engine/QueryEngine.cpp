@@ -184,6 +184,14 @@ public:
         WorkEmitter& emitter);
     void stopQuery(QueryId queryId);
 
+    /// Reserves the slot of a query. A stop that is executed before the start of the query then finds the query.
+    void reserve(QueryId queryId)
+    {
+        const std::scoped_lock lock(mutex);
+        const bool inserted = queryStates.emplace(queryId, std::make_shared<StateRef>(Reserved{})).second;
+        INVARIANT(inserted, "Query {} was started twice", queryId);
+    }
+
     void clear()
     {
         const std::scoped_lock lock(mutex);
@@ -817,6 +825,9 @@ void QueryEngine::stop(QueryId queryId)
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
+    /// Worker threads do not execute the tasks in the order of the admission queue, so a later StopQueryTask can be executed before
+    /// the StartQueryTask. The slot is reserved here, on the thread of the caller, so that such a stop is not lost.
+    queryCatalog->reserve(executableQueryPlan->queryId);
     threadPool->taskQueue.addAdmissionTaskBlocking(
         {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
@@ -959,11 +970,16 @@ void QueryCatalog::start(
         WeakStateRef state;
     };
 
-    auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
     const auto startTimestamp = std::chrono::system_clock::now();
-    auto state = std::make_shared<StateRef>(Reserved{});
-    const bool inserted = this->queryStates.emplace(queryId, state).second;
-    INVARIANT(inserted, "Query {} was started twice", queryId);
+    const auto state = this->queryStates.at(queryId);
+    if (state->is<Terminated>())
+    {
+        ENGINE_LOG_INFO("Query {} was stopped before its start was executed and is not started", queryId);
+        listener->logQueryStatusChange(queryId, QueryStatus::Stopped, startTimestamp);
+        statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
+        return;
+    }
+    auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
     queryListener->state = state;
 
     auto [runningQueryPlan, callback] = RunningQueryPlan::start(queryId, std::move(plan), controller, emitter, queryListener);
@@ -992,8 +1008,10 @@ void QueryCatalog::stopQuery(QueryId id)
         if (auto it = queryStates.find(id); it != queryStates.end())
         {
             auto& state = *it->second;
-            absl::AnyInvocable<void()> cleanup;
+            absl::AnyInvocable<void()> cleanup = [] { };
             bool didTransition = state.transition(
+                /// The start of the query was not executed yet. It finds the query terminated and does not start it.
+                [](Reserved&&) { return Terminated{Terminated::TerminationReason::Stopped}; },
                 [&cleanup](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                 {
                     auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(starting.plan));
