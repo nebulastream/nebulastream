@@ -127,8 +127,8 @@ fn classify(addr: &NetworkAddr, status: &tonic::Status) -> CallError {
     }
 }
 
-/// Codes that say the call could not complete for now, not that the request failed.
-/// `UNKNOWN` is excluded because it does not say whether the failure will clear.
+/// Codes that mean the call could not complete for now, not that the request failed.
+/// `UNKNOWN` is excluded because it does not tell whether the failure is temporary.
 const fn retryable(code: tonic::Code) -> bool {
     matches!(
         code,
@@ -148,7 +148,7 @@ fn meta_str(status: &tonic::Status, key: &str) -> String {
         .to_string()
 }
 
-/// The code the worker attached to a failed call, if it attached one.
+/// The code that the worker attached to a failed call, if it attached one.
 fn reported_code(status: &tonic::Status) -> Option<ErrorCode> {
     meta_str(status, "code")
         .parse::<u16>()

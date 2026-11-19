@@ -36,8 +36,8 @@ missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 redundant_pub_crate = "allow"
 module_name_repetitions = "allow"
-# The lint suggests Duration::from_mins/from_hours, which are not stable in
-# the pinned dev-container rustc, so the constants stay in from_secs.
+# The lint suggests Duration::from_mins and from_hours,
+# which are not stable in the dev container's pinned rustc.
 duration_suboptimal_units = "allow"
 
 # Shared dependency declarations. Member crates opt in with `dep.workspace = true`.

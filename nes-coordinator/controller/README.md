@@ -42,16 +42,18 @@ The top-level controller reads actionable worker rows and handles them according
 
 - An active worker gets a worker task if none is already running for its address.
 - A worker marked for removal has its task aborted before the catalog records it as removed.
+  For a remote worker, the controller then stops the fragments that the removal failed in the catalog.
 
 A worker task connects to its worker, records whether it is active or unreachable, and manages the fragments assigned to it.  
 After a remote connection is lost, the task discards its fragment tasks, marks the worker unreachable, and enters the connection loop again.  
-The next successful connection reconstructs fragment tasks from the catalog.
+The next successful connection reconstructs fragment tasks from the catalog.  
+While connected, the task also stops every fragment that the worker runs but that has no non-terminal row for this worker in the catalog.
 
 ## Query Fragment Tasks
 
 Each query fragment task controls one fragment on its assigned worker.  
-To start the fragment, it loads the fragment’s execution plan from the catalog, adds its identifier, and sends it to the worker.  
-It can then ask the worker to stop the fragment or report its current status.
+To start the fragment, it loads the fragment's execution plan from the catalog, adds its identifier, and sends it to the worker.  
+It can then request a stop or the fragment's current status.
 
 The fragment task chooses its next action from the desired and observed states:
 
@@ -62,14 +64,14 @@ The fragment task chooses its next action from the desired and observed states:
 | Stopped | Any non-terminal state | Request a stop and read its status; request the stop again while the fragment is reported live |
 | Completed or Stopped | Completed, Stopped, or Failed | Finish the task |
 
-The controller keeps the catalog synchronized with the fragment states reported by workers.
+The controller keeps the catalog synchronized with the fragment states that workers report.
 
 ## Communicating with Workers
 
 The controller sends the same fragment commands to every worker: start, stop, and report status.
 
 Remote workers run outside the coordinator process and receive these commands through gRPC.  
-It monitors the connection, reconnects when it is lost, and retries temporary communication failures.
+The controller monitors the connection, reconnects when it is lost, and retries temporary communication failures.
 
 Embedded workers run inside the coordinator process, so the same commands are made through direct in-process calls instead of the network.
 

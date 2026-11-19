@@ -32,7 +32,7 @@ use std::ops::ControlFlow;
 use tokio::sync::watch;
 use tracing::{debug, error, warn};
 
-/// Moves one fragment from pending to a terminal state by calling its worker,
+/// Moves one fragment to a terminal state by calling its worker,
 /// and writes each transition and observation to the fragment's catalog row.
 pub(crate) struct QueryFragmentTask<T> {
     fragment: query_fragment::Model,
@@ -141,6 +141,8 @@ impl<T: Transport> QueryFragmentTask<T> {
         Ok(ControlFlow::Continue(()))
     }
 
+    /// The catalog rejected a state that the worker reported, so the row and the worker disagree.
+    /// Unless the row is already terminal, the fragment is stopped on the worker and failed in the catalog.
     async fn fail_rejected(&self, err: DbErr) -> anyhow::Result<ControlFlow<()>> {
         error!(error = %err, "catalog rejected the write");
         let Some(row) = query_fragment::Entity::find_by_id(self.fragment.id)
@@ -175,7 +177,7 @@ impl<T: Transport> QueryFragmentTask<T> {
     }
 }
 
-// The stored plan has no id; the worker knows the plan by the fragment's id.
+// The stored plan has no id, and the worker identifies the plan by the fragment's id.
 fn plan_for(id: QueryFragmentId, plan: &[u8]) -> Result<SerializableQueryPlan, QueryFragmentError> {
     let mut query_plan: SerializableQueryPlan = prost::Message::decode(plan).map_err(|e| {
         QueryFragmentError::Internal(CodedError::new(
@@ -550,7 +552,7 @@ mod tests {
             "the next listing must still include the oldest active fragment"
         );
 
-        // Removing the worker fails the fragment, so the catalog no longer wants it either.
+        // Removing the worker fails the fragment, so it has no non-terminal row either.
         DropWorker::new(host.clone()).execute(&db).await.unwrap();
         backend.stopped.lock().unwrap().clear();
         stop_orphans(&backend, &backend, &db, &host, 10).await;

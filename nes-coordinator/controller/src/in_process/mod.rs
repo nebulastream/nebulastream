@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-//! Runs the fragments of a worker in the coordinator's own process.
+//! Reaches a worker that runs in the coordinator's own process.
 
 mod client;
 
@@ -85,7 +85,8 @@ const WORKER_DATA_ADDRESS_OPTION: &str = "data_address";
 
 /// The worker's config with its data address added as an option, unless the config already sets one.
 /// The catalog keeps the address in a column because the coordinator routes by it and keeps it unique,
-/// but a worker reads it only from its options and without it starts no data receiver.
+/// but a worker reads it only from its options,
+/// and without it the worker starts no data receiver.
 fn embedded_worker_config(worker: &worker::Model) -> anyhow::Result<String> {
     let mut options = match &worker.config {
         Value::Null => Map::new(),
