@@ -23,6 +23,10 @@
 namespace NES
 {
 
+/// Loads the Codon plugins that NES ships (once per process): Codon reads their modules when it compiles a UDF, and the
+/// worker needs their native functions for a compiled UDF that calls them, also if another process compiled it.
+void loadCodonPlugins();
+
 /// The interpreter's entry point of a compiled Python UDF whose pipeline entry point is `symbol`.
 [[nodiscard]] std::string interpreterSymbolName(const std::string& symbol);
 

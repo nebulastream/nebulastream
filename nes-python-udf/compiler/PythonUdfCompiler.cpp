@@ -602,6 +602,16 @@ std::filesystem::path pythonUdfSourceDirectory()
 
 }
 
+void loadCodonPlugins()
+{
+    loadCodonPlugin(codonPluginPath(NES_CODON_BLAS_PLUGIN_PATH));
+    loadCodonPlugin(codonPluginPath(NES_CODON_OPENCV_PLUGIN_PATH));
+    loadCodonPlugin(codonPluginPath(NES_CODON_COMPAT_PLUGIN_PATH));
+    loadCodonPlugin(codonPluginPath(NES_CODON_JSON_PLUGIN_PATH));
+    loadCodonPlugin(codonPluginPath(NES_CODON_RE_PLUGIN_PATH));
+    loadCodonPlugin(codonPluginPath(NES_CODON_UNICODE_PLUGIN_PATH));
+}
+
 CompiledInlineUdf compilePythonUdf(
     const std::string& symbol,
     const std::vector<std::string>& parameterNames,
@@ -618,12 +628,7 @@ CompiledInlineUdf compilePythonUdf(
     const auto compilationStart = std::chrono::steady_clock::now();
     try
     {
-        loadCodonPlugin(codonPluginPath(NES_CODON_BLAS_PLUGIN_PATH));
-        loadCodonPlugin(codonPluginPath(NES_CODON_OPENCV_PLUGIN_PATH));
-        loadCodonPlugin(codonPluginPath(NES_CODON_COMPAT_PLUGIN_PATH));
-        loadCodonPlugin(codonPluginPath(NES_CODON_JSON_PLUGIN_PATH));
-        loadCodonPlugin(codonPluginPath(NES_CODON_RE_PLUGIN_PATH));
-        loadCodonPlugin(codonPluginPath(NES_CODON_UNICODE_PLUGIN_PATH));
+        loadCodonPlugins();
         const auto source = createPythonUdfSource(symbol, parameterNames, body, argumentTypes, returnType, bytesArguments, bodyNullable);
         /// Named by the source, so that workers that compile the same UDF write the same file.
         const auto sourceDirectory = pythonUdfSourceDirectory();

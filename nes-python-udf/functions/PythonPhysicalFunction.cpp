@@ -602,6 +602,8 @@ PythonPhysicalFunction::PythonPhysicalFunction(
 {
     PRECONDITION(this->arguments.size() == this->argumentTypes.size(), "Python UDF argument and type counts differ");
     PRECONDITION(!this->arguments.empty(), "Python UDF requires at least one argument");
+    /// The UDF may call native functions of the Codon plugins, which this process loads only when it compiles a UDF itself.
+    loadCodonPlugins();
     /// Each call gets its own entry points, so that several calls of one UDF can be part of one pipeline.
     llvmBitcode = renameEntryPoint(compiled.pipelineBitcode, compiled.symbol, symbolName);
     interpreterLlvmBitcode
