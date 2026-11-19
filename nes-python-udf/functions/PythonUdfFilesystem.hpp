@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace NES
@@ -26,6 +27,10 @@ struct CodonCompilationResult
     double compileMilliseconds;
     double optimizeMilliseconds;
 };
+
+/// The global variables of the Codon base state and their addresses. Compiled UDF modules declare them; the query compiler
+/// must resolve them to these addresses.
+std::unordered_map<std::string, void*> getCodonBaseGlobalSymbols();
 
 /// Compiles a generated UDF source whose exported entry point is `entrySymbol`.
 CodonCompilationResult compileWithCodon(

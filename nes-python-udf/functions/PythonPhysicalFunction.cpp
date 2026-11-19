@@ -609,6 +609,7 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
     static const std::unordered_set<std::string_view> AllowedProcessFunctions{
         "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower", "modf", "memcmp" /* TEMPORARY */};
     const auto pluginFunctions = getCodonPluginNativeSymbols();
+    const auto baseGlobals = getCodonBaseGlobalSymbols();
 
     const auto* entryPoint = module.getFunction(symbol);
     if (entryPoint == nullptr || entryPoint->isDeclaration())
@@ -642,7 +643,7 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
     }
     for (const auto& global : module.globals())
     {
-        if (global.isDeclaration() && !global.getName().starts_with("llvm."))
+        if (global.isDeclaration() && !global.getName().starts_with("llvm.") && !baseGlobals.contains(global.getName().str()))
         {
             throw QueryCompilerError(
                 "Python UDF requires unsupported external global '{}'; only the NES Codon compatibility ABI is available",
@@ -988,6 +989,10 @@ compilePythonUdfInterpreter(const std::string& symbol, const std::string& interp
     {
         engine.registerExternalSymbol(name, address);
     }
+    for (const auto& [name, address] : getCodonBaseGlobalSymbols())
+    {
+        engine.registerExternalSymbol(name, address);
+    }
 
     auto module = engine.createModule();
     std::function<nautilus::val<uint8_t>(
@@ -1177,6 +1182,10 @@ void PythonPhysicalFunction::setupSelf(CompilationContext& compilationContext) c
         compilationContext.registerExternalSymbol(name, address);
     }
     for (const auto& [name, address] : getCodonPluginNativeSymbols())
+    {
+        compilationContext.registerExternalSymbol(name, address);
+    }
+    for (const auto& [name, address] : getCodonBaseGlobalSymbols())
     {
         compilationContext.registerExternalSymbol(name, address);
     }
