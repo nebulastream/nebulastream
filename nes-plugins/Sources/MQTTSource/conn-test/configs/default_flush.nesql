@@ -1,0 +1,10 @@
+-- An MQTT source with the default FLUSH_INTERVAL_MS of 0, which emits every message in a buffer of its own.
+-- Its read waits for a message without a timeout, so only this config covers that wait.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'tcp://localhost:1883' AS "SOURCE".SERVER_URI,
+    'sensors'              AS "SOURCE".TOPIC,
+    1                      AS "SOURCE".QOS,
+    'JSON'                 AS INPUT_FORMATTER."TYPE"
+);

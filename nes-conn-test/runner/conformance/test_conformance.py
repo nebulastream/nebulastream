@@ -112,7 +112,7 @@ def test_scenario(
     tmp_path: Path,
     worker_id: str,
 ) -> None:
-    loader = plugin.loader_cls(plugin.endpoint)
+    loader = plugin.loader_cls(plugin.endpoint, **scenario.loader_args)
     target = "conntest_" + unique_token(
         test_id=config_path.stem, scenario=scenario.name, worker_id=worker_id
     )

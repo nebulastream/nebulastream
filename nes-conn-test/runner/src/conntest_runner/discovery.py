@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import sys
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -105,6 +106,7 @@ class Scenario:
     A bare glob in ``configs`` expects OK.
     ``args`` holds the arguments of one scenario, such as the flush interval that a config sets.
     The framework passes them to the scenario as ``ctx.args`` without reading them.
+    ``loader_args`` holds keyword arguments of the loader's constructor, which the framework passes the same way.
     """
 
     def __init__(
@@ -116,6 +118,7 @@ class Scenario:
         outcome: str = "OK",
         n_buffers: int | None = None,
         args: dict[str, object] | None = None,
+        loader_args: dict[str, object] | None = None,
     ) -> None:
         specs: list[ConfigSpec] = []
         for entry in configs or []:
@@ -127,11 +130,12 @@ class Scenario:
         self.configs = specs
         self.n_buffers = n_buffers
         self.args = args or {}
+        self.loader_args = loader_args or {}
 
     def __repr__(self) -> str:
         return (
             f"Scenario(name={self.name!r}, configs={self.configs!r}, "
-            f"n_buffers={self.n_buffers!r}, args={self.args!r})"
+            f"n_buffers={self.n_buffers!r}, args={self.args!r}, loader_args={self.loader_args!r})"
         )
 
 
@@ -169,7 +173,14 @@ def _import(path: Path, module_name: str) -> ModuleType:
     if spec is None or spec.loader is None:
         raise ImportError(f"cannot load {path}")
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    # No __pycache__ in conn-test/: one left behind by a branch without the connector
+    # is a uv workspace member without a pyproject.toml, which fails every uv command.
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(mod)
+    finally:
+        sys.dont_write_bytecode = previous
     return mod
 
 

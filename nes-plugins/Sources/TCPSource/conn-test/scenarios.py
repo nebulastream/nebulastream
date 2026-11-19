@@ -34,7 +34,7 @@ SCENARIOS = [
     round_trip_1_buffer("basic.nesql"),
     # Only this round trip also covers the multi-column schema and the immediate flush.
     round_trip_n_buffers("basic.nesql", "multicol.nesql", "intervals.nesql"),
-    # Nothing is seeded, so the source waits on the silent connection until the harness closes it.
+    # No FILL follows the OPEN, so the source connects and closes without a read.
     empty("basic.nesql"),
     # An unreachable endpoint fails the open with CannotOpenSource (4002).
     bad_endpoint("basic.nesql", error=4002),

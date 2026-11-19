@@ -55,9 +55,10 @@ if (NES_ENABLES_TESTS)
 
     # The runner's own unit tests need no external service.
     # They run in the development image's venv (UV_PROJECT_ENVIRONMENT), or else in the one that uv creates.
+    # They import every registered loader, so a venv that uv creates needs every connector's dependencies.
     if (ENABLE_CONN_TESTS)
         add_test(NAME conntest-runner-tests
-                COMMAND ${UV_EXECUTABLE} run --frozen pytest tests --build-dir=${CMAKE_BINARY_DIR}
+                COMMAND ${UV_EXECUTABLE} run --frozen --all-packages pytest tests --build-dir=${CMAKE_BINARY_DIR}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runner
         )
         set_tests_properties(conntest-runner-tests PROPERTIES LABELS "ConnTest")

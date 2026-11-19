@@ -33,6 +33,7 @@ class Loader(ABC):
         """``endpoint`` is the compose service's address, such as ``broker:1883``.
 
         A connector without a compose service gets None, and its loader sets ``endpoint`` to a server that it starts itself.
+        A subclass can take keyword arguments after ``endpoint``, which a binding passes for one config.
         """
         self.endpoint = endpoint
 
