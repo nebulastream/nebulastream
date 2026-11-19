@@ -236,7 +236,7 @@ impl<V: WorkerVersions> RequestHandler<V> {
 mod tests {
     use super::*;
     use model::query::query_fragment;
-    use model::query::query_fragment::QueryFragmentState;
+    use model::query::query_fragment::{QueryFragmentError, QueryFragmentState};
     use model::query::query_state::QueryState;
     use model::query::{
         CreateQuery, CreateQueryWithRefs, DropQuery, QueryWithFragments, StopQuery,
@@ -363,7 +363,8 @@ mod tests {
         fixture
     }
 
-    /// Moves fragments through the intermediate states that the catalog validation trigger requires before `target`.
+    /// Moves fragments through the intermediate states that the catalog validation trigger requires before `target`,
+    /// with the columns that the catalog requires for each state.
     async fn transition_fragments(
         db: &Database,
         query: Option<QueryId>,
@@ -389,6 +390,22 @@ mod tests {
             let mut update = query_fragment::Entity::update_many()
                 .col_expr(query_fragment::Column::CurrentState, Expr::value(step))
                 .filter(query_fragment::Column::CurrentState.ne(step));
+            if step == QueryFragmentState::Running {
+                update = update.col_expr(
+                    query_fragment::Column::StartTimestamp,
+                    Expr::value(Utc::now()),
+                );
+            }
+            if step.is_terminal() {
+                update = update.col_expr(
+                    query_fragment::Column::StopTimestamp,
+                    Expr::value(Utc::now()),
+                );
+            }
+            if step == QueryFragmentState::Failed {
+                let error = QueryFragmentError::Transport { msg: "test".into() };
+                update = update.col_expr(query_fragment::Column::Error, Expr::value(error));
+            }
             if let Some(query) = query {
                 update = update.filter(query_fragment::Column::QueryId.eq(query));
             }

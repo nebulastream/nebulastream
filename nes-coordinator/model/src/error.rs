@@ -97,7 +97,7 @@ fn violation(err: &DbErr) -> Option<Violation> {
 pub enum WriteFailure {
     /// The row no longer exists.
     RowGone,
-    /// A trigger, a constraint or a model hook rejected the row, so writing it again fails the same way.
+    /// A trigger or a constraint rejected the row, so writing it again fails the same way.
     Rejected,
     /// The write may succeed later, for example when the database is busy or a connection is lost.
     Transient,
@@ -110,7 +110,6 @@ const SQLITE_CONSTRAINT_TRIGGER: &str = "1811";
 pub fn classify_write(err: &DbErr) -> WriteFailure {
     let runtime = match err {
         DbErr::RecordNotUpdated => return WriteFailure::RowGone,
-        DbErr::Custom(_) => return WriteFailure::Rejected,
         DbErr::Exec(runtime) | DbErr::Query(runtime) | DbErr::Conn(runtime) => runtime,
         _ => return WriteFailure::Transient,
     };
@@ -170,10 +169,6 @@ mod tests {
         assert_eq!(
             classify_write(&DbErr::RecordNotUpdated),
             WriteFailure::RowGone
-        );
-        assert_eq!(
-            classify_write(&DbErr::Custom("hook".to_string())),
-            WriteFailure::Rejected
         );
         assert_eq!(
             classify_write(&DbErr::Conn(RuntimeErr::Internal("down".to_string()))),

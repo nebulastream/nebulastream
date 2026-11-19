@@ -20,7 +20,7 @@ use crate::identifier::QueryId;
 use crate::worker::endpoint::NetworkAddr;
 use sea_orm::Set;
 use sea_orm::entity::prelude::*;
-use sea_orm::{ActiveValue, DerivePartialModel, FromJsonQueryResult, NotSet, QuerySelect};
+use sea_orm::{DerivePartialModel, FromJsonQueryResult, NotSet, QuerySelect};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use thiserror::Error;
@@ -57,8 +57,7 @@ impl std::fmt::Display for QueryError {
 }
 
 /// One execution unit of a query, placed on a single worker.
-/// Triggers decrement the worker's `max_operators` on insert,
-/// and restore it once the fragment terminates or is deleted.
+/// Its operators count against the worker's capacity until it terminates.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query_fragment")]
 pub struct Model {
@@ -112,51 +111,13 @@ impl Related<crate::worker::Entity> for Entity {
     }
 }
 
-#[async_trait::async_trait]
-impl ActiveModelBehavior for ActiveModel {
-    /// Rejects a save that would leave a column NULL that the new state requires:
-    /// running needs a start timestamp, terminal needs a stop timestamp, and failed also needs an error.
-    async fn before_save<C>(self, _db: &C, _insert: bool) -> Result<Self, DbErr>
-    where
-        C: ConnectionTrait,
-    {
-        let state = match &self.current_state {
-            ActiveValue::Set(s) => *s,
-            _ => return Ok(self),
-        };
-        let ensure = |cond: bool, msg: &str| -> Result<(), DbErr> {
-            if cond {
-                Ok(())
-            } else {
-                Err(DbErr::Custom(msg.into()))
-            }
-        };
-        // NOTE: `Set(None)` counts as set, so checking only whether the column is set persists a NULL that the state forbids.
-        // A nullable column counts as provided only when this save writes a value into it.
-        match state {
-            QueryFragmentState::Pending | QueryFragmentState::Started => {}
-            QueryFragmentState::Running => ensure(
-                matches!(self.start_timestamp, ActiveValue::Set(Some(_))),
-                "start_timestamp must be set upon transitioning to running",
-            )?,
-            QueryFragmentState::Completed | QueryFragmentState::Stopped => ensure(
-                matches!(self.stop_timestamp, ActiveValue::Set(Some(_))),
-                "stop_timestamp must be set upon transitioning to a terminal state",
-            )?,
-            QueryFragmentState::Failed => ensure(
-                matches!(self.error, ActiveValue::Set(Some(_)))
-                    && matches!(self.stop_timestamp, ActiveValue::Set(Some(_))),
-                "stop_timestamp and error must be set upon transitioning to a failed state",
-            )?,
-        }
-        Ok(self)
-    }
-}
+impl ActiveModelBehavior for ActiveModel {}
 
 /// The state to move a fragment to, with the columns that the state requires.
 /// A terminal transition may also set the start timestamp,
 /// because a short fragment can finish before it was ever observed running.
-/// Whether the step from the current state is legal is checked by a database trigger, not here.
+/// Whether the step from the current state is legal is checked by a database trigger,
+/// and whether the row has the required columns by CHECK constraints.
 #[derive(Debug, Clone)]
 pub enum QueryFragmentTransition {
     Pending,
@@ -321,11 +282,7 @@ impl Entity {
         // the non-terminal filter alone is enough.
         Entity::find()
             .filter(Column::HostAddr.eq(host.clone()))
-            .filter(Column::CurrentState.is_not_in([
-                QueryFragmentState::Completed,
-                QueryFragmentState::Stopped,
-                QueryFragmentState::Failed,
-            ]))
+            .filter(Column::CurrentState.is_not_in(QueryFragmentState::TERMINAL))
             .into_partial_model::<ActionableFragment>()
             .all(conn)
             .await
@@ -410,8 +367,10 @@ pub enum DesiredQueryFragmentState {
 }
 
 impl QueryFragmentState {
+    pub const TERMINAL: [Self; 3] = [Self::Completed, Self::Stopped, Self::Failed];
+
     pub fn is_terminal(self) -> bool {
-        matches!(self, Self::Completed | Self::Stopped | Self::Failed)
+        Self::TERMINAL.contains(&self)
     }
 }
 
@@ -449,14 +408,15 @@ impl TryFrom<i32> for QueryFragmentState {
 mod tests {
     use crate::Execute;
     use crate::database::Database;
-    use crate::error::{ErrorCode, code_of};
+    use crate::error::{ErrorCode, WriteFailure, classify_write, code_of};
     use crate::query::query_fragment::{
         self, DesiredQueryFragmentState, QueryFragmentError, QueryFragmentState,
     };
-    use crate::query::{CreateQueryWithRefs, setup, setup_refs, walk_one};
+    use crate::query::{CreateQueryWithRefs, free_capacities, setup, setup_refs, walk_one};
+    use crate::statement::ParsedStatement;
     use crate::worker::GetWorker;
     use crate::worker::endpoint::NetworkAddr;
-    use sea_orm::{ActiveModelTrait, ActiveValue::Set, EntityTrait};
+    use sea_orm::{ActiveModelTrait, ActiveValue::Set, DbErr, EntityTrait, PaginatorTrait};
     use std::collections::HashMap;
     use test_strategy::proptest;
 
@@ -485,34 +445,37 @@ mod tests {
         req.query.fragments[0].num_operators = cap + 1;
 
         setup_refs(&db, &mut req).await;
-        assert!(req.query.execute(&db).await.is_err());
+        let statement = ParsedStatement::CreateQuery(req.query);
+        let rejected = code_of(statement.execute_with(&db).await);
+        assert_eq!(rejected, Some(ErrorCode::CatalogWriteRejected));
+        assert_eq!(query_fragment::Entity::find().count(&db).await.unwrap(), 0);
     }
 
     #[proptest(async = "tokio")]
     async fn creation_reserves_capacity(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
-        let initial: HashMap<_, _> = req
-            .workers
-            .iter()
-            .map(|w| (w.host_addr.clone(), w.max_operators))
-            .collect();
-        let used: HashMap<_, i32> =
+        let used: HashMap<_, i64> =
             req.query
                 .fragments
                 .iter()
                 .fold(HashMap::new(), |mut acc, f| {
-                    *acc.entry(f.host_addr.clone()).or_default() += f.num_operators;
+                    *acc.entry(f.host_addr.clone()).or_default() += i64::from(f.num_operators);
                     acc
                 });
 
         setup(&db, &mut req).await;
 
-        let workers = GetWorker::all().execute(&db).await.unwrap();
-        assert!(workers.iter().all(|w| {
-            let init = initial[&w.host_addr];
+        let free = free_capacities(&db).await;
+        let stored = GetWorker::all().execute(&db).await.unwrap();
+        for w in &req.workers {
             let u = used.get(&w.host_addr).copied().unwrap_or(0);
-            w.max_operators == init.map(|c| c - u)
-        }));
+            assert_eq!(
+                free[&w.host_addr],
+                w.max_operators.map(|c| i64::from(c) - u)
+            );
+            let row = stored.iter().find(|row| row.host_addr == w.host_addr);
+            assert_eq!(row.unwrap().max_operators, w.max_operators);
+        }
     }
 
     #[proptest(async = "tokio")]
@@ -586,16 +549,7 @@ mod tests {
     async fn deleting_a_live_fragment_releases_its_capacity(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
         setup_refs(&db, &mut req).await;
-        let capacities = || async {
-            crate::worker::Entity::find()
-                .all(&db)
-                .await
-                .unwrap()
-                .into_iter()
-                .map(|w| (w.host_addr, w.max_operators))
-                .collect::<HashMap<_, _>>()
-        };
-        let before = capacities().await;
+        let before = free_capacities(&db).await;
         let created = req.query.execute(&db).await.unwrap();
 
         crate::query::Entity::delete_by_id(created.query.id)
@@ -603,11 +557,15 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(capacities().await, before);
+        assert_eq!(free_capacities(&db).await, before);
+    }
+
+    fn rejected<T>(result: Result<T, DbErr>) -> bool {
+        matches!(result, Err(err) if classify_write(&err) == WriteFailure::Rejected)
     }
 
     #[proptest(async = "tokio")]
-    async fn stop_hooks(mut req: CreateQueryWithRefs) {
+    async fn running_and_stopped_rows_need_their_timestamps(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
         let (_, fragments) = setup(&db, &mut req).await;
 
@@ -616,24 +574,24 @@ mod tests {
         update = update.save(&db).await.unwrap();
 
         update.current_state = Set(QueryFragmentState::Running);
-        assert!(update.clone().save(&db).await.is_err());
+        assert!(rejected(update.clone().save(&db).await));
         update.start_timestamp = Set(None);
-        assert!(update.clone().save(&db).await.is_err());
+        assert!(rejected(update.clone().save(&db).await));
 
         update.start_timestamp = Set(Some(chrono::Utc::now()));
         update = update.save(&db).await.unwrap();
 
         update.current_state = Set(QueryFragmentState::Stopped);
-        assert!(update.clone().save(&db).await.is_err());
+        assert!(rejected(update.clone().save(&db).await));
         update.stop_timestamp = Set(None);
-        assert!(update.clone().save(&db).await.is_err());
+        assert!(rejected(update.clone().save(&db).await));
 
         update.stop_timestamp = Set(Some(chrono::Utc::now()));
         update.save(&db).await.unwrap();
     }
 
     #[proptest(async = "tokio")]
-    async fn failed_hooks(mut req: CreateQueryWithRefs) {
+    async fn a_failed_row_needs_a_stop_timestamp_and_an_error(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
         let (_, fragments) = setup(&db, &mut req).await;
 
@@ -646,11 +604,11 @@ mod tests {
         update = update.save(&db).await.unwrap();
 
         update.current_state = Set(QueryFragmentState::Failed);
-        assert!(update.clone().save(&db).await.is_err());
+        assert!(rejected(update.clone().save(&db).await));
         update.stop_timestamp = Set(Some(chrono::Utc::now()));
-        assert!(update.clone().save(&db).await.is_err());
+        assert!(rejected(update.clone().save(&db).await));
         update.error = Set(None);
-        assert!(update.clone().save(&db).await.is_err());
+        assert!(rejected(update.clone().save(&db).await));
         update.error = Set(Some(QueryFragmentError::Transport {
             msg: "error".into(),
         }));

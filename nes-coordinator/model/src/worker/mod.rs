@@ -28,9 +28,11 @@ pub use get::GetWorker;
 pub use status::GetWorkerStatus;
 pub use version::{GetWorkerVersion, WorkerVersion};
 
+use crate::query::query_fragment::{self, QueryFragmentState};
 use crate::source::physical;
 use crate::{query, sink};
 use endpoint::NetworkAddr;
+use sea_orm::QuerySelect;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter};
@@ -67,8 +69,7 @@ pub struct Model {
     pub host_addr: NetworkAddr,
     #[sea_orm(unique)]
     pub data_addr: NetworkAddr,
-    /// How many more operators this worker can host, decremented by each fragment placement.
-    /// `None` means unbounded, so the arithmetic is skipped.
+    /// How many operators this worker can host in total, `None` for unbounded.
     pub max_operators: Option<i32>,
     #[sea_orm(column_type = "JsonBinary")]
     pub config: serde_json::Value,
@@ -134,6 +135,26 @@ impl ActiveModel {
     }
 }
 
+impl Model {
+    /// The configured capacity minus the operators of the worker's non-terminal fragments, `None` when unbounded.
+    /// It is negative when the fragments need more operators than the capacity.
+    pub async fn free_capacity(&self, conn: &impl ConnectionTrait) -> Result<Option<i64>, DbErr> {
+        let Some(capacity) = self.max_operators else {
+            return Ok(None);
+        };
+        let used: Option<i64> = query_fragment::Entity::find()
+            .select_only()
+            .column_as(query_fragment::Column::NumOperators.sum(), "used")
+            .filter(query_fragment::Column::HostAddr.eq(self.host_addr.clone()))
+            .filter(query_fragment::Column::CurrentState.is_not_in(QueryFragmentState::TERMINAL))
+            .into_tuple()
+            .one(conn)
+            .await?
+            .flatten();
+        Ok(Some(i64::from(capacity) - used.unwrap_or(0)))
+    }
+}
+
 impl Entity {
     /// The workers that the controller still has to reconcile:
     /// every worker targeted as `Active`,
@@ -157,8 +178,8 @@ mod tests {
     use crate::error::{ErrorCode, code_of};
     use crate::query::query_fragment::QueryFragmentError;
     use crate::query::{
-        self, CreateQueryWithRefs, query_fragment, query_fragment::QueryFragmentState, setup,
-        walk_all,
+        self, CreateQueryWithRefs, free_capacities, query_fragment,
+        query_fragment::QueryFragmentState, setup, walk_all,
     };
     use crate::statement::ParsedStatement;
     use crate::worker::endpoint::NetworkAddr;
@@ -412,32 +433,20 @@ mod tests {
         ]))]
         terminal_state: QueryFragmentState,
     ) {
-        let initial: HashMap<_, _> = req
+        let configured: HashMap<_, _> = req
             .workers
             .iter()
-            .map(|w| (w.host_addr.clone(), w.max_operators))
+            .map(|w| (w.host_addr.clone(), w.max_operators.map(i64::from)))
             .collect();
 
         let db = Database::for_test().await;
         let (_, fragments) = setup(&db, &mut req).await;
-        let (_, fragments) = walk_all(&fragments, terminal_state, &db).await;
-        // Saving a terminal fragment again must not release its capacity a second time.
-        for fragment in &fragments {
-            let again = fragment.with_state(terminal_state);
-            again.update(&db).await.unwrap();
-        }
-        DropWorker::new(fragments[0].host_addr.clone())
-            .execute(&db)
-            .await
-            .unwrap()
-            .expect("worker should exist");
+        walk_all(&fragments, terminal_state, &db).await;
+        assert_eq!(free_capacities(&db).await, configured);
 
-        for fragment in query_fragment::Entity::find().all(&db).await.unwrap() {
-            assert_eq!(fragment.current_state, terminal_state);
-        }
-        for w in GetWorker::all().execute(&db).await.unwrap() {
-            assert_eq!(w.max_operators, initial[&w.host_addr]);
-        }
+        // The generated query fits the configured capacities, so it fits again once its first run has terminated.
+        let statement = ParsedStatement::CreateQuery(req.query);
+        statement.execute_with(&db).await.unwrap();
     }
 
     #[proptest(async = "tokio")]

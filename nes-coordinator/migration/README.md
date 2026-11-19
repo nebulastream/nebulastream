@@ -118,6 +118,29 @@ erDiagram
     }
 ```
 
+`worker.max_operators` holds the configured capacity and changes only when a removed worker registers again.  
+The free capacity is not stored: the model derives it as the configured value minus the operators of the worker's non-terminal fragments.
+
+## Database Rules
+
+CHECK constraints on `query_fragment` require the columns of each state:
+a `Running` fragment has a start timestamp, a terminal one a stop timestamp, and a `Failed` one also an error.  
+They apply to every write, including the writes of the triggers.
+
+The init migration creates five triggers, and its SQL is in `src/m20260204_185834_init/`:
+
+| Trigger | Effect |
+| --- | --- |
+| `validate_query_fragment_state_transition` | Rejects a fragment state change out of a terminal state or from `Running` back to `Started`. |
+| `derive_query_state_on_query_fragment_update` | Derives a query's state, timestamps and error from its fragments. |
+| `cascade_query_failed_to_query_fragments` | Sets the desired state of a failed query's other fragments to `Stopped`. |
+| `cascade_worker_removed_to_query_fragments` | Fails the non-terminal fragments of a worker that is marked for removal. |
+| `delete_dropped_query_on_termination` | Deletes a dropped query once none of its fragments can run. |
+
+The rules that need an error with context are checked in the model's requests:
+creating a query fails when a worker's fragments need more operators than its capacity,
+and dropping a source or sink fails while a non-terminal query uses it.
+
 ## Relationship with the Model
 
 The `migration` and `model` crates work with the same catalog at different levels.

@@ -18,7 +18,7 @@ use strum::Display;
 
 /// Lifecycle state of a query.
 /// A trigger derives it from the states of the query's fragments after every fragment state change,
-/// and a second trigger rejects illegal transitions.
+/// so the trigger that rejects illegal fragment transitions also bounds the query's transitions.
 #[derive(
     Clone,
     Copy,
@@ -45,11 +45,10 @@ pub enum QueryState {
 }
 
 impl QueryState {
+    pub const TERMINAL: [Self; 3] = [Self::Completed, Self::Stopped, Self::Failed];
+
     pub fn is_terminal(&self) -> bool {
-        matches!(
-            self,
-            QueryState::Completed | QueryState::Stopped | QueryState::Failed
-        )
+        Self::TERMINAL.contains(self)
     }
 
     /// Terminated without completing.

@@ -58,13 +58,13 @@
 //!
 //! SQL triggers in the `migration` crate enforce the invariants that span rows:
 //!
-//! - validate query and fragment state transitions (illegal ones abort);
+//! - validate fragment state transitions (illegal ones abort);
 //! - derive a query's state, its start and stop timestamps, and the error of its first failed fragment;
-//! - debit a worker's `max_operators` when a fragment is placed,
-//!   and credit it back when the fragment ends;
 //! - stop a query's fragments when it fails, fail a removed worker's fragments,
-//!   and delete a dropped query once all of its fragments have terminated;
-//! - reject the drop of a source or sink that a non-terminal query uses.
+//!   and delete a dropped query once all of its fragments have terminated.
+//!
+//! The requests check the rules that need a readable error, such as a worker's capacity
+//! and the drop of a source or sink that a non-terminal query uses.
 
 pub mod database;
 pub mod error;

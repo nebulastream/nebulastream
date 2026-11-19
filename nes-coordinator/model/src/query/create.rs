@@ -16,18 +16,19 @@ use crate::error::{CodedError, ErrorCode, catalog_write};
 use crate::identifier::{SinkId, SourceId};
 use crate::query::query_fragment::{self, CreateQueryFragment};
 use crate::query::{ActiveModel, QueryWithFragments, query_sink, query_source};
-use crate::sink;
 use crate::source::physical;
 use crate::{ConnectorKind, Execute};
+use crate::{sink, worker};
 use anyhow::{Context, Result};
 use sea_orm::ActiveValue::{NotSet, Set};
 use sea_orm::sea_query::Expr;
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 /// Registers a query with its fragments, and links it to the sources and sinks that it uses.
-/// Fails with `QueryInvalid` when the query has no fragment, no source or no sink.
+/// Fails with `QueryInvalid` when the query has no fragment, no source or no sink,
+/// and with `CatalogWriteRejected` when a worker's non-terminal fragments need more operators than its capacity.
 /// The anonymous and internal sources and sinks among the ids become owned by the query.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -132,6 +133,7 @@ impl Execute for CreateQuery {
             ErrorCode::UnknownWorker,
         ))
         .context("failed to insert query fragments")?;
+        check_capacity(&self.fragments, conn).await?;
         query_source::Entity::insert_many(source_ids.into_iter().map(|sid| {
             query_source::ActiveModel {
                 query_id: Set(query.id),
@@ -182,4 +184,36 @@ impl Execute for CreateQuery {
             .context("failed to load created query fragments")?;
         Ok(QueryWithFragments { query, fragments })
     }
+}
+
+/// Runs after the fragments are inserted, so the free capacity already counts them.
+async fn check_capacity(
+    fragments: &[CreateQueryFragment],
+    conn: &impl ConnectionTrait,
+) -> Result<()> {
+    let hosts: HashSet<_> = fragments.iter().map(|f| f.host_addr.clone()).collect();
+    let workers = worker::Entity::find()
+        .filter(worker::Column::HostAddr.is_in(hosts))
+        .all(conn)
+        .await
+        .map_err(|err| CodedError::new(ErrorCode::CatalogUnavailable, err))
+        .context("failed to load the workers of the query fragments")?;
+    for worker in workers {
+        let free = worker
+            .free_capacity(conn)
+            .await
+            .map_err(|err| CodedError::new(ErrorCode::CatalogUnavailable, err))
+            .context("failed to derive the free capacity of a worker")?;
+        if let (Some(free), Some(capacity)) = (free, worker.max_operators)
+            && free < 0
+        {
+            crate::coded_bail!(
+                ErrorCode::CatalogWriteRejected,
+                "worker {} has capacity for {capacity} operators, but its fragments need {}",
+                worker.host_addr,
+                i64::from(capacity) - free
+            );
+        }
+    }
+    Ok(())
 }

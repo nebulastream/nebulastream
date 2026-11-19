@@ -13,11 +13,13 @@
 */
 
 use super::{Column, Model};
-use crate::error::{ErrorCode, catalog_write};
-use crate::identifier::SinkId;
-use crate::{ConnectorKind, Execute, IntoCondition, sink};
+use crate::error::{CodedError, ErrorCode, catalog_write};
+use crate::identifier::{QueryId, SinkId};
+use crate::query::query_sink;
+use crate::query::query_state::QueryState;
+use crate::{ConnectorKind, Execute, IntoCondition, coded_bail, query, sink};
 use anyhow::{Context, Result};
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::Deserialize;
 
 /// Deletes the shared sinks that match every set field and returns the deleted rows.
@@ -48,6 +50,27 @@ impl IntoCondition for DropSink {
 impl Execute for DropSink {
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
+        let in_use: Option<(SinkId, Option<String>, QueryId)> = query_sink::Entity::find()
+            .select_only()
+            .column(query_sink::Column::SinkId)
+            .column(Column::Name)
+            .column(query_sink::Column::QueryId)
+            .inner_join(sink::Entity)
+            .inner_join(query::Entity)
+            .filter(self.to_condition())
+            .filter(query::Column::State.is_not_in(QueryState::TERMINAL))
+            .into_tuple()
+            .one(conn)
+            .await
+            .map_err(|err| CodedError::new(ErrorCode::CatalogUnavailable, err))
+            .context("failed to find the queries that write into the sink(s)")?;
+        if let Some((id, name, query)) = in_use {
+            let sink = name.unwrap_or_else(|| id.to_string());
+            coded_bail!(
+                ErrorCode::CatalogWriteRejected,
+                "cannot drop sink {sink}: query {query} still writes into it"
+            );
+        }
         crate::drop_all::<sink::Entity>(self, conn)
             .await
             .map_err(catalog_write(

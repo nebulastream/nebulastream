@@ -18,7 +18,6 @@
 use sea_orm_migration::prelude::*;
 
 mod m20260204_185834_init;
-mod triggers;
 
 /// Runs when the coordinator opens the catalog, to create the schema and its triggers.
 #[derive(Debug)]

@@ -14,10 +14,12 @@
 
 //! The initial catalog migration: creates every table, index, and trigger in the data model.
 
-use crate::triggers::m20260204_185834_init as triggers;
 use crate::{drop_tables, ensure_no_tables};
 use sea_orm::DbBackend;
 use sea_orm_migration::prelude::{Index as MigrationIndex, Table as MigrationTable, *};
+
+const TRIGGERS_UP: &str = include_str!("m20260204_185834_init/triggers.up.sql");
+const TRIGGERS_DOWN: &str = include_str!("m20260204_185834_init/triggers.down.sql");
 
 /// Fails when one of its tables already exists or the backend is not SQLite.
 /// The crate README says what a migration is and when to add one.
@@ -74,18 +76,19 @@ impl MigrationTrait for Migration {
             manager.create_index(index).await?;
         }
 
-        if let Some(sql) = triggers::up(manager.get_database_backend()) {
-            manager.get_connection().execute_unprepared(sql).await?;
-        }
+        manager
+            .get_connection()
+            .execute_unprepared(TRIGGERS_UP)
+            .await?;
 
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let backend = manager.get_database_backend();
-        if let Some(sql) = triggers::down(backend) {
-            manager.get_connection().execute_unprepared(sql).await?;
-        }
+        manager
+            .get_connection()
+            .execute_unprepared(TRIGGERS_DOWN)
+            .await?;
 
         drop_tables!(
             manager,
@@ -123,6 +126,8 @@ fn worker_table() -> TableCreateStatement {
         // TODO #2420: identify a worker by a stable name, because its host address can change.
         .col(ColumnDef::new(Worker::HostAddr).string().not_null().primary_key())
         .col(ColumnDef::new(Worker::DataAddr).string().not_null().unique_key())
+        // The configured capacity, NULL for unbounded.
+        // The free capacity is derived from the operators of the worker's non-terminal fragments.
         .col(ColumnDef::new(Worker::MaxOperators).integer().null()
             .check(Expr::col(Worker::MaxOperators).is_null().or(Expr::col(Worker::MaxOperators).gte(0))))
         .col(ColumnDef::new(Worker::Config).json_binary().not_null().default("{}"))
@@ -254,6 +259,13 @@ fn query_fragment_table() -> TableCreateStatement {
         .col(ColumnDef::new(QueryFragment::StopTimestamp).date_time().null())
         .col(ColumnDef::new(QueryFragment::Error).json_binary().null())
         .col(ColumnDef::new(QueryFragment::LastObservedAt).date_time().null())
+        // The columns that a state requires, checked here so that the rows written by triggers follow them too.
+        .check(Expr::col(QueryFragment::CurrentState).ne("Running")
+            .or(Expr::col(QueryFragment::StartTimestamp).is_not_null()))
+        .check(Expr::col(QueryFragment::CurrentState).is_not_in(["Completed", "Stopped", "Failed"])
+            .or(Expr::col(QueryFragment::StopTimestamp).is_not_null()))
+        .check(Expr::col(QueryFragment::CurrentState).ne("Failed")
+            .or(Expr::col(QueryFragment::Error).is_not_null()))
         .foreign_key(&mut foreign_key(
             (QueryFragment::Table, QueryFragment::QueryId),
             (Query::Table, Query::Id),
@@ -341,10 +353,10 @@ fn indexes() -> Vec<IndexCreateStatement> {
         MigrationIndex::create().table(Sink::Table).name("idx_sink_query_id")
             .col(Sink::QueryId)
             .and_where(Expr::col(Sink::QueryId).is_not_null()).to_owned(),
-        // Finding the queries that use a source (drop guards)
+        // Finding the queries that use a source (drop checks)
         MigrationIndex::create().table(QuerySource::Table).name("idx_query_source_source_id")
             .col(QuerySource::SourceId).to_owned(),
-        // Finding the queries that use a sink (drop guards)
+        // Finding the queries that use a sink (drop checks)
         MigrationIndex::create().table(QuerySink::Table).name("idx_query_sink_sink_id")
             .col(QuerySink::SinkId).to_owned(),
         // Finding a worker's incoming links; the primary key covers the outgoing ones

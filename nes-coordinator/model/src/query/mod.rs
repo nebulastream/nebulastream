@@ -35,10 +35,17 @@ use crate::sink::{CreateAnonymousSink, CreateSink};
 use crate::source::physical::{CreateAnonymousSource, CreatePhysicalSource};
 #[cfg(any(test, feature = "testing"))]
 use crate::{ConnectorKind, Execute};
+#[cfg(test)]
+use crate::{
+    database::Database,
+    worker::{GetWorker, endpoint::NetworkAddr},
+};
 use anyhow::Result;
 use query_state::QueryState;
 use sea_orm::entity::prelude::*;
 use serde::Serialize;
+#[cfg(test)]
+use std::collections::HashMap;
 
 /// A submitted query.
 /// It owns its fragments, and its anonymous and internal sources and sinks.
@@ -157,6 +164,16 @@ pub(crate) async fn setup(
 }
 
 #[cfg(test)]
+pub(crate) async fn free_capacities(db: &Database) -> HashMap<NetworkAddr, Option<i64>> {
+    let mut free = HashMap::new();
+    for worker in GetWorker::all().execute(db).await.unwrap() {
+        let capacity = worker.free_capacity(db).await.unwrap();
+        free.insert(worker.host_addr, capacity);
+    }
+    free
+}
+
+#[cfg(test)]
 pub(crate) async fn walk_one(
     fragment: &query_fragment::Model,
     target: query_fragment::QueryFragmentState,
@@ -230,10 +247,9 @@ mod tests {
     use proptest::collection::vec;
     use proptest::option;
     use proptest::prelude::any;
-    use proptest::sample::{Index, select, subsequence};
+    use proptest::sample::{Index, subsequence};
     use sea_orm::{
-        ActiveEnum, ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, Iterable,
-        PaginatorTrait, QueryFilter,
+        ActiveModelTrait, ColumnTrait, EntityTrait, Iterable, PaginatorTrait, QueryFilter,
     };
     use test_strategy::proptest;
 
@@ -440,27 +456,41 @@ mod tests {
     }
 
     #[proptest(async = "tokio")]
-    async fn sources_and_sinks_of_an_active_query_cannot_be_deleted(mut req: CreateQueryWithRefs) {
+    async fn sources_and_sinks_of_an_active_query_cannot_be_dropped(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
-        let (_, fragments) = setup(&db, &mut req).await;
-        let source = physical::Entity::delete_by_id(*req.query.source_ids.first().unwrap());
-        let sink = sink::Entity::delete_by_id(*req.query.sink_ids.first().unwrap());
+        let (created, fragments) = setup(&db, &mut req).await;
+        let drop_sources = || ParsedStatement::DropPhysicalSource(DropPhysicalSource::all());
+        let drop_sinks = || ParsedStatement::DropSink(DropSink::all());
+        let counts = || async {
+            let sources = physical::Entity::find().count(&db).await.unwrap();
+            (sources, sink::Entity::find().count(&db).await.unwrap())
+        };
+        let before = counts().await;
 
-        assert!(source.clone().exec(&db).await.is_err());
-        assert!(sink.clone().exec(&db).await.is_err());
         // A drop matches only shared sources and sinks, so for the other kinds it matches nothing and succeeds.
         let shared = req.kind == ConnectorKind::Shared;
-        let rejected = shared.then_some(ErrorCode::CatalogWriteRejected);
-        assert_eq!(
-            code_of(DropPhysicalSource::all().execute(&db).await),
-            rejected
-        );
-        assert_eq!(code_of(DropSink::all().execute(&db).await), rejected);
+        for result in [
+            drop_sources().execute_with(&db).await,
+            drop_sinks().execute_with(&db).await,
+        ] {
+            if shared {
+                let err = result.unwrap_err();
+                let coded = err.downcast_ref::<CodedError>().unwrap();
+                assert_eq!(coded.code, ErrorCode::CatalogWriteRejected);
+                let blocker = format!("query {} still", created.id);
+                assert!(coded.msg.contains(&blocker), "{}", coded.msg);
+            } else {
+                result.unwrap();
+            }
+        }
+        assert_eq!(counts().await, before);
 
         walk_all(&fragments, QueryFragmentState::Completed, &db).await;
 
-        source.exec(&db).await.unwrap();
-        sink.exec(&db).await.unwrap();
+        drop_sources().execute_with(&db).await.unwrap();
+        drop_sinks().execute_with(&db).await.unwrap();
+        let dropped = if shared { (0, 0) } else { before };
+        assert_eq!(counts().await, dropped);
     }
 
     #[proptest(async = "tokio")]
@@ -588,24 +618,6 @@ mod tests {
         } else {
             previous
         }
-    }
-
-    #[proptest(async = "tokio")]
-    async fn direct_query_transitions_follow_the_state_machine(
-        mut req: CreateQueryWithRefs,
-        #[strategy(select(states()))] from: QueryFragmentState,
-        #[strategy(select(states()))] to: QueryFragmentState,
-    ) {
-        let db = Database::for_test().await;
-        let (_, fragments) = setup(&db, &mut req).await;
-        let (query, _) = walk_all(&fragments, from, &db).await;
-
-        let mut update: query::ActiveModel = query.into();
-        update.state = Set(QueryState::try_from_value(&to.to_value()).unwrap());
-        assert_eq!(
-            update.update(&db).await.is_ok(),
-            from == to || legal(from, to)
-        );
     }
 
     #[proptest(async = "tokio")]

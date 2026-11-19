@@ -72,7 +72,7 @@ pub(crate) mod ffi {
     struct Worker {
         host_addr: String,
         data_addr: String,
-        /// -1 when the worker has no limit.
+        /// The operators that the worker can still host, -1 when the worker has no limit.
         max_operators: i32,
         error: BridgeError,
     }
@@ -325,10 +325,14 @@ fn worker(ctx: &PlanningTransaction, host_addr: &str) -> anyhow::Result<ffi::Wor
             format!("worker '{host_addr}' not found"),
         )
     })?;
+    let free = ctx
+        .block_on(worker.free_capacity(ctx.txn()))
+        .map_err(|err| catalog_unavailable(err.into()))?;
     Ok(ffi::Worker {
         host_addr: worker.host_addr.to_string(),
         data_addr: worker.data_addr.to_string(),
-        max_operators: worker.max_operators.unwrap_or(-1),
+        // A negative value means unbounded, so an overfull worker reports no room at all.
+        max_operators: free.map_or(-1, |free| i32::try_from(free.max(0)).unwrap_or(i32::MAX)),
         ..Default::default()
     })
 }

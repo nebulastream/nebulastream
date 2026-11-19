@@ -13,11 +13,13 @@
 */
 
 use super::{Column, Entity, Model};
-use crate::error::{ErrorCode, catalog_write};
-use crate::identifier::SourceId;
-use crate::{ConnectorKind, Execute, IntoCondition};
+use crate::error::{CodedError, ErrorCode, catalog_write};
+use crate::identifier::{QueryId, SourceId};
+use crate::query::query_source;
+use crate::query::query_state::QueryState;
+use crate::{ConnectorKind, Execute, IntoCondition, coded_bail, query};
 use anyhow::{Context, Result};
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::Deserialize;
 
 /// Deletes the shared physical sources that match every set field and returns the deleted rows.
@@ -62,6 +64,25 @@ impl IntoCondition for DropPhysicalSource {
 impl Execute for DropPhysicalSource {
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
+        let in_use: Option<(SourceId, QueryId)> = query_source::Entity::find()
+            .select_only()
+            .column(query_source::Column::SourceId)
+            .column(query_source::Column::QueryId)
+            .inner_join(Entity)
+            .inner_join(query::Entity)
+            .filter(self.to_condition())
+            .filter(query::Column::State.is_not_in(QueryState::TERMINAL))
+            .into_tuple()
+            .one(conn)
+            .await
+            .map_err(|err| CodedError::new(ErrorCode::CatalogUnavailable, err))
+            .context("failed to find the queries that read the physical source(s)")?;
+        if let Some((source, query)) = in_use {
+            coded_bail!(
+                ErrorCode::CatalogWriteRejected,
+                "cannot drop physical source {source}: query {query} still reads from it"
+            );
+        }
         crate::drop_all::<Entity>(self, conn)
             .await
             .map_err(catalog_write(
