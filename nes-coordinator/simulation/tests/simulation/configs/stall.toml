@@ -30,8 +30,9 @@ timeout = 85
   drop_weight = 1
 
   [[test.workload]]
-  name = "Stall"
-  begin = 12
+  name = "NodeFault"
+  action = "Pause"
+  rate = 0.5
+  start = 12
   end = 38
-  pause_rate = 0.5
 

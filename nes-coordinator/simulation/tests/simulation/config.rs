@@ -40,7 +40,7 @@ pub struct TrialConfig {
     /// Buggify is on from the start until this time.
     /// Without the key it stays off.
     pub buggify_until: Option<u64>,
-    /// The trial fails if worker drops failed fewer queries than this.
+    /// The trial fails if fewer queries than this end with a fragment on a removed host and without a drop by the client.
     /// With a value above zero, the trial cannot pass without having dropped a worker that ran a fragment.
     #[serde(default)]
     pub min_failed_queries: usize,

@@ -18,7 +18,7 @@
 //! Every trial gets its own seed and a fresh madsim runtime,
 //! and runs on a separate thread under a wall-clock timeout, so a stuck simulation cannot hang the whole test binary.
 //! Every failed config trial prints its seed, which `MADSIM_TEST_SEED=...` replays.
-//! The binary also runs unit trials of the harness itself.
+//! The binary also runs the tests of the fake worker.
 //!
 //! The crate has to compile without madsim (clippy, normal builds, tooling),
 //! so most of the test code is behind `cfg(madsim)` and the non-madsim build produces an empty trial list.
@@ -27,7 +27,7 @@
     madsim,
     expect(
         clippy::future_not_send,
-        reason = "madsim runs every trial on one thread, and workloads share the model through a RefCell"
+        reason = "madsim runs every trial on one thread, and workloads share the ledger through a RefCell"
     )
 )]
 
@@ -38,11 +38,9 @@ mod harness;
 #[cfg(madsim)]
 mod invariant;
 #[cfg(madsim)]
-mod model_state;
+mod ledger;
 #[cfg(madsim)]
 mod runner;
-#[cfg(madsim)]
-mod unit;
 #[cfg(madsim)]
 mod worker;
 #[cfg(madsim)]
@@ -84,7 +82,7 @@ fn main() {
     #[cfg(madsim)]
     let trials: Vec<Trial> = discover_trials()
         .into_iter()
-        .chain(unit::build_trials())
+        .chain(worker::tests::build_trials())
         .collect();
 
     #[cfg(not(madsim))]

@@ -16,6 +16,7 @@
 //!
 //! The coordinator and each worker is a separate madsim node with its own IP.
 //! For example, the coordinator is 192.168.1.1 and the first two workers are 192.168.1.2 and 192.168.1.3.
+//! madsim assigns an IP to one node only, so an address that is registered again restarts its earlier node.
 //! Statements and fault primitives are harness methods.
 //! The simulator injects the faults.
 
@@ -23,7 +24,6 @@ use crate::worker::{HealthServer, HealthService, WorkerRpcServiceServer, WorkerS
 use anyhow::Result;
 use controller::remote::WorkerRpcServiceClient;
 use controller::remote::worker_rpc_service::{WorkerStatusRequest, WorkerStatusResponse};
-use futures::future::join_all;
 use madsim::net::NetSim;
 use madsim::runtime::{Handle, NodeHandle};
 use madsim::task::NodeId;
@@ -44,7 +44,6 @@ use tracing::debug;
 const COORDINATOR_NAME: &str = "coordinator";
 const SUBNET: [u8; 3] = [192, 168, 1];
 const COORDINATOR_OCTET: u8 = 1;
-pub const FIRST_WORKER_OCTET: u8 = 2;
 
 pub const fn build_ip(octet: u8) -> Ipv4Addr {
     let [a, b, c] = SUBNET;
@@ -75,6 +74,9 @@ struct Coordinator {
 /// It must be created and used inside a running madsim runtime.
 pub struct Harness {
     coordinator: Coordinator,
+    /// Every worker node that the harness started, also those of dropped workers.
+    nodes: RefCell<HashMap<NetworkAddr, NodeId>>,
+    /// The nodes of the registered workers.
     workers: RefCell<HashMap<NetworkAddr, NodeId>>,
 }
 
@@ -84,11 +86,12 @@ impl Harness {
 
         Self {
             coordinator: Self::start_coordinator(),
+            nodes: RefCell::default(),
             workers: RefCell::default(),
         }
     }
 
-    /// A worker create starts the worker's node before the statement is sent.
+    /// A worker create starts the worker's node before the statement is sent, and stops it if the create fails.
     /// A worker drop stops the node after the reply, also when the drop failed.
     pub async fn send(&self, statement: ParsedStatement) -> Result<StatementResult> {
         match statement {
@@ -133,27 +136,39 @@ impl Harness {
     async fn create_worker(&self, create: CreateWorker) -> Result<StatementResult> {
         debug!("{:?} starting", create.host_addr);
 
-        let node = Handle::current()
-            .create_node()
-            .name(create.host_addr.to_string())
-            .ip(create.host_addr.host().parse()?)
-            .init(move || async move {
-                Server::builder()
-                    .add_service(WorkerRpcServiceServer::new(WorkerService::new()))
-                    .add_service(HealthServer::new(HealthService))
-                    .serve(SocketAddr::from((Ipv4Addr::UNSPECIFIED, DEFAULT_HOST_PORT)))
-                    .await
-                    .expect("worker could not be started");
-            })
-            .build()
-            .id();
+        let addr = create.host_addr.clone();
+        let earlier = self.nodes.borrow().get(&addr).copied();
+        let node = if let Some(node) = earlier {
+            Handle::current().restart(node);
+            node
+        } else {
+            let node = Handle::current()
+                .create_node()
+                .name(addr.to_string())
+                .ip(addr.host().parse()?)
+                .init(move || async move {
+                    Server::builder()
+                        .add_service(WorkerRpcServiceServer::new(WorkerService::new()))
+                        .add_service(HealthServer::new(HealthService))
+                        .serve(SocketAddr::from((Ipv4Addr::UNSPECIFIED, DEFAULT_HOST_PORT)))
+                        .await
+                        .expect("worker could not be started");
+                })
+                .build()
+                .id();
+            self.nodes.borrow_mut().insert(addr.clone(), node);
+            node
+        };
+        self.workers.borrow_mut().insert(addr.clone(), node);
 
-        self.workers
-            .borrow_mut()
-            .insert(create.host_addr.clone(), node);
-
-        self.send_to_coordinator(ParsedStatement::CreateWorker(create))
-            .await
+        let result = self
+            .send_to_coordinator(ParsedStatement::CreateWorker(create))
+            .await;
+        if result.is_err() {
+            self.workers.borrow_mut().remove(&addr);
+            Handle::current().kill(node);
+        }
+        result
     }
 
     async fn drop_worker(&self, drop: DropWorker) -> Result<StatementResult> {
@@ -177,11 +192,14 @@ impl Harness {
         Handle::current().kill(id);
     }
 
-    /// Does nothing for a worker that was dropped while it was down.
+    /// Does nothing for a worker that was dropped while it was down,
+    /// or that runs again because its address was registered again.
+    /// A restart of a running node would keep its old socket bound, and the new server could not start.
     /// A restarted worker has no fragments.
     pub fn restart(&self, id: NodeId) {
-        if self.workers.borrow().values().any(|&worker| worker == id) {
-            Handle::current().restart(id);
+        let handle = Handle::current();
+        if handle.is_exit(id) && self.workers.borrow().values().any(|&worker| worker == id) {
+            handle.restart(id);
         }
     }
 
@@ -214,24 +232,16 @@ impl Harness {
         self.workers.borrow().values().copied().collect()
     }
 
-    /// The fragments that the given workers report as active.
-    pub async fn get_worker_fragments(
-        &self,
-        workers: &HashSet<NetworkAddr>,
-    ) -> HashSet<QueryFragmentId> {
-        // The requests run on the coordinator's node, because the main node of the simulation has no IP and cannot connect.
-        let statuses = workers
-            .iter()
-            .cloned()
-            .map(|addr| self.coordinator.handle.spawn(request_worker_status(addr)));
-        join_all(statuses)
+    /// The fragments that the worker reports as active.
+    pub async fn get_worker_fragments(&self, addr: NetworkAddr) -> HashSet<QueryFragmentId> {
+        // The request runs on the coordinator's node, because the main node of the simulation has no IP and cannot connect.
+        self.coordinator
+            .handle
+            .spawn(request_worker_status(addr))
             .await
+            .expect("the worker status request did not complete")
+            .active_queries
             .into_iter()
-            .flat_map(|status| {
-                status
-                    .expect("the worker status request did not complete")
-                    .active_queries
-            })
             .map(|q| {
                 q.query_id
                     .and_then(|id| id.fragment_id())

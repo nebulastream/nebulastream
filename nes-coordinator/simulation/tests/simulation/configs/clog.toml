@@ -32,7 +32,8 @@ timeout = 85
   drop_weight = 1
 
   [[test.workload]]
-  name = "Clog"
-  begin = 10
-  end = 40
-  clog_rate = 0.6
+  name = "NodeFault"
+  action = "Clog"
+  rate = 0.6
+  start = [10, 25]
+  end = [25, 40]

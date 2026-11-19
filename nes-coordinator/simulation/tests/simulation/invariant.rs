@@ -12,180 +12,230 @@
     limitations under the License.
 */
 
-//! Assertions that a trial runs once the simulation has quiesced.
+//! Predicates over the end state of a trial, which run once the simulation has quiesced.
 //!
-//! Each invariant compares one piece of model state against what the coordinator or the workers report, or against a configured minimum,
-//! and panics on mismatch.
+//! Each predicate compares the ledger with the catalog or with what the workers report,
+//! and lists every query or fragment that violates it.
 
 use crate::harness::Harness;
-use crate::model_state::ModelState;
+use crate::ledger::{Ledger, LedgerQuery};
+use futures::future::join_all;
 use model::identifier::{QueryFragmentId, QueryId};
-use model::query::query_fragment::{self, QueryFragmentState};
+use model::query::query_fragment::QueryFragmentState;
 use model::query::query_state::QueryState;
 use model::query::{GetQuery, QueryWithFragments};
 use model::statement::{ParsedStatement, StatementResult};
-use model::worker::endpoint::NetworkAddr;
-use model::worker::{GetWorker, WorkerState};
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::fmt::Write;
 use tracing::info;
 
+type Catalog = HashMap<QueryId, QueryWithFragments>;
+
 /// Run only after the workloads have finished and the system has had time to recover.
-pub async fn check_all(harness: &Harness, model: &ModelState, min_failed_queries: usize) {
-    check_active_catalog_fragments(harness, model).await;
-    check_dropped_catalog_queries(harness, model).await;
-    check_failed_catalog_queries(harness, model).await;
-    check_active_worker_fragments(harness, model).await;
-    check_active_catalog_workers(harness, model).await;
-    check_dropped_catalog_workers(harness, model).await;
-    check_failed_query_count(model, min_failed_queries);
+pub async fn check_all(harness: &Harness, ledger: &Ledger, min_failed_queries: usize) {
+    let catalog = get_catalog_queries(harness).await;
+
+    let mut violations = Vec::new();
+    for (&id, query) in ledger.queries() {
+        if query.is_dropped() {
+            check_dropped_query(id, query, ledger, &catalog, &mut violations);
+        } else if query
+            .fragments()
+            .values()
+            .any(|&host| ledger.is_dropped(host))
+        {
+            check_failed_query(id, query, ledger, &catalog, &mut violations);
+        } else {
+            check_running_query(id, query, ledger, &catalog, &mut violations);
+        }
+    }
+    check_worker_fragments(harness, ledger, &catalog, &mut violations).await;
+
+    if !violations.is_empty() {
+        let mut report = format!("{} violations:", violations.len());
+        for violation in &violations {
+            let _ = write!(report, "\n  {violation}");
+        }
+        panic!("{report}");
+    }
+    check_failed_query_count(ledger, min_failed_queries);
     info!("all invariants hold");
 }
 
-async fn get_catalog_queries(harness: &Harness, qids: Vec<QueryId>) -> Vec<QueryWithFragments> {
+async fn get_catalog_queries(harness: &Harness) -> Catalog {
     let StatementResult::Queries(queries) = harness
-        .send(ParsedStatement::GetQuery(
-            GetQuery::all().with_fragments().with_ids(qids),
-        ))
+        .send(ParsedStatement::GetQuery(GetQuery::all().with_fragments()))
         .await
         .unwrap()
     else {
         unreachable!("a query read returned another kind of result");
     };
-    queries
+    queries.into_iter().map(|row| (row.query.id, row)).collect()
 }
 
-async fn get_catalog_fragments(
-    harness: &Harness,
-    qids: Vec<QueryId>,
-) -> Vec<query_fragment::Model> {
-    let queries = get_catalog_queries(harness, qids).await;
-    queries.into_iter().flat_map(|row| row.fragments).collect()
+fn describe_hosts(query: &LedgerQuery, ledger: &Ledger) -> String {
+    let hosts: BTreeSet<String> = query
+        .fragments()
+        .values()
+        .map(|&host| ledger.get_addr(host).to_string())
+        .collect();
+    format!("{hosts:?}")
 }
 
-/// Whether the fragment terminated in a state that the model accepts.
-/// A fragment ends as Stopped unless its worker was removed first, which fails it.
-/// The model does not record which of the two happened first.
-pub fn is_stopped_or_failed_by_drop(fragment: &query_fragment::Model, model: &ModelState) -> bool {
-    match fragment.current_state {
-        QueryFragmentState::Stopped => true,
-        QueryFragmentState::Failed => model.dropped_workers().contains(&fragment.host_addr),
-        _ => false,
-    }
-}
-
-fn assert_stopped_or_failed_by_drop(
-    name: &str,
-    fragment: &query_fragment::Model,
-    model: &ModelState,
+/// Every query that the client did not drop and whose hosts all remain registered is Running,
+/// with the fragments that its create reply listed.
+fn check_running_query(
+    id: QueryId,
+    query: &LedgerQuery,
+    ledger: &Ledger,
+    catalog: &Catalog,
+    violations: &mut Vec<String>,
 ) {
-    assert!(
-        is_stopped_or_failed_by_drop(fragment, model),
-        "{name}: fragment {} on {} is {:?}, expect Stopped, or Failed on a dropped worker",
-        fragment.id,
-        fragment.host_addr,
-        fragment.current_state,
-    );
-}
-
-async fn get_catalog_workers(harness: &Harness, state: WorkerState) -> HashSet<NetworkAddr> {
-    let StatementResult::Workers(workers) = harness
-        .send(ParsedStatement::GetWorker(
-            GetWorker::all().with_current_state(state),
-        ))
-        .await
-        .unwrap()
-    else {
-        unreachable!("a worker read returned another kind of result");
+    const NAME: &str = "running_queries";
+    let Some(row) = catalog.get(&id) else {
+        violations.push(format!(
+            "{NAME}: query {id} on {} is missing from the catalog",
+            describe_hosts(query, ledger)
+        ));
+        return;
     };
-    workers.into_iter().map(|w| w.host_addr).collect()
-}
-
-/// Catalog fragments of active queries match the model and are all Running.
-async fn check_active_catalog_fragments(harness: &Harness, model: &ModelState) {
-    const NAME: &str = "active_catalog_fragments";
-    let fragments = get_catalog_fragments(harness, model.active_queries()).await;
-    let ids: HashSet<QueryFragmentId> = fragments.iter().map(|f| f.id).collect();
-    assert_eq!(ids, model.active_fragments(), "{NAME}: ID mismatch");
-    for f in &fragments {
-        assert_eq!(
-            f.current_state,
-            QueryFragmentState::Running,
-            "{NAME}: fragment {} is {:?}, expect Running",
-            f.id,
-            f.current_state,
-        );
+    if row.query.state != QueryState::Running {
+        violations.push(format!(
+            "{NAME}: query {id} on {} is {:?}, expect Running",
+            describe_hosts(query, ledger),
+            row.query.state
+        ));
     }
-}
-
-/// Every dropped query has terminated and is deleted.
-/// The check of the fragments that workers report shows that its fragments were stopped on the workers.
-async fn check_dropped_catalog_queries(harness: &Harness, model: &ModelState) {
-    const NAME: &str = "dropped_catalog_queries";
-    let left: Vec<_> = get_catalog_queries(harness, model.dropped_queries())
-        .await
-        .into_iter()
-        .map(|row| (row.query.id, row.query.state))
-        .collect();
-    assert!(
-        left.is_empty(),
-        "{NAME}: dropped queries left in the catalog: {left:?}"
-    );
-}
-
-/// A query that ran on a dropped worker is Failed.
-async fn check_failed_catalog_queries(harness: &Harness, model: &ModelState) {
-    const NAME: &str = "failed_catalog_queries";
-    let queries = get_catalog_queries(harness, model.failed_queries()).await;
-    let ids: HashSet<QueryFragmentId> = queries
-        .iter()
-        .flat_map(|row| row.fragments.iter().map(|f| f.id))
-        .collect();
-    assert_eq!(ids, model.failed_fragments(), "{NAME}: ID mismatch");
-    for row in &queries {
-        assert_eq!(
-            row.query.state,
-            QueryState::Failed,
-            "{NAME}: query {} is {:?}, expect Failed",
-            row.query.id,
-            row.query.state,
-        );
-        for f in &row.fragments {
-            assert_stopped_or_failed_by_drop(NAME, f, model);
+    let created: BTreeSet<QueryFragmentId> = query.fragments().keys().copied().collect();
+    let stored: BTreeSet<QueryFragmentId> = row.fragments.iter().map(|f| f.id).collect();
+    if created != stored {
+        violations.push(format!(
+            "{NAME}: query {id} has fragments {stored:?} in the catalog, its create reply listed {created:?}"
+        ));
+    }
+    for fragment in &row.fragments {
+        if fragment.current_state != QueryFragmentState::Running {
+            violations.push(format!(
+                "{NAME}: fragment {} of query {id} on {} is {:?}, expect Running",
+                fragment.id, fragment.host_addr, fragment.current_state
+            ));
         }
     }
 }
 
-/// Workers report the same set of active fragments as the model.
-async fn check_active_worker_fragments(harness: &Harness, model: &ModelState) {
-    const NAME: &str = "active_worker_fragments";
-    let actual = harness.get_worker_fragments(model.active_workers()).await;
-    let expected = model.active_fragments();
-    let leaked: Vec<_> = actual.difference(&expected).collect();
-    let missing: Vec<_> = expected.difference(&actual).collect();
-    assert!(
-        leaked.is_empty() && missing.is_empty(),
-        "{NAME}: {} leaked (active on worker but query dropped): {:?}, {} missing (expected active but not on worker): {:?}",
-        leaked.len(),
-        leaked,
-        missing.len(),
-        missing,
-    );
+/// Every query with a fragment on a removed host is Failed, unless the client dropped it.
+/// Its fragments are Stopped, or Failed on a removed host.
+fn check_failed_query(
+    id: QueryId,
+    query: &LedgerQuery,
+    ledger: &Ledger,
+    catalog: &Catalog,
+    violations: &mut Vec<String>,
+) {
+    const NAME: &str = "failed_queries";
+    let removed: Vec<String> = query
+        .fragments()
+        .iter()
+        .filter(|&(_, &host)| ledger.is_dropped(host))
+        .map(|(fragment, &host)| format!("fragment {fragment} on {}", ledger.get_addr(host)))
+        .collect();
+    let Some(row) = catalog.get(&id) else {
+        violations.push(format!(
+            "{NAME}: query {id} with {removed:?} on a removed host is missing from the catalog"
+        ));
+        return;
+    };
+    if row.query.state != QueryState::Failed {
+        violations.push(format!(
+            "{NAME}: query {id} with {removed:?} on a removed host is {:?}, expect Failed",
+            row.query.state
+        ));
+    }
+    for fragment in &row.fragments {
+        let on_removed_host = query
+            .fragments()
+            .get(&fragment.id)
+            .is_some_and(|&host| ledger.is_dropped(host));
+        let accepted = match fragment.current_state {
+            QueryFragmentState::Stopped => true,
+            QueryFragmentState::Failed => on_removed_host,
+            _ => false,
+        };
+        if !accepted {
+            violations.push(format!(
+                "{NAME}: fragment {} of failed query {id} on {} is {:?}, expect Stopped, or Failed on a removed host",
+                fragment.id, fragment.host_addr, fragment.current_state
+            ));
+        }
+    }
 }
 
-async fn check_active_catalog_workers(harness: &Harness, model: &ModelState) {
-    const NAME: &str = "active_catalog_workers";
-    let active = get_catalog_workers(harness, WorkerState::Active).await;
-    assert_eq!(&active, model.active_workers(), "{NAME}: set mismatch");
+/// Every query that the client dropped is deleted from the catalog.
+fn check_dropped_query(
+    id: QueryId,
+    query: &LedgerQuery,
+    ledger: &Ledger,
+    catalog: &Catalog,
+    violations: &mut Vec<String>,
+) {
+    const NAME: &str = "dropped_queries";
+    if let Some(row) = catalog.get(&id) {
+        violations.push(format!(
+            "{NAME}: dropped query {id} on {} is still in the catalog as {:?}",
+            describe_hosts(query, ledger),
+            row.query.state
+        ));
+    }
 }
 
-async fn check_dropped_catalog_workers(harness: &Harness, model: &ModelState) {
-    const NAME: &str = "dropped_catalog_workers";
-    let removed = get_catalog_workers(harness, WorkerState::Removed).await;
-    assert_eq!(&removed, model.dropped_workers(), "{NAME}: set mismatch");
+/// On every registered worker, the fragments that the catalog lists as Running are the ones that the worker reports as active.
+async fn check_worker_fragments(
+    harness: &Harness,
+    ledger: &Ledger,
+    catalog: &Catalog,
+    violations: &mut Vec<String>,
+) {
+    const NAME: &str = "worker_fragments";
+    let addrs = ledger.get_registered_addrs();
+    let reports = join_all(
+        addrs
+            .iter()
+            .map(|addr| harness.get_worker_fragments(addr.clone())),
+    )
+    .await;
+    for (addr, reported) in addrs.iter().zip(reports) {
+        let running: HashSet<QueryFragmentId> = catalog
+            .values()
+            .flat_map(|row| &row.fragments)
+            .filter(|f| &f.host_addr == addr && f.current_state == QueryFragmentState::Running)
+            .map(|f| f.id)
+            .collect();
+        let mut missing: Vec<_> = running.difference(&reported).collect();
+        let mut leaked: Vec<_> = reported.difference(&running).collect();
+        missing.sort_unstable();
+        leaked.sort_unstable();
+        if !missing.is_empty() {
+            violations.push(format!(
+                "{NAME}: fragments {missing:?} on {addr} are Running in the catalog but not active on the worker"
+            ));
+        }
+        if !leaked.is_empty() {
+            violations.push(format!(
+                "{NAME}: fragments {leaked:?} on {addr} are active on the worker but not Running in the catalog"
+            ));
+        }
+    }
 }
 
-fn check_failed_query_count(model: &ModelState, min: usize) {
-    let failed = model.failed_query_count();
+/// Fails a trial that never checked a failed query, so it cannot pass without having dropped a worker that ran a fragment.
+fn check_failed_query_count(ledger: &Ledger, min: usize) {
+    let failed = ledger
+        .queries()
+        .values()
+        .filter(|query| {
+            !query.is_dropped() && query.fragments().values().any(|&h| ledger.is_dropped(h))
+        })
+        .count();
     assert!(
         failed >= min,
         "worker drops failed {failed} queries, expect at least {min}"

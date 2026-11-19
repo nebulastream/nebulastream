@@ -15,27 +15,23 @@
 //! Workloads that make up a trial.
 //!
 //! A driver workload (`Worker`, `Query`) sends catalog operations,
-//! and a failure-injection workload (`Attrition`, `Clog`, `Stall`, `Degradation`) disrupts the network or nodes for a window.
+//! and a failure-injection workload (`NodeFault`, `Degradation`) disrupts the network or nodes for a window.
 //! A trial selects each workload by its `name` key in TOML.
 
-pub mod attrition;
-pub mod clog;
 pub mod degradation;
+pub mod node_fault;
 pub mod ops;
-pub mod stall;
 
 use crate::harness::Harness;
-use crate::model_state::{ModelState, Operation};
+use crate::ledger::{Ledger, Operation};
 use anyhow::{Result, ensure};
-use attrition::AttritionWorkload;
-use clog::ClogWorkload;
 use degradation::DegradationWorkload;
 use madsim::rand::seq::SliceRandom;
 use madsim::rand::thread_rng;
 use madsim::task::NodeId;
+use node_fault::NodeFaultWorkload;
 use ops::OpsWorkload;
 use serde::Deserialize;
-use stall::StallWorkload;
 use std::cell::RefCell;
 
 /// `Worker` and `Query` share one schema and differ in the operations that they send.
@@ -44,9 +40,7 @@ use std::cell::RefCell;
 pub enum Workload {
     Worker(OpsWorkload),
     Query(OpsWorkload),
-    Attrition(AttritionWorkload),
-    Clog(ClogWorkload),
-    Stall(StallWorkload),
+    NodeFault(NodeFaultWorkload),
     Degradation(DegradationWorkload),
 }
 
@@ -55,11 +49,7 @@ impl Workload {
     const fn end(&self) -> u64 {
         match self {
             Self::Worker(ops) | Self::Query(ops) => ops.end,
-            Self::Attrition(attrition) => {
-                attrition.begin.saturating_add(attrition.restart_delay_hi)
-            }
-            Self::Clog(clog) => clog.end,
-            Self::Stall(stall) => stall.end,
+            Self::NodeFault(fault) => fault.end.hi(),
             Self::Degradation(degradation) => degradation.end,
         }
     }
@@ -67,9 +57,7 @@ impl Workload {
     const fn rate(&self) -> Option<f64> {
         match self {
             Self::Worker(_) | Self::Query(_) => None,
-            Self::Attrition(attrition) => Some(attrition.kill_rate),
-            Self::Clog(clog) => Some(clog.clog_rate),
-            Self::Stall(stall) => Some(stall.pause_rate),
+            Self::NodeFault(fault) => Some(fault.rate),
             Self::Degradation(degradation) => Some(degradation.loss_rate),
         }
     }
@@ -77,9 +65,11 @@ impl Workload {
     pub fn validate(&self, title: &str, timeout: u64) -> Result<()> {
         let well_formed = match self {
             Self::Worker(ops) | Self::Query(ops) => ops.begin <= ops.end,
-            Self::Attrition(attrition) => attrition.restart_delay_lo < attrition.restart_delay_hi,
-            Self::Clog(clog) => clog.begin < clog.end,
-            Self::Stall(stall) => stall.begin < stall.end,
+            // Every victim's fault ends after it starts.
+            Self::NodeFault(fault) => {
+                let (start, end) = (fault.start, fault.end);
+                [start.lo(), start.hi(), end.lo(), end.hi()].is_sorted() && start.lo() < end.hi()
+            }
             Self::Degradation(degradation) => degradation.begin < degradation.end,
         };
         ensure!(
@@ -114,20 +104,18 @@ impl Workload {
     }
 
     /// Runs concurrently with the other workloads of the trial.
-    pub async fn run(&self, model: &RefCell<ModelState>, harness: &Harness) {
+    pub async fn run(&self, ledger: &RefCell<Ledger>, harness: &Harness) {
         use Operation::{CreateQuery, CreateWorker, DropQuery, DropWorker};
         match self {
             Self::Worker(ops) => {
-                ops.run("Worker", CreateWorker, DropWorker, model, harness)
+                ops.run("Worker", CreateWorker, DropWorker, ledger, harness)
                     .await;
             }
             Self::Query(ops) => {
-                ops.run("Query", CreateQuery, DropQuery, model, harness)
+                ops.run("Query", CreateQuery, DropQuery, ledger, harness)
                     .await;
             }
-            Self::Attrition(attrition) => attrition.run(harness).await,
-            Self::Clog(clog) => clog.run(harness).await,
-            Self::Stall(stall) => stall.run(harness).await,
+            Self::NodeFault(fault) => fault.run(harness).await,
             Self::Degradation(degradation) => degradation.run(harness).await,
         }
     }

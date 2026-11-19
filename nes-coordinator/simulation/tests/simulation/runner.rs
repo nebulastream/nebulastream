@@ -23,7 +23,7 @@
 use crate::config::TrialConfig;
 use crate::harness::Harness;
 use crate::invariant;
-use crate::model_state::ModelState;
+use crate::ledger::Ledger;
 use futures::future::join_all;
 use madsim::buggify;
 use madsim::runtime::Handle;
@@ -36,7 +36,7 @@ use tracing_subscriber::fmt::time::uptime;
 
 #[expect(
     clippy::await_holding_refcell_ref,
-    reason = "the model is only mutated while workloads run, the checks run after all of them finished, and madsim is single-threaded"
+    reason = "the ledger is only mutated while workloads run, the checks run after all of them finished, and madsim is single-threaded"
 )]
 /// Panics if a check fails.
 /// Logging is off unless `RUST_LOG` sets a filter.
@@ -48,9 +48,8 @@ pub async fn run(name: &str, cfg: &TrialConfig) {
 
     info!("=== simulation test: {name} (seed={seed}, timeout={timeout:?}) ===");
 
-    let model = RefCell::new(ModelState::default());
-
     let harness = Harness::start();
+    let ledger = RefCell::new(Ledger::setup(&harness).await);
 
     let start = Instant::now();
     let deadline = start + timeout;
@@ -60,7 +59,7 @@ pub async fn run(name: &str, cfg: &TrialConfig) {
     join_all(
         cfg.workloads
             .iter()
-            .map(|workload| workload.run(&model, &harness)),
+            .map(|workload| workload.run(&ledger, &harness)),
     )
     .await;
     info!("workloads finished");
@@ -68,7 +67,7 @@ pub async fn run(name: &str, cfg: &TrialConfig) {
     tokio::time::sleep_until(deadline).await;
     info!("simulation window elapsed, running checks");
 
-    invariant::check_all(&harness, &model.borrow(), cfg.min_failed_queries).await;
+    invariant::check_all(&harness, &ledger.borrow(), cfg.min_failed_queries).await;
 
     info!("=== simulation test PASSED (seed={seed}) ===");
 }

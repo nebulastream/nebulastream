@@ -19,17 +19,16 @@
 //! `create_weight = 3` and `drop_weight = 1` make each operation a create with probability 3/4.
 
 use crate::harness::Harness;
-use crate::model_state::{ModelState, Operation, Step};
+use crate::ledger::{Ledger, Operation};
 use madsim::rand::seq::SliceRandom;
 use madsim::rand::{Rng, thread_rng};
-use model::statement::ParsedStatement;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::time::Duration;
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
-/// An operation that the model cannot resolve, such as a drop with nothing to drop, is skipped with a warning.
+/// An operation without a target, such as a drop with nothing to drop, is skipped with a warning.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OpsWorkload {
@@ -47,7 +46,7 @@ impl OpsWorkload {
         name: &str,
         create: Operation,
         drop: Operation,
-        model: &RefCell<ModelState>,
+        ledger: &RefCell<Ledger>,
         harness: &Harness,
     ) {
         info!(
@@ -62,7 +61,13 @@ impl OpsWorkload {
             tokio::time::sleep_until(window_start + offset).await;
 
             let op = pick_weighted(&[(create, self.create_weight), (drop, self.drop_weight)]);
-            execute(op, model, harness).await;
+            let planned = ledger.borrow_mut().plan(op);
+            let Some((statement, sent)) = planned else {
+                warn!("{name}: {op:?} has no target");
+                continue;
+            };
+            let reply = harness.send(statement).await;
+            ledger.borrow_mut().record(sent, reply);
         }
 
         info!("{name}: completed {} ops", self.num_ops);
@@ -70,7 +75,7 @@ impl OpsWorkload {
 }
 
 /// Sorted, because the driver waits for each offset in turn.
-pub fn pick_offsets(num_ops: usize, window_secs: u64) -> Vec<Duration> {
+fn pick_offsets(num_ops: usize, window_secs: u64) -> Vec<Duration> {
     let window_ms = window_secs
         .checked_mul(1000)
         .expect("the operation window does not fit in milliseconds");
@@ -89,31 +94,4 @@ fn pick_weighted<T: Copy>(choices: &[(T, u32)]) -> T {
         .choose_weighted(&mut thread_rng(), |&(_, weight)| weight)
         .expect("validated weights include a non-zero one");
     choice
-}
-
-/// Sends the statements for an operation, prerequisites first, and applies each response to the model.
-async fn execute(op: Operation, model: &RefCell<ModelState>, harness: &Harness) {
-    loop {
-        let step = model.borrow_mut().resolve(op);
-        match step {
-            Ok(Step::Prerequisite(statement)) => send_and_observe(statement, model, harness).await,
-            Ok(Step::Ready(statement)) => return send_and_observe(statement, model, harness).await,
-            Err(e) => {
-                warn!("operation not possible: {e:?}");
-                return;
-            }
-        }
-    }
-}
-
-async fn send_and_observe(
-    statement: ParsedStatement,
-    model: &RefCell<ModelState>,
-    harness: &Harness,
-) {
-    let reply = harness
-        .send(statement)
-        .await
-        .expect("the coordinator rejected a statement");
-    model.borrow_mut().observe(reply);
 }

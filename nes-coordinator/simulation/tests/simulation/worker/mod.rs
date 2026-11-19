@@ -22,6 +22,8 @@
 //! The handlers have buggify points so the simulator exercises the controller's retry, reconnect,
 //! and crash-recovery paths without real worker processes.
 
+pub mod tests;
+
 use controller::remote::health_proto::health_check_response::ServingStatus;
 use controller::remote::health_proto::health_server::Health;
 pub use controller::remote::health_proto::health_server::HealthServer;
