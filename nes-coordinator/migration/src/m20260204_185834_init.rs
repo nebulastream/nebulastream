@@ -222,6 +222,7 @@ fn query_table() -> TableCreateStatement {
         .col(ColumnDef::new(Query::Id).big_integer().not_null().auto_increment().primary_key())
         .col(ColumnDef::new(Query::Name).string().null())
         .col(ColumnDef::new(Query::Sql).string().not_null())
+        .col(ColumnDef::new(Query::GlobalPlan).binary().not_null())
         // keep in sync with model::query::query_state::QueryState
         .col(ColumnDef::new(Query::State).string().not_null().default("Pending")
             .check(Expr::col(Query::State).is_in(["Pending", "Started", "Running", "Completed", "Stopped", "Failed"])))
@@ -441,6 +442,7 @@ enum Query {
     Id,
     Name,
     Sql,
+    GlobalPlan,
     State,
     StartTimestamp,
     StopTimestamp,
