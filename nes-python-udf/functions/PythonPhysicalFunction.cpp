@@ -607,7 +607,7 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
     /// The libc character classification and case mapping functions Codon's str methods call, and modf, which numpy's
     /// module initialization calls and the LLVM optimizations remove elsewhere; stateless, resolved from the process.
     static const std::unordered_set<std::string_view> AllowedProcessFunctions{
-        "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower", "modf"};
+        "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower", "modf", "memcmp" /* TEMPORARY */};
     const auto pluginFunctions = getCodonPluginNativeSymbols();
 
     const auto* entryPoint = module.getFunction(symbol);

@@ -15,6 +15,7 @@
 #include <PythonUdfFilesystem.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
@@ -31,6 +32,7 @@
 #include <utility>
 #include <vector>
 #include <NESCodonPlugin/Registry.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <codon/cir/llvm/optimize.h>
 #include <codon/compiler/compiler.h>
 #include <codon/parser/ast/error.h>
@@ -45,7 +47,9 @@
 #include <codon/parser/visitors/typecheck/ctx.h>
 #include <codon/parser/visitors/typecheck/typecheck.h>
 #include <codon/parser/visitors/visitor.h>
+#include <codon/util/common.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
@@ -56,9 +60,11 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Linker/Linker.h>
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Transforms/IPO/GlobalDCE.h>
 
 namespace NES
 {
@@ -472,10 +478,11 @@ void finishCodonModule(
 ///
 /// In JIT mode, Codon emits for each cell an LLVM module with the functions that are new since the previous cell; the
 /// others are declarations. The stdlib module, emitted once, holds the rest, so linking the two gives a complete module.
-/// After each UDF, the compiler returns to the state after the stdlib (JITState::undo), and the IR of the UDF is removed:
-/// each UDF imports its modules again, so a changed UDF file takes effect, and the stdlib functions that a UDF realizes
-/// are in its own module. The stdlib modules that the stdlib itself does not import, e.g. numpy, are also parsed again for
-/// each UDF that imports them.
+/// After each UDF, the compiler returns to its base state (as JITState::undo does), and the IR of the UDF is removed: each
+/// UDF imports its modules again, so a changed UDF file takes effect, and the stdlib functions that a UDF realizes are in
+/// its own module. The base state is the stdlib, and the stdlib and plugin modules that earlier UDFs imported, e.g. numpy:
+/// after a UDF, the compiler imports these into the base state (extendBase), so later UDFs do not parse and type check
+/// them again.
 ///
 /// NES_CODON_FRESH_COMPILER=1 compiles each UDF with a new compiler instead.
 class PersistentCodonCompiler
@@ -493,6 +500,10 @@ public:
                   std::make_shared<PythonUdfFilesystem>("nes-worker", "", std::vector<std::string>{})),
               &deleteCodonCompiler)
     {
+        if (const auto* debug = std::getenv("CODON_DEBUG")) /// TEMPORARY profiling
+        {
+            codon::getLogger().parse(debug);
+        }
         auto* cache = compiler->getCache();
         auto* visitor = compiler->getLLVMVisitor();
         visitor->setDebug(true);
@@ -520,17 +531,12 @@ public:
         {
             throw std::runtime_error("The Codon stdlib module has no initializer");
         }
-        stdlibInitializer = initializer->getName().str();
-        stdlibBitcode = writeBitcode(*stdlib.module);
-        for (const auto* node : *compiler->getModule())
-        {
-            stdlibNodes.insert(node->getId());
-        }
-        for (auto type = compiler->getModule()->types_begin(); type != compiler->getModule()->types_end(); ++type)
-        {
-            stdlibTypes.insert((*type)->getName());
-        }
-        snapshot = std::make_unique<CodonStateSnapshot>(*cache);
+        /// The stdlib's initializer is internal. UDF modules link it from the base module by name.
+        initializer->setLinkage(llvm::GlobalValue::ExternalLinkage);
+        baseInitializers.push_back(initializer->getName().str());
+        baseCellSymbols.push_back(definedSymbols(*stdlib.module));
+        baseBitcode = writeBitcode(*stdlib.module);
+        markBase();
     }
 
     /// Compiles a generated UDF source. The caller holds the Codon compiler mutex.
@@ -552,7 +558,7 @@ public:
             std::vector<codon::ir::Var*> added;
             for (auto* node : *irModule)
             {
-                if (!stdlibNodes.contains(node->getId()))
+                if (!baseNodes.contains(node->getId()))
                 {
                     added.push_back(node);
                 }
@@ -566,7 +572,7 @@ public:
             std::vector<codon::ir::types::Type*> addedTypes;
             for (auto type = irModule->types_begin(); type != irModule->types_end(); ++type)
             {
-                if (!stdlibTypes.contains((*type)->getName()))
+                if (!baseTypes.contains((*type)->getName()))
                 {
                     addedTypes.push_back(*type);
                 }
@@ -576,31 +582,49 @@ public:
                 irModule->remove(type);
             }
         };
+        CodonCompilationResult result;
+        std::set<std::string> newModules;
         try
         {
-            auto result = compileCell(*filesystem, sourcePath, source, entrySymbol);
+            result = compileCell(*filesystem, sourcePath, source, entrySymbol);
+            newModules = modulesBeyondBase(*filesystem);
+            const auto tr0 = std::chrono::steady_clock::now();
             restore();
-            return result;
+            fprintf(stderr, "TMPTIME restore %.0f\n", elapsedMilliseconds(tr0, std::chrono::steady_clock::now()));
         }
         catch (...)
         {
             restore();
             throw;
         }
+        if (!newModules.empty())
+        {
+            try
+            {
+                const auto te0 = std::chrono::steady_clock::now();
+                extendBase(newModules);
+                fprintf(stderr, "TMPTIME extend %.0f %s\n", elapsedMilliseconds(te0, std::chrono::steady_clock::now()), fmt::format("{}", fmt::join(newModules, ",")).c_str());
+            }
+            catch (const std::exception& exception)
+            {
+                restore();
+                NES_WARNING("Could not keep the modules {} in the Codon base state: {}", fmt::join(newModules, ", "), exception.what());
+            }
+        }
+        return result;
     }
 
 private:
     static constexpr std::string_view stdlibFile = "<nes-codon-stdlib>";
 
-    CodonCompilationResult compileCell(
-        const PythonUdfFilesystem& filesystem, const std::string& sourcePath, const std::string& source, const std::string& entrySymbol)
+    /// Parses, type checks and translates a cell: the code of a UDF, or imports for the base state.
+    codon::ir::Func* frontEnd(const std::string& file, const std::string& source)
     {
         auto* cache = compiler->getCache();
-        const auto parseStart = std::chrono::steady_clock::now();
         codon::ir::Func* cell = nullptr;
         try
         {
-            auto parsed = codon::ast::parseCode(cache, sourcePath, source);
+            auto parsed = codon::ast::parseCode(cache, file, source);
             if (!parsed)
             {
                 throw std::runtime_error("Could not parse Python UDF: " + llvm::toString(parsed.takeError()));
@@ -610,7 +634,7 @@ private:
             {
                 throw std::runtime_error("Could not parse Python UDF: " + llvm::toString(std::move(error)));
             }
-            auto* typechecked = codon::ast::TypecheckVisitor::apply(context, *parsed, sourcePath);
+            auto* typechecked = codon::ast::TypecheckVisitor::apply(context, *parsed, file);
             std::vector<codon::ast::Stmt*> statements{typechecked};
             for (const auto& [function, realization] : cache->pendingRealizations)
             {
@@ -623,28 +647,171 @@ private:
         {
             throw std::runtime_error("Could not parse Python UDF: " + parserErrorMessage(exception));
         }
+        return cell;
+    }
 
-        const auto compileStart = std::chrono::steady_clock::now();
+    /// The modules of the UDF that are neither UDF modules nor in the base state: stdlib modules such as numpy and plugin
+    /// modules such as cv2, as top-level packages. internal is the stdlib itself.
+    std::set<std::string> modulesBeyondBase(const PythonUdfFilesystem& filesystem) const
+    {
+        std::set<std::string> modules;
+        for (const auto& [key, imported] : compiler->getCache()->imports)
+        {
+            if (baseImports.contains(key) || imported.name.empty() || imported.name.starts_with(".")
+                || filesystem.isUdfModule(imported.filename))
+            {
+                continue;
+            }
+            /// A plugin module's name follows its canonical path (/nes-codon-plugins/<path>), so take the package from the path.
+            constexpr std::string_view pluginRoot = "/nes-codon-plugins/";
+            std::string package = imported.filename.starts_with(pluginRoot)
+                ? imported.filename.substr(pluginRoot.size(), imported.filename.find_first_of("/.", pluginRoot.size()) - pluginRoot.size())
+                : imported.name.substr(0, imported.name.find('.'));
+            const bool identifier = !package.empty() && !std::isdigit(static_cast<unsigned char>(package[0]))
+                && std::ranges::all_of(package, [](char c) { return std::isalnum(static_cast<unsigned char>(c)) || c == '_'; });
+            if (identifier && package != "internal")
+            {
+                modules.insert(package);
+            }
+        }
+        return modules;
+    }
+
+    /// Imports the modules into the base state, so that later UDFs do not parse and type check them again. Their top-level
+    /// code runs in the initializer of each UDF, after the stdlib's, as a module imported by the UDF would.
+    void extendBase(const std::set<std::string>& modules)
+    {
+        auto* cache = compiler->getCache();
+        const auto file = fmt::format("<nes-codon-base-{}>", baseInitializers.size());
+        cache->fs = std::make_shared<PythonUdfFilesystem>("nes-worker", file, std::vector<std::string>{});
+        std::string source;
+        for (const auto& module : modules)
+        {
+            source += "import " + module + "\n";
+        }
+        auto* cell = frontEnd(file, source);
         compiler->getPassManager()->run(compiler->getModule());
         const OwnedLlvmModule owned{compiler->getLLVMVisitor()->takeModule(compiler->getModule())};
+        auto symbols = definedSymbols(*owned.module);
+        linkBase(*owned.module, *owned.context, llvm::Linker::Flags::None);
+        baseInitializers.push_back(codon::ir::LLVMVisitor::getNameForFunction(cell));
+        baseCellSymbols.push_back(std::move(symbols));
+        baseBitcode = writeBitcode(*owned.module);
+        markBase();
+    }
+
+    /// Links the base module into the module of a cell, which declares the functions of the base that it uses. With
+    /// LinkOnlyNeeded, only these functions and what they use are read from the bitcode and linked.
+    void linkBase(llvm::Module& module, llvm::LLVMContext& context, const unsigned flags) const
+    {
+        auto base = llvm::getLazyBitcodeModule(llvm::MemoryBufferRef{baseBitcode, "nes-codon-base"}, context);
+        if (!base)
+        {
+            throw std::runtime_error("Could not read the Codon base module: " + llvm::toString(base.takeError()));
+        }
+        if (llvm::Linker::linkModules(module, std::move(*base), flags))
+        {
+            throw std::runtime_error("Could not link the Codon base module");
+        }
+    }
+
+    /// Runs Codon's IR passes only on the functions and global variables that are new since the base state. The base ones
+    /// are already optimized, and their LLVM code is in the base module; the analyses treat them conservatively.
+    void runPassesOnNewCode()
+    {
+        auto* irModule = compiler->getModule();
+        if (std::getenv("NES_CODON_ALL_PASSES") == nullptr) /// TEMPORARY comparison
+        {
+            irModule->hideVars([this](const codon::ir::Var* var) { return baseNodes.contains(var->getId()); });
+        }
+        try
+        {
+            compiler->getPassManager()->run(irModule);
+        }
+        catch (...)
+        {
+            irModule->unhideVars();
+            throw;
+        }
+        irModule->unhideVars();
+    }
+
+    /// Records the current state as the base state, which each UDF returns to.
+    void markBase()
+    {
+        baseNodes.clear();
+        for (const auto* node : *compiler->getModule())
+        {
+            baseNodes.insert(node->getId());
+        }
+        baseTypes.clear();
+        for (auto type = compiler->getModule()->types_begin(); type != compiler->getModule()->types_end(); ++type)
+        {
+            baseTypes.insert((*type)->getName());
+        }
+        baseImports.clear();
+        for (const auto& [key, imported] : compiler->getCache()->imports)
+        {
+            baseImports.insert(key);
+        }
+        snapshot = std::make_unique<CodonStateSnapshot>(*compiler->getCache());
+    }
+
+    CodonCompilationResult compileCell(
+        const PythonUdfFilesystem& filesystem, const std::string& sourcePath, const std::string& source, const std::string& entrySymbol)
+    {
+        const auto parseStart = std::chrono::steady_clock::now();
+        auto* cell = frontEnd(sourcePath, source);
+        auto* cache = compiler->getCache();
+
+        const auto compileStart = std::chrono::steady_clock::now();
+        runPassesOnNewCode();
+        const auto tPasses = std::chrono::steady_clock::now();
+        const OwnedLlvmModule owned{compiler->getLLVMVisitor()->takeModule(compiler->getModule())};
+        const auto tTake = std::chrono::steady_clock::now();
         auto& module = owned.module;
-        auto stdlib = llvm::parseBitcodeFile(llvm::MemoryBufferRef{stdlibBitcode, "nes-codon-stdlib"}, *owned.context);
-        if (!stdlib)
+        const auto initializers = declareUsedBaseInitializers(*module);
+        linkBase(*module, *owned.context, llvm::Linker::Flags::LinkOnlyNeeded);
+        const auto tLink = std::chrono::steady_clock::now();
+        const auto cellName = codon::ir::LLVMVisitor::getNameForFunction(cell);
+        auto needed = neededBaseCells(*module, initializers, cellName, entrySymbol);
+        if (std::getenv("NES_TMP_SKIP_BASE_INIT") != nullptr) /// TEMPORARY: measures LLVM without base top-level code
         {
-            throw std::runtime_error("Could not read the Codon stdlib module: " + llvm::toString(stdlib.takeError()));
+            needed = {0};
         }
-        if (llvm::Linker::linkModules(*module, std::move(*stdlib)))
-        {
-            throw std::runtime_error("Could not link the Codon stdlib module");
-        }
+        fprintf(stderr, "TMPTIME passes %.0f take %.0f link %.0f cells %zu/%zu/%zu funcs %zu\n", elapsedMilliseconds(compileStart, tPasses), elapsedMilliseconds(tPasses, tTake), elapsedMilliseconds(tTake, tLink), needed.size(), initializers, baseInitializers.size(), module->size());
         allocateVtablesPersistently(*module);
-        auto* initializer = createInitializer(*module, codon::ir::LLVMVisitor::getNameForFunction(cell));
+        auto* initializer = createInitializer(*module, needed, cellName);
         finishCodonModule(*module, initializer, *cache, filesystem, sourcePath, source, entrySymbol);
 
         const auto optimizeStart = std::chrono::steady_clock::now();
+        keepOnlyWhatEntryUses(*module, entrySymbol);
+        {
+            std::size_t instructions = 0;
+            std::size_t functions = 0;
+            for (auto& function : *module)
+            {
+                functions += function.isDeclaration() ? 0 : 1;
+                instructions += function.getInstructionCount();
+            }
+            fprintf(stderr, "TMPTIME after-dce functions %zu instructions %zu\n", functions, instructions);
+        }
         auto optimizationOptions = codon::ir::LLVMOptimizationOptions::release();
         optimizationOptions.preserveDebugInfo = true;
-        codon::ir::optimize(module.get(), optimizationOptions);
+        const std::string variant = std::getenv("NES_TMP_CODON_OPT") != nullptr ? std::getenv("NES_TMP_CODON_OPT") : ""; /// TEMPORARY
+        if (variant == "o3x1")
+        {
+            optimizationOptions.runs = 1;
+        }
+        else if (variant == "o1")
+        {
+            optimizationOptions.runs = 1;
+            optimizationOptions.level = llvm::OptimizationLevel::O1;
+        }
+        if (variant != "none")
+        {
+            codon::ir::optimize(module.get(), optimizationOptions);
+        }
         const auto optimizeEnd = std::chrono::steady_clock::now();
         return {
             .llvmBitcode = writeBitcode(*module),
@@ -679,15 +846,168 @@ private:
         }
     }
 
-    /// The initializer of a UDF: the top-level code of the stdlib, then that of the UDF's cell.
-    llvm::Function* createInitializer(llvm::Module& module, const std::string& cellName) const
+    /// The base module holds all functions of the base state, which Codon's JIT mode emits with external linkage. Internal,
+    /// those the UDF does not use are removed before the optimizations, which would otherwise optimize them all.
+    static void keepOnlyWhatEntryUses(llvm::Module& module, const std::string& entrySymbol)
     {
-        auto* stdlibMain = module.getFunction(stdlibInitializer);
-        auto* cellFunction = module.getFunction(cellName);
-        if (stdlibMain == nullptr || cellFunction == nullptr)
+        for (auto& function : module.functions())
+        {
+            if (!function.isDeclaration() && function.getName() != entrySymbol)
+            {
+                function.setLinkage(llvm::GlobalValue::InternalLinkage);
+            }
+        }
+        for (auto& global : module.globals())
+        {
+            if (!global.isDeclaration() && !global.getName().starts_with("llvm."))
+            {
+                global.setLinkage(llvm::GlobalValue::InternalLinkage);
+            }
+        }
+        llvm::LoopAnalysisManager loopAnalysisManager;
+        llvm::FunctionAnalysisManager functionAnalysisManager;
+        llvm::CGSCCAnalysisManager cgsccAnalysisManager;
+        llvm::ModuleAnalysisManager moduleAnalysisManager;
+        llvm::PassBuilder passBuilder;
+        passBuilder.registerModuleAnalyses(moduleAnalysisManager);
+        passBuilder.registerCGSCCAnalyses(cgsccAnalysisManager);
+        passBuilder.registerFunctionAnalyses(functionAnalysisManager);
+        passBuilder.registerLoopAnalyses(loopAnalysisManager);
+        passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cgsccAnalysisManager, moduleAnalysisManager);
+        llvm::ModulePassManager passes;
+        passes.addPass(llvm::GlobalDCEPass());
+        passes.run(module, moduleAnalysisManager);
+    }
+
+    /// The functions and global variables that a module defines.
+    static std::set<std::string> definedSymbols(const llvm::Module& module)
+    {
+        std::set<std::string> symbols;
+        for (const auto& value : module.global_values())
+        {
+            if (!value.isDeclaration())
+            {
+                symbols.insert(value.getName().str());
+            }
+        }
+        return symbols;
+    }
+
+    /// The base cells whose top-level code the UDF needs: the stdlib, and each cell up to the last one that defines a
+    /// function or global variable the UDF uses. A cell can use the modules of the cells before it, so these run too.
+    /// The UDF module declares the initializers, so that the linker links them.
+    std::size_t declareUsedBaseInitializers(llvm::Module& module) const
+    {
+        std::size_t used = 1;
+        for (const auto& value : module.global_values())
+        {
+            if (!value.isDeclaration())
+            {
+                continue;
+            }
+            for (std::size_t cell = used; cell < baseCellSymbols.size(); ++cell)
+            {
+                if (baseCellSymbols[cell].contains(value.getName().str()))
+                {
+                    used = cell + 1;
+                }
+            }
+        }
+        auto& context = module.getContext();
+        for (std::size_t cell = 0; cell < used; ++cell)
+        {
+            module.getOrInsertFunction(baseInitializers[cell], llvm::FunctionType::get(llvm::Type::getVoidTy(context), false));
+        }
+        return used;
+    }
+
+    /// The base cells whose top-level code must run before the UDF: the stdlib, and each linked cell that defines a global
+    /// variable that the UDF, or the top-level code of a needed cell, can reach. A cell can define functions that the UDF
+    /// uses without the need to run its top-level code: e.g. the numpy cell holds the stdlib functions that numpy realized.
+    std::vector<std::size_t> neededBaseCells(
+        llvm::Module& module, const std::size_t linkedCells, const std::string& cellName, const std::string& entrySymbol) const
+    {
+        std::vector<bool> needed(linkedCells, false);
+        needed[0] = true;
+        std::set<const llvm::Value*> visited;
+        std::vector<const llvm::Value*> open;
+        const auto push = [&](const llvm::Value* value)
+        {
+            if (value != nullptr && visited.insert(value).second)
+            {
+                open.push_back(value);
+            }
+        };
+        push(module.getFunction(cellName));
+        push(module.getFunction(entrySymbol));
+        while (!open.empty())
+        {
+            const auto* value = open.back();
+            open.pop_back();
+            if (const auto* function = llvm::dyn_cast<llvm::Function>(value))
+            {
+                for (const auto& instruction : llvm::instructions(*function))
+                {
+                    for (const auto& operand : instruction.operands())
+                    {
+                        if (llvm::isa<llvm::Constant>(operand.get()))
+                        {
+                            push(operand.get());
+                        }
+                    }
+                }
+            }
+            else if (const auto* global = llvm::dyn_cast<llvm::GlobalVariable>(value))
+            {
+                if (!global->isConstant() && !global->isDeclaration())
+                {
+                    for (std::size_t cell = 1; cell < linkedCells; ++cell)
+                    {
+                        if (!needed[cell] && baseCellSymbols[cell].contains(global->getName().str()))
+                        {
+                            needed[cell] = true;
+                            push(module.getFunction(baseInitializers[cell]));
+                        }
+                    }
+                }
+                if (global->hasInitializer())
+                {
+                    push(global->getInitializer());
+                }
+            }
+            else if (const auto* constant = llvm::dyn_cast<llvm::Constant>(value))
+            {
+                for (const auto& operand : constant->operands())
+                {
+                    push(operand.get());
+                }
+            }
+        }
+        std::vector<std::size_t> cells;
+        for (std::size_t cell = 0; cell < linkedCells; ++cell)
+        {
+            if (needed[cell])
+            {
+                cells.push_back(cell);
+            }
+        }
+        return cells;
+    }
+
+    /// The initializer of a UDF: the top-level code of the stdlib, of the base cells that it needs, then of the UDF's cell.
+    llvm::Function* createInitializer(llvm::Module& module, const std::vector<std::size_t>& baseCells, const std::string& cellName) const
+    {
+        std::vector<llvm::Function*> steps;
+        for (const auto cell : baseCells)
+        {
+            steps.push_back(module.getFunction(baseInitializers[cell]));
+        }
+        steps.push_back(module.getFunction(cellName));
+        if (std::ranges::contains(steps, nullptr))
         {
             throw std::runtime_error("The Codon module of the UDF lacks its initializers");
         }
+        auto* stdlibMain = steps.front();
         auto& context = module.getContext();
         auto* initializer = llvm::Function::Create(
             llvm::FunctionType::get(llvm::Type::getVoidTy(context), false),
@@ -697,18 +1017,24 @@ private:
         initializer->setPersonalityFn(stdlibMain->hasPersonalityFn() ? stdlibMain->getPersonalityFn() : nullptr);
         initializer->addFnAttr(llvm::Attribute::UWTable);
         llvm::IRBuilder<> builder(llvm::BasicBlock::Create(context, "entry", initializer));
-        builder.CreateCall(stdlibMain->getFunctionType(), stdlibMain, {});
-        builder.CreateCall(cellFunction->getFunctionType(), cellFunction, {});
+        for (auto* step : steps)
+        {
+            builder.CreateCall(step->getFunctionType(), step, {});
+        }
         builder.CreateRetVoid();
         return initializer;
     }
 
     std::unique_ptr<codon::Compiler, decltype(&deleteCodonCompiler)> compiler;
-    std::string stdlibBitcode;
-    std::string stdlibInitializer;
-    /// The IR nodes and types, and the type checker state after the stdlib.
-    std::set<codon::ir::id_t> stdlibNodes;
-    std::set<std::string> stdlibTypes;
+    /// The base state: the stdlib, and the modules that earlier UDFs imported (extendBase). Its LLVM module, the functions
+    /// that run its top-level code, and its IR nodes, IR types, imports and type checker state.
+    std::string baseBitcode;
+    std::vector<std::string> baseInitializers;
+    /// The functions and global variables that each base cell defines (the stdlib is the first cell).
+    std::vector<std::set<std::string>> baseCellSymbols;
+    std::set<codon::ir::id_t> baseNodes;
+    std::set<std::string> baseTypes;
+    std::set<std::string> baseImports;
     std::unique_ptr<CodonStateSnapshot> snapshot;
 };
 }
