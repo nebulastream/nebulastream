@@ -33,7 +33,8 @@ A watch ends in one of these ways:
 ```
 watch ─┬─ first catalog read fails ──────────▶ the read error
        ├─ matches no query ──────────────────▶ no rows
-       └─ parked, checked at once, on every controller notification, and at the deadline
+       └─ parked, checked at once, after every successful statement, on every controller notification,
+          at least once per poll interval, and at the deadline
             ├─ condition holds ──────────────▶ the rows
             ├─ deadline passed ──────────────▶ the rows of the last read, marked expired
             └─ deadline passed, read fails ──▶ CatalogUnavailable, and the caller can send the watch again

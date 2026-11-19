@@ -16,7 +16,7 @@
 //! The controller updates the workers to match the catalog.
 //!
 //! [`run`] polls the `RequestHandler` and the `Controller` concurrently.
-//! Apart from the worker factory, which both only read, the catalog is the only state that they share.
+//! Apart from the worker launcher, which both only read, the catalog is the only state that they share.
 //! They notify each other over two `watch` channels:
 //!
 //! ```text
@@ -33,7 +33,7 @@
 //! so a burst of updates becomes one wake-up.
 
 use controller::Controller;
-use controller::in_process::WorkerFactory;
+use controller::worker_client::in_process::EmbeddedWorkerLauncher;
 use model::database::Database;
 use model::request::Request;
 use model::worker;
@@ -50,35 +50,35 @@ use tracing::info;
 
 pub const DEFAULT_REQUEST_QUEUE_CAPACITY: usize = 1024;
 
-struct ControllerVersions(Option<Arc<dyn WorkerFactory>>);
+struct ControllerVersions(Option<Arc<dyn EmbeddedWorkerLauncher>>);
 
 impl WorkerVersions for ControllerVersions {
     fn versions(
         &self,
         workers: Vec<worker::Model>,
     ) -> impl Future<Output = Vec<WorkerVersion>> + Send {
-        controller::worker_versions(workers, self.0.clone())
+        controller::get_worker_versions(workers, self.0.clone())
     }
 }
 
 /// Returns once every sender of `receiver` is dropped.
-/// With a worker factory the workers run in this process, otherwise they are remote.
+/// With a launcher the workers run in this process, otherwise they are remote.
 /// Without a planner, every SQL statement fails.
 pub async fn run(
     db: Database,
     planner: Option<Arc<dyn SqlPlanner>>,
-    factory: Option<Arc<dyn WorkerFactory>>,
+    launcher: Option<Arc<dyn EmbeddedWorkerLauncher>>,
     receiver: async_channel::Receiver<Request>,
 ) {
     let (intent_tx, intent_rx) = watch::channel(());
     let (state_tx, state_rx) = watch::channel(());
 
-    let mode = if factory.is_some() {
+    let mode = if launcher.is_some() {
         WorkerMode::Embedded
     } else {
         WorkerMode::Remote
     };
-    let controller = Controller::new(db.clone(), intent_rx, state_tx, factory.clone());
+    let controller = Controller::new(db.clone(), intent_rx, state_tx, launcher.clone());
     let handler = RequestHandler::new(
         receiver,
         db,
@@ -86,7 +86,7 @@ pub async fn run(
         state_rx,
         planner,
         mode,
-        ControllerVersions(factory),
+        ControllerVersions(launcher),
     );
 
     tokio::select! {
@@ -103,14 +103,14 @@ pub fn start_with_runtime(
     runtime: &tokio::runtime::Runtime,
     state_backend: StateBackend,
     planner: Arc<dyn SqlPlanner>,
-    worker_factory: Option<Arc<dyn WorkerFactory>>,
+    launcher: Option<Arc<dyn EmbeddedWorkerLauncher>>,
 ) -> anyhow::Result<async_channel::Sender<Request>> {
     info!("starting");
     let (sender, receiver) = async_channel::bounded(DEFAULT_REQUEST_QUEUE_CAPACITY);
 
     runtime.block_on(async {
         let db = Database::open(state_backend).await?;
-        tokio::spawn(run(db, Some(planner), worker_factory, receiver));
+        tokio::spawn(run(db, Some(planner), launcher, receiver));
         anyhow::Ok(())
     })?;
 

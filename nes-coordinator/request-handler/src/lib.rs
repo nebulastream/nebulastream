@@ -60,6 +60,9 @@ pub trait WorkerVersions: Send + Sync + 'static {
     ) -> impl Future<Output = Vec<WorkerVersion>> + Send;
 }
 
+/// The same value as the controller's poll interval.
+const POLL_INTERVAL: Duration = Duration::from_secs(5);
+
 /// A send fails only when the client stopped waiting, so the failure is ignored.
 type ReplyTo = oneshot::Sender<anyhow::Result<StatementResult>>;
 
@@ -103,13 +106,13 @@ impl<V: WorkerVersions> RequestHandler<V> {
     pub async fn run(mut self) {
         info!("starting");
         loop {
-            // With no deadline due, the timer still fires once an hour,
-            // so a catalog change without a notification (for example, a worker that leaves the active state)
-            // is read within the hour.
+            // The timer fires at least once per poll interval, also when no deadline is due,
+            // so a catalog change without a notification delays a parked reply by at most that interval.
+            let poll = Instant::now() + POLL_INTERVAL;
             let next_deadline = self
                 .parked
                 .next_deadline()
-                .unwrap_or_else(|| Instant::now() + Duration::from_secs(60 * 60));
+                .map_or(poll, |deadline| deadline.min(poll));
             tokio::select! {
                 recv_result = self.receiver.recv() => {
                     let Ok(request) = recv_result else {
@@ -139,14 +142,20 @@ impl<V: WorkerVersions> RequestHandler<V> {
             Statement::Sql(sql) => self.execute_sql(sql).await,
             Statement::Parsed(statement) => self.execute(statement).await,
         };
+        let succeeded = result.is_ok();
         // A failed statement was rolled back, so the controller has nothing to reconcile.
-        if result.is_ok() {
+        if succeeded {
             // The controller holds the receiver while it runs, and the coordinator stops this handler when the controller returns.
             self.intent_tx
                 .send(())
                 .expect("intent channel should live as long as the request handler");
         }
         let _ = reply_to.send(result);
+        // A statement can end a parked wait without any controller write,
+        // for example a dropped worker, whose trigger fails its fragments.
+        if succeeded {
+            self.try_release().await;
+        }
     }
 
     async fn watch(&mut self, read: GetQuery, wait: Wait, reply_to: ReplyTo) {
@@ -235,6 +244,7 @@ impl<V: WorkerVersions> RequestHandler<V> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use model::name::{Config, Schema};
     use model::query::query_fragment;
     use model::query::query_fragment::QueryFragmentState;
     use model::query::query_state::QueryState;
@@ -242,13 +252,18 @@ mod tests {
         CreateQuery, CreateQueryWithRefs, DropQuery, QueryWithFragments, StopQuery,
     };
     use model::request::Until;
+    use model::sink;
+    use model::sink::CreateAnonymousSink;
     use model::statement::ParsedStatement;
-    use model::worker::WorkerState;
+    use model::worker::endpoint::NetworkAddr;
+    use model::worker::{DropWorker, WorkerState};
     use proptest::prelude::*;
     use proptest::strategy::ValueTree;
     use proptest::test_runner::TestRunner;
     use sea_orm::ConnectionTrait;
+    use sea_orm::DatabaseTransaction;
     use sea_orm::sea_query::Expr;
+    use tokio::runtime::Handle;
 
     /// Long enough for any wait that should be met, so a wait that is never met fails instead of hanging.
     const GENEROUS: Option<Duration> = Some(Duration::from_secs(10));
@@ -277,6 +292,13 @@ mod tests {
 
     impl TestHandle {
         fn new(req: &mut CreateQueryWithRefs) -> Self {
+            Self::with_planner(req, None)
+        }
+
+        fn with_planner(
+            req: &mut CreateQueryWithRefs,
+            planner: Option<Arc<dyn SqlPlanner>>,
+        ) -> Self {
             let rt = tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(1)
                 .enable_all()
@@ -294,7 +316,7 @@ mod tests {
                         db.clone(),
                         intent_tx,
                         state_rx,
-                        None,
+                        planner,
                         WorkerMode::Remote,
                         NoVersions,
                     )
@@ -626,6 +648,96 @@ mod tests {
             )
             .unwrap_err();
         assert!(err.to_string().contains("does not exist"), "{err:#}");
+    }
+
+    #[test]
+    fn dropping_the_worker_of_a_running_query_releases_its_wait() {
+        let mut req = fixture();
+        let handle = TestHandle::new(&mut req);
+        let id = handle.create(req.query);
+        let host = handle.rt.block_on(async {
+            transition_fragments(&handle.db, Some(id), QueryFragmentState::Running).await;
+            query_fragment::Entity::find()
+                .filter(query_fragment::Column::QueryId.eq(id))
+                .one(&handle.db)
+                .await
+                .unwrap()
+                .expect("the query should have a fragment")
+                .host_addr
+        });
+        let drop = Statement::Parsed(ParsedStatement::DropWorker(DropWorker::new(host)));
+        // Nothing sends a state notification and the wait has no deadline,
+        // so only the statement can release it before the handler's poll interval.
+        let released = handle.rt.block_on(async {
+            tokio::time::timeout(POLL_INTERVAL / 2, async {
+                let (waited, dropped) = tokio::join!(
+                    handle.client.await_completed(vec![id], None),
+                    handle.client.send(drop)
+                );
+                dropped.unwrap();
+                waited
+            })
+            .await
+        });
+        let err = released
+            .expect("the wait should end after the drop")
+            .unwrap_err();
+        assert!(matches!(
+            err.downcast_ref::<EarlyTermination>(),
+            Some(EarlyTermination { row, .. }) if row.query.state == QueryState::Failed
+        ));
+    }
+
+    /// Creates an anonymous sink in the transaction, as planning an EXPLAIN of a query with an inline sink does.
+    struct ExplainPlanner {
+        host_addr: NetworkAddr,
+    }
+
+    impl SqlPlanner for ExplainPlanner {
+        fn plan(
+            &self,
+            txn: DatabaseTransaction,
+            _sql: &str,
+        ) -> anyhow::Result<(ParsedStatement, DatabaseTransaction)> {
+            let sink = CreateAnonymousSink {
+                sink_type: "Void".parse()?,
+                schema: Schema::default(),
+                config: Config::default(),
+                host_addr: self.host_addr.clone(),
+                internal: false,
+            };
+            Handle::current().block_on(sink.execute(&txn))?;
+            let explain = ParsedStatement::ExplainQuery {
+                explanation: String::new(),
+            };
+            Ok((explain, txn))
+        }
+
+        fn validate_worker_config(&self, _config: &serde_json::Value) -> anyhow::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn an_explain_leaves_no_rows_in_the_catalog() {
+        let mut req = fixture();
+        let planner = ExplainPlanner {
+            host_addr: req.workers[0].host_addr.clone(),
+        };
+        let handle = TestHandle::with_planner(&mut req, Some(Arc::new(planner)));
+        let sinks = || {
+            handle
+                .rt
+                .block_on(sink::Entity::find().all(&handle.db))
+                .unwrap()
+        };
+        let before = sinks();
+        let explained = handle
+            .rt
+            .block_on(handle.client.send(Statement::Sql("EXPLAIN".to_string())))
+            .unwrap();
+        assert!(matches!(explained, StatementResult::ExplainedQuery(_)));
+        assert_eq!(sinks(), before);
     }
 
     proptest! {

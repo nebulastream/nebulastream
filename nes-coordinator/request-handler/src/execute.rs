@@ -72,16 +72,36 @@ impl<V: WorkerVersions> RequestHandler<V> {
                 planner.validate_worker_config(&worker.config)?;
             }
         }
-        // A worker's version is not stored in the catalog, so the catalog only selects the workers.
-        let result = if let ParsedStatement::GetWorkerVersion(req) = statement {
-            let workers = req.execute(&txn).await?;
-            StatementResult::WorkerVersions(self.versions.versions(workers).await)
-        } else {
-            statement.execute_on(&txn).await?
-        };
-        txn.commit()
-            .await
-            .map_err(|e| CodedError::new(ErrorCode::CatalogWriteRejected, e))?;
-        Ok(result)
+        match statement {
+            // A worker's version is not stored in the catalog, so the catalog only selects the workers.
+            // The transaction holds the write lock, so it ends before the workers are called.
+            ParsedStatement::GetWorkerVersion(req) => {
+                let workers = req.execute(&txn).await?;
+                commit(txn).await?;
+                Ok(StatementResult::WorkerVersions(
+                    self.versions.versions(workers).await,
+                ))
+            }
+            // Planning an EXPLAIN creates anonymous sources and sinks that no query owns,
+            // so its transaction is rolled back.
+            ParsedStatement::ExplainQuery { explanation } => {
+                txn.rollback()
+                    .await
+                    .map_err(|e| CodedError::new(ErrorCode::CatalogUnavailable, e))?;
+                Ok(StatementResult::ExplainedQuery(explanation))
+            }
+            statement => {
+                let result = statement.execute_on(&txn).await?;
+                commit(txn).await?;
+                Ok(result)
+            }
+        }
     }
+}
+
+async fn commit(txn: DatabaseTransaction) -> anyhow::Result<()> {
+    txn.commit()
+        .await
+        .map_err(|e| CodedError::new(ErrorCode::CatalogWriteRejected, e))?;
+    Ok(())
 }
