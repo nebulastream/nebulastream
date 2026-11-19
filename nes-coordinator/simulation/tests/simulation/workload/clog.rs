@@ -14,11 +14,9 @@
 
 //! Failure-injection workload that clogs whole nodes (not links) for overlapping windows.
 //!
-//! A clogged worker refuses every connection but keeps its fragments.
-//! The share `clog_rate` of the workers is picked at random (at least one).
-//! Each clog starts at a random point in the first half of the workload's window
-//! and ends at a random point in the second half,
-//! so the outages overlap in a rolling pattern that stresses concurrent reconnects.
+//! A clogged worker is unreachable but keeps its fragments.
+//! Each clog starts in the first half of the workload's window and ends in the second half,
+//! so every victim is clogged at the midpoint and the reconnects overlap.
 
 use crate::harness::Harness;
 use crate::workload::pick_victims;
@@ -29,6 +27,7 @@ use std::time::Duration;
 use tokio::time::Instant;
 use tracing::info;
 
+/// Only workers that exist at `begin` can be clogged.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ClogWorkload {

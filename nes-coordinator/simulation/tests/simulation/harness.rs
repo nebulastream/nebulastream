@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-//! Simulation harness: starts the coordinator and worker nodes inside madsim
-//! and gives workloads one API to operate them.
+//! Simulation harness: starts the coordinator and worker nodes inside madsim and gives workloads one API to operate them.
 //!
 //! The coordinator and each worker is a separate madsim node with its own IP.
-//! Statements and fault primitives (kill, pause, clog, restart) are harness methods.
+//! For example, the coordinator is 192.168.1.1 and the first two workers are 192.168.1.2 and 192.168.1.3.
+//! Statements and fault primitives are harness methods.
 //! The simulator injects the faults.
 
 use crate::worker::{HealthServer, HealthService, WorkerRpcServiceServer, WorkerService};
@@ -51,11 +51,12 @@ pub const fn build_ip(octet: u8) -> Ipv4Addr {
     Ipv4Addr::new(a, b, c, octet)
 }
 
-/// The simulation only sends statements that the coordinator replies to at once,
+/// The simulation only sends statements that the coordinator replies to immediately,
 /// so a reply that takes this long in simulated time means that the request handler is stuck.
 const REPLY_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// The latency range of the simulated network outside of a degradation window.
+/// The lower bound is above zero, so no trial relies on instant delivery.
 const DEFAULT_SEND_LATENCY: Range<Duration> = Duration::from_millis(1)..Duration::from_millis(100);
 
 fn configure_network(send_latency: Range<Duration>, packet_loss_rate: f64) {
@@ -70,7 +71,8 @@ struct Coordinator {
     handle: NodeHandle,
 }
 
-/// Per-trial control point over the simulated cluster.
+/// Starts the coordinator of one trial and the nodes of the workers that it creates, and injects faults into them.
+/// It must be created and used inside a running madsim runtime.
 pub struct Harness {
     coordinator: Coordinator,
     workers: RefCell<HashMap<NetworkAddr, NodeId>>,
@@ -86,7 +88,8 @@ impl Harness {
         }
     }
 
-    /// A worker statement also starts or stops the worker's node.
+    /// A worker create starts the worker's node before the statement is sent.
+    /// A worker drop stops the node after the reply, also when the drop failed.
     pub async fn send(&self, statement: ParsedStatement) -> Result<StatementResult> {
         match statement {
             ParsedStatement::CreateWorker(create) => self.create_worker(create).await,
@@ -114,8 +117,7 @@ impl Harness {
             .init(move || {
                 let receiver = receiver.clone();
                 async move {
-                    // The in-memory catalog has a single connection.
-                    // The simulation runs all connections on one thread,
+                    // A file catalog opens several connections, and the simulation runs them all on one thread,
                     // so a connection that waits for the write lock would block the one that holds it.
                     let db = Database::open(StateBackend::Memory)
                         .await
@@ -175,8 +177,9 @@ impl Harness {
         Handle::current().kill(id);
     }
 
+    /// Does nothing for a worker that was dropped while it was down.
+    /// A restarted worker has no fragments.
     pub fn restart(&self, id: NodeId) {
-        // A worker that was dropped while it was down stays down.
         if self.workers.borrow().values().any(|&worker| worker == id) {
             Handle::current().restart(id);
         }
@@ -206,6 +209,7 @@ impl Harness {
         configure_network(DEFAULT_SEND_LATENCY, 0.0);
     }
 
+    /// The nodes of the created workers that were not dropped, including killed, paused, and clogged ones.
     pub fn get_worker_nodes(&self) -> Vec<NodeId> {
         self.workers.borrow().values().copied().collect()
     }
@@ -215,6 +219,7 @@ impl Harness {
         &self,
         workers: &HashSet<NetworkAddr>,
     ) -> HashSet<QueryFragmentId> {
+        // The requests run on the coordinator's node, because the main node of the simulation has no IP and cannot connect.
         let statuses = workers
             .iter()
             .cloned()

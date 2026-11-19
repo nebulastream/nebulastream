@@ -12,9 +12,7 @@
 
 # Worker-failure resilience under load.
 # The test builds a pool of workers, accumulates queries on them, then kills and restarts a fraction of the workers in two waves.
-# The second wave keeps its victims down long enough that the coordinator marks them unreachable.
-# The timeout leaves at least 45 s after the last fault ends,
-# so the coordinator reconnects to every worker and restarts its fragments before the checks.
+# The second wave keeps its killed workers down long enough that the coordinator marks them unreachable.
 
 [[test]]
 title = "escalating_kill_waves"
@@ -44,7 +42,6 @@ timeout = 100
   create_weight = 2
   drop_weight = 1
 
-  # Wave 1: moderate
   [[test.workload]]
   name = "Attrition"
   begin = 10
@@ -52,7 +49,6 @@ timeout = 100
   restart_delay_lo = 1
   restart_delay_hi = 5
 
-  # Wave 2: aggressive, right after recovery, with a long outage
   [[test.workload]]
   name = "Attrition"
   begin = 25

@@ -11,14 +11,12 @@
 # limitations under the License.
 
 # Several failure modes with overlapping windows, while workers cycle and queries run throughout.
-# The timeout leaves at least 45 s after the last fault ends,
-# so the coordinator reconnects to every worker and restarts its fragments before the checks.
 
 [[test]]
 title = "compound_failures"
 timeout = 85
 
-  # An initial pool, so every fault phase finds a worker to hit
+  # An initial pool, so every fault phase has a worker to target
   [[test.workload]]
   name = "Worker"
   num_ops = 6
@@ -26,7 +24,6 @@ timeout = 85
   create_weight = 1
   drop_weight = 0
 
-  # Workers continuously created and dropped throughout
   [[test.workload]]
   name = "Worker"
   num_ops = 27
@@ -44,7 +41,6 @@ timeout = 85
   create_weight = 3
   drop_weight = 1
 
-  # Phase 1: network degrades while queries start
   [[test.workload]]
   name = "Degradation"
   begin = 8
@@ -53,14 +49,12 @@ timeout = 85
   latency_hi_ms = 1500
   loss_rate = 0.05
 
-  # Phase 2: clogged workers overlap with degraded network
   [[test.workload]]
   name = "Clog"
   begin = 12
   end = 22
   clog_rate = 0.3
 
-  # Phase 3: kill workers after the clogs heal, so fragments must recover
   [[test.workload]]
   name = "Attrition"
   begin = 20
@@ -68,7 +62,6 @@ timeout = 85
   restart_delay_lo = 2
   restart_delay_hi = 8
 
-  # Phase 4: stall surviving workers during recovery from attrition
   [[test.workload]]
   name = "Stall"
   begin = 25

@@ -18,8 +18,8 @@
 //! Workloads do not send statements directly.
 //! A workload picks an operation, the model resolves it into a ready statement or the next prerequisite,
 //! the workload sends the statement, and the model observes the response.
-//! Resolving every operation through the model keeps the mirror and the assertions consistent
-//! without catalog details in every workload.
+//! Resolving every operation through the model keeps the mirror and the assertions consistent without catalog details in every workload.
+//! For example, the first query on an empty model sends CreateLogicalSource, CreateWorker, CreatePhysicalSource, CreateSink, and CreateQuery.
 
 use crate::harness::{FIRST_WORKER_OCTET, build_ip};
 use anyhow::{Context, Result};
@@ -39,6 +39,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 const LOGICAL_SOURCE_NAME: &str = "source";
 const SINK_NAME: &str = "sink";
 
+/// A catalog change that a driver workload requests from the model.
 #[derive(Clone, Copy, Debug)]
 pub enum Operation {
     CreateWorker,
@@ -93,11 +94,12 @@ pub struct ModelState {
 
     queries: HashMap<QueryId, Query>,
     leaving_queries: HashSet<QueryId>,
-    /// A failed query that is dropped later still counts.
     failed_query_count: usize,
 }
 
 impl ModelState {
+    /// Returns an error if the operation has no target, such as a drop with nothing left to drop.
+    /// A drop reserves its target, so no later resolve picks it again.
     pub fn resolve(&mut self, op: Operation) -> Result<Step> {
         match op {
             Operation::CreateWorker => self.create_worker(),
@@ -108,17 +110,16 @@ impl ModelState {
     }
 
     /// Applies a statement response to the model.
-    /// Every response has to come back through here,
-    /// otherwise the model and the real catalog diverge and the invariants report a mismatch that the system did not cause.
+    /// Panics on a response that contradicts the model.
+    /// NOTE: Every response has to be applied here.
+    /// Otherwise the model and the real catalog diverge, and the invariants report a mismatch that the system did not cause.
     pub fn observe(&mut self, reply: StatementResult) {
         match reply {
             StatementResult::CreatedWorker(worker) => {
                 self.active_workers.insert(worker.host_addr);
             }
             StatementResult::DroppedWorker(worker) => {
-                let addr = worker
-                    .expect("the catalog dropped a worker it does not know")
-                    .host_addr;
+                let addr = worker.expect("the catalog had no worker to drop").host_addr;
                 assert!(self.active_workers.remove(&addr), "unknown worker {addr}");
                 for query in self.queries.values_mut() {
                     if query.status == QueryStatus::Active
@@ -177,7 +178,7 @@ impl ModelState {
                 });
                 match query.status {
                     // A worker drop that was observed before this response has already failed the query,
-                    // and the drop deletes it all the same.
+                    // and the drop still deletes it.
                     QueryStatus::Active | QueryStatus::Failed => {
                         query.status = QueryStatus::Dropped
                     }
@@ -196,8 +197,6 @@ impl ModelState {
             return self.create_sink().map(Step::into_prerequisite);
         };
         let mut rng = thread_rng();
-        // The source and sink hosts always get a fragment.
-        // The other fragments go to a random subset of the workers.
         let k = rng.gen_range(0..=self.active_workers.len());
         let workers: HashSet<&NetworkAddr> = self
             .active_workers
@@ -297,6 +296,8 @@ impl ModelState {
         ))))
     }
 
+    /// Gives every new worker an IP that no earlier worker had,
+    /// because the catalog keeps a dropped worker as Removed and registering its address again would reset it to Pending.
     fn create_worker(&mut self) -> Result<Step> {
         let octet = FIRST_WORKER_OCTET
             .checked_add(self.allocated_worker_ips)
@@ -345,10 +346,12 @@ impl ModelState {
         self.get_query_ids(QueryStatus::Dropped)
     }
 
+    /// Excludes a failed query that was dropped later.
     pub fn failed_queries(&self) -> Vec<QueryId> {
         self.get_query_ids(QueryStatus::Failed)
     }
 
+    /// Includes a failed query that was dropped later.
     pub const fn failed_query_count(&self) -> usize {
         self.failed_query_count
     }

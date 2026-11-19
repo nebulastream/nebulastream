@@ -10,14 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The timeout leaves at least 45 s after the last fault ends,
-# so the coordinator reconnects to every worker and restarts its fragments before the checks.
-
 [[test]]
 title = "degraded_during_worker_cycling"
 timeout = 75
 
-  # Workers cycling while the network is degraded
   [[test.workload]]
   name = "Worker"
   num_ops = 28

@@ -187,7 +187,10 @@ fn config_rejects_bad_ranges() {
         "name = \"Attrition\"\nbegin = 1\nkill_rate = 0.0\nrestart_delay_lo = 1\nrestart_delay_hi = 3",
         "name = \"Degradation\"\nbegin = 4\nend = 5\nlatency_lo_ms = 1\nlatency_hi_ms = 2\nloss_rate = 0.0",
     ] {
-        assert!(!rejects(accepted), "{accepted}");
+        assert!(
+            !rejects(accepted),
+            "a valid workload is rejected: {accepted}"
+        );
     }
     for rejected in [
         "name = \"Query\"\nnum_ops = 1\nbegin = 6\nend = 5\ncreate_weight = 1\ndrop_weight = 0",
@@ -206,7 +209,10 @@ fn config_rejects_bad_ranges() {
         "name = \"Degradation\"\nbegin = 4\nend = 5\nlatency_lo_ms = 1\nlatency_hi_ms = 2\nloss_rate = nan",
         "name = \"Degradation\"\nbegin = 4\nend = 5\nlatency_lo_ms = 1\nlatency_hi_ms = 2\nloss_rate = 1.5",
     ] {
-        assert!(rejects(rejected), "{rejected}");
+        assert!(
+            rejects(rejected),
+            "an invalid workload is accepted: {rejected}"
+        );
     }
 }
 
@@ -521,12 +527,12 @@ fn model_reserves_hosts() {
         assert!(model.resolve(Operation::DropWorker).is_ok());
         assert!(
             model.resolve(Operation::DropWorker).is_err(),
-            "a worker whose drop is in flight is dropped again"
+            "a worker with a drop in flight is dropped again"
         );
         let Ok(Step::Prerequisite(ParsedStatement::CreateWorker(_))) =
             model.resolve(Operation::CreateQuery)
         else {
-            panic!("a worker whose drop is in flight hosts the source");
+            panic!("a worker with a drop in flight hosts the source");
         };
     });
 }
@@ -593,7 +599,7 @@ fn model_reserves_queries() {
         );
         assert!(
             model.resolve(Operation::DropQuery).is_err(),
-            "a query whose drop is in flight is dropped again"
+            "a query with a drop in flight is dropped again"
         );
     });
 }
@@ -671,6 +677,8 @@ fn model_rejects_double_drop() {
     ))));
 }
 
+/// Octets 2 to 255 give 254 worker IPs.
+/// Every second worker is created and dropped, and the others never get a reply, so the test checks that neither case frees an IP.
 fn model_allocates_distinct_ips() {
     let mut model = ModelState::default();
     let mut hosts = HashSet::new();
@@ -734,15 +742,15 @@ fn model_rejects_inconsistent_responses() {
     );
     assert!(
         panics(|| build().observe(StatementResult::DroppedQueries(vec![build_query_row(2)]))),
-        "a drop of a query the model does not know"
+        "a drop of a query that is not in the model"
     );
     assert!(
         panics(|| build().observe(StatementResult::DroppedWorker(None))),
-        "a drop of a worker the catalog does not know"
+        "a drop of a worker that is not in the catalog"
     );
     assert!(
         panics(|| observe_dropped_worker(&mut build(), &b)),
-        "a drop of a worker the model does not know"
+        "a drop of a worker that is not in the model"
     );
     assert!(
         panics(|| {
@@ -756,6 +764,9 @@ fn model_rejects_inconsistent_responses() {
 }
 
 const FRAGMENT: i64 = 7;
+/// Longer than the fake worker's start and running delays together, and longer than its stop delay,
+/// so every pending state change has happened.
+const SETTLE_TIME: Duration = Duration::from_secs(13);
 
 fn build_query_id(id: i64) -> SerializableQueryId {
     SerializableQueryId::from_fragment_id(id)
@@ -798,7 +809,7 @@ async fn get_fragment_status(
         .into_inner();
     Ok((
         reply.state(),
-        reply.metrics.expect("a status reply carries metrics"),
+        reply.metrics.expect("a status reply contains metrics"),
     ))
 }
 
@@ -822,6 +833,8 @@ async fn list_active_fragments(worker: &WorkerService, after: u64) -> Vec<(i64, 
         .collect()
 }
 
+/// Polls the fragment every 250 ms for 16 s and stops it at 13 s, the settle time,
+/// so every seed observes Running and then Stopped.
 fn worker_lists_by_state() {
     for seed in 0..SEEDS {
         simulate(seed, async {
@@ -892,7 +905,7 @@ fn worker_stops_before_running() {
             start_fragment(&worker, FRAGMENT).await.unwrap();
             stop_fragment(&worker, FRAGMENT).await.unwrap();
 
-            tokio::time::sleep(Duration::from_secs(13)).await;
+            tokio::time::sleep(SETTLE_TIME).await;
 
             let (state, metrics) = get_fragment_status(&worker, FRAGMENT).await.unwrap();
             assert_eq!(state, WorkerQueryState::Stopped, "seed {seed}");
@@ -921,14 +934,14 @@ fn worker_rejects_invalid_requests() {
         );
 
         stop_fragment(&worker, FRAGMENT).await.unwrap();
-        tokio::time::sleep(Duration::from_secs(13)).await;
+        tokio::time::sleep(SETTLE_TIME).await;
         assert_eq!(stop_fragment(&worker, FRAGMENT).await, Ok(()));
         assert_eq!(
             start_fragment(&worker, FRAGMENT).await,
             Err(Code::AlreadyExists)
         );
 
-        tokio::time::sleep(Duration::from_secs(13)).await;
+        tokio::time::sleep(SETTLE_TIME).await;
         let (state, _) = get_fragment_status(&worker, FRAGMENT).await.unwrap();
         assert_eq!(state, WorkerQueryState::Stopped);
         assert!(list_active_fragments(&worker, 0).await.is_empty());

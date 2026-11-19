@@ -10,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The timeout leaves at least 45 s after the last fault ends,
-# so the coordinator reconnects to every worker and restarts its fragments before the checks.
-
 [[test]]
 title = "prolonged_majority_pause"
 timeout = 85
@@ -32,7 +29,6 @@ timeout = 85
   create_weight = 2
   drop_weight = 1
 
-  # Half the workers frozen for a long window
   [[test.workload]]
   name = "Stall"
   begin = 12

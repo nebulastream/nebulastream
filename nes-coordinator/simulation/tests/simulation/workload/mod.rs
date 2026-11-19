@@ -14,13 +14,8 @@
 
 //! Workloads that make up a trial.
 //!
-//! A workload is the unit of behavior that composes a trial.
-//! There are two kinds:
-//!
-//!  - Driver workloads (`ops`) submit catalog operations for queries or workers.
-//!  - Failure-injection workloads (`attrition`, `clog`, `stall`, `degradation`)
-//!    degrade or stop the network or nodes for a defined duration.
-//!
+//! A driver workload (`Worker`, `Query`) sends catalog operations,
+//! and a failure-injection workload (`Attrition`, `Clog`, `Stall`, `Degradation`) disrupts the network or nodes for a window.
 //! A trial selects each workload by its `name` key in TOML.
 
 pub mod attrition;
@@ -43,6 +38,7 @@ use serde::Deserialize;
 use stall::StallWorkload;
 use std::cell::RefCell;
 
+/// `Worker` and `Query` share one schema and differ in the operations that they send.
 #[derive(Debug, Deserialize)]
 #[serde(tag = "name")]
 pub enum Workload {
@@ -137,12 +133,13 @@ impl Workload {
     }
 }
 
-/// Picks the nodes that a fault hits: the share `rate` of the candidates, and at least one.
+/// Picks the nodes that a fault targets: the share `rate` of the candidates, rounded, and at least one.
+/// For 5 candidates: rate 0.0 picks 1, rate 0.3 picks 2, and rate 0.5 picks 3.
 /// With no victim the trial would pass without having injected the fault.
 pub fn pick_victims(candidates: &[NodeId], rate: f64) -> Vec<NodeId> {
     assert!(
         !candidates.is_empty(),
-        "a fault workload started before any node it could hit existed"
+        "a fault workload started before any worker existed"
     );
     let count = ((candidates.len() as f64 * rate).round() as usize).clamp(1, candidates.len());
     candidates

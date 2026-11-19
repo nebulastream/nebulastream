@@ -25,6 +25,7 @@ tonic = { version = "0.5.1", package = "madsim-tonic" }
 # The real tokio next to the madsim facade, because the trial runner seeds the real tokio's random generator.
 tokio-real.workspace = true
 async-channel.workspace = true
+# The trial runner sets ahash's process-wide hash keys from a fixed seed before the first trial.
 ahash.workspace = true
 anyhow.workspace = true
 futures.workspace = true

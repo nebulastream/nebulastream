@@ -14,8 +14,7 @@
 
 //! Failure-injection workload that raises network latency and packet loss for a window, then restores a baseline.
 //!
-//! Targets the parts of the system that assume a mostly working network: RPC retries and deadlines.
-//! The restored latency is small but non-zero so the test never relies on instant delivery.
+//! Targets the parts of the system that depend on a mostly working network: RPC retries and deadlines.
 
 use crate::harness::Harness;
 use serde::Deserialize;
@@ -23,6 +22,7 @@ use std::time::Duration;
 use tokio::time::Instant;
 use tracing::info;
 
+/// Overlapping degradation windows overwrite each other, and the first one to end restores the defaults.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DegradationWorkload {

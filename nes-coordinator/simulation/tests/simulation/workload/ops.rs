@@ -14,9 +14,9 @@
 
 //! Driver workloads: create and drop traffic for queries or for workers.
 //!
-//! A driver runs `num_ops` operations, each create or drop by `create_weight` and `drop_weight`,
-//! at random offsets inside `[begin, end]`.
-//! The model resolves every operation, so it runs against a well-formed catalog.
+//! A driver runs `num_ops` operations at random offsets inside `[begin, end]`.
+//! Each operation is a create or a drop, picked by weight:
+//! `create_weight = 3` and `drop_weight = 1` make each operation a create with probability 3/4.
 
 use crate::harness::Harness;
 use crate::model_state::{ModelState, Operation, Step};
@@ -29,6 +29,7 @@ use std::time::Duration;
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
+/// An operation that the model cannot resolve, such as a drop with nothing to drop, is skipped with a warning.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OpsWorkload {
@@ -68,6 +69,7 @@ impl OpsWorkload {
     }
 }
 
+/// Sorted, because the driver waits for each offset in turn.
 pub fn pick_offsets(num_ops: usize, window_secs: u64) -> Vec<Duration> {
     let window_ms = window_secs
         .checked_mul(1000)
