@@ -182,13 +182,16 @@ PlanOutput SqlPlanner::plan(const std::string_view sql) const
     }
 
     /// Only a query is placed; every other statement is a pure catalog request.
+    std::optional<LogicalPlan> globalPlan;
     std::vector<PlannedFragment> fragments;
 
     auto statement = std::visit(
         Overloaded{
             [&](const QueryStatement& stmt) -> CoordinatorStatement
             {
-                auto placement = recordPlacement(optimizer.optimize(stmt.plan).localPlans);
+                auto [optimizedPlan, localPlans] = optimizer.optimize(stmt.plan);
+                auto placement = recordPlacement(localPlans);
+                globalPlan = std::move(optimizedPlan);
                 fragments = std::move(placement.fragments);
                 return PlannedCreateQuery{
                     .name = canonical(stmt.name),
@@ -291,7 +294,7 @@ PlanOutput SqlPlanner::plan(const std::string_view sql) const
         },
         *boundStatement);
 
-    return PlanOutput{.statement = std::move(statement), .fragments = std::move(fragments)};
+    return PlanOutput{.statement = std::move(statement), .globalPlan = std::move(globalPlan), .fragments = std::move(fragments)};
 }
 
 }

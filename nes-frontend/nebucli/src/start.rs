@@ -36,7 +36,7 @@ pub struct Setup {
     #[serde(default, alias = "logical")]
     logical_sources: Vec<LogicalSource>,
     #[serde(default, alias = "physical")]
-    physical_sources: Vec<CreatePhysicalSource>,
+    physical_sources: Vec<PhysicalSource>,
     #[serde(default)]
     models: Vec<Model>,
     workers: Vec<Worker>,
@@ -125,6 +125,21 @@ fn convert_schema(fields: Vec<SchemaField>) -> serde_json::Value {
 struct LogicalSource {
     name: String,
     schema: Vec<SchemaField>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PhysicalSource {
+    #[serde(alias = "logical")]
+    logical_source: String,
+    #[serde(alias = "host")]
+    host_addr: NetworkAddr,
+    #[serde(alias = "type")]
+    source_type: String,
+    #[serde(default)]
+    source_config: serde_json::Value,
+    #[serde(default)]
+    parser_config: serde_json::Value,
 }
 
 #[derive(Deserialize)]
@@ -340,18 +355,23 @@ impl Setup {
 
         for logical_source in self.logical_sources {
             stmts.push(ParsedStatement::CreateLogicalSource(CreateLogicalSource {
-                name: bind_identifier(&logical_source.name),
-                schema: convert_schema(logical_source.schema),
+                name: bind_identifier(&logical_source.name).parse()?,
+                schema: convert_schema(logical_source.schema).try_into()?,
                 if_not_exists: true,
             }));
         }
 
-        for mut physical_source in self.physical_sources {
-            physical_source.logical_source = bind_identifier(&physical_source.logical_source);
-            physical_source.source_config = normalize_config(physical_source.source_config);
-            physical_source.parser_config = normalize_config(physical_source.parser_config);
-            physical_source.if_not_exists = true;
-            stmts.push(ParsedStatement::CreatePhysicalSource(physical_source));
+        for physical_source in self.physical_sources {
+            stmts.push(ParsedStatement::CreatePhysicalSource(
+                CreatePhysicalSource {
+                    logical_source: bind_identifier(&physical_source.logical_source).parse()?,
+                    host_addr: physical_source.host_addr,
+                    source_type: physical_source.source_type.parse()?,
+                    source_config: normalize_config(physical_source.source_config).try_into()?,
+                    parser_config: normalize_config(physical_source.parser_config).try_into()?,
+                    if_not_exists: true,
+                },
+            ));
         }
 
         for sink in self.sinks {
@@ -361,11 +381,11 @@ impl Setup {
                 bail!("sink name '{name}' is invalid: only-digit names are reserved");
             }
             stmts.push(ParsedStatement::CreateSink(CreateSink {
-                name,
+                name: name.parse()?,
                 host_addr: sink.host_addr,
-                sink_type: sink.sink_type,
-                schema: convert_schema(sink.schema),
-                config: merge_format_config(sink.config, sink.parser_config),
+                sink_type: sink.sink_type.parse()?,
+                schema: convert_schema(sink.schema).try_into()?,
+                config: merge_format_config(sink.config, sink.parser_config).try_into()?,
                 if_not_exists: true,
             }));
         }

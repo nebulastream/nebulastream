@@ -375,7 +375,7 @@ pub(crate) fn create_anonymous_source(
 ) -> ffi::CreatedId {
     or_error((|| {
         let source = ctx.execute_blocking(CreateAnonymousSource {
-            source_type: source_type.to_string(),
+            source_type: source_type.parse()?,
             source_config: serde_json::from_str(source_config_json)?,
             parser_config: serde_json::from_str(parser_config_json)?,
             host_addr: parse_host(host_addr)?,
@@ -398,7 +398,7 @@ pub(crate) fn create_anonymous_sink(
 ) -> ffi::CreatedId {
     or_error((|| {
         let sink = ctx.execute_blocking(CreateAnonymousSink {
-            sink_type: sink_type.to_string(),
+            sink_type: sink_type.parse()?,
             schema: serde_json::from_str(schema_json)?,
             config: serde_json::from_str(config_json)?,
             host_addr: parse_host(host_addr)?,

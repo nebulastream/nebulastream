@@ -50,9 +50,10 @@ struct PlanningScenario
     /// A planning failure is thrown.
     [[nodiscard]] std::unordered_map<Host, std::vector<LogicalPlan>> optimize() const
     {
-        auto [statement, fragments]
+        auto fragments
             = SqlPlanner{std::make_shared<CatalogBridge>(context->context(), std::nullopt), defaultConfiguration<QueryOptimizerConfiguration>(), std::nullopt}
-                  .plan(query);
+                  .plan(query)
+                  .fragments;
         std::unordered_map<Host, std::vector<LogicalPlan>> plansByHost;
         for (auto& fragment : fragments)
         {
@@ -74,10 +75,9 @@ inline PlanningScenario loadAndBind(const std::string_view setupSql, const std::
     }
     for (const auto& statement : *statements)
     {
-        const auto [error, statementJson, fragments]
-            = Bridge::plan_sql(context->context(), rust::Str{statement.data(), statement.size()}, rust::Str{}, rust::Str{});
-        Bridge::throwIfError(error);
-        context->execute_seed_statement(statementJson);
+        const auto planned = Bridge::plan_sql(context->context(), rust::Str{statement.data(), statement.size()}, rust::Str{}, rust::Str{});
+        Bridge::throwIfError(planned.error);
+        context->execute_seed_statement(planned.statement_json);
     }
     return PlanningScenario{.context = std::move(context), .query = std::string{query}};
 }
