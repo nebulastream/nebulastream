@@ -233,6 +233,7 @@ mod tests {
                 id: QueryId::new(id),
                 name: None,
                 sql: String::new(),
+                global_plan: Vec::new(),
                 state,
                 start_timestamp: None,
                 stop_timestamp: None,
