@@ -484,7 +484,6 @@ dependencies = [
  "cxx",
  "model",
  "request_handler",
- "sea-orm",
  "serde_json",
  "tokio",
  "tokio-util",

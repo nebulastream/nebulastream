@@ -221,6 +221,8 @@ impl ModelState {
                 .collect(),
             source_ids: BTreeSet::from([*source_id]),
             sink_ids: BTreeSet::from([*sink_id]),
+            created_sources: vec![],
+            created_sinks: vec![],
         })))
     }
 

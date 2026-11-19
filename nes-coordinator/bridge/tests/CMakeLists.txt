@@ -29,4 +29,8 @@ target_link_libraries(dropped-worker-test nes-coordinator-bridge)
 
 add_nes_unit_test(drop-statement-planning-test DropStatementPlanningTest.cpp)
 target_link_libraries(drop-statement-planning-test nes-coordinator-bridge)
+target_include_directories(drop-statement-planning-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+
+add_nes_unit_test(query-planning-test QueryPlanningTest.cpp)
+target_link_libraries(query-planning-test nes-coordinator-bridge)

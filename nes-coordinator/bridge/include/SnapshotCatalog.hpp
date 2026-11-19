@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -28,6 +29,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <nes-coordinator-bridge/planner.h>
+#include <rust/cxx.h>
 #include <Catalog.hpp>
 #include <HostPolicy.hpp>
 #include <Model.hpp>
@@ -35,22 +38,23 @@
 
 namespace NES
 {
-namespace Bridge
-{
-struct PlanningTransaction;
-}
 
-/// Implements the optimizer's catalog by calling the Rust coordinator.
-/// All calls run on the transaction of one request.
-class CatalogBridge final : public Catalog
+/// Implements the optimizer's catalog on a snapshot of the coordinator's catalog.
+/// A created source or sink gets the next id of the snapshot and is collected,
+/// so that the coordinator can insert it when it applies the planned statement.
+class SnapshotCatalog final : public Catalog
 {
-    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) the request's transaction outlives its catalog
-    const Bridge::PlanningTransaction& ctx;
+    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) the snapshot outlives the planning of one statement
+    const Bridge::CatalogSnapshot& snapshot;
     /// Used for an anonymous source or sink whose config has no host.
     std::optional<Host> defaultHost;
+    int64_t nextSourceId;
+    int64_t nextSinkId;
+    rust::Vec<Bridge::PhysicalSource> createdSources;
+    rust::Vec<Bridge::Sink> createdSinks;
 
 public:
-    CatalogBridge(const Bridge::PlanningTransaction& ctx, std::optional<Host> defaultHost);
+    SnapshotCatalog(const Bridge::CatalogSnapshot& snapshot, std::optional<Host> defaultHost);
 
     [[nodiscard]] LogicalSource getLogicalSource(std::string_view name) const override;
     [[nodiscard]] std::unordered_set<SourceDescriptor> getPhysicalSources(const LogicalSource& logicalSource) const override;
@@ -73,6 +77,9 @@ public:
     [[nodiscard]] NetworkTopology getTopology() const override;
 
     [[nodiscard]] RegisteredModel getModel(std::string_view name) const override;
+
+    [[nodiscard]] const rust::Vec<Bridge::PhysicalSource>& getCreatedSources() const;
+    [[nodiscard]] const rust::Vec<Bridge::Sink>& getCreatedSinks() const;
 };
 
 }

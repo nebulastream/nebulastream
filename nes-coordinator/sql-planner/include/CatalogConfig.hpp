@@ -25,7 +25,7 @@
 #include <ErrorHandling.hpp>
 
 /// How the options of a source or sink are written as JSON for the catalog.
-/// The planner writes them when a source or sink is created, and the catalog bridge reads them back.
+/// The planner writes them when a source or sink is created, and the snapshot catalog of the bridge reads them back.
 namespace NES::CatalogConfig
 {
 

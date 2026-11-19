@@ -36,10 +36,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
-#include <nes-coordinator-bridge/catalog.h>
-#include <nes-coordinator-bridge/planner.h>
-#include <nes-coordinator-bridge/test_context.h>
-#include <rust/cxx.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanningTestUtil.hpp>

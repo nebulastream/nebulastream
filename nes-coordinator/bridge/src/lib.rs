@@ -15,11 +15,9 @@
 //! The FFI surface between the C++ side and the Rust coordinator, one bridge module per file.
 //! Every bridge reports failures through the same error struct.
 
-mod catalog;
 mod coordinator;
 mod error;
 mod planner;
-mod test_context;
 mod worker;
 
 pub use coordinator::Coordinator;

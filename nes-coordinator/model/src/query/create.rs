@@ -47,6 +47,13 @@ pub struct CreateQuery {
     /// Each sink that the query writes into, listed once.
     #[serde(default)]
     pub sink_ids: BTreeSet<SinkId>,
+    /// The anonymous and internal sources that the planner created for this query.
+    /// They are inserted with the identifiers that the planner assigned, which are also among the source ids.
+    #[serde(skip)]
+    pub created_sources: Vec<physical::Model>,
+    /// The anonymous and internal sinks, inserted like the created sources.
+    #[serde(skip)]
+    pub created_sinks: Vec<sink::Model>,
 }
 
 impl CreateQuery {
@@ -58,6 +65,8 @@ impl CreateQuery {
             fragments: Vec::new(),
             source_ids: BTreeSet::new(),
             sink_ids: BTreeSet::new(),
+            created_sources: Vec::new(),
+            created_sinks: Vec::new(),
         }
     }
 
@@ -109,6 +118,27 @@ impl Execute for CreateQuery {
                 "a query must reference at least one sink"
             );
         }
+        // A created source or sink refers to its worker, which is the only reference that it can miss.
+        for source in &self.created_sources {
+            physical::ActiveModel::from(source.clone())
+                .insert(conn)
+                .await
+                .map_err(catalog_write(
+                    ErrorCode::SourceAlreadyExists,
+                    ErrorCode::UnknownWorker,
+                ))
+                .context("failed to insert the query's own source")?;
+        }
+        for sink in &self.created_sinks {
+            sink::ActiveModel::from(sink.clone())
+                .insert(conn)
+                .await
+                .map_err(catalog_write(
+                    ErrorCode::SinkAlreadyExists,
+                    ErrorCode::UnknownWorker,
+                ))
+                .context("failed to insert the query's own sink")?;
+        }
         let fragments = self.fragments.clone();
         let source_ids = self.source_ids.clone();
         let sink_ids = self.sink_ids.clone();
@@ -156,7 +186,7 @@ impl Execute for CreateQuery {
             ErrorCode::UnknownSinkName,
         ))
         .context("failed to link query sinks")?;
-        // The planner creates the query's own sources and sinks before the query row exists,
+        // The query's own sources and sinks are inserted before the query row,
         // so they are bound to the query only now.
         physical::Entity::update_many()
             .col_expr(physical::Column::QueryId, Expr::value(query.id))

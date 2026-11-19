@@ -26,7 +26,6 @@ coordinator.workspace = true
 request_handler.workspace = true
 controller.workspace = true
 model.workspace = true
-sea-orm.workspace = true
 cxx.workspace = true
 async-channel.workspace = true
 serde_json.workspace = true

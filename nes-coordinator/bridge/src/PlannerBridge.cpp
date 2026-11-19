@@ -25,15 +25,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <nes-coordinator-bridge/catalog.h>
 #include <nes-coordinator-bridge/planner.h>
 #include <rfl/json/write.hpp>
 #include <rust/cxx.h>
 #include <BridgeConfig.hpp>
 #include <BridgeError.hpp>
-#include <CatalogBridge.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <SnapshotCatalog.hpp>
 #include <SqlPlanner.hpp>
 
 namespace NES::Bridge
@@ -54,18 +53,11 @@ rust::Vec<uint8_t> serialize(const LogicalPlan& plan)
     return planBytes;
 }
 
-PlannedStatement
-planStatement(const PlanningTransaction& ctx, const rust::Str sql, const rust::Str optimizerConfig, const rust::Str defaultHost)
+PlannedStatement planStatement(const Planner& planner, const CatalogSnapshot& snapshot, const rust::Str sql)
 {
-    const auto config = resolveConfiguration<QueryOptimizerConfiguration>(literalsFromJson(std::string{optimizerConfig}));
-    if (!config.has_value())
-    {
-        throw InvalidConfigParameter("{}", config.error());
-    }
-    /// The coordinator passes an empty string when it has no default host.
-    const auto defaultHostOpt = defaultHost.empty() ? std::nullopt : std::optional{Host{std::string{defaultHost}}};
+    const auto catalog = std::make_shared<SnapshotCatalog>(snapshot, planner.defaultHost);
     const auto [statement, globalPlan, fragments]
-        = SqlPlanner{std::make_shared<CatalogBridge>(ctx, defaultHostOpt), *config, defaultHostOpt}.plan(std::string{sql});
+        = SqlPlanner{catalog, planner.optimizerConfig, planner.defaultHost}.plan(std::string{sql});
 
     rust::Vec<PlannedQueryFragment> serializedFragments;
     for (const auto& [host, plan, numOperators, hasSource] : fragments)
@@ -80,17 +72,32 @@ planStatement(const PlanningTransaction& ctx, const rust::Str sql, const rust::S
     }
     return PlannedStatement{
         /// Empty on success.
-        /// A failure does not reach this line: it is thrown, and the function below puts it into this field.
+        /// A failure does not reach this line: it is thrown, and the FFI function puts it into this field.
         .error = {},
         .statement_json = rust::String{rfl::json::write(statement)},
         .global_plan = globalPlan.transform(serialize).value_or(rust::Vec<uint8_t>{}),
         .fragments = std::move(serializedFragments),
+        .created_sources = catalog->getCreatedSources(),
+        .created_sinks = catalog->getCreatedSinks(),
     };
 }
 }
 
-PlannedStatement plan_sql(const PlanningTransaction& ctx, const rust::Str sql, const rust::Str optimizerConfig, const rust::Str defaultHost)
+std::unique_ptr<Planner> make_planner(const rust::Str optimizerConfig, const rust::Str defaultHost)
 {
-    return catchAsBridgeError([&] { return planStatement(ctx, sql, optimizerConfig, defaultHost); });
+    auto config = resolveConfiguration<QueryOptimizerConfiguration>(literalsFromJson(std::string{optimizerConfig}));
+    if (!config.has_value())
+    {
+        throw InvalidConfigParameter("{}", config.error());
+    }
+    /// The coordinator passes an empty string when it has no default host.
+    return std::make_unique<Planner>(Planner{
+        .optimizerConfig = std::move(*config),
+        .defaultHost = defaultHost.empty() ? std::nullopt : std::optional{Host{std::string{defaultHost}}}});
+}
+
+PlannedStatement plan_sql(const Planner& planner, const CatalogSnapshot& snapshot, const rust::Str sql)
+{
+    return catchAsBridgeError([&] { return planStatement(planner, snapshot, sql); });
 }
 }

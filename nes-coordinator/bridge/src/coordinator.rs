@@ -173,11 +173,8 @@ impl Coordinator {
             .context("failed to create coordinator runtime")?;
 
         let default_host = default_host_for(mode).to_string();
-        let planner: Arc<dyn SqlPlanner> = Arc::new(FfiSqlPlanner {
-            rt_handle: runtime.handle().clone(),
-            optimizer_config: optimizer_config.to_string(),
-            default_host: default_host.clone(),
-        });
+        let planner: Arc<dyn SqlPlanner> =
+            Arc::new(FfiSqlPlanner::new(optimizer_config, &default_host)?);
         let factory: Option<Arc<dyn WorkerFactory>> = match mode {
             ffi::WorkerMode::Embedded => Some(Arc::new(BridgeWorkerFactory)),
             _ => None,

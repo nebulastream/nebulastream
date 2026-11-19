@@ -23,7 +23,7 @@ mod parking;
 mod sql_planner;
 
 pub use client::{Client, EarlyTermination, WaitTimeout};
-pub use sql_planner::SqlPlanner;
+pub use sql_planner::{CatalogSnapshot, SqlPlanner};
 
 use chrono::Utc;
 use model::Execute;

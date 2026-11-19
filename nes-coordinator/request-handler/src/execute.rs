@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-use crate::{RequestHandler, WorkerMode, WorkerVersions};
+use crate::{CatalogSnapshot, RequestHandler, WorkerMode, WorkerVersions};
 use anyhow::Context;
 use model::Execute;
 use model::error::{CodedError, ErrorCode};
@@ -27,8 +27,8 @@ impl<V: WorkerVersions> RequestHandler<V> {
     pub(super) async fn execute_sql(&self, sql: String) -> anyhow::Result<StatementResult> {
         let planner = self.planner.clone().context("no SQL planner configured")?;
         let txn = self.begin().await?;
-        let (statement, txn) =
-            tokio::task::spawn_blocking(move || planner.plan(txn, &sql)).await??;
+        let snapshot = CatalogSnapshot::read(&txn).await?;
+        let statement = tokio::task::spawn_blocking(move || planner.plan(&sql, snapshot)).await??;
         self.apply(statement, txn).await
     }
 

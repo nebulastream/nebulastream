@@ -13,11 +13,11 @@
 add_cxx_bridge(
         nes-coordinator-bridge
         CRATE coordinator_bridge
-        FILES error.rs catalog.rs planner.rs worker.rs coordinator.rs test_context.rs
+        FILES error.rs planner.rs worker.rs coordinator.rs
 )
 target_sources(nes-coordinator-bridge PRIVATE
         src/BridgeConfig.cpp
-        src/CatalogBridge.cpp
+        src/SnapshotCatalog.cpp
         src/PlannerBridge.cpp
         src/WorkerBridge.cpp)
 target_include_directories(nes-coordinator-bridge

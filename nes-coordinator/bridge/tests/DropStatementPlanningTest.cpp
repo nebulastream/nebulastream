@@ -15,26 +15,22 @@
 #include <QueryOptimizerConfiguration.hpp>
 #include <SqlPlanner.hpp>
 
-#include <memory>
-#include <optional>
 #include <string_view>
-#include <utility>
-#include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
-#include <nes-coordinator-bridge/test_context.h>
+#include <nes-coordinator-bridge/planner.h>
 #include <rfl/Variant.hpp>
 #include <BaseUnitTest.hpp>
-#include <CatalogBridge.hpp>
 #include <CoordinatorStatement.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanningTestUtil.hpp>
 
 namespace NES
 {
 /// A drop statement is a pure catalog request: the planner binds it and maps it onto the wire struct without
-/// consulting the catalog, so an empty throwaway context is enough to plan one.
+/// consulting the catalog, so an empty snapshot is enough to plan one.
 class DropStatementPlanningTest : public Testing::BaseUnitTest
 {
 public:
@@ -48,11 +44,8 @@ public:
 
     static CoordinatorStatement plan(const std::string_view sql)
     {
-        const auto context = Bridge::create_test_planner_context();
-        auto output
-            = SqlPlanner{std::make_shared<CatalogBridge>(context->context(), std::nullopt), defaultConfiguration<QueryOptimizerConfiguration>(), std::nullopt}
-                  .plan(sql);
-        return std::move(output.statement);
+        const Bridge::CatalogSnapshot empty{};
+        return planWith(empty, sql).statement;
     }
 };
 

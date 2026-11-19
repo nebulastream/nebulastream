@@ -362,6 +362,8 @@ mod tests {
             }],
             source_ids: BTreeSet::from([SourceId::new(*source.id)]),
             sink_ids: BTreeSet::from([SinkId::new(*sink.id)]),
+            created_sources: vec![],
+            created_sinks: vec![],
         }
         .execute(db)
         .await

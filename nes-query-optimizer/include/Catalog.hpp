@@ -65,7 +65,7 @@ struct WorkerInfo
 };
 
 /// The optimizer's access to the catalog while it binds and places one query.
-/// The bridge implements it on the open transaction of the coordinator.
+/// The coordinator bridge implements it on a snapshot of the catalog.
 /// A lookup of an unknown name throws.
 /// An anonymous source or sink states its worker as the config key `host`.
 class Catalog
