@@ -1,14 +1,14 @@
 # name: udf/CodonJsonResult.test
 # description: An INLINE VARSIZED UDF can return a value of the json module (json.Value). A string value becomes its text, None
 # (a missing member, or JSON null) becomes NULL, and any other kind fails at run time, as a result that is not str or bytes
-# does in the Python executions.
+# does in the Python executions. isinstance checks the kind of a json.Value at run time, as for the objects of CPython's json.
 # groups: [PythonUdf]
 
-# {"a": "x", "n": 1, "z": null, "l": ["p"]}
+# {"a": "x", "n": 1, "z": null, "l": ["p"], "b": true, "f": 1.5, "o": {}}
 CREATE LOGICAL SOURCE documents(d VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR documents TYPE File;
 ATTACH INLINE
-eyJhIjogIngiLCAibiI6IDEsICJ6IjogbnVsbCwgImwiOiBbInAiXX0=
+eyJhIjogIngiLCAibiI6IDEsICJ6IjogbnVsbCwgImwiOiBbInAiXSwgImIiOiB0cnVlLCAiZiI6IDEuNSwgIm8iOiB7fX0=
 
 CREATE FUNCTION member (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE AS $python$
     import json
@@ -18,6 +18,35 @@ CREATE FUNCTION first (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURN
     import json
     return json.loads(document)[key][0]
 $python$;
+
+CREATE FUNCTION kinds (document VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    import json
+    data = json.loads(document)
+    names = []
+    for key in ["a", "n", "z", "l", "b", "f", "o"]:
+        value = data[key]
+        found = []
+        if isinstance(value, str):
+            found.append("str")
+        if isinstance(value, int):
+            found.append("int")
+        if isinstance(value, bool):
+            found.append("bool")
+        if isinstance(value, float):
+            found.append("float")
+        if isinstance(value, list):
+            found.append("list")
+        if isinstance(value, dict):
+            found.append("dict")
+        if isinstance(value, NoneType):
+            found.append("None")
+        names.append(key + "=" + "+".join(found))
+    return " ".join(names) + (" document=dict" if isinstance(data, dict) and not isinstance(data, list) else "")
+$python$;
+
+SELECT kinds(FROM_BASE64(d)) AS r FROM documents INTO FILE();
+----
+a=str n=int z=None l=list b=int+bool f=float o=dict document=dict
 
 SELECT member(FROM_BASE64(d), 'a') AS r FROM documents INTO FILE();
 ----

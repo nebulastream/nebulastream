@@ -289,7 +289,8 @@ std::string createPythonUdfSource(
     const auto bodySymbol = symbol + "_body";
     /// A VARSIZED or CHAR result may be a str or bytes, as in the Python executions, so the body has no return annotation and
     /// Codon infers its type. _nes_result_bytes takes the bytes of either. A type with a method __nes_str__ gives its text through
-    /// it, which may raise at run time (json.Value does for a value that is not a string, as CPython rejects a result that is
+    /// it (checked first: such a type, json.Value, can also answer isinstance at run time, which would keep the other branches
+    /// alive), which may raise at run time (json.Value does for a value that is not a string, as CPython rejects a result that is
     /// not str or bytes). It rejects other types when Codon compiles it.
     const bool textResult = returnType.type == DataType::Type::VARSIZED || returnType.type == DataType::Type::CHAR;
     const auto returnAnnotation = textResult
@@ -313,14 +314,14 @@ std::string createPythonUdfSource(
         "def _nes_char_bytes(value: u8) -> bytes:\n"
         "    return bytes(_nes_char_str(value))\n\n"
         "def _nes_result_bytes(value) -> str:\n"
-        "    if isinstance(value, Optional[str]) or isinstance(value, Optional[bytes]):\n"
+        "    if hasattr(value, \"__nes_str__\"):\n"
+        "        return _nes_result_bytes(value.__nes_str__())\n"
+        "    elif isinstance(value, Optional[str]) or isinstance(value, Optional[bytes]):\n"
         "        return _nes_result_bytes(value.__val__())\n"
         "    elif isinstance(value, str):\n"
         "        return value\n"
         "    elif isinstance(value, bytes):\n"
         "        return value._value\n"
-        "    elif hasattr(value, \"__nes_str__\"):\n"
-        "        return _nes_result_bytes(value.__nes_str__())\n"
         "    elif hasattr(value, \"__val__\"):\n"
         "        return _nes_result_bytes(value.__val__())\n"
         "    else:\n"

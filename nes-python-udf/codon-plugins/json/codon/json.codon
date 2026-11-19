@@ -20,8 +20,9 @@ results usable wherever Codon expects a `str`.
 `dumps` accepts Values and Codon values (str, int, float, bool, lists, dicts) and writes CPython's default format:
 ", " and ": " separators and non-ASCII characters escaped as \\uXXXX.
 
-Codon decides `type(x) == list` and `isinstance(x, list)` at compile time, so they cannot inspect a Value; use
-`x.is_list()`, `x.is_dict()` and friends instead.
+`isinstance(x, list)` (also dict, str, int, float, bool, NoneType) checks the kind of a Value at run time, through
+`Value.__isinstance__` (NES's Codon calls it when isinstance is not statically true). `type(x) == list` stays a compile-time
+check and is always False for a Value; `x.is_list()`, `x.is_dict()` and friends work as well.
 """
 
 KIND_NULL: Literal[int] = 0
@@ -74,6 +75,24 @@ class Value:
 
     def is_dict(self) -> bool:
         return self.kind == KIND_OBJECT
+
+    def __isinstance__(self, T: type) -> bool:
+        """isinstance(value, T) as for the object that CPython's json.loads gives: a bool is also an int."""
+        if T is List:
+            return self.kind == KIND_ARRAY
+        if T is Dict:
+            return self.kind == KIND_OBJECT
+        if T is str:
+            return self.kind == KIND_STRING
+        if T is bool:
+            return self.kind == KIND_BOOL
+        if T is int:
+            return self.kind == KIND_INT or self.kind == KIND_BOOL
+        if T is float:
+            return self.kind == KIND_FLOAT
+        if T is NoneType:
+            return self.kind == KIND_NULL
+        return False
 
     def _type_name(self) -> str:
         if self.kind == KIND_NULL:
