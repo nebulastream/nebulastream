@@ -312,6 +312,13 @@ class Value:
             return float(self.text)
         raise TypeError("float() argument must be a string or a number, not '" + self._type_name() + "'")
 
+    def __nes_str__(self) -> str:
+        """The result of a VARSIZED UDF that returns this value: the text of a string. Any other kind raises TypeError, as
+        CPython rejects a result that is not str or bytes (NES's entry code calls this, see createPythonUdfSource)."""
+        if self.kind != KIND_STRING:
+            raise TypeError("a VARSIZED UDF must return bytes or str, not " + self._type_name())
+        return self.text
+
     def __str__(self) -> str:
         """Like Python's str(): the text of a string, the repr of anything else."""
         if self.kind == KIND_STRING:

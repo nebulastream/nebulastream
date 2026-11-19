@@ -1,0 +1,40 @@
+# name: udf/CodonJsonResult.test
+# description: An INLINE VARSIZED UDF can return a value of the json module (json.Value). A string value becomes its text, None
+# (a missing member, or JSON null) becomes NULL, and any other kind fails at run time, as a result that is not str or bytes
+# does in the Python executions.
+# groups: [PythonUdf]
+
+# {"a": "x", "n": 1, "z": null, "l": ["p"]}
+CREATE LOGICAL SOURCE documents(d VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR documents TYPE File;
+ATTACH INLINE
+eyJhIjogIngiLCAibiI6IDEsICJ6IjogbnVsbCwgImwiOiBbInAiXX0=
+
+CREATE FUNCTION member (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    import json
+    return json.loads(document).get(key)
+$python$;
+CREATE FUNCTION first (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    import json
+    return json.loads(document)[key][0]
+$python$;
+
+SELECT member(FROM_BASE64(d), 'a') AS r FROM documents INTO FILE();
+----
+x
+
+SELECT first(FROM_BASE64(d), 'l') AS r FROM documents INTO FILE();
+----
+p
+
+SELECT member(FROM_BASE64(d), 'z') AS r FROM documents INTO FILE();
+----
+NULL
+
+SELECT member(FROM_BASE64(d), 'missing') AS r FROM documents INTO FILE();
+----
+NULL
+
+SELECT member(FROM_BASE64(d), 'n') AS r FROM documents INTO FILE();
+----
+ERROR UdfExecutionError "a VARSIZED UDF must return bytes or str, not int"
