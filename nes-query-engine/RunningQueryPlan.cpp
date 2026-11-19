@@ -96,7 +96,10 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     emitter.emitPipelineStart(
         queryId,
         node,
-        TaskCallback{TaskCallback::OnComplete(
+        /// The node counts as started only if its stage's start() returned (OnSuccess). A setup task that is skipped (e.g., engine
+        /// termination) or fails still drops its setup callback reference, but leaves the node unstarted: it is neither stopped later nor
+        /// does it let the sources of its query start (see RunningQueryPlan::start).
+        TaskCallback{TaskCallback::OnSuccess(
             [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
             {
                 if (const auto nodeLocked = weakRef.lock())
@@ -228,6 +231,28 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                 &emitter,
                 sources = std::move(sources)]() mutable
         {
+            /// The callback fires once every setup task has dropped its reference, including setup tasks that were skipped by a
+            /// terminating worker. Starting the sources then would let work reach a pipeline whose stage was never started.
+            const auto allPipelinesStarted = std::ranges::all_of(
+                runningPlan.internal.lock()->pipelines,
+                [](const auto& weakPipeline)
+                {
+                    /// An expired pipeline counts as not started.
+                    const auto pipeline = weakPipeline.lock();
+                    return pipeline && pipeline->requiresTermination;
+                });
+            if (!allPipelinesStarted)
+            {
+                /// The query then ends through onDestruction as Stopped, without onRunning or onFailure. That is expected while the engine
+                /// terminates. A failed pipeline start is reported separately through its failure path.
+                ENGINE_LOG_WARNING("Query {}: not all pipelines were started, the sources are not started", queryId);
+                /// Release the sources and their pipelines here, without holding the plan's lock. Releasing the last pipeline ends the
+                /// query, which disposes this RunningQueryPlan. That is safe while the callback runs, but not when the callback object
+                /// is destroyed afterwards, because the Callback holds its mutex then and the plan's destructor cancels this callback.
+                sources.clear();
+                return;
+            }
+
             {
                 auto lock = runningPlan.internal.lock();
                 auto& internal = *lock;
