@@ -154,9 +154,12 @@ impl Reconciler for Controller {
                     }
                     let mut update: worker::ActiveModel = worker.into();
                     update.apply_transition(WorkerTransition::Removed);
-                    if let Err(e) = update.save(&self.db).await {
+                    match update.save(&self.db).await {
+                        Ok(_) => {
+                            let _ = self.state_tx.send(());
+                        }
                         // The worker stays actionable, so the next tick retries it.
-                        warn!(error = %e, "failed to update worker");
+                        Err(e) => warn!(error = %e, "failed to update worker"),
                     }
                 }
             }

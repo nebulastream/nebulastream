@@ -245,6 +245,8 @@ impl<B: Backend> WorkerTask<B> {
             .update(&self.db)
             .await
             .inspect_err(|e| warn!(error = %e, "failed to update worker"))?;
+        // A wait on a fragment of this worker can depend on the worker's state.
+        let _ = self.state_tx.send(());
         Ok(())
     }
 }
