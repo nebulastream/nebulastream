@@ -7,9 +7,12 @@ The CLI below provides commands for running them manually.
 
 ## Catalog Schema
 
-The catalog stores the coordinator state across the tables shown below. Solid connections represent foreign key relationships. The dotted connections show the worker addresses used by `network_link`, which are not enforced through foreign keys.
+The catalog stores the coordinator state across the tables shown below.  
+Solid connections represent foreign key relationships.  
+The dotted connections show the worker addresses that `network_link` refers to, which no foreign key enforces.
 
-`PK` identifies a primary key, `FK` a foreign key, and `UK` a unique key. Fields marked as nullable do not require a value.
+`PK` identifies a primary key, `FK` a foreign key, and `UK` a unique key.  
+Fields marked as nullable do not require a value.
 
 ```mermaid
 erDiagram
@@ -23,6 +26,8 @@ erDiagram
     physical_source ||--o{ query_source : references
     query ||--o{ query_sink : uses
     sink ||--o{ query_sink : references
+    query |o--o{ physical_source : owns
+    query |o--o{ sink : owns
 
     worker ||..o{ network_link : "source endpoint"
     worker ||..o{ network_link : "target endpoint"
@@ -49,6 +54,7 @@ erDiagram
         json source_config
         json parser_config
         string kind
+        bigint query_id FK "nullable"
     }
 
     sink {
@@ -59,6 +65,7 @@ erDiagram
         json schema
         json config
         string kind
+        bigint query_id FK "nullable"
     }
 
     network_link {
@@ -74,6 +81,7 @@ erDiagram
         datetime start_timestamp "nullable"
         datetime stop_timestamp "nullable"
         json error "nullable"
+        boolean dropped
     }
 
     query_fragment {
@@ -118,7 +126,7 @@ The `migration` and `model` crates work with the same catalog at different level
 `migration` defines how catalog data is stored and which rules the database enforces, while `model` provides the Rust types and operations for reading and changing that data. 
 
 Changes to catalog tables and columns must be reflected in both crates.  
-By contrast, adding an operation that uses data already stored in the catalog only requires a `model` change.  
+Adding an operation on data that the catalog already stores only requires a `model` change.  
 For example, an operation that retrieves failed queries can use the existing query state and does not need a migration.
 
 ## Schema Changes

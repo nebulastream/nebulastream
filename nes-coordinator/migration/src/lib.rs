@@ -24,8 +24,7 @@ mod triggers;
 #[derive(Debug)]
 pub struct Migrator;
 
-/// Fail if any of the listed tables already exists.
-/// Runs at the top of an `up` so a migration is never applied on top of a leftover schema.
+/// Runs at the top of an `up`, so a migration is never applied on top of a leftover schema.
 macro_rules! ensure_no_tables {
     ($manager:expr, $( $table:ident ),+) => {
         $(
@@ -40,7 +39,7 @@ macro_rules! ensure_no_tables {
 }
 
 /// Drop the listed tables with `IF EXISTS ... CASCADE`.
-/// SQLite has no `CASCADE` clause (the builder omits it) and enforces foreign keys,
+/// NOTE: SQLite has no `CASCADE` clause (the builder omits it) and enforces foreign keys,
 /// so the caller must list children before parents and drop triggers first.
 macro_rules! drop_tables {
     ($manager:expr, $( $table:ident ),+) => {

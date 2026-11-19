@@ -19,7 +19,8 @@ use crate::{drop_tables, ensure_no_tables};
 use sea_orm::DbBackend;
 use sea_orm_migration::prelude::{Index as MigrationIndex, Table as MigrationTable, *};
 
-/// See the crate README for what a migration is and when to add one.
+/// Fails when one of its tables already exists or the backend is not SQLite.
+/// The crate README says what a migration is and when to add one.
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -41,15 +42,16 @@ impl MigrationTrait for Migration {
         );
 
         match manager.get_database_backend() {
+            // TODO #2247: create the schema on Postgres.
             DbBackend::MySql | DbBackend::Postgres => {
                 return Err(DbErr::Custom(
                     "only SQLite is currently supported".to_string(),
                 ));
             }
             DbBackend::Sqlite => {
-                // Per-connection pragmas (foreign_keys, journal_mode, synchronous,
-                // busy_timeout) are set via SqliteConnectOptions in `database.rs`,
-                // which applies them to every connection in the pool.
+                // The `model` crate sets the per-connection pragmas
+                // (foreign_keys, recursive_triggers, journal_mode, synchronous, busy_timeout)
+                // on every connection that it opens.
             }
         }
 
@@ -118,7 +120,7 @@ fn logical_source_table() -> TableCreateStatement {
 fn worker_table() -> TableCreateStatement {
     MigrationTable::create()
         .table(Worker::Table)
-        // TODO(yschroeder97): the host addr (IP, port) is not suitable as a stable PK for a worker
+        // TODO #2420: identify a worker by a stable name, because its host address can change.
         .col(ColumnDef::new(Worker::HostAddr).string().not_null().primary_key())
         .col(ColumnDef::new(Worker::DataAddr).string().not_null().unique_key())
         .col(ColumnDef::new(Worker::MaxOperators).integer().null()
@@ -140,7 +142,7 @@ fn physical_source_table() -> TableCreateStatement {
         .table(PhysicalSource::Table)
         .col(ColumnDef::new(PhysicalSource::Id).big_integer().not_null().auto_increment().primary_key())
         // NULL for query-owned (anonymous/internal) sources, which have no logical binding.
-        // Shared sources (CREATE PHYSICAL SOURCE FOR <logical>) always reference one.
+        // The request that creates a Shared source (CREATE PHYSICAL SOURCE FOR <logical>) always sets it.
         .col(ColumnDef::new(PhysicalSource::LogicalSource).string().null())
         .col(ColumnDef::new(PhysicalSource::HostAddr).string().not_null())
         // Free-form connector type, owned and validated by the C++ side.
@@ -176,6 +178,7 @@ fn sink_table() -> TableCreateStatement {
     MigrationTable::create()
         .table(Sink::Table)
         .col(ColumnDef::new(Sink::Id).big_integer().not_null().auto_increment().primary_key())
+        // SQLite treats NULLs as distinct in a unique column, so any number of query-owned sinks can have no name.
         .col(ColumnDef::new(Sink::Name).string().null().unique_key())
         .col(ColumnDef::new(Sink::HostAddr).string().not_null())
         // Free-form connector type, owned and validated by the C++ side.
@@ -204,6 +207,7 @@ fn sink_table() -> TableCreateStatement {
 fn network_link_table() -> TableCreateStatement {
     MigrationTable::create()
         .table(NetworkLink::Table)
+        // Neither column has a foreign key to worker, on purpose: the link entity in the `model` crate says why.
         .col(ColumnDef::new(NetworkLink::SourceHostAddr).string().not_null())
         .col(ColumnDef::new(NetworkLink::TargetHostAddr).string().not_null()
             .check(Expr::col(NetworkLink::TargetHostAddr).ne(Expr::col(NetworkLink::SourceHostAddr))))
@@ -314,20 +318,18 @@ fn ml_model_table() -> TableCreateStatement {
         .to_owned()
 }
 
-// Indexes for the hot lookup paths.
 // The join tables' composite primary keys already cover lookups from the query side,
 // so their indexes serve the reverse direction.
 #[rustfmt::skip]
 fn indexes() -> Vec<IndexCreateStatement> {
     vec![
-        // Finding a query's fragments
         MigrationIndex::create().table(QueryFragment::Table).name("idx_query_fragment_query_id")
             .col(QueryFragment::QueryId).to_owned(),
         // The per-worker reconciler scans fragments by host and state on every tick
         MigrationIndex::create().table(QueryFragment::Table).name("idx_query_fragment_host_addr_current_state")
             .col(QueryFragment::HostAddr).col(QueryFragment::CurrentState).to_owned(),
-        // Partial index: only Shared sources hold a logical_source,
-        // so exclude the NULL (anonymous/internal) rows from the index.
+        // Only Shared sources hold a logical source,
+        // so the index leaves out the NULL rows of anonymous and internal sources.
         MigrationIndex::create().table(PhysicalSource::Table).name("idx_physical_source_logical_source")
             .col(PhysicalSource::LogicalSource)
             .and_where(Expr::col(PhysicalSource::LogicalSource).is_not_null()).to_owned(),
@@ -350,7 +352,6 @@ fn indexes() -> Vec<IndexCreateStatement> {
     ]
 }
 
-/// Builds a foreign key from one `(table, column)` pair to another.
 /// Updates to a referenced key are always rejected; only the delete action varies.
 fn foreign_key<F: IntoIden + 'static, T: IntoIden + 'static>(
     from: (F, F),
