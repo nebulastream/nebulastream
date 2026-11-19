@@ -19,10 +19,12 @@
 //! Statements and fault primitives are harness methods.
 //! The simulator injects the faults.
 
-use crate::worker::{HealthServer, HealthService, WorkerRpcServiceServer, WorkerService};
+use crate::worker::{WorkerRpcServiceServer, WorkerService};
 use anyhow::Result;
-use controller::remote::WorkerRpcServiceClient;
-use controller::remote::worker_rpc_service::{WorkerStatusRequest, WorkerStatusResponse};
+use controller::worker_client::remote::WorkerRpcServiceClient;
+use controller::worker_client::remote::worker_rpc_service::{
+    WorkerStatusRequest, WorkerStatusResponse,
+};
 use futures::future::join_all;
 use madsim::net::NetSim;
 use madsim::runtime::{Handle, NodeHandle};
@@ -140,7 +142,6 @@ impl Harness {
             .init(move || async move {
                 Server::builder()
                     .add_service(WorkerRpcServiceServer::new(WorkerService::new()))
-                    .add_service(HealthServer::new(HealthService))
                     .serve(SocketAddr::from((Ipv4Addr::UNSPECIFIED, DEFAULT_HOST_PORT)))
                     .await
                     .expect("worker could not be started");
@@ -234,7 +235,7 @@ impl Harness {
             })
             .map(|q| {
                 q.query_id
-                    .and_then(|id| id.fragment_id())
+                    .and_then(|id| id.get_fragment_id())
                     .expect("a worker reported an active query without a fragment id")
             })
             .map(QueryFragmentId::new)

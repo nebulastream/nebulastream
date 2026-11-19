@@ -14,7 +14,7 @@
 
 //! Fake gRPC worker used by the simulation.
 //!
-//! Implements the RPC surface of a real worker (start, stop, per-fragment and aggregate status, health check)
+//! Implements the RPC surface of a real worker (start, stop, per-fragment and aggregate status)
 //! against an in-memory map of fragments.
 //! Like a real worker, it accepts a start or a stop in the handler and applies it later in a background task,
 //! so the controller can read a fragment's status between the reply and the state change.
@@ -22,15 +22,13 @@
 //! The handlers have buggify points so the simulator exercises the controller's retry, reconnect,
 //! and crash-recovery paths without real worker processes.
 
-use controller::remote::health_proto::health_check_response::ServingStatus;
-use controller::remote::health_proto::health_server::Health;
-pub use controller::remote::health_proto::health_server::HealthServer;
-use controller::remote::health_proto::{HealthCheckRequest, HealthCheckResponse};
-use controller::remote::worker_rpc_service::nes::SerializableQueryId;
-use controller::remote::worker_rpc_service::worker_rpc_service_server::WorkerRpcService;
-pub use controller::remote::worker_rpc_service::worker_rpc_service_server::WorkerRpcServiceServer;
-use controller::remote::worker_rpc_service::worker_status_response::ActiveQuery;
-use controller::remote::worker_rpc_service::{
+use controller::worker_client::remote::worker_rpc_service::nes::SerializableQueryId;
+use controller::worker_client::remote::worker_rpc_service::worker_rpc_service_server::WorkerRpcService;
+pub use controller::worker_client::remote::worker_rpc_service::worker_rpc_service_server::WorkerRpcServiceServer;
+use controller::worker_client::remote::worker_rpc_service::worker_status_response::{
+    ActiveQuery, TerminatedQuery,
+};
+use controller::worker_client::remote::worker_rpc_service::{
     QueryMetrics, QueryState, QueryStatusReply, QueryStatusRequest, StartQueryReply,
     StartQueryRequest, StopQueryRequest, VersionResponse, WorkerStatusRequest,
     WorkerStatusResponse,
@@ -65,7 +63,7 @@ fn pick_slow_reply_delay() -> Duration {
 
 fn extract_fragment_id(req_id: Option<&SerializableQueryId>) -> i64 {
     req_id
-        .and_then(SerializableQueryId::fragment_id)
+        .and_then(SerializableQueryId::get_fragment_id)
         .expect("the request has a fragment id")
 }
 
@@ -129,24 +127,6 @@ fn advance(fragments: &Fragments, id: i64, from: &[QueryState], to: QueryState) 
     fragment.enter(to);
     debug!("fragment {id} is {to:?}");
     true
-}
-
-/// Reports the worker as serving, and fails a check as unavailable under buggify.
-pub struct HealthService;
-
-#[tonic::async_trait]
-impl Health for HealthService {
-    async fn check(
-        &self,
-        _request: Request<HealthCheckRequest>,
-    ) -> Result<Response<HealthCheckResponse>, Status> {
-        if buggify() {
-            return Err(Status::unavailable("unavailable"));
-        }
-        Ok(Response::new(HealthCheckResponse {
-            status: ServingStatus::Serving as i32,
-        }))
-    }
 }
 
 /// The fragments are in memory, so a restarted worker has none.
@@ -314,33 +294,39 @@ impl WorkerRpcService for WorkerService {
         let after = request.get_ref().after_unix_timestamp_in_milli_seconds;
         let fragments = self.fragments.read().unwrap();
 
-        // NOTE: Like the real worker, the list leaves out a registered fragment,
-        // and lists a started or running fragment only if it entered that state at or after the requested time.
-        // For a request after 100: Started at 120 is listed without a time, Running since 150 is listed with 150,
-        // and Running since 90 is left out.
-        let active_queries = fragments
-            .iter()
-            .filter_map(|(&id, fragment)| {
-                let since = match fragment.state {
-                    QueryState::Started if fragment.started_at.is_some_and(|t| t >= after) => None,
-                    QueryState::Running if fragment.running_at.is_some_and(|t| t >= after) => {
-                        fragment.running_at
+        // NOTE: Like the real worker, the status lists every active fragment, registered ones included,
+        // and a stopped fragment only if it stopped at or after the requested time.
+        // For a request after 100: Registered is listed, Running since 90 is listed with 90,
+        // Stopped at 120 is listed, and Stopped at 90 is left out.
+        let mut active_queries = Vec::new();
+        let mut terminated_queries = Vec::new();
+        for (&id, fragment) in fragments.iter() {
+            let query_id = Some(SerializableQueryId::from_fragment_id(id));
+            match fragment.state {
+                QueryState::Registered | QueryState::Started | QueryState::Running => {
+                    active_queries.push(ActiveQuery {
+                        query_id,
+                        started_unix_timestamp_in_milli_seconds: fragment.running_at,
+                    });
+                }
+                QueryState::Stopped => {
+                    if let Some(stop) = fragment.stopped_at.filter(|&stop| stop >= after) {
+                        terminated_queries.push(TerminatedQuery {
+                            query_id,
+                            started_unix_timestamp_in_milli_seconds: fragment.running_at,
+                            terminated_unix_timestamp_in_milli_seconds: stop,
+                            error: None,
+                        });
                     }
-                    _ => return None,
-                };
-                Some(ActiveQuery {
-                    query_id: Some(SerializableQueryId::from_fragment_id(id)),
-                    started_unix_timestamp_in_milli_seconds: since,
-                })
-            })
-            .collect();
-
-        // The simulation reads only the active fragments.
+                }
+                _ => {}
+            }
+        }
         Ok(Response::new(WorkerStatusResponse {
             after_unix_timestamp_in_milli_seconds: after,
             until_unix_timestamp_in_milli_seconds: current_timestamp_ms(),
             active_queries,
-            terminated_queries: Vec::new(),
+            terminated_queries,
         }))
     }
 

@@ -209,6 +209,7 @@ impl ModelState {
         Ok(Step::Ready(ParsedStatement::CreateQuery(CreateQuery {
             name: None,
             sql: format!("SELECT * FROM {LOGICAL_SOURCE_NAME} INTO {SINK_NAME}"),
+            global_plan: vec![],
             fragments: workers
                 .into_iter()
                 .map(|addr| CreateQueryFragment {
@@ -228,9 +229,9 @@ impl ModelState {
             return self.create_worker().map(Step::into_prerequisite);
         };
         Ok(Step::Ready(ParsedStatement::CreateSink(CreateSink {
-            name: SINK_NAME.to_string(),
+            name: SINK_NAME.parse().unwrap(),
             host_addr: addr,
-            sink_type: "File".to_string(),
+            sink_type: "File".parse().unwrap(),
             schema: Default::default(),
             config: Default::default(),
             if_not_exists: false,
@@ -239,7 +240,7 @@ impl ModelState {
 
     fn create_logical_source() -> Step {
         Step::Ready(ParsedStatement::CreateLogicalSource(CreateLogicalSource {
-            name: LOGICAL_SOURCE_NAME.to_string(),
+            name: LOGICAL_SOURCE_NAME.parse().unwrap(),
             schema: Default::default(),
             if_not_exists: true,
         }))
@@ -254,9 +255,9 @@ impl ModelState {
         };
         Ok(Step::Ready(ParsedStatement::CreatePhysicalSource(
             CreatePhysicalSource {
-                logical_source: LOGICAL_SOURCE_NAME.to_string(),
+                logical_source: LOGICAL_SOURCE_NAME.parse().unwrap(),
                 host_addr: addr,
-                source_type: "File".to_string(),
+                source_type: "File".parse().unwrap(),
                 source_config: Default::default(),
                 parser_config: Default::default(),
                 if_not_exists: false,
