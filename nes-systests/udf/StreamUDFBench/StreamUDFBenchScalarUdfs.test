@@ -3,7 +3,8 @@
 # OUT_OF_PROCESS, IN_PROCESS and INLINE. The queries only exercise the UDFs. They are not StreamUDFBench queries.
 # UDFs: nes-systests/udf/pyudfs/StreamUDFBench/scalar/<name>.py (UDFBench files, unchanged) via udfbench_scalar.py, and for INLINE
 # via udfbench_scalar_inline.py, which Codon can compile. Data: nes-systests/testdata/large/streamudfbench/tiny (ExternalData).
-# The expected results are those of the UDFBench functions under CPython, applied to each row in Python.
+# The arguments are NOT NULL, so a NULL argument gives a NULL result without a call, as in UDFBench, which runs the functions in
+# DuckDB. The expected results are those of the UDFBench functions under CPython, applied to each row without a NULL argument.
 # groups: [StreamUDFBench, PythonUdf, large]
 
 CREATE LOGICAL SOURCE artifacts(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
@@ -35,31 +36,31 @@ ATTACH FILE large/streamudfbench/tiny/query2json_3M.csv
 
 
 # --- EXECUTION OUT_OF_PROCESS ---
-CREATE FUNCTION addnoise_oop (val INT32) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.addnoise';
-CREATE FUNCTION clean_oop (val VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.clean';
-CREATE FUNCTION cleandate_oop (pubdate VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.cleandate';
-CREATE FUNCTION converttoeuro_oop (x FLOAT64, y VARSIZED) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.converttoeuro';
-CREATE FUNCTION extractclass_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractclass';
-CREATE FUNCTION extractcode_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractcode';
-CREATE FUNCTION extractday_oop (arg VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractday';
-CREATE FUNCTION extractfunder_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractfunder';
-CREATE FUNCTION extractid_oop (project VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractid';
-CREATE FUNCTION extractmonth_oop (arg VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractmonth';
-CREATE FUNCTION extractprojectid_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractprojectid';
-CREATE FUNCTION extractyear_oop (arg VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractyear';
-CREATE FUNCTION filterstopwords_oop (words VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.filterstopwords';
-CREATE FUNCTION frequentterms_oop (input VARSIZED, N INT64) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.frequentterms';
-CREATE FUNCTION jaccard_oop (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jaccard';
-CREATE FUNCTION jpack_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jpack';
-CREATE FUNCTION jsoncount_oop (jval VARSIZED) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsoncount';
-CREATE FUNCTION jsonparse_oop (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsonparse';
-CREATE FUNCTION jsort_oop (jval VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsort';
-CREATE FUNCTION jsortvalues_oop (jval VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsortvalues';
-CREATE FUNCTION keywords_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.keywords';
-CREATE FUNCTION log_10_oop (x FLOAT64) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.log_10';
-CREATE FUNCTION lowerize_oop (val VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.lowerize';
-CREATE FUNCTION removeshortterms_oop (jval VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.removeshortterms';
-CREATE FUNCTION stem_oop (input VARSIZED) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.stem';
+CREATE FUNCTION addnoise_oop (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.addnoise';
+CREATE FUNCTION clean_oop (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.clean';
+CREATE FUNCTION cleandate_oop (pubdate VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.cleandate';
+CREATE FUNCTION converttoeuro_oop (x FLOAT64 NOT NULL, y VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.converttoeuro';
+CREATE FUNCTION extractclass_oop (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractclass';
+CREATE FUNCTION extractcode_oop (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractcode';
+CREATE FUNCTION extractday_oop (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractday';
+CREATE FUNCTION extractfunder_oop (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractfunder';
+CREATE FUNCTION extractid_oop (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractid';
+CREATE FUNCTION extractmonth_oop (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractmonth';
+CREATE FUNCTION extractprojectid_oop (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractprojectid';
+CREATE FUNCTION extractyear_oop (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractyear';
+CREATE FUNCTION filterstopwords_oop (words VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.filterstopwords';
+CREATE FUNCTION frequentterms_oop (input VARSIZED NOT NULL, N INT64 NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.frequentterms';
+CREATE FUNCTION jaccard_oop (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jaccard';
+CREATE FUNCTION jpack_oop (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jpack';
+CREATE FUNCTION jsoncount_oop (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsoncount';
+CREATE FUNCTION jsonparse_oop (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsonparse';
+CREATE FUNCTION jsort_oop (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsort';
+CREATE FUNCTION jsortvalues_oop (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsortvalues';
+CREATE FUNCTION keywords_oop (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.keywords';
+CREATE FUNCTION log_10_oop (x FLOAT64 NOT NULL) RETURNS FLOAT64 EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.log_10';
+CREATE FUNCTION lowerize_oop (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.lowerize';
+CREATE FUNCTION removeshortterms_oop (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.removeshortterms';
+CREATE FUNCTION stem_oop (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION OUT_OF_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.stem';
 
 SELECT id FROM artifacts WHERE addnoise_oop(authors) > FLOAT64(-1000.0) INTO Checksum();
 ----
@@ -162,31 +163,31 @@ SELECT id, stem_oop(abstract) AS r FROM artifact_abstracts INTO Checksum();
 16845 1074975864
 
 # --- EXECUTION IN_PROCESS ---
-CREATE FUNCTION addnoise_ip (val INT32) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.addnoise';
-CREATE FUNCTION clean_ip (val VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.clean';
-CREATE FUNCTION cleandate_ip (pubdate VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.cleandate';
-CREATE FUNCTION converttoeuro_ip (x FLOAT64, y VARSIZED) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.converttoeuro';
-CREATE FUNCTION extractclass_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractclass';
-CREATE FUNCTION extractcode_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractcode';
-CREATE FUNCTION extractday_ip (arg VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractday';
-CREATE FUNCTION extractfunder_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractfunder';
-CREATE FUNCTION extractid_ip (project VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractid';
-CREATE FUNCTION extractmonth_ip (arg VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractmonth';
-CREATE FUNCTION extractprojectid_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractprojectid';
-CREATE FUNCTION extractyear_ip (arg VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractyear';
-CREATE FUNCTION filterstopwords_ip (words VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.filterstopwords';
-CREATE FUNCTION frequentterms_ip (input VARSIZED, N INT64) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.frequentterms';
-CREATE FUNCTION jaccard_ip (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jaccard';
-CREATE FUNCTION jpack_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jpack';
-CREATE FUNCTION jsoncount_ip (jval VARSIZED) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsoncount';
-CREATE FUNCTION jsonparse_ip (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsonparse';
-CREATE FUNCTION jsort_ip (jval VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsort';
-CREATE FUNCTION jsortvalues_ip (jval VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsortvalues';
-CREATE FUNCTION keywords_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.keywords';
-CREATE FUNCTION log_10_ip (x FLOAT64) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.log_10';
-CREATE FUNCTION lowerize_ip (val VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.lowerize';
-CREATE FUNCTION removeshortterms_ip (jval VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.removeshortterms';
-CREATE FUNCTION stem_ip (input VARSIZED) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.stem';
+CREATE FUNCTION addnoise_ip (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.addnoise';
+CREATE FUNCTION clean_ip (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.clean';
+CREATE FUNCTION cleandate_ip (pubdate VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.cleandate';
+CREATE FUNCTION converttoeuro_ip (x FLOAT64 NOT NULL, y VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.converttoeuro';
+CREATE FUNCTION extractclass_ip (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractclass';
+CREATE FUNCTION extractcode_ip (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractcode';
+CREATE FUNCTION extractday_ip (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractday';
+CREATE FUNCTION extractfunder_ip (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractfunder';
+CREATE FUNCTION extractid_ip (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractid';
+CREATE FUNCTION extractmonth_ip (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractmonth';
+CREATE FUNCTION extractprojectid_ip (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractprojectid';
+CREATE FUNCTION extractyear_ip (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.extractyear';
+CREATE FUNCTION filterstopwords_ip (words VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.filterstopwords';
+CREATE FUNCTION frequentterms_ip (input VARSIZED NOT NULL, N INT64 NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.frequentterms';
+CREATE FUNCTION jaccard_ip (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jaccard';
+CREATE FUNCTION jpack_ip (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jpack';
+CREATE FUNCTION jsoncount_ip (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsoncount';
+CREATE FUNCTION jsonparse_ip (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsonparse';
+CREATE FUNCTION jsort_ip (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsort';
+CREATE FUNCTION jsortvalues_ip (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.jsortvalues';
+CREATE FUNCTION keywords_ip (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.keywords';
+CREATE FUNCTION log_10_ip (x FLOAT64 NOT NULL) RETURNS FLOAT64 EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.log_10';
+CREATE FUNCTION lowerize_ip (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.lowerize';
+CREATE FUNCTION removeshortterms_ip (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.removeshortterms';
+CREATE FUNCTION stem_ip (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'StreamUDFBench.udfbench_scalar.stem';
 
 SELECT id FROM artifacts WHERE addnoise_ip(authors) > FLOAT64(-1000.0) INTO Checksum();
 ----
@@ -290,45 +291,46 @@ SELECT id, stem_ip(abstract) AS r FROM artifact_abstracts INTO Checksum();
 
 # --- EXECUTION INLINE ---
 # Rejected: addnoise imports random inside the function, which NES rejects for INLINE.
-CREATE FUNCTION addnoise_inline (val INT32) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.addnoise';
+CREATE FUNCTION addnoise_inline (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.addnoise';
 ----
 ERROR QueryCompilerError
 
-CREATE FUNCTION clean_inline (val VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.clean';
-CREATE FUNCTION cleandate_inline (pubdate VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.cleandate';
-CREATE FUNCTION converttoeuro_inline (x FLOAT64, y VARSIZED) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.converttoeuro';
-CREATE FUNCTION extractclass_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractclass';
-CREATE FUNCTION extractcode_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractcode';
-CREATE FUNCTION extractday_inline (arg VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractday';
-CREATE FUNCTION extractfunder_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractfunder';
-CREATE FUNCTION extractid_inline (project VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractid';
-CREATE FUNCTION extractmonth_inline (arg VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractmonth';
-CREATE FUNCTION extractprojectid_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractprojectid';
-CREATE FUNCTION extractyear_inline (arg VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractyear';
-CREATE FUNCTION filterstopwords_inline (words VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.filterstopwords';
-CREATE FUNCTION frequentterms_inline (input VARSIZED, N INT64) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.frequentterms';
+CREATE FUNCTION clean_inline (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.clean';
+CREATE FUNCTION cleandate_inline (pubdate VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.cleandate';
+CREATE FUNCTION converttoeuro_inline (x FLOAT64 NOT NULL, y VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.converttoeuro';
+CREATE FUNCTION extractclass_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractclass';
+CREATE FUNCTION extractcode_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractcode';
+CREATE FUNCTION extractday_inline (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractday';
+CREATE FUNCTION extractfunder_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractfunder';
+CREATE FUNCTION extractid_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractid';
+CREATE FUNCTION extractmonth_inline (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractmonth';
+CREATE FUNCTION extractprojectid_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractprojectid';
+CREATE FUNCTION extractyear_inline (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractyear';
+CREATE FUNCTION filterstopwords_inline (words VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.filterstopwords';
+CREATE FUNCTION frequentterms_inline (input VARSIZED NOT NULL, N INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.frequentterms';
 # Does not compile: type(x) == list
-CREATE FUNCTION jaccard_inline (arg1 VARSIZED, arg2 VARSIZED) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jaccard';
+CREATE FUNCTION jaccard_inline (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jaccard';
 ----
 ERROR QueryCompilerError
 
-CREATE FUNCTION jpack_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
-CREATE FUNCTION jsoncount_inline (jval VARSIZED) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
-CREATE FUNCTION jsonparse_inline (json_content VARSIZED, key1 VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
-CREATE FUNCTION jsort_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsort';
-CREATE FUNCTION jsortvalues_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsortvalues';
-CREATE FUNCTION keywords_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.keywords';
-CREATE FUNCTION log_10_inline (x FLOAT64) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.log_10';
-CREATE FUNCTION lowerize_inline (val VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
-CREATE FUNCTION removeshortterms_inline (jval VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
+CREATE FUNCTION jpack_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
+CREATE FUNCTION jsoncount_inline (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
+CREATE FUNCTION jsonparse_inline (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
+CREATE FUNCTION jsort_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsort';
+CREATE FUNCTION jsortvalues_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsortvalues';
+CREATE FUNCTION keywords_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.keywords';
+CREATE FUNCTION log_10_inline (x FLOAT64 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.log_10';
+CREATE FUNCTION lowerize_inline (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
+CREATE FUNCTION removeshortterms_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
 # Does not compile: name 'ccy_exp' cannot be captured
-CREATE FUNCTION stem_inline (input VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
+CREATE FUNCTION stem_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
 ----
 ERROR QueryCompilerError
 
 # Not in this section, as Codon cannot compile or run them, or gives other results:
 # - frequentterms: among terms with equal counts, Counter and heapq.nlargest choose other terms than in CPython
-# - jsonparse: fails at run time: a None result of a function annotated -> str
+# - jsonparse: Codon decides isinstance(data, list) and isinstance(data, dict) at compile time, so the function returns None for
+#   every row, which fails at run time in a function annotated -> str
 
 SELECT id, clean_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
 ----
@@ -409,3 +411,21 @@ SELECT id, lowerize_inline(title) AS r FROM artifacts INTO Checksum();
 SELECT id, removeshortterms_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
 ----
 16699 255206502
+
+# --- EXECUTION INLINE, adapted UDFs ---
+# udfbench_scalar_inline_adapted.py: addnoise, jaccard and jsonparse changed so that Codon compiles them. Same results as above.
+CREATE FUNCTION addnoise_adapted (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_adapted.addnoise';
+CREATE FUNCTION jaccard_adapted (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_adapted.jaccard';
+CREATE FUNCTION jsonparse_adapted (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_adapted.jsonparse';
+
+SELECT id FROM artifacts WHERE addnoise_adapted(authors) > FLOAT64(-1000.0) INTO Checksum();
+----
+47919 174369468
+
+SELECT id, jaccard_adapted(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 64983328
+
+SELECT id, jsonparse_adapted(id, 'doi') AS r FROM query2json INTO Checksum();
+----
+23294 286664167
