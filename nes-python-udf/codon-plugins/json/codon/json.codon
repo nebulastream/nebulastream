@@ -331,6 +331,27 @@ class Value:
             return float(self.text)
         raise TypeError("float() argument must be a string or a number, not '" + self._type_name() + "'")
 
+    def __as__(self, T: type):
+        """The value as T, where a function annotated -> T returns it (NES's Codon calls this). As CPython ignores the
+        annotation and NES then checks the result: str for a string; int for an int or a bool; float for a number or a bool;
+        bool for any value, by its truth. Any other kind raises TypeError."""
+        if T is str:
+            return self.__nes_str__()
+        elif T is int:
+            if self.kind != KIND_INT and self.kind != KIND_BOOL:
+                raise TypeError("'" + self._type_name() + "' object cannot be interpreted as an integer")
+            return self.integer
+        elif T is float:
+            if self.kind == KIND_FLOAT:
+                return self.real
+            if self.kind != KIND_INT and self.kind != KIND_BOOL:
+                raise TypeError("must be real number, not " + self._type_name())
+            return float(self.integer)
+        elif T is bool:
+            return self.__bool__()
+        else:
+            compile_error("a json.Value can be returned as str, int, float or bool")
+
     def __nes_str__(self) -> str:
         """The result of a VARSIZED UDF that returns this value: the text of a string. Any other kind raises TypeError, as
         CPython rejects a result that is not str or bytes (NES's entry code calls this, see createPythonUdfSource)."""

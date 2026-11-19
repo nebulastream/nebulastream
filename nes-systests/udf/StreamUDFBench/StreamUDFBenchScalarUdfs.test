@@ -315,12 +315,7 @@ ERROR QueryCompilerError
 
 CREATE FUNCTION jpack_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
 CREATE FUNCTION jsoncount_inline (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
-# Does not compile: isinstance checks the json.Value at run time, so jsonparse returns a json.Value, and Codon enforces the
-# annotation -> str (udfbench_scalar_inline_adapted.py has a version that compiles)
 CREATE FUNCTION jsonparse_inline (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
-----
-ERROR QueryCompilerError
-
 CREATE FUNCTION jsort_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsort';
 CREATE FUNCTION jsortvalues_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsortvalues';
 CREATE FUNCTION keywords_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.keywords';
@@ -334,6 +329,10 @@ ERROR QueryCompilerError
 
 # Not in this section, as Codon cannot compile or run them, or gives other results:
 # - frequentterms: among terms with equal counts, Counter and heapq.nlargest choose other terms than in CPython
+
+SELECT id, jsonparse_inline(id, 'doi') AS r FROM query2json INTO Checksum();
+----
+23294 286664167
 
 SELECT id, clean_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
 ----

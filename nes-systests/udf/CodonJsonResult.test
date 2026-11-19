@@ -2,6 +2,8 @@
 # description: An INLINE VARSIZED UDF can return a value of the json module (json.Value). A string value becomes its text, None
 # (a missing member, or JSON null) becomes NULL, and any other kind fails at run time, as a result that is not str or bytes
 # does in the Python executions. isinstance checks the kind of a json.Value at run time, as for the objects of CPython's json.
+# A function annotated -> str, int, float or bool that returns a json.Value converts it (json.Value.__as__): CPython ignores
+# the annotation, and the Python executions then accept or reject the value as its type allows.
 # groups: [PythonUdf]
 
 # {"a": "x", "n": 1, "z": null, "l": ["p"], "b": true, "f": 1.5, "o": {}}
@@ -67,3 +69,53 @@ NULL
 SELECT member(FROM_BASE64(d), 'n') AS r FROM documents INTO FILE();
 ----
 ERROR UdfExecutionError "a VARSIZED UDF must return bytes or str, not int"
+
+CREATE FUNCTION as_text (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    import json
+    def member(document: str, key: str) -> str:
+        return json.loads(document).get(key)
+    return member(document, key)
+$python$;
+CREATE FUNCTION as_int (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE AS $python$
+    import json
+    def member(document: str, key: str) -> int:
+        return json.loads(document)[key]
+    return member(document, key)
+$python$;
+CREATE FUNCTION as_float (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE AS $python$
+    import json
+    def member(document: str, key: str) -> float:
+        return json.loads(document)[key]
+    return member(document, key)
+$python$;
+CREATE FUNCTION as_bool (document VARSIZED NOT NULL, key VARSIZED NOT NULL) RETURNS BOOLEAN EXECUTION INLINE AS $python$
+    import json
+    def member(document: str, key: str) -> bool:
+        return json.loads(document)[key]
+    return member(document, key)
+$python$;
+
+SELECT as_text(FROM_BASE64(d), 'a') AS r FROM documents INTO FILE();
+----
+x
+
+SELECT as_text(FROM_BASE64(d), 'n') AS r FROM documents INTO FILE();
+----
+ERROR UdfExecutionError "a VARSIZED UDF must return bytes or str, not int"
+
+SELECT as_int(FROM_BASE64(d), 'n') AS r FROM documents INTO FILE();
+----
+1
+
+SELECT as_int(FROM_BASE64(d), 'f') AS r FROM documents INTO FILE();
+----
+ERROR UdfExecutionError "'float' object cannot be interpreted as an integer"
+
+SELECT as_float(FROM_BASE64(d), 'f') AS r FROM documents INTO FILE();
+----
+1.5
+
+SELECT as_bool(FROM_BASE64(d), 'b') AS r FROM documents INTO FILE();
+----
+true
+
