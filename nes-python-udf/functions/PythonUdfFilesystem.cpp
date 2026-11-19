@@ -796,22 +796,14 @@ private:
             }
             fprintf(stderr, "TMPTIME after-dce functions %zu instructions %zu\n", functions, instructions);
         }
+        /// One O1 run, not Codon's release setting (two O3 runs): Nautilus links the UDF into the pipeline and optimizes it
+        /// again with O3. Codon's own passes (AllocationRemover, AllocationHoister) run only here and already run at O1;
+        /// without them, UDFs that allocate per row lose up to a quarter of their throughput (E60).
         auto optimizationOptions = codon::ir::LLVMOptimizationOptions::release();
+        optimizationOptions.level = llvm::OptimizationLevel::O1;
+        optimizationOptions.runs = 1;
         optimizationOptions.preserveDebugInfo = true;
-        const std::string variant = std::getenv("NES_TMP_CODON_OPT") != nullptr ? std::getenv("NES_TMP_CODON_OPT") : ""; /// TEMPORARY
-        if (variant == "o3x1")
-        {
-            optimizationOptions.runs = 1;
-        }
-        else if (variant == "o1")
-        {
-            optimizationOptions.runs = 1;
-            optimizationOptions.level = llvm::OptimizationLevel::O1;
-        }
-        if (variant != "none")
-        {
-            codon::ir::optimize(module.get(), optimizationOptions);
-        }
+        codon::ir::optimize(module.get(), optimizationOptions);
         const auto optimizeEnd = std::chrono::steady_clock::now();
         return {
             .llvmBitcode = writeBitcode(*module),
