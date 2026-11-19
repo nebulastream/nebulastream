@@ -355,12 +355,87 @@ void raiseMinByMinusOne()
     nautilus::invoke(+[] { throw ArithmeticalError(IsModulo ? "Can not modulo MIN by -1!" : "Can not divide MIN by -1!"); });
 }
 
+/// Non-integer operands (floating point): a zero divisor throws only for nullable operands, as before.
+template <bool IsModulo, typename RHS>
+RHS makeSafeDenominatorNonIntegral(const RHS& rhsVal, const bool nullable, const nautilus::val<bool>& rightIsNull)
+{
+    if (not nullable)
+    {
+        return rhsVal;
+    }
+    const auto isZero = rhsVal == RHS{0};
+    if (isZero and not rightIsNull)
+    {
+        raiseDivisorIsZero<IsModulo>();
+    }
+    return nautilus::select(isZero, RHS{1}, rhsVal);
+}
+
+/// MIN / -1 needs two signed operands, the dividend being the minimum of the (promoted) result type. Operands narrower than int are
+/// promoted to int, so e.g. INT8_MIN / -1 = 128 is representable and does not trap. With an unsigned operand the result is unsigned.
+template <typename LHS, typename RHS>
+constexpr bool canOverflowOnDivision()
+{
+    using LhsBasic = LHS::basic_type;
+    using RhsBasic = RHS::basic_type;
+    using ResultBasic = decltype(std::declval<LHS>() / std::declval<RHS>())::basic_type;
+    return std::is_signed_v<LhsBasic> and std::is_signed_v<RhsBasic> and std::is_signed_v<ResultBasic>
+        and std::numeric_limits<LhsBasic>::min() == std::numeric_limits<ResultBasic>::min();
+}
+
+template <typename LHS, typename RHS>
+nautilus::val<bool> isMinByMinusOne(const LHS& lhsVal, const RHS& rhsVal)
+{
+    using LhsBasic = LHS::basic_type;
+    return lhsVal == LHS{std::numeric_limits<LhsBasic>::min()} and rhsVal == RHS{-1};
+}
+
+/// Integer operands, NOT NULL: throws for a zero divisor and for MIN / -1, otherwise returns the divisor unchanged.
+template <bool IsModulo, typename LHS, typename RHS>
+RHS makeSafeDenominatorIntegral(const LHS& lhsVal, const RHS& rhsVal)
+{
+    if (rhsVal == RHS{0})
+    {
+        raiseDivisorIsZero<IsModulo>();
+    }
+    if constexpr (canOverflowOnDivision<LHS, RHS>())
+    {
+        if (isMinByMinusOne(lhsVal, rhsVal))
+        {
+            raiseMinByMinusOne<IsModulo>();
+        }
+    }
+    return rhsVal;
+}
+
+/// Integer operands, nullable: throws for a non-null zero divisor and for non-null MIN / -1. A NULL operand holds arbitrary raw bits,
+/// so the divisor is replaced by 1 whenever the raw operands would trap, and the (discarded) division can not fault.
+template <bool IsModulo, typename LHS, typename RHS>
+RHS makeSafeDenominatorIntegralNullable(
+    const LHS& lhsVal, const RHS& rhsVal, const nautilus::val<bool>& leftIsNull, const nautilus::val<bool>& rightIsNull)
+{
+    const auto isZero = rhsVal == RHS{0};
+    if (isZero and not rightIsNull)
+    {
+        raiseDivisorIsZero<IsModulo>();
+    }
+    if constexpr (canOverflowOnDivision<LHS, RHS>())
+    {
+        const auto isOverflow = isMinByMinusOne(lhsVal, rhsVal);
+        if (isOverflow and not(leftIsNull or rightIsNull))
+        {
+            raiseMinByMinusOne<IsModulo>();
+        }
+        return nautilus::select(isZero or isOverflow, RHS{1}, rhsVal);
+    }
+    else
+    {
+        return nautilus::select(isZero, RHS{1}, rhsVal);
+    }
+}
+
 /// Integer division and remainder trap in hardware (SIGFPE) on a zero divisor and on MIN / -1. Both must surface as a query error
-/// instead of killing the worker. Returns the denominator that is safe to divide by:
-///  - NOT NULL integers: throws ArithmeticalError for a zero divisor and for MIN / -1, otherwise returns the divisor unchanged.
-///  - nullable integers: throws for a non-null zero divisor and for non-null MIN / -1. A NULL operand holds arbitrary raw bits, so
-///    the divisor is replaced by 1 whenever the raw operands would trap, and the (discarded) division can not fault.
-///  - other operand types (floating point): a zero divisor throws only for nullable operands, as before.
+/// instead of killing the worker. Returns the denominator that is safe to divide by.
 template <bool IsModulo, typename LHS, typename RHS>
 RHS makeSafeDenominator(
     const LHS& lhsVal,
@@ -369,62 +444,19 @@ RHS makeSafeDenominator(
     const nautilus::val<bool>& leftIsNull,
     const nautilus::val<bool>& rightIsNull)
 {
-    using LhsBasic = typename LHS::basic_type;
-    using RhsBasic = typename RHS::basic_type;
+    using LhsBasic = LHS::basic_type;
+    using RhsBasic = RHS::basic_type;
     if constexpr (not(std::is_integral_v<LhsBasic> and std::is_integral_v<RhsBasic>))
     {
-        if (nullable)
-        {
-            if (rhsVal == RHS{0} and not rightIsNull)
-            {
-                raiseDivisorIsZero<IsModulo>();
-            }
-            return nautilus::select(rhsVal == RHS{0}, RHS{1}, rhsVal);
-        }
-        return rhsVal;
+        return makeSafeDenominatorNonIntegral<IsModulo>(rhsVal, nullable, rightIsNull);
     }
     else
     {
-        /// MIN / -1 needs two signed operands, the dividend being the minimum of the (promoted) result type. Operands narrower than int are
-        /// promoted to int, so e.g. INT8_MIN / -1 = 128 is representable and does not trap. With an unsigned operand the result is unsigned.
-        using ResultBasic = typename decltype(lhsVal / rhsVal)::basic_type;
-        constexpr bool canOverflow = std::is_signed_v<LhsBasic> and std::is_signed_v<RhsBasic> and std::is_signed_v<ResultBasic>
-            and std::numeric_limits<LhsBasic>::min() == std::numeric_limits<ResultBasic>::min();
-
-        const auto isZero = rhsVal == RHS{0};
         if (nullable)
         {
-            if (isZero and not rightIsNull)
-            {
-                raiseDivisorIsZero<IsModulo>();
-            }
-            if constexpr (canOverflow)
-            {
-                const auto isOverflow = lhsVal == LHS{std::numeric_limits<LhsBasic>::min()} and rhsVal == RHS{-1};
-                if (isOverflow and not(leftIsNull or rightIsNull))
-                {
-                    raiseMinByMinusOne<IsModulo>();
-                }
-                return nautilus::select(isZero or isOverflow, RHS{1}, rhsVal);
-            }
-            else
-            {
-                return nautilus::select(isZero, RHS{1}, rhsVal);
-            }
+            return makeSafeDenominatorIntegralNullable<IsModulo>(lhsVal, rhsVal, leftIsNull, rightIsNull);
         }
-
-        if (isZero)
-        {
-            raiseDivisorIsZero<IsModulo>();
-        }
-        if constexpr (canOverflow)
-        {
-            if (lhsVal == LHS{std::numeric_limits<LhsBasic>::min()} and rhsVal == RHS{-1})
-            {
-                raiseMinByMinusOne<IsModulo>();
-            }
-        }
-        return rhsVal;
+        return makeSafeDenominatorIntegral<IsModulo>(lhsVal, rhsVal);
     }
 }
 }

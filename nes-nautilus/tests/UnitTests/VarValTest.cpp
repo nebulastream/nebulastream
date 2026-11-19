@@ -519,6 +519,8 @@ void expectModuloMinByMinusOne(const Operation& operation)
     expectArithmeticalError(operation, "Can not modulo MIN by -1!");
 }
 
+constexpr int dividend = 5;
+
 template <typename T>
 VarVal notNull(const T value)
 {
@@ -534,39 +536,39 @@ VarVal nullable(const T value, const bool isNull)
 
 TEST_F(VarValTest, divisionByZeroNotNullThrows)
 {
-    expectDivideByZero([] { return notNull<int8_t>(5) / notNull<int8_t>(0); });
-    expectDivideByZero([] { return notNull<int32_t>(5) / notNull<int32_t>(0); });
-    expectDivideByZero([] { return notNull<int64_t>(5) / notNull<int64_t>(0); });
-    expectDivideByZero([] { return notNull<uint8_t>(5) / notNull<uint8_t>(0); });
-    expectDivideByZero([] { return notNull<uint64_t>(5) / notNull<uint64_t>(0); });
-    expectDivideByZero([] { return notNull<int32_t>(5) / notNull<uint64_t>(0); });
-    expectModuloByZero([] { return notNull<int32_t>(5) % notNull<int32_t>(0); });
-    expectModuloByZero([] { return notNull<int64_t>(5) % notNull<int64_t>(0); });
-    expectModuloByZero([] { return notNull<uint8_t>(5) % notNull<uint8_t>(0); });
-    expectModuloByZero([] { return notNull<uint64_t>(5) % notNull<uint64_t>(0); });
-    expectModuloByZero([] { return notNull<uint32_t>(5) % notNull<int8_t>(0); });
+    expectDivideByZero([] { return notNull<int8_t>(dividend) / notNull<int8_t>(0); });
+    expectDivideByZero([] { return notNull<int32_t>(dividend) / notNull<int32_t>(0); });
+    expectDivideByZero([] { return notNull<int64_t>(dividend) / notNull<int64_t>(0); });
+    expectDivideByZero([] { return notNull<uint8_t>(dividend) / notNull<uint8_t>(0); });
+    expectDivideByZero([] { return notNull<uint64_t>(dividend) / notNull<uint64_t>(0); });
+    expectDivideByZero([] { return notNull<int32_t>(dividend) / notNull<uint64_t>(0); });
+    expectModuloByZero([] { return notNull<int32_t>(dividend) % notNull<int32_t>(0); });
+    expectModuloByZero([] { return notNull<int64_t>(dividend) % notNull<int64_t>(0); });
+    expectModuloByZero([] { return notNull<uint8_t>(dividend) % notNull<uint8_t>(0); });
+    expectModuloByZero([] { return notNull<uint64_t>(dividend) % notNull<uint64_t>(0); });
+    expectModuloByZero([] { return notNull<uint32_t>(dividend) % notNull<int8_t>(0); });
 }
 
 TEST_F(VarValTest, divisionByZeroNullableThrows)
 {
-    expectDivideByZero([] { return nullable<int32_t>(5, false) / nullable<int32_t>(0, false); });
-    expectDivideByZero([] { return notNull<int32_t>(5) / nullable<int32_t>(0, false); });
-    expectModuloByZero([] { return nullable<uint64_t>(5, false) % notNull<uint64_t>(0); });
-    expectModuloByZero([] { return nullable<int8_t>(5, false) % nullable<int8_t>(0, false); });
-    expectDivideByZero([] { return nullable<uint32_t>(5, false) / nullable<uint32_t>(0, false); });
-    expectDivideByZero([] { return nullable<uint64_t>(5, false) / notNull<uint64_t>(0); });
-    expectModuloByZero([] { return nullable<uint32_t>(5, false) % nullable<uint32_t>(0, false); });
-    expectModuloByZero([] { return notNull<uint64_t>(5) % nullable<uint64_t>(0, false); });
-    expectDivideByZero([] { return notNull<int16_t>(5) / notNull<int16_t>(0); });
-    expectModuloByZero([] { return notNull<int16_t>(5) % notNull<int16_t>(0); });
-    expectDivideByZero([] { return nullable<int16_t>(5, false) / nullable<int16_t>(0, false); });
-    expectModuloByZero([] { return nullable<int16_t>(5, false) % nullable<int16_t>(0, false); });
+    expectDivideByZero([] { return nullable<int32_t>(dividend, false) / nullable<int32_t>(0, false); });
+    expectDivideByZero([] { return notNull<int32_t>(dividend) / nullable<int32_t>(0, false); });
+    expectModuloByZero([] { return nullable<uint64_t>(dividend, false) % notNull<uint64_t>(0); });
+    expectModuloByZero([] { return nullable<int8_t>(dividend, false) % nullable<int8_t>(0, false); });
+    expectDivideByZero([] { return nullable<uint32_t>(dividend, false) / nullable<uint32_t>(0, false); });
+    expectDivideByZero([] { return nullable<uint64_t>(dividend, false) / notNull<uint64_t>(0); });
+    expectModuloByZero([] { return nullable<uint32_t>(dividend, false) % nullable<uint32_t>(0, false); });
+    expectModuloByZero([] { return notNull<uint64_t>(dividend) % nullable<uint64_t>(0, false); });
+    expectDivideByZero([] { return notNull<int16_t>(dividend) / notNull<int16_t>(0); });
+    expectModuloByZero([] { return notNull<int16_t>(dividend) % notNull<int16_t>(0); });
+    expectDivideByZero([] { return nullable<int16_t>(dividend, false) / nullable<int16_t>(0, false); });
+    expectModuloByZero([] { return nullable<int16_t>(dividend, false) % nullable<int16_t>(0, false); });
 }
 
 TEST_F(VarValTest, divisionOfNullByNonNullZeroThrows)
 {
-    expectDivideByZero([] { return nullable<int32_t>(5, true) / nullable<int32_t>(0, false); });
-    expectModuloByZero([] { return nullable<int32_t>(5, true) % notNull<int32_t>(0); });
+    expectDivideByZero([] { return nullable<int32_t>(dividend, true) / nullable<int32_t>(0, false); });
+    expectModuloByZero([] { return nullable<int32_t>(dividend, true) % notNull<int32_t>(0); });
 }
 
 TEST_F(VarValTest, divisionMixedWidthsOfMinByMinusOne)
@@ -578,7 +580,7 @@ TEST_F(VarValTest, divisionMixedWidthsOfMinByMinusOne)
     const auto widened = notNull<int32_t>(std::numeric_limits<int32_t>::min()) / notNull<int64_t>(-1);
     EXPECT_EQ(widened.getRawValueAs<nautilus::val<int64_t>>(), -static_cast<int64_t>(std::numeric_limits<int32_t>::min()));
     /// Nullable INT8: a zero divisor throws, INT8_MIN / -1 is representable after promotion
-    expectDivideByZero([] { return nullable<int8_t>(5, false) / nullable<int8_t>(0, false); });
+    expectDivideByZero([] { return nullable<int8_t>(dividend, false) / nullable<int8_t>(0, false); });
     const auto promoted = nullable<int8_t>(std::numeric_limits<int8_t>::min(), false) / nullable<int8_t>(-1, false);
     EXPECT_EQ(promoted.getRawValueAs<nautilus::val<int32_t>>(), int32_t{128});
 }
@@ -586,9 +588,9 @@ TEST_F(VarValTest, divisionMixedWidthsOfMinByMinusOne)
 TEST_F(VarValTest, divisionByNullZeroIsNull)
 {
     /// A NULL divisor holds arbitrary raw bits (here 0); the result is NULL and must not fail.
-    const auto quotient = notNull<int32_t>(5) / nullable<int32_t>(0, true);
+    const auto quotient = notNull<int32_t>(dividend) / nullable<int32_t>(0, true);
     EXPECT_TRUE(static_cast<bool>(quotient.isNull()));
-    const auto remainder = nullable<int32_t>(5, false) % nullable<int32_t>(0, true);
+    const auto remainder = nullable<int32_t>(dividend, false) % nullable<int32_t>(0, true);
     EXPECT_TRUE(static_cast<bool>(remainder.isNull()));
 }
 
