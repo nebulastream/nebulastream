@@ -1135,8 +1135,7 @@ TEST_F(StatementBinderTest, ThresholdMinimumCountAcceptsBoundaryValues)
 {
     for (const auto* minimumCount : {"1", "2", "2147483647"})
     {
-        const auto query
-            = fmt::format("SELECT SUM(a) AS s FROM (SELECT * FROM s1) WINDOW THRESHOLD(a > 1, {}) INTO sink", minimumCount);
+        const auto query = fmt::format("SELECT SUM(a) AS s FROM (SELECT * FROM s1) WINDOW THRESHOLD(a > 1, {}) INTO sink", minimumCount);
         EXPECT_NO_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)) << minimumCount;
     }
 }
