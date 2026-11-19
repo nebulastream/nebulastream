@@ -100,7 +100,7 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
 
 const ConfigField<uint64_t> EMIT_COALESCING_DELAY{
     Identifier::parse("emit_coalescing_delay_us"),
-    "Microseconds an emit may hold an output to merge it with those of neighboring inputs. 0 disables coalescing.",
+    "Microseconds a consuming pipeline's scan may hold an input to process it together with adjacent ones. 0 disables coalescing.",
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{0}};

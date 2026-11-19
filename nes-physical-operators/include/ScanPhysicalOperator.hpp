@@ -14,12 +14,14 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -33,14 +35,26 @@ public:
     explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
+
+    void setCollector(OperatorHandlerId collector);
+
+    [[nodiscard]] bool isRaw() const { return isRawScan; }
+
+    [[nodiscard]] uint64_t getCapacity() const { return bufferRef->getCapacity(); }
 
 private:
     std::shared_ptr<TupleBufferRef> bufferRef;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::optional<PhysicalOperator> child;
     bool isRawScan = false;
+    std::optional<OperatorHandlerId> collector;
+
+    void collectingOpen(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void scanRecords(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 
     void rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 };

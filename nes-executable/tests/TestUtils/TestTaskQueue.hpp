@@ -108,7 +108,7 @@ public:
         this->operatorHandlers = operatorHandlers;
     }
 
-    void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override;
+    void repeatTask(const TupleBuffer&, std::chrono::microseconds) override;
 
     void scheduleCallback(std::chrono::microseconds, std::function<void(PipelineExecutionContext&)>) override
     {

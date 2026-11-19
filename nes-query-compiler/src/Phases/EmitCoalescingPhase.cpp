@@ -15,36 +15,19 @@
 #include <Phases/EmitCoalescingPhase.hpp>
 
 #include <chrono>
-#include <cstddef>
 #include <memory>
-#include <optional>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <CoalescingEmitOperatorHandler.hpp>
-#include <EmitPhysicalOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <InputCollector.hpp>
 #include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::EmitCoalescingPhase
 {
-
-namespace
-{
-/// Bounds the pooled buffers a coalescing emit holds per origin.
-constexpr size_t MAX_HELD_RUNS_PER_ORIGIN = 64;
-
-std::optional<EmitPhysicalOperator> closingEmit(const Pipeline& pipeline)
-{
-    auto current = pipeline.getRootOperator();
-    while (const auto child = current.getChild())
-    {
-        current = *child;
-    }
-    return current.tryGet<EmitPhysicalOperator>();
-}
-}
 
 void apply(PipelinedQueryPlan& plan, const std::chrono::microseconds maxDelay)
 {
@@ -65,11 +48,12 @@ void apply(PipelinedQueryPlan& plan, const std::chrono::microseconds maxDelay)
         }
         if (pipeline->isOperatorPipeline())
         {
-            if (const auto emit = closingEmit(*pipeline); emit && CoalescingEmitOperatorHandler::canReadBack(*emit->getBufferRef()))
+            if (auto scan = pipeline->getRootOperator().tryGet<ScanPhysicalOperator>(); scan && !scan->isRaw())
             {
-                pipeline->getOperatorHandlers().insert_or_assign(
-                    emit->getOperatorHandlerId(),
-                    std::make_shared<CoalescingEmitOperatorHandler>(emit->getBufferRef(), maxDelay, MAX_HELD_RUNS_PER_ORIGIN));
+                const auto collectorId = getNextOperatorHandlerId();
+                pipeline->getOperatorHandlers().emplace(collectorId, std::make_shared<InputCollector>(scan->getCapacity(), maxDelay));
+                scan->setCollector(collectorId);
+                pipeline->setRootOperator(*scan);
             }
         }
         pending.insert(pending.end(), pipeline->getSuccessors().begin(), pipeline->getSuccessors().end());

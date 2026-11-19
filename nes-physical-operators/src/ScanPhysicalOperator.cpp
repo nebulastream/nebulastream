@@ -15,18 +15,27 @@
 
 #include <ScanPhysicalOperator.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
 
+#include <DataTypes/DataTypesUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/TimestampRef.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
+#include <InputCollector.hpp>
 #include <InputFormatter.hpp>
 #include <PhysicalOperator.hpp>
+#include <function.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 
@@ -59,8 +68,60 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
     inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
+void ScanPhysicalOperator::setCollector(const OperatorHandlerId collector)
+{
+    this->collector = collector;
+}
+
+void ScanPhysicalOperator::scanRecords(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    const auto numberOfRecords = recordBuffer.getNumRecords();
+    for (nautilus::val<uint64_t> i = uint64_t{0}; i < numberOfRecords; i = i + uint64_t{1})
+    {
+        auto record = bufferRef->readRecord(projections, recordBuffer, i);
+        executeChild(executionCtx, record);
+    }
+}
+
+void ScanPhysicalOperator::collectingOpen(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    using Unit = InputCollector::Unit;
+    const auto handler = executionCtx.getGlobalOperatorHandler(*collector);
+    const auto unit = nautilus::invoke(InputCollector::collectProxy, handler, recordBuffer.getReference());
+    if (unit == nautilus::val<const Unit*>(nullptr))
+    {
+        executionCtx.setOpenReturnState(OpenReturnState::HOLD);
+        /// A held input skips `close`.
+        nautilus::invoke(InputCollector::repeatIfArmedProxy, executionCtx.pipelineContext, recordBuffer.getReference());
+        return;
+    }
+    executionCtx.originId = nautilus::val<OriginId>(*getMemberWithOffset<OriginId::Underlying>(unit, offsetof(Unit, origin)));
+    executionCtx.watermarkTs = nautilus::val<Timestamp>(*getMemberWithOffset<Timestamp::Underlying>(unit, offsetof(Unit, watermark)));
+    executionCtx.currentTs = nautilus::val<Timestamp>(*getMemberWithOffset<Timestamp::Underlying>(unit, offsetof(Unit, creation)));
+    executionCtx.sequenceNumber
+        = nautilus::val<SequenceNumber>(*getMemberWithOffset<SequenceNumber::Underlying>(unit, offsetof(Unit, sequenceNumber)));
+    executionCtx.sequenceRangeOffset = *getMemberWithOffset<uint32_t>(unit, offsetof(Unit, rangeOffset));
+    executionCtx.chunkNumber = nautilus::val<ChunkNumber>(*getMemberWithOffset<ChunkNumber::Underlying>(unit, offsetof(Unit, chunkNumber)));
+    executionCtx.lastChunk = *getMemberWithOffset<bool>(unit, offsetof(Unit, lastChunk));
+    /// The children's `open` and `close` receive the input that triggered the task, whose metadata may differ from the unit's.
+    openChild(executionCtx, recordBuffer);
+    const nautilus::val<const TupleBuffer*> buffers = *getMemberWithOffset<const TupleBuffer*>(unit, offsetof(Unit, buffers));
+    const nautilus::val<uint64_t> numberOfBuffers = *getMemberWithOffset<uint64_t>(unit, offsetof(Unit, numberOfBuffers));
+    for (nautilus::val<uint64_t> b = uint64_t{0}; b < numberOfBuffers; b = b + uint64_t{1})
+    {
+        RecordBuffer unitBuffer{BorrowedNautilusBuffer::from(buffers + b)};
+        scanRecords(executionCtx, unitBuffer);
+    }
+    nautilus::invoke(InputCollector::releaseUnitProxy);
+}
+
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    if (collector)
+    {
+        collectingOpen(executionCtx, recordBuffer);
+        return;
+    }
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
@@ -78,13 +139,26 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.sequenceRangeOffset = recordBuffer.getSequenceRangeOffset();
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
-    /// iterate over records in buffer
-    auto numberOfRecords = recordBuffer.getNumRecords();
-    for (nautilus::val<uint64_t> i = uint64_t{0}; i < numberOfRecords; i = i + uint64_t{1})
+    scanRecords(executionCtx, recordBuffer);
+}
+
+void ScanPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    closeChild(executionCtx, recordBuffer);
+    if (collector)
     {
-        auto record = bufferRef->readRecord(projections, recordBuffer, i);
-        executeChild(executionCtx, record);
+        /// A repeated task must not emit, so the repeat follows the children's close.
+        nautilus::invoke(InputCollector::repeatIfArmedProxy, executionCtx.pipelineContext, recordBuffer.getReference());
     }
+}
+
+void ScanPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+{
+    if (collector)
+    {
+        nautilus::invoke(InputCollector::stopProxy, executionCtx.getGlobalOperatorHandler(*collector), executionCtx.pipelineContext);
+    }
+    terminateChild(executionCtx);
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

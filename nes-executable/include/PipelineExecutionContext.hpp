@@ -50,7 +50,7 @@ public:
 
     /// This method can only be called once per pipeline execution! The Pipeline should immediately finish its execution as the exact same task could be executed
     /// immediately.
-    virtual void repeatTask(const TupleBuffer&, std::chrono::milliseconds) = 0;
+    virtual void repeatTask(const TupleBuffer&, std::chrono::microseconds) = 0;
 
     /// Runs `callback` on a worker thread after at least `delay`. Buffers it emits go to the successors of this pipeline.
     /// It never runs during or after the pipeline's stop. One still pending is dropped without running once it becomes due or the

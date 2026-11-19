@@ -19,7 +19,5 @@
 
 namespace NES::QueryCompilation::EmitCoalescingPhase
 {
-/// Gives every emit whose buffers can be concatenated a `CoalescingEmitOperatorHandler` whose coalescer holds outputs for up to `maxDelay`
-/// (@see RangeCoalescer). A zero delay leaves the plan unchanged.
 void apply(PipelinedQueryPlan& plan, std::chrono::microseconds maxDelay);
 }

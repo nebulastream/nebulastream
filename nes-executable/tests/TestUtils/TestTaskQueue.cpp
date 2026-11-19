@@ -59,7 +59,7 @@ TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
     throw BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
 }
 
-void TestPipelineExecutionContext::repeatTask(const TupleBuffer&, std::chrono::milliseconds)
+void TestPipelineExecutionContext::repeatTask(const TupleBuffer&, std::chrono::microseconds)
 {
     PRECONDITION(repeatTaskCallback != nullptr, "Cannot repeat a task without a valid repeatTaskCallback function");
     repeatTaskCallback();

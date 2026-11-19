@@ -86,9 +86,12 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
             case OpenReturnState::REPEAT: {
                 nautilus::invoke(
                     +[](PipelineExecutionContext* pec, const TupleBuffer* buffer)
-                    { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
+                    { pec->repeatTask(*buffer, std::chrono::microseconds::zero()); },
                     pipelineExecutionContext,
                     recordBufferRef);
+                break;
+            }
+            case OpenReturnState::HOLD: {
                 break;
             }
         }

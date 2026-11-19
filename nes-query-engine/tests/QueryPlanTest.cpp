@@ -146,7 +146,7 @@ concept RangeOf = std::ranges::range<R> && std::same_as<std::ranges::range_value
 
 struct TestPipelineExecutionContext : PipelineExecutionContext
 {
-    MOCK_METHOD(void, repeatTask, (const TupleBuffer&, std::chrono::milliseconds), (override));
+    MOCK_METHOD(void, repeatTask, (const TupleBuffer&, std::chrono::microseconds), (override));
     MOCK_METHOD(void, scheduleCallback, (std::chrono::microseconds, std::function<void(PipelineExecutionContext&)>), (override));
     MOCK_METHOD(WorkerThreadId, getWorkerThreadId, (), (const, override));
     MOCK_METHOD(TupleBuffer, allocateTupleBuffer, (), (override));

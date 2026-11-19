@@ -21,6 +21,7 @@ add_source_files(nes-physical-operators
         EmitOperatorHandler.cpp
         CoalescingEmitOperatorHandler.cpp
         RangeCoalescer.cpp
+        InputCollector.cpp
         ScanPhysicalOperator.cpp
         HashMapSlice.cpp
         SourceDescriptorPhysicalOperator.cpp

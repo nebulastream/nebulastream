@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -38,14 +38,14 @@
 #include <Util/UUID.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <CoalescingEmitOperatorHandler.hpp>
-#include <EmitPhysicalOperator.hpp>
+#include <InputCollector.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
 #include <QueryId.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourceDescriptorPhysicalOperator.hpp>
 #include <UnionPhysicalOperator.hpp>
@@ -57,16 +57,6 @@ namespace
 using PipelineLocation = PhysicalOperatorWrapper::PipelineLocation;
 constexpr std::chrono::microseconds DELAY{1000};
 constexpr uint64_t OPERATOR_BUFFER_SIZE = 4096;
-
-PhysicalOperator closingOperator(const Pipeline& pipeline)
-{
-    auto current = pipeline.getRootOperator();
-    while (const auto child = current.getChild())
-    {
-        current = *child;
-    }
-    return current;
-}
 
 std::vector<std::shared_ptr<Pipeline>> allPipelines(const PipelinedQueryPlan& plan)
 {
@@ -153,114 +143,82 @@ public:
         return QueryCompilation::PipeliningPhase::apply(std::move(builder).finalize());
     }
 
-    /// Whether the handler of each closing emit of the operator pipelines coalesces.
-    static std::vector<bool> coalescesPerEmit(const PipelinedQueryPlan& plan)
+    struct Scan
     {
-        std::vector<bool> emits;
+        bool raw;
+        bool collects;
+    };
+
+    /// The scans that root the operator pipelines, and whether their pipeline got an `InputCollector`.
+    static std::vector<Scan> scans(const PipelinedQueryPlan& plan)
+    {
+        std::vector<Scan> scans;
         for (const auto& pipeline : allPipelines(plan))
         {
-            if (!pipeline->isOperatorPipeline())
+            if (const auto scan = pipeline->getRootOperator().tryGet<ScanPhysicalOperator>(); pipeline->isOperatorPipeline() && scan)
             {
-                continue;
-            }
-            if (const auto emit = closingOperator(*pipeline).tryGet<EmitPhysicalOperator>())
-            {
-                const auto& handler = pipeline->getOperatorHandlers().at(emit->getOperatorHandlerId());
-                emits.push_back(std::dynamic_pointer_cast<CoalescingEmitOperatorHandler>(handler) != nullptr);
+                const auto& handlers = pipeline->getOperatorHandlers();
+                const bool collects = std::ranges::any_of(
+                    handlers, [](const auto& entry) { return std::dynamic_pointer_cast<InputCollector>(entry.second) != nullptr; });
+                scans.push_back({.raw = scan->isRaw(), .collects = collects});
             }
         }
-        return emits;
+        return scans;
+    }
+
+    /// A source feeding `shared`, whose output goes to the sink and to `consumer`, so that `consumer` gets its own pipeline.
+    std::shared_ptr<PipelinedQueryPlan> fanOut(const MemoryLayoutType sharedOutputLayout) const
+    {
+        auto source = makeSourceWrapper();
+        auto shared = makeIntermediateWrapper(sharedOutputLayout);
+        auto consumer = makeIntermediateWrapper(MemoryLayoutType::ROW_LAYOUT);
+        auto sink = makeSinkWrapper("NATIVE");
+        shared->addChild(source);
+        consumer->addChild(shared);
+        sink->addChild(shared);
+        sink->addChild(consumer);
+        return pipeline(sink);
     }
 
     SourceCatalog sourceCatalog;
     SinkCatalog sinkCatalog;
 };
 
-TEST_F(EmitCoalescingPhaseTest, DefaultEmitCoalesces)
+/// Only the scan that reads another pipeline's output collects; the raw scan behind the source does not.
+TEST_F(EmitCoalescingPhaseTest, OnlyTheNonRawScanCollects)
 {
-    auto source = makeSourceWrapper();
-    auto op = makeIntermediateWrapper(MemoryLayoutType::ROW_LAYOUT);
-    auto sink = makeSinkWrapper("NATIVE");
-    op->addChild(source);
-    sink->addChild(op);
-    const auto plan = pipeline(sink);
+    const auto plan = fanOut(MemoryLayoutType::ROW_LAYOUT);
 
     QueryCompilation::EmitCoalescingPhase::apply(*plan, DELAY);
 
-    const auto emits = coalescesPerEmit(*plan);
-    ASSERT_EQ(emits.size(), 1U);
-    EXPECT_TRUE(emits[0]);
-}
-
-TEST_F(EmitCoalescingPhaseTest, ColumnarEmitCoalesces)
-{
-    auto source = makeSourceWrapper();
-    auto op = makeIntermediateWrapper(MemoryLayoutType::COLUMNAR_LAYOUT);
-    auto sink = makeSinkWrapper("NATIVE");
-    op->addChild(source);
-    sink->addChild(op);
-    const auto plan = pipeline(sink);
-
-    QueryCompilation::EmitCoalescingPhase::apply(*plan, DELAY);
-
-    const auto emits = coalescesPerEmit(*plan);
-    ASSERT_EQ(emits.size(), 1U);
-    EXPECT_TRUE(emits[0]);
-}
-
-TEST_F(EmitCoalescingPhaseTest, FormattingEmitStaysAsItIs)
-{
-    auto source = makeSourceWrapper();
-    auto op = makeIntermediateWrapper(MemoryLayoutType::ROW_LAYOUT);
-    auto sink = makeSinkWrapper("CSV");
-    op->addChild(source);
-    sink->addChild(op);
-    const auto plan = pipeline(sink);
-
-    QueryCompilation::EmitCoalescingPhase::apply(*plan, DELAY);
-
-    const auto emits = coalescesPerEmit(*plan);
-    ASSERT_EQ(emits.size(), 1U);
-    EXPECT_FALSE(emits[0]);
-}
-
-/// A shared emit reached through several paths coalesces, and so does every consumer's emit.
-TEST_F(EmitCoalescingPhaseTest, EveryEmitOfAFanOutCoalesces)
-{
-    auto source = makeSourceWrapper();
-    auto shared = makeIntermediateWrapper(MemoryLayoutType::ROW_LAYOUT);
-    auto consumer = makeIntermediateWrapper(MemoryLayoutType::ROW_LAYOUT);
-    auto sink = makeSinkWrapper("NATIVE");
-    shared->addChild(source);
-    consumer->addChild(shared);
-    sink->addChild(shared);
-    sink->addChild(consumer);
-    const auto plan = pipeline(sink);
-
-    QueryCompilation::EmitCoalescingPhase::apply(*plan, DELAY);
-
-    const auto emits = coalescesPerEmit(*plan);
-    ASSERT_EQ(emits.size(), 2U);
-    for (const bool coalesces : emits)
+    const auto found = scans(*plan);
+    ASSERT_EQ(found.size(), 2U);
+    for (const auto& scan : found)
     {
-        EXPECT_TRUE(coalesces);
+        EXPECT_EQ(scan.collects, !scan.raw);
     }
+}
+
+TEST_F(EmitCoalescingPhaseTest, ColumnarScanCollects)
+{
+    const auto plan = fanOut(MemoryLayoutType::COLUMNAR_LAYOUT);
+
+    QueryCompilation::EmitCoalescingPhase::apply(*plan, DELAY);
+
+    const auto found = scans(*plan);
+    ASSERT_EQ(found.size(), 2U);
+    EXPECT_EQ(std::ranges::count_if(found, [](const Scan& scan) { return scan.collects; }), 1);
 }
 
 TEST_F(EmitCoalescingPhaseTest, ZeroDelayLeavesThePlanAsItIs)
 {
-    auto source = makeSourceWrapper();
-    auto op = makeIntermediateWrapper(MemoryLayoutType::ROW_LAYOUT);
-    auto sink = makeSinkWrapper("NATIVE");
-    op->addChild(source);
-    sink->addChild(op);
-    const auto plan = pipeline(sink);
+    const auto plan = fanOut(MemoryLayoutType::ROW_LAYOUT);
 
     QueryCompilation::EmitCoalescingPhase::apply(*plan, std::chrono::microseconds::zero());
 
-    const auto emits = coalescesPerEmit(*plan);
-    ASSERT_EQ(emits.size(), 1U);
-    EXPECT_FALSE(emits[0]);
+    const auto found = scans(*plan);
+    ASSERT_EQ(found.size(), 2U);
+    EXPECT_TRUE(std::ranges::none_of(found, [](const Scan& scan) { return scan.collects; }));
 }
 
 }

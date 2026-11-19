@@ -72,6 +72,8 @@ enum class OpenReturnState : uint8_t
 {
     CONTINUE,
     REPEAT,
+    /// Ends the task without `close`, since the scan holds its input.
+    HOLD,
 };
 
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well

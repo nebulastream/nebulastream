@@ -205,7 +205,7 @@ struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
-    std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
+    std::function<void(const TupleBuffer& tb, std::chrono::microseconds duration)> repeatHandler;
     std::function<void(std::chrono::microseconds delay, std::function<void(PipelineExecutionContext&)> callback)> scheduleHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
     size_t numberOfThreads;
@@ -222,7 +222,7 @@ struct DefaultPEC final : PipelineExecutionContext
         PipelineId pipelineId,
         std::shared_ptr<AbstractBufferProvider> bm,
         std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
-        std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler,
+        std::function<void(const TupleBuffer& tb, std::chrono::microseconds)> repeatHandler,
         std::function<void(std::chrono::microseconds, std::function<void(PipelineExecutionContext&)>)> scheduleHandler)
         : handler(std::move(handler))
         , repeatHandler(std::move(repeatHandler))
@@ -258,7 +258,7 @@ struct DefaultPEC final : PipelineExecutionContext
         return handler(buffer, policy);
     }
 
-    void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds duration) override
+    void repeatTask(const TupleBuffer& buffer, std::chrono::microseconds duration) override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
 #ifndef NO_ASSERT
@@ -528,7 +528,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
-        std::optional<std::pair<TupleBuffer, std::chrono::milliseconds>> requiresTaskRepetition;
+        std::optional<std::pair<TupleBuffer, std::chrono::microseconds>> requiresTaskRepetition;
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -536,7 +536,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             { return dispatchToSuccessors(task.queryId, *pipeline, tupleBuffer, continuationPolicy, taskId); },
-            [&](const TupleBuffer& tupleBuffer, std::chrono::milliseconds duration)
+            [&](const TupleBuffer& tupleBuffer, std::chrono::microseconds duration)
             {
                 INVARIANT(!requiresTaskRepetition.has_value(), "Pipeline attempts to repeat the task multiple times");
                 requiresTaskRepetition = std::make_pair(tupleBuffer, duration);
@@ -604,7 +604,7 @@ bool ThreadPool::WorkerThread::operator()(PipelineCallbackTask& task) const
         pool.bufferProvider,
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         { return dispatchToSuccessors(task.queryId, *pipeline, tupleBuffer, continuationPolicy, taskId); },
-        [](const TupleBuffer&, std::chrono::milliseconds)
+        [](const TupleBuffer&, std::chrono::microseconds)
         { INVARIANT(false, "A pipeline callback cannot be repeated; it can schedule another callback instead"); },
         [this, &task](std::chrono::microseconds delay, std::function<void(PipelineExecutionContext&)> next)
         { pool.scheduleCallback(task.queryId, task.pipeline, delay, std::move(next)); });
@@ -651,7 +651,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "concurrently and there is no guarantee that the successor pipeline has been initialized");
                 return false;
             },
-            [&](const TupleBuffer&, std::chrono::milliseconds)
+            [&](const TupleBuffer&, std::chrono::microseconds)
             {
                 INVARIANT(
                     false,
@@ -717,7 +717,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
 {
     LogContext logContext("Task", fmt::format("{}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id));
     ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
-    std::optional<std::chrono::milliseconds> requiresTaskRepetition;
+    std::optional<std::chrono::microseconds> requiresTaskRepetition;
     DefaultPEC pec(
         pool.numberOfThreads(),
         WorkerThread::id,
@@ -740,7 +740,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
             }
             return true;
         },
-        [&](const TupleBuffer&, std::chrono::milliseconds duration)
+        [&](const TupleBuffer&, std::chrono::microseconds duration)
         {
             INVARIANT(!requiresTaskRepetition.has_value(), "Pipeline attempts to repeat the task multiple times");
             requiresTaskRepetition = duration;

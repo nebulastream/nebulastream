@@ -127,7 +127,7 @@ struct RecordingContext final : PipelineExecutionContext
         return callbacks.size();
     }
 
-    void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
+    void repeatTask(const TupleBuffer&, std::chrono::microseconds) override { INVARIANT(false, "This function should not be called"); }
 
     TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
 

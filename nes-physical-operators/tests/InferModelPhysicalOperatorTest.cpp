@@ -105,7 +105,7 @@ protected:
             operatorHandlers = &opHandlers;
         }
 
-        void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
+        void repeatTask(const TupleBuffer&, std::chrono::microseconds) override { INVARIANT(false, "This function should not be called"); }
 
         void scheduleCallback(std::chrono::microseconds, std::function<void(PipelineExecutionContext&)>) override
         {
