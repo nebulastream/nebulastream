@@ -12,19 +12,18 @@
     limitations under the License.
 */
 
-use crate::config::REMOTE_FRAGMENT_POLL_INTERVAL;
-use crate::query_fragment::{CallError, RawStatus, Transport};
 use crate::remote::worker_rpc_service;
+use crate::remote::worker_rpc_service::WorkerStatusResponse;
 use crate::remote::worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
+use crate::worker_task::{CallError, Transport};
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::QueryFragmentError;
 use model::worker::endpoint::NetworkAddr;
-use std::time::Duration;
 use tonic::transport::Channel;
-use tracing::{debug, warn};
+use tracing::warn;
 
-pub(super) use super::WorkerRpcServiceClient;
+use super::WorkerRpcServiceClient;
 
 #[derive(Clone)]
 pub(crate) struct RemoteTransport {
@@ -37,12 +36,8 @@ impl RemoteTransport {
         Self { channel, host_addr }
     }
 
-    pub(super) fn client(&self) -> WorkerRpcServiceClient<Channel> {
+    fn client(&self) -> WorkerRpcServiceClient<Channel> {
         WorkerRpcServiceClient::new(self.channel.clone())
-    }
-
-    pub(super) const fn channel(&self) -> &Channel {
-        &self.channel
     }
 
     fn call_error(&self, status: &tonic::Status) -> CallError {
@@ -52,10 +47,6 @@ impl RemoteTransport {
 }
 
 impl Transport for RemoteTransport {
-    fn poll_interval(&self) -> Duration {
-        REMOTE_FRAGMENT_POLL_INTERVAL
-    }
-
     #[tracing::instrument(level = "debug", skip(self, plan))]
     async fn start(&self, plan: SerializableQueryPlan) -> Result<(), CallError> {
         let req = worker_rpc_service::StartQueryRequest {
@@ -81,37 +72,17 @@ impl Transport for RemoteTransport {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn status(&self, id: QueryFragmentId) -> Result<RawStatus, CallError> {
-        let req = worker_rpc_service::QueryStatusRequest {
-            query_id: Some(SerializableQueryId::from_fragment_id(*id)),
+    async fn report(&self, after: u64) -> anyhow::Result<WorkerStatusResponse> {
+        let request = worker_rpc_service::WorkerStatusRequest {
+            after_unix_timestamp_in_milli_seconds: after,
         };
-        let reply = self
-            .client()
-            .request_query_status(req)
-            .await
-            .map_err(|status| self.call_error(&status))?
-            .into_inner();
-        let metrics = reply.metrics.as_ref();
-        let status = RawStatus {
-            state: reply.state,
-            start_ms: metrics.and_then(|m| m.start_unix_time_in_ms),
-            stop_ms: metrics.and_then(|m| m.stop_unix_time_in_ms),
-            error: metrics
-                .and_then(|m| m.error.as_ref())
-                .map(QueryFragmentError::from),
-        };
-        debug!(state = status.state, "status");
-        Ok(status)
+        Ok(self.client().request_status(request).await?.into_inner())
     }
 }
 
 fn classify(addr: &NetworkAddr, status: &tonic::Status) -> CallError {
     let code = reported_code(status);
-    // A status read returns `NOT_FOUND` for an unknown id,
-    // while a stop sends the worker's own code in the trailing metadata, so both count.
-    if status.code() == tonic::Code::NotFound || code == Some(ErrorCode::QueryNotFound) {
-        CallError::NotFound
-    } else if status.code() == tonic::Code::AlreadyExists {
+    if status.code() == tonic::Code::AlreadyExists {
         CallError::AlreadyExists
     } else if retryable(status.code()) {
         CallError::Transient(QueryFragmentError::Transport {
@@ -203,18 +174,6 @@ mod tests {
         ] {
             assert!(matches!(classify(&status), CallError::Failed(_)));
         }
-    }
-
-    #[test]
-    fn both_spellings_of_an_unknown_query_count_as_not_found() {
-        assert!(matches!(
-            classify(&tonic::Status::not_found("gone")),
-            CallError::NotFound
-        ));
-        assert!(matches!(
-            classify(&with_code(ErrorCode::QueryNotFound)),
-            CallError::NotFound
-        ));
     }
 
     #[test]

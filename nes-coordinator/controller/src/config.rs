@@ -16,46 +16,29 @@
 
 use std::time::Duration;
 
-/// How long a reconciliation loop waits between catalog reads when no wake-up arrives.
+/// How long the controller waits between catalog reads when no wake-up arrives.
 pub(crate) const POLL_INTERVAL: Duration = Duration::from_secs(5);
 
-/// How often a remote worker's active fragments are compared with the catalog.
-/// A fragment that has no non-terminal row for the worker can run for about this long before it is stopped.
-pub(crate) const ORPHAN_CHECK_INTERVAL: Duration = Duration::from_secs(5);
-
-/// How long a fragment lifecycle waits between status reads for a remote worker.
+/// How long a worker loop waits between status reports of a remote worker.
 /// A shorter interval detects state changes sooner and adds network traffic.
-pub(crate) const REMOTE_FRAGMENT_POLL_INTERVAL: Duration = Duration::from_secs(5);
+pub(crate) const REMOTE_REPORT_INTERVAL: Duration = Duration::from_secs(5);
 
 /// The same wait for an in-process worker.
-/// The read is an FFI call, so it costs almost nothing.
-pub(crate) const EMBEDDED_FRAGMENT_POLL_INTERVAL: Duration = Duration::from_millis(50);
+/// The report is an FFI call, so it costs almost nothing.
+pub(crate) const EMBEDDED_REPORT_INTERVAL: Duration = Duration::from_millis(50);
 
-/// Delay before a fragment task repeats a worker call or a catalog write after a retryable failure.
-pub(crate) const RETRY_INTERVAL: Duration = Duration::from_secs(2);
-
-/// How long a failed task keeps its key, so a failing task is not restarted in a tight loop.
-pub(crate) const TASK_RESPAWN_DELAY: Duration = Duration::from_secs(2);
-
-pub(crate) const REMOVED_WORKER_STOP_DEADLINE: Duration = Duration::from_secs(5);
-
-/// Minimum time between two catalog writes of an unchanged status.
+/// Minimum time between two catalog writes that only mark running fragments as observed.
 pub(crate) const OBSERVATION_WRITE_INTERVAL: Duration = Duration::from_secs(1);
 
-/// Retryable failures in a row at which a fragment fails.
-/// Every failure costs at most the RPC deadline and the retry delay,
-/// so a fragment fails after at most about two and a half minutes of failing calls.
+/// Failed starts in a row at which a fragment fails.
+/// A failed start is repeated at the next report, so a remote fragment fails after a few minutes of failing starts.
 pub(crate) const MAX_CONSECUTIVE_FAILURES: u32 = 40;
 
-pub(crate) const HEALTH_CHECK_INTERVAL: Duration = Duration::from_secs(5);
-
-/// Failed health checks in a row at which the link to a worker counts as lost.
+/// Missed reports in a row at which a worker counts as unreachable, and a removed worker is given up.
 pub(crate) const HEALTH_CHECK_MAX_MISSES: u32 = 3;
 
 pub(crate) const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub(crate) const VERSION_TIMEOUT: Duration = Duration::from_secs(3);
-
-pub(crate) const RECONNECT_INTERVAL: Duration = Duration::from_secs(5);
 
 pub(crate) const RPC_TIMEOUT: Duration = Duration::from_secs(2);

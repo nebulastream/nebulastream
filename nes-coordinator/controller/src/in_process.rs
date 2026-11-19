@@ -16,23 +16,20 @@
 
 mod client;
 
-use crate::query_fragment::RawStatus;
-use crate::worker_task::{ActiveFragments, Backend};
 use client::InProcessTransport;
 use model::query::query_fragment::QueryFragmentError;
 use model::worker;
-use model::worker::endpoint::NetworkAddr;
 use serde_json::{Map, Value};
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::task::JoinError;
 
 /// A worker in the coordinator's own process.
-/// Its calls block, so the transport runs them off the async runtime.
+/// Its calls block, so the transport runs each on a thread of its own, and a long start does not delay a stop or a report.
 pub trait InProcessWorker: Send + Sync + 'static {
     fn start_query_fragment(&self, plan: Vec<u8>) -> Result<(), QueryFragmentError>;
     fn stop_query_fragment(&self, id: i64) -> Result<(), QueryFragmentError>;
-    fn get_query_fragment_status(&self, id: i64) -> Result<RawStatus, QueryFragmentError>;
+    /// The serialized `WorkerStatusResponse` that the worker's gRPC service would return for `after_ms`.
+    fn worker_status(&self, after_ms: u64) -> anyhow::Result<Vec<u8>>;
 }
 
 /// Constructs an in-process worker from the worker row's config JSON.
@@ -44,40 +41,14 @@ pub trait WorkerFactory: Send + Sync + 'static {
     fn version(&self) -> String;
 }
 
-pub(crate) struct InProcessBackend {
+/// Creates the worker, so a worker loop calls it until it succeeds once.
+pub(crate) async fn connect(
     factory: Arc<dyn WorkerFactory>,
     worker: worker::Model,
-}
-
-impl InProcessBackend {
-    pub(crate) fn new(factory: Arc<dyn WorkerFactory>, worker: worker::Model) -> Self {
-        Self { factory, worker }
-    }
-}
-
-impl Backend for InProcessBackend {
-    type Transport = InProcessTransport;
-
-    const HEARTBEAT: Option<Duration> = None;
-
-    async fn connect(&self, _: &NetworkAddr) -> anyhow::Result<InProcessTransport> {
-        let config = embedded_worker_config(&self.worker)?;
-        let factory = self.factory.clone();
-        let worker = run_blocking(move || factory.create(&config)).await??;
-        Ok(InProcessTransport::new(worker))
-    }
-
-    /// An in-process worker has no call that lists its fragments, so nothing is compared for it.
-    async fn active_fragments(
-        &self,
-        _: &InProcessTransport,
-        after: u64,
-    ) -> anyhow::Result<ActiveFragments> {
-        Ok(ActiveFragments {
-            fragments: Vec::new(),
-            until: after,
-        })
-    }
+) -> anyhow::Result<InProcessTransport> {
+    let config = embedded_worker_config(&worker)?;
+    let worker = run_blocking(move || factory.create(&config)).await??;
+    Ok(InProcessTransport::new(worker))
 }
 
 /// The worker process option for its data-plane address, which is spelled differently from the catalog column.
@@ -126,6 +97,7 @@ async fn run_blocking<R: Send + 'static>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use model::worker::endpoint::NetworkAddr;
     use model::worker::{DesiredWorkerState, WorkerState};
 
     fn worker_with(config: Value) -> worker::Model {

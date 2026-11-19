@@ -21,6 +21,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES
@@ -45,13 +46,20 @@ struct WorkerStatus
         std::optional<Exception> error;
     };
 
-    /// Currently we will not store all historical data on the WorkerNode.
-    /// This timestamp indicates which events are captured by the WorkerStatus
+    /// Only queries that terminated at or after this time are listed as terminated.
+    /// Every active query is listed, whenever it started.
     std::chrono::system_clock::time_point after;
     std::chrono::system_clock::time_point until;
     std::vector<ActiveQuery> activeQueries;
     std::vector<TerminatedQuery> terminatedQueries;
 };
+
+/// Take `until` before the snapshots.
+/// A query that terminates while they are taken is then listed again by a status whose `after` is this `until`.
+WorkerStatus buildWorkerStatus(
+    const std::vector<LocalQueryStatusSnapshot>& snapshots,
+    std::chrono::system_clock::time_point after,
+    std::chrono::system_clock::time_point until);
 
 void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* response);
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response);

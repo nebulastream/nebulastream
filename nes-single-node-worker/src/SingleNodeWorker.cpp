@@ -176,53 +176,8 @@ std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQuerySta
 
 WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
 {
-    const std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
-    const auto summaries = nodeEngine->getQueryLog()->getStatus();
-    WorkerStatus status;
-    status.after = after;
-    status.until = until;
-    for (const auto& [queryId, state, metrics] : summaries)
-    {
-        switch (state)
-        {
-            case QueryStatus::Registered:
-                /// Ignore these for the worker status
-                break;
-            case QueryStatus::Started:
-                INVARIANT(metrics.start.has_value(), "If query is started, it should have a start timestamp");
-                if (metrics.start.value() >= after)
-                {
-                    status.activeQueries.emplace_back(queryId, std::nullopt);
-                }
-                break;
-            case QueryStatus::Running: {
-                INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
-                if (metrics.running.value() >= after)
-                {
-                    status.activeQueries.emplace_back(queryId, metrics.running.value());
-                }
-                break;
-            }
-            case QueryStatus::Stopped: {
-                /// A query stopped during setup may never have reported Running.
-                INVARIANT(metrics.stop.has_value(), "If query is stopped, it should have a stopped timestamp");
-                if (metrics.stop.value() >= after)
-                {
-                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
-                }
-                break;
-            }
-            case QueryStatus::Failed: {
-                INVARIANT(metrics.stop.has_value(), "If query has failed, it should have a stopped timestamp");
-                if (metrics.stop.value() >= after)
-                {
-                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
-                }
-                break;
-            }
-        }
-    }
-    return status;
+    const auto until = std::chrono::system_clock::now();
+    return buildWorkerStatus(nodeEngine->getQueryLog()->getStatus(), after, until);
 }
 
 }

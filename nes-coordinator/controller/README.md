@@ -1,78 +1,69 @@
 # Controller
 
-The `controller` crate owns the runtime tasks that operate workers and query fragments.  
+The `controller` crate owns the runtime tasks that operate workers and their query fragments.  
 For the coordinator's role, request flow, and general reconciliation model, see the [coordinator README](../README.md).
 
-## Task Hierarchy
+## Worker Loops
 
-The controller maintains one task for each worker that requires action.  
-Each worker task maintains the tasks for the query fragments assigned to that worker.
+The controller runs one loop for each actionable worker, keyed by the worker's address.  
+It starts a loop for every actionable worker that has none, and a loop ends once its worker is recorded as removed.
 
 ```mermaid
 flowchart TB
     Catalog[(Catalog)]
     Controller[Controller]
-
-    subgraph WorkerA[Worker Task]
-        FragmentA[Query Fragment Task]
-        FragmentB[Query Fragment Task]
-    end
-
-    subgraph WorkerB[Worker Task]
-        FragmentC[Query Fragment Task]
-    end
+    LoopA[Worker Loop]
+    LoopB[Worker Loop]
+    WorkerA[Worker]
+    WorkerB[Worker]
 
     Catalog -->|Actionable workers| Controller
-    Controller --> WorkerA
-    Controller --> WorkerB
-    WorkerA --> FragmentA
-    WorkerA --> FragmentB
-    WorkerB --> FragmentC
-    FragmentA -.->|Observed state| Catalog
-    FragmentB -.->|Observed state| Catalog
-    FragmentC -.->|Observed state| Catalog
+    Controller --> LoopA
+    Controller --> LoopB
+    LoopA <-->|Report, start, stop| WorkerA
+    LoopB <-->|Report, start, stop| WorkerB
+    LoopA -.->|Observed state| Catalog
+    LoopB -.->|Observed state| Catalog
 ```
 
-Tasks are keyed by worker address or query fragment identifier.  
-At most one task for a given key is tracked at a time.
+Each pass of a loop reads the worker's status report, then the worker's wanted fragments, which are its catalog rows that have not reached a terminal state.  
+A pure function compares the two and returns the actions: start a fragment, stop a fragment, or record an observed state.  
+A pass runs once per report interval, after a catalog change, and after a start returns.
 
-## Worker Tasks
+The report lists every fragment that the worker runs, including those that are still compiling, and the fragments that terminated since the previous report.  
+The loop keeps only what the report and the catalog cannot tell: the starts in flight, the failed starts in a row of each fragment, the time from which terminations are reported, and the missed reports in a row.
 
-The top-level controller reads actionable worker rows and handles them according to their desired state.
+## Fragment Actions
 
-- An active worker gets a worker task if none is already running for its address.
-- A worker marked for removal has its task aborted before the catalog records it as removed.
-  For a remote worker, the controller then stops the fragments that the removal failed in the catalog.
+| Worker reports                        | Desired state | Action                                                       |
+|---------------------------------------|---------------|--------------------------------------------------------------|
+| Nothing                               | Completed     | Start the fragment, unless a start is in flight              |
+| Nothing                               | Stopped       | Record Stopped                                               |
+| Starting or Running                   | Completed     | Record the state if it is ahead of the catalog               |
+| Starting or Running                   | Stopped       | Record the state if it is ahead of the catalog, and stop it  |
+| Terminated                            | Any           | Record Failed with an error, otherwise Stopped or Completed  |
+| Starting or Running, but not wanted   | None          | Stop the fragment                                            |
 
-A worker task connects to its worker, records whether it is active or unreachable, and manages the fragments assigned to it.  
-After a remote connection is lost, the task discards its fragment tasks, marks the worker unreachable, and enters the connection loop again.  
-The next successful connection reconstructs fragment tasks from the catalog.  
-While connected to a remote worker, the task also stops every fragment that the worker runs but that has no non-terminal row for this worker in the catalog.
+A state is recorded only when it is ahead of the catalog's state, so a late or reordered report never moves a fragment back.  
+A stop is repeated by every pass in which the worker still reports the fragment.
 
-## Query Fragment Tasks
+A start runs as a task of its own, so a long compile delays neither the reports nor the stops of the same worker.  
+A start that fails permanently, or fails repeatedly, records the fragment as failed.
 
-Each query fragment task controls one fragment on its assigned worker.  
-To start the fragment, it loads the fragment's execution plan from the catalog, adds its identifier, and sends it to the worker.  
-It can then request a stop or the fragment's current status.
+## Worker States
 
-The fragment task chooses its next action from the desired and observed states:
+A worker whose report succeeds is recorded as active.  
+A failed report, including a failed connection, counts as a missed health check, and the worker is recorded as unreachable after several misses in a row.
 
-| Desired state        | Observed state                | Action                                                                                         |
-|----------------------|-------------------------------|------------------------------------------------------------------------------------------------|
-| Completed            | Pending                       | Start the fragment                                                                             |
-| Completed            | Started or Running            | Read its status, and start it again if the worker does not know it                             |
-| Stopped              | Any non-terminal state        | Request a stop and read its status; request the stop again while the status is non-terminal    |
-| Completed or Stopped | Completed, Stopped, or Failed | Finish the task                                                                                |
-
-The controller keeps the catalog synchronized with the fragment states that workers report.
+Removing a worker fails its fragments in the catalog, so the worker has no wanted fragments, and its loop stops every fragment that the worker still reports.  
+Once the worker reports no running fragment, or misses several reports in a row, the loop records it as removed and ends.
 
 ## Communicating with Workers
 
-The controller sends the same fragment commands to every worker: start, stop, and report status.
+The controller sends the same commands to every worker: start, stop, and report status.
 
 Remote workers run outside the coordinator process and receive these commands through gRPC.  
-The controller monitors the connection, reconnects when it is lost, and retries temporary communication failures.
+The connection is made once per loop and dials again after the worker was unreachable.
 
-Embedded workers run inside the coordinator process, so the same commands are made through direct in-process calls instead of the network.
-
-If a fragment command repeatedly fails or returns a permanent error, the controller records the fragment as failed in the catalog.
+Embedded workers run inside the coordinator process, so the same commands are direct in-process calls.  
+An embedded worker is created when its loop connects, and its report is the same protocol message that a remote worker sends.
