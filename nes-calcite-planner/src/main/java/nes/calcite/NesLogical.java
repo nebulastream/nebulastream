@@ -51,6 +51,63 @@ final class NesLogical {
     }
 
     /**
+     * A windowed aggregation as the placement and the physical operators see it (Windows.lower makes it from a
+     * NesWindowAggregate after the rules): it reads the rows of the window, with the window in spec. The output is the
+     * NesWindowAggregate's. The engine's probe emits window start, window end, the keys and the aggregates (spec's order,
+     * maybe with an extra COUNT(*)); probeColumns is the probe column of each output column.
+     */
+    static final class WindowAggregation extends org.apache.calcite.rel.SingleRel {
+        final nes.calcite.proto.WindowAggregate spec;
+        final List<Integer> probeColumns;
+
+        WindowAggregation(RelOptCluster cluster, RelTraitSet traits, RelNode rows, nes.calcite.proto.WindowAggregate spec,
+                          List<Integer> probeColumns, RelDataType rowType) {
+            super(cluster, traits, rows);
+            this.spec = spec;
+            this.probeColumns = List.copyOf(probeColumns);
+            this.rowType = rowType;
+        }
+
+        @Override
+        public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
+            return new WindowAggregation(getCluster(), traitSet, sole(inputs), spec, probeColumns, rowType);
+        }
+
+        @Override
+        public RelWriter explainTerms(RelWriter pw) {
+            return super.explainTerms(pw).item("spec", com.google.protobuf.TextFormat.shortDebugString(spec));
+        }
+    }
+
+    /** The plan with each NesWindowAggregate as a WindowAggregation. */
+    static RelNode lowerWindows(RelNode plan) {
+        return plan.accept(new org.apache.calcite.rel.RelHomogeneousShuttle() {
+            @Override
+            public RelNode visit(RelNode other) {
+                RelNode node = super.visit(other);
+                if (!(node instanceof NesWindowAggregate aggregate)) {
+                    return node;
+                }
+                nes.calcite.proto.WindowAggregate spec = aggregate.spec();
+                int keys = spec.getGroupKeysCount();
+                List<Integer> probeColumns = new ArrayList<>();
+                for (int i = 0; i < keys; i++) {
+                    probeColumns.add(2 + i);
+                }
+                if (!aggregate.global) {
+                    probeColumns.add(0);
+                    probeColumns.add(1);
+                }
+                for (int i = 0; i < aggregate.getAggCallList().size(); i++) {
+                    probeColumns.add(2 + keys + i);
+                }
+                return new WindowAggregation(aggregate.getCluster(), aggregate.getTraitSet(), aggregate.rows(), spec, probeColumns,
+                    aggregate.getRowType());
+            }
+        });
+    }
+
+    /**
      * Sets the watermarks of the rows of one source from their event time in timeField. It is the first operator after
      * the source (Watermarks.assign), so it runs on the source's worker (Placement) and every row of the source, also one
      * that a later filter drops, advances the watermark.

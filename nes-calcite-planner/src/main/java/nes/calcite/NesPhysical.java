@@ -85,7 +85,7 @@ final class NesPhysical {
                 && watermarked(alternative));
         }
         RelNode rel = node instanceof org.apache.calcite.plan.hep.HepRelVertex vertex ? vertex.getCurrentRel() : node;
-        if (rel instanceof NesWindowAggregate || rel instanceof NesWindowJoin || rel instanceof NesLogical.WatermarkAssigner) {
+        if (rel instanceof NesLogical.WindowAggregation || rel instanceof NesWindowJoin || rel instanceof NesLogical.WatermarkAssigner) {
             return true;
         }
         if (rel instanceof NesLogical.NetworkSource network) {
@@ -110,7 +110,7 @@ final class NesPhysical {
             || plan instanceof NesLogical.NetworkSource || plan instanceof NesLogical.WatermarkAssigner
             || plan instanceof NesLogical.Parts || plan instanceof LogicalFilter || plan instanceof LogicalProject
             || (plan instanceof LogicalUnion union && union.all)
-            || plan instanceof NesWindowAggregate;
+            || plan instanceof NesLogical.WindowAggregation;
         return converted ? null : plan;
     }
 
@@ -1132,7 +1132,7 @@ final class NesPhysical {
      */
     public static final class WindowRule extends ConverterRule {
         static final Config CONFIG = Config.INSTANCE
-            .withConversion(NesWindowAggregate.class, Convention.NONE, NES, "NesWindowRule")
+            .withConversion(NesLogical.WindowAggregation.class, Convention.NONE, NES, "NesWindowRule")
             .withRuleFactory(WindowRule::new);
 
         WindowRule(Config config) {
@@ -1141,27 +1141,48 @@ final class NesPhysical {
 
         @Override
         public RelNode convert(RelNode rel) {
-            NesWindowAggregate aggregate = (NesWindowAggregate) rel;
+            NesLogical.WindowAggregation aggregate = (NesLogical.WindowAggregation) rel;
             WindowAggregate spec = aggregate.spec;
             RelOptCluster cluster = aggregate.getCluster();
             RelTraitSet traits = aggregate.getTraitSet().replace(NES);
             RelDataTypeFactory types = cluster.getTypeFactory();
             List<RelDataTypeField> inputFields = aggregate.getInput().getRowType().getFieldList();
             List<RelDataTypeField> outputFields = aggregate.getRowType().getFieldList();
+            List<Integer> probeColumns = aggregate.probeColumns;
 
-            /// The probe's row: window start and end, the keys, then each result in the engine's type.
-            RelDataTypeFactory.Builder probeRow = types.builder();
-            probeRow.add(outputFields.get(0)).add(outputFields.get(1));
+            /// The probe's row: window start and end, the keys, then each result in the engine's type. The window columns and
+            /// keys have the types (and all columns the names) of their output columns.
+            RelDataType bigint = types.createSqlType(SqlTypeName.BIGINT);
+            RelDataType[] probeTypes = new RelDataType[2 + spec.getGroupKeysCount() + spec.getAggregatesCount()];
+            String[] probeNames = new String[probeTypes.length];
+            probeNames[0] = "START";
+            probeNames[1] = "END";
+            probeTypes[0] = probeTypes[1] = bigint; // GLOBAL: never read
             for (int i = 0; i < spec.getGroupKeysCount(); i++) {
-                probeRow.add(outputFields.get(2 + i));
+                probeNames[2 + i] = inputFields.get(spec.getGroupKeys(i)).getName();
+                probeTypes[2 + i] = inputFields.get(spec.getGroupKeys(i)).getType();
             }
             List<Integer> arguments = new ArrayList<>();
             for (int i = 0; i < spec.getAggregatesCount(); i++) {
                 WindowAggregate.Aggregate call = spec.getAggregates(i);
                 RelDataType argument = call.hasField() ? inputFields.get(call.getField()).getType() : null;
-                probeRow.add(outputFields.get(2 + spec.getGroupKeysCount() + i).getName(),
-                    engineType(types, call, argument, outputFields.get(2 + spec.getGroupKeysCount() + i).getType()));
+                int probe = 2 + spec.getGroupKeysCount() + i;
+                int output = probeColumns.indexOf(probe);
+                probeNames[probe] = call.getName();
+                probeTypes[probe] = engineType(types, call, argument,
+                    output < 0 ? types.createSqlType(SqlTypeName.BIGINT) : outputFields.get(output).getType());
                 arguments.add(call.hasField() ? call.getField() : -1);
+            }
+            for (int output = 0; output < outputFields.size(); output++) {
+                int probe = probeColumns.get(output);
+                probeNames[probe] = outputFields.get(output).getName();
+                if (probe < 2 + spec.getGroupKeysCount()) {
+                    probeTypes[probe] = outputFields.get(output).getType();
+                }
+            }
+            RelDataTypeFactory.Builder probeRow = types.builder();
+            for (int i = 0; i < probeTypes.length; i++) {
+                probeRow.add(probeNames[i], probeTypes[i]);
             }
             RelDataType probeRowType = probeRow.uniquify().build();
 
@@ -1173,12 +1194,13 @@ final class NesPhysical {
             List<Integer> fields = new ArrayList<>();
             List<RelDataTypeField> probeFields = probeRowType.getFieldList();
             for (int i = 0; i < outputFields.size(); i++) {
+                int probe = probeColumns.get(i);
                 RelDataType target = outputFields.get(i).getType();
-                if (probeFields.get(i).getType().equals(target)) {
-                    fields.add(i);
+                if (probeFields.get(probe).getType().equals(target)) {
+                    fields.add(probe);
                 } else {
                     fields.add(casts.add(
-                        cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(i, probeFields.get(i).getType()), false)));
+                        cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(probe, probeFields.get(probe).getType()), false)));
                 }
             }
             RelNode current = casts.map(cluster, traits);

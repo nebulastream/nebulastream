@@ -185,6 +185,7 @@ final class PlanGraph {
     /** Window operators: aggregations and joins, logical and physical. They have a green border (and the fill of their kind). */
     private static boolean window(RelNode node) {
         return node instanceof NesPhysical.WindowBuild || node instanceof NesPhysical.WindowProbe || node instanceof NesWindowAggregate
+            || node instanceof NesLogical.WindowAggregation
             || node instanceof NesPhysical.JoinBuild || node instanceof NesPhysical.JoinProbe || node instanceof NesWindowJoin;
     }
 

@@ -51,11 +51,11 @@ final class NesNames {
             RelNode right = rename(join.getRight(), names.subList(2 + leftWidth, names.size()));
             return join.copy(join.getTraitSet(), List.of(left, right));
         }
-        if (node instanceof NesWindowAggregate window) {
+        if (node instanceof NesLogical.WindowAggregation window) {
             List<String> names = new ArrayList<>(window.getInput().getRowType().getFieldNames());
             List<Integer> keys = window.spec.getGroupKeysList();
             for (int i = 0; i < keys.size(); i++) {
-                names.set(keys.get(i), window.getRowType().getFieldNames().get(2 + i));
+                names.set(keys.get(i), window.getRowType().getFieldNames().get(window.probeColumns.indexOf(2 + i)));
             }
             return window.copy(window.getTraitSet(), List.of(rename(window.getInput(), names)));
         }

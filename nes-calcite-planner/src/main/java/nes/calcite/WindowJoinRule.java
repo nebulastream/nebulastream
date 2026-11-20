@@ -267,10 +267,15 @@ final class WindowJoinRule extends RelOptRule {
                 return null;
             }
         }
-        WindowAggregate spec = ((NesWindowAggregate) current).spec;
+        NesWindowAggregate aggregate = (NesWindowAggregate) current;
+        if (aggregate.global) {
+            return null;
+        }
+        WindowAggregate spec = aggregate.spec();
         if (spec.getKind() != WindowAggregate.Kind.TUMBLING) {
             return null;
         }
+        int start = aggregate.startColumn();
         Side side = new Side();
         side.input = node;
         side.inputColumn = new int[width];
@@ -278,7 +283,7 @@ final class WindowJoinRule extends RelOptRule {
         int timeField = -1;
         for (int i = 0; i < width; i++) {
             side.inputColumn[i] = i;
-            side.windowColumn[i] = toAggregate[i] == 0 || toAggregate[i] == 1 ? toAggregate[i] : -1;
+            side.windowColumn[i] = toAggregate[i] == start || toAggregate[i] == start + 1 ? toAggregate[i] - start : -1;
             if (side.windowColumn[i] == 0 && timeField < 0) {
                 timeField = i;
             }

@@ -37,7 +37,7 @@ final class Watermarks {
     /** For each window input, the sources and the column of each that its time field passes on. */
     private static void collect(RelNode node, Map<RelNode, Integer> timeFields) {
         node.getInputs().forEach(input -> collect(input, timeFields));
-        if (node instanceof NesWindowAggregate aggregate) {
+        if (node instanceof NesLogical.WindowAggregation aggregate) {
             sources(aggregate.getInput(), aggregate.spec.getTimeField(), timeFields);
         } else if (node instanceof NesWindowJoin join) {
             sources(join.getLeft(), join.spec.getLeftTimeField(), timeFields);
@@ -64,7 +64,7 @@ final class Watermarks {
             found.put(rel, field);
             return true;
         }
-        if (rel instanceof NesWindowAggregate || rel instanceof NesWindowJoin) {
+        if (rel instanceof NesLogical.WindowAggregation || rel instanceof NesWindowJoin) {
             return true;
         }
         if (rel instanceof Filter filter) {

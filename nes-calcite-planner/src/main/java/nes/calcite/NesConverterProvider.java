@@ -388,7 +388,7 @@ final class NesConverterProvider extends ConverterProvider {
                 return ExtensionSingle.from(new ProjectionPayload(projection.fields(), expressions, outputType),
                     apply(projection.getInput())).build();
             }
-            if (node instanceof NesWindowAggregate window) {
+            if (node instanceof NesLogical.WindowAggregation window) {
                 Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(window.getRowType());
                 return ExtensionSingle.from(new Payload(Any.pack(window.spec), outputType), apply(window.getInput())).build();
             }

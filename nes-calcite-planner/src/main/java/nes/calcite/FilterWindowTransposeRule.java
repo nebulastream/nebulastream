@@ -12,8 +12,9 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.tools.RelBuilder;
 
 /**
- * Pushes the conjuncts of a Filter above a {@link NesWindowAggregate} that only use group keys below the window.
- * Conjuncts on window_start/window_end or on aggregates stay above.
+ * Pushes the conjuncts of a Filter above a {@link NesWindowAggregate} that only use group keys below the window (below
+ * its window table function, which Calcite's FilterAggregateTransposeRule and FilterTableFunctionTransposeRule cannot do:
+ * the window function adds columns). Conjuncts on window_start/window_end or on aggregates stay above.
  */
 final class FilterWindowTransposeRule extends RelOptRule {
     static final FilterWindowTransposeRule INSTANCE = new FilterWindowTransposeRule();
@@ -27,13 +28,12 @@ final class FilterWindowTransposeRule extends RelOptRule {
     public void onMatch(RelOptRuleCall call) {
         Filter filter = call.rel(0);
         NesWindowAggregate window = call.rel(1);
-        List<Integer> keys = window.spec.getGroupKeysList(); // window output column 2 + i is input column keys[i]
+        List<Integer> keys = window.keys(); // output column i is column keys[i] of the window's rows
 
         List<RexNode> pushed = new ArrayList<>();
         List<RexNode> kept = new ArrayList<>();
         for (RexNode conjunct : RelOptUtil.conjunctions(filter.getCondition())) {
-            boolean onKeysOnly = RelOptUtil.InputFinder.bits(conjunct).asList().stream()
-                .allMatch(i -> i >= 2 && i < 2 + keys.size());
+            boolean onKeysOnly = RelOptUtil.InputFinder.bits(conjunct).asList().stream().allMatch(i -> i < keys.size());
             (onKeysOnly ? pushed : kept).add(conjunct);
         }
         if (pushed.isEmpty()) {
@@ -41,15 +41,15 @@ final class FilterWindowTransposeRule extends RelOptRule {
         }
 
         RelBuilder builder = call.builder();
-        builder.push(window.getInput());
-        RexShuttle toInput = new RexShuttle() {
+        builder.push(window.rows());
+        RexShuttle toRows = new RexShuttle() {
             @Override
             public RexNode visitInputRef(RexInputRef ref) {
-                return builder.field(keys.get(ref.getIndex() - 2));
+                return builder.field(keys.get(ref.getIndex()));
             }
         };
-        builder.filter(pushed.stream().map(conjunct -> conjunct.accept(toInput)).toList());
-        builder.push(window.copy(window.getTraitSet(), List.of(builder.build())));
+        builder.filter(pushed.stream().map(conjunct -> conjunct.accept(toRows)).toList());
+        builder.push(window.withRows(builder.build()));
         builder.filter(kept);
         call.transformTo(builder.build());
     }

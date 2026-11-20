@@ -14,21 +14,21 @@ import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.ImmutableBitSet;
 
 /**
  * Rewrites {@code Aggregate([Project]([Filter](TUMBLE|HOP(input))))} grouped by window_start and/or window_end into
- * {@code Project(NesWindowAggregate(Project([Filter](input))))}.
+ * {@code Project(NesWindowAggregate(TUMBLE|HOP(Project([Filter](input)))))}.
  *
  * <p>The lower Project computes the grouping keys and aggregate arguments as plain columns, because NebulaStream
- * aggregates over fields only. The upper Project restores the Aggregate's column order and names. Anything the rule
+ * aggregates over fields only. The aggregation groups by window_start and window_end, and the upper Project restores the
+ * Aggregate's column order and names. Anything the rule
  * does not recognize is left untouched and later fails the Substrait conversion with "Unable to handle node".
  */
 final class WindowAggregateRule extends RelOptRule {
@@ -46,7 +46,7 @@ final class WindowAggregateRule extends RelOptRule {
     @Override
     public void onMatch(RelOptRuleCall call) {
         Aggregate agg = call.rel(0);
-        if (agg.getGroupType() != Aggregate.Group.SIMPLE) {
+        if (agg instanceof NesWindowAggregate || agg.getGroupType() != Aggregate.Group.SIMPLE) {
             return;
         }
 
@@ -85,65 +85,46 @@ final class WindowAggregateRule extends RelOptRule {
         /// Columns of the lower Project. TUMBLE/HOP pass their input through unchanged at the same positions, so
         /// expressions over the window output are valid over the source as long as they avoid the window columns.
         List<RexNode> below = new ArrayList<>();
-        spec.setTimeField(indexOf(below, RexInputRef.of(spec.getTimeField(), source.getRowType())));
+        int timeField = indexOf(below, RexInputRef.of(spec.getTimeField(), source.getRowType()));
 
+        /// Per Aggregate output: a column of the lower Project, WINDOW_START/WINDOW_END, or for an aggregate the index of
+        /// its call (in aggCalls), or a literal.
+        List<Object> outputs = new ArrayList<>();
         boolean groupsByWindow = false;
-        List<RelDataTypeField> outputFields = agg.getRowType().getFieldList();
-        RelDataTypeFactory.Builder rowType = agg.getCluster().getTypeFactory().builder();
-        rowType.add("START", tfs.getRowType().getFieldList().get(sourceWidth).getType());
-        rowType.add("END", tfs.getRowType().getFieldList().get(sourceWidth + 1).getType());
-        List<Integer> outputOrder = new ArrayList<>(); // position in NesWindowAggregate output, per Aggregate output
-        int outputIndex = 0;
         for (int group : agg.getGroupSet()) {
             Integer column = mapColumn(exprs.get(group), sourceWidth, below);
             if (column == null) {
                 return;
             }
-            if (column < 0) {
-                groupsByWindow = true;
-                outputOrder.add(column == WINDOW_START ? 0 : 1);
-            } else {
-                spec.addGroupKeys(column);
-                outputOrder.add(2 + spec.getGroupKeysCount() - 1);
-                rowType.add(outputFields.get(outputIndex));
-            }
-            outputIndex++;
+            groupsByWindow |= column < 0;
+            outputs.add(column);
         }
         if (!groupsByWindow) {
             return;
         }
 
-        List<RexNode> literals = new ArrayList<>(); // outputOrder entry -1 - i is literals[i]
+        List<AggregateCall> aggCalls = new ArrayList<>();
         for (AggregateCall aggCall : agg.getAggCallList()) {
             /// LITERAL_AGG(true) marks matches in Calcite's NOT IN/NOT EXISTS rewrite: a constant, not an aggregation.
             if (aggCall.getAggregation().getKind() == SqlKind.LITERAL_AGG && aggCall.rexList.size() == 1) {
-                outputOrder.add(-1 - literals.size());
-                literals.add(aggCall.rexList.get(0));
-                outputIndex++;
+                outputs.add(aggCall.rexList.get(0));
                 continue;
             }
             String function = toFunction(aggCall);
-            if (function == null) {
+            if (function == null || (aggCall.getArgList().isEmpty() && !function.equals("COUNT"))) {
                 return;
             }
-            WindowAggregate.Aggregate.Builder aggregate = WindowAggregate.Aggregate.newBuilder().setFunction(function);
-            if (aggCall.getArgList().isEmpty()) {
-                if (!function.equals("COUNT")) {
-                    return;
-                }
-            } else {
+            List<Integer> arguments = List.of();
+            if (!aggCall.getArgList().isEmpty()) {
                 Integer column = mapColumn(exprs.get(aggCall.getArgList().get(0)), sourceWidth, below);
                 if (column == null || column < 0) {
                     return;
                 }
-                aggregate.setField(column);
+                arguments = List.of(column);
             }
-            spec.addAggregates(withType(aggregate, outputFields.get(outputIndex).getType()).setName(outputFields.get(outputIndex).getName()));
-            outputOrder.add(2 + spec.getGroupKeysCount() + spec.getAggregatesCount() - 1);
-            rowType.add(outputFields.get(outputIndex++));
+            outputs.add(new int[] {aggCalls.size()});
+            aggCalls.add(aggCall.withArgList(arguments));
         }
-
-        addCountIfEmpty(spec, rowType, agg.getCluster().getTypeFactory());
 
         RelBuilder builder = call.builder();
         builder.push(source);
@@ -151,11 +132,34 @@ final class WindowAggregateRule extends RelOptRule {
             builder.filter(filter);
         }
         builder.project(below);
-        RelNode window = new NesWindowAggregate(
-            agg.getCluster(), agg.getTraitSet(), builder.build(), spec.build(), rowType.build());
+        RelNode rows = builder.build();
+        int width = below.size();
+        /// Grouped by both window columns (window_start determines window_end), whichever the query groups by.
+        ImmutableBitSet.Builder groupSet = ImmutableBitSet.builder().set(width).set(width + 1);
+        outputs.stream().filter(o -> o instanceof Integer column && column >= 0).forEach(o -> groupSet.set((Integer) o));
+        ImmutableBitSet groups = groupSet.build();
+        /// The window columns have the names of the Aggregate's columns (if it has them), as its other columns.
+        List<String> names = new ArrayList<>(List.of("window_start", "window_end"));
+        for (int i = 0; i < agg.getGroupCount(); i++) {
+            if (outputs.get(i) instanceof Integer column && column < 0) {
+                names.set(column == WINDOW_START ? 0 : 1, agg.getRowType().getFieldNames().get(i));
+            }
+        }
+        RelNode window = new NesWindowAggregate(agg.getCluster(), agg.getTraitSet(),
+            NesWindowAggregate.windowFunction(tfs, rows, timeField, names.get(0), names.get(1)), groups, aggCalls, false);
 
         builder.push(window);
-        List<RexNode> reorder = outputOrder.stream().map(i -> i >= 0 ? builder.field(i) : literals.get(-1 - i)).toList();
+        List<RexNode> reorder = new ArrayList<>();
+        for (Object output : outputs) {
+            if (output instanceof Integer column) {
+                int group = column == WINDOW_START ? width : column == WINDOW_END ? width + 1 : column;
+                reorder.add(builder.field(groups.indexOf(group)));
+            } else if (output instanceof int[] aggregate) {
+                reorder.add(builder.field(groups.cardinality() + aggregate[0]));
+            } else {
+                reorder.add((RexNode) output);
+            }
+        }
         builder.project(reorder, agg.getRowType().getFieldNames(), true);
         call.transformTo(builder.build());
     }
@@ -167,20 +171,6 @@ final class WindowAggregateRule extends RelOptRule {
     static RelNode windowInput(TableFunctionScan tfs) {
         List<RelNode> inputs = tfs.getInputs().stream().map(WindowAggregateRule::strip).toList();
         return inputs.size() == 1 ? inputs.get(0) : org.apache.calcite.rel.logical.LogicalUnion.create(inputs, true);
-    }
-
-    /**
-     * Our aggregation needs at least one aggregate: one without (Calcite's deduplication for IN/EXISTS) gets a COUNT(*),
-     * which the projection on top leaves out.
-     */
-    static void addCountIfEmpty(WindowAggregate.Builder spec, RelDataTypeFactory.Builder rowType, RelDataTypeFactory types) {
-        if (spec.getAggregatesCount() > 0) {
-            return;
-        }
-        RelDataType count = types.createSqlType(org.apache.calcite.sql.type.SqlTypeName.BIGINT);
-        spec.addAggregates(withType(WindowAggregate.Aggregate.newBuilder().setFunction("COUNT"), count)
-            .setName("$f_count"));
-        rowType.add("$f_count", count);
     }
 
     /** Records Calcite's result type, to which the converter casts the aggregation's result. */

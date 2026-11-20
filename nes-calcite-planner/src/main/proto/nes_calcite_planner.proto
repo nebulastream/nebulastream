@@ -230,8 +230,11 @@ message RuleApplication {
 // Payload (google.protobuf.Any) of the Substrait ExtensionSingleRel emitted for a windowed aggregation,
 // i.e. Aggregate(GROUP BY window_start/window_end, ...) over TUMBLE/HOP.
 //
-// Field indices refer to the input relation. Output columns are, in order:
-//   window_start, window_end, group_keys..., aggregates...
+// Field indices refer to the input relation. Output columns are, in order (as Calcite's Aggregate, grouped by the keys,
+// window_start and window_end):
+//   group_keys..., window_start, window_end, aggregates...
+// A GLOBAL window has no window_start and window_end columns. The engine's probe emits window_start, window_end,
+// group_keys..., aggregates... (and a COUNT(*) if the aggregation has no aggregate); the physical plan reorders them.
 message WindowAggregate {
   enum Kind {
     TUMBLING = 0;

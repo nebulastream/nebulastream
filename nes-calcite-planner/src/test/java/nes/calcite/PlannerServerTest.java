@@ -633,7 +633,8 @@ class PlannerServerTest {
         assertEquals(0, window.getGroupKeysCount());
         assertEquals("COUNT", window.getAggregates(0).getFunction());
         assertTrue(!window.getAggregates(0).hasField());
-        assertEquals(List.of("WINDOW_START", "WINDOW_END", "C"), plan.getRelations(0).getRoot().getNamesList());
+        /// The window columns keep their names, which differ from the query's only in case (Planner.outputNames).
+        assertEquals(List.of("window_start", "window_end", "C"), plan.getRelations(0).getRoot().getNamesList());
     }
 
     @Test
@@ -859,8 +860,8 @@ class PlannerServerTest {
         assertTrue(isProjection(input), "the time column is computed by a projection below the window");
         List<String> names = input.getExtensionSingle().getCommon().getHint().getOutputNamesList();
         assertEquals("$f_time", names.get(aggregate.getTimeField()));
-        /// Our names: START, END, the key, the aggregate.
-        assertEquals(List.of("START", "END", "id", "S"), windowRel.getExtensionSingle().getCommon().getHint().getOutputNamesList());
+        /// The key, the aggregate (a GLOBAL window has no window columns).
+        assertEquals(List.of("id", "S"), windowRel.getExtensionSingle().getCommon().getHint().getOutputNamesList());
     }
 
     @Test

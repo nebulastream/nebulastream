@@ -183,7 +183,7 @@ final class Conversions implements RelOptListener {
         if (logical instanceof NesModelInference inference) {
             return "an InferModel that reads " + inference.inputColumns() + " and appends the model's outputs.";
         }
-        if (logical instanceof NesWindowAggregate aggregate) {
+        if (logical instanceof NesLogical.WindowAggregation aggregate) {
             return "a " + aggregate.spec.getKind() + " window aggregation: a WindowBuild ends the input's pipeline and fills the"
                 + " window state, a WindowProbe starts a pipeline and emits the closed windows." + watermarks;
         }

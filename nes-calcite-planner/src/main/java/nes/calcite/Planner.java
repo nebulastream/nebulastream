@@ -401,6 +401,8 @@ public final class Planner {
         if (generated != optimized) {
             optimized = steps.add("constant rows from a generator", "ours: ValuesFromGenerator", generated);
         }
+        optimized = steps.add("window aggregations lowered for the placement", "ours: NesLogical.lowerWindows",
+            NesLogical.lowerWindows(optimized));
         rejectUnsupported(optimized);
         optimized = typeCaseResults(optimized);
         optimized = typeUntypedNulls(optimized);

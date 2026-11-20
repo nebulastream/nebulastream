@@ -72,57 +72,37 @@ final class GlobalWindowRules {
         @Override
         public void onMatch(RelOptRuleCall call) {
             Aggregate agg = call.rel(0);
-            if (agg.getGroupType() != Aggregate.Group.SIMPLE) {
+            if (agg instanceof NesWindowAggregate || agg.getGroupType() != Aggregate.Group.SIMPLE) {
                 return;
             }
-            WindowAggregate.Builder spec = WindowAggregate.newBuilder().setKind(WindowAggregate.Kind.GLOBAL);
-            List<RelDataTypeField> outputFields = agg.getRowType().getFieldList();
-            RelDataTypeFactory.Builder rowType = windowColumns(agg.getCluster().getTypeFactory());
             List<Object> outputs = new ArrayList<>(); // per Aggregate output: NesWindowAggregate column or a literal
             List<Integer> zeroWhenEmpty = new ArrayList<>(); // outputs of SUM0, which is 0 rather than NULL without rows
-
-            int outputIndex = 0;
-            for (int group : agg.getGroupSet()) {
-                spec.addGroupKeys(group);
-                outputs.add(2 + spec.getGroupKeysCount() - 1);
-                rowType.add(outputFields.get(outputIndex++));
+            List<AggregateCall> aggCalls = new ArrayList<>();
+            for (int i = 0; i < agg.getGroupCount(); i++) {
+                outputs.add(i);
             }
             for (AggregateCall aggCall : agg.getAggCallList()) {
                 if (aggCall.getAggregation().getKind() == SqlKind.LITERAL_AGG && aggCall.rexList.size() == 1) {
                     outputs.add(aggCall.rexList.get(0));
-                    outputIndex++;
                     continue;
                 }
                 String function = WindowAggregateRule.toFunction(aggCall);
                 if (function == null || (aggCall.getArgList().isEmpty() && !function.equals("COUNT"))) {
                     return;
                 }
-                WindowAggregate.Aggregate.Builder aggregate = WindowAggregate.Aggregate.newBuilder().setFunction(function);
-                if (!aggCall.getArgList().isEmpty()) {
-                    aggregate.setField(aggCall.getArgList().get(0));
-                }
-                spec.addAggregates(WindowAggregateRule.withType(aggregate, outputFields.get(outputIndex).getType())
-                    .setName(outputFields.get(outputIndex).getName()));
-                RelDataTypeField field = outputFields.get(outputIndex++);
                 if (aggCall.getAggregation().getKind() == SqlKind.SUM0 && agg.getGroupSet().isEmpty()) {
-                    /// Our SUM yields NULL for an empty input, which only an aggregation without GROUP BY sees.
+                    /// Our SUM yields NULL for an empty input, which only an aggregation without GROUP BY sees: a SUM, and
+                    /// 0 instead of its NULL above.
                     zeroWhenEmpty.add(outputs.size());
-                    field = new RelDataTypeFieldImpl(field.getName(), field.getIndex(),
-                        agg.getCluster().getTypeFactory().createTypeWithNullability(field.getType(), true));
+                    aggCall = AggregateCall.create(SqlStdOperatorTable.SUM, false, false, false, List.of(), aggCall.getArgList(),
+                        -1, null, aggCall.getCollation(), true, agg.getInput(), null, aggCall.getName());
                 }
-                outputs.add(2 + agg.getGroupCount() + spec.getAggregatesCount() - 1);
-                rowType.add(field);
+                outputs.add(agg.getGroupCount() + aggCalls.size());
+                aggCalls.add(aggCall);
             }
-
-            /// SQL: an aggregation without GROUP BY returns one row even for an empty input (counts 0, all else NULL).
-            if (agg.getGroupSet().isEmpty()) {
-                spec.setEmitOnEmptyInput(true);
-            }
-            WindowAggregateRule.addCountIfEmpty(spec, rowType, agg.getCluster().getTypeFactory());
-            RelNode input = withConstantTime(agg.getInput());
-            spec.setTimeField(input.getRowType().getFieldCount() - 1);
-            RelNode window = new NesWindowAggregate(
-                agg.getCluster(), agg.getTraitSet(), input, spec.build(), rowType.build());
+            /// The constant time is the last column: the group keys and arguments still index the input.
+            RelNode window = new NesWindowAggregate(agg.getCluster(), agg.getTraitSet(), withConstantTime(agg.getInput()),
+                agg.getGroupSet(), aggCalls, true);
             RelBuilder builder = call.builder().push(window);
             List<RexNode> projections = new ArrayList<>(outputs.stream()
                 .map(output -> output instanceof Integer column ? builder.field(column) : (RexNode) output)
