@@ -20,14 +20,32 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <mutex>
 #include <numeric>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <nlohmann/json.hpp>
 
 namespace NES
 {
+
+namespace
+{
+std::optional<std::string> callLogPathFromEnvironment()
+{
+    const char* const path = std::getenv("NES_SEMANTIC_CALL_LOG"); /// NOLINT(concurrency-mt-unsafe) read once, at first use
+    return path != nullptr && *path != '\0' ? std::optional<std::string>{path} : std::nullopt;
+}
+}
+
+SemanticCallStats::SemanticCallStats() : callLogPath(callLogPathFromEnvironment())
+{
+}
 
 SemanticCallStats& SemanticCallStats::instance()
 {
@@ -100,6 +118,43 @@ void SemanticCallStats::recordCascadeRow(const std::string_view route, const boo
     }
 }
 
+void SemanticCallStats::recordExchange(SemanticCallRecord record)
+{
+    const std::scoped_lock lock{mutex};
+    if (callLogPath)
+    {
+        calls.push_back(std::move(record));
+    }
+}
+
+void SemanticCallStats::setCallLogPath(std::optional<std::string> path)
+{
+    const std::scoped_lock lock{mutex};
+    callLogPath = std::move(path);
+    if (!callLogPath)
+    {
+        calls.clear();
+    }
+}
+
+std::string SemanticCallStats::formatCallRecord(const SemanticCallRecord& record, const std::string_view context)
+{
+    const auto optionalNumber
+        = [](const std::optional<uint64_t> value) { return value ? nlohmann::json(*value) : nlohmann::json(nullptr); };
+    nlohmann::ordered_json line;
+    line["context"] = std::string{context};
+    line["start_ns"] = record.startNs;
+    line["end_ns"] = record.endNs;
+    line["latency_ms"] = static_cast<double>(record.endNs - record.startNs) / 1e6;
+    line["status"] = record.status == 0 ? nlohmann::json(nullptr) : nlohmann::json(record.status);
+    line["prompt_tokens"] = optionalNumber(record.promptTokens);
+    line["completion_tokens"] = optionalNumber(record.completionTokens);
+    line["rows"] = record.rows;
+    line["model"] = record.model;
+    line["role"] = record.role.empty() ? nlohmann::json(nullptr) : nlohmann::json(record.role);
+    return line.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
+}
+
 void SemanticCallStats::reportAndReset(const std::string_view context)
 {
     const std::scoped_lock lock{mutex};
@@ -160,6 +215,21 @@ void SemanticCallStats::reportAndReset(const std::string_view context)
         }
         NES_INFO("{}", line);
     }
+    /// The per-call log: written once, at the end of the run, so the query itself does no file I/O for it.
+    if (callLogPath && !calls.empty())
+    {
+        std::ofstream log{*callLogPath, std::ios::app};
+        for (const auto& record : calls)
+        {
+            log << formatCallRecord(record, context) << '\n';
+        }
+        log.flush();
+        if (!log)
+        {
+            NES_WARNING("Semantic model call log: could not append {} records to {}", calls.size(), *callLogPath);
+        }
+    }
+    calls.clear();
     latenciesMs.clear();
     failures = 0;
     firstStart.reset();

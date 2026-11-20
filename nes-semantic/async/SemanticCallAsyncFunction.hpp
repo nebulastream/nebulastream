@@ -19,6 +19,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <Sources/AsyncFunction.hpp>
@@ -39,6 +40,14 @@
 
 namespace NES
 {
+
+/// What the per-call log (`SemanticCallRecord`) says about a request beyond the request itself. `role` is a literal:
+/// "student", "teacher" or "audit" for a cascade's calls, empty otherwise.
+struct SemanticCallInfo
+{
+    size_t rows = 1;
+    std::string_view role;
+};
 
 /// Executes `SEM_CALL`: one prompt per row, built and decoded by the semantic codecs, sent over HTTP or answered by the
 /// mock after a timer. Returns one value per step, a MAP step's answer or a FILTER step's `'true'`/`'false'`.
@@ -85,17 +94,19 @@ public:
 
 private:
     /// Sends on `client`, or on the instance's own connection, with `images` attached to the message.
-    boost::asio::awaitable<std::string>
-    complete(std::string prompt, SemanticHttpClient* client = nullptr, std::vector<ImageAttachment> images = {});
+    boost::asio::awaitable<std::string> complete(
+        std::string prompt, SemanticHttpClient* client = nullptr, std::vector<ImageAttachment> images = {}, SemanticCallInfo info = {});
     /// Posts a chat request on `client` (or the instance's own connection) and returns the answer's content, empty if the
     /// envelope has none, and the alternatives of its first token if the envelope lists logprobs. A failed exchange or a
     /// non-2xx status throws, a transient one as `AsyncTransientFailure`.
-    boost::asio::awaitable<std::pair<std::string, TokenLogprobs>> exchange(nlohmann::json request, SemanticHttpClient* client);
+    boost::asio::awaitable<std::pair<std::string, TokenLogprobs>>
+    exchange(nlohmann::json request, SemanticHttpClient* client, SemanticCallInfo info);
     /// LLM.ANSWER_MODE LABEL: one row, the label prompt, one answer token (`SemanticLabelAnswer.hpp`).
-    boost::asio::awaitable<AsyncCallResult> callLabel(std::vector<std::string> arguments);
+    boost::asio::awaitable<AsyncCallResult> callLabel(std::vector<std::string> arguments, SemanticCallInfo info = {});
     /// The label request itself: the value the answer names (if any) and its token's alternatives (with logprobs only
     /// when CONFIDENCE_FIELD is set or the call is a cascade's student).
-    boost::asio::awaitable<std::pair<std::optional<std::string>, TokenLogprobs>> askLabel(std::vector<std::string> arguments);
+    boost::asio::awaitable<std::pair<std::optional<std::string>, TokenLogprobs>>
+    askLabel(std::vector<std::string> arguments, SemanticCallInfo info);
     /// A cascade's student call: (verdict, route, p(true)), see `SemanticCallPayload::ProxyRole`.
     boost::asio::awaitable<AsyncCallResult> callProxyStudent(std::vector<std::string> arguments);
     /// A cascade's teacher call: the student's verdict for a "student" row, else the model's own.

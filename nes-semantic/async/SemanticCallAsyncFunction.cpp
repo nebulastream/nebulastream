@@ -26,6 +26,8 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
@@ -146,7 +148,7 @@ bool inAuditSample(const std::string& text, const double rate)
 std::atomic<size_t> liveInstances{0};
 
 /// The `usage` block of a chat-completion envelope, as vLLM, Ollama and the hosted APIs send it.
-void recordUsage(const nlohmann::json& envelope)
+std::pair<std::optional<uint64_t>, std::optional<uint64_t>> recordUsage(const nlohmann::json& envelope)
 {
     const auto count = [&](const char* const field) -> std::optional<uint64_t>
     {
@@ -162,15 +164,12 @@ void recordUsage(const nlohmann::json& envelope)
     const bool cutOff = envelope.contains("choices") && envelope["choices"].is_array() && !envelope["choices"].empty()
         && envelope["choices"][0].is_object() && envelope["choices"][0].value("finish_reason", "") == "length";
     SemanticCallStats::instance().recordUsage(prompt && completion, prompt.value_or(0), completion.value_or(0), cutOff);
+    return {prompt, completion};
 }
 
 /// `choices[0].message.content` of a chat-completion envelope, if it has one.
 std::optional<std::string> messageContent(const nlohmann::json& envelope)
 {
-    if (envelope.is_object())
-    {
-        recordUsage(envelope);
-    }
     if (!envelope.is_object() || !envelope.contains("choices") || !envelope["choices"].is_array() || envelope["choices"].empty())
     {
         return std::nullopt;
@@ -394,7 +393,7 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callValues(st
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<std::pair<std::optional<std::string>, TokenLogprobs>>
-SemanticCallAsyncFunction::askLabel(std::vector<std::string> arguments)
+SemanticCallAsyncFunction::askLabel(std::vector<std::string> arguments, const SemanticCallInfo info)
 {
     const auto& config = payload.config;
     const auto& step = config.steps.front();
@@ -424,16 +423,17 @@ SemanticCallAsyncFunction::askLabel(std::vector<std::string> arguments)
         {
             applyLogprobRequestFields(request);
         }
-        completion = co_await exchange(std::move(request), nullptr);
+        completion = co_await exchange(std::move(request), nullptr, info);
     }
     co_return std::pair{parseLabelAnswer(completion.first, values), std::move(completion.second)};
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std::vector<std::string> arguments)
+boost::asio::awaitable<AsyncCallResult>
+SemanticCallAsyncFunction::callLabel(std::vector<std::string> arguments, const SemanticCallInfo info)
 {
     const auto& step = payload.config.steps.front();
-    const auto [answer, alternatives] = co_await askLabel(arguments);
+    const auto [answer, alternatives] = co_await askLabel(arguments, info);
     AsyncCallResult result;
     if (step.kind == SemanticStep::Kind::FILTER)
     {
@@ -457,7 +457,7 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callLabel(std
 boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callProxyStudent(std::vector<std::string> arguments)
 {
     const auto& proxy = *payload.config.proxy;
-    const auto [answer, alternatives] = co_await askLabel(arguments);
+    const auto [answer, alternatives] = co_await askLabel(arguments, SemanticCallInfo{.rows = 1, .role = "student"});
     const auto probability = labelProbability(alternatives, labelValues(payload.config.steps.front()), "true");
     const bool verdict = answer == "true";
     /// No probability (no logprobs, or an answer that is no value) is no confidence: the teacher decides. A `true` stands
@@ -481,10 +481,11 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callCascadeTe
         SemanticCallStats::instance().recordCascadeRow(route, false);
         co_return AsyncCallResult{std::move(studentVerdict)};
     }
+    const SemanticCallInfo teacher{.rows = 1, .role = route == "audit" ? std::string_view{"audit"} : std::string_view{"teacher"}};
     std::string verdict;
     if (payload.config.answerMode == AnswerMode::LABEL)
     {
-        verdict = (co_await callLabel(std::move(inputs))).front();
+        verdict = (co_await callLabel(std::move(inputs), teacher)).front();
     }
     else
     {
@@ -494,7 +495,7 @@ boost::asio::awaitable<AsyncCallResult> SemanticCallAsyncFunction::callCascadeTe
             row.fields.emplace_back(payload.inputFields[field], std::move(inputs[field]));
         }
         const std::vector rows{std::move(row)};
-        const auto answer = co_await complete(filterCodec->buildPrompt(rows));
+        const auto answer = co_await complete(filterCodec->buildPrompt(rows), nullptr, {}, teacher);
         verdict = decode(answer, rows).front().front();
     }
     SemanticCallStats::instance().recordCascadeRow(route, route == "audit" && verdict != studentVerdict);
@@ -521,7 +522,8 @@ boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(st
                     .pairId = batchRowId(position), .left = std::move(rows[position][0]), .right = std::move(rows[position][1])});
         }
         joinCodec->keyPairs(pairs);
-        const auto answer = co_await complete(joinCodec->buildPrompt(pairs));
+        const auto answer
+            = co_await complete(joinCodec->buildPrompt(pairs), nullptr, {}, SemanticCallInfo{.rows = pairs.size(), .role = {}});
         const auto parsed = parseLlmJson(answer);
         const auto verdicts = joinCodec->parse(answer, pairs);
         size_t missing = 0;
@@ -548,7 +550,7 @@ boost::asio::awaitable<AsyncBatchResult> SemanticCallAsyncFunction::callBatch(st
         payloads.push_back(std::move(row));
     }
     const auto prompt = mapCodec ? mapCodec->buildPrompt(payloads) : filterCodec->buildPrompt(payloads);
-    const auto answer = co_await complete(prompt);
+    const auto answer = co_await complete(prompt, nullptr, {}, SemanticCallInfo{.rows = payloads.size(), .role = {}});
     const auto parsed = parseLlmJson(answer);
     auto decoded = decode(answer, payloads);
     size_t missing = 0;
@@ -704,8 +706,8 @@ SemanticCallAsyncFunction::scoreWindows(std::shared_ptr<WindowScoring> scoring, 
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<std::string>
-SemanticCallAsyncFunction::complete(std::string prompt, SemanticHttpClient* const client, std::vector<ImageAttachment> images)
+boost::asio::awaitable<std::string> SemanticCallAsyncFunction::complete(
+    std::string prompt, SemanticHttpClient* const client, std::vector<ImageAttachment> images, const SemanticCallInfo info)
 {
     auto request = buildChatRequest(payload.config.modelName, prompt, images, payload.config.maxTokens);
     if (mock)
@@ -723,13 +725,25 @@ SemanticCallAsyncFunction::complete(std::string prompt, SemanticHttpClient* cons
         }
         co_return std::move(answer).value();
     }
-    co_return (co_await exchange(std::move(request), client)).first;
+    co_return (co_await exchange(std::move(request), client, info)).first;
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<std::pair<std::string, TokenLogprobs>>
-SemanticCallAsyncFunction::exchange(nlohmann::json request, SemanticHttpClient* const client)
+SemanticCallAsyncFunction::exchange(nlohmann::json request, SemanticHttpClient* const client, const SemanticCallInfo info)
 {
+    /// The per-call log's wall-clock times (system_clock, comparable across processes); the latency line keeps steady_clock.
+    const auto epochNs
+        = [] { return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); };
+    SemanticCallRecord record{
+        .startNs = epochNs(),
+        .endNs = 0,
+        .status = 0,
+        .promptTokens = std::nullopt,
+        .completionTokens = std::nullopt,
+        .rows = info.rows,
+        .model = request.contains("model") && request["model"].is_string() ? request["model"].get<std::string>() : std::string{},
+        .role = std::string{info.role}};
     const auto start = std::chrono::steady_clock::now();
     std::optional<SemanticHttpResponse> exchanged;
     try
@@ -740,12 +754,17 @@ SemanticCallAsyncFunction::exchange(nlohmann::json request, SemanticHttpClient* 
     catch (...) /// NOLINT(no-raw-catch-all)
     {
         SemanticCallStats::instance().recordCall(start, std::chrono::steady_clock::now(), true);
+        record.endNs = epochNs();
+        SemanticCallStats::instance().recordExchange(std::move(record));
         throw;
     }
     const auto& response = *exchanged;
     SemanticCallStats::instance().recordCall(start, std::chrono::steady_clock::now(), response.status < 200 || response.status >= 300);
+    record.endNs = epochNs();
+    record.status = response.status;
     if (response.status < 200 || response.status >= 300)
     {
+        SemanticCallStats::instance().recordExchange(std::move(record));
         if (isTransientStatus(response.status))
         {
             SemanticCallStats::instance().recordTransientStatus(response.status);
@@ -756,6 +775,11 @@ SemanticCallAsyncFunction::exchange(nlohmann::json request, SemanticHttpClient* 
         throw CannotReadFromSource("SEM_CALL of model '{}' got status {}: {}", payload.model, response.status, response.body);
     }
     const auto envelope = nlohmann::json::parse(response.body, nullptr, false);
+    if (envelope.is_object())
+    {
+        std::tie(record.promptTokens, record.completionTokens) = recordUsage(envelope);
+    }
+    SemanticCallStats::instance().recordExchange(std::move(record));
     if (auto content = messageContent(envelope))
     {
         co_return std::pair{std::move(content).value(), firstTokenLogprobs(envelope)};
