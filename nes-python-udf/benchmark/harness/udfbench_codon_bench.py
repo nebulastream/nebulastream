@@ -53,6 +53,7 @@ def main():
     parser.add_argument("--experiment", required=True)
     parser.add_argument("--build", default=os.path.join(REPOSITORY, "cmake-build-relwithdebinfo-libstdcxx-none"))
     parser.add_argument("--rounds", type=int, default=2)
+    parser.add_argument("--query-timeout", type=int, default=1200, help="seconds; stem on the x10 data takes minutes")
     parser.add_argument("--scratch", required=True, help="directory for the systest working directory and output")
     parser.add_argument("--test", default=TEST, help="the benchmark test (default: UdfBenchCodonNumba.test); for "
                         "UdfBenchBaseline.test, the record of each source is its baseline without a UDF")
@@ -65,7 +66,7 @@ def main():
     os.makedirs(run_dir + "/work")
     command = [os.path.join(arguments.build, "nes-systests/systest/systest"), "-t", arguments.test, "--data", DATA,
                "--workingDir", run_dir + "/work", "--log-path", run_dir + "/log.txt", "-b", "--benchmark-rounds",
-               str(arguments.rounds), "-c", os.path.join(HARNESS, "single-node.yaml"), "--",
+               str(arguments.rounds), "--query-timeout", str(arguments.query_timeout), "-c", os.path.join(HARNESS, "single-node.yaml"), "--",
                "--worker.query_engine.number_of_worker_threads=1"]
     started = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     with open(run_dir + "/out.txt", "w") as output:
