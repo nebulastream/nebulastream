@@ -21,6 +21,7 @@
 #include <functional>
 #include <initializer_list>
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -71,6 +72,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <Calcite/CalcitePlanner.hpp>
 #include <Calcite/QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
 #include <Version.hpp>
@@ -770,6 +772,82 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     }
 }
 
+/// The planner's steps of each query in the JSON that nes-calcite-planner/docs/tools/render_steps.py renders (as written by
+/// DumpSteps.java): a query that fails to plan has its error and no steps.
+struct RenderedRule
+{
+    std::string rule;
+    bool ours;
+    std::string plan;
+    std::string dot;
+};
+
+struct RenderedStep
+{
+    std::string name;
+    std::string origin;
+    std::string plan;
+    std::string dot;
+    std::vector<RenderedRule> rules;
+};
+
+struct RenderedQuery
+{
+    std::string label;
+    std::string sql;
+    bool logical = false;
+    /// Empty if the query planned.
+    std::string error;
+    std::vector<RenderedStep> steps;
+};
+
+void writePlannerSteps(
+    const std::string& path,
+    const std::vector<std::string>& queries,
+    const NES::QueryCatalogs& catalogs,
+    const NES::QueryOptimizerConfiguration& optimizer)
+{
+    std::vector<RenderedQuery> rendered;
+    for (const auto& [index, query] : queries | std::views::enumerate)
+    {
+        RenderedQuery entry{.label = fmt::format("Query {}", index + 1), .sql = query, .logical = false, .error = {}, .steps = {}};
+        try
+        {
+            const auto planned = NES::Calcite::planStatement(
+                query,
+                *catalogs.sourceCatalog,
+                *catalogs.sinkCatalog,
+                *catalogs.workerCatalog,
+                catalogs.modelCatalog.get(),
+                optimizer,
+                /*detailedSteps=*/true);
+            for (const auto& step : planned.steps)
+            {
+                entry.steps.push_back(RenderedStep{
+                    .name = step.name,
+                    .origin = step.origin,
+                    .plan = step.plan,
+                    .dot = step.dot,
+                    .rules = step.rules
+                        | std::views::transform([](const auto& rule)
+                                                { return RenderedRule{.rule = rule.rule, .ours = rule.ours, .plan = rule.plan, .dot = rule.dot}; })
+                        | std::ranges::to<std::vector>()});
+            }
+        }
+        catch (const NES::Exception& exception)
+        {
+            entry.error = exception.what();
+        }
+        rendered.push_back(std::move(entry));
+    }
+    std::ofstream out(path);
+    if (not out)
+    {
+        throw NES::InvalidConfigParameter("cannot write the planner steps to {}", path);
+    }
+    out << rfl::json::write(rendered) << '\n';
+}
+
 void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     auto topologyConfig = getTopologyPath(program);
@@ -817,6 +895,10 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
+        if (subcommand.is_used("--steps"))
+        {
+            writePlannerSteps(subcommand.get<std::string>("--steps"), queries, catalogs, optimizer);
+        }
         NES::QueryStatementHandler queryStatementHandler{queryManager, catalogs, optimizer};
         for (const auto& query : queries)
         {
@@ -863,6 +945,10 @@ int main(int argc, char** argv)
 
         ArgumentParser dump("dump");
         dump.add_argument("queries").nargs(argparse::nargs_pattern::any);
+        dump.add_argument("--steps")
+            .help("Also write every planner step of each query as JSON to this file, the input of "
+                  "nes-calcite-planner/docs/tools/render_steps.py (an HTML page per query: a graph per step and the plan after "
+                  "each rule)");
 
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);

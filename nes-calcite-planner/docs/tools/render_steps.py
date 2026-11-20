@@ -4,6 +4,8 @@ steps the plan after each rule. Graphs are Graphviz DOT, drawn in the browser by
 
 python3 render_steps.py <steps.json> <out.html>
 
+The CLI writes the same JSON for the queries of a topology file: nes-cli -t <topology> dump --steps <steps.json>.
+
 With --systest, for the requests of a systest run (DumpSteps.java --requests): one page per test file and an index.
 python3 render_steps.py --systest <steps.json> <nes-systests directory> <out directory>
 

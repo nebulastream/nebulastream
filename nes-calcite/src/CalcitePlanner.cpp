@@ -399,10 +399,12 @@ PlannedPhysicalQuery planPhysical(
     const bool finiteInputs,
     const std::unordered_map<std::string, std::string>& sourceNames,
     const ModelCatalog* models,
-    const QueryOptimizerConfiguration& optimizer)
+    const QueryOptimizerConfiguration& optimizer,
+    const bool detailedSteps)
 {
     auto [request, catalogNames, caseSensitive] = makeRequest(sql, sourceCatalog, finiteInputs, sourceNames, /*physical=*/true, models);
     request.set_nested_loop_joins(optimizer.joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN);
+    request.set_detailed_steps(detailedSteps);
     /// The sink clause is in our dialect, which our parser reads.
     const auto sink = AntlrSQLQueryParser::bindSinkClause(sinkClause);
     const auto* const anonymous = std::get_if<AntlrSQLQueryParser::AnonymousSinkClause>(&sink);
@@ -527,10 +529,15 @@ PlannedPhysicalQuery planPhysical(
         placed[host].push_back(PhysicalQuery{.queryId = INVALID_QUERY_ID, .part = resolveWorkerPart(substraitPlan, relation, *context, host)});
     }
     /// The sink writes its own schema, if it has one: that is the result systest and others read.
-    std::vector<std::pair<std::string, std::string>> steps;
+    std::vector<PlanStep> steps;
     for (const auto& step : response.steps())
     {
-        steps.emplace_back(step.name(), step.plan());
+        std::vector<PlanStep::Rule> rules;
+        for (const auto& rule : step.rules())
+        {
+            rules.push_back({.rule = rule.rule(), .ours = rule.ours(), .plan = rule.plan(), .dot = rule.dot()});
+        }
+        steps.push_back({.name = step.name(), .origin = step.origin(), .plan = step.plan(), .dot = step.dot(), .rules = std::move(rules)});
     }
     return PlannedPhysicalQuery{
         .parts = std::move(placed),
@@ -547,10 +554,12 @@ PlannedPhysicalQuery planStatement(
     const SinkCatalog& sinkCatalog,
     const WorkerCatalog& workerCatalog,
     const ModelCatalog* models,
-    const QueryOptimizerConfiguration& optimizer)
+    const QueryOptimizerConfiguration& optimizer,
+    const bool detailedSteps)
 {
     const auto [query, sinkClause] = splitSink(statement);
-    return planPhysical(query, sinkClause, sourceCatalog, sinkCatalog, workerCatalog, plannerAddress(), finiteInputs(), {}, models, optimizer);
+    return planPhysical(
+        query, sinkClause, sourceCatalog, sinkCatalog, workerCatalog, plannerAddress(), finiteInputs(), {}, models, optimizer, detailedSteps);
 }
 
 }

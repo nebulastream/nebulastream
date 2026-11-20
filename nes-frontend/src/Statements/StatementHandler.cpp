@@ -330,9 +330,9 @@ std::string computeExplainOutput(const ExplainQueryStatement& statement, const C
     std::stringstream explainMessage;
     if (statement.explainFormat == ExplainFormat::Verbose)
     {
-        for (const auto& [name, plan] : planned.steps)
+        for (const auto& step : planned.steps)
         {
-            fmt::println(explainMessage, "== {} ==\n{}", name, plan);
+            fmt::println(explainMessage, "== {} ==\n{}", step.name, step.plan);
         }
     }
     fmt::print(explainMessage, "== Placed Pipelines ==\n{}", planned.explain);

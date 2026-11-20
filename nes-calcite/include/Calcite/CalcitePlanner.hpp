@@ -61,6 +61,26 @@ bool finiteInputs();
 /// sink name or an anonymous sink such as File('out.csv' AS "SINK".FILE_PATH, ...), in our SQL dialect.
 std::pair<std::string, std::string> splitSink(std::string_view statement);
 
+/// A step of the planner (PlanStep): its name, who does it (origin) and the plan after it. With detailed steps, also the
+/// plan as a Graphviz graph (DOT) and, for a step that applies rules, the plan after each rule that changed it.
+struct PlanStep
+{
+    struct Rule
+    {
+        std::string rule;
+        /// One of our rules, not one of Calcite's.
+        bool ours;
+        std::string plan;
+        std::string dot;
+    };
+
+    std::string name;
+    std::string origin;
+    std::string plan;
+    std::string dot;
+    std::vector<Rule> rules;
+};
+
 /// A query that Calcite planned down to its pipelines and placed on workers (planPhysical).
 struct PlannedPhysicalQuery
 {
@@ -73,8 +93,8 @@ struct PlannedPhysicalQuery
     std::string sinkType;
     /// The placed pipelines as the planner describes them, per worker (for EXPLAIN).
     std::string explain;
-    /// The planner's steps: each step's name and the plan after it (for EXPLAIN VERBOSE).
-    std::vector<std::pair<std::string, std::string>> steps;
+    /// The planner's steps (for EXPLAIN VERBOSE, and with detailed steps for the HTML of nes-calcite-planner/docs/tools).
+    std::vector<PlanStep> steps;
 };
 
 /// Plans a single SELECT with Calcite down to its pipelines and places them on the workers of `workerCatalog`; we neither
@@ -96,7 +116,8 @@ PlannedPhysicalQuery planPhysical(
     bool finiteInputs = false,
     const std::unordered_map<std::string, std::string>& sourceNames = {},
     const ModelCatalog* models = nullptr,
-    const QueryOptimizerConfiguration& optimizer = defaultConfiguration<QueryOptimizerConfiguration>());
+    const QueryOptimizerConfiguration& optimizer = defaultConfiguration<QueryOptimizerConfiguration>(),
+    bool detailedSteps = false);
 
 /// Plans a query statement, "SELECT ... INTO <sink>", as planPhysical does, with the planner at plannerAddress() and
 /// $NES_CALCITE_FINITE_INPUTS (see finiteInputs()).
@@ -106,7 +127,8 @@ PlannedPhysicalQuery planStatement(
     const SinkCatalog& sinkCatalog,
     const WorkerCatalog& workerCatalog,
     const ModelCatalog* models,
-    const QueryOptimizerConfiguration& optimizer);
+    const QueryOptimizerConfiguration& optimizer,
+    bool detailedSteps = false);
 
 
 }
