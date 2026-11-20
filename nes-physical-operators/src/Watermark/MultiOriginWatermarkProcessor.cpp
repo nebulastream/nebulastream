@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <ranges>
+#include <span>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -45,14 +46,16 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
-Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const
+MultiOriginWatermarkProcessor::WatermarkUpdate
+MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const
 {
     bool found = false;
+    bool advanced = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
     {
         if (origins[originIndex] == origin)
         {
-            watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
+            advanced |= watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
             found = true;
         }
     }
@@ -62,7 +65,18 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceD
         origin,
         origins.size(),
         fmt::join(origins, ","));
-    return getCurrentWatermark();
+    auto global = UINT64_MAX;
+    auto originWatermark = UINT64_MAX;
+    for (const auto& [currentOrigin, processor] : std::views::zip(origins, watermarkProcessors))
+    {
+        const auto value = processor->getCurrentValue();
+        global = std::min(global, value);
+        if (currentOrigin == origin)
+        {
+            originWatermark = value;
+        }
+    }
+    return {.global = Timestamp(global), .origin = Timestamp(originWatermark), .originAdvanced = advanced};
 }
 
 std::string MultiOriginWatermarkProcessor::getCurrentStatus()
@@ -86,6 +100,19 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark(const OriginId orig
     }
     INVARIANT(false, "watermark requested for non existing origin={}", origin);
     std::unreachable();
+}
+
+void MultiOriginWatermarkProcessor::getCurrentWatermarks(const std::span<Timestamp> out) const
+{
+    PRECONDITION(
+        out.size() == origins.size(),
+        "The output has space for {} watermarks, but the processor tracks {} origins",
+        out.size(),
+        origins.size());
+    for (auto&& [target, processor] : std::views::zip(out, watermarkProcessors))
+    {
+        target = Timestamp(processor->getCurrentValue());
+    }
 }
 
 Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const

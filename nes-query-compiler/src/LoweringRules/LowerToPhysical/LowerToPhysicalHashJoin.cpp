@@ -77,6 +77,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
@@ -394,8 +395,12 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         std::unreachable();
     };
 
-    auto handler
-        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = std::make_shared<HJOperatorHandler>(
+        inputOriginIds,
+        watermarkGapFor(conf.maxWatermarkGapInMs, {timeStampFieldLeft, timeStampFieldRight}),
+        outputOriginId,
+        std::move(sliceAndWindowStore),
+        createTriggerStrategy());
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{

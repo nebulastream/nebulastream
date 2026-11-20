@@ -15,4 +15,5 @@ add_source_files(nes-physical-operators
         IngestionTimeWatermarkAssignerPhysicalOperator.cpp
         MultiOriginWatermarkProcessor.cpp
         TimeFunction.cpp
+        WatermarkGapThrottle.cpp
 )

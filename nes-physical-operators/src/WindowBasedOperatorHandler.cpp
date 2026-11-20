@@ -35,6 +35,7 @@ namespace NES
 
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
+    const uint64_t maxWatermarkGap,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
@@ -43,15 +44,27 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {
+    if (maxWatermarkGap > 0 && inputOrigins.size() > 1)
+    {
+        watermarkGapThrottle.emplace(inputOrigins, maxWatermarkGap);
+    }
 }
 
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+    if (watermarkGapThrottle)
+    {
+        watermarkGapThrottle->start(pipelineExecutionContext.newInternalBackpressureVoter(outputOriginId));
+    }
 }
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
+    if (watermarkGapThrottle)
+    {
+        watermarkGapThrottle->stop();
+    }
 }
 
 NAUTILUS_INLINE WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
@@ -62,7 +75,7 @@ NAUTILUS_INLINE WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSlice
 void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData)
 {
     const auto newGlobalWaterMarkProbe
-        = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+        = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId).global;
 
     NES_TRACE(
         "New global watermark probe: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
@@ -103,8 +116,9 @@ void WindowBasedOperatorHandler::finishBuildBuffer(const Timestamp lowerBound)
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
     /// The watermark processor handles the minimal watermark across both streams
-    const auto newGlobalWatermark
+    const auto update
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    const auto newGlobalWatermark = update.global;
 
     NES_TRACE(
         "New global watermark: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
@@ -113,18 +127,31 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
 
+    /// Every rise of the minimal watermark gives some update a value above `highestTriggeredWatermark`,
+    /// and the thread of that update raises it here, so exactly one thread observes each rise as its own.
     const auto newValue = newGlobalWatermark.getRawValue();
     auto highestWatermark = highestTriggeredWatermark.load();
-    while (true)
+    bool advancedGlobal = false;
+    while (newValue > highestWatermark)
     {
-        if (newValue <= highestWatermark)
-        {
-            return; /// already triggered up to here, possibly by another thread
-        }
         if (highestTriggeredWatermark.compare_exchange_weak(highestWatermark, newValue))
         {
-            break; /// this thread advanced the watermark
+            advancedGlobal = true;
+            break;
         }
+    }
+
+    if (watermarkGapThrottle
+        && watermarkGapThrottle->mayChangeVotes(
+            bufferMetaData.originId, update.origin, update.global, update.originAdvanced, advancedGlobal))
+    {
+        /// The watermark processor and the throttle both track `inputOrigins` in this order.
+        watermarkGapThrottle->onWatermarksMoved(*watermarkProcessorBuild);
+    }
+
+    if (!advancedGlobal)
+    {
+        return; /// already triggered up to here, possibly by another thread
     }
 
     /// The store assigns all sequence numbers, so the buffers can be emitted in any order and without holding a lock.

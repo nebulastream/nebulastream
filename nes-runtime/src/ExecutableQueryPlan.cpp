@@ -74,7 +74,7 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     auto backpressure = std::make_shared<const BackpressureManager>(
         compiledQueryPlan.sources | std::views::transform([](const auto& source) { return source.originId; })
             | std::ranges::to<std::vector>(),
-        OriginMaps{});
+        compiledQueryPlan.origins);
 
     if (compiledQueryPlan.sinks.size() != 1)
     {
