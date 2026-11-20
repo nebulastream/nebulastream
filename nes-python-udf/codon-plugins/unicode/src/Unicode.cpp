@@ -120,9 +120,25 @@ extern "C" uint32_t nes_unicode_flags(const int32_t codePoint)
     return codePoint >= 0 && codePoint <= 0x10FFFF ? computeFlags(codePoint) : 0;
 }
 
+static_assert(std::ranges::is_sorted(NES::Unicode::specialCasing, {}, &NES::Unicode::SpecialCasing::codePoint));
+
 extern "C" int64_t nes_unicode_map(const int32_t codePoint, const int64_t kind, int32_t* out)
 {
     out[0] = codePoint;
+    /// ASCII has no special casing, and its case fold is its lowercase.
+    if (codePoint >= 0 && codePoint < 0x80)
+    {
+        const bool toLower = kind == NES_UNICODE_MAP_LOWER || kind == NES_UNICODE_MAP_FOLD;
+        if (toLower && codePoint >= 'A' && codePoint <= 'Z')
+        {
+            out[0] = codePoint + ('a' - 'A');
+        }
+        else if (!toLower && codePoint >= 'a' && codePoint <= 'z')
+        {
+            out[0] = codePoint - ('a' - 'A');
+        }
+        return 1;
+    }
     if (!isAssigned(codePoint))
     {
         return 1;
@@ -140,12 +156,14 @@ extern "C" int64_t nes_unicode_map(const int32_t codePoint, const int64_t kind, 
         std::ranges::copy_n(folded.begin(), length, out);
         return length;
     }
-    for (const auto& special : NES::Unicode::specialCasing)
+    for (auto special = std::ranges::lower_bound(NES::Unicode::specialCasing, codePoint, {}, &NES::Unicode::SpecialCasing::codePoint);
+         special != NES::Unicode::specialCasing.end() && special->codePoint == codePoint;
+         ++special)
     {
-        if (special.codePoint == codePoint && special.kind == kind)
+        if (special->kind == kind)
         {
-            std::ranges::copy_n(special.mapping.begin(), special.length, out);
-            return special.length;
+            std::ranges::copy_n(special->mapping.begin(), special->length, out);
+            return special->length;
         }
     }
     int32_t mapped = codePoint;

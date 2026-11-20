@@ -409,16 +409,72 @@ class str:
             i += n
         return True
 
-    def _nes_map(self, kind: int) -> str:
-        """Maps each code point with nes_unicode_map. Not for lower(), which has the final sigma."""
-        out = _NesBuffer(self.len)
+    def _nes_ascii_case(self, p: Ptr[byte], upper: bool) -> bool:
+        """Writes the bytes to p with the ASCII letters in lower (or upper) case. True if all bytes are ASCII.
+
+        The loop has no early exit and no call, so LLVM can vectorize it. A byte below 0x80 is always a complete
+        character in UTF-8, so the bytes in p are correct for the ASCII characters of any string."""
+        src = self.ptr
+        first = 97 if upper else 65
+        delta = -32 if upper else 32
+        seen = 0
+        for i in range(self.len):
+            b = int(src[i])
+            seen |= b
+            p[i] = byte(b + delta if first <= b < first + 26 else b)
+        return seen < 0x80
+
+    def _nes_case_mixed(self, p: Ptr[byte], kind: int) -> str:
+        """The case mapping of a string with non-ASCII characters. p holds the result of _nes_ascii_case: the runs of
+        ASCII bytes come from p, and each other character goes through nes_unicode_map (lower: with the final sigma)."""
+        src = self.ptr
+        n = self.len
+        out = _NesBuffer(n + 8)
         mapping = Ptr[i32](3)
         i = 0
-        while i < self.len:
-            code_point, n = self._nes_decode(i)
-            out.add_mapping(mapping, nes_unicode_map(i32(code_point), kind, mapping))
-            i += n
+        while i < n:
+            start = i
+            while i < n and int(src[i]) < 0x80:
+                i += 1
+            if i > start:
+                out.add_bytes(p + start, i - start)
+            if i < n:
+                code_point, length = self._nes_decode(i)
+                if kind == _NES_MAP_LOWER and code_point == 0x3A3:
+                    out.add(0x3C2 if self._nes_final_sigma_at(i, length) else 0x3C3)
+                else:
+                    out.add_mapping(mapping, nes_unicode_map(i32(code_point), kind, mapping))
+                i += length
         return str(out)
+
+    def _nes_decode_before(self, offset: int) -> Tuple[int, int]:
+        """The code point that ends at the byte offset and the byte offset where it starts."""
+        start = offset - 1
+        while start > 0 and (int(self.ptr[start]) & 0xC0) == 0x80:
+            start -= 1
+        code_point, n = self._nes_decode(start)
+        if start + n != offset:
+            return (int(self.ptr[offset - 1]), offset - 1)
+        return (code_point, start)
+
+    def _nes_final_sigma_at(self, offset: int, length: int) -> bool:
+        """_nes_final_sigma on the bytes: the sigma at the byte offset has a cased letter before it and none after it."""
+        j = offset
+        cased_before = False
+        while j > 0:
+            code_point, j = self._nes_decode_before(j)
+            if not _nes_has(code_point, _NES_CASE_IGNORABLE):
+                cased_before = _nes_has(code_point, _NES_CASED)
+                break
+        if not cased_before:
+            return False
+        j = offset + length
+        while j < self.len:
+            code_point, n = self._nes_decode(j)
+            if not _nes_has(code_point, _NES_CASE_IGNORABLE):
+                return not _nes_has(code_point, _NES_CASED)
+            j += n
+        return True
 
     def _nes_add_lower(code_points: List[int], index: int, out: _NesBuffer, mapping: Ptr[i32]):
         """CPython's lower_ucs4: the full lowercase mapping, with the final form of a capital sigma."""
@@ -620,39 +676,35 @@ class str:
             i += n
         return True
 
-    # NES: the full case mappings of CPython, for all of Unicode. ASCII strings take Codon's byte code.
+    # NES: the full case mappings of CPython, for all of Unicode. One pass maps the ASCII bytes. Only a string with
+    # non-ASCII characters takes a second pass, which maps the non-ASCII characters one by one.
 
     def lower(self) -> str:
         n = self.len
         if n == 0:
             return ""
-        if self._nes_is_ascii():
-            p = Ptr[byte](n)
-            for i in range(n):
-                p[i] = str._tolower(self.ptr[i])
+        p = Ptr[byte](n)
+        if self._nes_ascii_case(p, False):
             return str(p, n)
-        code_points = self._nes_decode_all()
-        out = _NesBuffer(n)
-        mapping = Ptr[i32](3)
-        for k in range(len(code_points)):
-            str._nes_add_lower(code_points, k, out, mapping)
-        return str(out)
+        return self._nes_case_mixed(p, _NES_MAP_LOWER)
 
     def upper(self) -> str:
         n = self.len
         if n == 0:
             return ""
-        if self._nes_is_ascii():
-            p = Ptr[byte](n)
-            for i in range(n):
-                p[i] = str._toupper(self.ptr[i])
+        p = Ptr[byte](n)
+        if self._nes_ascii_case(p, True):
             return str(p, n)
-        return self._nes_map(_NES_MAP_UPPER)
+        return self._nes_case_mixed(p, _NES_MAP_UPPER)
 
     def casefold(self) -> str:
-        if self._nes_is_ascii():
-            return self.lower()
-        return self._nes_map(_NES_MAP_FOLD)
+        n = self.len
+        if n == 0:
+            return ""
+        p = Ptr[byte](n)
+        if self._nes_ascii_case(p, False):
+            return str(p, n)
+        return self._nes_case_mixed(p, _NES_MAP_FOLD)
 
     def swapcase(self) -> str:
         code_points = self._nes_decode_all()
