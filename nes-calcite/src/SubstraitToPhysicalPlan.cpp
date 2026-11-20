@@ -48,6 +48,7 @@
 #include <Watermark/TimeFunction.hpp>
 #include <fmt/format.h>
 #include <substrait/algebra.pb.h>
+#include <google/protobuf/io/coded_stream.h>
 #include <substrait/plan.pb.h>
 #include "SubstraitTypes.hpp"
 #include <ErrorHandling.hpp>
@@ -1357,7 +1358,14 @@ std::shared_ptr<PipelinedQueryPlan> toPipelines(const std::string_view workerPar
 {
     nes::calcite::WorkerPart part;
     substrait::Plan plan;
-    if (not part.ParseFromArray(workerPart.data(), static_cast<int>(workerPart.size())) or not plan.ParseFromString(part.plan()))
+    /// Deep join trees nest far beyond protobuf's default recursion limit of 100 (as in substraitPlanOf).
+    google::protobuf::io::CodedInputStream partInput(reinterpret_cast<const uint8_t*>(workerPart.data()), static_cast<int>(workerPart.size()));
+    partInput.SetRecursionLimit(100'000);
+    const auto parsedPart = part.ParseFromCodedStream(&partInput) and partInput.ConsumedEntireMessage();
+    google::protobuf::io::CodedInputStream planInput(
+        reinterpret_cast<const uint8_t*>(part.plan().data()), static_cast<int>(part.plan().size()));
+    planInput.SetRecursionLimit(100'000);
+    if (not parsedPart or not plan.ParseFromCodedStream(&planInput) or not planInput.ConsumedEntireMessage())
     {
         throw CannotDeserialize("a part of a physical plan");
     }
