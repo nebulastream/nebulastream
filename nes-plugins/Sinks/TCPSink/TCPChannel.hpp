@@ -48,6 +48,7 @@ public:
     /// @param port Server TCP port.
     /// @param connectionTimeout Timeout for connecting or reconnecting, including DNS resolution.
     /// @param closeTimeout Time tryClose() waits without a buffer being written before aborting the drain.
+    ///                     Also the TCP user timeout: the connection is reset when sent data stays unacknowledged this long.
     /// @param maxQueuedBuffers Maximum number of queued buffers, excluding the buffer being written.
     TCPChannel(
         std::string host,
