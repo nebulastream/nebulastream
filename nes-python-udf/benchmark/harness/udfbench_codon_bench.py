@@ -9,10 +9,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Runs benchmark/UdfBenchCodonNumba.test (UDFBench scalar UDFs as INLINE, Codon) and writes per UDF:
+"""Runs benchmark/UdfBenchCodonNumba.test (UDFBench scalar UDFs as INLINE, Codon), or with --test UdfBenchNumba.test the same
+with Numba (COMPILER NUMBA; needs NES_NUMBA_PYTHON), and writes per UDF:
 
-- the Codon compile time of CREATE FUNCTION (the frontend's "Compiled ... with Codon in" line, with its phases), in the order
-  of the test, so the first UDF also loads the Codon stdlib;
+- the compile time of CREATE FUNCTION (the frontend's "Compiled ... with Codon in" line with its phases, or "... with Numba
+  in"), in the order of the test, so the first Codon UDF also loads the Codon stdlib;
 - the time of the query on the tiny data and on the x10 data (best of --rounds), and the cost per row:
   (time x10 - time tiny) / (rows x10 - rows tiny), which leaves out fixed costs such as the pipeline compilation.
 
@@ -72,13 +73,18 @@ def main():
     out = open(run_dir + "/out.txt").read()
 
     test = open(arguments.test).read()
-    creates = re.findall(r"^CREATE FUNCTION (\w+)_inline|^CREATE FUNCTION (\w+)_adapted", test, flags=re.MULTILINE)
-    names = [inline or adapted for inline, adapted in creates]
+    creates = re.findall(r"^CREATE FUNCTION (\w+)_(inline|adapted|numba) ", test, flags=re.MULTILINE)
+    names = [name for name, _ in creates]
+    suffixes = {name: suffix for name, suffix in creates}
+    engine = "numba" if "COMPILER NUMBA" in test else "codon"
     baseline = not names
     if baseline:
         names = list(FILES)
-    compiles = re.findall(r"Compiled '__nes_python_udf_registered_\d+' with Codon in ([0-9.]+) ms \(mutex wait: [0-9.]+ ms, "
-                          r"parse: ([0-9.]+) ms, compile: ([0-9.]+) ms, LLVM optimize: ([0-9.]+) ms", out)
+    if engine == "numba":
+        compiles = [(total, None, None, None) for total in re.findall(r"Compiled '__nes_numba_udf_registered_\d+' with Numba in ([0-9.]+) ms", out)]
+    else:
+        compiles = re.findall(r"Compiled '__nes_python_udf_registered_\d+' with Codon in ([0-9.]+) ms \(mutex wait: [0-9.]+ ms, "
+                              r"parse: ([0-9.]+) ms, compile: ([0-9.]+) ms, LLVM optimize: ([0-9.]+) ms", out)
     statements = re.findall(r"^(SELECT .*?);\n----", test, flags=re.MULTILINE)
     times = {}
     for path in glob.glob(run_dir + "/work/**/BenchmarkResults.json", recursive=True):
@@ -90,15 +96,17 @@ def main():
     records = []
     for index, name in enumerate(names):
         record = dict(common, udf=None if baseline else name, source=name if baseline else None,
-                      engine="nes-baseline" if baseline else "codon")
+                      engine="nes-baseline" if baseline else engine)
         if index < len(compiles):
-            total, parse, compile_, optimize = map(float, compiles[index])
-            record.update(compile_ms=total, parse_ms=parse, typecheck_ms=compile_, llvm_optimize_ms=optimize)
+            total, parse, compile_, optimize = compiles[index]
+            record["compile_ms"] = float(total)
+            if parse is not None:
+                record.update(parse_ms=float(parse), typecheck_ms=float(compile_), llvm_optimize_ms=float(optimize))
         for number, statement in enumerate(statements, start=1):
             if baseline:
                 if re.search(r"FROM (\w+)", statement).group(1).removesuffix("_x10") != name:
                     continue
-            elif f"{name}_inline(" not in statement and f"{name}_adapted(" not in statement:
+            elif f"{name}_{suffixes[name]}(" not in statement:
                 continue
             source = re.search(r"FROM (\w+)", statement).group(1)
             key = "x10" if source.endswith("_x10") else "tiny"

@@ -1,0 +1,239 @@
+# name: benchmark/UdfBenchNumba.test
+# description: benchmark/UdfBenchCodonNumba.test with every UDF compiled by Numba (EXECUTION INLINE COMPILER NUMBA) instead of
+# Codon, the same UDFs, queries and data. Needs NES_NUMBA_PYTHON. The Codon test's description: Per-row cost of the UDFBench
+# scalar UDFs as INLINE (Codon): each query of the INLINE section of
+# udf/StreamUDFBench/StreamUDFBenchScalarUdfs.test (and frequentterms, which gives other terms than CPython for ties) on the tiny
+# data and on the same data ten times (x10, nes-python-udf/benchmark/harness/make_udfbench_x10.sh), into a Void sink. The
+# difference of the two times over the difference of the rows is the cost per row without fixed costs such as compilation.
+# Run with nes-python-udf/benchmark/harness/udfbench_codon_bench.py.
+# groups: [benchmark, large, Numba]
+
+CREATE LOGICAL SOURCE artifacts(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/query2json_3M.csv
+
+CREATE LOGICAL SOURCE artifacts_x10(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts_x10(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists_x10(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges_x10(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts_x10(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json_x10(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/query2json_3M.csv
+
+CREATE FUNCTION clean_numba (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.clean';
+CREATE FUNCTION cleandate_numba (pubdate VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.cleandate';
+CREATE FUNCTION converttoeuro_numba (x FLOAT64 NOT NULL, y VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.converttoeuro';
+CREATE FUNCTION extractclass_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractclass';
+CREATE FUNCTION extractcode_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractcode';
+CREATE FUNCTION extractday_numba (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractday';
+CREATE FUNCTION extractfunder_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractfunder';
+CREATE FUNCTION extractid_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractid';
+CREATE FUNCTION extractmonth_numba (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractmonth';
+CREATE FUNCTION extractprojectid_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractprojectid';
+CREATE FUNCTION extractyear_numba (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.extractyear';
+CREATE FUNCTION filterstopwords_numba (words VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.filterstopwords';
+CREATE FUNCTION frequentterms_numba (input VARSIZED NOT NULL, N INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.frequentterms';
+CREATE FUNCTION jaccard_numba (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.jaccard';
+CREATE FUNCTION jpack_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.jpack';
+CREATE FUNCTION jsoncount_numba (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.jsoncount';
+CREATE FUNCTION jsonparse_numba (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.jsonparse';
+CREATE FUNCTION jsort_numba (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.jsort';
+CREATE FUNCTION jsortvalues_numba (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.jsortvalues';
+CREATE FUNCTION keywords_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.keywords';
+CREATE FUNCTION log_10_numba (x FLOAT64 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.log_10';
+CREATE FUNCTION lowerize_numba (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.lowerize';
+CREATE FUNCTION removeshortterms_numba (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.removeshortterms';
+CREATE FUNCTION stem_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_numba.stem';
+CREATE FUNCTION addnoise_numba (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_numba.addnoise';
+
+SELECT id, frequentterms_numba(abstract, INT64(5)) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, frequentterms_numba(abstract, INT64(5)) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id, jaccard_numba(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jaccard_numba(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, jsonparse_numba(id, 'doi') AS r FROM query2json INTO Void();
+----
+
+SELECT id, jsonparse_numba(id, 'doi') AS r FROM query2json_x10 INTO Void();
+----
+
+SELECT id, clean_numba(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, clean_numba(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, cleandate_numba(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, cleandate_numba(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, converttoeuro_numba(amount, currency) AS r FROM artifact_charges INTO Void();
+----
+
+SELECT id, converttoeuro_numba(amount, currency) AS r FROM artifact_charges_x10 INTO Void();
+----
+
+SELECT id, extractclass_numba(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractclass_numba(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractcode_numba(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractcode_numba(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractday_numba(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, extractday_numba(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, extractfunder_numba(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractfunder_numba(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractid_numba(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractid_numba(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractmonth_numba(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, extractmonth_numba(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, extractprojectid_numba(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractprojectid_numba(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractyear_numba(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, extractyear_numba(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, filterstopwords_numba(abstract) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, filterstopwords_numba(abstract) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id, jpack_numba(title) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, jpack_numba(title) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, jsoncount_numba(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jsoncount_numba(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, jsort_numba(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jsort_numba(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, jsortvalues_numba(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jsortvalues_numba(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, keywords_numba(abstract) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, keywords_numba(abstract) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id, log_10_numba(amount) AS r FROM artifact_charges INTO Void();
+----
+
+SELECT id, log_10_numba(amount) AS r FROM artifact_charges_x10 INTO Void();
+----
+
+SELECT id, lowerize_numba(title) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, lowerize_numba(title) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, removeshortterms_numba(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, removeshortterms_numba(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, stem_numba(abstract) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, stem_numba(abstract) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id FROM artifacts WHERE addnoise_numba(authors) > FLOAT64(-1000.0) INTO Void();
+----
+
+SELECT id FROM artifacts_x10 WHERE addnoise_numba(authors) > FLOAT64(-1000.0) INTO Void();
+----
