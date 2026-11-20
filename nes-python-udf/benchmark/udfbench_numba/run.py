@@ -13,7 +13,7 @@
 them against CPython on the tiny StreamUDFBench data.
 
 Usage: run.py [--adapted] [UDF ...]. With --adapted, it compiles the functions of udfbench_scalar_inline_adapted.py instead
-(addnoise, jaccard and jsonparse by default) and checks them against the unchanged UDFBench functions under CPython. Prints one JSON line per UDF: compile time (wall and CPU), rows checked, mismatches with the first
+(addnoise by default) and checks them against the unchanged UDFBench functions under CPython. Prints one JSON line per UDF: compile time (wall and CPU), rows checked, mismatches with the first
 ones, the time of one pass over all checked rows with Numba and with CPython (the fastest of REPEATS passes, calls from
 Python included), and the error if the UDF does not compile. Rows with a NULL argument are skipped: the query result is NULL for them.
 addnoise draws random numbers; its results are only checked to be floats.

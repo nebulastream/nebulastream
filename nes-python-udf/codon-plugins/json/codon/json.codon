@@ -23,7 +23,7 @@ results usable wherever Codon expects a `str`.
 `isinstance(x, list)` (also dict, str, int, float, bool, NoneType) checks the kind of a Value at run time, through
 `Value.__isinstance__` (NES's Codon calls it when isinstance is not statically true), and `type(x) == list` through
 `Value.__type_is__`, which is exact (a bool is not an int). `tuple(x)` gives a Value (`Value.__tuple__`); an array
-stands for itself, as it is hashable. `x.is_list()`, `x.is_dict()` and friends work as well.
+stands for itself, as it is hashable.
 """
 
 KIND_NULL: Literal[int] = 0
@@ -51,31 +51,7 @@ class Value:
         self.elements = []
         self.names = []
 
-    # ---- type checks: the runtime counterpart of isinstance(x, list) etc.
-
-    def is_null(self) -> bool:
-        return self.kind == KIND_NULL
-
-    def is_bool(self) -> bool:
-        return self.kind == KIND_BOOL
-
-    def is_int(self) -> bool:
-        return self.kind == KIND_INT
-
-    def is_float(self) -> bool:
-        return self.kind == KIND_FLOAT
-
-    def is_number(self) -> bool:
-        return self.kind == KIND_INT or self.kind == KIND_FLOAT
-
-    def is_str(self) -> bool:
-        return self.kind == KIND_STRING
-
-    def is_list(self) -> bool:
-        return self.kind == KIND_ARRAY
-
-    def is_dict(self) -> bool:
-        return self.kind == KIND_OBJECT
+    # ---- type checks: isinstance(x, list) etc. at run time (NES's Codon calls these)
 
     def __isinstance__(self, T: type) -> bool:
         """isinstance(value, T) as for the object that CPython's json.loads gives: a bool is also an int."""
@@ -260,7 +236,7 @@ class Value:
                 return self.integer == int(other)
             return self.kind == KIND_FLOAT and self.real == float(int(other))
         elif isinstance(other, float):
-            return self.is_number() and float(self) == other
+            return (self.kind == KIND_INT or self.kind == KIND_FLOAT) and float(self) == other
         elif isinstance(other, NoneType):
             return self.kind == KIND_NULL
         else:
@@ -424,7 +400,7 @@ def _string_value(text: str) -> Value:
 
 
 def _equal(left: Value, right: Value) -> bool:
-    if left.is_number() and right.is_number():
+    if (left.kind == KIND_INT or left.kind == KIND_FLOAT) and (right.kind == KIND_INT or right.kind == KIND_FLOAT):
         if left.kind == KIND_FLOAT or right.kind == KIND_FLOAT:
             return float(left) == float(right)
         return left.integer == right.integer
@@ -463,7 +439,7 @@ def _equal(left: Value, right: Value) -> bool:
 
 def _compare(left: Value, right: Value) -> int:
     """Three-way comparison with Python's ordering rules; unorderable pairs raise TypeError."""
-    if (left.is_number() or left.kind == KIND_BOOL) and (right.is_number() or right.kind == KIND_BOOL):
+    if left.kind in (KIND_INT, KIND_FLOAT, KIND_BOOL) and right.kind in (KIND_INT, KIND_FLOAT, KIND_BOOL):
         a = float(left)
         b = float(right)
         return -1 if a < b else (1 if a > b else 0)

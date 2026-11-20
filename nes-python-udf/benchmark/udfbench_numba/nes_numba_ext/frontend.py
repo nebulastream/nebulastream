@@ -21,7 +21,7 @@ compile. The source file stays as it is. Each rewrite keeps the result of the UD
 - The test `if x:` (also `while x:`, `... if x else ...` and `not x`) of a variable becomes `x is not None and x`. Numba
   0.68.1 raises TypeError for the truth value of an optional string that is None.
 - `type(x) == list` (also tuple, dict, str) becomes `isinstance(x, list)`. Numba does not compare types.
-- In a function that asks a JSON value for its kind (is_list(), is_dict(), ..., or isinstance(x, list) or dict), json.loads(x)
+- In a function that asks a JSON value for its kind (isinstance(x, list) or dict), json.loads(x)
   becomes json_value(x) (json_value_ext), `for item in data` over such a value becomes a loop over its indices, and each
   `return x` of the UDF becomes `return result_text(x)`. A jitted wrapper raises TypeError for a value that is not a string,
   outside the UDF's own try/except, and returns the text otherwise, as NES's entry code does with a VARSIZED result.
@@ -82,15 +82,10 @@ class _TypeComparisons(ast.NodeTransformer):
         return node
 
 
-_KIND_METHODS = {"is_null", "is_bool", "is_int", "is_float", "is_number", "is_str", "is_list", "is_dict"}
-
-
 def _asks_json_kind(function):
     for node in ast.walk(function):
         if not isinstance(node, ast.Call):
             continue
-        if isinstance(node.func, ast.Attribute) and node.func.attr in _KIND_METHODS:
-            return True
         if isinstance(node.func, ast.Name) and node.func.id == "isinstance" and len(node.args) == 2 \
                 and isinstance(node.args[1], ast.Name) and node.args[1].id in ("list", "dict"):
             return True

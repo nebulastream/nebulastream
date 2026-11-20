@@ -416,19 +416,9 @@ SELECT id, stem_inline(abstract) AS r FROM artifact_abstracts INTO Checksum();
 16845 1074975864
 
 # --- EXECUTION INLINE, adapted UDFs ---
-# udfbench_scalar_inline_adapted.py: addnoise, jaccard and jsonparse changed so that Codon compiles them. Same results as above.
+# udfbench_scalar_inline_adapted.py: addnoise with its import at module level. Same result as above.
 CREATE FUNCTION addnoise_adapted (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_adapted.addnoise';
-CREATE FUNCTION jaccard_adapted (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_adapted.jaccard';
-CREATE FUNCTION jsonparse_adapted (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_adapted.jsonparse';
 
 SELECT id FROM artifacts WHERE addnoise_adapted(authors) > FLOAT64(-1000.0) INTO Checksum();
 ----
 47919 174369468
-
-SELECT id, jaccard_adapted(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Checksum();
-----
-16699 64983328
-
-SELECT id, jsonparse_adapted(id, 'doi') AS r FROM query2json INTO Checksum();
-----
-23294 286664167

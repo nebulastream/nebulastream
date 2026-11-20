@@ -9,11 +9,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""A JSON value for nopython mode, with the interface of the Value of NES's Codon json plugin: is_null(), is_bool(), is_int(),
-is_float(), is_str(), is_list(), is_dict(), len(), [int] for an array, [str], get() and `in` for an object, str(), and
-isinstance(value, list) (also dict, str, int, float, bool), which checks the kind at run time.
+"""A JSON value for nopython mode, with the interface of the Value of NES's Codon json plugin: len(), [int] for an array, [str],
+get() and `in` for an object, str(), and isinstance(value, list) (also dict, str, int, float, bool), which checks the kind at
+run time.
 
-get() returns a value also for a missing member, which acts as None (is_null(), str() "None"): Numba cannot unify a structref
+get() returns a value also for a missing member, which acts as None (str() "None"): Numba cannot unify a structref
 with None. result_text(value) is what NES's entry code does with a VARSIZED result (__nes_str__ in the Codon plugin):
 (True, the text) for a string, (True, None) for null or a missing member, and (False, None) for any other kind, for which
 the caller raises TypeError outside the UDF, so that the UDF's own `except` does not catch it. Any other value v gives
@@ -21,7 +21,7 @@ the caller raises TypeError outside the UDF, so that the UDF's own `except` does
 
 json_value(text) parses `text` into flat arrays of nodes. A value is the arrays and the index of a node, so a member or an
 element shares the arrays of its document. The front end (frontend.njit) calls json_value in place of json.loads in a UDF that
-asks a value for its kind (is_list(), is_dict(), ...): one Numba type cannot be both the list of strings that json.loads gives
+asks a value for its kind (isinstance(x, list) or dict): one Numba type cannot be both the list of strings that json.loads gives
 the other UDFs and a value of any kind.
 
 str() gives the text of a string, None, True or False, and the JSON text of a number (CPython can write a float another way,
@@ -201,20 +201,6 @@ def json_value(text):
     return JsonValue(text, numpy.array(kinds, dtype=numpy.int64), numpy.array(starts, dtype=numpy.int64),
                      numpy.array(ends, dtype=numpy.int64), numpy.array(firsts, dtype=numpy.int64),
                      numpy.array(nexts, dtype=numpy.int64), numpy.array(keys, dtype=numpy.int64), strings, 0)
-
-
-def _kind_check(kind, second=-1):
-    def method(value):
-        def implementation(value):
-            found = _kind(value)
-            return found == kind or found == second
-        return implementation
-    return method
-
-
-for _name, _kinds in (("is_null", (NULL,)), ("is_bool", (BOOL,)), ("is_int", (INT,)), ("is_float", (FLOAT,)),
-                      ("is_number", (INT, FLOAT)), ("is_str", (STRING,)), ("is_list", (ARRAY,)), ("is_dict", (OBJECT,))):
-    overload_method(JsonValueType, _name)(_kind_check(*_kinds))
 
 
 @register_jitable

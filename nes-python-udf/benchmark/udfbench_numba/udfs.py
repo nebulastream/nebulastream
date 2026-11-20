@@ -105,7 +105,7 @@ def function(name):
 
 
 # The UDFs of udfbench_scalar_inline_adapted.py, which take no `self`.
-ADAPTED = ("addnoise", "jaccard", "jsonparse")
+ADAPTED = ("addnoise",)
 
 
 def adapted_function(name):
