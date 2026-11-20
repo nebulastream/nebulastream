@@ -540,7 +540,7 @@ localhost:8181), <code>events2</code> two (one on each worker).</p>
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;PhysicalSourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;LogicalFilter\ncondition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_2 [label=&quot;LogicalProject\nid=[$0]\nV2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -566,7 +566,7 @@ localhost:8181), <code>events2</code> two (one on each worker).</p>
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282, into the sink:
 LogicalUnion(all=[true])
-  NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+  NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
     LogicalFilter(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
       PhysicalSourceScan(table=[[events2]], physicalSource=[3])
@@ -581,7 +581,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -600,7 +600,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
     p1_13 [label=&quot;Map\nCALCITE_F1=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_12 [label=&quot;Retain\nfields=[[0, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_11 [label=&quot;Emit\nfields=[[ID, CALCITE_F1]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_10 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_10 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
   }
   p0_4 -&gt; p0_3;
   p0_9 -&gt; p0_8;
@@ -624,14 +624,14 @@ Sink(names=[[id, V2]])
   Emit(fields=[[id, V2]], forSink=[true])
     UnionAll
       Scan(fields=[[id, V2]])
-        NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+        NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
       Retain(fields=[[0, 3]])
         Map(CALCITE_F0=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
           Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
             Scan(fields=[[ID, VAL, TS]])
               SourceScan(table=[[events2]], physicalSource=[3])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+NetworkSink(to=[localhost:8282], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Emit(fields=[[ID, CALCITE_F1]], forSink=[true])
     Retain(fields=[[0, 3]])
       Map(CALCITE_F1=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
@@ -645,7 +645,7 @@ NetworkSink(to=[localhost:8282], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_5 [label=&quot;PhysicalSourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;LogicalFilter\ncondition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -672,7 +672,7 @@ NetworkSink(to=[localhost:8282], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
     LogicalFilter(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
       PhysicalSourceScan(table=[[events2]], physicalSource=[3])
@@ -687,7 +687,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_5 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
@@ -716,7 +716,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
     LogicalFilter(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
       Scan(fields=[[ID, VAL, TS]])
@@ -732,7 +732,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -761,7 +761,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
     Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
       Scan(fields=[[ID, VAL, TS]])
@@ -777,7 +777,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -808,7 +808,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Retain(fields=[[0, 3]])
     Map(CALCITE_F0=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
@@ -825,7 +825,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -856,7 +856,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Retain(fields=[[0, 3]])
     Map(CALCITE_F0=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
@@ -873,7 +873,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -906,7 +906,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Retain(fields=[[0, 3]])
     Map(CALCITE_F0=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
@@ -924,7 +924,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -957,7 +957,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Retain(fields=[[0, 3]])
     Map(CALCITE_F0=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
@@ -975,7 +975,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -1010,7 +1010,7 @@ LogicalProject(id=[$0], V2=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[id, V2]])
-    NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+    NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Retain(fields=[[0, 3]])
     Map(CALCITE_F0=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
@@ -1029,7 +1029,7 @@ Retain(fields=[[0, 3]])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_2 [label=&quot;Scan\nfields=[[id, V2]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Emit\nfields=[[id, V2]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -1051,7 +1051,7 @@ Retain(fields=[[0, 3]])
     p1_12 [label=&quot;Selection\ncondition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_11 [label=&quot;Map\nCALCITE_F1=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_10 [label=&quot;Emit\nfields=[[ID, CALCITE_F1]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_9 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_9 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[456f06b1-b639-4065-afd6-ebdd0d46b791]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     subgraph cluster_p1_pipeline0 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_14 }
     subgraph cluster_p1_pipeline1 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_13; p1_12; p1_11; p1_10 }
     subgraph cluster_p1_pipeline2 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_9 }
@@ -1075,14 +1075,14 @@ Retain(fields=[[0, 3]])
 Sink(names=[[id, V2]])
   Emit(fields=[[id, V2]], forSink=[true])
     Scan(fields=[[id, V2]])
-      NetworkSource(from=[localhost:8181], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+      NetworkSource(from=[localhost:8181], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Emit(fields=[[ID, CALCITE_F0]], forSink=[true])
     Map(CALCITE_F0=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
         Scan(fields=[[ID, VAL, TS]])
           SourceScan(table=[[events2]], physicalSource=[3])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
+NetworkSink(to=[localhost:8282], channel=[456f06b1-b639-4065-afd6-ebdd0d46b791])
   Emit(fields=[[ID, CALCITE_F1]], forSink=[true])
     Map(CALCITE_F1=[*($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Selection(condition=[&gt;($1, CAST(20):BIGINT UNSIGNED NOT NULL)])
@@ -1926,8 +1926,8 @@ NetworkSink(to=[localhost:8282], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
-    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;PhysicalSourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;LogicalFilter\ncondition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;LogicalProject\nA=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)]\nB=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT U...&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -1959,14 +1959,14 @@ NetworkSink(to=[localhost:8282], channel=[03bd7e8a-a73c-44f7-91f2-fff918b72f8a])
   p2_12 -&gt; p2_11;
   p2_11 -&gt; p2_10;
   p2_10 -&gt; p2_end;
-  p2_end -&gt; p0_3 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_1 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_3 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282, into the sink:
 LogicalUnion(all=[true])
-  NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+  NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   LogicalUnion(all=[true])
-    NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+    NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       LogicalFilter(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
         PhysicalSourceScan(table=[[events2]], physicalSource=[3])
@@ -1985,9 +1985,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_12 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2007,14 +2007,14 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
     p1_16 [label=&quot;Map\nCALCITE_F2=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)]\nCALCITE_F3=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null...&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_15 [label=&quot;Retain\nfields=[[3, 4]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_14 [label=&quot;Emit\nfields=[[CALCITE_F2, CALCITE_F3]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_13 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_13 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p2_26 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[2]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p2_25 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p2_24 [label=&quot;Selection\ncondition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p2_23 [label=&quot;Map\nCALCITE_F4=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)]\nCALCITE_F5=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null...&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p2_22 [label=&quot;Retain\nfields=[[3, 4]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p2_21 [label=&quot;Emit\nfields=[[CALCITE_F4, CALCITE_F5]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p2_20 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p2_20 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
   }
   p0_4 -&gt; p0_3;
   p0_7 -&gt; p0_6;
@@ -2040,25 +2040,25 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_23 -&gt; p2_22;
   p2_22 -&gt; p2_21;
   p2_21 -&gt; p2_20;
-  p2_20 -&gt; p0_7 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_13 -&gt; p0_4 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_20 -&gt; p0_7 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Sink(names=[[A, B]])
   Emit(fields=[[A, B]], forSink=[true])
     UnionAll
       Scan(fields=[[A, B]])
-        NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+        NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
       UnionAll
         Scan(fields=[[A, B]])
-          NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+          NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
         Retain(fields=[[3, 4]])
           Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
             Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
               Scan(fields=[[ID, VAL, TS]])
                 SourceScan(table=[[events2]], physicalSource=[3])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+NetworkSink(to=[localhost:8282], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   Emit(fields=[[CALCITE_F2, CALCITE_F3]], forSink=[true])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F2=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F3=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
@@ -2066,7 +2066,7 @@ NetworkSink(to=[localhost:8282], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
           Scan(fields=[[ID, VAL, TS]])
             SourceScan(table=[[events]], physicalSource=[1])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+NetworkSink(to=[localhost:8282], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
   Emit(fields=[[CALCITE_F4, CALCITE_F5]], forSink=[true])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F4=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F5=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
@@ -2080,9 +2080,9 @@ NetworkSink(to=[localhost:8282], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;PhysicalSourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;LogicalFilter\ncondition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;LogicalProject\nA=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)]\nB=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT U...&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -2113,15 +2113,15 @@ NetworkSink(to=[localhost:8282], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
   p2_13 -&gt; p2_12;
   p2_12 -&gt; p2_11;
   p2_11 -&gt; p2_end;
-  p2_end -&gt; p0_4 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_4 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   LogicalUnion(all=[true])
-    NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+    NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       LogicalFilter(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
         PhysicalSourceScan(table=[[events2]], physicalSource=[3])
@@ -2140,9 +2140,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_8 [label=&quot;PhysicalSourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;LogicalFilter\ncondition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -2175,16 +2175,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_14 -&gt; p2_13;
   p2_13 -&gt; p2_12;
   p2_12 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   LogicalUnion(all=[true])
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       LogicalFilter(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
         PhysicalSourceScan(table=[[events2]], physicalSource=[3])
@@ -2203,9 +2203,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
@@ -2240,16 +2240,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_15 -&gt; p2_14;
   p2_14 -&gt; p2_13;
   p2_13 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   LogicalUnion(all=[true])
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       LogicalFilter(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
         Scan(fields=[[ID, VAL, TS]])
@@ -2269,9 +2269,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2306,16 +2306,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_15 -&gt; p2_14;
   p2_14 -&gt; p2_13;
   p2_13 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   LogicalUnion(all=[true])
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
         Scan(fields=[[ID, VAL, TS]])
@@ -2335,9 +2335,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2374,16 +2374,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_16 -&gt; p2_15;
   p2_15 -&gt; p2_14;
   p2_14 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   LogicalUnion(all=[true])
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2404,9 +2404,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2443,16 +2443,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_16 -&gt; p2_15;
   p2_15 -&gt; p2_14;
   p2_14 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 LogicalUnion(all=[true])
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2473,9 +2473,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2512,16 +2512,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_16 -&gt; p2_15;
   p2_15 -&gt; p2_14;
   p2_14 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2542,9 +2542,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2583,16 +2583,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_17 -&gt; p2_16;
   p2_16 -&gt; p2_15;
   p2_15 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2614,9 +2614,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2655,16 +2655,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_17 -&gt; p2_16;
   p2_16 -&gt; p2_15;
   p2_15 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2686,9 +2686,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2729,16 +2729,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_18 -&gt; p2_17;
   p2_17 -&gt; p2_16;
   p2_16 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2761,9 +2761,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2806,16 +2806,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_18 -&gt; p2_17;
   p2_17 -&gt; p2_16;
   p2_16 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2839,9 +2839,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2884,16 +2884,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_18 -&gt; p2_17;
   p2_17 -&gt; p2_16;
   p2_16 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2917,9 +2917,9 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_2 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_5 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -2964,16 +2964,16 @@ LogicalProject(A=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], B=[CASE(&gt;($1, CAS
   p2_18 -&gt; p2_17;
   p2_17 -&gt; p2_16;
   p2_16 -&gt; p2_end;
-  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_end -&gt; p0_2 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_end -&gt; p0_5 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 UnionAll
   Scan(fields=[[A, B]])
-    NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+    NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   UnionAll
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
     Retain(fields=[[3, 4]])
       Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
         Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -2998,10 +2998,10 @@ Retain(fields=[[3, 4]])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_2 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Emit\nfields=[[A, B]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_6 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_6 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;Scan\nfields=[[A, B]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_4 [label=&quot;Emit\nfields=[[A, B]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -3025,7 +3025,7 @@ Retain(fields=[[3, 4]])
     p1_15 [label=&quot;Selection\ncondition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_14 [label=&quot;Map\nCALCITE_F2=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)]\nCALCITE_F3=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null...&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_13 [label=&quot;Emit\nfields=[[CALCITE_F2, CALCITE_F3]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_12 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[7d549109-4d4f-4e50-8d0b-4990703773c2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_12 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[ea88469d-1073-46df-b9cb-2a200a1b6019]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     subgraph cluster_p1_pipeline0 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_17 }
     subgraph cluster_p1_pipeline1 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_16; p1_15; p1_14; p1_13 }
     subgraph cluster_p1_pipeline2 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_12 }
@@ -3034,7 +3034,7 @@ Retain(fields=[[3, 4]])
     p2_21 [label=&quot;Selection\ncondition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p2_20 [label=&quot;Map\nCALCITE_F4=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)]\nCALCITE_F5=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null...&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p2_19 [label=&quot;Emit\nfields=[[CALCITE_F4, CALCITE_F5]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p2_18 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[88d56c32-af20-458d-b6f7-c172f47e7431]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p2_18 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[9d1d28ea-8743-48e5-a0da-c913964ba92c]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     subgraph cluster_p2_pipeline0 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p2_23 }
     subgraph cluster_p2_pipeline1 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p2_22; p2_21; p2_20; p2_19 }
     subgraph cluster_p2_pipeline2 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p2_18 }
@@ -3060,31 +3060,31 @@ Retain(fields=[[3, 4]])
   p2_21 -&gt; p2_20;
   p2_20 -&gt; p2_19;
   p2_19 -&gt; p2_18;
-  p2_18 -&gt; p0_6 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
   p1_12 -&gt; p0_3 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
+  p2_18 -&gt; p0_6 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Sink(names=[[A, B]])
   Emit(fields=[[A, B]], forSink=[true])
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+      NetworkSource(from=[localhost:8181], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   Emit(fields=[[A, B]], forSink=[true])
     Scan(fields=[[A, B]])
-      NetworkSource(from=[localhost:8181], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+      NetworkSource(from=[localhost:8181], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
   Emit(fields=[[CALCITE_F0, CALCITE_F1]], forSink=[true])
     Map(CALCITE_F0=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F1=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
         Scan(fields=[[ID, VAL, TS]])
           SourceScan(table=[[events2]], physicalSource=[3])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[7d549109-4d4f-4e50-8d0b-4990703773c2])
+NetworkSink(to=[localhost:8282], channel=[ea88469d-1073-46df-b9cb-2a200a1b6019])
   Emit(fields=[[CALCITE_F2, CALCITE_F3]], forSink=[true])
     Map(CALCITE_F2=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F3=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
         Scan(fields=[[ID, VAL, TS]])
           SourceScan(table=[[events]], physicalSource=[1])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
+NetworkSink(to=[localhost:8282], channel=[9d1d28ea-8743-48e5-a0da-c913964ba92c])
   Emit(fields=[[CALCITE_F4, CALCITE_F5]], forSink=[true])
     Map(CALCITE_F4=[+($0, CAST(1):BIGINT UNSIGNED NOT NULL)], CALCITE_F5=[CASE(&gt;($1, CAST(30):BIGINT UNSIGNED NOT NULL), $1, null:BIGINT UNSIGNED)])
       Selection(condition=[&lt;($0, CAST(3):BIGINT UNSIGNED NOT NULL)])
@@ -3641,7 +3641,7 @@ NetworkSink(to=[localhost:8282], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]\nwatermarked=[true]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]\nwatermarked=[true]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;PhysicalSourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;WatermarkAssigner\ntime=[ts]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;LogicalFilter\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -3677,7 +3677,7 @@ NetworkSink(to=[localhost:8282], channel=[88d56c32-af20-458d-b6f7-c172f47e7431])
 LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   NesWindowAggregate(spec=[size_ms: 1000 slide_ms: 1000 aggregates { function: &quot;COUNT&quot; type: &quot;BIGINT&quot; name: &quot;N&quot; } aggregates { function: &quot;SUM&quot; field: 1 type: &quot;UBIGINT&quot; nullable: true name: &quot;S&quot; }])
     LogicalUnion(all=[true])
-      NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2], watermarked=[true])
+      NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad], watermarked=[true])
       LogicalProject(ts=[$2], val=[$1])
         LogicalFilter(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
           WatermarkAssigner(time=[ts])
@@ -3694,7 +3694,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_9 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_9 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_14 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_13 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -3702,8 +3702,8 @@ LogicalProject(ts=[$2], val=[$1])
     p0_11 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;UnionAll&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_6 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p0_5 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_6 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_5 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_4 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Retain\nfields=[[0, 1, 4, 5]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_2 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -3718,7 +3718,7 @@ LogicalProject(ts=[$2], val=[$1])
     p1_18 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_17 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_16 [label=&quot;Emit\nfields=[[TS, VAL]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_15 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_15 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
   }
   p0_9 -&gt; p0_8;
   p0_14 -&gt; p0_13;
@@ -3748,18 +3748,18 @@ Sink(names=[[WINDOW_START, N, S]])
     Retain(fields=[[0, 2, 3]])
       Retain(fields=[[0, 1, 4, 5]])
         Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-          WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-            WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+          WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+            WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
               UnionAll
                 Scan(fields=[[ts, val]])
-                  NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+                  NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
                 Retain(fields=[[2, 1]])
                   Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
                     WatermarkAssigner(time=[TS])
                       Scan(fields=[[ID, VAL, TS]])
                         SourceScan(table=[[events2]], physicalSource=[3])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+NetworkSink(to=[localhost:8282], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
   Emit(fields=[[TS, VAL]], forSink=[true])
     Retain(fields=[[2, 1]])
       Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
@@ -3773,7 +3773,7 @@ NetworkSink(to=[localhost:8282], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_3 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_8 [label=&quot;PhysicalSourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
     p0_7 [label=&quot;WatermarkAssigner\ntime=[ts]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -3810,7 +3810,7 @@ LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   NesWindowAggregate(spec=[size_ms: 1000 slide_ms: 1000 aggregates { function: &quot;COUNT&quot; type: &quot;BIGINT&quot; name: &quot;N&quot; } aggregates { function: &quot;SUM&quot; field: 1 type: &quot;UBIGINT&quot; nullable: true name: &quot;S&quot; }])
     LogicalUnion(all=[true])
       Scan(fields=[[ts, val]])
-        NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+        NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
       LogicalProject(ts=[$2], val=[$1])
         LogicalFilter(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
           WatermarkAssigner(time=[ts])
@@ -3827,7 +3827,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
@@ -3866,7 +3866,7 @@ LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   NesWindowAggregate(spec=[size_ms: 1000 slide_ms: 1000 aggregates { function: &quot;COUNT&quot; type: &quot;BIGINT&quot; name: &quot;N&quot; } aggregates { function: &quot;SUM&quot; field: 1 type: &quot;UBIGINT&quot; nullable: true name: &quot;S&quot; }])
     LogicalUnion(all=[true])
       Scan(fields=[[ts, val]])
-        NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+        NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
       LogicalProject(ts=[$2], val=[$1])
         LogicalFilter(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
           WatermarkAssigner(time=[TS])
@@ -3884,7 +3884,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -3923,7 +3923,7 @@ LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   NesWindowAggregate(spec=[size_ms: 1000 slide_ms: 1000 aggregates { function: &quot;COUNT&quot; type: &quot;BIGINT&quot; name: &quot;N&quot; } aggregates { function: &quot;SUM&quot; field: 1 type: &quot;UBIGINT&quot; nullable: true name: &quot;S&quot; }])
     LogicalUnion(all=[true])
       Scan(fields=[[ts, val]])
-        NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+        NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
       LogicalProject(ts=[$2], val=[$1])
         LogicalFilter(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
           WatermarkAssigner(time=[TS])
@@ -3941,7 +3941,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -3980,7 +3980,7 @@ LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   NesWindowAggregate(spec=[size_ms: 1000 slide_ms: 1000 aggregates { function: &quot;COUNT&quot; type: &quot;BIGINT&quot; name: &quot;N&quot; } aggregates { function: &quot;SUM&quot; field: 1 type: &quot;UBIGINT&quot; nullable: true name: &quot;S&quot; }])
     LogicalUnion(all=[true])
       Scan(fields=[[ts, val]])
-        NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+        NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
       LogicalProject(ts=[$2], val=[$1])
         Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
           WatermarkAssigner(time=[TS])
@@ -3998,7 +3998,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4037,7 +4037,7 @@ LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   NesWindowAggregate(spec=[size_ms: 1000 slide_ms: 1000 aggregates { function: &quot;COUNT&quot; type: &quot;BIGINT&quot; name: &quot;N&quot; } aggregates { function: &quot;SUM&quot; field: 1 type: &quot;UBIGINT&quot; nullable: true name: &quot;S&quot; }])
     LogicalUnion(all=[true])
       Scan(fields=[[ts, val]])
-        NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+        NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
       Retain(fields=[[2, 1]])
         Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
           WatermarkAssigner(time=[TS])
@@ -4055,7 +4055,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_4 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_3 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4094,7 +4094,7 @@ LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   NesWindowAggregate(spec=[size_ms: 1000 slide_ms: 1000 aggregates { function: &quot;COUNT&quot; type: &quot;BIGINT&quot; name: &quot;N&quot; } aggregates { function: &quot;SUM&quot; field: 1 type: &quot;UBIGINT&quot; nullable: true name: &quot;S&quot; }])
     UnionAll
       Scan(fields=[[ts, val]])
-        NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+        NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
       Retain(fields=[[2, 1]])
         Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
           WatermarkAssigner(time=[TS])
@@ -4112,7 +4112,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_12 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4120,8 +4120,8 @@ LogicalProject(ts=[$2], val=[$1])
     p0_9 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;UnionAll&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_4 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
-    p0_3 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p0_4 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p0_3 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_2 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_1 [label=&quot;Retain\nfields=[[0, 1, 4, 5]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_0 [label=&quot;LogicalProject\nWINDOW_START=[$0]\nN=[$2]\nS=[$3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -4156,11 +4156,11 @@ LogicalProject(ts=[$2], val=[$1])
 LogicalProject(WINDOW_START=[$0], N=[$2], S=[$3])
   Retain(fields=[[0, 1, 4, 5]])
     Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-        WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+      WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+        WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
           UnionAll
             Scan(fields=[[ts, val]])
-              NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+              NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
             Retain(fields=[[2, 1]])
               Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
                 WatermarkAssigner(time=[TS])
@@ -4178,7 +4178,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_12 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4186,8 +4186,8 @@ LogicalProject(ts=[$2], val=[$1])
     p0_9 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;UnionAll&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_4 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p0_3 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_4 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_3 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_2 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Retain\nfields=[[0, 1, 4, 5]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
@@ -4222,11 +4222,11 @@ LogicalProject(ts=[$2], val=[$1])
 Retain(fields=[[0, 2, 3]])
   Retain(fields=[[0, 1, 4, 5]])
     Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-        WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+      WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+        WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
           UnionAll
             Scan(fields=[[ts, val]])
-              NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+              NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
             Retain(fields=[[2, 1]])
               Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
                 WatermarkAssigner(time=[TS])
@@ -4244,7 +4244,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_12 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4252,8 +4252,8 @@ LogicalProject(ts=[$2], val=[$1])
     p0_9 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;UnionAll&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_4 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p0_3 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_4 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_3 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_2 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Retain\nfields=[[0, 1, 4, 5]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4290,11 +4290,11 @@ LogicalProject(ts=[$2], val=[$1])
 Retain(fields=[[0, 2, 3]])
   Retain(fields=[[0, 1, 4, 5]])
     Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-        WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+      WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+        WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
           UnionAll
             Scan(fields=[[ts, val]])
-              NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+              NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
             Retain(fields=[[2, 1]])
               Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
                 WatermarkAssigner(time=[TS])
@@ -4313,7 +4313,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_12 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4321,8 +4321,8 @@ LogicalProject(ts=[$2], val=[$1])
     p0_9 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;UnionAll&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_4 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p0_3 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_4 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_3 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_2 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Retain\nfields=[[0, 1, 4, 5]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4359,11 +4359,11 @@ LogicalProject(ts=[$2], val=[$1])
 Retain(fields=[[0, 2, 3]])
   Retain(fields=[[0, 1, 4, 5]])
     Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-        WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+      WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+        WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
           UnionAll
             Scan(fields=[[ts, val]])
-              NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+              NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
             Retain(fields=[[2, 1]])
               Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
                 WatermarkAssigner(time=[TS])
@@ -4382,7 +4382,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_12 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4390,8 +4390,8 @@ LogicalProject(ts=[$2], val=[$1])
     p0_9 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;UnionAll&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_4 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p0_3 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_4 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_3 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_2 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Retain\nfields=[[0, 1, 4, 5]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4428,11 +4428,11 @@ LogicalProject(ts=[$2], val=[$1])
 Retain(fields=[[0, 2, 3]])
   Retain(fields=[[0, 1, 4, 5]])
     Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-        WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+      WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+        WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
           UnionAll
             Scan(fields=[[ts, val]])
-              NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+              NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
             Retain(fields=[[2, 1]])
               Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
                 WatermarkAssigner(time=[TS])
@@ -4451,7 +4451,7 @@ LogicalProject(ts=[$2], val=[$1])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_7 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_6 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_12 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4459,8 +4459,8 @@ LogicalProject(ts=[$2], val=[$1])
     p0_9 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Retain\nfields=[[2, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;UnionAll&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_4 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p0_3 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_4 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_3 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_2 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Retain\nfields=[[0, 1, 4, 5]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4497,11 +4497,11 @@ LogicalProject(ts=[$2], val=[$1])
 Retain(fields=[[0, 2, 3]])
   Retain(fields=[[0, 1, 4, 5]])
     Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-        WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+      WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+        WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
           UnionAll
             Scan(fields=[[ts, val]])
-              NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+              NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
             Retain(fields=[[2, 1]])
               Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
                 WatermarkAssigner(time=[TS])
@@ -4520,15 +4520,15 @@ Retain(fields=[[2, 1]])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_6 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_6 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_5 [label=&quot;Scan\nfields=[[ts, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_4 [label=&quot;WindowBuild\nwindow=[657]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_4 [label=&quot;WindowBuild\nwindow=[845]\ntime=[ts]\nkeys=[[]]\narguments=[[*, val]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_11 [label=&quot;SourceScan\ntable=[[events2]]\nphysicalSource=[3]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_10 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_9 [label=&quot;WatermarkAssigner\ntime=[TS]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_8 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p0_7 [label=&quot;WindowBuild\nwindow=[657]\ntime=[TS]\nkeys=[[]]\narguments=[[*, VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p0_3 [label=&quot;WindowProbe\nwindow=[657]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_7 [label=&quot;WindowBuild\nwindow=[845]\ntime=[TS]\nkeys=[[]]\narguments=[[*, VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p0_3 [label=&quot;WindowProbe\nwindow=[845]\nkind=[TUMBLING]\nsize=[1000]\nslide=[1000]\nfields=[[START, END, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p0_2 [label=&quot;Map\nCALCITE_F0=[CAST($2):BIGINT NOT NULL]\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Emit\nfields=[[START, CALCITE_F0, CALCITE_F1]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Sink\nnames=[[WINDOW_START, N, S]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -4546,7 +4546,7 @@ Retain(fields=[[2, 1]])
     p1_15 [label=&quot;WatermarkAssigner\ntime=[TS]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_14 [label=&quot;Selection\ncondition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_13 [label=&quot;Emit\nfields=[[TS, VAL]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_12 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_12 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     subgraph cluster_p1_pipeline0 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_17 }
     subgraph cluster_p1_pipeline1 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_16; p1_15; p1_14; p1_13 }
     subgraph cluster_p1_pipeline2 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_12 }
@@ -4573,17 +4573,17 @@ Retain(fields=[[2, 1]])
 Sink(names=[[WINDOW_START, N, S]])
   Emit(fields=[[START, CALCITE_F0, CALCITE_F1]], forSink=[true])
     Map(CALCITE_F0=[CAST($2):BIGINT NOT NULL], CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[657], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
-        WindowBuild(window=[657], time=[ts], keys=[[]], arguments=[[*, val]])
+      WindowProbe(window=[845], kind=[TUMBLING], size=[1000], slide=[1000], fields=[[START, END, N, S]])
+        WindowBuild(window=[845], time=[ts], keys=[[]], arguments=[[*, val]])
           Scan(fields=[[ts, val]])
-            NetworkSource(from=[localhost:8181], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
-        WindowBuild(window=[657], time=[TS], keys=[[]], arguments=[[*, VAL]])
+            NetworkSource(from=[localhost:8181], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
+        WindowBuild(window=[845], time=[TS], keys=[[]], arguments=[[*, VAL]])
           Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
             WatermarkAssigner(time=[TS])
               Scan(fields=[[ID, VAL, TS]])
                 SourceScan(table=[[events2]], physicalSource=[3])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
+NetworkSink(to=[localhost:8282], channel=[3f51e103-4c88-42fd-87d8-0a6b1b30a6ad])
   Emit(fields=[[TS, VAL]], forSink=[true])
     Selection(condition=[&gt;($1, CAST(5):BIGINT UNSIGNED NOT NULL)])
       WatermarkAssigner(time=[TS])
@@ -4966,7 +4966,7 @@ NetworkSink(to=[localhost:8282], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_0 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]\nwatermarked=[true]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_0 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]\nwatermarked=[true]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_end [label=&quot;Sink&quot;, fillcolor=&quot;#e5e7eb&quot;, color=&quot;#9ca3af&quot;];
   }
   subgraph cluster_worker1 {
@@ -4987,7 +4987,7 @@ NetworkSink(to=[localhost:8282], channel=[3a5fce12-d6d7-4fe4-bbe8-020d1474a6b2])
   p1_end -&gt; p0_0 [style=dashed, color=&quot;#dc2626&quot;, label=&quot;network&quot;, fontcolor=&quot;#dc2626&quot;, fontsize=9];
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282, into the sink:
-NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba], watermarked=[true])
+NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1], watermarked=[true])
 on localhost:8181, to localhost:8282:
 LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   NesWindowAggregate(spec=[kind: SLIDING size_ms: 2000 slide_ms: 1000 group_keys: 1 aggregates { function: &quot;AVG&quot; field: 2 type: &quot;UBIGINT&quot; nullable: true name: &quot;A&quot; }])
@@ -5001,7 +5001,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_2 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Emit\nfields=[[WINDOW_START, K, A]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Sink\nnames=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -5013,13 +5013,13 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
     p1_13 [label=&quot;WatermarkAssigner\ntime=[TS]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_12 [label=&quot;Map\nCALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_11 [label=&quot;Retain\nfields=[[2, 3, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_10 [label=&quot;WindowBuild\nwindow=[365]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p1_9 [label=&quot;WindowProbe\nwindow=[365]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p1_10 [label=&quot;WindowBuild\nwindow=[14]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p1_9 [label=&quot;WindowProbe\nwindow=[14]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p1_8 [label=&quot;Map\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_7 [label=&quot;Retain\nfields=[[0, 1, 2, 4]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_6 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_5 [label=&quot;Emit\nfields=[[START, $f3, CALCITE_F1]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_4 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_4 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
   }
   p0_3 -&gt; p0_2;
   p0_2 -&gt; p0_1;
@@ -5041,15 +5041,15 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
 Sink(names=[[WINDOW_START, K, A]])
   Emit(fields=[[WINDOW_START, K, A]], forSink=[true])
     Scan(fields=[[WINDOW_START, K, A]])
-      NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+      NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+NetworkSink(to=[localhost:8282], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
   Emit(fields=[[START, $f3, CALCITE_F1]], forSink=[true])
     Retain(fields=[[0, 2, 3]])
       Retain(fields=[[0, 1, 2, 4]])
         Map(CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-          WindowProbe(window=[365], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
-            WindowBuild(window=[365], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
+          WindowProbe(window=[14], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
+            WindowBuild(window=[14], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
               Retain(fields=[[2, 3, 1]])
                 Map(CALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)])
                   WatermarkAssigner(time=[TS])
@@ -5062,7 +5062,7 @@ NetworkSink(to=[localhost:8282], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p0_0 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
   }
   subgraph cluster_worker1 {
@@ -5084,7 +5084,7 @@ NetworkSink(to=[localhost:8282], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Scan(fields=[[WINDOW_START, K, A]])
-  NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+  NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
 LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   NesWindowAggregate(spec=[kind: SLIDING size_ms: 2000 slide_ms: 1000 group_keys: 1 aggregates { function: &quot;AVG&quot; field: 2 type: &quot;UBIGINT&quot; nullable: true name: &quot;A&quot; }])
@@ -5098,7 +5098,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
   }
   subgraph cluster_worker1 {
@@ -5122,7 +5122,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Scan(fields=[[WINDOW_START, K, A]])
-  NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+  NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
 LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   NesWindowAggregate(spec=[kind: SLIDING size_ms: 2000 slide_ms: 1000 group_keys: 1 aggregates { function: &quot;AVG&quot; field: 2 type: &quot;UBIGINT&quot; nullable: true name: &quot;A&quot; }])
@@ -5137,7 +5137,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
   }
   subgraph cluster_worker1 {
@@ -5161,7 +5161,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Scan(fields=[[WINDOW_START, K, A]])
-  NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+  NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
 LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   NesWindowAggregate(spec=[kind: SLIDING size_ms: 2000 slide_ms: 1000 group_keys: 1 aggregates { function: &quot;AVG&quot; field: 2 type: &quot;UBIGINT&quot; nullable: true name: &quot;A&quot; }])
@@ -5176,7 +5176,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
   }
   subgraph cluster_worker1 {
@@ -5202,7 +5202,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Scan(fields=[[WINDOW_START, K, A]])
-  NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+  NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
 LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   NesWindowAggregate(spec=[kind: SLIDING size_ms: 2000 slide_ms: 1000 group_keys: 1 aggregates { function: &quot;AVG&quot; field: 2 type: &quot;UBIGINT&quot; nullable: true name: &quot;A&quot; }])
@@ -5218,7 +5218,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
   }
   subgraph cluster_worker1 {
@@ -5228,8 +5228,8 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
     p1_9 [label=&quot;WatermarkAssigner\ntime=[TS]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_8 [label=&quot;Map\nCALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_7 [label=&quot;Retain\nfields=[[2, 3, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_6 [label=&quot;WindowBuild\nwindow=[365]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
-    p1_5 [label=&quot;WindowProbe\nwindow=[365]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p1_6 [label=&quot;WindowBuild\nwindow=[14]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
+    p1_5 [label=&quot;WindowProbe\nwindow=[14]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p1_4 [label=&quot;Map\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p1_3 [label=&quot;Retain\nfields=[[0, 1, 2, 4]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
     p1_2 [label=&quot;LogicalProject\nWINDOW_START=[$0]\nK=[$2]\nA=[$3]&quot;, fillcolor=&quot;#dbeafe&quot;, color=&quot;#9ca3af&quot;];
@@ -5250,13 +5250,13 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Scan(fields=[[WINDOW_START, K, A]])
-  NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+  NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
 LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   Retain(fields=[[0, 1, 2, 4]])
     Map(CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[365], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
-        WindowBuild(window=[365], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
+      WindowProbe(window=[14], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
+        WindowBuild(window=[14], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
           Retain(fields=[[2, 3, 1]])
             Map(CALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)])
               WatermarkAssigner(time=[TS])
@@ -5269,7 +5269,7 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_1 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
   }
   subgraph cluster_worker1 {
@@ -5279,8 +5279,8 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
     p1_9 [label=&quot;WatermarkAssigner\ntime=[TS]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_8 [label=&quot;Map\nCALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_7 [label=&quot;Retain\nfields=[[2, 3, 1]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_6 [label=&quot;WindowBuild\nwindow=[365]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p1_5 [label=&quot;WindowProbe\nwindow=[365]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p1_6 [label=&quot;WindowBuild\nwindow=[14]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p1_5 [label=&quot;WindowProbe\nwindow=[14]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p1_4 [label=&quot;Map\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_3 [label=&quot;Retain\nfields=[[0, 1, 2, 4]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_2 [label=&quot;Retain\nfields=[[0, 2, 3]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#dc2626&quot;, penwidth=3];
@@ -5301,13 +5301,13 @@ LogicalProject(WINDOW_START=[$0], K=[$2], A=[$3])
 }
 ">drawing &hellip;</div><details><summary>text</summary><pre>on localhost:8282:
 Scan(fields=[[WINDOW_START, K, A]])
-  NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+  NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
 Retain(fields=[[0, 2, 3]])
   Retain(fields=[[0, 1, 2, 4]])
     Map(CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[365], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
-        WindowBuild(window=[365], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
+      WindowProbe(window=[14], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
+        WindowBuild(window=[14], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
           Retain(fields=[[2, 3, 1]])
             Map(CALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)])
               WatermarkAssigner(time=[TS])
@@ -5320,7 +5320,7 @@ Retain(fields=[[0, 2, 3]])
   edge [color=&quot;#555555&quot;];
   subgraph cluster_worker0 {
     label=&quot;worker localhost:8282&quot;; style=&quot;rounded,dashed&quot;; color=&quot;#888888&quot;; fontname=&quot;Helvetica&quot;; fontsize=12;
-    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p0_3 [label=&quot;NetworkSource\nfrom=[localhost:8181]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     p0_2 [label=&quot;Scan\nfields=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_1 [label=&quot;Emit\nfields=[[WINDOW_START, K, A]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p0_0 [label=&quot;Sink\nnames=[[WINDOW_START, K, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
@@ -5334,11 +5334,11 @@ Retain(fields=[[0, 2, 3]])
     p1_11 [label=&quot;Scan\nfields=[[ID, VAL, TS]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_10 [label=&quot;WatermarkAssigner\ntime=[TS]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_9 [label=&quot;Map\nCALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_8 [label=&quot;WindowBuild\nwindow=[365]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
-    p1_7 [label=&quot;WindowProbe\nwindow=[365]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p1_8 [label=&quot;WindowBuild\nwindow=[14]\ntime=[TS]\nkeys=[[CALCITE_F0]]\narguments=[[VAL]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
+    p1_7 [label=&quot;WindowProbe\nwindow=[14]\nkind=[SLIDING]\nsize=[2000]\nslide=[1000]\nfields=[[START, END, $f3, A]]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#16a34a&quot;, penwidth=3];
     p1_6 [label=&quot;Map\nCALCITE_F1=[CAST($3):BIGINT UNSIGNED]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
     p1_5 [label=&quot;Emit\nfields=[[START, $f3, CALCITE_F1]]\nforSink=[true]&quot;, fillcolor=&quot;#fde68a&quot;, color=&quot;#9ca3af&quot;];
-    p1_4 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[76c02050-818a-447c-bbd1-521d00c53eba]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
+    p1_4 [label=&quot;NetworkSink\nto=[localhost:8282]\nchannel=[f434be6e-f6cc-40ff-8125-6e37a05275a1]&quot;, fillcolor=&quot;#fed7aa&quot;, color=&quot;#9ca3af&quot;];
     subgraph cluster_p1_pipeline0 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_12 }
     subgraph cluster_p1_pipeline1 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_11; p1_10; p1_9; p1_8 }
     subgraph cluster_p1_pipeline2 { label=&quot;pipeline&quot;; style=&quot;rounded&quot;; color=&quot;#2563eb&quot;; fontcolor=&quot;#2563eb&quot;; p1_7; p1_6; p1_5 }
@@ -5361,13 +5361,13 @@ Retain(fields=[[0, 2, 3]])
 Sink(names=[[WINDOW_START, K, A]])
   Emit(fields=[[WINDOW_START, K, A]], forSink=[true])
     Scan(fields=[[WINDOW_START, K, A]])
-      NetworkSource(from=[localhost:8181], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+      NetworkSource(from=[localhost:8181], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
 on localhost:8181:
-NetworkSink(to=[localhost:8282], channel=[76c02050-818a-447c-bbd1-521d00c53eba])
+NetworkSink(to=[localhost:8282], channel=[f434be6e-f6cc-40ff-8125-6e37a05275a1])
   Emit(fields=[[START, $f3, CALCITE_F1]], forSink=[true])
     Map(CALCITE_F1=[CAST($3):BIGINT UNSIGNED])
-      WindowProbe(window=[365], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
-        WindowBuild(window=[365], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
+      WindowProbe(window=[14], kind=[SLIDING], size=[2000], slide=[1000], fields=[[START, END, $f3, A]])
+        WindowBuild(window=[14], time=[TS], keys=[[CALCITE_F0]], arguments=[[VAL]])
           Map(CALCITE_F0=[MOD($0, CAST(4):BIGINT UNSIGNED NOT NULL)])
             WatermarkAssigner(time=[TS])
               Scan(fields=[[ID, VAL, TS]])

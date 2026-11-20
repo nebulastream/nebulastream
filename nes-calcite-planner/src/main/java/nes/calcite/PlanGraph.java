@@ -134,8 +134,9 @@ final class PlanGraph {
             receivers.put(source.channel, id);
         }
         if (byPipeline != null && node instanceof NesPhysical.NesRel) {
+            /// As Pipelines.finish: a probe starts a pipeline of its own; its builds end the pipelines below it.
             boolean starts = node.getInputs().isEmpty() || node instanceof NesPhysical.Scan || node instanceof NesPhysical.Sink
-                || node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.WindowProbe;
+                || node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.WindowProbe || node instanceof NesPhysical.JoinProbe;
             int pipeline = starts ? nextPipeline[0]++ : pipelineOf.get(unwrap(node.getInput(0)));
             pipelineOf.put(node, pipeline);
             byPipeline.computeIfAbsent(pipeline, k -> new ArrayList<>()).add(id);
