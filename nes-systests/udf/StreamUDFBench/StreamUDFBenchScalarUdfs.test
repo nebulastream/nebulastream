@@ -318,10 +318,7 @@ CREATE FUNCTION keywords_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECU
 CREATE FUNCTION log_10_inline (x FLOAT64 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.log_10';
 CREATE FUNCTION lowerize_inline (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
 CREATE FUNCTION removeshortterms_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
-# Does not compile: name 'ccy_exp' cannot be captured
 CREATE FUNCTION stem_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
-----
-ERROR QueryCompilerError
 
 # Not in this section, as Codon cannot compile or run them, or gives other results:
 # - frequentterms: among terms with equal counts, Counter and heapq.nlargest choose other terms than in CPython
@@ -413,6 +410,10 @@ SELECT id, lowerize_inline(title) AS r FROM artifacts INTO Checksum();
 SELECT id, removeshortterms_inline(authorlist) AS r FROM artifact_authorlists INTO Checksum();
 ----
 16699 255206502
+
+SELECT id, stem_inline(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1074975864
 
 # --- EXECUTION INLINE, adapted UDFs ---
 # udfbench_scalar_inline_adapted.py: addnoise, jaccard and jsonparse changed so that Codon compiles them. Same results as above.

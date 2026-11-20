@@ -146,6 +146,10 @@ public:
         return ResourceFilesystem::canonical(path);
     }
 
+    /// NES's Codon applies its isinstance, type() and tuple() hooks (json.Value) only to user code. UDF modules are user code,
+    /// although they are found in search paths; plugin modules are library code, as is the stdlib.
+    [[nodiscard]] bool is_library(const path_t& path) const override { return !isUdfModule(path); }
+
     /// A module loaded from a configured UDF import path, as opposed to Codon's stdlib or a plugin module.
     [[nodiscard]] bool isUdfModule(const path_t& path) const
     {
@@ -400,9 +404,21 @@ std::string writeBitcode(const llvm::Module& module)
     return {bitcode.data(), bitcode.size()};
 }
 
+/// The first error with the place of each step of its backtrace: "message (file:line:column); during ... (file:line:column)".
 std::string parserErrorMessage(const codon::exc::ParserException& exception)
 {
-    return exception.what();
+    if (exception.getErrors().empty())
+    {
+        return exception.what();
+    }
+    std::vector<std::string> steps;
+    for (const auto& message : exception.getErrors().errors.front().getMessages())
+    {
+        steps.push_back(
+            message.getFile().empty() ? message.getMessage()
+                                      : fmt::format("{} ({}:{}:{})", message.getMessage(), message.getFile(), message.getLine(), message.getColumn()));
+    }
+    return fmt::format("{}", fmt::join(steps, "; "));
 }
 
 /// An LLVM module with its context. The module is destroyed first: std::pair, which Codon's takeModule returns, destroys
