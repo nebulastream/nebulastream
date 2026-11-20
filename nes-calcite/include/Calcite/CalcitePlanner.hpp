@@ -53,10 +53,6 @@ std::string plannerAddress();
 /// nes-calcite-planner/docs/tools/generate_systest_steps.sh shows the planner's steps for them.
 void setRequestLabel(std::string label);
 
-/// $NES_CALCITE_FINITE_INPUTS=1: all sources are finite, so joins and aggregations without a window get one window over the
-/// whole input that fires at the end of the stream. Off by default; without it Calcite rejects them.
-bool finiteInputs();
-
 /// Splits "<query> INTO <sink>" into the query and the sink clause. The query is sent to Calcite, the sink stays ours: a
 /// sink name or an anonymous sink such as File('out.csv' AS "SINK".FILE_PATH, ...), in our SQL dialect.
 std::pair<std::string, std::string> splitSink(std::string_view statement);
@@ -113,14 +109,13 @@ PlannedPhysicalQuery planPhysical(
     const SinkCatalog& sinkCatalog,
     const WorkerCatalog& workerCatalog,
     const std::string& address,
-    bool finiteInputs = false,
     const std::unordered_map<std::string, std::string>& sourceNames = {},
     const ModelCatalog* models = nullptr,
     const QueryOptimizerConfiguration& optimizer = defaultConfiguration<QueryOptimizerConfiguration>(),
     bool detailedSteps = false);
 
 /// Plans a query statement, "SELECT ... INTO <sink>", as planPhysical does, with the planner at plannerAddress() and
-/// $NES_CALCITE_FINITE_INPUTS (see finiteInputs()).
+/// the optimizer configuration (e.g. its finite_inputs).
 PlannedPhysicalQuery planStatement(
     std::string_view statement,
     const SourceCatalog& sourceCatalog,

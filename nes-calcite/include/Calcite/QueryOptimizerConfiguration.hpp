@@ -46,13 +46,17 @@ struct QueryOptimizerConfiguration
 
     QueryOptimizerConfiguration() = delete;
 
-    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, MemoryLayoutPolicy memoryLayout, QueryOptimizerNetworkConfiguration network)
-        : joinStrategy(joinStrategy), memoryLayout(memoryLayout), network(network)
+    QueryOptimizerConfiguration(
+        StreamJoinStrategy joinStrategy, MemoryLayoutPolicy memoryLayout, bool finiteInputs, QueryOptimizerNetworkConfiguration network)
+        : joinStrategy(joinStrategy), memoryLayout(memoryLayout), finiteInputs(finiteInputs), network(network)
     {
     }
 
     StreamJoinStrategy joinStrategy;
     MemoryLayoutPolicy memoryLayout;
+    /// All inputs end (e.g. files): joins and aggregations without a window get one window over the whole input, which
+    /// fires at the end of the stream. Without it, the planner rejects them, as they would never emit on an endless stream.
+    bool finiteInputs;
     QueryOptimizerNetworkConfiguration network;
 
     static QueryOptimizerConfiguration fromConfig(const InstantiatedConfig& config);

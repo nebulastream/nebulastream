@@ -593,6 +593,15 @@ void validateWorkerOptimizerConfig(NES::SystestConfiguration& config)
         std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
     config.queryOptimizerConfig = std::move(workerOptimizerConfig)->queryOptimizer;
+    /// Test files hold finite inputs: joins and aggregations without a window run over the whole input, unless the command
+    /// line says otherwise (--optimizer finite_inputs=false).
+    const auto finiteInputs = NES::Identifier::parse("finite_inputs");
+    if (std::ranges::none_of(
+            config.workerOptimizerConfigLiterals,
+            [&](const auto& literal) { return *std::ranges::prev(literal.getFullyQualifiedName().end()) == finiteInputs; }))
+    {
+        config.queryOptimizerConfig.finiteInputs = true;
+    }
 }
 
 void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfiguration& config)

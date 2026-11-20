@@ -97,6 +97,12 @@ struct SystestConfiguration final
     /// Explicitly resolved defaults: tests construct SystestConfiguration without going through
     /// the starter (which overwrites this from the `--` section), and the config structs are not
     /// default-initialized to their defaults.
-    QueryOptimizerConfiguration queryOptimizerConfig = defaultConfiguration<QueryOptimizerConfiguration>();
+    /// Test files hold finite inputs (see validateWorkerOptimizerConfig).
+    QueryOptimizerConfiguration queryOptimizerConfig = []
+    {
+        auto configuration = defaultConfiguration<QueryOptimizerConfiguration>();
+        configuration.finiteInputs = true;
+        return configuration;
+    }();
 };
 }

@@ -73,6 +73,13 @@ const ConfigField<MemoryLayoutPolicy> MEMORY_LAYOUT{
     },
     MemoryLayoutPolicy::ROW,
     "ROW"};
+
+const ConfigField<bool> FINITE_INPUTS{
+    Identifier::parse("finite_inputs"),
+    "All inputs end (e.g. files): joins and aggregations without a window run over the whole input and emit at its end. "
+    "Without it, they are rejected.",
+    [](const ConfigLiteral& literal) { return tryGetOr<bool>(literal, expectedType<bool>()); },
+    false};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -80,12 +87,13 @@ const ConfigField<MemoryLayoutPolicy> MEMORY_LAYOUT{
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerConfiguration::getConfigSchema()
 {
     return createConfigSchema(
-        Identifier::parse("optimizer"), JOIN_STRATEGY, MEMORY_LAYOUT, QueryOptimizerNetworkConfiguration::getConfigSchema());
+        Identifier::parse("optimizer"), JOIN_STRATEGY, MEMORY_LAYOUT, FINITE_INPUTS, QueryOptimizerNetworkConfiguration::getConfigSchema());
 }
 
 QueryOptimizerConfiguration QueryOptimizerConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(JOIN_STRATEGY), config.get(MEMORY_LAYOUT), QueryOptimizerNetworkConfiguration::fromConfig(config)};
+    return {
+        config.get(JOIN_STRATEGY), config.get(MEMORY_LAYOUT), config.get(FINITE_INPUTS), QueryOptimizerNetworkConfiguration::fromConfig(config)};
 }
 
 }

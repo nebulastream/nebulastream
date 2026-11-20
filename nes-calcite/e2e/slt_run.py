@@ -3,7 +3,7 @@
 
 The file is replayed in SQLite. Whenever a statement changes the tables, the current tables are written as CSV files and
 registered as a new version of File sources (tab0_v2, ...); each query runs against the version that was current at its
-position, as `CALCITE <query> INTO File(...);` in one embedded REPL session with NES_CALCITE_FINITE_INPUTS=1. Results are
+position, as `CALCITE <query> INTO File(...);` in one embedded REPL session with --optimizer.finite_inputs=true. Results are
 compared with SQLite's as sorted multisets of rows, with floats rounded to 3 decimals (the sqllogictest convention).
 
 Usage: slt_run.py <slt file> <nes-repl-embedded> <nes-calcite-planner.jar> <java>
@@ -144,11 +144,13 @@ def main():
     started = time.time()
     try:
         planner.stdout.readline()  # "listening on port ..."
-        env = {'NES_CALCITE_PLANNER': f'localhost:{port}', 'NES_CALCITE_FINITE_INPUTS': '1', 'PATH': '/usr/bin:/bin'}
+        env = {'NES_CALCITE_PLANNER': f'localhost:{port}', 'PATH': '/usr/bin:/bin'}
         mode = 'COMPILER' if args.compiler else 'INTERPRETER'
         with open(workdir / 'queries.sql') as stdin, open(workdir / 'repl.log', 'w') as log:
             subprocess.run([str(args.repl), '-e', 'RECOVER', '--on-exit', 'WAIT_FOR_QUERY_TERMINATION',
                             '--', f'--worker.default_query_execution.execution_mode={mode}',
+                            # The tables of the tests end: joins and aggregations without a window run over them.
+                            '--optimizer.finite_inputs=true',
                             # Joins of dozens of tables produce rows wider than the default 1 KiB pages.
                             '--worker.default_query_execution.page_size=16384',
                             # Thousands of concurrent queries, some holding 10^6-row windows: 256 MiB is not enough.

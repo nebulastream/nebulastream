@@ -202,12 +202,6 @@ std::string plannerAddress()
     return address != nullptr ? address : "localhost:50061";
 }
 
-bool finiteInputs()
-{
-    const char* value = std::getenv("NES_CALCITE_FINITE_INPUTS"); /// NOLINT(concurrency-mt-unsafe)
-    return value != nullptr and std::string_view{value} == "1";
-}
-
 std::pair<std::string, std::string> splitSink(std::string_view statement)
 {
     /// The last INTO starts the sink: a name or a sink type with options in parentheses.
@@ -397,13 +391,12 @@ PlannedPhysicalQuery planPhysical(
     const SinkCatalog& sinkCatalog,
     const WorkerCatalog& workerCatalog,
     const std::string& address,
-    const bool finiteInputs,
     const std::unordered_map<std::string, std::string>& sourceNames,
     const ModelCatalog* models,
     const QueryOptimizerConfiguration& optimizer,
     const bool detailedSteps)
 {
-    auto [request, catalogNames, caseSensitive] = makeRequest(sql, sourceCatalog, finiteInputs, sourceNames, /*physical=*/true, models);
+    auto [request, catalogNames, caseSensitive] = makeRequest(sql, sourceCatalog, optimizer.finiteInputs, sourceNames, /*physical=*/true, models);
     request.set_nested_loop_joins(optimizer.joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN);
     request.set_detailed_steps(detailedSteps);
     request.set_layout_policy(
@@ -576,7 +569,7 @@ PlannedPhysicalQuery planStatement(
 {
     const auto [query, sinkClause] = splitSink(statement);
     return planPhysical(
-        query, sinkClause, sourceCatalog, sinkCatalog, workerCatalog, plannerAddress(), finiteInputs(), {}, models, optimizer, detailedSteps);
+        query, sinkClause, sourceCatalog, sinkCatalog, workerCatalog, plannerAddress(), {}, models, optimizer, detailedSteps);
 }
 
 }

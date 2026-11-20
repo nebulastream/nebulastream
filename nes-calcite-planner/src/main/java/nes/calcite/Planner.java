@@ -540,7 +540,7 @@ public final class Planner {
         }
         if (rel instanceof Join || rel instanceof Aggregate) {
             throw new UnsupportedOperationException(rel.getRelTypeName() + " without a window (TUMBLE/HOP) is not supported on streams;"
-                + " for finite inputs, enable finite_inputs:\n" + RelOptUtil.toString(rel));
+                + " if all inputs end (e.g. files), set the optimizer option finite_inputs (optimizer.finite_inputs=true):\n" + RelOptUtil.toString(rel));
         }
         rel.getInputs().forEach(Planner::rejectUnsupported);
     }

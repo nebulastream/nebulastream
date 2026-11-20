@@ -190,7 +190,6 @@ private:
     [[nodiscard]] Calcite::PlannedPhysicalQuery plan(const std::string& sql, const std::string& queryId) const
     {
         static const std::unordered_map<std::string, std::string> AllSources;
-        /// Test files hold finite inputs, so unwindowed joins and aggregations run over the whole input.
         const auto [query, sinkClause] = Calcite::splitSink(sql);
         Calcite::setRequestLabel(queryId);
         return Calcite::planPhysical(
@@ -200,7 +199,6 @@ private:
             *sinkCatalog,
             *workerCatalog,
             Calcite::plannerAddress(),
-            /*finiteInputs=*/true,
             calciteSources != nullptr ? *calciteSources : AllSources,
             modelCatalog.get(),
             optimizer);
