@@ -67,7 +67,10 @@ public:
         UdfLanguage language = UdfLanguage::Python,
         /// Positions of the VARSIZED or CHAR arguments that the function receives as bytes instead of str.
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-        std::vector<uint64_t> bytesArguments = {});
+        std::vector<uint64_t> bytesArguments = {},
+        /// The compiler of an Inline UDF: "Codon" or "Numba".
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        std::string compiler = "Codon");
     void removeUdf(const std::string& udfName);
     [[nodiscard]] bool hasUdf(const std::string& udfName) const;
     [[nodiscard]] std::vector<std::string> getUdfNames() const;

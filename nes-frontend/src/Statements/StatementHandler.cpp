@@ -347,7 +347,8 @@ std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::ope
             statement.execution,
             statement.source,
             statement.language,
-            statement.bytesArguments);
+            statement.bytesArguments,
+            statement.compiler);
     }
     catch (const Exception& e)
     {

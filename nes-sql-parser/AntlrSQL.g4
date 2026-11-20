@@ -87,7 +87,7 @@ modelOutputField: identifier typeDefinition;
 createFunctionDefinition: FUNCTION udfName=identifier '(' (functionArgField (',' functionArgField)*)? ')'
                           RETURNS returnType=typeDefinition
                           (LANGUAGE language=identifier)?
-                          (EXECUTION execution=identifier)?
+                          (EXECUTION execution=identifier (COMPILER compiler=identifier)?)?
                           (ENTRYPOINT entrypoint=STRING | AS body=PYTHON_BODY);
 /// A VARSIZED or CHAR argument followed by BYTES reaches the function as raw bytes instead of a str.
 functionArgField: name=identifier typeDefinition nullableDefinition? (representation=identifier)?;
@@ -573,6 +573,7 @@ RETURNS: 'RETURNS';
 ENTRYPOINT: 'ENTRYPOINT';
 LANGUAGE: 'LANGUAGE';
 EXECUTION: 'EXECUTION';
+COMPILER: 'COMPILER';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

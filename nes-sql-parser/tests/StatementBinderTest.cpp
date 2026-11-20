@@ -480,6 +480,33 @@ TEST_F(StatementBinderTest, BindCreateFunctionInline)
     EXPECT_EQ(create.entrypoint, "discount.apply_discount");
 }
 
+TEST_F(StatementBinderTest, BindCreateFunctionInlineWithCompiler)
+{
+    if (!isUdfBridgeShipped(InlineBridge))
+    {
+        GTEST_SKIP() << "UDF bridge " << InlineBridge << " is not part of this build";
+    }
+    const auto numba
+        = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE COMPILER numba ENTRYPOINT 'm.f'");
+    ASSERT_TRUE(numba.has_value()) << numba.error().what();
+    EXPECT_EQ(std::get<CreateFunctionStatement>(*numba).compiler, "Numba");
+    const auto codon = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'm.f'");
+    ASSERT_TRUE(codon.has_value()) << codon.error().what();
+    EXPECT_EQ(std::get<CreateFunctionStatement>(*codon).compiler, "Codon");
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithCompilerOutsideInlineThrows)
+{
+    const auto unknown
+        = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE COMPILER gcc ENTRYPOINT 'm.f'");
+    ASSERT_FALSE(unknown.has_value());
+    EXPECT_EQ(unknown.error().code(), ErrorCode::InvalidStatement);
+    const auto outside
+        = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION IN_PROCESS COMPILER numba ENTRYPOINT 'm.f'");
+    ASSERT_FALSE(outside.has_value());
+    EXPECT_EQ(outside.error().code(), ErrorCode::InvalidStatement);
+}
+
 TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownExecutionThrows)
 {
     const auto statement = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION sidecar ENTRYPOINT 'm.f'");

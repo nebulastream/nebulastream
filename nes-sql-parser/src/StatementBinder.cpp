@@ -320,6 +320,20 @@ public:
             }
             execution = *parsed;
         }
+        std::string compiler = "Codon";
+        if (functionDefAST->compiler != nullptr)
+        {
+            const auto compilerName = toUpperCase(bindIdentifier(functionDefAST->compiler->strictIdentifier()).getOriginalString());
+            if (execution != UdfExecution::Inline)
+            {
+                throw InvalidStatement("CREATE FUNCTION ... COMPILER {}: only an EXECUTION INLINE function has a compiler", compilerName);
+            }
+            if (compilerName != "CODON" && compilerName != "NUMBA")
+            {
+                throw InvalidStatement("CREATE FUNCTION ... COMPILER {}: expected CODON or NUMBA", compilerName);
+            }
+            compiler = compilerName == "CODON" ? "Codon" : "Numba";
+        }
         const auto path = resolveUdfBridgeLibraryPath(language, execution).string();
         const auto entrypoint = functionDefAST->entrypoint != nullptr ? bindStringLiteral(functionDefAST->entrypoint) : std::string{};
 
@@ -378,7 +392,8 @@ public:
             .returnType = returnType,
             .execution = execution,
             .source = std::move(source),
-            .language = language};
+            .language = language,
+            .compiler = std::move(compiler)};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

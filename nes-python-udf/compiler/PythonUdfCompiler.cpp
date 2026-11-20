@@ -670,6 +670,66 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
     }
 }
 
+void validateNumbaUdfModule(const llvm::Module& module, const std::string& symbol)
+{
+    const auto* entryPoint = module.getFunction(symbol);
+    if (entryPoint == nullptr || entryPoint->isDeclaration())
+    {
+        throw QueryCompilerError("Numba did not emit the entry point '{}'", symbol);
+    }
+    std::vector<std::string> unsupported;
+    for (const auto& function : module.functions())
+    {
+        const std::string_view name{function.getName().data(), function.getName().size()};
+        if (function.isDeclaration() && !name.starts_with("llvm.") && !std::ranges::contains(NumbaRuntimeSymbolNames, name)
+            && !std::ranges::contains(PythonUdfRuntimeSymbolNames, name) && !std::ranges::contains(NumbaProcessFunctions, name))
+        {
+            unsupported.emplace_back(name);
+        }
+    }
+    for (const auto& global : module.globals())
+    {
+        const std::string_view name{global.getName().data(), global.getName().size()};
+        if (global.isDeclaration() && !name.starts_with("llvm.") && !std::ranges::contains(NumbaRuntimeSymbolNames, name))
+        {
+            unsupported.emplace_back(name);
+        }
+    }
+    if (!unsupported.empty())
+    {
+        std::ranges::sort(unsupported);
+        throw QueryCompilerError(
+            "Python UDF compiled by Numba requires unsupported external symbols {}; only Numba's runtime (NRT, typed dict and "
+            "list, Unicode tables) is available",
+            join(unsupported));
+    }
+    std::string verificationMessage;
+    llvm::raw_string_ostream verificationStream(verificationMessage);
+    if (llvm::verifyModule(module, &verificationStream))
+    {
+        throw QueryCompilerError("Numba emitted an invalid LLVM module: {}", verificationMessage);
+    }
+}
+
+CompiledInlineUdf finishNumbaUdf(
+    const std::string& bitcode, const std::string& symbol, const std::vector<DataType>& argumentTypes, const DataType& returnType)
+{
+    llvm::LLVMContext llvmContext;
+    auto parsedModule = llvm::parseBitcodeFile(llvm::MemoryBufferRef{llvm::StringRef{bitcode.data(), bitcode.size()}, symbol}, llvmContext);
+    if (!parsedModule)
+    {
+        throw QueryCompilerError("Could not read the LLVM bitcode of Numba UDF '{}': {}", symbol, llvm::toString(parsedModule.takeError()));
+    }
+    auto pipelineModule = std::move(*parsedModule);
+    addPythonUdfInterpreterAdapter(*pipelineModule, symbol, argumentTypes, returnType);
+    auto interpreterModule = llvm::CloneModule(*pipelineModule);
+    internalizePythonUdfModule(*pipelineModule, symbol);
+    validateNumbaUdfModule(*pipelineModule, symbol);
+    internalizePythonUdfModule(*interpreterModule, interpreterSymbolName(symbol));
+    validateNumbaUdfModule(*interpreterModule, interpreterSymbolName(symbol));
+    return {.symbol = symbol, .pipelineBitcode = writeBitcode(*pipelineModule), .interpreterBitcode = writeBitcode(*interpreterModule)};
+}
+
 void loadCodonPlugins()
 {
     loadCodonPlugin(codonPluginPath(NES_CODON_BLAS_PLUGIN_PATH));

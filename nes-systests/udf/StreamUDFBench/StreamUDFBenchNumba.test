@@ -1,0 +1,158 @@
+# name: udf/StreamUDFBench/StreamUDFBenchNumba.test
+# description: Each UDFBench scalar UDF, unchanged, as an INLINE UDF compiled with Numba (COMPILER NUMBA), in the queries of
+# StreamUDFBenchScalarUdfs.test, with the results of its OUT_OF_PROCESS section. Entry points as for Codon:
+# udfbench_scalar_inline.py. Needs NES_NUMBA_PYTHON (an environment with Numba).
+# groups: [StreamUDFBench, large, Numba]
+
+CREATE LOGICAL SOURCE artifacts(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/query2json_3M.csv
+
+CREATE FUNCTION addnoise_numba (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.addnoise';
+CREATE FUNCTION clean_numba (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.clean';
+CREATE FUNCTION cleandate_numba (pubdate VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.cleandate';
+CREATE FUNCTION converttoeuro_numba (x FLOAT64 NOT NULL, y VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.converttoeuro';
+CREATE FUNCTION extractclass_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractclass';
+CREATE FUNCTION extractcode_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractcode';
+CREATE FUNCTION extractday_numba (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractday';
+CREATE FUNCTION extractfunder_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractfunder';
+CREATE FUNCTION extractid_numba (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractid';
+CREATE FUNCTION extractmonth_numba (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractmonth';
+CREATE FUNCTION extractprojectid_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractprojectid';
+CREATE FUNCTION extractyear_numba (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractyear';
+CREATE FUNCTION filterstopwords_numba (words VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.filterstopwords';
+CREATE FUNCTION frequentterms_numba (input VARSIZED NOT NULL, N INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.frequentterms';
+CREATE FUNCTION jaccard_numba (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jaccard';
+CREATE FUNCTION jpack_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
+CREATE FUNCTION jsoncount_numba (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
+CREATE FUNCTION jsonparse_numba (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
+CREATE FUNCTION jsort_numba (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsort';
+CREATE FUNCTION jsortvalues_numba (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsortvalues';
+CREATE FUNCTION keywords_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.keywords';
+CREATE FUNCTION log_10_numba (x FLOAT64 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.log_10';
+CREATE FUNCTION lowerize_numba (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
+CREATE FUNCTION removeshortterms_numba (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
+CREATE FUNCTION stem_numba (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
+
+SELECT id FROM artifacts WHERE addnoise_numba(authors) > FLOAT64(-1000.0) INTO Checksum();
+----
+47919 174369468
+
+SELECT id, clean_numba(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 262835702
+
+SELECT id, cleandate_numba(date) AS r FROM artifacts INTO Checksum();
+----
+48448 205632237
+
+SELECT id, converttoeuro_numba(amount, currency) AS r FROM artifact_charges INTO Checksum();
+----
+448 1787873
+
+SELECT id, extractclass_numba(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 338800898
+
+SELECT id, extractcode_numba(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractday_numba(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181955664
+
+SELECT id, extractfunder_numba(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 396368862
+
+SELECT id, extractid_numba(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 342784166
+
+SELECT id, extractmonth_numba(date) AS r FROM artifacts INTO Checksum();
+----
+48448 181348715
+
+SELECT id, extractprojectid_numba(fundinginfo) AS r FROM projects_artifacts INTO Checksum();
+----
+81813 318820139
+
+SELECT id, extractyear_numba(date) AS r FROM artifacts INTO Checksum();
+----
+48448 188118858
+
+SELECT id, filterstopwords_numba(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1007785841
+
+SELECT id, frequentterms_numba(abstract, INT64(5)) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 100299983
+
+SELECT id, jaccard_numba(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 64983328
+
+SELECT id, jpack_numba(title) AS r FROM artifacts INTO Checksum();
+----
+48448 691382596
+
+SELECT id, jsoncount_numba(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 62347253
+
+SELECT id, jsonparse_numba(id, 'doi') AS r FROM query2json INTO Checksum();
+----
+23294 286664167
+
+SELECT id, jsort_numba(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, jsortvalues_numba(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 267026111
+
+SELECT id, keywords_numba(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1193827570
+
+SELECT id, log_10_numba(amount) AS r FROM artifact_charges INTO Checksum();
+----
+448 1815707
+
+SELECT id, lowerize_numba(title) AS r FROM artifacts INTO Checksum();
+----
+48448 585633644
+
+SELECT id, removeshortterms_numba(authorlist) AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 255206502
+
+SELECT id, stem_numba(abstract) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 1074975864

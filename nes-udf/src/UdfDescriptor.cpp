@@ -124,6 +124,7 @@ struct ReflectedUdfDescriptor
     /// Base64, because the plan is serialized as JSON.
     std::optional<std::string> compiledPipelineBitcode;
     std::optional<std::string> compiledInterpreterBitcode;
+    std::optional<std::string> compiler;
 };
 
 constexpr std::string_view base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -211,9 +212,11 @@ Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, 
             .execution = std::make_optional(descriptor.getExecution()),
             .language = std::make_optional(descriptor.getLanguage()),
             .compiledSymbol = compiled.has_value() ? std::make_optional(compiled->symbol) : std::nullopt,
-            .compiledPipelineBitcode = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->pipelineBitcode)) : std::nullopt,
+            .compiledPipelineBitcode
+            = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->pipelineBitcode)) : std::nullopt,
             .compiledInterpreterBitcode
-            = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->interpreterBitcode)) : std::nullopt});
+            = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->interpreterBitcode)) : std::nullopt,
+            .compiler = std::make_optional(descriptor.getCompiler())});
 }
 
 UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -250,7 +253,8 @@ UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const
         std::move(reflected.returnType).value(),
         reflected.execution.value_or(UdfExecution::InProcess),
         reflected.language.value_or(UdfLanguage::Python),
-        std::move(compiled)};
+        std::move(compiled),
+        std::move(reflected.compiler).value_or("Codon")};
 }
 
 }

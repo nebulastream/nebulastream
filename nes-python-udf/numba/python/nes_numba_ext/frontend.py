@@ -23,15 +23,19 @@ compile. The source file stays as it is. Each rewrite keeps the result of the UD
 - `type(x) == list` (also tuple, dict, str) becomes `isinstance(x, list)`. Numba does not compare types.
 - In a function that asks a JSON value for its kind (isinstance(x, list) or dict), json.loads(x)
   becomes json_value(x) (json_value_ext), `for item in data` over such a value becomes a loop over its indices, and each
-  `return x` of the UDF becomes `return result_text(x)`. A jitted wrapper raises TypeError for a value that is not a string,
-  outside the UDF's own try/except, and returns the text otherwise, as NES's entry code does with a VARSIZED result.
-- A plain Python function of the UDF's module that the UDF calls (a helper) is compiled with this front end too.
+  `return x` becomes `return result_text(x)`. A jitted wrapper raises TypeError for a value that is not a string, outside the
+  function's own try/except, and returns the text otherwise, as NES's entry code does with a VARSIZED result. This holds for
+  the UDF and for a helper it calls (the UDFBench INLINE entry points forward to the UDFBench function): a helper cannot
+  return a JSON value to a caller that uses it as one.
+- A plain Python function of a user module that the UDF calls (a helper, also one imported from another module) is compiled
+  with this front end too.
 - A global set or frozenset of strings becomes a sorted string blob with an offset array, and `x in s` / `x not in s`
   becomes a binary search on it (Numba does not freeze sets as constants, and freezes tuples only up to 1000 items).
 """
 
 import ast
 import inspect
+import sys
 import textwrap
 
 import numba
@@ -295,6 +299,13 @@ def _checked(udf, parameters):
     return numba.njit(namespace["checked"])
 
 
+def _is_user_function(function):
+    """A plain Python function of a user module: not of the standard library, Numba or this package, which Numba's own
+    overloads cover (for example heapq.nlargest)."""
+    module = (function.__module__ or "").split(".")[0]
+    return module not in sys.stdlib_module_names and module not in ("numba", "llvmlite", "numpy", "nes_numba_ext")
+
+
 def njit(function, _compiled=None):
     """numba.njit of `function` after the rewrites above."""
     is_udf = _compiled is None
@@ -314,8 +325,7 @@ def njit(function, _compiled=None):
     if uses_json_values:
         _JsonValues().visit(definition)
         _JsonLoops(_json_value_names(definition)).visit(definition)
-        if is_udf:
-            _wrap_returns(definition)
+        _wrap_returns(definition)
     lifted = []
     _lift(definition, lifted)
     sets = {name for name, value in function.__globals__.items() if _is_string_set(value)}
@@ -329,7 +339,7 @@ def njit(function, _compiled=None):
     compiled[function] = None
     for name in _loaded_names(definition):
         value = namespace.get(name)
-        if inspect.isfunction(value) and value is not function and value.__module__ == function.__module__:
+        if inspect.isfunction(value) and value is not function and _is_user_function(value):
             namespace[name] = njit(value, compiled)
     for node in lifted + [definition]:
         _SetMembership(sets).visit(node)
@@ -341,6 +351,6 @@ def njit(function, _compiled=None):
         namespace[node.name] = numba.njit(namespace[node.name])
     exec(compile(ast.fix_missing_locations(ast.Module(body=[definition], type_ignores=[])), inspect.getsourcefile(function), "exec"), namespace)
     compiled[function] = numba.njit(namespace[definition.name])
-    if is_udf and uses_json_values:
-        return _checked(compiled[function], [argument.arg for argument in definition.args.args])
+    if uses_json_values:
+        compiled[function] = _checked(compiled[function], [argument.arg for argument in definition.args.args])
     return compiled[function]

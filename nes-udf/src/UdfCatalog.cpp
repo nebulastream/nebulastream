@@ -40,7 +40,8 @@ void UdfCatalog::registerUdf(
     const UdfExecution execution,
     std::optional<InlineUdfSource> source,
     const UdfLanguage language,
-    std::vector<uint64_t> bytesArguments)
+    std::vector<uint64_t> bytesArguments,
+    std::string compiler)
 {
     if (source.has_value() && source->parameterNames.size() != argTypes.size())
     {
@@ -93,14 +94,20 @@ void UdfCatalog::registerUdf(
         std::move(bytesArguments),
         returnType,
         execution,
-        language};
+        language,
+        std::nullopt,
+        compiler};
     /// Compiled once here instead of for each call in a query. A build without Python UDFs has no compiler; the worker then
     /// reports that it cannot execute the UDF.
     if (execution == UdfExecution::Inline && language == UdfLanguage::Python)
     {
-        if (const auto compile = UdfCompilerRegistry::instance().find("Codon"))
+        if (const auto compile = UdfCompilerRegistry::instance().find(compiler))
         {
             descriptor.compiled = (*compile)(UdfCompilerRegistryArguments{.udf = descriptor, .importPaths = importPaths});
+        }
+        else if (compiler != "Codon")
+        {
+            throw NES::CannotLoadUdf("Inline UDF '{}': this build has no {} compiler", name, compiler);
         }
     }
     catalog.registerEntry(std::move(name), std::move(descriptor));

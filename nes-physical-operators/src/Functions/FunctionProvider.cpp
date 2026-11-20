@@ -93,7 +93,7 @@ PhysicalFunction FunctionProvider::lowerFunction(
             "UDF '{}' must have been lifted into a UDF operator",
             udfCallFunction.value()->getUdfName());
         return lowerUdf(
-            "Codon",
+            descriptor->getCompiler(),
             fmt::format("UDF '{}'", udfCallFunction.value()->getUdfName()),
             UdfLoweringRegistryArguments{
                 .udf = *descriptor,

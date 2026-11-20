@@ -16,6 +16,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 # every binary with a UDF catalog links Codon; the worker runs it only for UDFs that do not come from the catalog.
 add_library(nes-python-udf-compiler STATIC
         CodonUdfCompiler.cpp
+        NumbaUdfCompiler.cpp
         PythonUdfCompiler.cpp
         PythonUdfFilesystem.cpp)
 target_include_directories(nes-python-udf-compiler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -28,7 +29,8 @@ target_compile_definitions(nes-python-udf-compiler PRIVATE
         NES_CODON_COMPAT_PLUGIN_PATH="$<TARGET_FILE:nes-codon-compat-plugin>"
         NES_CODON_JSON_PLUGIN_PATH="$<TARGET_FILE:nes-codon-json-plugin>"
         NES_CODON_RE_PLUGIN_PATH="$<TARGET_FILE:nes-codon-re-plugin>"
-        NES_CODON_UNICODE_PLUGIN_PATH="$<TARGET_FILE:nes-codon-unicode-plugin>")
+        NES_CODON_UNICODE_PLUGIN_PATH="$<TARGET_FILE:nes-codon-unicode-plugin>"
+        NES_NUMBA_COMPILE_SCRIPT="${CMAKE_CURRENT_SOURCE_DIR}/../numba/python/nes_numba_compile.py")
 
 # Codon is built with the same RTTI mode as LLVM. Keep its filesystem adapter consistent because polymorphic
 # shared_ptr objects cross this boundary.
@@ -38,3 +40,4 @@ endif ()
 
 link_plugin_library(nes-udf nes-python-udf-compiler)
 add_registry_entry(UdfCompiler Codon)
+add_registry_entry(UdfCompiler Numba)

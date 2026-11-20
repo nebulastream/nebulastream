@@ -79,6 +79,7 @@
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <Module.hpp>
+#include <NumbaRuntime.hpp>
 #include <PythonUdfCompiler.hpp>
 #include <PythonUdfRuntime.hpp>
 #include <UdfBridgeRegistry.hpp>
@@ -128,7 +129,7 @@ std::string writeBitcode(const llvm::Module& module)
 
 /// The bitcode of a compiled UDF with its entry point `from` renamed to `to`, after checking that it uses only what this
 /// worker provides.
-std::string renameEntryPoint(const std::string& bitcode, const std::string& from, const std::string& to)
+std::string renameEntryPoint(const std::string& bitcode, const std::string& from, const std::string& to, const InlineUdfRuntime runtime)
 {
     llvm::LLVMContext context;
     auto parsed = llvm::parseBitcodeFile(llvm::MemoryBufferRef{llvm::StringRef{bitcode.data(), bitcode.size()}, from}, context);
@@ -144,7 +145,14 @@ std::string renameEntryPoint(const std::string& bitcode, const std::string& from
     }
     entryPoint->setName(to);
     /// Checked again here: the frontend that compiled it may come from another build.
-    validatePythonUdfModule(module, to);
+    if (runtime == InlineUdfRuntime::Numba)
+    {
+        validateNumbaUdfModule(module, to);
+    }
+    else
+    {
+        validatePythonUdfModule(module, to);
+    }
     return writeBitcode(module);
 }
 
@@ -343,8 +351,31 @@ VarVal invokePython(const std::string& symbol, const DataType& returnType, Arena
     return std::move(*result);
 }
 
+/// The functions and globals that the compiled code of `runtime` may call, as the JIT resolves them.
+std::vector<std::pair<std::string, void*>> runtimeSymbols(const InlineUdfRuntime runtime)
+{
+    std::vector<std::pair<std::string, void*>> symbols;
+    for (const auto& [name, address] : getPythonUdfRuntimeSymbols())
+    {
+        symbols.emplace_back(name, address);
+    }
+    if (runtime == InlineUdfRuntime::Numba)
+    {
+        for (const auto& [name, address] : getNumbaRuntimeSymbols())
+        {
+            symbols.emplace_back(name, address);
+        }
+        return symbols;
+    }
+    for (const auto& [name, address] : getCodonPluginNativeSymbols())
+    {
+        symbols.emplace_back(name, address);
+    }
+    return symbols;
+}
+
 std::shared_ptr<PythonUdfInterpreterExecutable>
-compilePythonUdfInterpreter(const std::string& symbol, const std::string& interpreterBitcode)
+compilePythonUdfInterpreter(const std::string& symbol, const std::string& interpreterBitcode, const InlineUdfRuntime runtime)
 {
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", true);
@@ -356,11 +387,7 @@ compilePythonUdfInterpreter(const std::string& symbol, const std::string& interp
     nautilus::engine::NautilusEngine engine{options};
     const auto udfSymbol = interpreterSymbolName(symbol);
     engine.registerUDF(udfSymbol, interpreterBitcode);
-    for (const auto& [name, address] : getPythonUdfRuntimeSymbols())
-    {
-        engine.registerExternalSymbol(name, address);
-    }
-    for (const auto& [name, address] : getCodonPluginNativeSymbols())
+    for (const auto& [name, address] : runtimeSymbols(runtime))
     {
         engine.registerExternalSymbol(name, address);
     }
@@ -522,34 +549,38 @@ VarVal invokePythonInterpreter(
 }
 
 PythonPhysicalFunction::PythonPhysicalFunction(
-    const CompiledInlineUdf& compiled, std::vector<PhysicalFunction> arguments, std::vector<DataType> argumentTypes, DataType returnType)
+    const CompiledInlineUdf& compiled,
+    std::vector<PhysicalFunction> arguments,
+    std::vector<DataType> argumentTypes,
+    DataType returnType,
+    const InlineUdfRuntime runtime)
     : arguments(std::move(arguments))
     , argumentTypes(std::move(argumentTypes))
     , returnType(returnType)
+    , runtime(runtime)
     , symbolName(fmt::format("__nes_python_udf_{}", nextPythonUdfId.fetch_add(1)))
 {
     PRECONDITION(this->arguments.size() == this->argumentTypes.size(), "Python UDF argument and type counts differ");
     PRECONDITION(!this->arguments.empty(), "Python UDF requires at least one argument");
-    /// The UDF may call native functions of the Codon plugins, which this process loads only when it compiles a UDF itself.
-    loadCodonPlugins();
+    if (runtime == InlineUdfRuntime::Codon)
+    {
+        /// The UDF may call native functions of the Codon plugins, which this process loads only when it compiles a UDF itself.
+        loadCodonPlugins();
+    }
     /// Each call gets its own entry points, so that several calls of one UDF can be part of one pipeline.
-    llvmBitcode = renameEntryPoint(compiled.pipelineBitcode, compiled.symbol, symbolName);
+    llvmBitcode = renameEntryPoint(compiled.pipelineBitcode, compiled.symbol, symbolName, runtime);
     interpreterLlvmBitcode
-        = renameEntryPoint(compiled.interpreterBitcode, interpreterSymbolName(compiled.symbol), interpreterSymbolName(symbolName));
+        = renameEntryPoint(compiled.interpreterBitcode, interpreterSymbolName(compiled.symbol), interpreterSymbolName(symbolName), runtime);
 }
 
 void PythonPhysicalFunction::setupSelf(CompilationContext& compilationContext) const
 {
     if (!compilationContext.isCompiled())
     {
-        interpreterExecutable = compilePythonUdfInterpreter(symbolName, interpreterLlvmBitcode);
+        interpreterExecutable = compilePythonUdfInterpreter(symbolName, interpreterLlvmBitcode, runtime);
         return;
     }
-    for (const auto& [name, address] : getPythonUdfRuntimeSymbols())
-    {
-        compilationContext.registerExternalSymbol(name, address);
-    }
-    for (const auto& [name, address] : getCodonPluginNativeSymbols())
+    for (const auto& [name, address] : runtimeSymbols(runtime))
     {
         compilationContext.registerExternalSymbol(name, address);
     }

@@ -98,6 +98,8 @@ class UdfDescriptor
     UdfExecution execution;
     UdfLanguage language;
     std::optional<CompiledInlineUdf> compiled;
+    /// The compiler of an Inline UDF ("Codon" or "Numba"), which also selects how the worker runs the compiled code.
+    std::string compiler;
 
     UdfDescriptor(
         std::string name,
@@ -109,7 +111,8 @@ class UdfDescriptor
         DataType returnType,
         UdfExecution execution,
         UdfLanguage language,
-        std::optional<CompiledInlineUdf> compiled = std::nullopt)
+        std::optional<CompiledInlineUdf> compiled = std::nullopt,
+        std::string compiler = "Codon")
         : name(std::move(name))
         , path(std::move(path))
         , entrypoint(std::move(entrypoint))
@@ -120,6 +123,7 @@ class UdfDescriptor
         , execution(execution)
         , language(language)
         , compiled(std::move(compiled))
+        , compiler(std::move(compiler))
     {
     }
 
@@ -164,6 +168,9 @@ public:
 
     /// Set for an Inline UDF that the catalog compiled at registration.
     [[nodiscard]] const std::optional<CompiledInlineUdf>& getCompiled() const { return compiled; }
+
+    /// "Codon" or "Numba"; meaningful for an Inline UDF.
+    [[nodiscard]] const std::string& getCompiler() const { return compiler; }
 
     bool operator==(const UdfDescriptor&) const = default;
 };

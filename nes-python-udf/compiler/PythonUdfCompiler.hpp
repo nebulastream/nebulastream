@@ -33,6 +33,16 @@ namespace NES
 /// checks this, and the worker checks it again before it runs bitcode that another process compiled.
 void validatePythonUdfModule(const llvm::Module& module, const std::string& symbol);
 
+/// Like validatePythonUdfModule for a UDF compiled by Numba: the module may call NumbaRuntimeSymbolNames (functions and
+/// globals), PythonUdfRuntimeSymbolNames and LLVM intrinsics.
+void validateNumbaUdfModule(const llvm::Module& module, const std::string& symbol);
+
+/// The pipeline and interpreter bitcode of a UDF that Numba compiled into `bitcode`, which defines `symbol` with the ABI of the
+/// Codon entry (createPythonUdfSource) for `argumentTypes` and `returnType`: adds the interpreter's entry point, keeps only the
+/// entry points external, removes dead code (also Numba's wrapper for calls from Python) and validates both.
+[[nodiscard]] CompiledInlineUdf finishNumbaUdf(
+    const std::string& bitcode, const std::string& symbol, const std::vector<DataType>& argumentTypes, const DataType& returnType);
+
 /// Loads the Codon plugins that NES ships (once per process): Codon reads their modules when it compiles a UDF, and the
 /// worker needs their native functions for a compiled UDF that calls them, also if another process compiled it.
 void loadCodonPlugins();

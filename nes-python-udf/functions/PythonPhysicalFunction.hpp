@@ -30,12 +30,24 @@ namespace NES
 class CompilationContext;
 struct PythonUdfInterpreterExecutable;
 
+/// The compiler of an INLINE UDF decides which runtime its code calls: Codon's (seq_*, the Codon plugins) or Numba's.
+enum class InlineUdfRuntime : uint8_t
+{
+    Codon,
+    Numba
+};
+
 class PythonPhysicalFunction final
 {
 public:
-    /// `compiled` is the UDF as Codon compiled it for `argumentTypes` and `returnType`.
+    /// `compiled` is the UDF as Codon or Numba (`runtime`) compiled it for `argumentTypes` and `returnType`.
     PythonPhysicalFunction(
-        const CompiledInlineUdf& compiled, std::vector<PhysicalFunction> arguments, std::vector<DataType> argumentTypes, DataType returnType);
+        const CompiledInlineUdf& compiled,
+        std::vector<PhysicalFunction> arguments,
+        std::vector<DataType> argumentTypes,
+        DataType returnType,
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        InlineUdfRuntime runtime = InlineUdfRuntime::Codon);
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
     void setupSelf(CompilationContext& compilationContext) const;
@@ -44,6 +56,7 @@ private:
     std::vector<PhysicalFunction> arguments;
     std::vector<DataType> argumentTypes;
     DataType returnType;
+    InlineUdfRuntime runtime;
     std::string symbolName;
     std::string llvmBitcode;
     std::string interpreterLlvmBitcode;

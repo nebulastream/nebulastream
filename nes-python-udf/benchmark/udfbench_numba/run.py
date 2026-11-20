@@ -27,8 +27,11 @@ addnoise draws random numbers; its results are only checked to be floats.
 
 import json
 import math
+import pathlib
 import sys
 import time
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "numba/python"))
 
 import numba
 from numba import types

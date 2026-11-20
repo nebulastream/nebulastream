@@ -12,8 +12,11 @@
 """Compiles a UDFBench UDF with Numba into an object file with one C-ABI entry and no Python wrapper, and writes the inputs
 and the CPython results for the C++ driver. Usage: build.py UDF OUTDIR"""
 import os
+import pathlib
 import struct
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "numba/python"))
 
 import llvmlite.binding as llvm
 import numba

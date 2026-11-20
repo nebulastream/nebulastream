@@ -1,0 +1,46 @@
+# name: udf/NumbaInline.test
+# description: INLINE UDFs compiled with Numba (COMPILER NUMBA): bodies and an entry point, integer and string arguments and
+# results, ASCII and other text, NULL for a NOT NULL argument, and a Numba and a Codon UDF in one query. Needs NES_NUMBA_PYTHON.
+# groups: [Numba]
+
+CREATE LOGICAL SOURCE words(id INT64 NOT NULL, w VARSIZED);
+CREATE PHYSICAL SOURCE FOR words TYPE File;
+ATTACH INLINE
+1,Hello
+2,Grüße
+3,
+
+CREATE FUNCTION inc_numba (x INT64 NOT NULL) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA AS $python$
+    return x + 1
+$python$;
+CREATE FUNCTION upper_numba (s VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA AS $python$
+    return s.upper()
+$python$;
+CREATE FUNCTION lowerize_numba (s VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER NUMBA ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
+CREATE FUNCTION upper_codon (s VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER CODON AS $python$
+    return s.upper()
+$python$;
+
+SELECT id, inc_numba(id) AS r FROM words INTO FILE();
+----
+1,2
+2,3
+3,4
+
+SELECT id, upper_numba(w) AS r FROM words INTO FILE();
+----
+1,HELLO
+2,GRÜSSE
+3,NULL
+
+SELECT id, lowerize_numba(w) AS r FROM words INTO FILE();
+----
+1,hello
+2,grüße
+3,NULL
+
+SELECT id, upper_numba(w) AS n, upper_codon(w) AS c FROM words INTO FILE();
+----
+1,HELLO,HELLO
+2,GRÜSSE,GRÜSSE
+3,NULL,NULL
