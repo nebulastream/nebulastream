@@ -44,9 +44,10 @@ RUN set -eux; \
     /opt/graalvm/bin/native-image --version
 ENV GRAALVM_HOME=/opt/graalvm
 
+# From Maven Central: archive.apache.org rate-limits and served the arm64 runners a different file.
 ARG MAVEN_VERSION=3.9.16
 ADD --checksum=sha512:831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6 \
-  https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz /tmp/maven.tar.gz
+  https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/apache-maven-${MAVEN_VERSION}-bin.tar.gz /tmp/maven.tar.gz
 RUN mkdir -p /opt/maven \
     && tar -xzf /tmp/maven.tar.gz -C /opt/maven --strip-components=1 \
     && rm /tmp/maven.tar.gz \
