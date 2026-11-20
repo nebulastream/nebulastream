@@ -29,8 +29,8 @@ import org.apache.calcite.tools.RelBuilder;
 
 /**
  * Only for finite inputs: joins and aggregations without a window become NesWindowJoin / NesWindowAggregate with a
- * GLOBAL window, one window over the whole input that fires at the end of the stream. They run after WindowAggregateRule
- * and WindowJoinRule, so everything still a plain Aggregate or Join here has no window.
+ * GLOBAL window, one window over the whole input that fires at the end of the stream. AGGREGATE runs after
+ * WindowAggregateRule and JOIN after WindowJoinRule, so every plain Aggregate or Join they see has no window.
  */
 final class GlobalWindowRules {
     static final RelOptRule AGGREGATE = new AggregateRule();

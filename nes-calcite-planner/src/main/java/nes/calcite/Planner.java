@@ -67,7 +67,7 @@ public final class Planner {
     /// (see SKIPPED_NES_RULES on the C++ side):
     ///   1. trim unused columns: projections right above the sources, unused aggregates dropped (RelFieldTrimmer);
     ///   2. normalize so that windowed aggregations and joins sit directly on TUMBLE/HOP, and rewrite them
-    ///      (WindowAggregateRule, WindowJoinRule; the latter also picks the join implementation);
+    ///      (WindowAggregateRule; a window join stays a Join, see WINDOW_JOINS);
     ///   3. push filters down through projections, unions and window group keys, and drop identity projections.
     /// Unused-column trimming runs first because the trimmer only understands Calcite's own Aggregate.
     private static final HepProgram REMOVE_SUBQUERIES = HepProgram.builder()
@@ -107,12 +107,23 @@ public final class Planner {
             CoreRules.AGGREGATE_PROJECT_MERGE,
             ProjectWindowTransposeRule.INSTANCE))
         .addRuleInstance(WindowAggregateRule.INSTANCE)
-        .addRuleInstance(WindowJoinRule.INSTANCE)
         .build();
 
     private static final HepProgram GLOBAL_WINDOWS = HepProgram.builder()
         .addRuleInstance(GlobalWindowRules.SINGLE_ROW_OUTER_JOIN)
-        .addRuleCollection(List.of(GlobalWindowRules.AGGREGATE, GlobalWindowRules.JOIN))
+        .addRuleInstance(GlobalWindowRules.AGGREGATE)
+        .build();
+
+    /// After all other rules (as Flink converts a window join only to its physical operator), each Join of two windowed
+    /// inputs becomes a NesWindowJoin, which also picks the join implementation (WindowJoinRule). Until then it is a Join,
+    /// which Calcite's rules and metadata know.
+    private static final HepProgram WINDOW_JOINS = HepProgram.builder()
+        .addRuleInstance(WindowJoinRule.INSTANCE)
+        .build();
+
+    /// For finite inputs, the remaining joins (without a window) get a GLOBAL window.
+    private static final HepProgram GLOBAL_JOINS = HepProgram.builder()
+        .addRuleInstance(GlobalWindowRules.JOIN)
         .build();
 
     private static final HepProgram PUSHDOWN = HepProgram.builder()
@@ -401,6 +412,15 @@ public final class Planner {
         if (generated != optimized) {
             optimized = steps.add("constant rows from a generator", "ours: ValuesFromGenerator", generated);
         }
+        optimized = steps.rules("window joins", "rules: ours (WindowJoinRule)", WINDOW_JOINS, optimized);
+        WindowJoinRule.rejectUnjoinedWindows(optimized);
+        if (finiteInputs) {
+            optimized = steps.rules("global windows for the other joins (finite inputs)", "rules: ours (GlobalWindowRules)",
+                GLOBAL_JOINS, optimized);
+        }
+        /// The projections above the new joins merge with those of the query (e.g. COALESCE(l.window_start,
+        /// r.window_start) of a FULL join becomes the join's START, which is never null).
+        optimized = steps.rules("projections merged after the joins", "rules: Calcite's, selected by us", PUSHDOWN, optimized);
         optimized = steps.add("window aggregations lowered for the placement", "ours: NesLogical.lowerWindows",
             NesLogical.lowerWindows(optimized));
         rejectUnsupported(optimized);

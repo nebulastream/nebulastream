@@ -17,6 +17,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * A windowed join of two streams as NebulaStream executes it. Output: window_start, window_end, left columns, right
  * columns. {@code condition} refers to [left columns..., right columns...] and is null for a pure window join. For a
  * hash join it only holds the leftField = rightField keys and {@code residual} the rest of the condition.
+ *
+ * <p>WindowJoinRule and GlobalWindowRules make it after all other rules: until then a window join is a Calcite Join (of
+ * the window table functions), which Calcite's rules and metadata know. So its own row type, with the window columns
+ * first, is only seen by our later steps (the placement and the physical operators).
  */
 public final class NesWindowJoin extends BiRel {
     final WindowJoin spec;

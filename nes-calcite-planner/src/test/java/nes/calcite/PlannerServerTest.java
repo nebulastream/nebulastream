@@ -769,6 +769,18 @@ class PlannerServerTest {
         assertThrows(StatusRuntimeException.class, () -> plan(sql));
     }
 
+    @Test
+    void windowedInputsWithoutWindowEqualityAreRejected() {
+        /// Both sides are windowed, but the condition does not join their windows: neither a window join nor (for finite
+        /// inputs) a GLOBAL join can read the window columns of a stream.
+        String sql = "SELECT l.id FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' SECOND)) l"
+            + " JOIN TABLE(TUMBLE(TABLE s2, DESCRIPTOR(ts), INTERVAL '1' SECOND)) r ON l.id = r.id";
+        for (java.util.concurrent.Callable<Plan> request : List.<java.util.concurrent.Callable<Plan>>of(() -> plan(sql), () -> planFinite(sql))) {
+            StatusRuntimeException error = assertThrows(StatusRuntimeException.class, request::call);
+            assertTrue(error.getStatus().getDescription().contains("left.window_start = right.window_start"), error.getStatus().getDescription());
+        }
+    }
+
     private static WindowJoin join(Plan plan) throws Exception {
         return joinRel(root(plan)).getExtensionMulti().getDetail().unpack(WindowJoin.class);
     }

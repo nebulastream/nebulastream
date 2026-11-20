@@ -218,6 +218,21 @@ final class WindowJoinRule extends RelOptRule {
         return new Split(WindowJoin.Implementation.HASH_JOIN, RexUtil.composeConjunction(rexBuilder, keys), info.nonEquiConditions);
     }
 
+    /**
+     * Fails for a Join that reads a window table function (TUMBLE/HOP) on a side but did not become a NesWindowJoin
+     * (e.g. it joins two windowed streams without left.window_start = right.window_start). Neither a GLOBAL join nor
+     * the engine can read the window columns of a stream.
+     */
+    static void rejectUnjoinedWindows(RelNode plan) {
+        RelNode rel = strip(plan);
+        if (rel instanceof Join join && (describeStream(strip(join.getLeft())) != null || describeStream(strip(join.getRight())) != null)) {
+            throw new UnsupportedOperationException("a join of windowed inputs (TUMBLE/HOP) needs the same window on both sides and"
+                + " left.window_start = right.window_start (or window_end) in its condition, with no other condition on the window"
+                + " columns:\n" + RelOptUtil.toString(join));
+        }
+        rel.getInputs().forEach(WindowJoinRule::rejectUnjoinedWindows);
+    }
+
     private static Side describe(RelNode node) {
         Side stream = describeStream(node);
         return stream != null ? stream : describeAggregated(node);
