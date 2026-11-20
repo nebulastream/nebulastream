@@ -1,0 +1,237 @@
+# name: benchmark/UdfBenchCodonNumba.test
+# description: Per-row cost of the UDFBench scalar UDFs as INLINE (Codon): each query of the INLINE section of
+# udf/StreamUDFBench/StreamUDFBenchScalarUdfs.test (and frequentterms, which gives other terms than CPython for ties) on the tiny
+# data and on the same data ten times (x10, nes-python-udf/benchmark/harness/make_udfbench_x10.sh), into a Void sink. The
+# difference of the two times over the difference of the rows is the cost per row without fixed costs such as compilation.
+# Run with nes-python-udf/benchmark/harness/udfbench_codon_bench.py.
+# groups: [benchmark, large, PythonUdf]
+
+CREATE LOGICAL SOURCE artifacts(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/query2json_3M.csv
+
+CREATE LOGICAL SOURCE artifacts_x10(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts_x10(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists_x10(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges_x10(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts_x10(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json_x10(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/query2json_3M.csv
+
+CREATE FUNCTION clean_inline (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.clean';
+CREATE FUNCTION cleandate_inline (pubdate VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.cleandate';
+CREATE FUNCTION converttoeuro_inline (x FLOAT64 NOT NULL, y VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.converttoeuro';
+CREATE FUNCTION extractclass_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractclass';
+CREATE FUNCTION extractcode_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractcode';
+CREATE FUNCTION extractday_inline (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractday';
+CREATE FUNCTION extractfunder_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractfunder';
+CREATE FUNCTION extractid_inline (project VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractid';
+CREATE FUNCTION extractmonth_inline (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractmonth';
+CREATE FUNCTION extractprojectid_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractprojectid';
+CREATE FUNCTION extractyear_inline (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractyear';
+CREATE FUNCTION filterstopwords_inline (words VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.filterstopwords';
+CREATE FUNCTION frequentterms_inline (input VARSIZED NOT NULL, N INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.frequentterms';
+CREATE FUNCTION jaccard_inline (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jaccard';
+CREATE FUNCTION jpack_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
+CREATE FUNCTION jsoncount_inline (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
+CREATE FUNCTION jsonparse_inline (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
+CREATE FUNCTION jsort_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsort';
+CREATE FUNCTION jsortvalues_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsortvalues';
+CREATE FUNCTION keywords_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.keywords';
+CREATE FUNCTION log_10_inline (x FLOAT64 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.log_10';
+CREATE FUNCTION lowerize_inline (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.lowerize';
+CREATE FUNCTION removeshortterms_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
+CREATE FUNCTION stem_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
+CREATE FUNCTION addnoise_adapted (val INT32 NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline_adapted.addnoise';
+
+SELECT id, frequentterms_inline(abstract, INT64(5)) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, frequentterms_inline(abstract, INT64(5)) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id, jaccard_inline(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jaccard_inline(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, jsonparse_inline(id, 'doi') AS r FROM query2json INTO Void();
+----
+
+SELECT id, jsonparse_inline(id, 'doi') AS r FROM query2json_x10 INTO Void();
+----
+
+SELECT id, clean_inline(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, clean_inline(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, cleandate_inline(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, cleandate_inline(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, converttoeuro_inline(amount, currency) AS r FROM artifact_charges INTO Void();
+----
+
+SELECT id, converttoeuro_inline(amount, currency) AS r FROM artifact_charges_x10 INTO Void();
+----
+
+SELECT id, extractclass_inline(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractclass_inline(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractcode_inline(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractcode_inline(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractday_inline(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, extractday_inline(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, extractfunder_inline(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractfunder_inline(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractid_inline(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractid_inline(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractmonth_inline(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, extractmonth_inline(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, extractprojectid_inline(fundinginfo) AS r FROM projects_artifacts INTO Void();
+----
+
+SELECT id, extractprojectid_inline(fundinginfo) AS r FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id, extractyear_inline(date) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, extractyear_inline(date) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, filterstopwords_inline(abstract) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, filterstopwords_inline(abstract) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id, jpack_inline(title) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, jpack_inline(title) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, jsoncount_inline(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jsoncount_inline(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, jsort_inline(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jsort_inline(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, jsortvalues_inline(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, jsortvalues_inline(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, keywords_inline(abstract) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, keywords_inline(abstract) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id, log_10_inline(amount) AS r FROM artifact_charges INTO Void();
+----
+
+SELECT id, log_10_inline(amount) AS r FROM artifact_charges_x10 INTO Void();
+----
+
+SELECT id, lowerize_inline(title) AS r FROM artifacts INTO Void();
+----
+
+SELECT id, lowerize_inline(title) AS r FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, removeshortterms_inline(authorlist) AS r FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, removeshortterms_inline(authorlist) AS r FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, stem_inline(abstract) AS r FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, stem_inline(abstract) AS r FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id FROM artifacts WHERE addnoise_adapted(authors) > FLOAT64(-1000.0) INTO Void();
+----
+
+SELECT id FROM artifacts_x10 WHERE addnoise_adapted(authors) > FLOAT64(-1000.0) INTO Void();
+----
