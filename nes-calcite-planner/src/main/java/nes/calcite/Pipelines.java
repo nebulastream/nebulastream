@@ -126,7 +126,7 @@ final class Pipelines {
         } else if (node instanceof NesPhysical.Emit emit) {
             for (Branch below : rewrite(emit.getInput())) {
                 List<Integer> fields = emit.fields.stream().map(field -> below.fields()[field]).toList();
-                branches.add(Branch.of(new NesPhysical.Emit(emit.getCluster(), emit.getTraitSet(), below.node(), fields, emit.forSink)));
+                branches.add(Branch.of(new NesPhysical.Emit(emit.getCluster(), emit.getTraitSet(), below.node(), fields)));
             }
         } else {
             throw new UnsupportedOperationException("not a physical operator: " + node.getRelTypeName());

@@ -77,6 +77,12 @@ const ConfigField<size_t> MAX_PENDING_ACKS{
     { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(narrowConfigValue<int64_t, size_t>); },
     size_t{0}};
 
+const ConfigField<bool> WHOLE_BUFFERS{
+    Identifier::parse("WHOLE_BUFFERS"),
+    "Send each buffer's whole memory area, not only its rows: for buffers in another layout than rows (e.g. columnar).",
+    [](const ConfigLiteral& literal) { return tryGetOr<bool>(literal, expectedType<bool>()); },
+    false};
+
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -90,6 +96,7 @@ Schema<QualifiedErasedConfigField, Ordered> NetworkSink::getConfigSchema()
         CHANNEL,
         SENDER_QUEUE_SIZE,
         MAX_PENDING_ACKS,
+        WHOLE_BUFFERS,
         SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD,
         SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD);
 }
@@ -101,7 +108,8 @@ std::expected<NetworkSinkConfig, Exception> NetworkSinkConfig::fromConfig(const 
         .bind = config.get(BIND),
         .channel = config.get(CHANNEL),
         .senderQueueSize = config.get(SENDER_QUEUE_SIZE),
-        .maxPendingAcks = config.get(MAX_PENDING_ACKS)};
+        .maxPendingAcks = config.get(MAX_PENDING_ACKS),
+        .wholeBuffers = config.get(WHOLE_BUFFERS)};
 }
 
 NetworkSink::NetworkSink(
@@ -114,6 +122,7 @@ NetworkSink::NetworkSink(
     , thisConnection(config.bind)
     , senderQueueSize(config.senderQueueSize)
     , maxPendingAcks(config.maxPendingAcks)
+    , wholeBuffers(config.wholeBuffers)
 {
 }
 
@@ -202,8 +211,10 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             children.emplace_back(childPayload);
         }
 
+        /// The rows of a buffer in rows; the whole buffer in another layout (e.g. columnar, whose columns span the buffer).
+        const auto bufferMemory = currentBuffer->getAvailableMemoryArea<const uint8_t>();
         std::span usedBufferMemory(
-            currentBuffer->getAvailableMemoryArea<const uint8_t>().data(), currentBuffer->getNumberOfTuples() * tupleSize);
+            bufferMemory.data(), wholeBuffers ? bufferMemory.size() : currentBuffer->getNumberOfTuples() * tupleSize);
         /// Set data and send over the network
         const auto sendResult = send_buffer(
             *channel.value(), metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children));

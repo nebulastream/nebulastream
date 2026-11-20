@@ -313,23 +313,27 @@ public final class Planner {
 
     /// physical: plan down to NebulaStream's physical operators (NesPhysical) instead of a logical plan.
     public Result plan(String sql, List<Source> sources, boolean finiteInputs, boolean physical) throws Exception {
-        return plan(sql, sources, finiteInputs, physical, List.of(), "", false, List.of(), List.of(), List.of(), false, TEST_FUNCTIONS);
+        return plan(sql, sources, finiteInputs, physical, List.of(), "", false, List.of(), List.of(), List.of(), false, TEST_FUNCTIONS,
+            "", nes.calcite.proto.LayoutPolicy.ROWS);
     }
 
     /// A request of the service (PlanRequest).
     public Result plan(nes.calcite.proto.PlanRequest request) throws Exception {
         return plan(request.getSql(), request.getSourcesList(), request.getFiniteInputs(), request.getPhysical(),
             request.getTopologyList(), request.getSinkHost(), request.getDetailedSteps(), request.getModelsList(),
-            request.getSourceTypesList(), request.getFormatOptionsList(), request.getNestedLoopJoins(), request.getFunctionsList());
+            request.getSourceTypesList(), request.getFormatOptionsList(), request.getNestedLoopJoins(), request.getFunctionsList(),
+            request.getSinkFormat(), request.getLayoutPolicy());
     }
 
     /// topology: place the physical plan on these workers, with the sink on sinkHost (see Placement).
     /// detailedSteps: a graph per step, and the plan after each rule (see Steps). models: for MODEL_INFERENCE.
     /// nestedLoopJoins: physical plans join with nested loops only (see PlanRequest.nested_loop_joins).
+    /// sinkFormat, layoutPolicy: the sink's format and the policy for the buffers between pipelines (see Layouts).
     public Result plan(String sql, List<Source> sources, boolean finiteInputs, boolean physical,
                        List<nes.calcite.proto.Worker> topology, String sinkHost, boolean detailedSteps,
                        List<nes.calcite.proto.Model> models, List<nes.calcite.proto.SourceType> sourceTypes,
-                       List<String> formatOptions, boolean nestedLoopJoins, List<nes.calcite.proto.Function> functions) throws Exception {
+                       List<String> formatOptions, boolean nestedLoopJoins, List<nes.calcite.proto.Function> functions,
+                       String sinkFormat, nes.calcite.proto.LayoutPolicy layoutPolicy) throws Exception {
         NesConverterProvider provider = providers.computeIfAbsent(List.copyOf(functions), NesConverterProvider::new);
         SqlParser.Config parserConfig = provider.getSqlParserConfig()
             /// As in standard SQL and our own identifiers: unquoted names are upper case, quoted ones keep their case, so the
@@ -413,7 +417,7 @@ public final class Planner {
                 root = root.withRel(steps.add("window joins as nested-loop joins", "ours: NesWindowJoin.nestedLoop",
                     NesWindowJoin.nestedLoop(root.rel)));
             }
-            List<Placement.Fragment> fragments = toPhysical(volcano, root, topology, sinkHost, steps);
+            List<Placement.Fragment> fragments = toPhysical(volcano, root, topology, sinkHost, steps, sinkFormat, layoutPolicy);
             String explain = describe(fragments);
             return new Result(Plan.builder().executionBehavior(provider.getExecutionBehavior())
                 .roots(provider.convertPhysical(fragments)).build(), explain, steps.list());
@@ -547,7 +551,8 @@ public final class Planner {
      * the cheapest physical operators and pipelines. A part writes into the query's sink or into a network channel.
      */
     private static List<Placement.Fragment> toPhysical(VolcanoPlanner volcano, RelRoot root, List<nes.calcite.proto.Worker> topology,
-                                                       String sinkHost, Steps steps) {
+                                                       String sinkHost, Steps steps, String sinkFormat,
+                                                       nes.calcite.proto.LayoutPolicy layoutPolicy) {
         /// Projections and filters go below the unions of physical sources, so that each source's rows shrink where it runs.
         RelNode logical = steps.rules("filters and projections pushed into each physical source", "rules: Calcite's, selected by us",
             PUSH_INTO_SOURCES, root.project());
@@ -597,7 +602,7 @@ public final class Planner {
                 RelNode physical = Pipelines.strip(best.getInput(planned.indexOf(part)));
                 /// The rows go into the sink in the sink's format, or into the network in the native format.
                 List<Integer> all = java.util.stream.IntStream.range(0, physical.getRowType().getFieldCount()).boxed().toList();
-                RelNode emit = new NesPhysical.Emit(cluster, traits, physical, all, true);
+                RelNode emit = new NesPhysical.Emit(cluster, traits, physical, all);
                 sink = part.channel() == null
                     ? new NesPhysical.Sink(cluster, traits, List.of(emit), root.fields.rightList())
                     : new NesPhysical.NetworkSink(cluster, traits, List.of(emit), part.channel(), part.downstreamHost());
@@ -611,6 +616,8 @@ public final class Planner {
         steps.add("physical operators (Calcite's choice, with Retain and UnionAll)", "Calcite: VolcanoPlanner, with our operators and converter rules (NesPhysical)", graphParts(fragments), false, converted);
         fragments = fragments.stream().map(f -> new Placement.Fragment(f.host(), Pipelines.finish(f.root()))).toList();
         steps.add("pipelines (Pipelines.finish)", "ours: Pipelines.finish", graphParts(fragments), true);
+        Layouts.assign(fragments, sinkFormat, layoutPolicy);
+        steps.add("memory layouts (Layouts)", "ours: Layouts.assign", graphParts(fragments), true);
         return fragments;
     }
 

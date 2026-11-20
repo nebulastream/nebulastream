@@ -54,18 +54,38 @@ const ConfigField<StreamJoinStrategy> JOIN_STRATEGY{
     },
     StreamJoinStrategy::OPTIMIZER_CHOOSES,
     "OPTIMIZER_CHOOSES"};
+
+const ConfigField<MemoryLayoutPolicy> MEMORY_LAYOUT{
+    Identifier::parse("memory_layout"),
+    "Layout of the buffers between pipelines, where neither a source nor the sink fixes it [ROW|COLUMNAR].",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](std::string value) -> std::expected<MemoryLayoutPolicy, Exception>
+                {
+                    if (const auto parsed = EnumWrapper{value}.asEnum<MemoryLayoutPolicy>())
+                    {
+                        return *parsed;
+                    }
+                    return std::unexpected{InvalidConfigParameter("Invalid memory layout, must be ROW or COLUMNAR: {}", value)};
+                });
+    },
+    MemoryLayoutPolicy::ROW,
+    "ROW"};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("optimizer"), JOIN_STRATEGY, QueryOptimizerNetworkConfiguration::getConfigSchema());
+    return createConfigSchema(
+        Identifier::parse("optimizer"), JOIN_STRATEGY, MEMORY_LAYOUT, QueryOptimizerNetworkConfiguration::getConfigSchema());
 }
 
 QueryOptimizerConfiguration QueryOptimizerConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(JOIN_STRATEGY), QueryOptimizerNetworkConfiguration::fromConfig(config)};
+    return {config.get(JOIN_STRATEGY), config.get(MEMORY_LAYOUT), QueryOptimizerNetworkConfiguration::fromConfig(config)};
 }
 
 }

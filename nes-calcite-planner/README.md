@@ -214,3 +214,19 @@ A network channel needs the data address of each worker on it. The REPL's own wo
 sets it, and that flag applies to every embedded worker. A demo therefore uses workers from `CREATE WORKER ... AS DATA`.
 
 Not yet: joins, operator costs (CPU) for the placement, and statistics for better byte estimates.
+
+### Memory layouts
+
+After pipelining, `Layouts.assign` gives each edge between pipelines a layout (`Layout` in the proto). An edge is all
+operators whose buffers must agree: a `Scan` and the `Emit`s or the source it reads, a `Sink` or `NetworkSink` and the
+`Emit`s that write into it, and the two ends of a network channel. The `Emit`s, `Scan`s and `NetworkSink`s of an edge
+carry its layout; EXPLAIN shows it (e.g. `layout=[CSV]`, `layout=[ROW(ID, VAL)]`).
+
+- A source fixes its edge to its format (`PhysicalSource.format`), and the sink to its format (`PlanRequest.sink_format`).
+  Each has one layout; a native sink (e.g. Void) takes rows.
+- Every other edge gets the layout of `PlanRequest.layout_policy` (`optimizer.memory_layout`: `ROW` or `COLUMNAR`).
+
+A layout describes the buffers, not only a kind: `Native` lists groups of fields in buffer order, each stored as rows or
+as columns; `Format` names a source's or sink's format. The engine supports one row group or column groups so far. The
+state of windows and joins keeps its own layout inside the operators. A `NetworkSink` sends only a buffer's rows for the
+row layout and the whole buffer for any other.

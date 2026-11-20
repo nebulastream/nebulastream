@@ -198,7 +198,8 @@ public:
                 {{Identifier::parse("channel"), last.network_sink().channel()},
                  {Identifier::parse("bind"), dataAddress(context, worker)},
                  {Identifier::parse("data_endpoint"), dataAddress(context, Host(last.network_sink().downstream_host()))},
-                 {Identifier::parse("output_format"), "NATIVE"}},
+                 {Identifier::parse("output_format"), "NATIVE"},
+                 {Identifier::parse("whole_buffers"), rowsOnly(last.network_sink().layout()) ? "false" : "true"}},
                 {});
             if (not sink)
             {
@@ -596,7 +597,9 @@ private:
             case nes::calcite::PhysicalOperator::kScan: {
                 const auto fields = names(outputSchema);
                 /// As our PipeliningPhase checks it: a pipeline's buffers must hold at least one of its input rows.
-                const auto& scanned = physical.scan().parses_source() ? inputs.at(0).source->getSchema() : outputSchema;
+                /// A format (after a source) is the source's: it parses the source's raw data.
+                const auto& layout = physical.scan().layout();
+                const auto& scanned = layout.has_format() ? inputs.at(0).source->getSchema() : outputSchema;
                 if (getSizeInBytes(scanned) > bufferSize)
                 {
                     throw TuplesTooLargeForPipelineBufferSize(
@@ -607,15 +610,15 @@ private:
                 }
                 auto scan = [&]
                 {
-                    if (physical.scan().parses_source())
+                    if (layout.has_format())
                     {
                         const auto& source = inputs.at(0).source.value();
+                        const auto& formatter = source.getInputFormatterDescriptor();
+                        checkFormat(layout.format(), formatter.getInputFormatterType(), "source");
                         return ScanPhysicalOperator(
-                            provideInputFormatter(
-                                source.getInputFormatterDescriptor(), LowerSchemaProvider::lowerSchema(bufferSize, source.getSchema(), ROW)),
-                            fields);
+                            provideInputFormatter(formatter, LowerSchemaProvider::lowerSchema(bufferSize, source.getSchema(), ROW)), fields);
                     }
-                    return ScanPhysicalOperator(LowerSchemaProvider::lowerSchema(bufferSize, outputSchema, ROW), fields);
+                    return ScanPhysicalOperator(nativeBufferRef(layout, outputSchema), fields);
                 }();
                 open(id, std::make_shared<Pipeline>(PhysicalOperator(scan)));
                 link(inputs, id);
@@ -637,11 +640,18 @@ private:
                 return {.pipeline = id, .outputSchema = std::move(outputSchema), .source = std::nullopt};
             }
             case nes::calcite::PhysicalOperator::kEmit: {
-                /// A native sink (e.g. a NetworkSink) takes rows as they are, as in the PipeliningPhase.
-                const auto bufferRef = physical.emit().for_sink() and not sinkDescriptor->getOutputFormatterDescriptor().isNative()
-                    ? LowerSchemaProvider::lowerSchemaWithOutputFormat(
-                          bufferSize, inSinkOrder(outputSchema), sinkDescriptor->getOutputFormatterDescriptor())
-                    : LowerSchemaProvider::lowerSchema(bufferSize, outputSchema, ROW);
+                /// A format is the sink's, in the sink's field order; a native sink (e.g. Void) and the network take native buffers.
+                const auto& layout = physical.emit().layout();
+                const auto bufferRef = [&]
+                {
+                    if (layout.has_format())
+                    {
+                        const auto& formatter = sinkDescriptor->getOutputFormatterDescriptor();
+                        checkFormat(layout.format(), formatter.getOutputFormatterType(), "sink");
+                        return LowerSchemaProvider::lowerSchemaWithOutputFormat(bufferSize, inSinkOrder(outputSchema), formatter);
+                    }
+                    return nativeBufferRef(layout, outputSchema);
+                }();
                 const auto handlerId = getNextOperatorHandlerId();
                 const auto& pipeline = pipelines.at(id);
                 pipeline->getOperatorHandlers().emplace(handlerId, std::make_shared<EmitOperatorHandler>());
@@ -1026,6 +1036,63 @@ private:
             throw UnsupportedQuery("worker {} has no data address", host);
         }
         return found->second;
+    }
+
+    /// The buffers of a native layout (Layout.Native): one row group, or column groups, over the fields of the row in the
+    /// order of the buffer. Our engine has no layout that mixes rows and columns yet.
+    std::shared_ptr<TupleBufferRef> nativeBufferRef(const nes::calcite::Layout& layout, const PhysicalSchema& row) const
+    {
+        if (not layout.has_native() or layout.native().groups().empty())
+        {
+            throw UnsupportedQuery("a native memory layout is required here, got {}", layout.ShortDebugString());
+        }
+        const auto& groups = layout.native().groups();
+        const auto kind = groups.Get(0).kind();
+        if (std::ranges::any_of(groups, [kind](const auto& group) { return group.kind() != kind; })
+            or (kind == nes::calcite::Layout::FieldGroup::ROW and groups.size() > 1))
+        {
+            throw UnsupportedQuery("memory layouts with several groups of rows, or of rows and columns, are not supported yet: {}",
+                                   layout.ShortDebugString());
+        }
+        /// The fields in the order of the buffer: every field of the row once.
+        std::vector<QualifiedUnboundField> ordered;
+        std::vector<bool> seen(row.size());
+        for (const auto& group : groups)
+        {
+            for (const auto field : group.fields())
+            {
+                if (field >= row.size() or seen.at(field))
+                {
+                    throw UnsupportedQuery("memory layout {} is not an order of the {} fields", layout.ShortDebugString(), row.size());
+                }
+                seen.at(field) = true;
+                ordered.push_back(*std::ranges::next(row.begin(), field));
+            }
+        }
+        if (ordered.size() != row.size())
+        {
+            throw UnsupportedQuery("memory layout {} misses fields of the row", layout.ShortDebugString());
+        }
+        return LowerSchemaProvider::lowerSchema(
+            bufferSize,
+            ordered | std::ranges::to<PhysicalSchema>(),
+            kind == nes::calcite::Layout::FieldGroup::COLUMN ? MemoryLayoutType::COLUMNAR_LAYOUT : MemoryLayoutType::ROW_LAYOUT);
+    }
+
+    /// Whether a layout is one group of rows (the network then sends only a buffer's rows).
+    static bool rowsOnly(const nes::calcite::Layout& layout)
+    {
+        return layout.has_native() and layout.native().groups_size() == 1
+            and layout.native().groups(0).kind() == nes::calcite::Layout::FieldGroup::ROW;
+    }
+
+    /// A format of the plan is the source's or sink's own, whose descriptor configures it.
+    static void checkFormat(const nes::calcite::Layout::Format& format, const Identifier& type, const std::string_view endpoint)
+    {
+        if (not format.type().empty() and Identifier::parse(format.type()) != type)
+        {
+            throw UnsupportedQuery("the plan reads the {} as {}, but its format is {}", endpoint, format.type(), type);
+        }
     }
 
     static std::vector<QualifiedIdentifier> names(const PhysicalSchema& schema)

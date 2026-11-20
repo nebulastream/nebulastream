@@ -105,9 +105,8 @@ class PlannerServerTest {
         List<Source> sources = List.of(withPhysicalSources(stream("s1"), 11), withPhysicalSources(stream("s2"), 21, 22));
         PlanRequest request = PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT id, val * 2 AS v2 FROM s1 WHERE val > 20 UNION ALL SELECT id, val FROM s2")
-            .addAllSources(sources).setPhysical(true).build();
+            .addAllSources(sources).setPhysical(true).setSinkFormat("JSON").build();
         PlanResponse response = stub.plan(request);
-        System.out.println(response.getExplain());
         Rel root = Plan.parseFrom(response.getSubstraitPlan()).getRelations(0).getRoot().getInput();
 
         List<PhysicalOperator> operators = new java.util.ArrayList<>();
@@ -123,22 +122,56 @@ class PlannerServerTest {
 
         PhysicalOperator sink = operators.get(0);
         assertEquals(List.of("ID", "V2"), sink.getOutputSchemaList().stream().map(PhysicalOperator.Field::getName).toList());
-        assertTrue(operators.get(1).getEmit().getForSink(), "the sink's input is emitted in the sink's format");
+        assertEquals("JSON", operators.get(1).getEmit().getLayout().getFormat().getType(), "the sink's input is emitted in the sink's format");
 
         List<PhysicalOperator> sourceScans = operators.stream().filter(PhysicalOperator::hasSourceScan).toList();
         assertEquals(java.util.Set.of(11L, 21L, 22L),
             sourceScans.stream().map(o -> o.getSourceScan().getPhysicalSourceId()).collect(java.util.stream.Collectors.toSet()));
         assertEquals(3, sourceScans.stream().map(o -> o.getSourceScan().getOriginId()).distinct().count(), "distinct origins");
-        assertEquals(3, operators.stream().filter(o -> o.hasScan() && o.getScan().getParsesSource()).count());
+        assertEquals(3, operators.stream().filter(o -> o.hasScan() && o.getScan().getLayout().getFormat().getType().equals("CSV")).count(),
+            "each scan parses its source's format");
 
         /// A Map computes one value into one field, appended to the row it gets: val * 2, after S1_ID, S1_VAL, S1_TS.
         PhysicalOperator map = operators.stream().filter(PhysicalOperator::hasMap).findFirst().orElseThrow();
         assertEquals(List.of("S1_ID", "S1_VAL", "S1_TS", map.getMap().getAssignments(0).getField()),
             map.getOutputSchemaList().stream().map(PhysicalOperator.Field::getName).toList());
 
-        assertTrue(operators.stream().filter(PhysicalOperator::hasEmit).allMatch(o -> o.getEmit().getForSink()));
+        assertTrue(operators.stream().filter(PhysicalOperator::hasEmit).allMatch(o -> o.getEmit().getLayout().hasFormat()));
         /// Pipelines: 3 sources, 3 parsing scans and the sink each start one.
         assertEquals(7, operators.stream().map(PhysicalOperator::getPipeline).distinct().count());
+    }
+
+    @Test
+    void memoryLayouts() throws Exception {
+        /// Two workers: the source's format into the first pipeline, the policy's layout over the network (on both ends of the
+        /// channel), rows into the native sink.
+        Source s1 = withPhysicalSources(stream("s1"), 11);
+        List<Source> sources = List.of(s1.toBuilder().setPhysicalSources(0, s1.getPhysicalSources(0).toBuilder().setHost("w1")).build());
+        for (var policy : List.of(nes.calcite.proto.LayoutPolicy.ROWS, nes.calcite.proto.LayoutPolicy.COLUMNS)) {
+            PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+                .setSql("SELECT id + 1 AS i FROM s1 WHERE val > 20").addAllSources(sources).setPhysical(true)
+                .addTopology(nes.calcite.proto.Worker.newBuilder().setHost("w1").addDownstream("w2"))
+                .addTopology(nes.calcite.proto.Worker.newBuilder().setHost("w2")).setSinkHost("w2")
+                .setSinkFormat("NATIVE").setLayoutPolicy(policy).build());
+            List<PhysicalOperator> operators = new java.util.ArrayList<>();
+            for (var relation : Plan.parseFrom(response.getSubstraitPlan()).getRelationsList()) {
+                collectPhysical(relation.getRoot().getInput(), operators);
+            }
+            var kind = policy == nes.calcite.proto.LayoutPolicy.COLUMNS ? nes.calcite.proto.Layout.FieldGroup.Kind.COLUMN
+                : nes.calcite.proto.Layout.FieldGroup.Kind.ROW;
+            List<String> scans = operators.stream().filter(PhysicalOperator::hasScan).map(o -> describe(o.getScan().getLayout())).toList();
+            List<String> emits = operators.stream().filter(PhysicalOperator::hasEmit).map(o -> describe(o.getEmit().getLayout())).toList();
+            /// The source's format; over the network the policy's layout on both ends; rows into the native sink.
+            assertEquals(java.util.Set.of("CSV", kind.name()), java.util.Set.copyOf(scans), response.getExplain());
+            assertEquals(2, scans.size(), response.getExplain());
+            assertEquals(new java.util.HashSet<>(List.of(kind.name(), "ROW")), java.util.Set.copyOf(emits), response.getExplain());
+            assertEquals(2, emits.size(), response.getExplain());
+        }
+    }
+
+    /** The kind of a layout: its format, or the kind of its (only) group. */
+    private static String describe(nes.calcite.proto.Layout layout) {
+        return layout.hasFormat() ? layout.getFormat().getType() : layout.getNative().getGroups(0).getKind().name();
     }
 
     @Test
@@ -499,7 +532,7 @@ class PlannerServerTest {
     private static Source withPhysicalSources(Source source, long... ids) {
         Source.Builder builder = source.toBuilder();
         for (long id : ids) {
-            builder.addPhysicalSources(nes.calcite.proto.PhysicalSource.newBuilder().setId(id).addAllFieldNames(
+            builder.addPhysicalSources(nes.calcite.proto.PhysicalSource.newBuilder().setId(id).setFormat("CSV").addAllFieldNames(
                 source.getFieldsList().stream().map(f -> source.getName().toUpperCase() + "_" + f.getName().toUpperCase()).toList()));
         }
         return builder.build();

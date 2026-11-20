@@ -346,6 +346,7 @@ Request makeRequest(
                 auto* physicalSource = sourceProto->add_physical_sources();
                 physicalSource->set_id(descriptor.getPhysicalSourceId().getRawValue());
                 physicalSource->set_host(descriptor.getHost().getRawValue());
+                physicalSource->set_format(descriptor.getInputFormatterDescriptor().getInputFormatterType().asCanonicalString());
                 for (const auto& field : descriptor.getSchema())
                 {
                     physicalSource->add_field_names(fmt::format("{}", field.getFullyQualifiedName()));
@@ -405,6 +406,8 @@ PlannedPhysicalQuery planPhysical(
     auto [request, catalogNames, caseSensitive] = makeRequest(sql, sourceCatalog, finiteInputs, sourceNames, /*physical=*/true, models);
     request.set_nested_loop_joins(optimizer.joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN);
     request.set_detailed_steps(detailedSteps);
+    request.set_layout_policy(
+        optimizer.memoryLayout == MemoryLayoutPolicy::COLUMNAR ? nes::calcite::LayoutPolicy::COLUMNS : nes::calcite::LayoutPolicy::ROWS);
     /// The sink clause is in our dialect, which our parser reads.
     const auto sink = AntlrSQLQueryParser::bindSinkClause(sinkClause);
     const auto* const anonymous = std::get_if<AntlrSQLQueryParser::AnonymousSinkClause>(&sink);
@@ -459,6 +462,20 @@ PlannedPhysicalQuery planPhysical(
             sinkHost.getRawValue());
     }
     request.set_sink_host(sinkHost.getRawValue());
+    /// The sink's format: a named sink's output formatter, an anonymous sink's OUTPUT_FORMAT option (as the sink catalog
+    /// reads it), else NATIVE.
+    if (namedSink)
+    {
+        request.set_sink_format(namedSink->getOutputFormatterDescriptor().getOutputFormatterType().asCanonicalString());
+    }
+    else if (const auto format = anonymousConfig.find(Identifier::parse("OUTPUT_FORMAT")); format != anonymousConfig.end())
+    {
+        request.set_sink_format(Identifier::parse(format->second).asCanonicalString());
+    }
+    else
+    {
+        request.set_sink_format("NATIVE");
+    }
     dumpRequest(request);
     const auto response = callPlanner(request, address);
     const auto substraitPlan = substraitPlanOf(response, sql);

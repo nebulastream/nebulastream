@@ -177,21 +177,20 @@ final class NesPhysical {
     }
 
     /**
-     * Starts a pipeline: reads the buffers of its inputs as rows of its row type, field by field in order (which also
-     * renames them). After a SourceScan it parses the source's raw data instead. Several inputs, each ending in an Emit
-     * of the same layout, would be merged; we only read an Emit's buffers again where a result is shared.
+     * Starts a pipeline: reads the buffers of its inputs in its layout as rows of its row type, field by field in order
+     * (which also renames them). After a SourceScan the layout is the source's format, which it parses. Several inputs,
+     * each ending in an Emit of the same layout, would be merged; we only read an Emit's buffers again where a result is
+     * shared.
      */
     static final class Scan extends AbstractRelNode implements NesRel {
         private List<RelNode> inputs;
+        /// Set by the memory layout phase (Layouts), after pipelining.
+        nes.calcite.proto.Layout layout;
 
         Scan(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs, RelDataType rowType) {
             super(cluster, traits);
             this.inputs = new ArrayList<>(inputs);
             this.rowType = rowType;
-        }
-
-        boolean parsesSource() {
-            return inputs.size() == 1 && Pipelines.strip(inputs.get(0)) instanceof SourceScan;
         }
 
         @Override
@@ -214,7 +213,8 @@ final class NesPhysical {
             for (int i = 0; i < inputs.size(); i++) {
                 pw.input("input#" + i, inputs.get(i));
             }
-            return pw.item("fields", rowType.getFieldNames());
+            return pw.item("fields", rowType.getFieldNames()).itemIf("layout", layout == null ? "" : Layouts.describe(layout, rowType),
+                layout != null);
         }
     }
 
@@ -590,17 +590,17 @@ final class NesPhysical {
     }
 
     /**
-     * Ends a pipeline: writes the given fields of its input, in this order, into buffers. Before a sink, it writes them
-     * in the sink's output format.
+     * Ends a pipeline: writes the given fields of its input, in this order, into buffers in its layout. Before a sink,
+     * the layout is the sink's format.
      */
     static final class Emit extends SingleRel implements NesRel {
         final List<Integer> fields;
-        final boolean forSink;
+        /// Set by the memory layout phase (Layouts), after pipelining.
+        nes.calcite.proto.Layout layout;
 
-        Emit(RelOptCluster cluster, RelTraitSet traits, RelNode input, List<Integer> fields, boolean forSink) {
+        Emit(RelOptCluster cluster, RelTraitSet traits, RelNode input, List<Integer> fields) {
             super(cluster, traits, input);
             this.fields = List.copyOf(fields);
-            this.forSink = forSink;
         }
 
         @Override
@@ -613,12 +613,13 @@ final class NesPhysical {
 
         @Override
         public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
-            return new Emit(getCluster(), traitSet, inputs.get(0), fields, forSink);
+            return new Emit(getCluster(), traitSet, inputs.get(0), fields);
         }
 
         @Override
         public RelWriter explainTerms(RelWriter pw) {
-            return super.explainTerms(pw).item("fields", getRowType().getFieldNames()).itemIf("forSink", true, forSink);
+            return super.explainTerms(pw).item("fields", getRowType().getFieldNames())
+                .itemIf("layout", layout == null ? "" : Layouts.describe(layout, getRowType()), layout != null);
         }
     }
 
@@ -666,6 +667,8 @@ final class NesPhysical {
         private List<RelNode> inputs;
         final String channel;
         final String downstreamHost;
+        /// Set by the memory layout phase (Layouts), after pipelining.
+        nes.calcite.proto.Layout layout;
 
         NetworkSink(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs, String channel, String downstreamHost) {
             super(cluster, traits);

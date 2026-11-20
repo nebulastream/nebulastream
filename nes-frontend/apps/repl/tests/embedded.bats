@@ -100,20 +100,20 @@ setup()         { nes_offline_setup; }
 == Placed Pipelines ==
 on sink-node:8080:
 Sink(names=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
-  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], forSink=[true])
-    Scan(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
+  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], layout=[ROW(START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2)])
+    Scan(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], layout=[ROW(START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2)])
       NetworkSource(from=[source-node:8080], channel=[channel-1])
 on source-node:8080:
 NetworkSink(to=[sink-node:8080], channel=[channel-1])
-  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], forSink=[true])
+  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], layout=[ROW(START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2)])
     JoinProbe(join=[1], type=[INNER], implementation=[HASH_JOIN], kind=[TUMBLING], size=[1000], condition=[=($0, $3)], fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
       JoinBuild(join=[1], side=[left], time=[TIMESTAMP], stored=[[ID, VALUE, TIMESTAMP]])
         WatermarkAssigner(time=[TIMESTAMP])
-          Scan(fields=[[ID, VALUE, TIMESTAMP]])
+          Scan(fields=[[ID, VALUE, TIMESTAMP]], layout=[CSV])
             SourceScan(table=[[STREAM]], physicalSource=[1])
       JoinBuild(join=[1], side=[right], time=[TIMESTAMP2], stored=[[ID2, VALUE2, TIMESTAMP2]])
         WatermarkAssigner(time=[TIMESTAMP2])
-          Scan(fields=[[ID2, VALUE2, TIMESTAMP2]])
+          Scan(fields=[[ID2, VALUE2, TIMESTAMP2]], layout=[CSV])
             SourceScan(table=[[STREAM2]], physicalSource=[2])
 EOF
 )"

@@ -74,6 +74,14 @@ final class NesConverterProvider extends ConverterProvider {
         }
     }
 
+    /** The layout of a Scan or Emit, which the memory layout phase (Layouts) sets on every one. */
+    private static nes.calcite.proto.Layout laidOut(nes.calcite.proto.Layout layout, RelNode node) {
+        if (layout == null) {
+            throw new IllegalStateException("no memory layout for " + node.getRelTypeName() + " (Layouts.assign has not run)");
+        }
+        return layout;
+    }
+
     /** Calcite's operators and ours (NesFunctions). */
     @Override
     public org.apache.calcite.sql.SqlOperatorTable getSqlOperatorTable() {
@@ -213,7 +221,7 @@ final class NesConverterProvider extends ConverterProvider {
                 operator.setSourceScan(sourceScan);
                 build = converter -> operator.build();
             } else if (node instanceof NesPhysical.Scan scan) {
-                operator.setScan(PhysicalOperator.Scan.newBuilder().setParsesSource(scan.parsesSource()));
+                operator.setScan(PhysicalOperator.Scan.newBuilder().setLayout(laidOut(scan.layout, scan)));
                 build = converter -> operator.build();
             } else if (node instanceof NesPhysical.Selection selection) {
                 Expression predicate = toExpression(selection.condition);
@@ -234,7 +242,7 @@ final class NesConverterProvider extends ConverterProvider {
                     .addAllInputFields(infer.inputFields));
                 build = converter -> operator.build();
             } else if (node instanceof NesPhysical.Emit emit) {
-                operator.setEmit(PhysicalOperator.Emit.newBuilder().setForSink(emit.forSink));
+                operator.setEmit(PhysicalOperator.Emit.newBuilder().setLayout(laidOut(emit.layout, emit)));
                 build = converter -> operator.build();
             } else if (node instanceof NesPhysical.NetworkSource source) {
                 /// The rows keep the origins (and sequence numbers and watermarks) they had on the sending worker.
@@ -282,7 +290,7 @@ final class NesConverterProvider extends ConverterProvider {
                 };
             } else if (node instanceof NesPhysical.NetworkSink sink) {
                 ids.channels.put(sink.channel, inputOrigins);
-                operator.setNetworkSink(PhysicalOperator.NetworkSink.newBuilder().setChannel(sink.channel)
+                operator.setNetworkSink(PhysicalOperator.NetworkSink.newBuilder().setChannel(sink.channel).setLayout(laidOut(sink.layout, sink))
                     .setDownstreamHost(sink.downstreamHost));
                 build = converter -> operator.build();
             } else if (node instanceof NesPhysical.Sink) {

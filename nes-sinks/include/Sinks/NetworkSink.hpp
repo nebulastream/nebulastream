@@ -52,6 +52,8 @@ struct NetworkSinkConfig
     size_t senderQueueSize;
     /// Per-channel max pending acks override. 0 means use the worker-level default.
     size_t maxPendingAcks;
+    /// Send each buffer's whole memory area, not only its rows (for layouts other than rows, e.g. columnar).
+    bool wholeBuffers;
 
     static std::expected<NetworkSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
@@ -95,6 +97,7 @@ private:
     std::string thisConnection;
     size_t senderQueueSize;
     size_t maxPendingAcks;
+    bool wholeBuffers;
     std::atomic_bool closed;
 };
 

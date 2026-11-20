@@ -7161,6 +7161,174 @@
       "allDeclaredFields": true
     },
     {
+      "type": "nes.calcite.proto.Layout",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$FieldGroup",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$FieldGroup$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$FieldGroup$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$FieldGroup$Kind",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$FieldGroup$Kind$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$FieldGroupOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$Format",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$Format$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$Format$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$FormatOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$KindCase",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$Native",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$Native$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$Native$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Layout$NativeOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.LayoutOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.LayoutPolicy",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.LayoutPolicy$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "nes.calcite.proto.Model",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,

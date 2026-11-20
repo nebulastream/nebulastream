@@ -31,18 +31,28 @@ enum class StreamJoinStrategy : uint8_t
     OPTIMIZER_CHOOSES
 };
 
+/// How the planner lays out the buffers between two pipelines, where neither a source nor the sink fixes the layout.
+enum class MemoryLayoutPolicy : uint8_t
+{
+    /// A row per record.
+    ROW,
+    /// A column per field.
+    COLUMNAR
+};
+
 struct QueryOptimizerConfiguration
 {
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     QueryOptimizerConfiguration() = delete;
 
-    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, QueryOptimizerNetworkConfiguration network)
-        : joinStrategy(joinStrategy), network(network)
+    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, MemoryLayoutPolicy memoryLayout, QueryOptimizerNetworkConfiguration network)
+        : joinStrategy(joinStrategy), memoryLayout(memoryLayout), network(network)
     {
     }
 
     StreamJoinStrategy joinStrategy;
+    MemoryLayoutPolicy memoryLayout;
     QueryOptimizerNetworkConfiguration network;
 
     static QueryOptimizerConfiguration fromConfig(const InstantiatedConfig& config);
