@@ -54,7 +54,6 @@ import org.apache.calcite.util.Util;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.RelDecorrelator;
-import org.apache.calcite.sql2rel.RelFieldTrimmer;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
@@ -391,7 +390,8 @@ public final class Planner {
         optimized = steps.rules("table functions rewritten (MODEL_INFERENCE, anonymous sources)",
             "rules: ours (ModelInference, AnonymousSources)", MODEL_INFERENCE, optimized);
         optimized = steps.add("decorrelated", "Calcite: RelDecorrelator", RelDecorrelator.decorrelateQuery(optimized, relBuilder));
-        optimized = steps.add("unused fields trimmed", "Calcite: RelFieldTrimmer", new RelFieldTrimmer(validator, relBuilder).trim(optimized));
+        optimized = steps.add("unused fields trimmed", "Calcite: RelFieldTrimmer (with our sources, NesFieldTrimmer)",
+            new NesFieldTrimmer(validator, relBuilder).trim(optimized));
         optimized = steps.rules("windows rewritten", "rules: Calcite's and ours, selected by us", PREPARE_AND_REWRITE_WINDOWS, optimized);
         if (finiteInputs) {
             optimized = steps.rules("global windows for finite inputs", "rules: ours (GlobalWindowRules)", GLOBAL_WINDOWS, optimized);
