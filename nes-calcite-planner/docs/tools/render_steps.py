@@ -60,7 +60,7 @@ details.file > summary { cursor: pointer; font-size: 1.2rem; font-weight: 600; p
 </style></head><body>
 @@INTRO@@
 <p class="legend"><span style="background:#dbeafe">logical operator</span><span style="background:#fde68a">physical operator</span>
-<span style="background:#bbf7d0">window</span><span style="background:#fed7aa">network</span>
+<span style="border-color:#16a34a;border-width:3px">window (aggregation or join)</span><span style="background:#fed7aa">network</span>
 <span style="border-color:#dc2626;border-width:3px">changed by the rule</span>
 <span style="border:1px dashed #888">a worker</span><span style="border-color:#2563eb">a pipeline</span></p>
 <p>Who does what: <span class="badge calcite">Calcite</span> Calcite's own code or rule,
