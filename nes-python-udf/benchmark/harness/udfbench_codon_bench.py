@@ -53,6 +53,8 @@ def main():
     parser.add_argument("--build", default=os.path.join(REPOSITORY, "cmake-build-relwithdebinfo-libstdcxx-none"))
     parser.add_argument("--rounds", type=int, default=2)
     parser.add_argument("--scratch", required=True, help="directory for the systest working directory and output")
+    parser.add_argument("--test", default=TEST, help="the benchmark test (default: UdfBenchCodonNumba.test); for "
+                        "UdfBenchBaseline.test, the record of each source is its baseline without a UDF")
     arguments = parser.parse_args()
     if git("status", "--porcelain", "--untracked-files=no"):
         raise SystemExit("There are uncommitted changes. Commit them first, so that the recorded commit says what was measured.")
@@ -60,7 +62,7 @@ def main():
     run_dir = os.path.join(arguments.scratch, arguments.experiment)
     shutil.rmtree(run_dir, ignore_errors=True)
     os.makedirs(run_dir + "/work")
-    command = [os.path.join(arguments.build, "nes-systests/systest/systest"), "-t", TEST, "--data", DATA,
+    command = [os.path.join(arguments.build, "nes-systests/systest/systest"), "-t", arguments.test, "--data", DATA,
                "--workingDir", run_dir + "/work", "--log-path", run_dir + "/log.txt", "-b", "--benchmark-rounds",
                str(arguments.rounds), "-c", os.path.join(HARNESS, "single-node.yaml"), "--",
                "--worker.query_engine.number_of_worker_threads=1"]
@@ -69,9 +71,12 @@ def main():
         return_code = subprocess.run(command, stdout=output, stderr=subprocess.STDOUT).returncode
     out = open(run_dir + "/out.txt").read()
 
-    test = open(TEST).read()
+    test = open(arguments.test).read()
     creates = re.findall(r"^CREATE FUNCTION (\w+)_inline|^CREATE FUNCTION (\w+)_adapted", test, flags=re.MULTILINE)
     names = [inline or adapted for inline, adapted in creates]
+    baseline = not names
+    if baseline:
+        names = list(FILES)
     compiles = re.findall(r"Compiled '__nes_python_udf_registered_\d+' with Codon in ([0-9.]+) ms \(mutex wait: [0-9.]+ ms, "
                           r"parse: ([0-9.]+) ms, compile: ([0-9.]+) ms, LLVM optimize: ([0-9.]+) ms", out)
     statements = re.findall(r"^(SELECT .*?);\n----", test, flags=re.MULTILINE)
@@ -84,12 +89,16 @@ def main():
               "return_code": return_code, "rounds": arguments.rounds}
     records = []
     for index, name in enumerate(names):
-        record = dict(common, udf=name, engine="codon")
+        record = dict(common, udf=None if baseline else name, source=name if baseline else None,
+                      engine="nes-baseline" if baseline else "codon")
         if index < len(compiles):
             total, parse, compile_, optimize = map(float, compiles[index])
             record.update(compile_ms=total, parse_ms=parse, typecheck_ms=compile_, llvm_optimize_ms=optimize)
         for number, statement in enumerate(statements, start=1):
-            if f"{name}_inline(" not in statement and f"{name}_adapted(" not in statement:
+            if baseline:
+                if re.search(r"FROM (\w+)", statement).group(1).removesuffix("_x10") != name:
+                    continue
+            elif f"{name}_inline(" not in statement and f"{name}_adapted(" not in statement:
                 continue
             source = re.search(r"FROM (\w+)", statement).group(1)
             key = "x10" if source.endswith("_x10") else "tiny"
@@ -104,7 +113,7 @@ def main():
         for record in records:
             results.write(json.dumps(record) + "\n")
     for record in records:
-        print(f"{record['udf']:18} compile {record.get('compile_ms', float('nan')):8.0f} ms  tiny {record.get('seconds_tiny') or float('nan'):7.3f} s"
+        print(f"{record['udf'] or record['source']:20} compile {record.get('compile_ms', float('nan')):8.0f} ms  tiny {record.get('seconds_tiny') or float('nan'):7.3f} s"
               f"  x10 {record.get('seconds_x10') or float('nan'):7.3f} s  {record.get('ns_per_row', float('nan')):10.0f} ns/row")
     print(f"return code {return_code}")
 

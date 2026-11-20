@@ -1,0 +1,95 @@
+# name: benchmark/UdfBenchBaseline.test
+# description: The sources of benchmark/UdfBenchCodonNumba.test without a UDF: the columns its queries read, on the tiny data
+# and the x10 data, into a Void sink. The difference per row is NES's own cost per row (reading, sink), which the UDF
+# queries contain as well. Run with nes-python-udf/benchmark/harness/udfbench_codon_bench.py --test.
+# groups: [benchmark, large]
+
+CREATE LOGICAL SOURCE artifacts(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE large/streamudfbench/tiny/query2json_3M.csv
+
+CREATE LOGICAL SOURCE artifacts_x10(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
+    access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
+    type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifacts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifacts_15M.csv
+
+CREATE LOGICAL SOURCE artifact_abstracts_x10(id VARSIZED, abstract VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_abstracts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_abstracts_13M.csv
+
+CREATE LOGICAL SOURCE artifact_authorlists_x10(id VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_authorlists_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_authorlists_4M.csv
+
+CREATE LOGICAL SOURCE artifact_charges_x10(id VARSIZED, amount FLOAT64, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR artifact_charges_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/artifact_charges_32K.csv
+
+CREATE LOGICAL SOURCE projects_artifacts_x10(id VARSIZED, artifactid VARSIZED, provenance VARSIZED, funder VARSIZED, fundinginfo VARSIZED,
+    startdate VARSIZED, enddate VARSIZED, amount VARSIZED, currency VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR projects_artifacts_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/projects_artifacts_16M.csv
+
+CREATE LOGICAL SOURCE query2json_x10(id VARSIZED, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR query2json_x10 TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
+ATTACH FILE x10/streamudfbench/query2json_3M.csv
+
+SELECT id, title FROM artifacts INTO Void();
+----
+
+SELECT id, title FROM artifacts_x10 INTO Void();
+----
+
+SELECT id, abstract FROM artifact_abstracts INTO Void();
+----
+
+SELECT id, abstract FROM artifact_abstracts_x10 INTO Void();
+----
+
+SELECT id, authorlist FROM artifact_authorlists INTO Void();
+----
+
+SELECT id, authorlist FROM artifact_authorlists_x10 INTO Void();
+----
+
+SELECT id, amount, currency FROM artifact_charges INTO Void();
+----
+
+SELECT id, amount, currency FROM artifact_charges_x10 INTO Void();
+----
+
+SELECT id, fundinginfo FROM projects_artifacts INTO Void();
+----
+
+SELECT id, fundinginfo FROM projects_artifacts_x10 INTO Void();
+----
+
+SELECT id FROM query2json INTO Void();
+----
+
+SELECT id FROM query2json_x10 INTO Void();
+----
