@@ -17,11 +17,14 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <BackpressureManager.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -56,6 +59,14 @@ public:
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<AbstractBufferProvider> getBufferManager() const = 0;
     [[nodiscard]] virtual PipelineId getPipelineId() const = 0;
+
+    /// Returns a new external voter of the backpressure manager of the running query.
+    /// Call it in `start` and keep the voter while its votes must hold.
+    [[nodiscard]] virtual ExternalBackpressureVoter newExternalBackpressureVoter()
+    {
+        INVARIANT(false, "This pipeline execution context does not support backpressure");
+        std::unreachable();
+    }
 
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;

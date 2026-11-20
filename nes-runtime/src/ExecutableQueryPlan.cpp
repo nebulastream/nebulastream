@@ -20,6 +20,7 @@
 #include <iterator>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -30,10 +31,11 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Overloaded.hpp>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -69,7 +71,10 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
 
     std::unordered_map<OperatorId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
 
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    auto backpressure = std::make_shared<const BackpressureManager>(
+        compiledQueryPlan.sources | std::views::transform([](const auto& source) { return source.originId; })
+            | std::ranges::to<std::vector>(),
+        OriginMaps{});
 
     if (compiledQueryPlan.sinks.size() != 1)
     {
@@ -78,7 +83,7 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
 
     auto& [pipelineId, descriptor, predecessors] = compiledQueryPlan.sinks.front();
 
-    auto sink = ExecutablePipeline::create(pipelineId, lower(std::move(backpressureController), descriptor), {});
+    auto sink = ExecutablePipeline::create(pipelineId, lower(descriptor), {});
     compiledQueryPlan.pipelines.push_back(sink);
     for (const auto& predecessor : predecessors)
     {
@@ -94,16 +99,24 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[operatorId], std::back_inserter(successors));
-        instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor), std::move(successors));
+        instantiatedSources.emplace_back(
+            sourceProvider.lower(originId, backpressure->getListener(originId), descriptor), std::move(successors));
     }
 
 
-    return std::make_unique<ExecutableQueryPlan>(compiledQueryPlan.queryId, compiledQueryPlan.pipelines, std::move(instantiatedSources));
+    return std::make_unique<ExecutableQueryPlan>(
+        compiledQueryPlan.queryId, compiledQueryPlan.pipelines, std::move(instantiatedSources), std::move(backpressure));
 }
 
 ExecutableQueryPlan::ExecutableQueryPlan(
-    QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources)
-    : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
+    QueryId queryId,
+    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+    std::vector<SourceWithSuccessor> instantiatedSources,
+    std::shared_ptr<const BackpressureManager> backpressure)
+    : queryId(std::move(queryId))
+    , pipelines(std::move(pipelines))
+    , sources(std::move(instantiatedSources))
+    , backpressure(std::move(backpressure))
 {
 }
 }

@@ -34,7 +34,6 @@
 #include <folly/Synchronized.h>
 #include <mqtt/async_client.h>
 #include <nes-network-bindings/lib.h>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -61,7 +60,7 @@ public:
     static constexpr std::string_view NAME = "MQTT";
     static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
 
-    explicit MQTTSink(BackpressureController backpressureController, const MQTTSinkConfig& config, const SinkDescriptor& sinkDescriptor);
+    explicit MQTTSink(const MQTTSinkConfig& config, const SinkDescriptor& sinkDescriptor);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;

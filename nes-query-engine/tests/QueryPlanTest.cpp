@@ -444,10 +444,19 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
 
     /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a setup task has been submitted
     const auto testQid = randomQueryId();
-    auto sink = RunningQueryPlanNode::create(testQid, PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef);
+    auto sink = RunningQueryPlanNode::create(
+        testQid, PipelineId(1), emitter, {}, std::move(stage2), nullptr, [](auto) { }, expirationRef, setupRef);
     EXPECT_THAT(*setups, testing::SizeIs(1));
     auto pipeline = RunningQueryPlanNode::create(
-        testQid, PipelineId(2), emitter, {std::move(sink)}, std::move(stage1), [](auto) { }, std::move(expirationRef), std::move(setupRef));
+        testQid,
+        PipelineId(2),
+        emitter,
+        {std::move(sink)},
+        std::move(stage1),
+        nullptr,
+        [](auto) { },
+        std::move(expirationRef),
+        std::move(setupRef));
     EXPECT_THAT(*setups, testing::SizeIs(2));
 
     /// Run all setup tasks.

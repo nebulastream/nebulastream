@@ -40,6 +40,7 @@
 #include <Util/AtomicState.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <BackpressureManager.hpp>
 #include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -203,6 +204,8 @@ using Queue = folly::MPMCQueue<Task>;
 struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
+    /// The manager of the query of the pipeline. Null only for a pipeline that was created without a manager, e.g., in a test.
+    const BackpressureManager* backpressure;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
     std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
@@ -219,9 +222,11 @@ struct DefaultPEC final : PipelineExecutionContext
         WorkerThreadId threadId,
         PipelineId pipelineId,
         std::shared_ptr<AbstractBufferProvider> bm,
+        const BackpressureManager* backpressure,
         std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
         std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
-        : handler(std::move(handler))
+        : backpressure(backpressure)
+        , handler(std::move(handler))
         , repeatHandler(std::move(repeatHandler))
         , bm(std::move(bm))
         , numberOfThreads(numberOfThreads)
@@ -274,6 +279,13 @@ struct DefaultPEC final : PipelineExecutionContext
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return pipelineId;
+    }
+
+    [[nodiscard]] ExternalBackpressureVoter newExternalBackpressureVoter() override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        PRECONDITION(backpressure != nullptr, "The backpressure manager was not set");
+        return backpressure->newExternalVoter();
     }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
@@ -495,6 +507,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             WorkerThread::id,
             pipeline->id,
             pool.bufferProvider,
+            pipeline->backpressure.get(),
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
                 ENGINE_LOG_DEBUG(
@@ -561,6 +574,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             WorkerThread::id,
             pipeline->id,
             pool.bufferProvider,
+            pipeline->backpressure.get(),
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
                 /// Catch Emits, that are currently not supported during pipeline stage initialization.
@@ -640,6 +654,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
         pool.bufferProvider,
+        stopPipelineTask.pipeline->backpressure.get(),
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {
             if (terminating)

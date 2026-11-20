@@ -28,7 +28,6 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <BackpressureChannel.hpp>
 #include <Checksum.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -54,7 +53,7 @@ class ChecksumSink : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Checksum";
-    explicit ChecksumSink(BackpressureController backpressureController, const ChecksumSinkConfig& config);
+    explicit ChecksumSink(const ChecksumSinkConfig& config);
 
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;

@@ -21,6 +21,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <folly/Synchronized.h>
+#include <BackpressureManager.hpp>
 #include <Callback.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -58,6 +59,7 @@ struct RunningQueryPlanNode
         WorkEmitter& emitter,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<ExecutablePipelineStage> stage,
+        std::shared_ptr<const BackpressureManager> backpressure,
         std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef,
         CallbackRef setupCallback);
@@ -69,11 +71,13 @@ struct RunningQueryPlanNode
         PipelineId id,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<ExecutablePipelineStage> stage,
+        std::shared_ptr<const BackpressureManager> backpressure,
         std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef)
         : id(id)
         , successors(std::move(successors))
         , stage(std::move(stage))
+        , backpressure(std::move(backpressure))
         , unregisterWithError(std::move(unregisterWithError))
         , planRef(std::move(planRef))
     {
@@ -87,6 +91,9 @@ struct RunningQueryPlanNode
     std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<ExecutablePipelineStage> stage;
+    /// Shared, as a start task can still run while the running query plan is destroyed, before the sources release the node.
+    /// Set in the constructor, as `create` already submits the start task, which another worker thread can run at once.
+    std::shared_ptr<const BackpressureManager> backpressure;
 
     std::function<void(Exception)> unregisterWithError;
     CallbackRef planRef;

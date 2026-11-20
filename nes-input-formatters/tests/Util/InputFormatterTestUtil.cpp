@@ -62,7 +62,7 @@
 #include <Util/Overloaded.hpp>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -129,7 +129,7 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
     };
 }
 
-std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
+std::pair<ExternalBackpressureVoter, std::unique_ptr<SourceHandle>> createFileSource(
     const std::string& filePath,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
@@ -148,9 +148,11 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
                                       {{Identifier::parse("type"), "CSV"}},
                                       false)
                                       .value();
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    constexpr OriginId source{1};
+    const BackpressureManager backpressure({source}, {});
+    auto backpressureVoter = backpressure.newExternalVoter();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, backpressureListener, sourceDescriptor)};
+    return {std::move(backpressureVoter), sourceProvider.lower(source, backpressure.getListener(source), sourceDescriptor)};
 }
 
 InputFormatterDescriptor

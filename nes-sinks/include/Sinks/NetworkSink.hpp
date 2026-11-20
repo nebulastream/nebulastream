@@ -33,7 +33,6 @@
 #include <folly/Synchronized.h>
 #include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -67,7 +66,7 @@ public:
         return Instance;
     }
 
-    NetworkSink(BackpressureController backpressureController, const NetworkSinkConfig& config, const SinkDescriptor& sinkDescriptor);
+    NetworkSink(const NetworkSinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~NetworkSink() override = default;
 
     NetworkSink(const NetworkSink&) = delete;
