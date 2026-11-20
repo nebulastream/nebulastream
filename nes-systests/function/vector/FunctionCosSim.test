@@ -1,0 +1,79 @@
+# name: function/vector/FunctionCosSim.test
+# description: Tests for the COSSIM vector cosine similarity function
+# groups: [Function, FunctionCosSim]
+
+# Base64-encoded little-endian IEEE-754 float32 vector pairs:
+# 1: [1.0, 2.0, 3.0] vs [1.0, 2.0, 3.0]     -> 1.0 (identical)
+# 2: [1.0, 2.0, 3.0] vs [-1.0, -2.0, -3.0]  -> -1.0 (opposite)
+# 3: [1.0, 0.0, 0.0] vs [0.0, 1.0, 0.0]     -> 0.0 (orthogonal)
+# 4: [3.0, 4.0]      vs [4.0, 3.0]          -> 0.96 (24 / 25)
+# 5: [1.0, 2.0, 2.0] vs [2.0, 4.0, 4.0]     -> 1.0 (scale invariance)
+# 6: [3.0]           vs [3.0, 4.0]          -> 0.6 (zero-padded shorter vector: 9 / (3 * 5))
+# 7: [0.0, 0.0]      vs [3.0, 4.0]          -> 0.0 (zero vector)
+# 8: [0.0, 0.0]      vs [0.0, 0.0]          -> 0.0 (both zero vectors)
+CREATE LOGICAL SOURCE vecStream(id UINT64 NOT NULL, v1 VARSIZED NOT NULL, v2 VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR vecStream TYPE File;
+ATTACH INLINE
+1,AACAPwAAAEAAAEBA,AACAPwAAAEAAAEBA
+2,AACAPwAAAEAAAEBA,AACAvwAAAMAAAEDA
+3,AACAPwAAAAAAAAAA,AAAAAAAAgD8AAAAA
+4,AABAQAAAgEA=,AACAQAAAQEA=
+5,AACAPwAAAEAAAABA,AAAAQAAAgEAAAIBA
+6,AABAQA==,AABAQAAAgEA=
+7,AAAAAAAAAAA=,AABAQAAAgEA=
+8,AAAAAAAAAAA=,AAAAAAAAAAA=
+
+CREATE SINK simSink(id UINT64 NOT NULL, sim FLOAT64 NOT NULL) TYPE File;
+CREATE SINK idSink(id UINT64 NOT NULL) TYPE File;
+
+# Standard cosine similarity over decoded float32 vectors
+SELECT id AS id, COSSIM(FROM_BASE64(v1), FROM_BASE64(v2)) AS sim FROM vecStream INTO simSink;
+----
+1,1.0
+2,-1.0
+3,0.0
+4,0.96
+5,1.0
+6,0.6
+7,0.0
+8,0.0
+
+# Symmetry: COSSIM(v2, v1) must match COSSIM(v1, v2)
+SELECT id AS id, COSSIM(FROM_BASE64(v2), FROM_BASE64(v1)) AS sim FROM vecStream INTO simSink;
+----
+1,1.0
+2,-1.0
+3,0.0
+4,0.96
+5,1.0
+6,0.6
+7,0.0
+8,0.0
+
+# Filter in WHERE clause using COSSIM over two stream vectors
+SELECT id AS id FROM vecStream WHERE COSSIM(FROM_BASE64(v1), FROM_BASE64(v2)) > 0.7 INTO idSink;
+----
+1
+4
+5
+
+# Filter against a constant query vector [3.0, 4.0] ('AABAQAAAgEA=')
+SELECT id AS id FROM vecStream WHERE COSSIM(FROM_BASE64(v1), FROM_BASE64('AABAQAAAgEA=')) > 0.7 INTO idSink;
+----
+4
+5
+
+# Error cases: wrong arity (CannotDeserialize = 2002) and non-VARSIZED inputs (CannotInferStamp = 2007)
+CREATE LOGICAL SOURCE invalidInputStream(id UINT64 NOT NULL, v VARSIZED NOT NULL, num FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR invalidInputStream TYPE File;
+ATTACH INLINE
+1,@@@@,1.0
+
+SELECT id AS id, COSSIM(v) AS sim FROM invalidInputStream INTO simSink;
+----
+ERROR 2002
+
+SELECT id AS id, COSSIM(v, num) AS sim FROM invalidInputStream INTO simSink;
+----
+ERROR 2007
+

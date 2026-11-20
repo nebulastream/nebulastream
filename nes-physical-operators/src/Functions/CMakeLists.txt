@@ -22,6 +22,7 @@ add_source_files(nes-physical-operators
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
 add_subdirectory(BooleanFunctions)
+add_subdirectory(VectorFunctions)
 
 add_source_files(nes-physical-operators
         ConcatPhysicalFunction.cpp
