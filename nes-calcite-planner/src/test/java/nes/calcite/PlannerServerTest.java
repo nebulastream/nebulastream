@@ -142,6 +142,22 @@ class PlannerServerTest {
     }
 
     @Test
+    void unusedColumnsAreTrimmedAtTheSources() throws Exception {
+        /// Only id of each source is used: neither the join state nor its result carries val (physical and anonymous sources).
+        List<Source> sources = List.of(withPhysicalSources(stream("s1"), 11), withPhysicalSources(stream("s2"), 21));
+        String explain = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+            .setSql("SELECT a.id FROM s1 a, s2 b WHERE a.id = b.id")
+            .addAllSources(sources).setPhysical(true).setFiniteInputs(true).build()).getExplain();
+        java.util.regex.Matcher stored = java.util.regex.Pattern.compile("JoinBuild\\(.*?stored=\\[\\[(.*?)\\]\\]").matcher(explain);
+        int builds = 0;
+        while (stored.find()) {
+            builds++;
+            assertFalse(stored.group(1).contains("VAL"), explain);
+        }
+        assertEquals(2, builds, explain);
+    }
+
+    @Test
     void joinKeysInEveryOrBranch() throws Exception {
         /// As TPC-H Q19: the join key and a filter are in each OR branch. They become conditions of their own, so the join has
         /// a key (a hash join, not a nested-loop join over all pairs) and the filter goes below it.
