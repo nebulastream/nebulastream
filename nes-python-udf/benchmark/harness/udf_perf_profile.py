@@ -66,13 +66,14 @@ def main():
     subprocess.run(["perf", "inject", "--jit", "-i", data, "-o", jitted], check=True)
     # Only the worker thread: the frontend's compile at CREATE FUNCTION runs in the same process.
     report = subprocess.run(["perf", "report", "--stdio", "--no-children", "-i", jitted, "--comms", "WorkerThread-0", "--sort", "dso,sym",
-                             "--percent-limit", "0.3"],
+                             "--percentage", "relative", "--percent-limit", "0.3"],
                             capture_output=True, text=True).stdout
     open(os.path.join(arguments.out, name + ".report.txt"), "w").write(report)
     hottest = next((line for line in report.splitlines() if "jitted-" in line), None)
     if hottest:
         symbol = hottest.split("] ")[-1].strip()
-        annotate = subprocess.run(["perf", "annotate", "--stdio", "-i", jitted, "--comms", "WorkerThread-0", "-s", symbol],
+        # perf annotate has no --comms. The generated functions run only in the worker thread.
+        annotate = subprocess.run(["perf", "annotate", "--stdio", "-i", jitted, "-s", symbol],
                                   capture_output=True, text=True).stdout
         open(os.path.join(arguments.out, name + ".annotate.txt"), "w").write(annotate)
     print(f"{name}: {os.path.join(arguments.out, name + '.report.txt')}")
