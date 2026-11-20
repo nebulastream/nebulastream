@@ -21,16 +21,17 @@ import org.apache.calcite.rel.type.RelDataType;
 final class NesLogical {
     private NesLogical() {}
 
-    /** Reads one physical source of a logical source; it runs on the source's worker. */
-    static final class PhysicalSourceScan extends AbstractRelNode {
-        final RelOptTable table;
+    /**
+     * Reads one physical source of a logical source; it runs on the source's worker. A TableScan of the logical source's
+     * table, so that Calcite's rules and metadata handle it as a table (e.g. RelFieldTrimmer trims its unused columns,
+     * column origins find its columns).
+     */
+    static final class PhysicalSourceScan extends TableScan {
         final PhysicalSource physicalSource;
 
         PhysicalSourceScan(RelOptCluster cluster, RelTraitSet traits, RelOptTable table, PhysicalSource physicalSource) {
-            super(cluster, traits);
-            this.table = table;
+            super(cluster, traits, List.of(), table);
             this.physicalSource = physicalSource;
-            this.rowType = table.getRowType();
         }
 
         @Override
@@ -45,7 +46,7 @@ final class NesLogical {
 
         @Override
         public RelWriter explainTerms(RelWriter pw) {
-            return super.explainTerms(pw).item("table", table.getQualifiedName()).item("physicalSource", physicalSource.getId());
+            return super.explainTerms(pw).item("physicalSource", physicalSource.getId());
         }
     }
 
@@ -150,7 +151,9 @@ final class NesLogical {
 
             @Override
             public RelNode visit(RelNode other) {
-                if (other instanceof TableScan scan) {
+                /// Our sources are table scans, too, but already expanded.
+                if (other instanceof TableScan scan && !(scan instanceof PhysicalSourceScan)
+                    && !(scan instanceof AnonymousSources.NesAnonymousSource)) {
                     return expand(scan);
                 }
                 return super.visit(other).accept(subqueries);

@@ -232,16 +232,12 @@ public final class Planner {
 
     /**
      * The source column that column i of the relation passes on unchanged, or null: through projections, filters, unions
-     * (if every input passes on the same source column) and window joins. Calcite's column origins do not know our nodes.
+     * (if every input passes on the same source column) and window joins. Calcite's column origins do not know our window joins.
      */
     private static Field sourceColumn(RelNode node, int i) {
         RelNode rel = node instanceof org.apache.calcite.plan.hep.HepRelVertex vertex ? vertex.getCurrentRel() : node;
         if (rel instanceof org.apache.calcite.rel.core.TableScan scan) {
             SourceTable table = scan.getTable().unwrap(SourceTable.class);
-            return table == null ? null : table.source.getFields(i);
-        }
-        if (rel instanceof NesLogical.PhysicalSourceScan scan) {
-            SourceTable table = scan.table.unwrap(SourceTable.class);
             return table == null ? null : table.source.getFields(i);
         }
         if (rel instanceof org.apache.calcite.rel.core.Project project) {
@@ -390,8 +386,8 @@ public final class Planner {
         optimized = steps.rules("table functions rewritten (MODEL_INFERENCE, anonymous sources)",
             "rules: ours (ModelInference, AnonymousSources)", MODEL_INFERENCE, optimized);
         optimized = steps.add("decorrelated", "Calcite: RelDecorrelator", RelDecorrelator.decorrelateQuery(optimized, relBuilder));
-        optimized = steps.add("unused fields trimmed", "Calcite: RelFieldTrimmer (with our sources, NesFieldTrimmer)",
-            new NesFieldTrimmer(validator, relBuilder).trim(optimized));
+        optimized = steps.add("unused fields trimmed", "Calcite: RelFieldTrimmer",
+            new org.apache.calcite.sql2rel.RelFieldTrimmer(validator, relBuilder).trim(optimized));
         optimized = steps.rules("windows rewritten", "rules: Calcite's and ours, selected by us", PREPARE_AND_REWRITE_WINDOWS, optimized);
         if (finiteInputs) {
             optimized = steps.rules("global windows for finite inputs", "rules: ours (GlobalWindowRules)", GLOBAL_WINDOWS, optimized);

@@ -955,7 +955,7 @@ final class NesPhysical {
         public RelNode convert(RelNode rel) {
             NesLogical.PhysicalSourceScan scan = (NesLogical.PhysicalSourceScan) rel;
             RelTraitSet traits = scan.getTraitSet().replace(NES);
-            SourceScan source = new SourceScan(scan.getCluster(), traits, scan.table, scan.physicalSource);
+            SourceScan source = new SourceScan(scan.getCluster(), traits, scan.getTable(), scan.physicalSource);
             return new Scan(scan.getCluster(), traits, List.of(source), source.getRowType());
         }
     }

@@ -374,6 +374,12 @@ final class NesConverterProvider extends ConverterProvider {
             };
         }
 
+        /** An anonymous source is a TableScan, but becomes our extension (see visitOther), not a named table. */
+        @Override
+        public Rel visit(org.apache.calcite.rel.core.TableScan scan) {
+            return scan instanceof AnonymousSources.NesAnonymousSource ? visitOther(scan) : super.visit(scan);
+        }
+
         @Override
         public Rel visitOther(RelNode node) {
             if (node instanceof NesProjection projection) {

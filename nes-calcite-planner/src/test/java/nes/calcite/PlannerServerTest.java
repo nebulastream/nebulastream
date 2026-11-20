@@ -155,6 +155,23 @@ class PlannerServerTest {
             assertFalse(stored.group(1).contains("VAL"), explain);
         }
         assertEquals(2, builds, explain);
+
+        /// The same with an anonymous source as the right side.
+        String anonymous = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+            .setSql("SELECT a.id FROM s1 a, TABLE(FILE(schema => 'id UINT64 NOT NULL, val UINT64 NOT NULL', file_path => 'b.csv',"
+                + " format => 'CSV', host => 'w1')) b WHERE a.id = b.id")
+            .addSourceTypes(nes.calcite.proto.SourceType.newBuilder().setName("File").addOptions("FILE_PATH"))
+            .addFormatOptions("TYPE")
+            .addSources(onHosts(withPhysicalSources(stream("s1"), 11), "w1"))
+            .addTopology(nes.calcite.proto.Worker.newBuilder().setHost("w1")).setSinkHost("w1")
+            .setPhysical(true).setFiniteInputs(true).build()).getExplain();
+        stored = java.util.regex.Pattern.compile("JoinBuild\\(.*?stored=\\[\\[(.*?)\\]\\]").matcher(anonymous);
+        builds = 0;
+        while (stored.find()) {
+            builds++;
+            assertFalse(stored.group(1).contains("VAL"), anonymous);
+        }
+        assertEquals(2, builds, anonymous);
     }
 
     @Test

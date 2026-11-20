@@ -65,7 +65,7 @@ final class Placement {
                 if (host.isEmpty()) {
                     throw new PlacementFailure("physical source " + source.physicalSource.getId() + " has no host");
                 }
-                List<String> name = source.table.getQualifiedName();
+                List<String> name = source.getTable().getQualifiedName();
                 x.get(operator)[workerOf(hosts, host, "SOURCE(" + name.get(name.size() - 1) + ")")].level(1);
             }
             if (operator instanceof AnonymousSources.NesAnonymousSource source) {

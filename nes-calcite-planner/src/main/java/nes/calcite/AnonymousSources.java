@@ -14,7 +14,10 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelTraitSet;
-import org.apache.calcite.rel.AbstractRelNode;
+import org.apache.calcite.linq4j.tree.Expression;
+import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.prepare.RelOptTableImpl;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelWriter;
 import org.apache.calcite.rel.core.TableFunctionScan;
@@ -185,19 +188,25 @@ final class AnonymousSources {
         return row.build();
     }
 
-    /** Reads an anonymous source; see AnonymousSource. */
-    static final class NesAnonymousSource extends AbstractRelNode {
+    /**
+     * Reads an anonymous source; see AnonymousSource. A TableScan of a table of its own (named after the source type, with
+     * its row type), so that Calcite's rules and metadata handle it as a table, as NesLogical.PhysicalSourceScan.
+     */
+    static final class NesAnonymousSource extends TableScan {
         final AnonymousSource spec;
 
         NesAnonymousSource(RelOptCluster cluster, RelTraitSet traits, AnonymousSource spec, RelDataType rowType) {
-            super(cluster, traits);
+            this(cluster, traits, spec, RelOptTableImpl.create(null, rowType, List.of("anonymous " + spec.getType()), (Expression) null));
+        }
+
+        private NesAnonymousSource(RelOptCluster cluster, RelTraitSet traits, AnonymousSource spec, RelOptTable table) {
+            super(cluster, traits, List.of(), table);
             this.spec = spec;
-            this.rowType = rowType;
         }
 
         @Override
         public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
-            return new NesAnonymousSource(getCluster(), traitSet, spec, rowType);
+            return new NesAnonymousSource(getCluster(), traitSet, spec, table);
         }
 
         /** The worker that runs the source (the HOST argument). */

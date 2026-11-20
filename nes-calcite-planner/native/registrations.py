@@ -50,8 +50,6 @@ implementors = sorted(n for n in classes if n.startswith('org.apache.calcite.ada
                       or re.fullmatch(r'org\.apache\.calcite\.sql2rel\.(RelFieldTrimmer|RelDecorrelator)(\$\w+)*', n)
                       # the convertlets of SqlToRel (e.g. for EXTRACT), which ReflectiveConvertletTable finds by name
                       or re.fullmatch(r'org\.apache\.calcite\.sql2rel\.(Standard|Reflective)ConvertletTable(\$\w+)*', n)
-                      # our trimmer, which RelFieldTrimmer's dispatch calls by reflection
-                      or n == 'nes.calcite.NesFieldTrimmer'
                       # the parser's error messages list the expected tokens by reflecting on its production methods
                       or re.fullmatch(r'org\.apache\.calcite\.sql\.parser\.(ddl\.SqlDdlParserImpl|impl\.SqlParserImpl)(\$\w+)*', n))
 write('calcite-reflective', everything(implementors))

@@ -1,14 +1,6 @@
 {
   "reflection": [
     {
-      "type": "nes.calcite.NesFieldTrimmer",
-      "allDeclaredConstructors": true,
-      "allPublicConstructors": true,
-      "allPublicMethods": true,
-      "allDeclaredMethods": true,
-      "allDeclaredFields": true
-    },
-    {
       "type": "org.apache.calcite.adapter.enumerable.RexImpTable$1",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
