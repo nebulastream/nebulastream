@@ -42,9 +42,9 @@ namespace NES::Testing
 {
 namespace
 {
-QueryId randomQueryId()
+LocalQueryId randomQueryId()
 {
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
+    return LocalQueryId(generateUUID());
 }
 
 WorkTask createTrackedTask(std::atomic<int>& completeCount, std::atomic<int>& failureCount)
@@ -120,7 +120,7 @@ protected:
     std::atomic<int> taskCounter{0};
 
     /// For tracking execution order in tests
-    folly::Synchronized<std::vector<QueryId>> executionOrder;
+    folly::Synchronized<std::vector<LocalQueryId>> executionOrder;
 
     void submitTask(Task task)
     {
@@ -167,7 +167,7 @@ TEST_F(DelayedTaskSubmitterTest, testMultipleTasksOrderedExecution)
             if (std::holds_alternative<WorkTask>(task))
             {
                 const auto& workTask = std::get<WorkTask>(task);
-                executionOrder.wlock()->push_back(workTask.queryId);
+                executionOrder.wlock()->push_back(workTask.queryId.getLocalQueryId());
             }
             submitTask(std::move(task));
         });

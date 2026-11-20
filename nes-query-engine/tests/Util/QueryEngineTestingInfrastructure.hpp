@@ -172,7 +172,11 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(
         bool,
         emitWork,
-        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TupleBuffer, TaskCallback, PipelineExecutionContext::ContinuationPolicy),
+        (const QueryId&,
+         const std::shared_ptr<RunningQueryPlanNode>&,
+         TupleBuffer,
+         TaskCallback,
+         PipelineExecutionContext::ContinuationPolicy),
         (override));
     MOCK_METHOD(void, emitPipelineStart, (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback), (override));
     MOCK_METHOD(void, emitPendingPipelineStop, (QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback), (override));
