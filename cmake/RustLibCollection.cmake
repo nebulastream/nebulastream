@@ -49,6 +49,10 @@ function(add_rust_cargo_test crate)
     set(_test_env "RUSTUP_TOOLCHAIN=${Rust_TOOLCHAIN}")
     get_property(_rustc CACHE Rust_COMPILER_CACHED PROPERTY VALUE)
     list(APPEND _test_env "RUSTC=${_rustc}")
+    # A crate whose build script compiles protos needs the same protoc as the C++ build.
+    # The generator expression resolves after the protobuf package is found,
+    # which happens later in the configure run.
+    list(APPEND _test_env "PROTOC=$<TARGET_FILE:protobuf::protoc>")
     if (NES_RUST_ENV_VARS)
         list(APPEND _test_env ${NES_RUST_ENV_VARS})
     endif ()

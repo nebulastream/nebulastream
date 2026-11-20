@@ -45,8 +45,8 @@ struct WorkerStatus
         std::optional<Exception> error;
     };
 
-    /// Currently we will not store all historical data on the WorkerNode.
-    /// This timestamp indicates which events are captured by the WorkerStatus
+    /// Only queries that terminated at or after this time are listed as terminated.
+    /// Every active query is listed, whenever it started.
     std::chrono::system_clock::time_point after;
     std::chrono::system_clock::time_point until;
     std::vector<ActiveQuery> activeQueries;
