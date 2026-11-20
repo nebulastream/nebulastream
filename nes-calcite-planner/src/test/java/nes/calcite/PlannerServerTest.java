@@ -2,6 +2,7 @@ package nes.calcite;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -236,6 +237,11 @@ class PlannerServerTest {
         /// Calcite checks the argument names; the schema is required.
         assertThrows(StatusRuntimeException.class, () -> stub.plan(request.apply("SELECT * FROM TABLE(FILE(schema => 'a UINT64', nope => 1))")));
         assertThrows(StatusRuntimeException.class, () -> stub.plan(request.apply("SELECT * FROM TABLE(FILE(file_path => 'x'))")));
+        /// Also in a (correlated) subquery, which rules only see once it is a join.
+        String file = "TABLE(FILE(schema => 'id UINT64 NOT NULL, val UINT64 NOT NULL', file_path => 'data.csv', format => 'CSV'))";
+        PlanResponse correlated = stub.plan(request.apply("SELECT r.id FROM " + file + " AS r WHERE r.val > (SELECT AVG(i.val) FROM "
+            + file + " AS i WHERE i.id = r.id)").toBuilder().setFiniteInputs(true).setPhysical(true).build());
+        assertFalse(correlated.getExplain().contains("TableFunctionScan"), correlated.getExplain());
     }
 
     private static AnonymousSource anonymousSource(Rel rel) throws Exception {

@@ -380,9 +380,10 @@ public final class Planner {
             /// Physical plans read physical sources: all later steps (e.g. the pushdown of filters) see each of them.
             optimized = steps.add("sources expanded per physical source", "ours: NesLogical.expandSources", NesLogical.expandSources(optimized));
         }
+        optimized = steps.rules("subqueries removed", "rules: Calcite's, selected by us", REMOVE_SUBQUERIES, optimized);
+        /// After the subqueries are removed: rules do not look into subqueries, which may call table functions, too.
         optimized = steps.rules("table functions rewritten (MODEL_INFERENCE, anonymous sources)",
             "rules: ours (ModelInference, AnonymousSources)", MODEL_INFERENCE, optimized);
-        optimized = steps.rules("subqueries removed", "rules: Calcite's, selected by us", REMOVE_SUBQUERIES, optimized);
         optimized = steps.add("decorrelated", "Calcite: RelDecorrelator", RelDecorrelator.decorrelateQuery(optimized, relBuilder));
         optimized = steps.add("unused fields trimmed", "Calcite: RelFieldTrimmer", new RelFieldTrimmer(validator, relBuilder).trim(optimized));
         optimized = steps.rules("windows rewritten", "rules: Calcite's and ours, selected by us", PREPARE_AND_REWRITE_WINDOWS, optimized);
