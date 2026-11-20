@@ -150,6 +150,21 @@ const ConfigField<bool> NAUTILUS_PERF{
     "jitdump records with their symbols, line tables and unwinding information, so that `perf inject --jit` attributes samples to "
     "them. Keeps the optimization level, so the profile shows production code.",
     false};
+
+/// Bounds the delay that the coalescer adds to the clock in nanoseconds.
+constexpr uint64_t MAX_EMIT_COALESCING_DELAY_MICROSECONDS = 60'000'000;
+
+const ConfigField<uint64_t> EMIT_COALESCING_DELAY{
+    Identifier::parse("emit_coalescing_delay_us"),
+    fmt::format(
+        "Microseconds an emit may hold an output to merge it with those of neighboring inputs, at most {}. 0 disables coalescing.",
+        MAX_EMIT_COALESCING_DELAY_MICROSECONDS),
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t, MAX_EMIT_COALESCING_DELAY_MICROSECONDS>);
+    },
+    uint64_t{0}};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -166,6 +181,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
         NAUTILUS_PERF,
+        EMIT_COALESCING_DELAY,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -187,6 +203,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
         config.get(TUPLE_BUFFER_INLINING),
+        config.get(EMIT_COALESCING_DELAY),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),
         config.get(NAUTILUS_PERF)};

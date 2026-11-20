@@ -13,22 +13,30 @@
 */
 #include <Sequencing/SequenceData.hpp>
 
+#include <cstdint>
 #include <ostream>
 #include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
-SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk)
-    : sequenceNumber(sequenceNumber.getRawValue()), chunkNumber(chunkNumber.getRawValue()), lastChunk(lastChunk)
+SequenceData::SequenceData(SequenceNumber sequenceNumber, uint32_t sequenceRangeOffset, ChunkNumber chunkNumber, bool lastChunk)
+    : sequenceNumber(sequenceNumber.getRawValue())
+    , chunkNumber(chunkNumber.getRawValue())
+    , lastChunk(lastChunk)
+    , sequenceRangeOffset(sequenceRangeOffset)
 {
 }
 
 SequenceData::SequenceData()
-    : sequenceNumber(INVALID_SEQ_NUMBER.getRawValue()), chunkNumber(INVALID_CHUNK_NUMBER.getRawValue()), lastChunk(false) { };
+    : sequenceNumber(INVALID_SEQ_NUMBER.getRawValue())
+    , chunkNumber(INVALID_CHUNK_NUMBER.getRawValue())
+    , lastChunk(false)
+    , sequenceRangeOffset(0) { };
 
 std::ostream& operator<<(std::ostream& os, const SequenceData& obj)
 {
-    os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk << "}";
+    os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk
+       << ", SequenceRangeOffset: " << obj.sequenceRangeOffset << "}";
     return os;
 }
 

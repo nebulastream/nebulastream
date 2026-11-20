@@ -136,17 +136,38 @@ NAUTILUS_INLINE Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 
 NAUTILUS_INLINE void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) noexcept
 {
-    controlBlock->setSequenceNumber(sequenceNumber);
+    controlBlock->setSequenceRange(sequenceNumber, 0);
+}
+
+NAUTILUS_INLINE void TupleBuffer::setSequenceRange(const SequenceNumber last, const uint32_t offset) noexcept
+{
+    PRECONDITION(
+        offset == 0 || last.getRawValue() >= SequenceNumber::INITIAL + offset,
+        "Sequence range [{} - {}, {}] starts below the first sequence number",
+        last,
+        offset,
+        last);
+    controlBlock->setSequenceRange(last, offset);
 }
 
 std::string TupleBuffer::getSequenceDataAsString() const noexcept
 {
-    return fmt::format("SeqNumber: {}, ChunkNumber: {}, LastChunk: {}", getSequenceNumber(), getChunkNumber(), isLastChunk());
+    return fmt::format(
+        "SeqNumber: {}, SequenceRangeOffset: {}, ChunkNumber: {}, LastChunk: {}",
+        getSequenceNumber(),
+        getSequenceRangeOffset(),
+        getChunkNumber(),
+        isLastChunk());
 }
 
 NAUTILUS_INLINE SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
+}
+
+NAUTILUS_INLINE uint32_t TupleBuffer::getSequenceRangeOffset() const noexcept
+{
+    return controlBlock->getSequenceRangeOffset();
 }
 
 NAUTILUS_INLINE void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept

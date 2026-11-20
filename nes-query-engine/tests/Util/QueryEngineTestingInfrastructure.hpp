@@ -214,15 +214,38 @@ public:
     std::atomic<size_t> throwOnNthInvocation = -1;
     std::atomic<size_t> repeatCount = 0;
     std::atomic<size_t> repeatCountDuringStop = 0;
+    /// Emits every input buffer with tuples from a callback scheduled `callbackDelay` later. Buffers without tuples, such as the
+    /// end-of-stream watermark buffer, leave at once, as the pipeline stop would drop their pending callback.
+    std::atomic_bool emitThroughCallback = false;
+    std::atomic<std::chrono::milliseconds> callbackDelay = std::chrono::milliseconds(0);
+    std::atomic_bool throwInCallback = false;
+    /// When set, every callback schedules one follow-up callback without delay, which emits the buffer again.
+    std::atomic_bool followUpCallback = false;
+    /// When set, a callback waits for `releaseCallback` before it runs.
+    std::atomic_bool blockCallback = false;
+    /// When set, the first input buffer starts a chain of callbacks that schedule themselves again without delay. A second chain would
+    /// keep the internal task queue from ever running empty, so the engine would never read the source's end of stream.
+    std::atomic_bool rearmCallback = false;
+    std::atomic_size_t scheduledCallbacks = 0;
+    std::atomic_size_t executedCallbacks = 0;
+    std::atomic_size_t callbacksAfterStop = 0;
+    /// Time from scheduling to running of the last callback scheduled by `execute`.
+    std::atomic<std::chrono::nanoseconds> callbackLatency = std::chrono::nanoseconds(0);
 
     std::promise<void> start;
     std::promise<void> startEntered;
     std::promise<void> stop;
     std::promise<void> destruction;
+    std::promise<void> callbackScheduled;
+    std::promise<void> callbackEntered;
+    std::promise<void> releaseCallback;
     std::shared_future<void> startFuture = start.get_future().share();
     std::shared_future<void> startEnteredFuture = startEntered.get_future().share();
     std::shared_future<void> stopFuture = stop.get_future().share();
     std::shared_future<void> destructionFuture = destruction.get_future().share();
+    std::shared_future<void> callbackScheduledFuture = callbackScheduled.get_future().share();
+    std::shared_future<void> callbackEnteredFuture = callbackEntered.get_future().share();
+    std::shared_future<void> releaseCallbackFuture = releaseCallback.get_future().share();
     std::binary_semaphore startGate{0};
 
     /// Back reference this is set during construction of a TestPipeline
@@ -242,6 +265,17 @@ public:
     [[nodiscard]] testing::AssertionResult waitForDestruction() const
     {
         return waitForFuture(destructionFuture, DEFAULT_LONG_AWAIT_TIMEOUT);
+    }
+
+    /// Waits until `execute` scheduled its first callback.
+    [[nodiscard]] testing::AssertionResult waitForCallbackScheduled() const
+    {
+        return waitForFuture(callbackScheduledFuture, DEFAULT_LONG_AWAIT_TIMEOUT);
+    }
+
+    [[nodiscard]] testing::AssertionResult waitUntilCallbackEntered() const
+    {
+        return waitForFuture(callbackEnteredFuture, DEFAULT_LONG_AWAIT_TIMEOUT);
     }
 
     [[nodiscard]] testing::AssertionResult keepRunning() const
@@ -282,6 +316,24 @@ struct TestPipeline final : ExecutablePipelineStage
         {
             throw Exception("I should throw here.", 9999);
         }
+    }
+
+    static void rearm(const std::shared_ptr<TestPipelineController>& controller, PipelineExecutionContext& context)
+    {
+        context.scheduleCallback(
+            std::chrono::microseconds(0),
+            [controller](PipelineExecutionContext& callbackContext)
+            {
+                if (controller->executedCallbacks++ == 0)
+                {
+                    controller->callbackEntered.set_value();
+                }
+                if (controller->wasStopped())
+                {
+                    ++controller->callbacksAfterStop;
+                }
+                rearm(controller, callbackContext);
+            });
     }
 
     std::atomic_size_t stopCalled = 0;
@@ -331,6 +383,54 @@ struct TestPipeline final : ExecutablePipelineStage
                 pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
                 return;
             }
+        }
+
+        if (controller->rearmCallback)
+        {
+            if (controller->scheduledCallbacks++ == 0)
+            {
+                rearm(controller, pipelineExecutionContext);
+            }
+            return;
+        }
+
+        if (controller->emitThroughCallback && inputTupleBuffer.getNumberOfTuples() > 0)
+        {
+            const auto isFirstCallback = controller->scheduledCallbacks++ == 0;
+            pipelineExecutionContext.scheduleCallback(
+                controller->callbackDelay.load(),
+                [controller = controller, buffer = inputTupleBuffer, scheduledAt = std::chrono::steady_clock::now()](
+                    PipelineExecutionContext& callbackContext)
+                {
+                    controller->callbackLatency = std::chrono::steady_clock::now() - scheduledAt;
+                    ++controller->executedCallbacks;
+                    if (controller->blockCallback)
+                    {
+                        controller->callbackEntered.set_value();
+                        controller->releaseCallbackFuture.wait();
+                    }
+                    if (controller->throwInCallback)
+                    {
+                        throw Exception("There should be a throw here", 9999);
+                    }
+                    callbackContext.emitBuffer(buffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                    if (controller->followUpCallback)
+                    {
+                        ++controller->scheduledCallbacks;
+                        callbackContext.scheduleCallback(
+                            std::chrono::microseconds(0),
+                            [controller, buffer](PipelineExecutionContext& followUpContext)
+                            {
+                                ++controller->executedCallbacks;
+                                followUpContext.emitBuffer(buffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                            });
+                    }
+                });
+            if (isFirstCallback)
+            {
+                controller->callbackScheduled.set_value();
+            }
+            return;
         }
 
         pipelineExecutionContext.emitBuffer(inputTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);

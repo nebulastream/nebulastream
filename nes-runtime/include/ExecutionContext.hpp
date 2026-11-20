@@ -27,7 +27,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
-#include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -99,9 +98,6 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
 
 
-    /// Emit a record buffer to the successor pipeline(s) or sink(s)
-    void emitBuffer(const RecordBuffer& buffer) const;
-
     void setOpenReturnState(OpenReturnState openReturnState);
     [[nodiscard]] OpenReturnState getOpenReturnState() const;
 
@@ -113,6 +109,7 @@ struct ExecutionContext final
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> currentTs; /// Stores the current timestamp. This is set by a time function
     nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<uint32_t> sequenceRangeOffset; /// Stores the sequence range offset of the incoming tuple buffer. This is set in the scan.
     nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
 

@@ -44,7 +44,7 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
 
 void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)
 {
-    buffer.setSequenceNumber(NES::SequenceNumber(metaData.sequence_number));
+    buffer.setSequenceRange(NES::SequenceNumber(metaData.sequence_number), metaData.sequence_range_offset);
     buffer.setChunkNumber(NES::ChunkNumber(metaData.chunk_number));
     buffer.setOriginId(NES::OriginId(metaData.origin_id));
     buffer.setLastChunk(metaData.last_chunk);

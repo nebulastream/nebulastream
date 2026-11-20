@@ -158,11 +158,16 @@ public:
     void setWatermark(Timestamp value) noexcept;
 
     [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
+
+    /// A buffer covers the sequence numbers [`getSequenceNumber()` - `getSequenceRangeOffset()`, `getSequenceNumber()`] of its origin,
+    /// and its chunk number and last chunk flag refer to the whole range. Each sequence number of an origin belongs to exactly one
+    /// range. `setSequenceNumber` sets a range of one sequence number.
     void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
+    void setSequenceRange(SequenceNumber last, uint32_t offset) noexcept;
+    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
+    [[nodiscard]] uint32_t getSequenceRangeOffset() const noexcept;
 
     [[nodiscard]] std::string getSequenceDataAsString() const noexcept;
-
-    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
     void setChunkNumber(ChunkNumber chunkNumber) noexcept;
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
