@@ -308,11 +308,7 @@ CREATE FUNCTION extractprojectid_inline (input VARSIZED NOT NULL) RETURNS VARSIZ
 CREATE FUNCTION extractyear_inline (arg VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.extractyear';
 CREATE FUNCTION filterstopwords_inline (words VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.filterstopwords';
 CREATE FUNCTION frequentterms_inline (input VARSIZED NOT NULL, N INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.frequentterms';
-# Does not compile: type(x) == list
 CREATE FUNCTION jaccard_inline (arg1 VARSIZED NOT NULL, arg2 VARSIZED NOT NULL) RETURNS FLOAT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jaccard';
-----
-ERROR QueryCompilerError
-
 CREATE FUNCTION jpack_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jpack';
 CREATE FUNCTION jsoncount_inline (jval VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsoncount';
 CREATE FUNCTION jsonparse_inline (json_content VARSIZED NOT NULL, key1 VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.jsonparse';
@@ -329,6 +325,10 @@ ERROR QueryCompilerError
 
 # Not in this section, as Codon cannot compile or run them, or gives other results:
 # - frequentterms: among terms with equal counts, Counter and heapq.nlargest choose other terms than in CPython
+
+SELECT id, jaccard_inline(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Checksum();
+----
+16699 64983328
 
 SELECT id, jsonparse_inline(id, 'doi') AS r FROM query2json INTO Checksum();
 ----

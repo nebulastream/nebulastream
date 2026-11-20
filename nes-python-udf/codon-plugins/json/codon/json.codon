@@ -21,8 +21,9 @@ results usable wherever Codon expects a `str`.
 ", " and ": " separators and non-ASCII characters escaped as \\uXXXX.
 
 `isinstance(x, list)` (also dict, str, int, float, bool, NoneType) checks the kind of a Value at run time, through
-`Value.__isinstance__` (NES's Codon calls it when isinstance is not statically true). `type(x) == list` stays a compile-time
-check and is always False for a Value; `x.is_list()`, `x.is_dict()` and friends work as well.
+`Value.__isinstance__` (NES's Codon calls it when isinstance is not statically true), and `type(x) == list` through
+`Value.__type_is__`, which is exact (a bool is not an int). `tuple(x)` gives a Value (`Value.__tuple__`); an array
+stands for itself, as it is hashable. `x.is_list()`, `x.is_dict()` and friends work as well.
 """
 
 KIND_NULL: Literal[int] = 0
@@ -330,6 +331,40 @@ class Value:
         if self.kind == KIND_STRING:
             return float(self.text)
         raise TypeError("float() argument must be a string or a number, not '" + self._type_name() + "'")
+
+    def __type_is__(self, T: type) -> bool:
+        """type(value) == T as for the object that CPython's json.loads gives: exact, so a bool is not an int."""
+        if T is List:
+            return self.kind == KIND_ARRAY
+        if T is Dict:
+            return self.kind == KIND_OBJECT
+        if T is str:
+            return self.kind == KIND_STRING
+        if T is bool:
+            return self.kind == KIND_BOOL
+        if T is int:
+            return self.kind == KIND_INT
+        if T is float:
+            return self.kind == KIND_FLOAT
+        if T is NoneType:
+            return self.kind == KIND_NULL
+        return False
+
+    def __tuple__(self) -> Value:
+        """tuple(value): an array stands for itself (a Value array is hashable), a string gives its characters, an object its
+        keys, as tuple() of the objects of CPython's json; anything else raises TypeError."""
+        if self.kind == KIND_ARRAY:
+            return self
+        result = Value(KIND_ARRAY)
+        if self.kind == KIND_STRING:
+            for character in _code_points(self.text):
+                result.elements.append(_string_value(character))
+        elif self.kind == KIND_OBJECT:
+            for name in self.names:
+                result.elements.append(_string_value(name))
+        else:
+            raise TypeError("'" + self._type_name() + "' object is not iterable")
+        return result
 
     def __as__(self, T: type):
         """The value as T, where a function annotated -> T returns it (NES's Codon calls this). As CPython ignores the

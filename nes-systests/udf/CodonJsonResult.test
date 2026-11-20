@@ -1,7 +1,8 @@
 # name: udf/CodonJsonResult.test
 # description: An INLINE VARSIZED UDF can return a value of the json module (json.Value). A string value becomes its text, None
 # (a missing member, or JSON null) becomes NULL, and any other kind fails at run time, as a result that is not str or bytes
-# does in the Python executions. isinstance checks the kind of a json.Value at run time, as for the objects of CPython's json.
+# does in the Python executions. isinstance and type(x) == T check the kind of a json.Value at run time, as for the objects of
+# CPython's json, and tuple(x) of an array gives the array.
 # A function annotated -> str, int, float or bool that returns a json.Value converts it (json.Value.__as__): CPython ignores
 # the annotation, and the Python executions then accept or reject the value as its type allows.
 # groups: [PythonUdf]
@@ -118,4 +119,42 @@ SELECT as_float(FROM_BASE64(d), 'f') AS r FROM documents INTO FILE();
 SELECT as_bool(FROM_BASE64(d), 'b') AS r FROM documents INTO FILE();
 ----
 true
+
+CREATE FUNCTION exact_kinds (document VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE AS $python$
+    import json
+    data = json.loads(document)
+    names = []
+    for key in ["a", "n", "z", "l", "b", "f", "o"]:
+        value = data[key]
+        found = []
+        if type(value) == str:
+            found.append("str")
+        if type(value) is int:
+            found.append("int")
+        if type(value) == bool:
+            found.append("bool")
+        if type(value) == float:
+            found.append("float")
+        if type(value) == list:
+            found.append("list")
+        if type(value) == dict:
+            found.append("dict")
+        if type(value) != NoneType:
+            found.append("notnone")
+        names.append(key + "=" + "+".join(found))
+    return " ".join(names)
+$python$;
+CREATE FUNCTION distinct_lists (document VARSIZED NOT NULL) RETURNS INT64 EXECUTION INLINE AS $python$
+    import json
+    items = json.loads(document)
+    return len(set([tuple(x) if type(x) == list else x for x in items]))
+$python$;
+
+SELECT exact_kinds(FROM_BASE64(d)) AS r FROM documents INTO FILE();
+----
+a=str+notnone n=int+notnone z= l=list+notnone b=bool+notnone f=float+notnone o=dict+notnone
+
+SELECT distinct_lists('[["a", "b"], ["a", "b"], ["b"], "a", "a", 1]') AS r FROM documents INTO FILE();
+----
+4
 
