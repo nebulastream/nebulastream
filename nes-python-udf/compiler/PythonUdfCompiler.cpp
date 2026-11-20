@@ -711,6 +711,57 @@ void validateNumbaUdfModule(const llvm::Module& module, const std::string& symbo
     }
 }
 
+namespace
+{
+/// Numba counts references with atomic operations in NRT_incref and NRT_decref, and marks both noinline for its reference
+/// count pruning, which has run before NES gets the module. One UDF call runs on one thread, and its objects do not escape the
+/// call (constants have no reference count), so NES replaces both with plain increments and decrements that LLVM can inline.
+void makeNumbaReferenceCountsPlain(llvm::Module& module)
+{
+    auto& context = module.getContext();
+    auto* int64Type = llvm::Type::getInt64Ty(context);
+    auto* pointerType = llvm::PointerType::getUnqual(context);
+    for (const bool increment : {true, false})
+    {
+        auto* function = module.getFunction(increment ? "NRT_incref" : "NRT_decref");
+        if (function == nullptr || function->isDeclaration())
+        {
+            continue;
+        }
+        const auto linkage = function->getLinkage();
+        function->deleteBody();
+        function->setLinkage(linkage);
+        function->setAttributes({});
+        auto* pointer = function->getArg(0);
+        auto* entry = llvm::BasicBlock::Create(context, "entry", function);
+        auto* update = llvm::BasicBlock::Create(context, "update", function);
+        auto* done = llvm::BasicBlock::Create(context, "done", function);
+        llvm::IRBuilder<> builder(entry);
+        builder.CreateCondBr(builder.CreateIsNull(pointer), done, update);
+        builder.SetInsertPoint(update);
+        auto* count = builder.CreateLoad(int64Type, pointer);
+        auto* updated = increment ? builder.CreateAdd(count, builder.getInt64(1)) : builder.CreateSub(count, builder.getInt64(1));
+        builder.CreateStore(updated, pointer);
+        if (increment)
+        {
+            builder.CreateBr(done);
+        }
+        else
+        {
+            auto* destroy = llvm::BasicBlock::Create(context, "destroy", function, done);
+            builder.CreateCondBr(builder.CreateICmpEQ(updated, builder.getInt64(0)), destroy, done);
+            builder.SetInsertPoint(destroy);
+            const auto destructor = module.getOrInsertFunction(
+                "NRT_MemInfo_call_dtor", llvm::FunctionType::get(llvm::Type::getVoidTy(context), {pointerType}, false));
+            builder.CreateCall(destructor, {pointer});
+            builder.CreateBr(done);
+        }
+        builder.SetInsertPoint(done);
+        builder.CreateRetVoid();
+    }
+}
+}
+
 CompiledInlineUdf finishNumbaUdf(
     const std::string& bitcode, const std::string& symbol, const std::vector<DataType>& argumentTypes, const DataType& returnType)
 {
@@ -721,6 +772,7 @@ CompiledInlineUdf finishNumbaUdf(
         throw QueryCompilerError("Could not read the LLVM bitcode of Numba UDF '{}': {}", symbol, llvm::toString(parsedModule.takeError()));
     }
     auto pipelineModule = std::move(*parsedModule);
+    makeNumbaReferenceCountsPlain(*pipelineModule);
     addPythonUdfInterpreterAdapter(*pipelineModule, symbol, argumentTypes, returnType);
     auto interpreterModule = llvm::CloneModule(*pipelineModule);
     internalizePythonUdfModule(*pipelineModule, symbol);

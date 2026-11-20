@@ -44,18 +44,32 @@ import numpy
 from nes_numba_ext.json_value_ext import json_value, result_text
 
 from numba.core.extending import register_jitable
+from numba.cpython.unicode import _cmp_region
+
+
+@register_jitable
+def _frozen_compare(blob, start, end, word):
+    """Compares blob[start:end] with word by code points, as str comparison does, without a slice: -1, 0 or 1."""
+    length = end - start
+    common = _cmp_region(blob, start, word, 0, min(length, len(word)))
+    if common != 0:
+        return common
+    if length == len(word):
+        return 0
+    return -1 if length < len(word) else 1
 
 
 @register_jitable
 def _frozen_contains(frozen, word):
+    """A binary search that compares in the blob: a slice per step would allocate a string and count its references."""
     blob, offsets = frozen
     low, high = 0, len(offsets) - 1
     while low < high:
         middle = (low + high) // 2
-        item = blob[offsets[middle]:offsets[middle + 1]]
-        if item == word:
+        order = _frozen_compare(blob, offsets[middle], offsets[middle + 1], word)
+        if order == 0:
             return True
-        if item < word:
+        if order < 0:
             low = middle + 1
         else:
             high = middle
