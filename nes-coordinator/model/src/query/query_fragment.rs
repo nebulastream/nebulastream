@@ -15,12 +15,10 @@
 //! The query fragment entity and its lifecycle types.
 
 use crate::error::CodedError;
-use crate::identifier::QueryFragmentId;
-use crate::identifier::QueryId;
+use crate::identifier::{QueryFragmentId, QueryId};
 use crate::worker::endpoint::NetworkAddr;
-use sea_orm::Set;
 use sea_orm::entity::prelude::*;
-use sea_orm::{ActiveValue, DerivePartialModel, FromJsonQueryResult, NotSet, QuerySelect};
+use sea_orm::{ActiveValue, DerivePartialModel, FromJsonQueryResult, NotSet, Set};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use thiserror::Error;
@@ -37,9 +35,9 @@ pub enum QueryFragmentError {
 /// A fragment that the controller still has to move to its desired state, with only the columns that the controller reads.
 #[derive(Clone, Debug, PartialEq, Eq, DerivePartialModel)]
 #[sea_orm(entity = "Entity", from_query_result)]
-pub struct ActionableFragment {
+pub struct ManagedFragment {
     pub id: QueryFragmentId,
-    pub query_id: QueryId,
+    pub current_state: QueryFragmentState,
     pub desired_state: DesiredQueryFragmentState,
 }
 
@@ -157,7 +155,7 @@ impl ActiveModelBehavior for ActiveModel {
 /// A terminal transition may also set the start timestamp,
 /// because a short fragment can finish before it was ever observed running.
 /// Whether the step from the current state is legal is checked by a database trigger, not here.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QueryFragmentTransition {
     Pending,
     Started,
@@ -259,10 +257,6 @@ impl ActiveModel {
             self.start_timestamp = Set(Some(start_timestamp));
         }
     }
-
-    pub fn mark_observed(&mut self, at: chrono::DateTime<chrono::Utc>) {
-        self.last_observed_at = Set(Some(at));
-    }
 }
 
 impl Model {
@@ -287,36 +281,12 @@ impl Model {
 }
 
 impl Entity {
-    /// Fragments on the given worker that the worker-removal trigger failed.
-    pub async fn failed_by_worker_removal(
-        conn: &impl ConnectionTrait,
-        host: &NetworkAddr,
-    ) -> Result<Vec<QueryFragmentId>, DbErr> {
-        let rows: Vec<(QueryFragmentId, Option<QueryFragmentError>)> = Entity::find()
-            .select_only()
-            .column(Column::Id)
-            .column(Column::Error)
-            .filter(Column::HostAddr.eq(host.clone()))
-            .filter(Column::CurrentState.eq(QueryFragmentState::Failed))
-            .into_tuple()
-            .all(conn)
-            .await?;
-        Ok(rows
-            .into_iter()
-            .filter(|(_, error)| {
-                // The message that the worker-removal trigger writes.
-                matches!(error, Some(QueryFragmentError::Transport { msg }) if msg == "worker removed")
-            })
-            .map(|(id, _)| id)
-            .collect())
-    }
-
     /// Non-terminal fragments on the given worker with an observed state that differs from their target,
     /// meaning the fragments that the per-worker controller still has to reconcile.
-    pub async fn actionable(
+    pub async fn get_managed(
         conn: &impl ConnectionTrait,
         host: &NetworkAddr,
-    ) -> Result<Vec<ActionableFragment>, DbErr> {
+    ) -> Result<Vec<ManagedFragment>, DbErr> {
         // The desired state is always terminal, so a non-terminal current state already differs from it;
         // the non-terminal filter alone is enough.
         Entity::find()
@@ -326,9 +296,22 @@ impl Entity {
                 QueryFragmentState::Stopped,
                 QueryFragmentState::Failed,
             ]))
-            .into_partial_model::<ActionableFragment>()
+            .into_partial_model::<ManagedFragment>()
             .all(conn)
             .await
+    }
+
+    /// Sets the time at which the given fragments were last observed running to now.
+    pub async fn mark_observed(
+        conn: &impl ConnectionTrait,
+        ids: Vec<QueryFragmentId>,
+    ) -> Result<(), DbErr> {
+        Entity::update_many()
+            .col_expr(Column::LastObservedAt, chrono::Utc::now().into())
+            .filter(Column::Id.is_in(ids))
+            .exec(conn)
+            .await
+            .map(|_| ())
     }
 }
 
@@ -537,9 +520,7 @@ mod tests {
     }
 
     #[proptest(async = "tokio")]
-    async fn actionable_lists_only_non_terminal_fragments_on_the_host(
-        mut req: CreateQueryWithRefs,
-    ) {
+    async fn managed_fragments(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
         let (_, fragments) = setup(&db, &mut req).await;
         let host = fragments[0].host_addr.clone();
@@ -550,17 +531,17 @@ mod tests {
                 .map(|f| f.id)
                 .collect()
         };
-        let ids = |rows: Vec<query_fragment::ActionableFragment>| -> Vec<_> {
+        let ids = |rows: Vec<query_fragment::ManagedFragment>| -> Vec<_> {
             rows.into_iter().map(|row| row.id).collect()
         };
 
-        let rows = query_fragment::Entity::actionable(&db, &host)
+        let rows = query_fragment::Entity::get_managed(&db, &host)
             .await
             .unwrap();
         assert_eq!(ids(rows), on_host(&fragments));
 
         walk_one(&fragments[0], QueryFragmentState::Stopped, &db).await;
-        let rows = query_fragment::Entity::actionable(&db, &host)
+        let rows = query_fragment::Entity::get_managed(&db, &host)
             .await
             .unwrap();
         assert!(!ids(rows).contains(&fragments[0].id));

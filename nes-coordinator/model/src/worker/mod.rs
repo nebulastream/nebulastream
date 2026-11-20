@@ -116,7 +116,7 @@ pub enum WorkerTransition {
 }
 
 impl WorkerTransition {
-    fn state(self) -> WorkerState {
+    pub const fn get_state(self) -> WorkerState {
         match self {
             Self::Active => WorkerState::Active,
             Self::Unreachable => WorkerState::Unreachable,
@@ -130,7 +130,7 @@ impl ActiveModel {
     /// Unlike a fragment's state, no trigger checks the transition, because every state is reachable:
     /// a worker can recover from unreachable, and registering a removed address again resets it to Pending.
     pub fn apply_transition(&mut self, transition: WorkerTransition) {
-        self.current_state = sea_orm::Set(transition.state());
+        self.current_state = sea_orm::Set(transition.get_state());
     }
 }
 
@@ -138,7 +138,7 @@ impl Entity {
     /// The workers that the controller still has to reconcile:
     /// every worker targeted as `Active`,
     /// and every worker with an observed state that has not yet converged on its target.
-    pub async fn actionable(conn: &impl ConnectionTrait) -> Result<Vec<Model>, DbErr> {
+    pub async fn get_managed(conn: &impl ConnectionTrait) -> Result<Vec<Model>, DbErr> {
         Entity::find()
             .filter(
                 Column::DesiredState
@@ -246,15 +246,15 @@ mod tests {
     }
 
     #[proptest(async = "tokio")]
-    async fn actionable_keeps_active_targets_and_unconverged_removals(
+    async fn managed_workers(
         #[strategy(CreateWorker::topology_dag(2..=32))] workers: Vec<CreateWorker>,
     ) {
         let db = Database::for_test().await;
         for w in &workers {
             w.execute(&db).await.unwrap();
         }
-        let actionable = || async { worker::Entity::actionable(&db).await.unwrap() };
-        assert_eq!(actionable().await.len(), workers.len());
+        let managed = || async { worker::Entity::get_managed(&db).await.unwrap() };
+        assert_eq!(managed().await.len(), workers.len());
 
         let target = workers[0].host_addr.clone();
         let removing = DropWorker::new(target.clone())
@@ -262,12 +262,12 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert!(actionable().await.contains(&removing));
+        assert!(managed().await.contains(&removing));
         let found = GetWorker::all().with_host_addr(target.clone());
         assert_eq!(found.execute(&db).await.unwrap(), [removing]);
 
         finish_removal(&db, target.clone()).await;
-        assert!(actionable().await.iter().all(|w| w.host_addr != target));
+        assert!(managed().await.iter().all(|w| w.host_addr != target));
     }
 
     #[proptest(async = "tokio")]
@@ -363,7 +363,7 @@ mod tests {
                 HashSet::from([addr("new-peer", 2)])
             );
             assert!(
-                worker::Entity::actionable(&db)
+                worker::Entity::get_managed(&db)
                     .await
                     .unwrap()
                     .contains(&row)
@@ -445,11 +445,6 @@ mod tests {
         let db = Database::for_test().await;
         let (query, fragments) = setup(&db, &mut req).await;
         let host = fragments[0].host_addr.clone();
-        let failed_by_removal = || async {
-            let failed = query_fragment::Entity::failed_by_worker_removal(&db, &host).await;
-            failed.unwrap().into_iter().collect::<HashSet<_>>()
-        };
-        assert!(failed_by_removal().await.is_empty());
 
         DropWorker::new(host.clone())
             .execute(&db)
@@ -463,10 +458,6 @@ mod tests {
             .await
             .unwrap();
         assert!(!after.is_empty());
-        assert_eq!(
-            failed_by_removal().await,
-            after.iter().map(|f| f.id).collect()
-        );
         let (worker, hosted) = GetWorkerStatus::new(host.clone())
             .execute(&db)
             .await
