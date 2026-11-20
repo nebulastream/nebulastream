@@ -182,7 +182,6 @@ BEGIN
         -- `2026-02-04 18:58:35` sorts before `2026-02-04T18:58:34+00:00`, because a space sorts before `T`.
         stop_timestamp = strftime('%Y-%m-%dT%H:%M:%f', 'now') || '+00:00',
         -- The serde encoding of the model's Transport fragment error.
-        -- The model finds the query_fragments that this trigger failed by this message, so change both together.
         error = json_object('Transport', json_object('msg', 'worker removed'))
     WHERE host_addr = NEW.host_addr
     AND current_state NOT IN ('Completed', 'Stopped', 'Failed');
