@@ -224,6 +224,8 @@ struct SemanticModelConfig
     /// UUID v4 per prompt; i the pair's left text among the prompt's distinct left texts, j the pair among that text's),
     /// instead of `row1`..`rowN` ('ROW', the default). Only changes the ids, and so the tokens they cost on both sides.
     bool uuidPairIds = false;
+    /// `LLM.IMAGE_ENCODING`: the image fields hold file paths (default) or the image bytes in base64.
+    ImageEncoding imageEncoding = ImageEncoding::Path;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

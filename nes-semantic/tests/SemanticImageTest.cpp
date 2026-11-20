@@ -123,7 +123,7 @@ TEST_F(SemanticImageTest, Base64RejectsMalformedText)
 
 TEST_F(SemanticImageTest, DataUrlRoundTrips)
 {
-    const ImageAttachment image{.mime = "image/png", .bytes = allBytes()};
+    const ImageAttachment image{.mime = "image/png", .bytes = allBytes(), .base64 = {}};
     const auto url = imageDataUrl(image);
     EXPECT_TRUE(url.starts_with("data:image/png;base64,"));
     EXPECT_EQ(parseImageDataUrl(url), image);
@@ -186,7 +186,7 @@ TEST_F(SemanticImageTest, TextRequestIsUnchanged)
 TEST_F(SemanticImageTest, ImageRequestHasTextThenImageParts)
 {
     const std::vector images{
-        ImageAttachment{.mime = "image/jpeg", .bytes = "\xff\xd8\xff"}, ImageAttachment{.mime = "image/png", .bytes = allBytes()}};
+        ImageAttachment{.mime = "image/jpeg", .bytes = "\xff\xd8\xff", .base64 = {}}, ImageAttachment{.mime = "image/png", .bytes = allBytes(), .base64 = {}}};
     const auto request = buildChatRequest("gemma4:e2b", "Is the lesion malignant?", images, 0);
     const auto& content = request["messages"][0]["content"];
     ASSERT_TRUE(content.is_array());
@@ -202,6 +202,76 @@ TEST_F(SemanticImageTest, ImageRequestHasTextThenImageParts)
     EXPECT_TRUE(imagesOfChatRequest(buildChatRequest("m", "p", {}, 0)).empty());
 }
 
+TEST_F(SemanticImageTest, EncodingNames)
+{
+    EXPECT_EQ(parseImageEncoding("PATH"), ImageEncoding::Path);
+    EXPECT_EQ(parseImageEncoding("base64"), ImageEncoding::Base64);
+    EXPECT_EQ(parseImageEncoding("url"), std::nullopt);
+    EXPECT_EQ(imageEncodingName(ImageEncoding::Base64), "BASE64");
+    EXPECT_EQ(parseImageEncoding(imageEncodingName(ImageEncoding::Path)), ImageEncoding::Path);
+}
+
+TEST_F(SemanticImageTest, Base64SizeWithoutDecoding)
+{
+    for (size_t length = 0; length < 70; ++length)
+    {
+        const auto bytes = allBytes().substr(0, length);
+        EXPECT_EQ(base64DecodedSize(base64Encode(bytes)), length);
+    }
+    EXPECT_EQ(base64DecodedSize("Zm9v\n"), std::nullopt);
+    EXPECT_EQ(base64DecodedSize("Zm9"), std::nullopt);
+    EXPECT_EQ(base64DecodedSize("Zm9v-_=="), std::nullopt) << "the URL-safe alphabet is not standard base64";
+    EXPECT_EQ(base64DecodedSize("Z==="), std::nullopt);
+    EXPECT_EQ(base64DecodedSize("Zg==Zg=="), std::nullopt);
+    EXPECT_EQ(base64DecodedSize("data:image/png;base64,iVBORw0K"), std::nullopt) << "a data URL is not a base64 field";
+}
+
+TEST_F(SemanticImageTest, MimeTypeFromTheFirstBytes)
+{
+    EXPECT_EQ(imageMimeTypeOfBytes("\xff\xd8\xff\xe0"), "image/jpeg");
+    EXPECT_EQ(imageMimeTypeOfBytes(std::string_view{"\x89PNG\r\n\x1a\n\0\0\0\x0d", 12}), "image/png");
+    EXPECT_EQ(imageMimeTypeOfBytes("RIFF\x24\x01\x01\x01WEBPVP8 "), "image/webp");
+    EXPECT_EQ(imageMimeTypeOfBytes("GIF89a\x01\x01"), "image/gif");
+    EXPECT_EQ(imageMimeTypeOfBytes("RIFF\x24\x01\x01\x01WAVE"), std::nullopt);
+    EXPECT_EQ(imageMimeTypeOfBytes("BM"), std::nullopt);
+    EXPECT_EQ(imageMimeTypeOfBytes(""), std::nullopt);
+}
+
+/// The same image as a file and as base64 gives the same data URL, so 'PATH' and 'BASE64' send the same request bytes.
+TEST_F(SemanticImageTest, Base64FieldGivesTheSameRequestAsTheFile)
+{
+    const auto root = directory.string();
+    const std::string jpeg = std::string{"\xff\xd8\xff\xe0"} + allBytes();
+    writeFile(directory / "images" / "photo.jpg", jpeg);
+    const auto fromFile = loadImage("images/photo.jpg", root, DefaultImageMaxBytes);
+    const auto fromBase64 = imageFromBase64(base64Encode(jpeg), DefaultImageMaxBytes);
+    ASSERT_TRUE(fromFile.has_value()) << fromFile.error();
+    ASSERT_TRUE(fromBase64.has_value()) << fromBase64.error();
+    EXPECT_EQ(fromBase64->mime, "image/jpeg");
+    EXPECT_TRUE(fromBase64->bytes.empty()) << "the base64 text is not decoded";
+    EXPECT_EQ(imageDataUrl(*fromBase64), imageDataUrl(*fromFile));
+    const std::vector viaFile{*fromFile};
+    const std::vector viaBase64{*fromBase64};
+    EXPECT_EQ(buildChatRequest("m", "Cat?", viaBase64, 8).dump(), buildChatRequest("m", "Cat?", viaFile, 8).dump());
+    /// The mock decodes what was sent: the file's bytes.
+    EXPECT_EQ(imagesOfChatRequest(buildChatRequest("m", "Cat?", viaBase64, 0)), viaFile);
+}
+
+TEST_F(SemanticImageTest, UnusableBase64Fields)
+{
+    const std::string png = std::string{"\x89PNG\r\n\x1a\n"} + std::string(92, 'x');
+    ASSERT_TRUE(imageFromBase64(base64Encode(png), 100).has_value());
+    const auto tooLarge = imageFromBase64(base64Encode(png), 99);
+    ASSERT_FALSE(tooLarge.has_value());
+    EXPECT_NE(tooLarge.error().find("100 bytes, more than LLM.IMAGE_MAX_BYTES 99"), std::string::npos) << tooLarge.error();
+    EXPECT_FALSE(imageFromBase64("", 100).has_value());
+    const auto notBase64 = imageFromBase64("images/photo.jpg", 100);
+    ASSERT_FALSE(notBase64.has_value());
+    EXPECT_EQ(notBase64.error().find("photo"), std::string::npos) << "the error never repeats the field: " << notBase64.error();
+    EXPECT_FALSE(imageFromBase64(base64Encode("just some text, not an image"), 100).has_value());
+    EXPECT_FALSE(imageFromBase64(base64Encode(png) + "\n", 100).has_value());
+}
+
 TEST_F(SemanticImageTest, PlaceholdersCountFromOne)
 {
     EXPECT_EQ(imagePlaceholder(0), "[image 1]");
@@ -212,7 +282,7 @@ TEST_F(SemanticImageTest, MockDescribesTheImagesItReceived)
 {
     const MockSemanticBackend mock{"imageinfo", {"LABEL"}};
     const std::string prompt = "Classify\nData: {\"row1\": \"[image 1]\"}";
-    const std::vector images{ImageAttachment{.mime = "image/jpeg", .bytes = "abc"}};
+    const std::vector images{ImageAttachment{.mime = "image/jpeg", .bytes = "abc", .base64 = {}}};
     const auto answer = mock.respond(prompt, images);
     ASSERT_TRUE(answer.has_value());
     const auto parsed = nlohmann::json::parse(answer.value());
@@ -253,6 +323,14 @@ TEST_F(SemanticImageTest, PayloadCarriesImageFieldsOnlyWhenSet)
     EXPECT_EQ(decoded.config.imageRoot, "/data/skin");
     EXPECT_EQ(decoded.config.imageMaxBytes, 1234);
     EXPECT_EQ(decoded.config, payload.config);
+    EXPECT_EQ(encodeSemanticCallPayload(payload).find("\"imageEncoding\""), std::string::npos)
+        << "'PATH' models keep their payload";
+
+    payload.config.imageRoot = "";
+    payload.config.imageEncoding = ImageEncoding::Base64;
+    const auto base64 = decodeSemanticCallPayload(encodeSemanticCallPayload(payload));
+    EXPECT_EQ(base64.config.imageEncoding, ImageEncoding::Base64);
+    EXPECT_EQ(base64.config, payload.config);
 }
 
 }

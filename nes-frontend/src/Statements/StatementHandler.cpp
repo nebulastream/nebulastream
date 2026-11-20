@@ -433,6 +433,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"PROXY_THRESHOLD_FALSE"},
     std::string_view{"PROXY_AUDIT_RATE"},
     std::string_view{"JOIN_PAIR_IDS"},
+    std::string_view{"IMAGE_ENCODING"},
 };
 
 /// Options only a SEM_SCAN or SEM_WINDOW model reads.
@@ -750,7 +751,7 @@ std::vector<std::string> bindImageFields(const CreateSemanticModelStatement& sta
     }
     if (fields.empty())
     {
-        for (const auto option : {std::string_view{"IMAGE_ROOT"}, std::string_view{"IMAGE_MAX_BYTES"}})
+        for (const auto option : {std::string_view{"IMAGE_ROOT"}, std::string_view{"IMAGE_MAX_BYTES"}, std::string_view{"IMAGE_ENCODING"}})
         {
             if (findOption(statement.config, option) != nullptr)
             {
@@ -759,6 +760,17 @@ std::vector<std::string> bindImageFields(const CreateSemanticModelStatement& sta
         }
     }
     return fields;
+}
+
+/// `LLM.IMAGE_ENCODING`: 'PATH' (default) or 'BASE64'.
+ImageEncoding bindImageEncoding(const CreateSemanticModelStatement& statement)
+{
+    const auto name = optionalOption(statement.config, "IMAGE_ENCODING", "PATH");
+    if (const auto encoding = parseImageEncoding(name))
+    {
+        return *encoding;
+    }
+    throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_ENCODING must be 'PATH' or 'BASE64', not '{}'", statement.name, name);
 }
 
 /// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
@@ -800,7 +812,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .inputLabel = optionalOption(statement.config, "INPUT_LABEL", ""),
         .confidenceField = bindConfidenceField(statement.config),
         .proxy = bindProxy(statement),
-        .uuidPairIds = bindUuidPairIds(statement.config)};
+        .uuidPairIds = bindUuidPairIds(statement.config),
+        .imageEncoding = bindImageEncoding(statement)};
 }
 
 /// The OUTPUT clause's fields, followed by LLM.CONFIDENCE_FIELD's if there is one.

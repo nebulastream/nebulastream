@@ -68,8 +68,40 @@ The options travel in the catalog's reflection and in `SEM_CALL`'s payload. The 
 | `LLM.IMAGE_ROOT` | the worker's working directory | the directory relative paths are resolved against |
 | `LLM.IMAGE_MAX_BYTES` | 8388608 (8 MB) | larger files are not sent; their rows get the default value |
 
+| `LLM.IMAGE_ENCODING` | `PATH` | `PATH`: the field holds a file path; `BASE64`: the field holds the image bytes as base64 |
+
 The path is resolved on the worker that runs the call, so the images must be readable there. On a cluster that means a
-shared or replicated directory.
+shared or replicated directory, or `BASE64`.
+
+## Images in the stream: `LLM.IMAGE_ENCODING 'BASE64'`
+
+With `'BASE64' AS LLM.IMAGE_ENCODING` the image field carries the image itself, so the worker needs no access to the
+files. The source writes each image as padded standard base64 (RFC 4648 section 4: `A–Z a–z 0–9 + /`, `=` padding, no
+line breaks, no `data:` prefix) into the VARSIZED field, e.g. one CSV line `id,<base64>` per image; base64 has no comma,
+quote or line break, so it needs no CSV quoting.
+
+```sql
+CREATE SEM_MODEL pets
+INPUT (image VARSIZED)
+OUTPUT (animal VARSIZED)
+SET ('Which animal is shown: cat or dog?' AS LLM.PROMPT, 'cat,dog' AS LLM.OUTPUT_VALUES, ...,
+     'image' AS LLM.IMAGE_FIELDS, 'BASE64' AS LLM.IMAGE_ENCODING);
+```
+
+- **No decoding, no re-encoding** (`imageFromBase64`): `SEM_CALL` checks that the text is padded standard base64
+  (one pass over the characters), computes the decoded size from the length for `LLM.IMAGE_MAX_BYTES`, and decodes only
+  the first 16 characters to read the file signature, which gives the MIME type: JPEG `FF D8 FF`, PNG `89 50 4E 47 0D 0A
+  1A 0A`, WebP `RIFF....WEBP`, GIF `GIF87a`/`GIF89a`. The text then goes into `data:<mime>;base64,<text>` as it is.
+- **The same request as `PATH`:** for a file with the right extension, the data URL is byte for byte the one `PATH`
+  builds from the file, because both are standard base64 of the same bytes (`Base64FieldGivesTheSameRequestAsTheFile`).
+- **Unusable values** get the default, as in `PATH` mode: empty, not base64 (a path, URL-safe base64, a line break,
+  a `data:` URL), larger than `IMAGE_MAX_BYTES` once decoded, or not one of the four image signatures. The warning never
+  repeats the field.
+- `IMAGE_ROOT` is rejected with `BASE64`: no file is read, and the catalog rejects options that do nothing.
+  `IMAGE_ENCODING` without `IMAGE_FIELDS` is rejected too. The payload and the catalog carry the option only for
+  `BASE64`, so `PATH` models keep their payload and EXPLAIN hash.
+- **Cost:** the tuple carries about 4/3 of the image size in the VARSIZED field (a 47 KB JPEG is a 63 KB field) instead
+  of a path of a few dozen bytes. Measured on 2,000 pet photos in `sem-proxy-REPORT.md` (12 Nov).
 
 ## Tests
 
@@ -83,6 +115,12 @@ shared or replicated directory.
   - payload round trip, with no change for text models.
 - **`SemanticModelCatalogTest.ImageFieldsAreInputsOfAnUnbatchedMapOrFilterModel`:** validation and reflection.
 - **`SemanticMapStatementTest.ImageFieldsNameInputFields`:** binding the options and their error messages.
+- **`SemanticImageTest` for `BASE64`:** encoding names, the decoded size without decoding, the MIME signatures, the same
+  request as from the file, and every rejection.
+- **`nes-systests/semantic/SemanticImageBase64.test`:** the same three images as base64 in a CSV file
+  (`testdata/small/semantic/images_base64.csv`) give the same mock answers as from disk; a 100,000-byte image in a
+  133,336-character field; the placeholder in the prompt; `IMAGE_MAX_BYTES`; a path and a non-image as unusable values;
+  SEM_FILTER.
 - **`nes-systests/semantic/SemanticImage.test`:** SEM_MAP and SEM_FILTER end to end against the mock, covering:
   - the data URL round trip;
   - the placeholder in the prompt;

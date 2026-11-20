@@ -138,7 +138,7 @@ std::expected<ImageAttachment, std::string> loadImage(const std::string_view pat
     {
         return std::unexpected{fmt::format("cannot read '{}'", file.string())};
     }
-    return ImageAttachment{.mime = std::move(mime).value(), .bytes = std::move(bytes)};
+    return ImageAttachment{.mime = std::move(mime).value(), .bytes = std::move(bytes), .base64 = {}};
 }
 
 std::string base64Encode(const std::string_view bytes)
@@ -222,7 +222,98 @@ std::optional<std::string> base64Decode(const std::string_view text)
 
 std::string imageDataUrl(const ImageAttachment& image)
 {
+    if (!image.base64.empty())
+    {
+        return fmt::format("{}{}{}{}", DataUrlPrefix, image.mime, Base64Marker, image.base64);
+    }
     return fmt::format("{}{}{}{}", DataUrlPrefix, image.mime, Base64Marker, base64Encode(image.bytes));
+}
+
+std::optional<ImageEncoding> parseImageEncoding(const std::string_view name)
+{
+    std::string upper;
+    upper.reserve(name.size());
+    std::ranges::transform(
+        name, std::back_inserter(upper), [](const unsigned char character) { return static_cast<char>(std::toupper(character)); });
+    if (upper == "PATH")
+    {
+        return ImageEncoding::Path;
+    }
+    if (upper == "BASE64")
+    {
+        return ImageEncoding::Base64;
+    }
+    return std::nullopt;
+}
+
+std::string_view imageEncodingName(const ImageEncoding encoding)
+{
+    return encoding == ImageEncoding::Base64 ? "BASE64" : "PATH";
+}
+
+std::optional<size_t> base64DecodedSize(const std::string_view text)
+{
+    if (text.size() % 4 != 0)
+    {
+        return std::nullopt;
+    }
+    size_t padding = 0;
+    if (!text.empty() && text.back() == '=')
+    {
+        padding = text[text.size() - 2] == '=' ? 2 : 1;
+    }
+    const auto body = text.substr(0, text.size() - padding);
+    if (!std::ranges::all_of(body, [](const char character) { return base64Value(character) >= 0; }))
+    {
+        return std::nullopt;
+    }
+    return text.size() / 4 * 3 - padding;
+}
+
+std::optional<std::string> imageMimeTypeOfBytes(const std::string_view head)
+{
+    if (head.starts_with("\xff\xd8\xff"))
+    {
+        return "image/jpeg";
+    }
+    if (head.starts_with("\x89PNG\r\n\x1a\n"))
+    {
+        return "image/png";
+    }
+    if (head.size() >= 12 && head.starts_with("RIFF") && head.substr(8, 4) == "WEBP")
+    {
+        return "image/webp";
+    }
+    if (head.starts_with("GIF87a") || head.starts_with("GIF89a"))
+    {
+        return "image/gif";
+    }
+    return std::nullopt;
+}
+
+std::expected<ImageAttachment, std::string> imageFromBase64(std::string text, const size_t maxBytes)
+{
+    if (text.empty())
+    {
+        return std::unexpected{std::string{"the base64 image is empty"}};
+    }
+    const auto size = base64DecodedSize(text);
+    if (!size)
+    {
+        return std::unexpected{fmt::format("the image field ({} characters) is not padded standard base64", text.size())};
+    }
+    if (*size > maxBytes)
+    {
+        return std::unexpected{fmt::format("the base64 image has {} bytes, more than LLM.IMAGE_MAX_BYTES {}", *size, maxBytes)};
+    }
+    /// 16 characters are 12 bytes, enough for every signature; a shorter text is decoded whole.
+    const auto head = base64Decode(std::string_view{text}.substr(0, std::min<size_t>(text.size(), 16)));
+    auto mime = head ? imageMimeTypeOfBytes(*head) : std::nullopt;
+    if (!mime)
+    {
+        return std::unexpected{std::string{"the base64 image is not a JPEG, PNG, WebP or GIF (by its first bytes)"}};
+    }
+    return ImageAttachment{.mime = std::move(mime).value(), .bytes = {}, .base64 = std::move(text)};
 }
 
 std::optional<ImageAttachment> parseImageDataUrl(const std::string_view url)
@@ -242,7 +333,7 @@ std::optional<ImageAttachment> parseImageDataUrl(const std::string_view url)
         return std::nullopt;
     }
     return ImageAttachment{
-        .mime = std::string{url.substr(DataUrlPrefix.size(), marker - DataUrlPrefix.size())}, .bytes = std::move(bytes).value()};
+        .mime = std::string{url.substr(DataUrlPrefix.size(), marker - DataUrlPrefix.size())}, .bytes = std::move(bytes).value(), .base64 = {}};
 }
 
 std::string imagePlaceholder(const size_t index)

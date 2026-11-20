@@ -86,6 +86,8 @@ struct
     std::optional<std::string> proxy;
     /// Optional on read: catalogs reflected before LLM.JOIN_PAIR_IDS existed carry none, which means ROW.
     std::optional<bool> uuidPairIds;
+    /// Only written for 'BASE64'.
+    std::optional<std::string> imageEncoding;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -197,6 +199,10 @@ void validateImageFields(const std::string& name, const SemanticModelConfig& con
 {
     if (config.imageFields.empty())
     {
+        if (config.imageEncoding != ImageEncoding::Path)
+        {
+            throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_ENCODING requires LLM.IMAGE_FIELDS", name);
+        }
         return;
     }
     for (const auto& field : config.imageFields)
@@ -236,6 +242,12 @@ void validateImageFields(const std::string& name, const SemanticModelConfig& con
     if (config.imageMaxBytes == 0)
     {
         throw InvalidSemanticModel("Semantic model '{}': LLM.IMAGE_MAX_BYTES must be at least 1", name);
+    }
+    /// No file is read in base64 mode, so a root would do nothing; the catalog rejects options that do nothing.
+    if (config.imageEncoding == ImageEncoding::Base64 && !config.imageRoot.empty())
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': LLM.IMAGE_ROOT does nothing with LLM.IMAGE_ENCODING 'BASE64' (no file is read); remove it", name);
     }
 }
 
@@ -622,6 +634,8 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
             .confidenceField = std::make_optional(config.confidenceField),
             .proxy = config.proxy ? std::optional{encodeSemanticProxyConfig(*config.proxy)} : std::nullopt,
             .uuidPairIds = std::make_optional(config.uuidPairIds),
+            .imageEncoding = config.imageEncoding == ImageEncoding::Path ? std::nullopt
+                                                                         : std::optional{std::string{imageEncodingName(config.imageEncoding)}},
             .inputs = std::make_optional(model.getSchema().inputs),
             .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -673,7 +687,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .inputLabel = std::move(reflected.inputLabel).value_or(""),
         .confidenceField = std::move(reflected.confidenceField).value_or(""),
         .proxy = reflected.proxy ? std::optional{decodeSemanticProxyConfig(*reflected.proxy)} : std::nullopt,
-        .uuidPairIds = reflected.uuidPairIds.value_or(false)};
+        .uuidPairIds = reflected.uuidPairIds.value_or(false),
+        .imageEncoding = parseImageEncoding(reflected.imageEncoding.value_or("PATH")).value_or(ImageEncoding::Path)};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

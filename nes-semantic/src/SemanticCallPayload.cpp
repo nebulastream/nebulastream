@@ -120,6 +120,8 @@ struct EncodedPayload
     std::optional<int64_t> proxyRole;
     /// Only written for LLM.JOIN_PAIR_IDS 'UUID', for the same reason.
     std::optional<bool> uuidPairIds;
+    /// Only written for 'BASE64', so path models keep their payload.
+    std::optional<std::string> imageEncoding;
 };
 
 /// The encoded form comes from a plan we generated ourselves, but it has been through
@@ -239,7 +241,9 @@ std::string encodeSemanticCallPayload(const SemanticCallPayload& payload)
                                   : std::nullopt,
             .proxyRole = payload.proxyRole == SemanticCallPayload::ProxyRole::NONE ? std::nullopt
                                                                                   : std::optional{static_cast<int64_t>(payload.proxyRole)},
-            .uuidPairIds = config.uuidPairIds ? std::optional{true} : std::nullopt});
+            .uuidPairIds = config.uuidPairIds ? std::optional{true} : std::nullopt,
+            .imageEncoding = config.imageEncoding == ImageEncoding::Path ? std::nullopt
+                                                                         : std::optional{std::string{imageEncodingName(config.imageEncoding)}}});
 }
 
 SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
@@ -299,7 +303,8 @@ SemanticCallPayload decodeSemanticCallPayload(const std::string_view encoded)
                                        .thresholdFalse = value.proxy->thresholdFalse,
                                        .auditRate = value.proxy->auditRate}}
                                  : std::nullopt,
-            .uuidPairIds = value.uuidPairIds.value_or(false)},
+            .uuidPairIds = value.uuidPairIds.value_or(false),
+            .imageEncoding = parseImageEncoding(value.imageEncoding.value_or("PATH")).value_or(ImageEncoding::Path)},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields),
         .join = value.join.value_or(false),

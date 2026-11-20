@@ -363,6 +363,27 @@ TEST_F(SemanticModelCatalogTest, ImageFieldsAreInputsOfAnUnbatchedMapOrFilterMod
     rejected("batched", [](SemanticModelConfig& changed) { changed.batchSize = 4; });
     rejected("fused", [](SemanticModelConfig& changed) { changed.fusion = true; });
     rejected("no bytes allowed", [](SemanticModelConfig& changed) { changed.imageMaxBytes = 0; });
+    rejected("a root with base64", [](SemanticModelConfig& changed) { changed.imageEncoding = ImageEncoding::Base64; });
+    rejected(
+        "base64 without image fields",
+        [](SemanticModelConfig& changed)
+        {
+            changed.imageFields = {};
+            changed.imageRoot = "";
+            changed.imageEncoding = ImageEncoding::Base64;
+        });
+    {
+        auto base64 = config;
+        base64.imageRoot = "";
+        base64.imageEncoding = ImageEncoding::Base64;
+        SemanticModelCatalog catalog;
+        catalog.registerModel("lesion", base64, schema);
+        const ReflectionContext context;
+        const auto model = catalog.load("lesion");
+        const auto roundTripped = context.unreflect<RegisteredSemanticModel>(context.reflect(model));
+        EXPECT_EQ(roundTripped, model);
+        EXPECT_EQ(roundTripped.getConfig().imageEncoding, ImageEncoding::Base64);
+    }
 }
 
 TEST_F(SemanticModelCatalogTest, LabelModeIsOneUnbatchedUnfusedTextStep)
