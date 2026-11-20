@@ -28,9 +28,11 @@ final class Steps {
         return steps;
     }
 
+    /** A step that rebuilds the plan (no rules): its result shares identical subtrees again (see Sharing). */
     RelNode add(String name, String origin, RelNode plan) {
-        add(name, origin, RelOptUtil.toString(plan), detailed ? PlanGraph.of(plan, node -> false) : "", List.of());
-        return plan;
+        RelNode sharedPlan = Sharing.share(plan);
+        add(name, origin, RelOptUtil.toString(sharedPlan), detailed ? PlanGraph.of(sharedPlan, node -> false) : "", List.of());
+        return sharedPlan;
     }
 
     boolean detailed() {
