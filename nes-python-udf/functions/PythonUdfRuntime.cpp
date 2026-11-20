@@ -28,12 +28,14 @@
 #include <cstring>
 #include <exception>
 #include <limits>
+#include <memory>
 #include <mutex>
 #include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <vector>
 #include <strings.h>
 #include <unistd.h>
 #include <unwind.h>
@@ -77,9 +79,15 @@ void* allocatePythonUdfMemory(const size_t size)
 }
 }
 
+namespace
+{
+void resetNumbaScratch();
+}
+
 void activatePythonUdfArena(Arena* arena)
 {
     setCurrentPythonUdfArena(arena);
+    resetNumbaScratch();
 }
 
 /// These symbols implement the subset of Codon's runtime allocation ABI supported by NES. They are resolved both by the
@@ -113,78 +121,120 @@ extern "C" void NRT_MemSys_set_allocator(void* (*malloc)(size_t), void* (*reallo
 
 namespace
 {
-/// Numba's runtime (NRT) allocates each object with malloc and frees it when its reference count becomes zero. During a UDF
-/// call, NES gives NRT memory of the call's arena instead, as it gives Codon: an allocation is a pointer increment, a free does
-/// nothing. A header before each block holds its size, for realloc, and whether libc allocated it (no active arena), for free.
-/// Numba's typed dict and list call libc directly and are not affected.
+/// Numba's runtime (NRT) allocates each object with malloc and frees it when its reference count becomes zero. NES gives it a
+/// scratch region of the thread instead, which activatePythonUdfArena resets at the start of each UDF call: an allocation is a
+/// pointer increment and a free does nothing. This is correct because no NRT object outlives a call: the entry copies a
+/// VARSIZED result into memory from seq_alloc, and NES copies that right after the call. Unlike the NES arena (E72), the
+/// region is reused by every call, so it stays in the cache and needs no buffers from the buffer manager. Numba's typed dict
+/// and list call libc directly and are not affected. A header before each block holds its size, for realloc.
 struct alignas(std::max_align_t) NumbaBlockHeader
 {
     size_t size;
-    bool fromLibc;
 };
+
+class NumbaScratch
+{
+public:
+    void* allocate(const size_t size)
+    {
+        const auto needed = alignUp(sizeof(NumbaBlockHeader) + size);
+        if (needed > ChunkSize)
+        {
+            large.emplace_back(std::make_unique<std::byte[]>(needed));
+            return finish(large.back().get(), size);
+        }
+        if (chunks.empty() || offset + needed > ChunkSize)
+        {
+            ++chunk;
+            if (chunk >= chunks.size())
+            {
+                chunks.emplace_back(std::make_unique<std::byte[]>(ChunkSize));
+                chunk = chunks.size() - 1;
+            }
+            offset = 0;
+        }
+        auto* block = chunks[chunk].get() + offset;
+        offset += needed;
+        return finish(block, size);
+    }
+
+    void* reallocate(void* memory, const size_t size)
+    {
+        if (memory == nullptr)
+        {
+            return allocate(size);
+        }
+        auto* header = static_cast<NumbaBlockHeader*>(memory) - 1;
+        if (size <= header->size)
+        {
+            header->size = size;
+            return memory;
+        }
+        /// The last block of the current chunk grows in place if the chunk has room.
+        auto* const chunkBegin = chunks.empty() ? nullptr : chunks[chunk].get();
+        auto* const blockBegin = reinterpret_cast<std::byte*>(header);
+        const auto oldNeeded = alignUp(sizeof(NumbaBlockHeader) + header->size);
+        const auto newNeeded = alignUp(sizeof(NumbaBlockHeader) + size);
+        if (chunkBegin != nullptr && blockBegin + oldNeeded == chunkBegin + offset && blockBegin - chunkBegin + newNeeded <= ChunkSize)
+        {
+            offset = static_cast<size_t>(blockBegin - chunkBegin) + newNeeded;
+            header->size = size;
+            return memory;
+        }
+        auto* grown = allocate(size);
+        std::memcpy(grown, memory, header->size);
+        return grown;
+    }
+
+    /// Frees the large blocks and makes the chunks free again; keeps the chunks for the next call.
+    void reset()
+    {
+        large.clear();
+        chunk = 0;
+        offset = 0;
+    }
+
+private:
+    static constexpr size_t ChunkSize = 256 * 1024;
+
+    static size_t alignUp(const size_t size)
+    {
+        constexpr auto mask = alignof(std::max_align_t) - 1;
+        return (size + mask) & ~mask;
+    }
+
+    static void* finish(std::byte* block, const size_t size)
+    {
+        auto* header = reinterpret_cast<NumbaBlockHeader*>(block);
+        header->size = size;
+        return header + 1;
+    }
+
+    std::vector<std::unique_ptr<std::byte[]>> chunks;
+    std::vector<std::unique_ptr<std::byte[]>> large;
+    size_t chunk = 0;
+    size_t offset = 0;
+};
+
+thread_local NumbaScratch numbaScratch;
 
 void* numbaAllocate(const size_t size)
 {
-    NumbaBlockHeader* header = nullptr;
-    const bool fromLibc = currentPythonUdfArena == nullptr || persistentPythonUdfAllocation;
-    if (fromLibc)
-    {
-        header = static_cast<NumbaBlockHeader*>(std::malloc(sizeof(NumbaBlockHeader) + size));
-        if (header == nullptr)
-        {
-            return nullptr;
-        }
-    }
-    else
-    {
-        header = static_cast<NumbaBlockHeader*>(allocatePythonUdfMemory(sizeof(NumbaBlockHeader) + size));
-    }
-    header->size = size;
-    header->fromLibc = fromLibc;
-    return header + 1;
+    return numbaScratch.allocate(size);
 }
 
-void numbaFree(void* memory)
+void numbaFree(void*)
 {
-    if (memory == nullptr)
-    {
-        return;
-    }
-    auto* header = static_cast<NumbaBlockHeader*>(memory) - 1;
-    if (header->fromLibc)
-    {
-        std::free(header);
-    }
+}
+
+void resetNumbaScratch()
+{
+    numbaScratch.reset();
 }
 
 void* numbaReallocate(void* memory, const size_t size)
 {
-    if (memory == nullptr)
-    {
-        return numbaAllocate(size);
-    }
-    auto* header = static_cast<NumbaBlockHeader*>(memory) - 1;
-    if (header->fromLibc)
-    {
-        auto* moved = static_cast<NumbaBlockHeader*>(std::realloc(header, sizeof(NumbaBlockHeader) + size));
-        if (moved == nullptr)
-        {
-            return nullptr;
-        }
-        moved->size = size;
-        return moved + 1;
-    }
-    if (size <= header->size)
-    {
-        header->size = size;
-        return memory;
-    }
-    auto* grown = numbaAllocate(size);
-    if (grown != nullptr)
-    {
-        std::memcpy(grown, memory, header->size);
-    }
-    return grown;
+    return numbaScratch.reallocate(memory, size);
 }
 }
 
