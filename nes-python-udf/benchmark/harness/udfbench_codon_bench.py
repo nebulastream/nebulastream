@@ -57,10 +57,35 @@ def main():
     parser.add_argument("--scratch", required=True, help="directory for the systest working directory and output")
     parser.add_argument("--test", default=TEST, help="the benchmark test (default: UdfBenchCodonNumba.test); for "
                         "UdfBenchBaseline.test, the record of each source is its baseline without a UDF")
+    parser.add_argument("--udfs", help="comma-separated UDF names: run only their CREATE FUNCTION statements and queries")
     arguments = parser.parse_args()
     if git("status", "--porcelain", "--untracked-files=no"):
         raise SystemExit("There are uncommitted changes. Commit them first, so that the recorded commit says what was measured.")
 
+    if arguments.udfs:
+        arguments.test = filtered_test(arguments.test, arguments.udfs.split(","))
+    try:
+        run(arguments)
+    finally:
+        if arguments.udfs:
+            os.remove(arguments.test)
+
+
+def filtered_test(path, udfs):
+    """A copy of the test, in the same directory (systest needs it in the repository), with only the UDFs in udfs."""
+    test = open(path).read()
+    keep = lambda line: not re.match(r"(CREATE FUNCTION|SELECT) ", line) or any(re.search(rf"\b{udf}_(inline|adapted|numba)\b", line) for udf in udfs)
+    blocks = test.split("\n\n")
+    # A query block (SELECT, ----, expected rows) goes as a whole; in other blocks, only the CREATE FUNCTION lines are filtered.
+    kept = [block for block in blocks if not block.startswith("SELECT ") or keep(block.splitlines()[0])]
+    kept = ["\n".join(line for line in block.splitlines() if keep(line)) for block in kept]
+    filtered = os.path.join(os.path.dirname(path), "TmpFiltered_" + os.path.basename(path))
+    with open(filtered, "w") as output:
+        output.write("\n\n".join(block for block in kept if block.strip()) + "\n")
+    return filtered
+
+
+def run(arguments):
     run_dir = os.path.join(arguments.scratch, arguments.experiment)
     shutil.rmtree(run_dir, ignore_errors=True)
     os.makedirs(run_dir + "/work")
