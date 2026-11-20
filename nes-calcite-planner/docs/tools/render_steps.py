@@ -44,6 +44,9 @@ pre { background: #f9fafb; padding: .6rem; border-radius: 6px; overflow-x: auto;
 .rules ol { min-width: 15rem; max-width: 18rem; margin: 0; padding-left: 1.5rem; font-size: .85rem; }
 .rules li { cursor: pointer; padding: .15rem .3rem; border-radius: 4px; }
 .rules li.active { background: #fee2e2; font-weight: 600; }
+.rules li[title]:not([title=""]), .rules b[title]:not([title=""]) { text-decoration: underline dotted #94a3b8; }
+.rules .what { max-width: 48rem; margin: .2rem 0 .5rem; font-size: .85rem; color: #475569; }
+.rules .what:empty { display: none; }
 .rules .view { flex: 1; min-width: 0; }
 .nav button { margin-right: .3rem; }
 .legend span { display: inline-block; padding: .1rem .5rem; border-radius: 4px; margin-right: .4rem; border: 1px solid #9ca3af; font-size: .85rem; }
@@ -118,6 +121,74 @@ def origin_badge(origin):
     return '<span class="badge %s">%s</span>' % (css, html.escape(kind))
 
 
+## What each rule does, shown when the pointer is on its name. Keyed by the rule's name without its arguments (the text
+## before "(" or ":"). Calcite's rules: org.apache.calcite.rel.rules (CoreRules); ours: package nes.calcite.
+RULE_DESCRIPTIONS = {
+    # Subqueries and table functions
+    "SubQueryRemoveRule": "Calcite. Replaces an IN, EXISTS or scalar subquery in a filter, projection or join condition"
+        " with a join (with a correlation where the subquery reads the outer row). RelDecorrelator then removes the correlation.",
+    "NesModelInferenceRule": "Ours. Replaces TABLE(MODEL_INFERENCE(...)) with our inference operator, which appends the outputs of the model to each row.",
+    "NesAnonymousSourceRule": "Ours. Replaces a source table function (e.g. TABLE(FILE(...))) with an anonymous source, a table scan that reads the source with the given options.",
+    # Set operations and DISTINCT
+    "UnionToDistinctRule": "Calcite. Replaces UNION (without ALL) with UNION ALL and an aggregation that removes duplicate rows.",
+    "IntersectToDistinctRule": "Calcite. Replaces INTERSECT with UNION ALL and an aggregation that counts each row per input and keeps the rows that every input has.",
+    "MinusToDistinctRule": "Calcite. Replaces EXCEPT with UNION ALL and an aggregation that counts each row per input and keeps the rows that only the first input has.",
+    "AggregateFilterToCaseRule": "Calcite. Replaces an aggregation with FILTER (WHERE c) with an aggregation of CASE WHEN c THEN x END. Our aggregations have no FILTER clause.",
+    "AggregateExpandDistinctAggregatesRule": "Calcite. Replaces COUNT(DISTINCT x) and other DISTINCT aggregations with a grouping by x, then the aggregation."
+        " It computes several of them separately and joins the results. Our aggregations have no DISTINCT.",
+    # Joins
+    "NesOrFactorsRule": "Ours (OrFactors). Above a join: a condition that every OR branch has becomes a condition of its own"
+        " ((A AND B) OR (A AND C) becomes A AND (B OR C)), so that a join key in it makes a hash join possible."
+        " If each branch has conditions on one input, their OR is added too, so that it can move below the join.",
+    "FilterIntoJoinRule": "Calcite. Moves the conditions of a filter above a join into the join: a condition on one input goes below the join,"
+        " a condition on both inputs becomes part of the join condition.",
+    "JoinConditionPushRule": "Calcite. Moves the conditions of a join condition that read only one input below the join, as a filter on that input.",
+    "JoinToMultiJoinRule": "Calcite. Combines a tree of inner joins into one MultiJoin with all inputs and conditions, for the join reordering. It applies once per join.",
+    "LoptOptimizeJoinRule": "Calcite (MULTI_JOIN_OPTIMIZE). Replaces a MultiJoin with a tree of joins in a new order: a heuristic that joins inputs"
+        " connected by a condition before cross products and prefers small intermediate results.",
+    "NesSingleRowOuterJoinRule": "Ours (GlobalWindowRules, finite inputs). Replaces an outer join without a condition, whose other side always has exactly one row"
+        " (e.g. an aggregation without GROUP BY), with an inner join. They have the same result, and our joins need no padding then.",
+    # Filters and projections
+    "FilterMergeRule": "Calcite. Combines a filter directly above another filter into one filter with both conditions.",
+    "FilterProjectTransposeRule": "Calcite. Moves a filter below a projection: the condition then reads the input columns instead of the projected expressions."
+        " Filters get nearer to the sources, which then send fewer rows.",
+    "FilterSetOpTransposeRule": "Calcite. Moves a filter below a UNION ALL: each input gets the filter.",
+    "ProjectMergeRule": "Calcite. Combines a projection directly above another projection into one projection.",
+    "ProjectRemoveRule": "Calcite. Removes a projection that passes on all columns of its input unchanged.",
+    "ProjectSetOpTransposeRule": "Calcite. Moves a projection below a UNION ALL: each input gets the projection, so that each sends only the columns that the query reads.",
+    "AggregateProjectMergeRule": "Calcite. Removes a projection below an aggregation that only selects columns: the aggregation then reads the columns directly.",
+    "NesProjectWindowTransposeRule": "Ours (ProjectWindowTransposeRule). Moves a projection that only selects columns below an OVER window (a Calcite Window operator).",
+    "NesFilterWindowTransposeRule": "Ours (FilterWindowTransposeRule). Moves the conditions of a filter above a window aggregation that read only its group keys"
+        " below the window table function (TUMBLE/HOP). Conditions on the window columns or the aggregates stay above.",
+    # Windows
+    "NesWindowAggregateRule": "Ours (WindowAggregateRule). Replaces an aggregation grouped by window_start or window_end of TUMBLE/HOP with our"
+        " NesWindowAggregate: a projection below computes the keys and arguments as columns, a projection above restores the order of the columns.",
+    "NesGlobalAggregateRule": "Ours (GlobalWindowRules, finite inputs). Replaces an aggregation without a window with a NesWindowAggregate with a GLOBAL window:"
+        " one window over the whole input, which closes at the end of the input.",
+    "NesWindowJoinRule": "Ours (WindowJoinRule). Replaces a join of two windowed inputs (same TUMBLE/HOP, left.window_start = right.window_start)"
+        " with our NesWindowJoin. It also selects the implementation: a hash join if the condition has a left field = right field, else a nested-loop join.",
+    "NesGlobalJoinRule": "Ours (GlobalWindowRules, finite inputs). Replaces a join without a window with a NesWindowJoin with a GLOBAL window:"
+        " one window over the whole inputs, which closes at the end of the inputs.",
+    # Physical operators (VolcanoPlanner): the text after the colon explains each conversion.
+    "NesSourceScanRule": "Ours (NesPhysical). Converts a physical source: a SourceScan reads it, a Scan parses its rows.",
+    "NesNetworkSourceRule": "Ours (NesPhysical). Converts the receiving end of a network channel: a NetworkSource, and a Scan that reads the native format.",
+    "NesWatermarkAssignerRule": "Ours (NesPhysical). Converts a watermark assigner, which sets the watermarks from an event-time field.",
+    "NesSelectionRule": "Ours (NesPhysical). Converts a filter into a Selection.",
+    "NesProjectionRule": "Ours (NesPhysical). Converts a projection: a Map computes the new fields, a Retain keeps the projected fields.",
+    "NesUnionRule": "Ours (NesPhysical). Converts a UNION ALL: the operators above it are copied into the pipeline of each input.",
+    "NesWindowRule": "Ours (NesPhysical). Converts a window aggregation: a WindowBuild ends the pipeline of its input, a WindowProbe starts a pipeline and emits the closed windows.",
+    "NesJoinRule": "Ours (NesPhysical). Converts a window join: a JoinBuild per side ends its pipeline, a JoinProbe starts a pipeline and joins the closed windows.",
+    "NesInferModelRule": "Ours (NesPhysical). Converts a model inference into an InferModel operator.",
+    "NesPartsRule": "Ours (NesPhysical). Converts the parts of a placed plan, one per worker.",
+}
+
+
+def rule_title(rule):
+    name = rule["rule"]
+    base = name.split("(")[0].split(":")[0]
+    return html.escape(RULE_DESCRIPTIONS.get(base, ""), quote=True)
+
+
 def rule_badge(rule):
     return '<span class="badge %s">%s</span>' % (("ours", "ours") if rule.get("ours") else ("calcite", "Calcite"))
 
@@ -140,12 +211,13 @@ def step_html(step, previous_plan, last):
     parts.append("<details><summary>text</summary><pre>%s</pre></details>" % html.escape(step["plan"]))
     if rules:
         parts.append('<h4>Rule by rule</h4><div class="rules" data-index="0"><ol>')
-        parts.extend("<li>%s%s</li>" % (rule_badge(rule), html.escape(rule["rule"])) for rule in rules)
+        parts.extend('<li title="%s">%s%s</li>' % (rule_title(rule), rule_badge(rule), html.escape(rule["rule"])) for rule in rules)
         parts.append('</ol><div class="view"><div class="nav"><button class="prev">&larr; previous rule</button>'
                      '<button class="next">next rule &rarr;</button></div>')
         for i, rule in enumerate(rules):
-            parts.append('<div class="rule"%s><p><b>%d. %s%s</b></p>%s<details><summary>text</summary><pre>%s</pre></details></div>' % (
-                "" if i == 0 else " hidden", i + 1, rule_badge(rule), html.escape(rule["rule"]), graph(rule["dot"]), html.escape(rule["plan"])))
+            parts.append('<div class="rule"%s><p><b title="%s">%d. %s%s</b></p><p class="what">%s</p>%s<details><summary>text</summary><pre>%s</pre></details></div>' % (
+                "" if i == 0 else " hidden", rule_title(rule), i + 1, rule_badge(rule), html.escape(rule["rule"]), rule_title(rule),
+                graph(rule["dot"]), html.escape(rule["plan"])))
         parts.append("</div></div>")
     parts.append("</div></details>")
     return "".join(parts)

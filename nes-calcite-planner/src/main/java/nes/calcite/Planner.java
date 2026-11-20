@@ -83,21 +83,29 @@ public final class Planner {
         .addRuleInstance(AnonymousSources.RULE)
         .build();
 
-    private static final HepProgram PREPARE_AND_REWRITE_WINDOWS = HepProgram.builder()
-        /// Distinct UNION, INTERSECT and EXCEPT become UNION ALL plus aggregations (Calcite's stock rewrites).
+    /// Distinct UNION, INTERSECT and EXCEPT become UNION ALL plus aggregations (Calcite's stock rewrites). Those count
+    /// with COUNT() FILTER (WHERE ...), which our aggregations lack: COUNT(CASE WHEN ... THEN 1 END) instead. Our
+    /// aggregations have no DISTINCT: COUNT(DISTINCT x) becomes a grouping by x, then COUNT(x); several of them are
+    /// computed separately and joined (the variant without joins needs GROUPING SETS).
+    private static final HepProgram SET_OPERATIONS_AND_DISTINCT = HepProgram.builder()
         .addRuleCollection(List.of(CoreRules.UNION_TO_DISTINCT, CoreRules.INTERSECT_TO_DISTINCT, CoreRules.MINUS_TO_DISTINCT))
-        /// Those count with COUNT() FILTER (WHERE ...), which our aggregations lack: COUNT(CASE WHEN ... THEN 1 END) instead.
         .addRuleInstance(CoreRules.AGGREGATE_FILTER_TO_CASE)
-        /// Our aggregations have no DISTINCT: COUNT(DISTINCT x) becomes a grouping by x, then COUNT(x); several of them
-        /// are computed separately and joined (the variant without joins needs GROUPING SETS).
         .addRuleInstance(CoreRules.AGGREGATE_EXPAND_DISTINCT_AGGREGATES_TO_JOIN)
-        /// Conditions repeated in every OR branch (e.g. a join key) become conditions of their own (OrFactors).
+        .build();
+
+    /// Conditions repeated in every OR branch (e.g. a join key) become conditions of their own (OrFactors); filters move
+    /// into the joins; Calcite's stock heuristic join reordering joins connected tables before cross products.
+    private static final HepProgram JOINS = HepProgram.builder()
         .addRuleInstance(OrFactors.RULE)
-        /// Join order: Calcite's stock heuristic join reordering, which joins connected tables before cross products.
         .addRuleCollection(List.of(CoreRules.FILTER_INTO_JOIN, CoreRules.JOIN_CONDITION_PUSH))
         .addMatchOrder(org.apache.calcite.plan.hep.HepMatchOrder.BOTTOM_UP)
         .addRuleInstance(CoreRules.JOIN_TO_MULTI_JOIN)
         .addRuleInstance(CoreRules.MULTI_JOIN_OPTIMIZE)
+        .build();
+
+    /// Filters and projections merged and pushed down, so that windowed aggregations sit directly on TUMBLE/HOP.
+    private static final HepProgram MERGE = HepProgram.builder()
+        .addMatchOrder(org.apache.calcite.plan.hep.HepMatchOrder.BOTTOM_UP)
         .addRuleCollection(List.of(
             CoreRules.FILTER_MERGE,
             CoreRules.FILTER_PROJECT_TRANSPOSE,
@@ -106,6 +114,10 @@ public final class Planner {
             CoreRules.PROJECT_REMOVE,
             CoreRules.AGGREGATE_PROJECT_MERGE,
             ProjectWindowTransposeRule.INSTANCE))
+        .build();
+
+    private static final HepProgram WINDOW_AGGREGATES = HepProgram.builder()
+        .addMatchOrder(org.apache.calcite.plan.hep.HepMatchOrder.BOTTOM_UP)
         .addRuleInstance(WindowAggregateRule.INSTANCE)
         .build();
 
@@ -399,7 +411,11 @@ public final class Planner {
         optimized = steps.add("decorrelated", "Calcite: RelDecorrelator", RelDecorrelator.decorrelateQuery(optimized, relBuilder));
         optimized = steps.add("unused fields trimmed", "Calcite: RelFieldTrimmer",
             new org.apache.calcite.sql2rel.RelFieldTrimmer(validator, relBuilder).trim(optimized));
-        optimized = steps.rules("windows rewritten", "rules: Calcite's and ours, selected by us", PREPARE_AND_REWRITE_WINDOWS, optimized);
+        optimized = steps.rules("set operations and DISTINCT as aggregations", "rules: Calcite's, selected by us",
+            SET_OPERATIONS_AND_DISTINCT, optimized);
+        optimized = steps.rules("join conditions and join order", "rules: Calcite's and ours (OrFactors), selected by us", JOINS, optimized);
+        optimized = steps.rules("filters and projections merged", "rules: Calcite's, selected by us", MERGE, optimized);
+        optimized = steps.rules("window aggregations", "rules: ours (WindowAggregateRule)", WINDOW_AGGREGATES, optimized);
         if (finiteInputs) {
             optimized = steps.rules("global windows for finite inputs", "rules: ours (GlobalWindowRules)", GLOBAL_WINDOWS, optimized);
         }
