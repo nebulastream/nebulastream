@@ -132,6 +132,15 @@ public:
         }
     }
 
+    /// The next OffsetFetch request fails with "not coordinator", as a freshly started broker answers while it creates the offsets topic.
+    void failNextOffsetFetch()
+    {
+        constexpr int16_t OFFSET_FETCH_API_KEY = 9;
+        /// librdkafka's mock API is inherently variadic
+        ///NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
+        rd_kafka_mock_push_request_errors(cluster, OFFSET_FETCH_API_KEY, 1, RD_KAFKA_RESP_ERR_NOT_COORDINATOR);
+    }
+
     void setBrokerDown(const bool down)
     {
         if (down)
@@ -575,6 +584,18 @@ TEST_F(KafkaSourceTest, BrokerOutageKeepsTheSourceRunningAndResumes)
     /// Producer and consumer reconnect with librdkafka's backoff (up to 10 s by default).
     kafka.flush(30000);
     EXPECT_EQ(readRecords(source, 1, std::chrono::seconds(40)), std::vector<std::string>{"after"});
+    source.close();
+}
+
+TEST_F(KafkaSourceTest, ANotCoordinatorAnswerToTheFirstOffsetLookupDoesNotLeaveTheSourceIdle)
+{
+    MockKafka kafka;
+    kafka.produce(0, "first");
+    kafka.flush();
+    kafka.failNextOffsetFetch();
+    KafkaSource source{config(kafka, "g-not-coordinator")};
+    source.open(bufferManager);
+    EXPECT_EQ(readRecords(source, 1, std::chrono::seconds(20)), std::vector<std::string>{"first"});
     source.close();
 }
 

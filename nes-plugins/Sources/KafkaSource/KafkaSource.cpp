@@ -62,6 +62,9 @@ constexpr std::chrono::seconds WARNING_INTERVAL{10};
 /// closes against a persistently unreachable broker could otherwise pile these up unbounded.
 constexpr uint64_t DETACHED_TEARDOWN_WARNING_THRESHOLD = 8;
 constexpr size_t MAX_TOPIC_NAME_LENGTH = 249;
+constexpr size_t MAX_LOGGED_TEXT_LENGTH = 512;
+constexpr unsigned char FIRST_PRINTABLE_CHARACTER = 0x20;
+constexpr unsigned char DELETE_CHARACTER = 0x7f;
 std::atomic<uint64_t> inFlightDetachedTeardowns{0};
 
 /// True at most once per WARNING_INTERVAL per call site; keeps an outage from flooding the log.
@@ -80,11 +83,14 @@ bool shouldWarn(std::chrono::steady_clock::time_point& last)
 /// and the text is cut at 512 bytes.
 std::string printableForLog(std::string_view text)
 {
-    constexpr size_t MAX_LENGTH = 512;
-    std::string result(text.substr(0, MAX_LENGTH));
+    std::string result(text.substr(0, MAX_LOGGED_TEXT_LENGTH));
     std::ranges::replace_if(
         result,
-        [](const char character) { return static_cast<unsigned char>(character) < 0x20 || static_cast<unsigned char>(character) == 0x7f; },
+        [](const char character)
+        {
+            const auto code = static_cast<unsigned char>(character);
+            return code < FIRST_PRINTABLE_CHARACTER || code == DELETE_CHARACTER;
+        },
         '?');
     return result;
 }
@@ -312,7 +318,7 @@ void KafkaSource::EventCallback::event_cb(RdKafka::Event& event)
         case RdKafka::Event::EVENT_LOG:
             /// With auto.offset.reset=earliest|latest librdkafka resets an out-of-range committed offset itself and only
             /// logs it; surface it, since the skipped range is data loss the operator must see.
-            if (event.fac() == "OFFSET" && event.str().find("offset reset") != std::string::npos)
+            if (event.fac() == "OFFSET" && event.str().contains("offset reset"))
             {
                 NES_WARNING("Kafka source: committed offset is out of range, applying AUTO_OFFSET_RESET: {}", event.str());
             }
@@ -395,11 +401,11 @@ void KafkaSource::closeConsumer()
             groupId);
     }
     std::thread(
-        [c = std::move(consumer), e = std::move(eventCallback), cb = std::move(commitCallback)]() mutable
+        [closing = std::move(consumer), events = std::move(eventCallback), commits = std::move(commitCallback)]() mutable
         {
-            (void)e;
-            (void)cb;
-            c.reset();
+            (void)events;
+            (void)commits;
+            closing.reset();
             inFlightDetachedTeardowns.fetch_sub(1, std::memory_order_relaxed);
         })
         .detach();
@@ -465,14 +471,23 @@ void KafkaSource::open(std::shared_ptr<AbstractBufferProvider>)
             "Kafka source: topic '{}' not found on {}: {}",
             topic,
             brokers,
-            RdKafka::err2str(topicMetadata ? topicMetadata->err() : RdKafka::ERR_UNKNOWN_TOPIC_OR_PART));
+            RdKafka::err2str(topicMetadata != nullptr ? topicMetadata->err() : RdKafka::ERR_UNKNOWN_TOPIC_OR_PART));
     }
-    std::vector<int32_t> partitionIds;
+    partitionIds.clear();
     for (const auto* partition : *topicMetadata->partitions())
     {
         partitionIds.push_back(partition->id());
     }
 
+    if (const auto assignError = assignPartitions(); assignError != RdKafka::ERR_NO_ERROR)
+    {
+        throw CannotOpenSource("Kafka source: cannot assign partitions of '{}': {}", topic, RdKafka::err2str(assignError));
+    }
+    NES_INFO("Kafka source consuming '{}' partitions [{}] from {} as group '{}'", topic, fmt::join(partitionIds, ","), brokers, groupId);
+}
+
+RdKafka::ErrorCode KafkaSource::assignPartitions()
+{
     /// OFFSET_STORED: resume from GROUP_ID's committed offset, else AUTO_OFFSET_RESET. librdkafka also applies
     /// AUTO_OFFSET_RESET when a committed offset is out of range; it only logs that (see EventCallback).
     std::vector<RdKafka::TopicPartition*> partitions;
@@ -481,13 +496,10 @@ void KafkaSource::open(std::shared_ptr<AbstractBufferProvider>)
     {
         partitions.push_back(RdKafka::TopicPartition::create(topic, partition, RdKafka::Topic::OFFSET_STORED));
     }
-    const auto assignError = consumer->assign(partitions);
+    lastAssignment = std::chrono::steady_clock::now();
+    const auto error = consumer->assign(partitions);
     RdKafka::TopicPartition::destroy(partitions);
-    if (assignError != RdKafka::ERR_NO_ERROR)
-    {
-        throw CannotOpenSource("Kafka source: cannot assign partitions of '{}': {}", topic, RdKafka::err2str(assignError));
-    }
-    NES_INFO("Kafka source consuming '{}' partitions [{}] from {} as group '{}'", topic, fmt::join(partitionIds, ","), brokers, groupId);
+    return error;
 }
 
 void KafkaSource::commitCompleted(const bool wait, const std::stop_token& stopToken)
@@ -618,6 +630,18 @@ void KafkaSource::handleConsumeError(const RdKafka::Message& message)
     if (shouldWarn(lastConsumeErrorWarning))
     {
         NES_WARNING("Kafka source: {} ({}), waiting for the brokers", message.errstr(), RdKafka::err2str(code));
+    }
+    const bool coordinatorNotReady = code == RdKafka::ERR_NOT_COORDINATOR || code == RdKafka::ERR_COORDINATOR_NOT_AVAILABLE
+        || code == RdKafka::ERR_GROUP_LOAD_IN_PROGRESS;
+    if (coordinatorNotReady && std::chrono::steady_clock::now() - lastAssignment >= REASSIGN_INTERVAL)
+    {
+        /// A broker that has just started answers the lookup of the committed offsets with "not coordinator" while it still creates
+        /// the offsets topic. With a static assignment librdkafka then leaves the partitions without a start offset and never asks
+        /// again, so the source would stay idle forever. Assigning again repeats the lookup.
+        if (const auto error = assignPartitions(); error != RdKafka::ERR_NO_ERROR)
+        {
+            NES_WARNING("Kafka source: cannot re-assign partitions of '{}': {}", topic, RdKafka::err2str(error));
+        }
     }
 }
 

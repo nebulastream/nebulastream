@@ -78,8 +78,6 @@ public:
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-
     [[nodiscard]] uint64_t getSkippedMessages() const { return skippedMessages; }
 
     [[nodiscard]] uint64_t getFailedCommits() const { return failedCommits->load(); }
@@ -94,12 +92,17 @@ public:
     /// Longest a SYNC commit (and the final commit in close()) waits for the broker. A commit that times out stays
     /// pending and is retried with the next one; it never blocks a stop or an outage indefinitely.
     static constexpr std::chrono::milliseconds COMMIT_TIMEOUT{5000};
+    /// Least time between two re-assignments after the group coordinator was not ready to serve the committed offsets.
+    static constexpr std::chrono::milliseconds REASSIGN_INTERVAL{1000};
 
     /// ERR__AUTHENTICATION, ERR__SSL and ERR__FATAL: a rejected login or certificate does not heal by retrying.
     static bool isFatalConnectionError(RdKafka::ErrorCode code);
     /// Errors after which the source cannot make progress: the connection errors above plus unknown topic or partition, authorization
     /// failures and an invalid argument. Everything else is transient.
     static bool isFatalError(RdKafka::ErrorCode code);
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     class EventCallback : public RdKafka::EventCb
@@ -141,6 +144,8 @@ private:
     void handleConsumeError(const RdKafka::Message& message);
     void countFailedCommit(std::string_view reason);
     void closeConsumer();
+    /// (Re-)assigns every partition of the topic, starting at the committed offset of GROUP_ID (else AUTO_OFFSET_RESET).
+    [[nodiscard]] RdKafka::ErrorCode assignPartitions();
     /// Moves the offsets of the last filled buffer to the committable set if SourceThread emitted it.
     void takeEmittedOffsets();
     /// Records that the current buffer fully contains `offset` of `partition`.
@@ -160,6 +165,8 @@ private:
     std::unique_ptr<CommitCallback> commitCallback;
     std::unique_ptr<RdKafka::KafkaConsumer> consumer;
     PayloadStash payloadStash;
+    std::vector<int32_t> partitionIds;
+    std::chrono::steady_clock::time_point lastAssignment;
 
     /// The message whose record did not fit and is (partly) in the stash; complete once the stash drains.
     std::optional<std::pair<int32_t, int64_t>> stashedMessage;

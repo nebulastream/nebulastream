@@ -86,7 +86,7 @@ export -f data_rows data_row_count unique_ids
   [ "$(data_row_count)" -eq 10000 ]
   [ "$(unique_ids)" -eq 10000 ]
   # every row is intact: value = id * 10
-  run awk -F, '$2 != $1 * 10 { bad++ } END { print bad + 0 }' worker-1/out.csv
+  run bash -c "data_rows | awk -F, '\$2 != \$1 * 10 { bad++ } END { print bad + 0 }'"
   assert_output "0"
   [ "$(group_lag_total nes-sensors)" -eq 0 ]
 }
