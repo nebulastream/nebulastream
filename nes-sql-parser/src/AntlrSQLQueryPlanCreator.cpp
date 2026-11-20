@@ -78,8 +78,11 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <CommonParserFunctions.hpp>
+#include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <ParserUtil.hpp>
 
 namespace NES::Parsers
@@ -1366,11 +1369,32 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             isAggregation = true;
             break;
         default:
-            helpers.top().hasUnnamedAggregation = false;
-            /// Check if the function is a constructor for a datatype
-            if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
+            /// Check if there is an aggregation function registered under the key funcName.
+            const auto numArgs = context->argument.size();
+            if (const auto aggFactory = AggregationLogicalFunctionRegistry::instance().find(funcName))
             {
-                if (const auto numArgs = context->argument.size(); numArgs != 1)
+                if (numArgs != 1)
+                {
+                    throw InvalidQuerySyntax(
+                        "Aggregation functions currently require exactly one argument. Got {} for aggregation function {}.",
+                        numArgs,
+                        funcName);
+                }
+                /// Aggregation functions only accept field accesses as input. An expression argument is desugared into a pre-aggregation projection, just like for the built-in aggregations.
+                ensureFieldAccessArgument();
+                const std::vector<AggregationFieldAccess> aggInput{
+                    helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()};
+
+                const AggregationLogicalFunctionRegistryArguments aggArgs{.on = aggInput, .includeNullValues = false};
+                const WindowAggregationLogicalFunction aggFunc = (*aggFactory)(aggArgs);
+                helpers.top().windowAggs.emplace_back(aggFunc, std::nullopt);
+                isAggregation = true;
+            }
+            /// Check if the function is a constructor for a datatype
+            else if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
+            {
+                helpers.top().hasUnnamedAggregation = false;
+                if (numArgs != 1)
                 {
                     throw InvalidQuerySyntax(
                         "Type constructor {} expects exactly 1 argument, got {} at {}", funcName, numArgs, context->getText());
@@ -1385,9 +1409,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
             }
+            /// Check if there is a logical function registered under funcName
             else
             {
-                const auto numArgs = context->argument.size();
+                helpers.top().hasUnnamedAggregation = false;
                 if (numArgs > helpers.top().functionBuilder.size())
                 {
                     throw InvalidQuerySyntax(
@@ -1407,11 +1432,23 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 {
                     auto registeredNamesAggregation
                         = AggregationLogicalFunctionRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
+                    auto registeredNamesDataType = DataTypeRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
+                    auto registeredNamesLogicalFunction
+                        = LogicalFunctionRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
+
                     std::ranges::sort(registeredNamesAggregation);
+                    std::ranges::sort(registeredNamesDataType);
+                    std::ranges::sort(registeredNamesLogicalFunction);
+
                     throw InvalidQuerySyntax(
-                        "Unknown function: {}. Supported aggregation functions are {}.",
+                        "{} is not a registered aggregation function, data type, or logical function.\n"
+                        "Registered aggregation functions: {}\n"
+                        "Registered data types: {}\n"
+                        "Registered logical functions: {}",
                         funcName,
-                        fmt::join(registeredNamesAggregation, ", "));
+                        fmt::join(registeredNamesAggregation, ", "),
+                        fmt::join(registeredNamesDataType, ", "),
+                        fmt::join(registeredNamesLogicalFunction, ", "));
                 }
             }
     }
