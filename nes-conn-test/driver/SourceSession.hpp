@@ -21,7 +21,6 @@
 /// so CLOSE then OPEN never relies on reopening in place.
 /// The reply shapes are defined in `conntest_runner/protocol.py`.
 
-#include <chrono>
 #include <cstddef>
 #include <filesystem>
 #include <optional>
@@ -31,11 +30,6 @@ namespace NES::ConnTest
 
 inline constexpr std::size_t DEFAULT_SOURCE_BUFFER_SIZE = 4096;
 inline constexpr std::size_t DEFAULT_SOURCE_BUFFER_COUNT = 8;
-/// A stuck OPEN waits this long for the open and then again for the stop, so one step can take twice this.
-/// The runner's deadline per test is four times this, so a stuck step replies with a StepTimeout that says which step,
-/// as long as the steps before it took less than half of the deadline.
-/// The runner derives its timeouts from a copy of this value in nes-conn-test/runner/src/conntest_runner/harness.py, so change both.
-inline constexpr std::chrono::milliseconds SOURCE_STEP_TIMEOUT{30'000};
 
 /// The harness exits with this code after a source did not stop within the step timeout, see runSourceSession.
 inline constexpr int SOURCE_STUCK_EXIT_CODE = 3;

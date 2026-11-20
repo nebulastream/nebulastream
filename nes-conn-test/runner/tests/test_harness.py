@@ -39,12 +39,28 @@ signal.pause()
 """
 
 
+# Replies to every command with a BIND reply whose step timeout is 60 s, and exits after EOF.
+_STEP_TIMEOUT_60_S = """
+import socket, sys
+path = next(arg.split("=", 1)[1] for arg in sys.argv if arg.startswith("--control-sock="))
+conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+conn.connect(path)
+for _ in conn.makefile("rb"):
+    conn.sendall(b'{"ok":true,"phase":"bind","schema":[{"name":"ID","type":"INT32","nullable":false}],"step_timeout_ms":60000}\\n')
+"""
+
+
+def _fake_harness(tmp_path: Path, script: str) -> Path:
+    fake = tmp_path / "fake-harness"
+    fake.write_text(f"#!{sys.executable}\n{script}", encoding="utf-8")
+    fake.chmod(fake.stat().st_mode | stat.S_IXUSR)
+    return fake
+
+
 def test_end_session_kills_a_harness_that_does_not_exit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Only the kill ends the fake harness, so the timeout's value changes how long the test takes, not its outcome.
     monkeypatch.setattr(harness, "_END_SESSION_TIMEOUT_S", 0.1)
-    fake = tmp_path / "fake-harness"
-    fake.write_text(f"#!{sys.executable}\n{_NEVER_EXITS}", encoding="utf-8")
-    fake.chmod(fake.stat().st_mode | stat.S_IXUSR)
+    fake = _fake_harness(tmp_path, _NEVER_EXITS)
     source = harness.Source(harness=fake, config=tmp_path / "unused.nesql")
     source.open()
     proc = source._proc.proc  # noqa: SLF001
@@ -54,3 +70,10 @@ def test_end_session_kills_a_harness_that_does_not_exit(tmp_path: Path, monkeypa
     # The rest of the cleanup ran although the harness had to be killed.
     assert proc.returncode == -signal.SIGKILL
     assert not sock_dir.exists()
+
+
+def test_bind_fails_when_the_harness_has_another_step_timeout(tmp_path: Path) -> None:
+    source = harness.Source(harness=_fake_harness(tmp_path, _STEP_TIMEOUT_60_S), config=tmp_path / "unused.nesql")
+    with pytest.raises(HarnessError, match="step timeout is 60000 ms, but the runner's copy in harness.py is 30000 ms"):
+        source.bind()
+    source.cleanup()

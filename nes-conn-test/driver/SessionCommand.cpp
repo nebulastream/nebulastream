@@ -48,6 +48,23 @@ std::string_view verbOf(const std::string_view line)
     return line.substr(0, end);
 }
 
+std::optional<std::uint64_t> argOf(const std::string_view line)
+{
+    const auto separator = line.find(' ');
+    if (separator == std::string_view::npos)
+    {
+        return std::nullopt;
+    }
+    try
+    {
+        return NES::from_chars_with_exception<std::uint64_t>(line.substr(separator + 1));
+    }
+    catch (const Exception&)
+    {
+        return std::nullopt;
+    }
+}
+
 std::optional<std::pair<std::uint64_t, std::uint64_t>> twoArgsOf(const std::string_view line)
 {
     const auto firstSeparator = line.find(' ');

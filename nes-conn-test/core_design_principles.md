@@ -88,7 +88,7 @@ and the battery never goes flaky.
 
 **Data (replay).** A fixed seed, and no wall-clock or unseeded randomness in generation or compare.
 A failure replays from its pytest id, which carries N (e.g.
-`round_trip_n_buffers-<Name>-basic-N100`).
+`transfer_n_buffers-<Name>-basic-N100`).
 
 **Control (synchronization).** A scenario advances by **handshakes, never by
 sleeping**: each control step is one request/reply with the C++ harness, and each
@@ -117,6 +117,10 @@ connector genuinely signals one (a source that legitimately ends before the quot
 returns `eos:true` from `FILL`), but never *required* and never *manufactured*. See
 `deterministic` (the quota is the stop) and `generator-is-truth` (the data is
 only data).
+
+A sink's end is its stop: `STOP` returns once the sink has delivered what it holds,
+and the loader reads back only after that, so no marker in the data is needed there either.
+A loader whose backend cannot tell when the last record has arrived bounds its wait by the number of rows the sink was given.
 
 > Anti-pattern: "fixing" a never-ending source by injecting an EoS/sentinel into
 > the generated data and waiting for it in `SourceSession`; making a test pass by
