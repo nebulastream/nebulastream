@@ -142,6 +142,21 @@ class PlannerServerTest {
     }
 
     @Test
+    void joinKeysInEveryOrBranch() throws Exception {
+        /// As TPC-H Q19: the join key and a filter are in each OR branch. They become conditions of their own, so the join has
+        /// a key (a hash join, not a nested-loop join over all pairs) and the filter goes below it.
+        List<Source> sources = List.of(withPhysicalSources(stream("s1"), 11), withPhysicalSources(stream("s2"), 21));
+        String explain = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+            .setSql("SELECT SUM(a.val) AS s FROM s1 a, s2 b WHERE (a.id = b.id AND a.val > 1 AND b.val < 5 AND a.ts > 0)"
+                + " OR (a.id = b.id AND a.val > 3 AND b.val < 9 AND a.ts > 0)")
+            .addAllSources(sources).setPhysical(true).setFiniteInputs(true).build()).getExplain();
+        assertTrue(explain.contains("implementation=[HASH_JOIN]"), explain);
+        /// The filters implied for each side: b.val < 5 OR b.val < 9, and a.ts > 0 AND (a.val > 1 OR a.val > 3).
+        assertTrue(explain.contains("Selection(condition=[<($1, 9)])"), explain);
+        assertTrue(explain.contains("Selection(condition=[AND(>($2, CAST(0):BIGINT UNSIGNED NOT NULL), >($1, 1))])"), explain);
+    }
+
+    @Test
     void memoryLayouts() throws Exception {
         /// Two workers: the source's format into the first pipeline, the policy's layout over the network (on both ends of the
         /// channel), rows into the native sink.

@@ -92,6 +92,8 @@ public final class Planner {
         /// Our aggregations have no DISTINCT: COUNT(DISTINCT x) becomes a grouping by x, then COUNT(x); several of them
         /// are computed separately and joined (the variant without joins needs GROUPING SETS).
         .addRuleInstance(CoreRules.AGGREGATE_EXPAND_DISTINCT_AGGREGATES_TO_JOIN)
+        /// Conditions repeated in every OR branch (e.g. a join key) become conditions of their own (OrFactors).
+        .addRuleInstance(OrFactors.RULE)
         /// Join order: Calcite's stock heuristic join reordering, which joins connected tables before cross products.
         .addRuleCollection(List.of(CoreRules.FILTER_INTO_JOIN, CoreRules.JOIN_CONDITION_PUSH))
         .addMatchOrder(org.apache.calcite.plan.hep.HepMatchOrder.BOTTOM_UP)
