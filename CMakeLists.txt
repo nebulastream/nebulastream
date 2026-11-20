@@ -262,6 +262,12 @@ foreach (NES_DIR ${NES_DIRECTORIES_ALL})
     endif ()
 endforeach ()
 
+# native-image needs about 9 GB of memory and all cores. It depends only on the planner's Java sources, so it runs first,
+# alone: every NebulaStream object waits for it through nes-common (Ninja cannot reserve the machine for one job).
+if (TARGET nes-calcite-planner-native)
+    add_dependencies(nes-common nes-calcite-planner-native)
+endif ()
+
 # Registered here, not in a suite directory, because it checks all suites at once.
 add_e2e_test(
     NAME bats-lib-test
