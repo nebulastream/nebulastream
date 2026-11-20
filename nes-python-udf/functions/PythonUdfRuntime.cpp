@@ -109,6 +109,91 @@ extern "C" __attribute__((visibility("default"), used)) void seq_free(void*)
     /// Individual arena allocations cannot be freed. They are released together when the pipeline arena is destroyed.
 }
 
+extern "C" void NRT_MemSys_set_allocator(void* (*malloc)(size_t), void* (*realloc)(void*, size_t), void (*free)(void*));
+
+namespace
+{
+/// Numba's runtime (NRT) allocates each object with malloc and frees it when its reference count becomes zero. During a UDF
+/// call, NES gives NRT memory of the call's arena instead, as it gives Codon: an allocation is a pointer increment, a free does
+/// nothing. A header before each block holds its size, for realloc, and whether libc allocated it (no active arena), for free.
+/// Numba's typed dict and list call libc directly and are not affected.
+struct alignas(std::max_align_t) NumbaBlockHeader
+{
+    size_t size;
+    bool fromLibc;
+};
+
+void* numbaAllocate(const size_t size)
+{
+    NumbaBlockHeader* header = nullptr;
+    const bool fromLibc = currentPythonUdfArena == nullptr || persistentPythonUdfAllocation;
+    if (fromLibc)
+    {
+        header = static_cast<NumbaBlockHeader*>(std::malloc(sizeof(NumbaBlockHeader) + size));
+        if (header == nullptr)
+        {
+            return nullptr;
+        }
+    }
+    else
+    {
+        header = static_cast<NumbaBlockHeader*>(allocatePythonUdfMemory(sizeof(NumbaBlockHeader) + size));
+    }
+    header->size = size;
+    header->fromLibc = fromLibc;
+    return header + 1;
+}
+
+void numbaFree(void* memory)
+{
+    if (memory == nullptr)
+    {
+        return;
+    }
+    auto* header = static_cast<NumbaBlockHeader*>(memory) - 1;
+    if (header->fromLibc)
+    {
+        std::free(header);
+    }
+}
+
+void* numbaReallocate(void* memory, const size_t size)
+{
+    if (memory == nullptr)
+    {
+        return numbaAllocate(size);
+    }
+    auto* header = static_cast<NumbaBlockHeader*>(memory) - 1;
+    if (header->fromLibc)
+    {
+        auto* moved = static_cast<NumbaBlockHeader*>(std::realloc(header, sizeof(NumbaBlockHeader) + size));
+        if (moved == nullptr)
+        {
+            return nullptr;
+        }
+        moved->size = size;
+        return moved + 1;
+    }
+    if (size <= header->size)
+    {
+        header->size = size;
+        return memory;
+    }
+    auto* grown = numbaAllocate(size);
+    if (grown != nullptr)
+    {
+        std::memcpy(grown, memory, header->size);
+    }
+    return grown;
+}
+}
+
+void useArenaForNumbaRuntime()
+{
+    static std::once_flag installed;
+    std::call_once(installed, [] { NRT_MemSys_set_allocator(numbaAllocate, numbaReallocate, numbaFree); });
+}
+
 namespace
 {
 /// Minimal Codon 0.19.6 runtime ABI used by compiled Python UDFs. The exception

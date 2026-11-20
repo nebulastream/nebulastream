@@ -365,6 +365,7 @@ std::vector<std::pair<std::string, void*>> runtimeSymbols(const InlineUdfRuntime
         {
             symbols.emplace_back(name, address);
         }
+        useArenaForNumbaRuntime();
         return symbols;
     }
     for (const auto& [name, address] : getCodonPluginNativeSymbols())

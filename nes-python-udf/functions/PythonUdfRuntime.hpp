@@ -43,5 +43,7 @@ struct PythonUdfRuntimeSymbol
 };
 
 void activatePythonUdfArena(Arena* arena);
+/// Makes Numba's runtime allocate from the arena of the active UDF call. Call it after the Numba runtime is initialized.
+void useArenaForNumbaRuntime();
 std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols();
 }
