@@ -30,10 +30,10 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/PayloadStash.hpp>
 #include <Sources/Source.hpp>
 #include <mqtt/client.h>
 #include <ErrorHandling.hpp>
-#include <PayloadStash.hpp>
 
 namespace NES
 {

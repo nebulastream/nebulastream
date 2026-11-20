@@ -19,7 +19,7 @@
       ]
     },
     "kafka": {
-      "description": "enables the kafka sink",
+      "description": "enables the kafka source and sink",
       "dependencies": [
         "librdkafka"
       ]
