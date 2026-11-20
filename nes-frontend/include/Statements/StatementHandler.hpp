@@ -37,8 +37,10 @@
 #include <Util/Pointers.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <Calcite/QueryOptimizerConfiguration.hpp>
+#include <Calcite/CalcitePlanner.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <ModelCatalog.hpp>
-#include <QueryOptimizer.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -244,17 +246,28 @@ public:
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
 };
 
-/// Computes the EXPLAIN output for the given statement using the provided optimizer.
-std::string computeExplainOutput(const ExplainQueryStatement& statement, const QueryOptimizer& optimizer);
+/// The EXPLAIN output of a planned query: the placed pipelines per worker; Verbose shows the planner's steps first.
+std::string computeExplainOutput(const ExplainQueryStatement& statement, const Calcite::PlannedPhysicalQuery& planned);
+
+/// The catalogs a query is planned against (see Calcite::planStatement).
+struct QueryCatalogs
+{
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<const WorkerCatalog> workerCatalog;
+    std::shared_ptr<const ModelCatalog> modelCatalog;
+};
 
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;
-    SharedPtr<const QueryOptimizer> queryOptimizer;
-    SharedPtr<WorkerCatalog> workerCatalog;
+    QueryCatalogs catalogs;
+    QueryOptimizerConfiguration optimizer;
+
+    [[nodiscard]] Calcite::PlannedPhysicalQuery plan(const std::string& sql) const;
 
 public:
-    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer);
+    QueryStatementHandler(SharedPtr<QueryManager> queryManager, QueryCatalogs catalogs, QueryOptimizerConfiguration optimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     /// A query planned down to physical operators and placed (e.g. by the Calcite frontend): not optimized.
     std::expected<QueryStatementResult, Exception> startPhysical(PlacedPhysicalQuery query);
@@ -269,6 +282,7 @@ class ModelStatementHandler final : public StatementHandler<ModelStatementHandle
 
 public:
     explicit ModelStatementHandler(std::shared_ptr<ModelCatalog> modelCatalog);
+    [[nodiscard]] const ModelCatalog& getModelCatalog() const { return *modelCatalog; }
     std::expected<CreateModelStatementResult, Exception> operator()(const CreateModelStatement& statement);
     std::expected<ShowModelsStatementResult, Exception> operator()(const ShowModelsStatement& statement) const;
     std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);

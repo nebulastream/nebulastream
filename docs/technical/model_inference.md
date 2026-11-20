@@ -1,5 +1,7 @@
 # Model Inference
 
+> **Partly outdated.** `InferModelLogicalOperator` and `InferModelNameLogicalOperator` no longer exist. Apache Calcite plans model inference now (see `NesModelInference` in `nes-calcite-planner`). The physical operators are still correct.
+
 This document describes how NebulaStream evaluates ML models inside a streaming
 query. It is aimed at contributors who need to extend, debug, or replace the
 current implementation.

@@ -72,6 +72,18 @@ final class Pipelines {
                     build.aggregationFields.stream().map(f -> f < 0 ? f : fields[f]).toList(), build.probeRowType);
                 branches.add(Branch.of(copy));
             }
+        } else if (node instanceof NesPhysical.JoinProbe probe) {
+            /// Starts a pipeline: each copy of its builds (one per branch below) is an input.
+            List<RelNode> inputs = new ArrayList<>();
+            probe.getInputs().forEach(input -> rewrite(input).forEach(branch -> inputs.add(branch.node())));
+            branches.add(Branch.of(probe.copy(probe.getTraitSet(), inputs)));
+        } else if (node instanceof NesPhysical.JoinBuild build) {
+            /// Ends the pipeline of each branch; all copies of a side store into the same state.
+            for (Branch below : rewrite(build.getInput())) {
+                int[] fields = below.fields();
+                branches.add(Branch.of(new NesPhysical.JoinBuild(build.getCluster(), build.getTraitSet(), below.node(), build.join,
+                    build.right, fields[build.timeField], build.storedFields.stream().map(f -> fields[f]).toList())));
+            }
         } else if (node instanceof NesPhysical.UnionAll union) {
             /// Field i of the union is field i of each input.
             union.getInputs().forEach(input -> branches.addAll(rewrite(input)));
@@ -88,11 +100,27 @@ final class Pipelines {
             }
         } else if (node instanceof NesPhysical.Map map) {
             for (Branch below : rewrite(map.getInput())) {
-                RelNode copy = new NesPhysical.Map(
-                    map.getCluster(), map.getTraitSet(), below.node(), map.field, renumber(map.expression, below.fields()));
-                int[] fields = new int[below.fields().length + 1];
+                RelNode copy = new NesPhysical.Map(map.getCluster(), map.getTraitSet(), below.node(), map.fields,
+                    map.expressions.stream().map(expression -> renumber(expression, below.fields())).toList());
+                int width = copy.getRowType().getFieldCount();
+                int[] fields = new int[below.fields().length + map.fields.size()];
                 System.arraycopy(below.fields(), 0, fields, 0, below.fields().length);
-                fields[fields.length - 1] = copy.getRowType().getFieldCount() - 1;
+                for (int i = 0; i < map.fields.size(); i++) {
+                    fields[below.fields().length + i] = width - map.fields.size() + i;
+                }
+                branches.add(new Branch(copy, fields));
+            }
+        } else if (node instanceof NesPhysical.InferModel infer) {
+            /// As a Map: reads fields of its input row, appends its outputs.
+            for (Branch below : rewrite(infer.getInput())) {
+                RelNode copy = new NesPhysical.InferModel(infer.getCluster(), infer.getTraitSet(), below.node(), infer.model,
+                    infer.inputFields.stream().map(field -> below.fields()[field]).toList(), infer.outputFields, infer.outputTypes);
+                int width = copy.getRowType().getFieldCount();
+                int[] fields = new int[below.fields().length + infer.outputFields.size()];
+                System.arraycopy(below.fields(), 0, fields, 0, below.fields().length);
+                for (int i = 0; i < infer.outputFields.size(); i++) {
+                    fields[below.fields().length + i] = width - infer.outputFields.size() + i;
+                }
                 branches.add(new Branch(copy, fields));
             }
         } else if (node instanceof NesPhysical.Emit emit) {

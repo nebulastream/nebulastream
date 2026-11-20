@@ -3,6 +3,8 @@ title: "How to add a Placement Strategy"
 weight: 50
 ---
 
+> **Outdated.** This document describes the logical operators and the query optimizer of NebulaStream. Both no longer exist. Apache Calcite plans the queries now (see `nes-calcite-planner/README.md`).
+
 # How to add a `Placement Strategy`
 
 Operator placement decides on which worker each logical operator runs.

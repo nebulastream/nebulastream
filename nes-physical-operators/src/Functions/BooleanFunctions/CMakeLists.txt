@@ -19,7 +19,7 @@ add_source_files(nes-physical-operators
 )
 
 add_registry_entry(PhysicalFunction And)
-add_registry_entry(PhysicalFunction Equals)
-add_registry_entry(PhysicalFunction IsNullCheck KEY IsNull)
-add_registry_entry(PhysicalFunction Negate)
+add_registry_entry(PhysicalFunction Equals KEY Equal)
+add_registry_entry(PhysicalFunction IsNullCheck KEY Is_Null)
+add_registry_entry(PhysicalFunction Negate KEY Not)
 add_registry_entry(PhysicalFunction Or)

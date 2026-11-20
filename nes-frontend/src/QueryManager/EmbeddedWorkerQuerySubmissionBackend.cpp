@@ -22,7 +22,6 @@
 #include <utility>
 #include <variant>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
@@ -43,11 +42,6 @@ namespace
 {
 struct Stop
 {
-};
-
-struct StartQuery
-{
-    LogicalPlan plan;
 };
 
 struct StartPhysicalQuery
@@ -90,7 +84,7 @@ struct WorkerStatusReply
     std::expected<WorkerStatus, Exception> reply;
 };
 
-using Request = std::variant<Stop, StartQuery, StartPhysicalQuery, StopQuery, QueryStatusQuery, WorkerStatusQuery>;
+using Request = std::variant<Stop, StartPhysicalQuery, StopQuery, QueryStatusQuery, WorkerStatusQuery>;
 /// `std::monostate` first so the variant is default-constructible — needed because
 /// folly's `dequeue(T&)` writes into an existing slot. It is never actually pushed.
 using Reply = std::variant<std::monostate, StartQueryReply, StopQueryReply, QueryStatusReply, WorkerStatusReply>;
@@ -119,7 +113,6 @@ public:
     {
     }
 
-    std::expected<QueryId, Exception> start(LogicalPlan plan) { return submit<StartQueryReply>(StartQuery{.plan = std::move(plan)}); }
 
     std::expected<QueryId, Exception> start(PhysicalQuery query)
     {
@@ -167,7 +160,6 @@ private:
             Reply reply = std::visit(
                 Overloaded{
                     [](Stop) -> Reply { std::unreachable(); },
-                    [&](StartQuery& request) -> Reply { return StartQueryReply{.reply = worker.startQuery(std::move(request.plan))}; },
                     [&](StartPhysicalQuery& request) -> Reply
                     { return StartQueryReply{.reply = worker.startQuery(std::move(request.query))}; },
                     [&](const StopQuery& request) -> Reply { return StopQueryReply{.reply = worker.stopQuery(request.id)}; },
@@ -217,11 +209,6 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 }
 
 EmbeddedWorkerQuerySubmissionBackend::~EmbeddedWorkerQuerySubmissionBackend() = default;
-
-std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LogicalPlan plan)
-{
-    return channel->start(std::move(plan));
-}
 
 std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(PhysicalQuery query)
 {

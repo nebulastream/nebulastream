@@ -20,7 +20,6 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
@@ -37,7 +36,7 @@ class GRPCQuerySubmissionBackend final : public QuerySubmissionBackend
 
 public:
     explicit GRPCQuerySubmissionBackend(WorkerConfig config);
-    [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
+    [[nodiscard]] std::expected<QueryId, Exception> start(PhysicalQuery query) override;
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;

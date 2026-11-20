@@ -21,7 +21,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <DataTypes/TimeUnit.hpp>
 
 namespace NES
 {
@@ -42,7 +42,6 @@ public:
     virtual ~TimeFunction() = default;
 
     [[nodiscard]] virtual std::unique_ptr<TimeFunction> clone() const = 0;
-    [[nodiscard]] static std::unique_ptr<TimeFunction> create(const Windowing::BoundTimeCharacteristic& timeCharacteristic);
 };
 
 class EventTimeFunction final : public TimeFunction

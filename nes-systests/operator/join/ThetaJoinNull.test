@@ -27,7 +27,12 @@ CREATE SINK sinkNullLtTumbling2s(start UINT64 NOT NULL, end UINT64 NOT NULL, id1
 
 # Query 1 - id1 < id2, tumbling 1 sec
 # Tests: a record with NULL in the join key produces no output row — NULL is not smaller than any value
-SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2) ON id1 < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkNullLt;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id1, l.value1, l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE streamNull1, DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE streamNull2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id1 < id2
+INTO sinkNullLt;
 ----
 1000 2000 3 10 1000 6 50 1050
 1000 2000 3 10 1000 8 70 1250
@@ -37,7 +42,12 @@ SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2)
 
 # Query 2 - id1 < id2, sliding 1 sec advance 500 ms
 # Tests: null exclusion holds with sliding windows — null-keyed records are absent regardless of window type
-SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2) ON id1 < id2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms) INTO sinkNullLtSliding;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id1, l.value1, l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(HOP(TABLE streamNull1, DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS l
+JOIN TABLE(HOP(TABLE streamNull2, DESCRIPTOR(timestamp2), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id1 < id2
+INTO sinkNullLtSliding;
 ----
 500 1500 3 10 1000 6 50 1050
 500 1500 3 10 1000 8 70 1250
@@ -52,7 +62,12 @@ SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2)
 
 # Query 3 - id1 < id2, tumbling 2 sec
 # Tests: null exclusion is independent of window size — a wider window that groups more records together still produces no output for null-keyed records
-SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2) ON id1 < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 2 sec) INTO sinkNullLtTumbling2s;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id1, l.value1, l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE streamNull1, DESCRIPTOR(timestamp1), INTERVAL '2' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE streamNull2, DESCRIPTOR(timestamp2), INTERVAL '2' SECOND)) AS r
+ON l.window_start = r.window_start AND id1 < id2
+INTO sinkNullLtTumbling2s;
 ----
 0 2000 3 10 1000 6 50 1050
 0 2000 3 10 1000 8 70 1250

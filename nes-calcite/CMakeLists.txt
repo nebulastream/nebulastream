@@ -55,24 +55,42 @@ add_custom_command(
 add_custom_target(nes-calcite-codegen DEPENDS ${CALCITE_GENERATED_SOURCES} ${CALCITE_SERVICE_SOURCES})
 add_dependencies(nes-codegen nes-calcite-codegen)
 
+# The pipelines of a worker's part of a placed physical plan: the coordinator resolves the part, the worker builds its
+# pipelines from it. Workers link only this, not the planner client.
+add_library(nes-calcite-pipelines STATIC
+        src/SubstraitToPhysicalPlan.cpp
+        src/SubstraitTypes.cpp
+        ${CALCITE_GENERATED_SOURCES}
+        ${CALCITE_GENERATED_DIR}/nes_calcite_planner.pb.cc)
+add_dependencies(nes-calcite-pipelines nes-calcite-codegen)
+target_include_directories(nes-calcite-pipelines
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CALCITE_GENERATED_DIR}>)
+target_link_libraries(nes-calcite-pipelines PUBLIC nes-inference nes-distributed nes-physical-operators nes-query-compiler nes-input-formatters nes-sinks nes-sources nes-common ${GRPC_LIBRARIES})
+
 add_library(nes-calcite STATIC
         src/CalcitePlanner.cpp
-        src/SubstraitToLogicalPlan.cpp
-        src/SubstraitToPhysicalPlan.cpp
-        ${CALCITE_GENERATED_SOURCES}
-        ${CALCITE_SERVICE_SOURCES})
+        src/QueryOptimizerConfiguration.cpp
+        ${CALCITE_GENERATED_DIR}/nes_calcite_planner.grpc.pb.cc)
 target_include_directories(nes-calcite
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CALCITE_GENERATED_DIR}>)
-target_link_libraries(nes-calcite PUBLIC nes-logical-operators nes-physical-operators nes-query-compiler nes-input-formatters nes-sinks nes-query-optimizer nes-sql-parser nes-sources nes-common ${GRPC_LIBRARIES})
+target_link_libraries(nes-calcite PUBLIC nes-calcite-pipelines nes-configurations nes-network-interface nes-physical-operators nes-query-compiler nes-input-formatters nes-sinks nes-sql-parser nes-sources nes-common ${GRPC_LIBRARIES})
 # Generated protobuf code does not follow our warning rules.
 set_source_files_properties(${CALCITE_GENERATED_SOURCES} ${CALCITE_SERVICE_SOURCES} PROPERTIES COMPILE_OPTIONS "-w")
 
-# Opt-in: build the planner into a native library with GraalVM (native-image --shared) and call it in-process instead of
-# the planner service. Rebuilt only when the planner's sources change; native-image itself always does a full build
-# (about 1.5 min, 9 GB RAM).
-set(NES_CALCITE_GRAALVM_HOME "$ENV{GRAALVM_HOME}" CACHE PATH "GraalVM; if set, the Calcite planner is linked in as a native library")
-set(NES_CALCITE_MAVEN "mvn" CACHE FILEPATH "Maven, to build the planner jar for the native library")
+# With GraalVM, the planner is built into a native library (native-image --shared) and called in-process: no planner
+# service. Without it, the planner runs as a service (see nes-calcite-planner/README.md). GraalVM comes from
+# NES_CALCITE_GRAALVM_HOME or else $GRAALVM_HOME (the development image sets it). Rebuilt only when the planner's sources
+# change; native-image itself always does a full build (about 1.5 min, 9 GB RAM).
+set(NES_CALCITE_GRAALVM_HOME "" CACHE PATH "GraalVM; if set, the Calcite planner is linked in as a native library")
+if (NOT NES_CALCITE_GRAALVM_HOME AND DEFINED ENV{GRAALVM_HOME})
+    set(NES_CALCITE_GRAALVM_HOME "$ENV{GRAALVM_HOME}")
+endif ()
 if (NES_CALCITE_GRAALVM_HOME)
+    find_program(NES_CALCITE_MAVEN mvn DOC "Maven, to build the planner jar for the native library")
+    if (NOT NES_CALCITE_MAVEN)
+        message(FATAL_ERROR "Maven (mvn) is required to build the Calcite planner for the native library")
+    endif ()
+    message(STATUS "Calcite planner: native library (GraalVM ${NES_CALCITE_GRAALVM_HOME})")
     set(CALCITE_PLANNER_DIR ${PROJECT_SOURCE_DIR}/nes-calcite-planner)
     set(CALCITE_PLANNER_JAR ${CALCITE_PLANNER_DIR}/target/nes-calcite-planner.jar)
     set(CALCITE_NATIVE_DIR ${CMAKE_CURRENT_BINARY_DIR}/native)
@@ -100,4 +118,8 @@ if (NES_CALCITE_GRAALVM_HOME)
     target_include_directories(nes-calcite PRIVATE ${CALCITE_NATIVE_DIR})
     target_link_libraries(nes-calcite PUBLIC nes-calcite-planner-native-library)
     target_compile_definitions(nes-calcite PRIVATE NES_CALCITE_NATIVE)
+    set(NES_CALCITE_NATIVE_LIBRARY ${CALCITE_NATIVE_LIBRARY} CACHE INTERNAL "The native Calcite planner library")
+else ()
+    message(STATUS "Calcite planner: service (no GraalVM)")
+    unset(NES_CALCITE_NATIVE_LIBRARY CACHE)
 endif ()

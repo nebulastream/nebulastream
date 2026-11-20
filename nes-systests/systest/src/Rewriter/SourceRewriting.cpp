@@ -167,45 +167,6 @@ std::string SourceRewriter::renderSetClauseFor(
     return Sql::setClause(Sql::optionList(options));
 }
 
-void makeAnonymousSourcePathsAbsolute(
-    const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir)
-{
-    for (const auto* source : findAll<AntlrSQLParser::AnonymousSourceContext>(parse.tree()))
-    {
-        for (auto* option : source->parameters->namedConfigExpression())
-        {
-            if (auto* value = getStringValueOf(option); value != nullptr and isOption(option, Sql::Source, Sql::FilePath))
-            {
-                if (const std::filesystem::path declared{unquote(value->getText())}; declared.is_relative())
-                {
-                    rewriter.replace(value->getStart(), value->getStop(), Sql::stringLiteral((testDataDir / declared).string()));
-                }
-            }
-        }
-    }
-}
-
-void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host)
-{
-    for (const auto* source : findAll<AntlrSQLParser::AnonymousSourceContext>(parse.tree()))
-    {
-        const auto declared = source->parameters->namedConfigExpression();
-        std::vector<std::string> missing;
-        if (not std::ranges::any_of(declared, [](auto* option) { return isOption(option, Sql::Source, Sql::Host); }))
-        {
-            missing.push_back(Sql::option(Sql::Source, Sql::Host, host.view()));
-        }
-        if (not std::ranges::any_of(declared, [](auto* option) { return isOption(option, Sql::InputFormatter, Sql::Type); }))
-        {
-            missing.push_back(Sql::option(Sql::InputFormatter, Sql::Type, Sql::Csv));
-        }
-        if (not missing.empty())
-        {
-            rewriter.insertAfter(source->parameters->getStop(), fmt::format(", {}", Sql::optionList(missing)));
-        }
-    }
-}
-
 std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options)
 {
     SqlParse parse{sql};

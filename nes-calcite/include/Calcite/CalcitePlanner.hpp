@@ -14,19 +14,25 @@
 
 #pragma once
 
+#include <Calcite/QueryOptimizerConfiguration.hpp>
+#include <Configurations/Util.hpp>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifier.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <PhysicalQuery.hpp>
+#include <Calcite/PhysicalParts.hpp>
 #include <WorkerCatalog.hpp>
+#include <ModelCatalog.hpp>
 #include <PipelinedQueryPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
@@ -42,8 +48,10 @@ namespace NES::Calcite
 /// Address of the planner service: $NES_CALCITE_PLANNER, or localhost:50061.
 std::string plannerAddress();
 
-/// $NES_CALCITE_PHYSICAL=1: plan down to physical operators (planPhysical) instead of a logical plan for our optimizer.
-bool physicalPlans();
+/// For inspecting the planner: with $NES_CALCITE_DUMP_REQUESTS set to a directory, the requests to the planner are written
+/// there, each as `<label>.pb` (a serialized PlanRequest), with the label this thread set last (e.g. systest's query id).
+/// nes-calcite-planner/docs/tools/generate_systest_steps.sh shows the planner's steps for them.
+void setRequestLabel(std::string label);
 
 /// $NES_CALCITE_FINITE_INPUTS=1: all sources are finite, so joins and aggregations without a window get one window over the
 /// whole input that fires at the end of the stream. Off by default; without it Calcite rejects them.
@@ -53,38 +61,32 @@ bool finiteInputs();
 /// sink name or an anonymous sink such as File('out.csv' AS "SINK".FILE_PATH, ...), in our SQL dialect.
 std::pair<std::string, std::string> splitSink(std::string_view statement);
 
-/// Plans a single SELECT in Calcite's SQL dialect against the schemas of all logical sources in `catalog`.
-/// Returns the same kind of unbound plan the ANTLR parser produces, writing into `sinkClause` (see splitSink).
-/// Throws InvalidQuerySyntax if Calcite rejects the query and UnsupportedQuery if the service is unreachable or the plan
-/// contains something we cannot convert.
-/// sourceNames: if not empty, only these catalog sources are offered to Calcite, under the given names
-/// (catalog name -> name in the SQL); e.g. systest offers each test file's sources under their unprefixed names.
-LogicalPlan plan(
-    std::string_view sql,
-    std::string_view sinkClause,
-    const SourceCatalog& catalog,
-    const std::string& address,
-    bool finiteInputs = false,
-    const std::unordered_map<std::string, std::string>& sourceNames = {});
-
-/// Binds the sink clause of a physical plan, given the query's output schema: a sink of the catalog, or an anonymous sink
-/// of that schema.
-using BindSink = std::function<SinkDescriptor(const Schema<UnqualifiedUnboundField, Ordered>&)>;
-
-/// What building a placed physical plan needs besides the plan: the catalogs (for the network sources and sinks), the sink
-/// clause, and each worker's data address, for its network channels.
-struct PhysicalPlanContext
+/// A query that Calcite planned down to its pipelines and placed on workers (planPhysical).
+struct PlannedPhysicalQuery
 {
-    const SourceCatalog& sourceCatalog;
-    const SinkCatalog& sinkCatalog;
-    BindSink bindSink;
-    std::unordered_map<Host, std::string> dataAddresses;
+    /// The part of each worker.
+    PlacedPhysicalQuery parts;
+    /// The rows that the sink writes: its own schema if it has one (a named sink's, or an anonymous sink's that gives one),
+    /// else the query's result.
+    Schema<UnqualifiedUnboundField, Ordered> sinkInputSchema;
+    /// The sink's type, e.g. File or Checksum.
+    std::string sinkType;
+    /// The placed pipelines as the planner describes them, per worker (for EXPLAIN).
+    std::string explain;
+    /// The planner's steps: each step's name and the plan after it (for EXPLAIN VERBOSE).
+    std::vector<std::pair<std::string, std::string>> steps;
 };
 
 /// Plans a single SELECT with Calcite down to its pipelines and places them on the workers of `workerCatalog`; we neither
-/// optimize, place nor pipeline it, each worker only compiles its part (see PhysicalQuery). The sink clause is bound with
-/// `sinkCatalog`; both catalogs must outlive the workers' start of the query. Errors as for plan().
-PlacedPhysicalQuery planPhysical(
+/// optimize, place nor pipeline it, each worker builds and compiles its part (see PhysicalQuery, WorkerPart). The sink
+/// clause is bound with `sinkCatalog`. A named sink's schema must have the fields of
+/// the query's result (CannotInferSchema otherwise). nestedLoopJoins: every window join is a nested-loop join (as our
+/// optimizer's join_strategy NESTED_LOOP_JOIN).
+/// sourceNames: if not empty, only these catalog sources are offered to Calcite, under the given names (catalog name ->
+/// name in the SQL); e.g. systest offers each test file's sources under their unprefixed names.
+/// Throws InvalidQuerySyntax if Calcite rejects the query, UnsupportedQuery if the service is unreachable or the query uses
+/// something we cannot run, and PlacementFailure if it cannot be placed on the workers.
+PlannedPhysicalQuery planPhysical(
     std::string_view sql,
     std::string_view sinkClause,
     const SourceCatalog& sourceCatalog,
@@ -92,24 +94,19 @@ PlacedPhysicalQuery planPhysical(
     const WorkerCatalog& workerCatalog,
     const std::string& address,
     bool finiteInputs = false,
-    const std::unordered_map<std::string, std::string>& sourceNames = {});
+    const std::unordered_map<std::string, std::string>& sourceNames = {},
+    const ModelCatalog* models = nullptr,
+    const QueryOptimizerConfiguration& optimizer = defaultConfiguration<QueryOptimizerConfiguration>());
 
-/// Builds the pipelines of the parts of a placed physical plan (PhysicalOperator payloads) that run on `worker`, with the
-/// worker's configuration, e.g. its buffer size.
-std::shared_ptr<PipelinedQueryPlan> toPipelines(
-    const substrait::Plan& plan,
-    const PhysicalPlanContext& context,
-    const Host& worker,
-    QueryId queryId,
-    const QueryExecutionConfiguration& configuration);
+/// Plans a query statement, "SELECT ... INTO <sink>", as planPhysical does, with the planner at plannerAddress() and
+/// $NES_CALCITE_FINITE_INPUTS (see finiteInputs()).
+PlannedPhysicalQuery planStatement(
+    std::string_view statement,
+    const SourceCatalog& sourceCatalog,
+    const SinkCatalog& sinkCatalog,
+    const WorkerCatalog& workerCatalog,
+    const ModelCatalog* models,
+    const QueryOptimizerConfiguration& optimizer);
 
-/// Converts a Substrait plan from the planner service into an unbound logical plan without a sink.
-/// finiteInputs: constant rows (VALUES) may be derived from the sources, see the planner's finite_inputs. They use a source
-/// the plan reads, or fallbackSource if it reads none. catalogNames maps source names in the plan to catalog names.
-LogicalPlan toLogicalPlan(
-    const substrait::Plan& plan,
-    bool finiteInputs = false,
-    std::optional<std::string> fallbackSource = std::nullopt,
-    std::unordered_map<std::string, std::string> catalogNames = {});
 
 }

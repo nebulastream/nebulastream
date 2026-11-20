@@ -20,16 +20,15 @@ ATTACH INLINE
 /search,190.0,330000
 
 CREATE SINK sink(
-    response_time_count UINT64 NOT NULL,
-    response_time_avg   FLOAT64 NOT NULL
+    response_time_count INT64 NOT NULL,
+    response_time_avg   FLOAT64
 ) TYPE File;
 
 SELECT
     COUNT(response_time) AS response_time_count,
     AVG(response_time) AS response_time_avg
-FROM api_requests
-GROUP BY endpoint
-WINDOW TUMBLING(ts, SIZE 5 MINUTES)
+FROM TABLE(TUMBLE(TABLE api_requests, DESCRIPTOR(ts), INTERVAL '5' MINUTE))
+GROUP BY window_start, window_end, endpoint
 INTO sink;
 ----
 1,90.0

@@ -184,8 +184,9 @@ final class PlanGraph {
         if (node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.NetworkSource || node instanceof NesLogical.NetworkSource) {
             return "#fed7aa";
         }
-        if (node instanceof NesPhysical.WindowBuild || node instanceof NesPhysical.WindowProbe
-            || node instanceof NesPhysical.WatermarkAssigner || node instanceof NesWindowAggregate) {
+        /// Window operators: aggregations and joins, logical and physical.
+        if (node instanceof NesPhysical.WindowBuild || node instanceof NesPhysical.WindowProbe || node instanceof NesWindowAggregate
+            || node instanceof NesPhysical.JoinBuild || node instanceof NesPhysical.JoinProbe || node instanceof NesWindowJoin) {
             return "#bbf7d0";
         }
         if (node instanceof NesPhysical.NesRel) {

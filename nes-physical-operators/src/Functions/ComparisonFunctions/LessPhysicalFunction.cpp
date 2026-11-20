@@ -38,7 +38,7 @@ LessPhysicalFunction::LessPhysicalFunction(PhysicalFunction leftPhysicalFunction
 {
 }
 
-PhysicalFunctionRegistryReturnType LessPhysicalFunction::createLess(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType LessPhysicalFunction::createLt(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Less function must have exactly two child functions");
     return LessPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);

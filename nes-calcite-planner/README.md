@@ -49,28 +49,36 @@ without DISTINCT or FILTER. A `WHERE` on non-window columns is allowed. Window o
 
 ## NebulaStream side
 
-`nes-calcite/` (C++) calls the service and converts the Substrait plan into the same unbound `LogicalPlan` the ANTLR
-parser builds, so binding, type inference, watermark/origin-id rules, placement and lowering run unchanged.
-The REPL routes statements of the form `CALCITE <query> INTO <sink>;` through it, using `$NES_CALCITE_PLANNER`
-(default `localhost:50061`).
+Every query is planned by Calcite: NebulaStream has no optimizer, lowering or pipelining of its own anymore. The
+frontend (REPL, CLI, systest) calls the service at `$NES_CALCITE_PLANNER` (default `localhost:50061`) and gets the placed
+pipelines back (see "Physical plans" below).
 
-`nes-calcite/e2e/run.sh <nes-repl-embedded> <nes-calcite-planner.jar> [java]` runs ANTLR/Calcite query pairs on the
-embedded worker and checks that each pair writes the same rows.
+- A query is written in Calcite's dialect. Our SQL grammar only recognizes it (a query starts with `SELECT`, `WITH`,
+  `VALUES`, `TABLE` or `(`) and keeps its text; only the sink clause after `INTO` is ours (a sink name or an anonymous
+  sink such as `File(...)`). In the REPL, the prefix `CALCITE` is optional.
+- `EXPLAIN [FORMAT TEXT | VERBOSE] <query>` shows the placed pipelines per worker; `VERBOSE` shows the planner's steps
+  first.
+- `nes-calcite/` (C++) resolves each worker's part of the plan into a self-contained `WorkerPart`: the part's Substrait
+  relation, with the source and sink descriptors and the models it reads from the coordinator's catalogs. A worker
+  (embedded, or remote with the gRPC request `StartPhysicalQuery`) builds its pipelines from the part alone
+  (`nes-calcite-pipelines`) and compiles them.
+- Systest plans every test file this way: the queries are written against the sources the file declares.
 
-Systest files that start with `# calcite` are planned the same way: their queries are in Calcite's dialect, written
-against the sources the file declares; only the sink clause after `INTO` is ours (see `nes-systests/calcite/`).
+`nes-calcite/e2e/slt_run.py` runs a sqllogictest file through the REPL and compares every result with SQLite.
 
-## Native library (proof of concept)
+## Native library
 
-Instead of the service, the planner can be compiled with GraalVM `native-image --shared` into
-`libnes-calcite-planner.so` and called in-process: no JVM, no gRPC, no service to start.
+With GraalVM, the build compiles the planner with `native-image --shared` into `libnes-calcite-planner.so` and links it
+into `nes-calcite`. The planner then runs in-process: no JVM, no gRPC, no service to start. The development image has
+GraalVM and Maven and sets `GRAALVM_HOME`, so CI builds and the executable images (`package-docker-images-all`, which
+copies the library to `/usr/lib`) always use the native library. Elsewhere:
 
-    cmake ... -DNES_CALCITE_GRAALVM_HOME=<graalvm> -DNES_CALCITE_MAVEN=<mvn>
+    GRAALVM_HOME=<graalvm> cmake --preset ...    # or -DNES_CALCITE_GRAALVM_HOME=<graalvm>; mvn must be on the PATH
 
-builds the jar and the library (about 1.5 min and 9 GB RAM; native-image has no incremental mode) whenever the planner's
-sources change, and links it into `nes-calcite`. `CalcitePlanner.cpp` then creates one GraalVM isolate per process and
-calls `nes_calcite_plan` (serialized `PlanRequest` in, `PlanResponse` out, see `NativeEntryPoints.java`); errors arrive in
-`PlanResponse.error`. Without the option nothing changes.
+The build makes the jar and the library (about 3 min and 9 GB RAM; native-image has no incremental mode) whenever the
+planner's sources change. `CalcitePlanner.cpp` creates one GraalVM isolate per process and calls `nes_calcite_plan`
+(serialized `PlanRequest` in, `PlanResponse` out, see `NativeEntryPoints.java`); errors arrive in `PlanResponse.error`.
+Without GraalVM, NebulaStream calls the planner service instead (see above).
 
 Two parts of Calcite compile generated Java code at runtime (Janino), which a native image cannot do. The planner
 therefore uses `CachingMetadataHandlerProvider` for metadata (Calcite's `ProxyingMetadataHandlerProvider` plus the
@@ -90,6 +98,27 @@ byte-identical plans to Calcite's defaults on the recorded requests. What the im
   written by `native/registrations.py`, because which of them a query reaches depends on its operators and size, and
   tracing missed some.
 
+## Anonymous sources
+
+A query can read a source that is not in the catalog with a table function per source type, as DuckDB's `read_csv`:
+
+```sql
+SELECT id, val
+FROM TABLE(FILE(
+    schema => 'id UINT64 NOT NULL, val INT32',
+    file_path => 'data.csv',
+    format => 'CSV',
+    format_field_delimiter => ';'))
+```
+
+- `schema` (required): the fields as in `CREATE LOGICAL SOURCE` (`name TYPE [NOT NULL]`, quoted names keep their case).
+- `host`: the worker that runs the source. `format`: the input formatter type; `format_<option>`: its options.
+- Every option of the source type under its name (e.g. `file_path` for `FILE`, `generator_schema` for `GENERATOR`).
+
+The request lists the registered source types and their options (`PlanRequest.source_types`, `format_options`), so
+Calcite checks the argument names; the engine checks the values. `AnonymousSources.java` turns the call into an
+`AnonymousSource` payload, which becomes our anonymous source operator. Not yet in physical plans.
+
 ## Unsigned integers
 
 `UINT8`..`UINT64` are Calcite's `UTINYINT`..`UBIGINT` and, in Substrait, the user-defined types `u8`..`u64` of
@@ -99,9 +128,9 @@ systems, so it fails: an operation takes unsigned operands of one type (a narrow
 non-negative integer literal is cast to the unsigned type), and a cast to or from an unsigned type must keep every value
 (e.g. `UINT32` to `BIGINT`). Like all our integer arithmetic, unsigned arithmetic wraps on overflow.
 
-## Physical plans (prototype)
+## Physical plans
 
-With `PlanRequest.physical` (in the REPL: `NES_CALCITE_PHYSICAL=1`), Calcite plans down to our pipelines, and the engine
+With `PlanRequest.physical` (which the frontend always sets), Calcite plans down to our pipelines, and the engine
 neither optimizes, lowers nor pipelines the query: it only compiles the pipelines.
 
 - `NesPhysical.java`: one Calcite node per engine operator, in the convention `NES`: `SourceScan`, `Scan`, `Selection`,
@@ -125,7 +154,12 @@ neither optimizes, lowers nor pipelines the query: it only compiles the pipeline
 - `docs/physical-plans.html` shows example queries with their logical plan, physical plan and pipelines.
 - `docs/planner-steps.html` shows every planner step as a graph, and the plan after each rule of the rule-based steps
   (`PlanRequest.detailed_steps`, see `Steps` and `PlanGraph`). Regenerate it with `docs/tools/generate_steps.sh <java>`
-  after `mvn package`.
+  after `mvn package`. Its queries are also a systest, `nes-systests/calcite/PlannerExamples.test`.
+- `docs/tools/generate_systest_steps.sh <systest binary> <out directory> [java]` shows the same for every systest query:
+  it runs the systests with `--plan-only` (each query is planned, none runs) and `NES_CALCITE_DUMP_REQUESTS` (each request
+  to the planner is saved under its query id), plans
+  the saved requests again with detailed steps, and writes one page per test file and an index. The planner service must
+  run.
 
 ### Windows
 
@@ -147,12 +181,16 @@ Not yet: GLOBAL windows (finite inputs) and joins.
 With `PlanRequest.topology` (the REPL sends its worker catalog), the plan is placed before it becomes physical
 operators, as our own optimizer places logical operators:
 
-1. `NesLogical.expandSources`: each logical source becomes a scan of each physical source (a UNION ALL of several).
-   Filters and projections then go below these unions, so that each source's rows shrink where it runs.
+1. `NesLogical.expandSources`, the first step after the conversion from SQL: each logical source becomes a scan of each
+   physical source (a UNION ALL of several). All later steps see the physical sources; filters and projections go below
+   these unions, so that each source's rows shrink where it runs.
+   `Watermarks.assign` then puts the watermark assigner of each window input directly after its sources, so that it is
+   the first operator after the source.
 2. `Placement.java` puts each logical operator on one worker with an integer linear program (ojAlgo, pure Java):
    - `x[o][w] = 1` if operator `o` runs on worker `w`. Each operator runs on exactly one worker.
-   - A physical source runs on its worker, and the sink on the sink's worker.
-   - A worker runs at most `max_operators` operators. The sink counts as one.
+   - A physical source runs on its worker, and the sink on the sink's worker. A watermark assigner runs on the worker of
+     its source.
+   - A worker runs at most `max_operators` operators. Sources, their watermark assigners and the sink cost no capacity.
    - An operator sends its rows only to its own worker or to a worker downstream of it.
    - Objective: each cut (an operator whose consumer runs on another worker) costs a fixed amount plus the bytes it
      sends, as Calcite estimates them, times the hops between the workers.

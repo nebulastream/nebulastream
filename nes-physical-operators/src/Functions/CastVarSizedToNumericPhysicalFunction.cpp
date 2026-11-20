@@ -122,14 +122,4 @@ CastVarSizedToNumericPhysicalFunction::CastVarSizedToNumericPhysicalFunction(Phy
 {
 }
 
-PhysicalFunctionRegistryReturnType
-CastVarSizedToNumericPhysicalFunction::createVarSizedToNumeric(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
-{
-    PRECONDITION(
-        physicalFunctionRegistryArguments.childFunctions.size() == 1, "VarSizedToNumeric function must have exactly one child function");
-
-    return CastVarSizedToNumericPhysicalFunction(
-        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
-}
-
 }

@@ -25,8 +25,8 @@
 #include <Interface/TimestampRef.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <Join/JoinType.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
@@ -55,10 +55,10 @@ public:
         ChainedHashMapConfig rightHashMapBasedOptions,
         std::optional<PhysicalFunction> residualFunction = std::nullopt);
 
-    static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
+    static constexpr bool supportsJoinType(JoinType joinType) noexcept
     {
-        return joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN
-            || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+        return joinType == JoinType::OUTER_LEFT_JOIN || joinType == JoinType::OUTER_RIGHT_JOIN
+            || joinType == JoinType::OUTER_FULL_JOIN;
     }
 
 protected:

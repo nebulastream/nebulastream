@@ -20,7 +20,10 @@ ATTACH INLINE
 11,2,2001
 16,2,2002
 
-CREATE SINK sinkStream(value_Sum UINT64 NOT NULL)  TYPE File;
-SELECT SUM(value) FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStream;
+CREATE SINK sinkStream(value_Sum UINT64)  TYPE File;
+SELECT SUM("VALUE") AS value_Sum
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
+INTO sinkStream;
 ----
 ERROR 3000

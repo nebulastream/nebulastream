@@ -39,105 +39,119 @@ CREATE SINK sinkStream3Stream4(start UINT64 NOT NULL, end UINT64 NOT NULL, intKe
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i8_s1 = i8_s2 and i8_s1 = i16_s2 and i8_s1 = i32_s2 and
-                                                      i8_s1 = i64_s2 and i8_s1 = u8_s2 and i8_s1 = u16_s2 and
-                                                      i8_s1 = u32_s2 and i8_s1 = u64_s2 and i8_s1 = f32_s2 and
-                                                      i8_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND i8_s1 = i8_s2 and i8_s1 = i16_s2 and i8_s1 = i32_s2 and i8_s1 = i64_s2 and i8_s1 = u8_s2 and i8_s1 = u16_s2 and i8_s1 = u32_s2 and i8_s1 = u64_s2 and i8_s1 = f32_s2 and i8_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,1,1,1,1,1,1,1,1,1.0,1.0,500
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i16_s1 = i8_s2 and i16_s1 = i16_s2 and i16_s1 = i32_s2 and
-                                                      i16_s1 = i64_s2 and i16_s1 = u8_s2 and i16_s1 = u16_s2 and
-                                                      i16_s1 = u32_s2 and i16_s1 = u64_s2 and i16_s1 = f32_s2 and
-                                                      i16_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND i16_s1 = i8_s2 and i16_s1 = i16_s2 and i16_s1 = i32_s2 and i16_s1 = i64_s2 and i16_s1 = u8_s2 and i16_s1 = u16_s2 and i16_s1 = u32_s2 and i16_s1 = u64_s2 and i16_s1 = f32_s2 and i16_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,2,2,2,2,2,2,2,2,2.0,2.0,501
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i32_s1 = i8_s2 and i32_s1 = i16_s2 and i32_s1 = i32_s2 and
-                                                      i32_s1 = i64_s2 and i32_s1 = u8_s2 and i32_s1 = u16_s2 and
-                                                      i32_s1 = u32_s2 and i32_s1 = u64_s2 and i32_s1 = f32_s2 and
-                                                      i32_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND i32_s1 = i8_s2 and i32_s1 = i16_s2 and i32_s1 = i32_s2 and i32_s1 = i64_s2 and i32_s1 = u8_s2 and i32_s1 = u16_s2 and i32_s1 = u32_s2 and i32_s1 = u64_s2 and i32_s1 = f32_s2 and i32_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,3,3,3,3,3,3,3,3,3.0,3.0,502
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i64_s1 = i8_s2 and i64_s1 = i16_s2 and i64_s1 = i32_s2 and
-                                                      i64_s1 = i64_s2 and i64_s1 = u8_s2 and i64_s1 = u16_s2 and
-                                                      i64_s1 = u32_s2 and i64_s1 = u64_s2 and i64_s1 = f32_s2 and
-                                                      i64_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND i64_s1 = i8_s2 and i64_s1 = i16_s2 and i64_s1 = i32_s2 and i64_s1 = i64_s2 and i64_s1 = u8_s2 and i64_s1 = u16_s2 and i64_s1 = u32_s2 and i64_s1 = u64_s2 and i64_s1 = f32_s2 and i64_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,4,4,4,4,4,4,4,4,4.0,4.0,503
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u8_s1 = i8_s2 and u8_s1 = i16_s2 and u8_s1 = i32_s2 and
-                                                      u8_s1 = i64_s2 and u8_s1 = u8_s2 and u8_s1 = u16_s2 and
-                                                      u8_s1 = u32_s2 and u8_s1 = u64_s2 and u8_s1 = f32_s2 and
-                                                      u8_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND u8_s1 = i8_s2 and u8_s1 = i16_s2 and u8_s1 = i32_s2 and u8_s1 = i64_s2 and u8_s1 = u8_s2 and u8_s1 = u16_s2 and u8_s1 = u32_s2 and u8_s1 = u64_s2 and u8_s1 = f32_s2 and u8_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,5,5,5,5,5,5,5,5,5.0,5.0,504
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u16_s1 = i8_s2 and u16_s1 = i16_s2 and u16_s1 = i32_s2 and
-                                                      u16_s1 = i64_s2 and u16_s1 = u8_s2 and u16_s1 = u16_s2 and
-                                                      u16_s1 = u32_s2 and u16_s1 = u64_s2 and u16_s1 = f32_s2 and
-                                                      u16_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND u16_s1 = i8_s2 and u16_s1 = i16_s2 and u16_s1 = i32_s2 and u16_s1 = i64_s2 and u16_s1 = u8_s2 and u16_s1 = u16_s2 and u16_s1 = u32_s2 and u16_s1 = u64_s2 and u16_s1 = f32_s2 and u16_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,6,6,6,6,6,6,6,6,6.0,6.0,505
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u32_s1 = i8_s2 and u32_s1 = i16_s2 and u32_s1 = i32_s2 and
-                                                      u32_s1 = i64_s2 and u32_s1 = u8_s2 and u32_s1 = u16_s2 and
-                                                      u32_s1 = u32_s2 and u32_s1 = u64_s2 and u32_s1 = f32_s2 and
-                                                      u32_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND u32_s1 = i8_s2 and u32_s1 = i16_s2 and u32_s1 = i32_s2 and u32_s1 = i64_s2 and u32_s1 = u8_s2 and u32_s1 = u16_s2 and u32_s1 = u32_s2 and u32_s1 = u64_s2 and u32_s1 = f32_s2 and u32_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,7,7,7,7,7,7,7,7,7.0,7.0,506
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u64_s1 = i8_s2 and u64_s1 = i16_s2 and u64_s1 = i32_s2 and
-                                                      u64_s1 = i64_s2 and u64_s1 = u8_s2 and u64_s1 = u16_s2 and
-                                                      u64_s1 = u32_s2 and u64_s1 = u64_s2 and u64_s1 = f32_s2 and
-                                                      u64_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND u64_s1 = i8_s2 and u64_s1 = i16_s2 and u64_s1 = i32_s2 and u64_s1 = i64_s2 and u64_s1 = u8_s2 and u64_s1 = u16_s2 and u64_s1 = u32_s2 and u64_s1 = u64_s2 and u64_s1 = f32_s2 and u64_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,8,8,8,8,8,8,8,8,8.0,8.0,507
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON f32_s1 = i8_s2 and f32_s1 = i16_s2 and f32_s1 = i32_s2 and
-                                                      f32_s1 = i64_s2 and f32_s1 = u8_s2 and f32_s1 = u16_s2 and
-                                                      f32_s1 = u32_s2 and f32_s1 = u64_s2 and f32_s1 = f32_s2 and
-                                                      f32_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND f32_s1 = i8_s2 and f32_s1 = i16_s2 and f32_s1 = i32_s2 and f32_s1 = i64_s2 and f32_s1 = u8_s2 and f32_s1 = u16_s2 and f32_s1 = u32_s2 and f32_s1 = u64_s2 and f32_s1 = f32_s2 and f32_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,9,9,9,9,9,9,9,9,9.0,9.0,508
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
-SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON f64_s1 = i8_s2 and f64_s1 = i16_s2 and f64_s1 = i32_s2 and
-                                                      f64_s1 = i64_s2 and f64_s1 = u8_s2 and f64_s1 = u16_s2 and
-                                                      f64_s1 = u32_s2 and f64_s1 = u64_s2 and f64_s1 = f32_s2 and
-                                                      f64_s1 = f64_s2
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream1Stream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.i8_s1, l.i16_s1, l.i32_s1, l.i64_s1, l.u8_s1, l.u16_s1, l.u32_s1, l.u64_s1, l.f32_s1, l.f64_s1, l.ts1, r.i8_s2, r.i16_s2, r.i32_s2, r.i64_s2, r.u8_s2, r.u16_s2, r.u32_s2, r.u64_s2, r.f32_s2, r.f64_s2, r.ts2
+FROM TABLE(TUMBLE(TABLE stream1, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND f64_s1 = i8_s2 and f64_s1 = i16_s2 and f64_s1 = i32_s2 and f64_s1 = i64_s2 and f64_s1 = u8_s2 and f64_s1 = u16_s2 and f64_s1 = u32_s2 and f64_s1 = u64_s2 and f64_s1 = f32_s2 and f64_s1 = f64_s2
+INTO sinkStream1Stream2;
 ----
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,10,10,10,10,10,10,10,10,10.0,10.0,509
 
-#Check that trying to join  a varsized on an int should produce an exception
-SELECT * FROM (SELECT * FROM stream3) JOIN (SELECT * FROM stream4) ON intKey == strKey
-  WINDOW TUMBLING (ts1, ts2, size 1 sec) INTO sinkStream3Stream4;
+# Calcite compares a VARSIZED with an INT64 as CAST(strKey AS BIGINT) = intKey: the strings here are no numbers, so the cast fails.
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.intKey, l.ts1, r.strKey, r.ts2
+FROM TABLE(TUMBLE(TABLE stream3, DESCRIPTOR(ts1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(ts2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND intKey = strKey
+INTO sinkStream3Stream4;
 ----
-ERROR 2007
+ERROR 4003

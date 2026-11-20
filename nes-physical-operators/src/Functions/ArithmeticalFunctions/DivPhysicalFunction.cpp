@@ -18,6 +18,7 @@
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
@@ -35,10 +36,10 @@ DivPhysicalFunction::DivPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 {
 }
 
-PhysicalFunctionRegistryReturnType DivPhysicalFunction::createDiv(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType DivPhysicalFunction::createDivide(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Div function must have exactly two child functions");
-    return DivPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    return castIntegerResult(DivPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]), physicalFunctionRegistryArguments.outputType);
 }
 
 }

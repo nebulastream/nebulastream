@@ -58,7 +58,7 @@ teardown()      { nes_distributed_teardown; }
 
 @test "launch query from commandline" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select * from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
@@ -77,7 +77,7 @@ teardown()      { nes_distributed_teardown; }
 
 @test "launch and stop query" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select * from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
@@ -92,7 +92,7 @@ teardown()      { nes_distributed_teardown; }
 
 @test "launch and monitor query" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select * from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
@@ -109,7 +109,7 @@ teardown()      { nes_distributed_teardown; }
 @test "launch and monitor distributed queries" {
   setup_distributed tests/good/distributed-query-deployment.yaml
 
-  run docker_nes_cli -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/distributed-query-deployment.yaml start 'select * from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
   # Output should be a query ID (human-readable name)
   [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
@@ -498,7 +498,7 @@ EOF
 
 @test "launch and stop query with topology from stdin" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
+  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select * from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (numeric)
@@ -512,7 +512,7 @@ EOF
 
 @test "query status with topology from stdin" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
+  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select * from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (numeric)

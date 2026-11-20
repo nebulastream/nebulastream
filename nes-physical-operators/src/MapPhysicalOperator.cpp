@@ -24,16 +24,28 @@
 namespace NES
 {
 MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction)
-    : fieldToWriteTo(std::move(fieldToWriteTo)), mapFunction(std::move(mapFunction))
+    : assignments{{std::move(fieldToWriteTo), std::move(mapFunction)}}
+{
+}
+
+MapPhysicalOperator::MapPhysicalOperator(std::vector<std::pair<Record::RecordFieldIdentifier, PhysicalFunction>> assignments)
+    : assignments(std::move(assignments))
 {
 }
 
 void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// execute map function
-    const auto value = mapFunction.execute(record, ctx.pipelineMemoryProvider.arena);
-    /// write the result to the record
-    record.write(fieldToWriteTo, value);
+    /// evaluate every function on the record as it arrived, then write the results
+    std::vector<VarVal> values;
+    values.reserve(assignments.size());
+    for (const auto& [field, function] : assignments)
+    {
+        values.push_back(function.execute(record, ctx.pipelineMemoryProvider.arena));
+    }
+    for (size_t i = 0; i < assignments.size(); ++i)
+    {
+        record.write(assignments[i].first, values[i]);
+    }
     /// call next operator
     executeChild(ctx, record);
 }

@@ -30,8 +30,6 @@
 #include <Configurations/ConfigParsing.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Operators/LogicalOperatorFwd.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -51,7 +49,6 @@
 #include <ErrorHandling.hpp>
 #include <Model.hpp>
 #include <ModelCatalog.hpp>
-#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -303,9 +300,16 @@ std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operat
     return DropModelStatementResult{.name = statement.name};
 }
 
-QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer)
-    : queryManager(std::move(queryManager)), queryOptimizer(std::move(queryOptimizer))
+QueryStatementHandler::QueryStatementHandler(
+    SharedPtr<QueryManager> queryManager, QueryCatalogs catalogs, QueryOptimizerConfiguration optimizer)
+    : queryManager(std::move(queryManager)), catalogs(std::move(catalogs)), optimizer(std::move(optimizer))
 {
+}
+
+Calcite::PlannedPhysicalQuery QueryStatementHandler::plan(const std::string& sql) const
+{
+    return Calcite::planStatement(
+        sql, *catalogs.sourceCatalog, *catalogs.sinkCatalog, *catalogs.workerCatalog, catalogs.modelCatalog.get(), optimizer);
 }
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
@@ -321,58 +325,17 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
         .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 
-std::string computeExplainOutput(const ExplainQueryStatement& statement, const QueryOptimizer& optimizer)
+std::string computeExplainOutput(const ExplainQueryStatement& statement, const Calcite::PlannedPhysicalQuery& planned)
 {
-    auto formatPlan = [&](const LogicalPlan& plan) -> std::string
-    {
-        switch (statement.explainFormat)
-        {
-            case ExplainFormat::Visual: {
-                std::stringstream stringstream;
-                auto renderer = PlanRenderer<LogicalPlan, LogicalOperator>(stringstream, ExplainVerbosity::Short);
-                renderer.dump(plan);
-                return stringstream.str();
-            }
-            case ExplainFormat::Text:
-                return explain(plan, ExplainVerbosity::Short);
-            case ExplainFormat::Verbose:
-                return explain(plan, ExplainVerbosity::Debug);
-        }
-        std::unreachable();
-    };
-
     std::stringstream explainMessage;
-    const auto distributedPlan = optimizer.optimize(statement.plan);
-
-
-    if (statement.explainStages.contains(ExplainStage::Logical))
+    if (statement.explainFormat == ExplainFormat::Verbose)
     {
-        fmt::println(explainMessage, "== Initial Logical Plan ==\n{}", formatPlan(statement.plan));
-    }
-
-    if (statement.explainStages.contains(ExplainStage::Optimized))
-    {
-        fmt::println(explainMessage, "== Optimized Global Plan ==\n{}", formatPlan(distributedPlan.getGlobalPlan()));
-    }
-
-    if (statement.explainStages.contains(ExplainStage::Distributed))
-    {
-        fmt::println(explainMessage, "== Decomposed Plans ==");
-        /// The distributed plan stores its local plans in an unordered map. Sort by host for deterministic output.
-        auto sortedWorkerPlans = std::ranges::to<std::vector>(
-            distributedPlan | std::views::transform([](const auto& entry) { return std::addressof(entry); }));
-        std::ranges::sort(sortedWorkerPlans, {}, [](const auto* entry) -> const auto& { return entry->first; });
-        for (const auto* entry : sortedWorkerPlans)
+        for (const auto& [name, plan] : planned.steps)
         {
-            const auto& [worker, plans] = *entry;
-            fmt::println(explainMessage, "-- {} plan(s) on {} --", plans.size(), worker);
-            for (const auto& [index, plan] : plans | views::enumerate)
-            {
-                fmt::println(explainMessage, "{}:\n{}\n", index, formatPlan(plan));
-            }
+            fmt::println(explainMessage, "== {} ==\n{}", name, plan);
         }
     }
-
+    fmt::print(explainMessage, "== Placed Pipelines ==\n{}", planned.explain);
     return explainMessage.str();
 }
 
@@ -380,7 +343,7 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
 {
     CPPTRACE_TRY
     {
-        return ExplainQueryStatementResult{computeExplainOutput(statement, *queryOptimizer)};
+        return ExplainQueryStatementResult{computeExplainOutput(statement, plan(statement.sql))};
     }
     CPPTRACE_CATCH(...)
     {
@@ -393,14 +356,15 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        auto distributedPlan = queryOptimizer->optimize(statement.plan);
-
+        auto planned = plan(statement.sql);
         if (statement.id)
         {
-            distributedPlan.setQueryId(*statement.id);
+            for (auto& part : planned.parts | std::views::values | std::views::join)
+            {
+                part.queryId = QueryId::createDistributed(*statement.id);
+            }
         }
-
-        return queryManager->start(distributedPlan)
+        return queryManager->start(std::move(planned.parts))
             .transform([](DistributedQueryId distQueryId) { return QueryStatementResult{std::move(distQueryId)}; })
             .transform_error(
                 [](auto vecOfErrors)

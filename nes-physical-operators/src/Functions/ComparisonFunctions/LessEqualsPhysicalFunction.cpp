@@ -39,7 +39,7 @@ LessEqualsPhysicalFunction::LessEqualsPhysicalFunction(PhysicalFunction leftPhys
 }
 
 PhysicalFunctionRegistryReturnType
-LessEqualsPhysicalFunction::createLessEquals(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+LessEqualsPhysicalFunction::createLte(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two child functions");
     return LessEqualsPhysicalFunction(

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #pragma once
+#include <utility>
+#include <vector>
 
 #include <memory>
 #include <optional>
@@ -24,19 +26,20 @@ namespace NES
 {
 
 /// Map functions read record fields, apply transformations, and can set/update fields.
+/// Several functions are evaluated on the record as it arrives, then all results are written: a map of several fields
+/// (e.g. a projection) is one operator, and an assignment never reads a field that another one writes (a := b, b := a).
 class MapPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction);
+    explicit MapPhysicalOperator(std::vector<std::pair<Record::RecordFieldIdentifier, PhysicalFunction>> assignments);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
 private:
-    Record::RecordFieldIdentifier fieldToWriteTo;
-    PhysicalFunction mapFunction;
-
+    std::vector<std::pair<Record::RecordFieldIdentifier, PhysicalFunction>> assignments;
     std::optional<PhysicalOperator> child;
 };
 

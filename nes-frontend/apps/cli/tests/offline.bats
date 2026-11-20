@@ -68,7 +68,7 @@ teardown() {
 
 @test "nebucli dump using environment and adhoc query" {
 
-  NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump 'SELECT * FROM stream INTO VOID_SINK'
+  NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump 'SELECT * FROM "STREAM" INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
@@ -125,7 +125,7 @@ JSONEOF
 }
 
 @test "nebucli dump with topology from stdin and adhoc query" {
-  run bash -c "cat tests/good/chained-joins.yaml | $NES_CLI -t - dump 'SELECT * FROM stream INTO VOID_SINK'"
+  run bash -c "cat tests/good/chained-joins.yaml | $NES_CLI -t - dump 'SELECT * FROM \"STREAM\" INTO VOID_SINK'"
   [ "$status" -eq 0 ]
 }
 
@@ -201,7 +201,7 @@ JSONEOF
   # Create a minimal topology without capacity field
   cat > topology-no-capacity.yaml << 'TOPEOF'
 query: |
-  SELECT * FROM stream INTO VOID_SINK
+  SELECT * FROM "STREAM" INTO VOID_SINK
 sinks:
   - name: VOID_SINK
     host: worker-1:8080
@@ -238,7 +238,7 @@ TOPEOF
   run $NES_CLI -t topology-no-capacity.yaml dump
   [ "$status" -eq 0 ]
   # Verify it actually parsed and shows the plan
-  echo "$output" | grep -q "Decomposed Plans"
+  echo "$output" | grep -q "Placed Pipelines"
 }
 
 @test "optimizer configuration: -t with invalid optimizer configuration name" {

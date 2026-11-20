@@ -30,7 +30,7 @@ public:
     explicit PowPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createPow(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createPower(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

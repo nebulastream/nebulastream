@@ -16,25 +16,34 @@ cat4VPUMd,ikhbCibnkg,r6Bzr,1,2,3,4,5,6,7,8,9,10,225
 cat4VPUMd,dog4VZYMd,r6Bzr,2,3,4,5,6,7,8,9,10,11,250
 
 
-CREATE SINK sinkStreamKeyI8I16(start UINT64 NOT NULL, end UINT64 NOT NULL, keyI8 VARSIZED NOT NULL, keyI16 VARSIZED NOT NULL, i8_out INT8 NOT NULL, i16_out INT16 NOT NULL, i32_out INT32 NOT NULL, i64_out INT64 NOT NULL, u8_out UINT8 NOT NULL, u16_out UINT16 NOT NULL, u32_out UINT32 NOT NULL, u64_out UINT64 NOT NULL, f32_out FLOAT32 NOT NULL, f64_out FLOAT64 NOT NULL)  TYPE File;
-CREATE SINK sinkStreamAllU64KeyI8(start UINT64 NOT NULL, end UINT64 NOT NULL, keyI8 VARSIZED NOT NULL, i8_out UINT64 NOT NULL, i16_out UINT64 NOT NULL, i32_out UINT64 NOT NULL, i64_out UINT64 NOT NULL, u8_out UINT64 NOT NULL, u16_out UINT64 NOT NULL, u32_out UINT64 NOT NULL, u64_out UINT64 NOT NULL, f32_out UINT64 NOT NULL, f64_out UINT64 NOT NULL)  TYPE File;
-CREATE SINK sinkStreamAllF64KeyI8I16U64(start UINT64 NOT NULL, end UINT64 NOT NULL, keyI8 VARSIZED NOT NULL, keyI16 VARSIZED NOT NULL, keyU64 VARSIZED NOT NULL, i8_out FLOAT64 NOT NULL, i16_out FLOAT64 NOT NULL, i32_out FLOAT64 NOT NULL, i64_out FLOAT64 NOT NULL, u8_out FLOAT64 NOT NULL, u16_out FLOAT64 NOT NULL, u32_out FLOAT64 NOT NULL, u64_out FLOAT64 NOT NULL, f32_out FLOAT64 NOT NULL, f64_out FLOAT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStreamKeyI8I16(start UINT64 NOT NULL, end UINT64 NOT NULL, keyI8 VARSIZED NOT NULL, keyI16 VARSIZED NOT NULL, i8_out INT8, i16_out INT16, i32_out INT32, i64_out INT64, u8_out UINT8, u16_out UINT16, u32_out UINT32, u64_out UINT64, f32_out FLOAT32, f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllU64KeyI8(start UINT64 NOT NULL, end UINT64 NOT NULL, keyI8 VARSIZED NOT NULL, i8_out INT64 NOT NULL, i16_out INT64 NOT NULL, i32_out INT64 NOT NULL, i64_out INT64 NOT NULL, u8_out INT64 NOT NULL, u16_out INT64 NOT NULL, u32_out INT64 NOT NULL, u64_out INT64 NOT NULL, f32_out INT64 NOT NULL, f64_out INT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStreamAllF64KeyI8I16U64(start UINT64 NOT NULL, end UINT64 NOT NULL, keyI8 VARSIZED NOT NULL, keyI16 VARSIZED NOT NULL, keyU64 VARSIZED NOT NULL, i8_out FLOAT64, i16_out FLOAT64, i32_out FLOAT64, i64_out FLOAT64, u8_out FLOAT64, u16_out FLOAT64, u32_out FLOAT64, u64_out FLOAT64, f32_out FLOAT64, f64_out FLOAT64)  TYPE File;
 CREATE SINK sinkStreamAllF64KeyI16(start UINT64 NOT NULL, end UINT64 NOT NULL, keyI16 VARSIZED NOT NULL, i8_out FLOAT64 NOT NULL, i16_out FLOAT64 NOT NULL, i32_out FLOAT64 NOT NULL, i64_out FLOAT64 NOT NULL, u8_out FLOAT64 NOT NULL, u16_out FLOAT64 NOT NULL, u32_out FLOAT64 NOT NULL, u64_out FLOAT64 NOT NULL, f32_out FLOAT64 NOT NULL, f64_out FLOAT64 NOT NULL)  TYPE File;
 
 
 # Checking if a count over a keyed window works for all data types
-SELECT start, end, keyI8, COUNT(i8) as i8_out, COUNT(i16) as i16_out, COUNT(i32) as i32_out, COUNT(i64) as i64_out, COUNT(u8) as u8_out, COUNT(u16) as u16_out, COUNT(u32) as u32_out, COUNT(u64) as u64_out, COUNT(f32) as f32_out, COUNT(f64) as f64_out
-FROM stream GROUP BY (keyI8) WINDOW TUMBLING(ts, size 200 ms) INTO sinkStreamAllU64KeyI8;
+SELECT window_start AS "START", window_end AS "END", keyI8, COUNT(i8) AS i8_out, COUNT(i16) AS i16_out,
+       COUNT(i32) AS i32_out, COUNT(i64) AS i64_out, COUNT(u8) AS u8_out, COUNT(u16) AS u16_out,
+       COUNT(u32) AS u32_out, COUNT(u64) AS u64_out, COUNT(f32) AS f32_out, COUNT(f64) AS f64_out
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.2' SECOND))
+GROUP BY window_start, window_end, keyI8
+INTO sinkStreamAllU64KeyI8;
 ----
 0,200,cat4VPUMd,5,5,5,5,5,5,5,5,5,5
 200,400,cat4VPUMd,3,3,3,3,3,3,3,3,3,3
 
 
 # Checking if an average over a keyed window works for all data types
-SELECT start, end, keyI8, keyI16, keyU64, AVG(i8) as i8_out, AVG(i16) as i16_out, AVG(i32) as i32_out, AVG(i64) as i64_out,
-       AVG(u8) as u8_out, AVG(u16) as u16_out, AVG(u32) as u32_out, AVG(u64) as u64_out,
-       AVG(f32) as f32_out, AVG(f64) as f64_out
-FROM stream GROUP BY (keyI8, keyI16, keyU64) WINDOW TUMBLING(ts, size 200 ms) INTO sinkStreamAllF64KeyI8I16U64;
+SELECT window_start AS "START", window_end AS "END", keyI8, keyI16, keyU64, AVG(CAST(i8 AS DOUBLE)) AS i8_out,
+       AVG(CAST(i16 AS DOUBLE)) AS i16_out, AVG(CAST(i32 AS DOUBLE)) AS i32_out,
+       AVG(CAST(i64 AS DOUBLE)) AS i64_out, AVG(CAST(u8 AS DOUBLE)) AS u8_out,
+       AVG(CAST(u16 AS DOUBLE)) AS u16_out, AVG(CAST(u32 AS DOUBLE)) AS u32_out,
+       AVG(CAST(u64 AS DOUBLE)) AS u64_out, AVG(CAST(f32 AS DOUBLE)) AS f32_out,
+       AVG(CAST(f64 AS DOUBLE)) AS f64_out
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.2' SECOND))
+GROUP BY window_start, window_end, keyI8, keyI16, keyU64
+INTO sinkStreamAllF64KeyI8I16U64;
 ----
 0,200,cat4VPUMd,ikhbCibnkg,o4BSHvfWO,1,2,3,4,5,6,7,8,9,10
 0,200,cat4VPUMd,ikhbCibnkg,vjYvMIm,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5
@@ -45,10 +54,12 @@ FROM stream GROUP BY (keyI8, keyI16, keyU64) WINDOW TUMBLING(ts, size 200 ms) IN
 
 
 # Checking if a min over a keyed window works for all data types
-SELECT start, end, keyI8, keyI16, MIN(i8) as i8_out, MIN(i16) as i16_out, MIN(i32) as i32_out, MIN(i64) as i64_out,
-       MIN(u8) as u8_out, MIN(u16) as u16_out, MIN(u32) as u32_out, MIN(u64) as u64_out,
-       MIN(f32) as f32_out, MIN(f64) as f64_out
-FROM stream GROUP BY (keyI8, keyI16) WINDOW TUMBLING(ts, size 200 ms) INTO sinkStreamKeyI8I16;
+SELECT window_start AS "START", window_end AS "END", keyI8, keyI16, MIN(i8) AS i8_out, MIN(i16) AS i16_out,
+       MIN(i32) AS i32_out, MIN(i64) AS i64_out, MIN(u8) AS u8_out, MIN(u16) AS u16_out, MIN(u32) AS u32_out,
+       MIN(u64) AS u64_out, MIN(f32) AS f32_out, MIN(f64) AS f64_out
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.2' SECOND))
+GROUP BY window_start, window_end, keyI8, keyI16
+INTO sinkStreamKeyI8I16;
 ----
 0 200 cat4VPUMd ikhbCibnkg 0 0 0 0 0 0 0 0 0 0
 0 200 cat4VPUMd UbxONo -42 -129 -32769 -2147483649 1 1 1 1 1 1
@@ -57,10 +68,12 @@ FROM stream GROUP BY (keyI8, keyI16) WINDOW TUMBLING(ts, size 200 ms) INTO sinkS
 
 
 # Checking if a median over a keyed window works for all data types
-SELECT start, end, keyI16, MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
-       MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
-       MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
-FROM stream GROUP BY (keyI16) WINDOW SLIDING(ts, size 200 ms, advance by 100 ms) INTO sinkStreamAllF64KeyI16;
+SELECT window_start AS "START", window_end AS "END", keyI16, MEDIAN(i8) AS i8_out, MEDIAN(i16) AS i16_out,
+       MEDIAN(i32) AS i32_out, MEDIAN(i64) AS i64_out, MEDIAN(u8) AS u8_out, MEDIAN(u16) AS u16_out,
+       MEDIAN(u32) AS u32_out, MEDIAN(u64) AS u64_out, MEDIAN(f32) AS f32_out, MEDIAN(f64) AS f64_out
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND, INTERVAL '0.2' SECOND))
+GROUP BY window_start, window_end, keyI16
+INTO sinkStreamAllF64KeyI16;
 ----
 0,200,ikhbCibnkg,1,2,3,4,5,6,7,8,9,10
 0,200,UbxONo,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12

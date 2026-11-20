@@ -20,6 +20,7 @@
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
@@ -37,10 +38,10 @@ ModPhysicalFunction::ModPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 {
 }
 
-PhysicalFunctionRegistryReturnType ModPhysicalFunction::createMod(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType ModPhysicalFunction::createModulus(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two child functions");
-    return ModPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    return castIntegerResult(ModPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]), physicalFunctionRegistryArguments.outputType);
 }
 
 }

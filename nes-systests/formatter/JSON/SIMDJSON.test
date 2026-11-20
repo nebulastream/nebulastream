@@ -14,6 +14,6 @@ CREATE LOGICAL SOURCE windTurbines(producerId INT32 NOT NULL, groupId INT32 NOT 
 CREATE PHYSICAL SOURCE FOR windTurbines TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
 ATTACH FILE large/debs/WIND_TURBINES_TOPIC_5M.json
 
-SELECT producerId, groupId, producedPower, timestamp FROM windTurbines INTO Checksum();
+SELECT producerId, groupId, producedPower, "TIMESTAMP" FROM windTurbines INTO Checksum();
 ----
 ERROR 4000

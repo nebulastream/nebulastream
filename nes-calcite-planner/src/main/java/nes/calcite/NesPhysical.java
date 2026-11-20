@@ -26,6 +26,12 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.plan.RelOptUtil;
+import nes.calcite.proto.WindowJoin;
 
 /**
  * NebulaStream's physical operators as a Calcite convention, one node per engine operator (and two helpers, Retain and
@@ -39,12 +45,83 @@ final class NesPhysical {
     /** The converter rules from Calcite's logical operators. */
     static final List<RelOptRule> RULES = List.of(
         SourceScanRule.CONFIG.toRule(),
+        AnonymousSourceRule.CONFIG.toRule(),
+        InferModelRule.CONFIG.toRule(),
+        JoinRule.CONFIG.toRule(),
         SelectionRule.CONFIG.toRule(),
         ProjectionRule.CONFIG.toRule(),
         UnionRule.CONFIG.toRule(),
         WindowRule.CONFIG.toRule(),
         NetworkSourceRule.CONFIG.toRule(),
+        WatermarkAssignerRule.CONFIG.toRule(),
         PartsRule.CONFIG.toRule());
+
+    /**
+     * The size of a GLOBAL window (finite inputs): one tumbling window over the constant event time 0 that holds every row,
+     * so only the end of the stream closes it. 10^15 ms are ~30,000 years: far from overflowing window ends. As in the
+     * logical converter (SubstraitToLogicalPlan.cpp).
+     */
+    static final long GLOBAL_WINDOW_SIZE_MS = 1_000_000_000_000_000L;
+
+    /**
+     * The input of a window operator, with watermarks from the event time in timeField. Usually the rows have them already:
+     * from the assigners after their sources (Watermarks.assign), or from another window operator (an aggregation or join),
+     * whose watermarks are the ends of its windows; its rows' event times are not in order, so an assigner would raise the
+     * watermark too early. Otherwise (e.g. a GLOBAL window, which reads a computed time) the assigner is added here.
+     */
+    static RelNode watermarked(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
+        RelNode converted = ConverterRule.convert(input, traits.replace(NES));
+        return watermarked(input) ? converted : new WatermarkAssigner(cluster, traits, converted, timeField);
+    }
+
+    /**
+     * Whether the rows carry watermarks: from an assigner, a window operator, or (on another worker) over a network channel,
+     * through filters, projections and unions whose inputs all carry them.
+     */
+    static boolean watermarked(RelNode node) {
+        if (node instanceof org.apache.calcite.plan.volcano.RelSubset subset) {
+            /// Equivalent alternatives: one of them carries watermarks, all do.
+            return subset.getRelList().stream().anyMatch(alternative -> !(alternative instanceof org.apache.calcite.plan.volcano.RelSubset)
+                && watermarked(alternative));
+        }
+        RelNode rel = node instanceof org.apache.calcite.plan.hep.HepRelVertex vertex ? vertex.getCurrentRel() : node;
+        if (rel instanceof NesWindowAggregate || rel instanceof NesWindowJoin || rel instanceof NesLogical.WatermarkAssigner) {
+            return true;
+        }
+        if (rel instanceof NesLogical.NetworkSource network) {
+            return network.watermarked;
+        }
+        boolean passesRows = rel instanceof org.apache.calcite.rel.core.Filter || rel instanceof org.apache.calcite.rel.core.Project
+            || rel instanceof org.apache.calcite.rel.core.Union || rel instanceof NesModelInference;
+        return passesRows && !rel.getInputs().isEmpty() && rel.getInputs().stream().allMatch(NesPhysical::watermarked);
+    }
+
+    /** A node of the plan that no rule of RULES converts, or null. */
+    static RelNode unsupported(RelNode plan) {
+        for (RelNode input : plan.getInputs()) {
+            RelNode found = unsupported(Pipelines.strip(input));
+            if (found != null) {
+                return found;
+            }
+        }
+        boolean converted = plan instanceof NesLogical.PhysicalSourceScan || plan instanceof AnonymousSources.NesAnonymousSource
+            || plan instanceof NesModelInference
+            || plan instanceof NesWindowJoin
+            || plan instanceof NesLogical.NetworkSource || plan instanceof NesLogical.WatermarkAssigner
+            || plan instanceof NesLogical.Parts || plan instanceof LogicalFilter || plan instanceof LogicalProject
+            || (plan instanceof LogicalUnion union && union.all)
+            || plan instanceof NesWindowAggregate;
+        return converted ? null : plan;
+    }
+
+    /** What a node that no rule converts is, for the error. */
+    static String describeUnsupported(RelNode node) {
+        String what = node instanceof org.apache.calcite.rel.core.Values ? "constant rows (VALUES)"
+            : node instanceof LogicalUnion ? "UNION without ALL"
+            : node.getRelTypeName();
+        String terms = org.apache.calcite.plan.RelOptUtil.toString(node).lines().findFirst().orElse("").trim();
+        return what + ": " + (terms.length() <= 300 ? terms : terms.substring(0, 300) + "...");
+    }
 
     /** Fresh names of computed fields, unique within one plan (see Planner, which resets them per plan). */
     private static final ThreadLocal<int[]> FRESH_NAMES = ThreadLocal.withInitial(() -> new int[1]);
@@ -64,24 +141,38 @@ final class NesPhysical {
 
     /** Reads one physical source; its buffers hold the source's raw data (e.g. CSV text), see Scan. */
     static final class SourceScan extends AbstractRelNode implements NesRel {
+        /// A physical source of the catalog (table and physicalSource), or an anonymous source (anonymous).
         final RelOptTable table;
         final PhysicalSource physicalSource;
+        final nes.calcite.proto.AnonymousSource anonymous;
 
         SourceScan(RelOptCluster cluster, RelTraitSet traits, RelOptTable table, PhysicalSource physicalSource) {
             super(cluster, traits);
             this.table = table;
             this.physicalSource = physicalSource;
+            this.anonymous = null;
             this.rowType = rename(cluster.getTypeFactory(), table.getRowType(), physicalSource.getFieldNamesList());
+        }
+
+        SourceScan(RelOptCluster cluster, RelTraitSet traits, nes.calcite.proto.AnonymousSource anonymous, RelDataType rowType) {
+            super(cluster, traits);
+            this.table = null;
+            this.physicalSource = null;
+            this.anonymous = anonymous;
+            this.rowType = rowType;
         }
 
         @Override
         public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
-            return new SourceScan(getCluster(), traitSet, table, physicalSource);
+            return anonymous != null ? new SourceScan(getCluster(), traitSet, anonymous, rowType)
+                : new SourceScan(getCluster(), traitSet, table, physicalSource);
         }
 
         @Override
         public RelWriter explainTerms(RelWriter pw) {
-            return super.explainTerms(pw).item("table", table.getQualifiedName()).item("physicalSource", physicalSource.getId());
+            return anonymous != null
+                ? super.explainTerms(pw).item("anonymous", anonymous.getType()).item("options", anonymous.getSourceOptionsMap())
+                : super.explainTerms(pw).item("table", table.getQualifiedName()).item("physicalSource", physicalSource.getId());
         }
     }
 
@@ -160,35 +251,341 @@ final class NesPhysical {
 
     /** Computes one value into one field, which it appends to the row; all other fields stay. */
     static final class Map extends SingleRel implements NesRel {
-        final String field;
-        final RexNode expression;
+        /// Field i gets expressions i; every expression reads the input row (all are computed before any is written).
+        final List<String> fields;
+        final List<RexNode> expressions;
 
-        Map(RelOptCluster cluster, RelTraitSet traits, RelNode input, String field, RexNode expression) {
+        Map(RelOptCluster cluster, RelTraitSet traits, RelNode input, List<String> fields, List<RexNode> expressions) {
             super(cluster, traits, input);
-            this.field = field;
-            this.expression = expression;
+            this.fields = List.copyOf(fields);
+            this.expressions = List.copyOf(expressions);
         }
 
         @Override
         protected RelDataType deriveRowType() {
-            return getCluster().getTypeFactory().builder().addAll(input.getRowType().getFieldList())
-                .add(field, expression.getType()).build();
+            RelDataTypeFactory.Builder row = getCluster().getTypeFactory().builder().addAll(input.getRowType().getFieldList());
+            for (int i = 0; i < fields.size(); i++) {
+                row.add(fields.get(i), expressions.get(i).getType());
+            }
+            return row.build();
         }
 
         @Override
         public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
-            return new Map(getCluster(), traitSet, inputs.get(0), field, expression);
+            return new Map(getCluster(), traitSet, inputs.get(0), fields, expressions);
         }
 
         @Override
         public RelNode accept(RexShuttle shuttle) {
-            RexNode visited = expression.accept(shuttle);
-            return visited == expression ? this : new Map(getCluster(), traitSet, input, field, visited);
+            List<RexNode> visited = expressions.stream().map(expression -> expression.accept(shuttle)).toList();
+            return visited.equals(expressions) ? this : new Map(getCluster(), traitSet, input, fields, visited);
         }
 
         @Override
         public RelWriter explainTerms(RelWriter pw) {
-            return super.explainTerms(pw).item("field", field).item("expression", expression);
+            RelWriter writer = super.explainTerms(pw);
+            for (int i = 0; i < fields.size(); i++) {
+                writer.item(fields.get(i), expressions.get(i));
+            }
+            return writer;
+        }
+    }
+
+    /**
+     * Runs a model on each row (NesModelInference): reads its inputs from inputFields, in the model's input order, and
+     * appends its outputs under the names in outputFields. Stays in its input's pipeline.
+     */
+    static final class InferModel extends SingleRel implements NesRel {
+        final nes.calcite.proto.Model model;
+        final List<Integer> inputFields;
+        final List<String> outputFields;
+        final List<RelDataType> outputTypes;
+
+        InferModel(RelOptCluster cluster, RelTraitSet traits, RelNode input, nes.calcite.proto.Model model, List<Integer> inputFields,
+                   List<String> outputFields, List<RelDataType> outputTypes) {
+            super(cluster, traits, input);
+            this.model = model;
+            this.inputFields = List.copyOf(inputFields);
+            this.outputFields = List.copyOf(outputFields);
+            this.outputTypes = List.copyOf(outputTypes);
+        }
+
+        @Override
+        protected RelDataType deriveRowType() {
+            RelDataTypeFactory.Builder row = getCluster().getTypeFactory().builder().addAll(input.getRowType().getFieldList());
+            for (int i = 0; i < outputFields.size(); i++) {
+                row.add(outputFields.get(i), outputTypes.get(i));
+            }
+            return row.build();
+        }
+
+        @Override
+        public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
+            return new InferModel(getCluster(), traitSet, inputs.get(0), model, inputFields, outputFields, outputTypes);
+        }
+
+        @Override
+        public RelWriter explainTerms(RelWriter pw) {
+            return super.explainTerms(pw).item("model", model.getName()).item("reads", inputFields).item("appends", outputFields);
+        }
+    }
+
+    /** Model inference (NesModelInference): its outputs get fresh fields, appended to the input row. */
+    public static final class InferModelRule extends ConverterRule {
+        static final Config CONFIG = Config.INSTANCE
+            .withConversion(NesModelInference.class, Convention.NONE, NES, "NesInferModelRule")
+            .withRuleFactory(InferModelRule::new);
+
+        InferModelRule(Config config) {
+            super(config);
+        }
+
+        @Override
+        public RelNode convert(RelNode rel) {
+            NesModelInference inference = (NesModelInference) rel;
+            RelTraitSet traits = inference.getTraitSet().replace(NES);
+            RelNode input = convert(inference.getInput(), traits);
+            List<RelDataTypeField> fields = inference.getRowType().getFieldList();
+            int inputWidth = inference.getInput().getRowType().getFieldCount();
+            List<String> outputFields = new ArrayList<>();
+            List<RelDataType> outputTypes = new ArrayList<>();
+            for (RelDataTypeField output : fields.subList(inputWidth, fields.size())) {
+                outputFields.add(freshName());
+                outputTypes.add(output.getType());
+            }
+            /// The next operator reads the outputs by position: their fresh names do not matter.
+            return new InferModel(inference.getCluster(), traits, input, inference.model, inference.inputColumns(), outputFields,
+                outputTypes);
+        }
+    }
+
+    /**
+     * The state of a window join (its handler), shared by the JoinBuilds of both sides and their JoinProbe. Each side's
+     * builds store its rows as leftStored / rightStored: the join's input columns, named as the join names them (unique
+     * across both sides), and for a hash join the key columns in the type both sides compare in. Keys: positions in the
+     * stored rows; for a hash join the keys, pairwise equal, for a nested-loop join the columns the condition reads.
+     */
+    static final class JoinState {
+        final WindowJoin spec;
+        final RelDataType leftStored;
+        final RelDataType rightStored;
+        final List<Integer> leftKeys;
+        final List<Integer> rightKeys;
+
+        JoinState(WindowJoin spec, RelDataType leftStored, RelDataType rightStored, List<Integer> leftKeys, List<Integer> rightKeys) {
+            this.spec = spec;
+            this.leftStored = leftStored;
+            this.rightStored = rightStored;
+            this.leftKeys = List.copyOf(leftKeys);
+            this.rightKeys = List.copyOf(rightKeys);
+        }
+    }
+
+    /**
+     * Ends a pipeline: stores each row of its side (right or left) in the state of its window. Fields are positions in
+     * its input: the event time, and the stored fields, which the state names as its side's stored row type.
+     */
+    static final class JoinBuild extends SingleRel implements NesRel {
+        final JoinState join;
+        final boolean right;
+        final int timeField;
+        final List<Integer> storedFields;
+
+        JoinBuild(RelOptCluster cluster, RelTraitSet traits, RelNode input, JoinState join, boolean right, int timeField,
+                  List<Integer> storedFields) {
+            super(cluster, traits, input);
+            this.join = join;
+            this.right = right;
+            this.timeField = timeField;
+            this.storedFields = List.copyOf(storedFields);
+        }
+
+        @Override
+        public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
+            return new JoinBuild(getCluster(), traitSet, inputs.get(0), join, right, timeField, storedFields);
+        }
+
+        @Override
+        public RelWriter explainTerms(RelWriter pw) {
+            List<String> names = input.getRowType().getFieldNames();
+            return super.explainTerms(pw).item("join", System.identityHashCode(join) % 1000).item("side", right ? "right" : "left")
+                .item("time", names.get(timeField)).item("stored", storedFields.stream().map(names::get).toList());
+        }
+    }
+
+    /**
+     * Starts a pipeline: emits the joined rows of each closed window, from the state its JoinBuilds (its inputs) filled:
+     * window start, window end, the left side's columns, the right side's. The condition and residual read [left stored
+     * row..., right stored row...]; for a hash join the condition compares the keys.
+     */
+    static final class JoinProbe extends AbstractRelNode implements NesRel {
+        final JoinState join;
+        final RexNode condition;
+        final List<RexNode> residual;
+        private List<RelNode> inputs;
+
+        JoinProbe(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs, JoinState join, RexNode condition,
+                  List<RexNode> residual, RelDataType rowType) {
+            super(cluster, traits);
+            this.inputs = new ArrayList<>(inputs);
+            this.join = join;
+            this.condition = condition;
+            this.residual = List.copyOf(residual);
+            this.rowType = rowType;
+        }
+
+        @Override
+        public List<RelNode> getInputs() {
+            return inputs;
+        }
+
+        @Override
+        public void replaceInput(int ordinalInParent, RelNode p) {
+            inputs.set(ordinalInParent, p);
+        }
+
+        @Override
+        public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
+            return new JoinProbe(getCluster(), traitSet, inputs, join, condition, residual, rowType);
+        }
+
+        @Override
+        public RelWriter explainTerms(RelWriter pw) {
+            for (int i = 0; i < inputs.size(); i++) {
+                pw.input("input#" + i, inputs.get(i));
+            }
+            WindowJoin spec = join.spec;
+            return pw.item("join", System.identityHashCode(join) % 1000).item("type", spec.getType())
+                .item("implementation", spec.getImplementation()).item("kind", spec.getKind()).item("size", spec.getSizeMs())
+                .itemIf("condition", condition, condition != null).itemIf("residual", residual, !residual.isEmpty())
+                .item("fields", rowType.getFieldNames());
+        }
+    }
+
+    /**
+     * A window join (NesWindowJoin): per side a watermark assigner and a JoinBuild, and a JoinProbe over both. A hash join
+     * compares its keys in one type: a key whose side has another type gets a column cast to it (a Map before the build).
+     */
+    public static final class JoinRule extends ConverterRule {
+        static final Config CONFIG = Config.INSTANCE
+            .withConversion(NesWindowJoin.class, Convention.NONE, NES, "NesJoinRule")
+            .withRuleFactory(JoinRule::new);
+
+        JoinRule(Config config) {
+            super(config);
+        }
+
+        @Override
+        public RelNode convert(RelNode rel) {
+            NesWindowJoin join = (NesWindowJoin) rel;
+            RelOptCluster cluster = join.getCluster();
+            RelTraitSet traits = join.getTraitSet().replace(NES);
+            RexBuilder rexBuilder = cluster.getRexBuilder();
+            RelDataTypeFactory types = cluster.getTypeFactory();
+            WindowJoin spec = join.spec;
+            int leftWidth = join.getLeft().getRowType().getFieldCount();
+            boolean hash = spec.getImplementation() == WindowJoin.Implementation.HASH_JOIN;
+
+            RelNode left = watermarked(cluster, traits, join.getLeft(), spec.getLeftTimeField());
+            RelNode right = watermarked(cluster, traits, join.getRight(), spec.getRightTimeField());
+            Assignments leftCasts = new Assignments(left);
+            Assignments rightCasts = new Assignments(right);
+            List<Integer> leftKeys = new ArrayList<>();
+            List<Integer> rightKeys = new ArrayList<>();
+            if (hash) {
+                /// The condition is leftField = rightField keys (see WindowJoinRule.split).
+                for (RexNode conjunct : RelOptUtil.conjunctions(join.condition)) {
+                    List<RexNode> operands = ((RexCall) conjunct).getOperands();
+                    RexInputRef a = (RexInputRef) operands.get(0);
+                    RexInputRef b = (RexInputRef) operands.get(1);
+                    RexInputRef l = a.getIndex() < leftWidth ? a : b;
+                    RexInputRef r = a.getIndex() < leftWidth ? b : a;
+                    RelDataType common = l.getType().equals(r.getType()) ? l.getType() : types.leastRestrictive(List.of(l.getType(), r.getType()));
+                    if (common == null) {
+                        throw new UnsupportedOperationException("cannot join keys of types " + l.getType() + " and " + r.getType());
+                    }
+                    leftKeys.add(l.getType().equals(common) ? l.getIndex()
+                        : leftCasts.add(rexBuilder.makeAbstractCast(common, new RexInputRef(l.getIndex(), l.getType()), false)));
+                    RexInputRef rightRef = new RexInputRef(r.getIndex() - leftWidth, r.getType());
+                    rightKeys.add(r.getType().equals(common) ? rightRef.getIndex()
+                        : rightCasts.add(rexBuilder.makeAbstractCast(common, rightRef, false)));
+                }
+            }
+            left = leftCasts.map(cluster, traits);
+            right = rightCasts.map(cluster, traits);
+
+            /// The stored rows: the join's names for its input columns, fresh names for the cast keys.
+            List<String> names = join.getRowType().getFieldNames();
+            RelDataType leftStored = stored(types, left, names.subList(2, 2 + leftWidth));
+            RelDataType rightStored = stored(types, right, names.subList(2 + leftWidth, names.size()));
+            int leftStoredWidth = leftStored.getFieldCount();
+            /// The probe's condition and residual read [left stored row..., right stored row...].
+            RexShuttle toStored = new RexShuttle() {
+                @Override
+                public RexNode visitInputRef(RexInputRef ref) {
+                    return ref.getIndex() < leftWidth ? ref : new RexInputRef(ref.getIndex() - leftWidth + leftStoredWidth, ref.getType());
+                }
+            };
+            RexNode condition;
+            List<RexNode> residual = join.residual.stream().map(r -> r.accept(toStored)).toList();
+            if (hash) {
+                List<RexNode> equalities = new ArrayList<>();
+                for (int i = 0; i < leftKeys.size(); i++) {
+                    RelDataType type = leftStored.getFieldList().get(leftKeys.get(i)).getType();
+                    equalities.add(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, new RexInputRef(leftKeys.get(i), type),
+                        new RexInputRef(leftStoredWidth + rightKeys.get(i), rightStored.getFieldList().get(rightKeys.get(i)).getType())));
+                }
+                condition = RexUtil.composeConjunction(rexBuilder, equalities);
+            } else {
+                condition = join.condition == null ? null : join.condition.accept(toStored);
+                /// The columns the condition reads, per side (our nested-loop join takes them as its keys).
+                java.util.BitSet read = new java.util.BitSet();
+                if (condition != null) {
+                    read.or(RelOptUtil.InputFinder.bits(condition).toBitSet());
+                }
+                residual.forEach(r -> read.or(RelOptUtil.InputFinder.bits(r).toBitSet()));
+                read.stream().forEach(i -> (i < leftStoredWidth ? leftKeys : rightKeys).add(i < leftStoredWidth ? i : i - leftStoredWidth));
+            }
+
+            /// GLOBAL: one window that holds every row (as for window aggregations).
+            WindowJoin sized = spec.getKind() == WindowAggregate.Kind.GLOBAL
+                ? spec.toBuilder().setSizeMs(GLOBAL_WINDOW_SIZE_MS).setSlideMs(GLOBAL_WINDOW_SIZE_MS).build()
+                : spec;
+            JoinState state = new JoinState(sized, leftStored, rightStored, leftKeys, rightKeys);
+            RelNode leftBuild = new JoinBuild(cluster, traits, left, state, false, spec.getLeftTimeField(), all(left));
+            RelNode rightBuild = new JoinBuild(cluster, traits, right, state, true, spec.getRightTimeField(), all(right));
+            return new JoinProbe(cluster, traits, List.of(leftBuild, rightBuild), state, condition, residual, join.getRowType());
+        }
+
+        /// The row type of the input with the given names for its first columns and fresh ones for the rest (cast keys).
+        private static RelDataType stored(RelDataTypeFactory types, RelNode input, List<String> names) {
+            List<String> all = new ArrayList<>(names);
+            while (all.size() < input.getRowType().getFieldCount()) {
+                all.add(freshName());
+            }
+            return types.createStructType(input.getRowType().getFieldList().stream().map(RelDataTypeField::getType).toList(), all);
+        }
+    }
+
+    /** The assignments of one Map: each computed value gets a fresh field, appended to the input row. */
+    private static final class Assignments {
+        private final RelNode input;
+        private final List<String> fields = new ArrayList<>();
+        private final List<RexNode> expressions = new ArrayList<>();
+
+        Assignments(RelNode input) {
+            this.input = input;
+        }
+
+        /// The position of the value's field in the Map's row.
+        int add(RexNode expression) {
+            fields.add(freshName());
+            expressions.add(expression);
+            return input.getRowType().getFieldCount() + fields.size() - 1;
+        }
+
+        RelNode map(RelOptCluster cluster, RelTraitSet traits) {
+            return fields.isEmpty() ? input : new Map(cluster, traits, input, fields, expressions);
         }
     }
 
@@ -560,6 +957,43 @@ final class NesPhysical {
         }
     }
 
+    /** An anonymous source (AnonymousSources.NesAnonymousSource): its SourceScan, parsed by a Scan. */
+    public static final class AnonymousSourceRule extends ConverterRule {
+        static final Config CONFIG = Config.INSTANCE
+            .withConversion(AnonymousSources.NesAnonymousSource.class, Convention.NONE, NES, "NesAnonymousSourceRule")
+            .withRuleFactory(AnonymousSourceRule::new);
+
+        AnonymousSourceRule(Config config) {
+            super(config);
+        }
+
+        @Override
+        public RelNode convert(RelNode rel) {
+            AnonymousSources.NesAnonymousSource anonymous = (AnonymousSources.NesAnonymousSource) rel;
+            RelTraitSet traits = anonymous.getTraitSet().replace(NES);
+            SourceScan source = new SourceScan(anonymous.getCluster(), traits, anonymous.spec, anonymous.getRowType());
+            return new Scan(anonymous.getCluster(), traits, List.of(source), source.getRowType());
+        }
+    }
+
+    /** The assigner after a source (NesLogical.WatermarkAssigner). */
+    public static final class WatermarkAssignerRule extends ConverterRule {
+        static final Config CONFIG = Config.INSTANCE
+            .withConversion(NesLogical.WatermarkAssigner.class, Convention.NONE, NES, "NesWatermarkAssignerRule")
+            .withRuleFactory(WatermarkAssignerRule::new);
+
+        WatermarkAssignerRule(Config config) {
+            super(config);
+        }
+
+        @Override
+        public RelNode convert(RelNode rel) {
+            NesLogical.WatermarkAssigner assigner = (NesLogical.WatermarkAssigner) rel;
+            RelTraitSet traits = assigner.getTraitSet().replace(NES);
+            return new WatermarkAssigner(assigner.getCluster(), traits, convert(assigner.getInput(), traits), assigner.timeField);
+        }
+    }
+
     /** The receiving end of a cut (NesLogical.NetworkSource): its rows arrive in the native format, a Scan reads them. */
     public static final class NetworkSourceRule extends ConverterRule {
         static final Config CONFIG = Config.INSTANCE
@@ -631,19 +1065,18 @@ final class NesPhysical {
             LogicalProject project = (LogicalProject) rel;
             RelOptCluster cluster = project.getCluster();
             RelTraitSet traits = project.getTraitSet().replace(NES);
-            RelNode current = convert(project.getInput(), NES);
+            Assignments assignments = new Assignments(convert(project.getInput(), NES));
             List<Integer> projected = new ArrayList<>();
             Set<Integer> passedOn = new HashSet<>();
             for (RexNode expression : project.getProjects()) {
                 if (expression instanceof RexInputRef ref && passedOn.add(ref.getIndex())) {
                     projected.add(ref.getIndex());
                 } else {
-                    /// Computed (or a field projected twice, which needs a field of its own).
-                    current = new Map(cluster, traits, current, freshName(), expression);
-                    projected.add(current.getRowType().getFieldCount() - 1);
+                    /// Computed (or a field projected twice, which needs a field of its own): all in one Map.
+                    projected.add(assignments.add(expression));
                 }
             }
-            return new Retain(cluster, traits, current, projected);
+            return new Retain(cluster, traits, assignments.map(cluster, traits), projected);
         }
     }
 
@@ -670,7 +1103,7 @@ final class NesPhysical {
             for (RelNode input : union.getInputs()) {
                 /// Every input has the union's types: a field of another type (e.g. NOT NULL where the union's is nullable)
                 /// is cast into a field of its own first.
-                RelNode current = convert(input, NES);
+                Assignments casts = new Assignments(convert(input, NES));
                 List<Integer> fields = new ArrayList<>();
                 List<RelDataTypeField> inputFields = input.getRowType().getFieldList();
                 for (int i = 0; i < inputFields.size(); i++) {
@@ -678,11 +1111,11 @@ final class NesPhysical {
                     if (inputFields.get(i).getType().equals(target)) {
                         fields.add(i);
                     } else {
-                        RexNode cast = cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(i, inputFields.get(i).getType()), false);
-                        current = new Map(cluster, traits, current, freshName(), cast);
-                        fields.add(current.getRowType().getFieldCount() - 1);
+                        fields.add(casts.add(
+                            cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(i, inputFields.get(i).getType()), false)));
                     }
                 }
+                RelNode current = casts.map(cluster, traits);
                 branches.add(fields.equals(all(input)) ? current : new Retain(cluster, traits, current, fields));
             }
             return new UnionAll(cluster, traits, branches, union.getRowType());
@@ -707,9 +1140,6 @@ final class NesPhysical {
         public RelNode convert(RelNode rel) {
             NesWindowAggregate aggregate = (NesWindowAggregate) rel;
             WindowAggregate spec = aggregate.spec;
-            if (spec.getKind() == WindowAggregate.Kind.GLOBAL || spec.getEmitOnEmptyInput()) {
-                return null; // GLOBAL windows (finite inputs) are not supported in physical plans yet
-            }
             RelOptCluster cluster = aggregate.getCluster();
             RelTraitSet traits = aggregate.getTraitSet().replace(NES);
             RelDataTypeFactory types = cluster.getTypeFactory();
@@ -727,18 +1157,16 @@ final class NesPhysical {
                 WindowAggregate.Aggregate call = spec.getAggregates(i);
                 RelDataType argument = call.hasField() ? inputFields.get(call.getField()).getType() : null;
                 probeRow.add(outputFields.get(2 + spec.getGroupKeysCount() + i).getName(),
-                    engineType(types, call.getFunction(), argument));
+                    engineType(types, call, argument, outputFields.get(2 + spec.getGroupKeysCount() + i).getType()));
                 arguments.add(call.hasField() ? call.getField() : -1);
             }
             RelDataType probeRowType = probeRow.uniquify().build();
 
             WindowState window = new WindowState(spec);
-            RelNode input = convert(aggregate.getInput(), NES);
-            RelNode assigner = new WatermarkAssigner(cluster, traits, input, spec.getTimeField());
+            RelNode assigner = watermarked(cluster, traits, aggregate.getInput(), spec.getTimeField());
             RelNode build = new WindowBuild(cluster, traits, assigner, window, spec.getTimeField(),
                 spec.getGroupKeysList(), arguments, probeRowType);
-            RelNode current = new WindowProbe(cluster, traits, List.of(build), window, probeRowType);
-
+            Assignments casts = new Assignments(new WindowProbe(cluster, traits, List.of(build), window, probeRowType));
             List<Integer> fields = new ArrayList<>();
             List<RelDataTypeField> probeFields = probeRowType.getFieldList();
             for (int i = 0; i < outputFields.size(); i++) {
@@ -746,29 +1174,31 @@ final class NesPhysical {
                 if (probeFields.get(i).getType().equals(target)) {
                     fields.add(i);
                 } else {
-                    RexNode cast = cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(i, probeFields.get(i).getType()), false);
-                    current = new Map(cluster, traits, current, freshName(), cast);
-                    fields.add(current.getRowType().getFieldCount() - 1);
+                    fields.add(casts.add(
+                        cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(i, probeFields.get(i).getType()), false)));
                 }
             }
+            RelNode current = casts.map(cluster, traits);
             return fields.equals(all(current)) ? current : new Retain(cluster, traits, current, fields);
         }
 
-        /// The engine's result type of an aggregation (see its *AggregationLogicalFunction).
-        private static RelDataType engineType(RelDataTypeFactory types, WindowAggregate.Function function, RelDataType argument) {
+        /// The engine's result type of an aggregation (see its *AggregationPhysicalFunction). An aggregation of
+        /// PlanRequest.functions has its declared type, which is Calcite's (result).
+        private static RelDataType engineType(RelDataTypeFactory types, WindowAggregate.Aggregate call, RelDataType argument,
+                                              RelDataType result) {
             boolean nullable = argument != null && argument.isNullable();
-            RelDataType type = switch (function) {
-                case COUNT -> types.createSqlType(SqlTypeName.UBIGINT);
-                case AVG -> types.createSqlType(SqlTypeName.DOUBLE);
-                case MIN, MAX -> argument;
-                case SUM -> switch (argument.getSqlTypeName()) {
+            RelDataType type = switch (call.getFunction()) {
+                case "COUNT" -> types.createSqlType(SqlTypeName.UBIGINT);
+                case "AVG" -> types.createSqlType(SqlTypeName.DOUBLE);
+                case "MIN", "MAX" -> argument;
+                case "SUM" -> switch (argument.getSqlTypeName()) {
                     case TINYINT, SMALLINT, INTEGER, BIGINT -> types.createSqlType(SqlTypeName.BIGINT);
                     case UTINYINT, USMALLINT, UINTEGER, UBIGINT -> types.createSqlType(SqlTypeName.UBIGINT);
                     default -> argument;
                 };
-                default -> throw new UnsupportedOperationException("window aggregation " + function);
+                default -> result;
             };
-            return types.createTypeWithNullability(type, function != WindowAggregate.Function.COUNT && nullable);
+            return types.createTypeWithNullability(type, !call.getFunction().equals("COUNT") && nullable);
         }
     }
 }

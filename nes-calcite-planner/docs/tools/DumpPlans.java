@@ -70,7 +70,7 @@ public class DumpPlans {
             case SOURCE_SCAN -> { kind = "SourceScan"; text = "physical source " + op.getSourceScan().getPhysicalSourceId() + ", origin " + op.getSourceScan().getOriginId(); }
             case SCAN -> { kind = "Scan"; text = op.getScan().getParsesSource() ? "parses the source's CSV" : (inputs.size() > 1 ? "merges " + inputs.size() + " inputs" : "reads buffers"); }
             case SELECTION -> { kind = "Selection"; text = expr(op.getSelection().getPredicate(), fn); }
-            case MAP -> { kind = "Map"; text = op.getMap().getField() + " := " + expr(op.getMap().getExpression(), fn); }
+            case MAP -> { kind = "Map"; text = String.join(", ", op.getMap().getAssignmentsList().stream().map(a -> a.getField() + " := " + expr(a.getExpression(), fn)).toList()); }
             case EMIT -> { kind = "Emit"; text = op.getEmit().getForSink() ? "in the sink's format" : "writes buffers"; }
             case SINK -> { kind = "Sink"; text = "the query's sink"; }
             default -> { kind = op.getOperatorCase().toString(); text = ""; }

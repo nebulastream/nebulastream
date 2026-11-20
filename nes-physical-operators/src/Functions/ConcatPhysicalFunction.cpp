@@ -65,7 +65,13 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
 
 PhysicalFunctionRegistryReturnType ConcatPhysicalFunction::createConcat(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Concat function must have exactly two child functions");
-    return ConcatPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    /// Variadic in SQL (Substrait), binary here: from the left.
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() >= 2, "Concat function must have at least two child functions");
+    PhysicalFunction result = ConcatPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    for (size_t child = 2; child < physicalFunctionRegistryArguments.childFunctions.size(); ++child)
+    {
+        result = ConcatPhysicalFunction(result, physicalFunctionRegistryArguments.childFunctions[child]);
+    }
+    return result;
 }
 }

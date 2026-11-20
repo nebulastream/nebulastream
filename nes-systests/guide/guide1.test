@@ -22,8 +22,8 @@ CREATE SINK sink(result FLOAT64 NOT NULL) TYPE File;
 
 # Test: SELECT 3.141 * r FROM stream INTO sink
 SELECT
-    3.141 * r AS result
-FROM stream INTO sink;
+    3.141E0 * r AS "RESULT"
+FROM "STREAM" INTO sink;
 ----
 3.141
 6.282

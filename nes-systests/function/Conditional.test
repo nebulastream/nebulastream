@@ -21,10 +21,10 @@ CREATE SINK traffic_light(intersection_id INT32, signal_command VARSIZED NOT NUL
 
 # Minimal conditional: single condition with default (two-way branch)
 SELECT intersection_id,
-       Conditional(emergency_vehicle_detected, VARSIZED('STOP'),
-                   VARSIZED('GO'))
+       CASE WHEN emergency_vehicle_detected THEN 'STOP'
+            ELSE 'GO' END
        AS signal
-FROM intersection
+FROM "INTERSECTION"
 INTO simple_signal;
 ----
 1,STOP
@@ -46,13 +46,13 @@ INTO simple_signal;
 #   Row 9: pedestrian=true but density not < 0.2, density not > 0.5, falls to default
 #   Row 10: emergency=true with high density -> branch 1 wins over branch 3
 SELECT intersection_id,
-       Conditional(emergency_vehicle_detected, VARSIZED('ALL_RED_EMERGENCY'),
-                   pedestrian_waiting AND traffic_density < FLOAT32(0.2), VARSIZED('PEDESTRIAN_WALK'),
-                   traffic_density > FLOAT32(0.8), VARSIZED('GREEN_EXTENDED'),
-                   traffic_density > FLOAT32(0.5), VARSIZED('GREEN_STANDARD'),
-                   VARSIZED('FLASHING_YELLOW'))
+       CASE WHEN emergency_vehicle_detected THEN 'ALL_RED_EMERGENCY'
+            WHEN pedestrian_waiting AND traffic_density < CAST(0.2 AS REAL) THEN 'PEDESTRIAN_WALK'
+            WHEN traffic_density > CAST(0.8 AS REAL) THEN 'GREEN_EXTENDED'
+            WHEN traffic_density > CAST(0.5 AS REAL) THEN 'GREEN_STANDARD'
+            ELSE 'FLASHING_YELLOW' END
        AS signal_command
-FROM intersection
+FROM "INTERSECTION"
 INTO traffic_light;
 ----
 1,ALL_RED_EMERGENCY
@@ -84,11 +84,11 @@ CREATE SINK code_sink(student_id INT32, code INT32 NOT NULL) TYPE File;
 # Numeric (INT32) result type instead of VARSIZED, with five branches and boundary inputs.
 # Boundaries are exclusive: score 70 satisfies "> 69" and yields 2; score 0 falls through to the default.
 SELECT student_id,
-       Conditional(score > INT32(89), INT32(4),
-                   score > INT32(79), INT32(3),
-                   score > INT32(69), INT32(2),
-                   score > INT32(59), INT32(1),
-                   INT32(0))
+       CASE WHEN score > 89 THEN 4
+            WHEN score > 79 THEN 3
+            WHEN score > 69 THEN 2
+            WHEN score > 59 THEN 1
+            ELSE 0 END
        AS grade_points
 FROM scores INTO grade_points_sink;
 ----
@@ -102,10 +102,10 @@ FROM scores INTO grade_points_sink;
 
 # Nested Conditional: each default is itself a Conditional, forming a three-level chain.
 SELECT student_id,
-       Conditional(score > INT32(89), VARSIZED('A'),
-                   Conditional(score > INT32(79), VARSIZED('B'),
-                               Conditional(score > INT32(69), VARSIZED('C'),
-                                           VARSIZED('F'))))
+       CASE WHEN score > 89 THEN CAST('A' AS VARCHAR)
+            ELSE CASE WHEN score > 79 THEN CAST('B' AS VARCHAR)
+                      ELSE CASE WHEN score > 69 THEN CAST('C' AS VARCHAR)
+                                ELSE CAST('F' AS VARCHAR) END END END
        AS letter
 FROM scores INTO letter_sink;
 ----
@@ -120,10 +120,9 @@ FROM scores INTO letter_sink;
 # A nested arithmetic function (modulo) inside a condition, and a nested Conditional as a THEN result.
 # For scores above 89 the result depends on the score's parity; otherwise a coarser bucketing applies.
 SELECT student_id,
-       Conditional(score > INT32(89),
-                     Conditional((score % INT32(2)) == INT32(0), INT32(400), INT32(401)),
-                   score > INT32(59), INT32(100),
-                   INT32(0))
+       CASE WHEN score > 89 THEN CASE WHEN MOD(score, 2) = 0 THEN 400 ELSE 401 END
+            WHEN score > 59 THEN 100
+            ELSE 0 END
        AS code
 FROM scores INTO code_sink;
 ----
@@ -140,8 +139,8 @@ CREATE SINK guarded_division_sink(student_id INT32, code INT32) TYPE File;
 # The default result is only evaluated for the rows that reach it. Student 7 has a score of 0, so
 # evaluating the division for that row would divide by zero.
 SELECT student_id,
-       Conditional(score == INT32(0), INT32(0),
-                   INT32(100) / score)
+       CASE WHEN score = 0 THEN 0
+            ELSE 100 / score END
        AS code
 FROM scores INTO guarded_division_sink;
 ----
@@ -158,11 +157,11 @@ CREATE SINK nested_condition_sink(intersection_id INT32, decision VARSIZED NOT N
 # A Conditional used as the condition of another Conditional. The inner Conditional returns a BOOLEAN:
 # when an emergency is present it yields whether the density is high, otherwise whether a pedestrian waits.
 SELECT intersection_id,
-       Conditional(Conditional(emergency_vehicle_detected, traffic_density > FLOAT32(0.5), pedestrian_waiting),
-                   VARSIZED('YES'),
-                   VARSIZED('NO'))
+       CASE WHEN CASE WHEN emergency_vehicle_detected THEN traffic_density > CAST(0.5 AS REAL) ELSE pedestrian_waiting END
+            THEN 'YES'
+            ELSE 'NO' END
        AS decision
-FROM intersection INTO nested_condition_sink;
+FROM "INTERSECTION" INTO nested_condition_sink;
 ----
 1,NO
 2,YES
@@ -177,25 +176,38 @@ FROM intersection INTO nested_condition_sink;
 
 # ERROR CASES
 
-# Fewer than three arguments: a Conditional needs at least one WHEN/THEN pair plus a default.
-SELECT student_id, Conditional(score > INT32(50)) AS label FROM scores INTO FILE();
+# A WHEN without a THEN is a syntax error.
+SELECT student_id, CASE WHEN score > 50 END AS label FROM scores INTO FILE();
 ----
-ERROR 2002
+ERROR 2000
 
-# An even argument count means the trailing default is missing.
-SELECT student_id, Conditional(score > INT32(50), INT32(1)) AS label FROM scores INTO FILE();
+# A CASE without ELSE yields NULL for rows that match no WHEN.
+CREATE SINK case_without_else_sink(student_id INT32, label INT32) TYPE File;
+SELECT student_id, CASE WHEN score > 50 THEN 1 END AS label FROM scores INTO case_without_else_sink;
 ----
-ERROR 2002
+1,1
+2,1
+3,1
+4,1
+5,NULL
+6,1
+7,NULL
 
-# A non-BOOLEAN condition is rejected during type inference.
-SELECT student_id, Conditional(score, INT32(1), INT32(0)) AS label FROM scores INTO FILE();
+# A non-BOOLEAN condition is rejected during validation.
+SELECT student_id, CASE WHEN score THEN 1 ELSE 0 END AS label FROM scores INTO FILE();
 ----
-ERROR 2006
+ERROR 2000
 
-# Every result must share the default result's type.
-SELECT student_id, Conditional(score > INT32(50), INT32(1), VARSIZED('x')) AS label FROM scores INTO FILE();
+# Calcite coerces mixed result types implicitly: here 1 becomes the VARCHAR '1', so the result is VARCHAR.
+SELECT student_id, CASE WHEN score > 50 THEN 1 ELSE 'x' END AS label FROM scores INTO FILE();
 ----
-ERROR 2006
+1,1
+2,1
+3,1
+4,1
+5,x
+6,1
+7,x
 
 # Null handling. A condition that is NULL is not true, so its branch is not taken. Results may
 # differ in nullability, in which case the whole expression becomes nullable.
@@ -212,9 +224,9 @@ CREATE SINK nullable_result(id INT32 NOT NULL, result INT32) TYPE File;
 # Row 1 takes the branch, row 2 has a NULL condition and row 3 a false one so both fall through to
 # the default, and row 4 takes the branch onto a NULL result.
 SELECT id,
-       Conditional(flag, value,
-                   INT32(-1))
-       AS result
+       CASE WHEN flag THEN "VALUE"
+            ELSE -1 END
+       AS "RESULT"
 FROM nullable_input
 INTO nullable_result;
 ----
@@ -240,10 +252,10 @@ CREATE SINK mixed_result(id INT32 NOT NULL, result INT32) TYPE File;
 # branch, row 3 matches nothing, row 4 takes the nullable branch onto a NULL, and row 5 has a NULL
 # first condition and a false second one so it reaches the default.
 SELECT id,
-       Conditional(a, x,
-                   b, y,
-                   INT32(0))
-       AS result
+       CASE WHEN a THEN x
+            WHEN b THEN y
+            ELSE 0 END
+       AS "RESULT"
 FROM mixed_input
 INTO mixed_result;
 ----
@@ -258,10 +270,10 @@ INTO mixed_result;
 CREATE SINK mixed_arith_result(id INT32 NOT NULL, result INT32) TYPE File;
 
 SELECT id,
-       Conditional(a, x,
-                   b, y,
-                   INT32(0)) + INT32(1)
-       AS result
+       CASE WHEN a THEN x
+            WHEN b THEN y
+            ELSE 0 END + 1
+       AS "RESULT"
 FROM mixed_input
 INTO mixed_arith_result;
 ----

@@ -58,14 +58,14 @@ SELECT
     producerId,
     groupId,
     producedPower,
-    timestamp as ts
+    "TIMESTAMP" AS ts
 FROM windTurbines
-UNION
+UNION ALL
 SELECT
     producerId,
     groupId,
     producedPower,
-    timestamp as ts
+    "TIMESTAMP" AS ts
 FROM solarPanels
 INTO q5Checksum;
 ----
@@ -78,12 +78,12 @@ SELECT
     producerId,
     groupId,
     producedPower,
-    timestamp as ts
+    "TIMESTAMP" AS ts
 FROM (
-    SELECT *, UINT64(1) AS source
+    SELECT *, CAST(1 AS BIGINT UNSIGNED) AS source
     FROM windTurbines
-        UNION
-    SELECT *, UINT64(2) AS source
+        UNION ALL
+    SELECT *, CAST(2 AS BIGINT UNSIGNED) AS source
     FROM solarPanels
 )
 INTO q6Checksum;
@@ -91,19 +91,17 @@ INTO q6Checksum;
 7026 10486101
 
 # Query 7 - Window aggregations with tumbling windows
-SELECT start, end, groupId, SUM(producedPower) AS producedPower
-FROM solarPanels
-GROUP BY groupId
-WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
+SELECT window_start AS "START", window_end AS "END", groupId, SUM(producedPower) AS producedPower
+FROM TABLE(TUMBLE(TABLE solarPanels, DESCRIPTOR("TIMESTAMP"), INTERVAL '1' HOUR))
+GROUP BY window_start, window_end, groupId
 INTO winPowerProductionChecksum;
 ----
 148 264615
 
 # Query 8 - Window aggregations with sliding windows
-SELECT start, end, groupId, SUM(producedPower) AS producedPower
-FROM solarPanels
-GROUP BY groupId
-WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+SELECT window_start AS "START", window_end AS "END", groupId, SUM(producedPower) AS producedPower
+FROM TABLE(HOP(TABLE solarPanels, DESCRIPTOR("TIMESTAMP"), INTERVAL '10' MINUTE, INTERVAL '1' HOUR))
+GROUP BY window_start, window_end, groupId
 INTO winPowerProductionChecksum;
 ----
 884 1581808

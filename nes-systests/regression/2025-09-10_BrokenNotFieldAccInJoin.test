@@ -18,11 +18,11 @@ ATTACH INLINE
 CREATE SINK sink(i UINT64 NOT NULL) TYPE File;
 
 
-SELECT id AS i FROM (SELECT * FROM stream)
-INNER JOIN (SELECT * FROM stream2)
-ON id = id2
-AND NOT e
-WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sink;
+SELECT l.id AS i
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND l.id = r.id2 AND NOT r.e
+INTO sink;
 ----
 1
 2

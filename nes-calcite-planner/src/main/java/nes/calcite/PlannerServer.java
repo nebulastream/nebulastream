@@ -29,7 +29,9 @@ public final class PlannerServer extends CalcitePlannerGrpc.CalcitePlannerImplBa
             /// AssertionError: Calcite's internal checks, e.g. for odd NULL comparisons; without this the client waits for
             /// its deadline.
             /// UNIMPLEMENTED: a valid query that NebulaStream cannot run (yet); INVALID_ARGUMENT: an invalid one.
-            Status status = isInvalidQuery(e) ? Status.INVALID_ARGUMENT : Status.UNIMPLEMENTED;
+            /// FAILED_PRECONDITION: the query cannot be placed on the topology (PlacementFailure).
+            Status status = PlacementFailure.in(e) ? Status.FAILED_PRECONDITION
+                : isInvalidQuery(e) ? Status.INVALID_ARGUMENT : Status.UNIMPLEMENTED;
             response.onError(status.withDescription(describe(e)).asRuntimeException());
             return;
         }
@@ -76,8 +78,11 @@ public final class PlannerServer extends CalcitePlannerGrpc.CalcitePlannerImplBa
                 message.append(": ").append(cause.getMessage());
             }
         }
-        return message.toString();
+        /// gRPC drops a status whose description exceeds its metadata limit (16 KB by default); the client then sees only that.
+        return message.length() <= MAX_MESSAGE ? message.toString() : message.substring(0, MAX_MESSAGE) + " ... (shortened)";
     }
+
+    private static final int MAX_MESSAGE = 4000;
 
     public static void main(String[] args) throws Exception {
         int port = args.length > 0 ? Integer.parseInt(args[0]) : 50061;

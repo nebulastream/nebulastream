@@ -20,6 +20,11 @@ ATTACH INLINE
 1,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 # The tuples never reach the build: lowering the hash join rejects the page size first.
-SELECT * FROM (SELECT * FROM wideStream) INNER JOIN (SELECT * FROM wideStream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO Checksum();
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l.timestamp1, l.f01, l.f02, l.f03, l.f04, l.f05, l.f06, l.f07, l.f08, l.f09, l.f10, l.f11, l.f12, l.f13, l.f14, r.id2, r.timestamp2, r.g01, r.g02, r.g03, r.g04, r.g05, r.g06, r.g07, r.g08, r.g09, r.g10, r.g11, r.g12, r.g13, r.g14
+FROM TABLE(TUMBLE(TABLE wideStream, DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE wideStream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id = id2
+INTO Checksum();
 ----
 ERROR QueryCompilerError

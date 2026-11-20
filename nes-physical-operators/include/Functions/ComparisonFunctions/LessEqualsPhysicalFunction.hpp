@@ -32,7 +32,7 @@ public:
     LessEqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createLessEquals(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createLte(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

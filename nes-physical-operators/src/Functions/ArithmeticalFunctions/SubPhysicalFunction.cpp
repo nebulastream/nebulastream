@@ -19,6 +19,7 @@
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
@@ -36,10 +37,10 @@ SubPhysicalFunction::SubPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 {
 }
 
-PhysicalFunctionRegistryReturnType SubPhysicalFunction::createSub(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType SubPhysicalFunction::createSubtract(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Sub function must have exactly two child functions");
-    return SubPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    return castIntegerResult(SubPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]), physicalFunctionRegistryArguments.outputType);
 }
 
 }

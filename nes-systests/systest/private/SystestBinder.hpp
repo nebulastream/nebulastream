@@ -22,11 +22,12 @@
 
 #include <Config/Config.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <variant>
 #include <Model/RunnableTestFile.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
+#include <PhysicalQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -34,7 +35,8 @@ namespace NES
 
 struct BoundPlan
 {
-    DistributedLogicalPlan plan;
+    /// Calcite's placed pipelines.
+    PlacedPhysicalQuery plan;
     Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
 };
 

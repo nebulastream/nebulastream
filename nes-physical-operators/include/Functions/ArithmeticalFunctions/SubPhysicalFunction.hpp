@@ -32,7 +32,7 @@ public:
     SubPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createSub(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createSubtract(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

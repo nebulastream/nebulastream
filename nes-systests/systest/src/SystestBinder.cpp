@@ -17,6 +17,7 @@
 #include <expected>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string>
 #include <utility>
@@ -33,7 +34,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Rewriter/Constants.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -45,12 +45,10 @@
 #include <Util/Overloaded.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
-#include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
-#include <QueryOptimizer.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Calcite/QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -68,19 +66,6 @@ const Schema<UnqualifiedUnboundField, Ordered>& getChecksumSchema()
     return ChecksumSchema;
 }
 
-Schema<UnqualifiedUnboundField, Ordered> getSinkOutputSchema(const DistributedLogicalPlan& plan)
-{
-    const auto sinkOperator = plan.getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
-    INVARIANT(sinkOperator.has_value(), "The optimized plan should have a sink operator");
-    const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
-    INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
-    if (Sql::sameName(descriptor->getSinkType(), Sql::Checksum))
-    {
-        return getChecksumSchema();
-    }
-    return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor->getSchema());
-}
-
 template <typename T>
 void throwOnError(std::expected<T, Exception> result)
 {
@@ -95,20 +80,15 @@ void throwOnError(std::expected<T, Exception> result)
 struct SystestBinder::Impl
 {
     explicit Impl(const SystestConfiguration& config)
-        : sourceCatalog{std::make_shared<SourceCatalog>()}
+        : optimizer{config.queryOptimizerConfig}
+        , sourceCatalog{std::make_shared<SourceCatalog>()}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
-        , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
-        , queryOptimizer{
-              config.queryOptimizerConfig,
-              sourceCatalog,
-              sinkCatalog,
-              copyPtr(workerCatalog),
-              modelCatalog}
+        , statementBinder{sourceCatalog}
     {
         for (const auto& [host, data, maxOperators, downstream, workerConfig] : config.clusterConfig.workers)
         {
@@ -172,7 +152,8 @@ private:
         const auto parseResult = managedParser->parseSingle();
         if (not parseResult.has_value())
         {
-            throw InvalidQuerySyntax("failed to parse the statement \"{}\"", replaceAll(sql, "\n", " "));
+            throw InvalidQuerySyntax(
+                "failed to parse the statement \"{}\": {}", replaceAll(sql, "\n", " "), parseResult.error().what());
         }
         auto binding = statementBinder.bind(parseResult.value().get());
         if (not binding.has_value())
@@ -198,30 +179,43 @@ private:
             BoundStatement{.plan = std::move(second), .explained = std::nullopt}};
     }
 
-    /// Computes an EXPLAIN here, because only this component holds the optimizer that the OPTIMIZED and DISTRIBUTED stages need.
+    /// Computes an EXPLAIN here, because only this component holds the catalogs the planner needs.
     [[nodiscard]] std::vector<BoundStatement> bindExplain(const RewrittenExplain& explain) const
     {
         return {BoundStatement{
             .plan = std::unexpected{TestException("an EXPLAIN is not executed and has no plan")}, .explained = runExplain(explain.sql)}};
     }
 
-    /// The query id correlates the statement with its answer.
+    /// Plans a query with Calcite down to placed pipelines. The query id correlates the statement with its answer.
+    [[nodiscard]] Calcite::PlannedPhysicalQuery plan(const std::string& sql, const std::string& queryId) const
+    {
+        static const std::unordered_map<std::string, std::string> AllSources;
+        /// Test files hold finite inputs, so unwindowed joins and aggregations run over the whole input.
+        const auto [query, sinkClause] = Calcite::splitSink(sql);
+        Calcite::setRequestLabel(queryId);
+        return Calcite::planPhysical(
+            query,
+            sinkClause,
+            *sourceCatalog,
+            *sinkCatalog,
+            *workerCatalog,
+            Calcite::plannerAddress(),
+            /*finiteInputs=*/true,
+            calciteSources != nullptr ? *calciteSources : AllSources,
+            modelCatalog.get(),
+            optimizer);
+    }
+
     [[nodiscard]] BoundPlan optimizeInto(const std::string& sql, const std::string& queryId) const
     {
-        auto plan = [&]
+        auto planned = plan(sql, queryId);
+        auto schema = Sql::sameName(planned.sinkType, Sql::Checksum) ? getChecksumSchema() : std::move(planned.sinkInputSchema);
+        /// The query runs under the test's query id.
+        for (auto& part : planned.parts | std::views::values | std::views::join)
         {
-            if (calciteSources == nullptr)
-            {
-                return AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
-            }
-            /// Test files hold finite inputs, so unwindowed joins and aggregations run over the whole input.
-            const auto [query, sinkClause] = Calcite::splitSink(sql);
-            return Calcite::plan(query, sinkClause, *sourceCatalog, Calcite::plannerAddress(), /*finiteInputs=*/true, *calciteSources);
-        }();
-        plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
-        auto optimized = queryOptimizer.optimize(plan);
-        auto schema = getSinkOutputSchema(optimized);
-        return BoundPlan{.plan = std::move(optimized), .sinkOutputSchema = std::move(schema)};
+            part.queryId = QueryId::createDistributed(DistributedQueryId{queryId});
+        }
+        return BoundPlan{.plan = std::move(planned.parts), .sinkOutputSchema = std::move(schema)};
     }
 
     [[nodiscard]] std::string runExplain(const std::string& sql) const
@@ -232,9 +226,11 @@ private:
         {
             throw UnsupportedQuery("expected an EXPLAIN statement, but got: \"{}\"", replaceAll(sql, "\n", " "));
         }
-        return computeExplainOutput(*explainStatement, queryOptimizer);
+        return computeExplainOutput(*explainStatement, plan(explainStatement->sql, "explain"));
     }
 
+    /// As our optimizer's join_strategy NESTED_LOOP_JOIN, for physical plans.
+    QueryOptimizerConfiguration optimizer;
     /// One catalog set for the whole run, which the rewriter's prefixing keeps collision-free.
     std::shared_ptr<SourceCatalog> sourceCatalog;
     /// Set while binding a `# calcite` file, see bind.
@@ -247,7 +243,6 @@ private:
     SinkStatementHandler sinkHandler;
     ModelStatementHandler modelHandler;
     StatementBinder statementBinder;
-    QueryOptimizer queryOptimizer;
 };
 
 SystestBinder::SystestBinder(const SystestConfiguration& config) : impl{std::make_unique<Impl>(config)}

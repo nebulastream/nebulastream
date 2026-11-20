@@ -29,8 +29,8 @@ ATTACH INLINE
 8,🎉🚀
 9,Hi🌍
 
-CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE File;
-CREATE SINK passThroughSink(id UINT64 NOT NULL, data VARSIZED NOT NULL, len UINT64 NOT NULL) TYPE File;
+CREATE SINK lengthSink(id UINT64 NOT NULL, len INT32 NOT NULL) TYPE File;
+CREATE SINK passThroughSink(id UINT64 NOT NULL, data VARSIZED NOT NULL, len INT32 NOT NULL) TYPE File;
 
 # Empty string, simple words, words with spaces, special characters, and UTF-8 multibyte chars
 # (OCTET_LENGTH returns byte count — "äöü" is 2 bytes per char in UTF-8 → 6)
@@ -58,8 +58,8 @@ SELECT id AS id, OCTET_LENGTH(data) AS len FROM textStream WHERE OCTET_LENGTH(da
 8 8
 9 6
 
-# OCTET_LENGTH composed with CONCAT — append "!!" (2 bytes) to each row
-SELECT id AS id, OCTET_LENGTH(CONCAT(data, '!!')) AS len FROM textStream INTO lengthSink;
+# OCTET_LENGTH composed with || — append "!!" (2 bytes) to each row
+SELECT id AS id, OCTET_LENGTH(data || '!!') AS len FROM textStream INTO lengthSink;
 ----
 1 2
 2 7
@@ -86,9 +86,9 @@ SELECT id AS id, data as data, OCTET_LENGTH(data) AS len FROM systestSafeTextStr
 # OCTET_LENGTH is unary — passing more than one argument must be rejected.
 SELECT id AS id, OCTET_LENGTH(data, data) AS len FROM textStream INTO lengthSink;
 ----
-ERROR 2002
+ERROR 2000
 
 # OCTET_LENGTH is unary — passing zero arguments must be rejected.
 SELECT id AS id, OCTET_LENGTH() AS len FROM textStream INTO lengthSink;
 ----
-ERROR 2002
+ERROR 2000

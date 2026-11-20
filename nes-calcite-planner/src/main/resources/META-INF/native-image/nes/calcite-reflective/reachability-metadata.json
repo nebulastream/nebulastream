@@ -1081,7 +1081,87 @@
       "allDeclaredFields": true
     },
     {
+      "type": "org.apache.calcite.sql.parser.ddl.SqlDdlParserImpl",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.ddl.SqlDdlParserImpl$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.ddl.SqlDdlParserImpl$2",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.ddl.SqlDdlParserImpl$JJCalls",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.ddl.SqlDdlParserImpl$LookaheadSuccess",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "org.apache.calcite.sql.parser.impl.ParseException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.impl.SqlParserImpl",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.impl.SqlParserImpl$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.impl.SqlParserImpl$2",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.impl.SqlParserImpl$JJCalls",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql.parser.impl.SqlParserImpl$LookaheadSuccess",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
       "allPublicMethods": true,
@@ -1098,6 +1178,14 @@
     },
     {
       "type": "org.apache.calcite.sql.validate.SqlValidatorException",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.ReflectiveConvertletTable",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
       "allPublicMethods": true,
@@ -1298,6 +1386,126 @@
     },
     {
       "type": "org.apache.calcite.sql2rel.RelFieldTrimmer$TrimResult",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$2",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$3",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$AvgVarianceConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$FloorCeilConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$GreatestConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$GreatestPgConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$RegrCovarianceConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$SubstrConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$TimestampAddConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$TimestampDiffConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$TimestampSubConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$TrimConvertlet",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.apache.calcite.sql2rel.StandardConvertletTable$TruncConvertlet",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
       "allPublicMethods": true,

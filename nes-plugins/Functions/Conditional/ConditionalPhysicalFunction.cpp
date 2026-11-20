@@ -75,9 +75,9 @@ VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& aren
     return withDeclaredType(elseCase.execute(record, arena), resultType);
 }
 
-PhysicalFunctionRegistryReturnType ConditionalPhysicalFunction::createConditional(PhysicalFunctionRegistryArguments arguments)
+PhysicalFunctionRegistryReturnType ConditionalPhysicalFunction::createCase(PhysicalFunctionRegistryArguments arguments)
 {
-    /// The logical function already validated the argument shape and types, so a bad shape here is a lowering bug.
+    /// The planner already validated the argument shape and types, so a bad shape here is a bug of the planner.
     PRECONDITION(
         arguments.childFunctions.size() >= 3 and arguments.childFunctions.size() % 2 == 1,
         "ConditionalPhysicalFunction requires an odd number of child functions >= 3 (when/then pairs plus a default), but got {}",

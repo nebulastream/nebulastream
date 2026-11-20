@@ -7,7 +7,7 @@ ATTACH INLINE
 CREATE SINK twoFieldSink(a INT64 NOT NULL, b INT64 NOT NULL, total INT64 NOT NULL, ts INT64 NOT NULL) TYPE File;
 
 SELECT a + 1 AS a, b + 1 AS b, a + b AS total, ts FROM (
-    SELECT a, b, ts FROM stream
+    SELECT a, b, ts FROM "STREAM"
 ) INTO twoFieldSink;
 ----
 11,101,110,1
@@ -15,7 +15,7 @@ SELECT a + 1 AS a, b + 1 AS b, a + b AS total, ts FROM (
 
 CREATE SINK swapSink2(a INT64 NOT NULL, b INT64 NOT NULL, diff INT64 NOT NULL, ts INT64 NOT NULL) TYPE File;
 
-SELECT b AS a, a AS b, a - b AS diff, ts FROM stream INTO swapSink2;
+SELECT b AS a, a AS b, a - b AS diff, ts FROM "STREAM" INTO swapSink2;
 ----
 100,10,-90,1
 200,20,-180,2

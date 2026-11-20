@@ -14,26 +14,27 @@
 
 #pragma once
 
-#include <functional>
-#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryId.hpp>
 
 namespace NES
 {
-struct PipelinedQueryPlan;
-struct QueryExecutionConfiguration;
 
-/// A query planned down to its pipelines, e.g. by the Calcite frontend: the worker neither optimizes, lowers nor
-/// pipelines it, it only compiles the pipelines. They are built with the worker's configuration (e.g. its buffer size).
+/// A query planned down to its pipelines by the Calcite frontend: the worker neither optimizes, lowers nor pipelines it.
+/// It builds the pipelines from the part, with its own configuration (e.g. its buffer size), and compiles them.
 struct PhysicalQuery
 {
     QueryId queryId;
-    std::function<std::shared_ptr<PipelinedQueryPlan>(QueryId, const QueryExecutionConfiguration&)> pipelines;
+    /// The worker's part of the plan, a serialized WorkerPart (see Calcite/PhysicalParts.hpp): self-contained, so that it
+    /// can be sent to a remote worker.
+    std::string part;
 };
 
-/// A physical query placed on workers: the part each worker runs.
-using PlacedPhysicalQuery = std::unordered_map<Host, PhysicalQuery>;
+/// A physical query placed on workers: the parts each worker runs, each a query of its own there. A worker's engine runs one
+/// sink per query, and a worker can hold several parts, e.g. one per channel to another worker.
+using PlacedPhysicalQuery = std::unordered_map<Host, std::vector<PhysicalQuery>>;
 
 }

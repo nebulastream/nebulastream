@@ -14,15 +14,16 @@ ATTACH INLINE
 ,210,2
 
 
-CREATE SINK sinkCountStar(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkCountBoth(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL, valueCount UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkCountStarKeyed(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkCountBothKeyed(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, rowCount UINT64 NOT NULL, valueCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountStar(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount INT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountBoth(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount INT64 NOT NULL, valueCount INT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountStarKeyed(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, rowCount INT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountBothKeyed(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, rowCount INT64 NOT NULL, valueCount INT64 NOT NULL) TYPE File;
 
 
 # COUNT(*) counts all rows including those with null values - tumbling window
-SELECT start, end, COUNT(*) AS rowCount
-FROM stream WINDOW TUMBLING(ts, size 100 ms)
+SELECT window_start AS "START", window_end AS "END", COUNT(*) AS rowCount
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
 INTO sinkCountStar;
 ----
 0,100,3
@@ -32,8 +33,9 @@ INTO sinkCountStar;
 
 # COUNT(*) vs COUNT(column_name) - tumbling window
 # COUNT(*) includes rows with null value, COUNT(value) does not
-SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
-FROM stream WINDOW TUMBLING(ts, size 100 ms)
+SELECT window_start AS "START", window_end AS "END", COUNT(*) AS rowCount, COUNT("VALUE") AS valueCount
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
 INTO sinkCountBoth;
 ----
 0,100,3,2
@@ -42,8 +44,9 @@ INTO sinkCountBoth;
 
 
 # COUNT(*) with keyed tumbling window
-SELECT start, end, id, COUNT(*) AS rowCount
-FROM stream GROUP BY (id) WINDOW TUMBLING(ts, size 100 ms)
+SELECT window_start AS "START", window_end AS "END", id, COUNT(*) AS rowCount
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end, id
 INTO sinkCountStarKeyed;
 ----
 0,100,1,2
@@ -54,8 +57,9 @@ INTO sinkCountStarKeyed;
 
 
 # COUNT(*) vs COUNT(column_name) with keyed tumbling window
-SELECT start, end, id, COUNT(*) AS rowCount, COUNT(value) AS valueCount
-FROM stream GROUP BY (id) WINDOW TUMBLING(ts, size 100 ms)
+SELECT window_start AS "START", window_end AS "END", id, COUNT(*) AS rowCount, COUNT("VALUE") AS valueCount
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end, id
 INTO sinkCountBothKeyed;
 ----
 0,100,1,2,1
@@ -66,8 +70,9 @@ INTO sinkCountBothKeyed;
 
 
 # COUNT(*) vs COUNT(column_name) - sliding window
-SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
-FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
+SELECT window_start AS "START", window_end AS "END", COUNT(*) AS rowCount, COUNT("VALUE") AS valueCount
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.05' SECOND, INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
 INTO sinkCountBoth;
 ----
 0,100,3,2
@@ -78,8 +83,9 @@ INTO sinkCountBoth;
 
 
 # COUNT(*) vs COUNT(column_name) with keyed sliding window
-SELECT start, end, id, COUNT(*) AS rowCount, COUNT(value) AS valueCount
-FROM stream GROUP BY (id) WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
+SELECT window_start AS "START", window_end AS "END", id, COUNT(*) AS rowCount, COUNT("VALUE") AS valueCount
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.05' SECOND, INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end, id
 INTO sinkCountBothKeyed;
 ----
 0,100,1,2,1
@@ -94,8 +100,9 @@ INTO sinkCountBothKeyed;
 
 
 # COUNT(1) should be accepted and should count rows like COUNT(*).
-SELECT start, end, COUNT(1) AS rowCount
-FROM stream WINDOW TUMBLING(ts, size 100 ms)
+SELECT window_start AS "START", window_end AS "END", COUNT(1) AS rowCount
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
 INTO sinkCountStar;
 ----
 0,100,3

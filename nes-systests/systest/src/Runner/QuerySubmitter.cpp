@@ -23,13 +23,10 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
@@ -41,41 +38,13 @@ QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager, const
 {
 }
 
-std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const DistributedLogicalPlan& plan)
+std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const PlacedPhysicalQuery& query)
 {
-    /// Make sure the queryplan is passed through serialization logic.
-    std::unordered_map<Host, std::vector<std::string>> serializationErrorsPerWorker;
-    for (const auto& [grpc, localPlans] : plan)
-    {
-        for (const auto& localPlan : localPlans)
-        {
-            const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(localPlan);
-            const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
-            if (deserialized != localPlan)
-            {
-                serializationErrorsPerWorker[grpc].emplace_back(
-                    fmt::format(
-                        "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
-                        "deserialize(serialize(plan)):\n{}",
-                        explain(localPlan, ExplainVerbosity::Debug),
-                        explain(deserialized, ExplainVerbosity::Debug)));
-            }
-        }
-    }
-
-    if (!serializationErrorsPerWorker.empty())
-    {
-        return std::unexpected(CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker));
-    }
-
-    auto result = queryManager->start(plan);
-
-
+    auto result = queryManager->start(query);
     if (!result.has_value())
     {
         return std::unexpected(std::move(result.error().at(0)));
     }
-
     running.emplace(*result, std::chrono::steady_clock::now());
     return result.value();
 }

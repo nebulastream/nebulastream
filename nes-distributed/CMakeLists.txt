@@ -14,7 +14,7 @@ add_subdirectory(src)
 get_source(nes-distributed NES_DISTRIBUTED_SOURCE_FILES)
 
 add_library(nes-distributed ${NES_DISTRIBUTED_SOURCE_FILES})
-target_link_libraries(nes-distributed PUBLIC nes-common nes-single-node-worker-interface nes-logical-operators)
+target_link_libraries(nes-distributed PUBLIC nes-common nes-single-node-worker-interface)
 target_include_directories(nes-distributed
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 

@@ -65,13 +65,6 @@ private:
     size_t ordinal = 0;
 };
 
-/// Makes the relative data file path of a source written into a query absolute, under the test data directory.
-/// The worker resolves a relative path from its own working directory, which may not match where the test data is.
-void makeAnonymousSourcePathsAbsolute(
-    const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir);
-
-/// Adds the config to an anonymous source.
-void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host);
 
 struct SourceOption
 {

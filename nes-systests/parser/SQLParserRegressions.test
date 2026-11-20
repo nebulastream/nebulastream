@@ -1,5 +1,5 @@
 # name: parser/SQLParserRegressions.test
-# description: SQL parser regressions for predicates, source qualifiers, and complete statements
+# description: SQL regressions for predicates, source qualifiers, and complete statements
 # groups: [Parser, Selection]
 
 CREATE LOGICAL SOURCE predicate_input(
@@ -26,14 +26,14 @@ ATTACH INLINE
 2,20
 
 # Parses a parenthesized BETWEEN predicate.
-SELECT pk FROM predicate_input WHERE (col1 BETWEEN FLOAT64(10.0) AND FLOAT64(30.0)) INTO File();
+SELECT pk FROM predicate_input WHERE (col1 BETWEEN CAST(10.0 AS DOUBLE) AND CAST(30.0 AS DOUBLE)) INTO File();
 ----
 1
 2
 5
 
 # Parses a parenthesized IN predicate.
-SELECT pk FROM predicate_input WHERE (col0 IN (INT64(1), INT64(2))) INTO File();
+SELECT pk FROM predicate_input WHERE (col0 IN (CAST(1 AS BIGINT), CAST(2 AS BIGINT))) INTO File();
 ----
 1
 2
@@ -47,7 +47,7 @@ SELECT pk FROM predicate_input WHERE (col1 IS NULL) INTO File();
 # Preserves precedence in nested AND and OR predicates.
 SELECT pk
 FROM predicate_input
-WHERE col4 <= FLOAT64(563.88) AND (col3 >= INT64(922) OR (col0 BETWEEN INT64(1) AND INT64(2)))
+WHERE col4 <= CAST(563.88 AS DOUBLE) AND (col3 >= CAST(922 AS BIGINT) OR (col0 BETWEEN CAST(1 AS BIGINT) AND CAST(2 AS BIGINT)))
 INTO File();
 ----
 1
@@ -57,7 +57,7 @@ INTO File();
 # Parses deeply nested predicate parentheses.
 SELECT pk
 FROM predicate_input
-WHERE ((col3 > INT64(700))) AND (((col3 BETWEEN INT64(700) AND INT64(950))))
+WHERE ((col3 > CAST(700 AS BIGINT))) AND (((col3 BETWEEN CAST(700 AS BIGINT) AND CAST(950 AS BIGINT))))
 INTO File();
 ----
 1
@@ -66,7 +66,7 @@ INTO File();
 # Combines IN and null predicates.
 SELECT pk
 FROM predicate_input
-WHERE col0 IN (INT64(1), INT64(2)) AND (col1 IS NULL OR col2 IS NOT NULL)
+WHERE col0 IN (CAST(1 AS BIGINT), CAST(2 AS BIGINT)) AND (col1 IS NULL OR col2 IS NOT NULL)
 INTO File();
 ----
 2
@@ -74,19 +74,19 @@ INTO File();
 # Uses a parenthesized predicate as a comparison operand.
 SELECT pk
 FROM predicate_input
-WHERE flag = (col0 = INT64(1) OR col1 = FLOAT64(20.0))
+WHERE flag = (col0 = CAST(1 AS BIGINT) OR col1 = CAST(20.0 AS DOUBLE))
 INTO File();
 ----
 1
 2
 
 # Accepts a named source alias with unqualified fields.
-SELECT pk FROM alias_input AS source_alias WHERE value = INT64(10) INTO File();
+SELECT pk FROM alias_input AS source_alias WHERE "VALUE" = CAST(10 AS BIGINT) INTO File();
 ----
 1
 
 # Resolves alias-qualified fields.
-SELECT source_alias.pk FROM alias_input AS source_alias WHERE source_alias.value = INT64(10) INTO File();
+SELECT source_alias.pk FROM alias_input AS source_alias WHERE source_alias."VALUE" = CAST(10 AS BIGINT) INTO File();
 ----
 1
 

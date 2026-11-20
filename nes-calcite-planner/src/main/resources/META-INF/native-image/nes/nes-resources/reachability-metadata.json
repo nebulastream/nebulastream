@@ -4,6 +4,9 @@
       "glob": "nes_unsigned_integers.yaml"
     },
     {
+      "glob": "nes_functions.yaml"
+    },
+    {
       "glob": "substrait/extensions/*.yaml"
     }
   ]

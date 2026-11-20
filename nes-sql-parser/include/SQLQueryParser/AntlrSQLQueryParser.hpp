@@ -18,21 +18,40 @@
 
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <variant>
 #include <vector>
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
 #include <CommonTokenStream.h>
 #include <ParserRuleContext.h>
-#include <Plans/LogicalPlan.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
 
-LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst);
-LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
+/// An anonymous sink of a sink clause, e.g. File('out.csv' AS "SINK".FILE_PATH, 'CSV' AS FORMAT.TYPE).
+struct AnonymousSinkClause
+{
+    Identifier type;
+    /// Its own schema, if the clause gives one; else the sink writes the query's result.
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema;
+    /// The sink's options (with "host", which places it).
+    std::unordered_map<Identifier, std::string> config;
+    std::unordered_map<Identifier, std::string> formatConfig;
+};
+
+/// The sink of a query: a named sink of the catalog, or an anonymous sink.
+using SinkClause = std::variant<Identifier, AnonymousSinkClause>;
+
+/// Binds the sink clause of a query, the part after INTO (e.g. `mySink` or `File(...)`).
+SinkClause bindSinkClause(std::string_view sinkClause);
 
 /// @brief Safe, heap allocated wrapper around an ANTLR chain instance. ASTs lifetime is owned by the chain that created them.
 class ManagedAntlrParser : public std::enable_shared_from_this<ManagedAntlrParser>

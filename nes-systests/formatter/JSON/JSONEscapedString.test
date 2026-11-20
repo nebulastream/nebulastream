@@ -28,14 +28,14 @@ ATTACH INLINE
 
 # Description: The escape sequences of a JSON string belong to its encoding, not to its value.
 # Both fields of a record are decoded, so this also covers that the scratch memory of a record is not reused within the record.
-SELECT value, letter FROM escapedJson INTO File();
+SELECT "VALUE", letter FROM escapedJson INTO File();
 ----
 ABC,x
 quote"and\backslash,"
 plain,y
 
 # Description: Escaped strings and NULL values combine.
-SELECT value, letter FROM nullableEscapedJson INTO File();
+SELECT "VALUE", letter FROM nullableEscapedJson INTO File();
 ----
 ABC,x
 NULL,NULL

@@ -80,6 +80,67 @@ message PlanRequest {
   string sink_host = 6;
   // For inspection: add a graph to each step, and the plan after each rule of the rule-based steps (PlanStep.rules).
   bool detailed_steps = 7;
+  // The registered models, for MODEL_INFERENCE.
+  repeated Model models = 8;
+  // The registered source types, for anonymous sources in FROM (see AnonymousSource).
+  repeated SourceType source_types = 9;
+  // The options of all input formatters (e.g. FIELD_DELIMITER), for anonymous sources.
+  repeated string format_options = 10;
+  // Physical plans: every window join is a NESTED_LOOP_JOIN, also one with keys (as our optimizer's join_strategy
+  // NESTED_LOOP_JOIN). Otherwise a join with at least one key is a HASH_JOIN.
+  bool nested_loop_joins = 11;
+  // The engine's functions that SQL (and Calcite's libraries) do not have, e.g. FROM_BASE64 and MEDIAN.
+  repeated Function functions = 12;
+}
+
+// A function of the engine: its name in SQL, the families of its operands (Calcite's SqlTypeFamily, e.g. STRING,
+// NUMERIC) and its result type (Calcite's SqlTypeName, e.g. VARBINARY, DOUBLE). The result is nullable if an operand is.
+// The engine registers it under its name, as a scalar function or as an aggregation.
+message Function {
+  string name = 1;
+  repeated string operands = 2;
+  string result = 3;
+  bool aggregation = 4;
+}
+
+// A source type (e.g. File, Generator) and the names of its options (e.g. FILE_PATH).
+message SourceType {
+  string name = 1;
+  repeated string options = 2;
+}
+
+// Payload (google.protobuf.Any) of the Substrait ExtensionLeafRel emitted for an anonymous source in FROM, e.g.
+// TABLE(FILE(schema => 'id UINT64 NOT NULL', file_path => 'data.csv', format => 'CSV')): reads a source that is not
+// in the catalog. Option values are config literals: strings in single quotes, except the host and the format type.
+message AnonymousSource {
+  string type = 1;
+  repeated Field schema = 2;
+  // Source options by name (e.g. FILE_PATH, HOST).
+  map<string, string> source_options = 3;
+  // Input formatter options by name (e.g. TYPE, FIELD_DELIMITER).
+  map<string, string> format_options = 4;
+}
+
+// A registered model (CREATE MODEL): its input and output fields, in tensor order.
+message Model {
+  string name = 1;
+  repeated Field inputs = 2;
+  repeated Field outputs = 3;
+}
+
+// Payload (google.protobuf.Any) of the Substrait ExtensionSingleRel emitted for MODEL_INFERENCE: runs the model on each
+// row of its input. Output columns: the input's columns, then the model's outputs (Model.outputs).
+message InferModel {
+  string model = 1;
+  // The names of the model's outputs, i.e. of the last output columns.
+  repeated string outputs = 2;
+  reserved 3;
+}
+
+// Payload (google.protobuf.Any) of the Substrait ExtensionSingleRel emitted for a projection (NesProjection): our
+// projection, whose columns are the assignments' fields, in this order. Each expression reads the input row.
+message Projection {
+  repeated PhysicalOperator.Map.Assignment assignments = 1;
 }
 
 message PlanResponse {
@@ -92,6 +153,8 @@ message PlanResponse {
   string error = 3;
   // The error is a valid query that NebulaStream cannot run (yet), rather than an invalid one.
   bool unsupported = 4;
+  // The error is that the query cannot be placed on the topology (our PlacementFailure).
+  bool placement_failure = 6;
   // The plan after each step of the planner, in order; for inspection only.
   repeated PlanStep steps = 5;
 }
@@ -131,22 +194,17 @@ message WindowAggregate {
     GLOBAL = 2;
   }
 
-  enum Function {
-    SUM = 0;
-    COUNT = 1;
-    MIN = 2;
-    MAX = 3;
-    AVG = 4;
-  }
-
   message Aggregate {
-    Function function = 1;
+    // The aggregation's name: SUM, COUNT, MIN, MAX, AVG or one of PlanRequest.functions (e.g. MEDIAN).
+    string function = 1;
     // Unset for COUNT(*).
     optional uint32 field = 2;
     // Calcite's result type (SqlTypeName, e.g. BIGINT, DOUBLE) and nullability. The result is cast to it, because our
     // aggregations type their results differently (e.g. an unsigned COUNT, a DOUBLE AVG of integers).
     string type = 3;
     bool nullable = 4;
+    // The name of the result column, as Calcite names it (e.g. an alias of the query).
+    string name = 5;
   }
 
   Kind kind = 1;
@@ -207,6 +265,8 @@ message PhysicalOperator {
   message SourceScan {
     uint64 physical_source_id = 1;
     uint64 origin_id = 2;
+    // An anonymous source in FROM (e.g. TABLE(FILE(...))), instead of a physical source of the catalog.
+    AnonymousSource anonymous = 3;
   }
   // Scan: starts a pipeline. Reads the buffers of its inputs as rows of the output schema, field by field in order.
   // parses_source: its input is a SourceScan, whose raw data (e.g. CSV) it parses into the output schema. Several inputs
@@ -218,10 +278,16 @@ message PhysicalOperator {
   message Selection {
     substrait.Expression predicate = 1;
   }
-  // Map: computes the expression into the field, which it appends to the row.
+  // Map: computes each expression into its field, which it appends to the row. All expressions read the row as it
+  // arrives, so one Map computes all values of a projection.
   message Map {
-    string field = 1;
-    substrait.Expression expression = 2;
+    message Assignment {
+      string field = 1;
+      substrait.Expression expression = 2;
+    }
+    reserved 1, 2;
+    // Each expression reads the operator's input row; the fields are appended in this order.
+    repeated Assignment assignments = 3;
   }
   // Emit: ends a pipeline. Writes the output schema's fields of the row, in this order. for_sink: in the output format of
   // the sink that follows.
@@ -251,7 +317,8 @@ message PhysicalOperator {
   // One aggregation of a window: the function over the input's field (unset for COUNT(*)); its result has the type of
   // the probe's output field. include_nulls: COUNT(*) counts rows with NULL in the field.
   message WindowAggregation {
-    WindowAggregate.Function function = 1;
+    // The aggregation's name (see WindowAggregate.Aggregate.function).
+    string function = 1;
     optional uint32 field = 2;
     bool include_nulls = 3;
   }
@@ -260,8 +327,12 @@ message PhysicalOperator {
     // Identifies the shared state within the plan.
     uint32 handler = 1;
     WindowAggregate.Kind kind = 2;
+    // GLOBAL: one window long enough to hold every row (see WindowAggregate.Kind), so its size is that window's.
     uint64 size_ms = 3;
     uint64 slide_ms = 4;
+    // An aggregation without keys: the first window emits one row even without input (counts 0, everything else NULL),
+    // as SQL's aggregation without GROUP BY.
+    bool emit_on_empty_input = 5;
   }
   // WindowBuild: ends a pipeline. Adds each row to the state of its window: groups by key_fields, aggregates as given.
   // Fields are positions in its input; the probe's output schema names the keys and results and gives their types.
@@ -284,6 +355,50 @@ message PhysicalOperator {
     repeated WindowAggregation aggregations = 4;
   }
 
+  // The window join of JoinBuilds and their JoinProbe, which share its state (the handler). Each side's builds store
+  // the side's rows as left_schema / right_schema: the join's input columns (named as the join names them, unique
+  // across both sides) and, for a hash join, key columns cast to the type both sides compare in.
+  message Join {
+    uint32 handler = 1;
+    WindowAggregate.Kind kind = 2;
+    // GLOBAL: one window long enough to hold every row (see WindowAggregate.Kind).
+    uint64 size_ms = 3;
+    uint64 slide_ms = 4;
+    WindowJoin.Type type = 5;
+    WindowJoin.Implementation implementation = 6;
+    repeated Field left_schema = 7;
+    repeated Field right_schema = 8;
+    // Positions in the stored rows. HASH_JOIN: the keys, pairwise equal. NESTED_LOOP_JOIN: the columns the condition reads.
+    repeated uint32 left_key_fields = 9;
+    repeated uint32 right_key_fields = 10;
+  }
+  // JoinBuild: ends a pipeline. Stores each row of its side in the state of its window: input fields stored_fields
+  // (positions in its input) under the names of its side's schema. time_field: the event time, a position in its input.
+  message JoinBuild {
+    Join join = 1;
+    bool right = 2;
+    uint32 time_field = 3;
+    repeated uint32 stored_fields = 4;
+  }
+  // JoinProbe: starts a pipeline. Emits the joined rows of each closed window: window start, window end, the left
+  // side's input columns, the right side's (output_schema). Its inputs are the JoinBuilds of its join. condition and
+  // residual read [left stored row..., right stored row...]; HASH_JOIN: condition compares the keys.
+  message JoinProbe {
+    Join join = 1;
+    uint64 output_origin_id = 2;
+    // The origins of the rows that the builds of both sides receive: their watermarks close the windows.
+    repeated uint64 input_origin_ids = 3;
+    substrait.Expression condition = 4;
+    repeated substrait.Expression residual = 5;
+  }
+
+  // InferModel: runs the model on each row: reads its inputs from input_fields (positions in its input, in the model's
+  // input order) and appends its outputs, the last fields of the output schema.
+  message InferModel {
+    string model = 1;
+    repeated uint32 input_fields = 2;
+  }
+
   repeated Field output_schema = 1;
   // The pipeline the operator belongs to; a pipeline's operators form a chain from its first operator.
   uint32 pipeline = 2;
@@ -302,5 +417,23 @@ message PhysicalOperator {
     WatermarkAssigner watermark_assigner = 18;
     WindowBuild window_build = 19;
     WindowProbe window_probe = 20;
+    InferModel infer_model = 21;
+    JoinBuild join_build = 22;
+    JoinProbe join_probe = 23;
   }
+}
+
+// A worker's part of a placed physical plan, self-contained: the worker builds its pipelines from it alone, without the
+// coordinator's catalogs. The coordinator resolves what the part reads from them.
+message WorkerPart {
+  // A substrait.Plan with the extensions of the whole plan and this part's relation only.
+  bytes plan = 1;
+  // The worker that runs the part.
+  string host = 2;
+  // The pipeline id of each SourceScan and NetworkSource -> its SourceDescriptor (reflected, as JSON).
+  map<uint32, string> sources = 3;
+  // The SinkDescriptor of the part's Sink or NetworkSink (reflected, as JSON).
+  string sink = 4;
+  // The model of each InferModel, by the name in the plan -> the RegisteredModel (reflected, as JSON).
+  map<string, string> models = 5;
 }

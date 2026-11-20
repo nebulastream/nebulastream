@@ -12,6 +12,6 @@ CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
 
 CREATE SINK projectionSink(out_id UINT64 NOT NULL, out_value UINT64 NOT NULL, out_timestamp UINT64 NOT NULL) TYPE File;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream INTO projectionSink;
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp FROM "STREAM" INTO projectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream INTO projectionSink;
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp FROM "STREAM" INTO projectionSink;

@@ -11,8 +11,10 @@ book,5,25
 cat,20,50
 
 # Checking if a count over a keyed window works for all data types
-SELECT start, end, key, COUNT(i8) as i8_out
-FROM stream GROUP BY (key) WINDOW TUMBLING(ts, size 100 ms) INTO FILE ();
+SELECT window_start AS "START", window_end AS "END", "KEY", COUNT(i8) AS i8_out
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end, "KEY"
+INTO FILE ();
 ----
 0,100,apple,1
 0,100,book,1

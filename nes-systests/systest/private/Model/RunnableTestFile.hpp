@@ -116,8 +116,6 @@ struct RunnableTestFile
     OriginalNames originalNames;
     std::vector<SetupStatement> setupStatements;
     std::vector<RewrittenTestCase> testCases;
-    /// Queries are planned by Calcite (`# calcite`), see SystestBinder.
-    bool calcite = false;
 };
 
 }

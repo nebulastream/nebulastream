@@ -33,7 +33,12 @@ CREATE SINK sinkStreamStream2Stream4Stream4_1(start1 UINT64 NOT NULL, end1 UINT6
 CREATE SINK sinkStream7Stream7_1(start UINT64 NOT NULL, end UINT64 NOT NULL, id7 UINT64 NOT NULL, value7 UINT64 NOT NULL, timestamp7 UINT64 NOT NULL, id7_1 UINT64 NOT NULL, value7_1 UINT64 NOT NULL, timestamp7_1 UINT64 NOT NULL) TYPE File;
 
 # Query 1 - Join two streams
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id = id2
+INTO sinkStreamStream2;
 ----
 1000 2000 12 1 1001 12 5 1011
 1000 2000 4 1 1002 4 3 1102
@@ -67,16 +72,13 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = 
 21000 22000 1 21 21000 1 21 21000
 
 # Query 2 - Join three streams
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-    FROM (
-      SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
-)
+SELECT c.start1, c.end1, c.window_start AS "START", c.window_end AS "END", c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+FROM TABLE(TUMBLE((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+  FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS a
+  JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS b
+  ON a.window_start = b.window_start AND a.id = b.id2), DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS c
+JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '1' SECOND)) AS d
+ON c.window_start = d.window_start AND c.id = d.id4
 INTO sinkStreamStream2Stream4;
 ----
 1000 2000 1000 2000 4 1 1002 4 3 1112 4 4 1001
@@ -89,22 +91,16 @@ INTO sinkStreamStream2Stream4;
 15000 16000 15000 16000 1 15 15000 1 15 15000 1 15 15000
 
 # Query 3 - Join four streams
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start2, end as end2, start1, end1, id, value, timestamp1, id2, value2, timestamp2, id4, value4, timestamp4
-    FROM (
-      SELECT * FROM (
-        SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-        FROM (
-          SELECT * FROM (SELECT * FROM stream)
-          INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
-        )
-      )
-      INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW TUMBLING (timestamp1, timestamp4_1, size 1 sec)
-)
+SELECT e.start1, e.end1, e.start2, e.end2, e.window_start AS "START", e.window_end AS "END", e.id, e."VALUE", e.timestamp1, e.id2, e.value2, e.timestamp2, e.id4, e.value4, e.timestamp4, f.id4_1, f.value4_1, f.timestamp4_1
+FROM TABLE(TUMBLE((SELECT c.window_start AS start2, c.window_end AS end2, c.start1, c.end1, c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+  FROM TABLE(TUMBLE((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+    FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS a
+    JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS b
+    ON a.window_start = b.window_start AND a.id = b.id2), DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS c
+  JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '1' SECOND)) AS d
+  ON c.window_start = d.window_start AND c.id = d.id4), DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS e
+JOIN TABLE(TUMBLE(TABLE stream4_1, DESCRIPTOR(timestamp4_1), INTERVAL '1' SECOND)) AS f
+ON e.window_start = f.window_start AND e.id = f.id4_1
 INTO sinkStreamStream2Stream4Stream4_1;
 ----
 12000 13000 12000 13000 12000 13000 1 12 12000 1 12 12000 1 12 12000 1 12 12000
@@ -117,9 +113,12 @@ INTO sinkStreamStream2Stream4Stream4_1;
 1000 2000 1000 2000 1000 2000 12 1 1001 12 5 1011 12 1 1300 12 1 1300
 
 # Query 4 - Join two streams with a sliding stream
-SELECT * FROM (SELECT * FROM stream7)
- INNER JOIN (SELECT * FROM stream7_1) ON id7 = id7_1 WINDOW SLIDING (timestamp7, timestamp7_1, size 1 sec, advance by 250 ms)
- INTO sinkStream7Stream7_1;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id7, l.value7, l.timestamp7, r.id7_1, r.value7_1, r.timestamp7_1
+FROM TABLE(HOP(TABLE stream7, DESCRIPTOR(timestamp7), INTERVAL '0.25' SECOND, INTERVAL '1' SECOND)) AS l
+JOIN TABLE(HOP(TABLE stream7_1, DESCRIPTOR(timestamp7_1), INTERVAL '0.25' SECOND, INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id7 = id7_1
+INTO sinkStream7Stream7_1;
 ----
 250 1250 1 1 1240 1 1 1240
 250 1250 4 2 1120 4 2 1120
@@ -249,22 +248,16 @@ SELECT * FROM (SELECT * FROM stream7)
 2750 3750 42 18 2990 42 18 2990
 
 # Query 5 - Join three streams with a sliding stream
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start2, end as end2, start1, end1, id, value, timestamp1, id2, value2, timestamp2, id4, value4, timestamp4
-    FROM (
-      SELECT * FROM (
-        SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-        FROM (
-          SELECT * FROM (SELECT * FROM stream)
-          INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms)
-        )
-      )
-      INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW SLIDING (timestamp1, timestamp4, size 1 sec, advance by 500 ms)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW SLIDING (timestamp1, timestamp4_1, size 1 sec, advance by 500 ms)
-)
+SELECT e.start1, e.end1, e.start2, e.end2, e.window_start AS "START", e.window_end AS "END", e.id, e."VALUE", e.timestamp1, e.id2, e.value2, e.timestamp2, e.id4, e.value4, e.timestamp4, f.id4_1, f.value4_1, f.timestamp4_1
+FROM TABLE(HOP((SELECT c.window_start AS start2, c.window_end AS end2, c.start1, c.end1, c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+  FROM TABLE(HOP((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+    FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS a
+    JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS b
+    ON a.window_start = b.window_start AND a.id = b.id2), DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS c
+  JOIN TABLE(HOP(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS d
+  ON c.window_start = d.window_start AND c.id = d.id4), DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS e
+JOIN TABLE(HOP(TABLE stream4_1, DESCRIPTOR(timestamp4_1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS f
+ON e.window_start = f.window_start AND e.id = f.id4_1
 INTO sinkStreamStream2Stream4Stream4_1;
 ----
 500 1500 500 1500 500 1500 12 1 1001 12 5 1011 12 1 1300 12 1 1300

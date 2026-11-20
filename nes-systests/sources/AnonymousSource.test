@@ -1,16 +1,16 @@
 # name: sources/AnonymousSource.test
-# description: Creating anonymous sources within queries
+# description: Anonymous sources within queries: a table function per source type with named arguments (like DuckDB's read_csv)
 # groups: [Sources]
 
 
 
 CREATE SINK file_output(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM TABLE(FILE(
+	schema => 'id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL',
+	file_path => 'small/stream8.csv',
+	format => 'CSV'))
 INTO file_output;
 ----
 1,1,12
@@ -24,13 +24,13 @@ INTO file_output;
 CREATE SINK generator_output(id UINT64 NOT NULL, field2 UINT64 NOT NULL) TYPE File;
 
 SELECT ID, FIELD2
-FROM Generator(
-    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    1000000 AS "SOURCE".MAX_RUNTIME_MS,
-    1 AS "SOURCE".SEED,
-    'CSV' AS INPUT_FORMATTER."TYPE",
-    'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS "SOURCE".GENERATOR_SCHEMA,
-    SCHEMA(id UINT64 NOT NULL, field2 UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+FROM TABLE(GENERATOR(
+    schema => 'id UINT64 NOT NULL, field2 UINT64 NOT NULL',
+    stop_generator_when_sequence_finishes => 'ALL',
+    max_runtime_ms => 1000000,
+    seed => 1,
+    generator_schema => 'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1',
+    format => 'CSV'))
 INTO generator_output;
 ----
 0 0
@@ -50,23 +50,23 @@ CREATE PHYSICAL SOURCE FOR input TYPE File;
 ATTACH FILE small/stream8.csv
 
 
-SELECT input.ID AS ID, input.VALUE AS VALUE, input.TIMESTAMP AS TIMESTAMP
+SELECT input.ID AS ID, input."VALUE" AS "VALUE", input."TIMESTAMP" AS "TIMESTAMP"
 FROM input
 INTO file_output;
 ====
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM TABLE(FILE(
+	schema => 'id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL',
+	file_path => 'small/stream8.csv',
+	format => 'CSV'))
 INTO file_output;
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'IDontExist' AS "SOURCE"."HOST",
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM TABLE(FILE(
+	schema => 'id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL',
+	file_path => 'small/stream8.csv',
+	host => 'IDontExist',
+	format => 'CSV'))
 INTO file_output;
 ----
 ERROR 2300

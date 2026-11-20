@@ -49,7 +49,6 @@
 #include <CommonTokenStream.h>
 #include <Exceptions.h>
 #include <DataTypes/DataType.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -70,15 +69,9 @@ namespace NES
 class StatementBinder::Impl
 {
     std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
 
 public:
-    Impl(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
-        : sourceCatalog(sourceCatalog), queryBinder(queryBinder)
-    {
-    }
+    explicit Impl(const std::shared_ptr<const SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
 
     ~Impl() = default;
 
@@ -542,52 +535,10 @@ public:
         throw InvalidStatement("Unrecognized DROP statement");
     }
 
-    std::unordered_set<ExplainStage> bindExplainStages(AntlrSQLParser::ExplainStagesContext* stagesContext) const
+    /// The SQL text of a query as written, from its first to its last token.
+    static std::string queryText(antlr4::ParserRuleContext* query)
     {
-        std::unordered_set<ExplainStage> explainStages;
-
-        for (auto* const stageContext : stagesContext->explainStage())
-        {
-            if (stageContext->LOGICAL() != nullptr)
-            {
-                if (!explainStages.insert(ExplainStage::Logical).second)
-                {
-                    throw InvalidStatement("Duplicate EXPLAIN stage: LOGICAL");
-                }
-            }
-            else
-            {
-                const auto identifier = bindIdentifier(stageContext->identifier());
-
-                if (identifier == Identifier::parse("logical"))
-                {
-                    if (!explainStages.insert(ExplainStage::Logical).second)
-                    {
-                        throw InvalidStatement("Duplicate EXPLAIN stage: LOGICAL");
-                    }
-                }
-                else if (identifier == Identifier::parse("optimized"))
-                {
-                    if (!explainStages.insert(ExplainStage::Optimized).second)
-                    {
-                        throw InvalidStatement("Duplicate EXPLAIN stage: OPTIMIZED");
-                    }
-                }
-                else if (identifier == Identifier::parse("distributed"))
-                {
-                    if (!explainStages.insert(ExplainStage::Distributed).second)
-                    {
-                        throw InvalidStatement("Duplicate EXPLAIN stage: DISTRIBUTED");
-                    }
-                }
-                else
-                {
-                    throw InvalidStatement("Unrecognized EXPLAIN stage: {}", identifier);
-                }
-            }
-        }
-
-        return explainStages;
+        return query->start->getInputStream()->getText(antlr4::misc::Interval(query->start->getStartIndex(), query->stop->getStopIndex()));
     }
 
     ExplainFormat bindExplainFormat(AntlrSQLParser::ExplainFormatContext* formatAST) const
@@ -618,17 +569,11 @@ public:
     {
         INVARIANT(explainAst->query() != nullptr, "Should be enforced by antlr");
         ExplainFormat format = ExplainFormat::Visual;
-        std::unordered_set<ExplainStage> stages = {ExplainStage::Logical, ExplainStage::Optimized, ExplainStage::Distributed};
-        if (auto* const stagesAST = explainAst->explainStages())
-        {
-            stages = bindExplainStages(stagesAST);
-        }
         if (auto* const formatAST = explainAst->explainFormat())
         {
             format = bindExplainFormat(formatAST);
         }
-
-        return ExplainQueryStatement{.plan = queryBinder(explainAst->query()), .explainFormat = format, .explainStages = stages};
+        return ExplainQueryStatement{.sql = queryText(explainAst->query()), .explainFormat = format};
     }
 
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
@@ -672,7 +617,7 @@ public:
                         }
                     }
                 }
-                return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
+                return QueryStatement{.sql = queryText(queryAst->query()), .id = queryId};
             }
 
             throw InvalidStatement(statementAST->toString());
@@ -688,10 +633,8 @@ public:
     }
 };
 
-StatementBinder::StatementBinder(
-    const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder)
-    : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
+StatementBinder::StatementBinder(const std::shared_ptr<const SourceCatalog>& sourceCatalog)
+    : impl(std::make_unique<Impl>(sourceCatalog))
 {
 }
 

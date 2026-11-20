@@ -47,7 +47,7 @@
 #include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Calcite/QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 #include <WorkerOptimizerConfig.hpp>
@@ -117,6 +117,10 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("--query-timeout")
         .help("fail a query that has not reached a terminal state after this many seconds. 0 waits forever. Default: 300")
         .scan<'i', int>();
+    program.add_argument("--plan-only")
+        .flag()
+        .help("plan each query (with the Calcite planner in `# calcite` files) but run none: a test case passes if its queries "
+              "plan, or fail to plan where it expects an error. Result rows are not checked");
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
     program.add_argument("--endless-rounds")
         .help("how many times --endless repeats the queries. Implies --endless. Unlimited by default")
@@ -474,6 +478,11 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     if (program.is_used("--query-timeout"))
     {
         config.queryTimeoutSeconds = program.get<int>("--query-timeout");
+    }
+
+    if (program.is_used("--plan-only"))
+    {
+        config.planOnly = true;
     }
 
     if (program.is_used("--endless"))

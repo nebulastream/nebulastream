@@ -32,10 +32,9 @@ SELECT
     order_id,
     customer_id,
     amount
-FROM (SELECT * FROM orders)
-INNER JOIN (SELECT * FROM payments)
-ON order_id = payments_order_id
-WINDOW SLIDING(ts_orders, ts_payments, SIZE 30 SEC, ADVANCE BY 5 SEC)
+FROM TABLE(HOP(TABLE orders, DESCRIPTOR(ts_orders), INTERVAL '5' SECOND, INTERVAL '30' SECOND)) AS o
+JOIN TABLE(HOP(TABLE payments, DESCRIPTOR(ts_payments), INTERVAL '5' SECOND, INTERVAL '30' SECOND)) AS p
+ON o.window_start = p.window_start AND o.order_id = p.payments_order_id
 INTO sink;
 ----
 1,42,99.99

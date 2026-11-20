@@ -178,7 +178,7 @@ CREATE PHYSICAL SOURCE FOR generator_large_text TYPE GENERATOR SET(
     1 as "SOURCE".SEED,
     'SEQUENCE UINT64 0 20 1, RANDOMSTR 8192 8192' AS "SOURCE".GENERATOR_SCHEMA
 );
-CREATE SINK generator_sink_text_with_size(id UINT64 NOT NULL, length UINT64 NOT NULL) TYPE File;
+CREATE SINK generator_sink_text_with_size(id UINT64 NOT NULL, length INT32 NOT NULL) TYPE File;
 SELECT id, OCTET_LENGTH(text) as length FROM generator_large_text
 INTO generator_sink_text_with_size;
 ----

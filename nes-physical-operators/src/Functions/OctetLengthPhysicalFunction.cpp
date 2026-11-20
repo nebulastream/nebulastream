@@ -21,6 +21,7 @@
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
@@ -44,6 +45,6 @@ OctetLengthPhysicalFunction::createOCTET_LENGTH(PhysicalFunctionRegistryArgument
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1, "OCTET_LENGTH function must have exactly one child function");
-    return OctetLengthPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+    return castIntegerResult(OctetLengthPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]), physicalFunctionRegistryArguments.outputType);
 }
 }

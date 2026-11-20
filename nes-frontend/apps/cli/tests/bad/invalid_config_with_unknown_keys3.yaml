@@ -11,8 +11,8 @@
 # limitations under the License.
 
 query: |
-  SELECT timestamp, id
-  FROM stream
+  SELECT "TIMESTAMP", id
+  FROM "STREAM"
   INTO sink;
 sinks:
   - name: sink

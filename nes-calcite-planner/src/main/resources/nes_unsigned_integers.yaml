@@ -3,7 +3,8 @@
 urn: extension:nebulastream:unsigned_integers
 description: >
   Comparisons and modulus of the unsigned integers of extension:io.substrait:unsigned_integers, which declares the
-  types and their arithmetic. Both operands have the same type: Unsigned.java rejects mixing signed and unsigned values.
+  types and their arithmetic. Both operands have the same type: Unsigned.java casts a mix of signed and unsigned values
+  to one type.
 scalar_functions:
   - name: "equal"
     impls:

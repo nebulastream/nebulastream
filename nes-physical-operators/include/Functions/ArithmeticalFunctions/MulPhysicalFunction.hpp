@@ -32,7 +32,7 @@ public:
     MulPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createMul(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createMultiply(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

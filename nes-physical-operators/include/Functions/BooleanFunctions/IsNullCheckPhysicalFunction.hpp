@@ -30,7 +30,7 @@ public:
     explicit IsNullCheckPhysicalFunction(PhysicalFunction childFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createIsNull(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createIs_Null(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childFunction;

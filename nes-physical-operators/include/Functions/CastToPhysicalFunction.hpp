@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <optional>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -28,15 +29,20 @@ class CastToPhysicalFunction
 {
 public:
     explicit CastToPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
+    /// inputType: the child's type; a cast of a number, boolean or character to VARSIZED formats it as text.
+    CastToPhysicalFunction(PhysicalFunction childFunction, DataType castToType, std::optional<DataType> inputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
-
-    static PhysicalFunctionRegistryReturnType createCastToType(PhysicalFunctionRegistryArguments arguments);
 
 private:
     DataType castToType;
     PhysicalFunction childFunction;
+    std::optional<DataType> inputType;
 };
 
 static_assert(PhysicalFunctionConcept<CastToPhysicalFunction>);
+
+/// The function's integer result as `outputType`: our integer arithmetic computes as C++ does (e.g. INT8 * INT8 in INT32),
+/// and the cast gives the type the planner inferred (which wraps on overflow).
+PhysicalFunction castIntegerResult(PhysicalFunction function, const DataType& outputType);
 
 }

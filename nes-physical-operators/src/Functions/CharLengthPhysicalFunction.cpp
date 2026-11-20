@@ -22,6 +22,7 @@
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <select.hpp>
 #include <val_arith.hpp>
@@ -60,6 +61,6 @@ PhysicalFunctionRegistryReturnType
 CharLengthPhysicalFunction::createCHAR_LENGTH(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "CHAR_LENGTH function must have exactly one child function");
-    return CharLengthPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+    return castIntegerResult(CharLengthPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]), physicalFunctionRegistryArguments.outputType);
 }
 }

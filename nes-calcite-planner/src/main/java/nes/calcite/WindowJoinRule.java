@@ -148,9 +148,11 @@ final class WindowJoinRule extends RelOptRule {
                 windowColumn = join.getRowType().getFieldList().get(i).getType();
             }
         }
+        /// The join pads a missing side with NULLs, but every joined row has its window: START and END are never null.
+        windowColumn = typeFactory.createTypeWithNullability(windowColumn, false);
         RelDataTypeFactory.Builder rowType = typeFactory.builder()
-            .add("window_start", windowColumn)
-            .add("window_end", windowColumn);
+            .add("START", windowColumn)
+            .add("END", windowColumn);
         for (RelDataTypeField field : leftInput.getRowType().getFieldList()) {
             rowType.add(field.getName(), typeFactory.createTypeWithNullability(field.getType(), leftNullable || field.getType().isNullable()));
         }
@@ -298,14 +300,14 @@ final class WindowJoinRule extends RelOptRule {
 
     private static Stream traceStream(RelNode node) {
         if (node instanceof TableFunctionScan tfs) {
-            if (tfs.getInputs().size() != 1 || !(tfs.getCall() instanceof RexCall invocation)) {
+            if (tfs.getInputs().isEmpty() || !(tfs.getCall() instanceof RexCall invocation)) {
                 return null;
             }
             Stream stream = new Stream();
             if (!WindowAggregateRule.parseWindow(invocation, stream.window)) {
                 return null;
             }
-            stream.source = strip(tfs.getInputs().get(0));
+            stream.source = WindowAggregateRule.windowInput(tfs);
             stream.sourceWidth = stream.source.getRowType().getFieldCount();
             stream.toWindowOutput = new int[stream.sourceWidth + 2];
             for (int i = 0; i < stream.toWindowOutput.length; i++) {

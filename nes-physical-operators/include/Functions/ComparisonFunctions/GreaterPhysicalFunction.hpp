@@ -30,7 +30,7 @@ public:
     GreaterPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createGreater(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createGt(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

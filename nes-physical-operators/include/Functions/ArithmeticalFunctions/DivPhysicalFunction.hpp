@@ -31,7 +31,7 @@ public:
     DivPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createDiv(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createDivide(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

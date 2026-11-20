@@ -24,20 +24,20 @@ CREATE SINK idBoolSink(id UINT64 NOT NULL, res BOOLEAN NOT NULL) TYPE File;
 CREATE SINK floatSink(id UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
 
 # IS NaN on a FLOAT64 column. Both the positive and the negative NaN must match.
-SELECT id FROM floatStream WHERE f64 IS NaN INTO idSink;
+SELECT id FROM floatStream WHERE IS_NAN(f64) INTO idSink;
 ----
 1
 4
 
 # IS NOT NaN keeps the ordinary values and both infinities.
-SELECT * FROM floatStream WHERE f64 IS NOT NaN INTO floatSink;
+SELECT * FROM floatStream WHERE NOT IS_NAN(f64) INTO floatSink;
 ----
 2,1.5,2.5
 3,inf,-inf
 5,0.0,0.0
 
-# The ISNAN() function-call spelling on a FLOAT32 column.
-SELECT id AS id, ISNAN(f32) AS res FROM floatStream INTO idBoolSink;
+# IS_NAN() as a projected value on a FLOAT32 column.
+SELECT id AS id, IS_NAN(f32) AS res FROM floatStream INTO idBoolSink;
 ----
 1,true
 2,false
@@ -46,18 +46,18 @@ SELECT id AS id, ISNAN(f32) AS res FROM floatStream INTO idBoolSink;
 5,false
 
 # NaN is only ever produced by floats, so an infinity is not NaN.
-SELECT id FROM floatStream WHERE f32 IS NaN AND f64 IS NaN INTO idSink;
+SELECT id FROM floatStream WHERE IS_NAN(f32) AND IS_NAN(f64) INTO idSink;
 ----
 1
 4
 
-# Lowercase and uppercase spellings of the keyword parse identically.
-SELECT id FROM floatStream WHERE f64 IS nan INTO idSink;
+# Lowercase and uppercase spellings of the function name parse identically.
+SELECT id FROM floatStream WHERE is_nan(f64) INTO idSink;
 ----
 1
 4
 
-SELECT id FROM floatStream WHERE f64 IS NAN INTO idSink;
+SELECT id FROM floatStream WHERE IS_NAN(f64) INTO idSink;
 ----
 1
 4
@@ -74,13 +74,13 @@ ATTACH INLINE
 CREATE SINK idTwoBoolSink(id UINT64 NOT NULL, signedRes BOOLEAN NOT NULL, unsignedRes BOOLEAN NOT NULL) TYPE File;
 CREATE SINK intSink(id UINT64 NOT NULL, i32 INT32 NOT NULL, u64 UINT64 NOT NULL) TYPE File;
 
-SELECT id AS id, ISNAN(i32) AS signedRes, ISNAN(u64) AS unsignedRes FROM intStream INTO idTwoBoolSink;
+SELECT id AS id, IS_NAN(i32) AS signedRes, IS_NAN(u64) AS unsignedRes FROM intStream INTO idTwoBoolSink;
 ----
 1,false,false
 2,false,false
 
 # IS NOT NaN on an integer column passes every row through.
-SELECT * FROM intStream WHERE i32 IS NOT NaN INTO intSink;
+SELECT * FROM intStream WHERE NOT IS_NAN(i32) INTO intSink;
 ----
 1,-5,5
 2,0,0
@@ -96,46 +96,47 @@ ATTACH INLINE
 
 CREATE SINK idNullableBoolSink(id UINT64 NOT NULL, res BOOLEAN) TYPE File;
 
-SELECT id AS id, ISNAN(f64) AS res FROM nullableStream INTO idNullableBoolSink;
+SELECT id AS id, IS_NAN(f64) AS res FROM nullableStream INTO idNullableBoolSink;
 ----
 1,true
 2,false
 3,NULL
 
 # A NULL predicate excludes the row, so id 3 appears in neither of the next two results.
-SELECT id FROM nullableStream WHERE f64 IS NaN INTO idSink;
+SELECT id FROM nullableStream WHERE IS_NAN(f64) INTO idSink;
 ----
 1
 
-SELECT id FROM nullableStream WHERE f64 IS NOT NaN INTO idSink;
+SELECT id FROM nullableStream WHERE NOT IS_NAN(f64) INTO idSink;
 ----
 2
 
 # ISNULL() is the way to catch the NULL row alongside the NaN one.
-SELECT id FROM nullableStream WHERE f64 IS NaN OR f64 IS NULL INTO idSink;
+SELECT id FROM nullableStream WHERE IS_NAN(f64) OR f64 IS NULL INTO idSink;
 ----
 1
 3
 
 
-# Non-numeric input is rejected during schema inference.
+# Non-numeric input. Calcite casts a VARSIZED implicitly to DECIMAL, and the planner rejects DECIMAL on purpose (2008).
+# A BOOLEAN is rejected during validation.
 CREATE LOGICAL SOURCE nonNumericStream(id UINT64 NOT NULL, txt VARSIZED NOT NULL, flag BOOLEAN NOT NULL);
 CREATE PHYSICAL SOURCE FOR nonNumericStream TYPE File;
 ATTACH INLINE
 1,nan,true
 
-SELECT id FROM nonNumericStream WHERE txt IS NaN INTO idSink;
+SELECT id FROM nonNumericStream WHERE IS_NAN(txt) INTO idSink;
 ----
-ERROR 2007
+ERROR 2008
 
-SELECT id FROM nonNumericStream WHERE flag IS NaN INTO idSink;
+SELECT id FROM nonNumericStream WHERE IS_NAN(flag) INTO idSink;
 ----
-ERROR 2007
+ERROR 2000
 
-SELECT id AS id, ISNAN(txt) AS res FROM nonNumericStream INTO idBoolSink;
+SELECT id AS id, IS_NAN(txt) AS res FROM nonNumericStream INTO idBoolSink;
 ----
-ERROR 2007
+ERROR 2008
 
 # An integer column never satisfies IS NaN, so this returns no tuples at all.
-SELECT id FROM intStream WHERE i32 IS NaN INTO idSink;
+SELECT id FROM intStream WHERE IS_NAN(i32) INTO idSink;
 ----

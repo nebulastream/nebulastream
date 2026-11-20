@@ -15,7 +15,12 @@ CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UIN
 
 # Query 1 - id < id2 AND value < value2, tumbling 1 sec
 # Tests: both AND conditions must hold simultaneously — a pair satisfying only one condition is not emitted
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < id2 AND value < value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id < id2 AND "VALUE" < value2
+INTO sinkStreamStream2;
 ----
 1000 2000 1 1 1000 12 5 1011
 1000 2000 1 1 1000 4 3 1102
@@ -24,7 +29,12 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < 
 
 # Query 2 - id <= id2 AND value >= value2, tumbling 1 sec
 # Tests: opposing comparison directions in a compound predicate — id must not exceed id2 while value must not be smaller than value2
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id <= id2 AND value >= value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id <= id2 AND "VALUE" >= value2
+INTO sinkStreamStream2;
 ----
 1000 2000 1 1 1000 21 1 1003
 1000 2000 12 1 1001 21 1 1003
@@ -67,7 +77,12 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id <=
 
 # Query 3 - id <= id2 AND value <= value2, tumbling 1 sec
 # Tests: <= on both fields includes equal-value pairs that strict < would exclude
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id <= id2 AND value <= value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id <= id2 AND "VALUE" <= value2
+INTO sinkStreamStream2;
 ----
 1000 2000 1 1 1000 21 1 1003
 1000 2000 1 1 1000 12 5 1011
@@ -117,7 +132,12 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id <=
 
 # Query 4 - id < id2 AND value < value2, sliding 1 sec advance 500 ms
 # Tests: compound AND predicate with a sliding window — the same matching pair appears once per overlapping window it falls into
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < id2 AND value < value2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS l
+JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id < id2 AND "VALUE" < value2
+INTO sinkStreamStream2;
 ----
 500 1500 1 1 1000 12 5 1011
 500 1500 1 1 1000 4 3 1102
@@ -130,7 +150,12 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < 
 
 # Query 5 - id < id2 AND value < value2, tumbling 2 sec
 # Tests: a wider 2-second window groups records from two adjacent 1-second buckets together — pairs that fall in different 1-second windows (excluded in Q1) can join here
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < id2 AND value < value2 WINDOW TUMBLING (timestamp1, timestamp2, size 2 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '2' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '2' SECOND)) AS r
+ON l.window_start = r.window_start AND id < id2 AND "VALUE" < value2
+INTO sinkStreamStream2;
 ----
 0 2000 1 1 1000 12 5 1011
 0 2000 1 1 1000 4 3 1102
@@ -143,7 +168,12 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < 
 
 # Query 6 - id < id2 AND value < value2, sliding 500 ms advance 250 ms
 # Tests: sub-second sliding window with a compound predicate — the smaller window size than Q4 limits which records co-occur, combining stricter temporal proximity with the AND requirement
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < id2 AND value < value2 WINDOW SLIDING (timestamp1, timestamp2, size 500 ms, advance by 250 ms) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '0.25' SECOND, INTERVAL '0.5' SECOND)) AS l
+JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '0.25' SECOND, INTERVAL '0.5' SECOND)) AS r
+ON l.window_start = r.window_start AND id < id2 AND "VALUE" < value2
+INTO sinkStreamStream2;
 ----
 750 1250 1 1 1000 12 5 1011
 750 1250 1 1 1000 4 3 1102
@@ -156,12 +186,22 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < 
 
 # Query 7 - id > id2 AND value > value2, tumbling 1 sec
 # Tests: reversed compound predicate — both fields in stream must exceed their counterparts in stream2, the mirror image of Q1
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id > id2 AND value > value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id > id2 AND "VALUE" > value2
+INTO sinkStreamStream2;
 ----
 
 # Query 8 - id >= id2 AND value >= value2, tumbling 1 sec
 # Tests: non-strict reversed compound — >= includes equal-value pairs that > excludes, producing a superset of Q7's output
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id >= id2 AND value >= value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id >= id2 AND "VALUE" >= value2
+INTO sinkStreamStream2;
 ----
 2000 3000 1 2 2000 1 2 2010
 2000 3000 11 2 2001 1 2 2010
@@ -198,14 +238,24 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id >=
 
 # Query 9 - id > id2 AND value < value2, tumbling 1 sec
 # Tests: opposing strict compound — id must exceed id2 while value must be smaller, a combination that cannot be satisfied by equal-field pairs
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id > id2 AND value < value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id > id2 AND "VALUE" < value2
+INTO sinkStreamStream2;
 ----
 1000 2000 12 1 1001 4 3 1102
 1000 2000 12 1 1001 4 3 1112
 
 # Query 10 - id < id2 AND value >= value2, tumbling 1 sec
 # Tests: mixed strict/non-strict opposing — strict < on id with non-strict >= on value, admitting pairs where values are equal but id is strictly smaller
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < id2 AND value >= value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id < id2 AND "VALUE" >= value2
+INTO sinkStreamStream2;
 ----
 1000 2000 1 1 1000 21 1 1003
 1000 2000 12 1 1001 21 1 1003
@@ -221,7 +271,12 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id < 
 
 # Query 11 - id >= id2 AND value < value2, tumbling 1 sec
 # Tests: non-strict/strict opposing — id may equal id2 but value must be strictly smaller, admitting pairs excluded by both Q2 and Q9
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id >= id2 AND value < value2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id >= id2 AND "VALUE" < value2
+INTO sinkStreamStream2;
 ----
 1000 2000 12 1 1001 12 5 1011
 1000 2000 12 1 1001 4 3 1102
@@ -231,12 +286,22 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id >=
 
 # Query 12 - id > id2 AND value > value2, sliding 1 sec advance 500 ms
 # Tests: reversed compound predicate with a sliding window — same sliding behaviour as Q4 but for the > direction, each qualifying pair appears once per overlapping window
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id > id2 AND value > value2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS l
+JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id > id2 AND "VALUE" > value2
+INTO sinkStreamStream2;
 ----
 
 # Query 13 - id >= id2 AND value <= value2, sliding 500 ms advance 250 ms
 # Tests: symmetric non-strict opposing compound (id >= while value <=) with a sub-second sliding window — verifies both >= and <= directions work correctly at high window density
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id >= id2 AND value <= value2 WINDOW SLIDING (timestamp1, timestamp2, size 500 ms, advance by 250 ms) INTO sinkStreamStream2;
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '0.25' SECOND, INTERVAL '0.5' SECOND)) AS l
+JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '0.25' SECOND, INTERVAL '0.5' SECOND)) AS r
+ON l.window_start = r.window_start AND id >= id2 AND "VALUE" <= value2
+INTO sinkStreamStream2;
 ----
 750 1250 12 1 1001 12 5 1011
 750 1250 12 1 1001 4 3 1102

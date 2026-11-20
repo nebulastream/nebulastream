@@ -19,7 +19,7 @@ ATTACH INLINE
 CREATE SINK sink(value UINT64, text VARSIZED) TYPE File;
 
 # 0: [value, text]
-SELECT value, text FROM stream INTO sink;
+SELECT "VALUE", text FROM "STREAM" INTO sink;
 ----
 NULL,NULL
 100,hello

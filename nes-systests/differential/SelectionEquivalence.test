@@ -11,163 +11,163 @@ CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
 
 CREATE SINK selectionSink(out_id UINT64 NOT NULL, out_value UINT64 NOT NULL, out_timestamp UINT64 NOT NULL) TYPE File;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE value >= 10 INTO selectionSink;
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp FROM "STREAM" WHERE "VALUE" >= 10 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE NOT (value < 10) INTO selectionSink;
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp FROM "STREAM" WHERE NOT ("VALUE" < 10) INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value >= 10 AND value <= 100
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" >= 10 AND "VALUE" <= 100
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE NOT (value < 10 OR value > 100)
-INTO selectionSink;
-
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value <= 20 OR value >= 80
-INTO selectionSink;
-====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE NOT (value > 20 AND value < 80)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE NOT ("VALUE" < 10 OR "VALUE" > 100)
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value != 42
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" <= 20 OR "VALUE" >= 80
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value < 42 OR value > 42
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE NOT ("VALUE" > 20 AND "VALUE" < 80)
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value >= 10 AND (id >= 1000 OR timestamp >= 1000000000)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" <> 42
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE (value >= 10 AND id >= 1000)
-   OR (value >= 10 AND timestamp >= 1000000000)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" < 42 OR "VALUE" > 42
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE (value >= 10 AND value <= 50)
-  AND (id >= 100 OR timestamp >= 1000000)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" >= 10 AND (id >= 1000 OR "TIMESTAMP" >= 1000000000)
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE ("VALUE" >= 10 AND id >= 1000)
+   OR ("VALUE" >= 10 AND "TIMESTAMP" >= 1000000000)
+INTO selectionSink;
+
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE ("VALUE" >= 10 AND "VALUE" <= 50)
+  AND (id >= 100 OR "TIMESTAMP" >= 1000000)
+INTO selectionSink;
+====
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
 WHERE NOT (
-    (value < 10 OR value > 50)
-    OR (id < 100 AND timestamp < 1000000)
+    ("VALUE" < 10 OR "VALUE" > 50)
+    OR (id < 100 AND "TIMESTAMP" < 1000000)
 )
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value >= 90 OR (id >= 5 AND timestamp >= 100)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" >= 90 OR (id >= 5 AND "TIMESTAMP" >= 100)
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE (value >= 90 OR id >= 5)
-  AND (value >= 90 OR timestamp >= 100)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE ("VALUE" >= 90 OR id >= 5)
+  AND ("VALUE" >= 90 OR "TIMESTAMP" >= 100)
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value >= 10
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" >= 10
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE (value >= 10 AND id >= 100)
-   OR (value >= 10 AND NOT (id >= 100))
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE ("VALUE" >= 10 AND id >= 100)
+   OR ("VALUE" >= 10 AND NOT (id >= 100))
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value <= 50
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" <= 50
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value <= 50 OR (value <= 50 AND id >= 1)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" <= 50 OR ("VALUE" <= 50 AND id >= 1)
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE (value >= 10 AND id >= 100)
-   OR (value < 10 AND timestamp >= 1000)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE ("VALUE" >= 10 AND id >= 100)
+   OR ("VALUE" < 10 AND "TIMESTAMP" >= 1000)
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE (value >= 10 AND id >= 100)
-   OR (value < 10 AND timestamp >= 1000)
-   OR (id >= 100 AND timestamp >= 1000)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE ("VALUE" >= 10 AND id >= 100)
+   OR ("VALUE" < 10 AND "TIMESTAMP" >= 1000)
+   OR (id >= 100 AND "TIMESTAMP" >= 1000)
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE id <= timestamp
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE id <= "TIMESTAMP"
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE NOT (id > timestamp)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE NOT (id > "TIMESTAMP")
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE id != value
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE id <> "VALUE"
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE id < value OR id > value
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE id < "VALUE" OR id > "VALUE"
 INTO selectionSink;
 
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE (value >= 100 AND value <= 200)
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE ("VALUE" >= 100 AND "VALUE" <= 200)
    OR (id >= 1000 AND id <= 2000)
-   OR (timestamp >= 10000 AND timestamp <= 20000)
+   OR ("TIMESTAMP" >= 10000 AND "TIMESTAMP" <= 20000)
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
 WHERE NOT (
-    (value < 100 OR value > 200) AND
+    ("VALUE" < 100 OR "VALUE" > 200) AND
     (id < 1000 OR id > 2000) AND
-    (timestamp < 10000 OR timestamp > 20000)
+    ("TIMESTAMP" < 10000 OR "TIMESTAMP" > 20000)
 )
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value < 10 AND value >= 10
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" < 10 AND "VALUE" >= 10
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE id != id
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE id <> id
 INTO selectionSink;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
 WHERE id = id
 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value >= 0
+SELECT id AS out_id, "VALUE" AS out_value, "TIMESTAMP" AS out_timestamp
+FROM "STREAM"
+WHERE "VALUE" >= 0
 INTO selectionSink;

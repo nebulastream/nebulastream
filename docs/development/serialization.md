@@ -1,5 +1,7 @@
 # Serialization of Logical Operators, Logical Functions, Traits, ... 
 
+> **Partly outdated.** The logical operators, logical functions and traits no longer exist. The reflection itself is still in use, e.g. for the source and sink descriptors in the part of a plan that a worker gets.
+
 We utilize reflection to enable a flexible serialization of logical operators, and logical functions.
 While we use an external library (reflect-cpp) for reflection, we wrap the reflection functionality in 
 a custom interface (see `Utils/Reflection.hpp` in nes-commons).
@@ -30,11 +32,8 @@ a custom interface (see `Utils/Reflection.hpp` in nes-commons).
    traits for example implementations.
    To be able to automatically reflect and unreflect objects, a header which declares the `Reflector` and the `Unreflector` must be 
    included. In most cases, the `Reflector` and `Unreflector` of a class are defined in the same header as the class itself and thus
-   no additional header is required to be included. There are some exceptions, most notably 
-   * LogicalFunctions -> use `#include <Serialization/LogicalFunctionReflection.hpp>`
-   * WindowTypes -> use `#include <Serialization/WindowTypeReflection.hpp>`
-   
-   If the relevant header is not included, you'll get a compiler error similar to `error: static assertion failed due to requirement 'always_false_v<NES::TypedLogicalFunction<NES::detail::ErasedLogicalFunction>>': Unsupported type` 
+   no additional header is required to be included.
+   If the relevant header is not included, you'll get a compiler error similar to `error: static assertion failed due to requirement 'always_false_v<...>': Unsupported type` 
    
    Following is an example implementation of a `Reflector` and `Unreflector` which assumes the class to reflect has the name `CLASS_NAME`.
    ```cpp

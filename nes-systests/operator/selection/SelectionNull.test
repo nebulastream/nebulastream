@@ -65,27 +65,27 @@ CREATE SINK bool_sinkIds(id UINT64 NOT NULL) TYPE File;
 CREATE SINK cmp_sinkCmp(id UINT64 NOT NULL, a_lt_3 BOOLEAN, b_gt_0 BOOLEAN, a_lt_b BOOLEAN) TYPE File;
 
 # Filter equal on INT32 with null
-SELECT * FROM stream WHERE value1 == 1 INTO sink0;
+SELECT * FROM "STREAM" WHERE value1 = 1 INTO sink0;
 ----
 3,1,one
 4,1,one
 5,1,one
 
 # Filter equal on VARSIZED with null
-SELECT ts, value1 FROM stream WHERE value2 == 'one' INTO sink1;
+SELECT ts, value1 FROM "STREAM" WHERE value2 = 'one' INTO sink1;
 ----
 3,1
 4,1
 5,1
 
 # Filter < 1, keep all values
-SELECT * FROM stream WHERE value1 < 1 INTO sink0;
+SELECT * FROM "STREAM" WHERE value1 < 1 INTO sink0;
 ----
 8,0,zero
 9,-1,NULL
 
 # Filter that keeps only non null values
-SELECT * FROM stream WHERE NOT ISNULL(value1) INTO sink0;
+SELECT * FROM "STREAM" WHERE value1 IS NOT NULL INTO sink0;
 ----
 3,1,one
 4,1,one
@@ -95,7 +95,7 @@ SELECT * FROM stream WHERE NOT ISNULL(value1) INTO sink0;
 9,-1,NULL
 
 # Filter that keeps only null values
-SELECT * FROM stream WHERE ISNULL(value2) INTO sink0;
+SELECT * FROM "STREAM" WHERE value2 IS NULL INTO sink0;
 ----
 1,NULL,NULL
 2,NULL,NULL
@@ -105,7 +105,7 @@ SELECT * FROM stream WHERE ISNULL(value2) INTO sink0;
 SELECT id,
        value1 + 5 AS v1_plus,
        value2 - 1 AS v2_minus
-FROM (SELECT id, value1, value2, NOT ISNULL(value1) AS value1NotNull, NOT ISNULL(value2) AS value2NotNull FROM stream2)
+FROM (SELECT id, value1, value2, value1 IS NOT NULL AS value1NotNull, value2 IS NOT NULL AS value2NotNull FROM stream2)
 WHERE value1NotNull AND value2NotNull
 INTO sinkMapped;
 ----
@@ -132,11 +132,11 @@ INTO sinkTextSuffix;
 10,omega_x
 
 SELECT id,
-       value1 == 1 AS v1_eq_1,
-       value2 == 2 AS v2_eq_2,
-       value1 == value2 AS v1_eq_v2,
-       value1 == value1 AS v1_self_eq,
-       value2 == value2 AS v2_self_eq
+       value1 = 1 AS v1_eq_1,
+       value2 = 2 AS v2_eq_2,
+       value1 = value2 AS v1_eq_v2,
+       value1 = value1 AS v1_self_eq,
+       value2 = value2 AS v2_self_eq
 FROM stream2
 INTO sinkBoolCmp;
 ----
@@ -152,10 +152,10 @@ INTO sinkBoolCmp;
 10,false,NULL,NULL,true,NULL
 
 SELECT id,
-       (value1 == 1) AND (value2 == 2) AS v1_and_v2,
-       (value1 == 1) OR (value2 == 2) AS v1_or_v2,
-       NOT (value1 == 1) AS not_v1_eq_1,
-       ISNULL(value1 == 1) AS v1_eq_1_isnull
+       (value1 = 1) AND (value2 = 2) AS v1_and_v2,
+       (value1 = 1) OR (value2 = 2) AS v1_or_v2,
+       NOT (value1 = 1) AS not_v1_eq_1,
+       (value1 = 1) IS NULL AS v1_eq_1_isnull
 FROM stream2
 INTO sinkBoolOps;
 ----
@@ -171,9 +171,9 @@ INTO sinkBoolOps;
 10,false,NULL,true,false
 
 SELECT id,
-       text == 'beta' AS is_beta,
-       text == text AS text_self_eq,
-       ISNULL(CONCAT(text, '_x')) AS concat_isnull
+       text = 'beta' AS is_beta,
+       text = text AS text_self_eq,
+       (CONCAT(text, '_x')) IS NULL AS concat_isnull
 FROM stream2
 INTO sinkTextCmp;
 ----
@@ -194,11 +194,11 @@ SELECT id,
        flag AND flag2 AS flag_and,
        flag OR flag2 AS flag_or,
        NOT flag AS not_flag,
-       flag == TRUE AS flag_eq_true,
-       flag == FALSE AS flag_eq_false,
-       flag2 == TRUE AS flag2_eq_true,
-       ISNULL(flag) AS flag_isnull,
-       ISNULL(flag2) AS flag2_isnull
+       flag = TRUE AS flag_eq_true,
+       flag = FALSE AS flag_eq_false,
+       flag2 = TRUE AS flag2_eq_true,
+       flag IS NULL AS flag_isnull,
+       flag2 IS NULL AS flag2_isnull
 FROM bool_stream
 INTO bool_sinkBool;
 ----

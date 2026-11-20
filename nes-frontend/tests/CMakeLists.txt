@@ -10,11 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_test(distributed-planning-test DistributedPlanningTest.cpp)
-target_link_libraries(distributed-planning-test nes-frontend-lib)
-target_include_directories(distributed-planning-test
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private
-)
-
 add_nes_test(grpc-query-submission-backend-test GRPCQuerySubmissionBackendTest.cpp)
 target_link_libraries(grpc-query-submission-backend-test nes-frontend-lib)

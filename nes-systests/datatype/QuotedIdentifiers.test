@@ -33,16 +33,16 @@ ATTACH INLINE
 
 CREATE SINK "projectionSink" ("renamedId" UINT64 NOT NULL, "doubledValue" UINT64 NOT NULL) TYPE File;
 CREATE SINK "nestedProjectionSink" ("renamedId" UINT64 NOT NULL) TYPE File;
-CREATE SINK "aggregationSink" ("groupKey" UINT64 NOT NULL, "sumValue" UINT64 NOT NULL) TYPE File;
+CREATE SINK "aggregationSink" ("groupKey" UINT64 NOT NULL, "sumValue" UINT64) TYPE File;
 CREATE SINK "unionSink" ("unionId" UINT64 NOT NULL) TYPE File;
 CREATE SINK "joinSink" ("leftResult" UINT64 NOT NULL, "rightResult" UINT64 NOT NULL) TYPE File;
 CREATE SINK "UPPERCASE_SINK" (A UINT64 NOT NULL) TYPE File;
 
 SELECT
     "id" AS "renamedId",
-    "value" * UINT64(2) AS "doubledValue"
+    "value" * CAST(2 AS BIGINT UNSIGNED) AS "doubledValue"
 FROM "inputStream"
-WHERE "id" = UINT64(2)
+WHERE "id" = CAST(2 AS BIGINT UNSIGNED)
 INTO "projectionSink";
 ----
 2,60
@@ -52,22 +52,21 @@ FROM (
     SELECT "id" AS "renamedId"
     FROM "inputStream"
 )
-WHERE "renamedId" = UINT64(2)
+WHERE "renamedId" = CAST(2 AS BIGINT UNSIGNED)
 INTO "nestedProjectionSink";
 ----
 2
 
 SELECT "id" AS "groupKey", SUM("value") AS "sumValue"
-FROM "inputStream"
-GROUP BY "id"
-WINDOW TUMBLING("timestamp", SIZE 1 SEC)
+FROM TABLE(TUMBLE(TABLE "inputStream", DESCRIPTOR("timestamp"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, "id"
 INTO "aggregationSink";
 ----
 1,30
 2,30
 
 SELECT "id" AS "unionId" FROM "inputStream"
-UNION
+UNION ALL
 SELECT "id" AS "unionId" FROM "secondInput"
 INTO "unionSink";
 ----
@@ -80,20 +79,19 @@ SELECT
     "leftId" AS "leftResult",
     "rightId" AS "rightResult"
 FROM (
-    SELECT * FROM (SELECT * FROM "leftStream")
-    INNER JOIN (SELECT * FROM "rightStream")
-    ON "joinKey" = "rightKey"
-    WINDOW TUMBLING("leftTimestamp", "rightTimestamp", SIZE 1 SEC)
+    SELECT * FROM TABLE(TUMBLE(TABLE "leftStream", DESCRIPTOR("leftTimestamp"), INTERVAL '1' SECOND)) AS l
+    INNER JOIN TABLE(TUMBLE(TABLE "rightStream", DESCRIPTOR("rightTimestamp"), INTERVAL '1' SECOND)) AS r
+    ON l.window_start = r.window_start AND l."joinKey" = r."rightKey"
 )
 INTO "joinSink";
 ----
 1,10
 
 SELECT "id", "value", "timestamp"
-FROM File(
-    'small/stream8.csv' AS "SOURCE"."FILE_PATH",
-    'CSV' AS "INPUT_FORMATTER"."TYPE",
-    SCHEMA("id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+FROM TABLE(FILE(
+    schema => '"id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL',
+    file_path => 'small/stream8.csv',
+    format => 'CSV'))
 INTO File(
     SCHEMA("id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL) AS "SINK"."SCHEMA");
 ----

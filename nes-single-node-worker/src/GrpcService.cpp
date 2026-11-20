@@ -20,9 +20,9 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <PhysicalQuery.hpp>
 
-#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <QueryIdSerialization.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -123,16 +123,17 @@ grpc::Status tryWithDefaultHandling(const std::function<grpc::Status()>& f, grpc
 
 }
 
-grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, StartQueryReply* response)
+grpc::Status
+GRPCServer::StartPhysicalQuery(grpc::ServerContext* context, const StartPhysicalQueryRequest* request, StartQueryReply* response)
 {
     return tryWithDefaultHandling(
         [&]
         {
-            auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
-            auto result = delegate.startQuery(std::move(queryPlan));
+            auto result = delegate.startQuery(
+                PhysicalQuery{.queryId = deserializeQueryId(request->queryid()), .part = request->part()});
             if (result.has_value())
             {
-                *response->mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(*result);
+                *response->mutable_queryid() = serializeQueryId(*result);
                 return grpc::Status::OK;
             }
             return handleError(result.error(), context);
@@ -145,7 +146,7 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
     return tryWithDefaultHandling(
         [&]
         {
-            const auto queryId = QueryPlanSerializationUtil::deserializeQueryId(request->queryid());
+            const auto queryId = deserializeQueryId(request->queryid());
             getValueOrThrow(delegate.stopQuery(queryId));
             return grpc::Status::OK;
         },
@@ -157,8 +158,8 @@ grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const 
     return tryWithDefaultHandling(
         [&]
         {
-            const auto queryId = QueryPlanSerializationUtil::deserializeQueryId(request->queryid());
-            *reply->mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
+            const auto queryId = deserializeQueryId(request->queryid());
+            *reply->mutable_queryid() = serializeQueryId(queryId);
             if (const auto queryStatus = delegate.getQueryStatus(queryId); queryStatus.has_value())
             {
                 const auto& [start, running, stop, error] = queryStatus->metrics;

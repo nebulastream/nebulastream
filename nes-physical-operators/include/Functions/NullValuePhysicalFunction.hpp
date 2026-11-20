@@ -24,14 +24,12 @@
 namespace NES
 {
 
-/// The SQL NULL of NullValueLogicalFunction: a null value of its type.
+/// The SQL NULL: a null value of its type.
 class NullValuePhysicalFunction final
 {
 public:
     explicit NullValuePhysicalFunction(DataType dataType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
-
-    static PhysicalFunctionRegistryReturnType createNullValue(PhysicalFunctionRegistryArguments arguments);
 
 private:
     DataType dataType;

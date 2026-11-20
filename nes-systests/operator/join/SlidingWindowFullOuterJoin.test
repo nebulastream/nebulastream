@@ -23,10 +23,11 @@ ATTACH INLINE
 
 CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64, value UINT64, timestamp UINT64, id2 UINT64, value2 UINT64, timestamp2 UINT64) TYPE File;
 
-SELECT *
-FROM (SELECT * FROM stream) FULL OUTER JOIN (SELECT * FROM stream2)
-ON (id = id2)
-WINDOW SLIDING (timestamp, timestamp2, size 4 sec, advance by 2 sec)
+SELECT COALESCE(s.window_start, s2.window_start) AS "START", COALESCE(s.window_end, s2.window_end) AS "END",
+       s.id, s."VALUE", s."TIMESTAMP", s2.id2, s2.value2, s2.timestamp2
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '2' SECOND, INTERVAL '4' SECOND)) AS s
+FULL OUTER JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '2' SECOND, INTERVAL '4' SECOND)) AS s2
+ON s.window_start = s2.window_start AND s.id = s2.id2
 INTO sink;
 ----
 0,4000,1,10,500,1,100,2500

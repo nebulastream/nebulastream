@@ -1,0 +1,36 @@
+# name: datatype/NumericLiteralTypes.test
+# description: The types of numeric literals at the boundaries of the integer types: an integer literal is an INTEGER, or a
+#   BIGINT beyond its range; above 2^63 - 1 it is not supported
+# groups: [DataTypes, NumericLiterals]
+
+CREATE LOGICAL SOURCE input(dummy UINT8 NOT NULL);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH INLINE
+1
+
+CREATE SINK unsignedLiterals(u8_min INT32 NOT NULL, u8_max INT32 NOT NULL, u16_min INT32 NOT NULL, u16_max INT32 NOT NULL, u32_min INT32 NOT NULL, u32_max INT64 NOT NULL, u64_min INT64 NOT NULL) TYPE File;
+CREATE SINK signedLiterals(i8_near_zero INT32 NOT NULL, i8_min INT32 NOT NULL, i16_below_i8 INT32 NOT NULL, i16_min INT32 NOT NULL, i32_below_i16 INT32 NOT NULL, i32_min INT32 NOT NULL, i64_below_i32 INT64 NOT NULL, i64_min INT64 NOT NULL) TYPE File;
+CREATE SINK floatLiterals(zero FLOAT64 NOT NULL, small_fraction FLOAT64 NOT NULL, integral FLOAT64 NOT NULL, fractional FLOAT64 NOT NULL, negative_fractional FLOAT64 NOT NULL, exponent FLOAT64 NOT NULL, decimal_exponent FLOAT64 NOT NULL) TYPE File;
+CREATE SINK explicitLiterals(u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
+
+SELECT 0 AS u8_min, 255 AS u8_max, 256 AS u16_min, 65535 AS u16_max, 65536 AS u32_min, 4294967295 AS u32_max, 4294967296 AS u64_min FROM input WHERE dummy = 1 INTO unsignedLiterals;
+----
+0, 255, 256, 65535, 65536, 4294967295, 4294967296
+
+# Above the range of BIGINT, an integer literal would be a DECIMAL in Calcite, which we do not support.
+SELECT 18446744073709551615 AS u64_max FROM input WHERE dummy = 1 INTO File();
+----
+ERROR 2008 "unsigned literals above 2^63 - 1 are not supported"
+
+SELECT -1 AS i8_near_zero, -128 AS i8_min, -129 AS i16_below_i8, -32768 AS i16_min, -32769 AS i32_below_i16, -2147483648 AS i32_min, -2147483649 AS i64_below_i32, -9223372036854775808 AS i64_min FROM input WHERE dummy = 1 INTO signedLiterals;
+----
+-1, -128, -129, -32768, -32769, -2147483648, -2147483649, -9223372036854775808
+
+# Fractional literals are DOUBLEs when written with an exponent; without one they would be decimals (not supported).
+SELECT 0.0E0 AS zero, 0.1E0 AS small_fraction, 42.0E0 AS integral, .5E0 AS fractional, -0.5E0 AS negative_fractional, 1E3 AS exponent, 1.25E2 AS decimal_exponent FROM input WHERE dummy = 1 INTO floatLiterals;
+----
+0.0, 0.1, 42.0, 0.5, -0.5, 1000.0, 125.0
+
+SELECT CAST(1 AS TINYINT UNSIGNED) AS u8, CAST(1 AS SMALLINT UNSIGNED) AS u16, CAST(1 AS INTEGER UNSIGNED) AS u32, CAST(1 AS BIGINT UNSIGNED) AS u64, CAST(-1 AS TINYINT) AS i8, CAST(-1 AS SMALLINT) AS i16, CAST(-1 AS INTEGER) AS i32, CAST(-1 AS BIGINT) AS i64, CAST(1.0 AS REAL) AS f32, CAST(1.0 AS DOUBLE) AS f64 FROM input WHERE dummy = 1 INTO explicitLiterals;
+----
+1, 1, 1, 1, -1, -1, -1, -1, 1.0, 1.0

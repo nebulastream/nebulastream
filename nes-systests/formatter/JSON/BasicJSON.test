@@ -66,7 +66,7 @@ SELECT KEY FROM jsonStream INTO keySink;
 1
 1
 
-SELECT value FROM jsonStream INTO valueSink;
+SELECT "value" FROM jsonStream INTO valueSink;
 ----
 1
 2

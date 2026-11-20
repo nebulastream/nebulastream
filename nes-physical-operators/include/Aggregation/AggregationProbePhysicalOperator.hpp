@@ -22,7 +22,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 

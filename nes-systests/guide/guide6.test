@@ -32,9 +32,9 @@ ATTACH INLINE
 CREATE SINK sink(user_id INT64 NOT NULL, action VARSIZED NOT NULL, timestamp INT64 NOT NULL) TYPE File;
 
 # Query under test
-SELECT user_id, action, timestamp FROM web_events
-UNION
-SELECT user_id, action, timestamp FROM mobile_events
+SELECT user_id, action, "TIMESTAMP" FROM web_events
+UNION ALL
+SELECT user_id, action, "TIMESTAMP" FROM mobile_events
 INTO sink;
 ----
 1,login,1000

@@ -14,9 +14,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Functions/ExtractFromTimestampLogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
@@ -25,6 +25,14 @@
 namespace NES
 {
 
+/// The calendar component that an ExtractFromTimestampPhysicalFunction returns.
+enum class TimestampUnit : uint8_t
+{
+    Day,
+    Month,
+    Year
+};
+
 /// Extracts a calendar component (day-of-month, month, or year) from a unix timestamp in
 /// milliseconds (UINT64) and returns it as UINT64. The component is selected via `unit`.
 class ExtractFromTimestampPhysicalFunction
@@ -32,13 +40,6 @@ class ExtractFromTimestampPhysicalFunction
 public:
     ExtractFromTimestampPhysicalFunction(TimestampUnit unit, PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
-
-    /// NOLINTNEXTLINE(readability-identifier-naming)
-    static PhysicalFunctionRegistryReturnType createDay_Of(PhysicalFunctionRegistryArguments arguments);
-    /// NOLINTNEXTLINE(readability-identifier-naming)
-    static PhysicalFunctionRegistryReturnType createMonth_Of(PhysicalFunctionRegistryArguments arguments);
-    /// NOLINTNEXTLINE(readability-identifier-naming)
-    static PhysicalFunctionRegistryReturnType createYear_Of(PhysicalFunctionRegistryArguments arguments);
 
 private:
     TimestampUnit unit;

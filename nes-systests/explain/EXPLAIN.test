@@ -1,5 +1,5 @@
 # name: explain/EXPLAIN.test
-# description: Validates the output of EXPLAIN statements.
+# description: Validates the output of EXPLAIN statements: the pipelines that Calcite places on the workers.
 # groups: [explain, inference]
 
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
@@ -30,92 +30,98 @@ ATTACH INLINE
 
 
 
-EXPLAIN (LOGICAL) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter;
+# A selection and a projection
+EXPLAIN FORMAT TEXT SELECT id, "VALUE" FROM "STREAM" WHERE "VALUE" > 2 INTO sinkFilter;
 ----
-== Initial Logical Plan ==
-SINK(SINKFILTER)
-  PROJECTION(fields: [ID, VALUE])
-    SELECTION(VALUE > 2)
-      SOURCE(STREAM)
+== Placed Pipelines ==
+on sink-node:8080:
+Sink(names=[[ID, VALUE]])
+  Emit(fields=[[ID, VALUE]], forSink=[true])
+    Scan(fields=[[ID, VALUE]])
+      NetworkSource(from=[source-node:8080], channel=[channel-1])
+on source-node:8080:
+NetworkSink(to=[sink-node:8080], channel=[channel-1])
+  Emit(fields=[[ID, VALUE]], forSink=[true])
+    Selection(condition=[>($1, CAST(2):BIGINT UNSIGNED NOT NULL)])
+      Scan(fields=[[ID, VALUE, TIMESTAMP]])
+        SourceScan(table=[[STREAM]], physicalSource=[1])
 ==END==
 
-
-EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter;
-----
-== Optimized Global Plan ==
-SINK(SINKFILTER)
-  SELECTION(VALUE > 2)
-    PROJECTION(fields: [ID, VALUE])
-      SOURCE(STREAM)
-==END==
-
-EXPLAIN (OPTIMIZED) FORMAT TEXT
-SELECT start, end, id, value, timestamp, id2, value2, timestamp2
-FROM (
-  SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2) WINDOW TUMBLING (timestamp, timestamp2, size 1 sec)
-)
+# A window join, with an event-time watermark assigner after each source
+EXPLAIN FORMAT TEXT
+SELECT a.window_start AS "START", a.window_end AS "END", a.id, a."VALUE", a."TIMESTAMP", b.id2, b.value2, b.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND)) AS a
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS b
+ON a.window_start = b.window_start AND a.id = b.id2
 INTO sinkJoin;
 ----
-== Optimized Global Plan ==
-SINK(SINKJOIN)
-  Join(INNER_JOIN, ID = ID2)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM2)
-==END==
-# At least one EXPLAIN call for each logical operators
-
-# Covering: Projection Selection Union, Sink, Source
-
-EXPLAIN (LOGICAL) FORMAT TEXT
-SELECT *
-FROM (
-    SELECT id * 2 as id FROM stream WHERE id > 0
-    UNION
-    SELECT id2 * 2 as id FROM stream2 WHERE id2 > 0)
-INTO File();
-----
-== Initial Logical Plan ==
-ANONYMOUS_SINK(FILE)
-  PROJECTION(fields: [*])
-    UnionWith
-      PROJECTION(fields: [ID * 2 as ID])
-        SELECTION(ID > 0)
-          SOURCE(STREAM)
-      PROJECTION(fields: [ID2 * 2 as ID])
-        SELECTION(ID2 > 0)
-          SOURCE(STREAM2)
+== Placed Pipelines ==
+on sink-node:8080:
+Sink(names=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
+  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], forSink=[true])
+    Scan(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
+      NetworkSource(from=[source-node:8080], channel=[channel-1])
+on source-node:8080:
+NetworkSink(to=[sink-node:8080], channel=[channel-1])
+  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], forSink=[true])
+    JoinProbe(join=[1], type=[INNER], implementation=[HASH_JOIN], kind=[TUMBLING], size=[1000], condition=[=($0, $3)], fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
+      JoinBuild(join=[1], side=[left], time=[TIMESTAMP], stored=[[ID, VALUE, TIMESTAMP]])
+        WatermarkAssigner(time=[TIMESTAMP])
+          Scan(fields=[[ID, VALUE, TIMESTAMP]])
+            SourceScan(table=[[STREAM]], physicalSource=[1])
+      JoinBuild(join=[1], side=[right], time=[TIMESTAMP2], stored=[[ID2, VALUE2, TIMESTAMP2]])
+        WatermarkAssigner(time=[TIMESTAMP2])
+          Scan(fields=[[ID2, VALUE2, TIMESTAMP2]])
+            SourceScan(table=[[STREAM2]], physicalSource=[2])
 ==END==
 
-# Covering: Join, EventTime, Window
-EXPLAIN (LOGICAL) FORMAT TEXT
-SELECT *
-FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
-ON (value = value2 AND id = id2)
-WINDOW TUMBLING (timestamp, timestamp2, size 1 sec)
+# A union of two selections with computed fields
+EXPLAIN FORMAT TEXT
+SELECT id * 2 AS id FROM "STREAM" WHERE id > 0
+UNION ALL
+SELECT id2 * 2 AS id FROM stream2 WHERE id2 > 0
 INTO File();
 ----
-== Initial Logical Plan ==
-ANONYMOUS_SINK(FILE)
-  PROJECTION(fields: [*])
-    Join(INNER_JOIN, VALUE = VALUE2 AND ID = ID2)
-      WATERMARK_ASSIGNER(Event time)
-        PROJECTION(fields: [*])
-          SOURCE(STREAM)
-      WATERMARK_ASSIGNER(Event time)
-        PROJECTION(fields: [*])
-          SOURCE(STREAM2)
+== Placed Pipelines ==
+on sink-node:8080:
+Sink(names=[[ID]])
+  Emit(fields=[[CALCITE_F0]], forSink=[true])
+    Map(CALCITE_F0=[*($0, CAST(2):BIGINT UNSIGNED NOT NULL)])
+      Scan(fields=[[ID, VALUE, TIMESTAMP]])
+        NetworkSource(from=[source-node:8080], channel=[channel-1])
+  Emit(fields=[[CALCITE_F1]], forSink=[true])
+    Map(CALCITE_F1=[*($0, CAST(2):BIGINT UNSIGNED NOT NULL)])
+      Scan(fields=[[ID2, VALUE2, TIMESTAMP2]])
+        NetworkSource(from=[source-node:8080], channel=[channel-2])
+on source-node:8080:
+NetworkSink(to=[sink-node:8080], channel=[channel-1])
+  Emit(fields=[[ID, VALUE, TIMESTAMP]], forSink=[true])
+    Selection(condition=[>($0, CAST(0):BIGINT UNSIGNED NOT NULL)])
+      Scan(fields=[[ID, VALUE, TIMESTAMP]])
+        SourceScan(table=[[STREAM]], physicalSource=[1])
+on source-node:8080:
+NetworkSink(to=[sink-node:8080], channel=[channel-2])
+  Emit(fields=[[ID2, VALUE2, TIMESTAMP2]], forSink=[true])
+    Selection(condition=[>($0, CAST(0):BIGINT UNSIGNED NOT NULL)])
+      Scan(fields=[[ID2, VALUE2, TIMESTAMP2]])
+        SourceScan(table=[[STREAM2]], physicalSource=[2])
 ==END==
 
-# Covering: Model Inference
-EXPLAIN (LOGICAL) FORMAT TEXT
-SELECT * FROM MODEL_INFERENCE(iris, stream_inference)
+# Model inference
+EXPLAIN FORMAT TEXT
+SELECT * FROM TABLE(MODEL_INFERENCE(TABLE stream_inference, 'iris'))
 INTO File();
 ----
-== Initial Logical Plan ==
-ANONYMOUS_SINK(FILE)
-  PROJECTION(fields: [*])
-    INFER_MODEL_NAME(model: IRIS)
-      SOURCE(STREAM_INFERENCE)
+== Placed Pipelines ==
+on sink-node:8080:
+Sink(names=[[P1, P2, P3, P4, SETOSA, VERSICOLOR, VIRGINICA]])
+  Emit(fields=[[P1, P2, P3, P4, CALCITE_F0, CALCITE_F1, CALCITE_F2]], forSink=[true])
+    InferModel(model=[IRIS], reads=[[0, 1, 2, 3]], appends=[[CALCITE_F0, CALCITE_F1, CALCITE_F2]])
+      Scan(fields=[[P1, P2, P3, P4]])
+        NetworkSource(from=[source-node:8080], channel=[channel-1])
+on source-node:8080:
+NetworkSink(to=[sink-node:8080], channel=[channel-1])
+  Emit(fields=[[P1, P2, P3, P4]], forSink=[true])
+    Scan(fields=[[P1, P2, P3, P4]])
+      SourceScan(table=[[STREAM_INFERENCE]], physicalSource=[1])
 ==END==

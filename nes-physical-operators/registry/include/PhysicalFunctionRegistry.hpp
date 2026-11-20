@@ -15,6 +15,7 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -26,11 +27,15 @@ namespace NES
 
 using PhysicalFunctionRegistryReturnType = PhysicalFunction;
 
+/// A function call, keyed by the function's SQL name (as Substrait names it, e.g. `add`, `is_not_null`, `extract`).
+/// A function computes a value of exactly `outputType`, the type the planner inferred.
 struct PhysicalFunctionRegistryArguments
 {
     std::vector<PhysicalFunction> childFunctions;
     std::vector<DataType> inputTypes;
     DataType outputType;
+    /// For each child that is a literal (or a Substrait enum, e.g. the unit of EXTRACT), its text; e.g. a format string.
+    std::vector<std::optional<std::string>> literals;
 };
 
 using PhysicalFunctionFn = std::function<PhysicalFunctionRegistryReturnType(PhysicalFunctionRegistryArguments)>;

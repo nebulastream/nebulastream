@@ -34,7 +34,7 @@ NegatePhysicalFunction::NegatePhysicalFunction(PhysicalFunction childFunction) :
 {
 }
 
-PhysicalFunctionRegistryReturnType NegatePhysicalFunction::createNegate(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType NegatePhysicalFunction::createNot(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one child function");
     return NegatePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);

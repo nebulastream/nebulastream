@@ -91,136 +91,30 @@ setup()         { nes_offline_setup; }
 
 
 
-@test "EXPLAIN over 2-node topology places sources upstream and join downstream" {
+@test "EXPLAIN over 2-node topology places the pipelines on both workers" {
   run $NES_REPL -f JSON <tests/sql-file-tests/good/explain_distributed.sql
   [ "$status" -eq 0 ]
 
-  # The six EXPLAIN statements sit at the tail of the JSON output stream.
-  local n=${#lines[@]}
-  local i_logical_text=$((n - 6))
-  local i_optimized_text=$((n - 5))
-  local i_distributed_text=$((n - 4))
-  local i_logical_visual=$((n - 3))
-  local i_optimized_visual=$((n - 2))
-  local i_distributed_visual=$((n - 1))
-
-  # `sed` inside extract_explain right-trims each line so VISUAL padding does not need to
-  # live as trailing whitespace in the .bats source.
-  extract_explain() {
-    echo "$1" | jq -j '.[0].explain' | sed 's/[[:space:]]*$//'
-  }
-
-  assert_equal "$(extract_explain "${lines[$i_logical_text]}")" "$(cat <<'EOF'
-== Initial Logical Plan ==
-ANONYMOUS_SINK(VOID)
-  PROJECTION(fields: [START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2])
-    PROJECTION(fields: [*])
-      Join(INNER_JOIN, ID = ID2)
-        WATERMARK_ASSIGNER(Event time)
-          PROJECTION(fields: [*])
-            SOURCE(STREAM)
-        WATERMARK_ASSIGNER(Event time)
-          PROJECTION(fields: [*])
-            SOURCE(STREAM2)
-EOF
-)"
-
-  assert_equal "$(extract_explain "${lines[$i_optimized_text]}")" "$(cat <<'EOF'
-== Optimized Global Plan ==
-SINK(VOID)
-  Join(INNER_JOIN, ID = ID2)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM2)
-EOF
-)"
-
-  assert_equal "$(extract_explain "${lines[$i_distributed_text]}")" "$(cat <<'EOF'
-== Decomposed Plans ==
--- 1 plan(s) on sink-node:8080 --
-0:
-SINK(VOID)
-  Join(INNER_JOIN, ID = ID2)
-    SOURCE(NETWORK)
-    SOURCE(NETWORK)
-
-
--- 2 plan(s) on source-node:8080 --
-0:
-SINK(NETWORK)
-  WATERMARK_ASSIGNER(Event time)
-    SOURCE(STREAM)
-
-
-1:
-SINK(NETWORK)
-  WATERMARK_ASSIGNER(Event time)
-    SOURCE(STREAM2)
-EOF
-)"
-
-  assert_equal "$(extract_explain "${lines[$i_logical_visual]}")" "$(cat <<'EOF'
-== Initial Logical Plan ==
-
-                    ANONYMOUS_SINK(VOID)
-                              │
-PROJECTION(fields: [START, END, ID, VALUE, TIMESTAMP, ID2...
-                              │
-                   PROJECTION(fields: [*])
-                              │
-                 Join(INNER_JOIN, ID = ID2)
-               ┌──────────────┴───────────────┐
-WATERMARK_ASSIGNER(Event time) WATERMARK_ASSIGNER(Event time)
-               │                              │
-   PROJECTION(fields: [*])        PROJECTION(fields: [*])
-              ┌┘                             ┌┘
-       SOURCE(STREAM)                SOURCE(STREAM2)
-EOF
-)"
-
-  assert_equal "$(extract_explain "${lines[$i_optimized_visual]}")" "$(cat <<'EOF'
-== Optimized Global Plan ==
-
-                         SINK(VOID)
-                              │
-                 Join(INNER_JOIN, ID = ID2)
-               ┌──────────────┴───────────────┐
-WATERMARK_ASSIGNER(Event time) WATERMARK_ASSIGNER(Event time)
-              ┌┘                             ┌┘
-       SOURCE(STREAM)                SOURCE(STREAM2)
-EOF
-)"
-
-  assert_equal "$(extract_explain "${lines[$i_distributed_visual]}")" "$(cat <<'EOF'
-== Decomposed Plans ==
--- 1 plan(s) on sink-node:8080 --
-0:
-
-          SINK(VOID)
-               │
-  Join(INNER_JOIN, ID = ID2)
-       ┌───────┴───────┐
-SOURCE(NETWORK) SOURCE(NETWORK)
-
-
--- 2 plan(s) on source-node:8080 --
-0:
-
-        SINK(NETWORK)
-               │
-WATERMARK_ASSIGNER(Event time)
-               │
-        SOURCE(STREAM)
-
-
-1:
-
-        SINK(NETWORK)
-               │
-WATERMARK_ASSIGNER(Event time)
-               │
-       SOURCE(STREAM2)
+  # The EXPLAIN statement is the last line of the JSON output stream.
+  assert_equal "$(echo "${lines[-1]}" | jq -j '.[0].explain' | sed 's/[[:space:]]*$//')" "$(cat <<'EOF'
+== Placed Pipelines ==
+on sink-node:8080:
+Sink(names=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
+  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], forSink=[true])
+    Scan(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
+      NetworkSource(from=[source-node:8080], channel=[channel-1])
+on source-node:8080:
+NetworkSink(to=[sink-node:8080], channel=[channel-1])
+  Emit(fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]], forSink=[true])
+    JoinProbe(join=[1], type=[INNER], implementation=[HASH_JOIN], kind=[TUMBLING], size=[1000], condition=[=($0, $3)], fields=[[START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2]])
+      JoinBuild(join=[1], side=[left], time=[TIMESTAMP], stored=[[ID, VALUE, TIMESTAMP]])
+        WatermarkAssigner(time=[TIMESTAMP])
+          Scan(fields=[[ID, VALUE, TIMESTAMP]])
+            SourceScan(table=[[STREAM]], physicalSource=[1])
+      JoinBuild(join=[1], side=[right], time=[TIMESTAMP2], stored=[[ID2, VALUE2, TIMESTAMP2]])
+        WatermarkAssigner(time=[TIMESTAMP2])
+          Scan(fields=[[ID2, VALUE2, TIMESTAMP2]])
+            SourceScan(table=[[STREAM2]], physicalSource=[2])
 EOF
 )"
 }

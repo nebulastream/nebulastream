@@ -64,10 +64,4 @@ VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaR
     return VarVal{parsedMilliSeconds, value.isNullable(), false}.castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType CastToUnixTimestampPhysicalFunction::createCastToUnixTs(PhysicalFunctionRegistryArguments arguments)
-{
-    PRECONDITION(arguments.childFunctions.size() == 1, "CastToUnixTimestampPhysicalFunction must have exactly one child function");
-    return CastToUnixTimestampPhysicalFunction(arguments.childFunctions[0], arguments.outputType);
-}
-
 }

@@ -30,7 +30,7 @@ public:
     EqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createEquals(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createEqual(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

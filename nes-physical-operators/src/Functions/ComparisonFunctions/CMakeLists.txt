@@ -17,7 +17,7 @@ add_source_files(nes-physical-operators
         LessEqualsPhysicalFunction.cpp
 )
 
-add_registry_entry(PhysicalFunction Greater)
-add_registry_entry(PhysicalFunction GreaterEquals)
-add_registry_entry(PhysicalFunction Less)
-add_registry_entry(PhysicalFunction LessEquals)
+add_registry_entry(PhysicalFunction Greater KEY Gt)
+add_registry_entry(PhysicalFunction GreaterEquals KEY Gte)
+add_registry_entry(PhysicalFunction Less KEY Lt)
+add_registry_entry(PhysicalFunction LessEquals KEY Lte)

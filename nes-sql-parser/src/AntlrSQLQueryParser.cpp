@@ -31,8 +31,7 @@
 #include <Parser.h>
 #include <Recognizer.h>
 #include <Token.h>
-#include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <CommonParserFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -72,47 +71,37 @@ installErrorListenerAndHandler(std::string_view query, antlr4::Lexer& lexer, ant
 }
 }
 
-LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
+SinkClause bindSinkClause(const std::string_view sinkClause)
 {
+    const auto input = fmt::format("INTO {}", sinkClause);
     try
     {
-        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
-        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, queryAst);
-        auto queryPlan = queryPlanCreator.getQueryPlan();
-        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
-        return queryPlan;
-    }
-    catch (antlr4::RuntimeException& antlrException)
-    {
-        throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryAst->getText());
-    }
-}
-
-LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
-{
-    try
-    {
-        antlr4::ANTLRInputStream input(queryString.data(), queryString.length());
-        AntlrSQLLexer lexer(&input);
+        antlr4::ANTLRInputStream stream(input.data(), input.length());
+        AntlrSQLLexer lexer(&stream);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
-        [[maybe_unused]] auto listener = installErrorListenerAndHandler(queryString, lexer, parser);
-        auto* const tree = parser.singleStatement();
-        auto* const statement = tree->statement();
-        if (statement == nullptr || statement->queryWithOptions() == nullptr)
+        [[maybe_unused]] auto listener = installErrorListenerAndHandler(input, lexer, parser);
+        auto* const clause = parser.sinkClause();
+        if (clause->sink().size() != 1)
         {
-            throw InvalidQuerySyntax("Expected a query statement in {}", queryString);
+            throw InvalidQuerySyntax("A query writes into exactly one sink, not: {}", sinkClause);
         }
-        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
-        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, statement->queryWithOptions()->query());
-        auto queryPlan = queryPlanCreator.getQueryPlan();
-        queryPlan.setOriginalSql(std::string(queryString));
-        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
-        return queryPlan;
+        auto* const sink = clause->sink().front();
+        if (sink->identifier() != nullptr)
+        {
+            return bindIdentifier(sink->identifier());
+        }
+        auto* const anonymous = sink->anonymousSink();
+        const auto options = bindConfigOptions(anonymous->parameters->namedConfigExpression());
+        return AnonymousSinkClause{
+            .type = bindIdentifier(anonymous->type),
+            .schema = getSinkSchema(options),
+            .config = getSinkConfig(options),
+            .formatConfig = parseOutputFormatterConfig(options)};
     }
     catch (antlr4::RuntimeException& antlrException)
     {
-        throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryString);
+        throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), sinkClause);
     }
 }
 

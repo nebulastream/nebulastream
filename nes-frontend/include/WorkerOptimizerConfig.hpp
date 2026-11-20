@@ -19,7 +19,7 @@
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Calcite/QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES

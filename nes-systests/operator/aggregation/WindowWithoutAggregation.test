@@ -26,14 +26,20 @@ CREATE SINK sinkStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
 CREATE SINK sinkStrStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
 
 # Window-only with integer source: should produce start/end columns.
-SELECT start, end FROM integers WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStartEnd;
+SELECT window_start AS "START", window_end AS "END"
+FROM TABLE(TUMBLE(TABLE integers, DESCRIPTOR("TIMESTAMP"), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
+INTO sinkStartEnd;
 ----
 100, 200
 200, 300
 300, 400
 
 # Window-only with VARSIZED string source: should produce start/end columns.
-SELECT start, end FROM strings WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStrStartEnd;
+SELECT window_start AS "START", window_end AS "END"
+FROM TABLE(TUMBLE(TABLE strings, DESCRIPTOR("TIMESTAMP"), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
+INTO sinkStrStartEnd;
 ----
 100, 200
 200, 300

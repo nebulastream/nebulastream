@@ -15,6 +15,9 @@
 #include <Rewriter/Emitter.hpp>
 
 #include <Calcite/CalcitePlanner.hpp>
+#include <filesystem>
+#include <regex>
+#include <SourceConfigSchemaRegistry.hpp>
 
 #include <algorithm>
 #include <filesystem>
@@ -73,7 +76,6 @@ Emitter::Emitter(const RewriteContext& context, Declarations declarations)
     runnable.name = context.name;
     runnable.key = context.testFileKey.value();
     runnable.originalNames = this->declarations.names.collectOriginalNames();
-    runnable.calcite = context.calcite;
 }
 
 RunnableTestFile Emitter::emit(ClassifiedTestFile classified) &&
@@ -155,11 +157,61 @@ PlainStatement Emitter::modelStatement(SqlParse& parse, const ModelDeclaration& 
 
 Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQueryId id, const std::string_view resultDiscriminator)
 {
-    if (context.calcite)
+    return emitCalciteSelect(sql, id, resultDiscriminator);
+}
+
+namespace
+{
+/// The anonymous sources of a Calcite query (TABLE(FILE(...)) etc., see AnonymousSources.java), completed as
+/// completeAnonymousSources does for our dialect: a relative FILE_PATH is resolved against the test data, and a source
+/// without HOST or FORMAT runs on the test's source host and reads CSV.
+std::string completeSourceFunctions(const std::string& query, const std::filesystem::path& testDataDir, const Host& host)
+{
+    std::string result = query;
+    static const std::regex filePath{R"((file_path\s*=>\s*)'([^']*)')", std::regex::icase};
+    std::string withPaths;
+    auto begin = std::sregex_iterator(result.begin(), result.end(), filePath);
+    size_t last = 0;
+    for (auto match = begin; match != std::sregex_iterator(); ++match)
     {
-        return emitCalciteSelect(sql, id, resultDiscriminator);
+        withPaths += result.substr(last, match->position() - last);
+        const std::filesystem::path declared{(*match)[2].str()};
+        withPaths += (*match)[1].str() + "'" + (declared.is_relative() ? (testDataDir / declared).string() : declared.string()) + "'";
+        last = match->position() + match->length();
     }
-    return emitNesSelect(sql, id, resultDiscriminator);
+    withPaths += result.substr(last);
+    result = std::move(withPaths);
+
+    static const std::regex call{R"(TABLE\s*\(\s*([A-Za-z_][A-Za-z_0-9]*)\s*\()", std::regex::icase};
+    std::smatch match;
+    size_t from = 0;
+    while (std::regex_search(result.cbegin() + static_cast<std::ptrdiff_t>(from), result.cend(), match, call))
+    {
+        const auto open = from + match.position() + match.length(); /// just after the function's '('
+        from = open;
+        if (not SourceConfigSchemaRegistry::instance().contains(match[1].str()))
+        {
+            continue; /// e.g. TUMBLE, MODEL_INFERENCE
+        }
+        size_t close = open;
+        for (int depth = 1; close < result.size() and depth > 0; ++close)
+        {
+            depth += result[close] == '(' ? 1 : result[close] == ')' ? -1 : 0;
+        }
+        const auto arguments = result.substr(open, close - open);
+        std::string missing;
+        if (not std::regex_search(arguments, std::regex{R"(\bhost\s*=>)", std::regex::icase}))
+        {
+            missing += fmt::format("host => '{}', ", host.view());
+        }
+        if (not std::regex_search(arguments, std::regex{R"(\bformat\s*=>)", std::regex::icase}))
+        {
+            missing += "format => 'CSV', ";
+        }
+        result.insert(open, missing);
+    }
+    return result;
+}
 }
 
 /// Calcite's dialect is not ours, so the query itself stays as written; its sources are offered to Calcite under their
@@ -177,7 +229,8 @@ Emitter::emitCalciteSelect(const std::string& sql, const SystestQueryId id, cons
     {
         return RewrittenSql{.sql = sql, .resultFile = std::nullopt, .inputFiles = {}};
     }
-    const auto& [query, sinkClause] = querySink;
+    const auto& [writtenQuery, sinkClause] = querySink;
+    const auto query = completeSourceFunctions(writtenQuery, context.testDataDir, context.sourceHost);
     const auto dummyQuery = std::string{"SELECT * FROM CALCITE_SINK_REWRITE INTO "};
     auto rewritten = emitNesSelect(dummyQuery + sinkClause, id, resultDiscriminator);
     if (not rewritten.sql.starts_with(dummyQuery))
@@ -209,9 +262,6 @@ Emitter::RewrittenSql Emitter::emitNesSelect(const std::string& sql, const Syste
     /// and the text that the edits below splice in is already written in terms of the catalog.
     prefixNames(*parse, rewriter, declarations.names);
 
-    makeAnonymousSourcePathsAbsolute(*parse, rewriter, context.testDataDir);
-    completeAnonymousSources(*parse, rewriter, context.sourceHost);
-
     const auto queryNumber = id.getRawValue();
     const auto suffix
         = resultDiscriminator.empty() ? fmt::format("{}", queryNumber) : fmt::format("{}_{}", resultDiscriminator, queryNumber);
@@ -220,23 +270,7 @@ Emitter::RewrittenSql Emitter::emitNesSelect(const std::string& sql, const Syste
     auto [inlinedSink, resultFile] = sinkRewriter.inlineSink(*parse, sink, context.resultFile(suffix));
     rewriter.replace(sink->getStart(), sink->getStop(), inlinedSink);
 
-    std::vector<std::filesystem::path> inputFiles;
-    for (auto* namedSource : findAll<AntlrSQLParser::NamedSourceContext>(parse->tree()))
-    {
-        /// A name that no identifier can hold matches no key, because every key comes from a name that this file declared.
-        /// It is skipped rather than reported, so the query is still submitted and rejected when it runs.
-        const auto name = sourceName(namedSource->multipartIdentifier()->getText());
-        if (not name)
-        {
-            continue;
-        }
-        if (const auto files = inputFilesBySource.find(*name); files != inputFilesBySource.end())
-        {
-            std::ranges::copy(files->second, std::back_inserter(inputFiles));
-        }
-    }
-
-    return RewrittenSql{.sql = rewriter.getText(), .resultFile = std::move(resultFile), .inputFiles = std::move(inputFiles)};
+    return RewrittenSql{.sql = rewriter.getText(), .resultFile = std::move(resultFile), .inputFiles = {}};
 }
 
 void Emitter::emitQuery(SelectStatement query)
@@ -254,32 +288,21 @@ void Emitter::emitQuery(SelectStatement query)
 
 void Emitter::emitExplain(ExplainStatement explain)
 {
-    SqlParse parse{explain.sql};
-    /// VISUAL (the default) aligns on label widths, which restoring names breaks.
-    if (auto* format = findFirst<AntlrSQLParser::ExplainStatementContext>(parse.tree())->explainFormat(); format == nullptr
-        or (format->identifier() != nullptr and Identifier::parse(format->identifier()->getText()) == Identifier::parse("visual")))
+    /// As a query of the file (emitCalciteSelect): Calcite's dialect is not ours, the query stays as written.
+    static const std::regex Head{R"(^\s*EXPLAIN\s+(?:FORMAT\s+([A-Za-z]+)\s+)?)", std::regex::icase};
+    std::smatch head;
+    if (not std::regex_search(explain.sql, head, Head) or not head[1].matched or Identifier::parse(head[1].str()) == Identifier::parse("visual"))
     {
         throw TestException(
             "An EXPLAIN check has to state FORMAT TEXT or FORMAT VERBOSE, because the VISUAL layout depends on the prefixed names: {}",
             explain.sql);
     }
-    antlr4::TokenStreamRewriter rewriter{&parse.tokenStream()};
-    prefixNames(parse, rewriter, declarations.names);
-
-    /// The explained query binds and optimizes as a regular query does, so its sources need the same completion.
-    makeAnonymousSourcePathsAbsolute(parse, rewriter, context.testDataDir);
-    completeAnonymousSources(parse, rewriter, context.sourceHost);
-
-    if (auto* sink = requireSingleSink(parse, explain.sql); sink->identifier() == nullptr)
-    {
-        /// An EXPLAIN starts no query, so the file is never written, but the sink descriptor is still validated and needs a path.
-        const auto candidate = context.resultFile(fmt::format("{}", explain.id.getRawValue()));
-        rewriter.replace(sink->getStart(), sink->getStop(), sinkRewriter.inlineSink(parse, sink, candidate).sql);
-    }
-
+    /// The statement ends in a semicolon, as the binder parses terminated statements; splitting off the sink drops it.
+    const auto rewritten = emitCalciteSelect(explain.sql.substr(head.length()), explain.id, "explain");
     runnable.testCases.push_back(
         RewrittenTestCase{
-            .action = RewrittenExplain{.sql = rewriter.getText(), .id = explain.id, .expected = std::move(explain.expected)}});
+            .action = RewrittenExplain{
+                .sql = head.str() + rewritten.sql + ";", .id = explain.id, .expected = std::move(explain.expected)}});
 }
 
 void Emitter::emitDifferential(const DifferentialStatement& block)

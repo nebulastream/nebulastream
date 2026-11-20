@@ -5,8 +5,8 @@
   proxies of the BuiltInMetadata interfaces, and which of them a query needs depends on its operators;
 - every generated protobuf message (Substrait, our service, protobuf's well-known types), whose accessors protobuf finds
   by reflection on some paths, e.g. for large plans;
-- Calcite's RexImpTable implementors and error messages (Resources), both created reflectively, and the field trimmer
-  and decorrelator, which dispatch by reflection;
+- Calcite's RexImpTable implementors and error messages (Resources), both created reflectively, the field trimmer,
+  decorrelator and convertlets, which dispatch by reflection, and the parsers, whose error messages reflect on them;
 - our resource files and Substrait's extension catalog.
 
 Rerun after a Calcite, Substrait or protobuf upgrade:
@@ -47,12 +47,16 @@ implementors = sorted(n for n in classes if n.startswith('org.apache.calcite.ada
                       or n.startswith('org.apache.calcite.runtime.Resources$')
                       or (n.startswith('org.apache.calcite.') and n.endswith('Exception'))
                       # dispatch to a method per node class by reflection (ReflectUtil.createMethodDispatcher)
-                      or re.fullmatch(r'org\.apache\.calcite\.sql2rel\.(RelFieldTrimmer|RelDecorrelator)(\$\w+)*', n))
+                      or re.fullmatch(r'org\.apache\.calcite\.sql2rel\.(RelFieldTrimmer|RelDecorrelator)(\$\w+)*', n)
+                      # the convertlets of SqlToRel (e.g. for EXTRACT), which ReflectiveConvertletTable finds by name
+                      or re.fullmatch(r'org\.apache\.calcite\.sql2rel\.(Standard|Reflective)ConvertletTable(\$\w+)*', n)
+                      # the parser's error messages list the expected tokens by reflecting on its production methods
+                      or re.fullmatch(r'org\.apache\.calcite\.sql\.parser\.(ddl\.SqlDdlParserImpl|impl\.SqlParserImpl)(\$\w+)*', n))
 write('calcite-reflective', everything(implementors))
 
 # Our own resources, which the native image only contains if listed.
 (out / 'nes-resources').mkdir(parents=True, exist_ok=True)
 (out / 'nes-resources' / 'reachability-metadata.json').write_text(json.dumps(
-    {'resources': [{'glob': 'nes_unsigned_integers.yaml'}, {'glob': 'substrait/extensions/*.yaml'}]}, indent=2) + '\n')
+    {'resources': [{'glob': 'nes_unsigned_integers.yaml'}, {'glob': 'nes_functions.yaml'}, {'glob': 'substrait/extensions/*.yaml'}]}, indent=2) + '\n')
 print(f'{len(handlers)} metadata handlers, {len(interfaces)} metadata interfaces, {len(messages)} protobuf classes, '
       f'{len(implementors)} implementors')

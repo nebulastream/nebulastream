@@ -15,19 +15,20 @@ CREATE PHYSICAL SOURCE FOR outOfOrderStreamB TYPE File;
 ATTACH FILE outoforder/outOfOrderStreamB.csv
 
 # Query 1: sliding-window aggregation over outOfOrderStreamA. A tuple with a timestamp below the watermark of its origin raises WindowingError.
-SELECT start, end, sectorId, SUM(consumedPower) AS consumedPower
-FROM outOfOrderStreamA
-GROUP BY sectorId
-WINDOW SLIDING(timestampA, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+SELECT window_start AS "START", window_end AS "END", sectorId, SUM(consumedPower) AS consumedPower
+FROM TABLE(HOP(TABLE outOfOrderStreamA, DESCRIPTOR(timestampA), INTERVAL '10' MINUTE, INTERVAL '1' HOUR))
+GROUP BY window_start, window_end, sectorId
 INTO Checksum();
 ----
 ERROR 3014
 
 # Query 2: sliding-window join of the two streams on consumerId, exercising the same out-of-order check.
-SELECT *
-FROM (SELECT * FROM outOfOrderStreamA)
-INNER JOIN (SELECT * FROM outOfOrderStreamB) ON consumerId = consumerId2
-WINDOW SLIDING (timestampA, timestampB, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+SELECT a.window_start AS "START", a.window_end AS "END",
+       a.consumerId, a.sectorId, a.consumedPower, a.consumerType, a.timestampA,
+       b.consumerId2, b.sectorId2, b.consumedPower2, b.consumerType2, b.timestampB
+FROM TABLE(HOP(TABLE outOfOrderStreamA, DESCRIPTOR(timestampA), INTERVAL '10' MINUTE, INTERVAL '1' HOUR)) AS a
+JOIN TABLE(HOP(TABLE outOfOrderStreamB, DESCRIPTOR(timestampB), INTERVAL '10' MINUTE, INTERVAL '1' HOUR)) AS b
+ON a.window_start = b.window_start AND a.consumerId = b.consumerId2
 INTO Checksum();
 ----
 ERROR 3014

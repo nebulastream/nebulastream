@@ -12,20 +12,18 @@ CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
 ATTACH FILE small/ysb/ysb10k_with_varsized_100K.csv
 
 CREATE SINK printSink(campaign UINT64)  TYPE File;
-CREATE SINK ysb1kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED, count_user_id UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK ysb10kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED, count_user_id UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK ysb1kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED, count_user_id INT64 NOT NULL)  TYPE Checksum;
+CREATE SINK ysb10kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_id VARSIZED, count_user_id INT64 NOT NULL)  TYPE Checksum;
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
 # YSB Query
 SELECT
-    start,
-    end,
+    window_start AS "START",
+    window_end AS "END",
     campaign_id,
     COUNT(user_id) AS count_user_id
-FROM ysb1k
-WHERE event_type == 'view'
-GROUP BY campaign_id
-WINDOW TUMBLING(event_time, SIZE 30 SEC)
+FROM TABLE(TUMBLE((SELECT * FROM ysb1k WHERE event_type = 'view'), DESCRIPTOR(event_time), INTERVAL '30' SECOND))
+GROUP BY window_start, window_end, campaign_id
 INTO ysb1kChecksum;
 ----
 55 219237
@@ -33,14 +31,12 @@ INTO ysb1kChecksum;
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
 # YSB Query
 SELECT
-    start,
-    end,
+    window_start AS "START",
+    window_end AS "END",
     campaign_id,
     COUNT(user_id) AS count_user_id
-FROM ysb10k
-WHERE event_type == 'view'
-GROUP BY campaign_id
-WINDOW TUMBLING(event_time, SIZE 30 SEC)
+FROM TABLE(TUMBLE((SELECT * FROM ysb10k WHERE event_type = 'view'), DESCRIPTOR(event_time), INTERVAL '30' SECOND))
+GROUP BY window_start, window_end, campaign_id
 INTO ysb10kChecksum;
 ----
 55 221693

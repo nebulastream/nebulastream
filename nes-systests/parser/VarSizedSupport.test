@@ -1,5 +1,5 @@
 # name: parser/VarSizedSupport.test
-# description: parser tests
+# description: Variable-sized string columns: pass-through, LIKE, IN over strings, and unsupported string functions
 # groups: [Parser]
 
 CREATE LOGICAL SOURCE streamWithText(id UINT64 NOT NULL, value UINT64 NOT NULL, text1 VARSIZED NOT NULL, text2 VARSIZED NOT NULL);
@@ -38,18 +38,18 @@ SELECT * FROM streamWithText INTO sinkStreamWithText;
 8,5,test1,test2
 
 # LIKE should be refused by name.
-SELECT text1 FROM streamWithText WHERE text1 LIKE VARSIZED('test%') INTO sinkStreamWithText;
+SELECT text1 FROM streamWithText WHERE text1 LIKE 'test%' INTO File();
 ----
-ERROR 2008 "LIKE is not supported"
+ERROR 2008 "Substrait function like is not supported"
 
 # Control for the case above: IN over the same column should be supported.
-SELECT id, value, text1, text2 FROM streamWithText
-WHERE text1 IN (VARSIZED('test3')) INTO sinkStreamWithText;
+SELECT id, "VALUE", text1, text2 FROM streamWithText
+WHERE text1 IN ('test3') INTO sinkStreamWithText;
 ----
 11,2,test3,test2
 11,3,test3,test1
 
-# An unknown scalar function should be reported and specify the set of supported functions.
-SELECT UPPER(text1) AS t FROM streamWithText INTO sinkStreamWithText;
+# An unsupported scalar string function should be refused by name.
+SELECT UPPER(text1) AS t FROM streamWithText INTO File();
 ----
-ERROR 2000 "Unknown function: UPPER. Supported aggregation functions are AVG, COUNT, MAX, MEDIAN, MIN, SUM."
+ERROR 2008 "Substrait function upper is not supported"

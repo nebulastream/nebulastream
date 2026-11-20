@@ -12,11 +12,8 @@
 
 
 add_subdirectory(Phases)
-add_subdirectory(LoweringRules)
-add_subdirectory(Util)
 
 add_source_files(nes-query-compiler
         QueryCompiler.cpp
         PipelinedQueryPlan.cpp
-        PhysicalPlanBuilder.cpp
 )

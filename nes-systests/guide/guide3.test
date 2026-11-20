@@ -23,7 +23,7 @@ CREATE SINK sink(speed FLOAT64 NOT NULL, altitude FLOAT64 NOT NULL) TYPE File;
 SELECT *
 FROM s
 WHERE CEIL(speed) != 0
-   OR altitude == 0
+   OR altitude = 0
 INTO sink;
 ----
 0.2, 100

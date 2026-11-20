@@ -16,8 +16,8 @@ CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE File;
 ATTACH FILE large/cluster_monitoring/google-cluster-data-original_1G.csv
 
 
-CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT64 NOT NULL, jobId UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK q2Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32 NOT NULL, jobId UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT64, jobId UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK q2Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32, jobId UINT64 NOT NULL)  TYPE Checksum;
 CREATE SINK q2Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32 NOT NULL, jobId UINT64 NOT NULL)  TYPE File;
 
 # These test is currently disabled, as we cannot ensure deterministic results for the queries
@@ -38,21 +38,17 @@ CREATE SINK q2Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOAT32 
 #
 
 # Query 2 with "original" data
-SELECT start, end, SUM(cpu) AS totalCpu, jobId
-FROM monitoringClusterData
-WHERE eventType == 3
-GROUP BY jobId
-WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+SELECT window_start AS "START", window_end AS "END", SUM(cpu) AS totalCpu, jobId
+FROM TABLE(HOP((SELECT * FROM monitoringClusterData WHERE eventType = 3), DESCRIPTOR(creationTS), INTERVAL '1' SECOND, INTERVAL '60' SECOND))
+GROUP BY window_start, window_end, jobId
 INTO q1Checksum;
 ----
 3094778,7192484640
 
 # Query 2 with Lightsaber data
-SELECT start, end, SUM(cpu) AS totalCpu, jobId
-FROM monitoringLightsaber
-WHERE eventType == 3
-GROUP BY jobId
-WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+SELECT window_start AS "START", window_end AS "END", CAST(SUM(cpu) AS REAL) AS totalCpu, jobId
+FROM TABLE(HOP((SELECT * FROM monitoringLightsaber WHERE eventType = 3), DESCRIPTOR(creationTS), INTERVAL '1' SECOND, INTERVAL '60' SECOND))
+GROUP BY window_start, window_end, jobId
 INTO q2Checksum;
 ----
 3403, 7612888

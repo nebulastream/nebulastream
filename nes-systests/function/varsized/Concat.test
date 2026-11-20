@@ -20,26 +20,26 @@ Rudolf,,Bayer
 CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED NOT NULL) TYPE File;
 CREATE SINK firstNameMiddleNameLastNameSink(firstNameMiddleNameLastName VARSIZED NOT NULL) TYPE File;
 
-SELECT CONCAT(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
+SELECT firstName || lastName AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----
 EdgarCodd
 JimGrey
 MichaelStonebraker
 
-SELECT CONCAT(CONCAT(firstName, ' '), lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
+SELECT (firstName || ' ') || lastName AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----
 Edgar Codd
 Jim Grey
 Michael Stonebraker
 
-SELECT CONCAT(firstName, CONCAT(' ', lastName)) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
+SELECT firstName || (' ' || lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----
 Edgar Codd
 Jim Grey
 Michael Stonebraker
 
 # Testing concatination of an empty string
-SELECT CONCAT(CONCAT(firstName, middleName), lastName) AS firstNameMiddleNameLastName FROM nameStreamWithMiddle INTO firstNameMiddleNameLastNameSink;
+SELECT (firstName || middleName) || lastName AS firstNameMiddleNameLastName FROM nameStreamWithMiddle INTO firstNameMiddleNameLastNameSink;
 ----
 EdgarFrankCodd
 JamesNicholasGrey
@@ -47,7 +47,7 @@ MichaelRalphStonebraker
 RudolfBayer
 
 # Testing concatination of an empty string
-SELECT CONCAT(firstName, CONCAT(middleName, lastName)) AS firstNameMiddleNameLastName FROM nameStreamWithMiddle INTO firstNameMiddleNameLastNameSink;
+SELECT firstName || (middleName || lastName) AS firstNameMiddleNameLastName FROM nameStreamWithMiddle INTO firstNameMiddleNameLastNameSink;
 ----
 EdgarFrankCodd
 JamesNicholasGrey

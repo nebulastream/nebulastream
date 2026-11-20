@@ -34,9 +34,4 @@ VarVal NullValuePhysicalFunction::execute(const Record&, ArenaRef&) const
     return makeNullVarVal(dataType);
 }
 
-PhysicalFunctionRegistryReturnType NullValuePhysicalFunction::createNullValue(PhysicalFunctionRegistryArguments arguments)
-{
-    return NullValuePhysicalFunction(arguments.outputType);
-}
-
 }

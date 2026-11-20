@@ -1,4 +1,3 @@
-# calcite
 # name: calcite/Distinct.test
 # description: Aggregations of distinct values under the Calcite frontend (Calcite groups by the values first)
 # groups: [Calcite]

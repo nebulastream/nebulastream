@@ -14,7 +14,7 @@
 # worker-a → worker-b → worker-c → worker-a (cycle)
 
 query: |
-  SELECT * FROM stream INTO VOID_SINK
+  SELECT * FROM "STREAM" INTO VOID_SINK
 
 sinks:
   - name: VOID_SINK

@@ -35,8 +35,11 @@ ATTACH INLINE
 1,20,20000
 1,21,21000
 
-CREATE SINK sinkStream(value_count UINT64 NOT NULL, value_Sum UINT64 NOT NULL, max_value UINT64 NOT NULL)  TYPE File;
-SELECT COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStream;
+CREATE SINK sinkStream(value_count INT64 NOT NULL, value_Sum UINT64, max_value UINT64)  TYPE File;
+SELECT COUNT("VALUE") AS value_count, SUM("VALUE") AS value_Sum, MAX("VALUE") AS max_value
+FROM TABLE(TUMBLE((SELECT * FROM "STREAM" WHERE id < 15), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
+INTO sinkStream;
 ----
 1,2,2
 1,2,2
@@ -64,8 +67,11 @@ SELECT COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM str
 1,21,21
 1,20,20
 
-CREATE SINK sinkStreamStart(start UINT64 NOT NULL, value_count UINT64 NOT NULL, value_Sum UINT64 NOT NULL, max_value UINT64 NOT NULL)  TYPE File;
-SELECT start, COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStreamStart;
+CREATE SINK sinkStreamStart(start UINT64 NOT NULL, value_count INT64 NOT NULL, value_Sum UINT64, max_value UINT64)  TYPE File;
+SELECT window_start AS "START", COUNT("VALUE") AS value_count, SUM("VALUE") AS value_Sum, MAX("VALUE") AS max_value
+FROM TABLE(TUMBLE((SELECT * FROM "STREAM" WHERE id < 15), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
+INTO sinkStreamStart;
 ----
 1000,1,1,1
 1000,1,1,1
@@ -93,8 +99,12 @@ SELECT start, COUNT(value) as value_count, SUM(value), MAX(value) as max_value F
 20000,1,20,20
 21000,1,21,21
 
-CREATE SINK sinkStreamStartId(id UINT64 NOT NULL, start UINT64 NOT NULL, value_count UINT64 NOT NULL, value_Sum UINT64 NOT NULL, max_value UINT64 NOT NULL)  TYPE File;
-SELECT id, start, COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStreamStartId;
+CREATE SINK sinkStreamStartId(id UINT64 NOT NULL, start UINT64 NOT NULL, value_count INT64 NOT NULL, value_Sum UINT64, max_value UINT64)  TYPE File;
+SELECT id, window_start AS "START", COUNT("VALUE") AS value_count, SUM("VALUE") AS value_Sum,
+       MAX("VALUE") AS max_value
+FROM TABLE(TUMBLE((SELECT * FROM "STREAM" WHERE id < 15), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
+INTO sinkStreamStartId;
 ----
 1,1000,1,1,1
 12,1000,1,1,1
@@ -123,14 +133,15 @@ SELECT id, start, COUNT(value) as value_count, SUM(value), MAX(value) as max_val
 1,20000,1,20,20
 
 
-CREATE SINK sinkStreamNested(id UINT64 NOT NULL, count_id UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStreamNested(id UINT64 NOT NULL, count_id INT64 NOT NULL)  TYPE File;
 
-SELECT id, COUNT(id) as count_id
-FROM (
-    SELECT id, start as innerStart, COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec)
-)
-GROUP BY id
-WINDOW TUMBLING(innerStart, size 4 sec)
+SELECT id, COUNT(id) AS count_id
+FROM TABLE(TUMBLE(
+    (SELECT id, window_start AS innerStart, COUNT("VALUE") AS value_count, SUM("VALUE") AS value_Sum, MAX("VALUE") AS max_value
+     FROM TABLE(TUMBLE((SELECT * FROM "STREAM" WHERE id < 15), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+     GROUP BY window_start, window_end, id),
+    DESCRIPTOR(innerStart), INTERVAL '4' SECOND))
+GROUP BY window_start, window_end, id
 INTO sinkStreamNested;
 ----
 1,4
@@ -145,19 +156,16 @@ INTO sinkStreamNested;
 
 # A column that is neither grouped nor aggregated is rejected while the query is still being parsed.
 SELECT id, COUNT(id) AS count_id
-FROM stream
-WHERE id > UINT64(15)
-WINDOW TUMBLING(timestamp, size 1 sec)
+FROM TABLE(TUMBLE((SELECT * FROM "STREAM" WHERE id > 15), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO sinkStreamNested;
 ----
-ERROR 2000 "column "id" must appear in the GROUP BY clause or be used in an aggregate function"
+ERROR 2000 "Expression 'ID' is not being grouped"
 
 # Control for the case above: with the column in GROUP BY the same query should be accepted.
 SELECT id, COUNT(id) AS count_id
-FROM stream
-WHERE id > UINT64(15)
-GROUP BY id
-WINDOW TUMBLING(timestamp, size 1 sec)
+FROM TABLE(TUMBLE((SELECT * FROM "STREAM" WHERE id > 15), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
 INTO sinkStreamNested;
 ----
 16,1

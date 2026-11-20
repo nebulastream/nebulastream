@@ -30,7 +30,7 @@ public:
     LessPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createLess(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createLt(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

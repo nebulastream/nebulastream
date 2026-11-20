@@ -1,6 +1,6 @@
-# description: ABS(INT8) must return its declared INT16 type when consumed by MIN/MAX.
-# Negating a negative input multiplied two INT16 values and promoted the result to INT32,
-# causing "select with different types" when MIN/MAX compared it with their INT16 state.
+# description: ABS(INT8) consumed by MIN/MAX must compile and keep its type.
+# Negating a negative input once promoted the result to INT32, causing "select with different types" when MIN/MAX
+# compared it with their state. In Calcite's types ABS(TINYINT) is a TINYINT, so ABS(-128) wraps to -128 before MIN/MAX.
 # groups: [regression, Function, FunctionAbs, Aggregation, WindowOperators]
 
 CREATE LOGICAL SOURCE aggregateStream(i8 INT8 NOT NULL, nullableI8 INT8, timestamp UINT64 NOT NULL);
@@ -15,21 +15,21 @@ ATTACH INLINE
 7,,11
 
 # Consume ABS directly: an intermediate emit/scan could narrow the value and hide the bug.
-# Include INT8_MIN to verify that the widened result still represents 128.
-SELECT start, MIN(ABS(i8)) AS minimum, MAX(ABS(i8)) AS maximum
-FROM aggregateStream
-WINDOW TUMBLING(timestamp, size 10 ms)
+# Include INT8_MIN: its absolute value does not fit TINYINT and wraps to -128.
+SELECT window_start AS "START", MIN(ABS(i8)) AS minimum, MAX(ABS(i8)) AS maximum
+FROM TABLE(TUMBLE(TABLE aggregateStream, DESCRIPTOR("TIMESTAMP"), INTERVAL '0.01' SECOND))
+GROUP BY window_start, window_end
 INTO File();
 ----
-0,0,128
+0,-128,42
 10,7,7
 
 # The first window mixes NULL and non-NULL inputs; the second contains only NULLs.
 # MIN/MAX must ignore NULLs in the first and preserve NULL results in the second.
-SELECT start, MIN(ABS(nullableI8)) AS minimum, MAX(ABS(nullableI8)) AS maximum
-FROM aggregateStream
-WINDOW TUMBLING(timestamp, size 10 ms)
+SELECT window_start AS "START", MIN(ABS(nullableI8)) AS minimum, MAX(ABS(nullableI8)) AS maximum
+FROM TABLE(TUMBLE(TABLE aggregateStream, DESCRIPTOR("TIMESTAMP"), INTERVAL '0.01' SECOND))
+GROUP BY window_start, window_end
 INTO File();
 ----
-0,0,128
+0,-128,7
 10,NULL,NULL

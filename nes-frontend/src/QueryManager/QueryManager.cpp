@@ -28,13 +28,11 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current_macros.hpp>
 #include <fmt/ranges.h>
-#include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
@@ -109,101 +107,48 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 }
 
-[[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(const DistributedLogicalPlan& plan)
+std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(PlacedPhysicalQuery query)
 {
-    std::unordered_map<Host, std::vector<QueryId>> localQueries;
-
-    auto id = plan.getQueryId();
+    /// The parts may carry the query's distributed id (as a logical plan may); otherwise the query gets a new one.
+    auto id = DistributedQueryId(DistributedQueryId::INVALID);
+    for (const auto& part : query | std::views::values | std::views::join)
+    {
+        id = part.queryId.getDistributedQueryId();
+        break;
+    }
     if (id == DistributedQueryId(DistributedQueryId::INVALID))
     {
         id = uniqueDistributedQueryId(state);
     }
-    else if (this->state.queries.contains(plan.getQueryId()))
+    else if (state.queries.contains(id))
     {
-        throw QueryAlreadyRegistered("{}", plan.getQueryId());
+        throw QueryAlreadyRegistered("{}", id);
     }
-
-    /// NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores) only read by NES_DEBUG, which may be compiled out
-    const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
-    std::vector<Exception> exceptions;
-
-    for (const auto& [host, localPlans] : plan)
-    {
-        INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
-        for (auto localPlan : localPlans)
-        {
-            try
-            {
-                /// Set the distributed query ID on the local plan before sending to worker
-                localPlan.setQueryId(QueryId::createDistributed(id));
-                const auto result = backends.at(host).start(localPlan);
-                if (result)
-                {
-                    NES_DEBUG("Starting query on node {} was successful.", host);
-                    localQueries[host].emplace_back(*result);
-                    continue;
-                }
-                exceptions.emplace_back(result.error());
-            }
-            catch (const std::exception& e)
-            {
-                exceptions.emplace_back(QueryStartFailed("Message from external exception: {}", e.what()));
-            }
-        }
-    }
-
-    if (!exceptions.empty())
-    {
-        /// Local plans that already started are not tracked in `state.queries` on this path, so nobody would ever stop them. A network
-        /// sink whose downstream local plan never started finds no receiving end for its channel, so the receiver denies it. The
-        /// sender treats a denied channel as a transient failure and retries forever, which blocks worker shutdown. Thus, we stop the
-        /// partial deployment here.
-        for (const auto& [host, startedQueryIds] : localQueries)
-        {
-            for (const auto& localQueryId : startedQueryIds)
-            {
-                CPPTRACE_TRY
-                {
-                    if (const auto result = backends.at(host).stop(localQueryId); not result)
-                    {
-                        NES_WARNING(
-                            "Could not stop local query {} on {} while unwinding a failed start: {}", localQueryId, host, result.error());
-                    }
-                }
-                CPPTRACE_CATCH(const std::exception& exception)
-                {
-                    NES_WARNING(
-                        "Could not stop local query {} on {} while unwinding a failed start: {}", localQueryId, host, exception.what());
-                }
-            }
-        }
-        return std::unexpected(exceptions);
-    }
-
-    return awaitStarted(id, std::move(localQueries), queryStartTimestamp);
-}
-
-std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(PlacedPhysicalQuery query)
-{
-    const auto id = uniqueDistributedQueryId(state);
     const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
     std::vector<Exception> exceptions;
-    for (auto& [host, part] : query)
+    for (auto& [host, parts] : query)
     {
         if (not backends.contains(host))
         {
             exceptions.emplace_back(QueryStartFailed("the physical query was placed on {}, which is not a worker", host));
             break;
         }
-        part.queryId = QueryId::createDistributed(id);
-        const auto result = backends.at(host).start(std::move(part));
-        if (not result)
+        for (auto& part : parts)
         {
-            exceptions.emplace_back(result.error());
+            part.queryId = QueryId::createDistributed(id);
+            const auto result = backends.at(host).start(std::move(part));
+            if (not result)
+            {
+                exceptions.emplace_back(result.error());
+                break;
+            }
+            localQueries[host].emplace_back(*result);
+        }
+        if (not exceptions.empty())
+        {
             break;
         }
-        localQueries[host].emplace_back(*result);
     }
     if (not exceptions.empty())
     {

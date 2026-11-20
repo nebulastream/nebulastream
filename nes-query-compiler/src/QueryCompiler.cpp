@@ -18,8 +18,6 @@
 #include <memory>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
-#include <Phases/LowerToPhysicalOperators.hpp>
-#include <Phases/PipeliningPhase.hpp>
 #include <PhysicalQuery.hpp>
 #include <PipelinedQueryPlan.hpp>
 #include <Util/DumpMode.hpp>
@@ -29,17 +27,9 @@
 namespace NES::QueryCompilation
 {
 
-/// This phase should be as dumb as possible and not further decisions should be made here.
-std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
+std::unique_ptr<CompiledQueryPlan>
+QueryCompiler::compilePipelines(const std::shared_ptr<PipelinedQueryPlan>& pipelines, const DumpMode dumpCompilationResult)
 {
-    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
-    auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
-    auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
-    return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
-}
-
-std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(const PhysicalQuery& query, const DumpMode dumpCompilationResult)
-{
-    return LowerToCompiledQueryPlanPhase(dumpCompilationResult).apply(query.pipelines(query.queryId, defaultQueryExecution));
+    return LowerToCompiledQueryPlanPhase(dumpCompilationResult).apply(pipelines);
 }
 }

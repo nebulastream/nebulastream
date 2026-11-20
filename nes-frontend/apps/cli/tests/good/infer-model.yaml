@@ -12,7 +12,7 @@
 
 query: |
   SELECT *
-  FROM MODEL_INFERENCE(iris, stream)
+  FROM TABLE(MODEL_INFERENCE(TABLE "STREAM", 'iris'))
   INTO VOID_SINK
 
 models:

@@ -20,55 +20,15 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <Functions/CastToTypeLogicalFunction.hpp>
-#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
 #include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Schema/Binder.hpp>
-#include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES::QueryCompilation
 {
-PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait)
-{
-    /// 1. Recursively lower the children of the function node.
-    std::vector<PhysicalFunction> childFunctions;
-    std::vector<DataType> inputTypes;
-    for (const auto& child : logicalFunction.getChildren())
-    {
-        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait));
-        inputTypes.emplace_back(child.getDataType());
-    }
-
-    /// 2. The field access and constant value nodes are special as they require a different treatment,
-    /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessFunction = logicalFunction.tryGetAs<FieldAccessLogicalFunction>())
-    {
-        const auto mappedName = fieldMappingTrait.getMapping(unbind(fieldAccessFunction.value()->getField()));
-        INVARIANT(mappedName.has_value(), "Can not find mapping for {}", fieldAccessFunction.value()->getField());
-        return FieldAccessPhysicalFunction(mappedName.value());
-    }
-    if (const auto constantValueFunction = logicalFunction.tryGetAs<ConstantValueLogicalFunction>())
-    {
-        return lowerConstantFunction(constantValueFunction->get());
-    }
-
-    /// 3. Calling the registry to create an executable function.
-    if (const auto factory = PhysicalFunctionRegistry::instance().find(std::string(logicalFunction.getType())))
-    {
-        return (*factory)(PhysicalFunctionRegistryArguments{
-            .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
-    }
-    throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
-}
-
 namespace
 {
 template <typename T>
@@ -83,10 +43,9 @@ T parseConstantValue(std::string_view input)
 }
 }
 
-PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
+PhysicalFunction FunctionProvider::lowerConstantFunction(const DataType& type, const std::string& stringValue)
 {
-    const auto stringValue = constantFunction.getConstantValue();
-    switch (constantFunction.getDataType().type)
+    switch (type.type)
     {
         case DataType::Type::UINT8:
             return ConstantUInt8ValueFunction(parseConstantValue<uint8_t>(stringValue));

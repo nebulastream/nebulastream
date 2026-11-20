@@ -16,7 +16,7 @@ ATTACH INLINE
 8,🎉🚀
 9,Hi🌍
 
-CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE File;
+CREATE SINK lengthSink(id UINT64 NOT NULL, len INT32 NOT NULL) TYPE File;
 
 # Codepoint count: ASCII rows match their byte length, "äöü" is 3 codepoints (not 6).
 SELECT id AS id, CHAR_LENGTH(data) AS len FROM textStream INTO lengthSink;
@@ -31,8 +31,8 @@ SELECT id AS id, CHAR_LENGTH(data) AS len FROM textStream INTO lengthSink;
 8 2
 9 3
 
-# CHAR_LENGTH composed with CONCAT — append '!!' (2 codepoints) to each row.
-SELECT id AS id, CHAR_LENGTH(CONCAT(data, '!!')) AS len FROM textStream INTO lengthSink;
+# CHAR_LENGTH composed with || — append '!!' (2 codepoints) to each row.
+SELECT id AS id, CHAR_LENGTH(data || '!!') AS len FROM textStream INTO lengthSink;
 ----
 1 2
 2 7
@@ -47,9 +47,9 @@ SELECT id AS id, CHAR_LENGTH(CONCAT(data, '!!')) AS len FROM textStream INTO len
 # CHAR_LENGTH is unary — passing more than one argument must be rejected.
 SELECT id AS id, CHAR_LENGTH(data, data) AS len FROM textStream INTO lengthSink;
 ----
-ERROR 2002
+ERROR 2000
 
 # CHAR_LENGTH is unary — passing zero arguments must be rejected.
 SELECT id AS id, CHAR_LENGTH() AS len FROM textStream INTO lengthSink;
 ----
-ERROR 2002
+ERROR 2000

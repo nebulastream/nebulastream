@@ -56,7 +56,7 @@ CREATE SINK sinkStreamWithText(id UINT64 NOT NULL, value UINT64 NOT NULL, text1 
 
 
 # Filter equal
-SELECT * FROM stream WHERE value != 1 INTO sinkStream;
+SELECT * FROM "STREAM" WHERE "VALUE" != 1 INTO sinkStream;
 ----
 1,2,2000
 11,2,2001
@@ -85,7 +85,7 @@ SELECT * FROM stream WHERE value != 1 INTO sinkStream;
 1,21,21000
 
 # Non-equal filter with non-existing value
-SELECT * FROM stream WHERE value != 1234 INTO sinkStream;
+SELECT * FROM "STREAM" WHERE "VALUE" != 1234 INTO sinkStream;
 ----
 1,1,1000
 12,1,1001
@@ -117,7 +117,7 @@ SELECT * FROM stream WHERE value != 1234 INTO sinkStream;
 1,21,21000
 
 # Two non-equals filters after each other
-SELECT * FROM stream WHERE value != 1 AND id != 16 INTO sinkStream;
+SELECT * FROM "STREAM" WHERE "VALUE" != 1 AND id != 16 INTO sinkStream;
 ----
 1,2,2000
 11,2,2001
@@ -145,7 +145,7 @@ SELECT * FROM stream WHERE value != 1 AND id != 16 INTO sinkStream;
 1,21,21000
 
 # Two non-equals filters after each other with no filtering
-SELECT * FROM stream WHERE value != 9999 AND id != 1234 INTO sinkStream;
+SELECT * FROM "STREAM" WHERE "VALUE" != 9999 AND id != 1234 INTO sinkStream;
 ----
 1,1,1000
 12,1,1001

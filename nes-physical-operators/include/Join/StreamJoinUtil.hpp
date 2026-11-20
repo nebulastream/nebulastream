@@ -21,7 +21,7 @@
 #include <vector>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT
-#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Join/JoinType.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sequencing/SequenceData.hpp>
@@ -62,7 +62,7 @@ using EmitSlicesFn = std::function<void(
 /// This enables compile-time verification in the lowering rules that the chosen probe operator is compatible with
 /// the requested join type.
 template <typename T>
-concept JoinProbeOperator = requires(JoinLogicalOperator::JoinType jt) {
+concept JoinProbeOperator = requires(JoinType jt) {
     { T::supportsJoinType(jt) } -> std::same_as<bool>;
 };
 

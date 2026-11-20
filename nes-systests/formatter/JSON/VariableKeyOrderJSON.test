@@ -18,7 +18,7 @@ SELECT key FROM variableKeyOrderStream INTO keySink;
 1
 1
 
-SELECT value FROM variableKeyOrderStream INTO valueSink;
+SELECT "VALUE" FROM variableKeyOrderStream INTO valueSink;
 ----
 1
 2

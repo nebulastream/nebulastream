@@ -28,7 +28,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>

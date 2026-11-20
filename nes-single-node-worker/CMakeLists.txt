@@ -14,9 +14,9 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
-add_library(nes-single-node-worker-interface interface/SingleNodeWorkerConfiguration.cpp interface/WorkerStatus.cpp)
+add_library(nes-single-node-worker-interface interface/SingleNodeWorkerConfiguration.cpp interface/WorkerStatus.cpp interface/QueryIdSerialization.cpp)
 target_include_directories(nes-single-node-worker-interface PUBLIC interface)
-target_link_libraries(nes-single-node-worker-interface PUBLIC nes-common nes-grpc nes-configurations nes-runtime-interface nes-logical-operators)
+target_link_libraries(nes-single-node-worker-interface PUBLIC nes-common nes-grpc nes-configurations nes-runtime-interface)
 
 # Add nes-worker library
 get_source(nes-single-node-worker NES_WORKER_SOURCE_FILES)
@@ -28,7 +28,7 @@ target_link_libraries(nes-single-node-worker-lib
         PUBLIC
         nes-grpc
         nes-query-compiler
-        nes-query-optimizer
+        nes-calcite-pipelines
         nes-single-node-worker-interface
 )
 

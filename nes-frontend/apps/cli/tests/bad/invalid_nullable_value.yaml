@@ -12,7 +12,7 @@
 
 # `nullable` must be a boolean. A non-bool value should be rejected.
 query: |
-  SELECT * FROM stream INTO sink
+  SELECT * FROM "STREAM" INTO sink
 sinks:
   - name: sink
     host: worker-1:8080

@@ -55,13 +55,14 @@ ATTACH INLINE
 
 CREATE SINK sink0(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT64) TYPE File;
 CREATE SINK sink1(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT64, valueMax INT32, valueMin INT32, valueAvg FLOAT64, valueMedian FLOAT64) TYPE File;
-CREATE SINK sink2(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, valueSum INT64, valueMin INT32, valueMax INT32, valueAvg FLOAT64, valueCount UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sink2(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, valueSum INT64, valueMin INT32, valueMax INT32, valueAvg FLOAT64, valueCount INT64 NOT NULL, rowCount INT64 NOT NULL) TYPE File;
 
 
 # Checking if a sum over a tumbling window works with null values in the value field
 # We expect NULLs to be ignored in value fields for SUM aggregation (SQL standard: NULL only when every input is NULL)
-SELECT start, end, SUM(value) as valueSum
-FROM stream WINDOW TUMBLING(ts, size 100 ms)
+SELECT window_start AS "START", window_end AS "END", SUM("VALUE") AS valueSum
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
 INTO sink0;
 ----
 0,100,4
@@ -72,9 +73,10 @@ INTO sink0;
 
 
 # Checking if all aggregation function over a sliding window works with null values in the value field
-SELECT start, end, SUM(value) AS valueSum, MAX(value) AS valueMax,
-       MIN(value) AS valueMin, AVG(value) AS valueAvg, MEDIAN(value) as valueMedian
-FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
+SELECT window_start AS "START", window_end AS "END", SUM("VALUE") AS valueSum, MAX("VALUE") AS valueMax,
+       MIN("VALUE") AS valueMin, AVG(CAST("VALUE" AS DOUBLE)) AS valueAvg, MEDIAN("VALUE") AS valueMedian
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.05' SECOND, INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
 INTO sink1;
 ----
 0,100,4,3,0,1.333333,1
@@ -89,33 +91,22 @@ INTO sink1;
 
 
 # Keyed aggregation with only null values in the key
-SELECT start, end, id,
-       SUM(value) AS valueSum,
-       MIN(value) AS valueMin,
-       MAX(value) AS valueMax,
-       AVG(value) AS valueAvg,
-       COUNT(value) AS valueCount,
+SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE") AS valueSum, MIN("VALUE") AS valueMin,
+       MAX("VALUE") AS valueMax, AVG(CAST("VALUE" AS DOUBLE)) AS valueAvg, COUNT("VALUE") AS valueCount,
        COUNT(ts) AS rowCount
-FROM stream2
-WHERE ISNULL(id)
-GROUP BY id
-WINDOW TUMBLING(ts, size 1 sec)
+FROM TABLE(TUMBLE((SELECT * FROM stream2 WHERE id IS NULL), DESCRIPTOR(ts), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
 INTO sink2;
 ----
 0,1000,NULL,1,1,1,1.0,1,2
 1000,2000,NULL,4,4,4,4.0,1,2
 
 # Keyed aggregation with and w/o null values in the key
-SELECT start, end, id,
-       SUM(value) AS valueSum,
-       MIN(value) AS valueMin,
-       MAX(value) AS valueMax,
-       AVG(value) AS valueAvg,
-       COUNT(value) AS valueCount,
+SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE") AS valueSum, MIN("VALUE") AS valueMin,
+       MAX("VALUE") AS valueMax, AVG(CAST("VALUE" AS DOUBLE)) AS valueAvg, COUNT("VALUE") AS valueCount,
        COUNT(ts) AS rowCount
-FROM stream2
-GROUP BY id
-WINDOW TUMBLING(ts, size 1 sec)
+FROM TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(ts), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
 INTO sink2;
 ----
 0,1000,NULL,1,1,1,1.0,1,2
@@ -125,24 +116,21 @@ INTO sink2;
 1000,2000,1,5,5,5,5.0,1,2
 1000,2000,3,NULL,NULL,NULL,NULL,0,1
 
-SELECT start, end, MAX(value), MIN(value), AVG(value), MEDIAN(value)
-FROM stream3
-WINDOW TUMBLING(timestamp, size 1 sec)
+SELECT window_start AS "START", window_end AS "END", MAX("VALUE"), MIN("VALUE"), AVG(CAST("VALUE" AS DOUBLE)),
+       MEDIAN("VALUE")
+FROM TABLE(TUMBLE(TABLE stream3, DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO File();
 ----
 2000,3000,NULL,NULL,NULL,NULL
 3000,4000,NULL,NULL,NULL,NULL
 
 
-SELECT start, end,
-       SUM(value) AS valueSum,
-       MIN(value) AS valueMin,
-       MAX(value) AS valueMax,
-       AVG(value) AS valueAvg,
-       MEDIAN(value) AS valueMedian,
-       COUNT(value) AS valueCount,
-       COUNT(*) AS countStarCount
-FROM stream4 WINDOW TUMBLING(ts, size 1 sec)
+SELECT window_start AS "START", window_end AS "END", SUM("VALUE") AS valueSum, MIN("VALUE") AS valueMin,
+       MAX("VALUE") AS valueMax, AVG(CAST("VALUE" AS DOUBLE)) AS valueAvg, MEDIAN("VALUE") AS valueMedian,
+       COUNT("VALUE") AS valueCount, COUNT(*) AS countStarCount
+FROM TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(ts), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO File();
 ----
 0,1000,NULL,NULL,NULL,NULL,NULL,0,4

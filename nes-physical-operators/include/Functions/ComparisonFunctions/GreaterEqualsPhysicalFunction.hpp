@@ -30,7 +30,7 @@ public:
     GreaterEqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createGreaterEquals(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createGte(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

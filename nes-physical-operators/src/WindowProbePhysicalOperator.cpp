@@ -18,7 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Time/Timestamp.hpp>

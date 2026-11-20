@@ -22,11 +22,9 @@ CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, totalCpu FLOA
 #
 
 # Query 2
-SELECT start, end, SUM(cpu) AS totalCpu, jobId
-FROM monitoringClusterData
-WHERE eventType == 3
-GROUP BY jobId
-WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+SELECT window_start AS "START", window_end AS "END", SUM(cpu) AS totalCpu, jobId
+FROM TABLE(HOP((SELECT * FROM monitoringClusterData WHERE eventType = 3), DESCRIPTOR(creationTS), INTERVAL '1' SECOND, INTERVAL '60' SECOND))
+GROUP BY window_start, window_end, jobId
 INTO q1Checksum;
 ----
 939 2095268

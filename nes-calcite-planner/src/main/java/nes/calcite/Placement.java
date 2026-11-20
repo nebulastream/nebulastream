@@ -22,7 +22,7 @@ import org.ojalgo.optimisation.Variable;
  * <ul>
  *   <li>x[o][w] = 1 if operator o runs on worker w; each operator runs on exactly one worker;</li>
  *   <li>a physical source runs on its worker, the sink on the sink's worker;</li>
- *   <li>a worker runs at most max_operators operators (the sink counts as one);</li>
+ *   <li>a worker runs at most max_operators operators; sources and the sink do not count, as in our own placement;</li>
  *   <li>an operator sends its rows only to its own worker or to a worker downstream of it;</li>
  *   <li>objective: each cut, i.e. an operator whose consumer runs on another worker, costs a fixed amount plus the bytes
  *   it sends (Calcite's estimate), times the hops between the two workers.</li>
@@ -63,9 +63,23 @@ final class Placement {
             if (operator instanceof NesLogical.PhysicalSourceScan source) {
                 String host = source.physicalSource.getHost();
                 if (host.isEmpty()) {
-                    throw new IllegalArgumentException("physical source " + source.physicalSource.getId() + " has no host");
+                    throw new PlacementFailure("physical source " + source.physicalSource.getId() + " has no host");
                 }
-                x.get(operator)[index(hosts, host)].level(1);
+                List<String> name = source.table.getQualifiedName();
+                x.get(operator)[workerOf(hosts, host, "SOURCE(" + name.get(name.size() - 1) + ")")].level(1);
+            }
+            if (operator instanceof AnonymousSources.NesAnonymousSource source) {
+                x.get(operator)[index(hosts, source.host())].level(1);
+            }
+            /// The first operator after a source runs on the source's worker. It belongs to reading the source and, as the
+            /// source, costs no capacity. (Our own placement counts it, and so may move it behind the network.)
+            if (operator instanceof NesLogical.WatermarkAssigner assigner) {
+                RelNode source = assigner.getInput();
+                String host = source instanceof NesLogical.PhysicalSourceScan scan ? scan.physicalSource.getHost()
+                    : source instanceof AnonymousSources.NesAnonymousSource anonymous ? anonymous.host() : null;
+                if (host != null && !host.isEmpty()) {
+                    x.get(operator)[index(hosts, host)].level(1);
+                }
             }
         }
         Variable[] sink = onOneWorker(model, hosts.size());
@@ -74,9 +88,14 @@ final class Placement {
         for (int w = 0; w < hosts.size(); w++) {
             long capacity = topology.get(w).getMaxOperators();
             if (capacity > 0) {
-                Expression load = model.addExpression().upper(capacity).set(sink[w], 1);
+                /// As our own placement counts (operatorCapacityDemand): sources and the sink stay where they are and cost nothing;
+                /// so do the watermark assigners after the sources.
+                Expression load = model.addExpression().upper(capacity);
                 for (RelNode operator : operators) {
-                    load.set(x.get(operator)[w], 1);
+                    if (!(operator instanceof NesLogical.PhysicalSourceScan || operator instanceof AnonymousSources.NesAnonymousSource
+                        || operator instanceof NesLogical.WatermarkAssigner)) {
+                        load.set(x.get(operator)[w], 1);
+                    }
                 }
             }
         }
@@ -102,7 +121,7 @@ final class Placement {
         }
         Optimisation.Result result = model.minimise();
         if (!result.getState().isFeasible()) {
-            throw new UnsupportedOperationException("The plan cannot be placed on the topology (" + result.getState()
+            throw new PlacementFailure("The plan cannot be placed on the topology (" + result.getState()
                 + "): sources and the sink stay on their workers, workers run at most max_operators operators, and data"
                 + " only flows downstream.");
         }
@@ -138,10 +157,12 @@ final class Placement {
     /** Sends the rows of the plan along the path; returns their receiving end on the last worker. */
     private static RelNode send(RelNode plan, List<String> path, List<Part> parts) {
         RelNode current = plan;
+        boolean watermarked = NesPhysical.watermarked(plan);
         for (int hop = 1; hop < path.size(); hop++) {
             String channel = UUID.randomUUID().toString();
             parts.add(new Part(path.get(hop - 1), current, channel, path.get(hop)));
-            current = new NesLogical.NetworkSource(plan.getCluster(), plan.getTraitSet(), plan.getRowType(), channel, path.get(hop - 1));
+            current = new NesLogical.NetworkSource(
+                plan.getCluster(), plan.getTraitSet(), plan.getRowType(), channel, path.get(hop - 1), watermarked);
         }
         return current;
     }
@@ -175,10 +196,18 @@ final class Placement {
         return (rows == null ? 1 : rows) * (rowSize == null ? 8.0 * operator.getRowType().getFieldCount() : rowSize);
     }
 
+    /** The worker of an operator that stays on its host (a source), or a failure that names the operator. */
+    private static int workerOf(List<String> hosts, String host, String operator) {
+        if (!hosts.contains(host)) {
+            throw new PlacementFailure(operator + " was placed on non-existing worker '" + host + "'");
+        }
+        return hosts.indexOf(host);
+    }
+
     private static int index(List<String> hosts, String host) {
         int index = hosts.indexOf(host);
         if (index < 0) {
-            throw new IllegalArgumentException("worker " + host + " is not in the topology " + hosts);
+            throw new PlacementFailure("worker " + host + " is not in the topology " + hosts);
         }
         return index;
     }

@@ -20,7 +20,6 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -50,7 +49,6 @@ class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 public:
     ~EmbeddedWorkerQuerySubmissionBackend() override;
     EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, const WorkerConfigResolver& resolveWorkerConfiguration);
-    [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     [[nodiscard]] std::expected<QueryId, Exception> start(PhysicalQuery query) override;
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;

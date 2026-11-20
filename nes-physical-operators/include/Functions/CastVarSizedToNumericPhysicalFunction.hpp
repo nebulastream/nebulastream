@@ -31,8 +31,6 @@ public:
 
     VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createVarSizedToNumeric(PhysicalFunctionRegistryArguments arguments);
-
 private:
     PhysicalFunction child;
     DataType outputType;

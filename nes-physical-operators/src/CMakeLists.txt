@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        PhysicalPlan.cpp
         MapPhysicalOperator.cpp
+        WindowMetaData.cpp
         SelectionPhysicalOperator.cpp
         UnionPhysicalOperator.cpp
         UnionRenamePhysicalOperator.cpp

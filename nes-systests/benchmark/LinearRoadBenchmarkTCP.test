@@ -7,24 +7,22 @@ CREATE LOGICAL SOURCE lrb(creationTS UINT64 NOT NULL, vehicle INT16 NOT NULL, sp
 CREATE PHYSICAL SOURCE FOR lrb TYPE File;
 ATTACH FILE large/lrb/linear_road_benchmark_560K.csv
 
-CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, highway INT16 NOT NULL, direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, avgSpeed FLOAT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q2Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, vehicle INT16 NOT NULL, highway INT16 NOT NULL, direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, cntSpeed UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, highway INT16 NOT NULL, direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, avgSpeed FLOAT64)  TYPE Checksum;
+CREATE SINK q2Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, vehicle INT16 NOT NULL, highway INT16 NOT NULL, direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, cntSpeed INT64 NOT NULL)  TYPE Checksum;
 
 # Query 1
-SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
-FROM (SELECT creationTS, highway, direction, position / 5280 AS positionDiv5280, speed FROM lrb)
-GROUP BY (highway, direction, positionDiv5280)
-WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
-HAVING avgSpeed < 40
+SELECT window_start AS "START", window_end AS "END", highway, direction, positionDiv5280, AVG(CAST(speed AS DOUBLE)) AS avgSpeed
+FROM TABLE(HOP((SELECT creationTS, highway, direction, "POSITION" / 5280 AS positionDiv5280, speed FROM lrb), DESCRIPTOR(creationTS), INTERVAL '1' SECOND, INTERVAL '5' MINUTE))
+GROUP BY window_start, window_end, highway, direction, positionDiv5280
+HAVING AVG(CAST(speed AS DOUBLE)) < 40
 INTO q1Checksum;
 ----
 70916, 151995926
 
 # Query 2
-SELECT start, end, vehicle, highway, direction, positionDiv5280, COUNT(speed) AS cntSpeed
-FROM (SELECT creationTS, vehicle, highway, direction, position / 5280 AS positionDiv5280, speed FROM lrb)
-GROUP BY (vehicle, highway, direction, positionDiv5280)
-WINDOW SLIDING(creationTS, SIZE 30 SEC, ADVANCE BY 1 SEC)
+SELECT window_start AS "START", window_end AS "END", vehicle, highway, direction, positionDiv5280, COUNT(speed) AS cntSpeed
+FROM TABLE(HOP((SELECT creationTS, vehicle, highway, direction, "POSITION" / 5280 AS positionDiv5280, speed FROM lrb), DESCRIPTOR(creationTS), INTERVAL '1' SECOND, INTERVAL '30' SECOND))
+GROUP BY window_start, window_end, vehicle, highway, direction, positionDiv5280
 INTO q2Checksum;
 ----
 491460, 991265094

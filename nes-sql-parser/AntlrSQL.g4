@@ -60,14 +60,12 @@ terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
-explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
-explainStages: explainStage (',' explainStage)*;
-explainStage: identifier | LOGICAL;
+explainStatement: EXPLAIN (FORMAT explainFormat)? query;
 explainFormat: identifier | TEXT;
 
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
-createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
+createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
                                 TYPE type=identifier
@@ -89,8 +87,6 @@ columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 
 typeDefinition: DATA_TYPE;
 nullableDefinition: NOT NULLTOKEN;
-
-fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
 dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
@@ -116,101 +112,16 @@ showSubject: QUERIES #showQueriesSubject
 showFilter: attr=strictIdentifier EQ value=constant;
 
 queryWithOptions: query optionsClause?;
-query: queryTerm queryOrganization ;
 
-queryOrganization:
-         (ORDER BY order+=sortItem (',' order+=sortItem)*)?
-         (LIMIT (ALL | limit=INTEGER_VALUE))?
-         (OFFSET offset=INTEGER_VALUE)?
-         ;
+/// A query in Calcite's dialect, as written: its tokens up to the sink clause. Calcite parses and plans the query; only the
+/// sink clause after INTO is ours. A query starts as SQL queries do, which tells it apart from the other statements.
+query: queryText sinkClause;
+queryText: (SELECT | WITH | VALUES | TABLE | '(') ~(INTO | SET | ';')*;
 
-queryTerm: queryPrimary #primaryQuery
-         |  left=queryTerm setoperator=UNION right=queryTerm  #setOperation
-         ;
-
-queryPrimary
-    : querySpecification                                                    #queryPrimaryDefault
-    | fromStatement                                                         #fromStmt
-    | TABLE multipartIdentifier                                             #table
-    | inlineTable                                                           #inlineTableDefault1
-    | '(' query ')'                                                         #subquery
-    ;
-/// new layout to be closer to traditional SQL
-querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
-
-
-fromClause: FROM relation (',' relation)*;
-
-relation
-    : relationPrimary joinRelation*
-    ;
-
-joinRelation
-    : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
-    | NATURAL joinType JOIN right=relationPrimary windowClause
-    ;
-
-joinType
-    : INNER?
-    | LEFT OUTER?
-    | RIGHT OUTER?
-    | FULL OUTER?
-    ;
-
-joinCriteria
-    : ON booleanExpression
-    ;
-
-relationPrimary
-    : multipartIdentifier (AS alias=identifier)? #namedSource
-    | '(' query ')'                           #aliasedQuery
-    | '(' relation ')'                        #aliasedRelation
-    | inlineTable                             #inlineTableDefault2
-    | anonymousSource                         #anonymousDefinedSource
-    | modelInferenceSource                    #modelInferenceRelation
-    ;
-
-modelInferenceSource
-    : MODEL_INFERENCE '(' modelName=identifier ',' modelInferenceInput ')'
-    ;
-
-modelInferenceInput
-    : multipartIdentifier                     #modelInferenceStreamName
-    | '(' query ')'                           #modelInferenceSubquery
-    | modelInferenceSource                    #modelInferenceNested
-    ;
-
-anonymousSource
-    : type=identifier '(' parameters=namedConfigExpressionSeq ')'
-    ;
-
-schema: SCHEMA schemaDefinition
- ;
-
-fromStatement: fromClause fromStatementBody+;
-
-fromStatementBody: selectClause whereClause? groupByClause?;
-
-selectClause : SELECT (hints+=hint)* namedExpressionSeq;
-
-whereClause: WHERE booleanExpression;
-
-havingClause: HAVING booleanExpression;
-
-inlineTable
-    : VALUES expression (',' expression)*
-    ;
-
-multipartIdentifier
-    : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
-    ;
+schema: SCHEMA schemaDefinition;
 
 namedConfigExpression: (constant | schema) AS name=identifierChain;
-
-namedExpression
-    : expression AS name=identifier
-    | expression
-    ;
+namedConfigExpressionSeq: (namedConfigExpression (',' namedConfigExpression)*)?;
 
 identifier: strictIdentifier;
 
@@ -228,205 +139,12 @@ BACKQUOTED_IDENTIFIER
 
 identifierChain: strictIdentifier ('.' strictIdentifier)*;
 
-identifierList
-    : '(' identifierSeq ')'
-    ;
-
-identifierSeq
-    : ident+=errorCapturingIdentifier (',' ident+=errorCapturingIdentifier)*
-    ;
-
-errorCapturingIdentifier
-    : identifier errorCapturingIdentifierExtra
-    ;
-
-errorCapturingIdentifierExtra
-    : (MINUS identifier)+    #errorIdent
-    |                        #realIdent
-    ;
-
-namedConfigExpressionSeq: (namedConfigExpression (',' namedConfigExpression)*)?;
-namedExpressionSeq
-    : namedExpression (',' namedExpression)*
-    ;
-
-expression
-    : valueExpression
-    | booleanExpression
-    | identifier
-    | schema
-    ;
-
-booleanExpression
-    : NOT booleanExpression                                  #logicalNot
-    | EXISTS '(' query ')'                                   #exists
-    | predicate                                              #predicateExpression
-    ;
-
-predicate
-    : orPredicate
-    ;
-
-orPredicate
-    : andPredicate (OR andPredicate)*
-    ;
-
-andPredicate
-    : notPredicate (AND notPredicate)*
-    ;
-
-notPredicate
-    : NOT notPredicate                                       #logicalNotPredicate
-    | predicatePrimary                                      #predicatePrimaryExpression
-    ;
-
-predicatePrimary
-    : '(' predicate ')'                                      #parenthesizedPredicate
-    | valueExpression booleanComparison?                     #boolComparison
-    ;
-
-/// Problem fixed that the querySpecification rule could match an empty string
-windowedAggregationClause:
-    groupByClause? windowClause watermarkClause?
-    | windowClause groupByClause? watermarkClause?;
-
-groupByClause
-    : GROUP BY groupingExpressions+=expression (',' groupingExpressions+=expression)* (
-      WITH kind=ROLLUP
-    | WITH kind=CUBE
-    | kind=GROUPING SETS '(' groupingSet (',' groupingSet)* ')')?
-    | GROUP BY kind=GROUPING SETS '(' groupingSet (',' groupingSet)* ')'
-    ;
-
-groupingSet
-    : '(' (expression (',' expression)*)? ')'
-    | expression
-    ;
-
-windowClause
-    : WINDOW windowSpec
-    ;
-
-watermarkClause: WATERMARK '(' watermarkParameters ')';
-
-watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE watermarkTimeUnit=timeUnit;
-/// Adding Threshold Windows
-windowSpec:
-    timeWindow #timeBasedWindow
-    | countWindow #countBasedWindow
-    | conditionWindow #thresholdBasedWindow
-    ;
-
-timeWindow
-    : TUMBLING '(' (timestampParameter ',')? sizeParameter ')'                       #tumblingWindow
-    | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
-    ;
-
-timestampParameter: name+=identifier (',' name+=identifier)?;
-
-countWindow:
-    TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
-    ;
-
-conditionWindow
-    : THRESHOLD '(' conditionParameter (',' thresholdMinSizeParameter)? ')' #thresholdWindow
-    ;
-
-conditionParameter: expression;
-thresholdMinSizeParameter: INTEGER_VALUE;
-
-sizeParameter: SIZE INTEGER_VALUE timeUnit;
-
-advancebyParameter: ADVANCE BY INTEGER_VALUE timeUnit;
-
-timeUnit: MS
-        | SEC
-        | MINUTE
-        | HOUR
-        | DAY
-        ;
-
-
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
-
 sinkClause: INTO sink (',' sink)*;
 
 sink: identifier | anonymousSink;
 
 anonymousSink
     : type=identifier '(' parameters=namedConfigExpressionSeq ')'
-    ;
-
-nullNotnull
-    : NOT? NULLTOKEN
-    ;
-
-nanNotNan
-    : NOT? NANTOKEN
-    ;
-
-streamName: IDENTIFIER;
-
-fileFormat: CSV_FORMAT;
-
-sortItem
-    : expression ordering=(ASC | DESC)? (NULLS nullOrder=(LAST | FIRST))?
-    ;
-
-booleanComparison
-    : NOT? kind=BETWEEN lower=valueExpression AND upper=valueExpression
-    | NOT? kind=IN '(' expression (',' expression)* ')'
-    | NOT? kind=IN '(' query ')'
-    | NOT? kind=RLIKE pattern=valueExpression
-    | NOT? kind=LIKE quantifier=(ANY | SOME | ALL) ('('')' | '(' expression (',' expression)* ')')
-    | NOT? kind=LIKE pattern=valueExpression (ESCAPE escapeChar=STRING)?
-    | IS nullNotnull
-    | IS nanNotNan
-    | IS NOT? kind=(TRUE | FALSE | UNKNOWN)
-    | IS NOT? kind=DISTINCT FROM right=valueExpression
-    ;
-
-
-valueExpression
-    : CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
-    | (functionName | typeDefinition) '(' (starArg=ASTERISK | argument+=expression (',' argument+=expression)*)? ')'  #functionCall
-    | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
-    | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
-    | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
-    | left=valueExpression op=AMPERSAND right=valueExpression                          #arithmeticBinary
-    | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
-    | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
-    | left=valueExpression comparisonOperator right=valueExpression                          #comparison
-    | primaryExpression                                                                      #valueExpressionDefault
-    ;
-
-comparisonOperator
-    : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
-    ;
-
-hint
-    : '/*+' hintStatements+=hintStatement (','? hintStatements+=hintStatement)* '*/'
-    ;
-
-hintStatement
-    : hintName=identifier
-    | hintName=identifier '(' parameters+=primaryExpression (',' parameters+=primaryExpression)* ')'
-    ;
-
-primaryExpression
-    : ASTERISK                                                                                 #star
-    | qualifiedName '.' ASTERISK                                                               #star
-    | base=primaryExpression '.' fieldName=identifier                                          #dereference
-    | '(' query ')'                                                                            #subqueryExpression
-    | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
-    | '(' valueExpression ')'                                                                  #parenthesizedExpression
-    | '(' predicate ')'                                                                        #parenthesizedPredicateExpression
-    | constant                                                                                 #constantDefault
-    | identifier                                                                               #columnReference
-    ;
-
-qualifiedName
-    : identifier ('.' identifier)*
     ;
 
 number
@@ -514,7 +232,7 @@ SELECT: 'SELECT' | 'select';
 SETS: 'SETS';
 SOME: 'SOME';
 START: 'START';
-TABLE: 'TABLE';
+TABLE: 'TABLE' | 'table';
 TO: 'TO';
 TRUE: 'TRUE';
 TYPE: 'TYPE';
@@ -522,11 +240,11 @@ UNION: 'UNION' | 'union';
 UNKNOWN: 'UNKNOWN';
 USE: 'USE';
 USING: 'USING';
-VALUES: 'VALUES';
+VALUES: 'VALUES' | 'values';
 WHEN: 'WHEN';
 WHERE: 'WHERE' | 'where';
 WINDOW: 'WINDOW' | 'window';
-WITH: 'WITH';
+WITH: 'WITH' | 'with';
 SET: 'SET';
 TUMBLING: 'TUMBLING' | 'tumbling';
 SLIDING: 'SLIDING' | 'sliding';

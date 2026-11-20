@@ -124,7 +124,6 @@ class AnonymousSinkDescriptor final
 {
     friend SinkCatalog;
     friend class SinkDescriptor;
-    friend struct SinkLogicalOperator;
     friend class CalcTargetOrderRule;
 
 public:
@@ -287,7 +286,6 @@ public:
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline auto configSchema = createConfigSchema(Identifier::parse("SINK"), HOST, SCHEMA, ADD_TIMESTAMP);
 
-    friend struct SinkLogicalOperator;
 };
 
 template <>

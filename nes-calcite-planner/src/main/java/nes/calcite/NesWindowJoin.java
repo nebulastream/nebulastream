@@ -36,7 +36,27 @@ public final class NesWindowJoin extends BiRel {
         this.spec = spec;
         this.condition = condition;
         this.residual = residual;
-        this.rowType = rowType;
+        /// Our names: START, END, the left input's columns, the right input's (also after a rule renames an input).
+        java.util.List<String> names = new java.util.ArrayList<>(NesWindowAggregate.WINDOW_COLUMNS);
+        names.addAll(left.getRowType().getFieldNames());
+        names.addAll(right.getRowType().getFieldNames());
+        this.rowType = NesWindowAggregate.withNames(cluster.getTypeFactory(), rowType, names);
+    }
+
+    /** The plan with every window join as a nested-loop join: it checks the keys with the rest of the condition. */
+    static RelNode nestedLoop(RelNode plan) {
+        return plan.accept(new org.apache.calcite.rel.RelHomogeneousShuttle() {
+            @Override
+            public RelNode visit(RelNode other) {
+                RelNode node = super.visit(other);
+                if (!(node instanceof NesWindowJoin join) || join.spec.getImplementation() == WindowJoin.Implementation.NESTED_LOOP_JOIN) {
+                    return node;
+                }
+                WindowJoin spec = join.spec.toBuilder().setImplementation(WindowJoin.Implementation.NESTED_LOOP_JOIN).build();
+                return new NesWindowJoin(join.getCluster(), join.getTraitSet(), join.getLeft(), join.getRight(), spec, join.condition,
+                    join.residual, join.getRowType());
+            }
+        });
     }
 
     @Override

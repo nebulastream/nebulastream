@@ -31,17 +31,17 @@ CREATE SINK keySinkWithNulls(key UINT64 NOT NULL) TYPE File;
 CREATE SINK letterSink(letter CHAR) TYPE File;
 CREATE SINK allFieldsSink(key UINT64 NOT NULL, value UINT64, name VARSIZED) TYPE File;
 
-SELECT KEY FROM jsonStream WHERE NOT ISNULL(value) INTO keySink;
+SELECT KEY FROM jsonStream WHERE "VALUE" IS NOT NULL INTO keySink;
 ----
 1
 1
 
-SELECT KEY FROM jsonStreamWithNulls WHERE NOT ISNULL(value) INTO keySinkWithNulls;
+SELECT KEY FROM jsonStreamWithNulls WHERE "VALUE" IS NOT NULL INTO keySinkWithNulls;
 ----
 2
 3
 
-SELECT * FROM jsonStreamWithNulls WHERE ISNULL(value) INTO allFieldsSink;
+SELECT * FROM jsonStreamWithNulls WHERE "VALUE" IS NULL INTO allFieldsSink;
 ----
 1,NULL,john1
 4,NULL,max1
@@ -54,7 +54,7 @@ a
 NULL
 b
 
-SELECT * FROM jsonStreamWithNulls WHERE NOT ISNULL(value) INTO allFieldsSink;
+SELECT * FROM jsonStreamWithNulls WHERE "VALUE" IS NOT NULL INTO allFieldsSink;
 ----
 2,1,NULL
 3,2,john2

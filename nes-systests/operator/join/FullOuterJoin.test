@@ -14,19 +14,21 @@ ATTACH FILE small/outer_join_right.csv
 CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64, value UINT64, timestamp UINT64, id2 UINT64, value2 UINT64, timestamp2 UINT64) TYPE Checksum;
 
 # Query 1 — Large tumbling window (10 sec)
-SELECT *
-FROM (SELECT * FROM stream) FULL OUTER JOIN (SELECT * FROM stream2)
-ON (id = id2)
-WINDOW TUMBLING (timestamp, timestamp2, size 10 sec)
+SELECT COALESCE(s.window_start, s2.window_start) AS "START", COALESCE(s.window_end, s2.window_end) AS "END",
+       s.id, s."VALUE", s."TIMESTAMP", s2.id2, s2.value2, s2.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '10' SECOND)) AS s
+FULL OUTER JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '10' SECOND)) AS s2
+ON s.window_start = s2.window_start AND s.id = s2.id2
 INTO sink;
 ----
 27049 58065409
 
 # Query 2 — Small tumbling window (1 sec)
-SELECT *
-FROM (SELECT * FROM stream) FULL OUTER JOIN (SELECT * FROM stream2)
-ON (id = id2)
-WINDOW TUMBLING (timestamp, timestamp2, size 1 sec)
+SELECT COALESCE(s.window_start, s2.window_start) AS "START", COALESCE(s.window_end, s2.window_end) AS "END",
+       s.id, s."VALUE", s."TIMESTAMP", s2.id2, s2.value2, s2.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND)) AS s
+FULL OUTER JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS s2
+ON s.window_start = s2.window_start AND s.id = s2.id2
 INTO sink;
 ----
 18884 44012447

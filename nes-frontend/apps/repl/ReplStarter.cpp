@@ -62,8 +62,7 @@
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
-#include <QueryOptimizer.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Calcite/QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
 #include <Thread.hpp>
 #include <Version.hpp>
@@ -268,7 +267,6 @@ int main(int argc, char** argv)
         {
             throw NES::InvalidConfigParameter("{}", workerOptimizerConfig.error());
         }
-        const auto queryOptimizerConfig = workerOptimizerConfig->queryOptimizer;
 
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
@@ -276,8 +274,7 @@ int main(int argc, char** argv)
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
-        auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+        auto binder = NES::StatementBinder{sourceCatalog};
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -327,9 +324,11 @@ int main(int argc, char** argv)
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
-        auto queryOptimizer
-            = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
-        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
+        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(
+            queryManager,
+            NES::QueryCatalogs{
+                .sourceCatalog = sourceCatalog, .sinkCatalog = sinkCatalog, .workerCatalog = workerCatalog, .modelCatalog = modelCatalog},
+            workerOptimizerConfig->queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),

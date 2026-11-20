@@ -1,5 +1,7 @@
 # The Problem
 
+> **Outdated.** This document describes fields in the logical operators and logical functions. Both no longer exist. Apache Calcite plans the queries now (see `nes-calcite-planner/README.md`).
+
 Currently, we have no clear way to reason about where attributes/fields come from.
 To differentiate fields from different input operators, we prefix fields with source names or combined source prefixes after joins.
 

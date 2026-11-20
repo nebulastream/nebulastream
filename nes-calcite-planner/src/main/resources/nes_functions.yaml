@@ -1,0 +1,64 @@
+%YAML 1.2
+---
+urn: extension:nebulastream:functions
+description: >
+  Functions our engine has (see the registry of physical functions) for argument types that Substrait's standard extensions do not
+  declare, e.g. CEIL of an integer or OCTET_LENGTH. The engine checks the argument types itself.
+scalar_functions:
+  - name: "ceil"
+    impls:
+      - args: [{value: any1}]
+        return: any1
+  - name: "floor"
+    impls:
+      - args: [{value: any1}]
+        return: any1
+  - name: "round"
+    impls:
+      - args: [{value: any1}]
+        return: any1
+  - name: "exp"
+    impls:
+      - args: [{value: any1}]
+        return: fp64
+  - name: "sqrt"
+    impls:
+      - args: [{value: any1}]
+        return: fp64
+  - name: "power"
+    impls:
+      - args: [{value: any1}, {value: any2}]
+        return: fp64
+  - name: "is_nan"
+    impls:
+      - args: [{value: any1}]
+        return: boolean
+  - name: "char_length"
+    impls:
+      - args: [{value: any1}]
+        return: i32
+  - name: "octet_length"
+    impls:
+      - args: [{value: any1}]
+        return: i32
+  - name: "to_base64"
+    impls:
+      - args: [{value: any1}]
+        return: any1
+  # Timestamps are unix milliseconds to our engine.
+  - name: "timestamp_millis"
+    impls:
+      - args: [{value: any1}]
+        return: any1
+  - name: "unix_millis"
+    impls:
+      - args: [{value: any1}]
+        return: any1
+  - name: "format_datetime"
+    impls:
+      - args: [{value: any1}, {value: any2}]
+        return: any1
+  - name: "timestamp"
+    impls:
+      - args: [{value: any1}]
+        return: any1

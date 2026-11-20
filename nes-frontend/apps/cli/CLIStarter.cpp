@@ -71,8 +71,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
-#include <QueryOptimizer.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Calcite/QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
@@ -726,7 +725,6 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
-    auto queryOptimizationConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     NES::CLI::QueryStateBackend stateBackend;
 
     const auto state = subcommand.get<std::vector<std::string>>("queryId")
@@ -751,9 +749,10 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
-    NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
+    NES::QueryStatementHandler queryHandler{
+        queryManager,
+        NES::QueryCatalogs{.sourceCatalog = sourceCatalog, .sinkCatalog = sinkCatalog, .workerCatalog = workerCatalog, .modelCatalog = modelCatalog},
+        loadQueryOptimizerConfiguration(topologyConfig)};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler);
 
@@ -776,7 +775,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     auto topologyConfig = getTopologyPath(program);
     auto statements = loadStatements(topologyConfig);
     auto queries = loadQueries(program, subcommand, topologyConfig);
-    auto queryOptimizerConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
+    const auto optimizer = loadQueryOptimizerConfiguration(topologyConfig);
     if (queries.empty())
     {
         throw NES::InvalidConfigParameter("No queries");
@@ -792,17 +791,17 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler);
+    const NES::QueryCatalogs catalogs{
+        .sourceCatalog = sourceCatalog, .sinkCatalog = sinkCatalog, .workerCatalog = workerCatalog, .modelCatalog = modelCatalog};
 
     if (program.is_subcommand_used("start"))
     {
         NES::CLI::QueryStateBackend stateBackend;
-        NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, catalogs, optimizer};
         for (const auto& query : queries)
         {
-            auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto result = queryStatementHandler(NES::QueryStatement{.sql = query, .id = std::nullopt});
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
@@ -818,11 +817,10 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, catalogs, optimizer};
         for (const auto& query : queries)
         {
-            auto result
-                = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto result = queryStatementHandler(NES::ExplainQueryStatement{.sql = query});
             if (result)
             {
                 std::cout << result->explainString << "\n";

@@ -39,7 +39,7 @@ GreaterEqualsPhysicalFunction::GreaterEqualsPhysicalFunction(PhysicalFunction le
 }
 
 PhysicalFunctionRegistryReturnType
-GreaterEqualsPhysicalFunction::createGreaterEquals(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+GreaterEqualsPhysicalFunction::createGte(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two child functions");

@@ -49,26 +49,55 @@ final class NesLogical {
         }
     }
 
-    /** The rows that another worker sends over a network channel: the receiving end of a cut between two workers. */
-    static final class NetworkSource extends AbstractRelNode {
-        final String channel;
-        final String upstreamHost;
+    /**
+     * Sets the watermarks of the rows of one source from their event time in timeField. It is the first operator after
+     * the source (Watermarks.assign), so it runs on the source's worker (Placement) and every row of the source, also one
+     * that a later filter drops, advances the watermark.
+     */
+    static final class WatermarkAssigner extends org.apache.calcite.rel.SingleRel {
+        final int timeField;
 
-        NetworkSource(RelOptCluster cluster, RelTraitSet traits, RelDataType rowType, String channel, String upstreamHost) {
-            super(cluster, traits);
-            this.rowType = rowType;
-            this.channel = channel;
-            this.upstreamHost = upstreamHost;
+        WatermarkAssigner(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
+            super(cluster, traits, input);
+            this.timeField = timeField;
         }
 
         @Override
         public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
-            return new NetworkSource(getCluster(), traitSet, rowType, channel, upstreamHost);
+            return new WatermarkAssigner(getCluster(), traitSet, inputs.get(0), timeField);
         }
 
         @Override
         public RelWriter explainTerms(RelWriter pw) {
-            return super.explainTerms(pw).item("from", upstreamHost).item("channel", channel);
+            return super.explainTerms(pw).item("time", getRowType().getFieldNames().get(timeField));
+        }
+    }
+
+    /** The rows that another worker sends over a network channel: the receiving end of a cut between two workers. */
+    static final class NetworkSource extends AbstractRelNode {
+        final String channel;
+        final String upstreamHost;
+        /// Whether the sent rows carry watermarks (from an assigner after their sources or from a window operator), which
+        /// must not be reassigned.
+        final boolean watermarked;
+
+        NetworkSource(RelOptCluster cluster, RelTraitSet traits, RelDataType rowType, String channel, String upstreamHost,
+            boolean watermarked) {
+            super(cluster, traits);
+            this.rowType = rowType;
+            this.channel = channel;
+            this.upstreamHost = upstreamHost;
+            this.watermarked = watermarked;
+        }
+
+        @Override
+        public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
+            return new NetworkSource(getCluster(), traitSet, rowType, channel, upstreamHost, watermarked);
+        }
+
+        @Override
+        public RelWriter explainTerms(RelWriter pw) {
+            return super.explainTerms(pw).item("from", upstreamHost).item("channel", channel).itemIf("watermarked", true, watermarked);
         }
     }
 
@@ -108,18 +137,35 @@ final class NesLogical {
 
     /** Replaces each scan of a logical source by a scan of each of its physical sources (a UNION ALL of several). */
     static RelNode expandSources(RelNode plan) {
-        return plan.accept(new RelShuttleImpl() {
-            @Override
-            public RelNode visit(TableScan scan) {
-                Planner.SourceTable table = scan.getTable().unwrapOrThrow(Planner.SourceTable.class);
-                if (table.physicalSources().isEmpty()) {
-                    throw new UnsupportedOperationException("logical source " + table.name() + " has no physical source");
+        return plan.accept(new org.apache.calcite.rel.RelHomogeneousShuttle() {
+            /// Also the tables of subqueries, which are expressions until Calcite removes them.
+            private final org.apache.calcite.rex.RexShuttle subqueries = new org.apache.calcite.rex.RexShuttle() {
+                @Override
+                public org.apache.calcite.rex.RexNode visitSubQuery(org.apache.calcite.rex.RexSubQuery subQuery) {
+                    org.apache.calcite.rex.RexSubQuery visited = (org.apache.calcite.rex.RexSubQuery) super.visitSubQuery(subQuery);
+                    RelNode expanded = expandSources(visited.rel);
+                    return expanded == visited.rel ? visited : visited.clone(expanded);
                 }
-                List<RelNode> scans = table.physicalSources().stream()
-                    .map(source -> (RelNode) new PhysicalSourceScan(scan.getCluster(), scan.getTraitSet(), scan.getTable(), source))
-                    .toList();
-                return scans.size() == 1 ? scans.get(0) : LogicalUnion.create(scans, true);
+            };
+
+            @Override
+            public RelNode visit(RelNode other) {
+                if (other instanceof TableScan scan) {
+                    return expand(scan);
+                }
+                return super.visit(other).accept(subqueries);
             }
         });
+    }
+
+    private static RelNode expand(TableScan scan) {
+        Planner.SourceTable table = scan.getTable().unwrapOrThrow(Planner.SourceTable.class);
+        if (table.physicalSources().isEmpty()) {
+            throw new UnsupportedOperationException("logical source " + table.name() + " has no physical source");
+        }
+        List<RelNode> scans = table.physicalSources().stream()
+            .map(source -> (RelNode) new PhysicalSourceScan(scan.getCluster(), scan.getTraitSet(), scan.getTable(), source))
+            .toList();
+        return scans.size() == 1 ? scans.get(0) : LogicalUnion.create(scans, true);
     }
 }

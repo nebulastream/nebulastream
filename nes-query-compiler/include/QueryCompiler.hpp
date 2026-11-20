@@ -16,38 +16,22 @@
 #include <memory>
 #include <utility>
 
-#include <Plans/LogicalPlan.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <PhysicalQuery.hpp>
+#include <PipelinedQueryPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation
 {
 
-/// Represents a query compilation request.
-struct QueryCompilationRequest
-{
-    LogicalPlan queryPlan;
-
-    /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
-    bool debug = false;
-    DumpMode dumpCompilationResult = DumpMode{DumpMode::Options::NONE, false};
-};
-
-/// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan
-/// This guarantees that identical QueryPlan instances produce identical CompiledQueryPlan results.
+/// The query compiler behaves as a pure function: PipelinedQueryPlan -> CompiledQueryPlan
+/// This guarantees that identical pipelines produce identical CompiledQueryPlan results.
 class QueryCompiler
 {
 public:
-    explicit QueryCompiler(QueryExecutionConfiguration defaultQueryExecution) : defaultQueryExecution(std::move(defaultQueryExecution)) { };
-
-    std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
-    /// A query planned down to its pipelines (see PhysicalQuery): only code generation.
-    std::unique_ptr<CompiledQueryPlan> compileQuery(const PhysicalQuery& query, DumpMode dumpCompilationResult);
-
-private:
-    QueryExecutionConfiguration defaultQueryExecution;
+    /// Pipelines that the worker built from a physical query (see PhysicalQuery): only code generation.
+    std::unique_ptr<CompiledQueryPlan> compilePipelines(const std::shared_ptr<PipelinedQueryPlan>& pipelines, DumpMode dumpCompilationResult);
 };
 
 }

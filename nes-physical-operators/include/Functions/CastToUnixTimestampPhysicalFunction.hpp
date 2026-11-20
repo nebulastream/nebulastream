@@ -30,8 +30,6 @@ public:
     explicit CastToUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createCastToUnixTs(PhysicalFunctionRegistryArguments arguments);
-
 private:
     DataType outputType;
     PhysicalFunction childFunction;

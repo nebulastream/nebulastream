@@ -21,8 +21,8 @@
 #include <vector>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
+#include <PhysicalQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -42,7 +42,8 @@ public:
     /// The timeout bounds how long a submitted query may take to reach a terminal state.
     /// Zero disables the timeout.
     QuerySubmitter(std::unique_ptr<QueryManager> queryManager, std::chrono::milliseconds timeout);
-    std::expected<DistributedQueryId, Exception> startQuery(const DistributedLogicalPlan& plan);
+    /// Calcite's placed pipelines (--physical): each worker compiles its part.
+    std::expected<DistributedQueryId, Exception> startQuery(const PlacedPhysicalQuery& query);
     void stopQuery(const DistributedQueryId& query);
     DistributedQueryStatusSnapshot waitForQueryTermination(const DistributedQueryId& query);
 

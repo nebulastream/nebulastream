@@ -16,7 +16,7 @@ CREATE SINK sinkIdx3ValueTimeStamp(id_x_3 INT64 NOT NULL, value INT64 NOT NULL, 
 CREATE SINK sinkIdNewValueNewTimeStamp(id_new INT64 NOT NULL, value_new INT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 
 # Filter and then map
-SELECT id * 3 AS id_x_3, value, timestamp FROM stream WHERE value != 1 INTO sinkIdx3ValueTimeStamp;
+SELECT id * 3 AS id_x_3, "VALUE", "TIMESTAMP" FROM "STREAM" WHERE "VALUE" != 1 INTO sinkIdx3ValueTimeStamp;
 ----
 9,11,1002
 12,412,2000
@@ -24,9 +24,9 @@ SELECT id * 3 AS id_x_3, value, timestamp FROM stream WHERE value != 1 INTO sink
 18,22,2021
 
 # Filter, Map and then Filter again
-SELECT id_x_3, value, timestamp FROM
-    (SELECT id * 3 AS id_x_3, value, timestamp FROM stream WHERE value != 1)
-WHERE id_x_3 != 9 AND value != 312 INTO sinkIdx3ValueTimeStamp;
+SELECT id_x_3, "VALUE", "TIMESTAMP" FROM
+    (SELECT id * 3 AS id_x_3, "VALUE", "TIMESTAMP" FROM "STREAM" WHERE "VALUE" != 1)
+WHERE id_x_3 != 9 AND "VALUE" != 312 INTO sinkIdx3ValueTimeStamp;
 ----
 12,412,2000
 18,22,2021
@@ -37,7 +37,7 @@ WHERE id_x_3 != 9 AND value != 312 INTO sinkIdx3ValueTimeStamp;
 #SELECT id_x_3 * 3 AS id_x_9, value, timestamp FROM
 #    (SELECT id * 3 AS id_x_3, value, timestamp FROM stream WHERE value != 1)
 #INTO SINK
-SELECT id * 9 AS id_x_3, value, timestamp FROM stream WHERE value != 1 INTO sinkIdx3ValueTimeStamp;
+SELECT id * 9 AS id_x_3, "VALUE", "TIMESTAMP" FROM "STREAM" WHERE "VALUE" != 1 INTO sinkIdx3ValueTimeStamp;
 ----
 27 11 1002
 36 412 2000
@@ -56,7 +56,7 @@ SELECT id * 9 AS id_x_3, value, timestamp FROM stream WHERE value != 1 INTO sink
 #SELECT id_new, value * 25 - id_new * 5 - 125 AS value_new, timestamp FROM
 #    (SELECT id * 3 / value + value * 2 AS id_new FROM stream)
 #INTO SINK
-SELECT id * 3 / value + value * 2 AS id_new, value * 25 - (id * 3 / value + value * 2) * 5 - 125 AS value_new, timestamp FROM stream INTO sinkIdNewValueNewTimeStamp;
+SELECT id * 3 / "VALUE" + "VALUE" * 2 AS id_new, "VALUE" * 25 - (id * 3 / "VALUE" + "VALUE" * 2) * 5 - 125 AS value_new, "TIMESTAMP" FROM "STREAM" INTO sinkIdNewValueNewTimeStamp;
 ----
 5,-125,1000
 8,-140,1001

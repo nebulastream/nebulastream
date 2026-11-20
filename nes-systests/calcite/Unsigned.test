@@ -1,7 +1,7 @@
-# calcite
 # name: calcite/Unsigned.test
 # description: UINT64 and UINT32 under the Calcite frontend: Calcite's unsigned types, Substrait's u64/u32. Values at and
-#              above 2^63 tell unsigned from signed. Mixing signed and unsigned values, and lossy casts, fail (2008).
+#              above 2^63 tell unsigned from signed. A mix of signed and unsigned values follows Calcite's types, and
+#              casts between them wrap, as in C.
 # groups: [Calcite]
 
 CREATE LOGICAL SOURCE t(id UINT64 NOT NULL, u UINT64, v UINT32, i INT64);
@@ -74,20 +74,33 @@ SELECT id, CAST(v AS BIGINT) + i FROM t WHERE id = 4 INTO File();
 ----
 4,5
 
-# What a mix of signed and unsigned values means is not defined (yet).
-SELECT u + i FROM t INTO File();
+# A mix of signed and unsigned values follows Calcite's types. Arithmetic computes in the wider type, at equal width the
+# unsigned one: i becomes a BIGINT UNSIGNED (-1 wraps to 2^64 - 1), and the sum wraps.
+SELECT id, u + i FROM t INTO File();
 ----
-ERROR 2008
+1,18446744073709551614
+2,9223372036854775813
+3,9223372036854775807
+4,7
+5,
 
+# Calcite compares U with I as CAST(U AS BIGINT): 2^63 becomes -2^63, which is less than 5.
 SELECT id FROM t WHERE u < i INTO File();
 ----
-ERROR 2008
+2
 
+# A negative literal: u is compared in the common type, BIGINT UNSIGNED, where -1 is 2^64 - 1.
 SELECT id FROM t WHERE u < -1 INTO File();
 ----
-ERROR 2008
+2
+3
+4
 
-# BIGINT does not hold every UINT64 value.
-SELECT CAST(u AS BIGINT) FROM t INTO File();
+# Casts between signed and unsigned wrap, as in C.
+SELECT id, CAST(u AS BIGINT) FROM t INTO File();
 ----
-ERROR 2008
+1,-1
+2,-9223372036854775808
+3,9223372036854775807
+4,5
+5,

@@ -35,7 +35,7 @@ IsNullCheckPhysicalFunction::IsNullCheckPhysicalFunction(PhysicalFunction childF
 }
 
 PhysicalFunctionRegistryReturnType
-IsNullCheckPhysicalFunction::createIsNull(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+IsNullCheckPhysicalFunction::createIs_Null(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "IsNull function must have exactly one sub-function");
     return IsNullCheckPhysicalFunction{physicalFunctionRegistryArguments.childFunctions[0]};

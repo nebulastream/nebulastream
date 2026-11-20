@@ -16,14 +16,12 @@ CREATE SINK ysb10kChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, campaign_
 
 # Query 1 YSB with 1k campaign_ids
 SELECT
-    start,
-    end,
-    campaign_id, 
+    window_start AS "START",
+    window_end AS "END",
+    campaign_id,
     SUM(user_id) AS sum_user_id
-FROM ysb1k
-WHERE event_type < 1
-GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 30 SEC)
+FROM TABLE(TUMBLE((SELECT * FROM ysb1k WHERE event_type < 1), DESCRIPTOR(current_ms), INTERVAL '30' SECOND))
+GROUP BY window_start, window_end, campaign_id
 INTO ysb1kChecksum;
 ----
 583 440557
@@ -31,14 +29,12 @@ INTO ysb1kChecksum;
 
 # Query 2 YSB with 10k campaign_ids
 SELECT
-    start,
-    end,
+    window_start AS "START",
+    window_end AS "END",
     campaign_id,
     SUM(user_id) AS sum_user_id
-FROM ysb10k
-WHERE event_type < 1
-GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 30 SEC)
+FROM TABLE(TUMBLE((SELECT * FROM ysb10k WHERE event_type < 1), DESCRIPTOR(current_ms), INTERVAL '30' SECOND))
+GROUP BY window_start, window_end, campaign_id
 INTO ysb10kChecksum;
 ----
 852 678338

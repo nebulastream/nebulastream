@@ -6881,6 +6881,54 @@
       "allDeclaredFields": true
     },
     {
+      "type": "nes.calcite.proto.AnonymousSource",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.AnonymousSource$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.AnonymousSource$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.AnonymousSource$FormatOptionsDefaultEntryHolder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.AnonymousSource$SourceOptionsDefaultEntryHolder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.AnonymousSourceOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "nes.calcite.proto.CalcitePlannerGrpc",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
@@ -7049,7 +7097,783 @@
       "allDeclaredFields": true
     },
     {
+      "type": "nes.calcite.proto.Function",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Function$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Function$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.FunctionOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.InferModel",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.InferModel$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.InferModel$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.InferModelOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Model",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Model$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Model$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.ModelOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "nes.calcite.proto.NesCalcitePlanner",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Emit",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Emit$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Emit$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$EmitOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Field",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Field$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Field$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$FieldOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$InferModel",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$InferModel$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$InferModel$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$InferModelOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Join",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Join$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Join$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinBuild",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinBuild$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinBuild$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinBuildOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinProbe",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinProbe$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinProbe$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$JoinProbeOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Map",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Map$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Map$Assignment",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Map$Assignment$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Map$Assignment$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Map$AssignmentOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Map$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$MapOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSink",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSink$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSink$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSinkOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSource",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSource$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSource$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$NetworkSourceOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$OperatorCase",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Scan",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Scan$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Scan$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$ScanOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Selection",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Selection$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Selection$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$SelectionOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Sink",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Sink$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Sink$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$SinkOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$SourceScan",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$SourceScan$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$SourceScan$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$SourceScanOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WatermarkAssigner",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WatermarkAssigner$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WatermarkAssigner$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WatermarkAssignerOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Window",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Window$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$Window$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowAggregation",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowAggregation$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowAggregation$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowAggregationOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowBuild",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowBuild$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowBuild$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowBuildOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowProbe",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowProbe$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowProbe$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperator$WindowProbeOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalOperatorOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalSource",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalSource$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalSource$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PhysicalSourceOrBuilder",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
       "allPublicMethods": true,
@@ -7121,6 +7945,102 @@
       "allDeclaredFields": true
     },
     {
+      "type": "nes.calcite.proto.PlanStep",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PlanStep$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PlanStep$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.PlanStepOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Projection",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Projection$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Projection$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.ProjectionOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.RuleApplication",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.RuleApplication$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.RuleApplication$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.RuleApplicationOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
       "type": "nes.calcite.proto.Source",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
@@ -7146,6 +8066,38 @@
     },
     {
       "type": "nes.calcite.proto.SourceOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.SourceType",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.SourceType$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.SourceType$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.SourceTypeOrBuilder",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
       "allPublicMethods": true,
@@ -7202,22 +8154,6 @@
     },
     {
       "type": "nes.calcite.proto.WindowAggregate$Builder",
-      "allDeclaredConstructors": true,
-      "allPublicConstructors": true,
-      "allPublicMethods": true,
-      "allDeclaredMethods": true,
-      "allDeclaredFields": true
-    },
-    {
-      "type": "nes.calcite.proto.WindowAggregate$Function",
-      "allDeclaredConstructors": true,
-      "allPublicConstructors": true,
-      "allPublicMethods": true,
-      "allDeclaredMethods": true,
-      "allDeclaredFields": true
-    },
-    {
-      "type": "nes.calcite.proto.WindowAggregate$Function$1",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
       "allPublicMethods": true,
@@ -7306,6 +8242,86 @@
     },
     {
       "type": "nes.calcite.proto.WindowJoinOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Worker",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Worker$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.Worker$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.WorkerOrBuilder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.WorkerPart",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.WorkerPart$1",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.WorkerPart$Builder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.WorkerPart$ModelsDefaultEntryHolder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.WorkerPart$SourcesDefaultEntryHolder",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "nes.calcite.proto.WorkerPartOrBuilder",
       "allDeclaredConstructors": true,
       "allPublicConstructors": true,
       "allPublicMethods": true,

@@ -14,21 +14,27 @@ ATTACH INLINE
 -100,-30000,-2000000000,-1000000000000000000,100,30000,2000000000,3000000000000000000,0.5,0.5,210
 -100,-30000,-2000000000,-1000000000000000000,100,30000,2000000000,3000000000000000000,0.5,0.5,220
 
-# Each SUM result is widened: signed integers to INT64, unsigned integers to UINT64; floats keep their input type.
+# Each SUM result is widened: signed integers to INT64, unsigned integers to UINT64; floats are summed as FLOAT64.
+# Calcite types SUM over UINT8/16/32 as the input type (the sum wraps), so the unsigned widening is written explicitly
+# as SUM(CAST(x AS BIGINT UNSIGNED)); the signed widening is implicit.
 # Every integer sum exceeds the range of its input type, so the values are only correct with the widened accumulator.
-CREATE SINK sinkSum(start UINT64 NOT NULL, end UINT64 NOT NULL, i8_sum INT64 NOT NULL, i16_sum INT64 NOT NULL, i32_sum INT64 NOT NULL, i64_sum INT64 NOT NULL, u8_sum UINT64 NOT NULL, u16_sum UINT64 NOT NULL, u32_sum UINT64 NOT NULL, u64_sum UINT64 NOT NULL, f32_sum FLOAT32 NOT NULL, f64_sum FLOAT64 NOT NULL) TYPE File;
-SELECT start, end, SUM(i8) AS i8_sum, SUM(i16) AS i16_sum, SUM(i32) AS i32_sum, SUM(i64) AS i64_sum,
-       SUM(u8) AS u8_sum, SUM(u16) AS u16_sum, SUM(u32) AS u32_sum, SUM(u64) AS u64_sum,
+CREATE SINK sinkSum(start UINT64 NOT NULL, end UINT64 NOT NULL, i8_sum INT64, i16_sum INT64, i32_sum INT64, i64_sum INT64, u8_sum UINT64, u16_sum UINT64, u32_sum UINT64, u64_sum UINT64, f32_sum FLOAT64, f64_sum FLOAT64) TYPE File;
+SELECT window_start AS "START", window_end AS "END", SUM(i8) AS i8_sum, SUM(i16) AS i16_sum, SUM(i32) AS i32_sum, SUM(i64) AS i64_sum,
+       SUM(CAST(u8 AS BIGINT UNSIGNED)) AS u8_sum, SUM(CAST(u16 AS BIGINT UNSIGNED)) AS u16_sum, SUM(CAST(u32 AS BIGINT UNSIGNED)) AS u32_sum, SUM(u64) AS u64_sum,
        SUM(f32) AS f32_sum, SUM(f64) AS f64_sum
-FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkSum;
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
+INTO sinkSum;
 ----
 100,200,300,90000,6000000000,3000000000000000000,600,180000,12000000000,18000000000000000000,4.5,7.5
 200,300,-300,-90000,-6000000000,-3000000000000000000,300,90000,6000000000,9000000000000000000,1.5,1.5
 
 
-# Promotion also applies to sliding windows, whose slices are combined pairwise in the widened type.
-SELECT start, end, SUM(i32) AS i32_sum, SUM(u32) AS u32_sum
-FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO File();
+# Promotion also applies to sliding windows (unsigned widening written explicitly, see above), whose slices are combined pairwise in the widened type.
+SELECT window_start AS "START", window_end AS "END", SUM(i32) AS i32_sum, SUM(CAST(u32 AS BIGINT UNSIGNED)) AS u32_sum
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(ts), INTERVAL '0.05' SECOND, INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
+INTO File();
 ----
 50,150,6000000000,12000000000
 100,200,6000000000,12000000000
@@ -47,7 +53,10 @@ ATTACH INLINE
 ,200
 
 CREATE SINK sinkNullableSum(start UINT64 NOT NULL, end UINT64 NOT NULL, v_sum INT64) TYPE File;
-SELECT start, end, SUM(v) AS v_sum FROM streamNullable WINDOW TUMBLING(ts, size 100 ms) INTO sinkNullableSum;
+SELECT window_start AS "START", window_end AS "END", SUM(v) AS v_sum
+FROM TABLE(TUMBLE(TABLE streamNullable, DESCRIPTOR(ts), INTERVAL '0.1' SECOND))
+GROUP BY window_start, window_end
+INTO sinkNullableSum;
 ----
 100,200,4000000000
 200,300,NULL

@@ -27,7 +27,8 @@ public final class NativePlanner {
         } catch (Throwable e) {
             /// Throwable: e.g. Calcite's AssertionErrors, or an Error of the native image (a missing registration), which
             /// would otherwise only surface as "the native Calcite planner failed".
-            response.setError(PlannerServer.describe(e)).setUnsupported(!PlannerServer.isInvalidQuery(e));
+            response.setError(PlannerServer.describe(e)).setUnsupported(!PlannerServer.isInvalidQuery(e))
+                .setPlacementFailure(PlacementFailure.in(e));
         }
         return response.build().toByteArray();
     }

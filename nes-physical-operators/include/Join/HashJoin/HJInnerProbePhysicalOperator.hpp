@@ -22,8 +22,8 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <Join/JoinType.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <ExecutionContext.hpp>
 
@@ -45,9 +45,9 @@ public:
         ChainedHashMapConfig rightHashMapBasedOptions,
         std::optional<PhysicalFunction> residualFunction = std::nullopt);
 
-    static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
+    static constexpr bool supportsJoinType(JoinType joinType) noexcept
     {
-        return joinType == JoinLogicalOperator::JoinType::INNER_JOIN || joinType == JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT;
+        return joinType == JoinType::INNER_JOIN || joinType == JoinType::CARTESIAN_PRODUCT;
     }
 
 protected:

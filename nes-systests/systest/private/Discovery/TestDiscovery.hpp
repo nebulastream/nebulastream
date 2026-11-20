@@ -45,8 +45,6 @@ struct DiscoveredTestFile
     /// Query numbers to keep; an empty filter keeps every query.
     std::unordered_set<SystestQueryId> queryFilter;
     std::vector<TestGroup> groups;
-    /// `# calcite` at the top of the file: its queries are written in Calcite's SQL dialect and planned by Calcite.
-    bool calcite = false;
 };
 
 std::ostream& operator<<(std::ostream& os, const std::vector<DiscoveredTestFile>& testFiles);

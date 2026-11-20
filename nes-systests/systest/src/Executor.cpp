@@ -142,7 +142,8 @@ RunOutcome runOnce(const SystestConfiguration& config, const RunPolicy& policy, 
         = [&](const ReportEntry& entry, const RewrittenTestCase&, const std::span<const StatementTiming> timings)
     { printProgress(++checkedSoFar, totalTestCases, entry, timings); };
 
-    std::ranges::move(runner.submitAll(policy.concurrency, observe), std::back_inserter(report));
+    std::ranges::move(
+        config.planOnly ? runner.planAll(observe) : runner.submitAll(policy.concurrency, observe), std::back_inserter(report));
     return summarize(report);
 }
 
@@ -267,7 +268,8 @@ RunOutcome Executor::execute() const
         shuffle(prepared.partitions, *ordering);
     }
 
-    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(config, runPolicy, std::move(prepared))
+    /// Planning repeats nothing worth measuring, so --plan-only runs once.
+    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) or config.planOnly ? runOnce(config, runPolicy, std::move(prepared))
                                                                     : runRounds(config, runPolicy, std::move(prepared));
 }
 

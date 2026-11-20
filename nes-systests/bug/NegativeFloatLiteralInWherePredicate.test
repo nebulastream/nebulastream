@@ -13,8 +13,8 @@ ATTACH INLINE
 CREATE SINK sinkStream(doublee FLOAT64 NOT NULL) TYPE File;
 
 SELECT *
-FROM stream
-WHERE doublee > FLOAT64(-0.5) AND doublee < FLOAT64(0.5)
+FROM "STREAM"
+WHERE doublee > -0.5E0 AND doublee < 0.5E0
 INTO sinkStream;
 ----
 -0.25
@@ -32,7 +32,7 @@ CREATE SINK sinkIntStream(value INT64 NOT NULL) TYPE File;
 
 SELECT *
 FROM intStream
-WHERE value > INT64(-2) AND value < INT64(1)
+WHERE "VALUE" > CAST(-2 AS BIGINT) AND "VALUE" < CAST(1 AS BIGINT)
 INTO sinkIntStream;
 ----
 -1

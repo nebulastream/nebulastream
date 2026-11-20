@@ -17,7 +17,10 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <algorithm>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <optional>
 #include <regex>
 #include <string>
@@ -26,18 +29,19 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Plans/LogicalPlanBuilder.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <set>
+#include <Configurations/ConfigField.hpp>
+#include <InputFormatterConfigSchemaRegistry.hpp>
+#include <SourceConfigSchemaRegistry.hpp>
 #include <unordered_set>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <grpcpp/grpcpp.h>
 #include <substrait/plan.pb.h>
+#include <FunctionSignatureRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <nes_calcite_planner.grpc.pb.h>
 
@@ -49,10 +53,6 @@ namespace NES::Calcite
 {
 namespace
 {
-/// NebulaStream optimizer rules whose rewrites Calcite performs (see Planner.java), not run again on Calcite plans.
-constexpr std::array<std::string_view, 3> SKIPPED_NES_RULES
-    = {"PredicatePushdownRule", "ProjectionPushdownRule", "RedundantProjectionRemovalRule"};
-
 #ifdef NES_CALCITE_NATIVE
 /// The planner compiled into this process with GraalVM (see nes-calcite/CMakeLists.txt); `address` is not used.
 nes::calcite::PlanResponse callPlanner(const nes::calcite::PlanRequest& request, const std::string& /*address*/)
@@ -89,6 +89,10 @@ nes::calcite::PlanResponse callPlanner(const nes::calcite::PlanRequest& request,
     {
         throw UnsupportedQuery("the native Calcite planner returned an unreadable response");
     }
+    if (response.placement_failure())
+    {
+        throw PlacementFailure("Calcite: {}", response.error());
+    }
     if (response.unsupported())
     {
         throw UnsupportedQuery("Calcite: {}", response.error());
@@ -115,6 +119,10 @@ nes::calcite::PlanResponse callPlanner(const nes::calcite::PlanRequest& request,
     if (status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
     {
         throw InvalidQuerySyntax("Calcite rejected the query: {}", status.error_message());
+    }
+    if (status.error_code() == grpc::StatusCode::FAILED_PRECONDITION)
+    {
+        throw PlacementFailure("Calcite: {}", status.error_message());
     }
     if (status.error_code() == grpc::StatusCode::UNIMPLEMENTED)
     {
@@ -165,16 +173,33 @@ nes::calcite::FieldType toFieldType(const DataType::Type type)
 }
 }
 
+namespace
+{
+thread_local std::string requestLabel = "request"; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+
+void dumpRequest(const nes::calcite::PlanRequest& request)
+{
+    const char* directory = std::getenv("NES_CALCITE_DUMP_REQUESTS"); /// NOLINT(concurrency-mt-unsafe)
+    if (directory == nullptr or *directory == '\0')
+    {
+        return;
+    }
+    auto name = requestLabel;
+    std::ranges::replace_if(name, [](const char c) { return c == '/' or c == ' '; }, '_');
+    std::ofstream file(std::filesystem::path(directory) / (name + ".pb"), std::ios::binary | std::ios::trunc);
+    request.SerializeToOstream(&file);
+}
+}
+
+void setRequestLabel(std::string label)
+{
+    requestLabel = std::move(label);
+}
+
 std::string plannerAddress()
 {
     const char* address = std::getenv("NES_CALCITE_PLANNER"); /// NOLINT(concurrency-mt-unsafe)
     return address != nullptr ? address : "localhost:50061";
-}
-
-bool physicalPlans()
-{
-    const char* value = std::getenv("NES_CALCITE_PHYSICAL"); /// NOLINT(concurrency-mt-unsafe)
-    return value != nullptr and std::string_view{value} == "1";
 }
 
 bool finiteInputs()
@@ -202,7 +227,7 @@ struct Request
 {
     nes::calcite::PlanRequest request;
     std::unordered_map<std::string, std::string> catalogNames; /// name in the SQL -> catalog name
-    std::optional<std::string> fallbackSource; /// a catalog source the query may be read from
+    std::unordered_set<std::string> caseSensitive; /// case-sensitive (quoted) source and field names, as sent to Calcite
 };
 
 Request makeRequest(
@@ -210,9 +235,75 @@ Request makeRequest(
     const SourceCatalog& catalog,
     const bool finiteInputs,
     const std::unordered_map<std::string, std::string>& sourceNames,
-    const bool physical)
+    const bool physical,
+    const ModelCatalog* models)
 {
     Request result;
+    /// The registered source types and input formatter options, for anonymous sources (TABLE(FILE(...)) etc.).
+    for (const auto& type : SourceConfigSchemaRegistry::instance().getRegisteredNames())
+    {
+        auto* typeProto = result.request.add_source_types();
+        typeProto->set_name(type);
+        for (const auto& option : SourceConfigSchemaRegistry::instance().getSchema(type).value_or(Schema<QualifiedErasedConfigField, Ordered>{}))
+        {
+            typeProto->add_options(std::ranges::prev(option.getFullyQualifiedName().end())->asCanonicalString());
+        }
+    }
+    std::set<std::string> formatOptions;
+    for (const auto& type : InputFormatterConfigSchemaRegistry::instance().getRegisteredNames())
+    {
+        for (const auto& option : InputFormatterConfigSchemaRegistry::instance().getSchema(type).value_or(Schema<QualifiedErasedConfigField, Ordered>{}))
+        {
+            formatOptions.insert(std::ranges::prev(option.getFullyQualifiedName().end())->asCanonicalString());
+        }
+    }
+    for (const auto& option : formatOptions)
+    {
+        result.request.add_format_options(option);
+    }
+    /// Our functions that SQL does not have.
+    for (const auto& name : FunctionSignatureRegistry::instance().getRegisteredNames())
+    {
+        const auto signature = FunctionSignatureRegistry::instance().find(name).value();
+        auto* function = result.request.add_functions();
+        function->set_name(name);
+        for (const auto& operand : signature.operands)
+        {
+            function->add_operands(operand);
+        }
+        function->set_result(signature.result);
+        function->set_aggregation(signature.aggregation);
+    }
+    /// The registered models, for MODEL_INFERENCE.
+    for (const auto& model : models == nullptr ? std::vector<RegisteredModel>{} : models->getRegisteredModels())
+    {
+        /// Offered under the name the query uses, as sources are (e.g. systest's unprefixed names).
+        auto name = model.getName();
+        if (not sourceNames.empty())
+        {
+            const auto alias = sourceNames.find(name);
+            if (alias == sourceNames.end())
+            {
+                continue;
+            }
+            name = alias->second;
+        }
+        result.catalogNames.emplace(name, model.getName());
+        auto* modelProto = result.request.add_models();
+        modelProto->set_name(name);
+        const auto addFields = [](const auto& schema, auto* fields)
+        {
+            for (const auto& field : schema)
+            {
+                auto* fieldProto = fields->Add();
+                fieldProto->set_name(fmt::format("{}", field.getFullyQualifiedName()));
+                fieldProto->set_type(toFieldType(field.getDataType().type));
+                fieldProto->set_nullable(field.getDataType().nullable);
+            }
+        };
+        addFields(model.getSchema().inputs, modelProto->mutable_inputs());
+        addFields(model.getSchema().outputs, modelProto->mutable_outputs());
+    }
     result.request.set_sql(std::string{sql});
     result.request.set_finite_inputs(finiteInputs);
     result.request.set_physical(physical);
@@ -230,20 +321,25 @@ Request makeRequest(
             name = alias->second;
         }
         result.catalogNames.emplace(name, catalogName);
-        if (not result.fallbackSource)
+        if (source.getLogicalSourceName().isCaseSensitive())
         {
-            result.fallbackSource = catalogName;
+            result.caseSensitive.insert(catalogName);
         }
         auto* sourceProto = result.request.add_sources();
         sourceProto->set_name(name);
         for (const auto& field : *source.getSchema())
         {
+            if (std::ranges::any_of(field.getFullyQualifiedName(), [](const auto& part) { return part.isCaseSensitive(); }))
+            {
+                result.caseSensitive.insert(fmt::format("{}", field.getFullyQualifiedName()));
+            }
             auto* fieldProto = sourceProto->add_fields();
             fieldProto->set_name(fmt::format("{}", field.getFullyQualifiedName()));
             fieldProto->set_type(toFieldType(field.getDataType().type));
             fieldProto->set_nullable(field.getDataType().nullable);
         }
-        if (physical)
+        /// Also for logical plans, which do not use them: a saved request (NES_CALCITE_DUMP_REQUESTS) can then be planned
+        /// down to placed pipelines, too.
         {
             for (const auto& descriptor : catalog.getPhysicalSources(source).value_or(std::unordered_set<SourceDescriptor>{}))
             {
@@ -276,32 +372,6 @@ substrait::Plan substraitPlanOf(const nes::calcite::PlanResponse& response, cons
 }
 }
 
-LogicalPlan plan(
-    const std::string_view sql,
-    const std::string_view sinkClause,
-    const SourceCatalog& catalog,
-    const std::string& address,
-    const bool finiteInputs,
-    const std::unordered_map<std::string, std::string>& sourceNames)
-{
-    auto [request, catalogNames, fallbackSource] = makeRequest(sql, catalog, finiteInputs, sourceNames, /*physical=*/false);
-    const auto substraitPlan = substraitPlanOf(callPlanner(request, address), sql);
-    auto plan = toLogicalPlan(substraitPlan, finiteInputs, fallbackSource, std::move(catalogNames));
-
-    /// The sink clause is ours: let our parser build the sink of a dummy query and put it on top of Calcite's plan.
-    if (not fallbackSource)
-    {
-        throw UnsupportedQuery("Calcite queries need at least one logical source");
-    }
-    const auto sinkPlan
-        = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(fmt::format("SELECT * FROM {} INTO {}", *fallbackSource, sinkClause));
-    const auto sink = sinkPlan.getRootOperators().at(0);
-    /// Unsafe: the plan is not bound yet, so the sink must not infer its schema now (the optimizer does that).
-    plan = plan.withRootOperators({sink.withChildrenUnsafe({plan.getRootOperators().at(0)})});
-    plan.setSkippedOptimizerRules({SKIPPED_NES_RULES.begin(), SKIPPED_NES_RULES.end()});
-    return plan;
-}
-
 namespace
 {
 /// The worker of a part of a placed physical plan: the host of its last operator (the Sink or a NetworkSink).
@@ -319,7 +389,7 @@ std::string partHost(const substrait::Rel& root)
 }
 }
 
-PlacedPhysicalQuery planPhysical(
+PlannedPhysicalQuery planPhysical(
     const std::string_view sql,
     const std::string_view sinkClause,
     const SourceCatalog& sourceCatalog,
@@ -327,35 +397,33 @@ PlacedPhysicalQuery planPhysical(
     const WorkerCatalog& workerCatalog,
     const std::string& address,
     const bool finiteInputs,
-    const std::unordered_map<std::string, std::string>& sourceNames)
+    const std::unordered_map<std::string, std::string>& sourceNames,
+    const ModelCatalog* models,
+    const QueryOptimizerConfiguration& optimizer)
 {
-    auto [request, catalogNames, fallbackSource] = makeRequest(sql, sourceCatalog, finiteInputs, sourceNames, /*physical=*/true);
-    if (not fallbackSource)
-    {
-        throw UnsupportedQuery("Calcite queries need at least one logical source");
-    }
-    /// The sink clause is in our dialect: our parser reads it as the sink of a dummy query.
-    const auto sinkPlan
-        = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(fmt::format("SELECT * FROM {} INTO {}", *fallbackSource, sinkClause));
-    const auto sink = sinkPlan.getRootOperators().at(0);
+    auto [request, catalogNames, caseSensitive] = makeRequest(sql, sourceCatalog, finiteInputs, sourceNames, /*physical=*/true, models);
+    request.set_nested_loop_joins(optimizer.joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN);
+    /// The sink clause is in our dialect, which our parser reads.
+    const auto sink = AntlrSQLQueryParser::bindSinkClause(sinkClause);
+    const auto* const anonymous = std::get_if<AntlrSQLQueryParser::AnonymousSinkClause>(&sink);
 
     /// The planner places the sink on its host: a named sink's, or the anonymous sink's "host" option (as
     /// AnonymousSinkBindingRule, "host" places the sink, it does not configure it).
     std::optional<SinkDescriptor> namedSink;
     std::unordered_map<Identifier, std::string> anonymousConfig;
     Host sinkHost{Host::INVALID};
-    if (const auto named = sink.tryGetAs<SinkLogicalOperator>())
+    if (const auto* const named = std::get_if<Identifier>(&sink))
     {
-        namedSink = sinkCatalog.getSinkDescriptor(named.value()->getSinkName());
+        namedSink = sinkCatalog.getSinkDescriptor(*named);
         if (not namedSink)
         {
-            throw UnknownSinkName("{}", named.value()->getSinkName());
+            throw UnknownSinkName("{}", *named);
         }
         sinkHost = namedSink->getHost();
     }
-    else if (const auto anonymous = sink.tryGetAs<AnonymousSinkLogicalOperator>())
+    else
     {
-        anonymousConfig = anonymous.value()->getSinkConfig();
+        anonymousConfig = anonymous->config;
         const auto host = anonymousConfig.find(Identifier::parse("host"));
         if (host == anonymousConfig.end())
         {
@@ -363,10 +431,6 @@ PlacedPhysicalQuery planPhysical(
         }
         sinkHost = Host(host->second);
         anonymousConfig.erase(host);
-    }
-    else
-    {
-        throw UnsupportedQuery("unknown sink clause {}", sinkClause);
     }
 
     std::unordered_map<Host, std::string> dataAddresses;
@@ -384,8 +448,18 @@ PlacedPhysicalQuery planPhysical(
         }
         dataAddresses.emplace(worker.host, worker.dataAddress);
     }
+    /// The sink runs on its host, which must be a worker (also without a topology to place on).
+    if (not dataAddresses.contains(sinkHost))
+    {
+        throw PlacementFailure(
+            "SINK({}) was placed on non-existing worker '{}'",
+            namedSink ? std::get<Identifier>(sink).asCanonicalString() : std::string("anonymous"),
+            sinkHost.getRawValue());
+    }
     request.set_sink_host(sinkHost.getRawValue());
-    const auto substraitPlan = substraitPlanOf(callPlanner(request, address), sql);
+    dumpRequest(request);
+    const auto response = callPlanner(request, address);
+    const auto substraitPlan = substraitPlanOf(response, sql);
 
     BindSink bindSink = [namedSink, anonymousConfig, sink, sinkHost, &sinkCatalog](
                             const Schema<UnqualifiedUnboundField, Ordered>& schema) -> SinkDescriptor
@@ -394,30 +468,89 @@ PlacedPhysicalQuery planPhysical(
         {
             return *namedSink;
         }
-        const auto anonymous = sink.tryGetAs<AnonymousSinkLogicalOperator>().value();
-        if (auto descriptor
-            = sinkCatalog.getAnonymousSink(schema, anonymous->getSinkType(), sinkHost, anonymousConfig, anonymous->getFormatConfig()))
+        /// An anonymous sink's own schema if it has one (e.g. systest's rewrite of a declared sink), else the result's.
+        const auto& anonymous = std::get<AntlrSQLQueryParser::AnonymousSinkClause>(sink);
+        if (auto descriptor = sinkCatalog.getAnonymousSink(
+                anonymous.schema.value_or(schema), anonymous.type, sinkHost, anonymousConfig, anonymous.formatConfig))
         {
             return std::move(*descriptor);
         }
         throw InvalidConfigParameter("Failed to create anonymous sink descriptor");
     };
     const auto context = std::make_shared<PhysicalPlanContext>(PhysicalPlanContext{
-        .sourceCatalog = sourceCatalog, .sinkCatalog = sinkCatalog, .bindSink = std::move(bindSink), .dataAddresses = std::move(dataAddresses)});
+        .sourceCatalog = sourceCatalog,
+        .sinkCatalog = sinkCatalog,
+        .bindSink = std::move(bindSink),
+        .dataAddresses = std::move(dataAddresses),
+        .models = models,
+        .catalogNames = catalogNames});
 
-    /// Each worker that runs a part of the plan builds the pipelines of its parts.
-    PlacedPhysicalQuery placed;
-    for (const auto& relation : substraitPlan.relations())
+    /// As our logical sink checks it: the schema of a named sink, or an anonymous sink's own one, has the result's fields, in
+    /// any order.
+    auto inputSchema = sinkInputSchema(substraitPlan);
+    const auto targetSchema = namedSink
+        ? std::optional{*std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(namedSink->getSchema())}
+        : anonymous->schema;
+    if (targetSchema)
     {
-        const auto host = Host(partHost(relation.root().input()));
-        placed.try_emplace(
-            host,
-            PhysicalQuery{
-                .queryId = INVALID_QUERY_ID,
-                .pipelines = [substraitPlan, context, host](const QueryId queryId, const QueryExecutionConfiguration& configuration)
-                { return toPipelines(substraitPlan, *context, host, queryId, configuration); }});
+        const auto& declared = *targetSchema;
+        const auto missing = [](const auto& full, const auto& partial)
+        {
+            std::vector<UnqualifiedUnboundField> fields;
+            for (const auto& field : full)
+            {
+                if (const auto found = partial[field.getFullyQualifiedName()]; not found or found->getDataType() != field.getDataType())
+                {
+                    fields.push_back(field);
+                }
+            }
+            return fields;
+        };
+        const auto expectedButNotFound = missing(declared, inputSchema);
+        const auto unexpected = missing(inputSchema, declared);
+        if (not expectedButNotFound.empty() or not unexpected.empty())
+        {
+            throw CannotInferSchema(
+                "The schema of the sink must be equal to the schema of the input operator. Expected fields {} where not found, and "
+                "found unexpected fields {}",
+                expectedButNotFound,
+                unexpected);
+        }
     }
-    return placed;
+    const auto sinkType = namedSink ? namedSink->getSinkType() : anonymous->type.asCanonicalString();
+
+    /// Each part is a query of its own on its worker, which builds its pipelines.
+    PlacedPhysicalQuery placed;
+    for (int relation = 0; relation < substraitPlan.relations_size(); ++relation)
+    {
+        const auto host = Host(partHost(substraitPlan.relations(relation).root().input()));
+        placed[host].push_back(PhysicalQuery{.queryId = INVALID_QUERY_ID, .part = resolveWorkerPart(substraitPlan, relation, *context, host)});
+    }
+    /// The sink writes its own schema, if it has one: that is the result systest and others read.
+    std::vector<std::pair<std::string, std::string>> steps;
+    for (const auto& step : response.steps())
+    {
+        steps.emplace_back(step.name(), step.plan());
+    }
+    return PlannedPhysicalQuery{
+        .parts = std::move(placed),
+        .sinkInputSchema = targetSchema.value_or(std::move(inputSchema)),
+        .sinkType = sinkType,
+        .explain = response.explain(),
+        .steps = std::move(steps)};
+}
+
+
+PlannedPhysicalQuery planStatement(
+    const std::string_view statement,
+    const SourceCatalog& sourceCatalog,
+    const SinkCatalog& sinkCatalog,
+    const WorkerCatalog& workerCatalog,
+    const ModelCatalog* models,
+    const QueryOptimizerConfiguration& optimizer)
+{
+    const auto [query, sinkClause] = splitSink(statement);
+    return planPhysical(query, sinkClause, sourceCatalog, sinkCatalog, workerCatalog, plannerAddress(), finiteInputs(), {}, models, optimizer);
 }
 
 }

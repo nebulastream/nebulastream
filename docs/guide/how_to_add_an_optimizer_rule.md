@@ -1,5 +1,7 @@
 # How to add an Optimizer `Rule`
 
+> **Outdated.** This document describes the logical operators and the query optimizer of NebulaStream. Both no longer exist. Apache Calcite plans the queries now (see `nes-calcite-planner/README.md`).
+
 Query optimization in NebulaStream is rule-based.   
 This includes the semantic analysis, the logical optimization, and the physical optimization (trait selection).
 The rules are defined in individual classes and loaded automatically if registered.

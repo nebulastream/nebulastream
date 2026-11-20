@@ -25,9 +25,60 @@ import org.apache.calcite.rex.RexNode;
 
 /** Isthmus converter that additionally emits {@link NesWindowAggregate} and {@link NesWindowJoin} as Substrait extension relations. */
 final class NesConverterProvider extends ConverterProvider {
-    NesConverterProvider() {
+    private final List<nes.calcite.proto.Function> functions;
+
+    /** functions: the engine's functions (PlanRequest.functions). */
+    NesConverterProvider(List<nes.calcite.proto.Function> functions) {
+        this(functions, Unsigned.EXTENSIONS.merge(NesFunctions.extension(functions)));
+    }
+
+    private NesConverterProvider(List<nes.calcite.proto.Function> functions, io.substrait.extension.SimpleExtension.ExtensionCollection extensions) {
         /// Unsigned integers as Substrait's u8..u64, see Unsigned.
-        super(ConverterProvider.builder().extensions(Unsigned.EXTENSIONS).typeConverter(Unsigned.TYPES));
+        super(ConverterProvider.builder().extensions(extensions).typeConverter(Unsigned.TYPES)
+            .typeFactory(io.substrait.isthmus.SubstraitTypeSystem.TYPE_FACTORY)
+            .scalarFunctionConverter(new ScalarFunctions(extensions, NesFunctions.substraitNames(functions))));
+        this.functions = functions;
+    }
+
+    /**
+     * Isthmus's conversion of scalar functions with our names (NesFunctions). Substrait's EXTRACT of a unit from QUARTER to
+     * DAY also takes the indexing of the unit, which isthmus gives for a date only: for a timestamp, it is given here (ONE).
+     */
+    private static final class ScalarFunctions extends io.substrait.isthmus.expression.ScalarFunctionConverter {
+        private static final java.util.Set<org.apache.calcite.avatica.util.TimeUnitRange> INDEXED = java.util.EnumSet.of(
+            org.apache.calcite.avatica.util.TimeUnitRange.QUARTER, org.apache.calcite.avatica.util.TimeUnitRange.MONTH,
+            org.apache.calcite.avatica.util.TimeUnitRange.DAY, org.apache.calcite.avatica.util.TimeUnitRange.DOY,
+            org.apache.calcite.avatica.util.TimeUnitRange.WEEK, org.apache.calcite.avatica.util.TimeUnitRange.DOW);
+
+        private final io.substrait.extension.SimpleExtension.ScalarFunctionVariant extract;
+
+        ScalarFunctions(io.substrait.extension.SimpleExtension.ExtensionCollection extensions, List<io.substrait.isthmus.expression.FunctionMappings.Sig> names) {
+            super(extensions.scalarFunctions(), names, io.substrait.isthmus.SubstraitTypeSystem.TYPE_FACTORY, Unsigned.TYPES);
+            extract = extensions.scalarFunctions().stream().filter(function -> function.key().equals("extract:req_req_pts")).findFirst()
+                .orElseThrow();
+        }
+
+        @Override
+        public java.util.Optional<Expression> convert(org.apache.calcite.rex.RexCall call, java.util.function.Function<RexNode, Expression> topLevelConverter) {
+            if (call.getKind() == org.apache.calcite.sql.SqlKind.EXTRACT && call.getOperands().size() == 2
+                && call.getOperands().get(0) instanceof org.apache.calcite.rex.RexLiteral unit
+                && call.getOperands().get(1).getType().getSqlTypeName() == org.apache.calcite.sql.type.SqlTypeName.TIMESTAMP
+                && INDEXED.contains(unit.getValueAs(org.apache.calcite.avatica.util.TimeUnitRange.class))) {
+                return java.util.Optional.of(Expression.ScalarFunctionInvocation.builder().declaration(extract)
+                    .addArguments(io.substrait.expression.EnumArg.of(unit.getValueAs(org.apache.calcite.avatica.util.TimeUnitRange.class).name()))
+                    .addArguments(io.substrait.expression.EnumArg.of("ONE"))
+                    .addArguments(topLevelConverter.apply(call.getOperands().get(1)))
+                    .outputType(Unsigned.TYPES.toSubstrait(call.getType())).build());
+            }
+            return super.convert(call, topLevelConverter);
+        }
+    }
+
+    /** Calcite's operators and ours (NesFunctions). */
+    @Override
+    public org.apache.calcite.sql.SqlOperatorTable getSqlOperatorTable() {
+        /// Ours first: where a name is also isthmus's (e.g. FROM_BASE64), our definition is the one the query calls.
+        return org.apache.calcite.sql.util.SqlOperatorTables.chain(NesFunctions.table(functions), super.getSqlOperatorTable());
     }
 
     RelDataTypeFactory typeFactory() {
@@ -89,6 +140,8 @@ final class NesConverterProvider extends ConverterProvider {
         final java.util.Map<String, List<Long>> channels = new java.util.HashMap<>();
         /// The handler id of each window's state.
         final java.util.IdentityHashMap<NesPhysical.WindowState, Integer> windows = new java.util.IdentityHashMap<>();
+        /// The handler id of each join's state.
+        final java.util.IdentityHashMap<NesPhysical.JoinState, Integer> joins = new java.util.IdentityHashMap<>();
     }
 
     private static final class Visitor extends SubstraitRelVisitor {
@@ -116,7 +169,13 @@ final class NesConverterProvider extends ConverterProvider {
         @Override
         public Rel apply(RelNode node) {
             RelNode stripped = Pipelines.strip(node);
-            return stripped instanceof NesPhysical.NesRel ? physical(stripped) : super.apply(node);
+            if (stripped instanceof NesPhysical.NesRel) {
+                return physical(stripped);
+            }
+            /// Substrait names only the root's columns: every relation carries Calcite's names of its columns, so that the
+            /// converter uses them and invents none (see SubstraitToLogicalPlan.cpp).
+            return super.apply(node).withHint(java.util.Optional.of(
+                io.substrait.hint.Hint.builder().addAllOutputNames(node.getRowType().getFieldNames()).build()));
         }
 
         /// A physical operator as an extension relation whose detail is its PhysicalOperator. Its inputs are written
@@ -125,7 +184,8 @@ final class NesConverterProvider extends ConverterProvider {
             List<Rel> inputs = node.getInputs().stream().map(this::apply).toList();
             boolean startsPipeline = node instanceof NesPhysical.SourceScan || node instanceof NesPhysical.Scan
                 || node instanceof NesPhysical.Sink || node instanceof NesPhysical.NetworkSource
-                || node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.WindowProbe;
+                || node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.WindowProbe
+                || node instanceof NesPhysical.JoinProbe;
             int pipeline = startsPipeline ? ids.nextPipeline++ : pipelines.get(Pipelines.strip(node.getInput(0)));
             pipelines.put(node, pipeline);
             List<Long> inputOrigins = node.getInputs().stream().flatMap(input -> origins.get(Pipelines.strip(input)).stream())
@@ -144,8 +204,13 @@ final class NesConverterProvider extends ConverterProvider {
             if (node instanceof NesPhysical.SourceScan scan) {
                 long origin = ids.nextOriginId++;
                 origins.put(node, List.of(origin));
-                operator.setSourceScan(PhysicalOperator.SourceScan.newBuilder()
-                    .setPhysicalSourceId(scan.physicalSource.getId()).setOriginId(origin));
+                PhysicalOperator.SourceScan.Builder sourceScan = PhysicalOperator.SourceScan.newBuilder().setOriginId(origin);
+                if (scan.anonymous != null) {
+                    sourceScan.setAnonymous(scan.anonymous);
+                } else {
+                    sourceScan.setPhysicalSourceId(scan.physicalSource.getId());
+                }
+                operator.setSourceScan(sourceScan);
                 build = converter -> operator.build();
             } else if (node instanceof NesPhysical.Scan scan) {
                 operator.setScan(PhysicalOperator.Scan.newBuilder().setParsesSource(scan.parsesSource()));
@@ -155,9 +220,19 @@ final class NesConverterProvider extends ConverterProvider {
                 build = converter -> operator.setSelection(PhysicalOperator.Selection.newBuilder()
                     .setPredicate(converter.getExpressionProtoConverter().toProto(predicate))).build();
             } else if (node instanceof NesPhysical.Map map) {
-                Expression expression = toExpression(map.expression);
-                build = converter -> operator.setMap(PhysicalOperator.Map.newBuilder().setField(map.field)
-                    .setExpression(converter.getExpressionProtoConverter().toProto(expression))).build();
+                List<Expression> expressions = map.expressions.stream().map(this::toExpression).toList();
+                build = converter -> {
+                    PhysicalOperator.Map.Builder spec = PhysicalOperator.Map.newBuilder();
+                    for (int i = 0; i < map.fields.size(); i++) {
+                        spec.addAssignments(PhysicalOperator.Map.Assignment.newBuilder().setField(map.fields.get(i))
+                            .setExpression(converter.getExpressionProtoConverter().toProto(expressions.get(i))));
+                    }
+                    return operator.setMap(spec).build();
+                };
+            } else if (node instanceof NesPhysical.InferModel infer) {
+                operator.setInferModel(PhysicalOperator.InferModel.newBuilder().setModel(infer.model.getName())
+                    .addAllInputFields(infer.inputFields));
+                build = converter -> operator.build();
             } else if (node instanceof NesPhysical.Emit emit) {
                 operator.setEmit(PhysicalOperator.Emit.newBuilder().setForSink(emit.forSink));
                 build = converter -> operator.build();
@@ -187,6 +262,24 @@ final class NesConverterProvider extends ConverterProvider {
                     .setOutputOriginId(origin).addAllInputOriginIds(inputOrigins)
                     .addAllAggregations(buildAggregations(first)));
                 build = converter -> operator.build();
+            } else if (node instanceof NesPhysical.JoinBuild joinBuild) {
+                operator.setJoinBuild(PhysicalOperator.JoinBuild.newBuilder().setJoin(join(joinBuild.join)).setRight(joinBuild.right)
+                    .setTimeField(joinBuild.timeField).addAllStoredFields(joinBuild.storedFields));
+                build = converter -> operator.build();
+            } else if (node instanceof NesPhysical.JoinProbe probe) {
+                long origin = ids.nextOriginId++;
+                origins.put(node, List.of(origin));
+                Expression condition = probe.condition == null ? null : toExpression(probe.condition);
+                List<Expression> residual = probe.residual.stream().map(this::toExpression).toList();
+                PhysicalOperator.JoinProbe.Builder spec = PhysicalOperator.JoinProbe.newBuilder().setJoin(join(probe.join))
+                    .setOutputOriginId(origin).addAllInputOriginIds(inputOrigins);
+                build = converter -> {
+                    if (condition != null) {
+                        spec.setCondition(converter.getExpressionProtoConverter().toProto(condition));
+                    }
+                    residual.forEach(r -> spec.addResidual(converter.getExpressionProtoConverter().toProto(r)));
+                    return operator.setJoinProbe(spec).build();
+                };
             } else if (node instanceof NesPhysical.NetworkSink sink) {
                 ids.channels.put(sink.channel, inputOrigins);
                 operator.setNetworkSink(PhysicalOperator.NetworkSink.newBuilder().setChannel(sink.channel)
@@ -207,11 +300,23 @@ final class NesConverterProvider extends ConverterProvider {
             };
         }
 
+        private PhysicalOperator.Join join(NesPhysical.JoinState state) {
+            int handler = ids.joins.computeIfAbsent(state, s -> ids.joins.size());
+            WindowJoin spec = state.spec;
+            return PhysicalOperator.Join.newBuilder().setHandler(handler).setKind(spec.getKind()).setSizeMs(spec.getSizeMs())
+                .setSlideMs(spec.getSlideMs()).setType(spec.getType()).setImplementation(spec.getImplementation())
+                .addAllLeftSchema(fields(state.leftStored)).addAllRightSchema(fields(state.rightStored))
+                .addAllLeftKeyFields(state.leftKeys).addAllRightKeyFields(state.rightKeys).build();
+        }
+
         private PhysicalOperator.Window window(NesPhysical.WindowState state) {
             int handler = ids.windows.computeIfAbsent(state, s -> ids.windows.size());
             WindowAggregate spec = state.spec;
+            boolean global = spec.getKind() == WindowAggregate.Kind.GLOBAL;
             return PhysicalOperator.Window.newBuilder().setHandler(handler).setKind(spec.getKind())
-                .setSizeMs(spec.getSizeMs()).setSlideMs(spec.getSlideMs()).build();
+                .setSizeMs(global ? NesPhysical.GLOBAL_WINDOW_SIZE_MS : spec.getSizeMs())
+                .setSlideMs(global ? NesPhysical.GLOBAL_WINDOW_SIZE_MS : spec.getSlideMs())
+                .setEmitOnEmptyInput(spec.getEmitOnEmptyInput()).build();
         }
 
         /// arguments: per aggregation, its field in the build's input (-1: COUNT(*), which counts all rows).
@@ -255,7 +360,7 @@ final class NesConverterProvider extends ConverterProvider {
                 case FLOAT, DOUBLE -> FieldType.FLOAT64;
                 case BOOLEAN -> FieldType.BOOLEAN;
                 case CHAR -> type.getPrecision() == 1 ? FieldType.CHAR : FieldType.VARSIZED;
-                case VARCHAR -> FieldType.VARSIZED;
+                case VARCHAR, VARBINARY, BINARY -> FieldType.VARSIZED; // bytes are variable-sized data to us, as text is
                 case TIMESTAMP -> FieldType.TIMESTAMP_MS;
                 default -> throw new UnsupportedOperationException("no field type for " + type.getFullTypeString());
             };
@@ -263,9 +368,23 @@ final class NesConverterProvider extends ConverterProvider {
 
         @Override
         public Rel visitOther(RelNode node) {
+            if (node instanceof NesProjection projection) {
+                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(projection.getRowType());
+                List<Expression> expressions = projection.expressions.stream().map(this::toExpression).toList();
+                return ExtensionSingle.from(new ProjectionPayload(projection.fields(), expressions, outputType),
+                    apply(projection.getInput())).build();
+            }
             if (node instanceof NesWindowAggregate window) {
                 Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(window.getRowType());
                 return ExtensionSingle.from(new Payload(Any.pack(window.spec), outputType), apply(window.getInput())).build();
+            }
+            if (node instanceof AnonymousSources.NesAnonymousSource source) {
+                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(source.getRowType());
+                return ExtensionLeaf.from(new LeafPayload(Any.pack(source.spec), outputType)).build();
+            }
+            if (node instanceof NesModelInference inference) {
+                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(inference.getRowType());
+                return ExtensionSingle.from(new Payload(Any.pack(inference.spec()), outputType), apply(inference.getInput())).build();
             }
             if (node instanceof NesWindowJoin join) {
                 Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(join.getRowType());
@@ -276,6 +395,25 @@ final class NesConverterProvider extends ConverterProvider {
                     .build();
             }
             return super.visitOther(node);
+        }
+    }
+
+    /** Named assignments; the expressions are serialized with the plan's converter, as a join's condition. */
+    private record ProjectionPayload(List<String> fields, List<Expression> expressions, Type.Struct outputType)
+        implements Extension.SingleRelDetail {
+        @Override
+        public Type.Struct deriveRecordType(Rel input) {
+            return outputType;
+        }
+
+        @Override
+        public Any toProto(RelProtoConverter converter) {
+            nes.calcite.proto.Projection.Builder builder = nes.calcite.proto.Projection.newBuilder();
+            for (int i = 0; i < fields.size(); i++) {
+                builder.addAssignments(PhysicalOperator.Map.Assignment.newBuilder().setField(fields.get(i))
+                    .setExpression(converter.getExpressionProtoConverter().toProto(expressions.get(i))));
+            }
+            return Any.pack(builder.build());
         }
     }
 
@@ -319,6 +457,18 @@ final class NesConverterProvider extends ConverterProvider {
         @Override
         public Any toProto(RelProtoConverter converter) {
             return Any.pack(build.apply(converter));
+        }
+    }
+
+    private record LeafPayload(Any detail, Type.Struct outputType) implements Extension.LeafRelDetail {
+        @Override
+        public Type.Struct deriveRecordType() {
+            return outputType;
+        }
+
+        @Override
+        public Any toProto(RelProtoConverter converter) {
+            return detail;
         }
     }
 

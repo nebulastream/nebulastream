@@ -14,26 +14,17 @@
 
 #pragma once
 
-#include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <string>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-
-namespace NES
-{
-class FieldMappingTrait;
-}
 
 namespace NES::QueryCompilation
 {
 class FunctionProvider
 {
 public:
-    /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
-    /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
-    static PhysicalFunction lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait);
-
-private:
-    static PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);
+    /// A constant of the type, from its text (e.g. "42", "true").
+    static PhysicalFunction lowerConstantFunction(const DataType& type, const std::string& value);
 };
 
 }

@@ -22,10 +22,8 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
-#include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <PhysicalQuery.hpp>
 #include <ErrorHandling.hpp>
@@ -43,12 +41,8 @@ class QuerySubmissionBackend
 {
 public:
     virtual ~QuerySubmissionBackend() = default;
-    [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
-    /// A query planned down to physical operators (see PhysicalQuery). Only a worker in this process can run one.
-    [[nodiscard]] virtual std::expected<QueryId, Exception> start(PhysicalQuery query)
-    {
-        return std::unexpected{QueryStartFailed("this worker backend cannot run physical queries ({})", query.queryId)};
-    }
+    /// A worker's part of a query planned down to its pipelines (see PhysicalQuery).
+    [[nodiscard]] virtual std::expected<QueryId, Exception> start(PhysicalQuery query) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
@@ -123,7 +117,6 @@ public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
     /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
-    [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
     /// A query planned down to physical operators and placed: each worker starts its part.
     [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(PlacedPhysicalQuery query);
     std::expected<void, std::vector<Exception>> stop(const DistributedQueryId& query);

@@ -31,8 +31,8 @@
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <Join/JoinType.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>

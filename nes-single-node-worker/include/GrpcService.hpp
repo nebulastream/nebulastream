@@ -29,7 +29,7 @@ namespace NES
 class GRPCServer final : public WorkerRPCService::Service
 {
 public:
-    grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest*, StartQueryReply*) override;
+    grpc::Status StartPhysicalQuery(grpc::ServerContext*, const StartPhysicalQueryRequest*, StartQueryReply*) override;
 
     grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
 

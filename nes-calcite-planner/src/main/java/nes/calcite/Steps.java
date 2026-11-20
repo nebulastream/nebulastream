@@ -33,14 +33,23 @@ final class Steps {
         return plan;
     }
 
+    boolean detailed() {
+        return detailed;
+    }
+
     /** A step whose result is in parts, e.g. one per worker. */
     void add(String name, String origin, List<PlanGraph.Part> parts, boolean pipelines) {
+        add(name, origin, parts, pipelines, List.of());
+    }
+
+    /** A step whose result is in parts, with the plan after each rule (see rules). */
+    void add(String name, String origin, List<PlanGraph.Part> parts, boolean pipelines, List<RuleApplication> rules) {
         StringBuilder text = new StringBuilder();
         for (PlanGraph.Part part : parts) {
             text.append(part.worker() == null ? "" : "on " + part.worker() + (part.output() == null ? "" : part.output().channel() == null
                 ? ", into the sink" : ", to " + part.output().downstreamHost()) + ":\n").append(RelOptUtil.toString(part.plan()));
         }
-        add(name, origin, text.toString(), detailed ? PlanGraph.of(parts, node -> false, pipelines) : "", List.of());
+        add(name, origin, text.toString(), detailed ? PlanGraph.of(parts, node -> false, pipelines) : "", rules);
     }
 
     /** Runs the rules of the program; with detailed, records the plan after each rule that changes it. */

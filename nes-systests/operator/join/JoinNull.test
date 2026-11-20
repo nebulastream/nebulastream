@@ -33,10 +33,11 @@ ATTACH INLINE
 CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64, timestamp2 UINT64 NOT NULL) TYPE File;
 
 # Query 1 - Join two streams
-SELECT *
-FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
-ON (id = id2)
-WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND (id = id2)
 INTO sink;
 ----
 0,1000,0,NULL,0,0,0,100
@@ -56,10 +57,11 @@ INTO sink;
 1000,2000,1,9,1500,1,NULL,1800
 
 # Query 2
-SELECT *
-FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
-ON (value = value2)
-WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND ("VALUE" = value2)
 INTO sink;
 ----
 1000,2000,0,7,1000,0,7,1300
@@ -67,10 +69,11 @@ INTO sink;
 
 
 # Query 3
-SELECT *
-FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
-ON (value = value2 AND id = id2)
-WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND ("VALUE" = value2 AND id = id2)
 INTO sink;
 ----
 1000,2000,0,7,1000,0,7,1300

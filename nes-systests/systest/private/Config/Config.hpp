@@ -22,7 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Calcite/QueryOptimizerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -62,6 +62,8 @@ struct SystestConfiguration final
     uint64_t numberConcurrentQueries = 6;
     /// Records the execution time of each query.
     bool benchmark = false;
+    /// Plans each query but runs none: a test case passes if its queries plan, or fail to plan where it expects an error.
+    bool planOnly = false;
     /// Test groups to run.
     std::vector<std::string> testGroups;
     /// Test groups to exclude.

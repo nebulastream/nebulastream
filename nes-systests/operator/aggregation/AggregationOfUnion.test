@@ -26,23 +26,19 @@ ATTACH INLINE
 1,2,2,3002
 1,2,2,3003
 
-CREATE SINK sink4(max_id UINT64 NOT NULL)  TYPE File;
-SELECT MAX(id) as max_id
-FROM (
-    SELECT * FROM stream UNION SELECT * FROM stream2
-)
-WINDOW TUMBLING(timestamp, size 1 sec)
+CREATE SINK sink4(max_id UINT64)  TYPE File;
+SELECT MAX(id) AS max_id
+FROM TABLE(TUMBLE((SELECT * FROM "STREAM" UNION ALL SELECT * FROM stream2), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO sink4;
 ----
 1
 2
 
-CREATE SINK sink5(max_id UINT64 NOT NULL)  TYPE File;
-SELECT MAX(id) as max_id
-FROM (
-    SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2)
-)
-WINDOW TUMBLING(timestamp, size 1 sec)
+CREATE SINK sink5(max_id UINT64)  TYPE File;
+SELECT MAX(id) AS max_id
+FROM TABLE(TUMBLE((SELECT * FROM (SELECT * FROM "STREAM" UNION ALL SELECT * FROM stream2)), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO sink5;
 ----
 1

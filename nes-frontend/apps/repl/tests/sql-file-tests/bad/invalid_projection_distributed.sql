@@ -8,4 +8,4 @@ CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
 SELECT TS FROM ENDLESS INTO Void('worker-node:8080' AS "SINK"."HOST");
 SELECT * FROM ENDLESS INTO Void('worker-node:8080' AS "SINK"."HOST");
 SELECT val_1 + AS val_plus_1 FROM ENDLESS INTO Void('worker-node:8080' AS "SINK"."HOST");
-SELECT AVG(val_1) AS agg_val_1 FROM ENDLESS WINDOW TUMBLING(ts, SIZE 1 SEC) INTO Void('worker-node:8080' AS "SINK"."HOST");
+SELECT AVG(val_1) AS agg_val_1 FROM TABLE(TUMBLE(TABLE ENDLESS, DESCRIPTOR(ts), INTERVAL '1' SECOND)) GROUP BY window_start, window_end INTO Void('worker-node:8080' AS "SINK"."HOST");

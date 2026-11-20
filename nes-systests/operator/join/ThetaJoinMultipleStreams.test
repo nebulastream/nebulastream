@@ -24,16 +24,13 @@ CREATE SINK sinkLtTumbling2s(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start
 
 # Query 1 - (id < id2) then (id < id4), tumbling 1 sec
 # Tests: stream.id must be strictly smaller than both joined stream ids — the most selective of the ordered operators
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-    FROM (
-      SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4) ON id < id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
-)
+SELECT c.start1, c.end1, c.window_start AS "START", c.window_end AS "END", c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+FROM TABLE(TUMBLE((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+  FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS a
+  JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS b
+  ON a.window_start = b.window_start AND a.id < b.id2), DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS c
+JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '1' SECOND)) AS d
+ON c.window_start = d.window_start AND c.id < d.id4
 INTO sinkLt;
 ----
 1000 2000 1000 2000 1 1 1000 21 1 1003 4 4 1001
@@ -55,16 +52,13 @@ INTO sinkLt;
 
 # Query 2 - (id > id2) then (id > id4), tumbling 1 sec
 # Tests: reversed direction: stream.id must exceed both joined stream ids — tests that the engine correctly handles the > operator and does not conflate it with <
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-    FROM (
-      SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id > id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4) ON id > id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
-)
+SELECT c.start1, c.end1, c.window_start AS "START", c.window_end AS "END", c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+FROM TABLE(TUMBLE((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+  FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS a
+  JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS b
+  ON a.window_start = b.window_start AND a.id > b.id2), DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS c
+JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '1' SECOND)) AS d
+ON c.window_start = d.window_start AND c.id > d.id4
 INTO sinkGt;
 ----
 1000 2000 1000 2000 12 1 1001 4 3 1102 4 4 1001
@@ -72,16 +66,13 @@ INTO sinkGt;
 
 # Query 3 - (id <= id2) then (id <= id4), tumbling 1 sec
 # Tests: <= includes equal-value id pairs that < would exclude — verifies the boundary case at equality
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-    FROM (
-      SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id <= id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4) ON id <= id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
-)
+SELECT c.start1, c.end1, c.window_start AS "START", c.window_end AS "END", c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+FROM TABLE(TUMBLE((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+  FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS a
+  JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS b
+  ON a.window_start = b.window_start AND a.id <= b.id2), DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS c
+JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '1' SECOND)) AS d
+ON c.window_start = d.window_start AND c.id <= d.id4
 INTO sinkLe;
 ----
 1000 2000 1000 2000 1 1 1000 21 1 1003 4 4 1001
@@ -123,16 +114,13 @@ INTO sinkLe;
 
 # Query 4 - (id >= id2) then (id >= id4), tumbling 1 sec
 # Tests: >= includes equal-value id pairs in the reversed direction — boundary case at equality for >=
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-    FROM (
-      SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id >= id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4) ON id >= id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
-)
+SELECT c.start1, c.end1, c.window_start AS "START", c.window_end AS "END", c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+FROM TABLE(TUMBLE((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+  FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS a
+  JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS b
+  ON a.window_start = b.window_start AND a.id >= b.id2), DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS c
+JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '1' SECOND)) AS d
+ON c.window_start = d.window_start AND c.id >= d.id4
 INTO sinkGe;
 ----
 1000 2000 1000 2000 12 1 1001 12 5 1011 4 4 1001
@@ -153,16 +141,13 @@ INTO sinkGe;
 
 # Query 5 - (id < id2) then (id < id4), sliding 1 sec advance 500 ms
 # Tests: three-stream chained join with a sliding window — the same triple appears once per overlapping window
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-    FROM (
-      SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id < id2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4) ON id < id4 WINDOW SLIDING (timestamp1, timestamp4, size 1 sec, advance by 500 ms)
-)
+SELECT c.start1, c.end1, c.window_start AS "START", c.window_end AS "END", c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+FROM TABLE(HOP((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+  FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS a
+  JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS b
+  ON a.window_start = b.window_start AND a.id < b.id2), DESCRIPTOR(timestamp1), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS c
+JOIN TABLE(HOP(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS d
+ON c.window_start = d.window_start AND c.id < d.id4
 INTO sinkLtSliding;
 ----
 500 1500 500 1500 1 1 1000 21 1 1003 4 4 1001
@@ -232,16 +217,13 @@ INTO sinkLtSliding;
 
 # Query 6 - (id < id2) then (id < id4), tumbling 2 sec
 # Tests: three-stream chained join with a 2-second window — triples whose records span adjacent 1-second buckets become eligible, expanding the result set compared to Q1
-SELECT * FROM (
-  SELECT * FROM (
-    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
-    FROM (
-      SELECT * FROM (SELECT * FROM stream)
-      INNER JOIN (SELECT * FROM stream2) ON id < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 2 sec)
-    )
-  )
-  INNER JOIN (SELECT * FROM stream4) ON id < id4 WINDOW TUMBLING (timestamp1, timestamp4, size 2 sec)
-)
+SELECT c.start1, c.end1, c.window_start AS "START", c.window_end AS "END", c.id, c."VALUE", c.timestamp1, c.id2, c.value2, c.timestamp2, d.id4, d.value4, d.timestamp4
+FROM TABLE(TUMBLE((SELECT a.window_start AS start1, a.window_end AS end1, a.id, a."VALUE", a.timestamp1, b.id2, b.value2, b.timestamp2
+  FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '2' SECOND)) AS a
+  JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '2' SECOND)) AS b
+  ON a.window_start = b.window_start AND a.id < b.id2), DESCRIPTOR(timestamp1), INTERVAL '2' SECOND)) AS c
+JOIN TABLE(TUMBLE(TABLE stream4, DESCRIPTOR(timestamp4), INTERVAL '2' SECOND)) AS d
+ON c.window_start = d.window_start AND c.id < d.id4
 INTO sinkLtTumbling2s;
 ----
 0 2000 0 2000 1 1 1000 21 1 1003 4 4 1001

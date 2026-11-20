@@ -26,7 +26,6 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 
 #include <Util/DumpMode.hpp>
@@ -36,6 +35,7 @@
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <Calcite/PhysicalParts.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -68,7 +68,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>();
 
     if (!configuration.dataAddress.empty())
     {
@@ -86,45 +86,6 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
 }
 
-std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan) noexcept
-{
-    CPPTRACE_TRY
-    {
-        /// Check if the plan already has a local query ID, generate one if needed
-        /// but preserve the distributed query ID if present
-        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
-        {
-            auto localId = LocalQueryId(generateUUID());
-            if (plan.getQueryId().isDistributed())
-            {
-                plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
-            }
-            else
-            {
-                plan.setQueryId(QueryId::createLocal(localId));
-            }
-        }
-
-        const LogContext context("queryId", plan.getQueryId());
-
-        const auto planStr = explain(plan, ExplainVerbosity::Debug);
-        NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);
-        listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), planStr});
-        const DumpMode dumpMode(configuration.workerConfiguration.dumpQueryCompilationIR, configuration.workerConfiguration.dumpGraph);
-        auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(plan);
-        request->dumpCompilationResult = dumpMode;
-        auto result = compiler->compileQuery(std::move(request));
-        INVARIANT(result, "expected successful query compilation or exception, but got nothing");
-        nodeEngine->startQuery(plan.getQueryId(), std::move(result));
-        return plan.getQueryId();
-    }
-    CPPTRACE_CATCH(...)
-    {
-        return std::unexpected(wrapExternalException());
-    }
-    std::unreachable();
-}
-
 std::expected<QueryId, Exception> SingleNodeWorker::startQuery(PhysicalQuery query) noexcept
 {
     CPPTRACE_TRY
@@ -140,7 +101,8 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(PhysicalQuery que
         NES_INFO("Registering physical query {}", query.queryId);
         listener->onEvent(SubmitQuerySystemEvent{query.queryId, "physical query"});
         const DumpMode dumpMode(configuration.workerConfiguration.dumpQueryCompilationIR, configuration.workerConfiguration.dumpGraph);
-        auto result = compiler->compileQuery(query, dumpMode);
+        auto pipelines = Calcite::toPipelines(query.part, query.queryId, configuration.workerConfiguration.defaultQueryExecution);
+        auto result = compiler->compilePipelines(pipelines, dumpMode);
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
         nodeEngine->startQuery(query.queryId, std::move(result));
         return query.queryId;

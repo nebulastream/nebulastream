@@ -37,11 +37,10 @@ CREATE SINK sink(
     ts_t   INT64 NOT NULL
 ) TYPE File;
 
-SELECT *
-FROM (SELECT * FROM s)
-INNER JOIN (SELECT * FROM t)
-ON sid = tid
-WINDOW TUMBLING(ts_s, ts_t, SIZE 1 MINUTES)
+SELECT s.window_start AS "START", s.window_end AS "END", s.sid, s.sval, s.ts_s, t.tid, t.tval, t.ts_t
+FROM TABLE(TUMBLE(TABLE s, DESCRIPTOR(ts_s), INTERVAL '1' MINUTE)) AS s
+JOIN TABLE(TUMBLE(TABLE t, DESCRIPTOR(ts_t), INTERVAL '1' MINUTE)) AS t
+ON s.window_start = t.window_start AND s.sid = t.tid
 INTO sink;
 ----
 0,60000,1,10,5,1,100,6

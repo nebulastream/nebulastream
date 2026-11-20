@@ -21,7 +21,6 @@
 #include <string_view>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <PhysicalQuery.hpp>
 #include <Runtime/NodeEngine.hpp>
 
@@ -62,11 +61,6 @@ public:
     SingleNodeWorker(SingleNodeWorker&& other) noexcept;
     SingleNodeWorker& operator=(SingleNodeWorker&& other) noexcept;
 
-    /// Compiles the LogicalPlan and immediately starts the query asynchronously. Query execution errors are only reported
-    /// during runtime of the query.
-    /// @param plan Fully Specified LogicalQueryPlan.
-    /// @return QueryId which identifies the started query
-    [[nodiscard]] std::expected<QueryId, Exception> startQuery(LogicalPlan plan) noexcept;
     /// A query planned down to physical operators (e.g. by the Calcite frontend): it is only pipelined and compiled.
     [[nodiscard]] std::expected<QueryId, Exception> startQuery(PhysicalQuery query) noexcept;
 

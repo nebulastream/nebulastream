@@ -31,7 +31,7 @@ public:
     explicit NegatePhysicalFunction(PhysicalFunction childFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createNegate(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createNot(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childFunction;

@@ -24,7 +24,7 @@
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>

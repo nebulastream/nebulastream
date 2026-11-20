@@ -50,8 +50,14 @@ OrPhysicalFunction::OrPhysicalFunction(PhysicalFunction leftPhysicalFunction, Ph
 
 PhysicalFunctionRegistryReturnType OrPhysicalFunction::createOr(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Or function must have exactly two child functions");
-    return OrPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    /// Variadic in SQL (Substrait), binary here: from the left.
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() >= 2, "Or function must have at least two child functions");
+    PhysicalFunction result = OrPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    for (size_t child = 2; child < physicalFunctionRegistryArguments.childFunctions.size(); ++child)
+    {
+        result = OrPhysicalFunction(result, physicalFunctionRegistryArguments.childFunctions[child]);
+    }
+    return result;
 }
 
 }

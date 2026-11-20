@@ -30,14 +30,9 @@ target_include_directories(nes-query-compiler PUBLIC
 # Runtime registry: lowering rules are constructed uniformly from the query execution
 # configuration; the class is LowerToPhysical<name> (the Source rule registers under the key
 # SourceDescriptor).
-create_runtime_registry(LoweringRule nes-query-compiler
-        ENTRY_TEMPLATE "makeLoweringRule<LowerToPhysical\${PLUGIN_NAME}>()"
-        HEADER_TEMPLATE "LowerToPhysical\${PLUGIN_NAME}.hpp"
-        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
 add_subdirectory(src)
 get_source(nes-query-compiler NES_QUERY_COMPILER_SOURCE_FILES)
 target_sources(nes-query-compiler PRIVATE ${NES_QUERY_COMPILER_SOURCE_FILES})
 
 
-add_tests_if_enabled(tests)

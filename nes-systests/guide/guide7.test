@@ -18,13 +18,12 @@ GOOG,1010.0,6
 GOOG,1005.0,7
 AAPL,151.0,8
 
-CREATE SINK sink(price_max FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sink(price_max FLOAT64) TYPE File;
 
 SELECT
     MAX(price) AS price_max
-FROM bid
-GROUP BY ticker
-WINDOW SLIDING(ts, SIZE 10 SEC, ADVANCE BY 1 SEC)
+FROM TABLE(HOP(TABLE bid, DESCRIPTOR(ts), INTERVAL '1' SECOND, INTERVAL '10' SECOND))
+GROUP BY window_start, window_end, ticker
 INTO sink;
 ----
 153.0

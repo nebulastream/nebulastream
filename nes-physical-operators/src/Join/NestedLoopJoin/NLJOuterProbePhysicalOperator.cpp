@@ -31,7 +31,7 @@
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperatorBase.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Schema/Schema.hpp>
 #include <SliceStore/Slice.hpp>

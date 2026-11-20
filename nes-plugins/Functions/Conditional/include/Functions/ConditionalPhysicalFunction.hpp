@@ -41,7 +41,7 @@ public:
     ConditionalPhysicalFunction(std::vector<WhenThenPhysicalFunction> whenThens, PhysicalFunction elseCase, DataType resultType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createConditional(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createCase(PhysicalFunctionRegistryArguments arguments);
 
 private:
     std::vector<WhenThenPhysicalFunction> whenThens;

@@ -14,11 +14,11 @@
 
 syntax = "proto3";
 import "SerializableQueryId.proto";
-import "SerializableQueryPlan.proto";
 import "google/protobuf/empty.proto";
 
 service WorkerRPCService {
-  rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
+  // A query that the Calcite frontend planned down to its pipelines: the worker builds them from its part and compiles them.
+  rpc StartPhysicalQuery (StartPhysicalQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
@@ -30,8 +30,10 @@ message VersionResponse {
   string version = 1;
 }
 
-message StartQueryRequest {
-  NES.SerializableQueryPlan queryPlan = 1;
+message StartPhysicalQueryRequest {
+  NES.SerializableQueryId queryId = 1;
+  // The worker's part of the plan, a serialized nes.calcite.WorkerPart (see Calcite/PhysicalParts.hpp).
+  bytes part = 2;
 }
 
 message StartQueryReply {

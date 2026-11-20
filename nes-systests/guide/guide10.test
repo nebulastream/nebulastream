@@ -28,9 +28,9 @@ GOOG,152.0,25
 
 CREATE SINK sink(
     ticker    VARSIZED NOT NULL,
-    max_price FLOAT64 NOT NULL,
-    min_price FLOAT64 NOT NULL,
-    cnt       UINT64 NOT NULL
+    max_price FLOAT64,
+    min_price FLOAT64,
+    cnt       INT64 NOT NULL
 ) TYPE File;
 
 SELECT
@@ -38,12 +38,11 @@ SELECT
     MAX(price) AS max_price,
     MIN(price) AS min_price,
     COUNT(price) AS cnt
-FROM stock_quotes
-GROUP BY ticker
-WINDOW TUMBLING(ts, SIZE 1 MINUTES)
+FROM TABLE(TUMBLE(TABLE stock_quotes, DESCRIPTOR(ts), INTERVAL '1' MINUTE))
+GROUP BY window_start, window_end, ticker
 HAVING
-    max_price > 100.0
-    AND cnt >= 10
+    MAX(price) > 100.0E0
+    AND COUNT(price) >= 10
 INTO sink;
 ----
 AAPL,110.0,95.0,10

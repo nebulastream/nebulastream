@@ -9,21 +9,18 @@ CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
     'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 10 50 10, SEQUENCE UINT64 0 20000 5000' AS "SOURCE".GENERATOR_SCHEMA
 );
 
-CREATE SINK sinkStream(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, sumValue UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStream(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, sumValue UINT64) TYPE File;
 
-SELECT start, end, id, SUM(value) AS sumValue
-FROM (
-  SELECT id, start, SUM(value) AS value
-  FROM stream
-  GROUP BY id
-  WINDOW TUMBLING (timestamp, size 5 sec)
-)
-GROUP BY id
-WINDOW SLIDING (start, size 10 sec, advance by 5 sec)
+SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE") AS sumValue
+FROM TABLE(HOP(
+  (SELECT id, window_start AS "START", SUM("VALUE") AS "VALUE"
+   FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '5' SECOND))
+   GROUP BY window_start, window_end, id),
+  DESCRIPTOR("START"), INTERVAL '5' SECOND, INTERVAL '10' SECOND))
+GROUP BY window_start, window_end, id
 INTO sinkStream;
 ====
-SELECT start, end, id, SUM(value) AS sumValue
-FROM stream
-GROUP BY id
-WINDOW SLIDING (timestamp, size 10 sec, advance by 5 sec)
+SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE") AS sumValue
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '5' SECOND, INTERVAL '10' SECOND))
+GROUP BY window_start, window_end, id
 INTO sinkStream;

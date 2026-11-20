@@ -74,6 +74,10 @@ public:
     /// Returns the entries in file order, so the report does not depend on timing.
     [[nodiscard]] std::vector<ReportEntry> submitAll(size_t concurrency, const Observer& observe = {});
 
+    /// Checks only the binding of the test cases, which plans their queries, and submits none (--plan-only): a test case
+    /// passes if all its statements bound, or a query that expects an error failed to bind. In file order.
+    [[nodiscard]] std::vector<ReportEntry> planAll(const Observer& observe = {}) const;
+
 private:
     struct SetUpPartition
     {

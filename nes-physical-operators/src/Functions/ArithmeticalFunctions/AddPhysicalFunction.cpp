@@ -18,6 +18,7 @@
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
@@ -38,7 +39,7 @@ AddPhysicalFunction::AddPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 PhysicalFunctionRegistryReturnType AddPhysicalFunction::createAdd(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two child functions");
-    return AddPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    return castIntegerResult(AddPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]), physicalFunctionRegistryArguments.outputType);
 }
 
 }

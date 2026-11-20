@@ -32,9 +32,11 @@ import org.apache.calcite.sql.type.SqlTypeName;
  * In Substrait they are the user-defined types u8..u64 of extension:io.substrait:unsigned_integers, which also declares
  * their arithmetic and sum/min/max; nes_unsigned_integers.yaml adds comparisons and modulus.
  *
- * What a mix of signed and unsigned values means differs between systems (Calcite casts U = I to CAST(U AS BIGINT) = I,
- * which is wrong for U >= 2^63), so {@link #prepare} rejects it: an operation takes unsigned operands of one type (a
- * narrower unsigned operand is widened, a non-negative integer literal is cast), and a cast must keep every value.
+ * A mix of signed and unsigned values follows Calcite's types, which {@link #prepare} makes explicit for the engine: an
+ * arithmetic operation computes in its result type (Calcite: the wider type, at equal width the unsigned one), so every
+ * operand is cast to it; a comparison compares in the type Calcite cast the operands to (for U = I: CAST(U AS BIGINT) =
+ * I). Casts between signed and unsigned types wrap, as in C (and our engine). Unsigned values of different widths are
+ * widened, and a comparison of an unsigned value with non-negative literals stays exact (the literals are cast).
  */
 final class Unsigned {
     static final String URN = "extension:io.substrait:unsigned_integers";
@@ -57,8 +59,11 @@ final class Unsigned {
     static final SimpleExtension.ExtensionCollection EXTENSIONS;
 
     static {
-        try (InputStream ours = Unsigned.class.getResourceAsStream("/nes_unsigned_integers.yaml")) {
-            EXTENSIONS = DefaultExtensionCatalog.DEFAULT_COLLECTION.merge(SimpleExtension.load(ours));
+        try (InputStream unsigned = Unsigned.class.getResourceAsStream("/nes_unsigned_integers.yaml");
+             InputStream functions = Unsigned.class.getResourceAsStream("/nes_functions.yaml")) {
+            /// Also our functions for argument types Substrait's standard extensions lack (see NesConverterProvider).
+            EXTENSIONS = DefaultExtensionCatalog.DEFAULT_COLLECTION.merge(SimpleExtension.load(unsigned))
+                .merge(SimpleExtension.load(functions));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -91,7 +96,7 @@ final class Unsigned {
 
     private static UnsupportedOperationException mixed(RexNode expression) {
         return new UnsupportedOperationException(
-            "mixing signed and unsigned values is not supported (only unsigned values of one type, and non-negative literals): "
+            "this mix of signed and unsigned values is not supported: "
                 + expression);
     }
 
@@ -135,6 +140,10 @@ final class Unsigned {
                 if (!ALIGNED.contains(call.getKind()) || operands.stream().noneMatch(o -> isUnsigned(o.getType()))) {
                     return call;
                 }
+                if (operands.stream().anyMatch(o -> !isUnsigned(o.getType()) && castLiteral(rexBuilder, o,
+                        operands.stream().map(RexNode::getType).filter(Unsigned::isUnsigned).findFirst().orElseThrow()) == null)) {
+                    return castTo(call, commonType(call));
+                }
                 RelDataType widest = operands.stream().map(RexNode::getType).filter(Unsigned::isUnsigned)
                     .max((a, b) -> Integer.compare(bits(a), bits(b))).orElseThrow();
                 List<RexNode> aligned = new ArrayList<>();
@@ -144,11 +153,7 @@ final class Unsigned {
                         aligned.add(bits(operand.getType()) == bits(widest) ? operand : rexBuilder.makeAbstractCast(target, operand, false));
                         continue;
                     }
-                    RexNode cast = castLiteral(rexBuilder, operand, widest);
-                    if (cast == null) {
-                        throw mixed(original);
-                    }
-                    aligned.add(cast);
+                    aligned.add(castLiteral(rexBuilder, operand, widest));
                 }
                 return call.clone(call.getType(), aligned);
             }
@@ -179,22 +184,39 @@ final class Unsigned {
                 return operands.equals(call.getOperands()) ? call : (RexCall) call.clone(call.getType(), operands);
             }
 
-            /** A cast to or from an unsigned type must keep every value. */
+            /** Calcite's type for a mix of signed and unsigned operands: the arithmetic's result, or their common type. */
+            private RelDataType commonType(RexCall call) {
+                if (SqlKind.BINARY_ARITHMETIC.contains(call.getKind())) {
+                    return call.getType();
+                }
+                RelDataType common = rexBuilder.getTypeFactory().leastRestrictive(call.getOperands().stream().map(RexNode::getType).toList());
+                if (common == null) {
+                    throw mixed(call);
+                }
+                return common;
+            }
+
+            /**
+             * The call with every operand of another type cast to the type (values wrap, as in C). Our engine computes an
+             * arithmetic of narrow integers in a wider type (C's integer promotion); its result is cast to Calcite's type,
+             * so that it wraps there as Calcite defines.
+             */
+            private RexNode castTo(RexCall call, RelDataType type) {
+                List<RexNode> operands = new ArrayList<>();
+                for (RexNode operand : call.getOperands()) {
+                    RelDataType target = rexBuilder.getTypeFactory().createTypeWithNullability(type, operand.getType().isNullable());
+                    operands.add(operand.getType().getSqlTypeName() == type.getSqlTypeName() ? operand
+                        : rexBuilder.makeAbstractCast(target, operand, false));
+                }
+                RexNode result = call.clone(call.getType(), operands);
+                return SqlKind.BINARY_ARITHMETIC.contains(call.getKind()) ? rexBuilder.makeAbstractCast(call.getType(), result, false) : result;
+            }
+
+            /** Casts between signed and unsigned types wrap, as in C; only DECIMAL stays unsupported. */
             private void checkCast(RexCall cast) {
-                RexNode input = cast.getOperands().get(0);
-                RelDataType from = input.getType();
-                RelDataType to = cast.getType();
-                if (isUnsigned(from) && isUnsigned(to)) {
-                    if (bits(to) < bits(from)) {
-                        throw new UnsupportedOperationException("narrowing an unsigned value is not supported: " + cast);
-                    }
-                } else if (isUnsigned(from)) {
-                    boolean widerSigned = SqlTypeFamily.EXACT_NUMERIC.contains(to) && to.getSqlTypeName() != SqlTypeName.DECIMAL
-                        && bits(to) > bits(from);
-                    if (!widerSigned && !SqlTypeFamily.APPROXIMATE_NUMERIC.contains(to)) {
-                        throw mixed(cast);
-                    }
-                } else if (isUnsigned(to) && castLiteral(rexBuilder, input, to) == null) {
+                RelDataType from = cast.getOperands().get(0).getType();
+                if ((isUnsigned(from) || isUnsigned(cast.getType()))
+                    && (from.getSqlTypeName() == SqlTypeName.DECIMAL || cast.getType().getSqlTypeName() == SqlTypeName.DECIMAL)) {
                     throw mixed(cast);
                 }
             }

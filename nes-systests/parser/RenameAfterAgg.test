@@ -1,5 +1,5 @@
 # name: parser/RenameAfterAgg.test
-# description: Checks if the AntlrSQLQueryPlanCreator correctly assigns AS renames
+# description: Checks that AS renames of window aggregates and window bounds reach the sink in any SELECT order
 # groups: [Parser]
 
 CREATE LOGICAL SOURCE input(
@@ -15,20 +15,19 @@ ATTACH INLINE
 
 CREATE SINK output(
     id UINT64 NOT NULL,
-    sumValue UINT64 NOT NULL,
+    sumValue UINT64,
     startValue UINT64 NOT NULL
 ) TYPE File;
 
 CREATE SINK output2(
     id UINT64 NOT NULL,
-    sumValue UINT64 NOT NULL,
+    sumValue UINT64,
     start UINT64 NOT NULL
 ) TYPE File;
 
-SELECT id, SUM(value) AS sumValue, start as startValue
-FROM input
-GROUP BY id
-WINDOW SLIDING(ts, size 10 ms, advance by 5 ms)
+SELECT id, SUM("VALUE") AS sumValue, window_start AS startValue
+FROM TABLE(HOP(TABLE input, DESCRIPTOR(ts), INTERVAL '0.005' SECOND, INTERVAL '0.01' SECOND))
+GROUP BY window_start, window_end, id
 INTO output;
 ----
 1 10 995
@@ -36,10 +35,9 @@ INTO output;
 1 20 1005
 1 20 1010
 
-SELECT id, start as startValue, SUM(value) AS sumValue
-FROM input
-GROUP BY id
-WINDOW SLIDING(ts, size 10 ms, advance by 5 ms)
+SELECT id, window_start AS startValue, SUM("VALUE") AS sumValue
+FROM TABLE(HOP(TABLE input, DESCRIPTOR(ts), INTERVAL '0.005' SECOND, INTERVAL '0.01' SECOND))
+GROUP BY window_start, window_end, id
 INTO output;
 ----
 1 10 995
@@ -47,10 +45,9 @@ INTO output;
 1 20 1005
 1 20 1010
 
-SELECT id, SUM(value) AS sumValue, start
-FROM input
-GROUP BY id
-WINDOW SLIDING(ts, size 10 ms, advance by 5 ms)
+SELECT id, SUM("VALUE") AS sumValue, window_start AS "START"
+FROM TABLE(HOP(TABLE input, DESCRIPTOR(ts), INTERVAL '0.005' SECOND, INTERVAL '0.01' SECOND))
+GROUP BY window_start, window_end, id
 INTO output2;
 ----
 1 10 995

@@ -20,6 +20,7 @@
 #include <deque>
 #include <exception>
 #include <expected>
+#include <variant>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -36,6 +37,8 @@
 #include <Configurations/Util.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
+#include <fmt/format.h>
+#include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
@@ -117,7 +120,7 @@ void TestRunner::setUp(std::vector<RunnablePartition> partitions)
         {
             auto [setupSql, staged] = stage(runnable);
             auto [testCases] = binder.bind(
-                setupSql, runnable.testCases, runnable.key, runnable.calcite ? &runnable.originalNames : nullptr);
+                setupSql, runnable.testCases, runnable.key, &runnable.originalNames);
             std::ranges::move(staged, std::back_inserter(servers));
             setUpPartitions.push_back(SetUpPartition{.partition = std::move(partition), .testCases = std::move(testCases)});
         }
@@ -165,7 +168,8 @@ std::optional<DistributedQueryId> TestRunner::submitNext(QuerySubmitter& submitt
         return std::nullopt;
     }
     const auto& [plan, explained] = run.remaining.front();
-    const auto started = plan.and_then([&](const BoundPlan& bound) { return submitter.startQuery(bound.plan); });
+    const auto started = plan.and_then([&](const BoundPlan& bound)
+                                       { return submitter.startQuery(bound.plan); });
     if (not started.has_value())
     {
         run.outcomes.push_back(
@@ -304,6 +308,34 @@ std::vector<ReportEntry> TestRunner::submitAll(const size_t concurrency, const O
                    return std::move(*entry);
                })
         | std::ranges::to<std::vector>();
+}
+
+std::vector<ReportEntry> TestRunner::planAll(const Observer& observe) const
+{
+    std::vector<ReportEntry> entries;
+    for (const auto& [partition, boundTestCases] : setUpPartitions)
+    {
+        for (const auto& [testCase, statements] : std::views::zip(partition.file.testCases, boundTestCases))
+        {
+            const auto* query = std::get_if<RewrittenQuery>(&testCase.action);
+            const bool expectsError = query != nullptr and std::holds_alternative<ExpectedError>(query->expected);
+            Verdict verdict = Success{};
+            for (const auto& statement : statements)
+            {
+                if (not statement.plan.has_value() and not statement.explained.has_value() and not expectsError)
+                {
+                    verdict = std::unexpected{Mismatch{.detail = fmt::format("planning failed: {}", statement.plan.error().what())}};
+                    break;
+                }
+            }
+            entries.push_back(ReportEntry{.id = createIdOf(partition, testCase), .outcome = std::move(verdict)});
+            if (observe)
+            {
+                observe(entries.back(), testCase, {});
+            }
+        }
+    }
+    return entries;
 }
 
 }

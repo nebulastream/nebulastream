@@ -38,7 +38,7 @@ ATTACH FILE small/200x8-rows-fields.csv
 
 CREATE SINK sinkMultiBuffer(field_1 UINT64 NOT NULL, field_2 UINT64 NOT NULL, field_3 UINT64 NOT NULL, field_4 UINT64 NOT NULL, field_5 UINT64 NOT NULL, field_6 UINT64 NOT NULL, field_7 UINT64 NOT NULL, field_8 UINT64 NOT NULL)  TYPE File;
 
-SELECT * FROM stream INTO tcp_sink;
+SELECT * FROM "STREAM" INTO tcp_sink;
 ----
 1,19,19000
 2,20,20000

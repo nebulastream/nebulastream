@@ -12,14 +12,13 @@ CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
 ATTACH FILE small/stream2.csv
 
 CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL)  TYPE File;
-CREATE SINK sinkStreamAgg(start UINT64 NOT NULL, end UINT64 NOT NULL, value UINT64 NOT NULL, id_count UINT64 NOT NULL, id_sum UINT64 NOT NULL, id_min UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStreamAgg(start UINT64 NOT NULL, end UINT64 NOT NULL, value UINT64 NOT NULL, id_count INT64 NOT NULL, id_sum UINT64, id_min UINT64)  TYPE File;
 
 
 # Query 1 - Sliding Window Aggregation with a gap
-SELECT start, end, value, COUNT(id) AS id_count, SUM(id) AS id_sum, MIN(id) AS id_min
-FROM stream
-GROUP BY (value)
-WINDOW SLIDING(timestamp1, size 3 sec, advance by 4 sec)
+SELECT window_start AS "START", window_end AS "END", "VALUE", COUNT(id) AS id_count, SUM(id) AS id_sum, MIN(id) AS id_min
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '4' SECOND, INTERVAL '3' SECOND))
+GROUP BY window_start, window_end, "VALUE"
 INTO sinkStreamAgg;
 ----
 0,3000,1,3,17,1
@@ -41,11 +40,11 @@ INTO sinkStreamAgg;
 
 
 # Query 2 - Sliding Window Join with a gap
-SELECT *
-FROM (SELECT * FROM stream)
-INNER JOIN (SELECT * FROM stream2)
-    ON (id = id2)
-WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 3 sec)
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '3' SECOND, INTERVAL '1' SECOND)) AS l
+JOIN TABLE(HOP(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '3' SECOND, INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND (id = id2)
 INTO sinkStreamStream2;
 ----
 3000 4000 1 3 3000 1 3 3009

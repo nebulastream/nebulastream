@@ -1,5 +1,5 @@
 # name: parser/WindowAggregationParser.test
-# description: Test correct window aggregation parsing
+# description: Sliding-window aggregation with WHERE, GROUP BY and HAVING, and rejection of malformed aggregation queries
 # groups: [Aggregation, WindowOperators, Parser]
 
 # Source definitions
@@ -35,89 +35,68 @@ ATTACH INLINE
 1,20,20000
 1,21,21000
 
-CREATE SINK sinkStream(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, sumValue UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStream(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, sumValue UINT64)  TYPE File;
+CREATE SINK sinkUnbounded(id UINT64 NOT NULL, sumValue UINT64) TYPE File;
 
-# Test aggregation syntax with window definition before group by
-SELECT start, end, id, SUM(value) as sumValue
-FROM stream
+# Sliding-window aggregation with a WHERE filter and a GROUP BY key
+SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE") AS sumValue
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND))
 WHERE id > 15
-WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
-GROUP BY id
+GROUP BY window_start, window_end, id
 INTO sinkStream;
 ----
 2000,3000,16,2
 1500,2500,16,2
 
-# Test aggregation syntax with group by before window definition
-SELECT start, end, id, SUM(value) as sumValue
-FROM stream
+# HAVING that repeats the projected aggregate expression
+SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE") AS sumValue
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND))
 WHERE id > 15
-GROUP BY id
-WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+GROUP BY window_start, window_end, id
+HAVING SUM("VALUE") > 0
 INTO sinkStream;
 ----
 2000,3000,16,2
 1500,2500,16,2
 
-# HAVING that repeats the aggregate expression should be refused.
-# The error message should hint to use an alias from the SELECT list.
-SELECT start, end, id, SUM(value) as sumValue
-FROM stream
+# HAVING over an aggregate of an expression
+SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE" + 1) AS sumValue
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND))
 WHERE id > 15
-WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
-GROUP BY id
-HAVING SUM(value) > UINT64(0)
+GROUP BY window_start, window_end, id
+HAVING SUM("VALUE" + 1) > 0
 INTO sinkStream;
 ----
-ERROR 2000 "HAVING must use the projected alias: write sumValue instead of SUM(VALUE)"
+2000,3000,16,3
+1500,2500,16,3
 
-SELECT start, end, id, SUM(value)
-FROM stream
-WHERE id > 15
-WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
-GROUP BY id
-HAVING SUM(value) > UINT64(0)
-INTO sinkStream;
-----
-ERROR 2000 "add SUM(VALUE) AS <alias> to the SELECT list"
-
-SELECT start, end, id, SUM(value + UINT64(1)) AS sumValue
-FROM stream
-WHERE id > 15
-WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
-GROUP BY id
-HAVING SUM(value + UINT64(1)) > UINT64(0)
-INTO sinkStream;
-----
-ERROR 2000 "add SUM(VALUE + 1) AS <alias> to the SELECT list"
-
-# Control for the case above: HAVING on the projected alias should be accepted.
-SELECT start, end, id, SUM(value) as sumValue
-FROM stream
-WHERE id > 15
-WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
-GROUP BY id
-HAVING sumValue > UINT64(0)
+# Filter on the projected aggregate alias (standard SQL does not allow a SELECT alias in HAVING,
+# so the filter is applied to the aggregation in a subquery)
+SELECT "START", "END", id, sumValue
+FROM (SELECT window_start AS "START", window_end AS "END", id, SUM("VALUE") AS sumValue
+      FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND))
+      WHERE id > 15
+      GROUP BY window_start, window_end, id)
+WHERE sumValue > 0
 INTO sinkStream;
 ----
 2000,3000,16,2
 1500,2500,16,2
 
-# Negative test: GroupBy before where
-SELECT SUM(value) as sumValue
-FROM stream
-GROUP BY id
+# Negative test: GROUP BY before WHERE
+SELECT SUM("VALUE") AS sumValue
+FROM TABLE(HOP(TABLE "STREAM", DESCRIPTOR("TIMESTAMP"), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND))
+GROUP BY window_start, window_end, id
 WHERE id > 15
-WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
 INTO sinkStream;
 ----
 ERROR 2000
 
-# Negative test: Missing WINDOW definition
-SELECT SUM(value) as sumValue
-FROM stream
+# Aggregation without a window: an unbounded aggregation over the whole stream
+SELECT id, SUM("VALUE") AS sumValue
+FROM "STREAM"
 WHERE id > 15
 GROUP BY id
-INTO sinkStream;
+INTO sinkUnbounded;
 ----
-ERROR 2000
+16,2

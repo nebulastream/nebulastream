@@ -37,7 +37,7 @@ ATTACH INLINE
 CREATE SINK sink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 
 # Simple Union
-SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink;
+SELECT * FROM "STREAM" UNION ALL SELECT * FROM stream2 INTO sink;
 ----
 1,1,1000
 1,1,1001
@@ -49,7 +49,7 @@ SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink;
 2,2,2003
 
 # Union with projection to fixup the schema
-SELECT id, timestamp FROM stream UNION SELECT id2 as id, timestamp FROM stream3 INTO File();
+SELECT id, "TIMESTAMP" FROM "STREAM" UNION ALL SELECT id2 as id, "TIMESTAMP" FROM stream3 INTO File();
 ----
 1,1000
 1,1001
@@ -60,9 +60,9 @@ SELECT id, timestamp FROM stream UNION SELECT id2 as id, timestamp FROM stream3 
 2,3002
 2,3003
 
-CREATE SINK sink2(timestamp UINT64 NOT NULL, origin UINT8 NOT NULL)  TYPE File;
+CREATE SINK sink2(timestamp UINT64 NOT NULL, origin INT32 NOT NULL)  TYPE File;
 # Union with selection to fixup the schema and projection of constant into the schema
-SELECT timestamp, 1 as origin FROM stream UNION SELECT timestamp, 2 as origin FROM stream WHERE timestamp < 1002 INTO sink2;
+SELECT "TIMESTAMP", 1 as origin FROM "STREAM" UNION ALL SELECT "TIMESTAMP", 2 as origin FROM "STREAM" WHERE "TIMESTAMP" < 1002 INTO sink2;
 ----
 1000,1
 1001,1
@@ -72,7 +72,7 @@ SELECT timestamp, 1 as origin FROM stream UNION SELECT timestamp, 2 as origin FR
 1001,2
 
 # nested union with projection to fixup the schema
-SELECT id, value, timestamp FROM stream UNION SELECT id, value, timestamp FROM stream2 UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink;
+SELECT id, "VALUE", "TIMESTAMP" FROM "STREAM" UNION ALL SELECT id, "VALUE", "TIMESTAMP" FROM stream2 UNION ALL SELECT id2 as id, "VALUE", "TIMESTAMP" FROM stream3 INTO sink;
 ----
 1,1,1000
 1,1,1001
@@ -90,9 +90,9 @@ SELECT id, value, timestamp FROM stream UNION SELECT id, value, timestamp FROM s
 CREATE SINK sink3(timestamp UINT64 NOT NULL)  TYPE File;
 
 # nested union with projection to fixup the schema
-SELECT timestamp
+SELECT "TIMESTAMP"
 FROM (
-    SELECT * FROM stream UNION SELECT * FROM stream
+    SELECT * FROM "STREAM" UNION ALL SELECT * FROM "STREAM"
 )
 INTO sink3;
 ----
@@ -123,12 +123,12 @@ ATTACH INLINE
 3,1002
 2,2001
 
-CREATE SINK sink4(max_value UINT64 NOT NULL)  TYPE File;
-SELECT MAX(value) as max_value
-FROM (
-    SELECT * FROM stream4 UNION SELECT * FROM stream5
-)
-WINDOW TUMBLING(timestamp, size 1 sec)
+CREATE SINK sink4(max_value UINT64)  TYPE File;
+SELECT MAX("VALUE") as max_value
+FROM TABLE(TUMBLE((
+    SELECT * FROM stream4 UNION ALL SELECT * FROM stream5
+), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO sink4;
 ----
 65
@@ -136,11 +136,10 @@ INTO sink4;
 
 CREATE SINK sink5(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp3_1 UINT64 NOT NULL) TYPE File;
 
-SELECT *
-FROM (SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2))
-INNER JOIN (SELECT * FROM stream3_1)
-ON (id = id2)
-WINDOW TUMBLING (timestamp, timestamp3_1, size 1 sec)
+SELECT s.window_start AS "START", s.window_end AS "END", s.id, s."VALUE", s."TIMESTAMP", s3.id2, s3.value2, s3.timestamp3_1
+FROM TABLE(TUMBLE((SELECT * FROM (SELECT * FROM "STREAM" UNION ALL SELECT * FROM stream2)), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND)) AS s
+INNER JOIN TABLE(TUMBLE(TABLE stream3_1, DESCRIPTOR(timestamp3_1), INTERVAL '1' SECOND)) AS s3
+ON s.window_start = s3.window_start AND s.id = s3.id2
 INTO sink5;
 ----
 1000,2000,1,1,1000,1,1,1005
@@ -179,12 +178,12 @@ ATTACH INLINE
 3,1002
 2,2003
 
-CREATE SINK sink5(max_value UINT64 NOT NULL)  TYPE File;
-SELECT MAX(value) as max_value
-FROM (
-    SELECT * FROM stream6 UNION SELECT * FROM stream7
-)
-WINDOW TUMBLING(timestamp, size 1 sec)
+CREATE SINK sink5(max_value UINT64)  TYPE File;
+SELECT MAX("VALUE") as max_value
+FROM TABLE(TUMBLE((
+    SELECT * FROM stream6 UNION ALL SELECT * FROM stream7
+), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO sink4;
 ----
 65
@@ -207,12 +206,12 @@ ATTACH INLINE
 3,1002
 2,2003
 
-CREATE SINK sink6(max_value UINT64 NOT NULL)  TYPE File;
-SELECT MAX(value) as max_value
-FROM (
-    SELECT * FROM (SELECT * FROM stream8 UNION SELECT * FROM stream9)
-)
-WINDOW TUMBLING(timestamp, size 1 sec)
+CREATE SINK sink6(max_value UINT64)  TYPE File;
+SELECT MAX("VALUE") as max_value
+FROM TABLE(TUMBLE((
+    SELECT * FROM (SELECT * FROM stream8 UNION ALL SELECT * FROM stream9)
+), DESCRIPTOR("TIMESTAMP"), INTERVAL '1' SECOND))
+GROUP BY window_start, window_end
 INTO sink6;
 ----
 65
@@ -220,9 +219,9 @@ INTO sink6;
 
 CREATE SINK subquery_sink(timestamp UINT64 NOT NULL)  TYPE File;
 # triple union query as a subquery as a nested query.
-SELECT timestamp
+SELECT "TIMESTAMP"
 FROM (
-    SELECT * FROM stream UNION SELECT * FROM stream UNION SELECT * FROM stream
+    SELECT * FROM "STREAM" UNION ALL SELECT * FROM "STREAM" UNION ALL SELECT * FROM "STREAM"
 )
 INTO subquery_sink;
 ----

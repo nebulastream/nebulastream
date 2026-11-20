@@ -36,31 +36,21 @@ graph LR
 
 The operator sees the stream, the function sees one record and produces one value.
 
-## 2. Logical and Physical Functions
+## 2. Planning and Execution
 
-A function has two representations, and you implement both.
+The planner (Apache Calcite, see `nes-calcite-planner`) checks the query and gives every expression its type.
+The engine only executes the function: it gets the arguments and the result type from the plan.
+Thus a function in the engine is one physical function and one registry entry.
 
-The logical function is used during query planning and optimization.
-It knows its child functions and its result data type.
-Given the schema of the input, it infers the result type of the expression, which is how the enclosing operator computes its own output schema.
-The logical function answers two questions: what is the type of this expression, and is the expression valid.
+The planner knows two kinds of functions:
 
-The physical function is used during query compilation and execution.
-It defines the execution semantics: given a record at runtime, produce the result value.
-It is lowered from the logical function and compiled by nautilus into executable code.
-The physical function answers one question: how is the value computed.
-
-Two representations exist because planning and execution need different information.
-Planning works on types and structure and never touches record values.
-Execution works on record values and never reasons about schemas.
-Keeping them apart means the optimizer stays independent of the runtime, and the runtime stays free of planning concerns.
-The two connect by name: lowering looks up the physical function using the logical function's registry key, so the names must match.
+- Functions of SQL and of Calcite's libraries (e.g. `+`, `CHAR_LENGTH`, `CASE`, `TIMESTAMP_MILLIS`). Calcite types them. You only add the physical function.
+- Functions that SQL does not have (e.g. `FROM_BASE64`, `MEDIAN`). You also add their signature (see section 5). The planner offers them to queries with this signature.
 
 ## 3. Overview
 
 Function plugins are implemented in the `nes-plugins/Functions/` directory.
 For each new function, create a new directory, such as `nes-plugins/Functions/Conditional/`.
-This directory contains both the logical and the physical function.
 For our example, we use the following structure:
 
 ```
@@ -68,15 +58,11 @@ nes-plugins/
 ├── Functions/
 │   ├── Conditional/
 │   │   ├── CMakeLists.txt
-│   │   ├── ConditionalLogicalFunction.cpp
 │   │   ├── ConditionalPhysicalFunction.cpp
-│   │   ├── ConditionalLogicalFunctionTest.cpp
 │   │   └── include/
 │   │       └── Functions/
-│   │           ├── ConditionalLogicalFunction.hpp
 │   │           └── ConditionalPhysicalFunction.hpp
 │   └── ...
-├── Rules/
 ├── Sinks/
 ├── Sources/
 └── ...
@@ -84,56 +70,54 @@ nes-plugins/
 
 ## 4. Plugin Registration
 
-The plugin's `CMakeLists.txt` builds one static library per function part and declares the registry entries that the plugin provides:
-1) The logical function, an entry in the `LogicalFunction` registry of nes-logical-operators
-2) The unreflection entry, which rebuilds the logical function from a serialized plan
-3) The physical function, an entry in the `PhysicalFunction` registry of nes-physical-operators
-4) The unit tests
+The plugin's `CMakeLists.txt` builds a static library and adds an entry to the `PhysicalFunction` registry of nes-physical-operators:
+
+```cmake
+add_registry_entry(PhysicalFunction Conditional KEY Case)
+```
+
+The key is the name of the function in Substrait, the plan format between the planner and the engine (e.g. `add`, `is_not_null`, `extract`).
+Lookups ignore the case of the key.
+`CASE` is Substrait's `IfThen` expression, which the engine looks up under the key `case`, and a `CAST` under the key `cast`.
+The registry calls the factory `create<Key>` of the class `<Name>PhysicalFunction`, thus `ConditionalPhysicalFunction::createCase` in the example.
 
 Registration happens at runtime: the build only collects the declared entries, and the host process registers them when it loads the built-in plugins.
-The plugin name is the registry key.
-A query refers to the function by that name, and lowering looks the physical function up under the same name.
 
 See `nes-plugins/Functions/Conditional/CMakeLists.txt` for the complete build setup of the example plugin.
 To activate the plugin, add the line `add_plugin("Functions/Conditional")` to `nes-plugins/CMakeLists.txt`.
 
 For a detailed explanation of the plugin system, CMake macros, and how registries work, see [guide/extensibility.md](extensibility.md).
 
-## 5. Interface
+## 5. Signatures of Functions That SQL Does Not Have
 
-A logical function can be any object that defines the following constant and methods:
+A function that SQL does not have also needs a signature class, `<Name>FunctionSignature` in `<Name>FunctionSignature.hpp`.
+The class meets `FunctionSignatureConcept` (see `nes-physical-operators/registry/include/FunctionSignatureRegistry.hpp`):
 
 ```cpp
-/// Name of the function, used as the registry key in a query and during lowering
-static constexpr std::string_view NAME = "NameOfFunction";
+struct FromBase64FunctionSignature
+{
+    static constexpr std::array<std::string_view, 1> OPERANDS{"STRING"};
+    static constexpr std::string_view RESULT = "VARBINARY";
+    static constexpr bool AGGREGATION = false;
+};
 
-/// Textual representation of the function
-std::string explain(ExplainVerbosity verbosity) const;
-
-/// Child functions of this function
-std::vector<LogicalFunction> getChildren() const;
-
-/// Result data type of the function
-DataType getDataType() const;
-
-/// New function with the given children
-T withChildren(const std::vector<LogicalFunction>& children) const;
-
-/// New function with the result type inferred from the input schema.
-/// This is the place to validate argument types and report invalid user input.
-LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
-
-/// The registry key of the function, usually NAME
-std::string_view getType() const;
-
-/// Equality operator
-bool operator==(const T& other) const;
+static_assert(FunctionSignatureConcept<FromBase64FunctionSignature>);
 ```
 
-To confirm the interface, add `static_assert(LogicalFunctionConcept<T>);`.
+Register it in the `FunctionSignature` registry under the name of the function in SQL:
 
-The logical function also needs a `Reflector<T>` and an `Unreflector<T>` so a plan can be serialized and read back.
-See `ConditionalLogicalFunction.hpp` and `ConditionalLogicalFunction.cpp` for the reflection code.
+```cmake
+add_registry_entry(FunctionSignature FromBase64 KEY FROM_BASE64)
+```
+
+The operands are Calcite's type families (`SqlTypeFamily`) and the result is a Calcite type (`SqlTypeName`).
+The result is nullable if an operand is nullable.
+Every plan request sends these signatures to the planner, which makes an operator for each.
+The engine registers a scalar function under its lower-case name in the `PhysicalFunction` registry, and an aggregation under its name in the `AggregationPhysicalFunction` registry.
+
+A function of Calcite's libraries that the Substrait conversion does not know needs a name for Substrait in `NesFunctions.SUBSTRAIT_NAMES` and a declaration in `nes_functions.yaml` (both in `nes-calcite-planner`).
+
+## 6. Interface
 
 A physical function can be any object that defines the following method:
 
@@ -144,58 +128,6 @@ VarVal execute(const Record& record, ArenaRef& arena) const;
 
 To confirm the interface, add `static_assert(PhysicalFunctionConcept<T>);`.
 
-## 6. Type Inference in the Logical Function
-
-`withInferredDataType` receives the input schema, which lists the fields available to the function together with their types.
-It returns a copy of the function with a known result type, and it validates the arguments along the way.
-
-For the Conditional function it works in three steps.
-First it infers the type of the default result, which is the type of the whole expression.
-A field access child resolves its type from the schema, and a nested function infers its own type.
-Second it infers the type of every condition and every branch result the same way.
-Third it checks that every condition is BOOLEAN and every branch result has the same type as the default.
-A mismatch comes from the user's query, so it throws a query error rather than an assertion.
-
-The check compares the type only. Nullability is joined instead of compared, because a branch that can produce a null makes the whole expression nullable, as in SQL.
-
-```cpp
-LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
-{
-    /// The default result carries the type of the whole expression.
-    const auto inferredElseCase = elseCase.withInferredDataType(schema);
-    auto resultType = inferredElseCase.getDataType();
-
-    std::vector<WhenThenLogicalFunction> inferredWhenThens;
-    inferredWhenThens.reserve(whenThens.size());
-    for (const auto& [when, then] : whenThens)
-    {
-        auto inferredWhen = when.withInferredDataType(schema);
-        auto inferredThen = then.withInferredDataType(schema);
-        if (not inferredWhen.getDataType().isType(DataType::Type::BOOLEAN))
-        {
-            throw DifferentFieldTypeExpected("CASE WHEN condition must be BOOLEAN, but got {}", inferredWhen.getDataType());
-        }
-        if (not inferredThen.getDataType().isType(resultType.type))
-        {
-            throw DifferentFieldTypeExpected(
-                "CASE WHEN results must all share the default result's type {}, but got {}", resultType, inferredThen.getDataType());
-        }
-        /// A branch that can produce a null makes the whole expression nullable, as in SQL.
-        resultType = DataTypeProvider::provideDataType(resultType.type, resultType.joinNullable(inferredThen.getDataType()));
-        inferredWhenThens.push_back(WhenThenLogicalFunction{.when = std::move(inferredWhen), .then = std::move(inferredThen)});
-    }
-
-    auto inferred = ConditionalLogicalFunction{std::move(inferredWhenThens), inferredElseCase};
-    inferred.dataType = resultType;
-    return inferred;
-}
-```
-
-Type inference is the only place that assigns the result type.
-A constructor leaves it alone, because before a schema is known there is nothing to infer from, so `getDataType()` reports a usable type only after inference has run.
-The enclosing operator reads that type to build its output schema.
-For example a Projection that outputs this function as a column needs to know the column's type, and it gets it from here.
-
 ## 7. Execution in the Physical Function
 
 `execute` defines the runtime semantics of the function.
@@ -204,7 +136,8 @@ nautilus traces this method to compile it into executable code, so the control f
 
 For the Conditional function, `execute` evaluates the conditions in order and returns the result of the first condition that holds, or the default if none hold.
 `when.execute(record, arena)` returns a `VarVal` that serves as the branch condition.
-`nautilus::static_iterable` walks the pairs at compile time, because the number of pairs is fixed once the function has been lowered, so the loop becomes a straight sequence of branches in the compiled code.
+`nautilus::static_iterable` walks the pairs at compile time, because the plan fixes the number of pairs.
+Thus the loop becomes a straight sequence of branches in the compiled code.
 
 ```cpp
 VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -225,29 +158,31 @@ VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& aren
 The child functions are themselves physical functions, so calling `execute` on a child evaluates a nested expression.
 This is how a function such as `a + CHAR_LENGTH(name)` composes at runtime.
 
-`withDeclaredType` rebuilds the returned `VarVal` with the type that inference settled on, which is the type the enclosing operator's output schema expects.
+`withDeclaredType` rebuilds the returned `VarVal` with the result type of the plan, which is the type the enclosing operator's output schema expects.
 
 ## 8. Factory Functions
 
-Each part needs a factory function that its registry calls to instantiate it.
-The factory is a static member of the function class, and the registry references it by a fixed naming pattern: `create` followed by the plugin name, so `createConditional` in the example.
+The registry calls the factory with `PhysicalFunctionRegistryArguments`:
 
-The logical factory receives the child functions that were parsed from the query.
-Argument count and other user input reach it directly, so report a bad count as a query error rather than an assertion.
+- `childFunctions`: the arguments, as physical functions.
+- `inputTypes`: the types of the arguments.
+- `outputType`: the result type that the planner gave the call.
+- `literals`: for each argument that is a literal or a Substrait enum, its text (e.g. the unit `DAY` of `EXTRACT`). Otherwise empty.
 
-The physical factory receives the child functions and the inferred result type, which the physical function keeps so it can declare the type of whatever a branch returns.
-The plugin name must match the logical function name, because lowering looks up the physical function by the logical function's registry key.
-The logical function already validated the argument shape, so a bad shape here is a lowering bug and a precondition fits.
+A function returns exactly `outputType`.
+If the computation gives a different type (e.g. integer arithmetic in `INT32` for an `INT8` result), the factory adds a cast (see `castIntegerResult`).
+The planner already checked the arguments, so a bad shape here is a bug of the planner and a precondition fits.
+A function can also be a composition of other physical functions, e.g. `NOT_EQUAL` as `NOT (a = b)` (see `SqlPhysicalFunction.cpp`).
 
-See the factory functions in `ConditionalLogicalFunction.cpp` and `ConditionalPhysicalFunction.cpp` for the example.
+See the factory function in `ConditionalPhysicalFunction.cpp` for the example.
 
 ## 9. Example and Tests
 
 The `Conditional` function used throughout this guide implements a CASE WHEN expression.
 It evaluates condition and result pairs in order and returns the first matching result, or a trailing default.
-Both representations store the branches as (condition, result) pairs plus the default result, so the shape is correct by construction.
-The generic child list interface flattens them into `[condition1, result1, ..., default]` and regroups them on the way back, which the type inference and the execution sections above show in full.
+The physical function stores the branches as (condition, result) pairs plus the default result.
+The factory receives them as `[condition1, result1, ..., default]` and groups them into pairs.
 
 Last, it is good practice to define tests for the function.
-See `ConditionalLogicalFunctionTest.cpp` for unit tests, and `nes-systests/function/Conditional.test` for end to end tests that run queries against the function.
+See `nes-systests/function/Conditional.test` for end to end tests that run queries against the function.
 Which layer a given test belongs in, and what each layer is expected to cover, is described in [standards/testing_guidelines.md](../standards/testing_guidelines.md).

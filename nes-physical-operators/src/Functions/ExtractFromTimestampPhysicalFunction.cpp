@@ -19,7 +19,6 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Functions/ExtractFromTimestampLogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
@@ -89,28 +88,7 @@ VarVal ExtractFromTimestampPhysicalFunction::execute(const Record& record, Arena
         std::unreachable();
     }();
 
-    return VarVal{extracted, value.isNullable(), false};
-}
-
-PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createDay_Of(PhysicalFunctionRegistryArguments arguments)
-{
-    PRECONDITION(
-        arguments.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Day_Of) must have exactly one child function");
-    return ExtractFromTimestampPhysicalFunction{TimestampUnit::Day, arguments.childFunctions[0], arguments.outputType};
-}
-
-PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createMonth_Of(PhysicalFunctionRegistryArguments arguments)
-{
-    PRECONDITION(
-        arguments.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Month_Of) must have exactly one child function");
-    return ExtractFromTimestampPhysicalFunction{TimestampUnit::Month, arguments.childFunctions[0], arguments.outputType};
-}
-
-PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createYear_Of(PhysicalFunctionRegistryArguments arguments)
-{
-    PRECONDITION(
-        arguments.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Year_Of) must have exactly one child function");
-    return ExtractFromTimestampPhysicalFunction{TimestampUnit::Year, arguments.childFunctions[0], arguments.outputType};
+    return VarVal{extracted, value.isNullable(), false}.castToType(outputType.type);
 }
 
 }

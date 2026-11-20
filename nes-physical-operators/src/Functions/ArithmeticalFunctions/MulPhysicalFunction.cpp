@@ -21,6 +21,7 @@
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
@@ -38,10 +39,10 @@ MulPhysicalFunction::MulPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 {
 }
 
-PhysicalFunctionRegistryReturnType MulPhysicalFunction::createMul(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType MulPhysicalFunction::createMultiply(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Mul function must have exactly two child functions");
-    return MulPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    return castIntegerResult(MulPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]), physicalFunctionRegistryArguments.outputType);
 }
 
 }

@@ -31,7 +31,7 @@ public:
     ModPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createMod(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createModulus(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

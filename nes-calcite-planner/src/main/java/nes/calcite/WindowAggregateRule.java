@@ -61,7 +61,7 @@ final class WindowAggregateRule extends RelOptRule {
             filter = f.getCondition();
             node = strip(f.getInput());
         }
-        if (!(node instanceof TableFunctionScan tfs) || tfs.getInputs().size() != 1) {
+        if (!(node instanceof TableFunctionScan tfs) || tfs.getInputs().isEmpty()) {
             return;
         }
 
@@ -70,7 +70,7 @@ final class WindowAggregateRule extends RelOptRule {
             return;
         }
 
-        RelNode source = strip(tfs.getInputs().get(0));
+        RelNode source = windowInput(tfs);
         int sourceWidth = source.getRowType().getFieldCount(); // window_start = sourceWidth, window_end = sourceWidth + 1
         if (filter != null && referencesWindow(filter, sourceWidth)) {
             return;
@@ -90,8 +90,8 @@ final class WindowAggregateRule extends RelOptRule {
         boolean groupsByWindow = false;
         List<RelDataTypeField> outputFields = agg.getRowType().getFieldList();
         RelDataTypeFactory.Builder rowType = agg.getCluster().getTypeFactory().builder();
-        rowType.add("window_start", tfs.getRowType().getFieldList().get(sourceWidth).getType());
-        rowType.add("window_end", tfs.getRowType().getFieldList().get(sourceWidth + 1).getType());
+        rowType.add("START", tfs.getRowType().getFieldList().get(sourceWidth).getType());
+        rowType.add("END", tfs.getRowType().getFieldList().get(sourceWidth + 1).getType());
         List<Integer> outputOrder = new ArrayList<>(); // position in NesWindowAggregate output, per Aggregate output
         int outputIndex = 0;
         for (int group : agg.getGroupSet()) {
@@ -122,13 +122,13 @@ final class WindowAggregateRule extends RelOptRule {
                 outputIndex++;
                 continue;
             }
-            WindowAggregate.Function function = toFunction(aggCall);
+            String function = toFunction(aggCall);
             if (function == null) {
                 return;
             }
             WindowAggregate.Aggregate.Builder aggregate = WindowAggregate.Aggregate.newBuilder().setFunction(function);
             if (aggCall.getArgList().isEmpty()) {
-                if (function != WindowAggregate.Function.COUNT) {
+                if (!function.equals("COUNT")) {
                     return;
                 }
             } else {
@@ -138,10 +138,12 @@ final class WindowAggregateRule extends RelOptRule {
                 }
                 aggregate.setField(column);
             }
-            spec.addAggregates(withType(aggregate, outputFields.get(outputIndex).getType()));
+            spec.addAggregates(withType(aggregate, outputFields.get(outputIndex).getType()).setName(outputFields.get(outputIndex).getName()));
             outputOrder.add(2 + spec.getGroupKeysCount() + spec.getAggregatesCount() - 1);
             rowType.add(outputFields.get(outputIndex++));
         }
+
+        addCountIfEmpty(spec, rowType, agg.getCluster().getTypeFactory());
 
         RelBuilder builder = call.builder();
         builder.push(source);
@@ -156,6 +158,29 @@ final class WindowAggregateRule extends RelOptRule {
         List<RexNode> reorder = outputOrder.stream().map(i -> i >= 0 ? builder.field(i) : literals.get(-1 - i)).toList();
         builder.project(reorder, agg.getRowType().getFieldNames(), true);
         call.transformTo(builder.build());
+    }
+
+    /**
+     * The rows the window function reads. Calcite passes a UNION ALL argument (TUMBLE((SELECT ... UNION ALL SELECT ...),
+     * ...)) as one input per branch; they are the union's rows.
+     */
+    static RelNode windowInput(TableFunctionScan tfs) {
+        List<RelNode> inputs = tfs.getInputs().stream().map(WindowAggregateRule::strip).toList();
+        return inputs.size() == 1 ? inputs.get(0) : org.apache.calcite.rel.logical.LogicalUnion.create(inputs, true);
+    }
+
+    /**
+     * Our aggregation needs at least one aggregate: one without (Calcite's deduplication for IN/EXISTS) gets a COUNT(*),
+     * which the projection on top leaves out.
+     */
+    static void addCountIfEmpty(WindowAggregate.Builder spec, RelDataTypeFactory.Builder rowType, RelDataTypeFactory types) {
+        if (spec.getAggregatesCount() > 0) {
+            return;
+        }
+        RelDataType count = types.createSqlType(org.apache.calcite.sql.type.SqlTypeName.BIGINT);
+        spec.addAggregates(withType(WindowAggregate.Aggregate.newBuilder().setFunction("COUNT"), count)
+            .setName("$f_count"));
+        rowType.add("$f_count", count);
     }
 
     /** Records Calcite's result type, to which the converter casts the aggregation's result. */
@@ -213,18 +238,16 @@ final class WindowAggregateRule extends RelOptRule {
         return index;
     }
 
-    static WindowAggregate.Function toFunction(AggregateCall call) {
+    /** The name of our aggregation, or null if the engine has none for the call. */
+    static String toFunction(AggregateCall call) {
         if (call.isDistinct() || call.isApproximate() || call.hasFilter() || call.getArgList().size() > 1
             || !call.getCollation().getFieldCollations().isEmpty()) {
             return null;
         }
         return switch (call.getAggregation().getKind()) {
-            case SUM, SUM0 -> WindowAggregate.Function.SUM;
-            case COUNT -> WindowAggregate.Function.COUNT;
-            case MIN -> WindowAggregate.Function.MIN;
-            case MAX -> WindowAggregate.Function.MAX;
-            case AVG -> WindowAggregate.Function.AVG;
-            default -> null;
+            case SUM, SUM0 -> "SUM";
+            case COUNT, MIN, MAX, AVG -> call.getAggregation().getKind().name();
+            default -> call.getAggregation() instanceof NesFunctions.Aggregation ? call.getAggregation().getName() : null;
         };
     }
 

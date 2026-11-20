@@ -16,7 +16,7 @@ ATTACH INLINE
 
 CREATE SINK file_sink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 
-SELECT * FROM stream INTO file_sink;
+SELECT * FROM "STREAM" INTO file_sink;
 ----
 1,1,12
 1,2,23

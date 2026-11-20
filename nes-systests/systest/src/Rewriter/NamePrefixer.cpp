@@ -231,15 +231,6 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
             rewriter.replace(identifier->getStart(), std::string{prefixed->getOriginalString()});
         }
     };
-    /// A declared name has no dot, so a reference is a single part.
-    const auto prefixParts = [&](const AntlrSQLParser::MultipartIdentifierContext* multipart)
-    {
-        for (auto* part : multipart->parts)
-        {
-            prefix(part->identifier());
-        }
-    };
-
     for (const auto* source : findAll<AntlrSQLParser::CreateLogicalSourceDefinitionContext>(parse.tree()))
     {
         prefix(source->sourceName);
@@ -256,37 +247,11 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefix(model->modelName);
     }
-    for (auto* source : findAll<AntlrSQLParser::NamedSourceContext>(parse.tree()))
-    {
-        prefixParts(source->multipartIdentifier());
-    }
-    for (const auto* inference : findAll<AntlrSQLParser::ModelInferenceSourceContext>(parse.tree()))
-    {
-        prefix(inference->modelName);
-    }
-    for (auto* input : findAll<AntlrSQLParser::ModelInferenceStreamNameContext>(parse.tree()))
-    {
-        prefixParts(input->multipartIdentifier());
-    }
     for (auto* sink : findAll<AntlrSQLParser::SinkContext>(parse.tree()))
     {
         prefix(sink->identifier());
     }
-    /// A qualified field reference writes the source name before the dot, and the parser checks that it matches the source.
-    for (const auto* dereference : findAll<AntlrSQLParser::DereferenceContext>(parse.tree()))
-    {
-        if (auto* qualifier = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(dereference->base))
-        {
-            prefix(qualifier->identifier());
-        }
-    }
-    for (auto* star : findAll<AntlrSQLParser::StarContext>(parse.tree()))
-    {
-        if (auto* qualified = star->qualifiedName(); qualified != nullptr)
-        {
-            prefix(qualified->identifier(0));
-        }
-    }
+
 }
 
 }

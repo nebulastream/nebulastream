@@ -21,7 +21,7 @@
 #include <ranges>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <QueryIdSerialization.hpp>
 #include <cpptrace/basic.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -35,7 +35,7 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
     for (const auto& activeQuery : status.activeQueries)
     {
         auto* activeQueryGRPC = response->add_active_queries();
-        *activeQueryGRPC->mutable_query_id() = QueryPlanSerializationUtil::serializeQueryId(activeQuery.queryId);
+        *activeQueryGRPC->mutable_query_id() = serializeQueryId(activeQuery.queryId);
         if (activeQuery.started)
         {
             activeQueryGRPC->set_started_unix_timestamp_in_milli_seconds(
@@ -46,7 +46,7 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
     for (const auto& terminatedQuery : status.terminatedQueries)
     {
         auto* terminatedQueryGRPC = response->add_terminated_queries();
-        *terminatedQueryGRPC->mutable_query_id() = QueryPlanSerializationUtil::serializeQueryId(terminatedQuery.queryId);
+        *terminatedQueryGRPC->mutable_query_id() = serializeQueryId(terminatedQuery.queryId);
         if (terminatedQuery.started)
         {
             terminatedQueryGRPC->set_started_unix_timestamp_in_milli_seconds(
@@ -86,7 +86,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                              [&](const auto& activeQuery)
                              {
                                  return WorkerStatus::ActiveQuery{
-                                     .queryId = QueryPlanSerializationUtil::deserializeQueryId(activeQuery.query_id()),
+                                     .queryId = deserializeQueryId(activeQuery.query_id()),
                                      .started = activeQuery.has_started_unix_timestamp_in_milli_seconds()
                                          ? std::make_optional(fromMillis(activeQuery.started_unix_timestamp_in_milli_seconds()))
                                          : std::nullopt};
@@ -98,7 +98,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                 [&](const auto& terminatedQuery)
                 {
                     return WorkerStatus::TerminatedQuery{
-                        .queryId = QueryPlanSerializationUtil::deserializeQueryId(terminatedQuery.query_id()),
+                        .queryId = deserializeQueryId(terminatedQuery.query_id()),
                         .started = terminatedQuery.has_started_unix_timestamp_in_milli_seconds()
                             ? std::make_optional(fromMillis(terminatedQuery.started_unix_timestamp_in_milli_seconds()))
                             : std::nullopt,

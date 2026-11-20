@@ -2,29 +2,25 @@
 # description: Void sink discards all tuples; no result file is produced and the systest harness must skip the output check.
 # groups: [Sinks]
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+# The sink is what these queries test; the rows come from a named source.
+CREATE LOGICAL SOURCE stream8(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream8 TYPE File;
+ATTACH FILE small/stream8.csv
+
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO Void();
 ----
 
 CREATE SINK discard(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE Void;
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO discard;
 ----
 
 # The output format is configurable, so that a query can run the formatting step without any I/O.
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO Void('CSV' AS "SINK".OUTPUT_FORMAT);
 ----

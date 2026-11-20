@@ -34,7 +34,7 @@ SELECT
 
     f32 > 42.0 AS f32,
     f64 > 42.0 AS f64
-FROM stream INTO sinkConstant;
+FROM "STREAM" INTO sinkConstant;
 ----
 false,false,false,false,false,true,true,true,false,true
 
@@ -63,9 +63,9 @@ SELECT
     i8 > f32 + 1 AS i8_f32_plus_1,
     i8 > f64 AS i8_f64,
     i8 > f64 + 1 AS i8_f64_plus_1
-FROM stream INTO sinkI8;
+FROM "STREAM" INTO sinkI8;
 ----
-false,false,true,true,true,true,true,true,false,false,false,false,true,true,true,true,false,false,false,false
+false,false,true,true,true,true,true,true,true,false,true,false,true,true,true,true,false,false,false,false
 
 # Greater i16 value with all other data types
 SELECT
@@ -92,7 +92,7 @@ SELECT
     i16 > f32 + 1 AS i16_f32_plus_1,
     i16 > f64 AS i16_f64,
     i16 > f64 + 1 AS i16_f64_plus_1
-FROM stream INTO sinkI16;
+FROM "STREAM" INTO sinkI16;
 ----
 false,false,false,false,true,true,true,true,false,false,true,true,true,true,true,true,false,false,false,false
 
@@ -121,7 +121,7 @@ SELECT
     i32 > f32 + 1 AS i32_f32_plus_1,
     i32 > f64 AS i32_f64,
     i32 > f64 + 1 AS i32_f64_plus_1
-FROM stream INTO sinkI32;
+FROM "STREAM" INTO sinkI32;
 ----
 false,false,false,false,false,false,true,true,false,false,false,false,true,true,true,true,false,false,false,false
 
@@ -150,7 +150,7 @@ SELECT
     i64 > f32 + 1 AS i64_f32_plus_1,
     i64 > f64 AS i64_f64,
     i64 > f64 + 1 AS i64_f64_plus_1
-FROM stream INTO sinkI64;
+FROM "STREAM" INTO sinkI64;
 ----
 false,false,false,false,false,false,false,false,false,false,false,false,false,false,true,true,false,false,false,false
 
@@ -180,7 +180,7 @@ SELECT
     u8 > f32 + 1 AS u8_f32_plus_1,
     u8 > f64 AS u8_f64,
     u8 > f64 + 1 AS u8_f64_plus_1
-FROM stream INTO sinkU8;
+FROM "STREAM" INTO sinkU8;
 ----
 true,true,true,true,true,true,true,true,false,false,false,false,false,false,false,false,true,true,false,false
 
@@ -209,9 +209,9 @@ SELECT
     u16 > f32 + 1 AS u16_f32_plus_1,
     u16 > f64 AS u16_f64,
     u16 > f64 + 1 AS u16_f64_plus_1
-FROM stream INTO sinkU16;
+FROM "STREAM" INTO sinkU16;
 ----
-true,true,true,true,true,true,true,true,true,true,true,true,false,false,false,false,true,true,true,true
+false,true,true,true,true,true,true,true,true,true,true,true,false,false,false,false,true,true,true,true
 
 # Greater u32 value with all other data types
 SELECT
@@ -238,9 +238,9 @@ SELECT
     u32 > f32 + 1 AS u32_f32_plus_1,
     u32 > f64 AS u32_f64,
     u32 > f64 + 1 AS u32_f64_plus_1
-FROM stream INTO sinkU32;
+FROM "STREAM" INTO sinkU32;
 ----
-false,false,false,false,false,false,true,true,true,true,true,true,false,false,false,false,true,true,true,true
+false,true,false,true,true,true,true,true,true,true,true,true,false,false,false,false,true,true,true,true
 
 # Greater u64 value with all other data types
 SELECT
@@ -267,6 +267,6 @@ SELECT
     u64 > f32 + 1 AS u64_f32_plus_1,
     u64 > f64 AS u64_f64,
     u64 > f64 + 1 AS u64_f64_plus_1
-FROM stream INTO sinkU64;
+FROM "STREAM" INTO sinkU64;
 ----
-false,false,false,false,false,false,false,false,true,true,true,true,true,true,false,false,true,true,true,true
+false,false,false,false,false,false,true,true,true,true,true,true,true,true,false,false,true,true,true,true

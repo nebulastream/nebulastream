@@ -7,13 +7,13 @@ CREATE LOGICAL SOURCE manufacturing(creationTS UINT64, messageIndex UINT64, mf01
 CREATE PHYSICAL SOURCE FOR manufacturing TYPE File;
 ATTACH FILE small/manufacturing/manufacturing_100K.csv
 
-CREATE SINK manufacturingChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, avg_mf01 FLOAT64, sum_mf02 INT64, min_mf03 INT16, count_mf01 UINT64 NOT NULL, sum_mf01 INT64)  TYPE Checksum ;
+CREATE SINK manufacturingChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, avg_mf01 FLOAT64, sum_mf02 INT64, min_mf03 INT16, count_mf01 INT64 NOT NULL, sum_mf01 INT64)  TYPE Checksum ;
 
 
 # Query 1 Windowed Aggregation with three different aggregation functions
-SELECT start, end, AVG(mf01) AS avg_mf01, SUM(mf02) AS sum_mf02, MIN(mf03) AS min_mf03, COUNT(mf01) AS count_mf01, SUM(mf01) AS sum_mf01
-FROM manufacturing
-WINDOW SLIDING(creationTS, SIZE 1 MINUTE, ADVANCE BY 1 SEC)
+SELECT window_start AS "START", window_end AS "END", AVG(CAST(mf01 AS DOUBLE)) AS avg_mf01, SUM(mf02) AS sum_mf02, MIN(mf03) AS min_mf03, COUNT(mf01) AS count_mf01, SUM(mf01) AS sum_mf01
+FROM TABLE(HOP(TABLE manufacturing, DESCRIPTOR(creationTS), INTERVAL '1' SECOND, INTERVAL '1' MINUTE))
+GROUP BY window_start, window_end
 INTO manufacturingChecksum;
 ----
 77 264968

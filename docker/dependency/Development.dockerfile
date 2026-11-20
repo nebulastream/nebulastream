@@ -19,10 +19,39 @@ RUN apt-get update -y && apt-get install -y \
         bats-assert \
         bats-file \
         openjdk-21-jre-headless \
+        zlib1g-dev \
     && apt clean && rm -rf /var/lib/apt/lists/*
 
 # Additional testing libraries for bats are discovered via the BATS_LIB_PATH environemnt
 ENV BATS_LIB_PATH=/usr/lib/bats
+
+# GraalVM and Maven build the Calcite planner into a native library, which NebulaStream links in place of a planner
+# service (see nes-calcite/CMakeLists.txt, which finds GraalVM via GRAALVM_HOME).
+ARG GRAALVM_RELEASE=25.5.5.0.3
+ARG GRAALVM_ARCHIVE=graalvm-community-jdk-25i5-25.0.5.0.3
+RUN set -eux; \
+    case "$(dpkg --print-architecture)" in \
+        'amd64') arch='x64'; sha256='c6438dee6c3ade2220d40b7ccdcad24b512d30e233e61bb4fc70519522de34ef' ;; \
+        'arm64') arch='aarch64'; sha256='41741c0650ae7564a78335f9e4fc353a902e6ff1d4140f2e4fabd1c55d5cce66' ;; \
+        *) echo >&2 "unsupported architecture"; exit 1 ;; \
+    esac; \
+    wget -q -O /tmp/graalvm.tar.gz \
+        "https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-${GRAALVM_RELEASE}/${GRAALVM_ARCHIVE}_linux-${arch}_bin.tar.gz"; \
+    echo "${sha256} /tmp/graalvm.tar.gz" | sha256sum -c -; \
+    mkdir -p /opt/graalvm; \
+    tar -xzf /tmp/graalvm.tar.gz -C /opt/graalvm --strip-components=1; \
+    rm /tmp/graalvm.tar.gz; \
+    /opt/graalvm/bin/native-image --version
+ENV GRAALVM_HOME=/opt/graalvm
+
+ARG MAVEN_VERSION=3.9.16
+ADD --checksum=sha512:831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6 \
+  https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz /tmp/maven.tar.gz
+RUN mkdir -p /opt/maven \
+    && tar -xzf /tmp/maven.tar.gz -C /opt/maven --strip-components=1 \
+    && rm /tmp/maven.tar.gz \
+    && ln -s /opt/maven/bin/mvn /usr/local/bin/mvn \
+    && JAVA_HOME=/opt/graalvm mvn --version
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \

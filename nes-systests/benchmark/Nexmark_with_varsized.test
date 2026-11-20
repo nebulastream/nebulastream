@@ -19,7 +19,7 @@ ATTACH FILE large/nexmark/person_840MB.csv
 CREATE SINK bidCheckSum(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
 CREATE SINK q1CheckSum(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
 CREATE SINK q2CheckSum(auctionId INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q5Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32 NOT NULL, num UINT64 NOT NULL, max_tmp UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q5Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32 NOT NULL, num INT64 NOT NULL, max_tmp INT64)  TYPE Checksum;
 CREATE SINK q8CheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, name VARSIZED NOT NULL)  TYPE Checksum;
 CREATE SINK q8VariantCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL, timestamp_auction UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL)  TYPE Checksum;
 
@@ -40,22 +40,22 @@ SELECT auctionId, price FROM bid WHERE auctionId % 123 = 0 INTO q2CheckSum;
 1511777 1211558031
 
 # Query 5
-SELECT start, end, auctionId, num, max_tmp
-FROM (SELECT auctionId, num, start as auction_start, end as auction_end
-      FROM (SELECT auctionId, COUNT(auctionId) AS num, start, end
-            FROM bid
-            GROUP BY auctionId
-            WINDOW SLIDING(timestamp_bid, SIZE 10 SEC, ADVANCE BY 2 SEC)))
-INNER JOIN (SELECT max_tmp, start as bid_start, end as bid_end
-              FROM (SELECT MAX(num_ids) AS max_tmp, start, end
-                    FROM
-                          (SELECT auctionId, COUNT(auctionId) AS num_ids, start
-                           FROM bid
-                           GROUP BY auctionId
-                           WINDOW SLIDING(timestamp_bid, SIZE 10 SEC, ADVANCE BY 2 SEC))
-                    WINDOW TUMBLING(start, SIZE 2 SEC)))
-ON num == max_tmp
-WINDOW TUMBLING(auction_start, bid_start, SIZE 2 SEC)
+SELECT a.window_start AS "START", a.window_end AS "END", a.auctionId, a.num, b.max_tmp
+FROM (SELECT * FROM TABLE(TUMBLE(
+        (SELECT auctionId, COUNT(auctionId) AS num, window_start AS auction_start, window_end AS auction_end
+         FROM TABLE(HOP(TABLE bid, DESCRIPTOR(timestamp_bid), INTERVAL '2' SECOND, INTERVAL '10' SECOND))
+         GROUP BY window_start, window_end, auctionId),
+        DESCRIPTOR(auction_start), INTERVAL '2' SECOND))) AS a
+INNER JOIN (SELECT * FROM TABLE(TUMBLE(
+        (SELECT MAX(num_ids) AS max_tmp, window_start AS bid_start, window_end AS bid_end
+         FROM TABLE(TUMBLE(
+                (SELECT auctionId, COUNT(auctionId) AS num_ids, window_start AS "START"
+                 FROM TABLE(HOP(TABLE bid, DESCRIPTOR(timestamp_bid), INTERVAL '2' SECOND, INTERVAL '10' SECOND))
+                 GROUP BY window_start, window_end, auctionId),
+                DESCRIPTOR("START"), INTERVAL '2' SECOND))
+         GROUP BY window_start, window_end),
+        DESCRIPTOR(bid_start), INTERVAL '2' SECOND))) AS b
+ON a.window_start = b.window_start AND a.num = b.max_tmp
 INTO q5Checksum;
 ----
 10589 23372488
@@ -64,24 +64,21 @@ INTO q5Checksum;
 # Query 8
 # Until PR #755 is not merged, we need to do another subquery to project the required fields
 # auction.id is renamed to auction_id to avoid collision with person.id in the join schema
-SELECT start, end, id, name
-FROM (
-        SELECT *
-            FROM (SELECT * FROM person)
-        INNER JOIN
-            (SELECT id AS auction_id, timestamp_auction, initialbid, reserve, expires, seller, category FROM auction)
-        ON id = seller WINDOW TUMBLING (timestamp_person, timestamp_auction, size 10 sec)
-    )
+SELECT p.window_start AS "START", p.window_end AS "END", p.id, p.name
+FROM TABLE(TUMBLE(TABLE person, DESCRIPTOR(timestamp_person), INTERVAL '10' SECOND)) AS p
+INNER JOIN TABLE(TUMBLE(TABLE auction, DESCRIPTOR(timestamp_auction), INTERVAL '10' SECOND)) AS a
+ON p.window_start = a.window_start AND p.id = a.seller
 INTO q8CheckSum;
 ----
 10999751 33652579169
 
 
 # Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
-SELECT start, end, timestamp_bid, auctionId, bidder, price, timestamp_auction, id, initialbid, reserve, expires, seller, category
-    FROM (SELECT * FROM bid)
-INNER JOIN
-    (SELECT * FROM auction)
-ON auctionId = id WINDOW TUMBLING (timestamp_bid, timestamp_auction, size 10 sec) INTO q8VariantCheckSum;
+SELECT b.window_start AS "START", b.window_end AS "END", b.timestamp_bid, b.auctionId, b.bidder, b.price,
+       a.timestamp_auction, a.id, a.initialbid, a.reserve, a.expires, a.seller, a.category
+FROM TABLE(TUMBLE(TABLE bid, DESCRIPTOR(timestamp_bid), INTERVAL '10' SECOND)) AS b
+INNER JOIN TABLE(TUMBLE(TABLE auction, DESCRIPTOR(timestamp_auction), INTERVAL '10' SECOND)) AS a
+ON b.window_start = a.window_start AND b.auctionId = a.id
+INTO q8VariantCheckSum;
 ----
 182197843 1176854299950

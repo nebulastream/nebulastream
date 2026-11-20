@@ -2,11 +2,13 @@
 # description: Creating anonymous sinks within queries
 # groups: [Sinks]
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+# The sink is what these queries test; the rows come from a named source.
+CREATE LOGICAL SOURCE stream8(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream8 TYPE File;
+ATTACH FILE small/stream8.csv
+
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO File();
 ----
 1,1,12
@@ -15,11 +17,8 @@ INTO File();
 1,4,45
 1,5,56
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO File(SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SINK"."SCHEMA");
 ----
 1,1,12
@@ -29,57 +28,39 @@ INTO File(SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT
 1,5,56
 
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO Checksum();
 ----
 5 1505
 
 CREATE SINK output_file(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO output_file;
 ====
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO File();
 
 
 
 CREATE SINK output_checksum(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE Checksum;
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO output_checksum;
 ====
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO Checksum();
 
 
 # The sink type is looked up as written, so "FileSink" does not resolve to the registered "File" sink and the
 # query must be rejected with an error instead of being silently accepted.
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS "SOURCE".FILE_PATH,
-	'CSV' AS INPUT_FORMATTER."TYPE",
-	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+SELECT ID, "VALUE", "TIMESTAMP"
+FROM stream8
 INTO FileSink();
 ----
 ERROR 1000

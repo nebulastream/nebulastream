@@ -14,6 +14,7 @@
 
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 
+#include <charconv>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -22,10 +23,9 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <QueryIdSerialization.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/client_context.h>
@@ -55,24 +55,39 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
     }
 }
 
-std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(LogicalPlan localPlan)
+std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(PhysicalQuery query)
 {
     grpc::ClientContext context;
     StartQueryReply reply;
-    StartQueryRequest request;
-    request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(localPlan));
-    const auto status = stub->StartQuery(&context, request, &reply);
+    StartPhysicalQueryRequest request;
+    *request.mutable_queryid() = serializeQueryId(query.queryId);
+    request.set_part(std::move(query.part));
+    const auto status = stub->StartPhysicalQuery(&context, request, &reply);
     if (status.ok())
     {
-        NES_DEBUG("Starting local query {} on node {} was successful.", localPlan.getQueryId(), workerConfig.host);
-        /// The worker returns its assigned LocalQueryId, but we need to return the full QueryId
-        /// which includes the DistributedQueryId from the plan
-        auto workerQueryId = QueryPlanSerializationUtil::deserializeQueryId(reply.queryid());
-        if (localPlan.getQueryId().isDistributed())
+        NES_DEBUG("Starting local physical query {} on node {} was successful.", query.queryId, workerConfig.host);
+        /// As for a logical plan: the worker's LocalQueryId with the query's DistributedQueryId.
+        auto workerQueryId = deserializeQueryId(reply.queryid());
+        if (query.queryId.isDistributed())
         {
-            return QueryId::create(workerQueryId.getLocalQueryId(), localPlan.getQueryId().getDistributedQueryId());
+            return QueryId::create(workerQueryId.getLocalQueryId(), query.queryId.getDistributedQueryId());
         }
         return workerQueryId;
+    }
+    /// The worker's own error (e.g. an unsupported function while it builds the pipelines), with its code: the worker sends
+    /// both in the trailing metadata.
+    const auto& trailing = context.GetServerTrailingMetadata();
+    const auto code = trailing.find("code");
+    const auto what = trailing.find("what");
+    if (code != trailing.end() and what != trailing.end())
+    {
+        const std::string codeText(code->second.data(), code->second.size());
+        uint64_t value = 0;
+        if (const auto [end, error] = std::from_chars(codeText.data(), codeText.data() + codeText.size(), value);
+            error == std::errc{} and value != static_cast<uint64_t>(ErrorCode::UnknownException))
+        {
+            return std::unexpected{Exception(std::string(what->second.data(), what->second.size()), value)};
+        }
     }
     return std::unexpected{QueryStartFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
@@ -82,7 +97,7 @@ std::expected<LocalQueryStatusSnapshot, Exception> GRPCQuerySubmissionBackend::s
 {
     grpc::ClientContext context;
     QueryStatusRequest request;
-    *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
+    *request.mutable_queryid() = serializeQueryId(queryId);
     QueryStatusReply response;
 
     if (const auto status = stub->RequestQueryStatus(&context, request, &response); status.ok())
@@ -174,7 +189,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
 {
     grpc::ClientContext context;
     StopQueryRequest request;
-    *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
+    *request.mutable_queryid() = serializeQueryId(queryId);
     google::protobuf::Empty response;
 
     const auto status = stub->StopQuery(&context, request, &response);

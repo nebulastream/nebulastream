@@ -35,18 +35,24 @@ add_source_files(nes-physical-operators
         CastFromUnixTimestampPhysicalFunction.cpp
         CastVarSizedToNumericPhysicalFunction.cpp
         ExtractFromTimestampPhysicalFunction.cpp
+        SqlPhysicalFunction.cpp
 )
 
-add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
-add_registry_entry(PhysicalFunction CastTo KEY CastToType)
-add_registry_entry(PhysicalFunction CastToUnixTimestamp KEY CastToUnixTs)
-add_registry_entry(PhysicalFunction CastVarSizedToNumeric KEY VarSizedToNumeric)
 add_registry_entry(PhysicalFunction CharLength KEY CHAR_LENGTH)
 add_registry_entry(PhysicalFunction Concat)
-add_registry_entry(PhysicalFunction NullValue)
-add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Day_Of)
-add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Month_Of)
-add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Year_Of)
 add_registry_entry(PhysicalFunction FromBase64 KEY FROM_BASE64)
+add_registry_entry(FunctionSignature FromBase64 KEY FROM_BASE64)
 add_registry_entry(PhysicalFunction OctetLength KEY OCTET_LENGTH)
 add_registry_entry(PhysicalFunction ToBase64 KEY TO_BASE64)
+add_registry_entry(PhysicalFunction Sql KEY Not_Equal)
+add_registry_entry(PhysicalFunction Sql KEY Is_Not_Null)
+add_registry_entry(PhysicalFunction Sql KEY Is_Not_True)
+add_registry_entry(PhysicalFunction Sql KEY Is_Nan)
+add_registry_entry(PhysicalFunction Sql KEY Exp)
+add_registry_entry(PhysicalFunction Sql KEY Negate)
+add_registry_entry(PhysicalFunction Sql KEY Cast)
+add_registry_entry(PhysicalFunction Sql KEY Timestamp_Millis)
+add_registry_entry(PhysicalFunction Sql KEY Unix_Millis)
+add_registry_entry(PhysicalFunction Sql KEY Extract)
+add_registry_entry(PhysicalFunction Sql KEY Format_Datetime)
+add_registry_entry(PhysicalFunction Sql KEY Timestamp)

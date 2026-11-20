@@ -21,6 +21,10 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 
 /**
@@ -35,10 +39,28 @@ final class GlobalWindowRules {
 
     private GlobalWindowRules() {}
 
-    /** window_start and window_end of a GLOBAL window; never read by the query, only there to keep the layout. */
+    /** START and END of a GLOBAL window; never read by the query, only there to keep the layout. */
     private static RelDataTypeFactory.Builder windowColumns(RelDataTypeFactory typeFactory) {
         RelDataType bigint = typeFactory.createSqlType(SqlTypeName.BIGINT);
-        return typeFactory.builder().add("window_start", bigint).add("window_end", bigint);
+        return typeFactory.builder().add("START", bigint).add("END", bigint);
+    }
+
+    /**
+     * The input with the event time of a GLOBAL window as an extra last column: 0 for every row, so that the window
+     * [0, size) holds every row and only the end of the stream closes it. (Ingestion time depends on the wall clock:
+     * nested GLOBAL operators then saw rows older than a watermark that another input had already advanced, and failed.)
+     */
+    private static RelNode withConstantTime(RelNode input) {
+        RexBuilder rexBuilder = input.getCluster().getRexBuilder();
+        List<RexNode> projects = new ArrayList<>();
+        List<String> names = new ArrayList<>(input.getRowType().getFieldNames());
+        for (int i = 0; i < names.size(); i++) {
+            projects.add(RexInputRef.of(i, input.getRowType()));
+        }
+        projects.add(rexBuilder.makeAbstractCast(rexBuilder.getTypeFactory().createSqlType(SqlTypeName.UBIGINT),
+            rexBuilder.makeExactLiteral(java.math.BigDecimal.ZERO), false));
+        names.add("$f_time");
+        return LogicalProject.create(input, List.of(), projects, SqlValidatorUtil.uniquify(names, true), java.util.Set.of());
     }
 
     private static final class AggregateRule extends RelOptRule {
@@ -71,15 +93,16 @@ final class GlobalWindowRules {
                     outputIndex++;
                     continue;
                 }
-                WindowAggregate.Function function = WindowAggregateRule.toFunction(aggCall);
-                if (function == null || (aggCall.getArgList().isEmpty() && function != WindowAggregate.Function.COUNT)) {
+                String function = WindowAggregateRule.toFunction(aggCall);
+                if (function == null || (aggCall.getArgList().isEmpty() && !function.equals("COUNT"))) {
                     return;
                 }
                 WindowAggregate.Aggregate.Builder aggregate = WindowAggregate.Aggregate.newBuilder().setFunction(function);
                 if (!aggCall.getArgList().isEmpty()) {
                     aggregate.setField(aggCall.getArgList().get(0));
                 }
-                spec.addAggregates(WindowAggregateRule.withType(aggregate, outputFields.get(outputIndex).getType()));
+                spec.addAggregates(WindowAggregateRule.withType(aggregate, outputFields.get(outputIndex).getType())
+                    .setName(outputFields.get(outputIndex).getName()));
                 RelDataTypeField field = outputFields.get(outputIndex++);
                 if (aggCall.getAggregation().getKind() == SqlKind.SUM0 && agg.getGroupSet().isEmpty()) {
                     /// Our SUM yields NULL for an empty input, which only an aggregation without GROUP BY sees.
@@ -95,8 +118,11 @@ final class GlobalWindowRules {
             if (agg.getGroupSet().isEmpty()) {
                 spec.setEmitOnEmptyInput(true);
             }
+            WindowAggregateRule.addCountIfEmpty(spec, rowType, agg.getCluster().getTypeFactory());
+            RelNode input = withConstantTime(agg.getInput());
+            spec.setTimeField(input.getRowType().getFieldCount() - 1);
             RelNode window = new NesWindowAggregate(
-                agg.getCluster(), agg.getTraitSet(), agg.getInput(), spec.build(), rowType.build());
+                agg.getCluster(), agg.getTraitSet(), input, spec.build(), rowType.build());
             RelBuilder builder = call.builder().push(window);
             List<RexNode> projections = new ArrayList<>(outputs.stream()
                 .map(output -> output instanceof Integer column ? builder.field(column) : (RexNode) output)
@@ -168,24 +194,40 @@ final class GlobalWindowRules {
             if (type == null) {
                 return;
             }
-            /// The join condition already refers to [left columns..., right columns...], NesWindowJoin's input layout.
-            RexNode condition = join.getCondition().isAlwaysTrue() ? null : join.getCondition();
-            WindowJoinRule.Split split = WindowJoinRule.split(join.getCluster().getRexBuilder(), join.getLeft(), join.getRight(), condition);
+            /// Each input gets its time column last: [left columns..., left time, right columns..., right time].
+            RelNode left = withConstantTime(join.getLeft());
+            RelNode right = withConstantTime(join.getRight());
+            int leftWidth = join.getLeft().getRowType().getFieldCount();
+            RexNode condition = join.getCondition().isAlwaysTrue() ? null : join.getCondition().accept(new RexShuttle() {
+                @Override
+                public RexNode visitInputRef(RexInputRef ref) {
+                    return ref.getIndex() < leftWidth ? ref : new RexInputRef(ref.getIndex() + 1, ref.getType());
+                }
+            });
+            WindowJoinRule.Split split = WindowJoinRule.split(join.getCluster().getRexBuilder(), left, right, condition);
             WindowJoin spec = WindowJoin.newBuilder()
                 .setKind(WindowAggregate.Kind.GLOBAL)
                 .setType(type)
                 .setImplementation(split.implementation())
+                .setLeftTimeField(leftWidth)
+                .setRightTimeField(right.getRowType().getFieldCount() - 1)
                 .build();
-            RelDataType rowType = windowColumns(join.getCluster().getTypeFactory())
-                .addAll(join.getRowType().getFieldList())
+            RelDataTypeFactory typeFactory = join.getCluster().getTypeFactory();
+            List<RelDataTypeField> fields = join.getRowType().getFieldList();
+            RelDataType time = typeFactory.createSqlType(SqlTypeName.UBIGINT);
+            RelDataType rowType = windowColumns(typeFactory)
+                .addAll(fields.subList(0, leftWidth))
+                .add("$f_time", typeFactory.createTypeWithNullability(time, type == WindowJoin.Type.RIGHT || type == WindowJoin.Type.FULL))
+                .addAll(fields.subList(leftWidth, fields.size()))
+                .add("$f_time", typeFactory.createTypeWithNullability(time, type == WindowJoin.Type.LEFT || type == WindowJoin.Type.FULL))
                 .uniquify()
                 .build();
             RelNode windowJoin = new NesWindowJoin(
-                join.getCluster(), join.getTraitSet(), join.getLeft(), join.getRight(), spec, split.condition(), split.residual(), rowType);
+                join.getCluster(), join.getTraitSet(), left, right, spec, split.condition(), split.residual(), rowType);
             RelBuilder builder = call.builder().push(windowJoin);
             List<RexNode> projections = new ArrayList<>();
             for (int i = 0; i < join.getRowType().getFieldCount(); i++) {
-                projections.add(builder.field(2 + i));
+                projections.add(builder.field(i < leftWidth ? 2 + i : 3 + i));
             }
             builder.project(projections, join.getRowType().getFieldNames(), true);
             call.transformTo(builder.build());

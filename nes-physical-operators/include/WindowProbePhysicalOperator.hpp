@@ -16,7 +16,7 @@
 
 #include <optional>
 #include <Interface/RecordBuffer.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include <WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>

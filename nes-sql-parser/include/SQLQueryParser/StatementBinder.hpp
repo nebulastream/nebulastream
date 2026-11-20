@@ -33,7 +33,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -121,9 +120,10 @@ struct DropSinkStatement
     Identifier name;
 };
 
+/// A query: its SQL text with the sink clause (SELECT ... INTO ...), which the Calcite planner plans.
 struct QueryStatement
 {
-    LogicalPlan plan;
+    std::string sql;
     std::optional<DistributedQueryId> id;
 };
 
@@ -134,18 +134,11 @@ enum class ExplainFormat : uint8_t
     Verbose
 };
 
-enum class ExplainStage : uint8_t
-{
-    Logical,
-    Optimized,
-    Distributed
-};
-
+/// EXPLAIN of a query: the placed pipelines the Calcite planner makes of it, and with Verbose also its planning steps.
 struct ExplainQueryStatement
 {
-    LogicalPlan plan;
+    std::string sql;
     ExplainFormat explainFormat = ExplainFormat::Visual;
-    std::unordered_set<ExplainStage> explainStages = {ExplainStage::Logical, ExplainStage::Optimized, ExplainStage::Distributed};
 };
 
 struct ShowQueriesStatement
@@ -247,9 +240,7 @@ class StatementBinder
     std::unique_ptr<Impl> impl;
 
 public:
-    explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
+    explicit StatementBinder(const std::shared_ptr<const SourceCatalog>& sourceCatalog);
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;

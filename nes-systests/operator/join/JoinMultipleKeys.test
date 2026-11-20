@@ -15,10 +15,11 @@ CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UIN
 
 
 # Query 1 - Join two streams
-SELECT start, end, id, value, timestamp1, id2, value2, timestamp2
-FROM (
-  SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
-)
+SELECT l.window_start AS "START", l.window_end AS "END",
+       l.id, l."VALUE", l.timestamp1, r.id2, r.value2, r.timestamp2
+FROM TABLE(TUMBLE(TABLE "STREAM", DESCRIPTOR(timestamp1), INTERVAL '1' SECOND)) AS l
+JOIN TABLE(TUMBLE(TABLE stream2, DESCRIPTOR(timestamp2), INTERVAL '1' SECOND)) AS r
+ON l.window_start = r.window_start AND id = id2 AND "VALUE" = value2
 INTO sinkStreamStream2;
 ----
 2000 3000 1 2 2000 1 2 2010

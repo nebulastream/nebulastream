@@ -21,7 +21,7 @@
 #include <substrait/plan.pb.h>
 #include <substrait/type.pb.h>
 
-/// Shared by the conversions of logical (SubstraitToLogicalPlan) and physical (SubstraitToPhysicalPlan) plans.
+/// Used by the conversion of physical plans (SubstraitToPhysicalPlan).
 namespace NES::Calcite::detail
 {
 /// Type anchor -> our type, for the user-defined types a plan declares; see unsignedTypes().

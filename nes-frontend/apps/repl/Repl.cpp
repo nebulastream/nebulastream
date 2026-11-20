@@ -405,8 +405,8 @@ struct Repl::Impl
         std::flush(std::cout);
     }
 
-    /// Prototype: "CALCITE [EXPLAIN [VERBOSE]] <query> INTO <sink or File(...)>;" plans <query> with Apache Calcite (nes-calcite-planner service at
-    /// $NES_CALCITE_PLANNER, default localhost:50061) instead of the ANTLR parser.
+    /// "CALCITE [EXPLAIN [VERBOSE]] <query> INTO <sink or File(...)>;": as the query (or EXPLAIN) without the prefix, which every
+    /// query is planned as with Apache Calcite (nes-calcite-planner service at $NES_CALCITE_PLANNER, default localhost:50061).
     static std::optional<std::string_view> stripKeyword(std::string_view statement, const std::string_view keyword)
     {
         const auto start = statement.find_first_not_of(" \t\r\n");
@@ -437,27 +437,12 @@ struct Repl::Impl
                 {
                     explainQuery = verbose;
                 }
-                auto [sql, sink] = Calcite::splitSink(explainQuery.value_or(statement));
-                if (Calcite::physicalPlans() and not explainQuery)
-                {
-                    /// Physical operators, placed by Calcite: neither our optimizer nor our placement, only compilation.
-                    return queryStatementHandler->startPhysical(Calcite::planPhysical(
-                        sql,
-                        sink,
-                        sourceStatementHandler.getSourceCatalog(),
-                        sinkStatementHandler.getSinkCatalog(),
-                        topologyStatementHandler.getWorkerCatalog(),
-                        Calcite::plannerAddress(),
-                        Calcite::finiteInputs()));
-                }
-                auto plan = Calcite::plan(
-                    sql, sink, sourceStatementHandler.getSourceCatalog(), Calcite::plannerAddress(), Calcite::finiteInputs());
                 if (explainQuery)
                 {
                     return queryStatementHandler->apply(ExplainQueryStatement{
-                        .plan = std::move(plan), .explainFormat = verbose ? ExplainFormat::Verbose : ExplainFormat::Visual});
+                        .sql = std::string(*explainQuery), .explainFormat = verbose ? ExplainFormat::Verbose : ExplainFormat::Visual});
                 }
-                return queryStatementHandler->apply(QueryStatement{.plan = std::move(plan), .id = std::nullopt});
+                return queryStatementHandler->apply(QueryStatement{.sql = std::string(statement), .id = std::nullopt});
             }
             catch (const NES::Exception& exception)
             {
