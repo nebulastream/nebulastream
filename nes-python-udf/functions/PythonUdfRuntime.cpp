@@ -39,6 +39,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <unwind.h>
+#include <Util/Sanitizer.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <Arena.hpp>
@@ -52,15 +53,103 @@ namespace NES
 {
 namespace
 {
-thread_local Arena* currentPythonUdfArena = nullptr;
 /// Set while a UDF module's globals are initialized: those allocations back module-level state that outlives every
-/// invocation, so they bypass the per-invocation arena. Bounded by the module's globals; never freed.
+/// invocation, so they bypass the per-invocation scratch region. Bounded by the module's globals; never freed.
 thread_local bool persistentPythonUdfAllocation = false;
 
-void setCurrentPythonUdfArena(Arena* arena)
+/// The memory of one UDF call, for Codon (seq_alloc) and for Numba's runtime (NRT): a region of the thread that
+/// activatePythonUdfArena resets at the start of each call. An allocation is a pointer increment and a free does nothing.
+/// This is correct because no object of a call outlives it: NES copies a VARSIZED result right after the call, reads an
+/// error message before the next call, and module-level state is allocated persistently (persistentPythonUdfAllocation).
+/// Before, the memory came from the NES arena of the input buffer, which takes a pooled buffer from the buffer manager
+/// whenever its buffer is full and keeps every block until the input buffer is done (E72, E73). The region is reused by
+/// every call, so it stays in the cache. An object that a UDF keeps in a global after the call was already invalid with the
+/// arena, after the input buffer. Under ASan, reset() poisons the region, so such an access is reported at the next call.
+class CallScratch
 {
-    currentPythonUdfArena = arena;
-}
+public:
+    void* allocate(const size_t size)
+    {
+        const auto needed = alignUp(std::max<size_t>(size, 1));
+        if (needed > ChunkSize)
+        {
+            large.emplace_back(std::make_unique<std::byte[]>(needed));
+            return large.back().get();
+        }
+        if (chunks.empty() || offset + needed > ChunkSize)
+        {
+            ++chunk;
+            if (chunk >= chunks.size())
+            {
+                chunks.emplace_back(std::make_unique<std::byte[]>(ChunkSize));
+                chunk = chunks.size() - 1;
+                ASAN_POISON_MEMORY_REGION(chunks.back().get(), ChunkSize);
+            }
+            offset = 0;
+        }
+        auto* block = chunks[chunk].get() + offset;
+        offset += needed;
+        ASAN_UNPOISON_MEMORY_REGION(block, size);
+        return block;
+    }
+
+    /// The last block of the current chunk grows in place if the chunk has room; other blocks move.
+    void* reallocate(void* memory, const size_t newSize, const size_t oldSize)
+    {
+        if (memory == nullptr)
+        {
+            return allocate(newSize);
+        }
+        if (newSize <= oldSize)
+        {
+            return memory;
+        }
+        auto* const block = static_cast<std::byte*>(memory);
+        if (!chunks.empty())
+        {
+            auto* const chunkBegin = chunks[chunk].get();
+            const auto blockOffset = static_cast<size_t>(block - chunkBegin);
+            if (block >= chunkBegin && block < chunkBegin + ChunkSize && blockOffset + alignUp(std::max<size_t>(oldSize, 1)) == offset
+                && blockOffset + alignUp(newSize) <= ChunkSize)
+            {
+                offset = blockOffset + alignUp(newSize);
+                ASAN_UNPOISON_MEMORY_REGION(block, newSize);
+                return memory;
+            }
+        }
+        auto* grown = allocate(newSize);
+        std::memcpy(grown, memory, oldSize);
+        return grown;
+    }
+
+    /// Frees the large blocks and makes the chunks free again; keeps the chunks for the next call.
+    void reset()
+    {
+        large.clear();
+        for (size_t index = 0; index <= chunk && index < chunks.size(); ++index)
+        {
+            ASAN_POISON_MEMORY_REGION(chunks[index].get(), ChunkSize);
+        }
+        chunk = 0;
+        offset = 0;
+    }
+
+private:
+    static constexpr size_t ChunkSize = 256 * 1024;
+
+    static size_t alignUp(const size_t size)
+    {
+        constexpr auto mask = alignof(std::max_align_t) - 1;
+        return (size + mask) & ~mask;
+    }
+
+    std::vector<std::unique_ptr<std::byte[]>> chunks;
+    std::vector<std::unique_ptr<std::byte[]>> large;
+    size_t chunk = 0;
+    size_t offset = 0;
+};
+
+thread_local CallScratch callScratch;
 
 void* allocatePythonUdfMemory(const size_t size)
 {
@@ -68,26 +157,13 @@ void* allocatePythonUdfMemory(const size_t size)
     {
         return std::calloc(1, std::max<size_t>(size, 1));
     }
-    PRECONDITION(currentPythonUdfArena != nullptr, "Python UDF allocation attempted without an active NES arena");
-    constexpr auto alignment = alignof(std::max_align_t);
-    constexpr auto alignmentMask = alignment - 1;
-    PRECONDITION(size <= std::numeric_limits<size_t>::max() - alignmentMask, "Python UDF allocation size overflow");
-    const auto allocationSize = std::max<size_t>(size, 1) + alignmentMask;
-    const auto memory = currentPythonUdfArena->allocateMemory(allocationSize);
-    const auto address = reinterpret_cast<uintptr_t>(memory.data());
-    return reinterpret_cast<void*>((address + alignmentMask) & ~alignmentMask);
+    return callScratch.allocate(size);
 }
 }
 
-namespace
+void activatePythonUdfArena(Arena*)
 {
-void resetNumbaScratch();
-}
-
-void activatePythonUdfArena(Arena* arena)
-{
-    setCurrentPythonUdfArena(arena);
-    resetNumbaScratch();
+    callScratch.reset();
 }
 
 /// These symbols implement the subset of Codon's runtime allocation ABI supported by NES. They are resolved both by the
@@ -102,139 +178,59 @@ extern "C" __attribute__((visibility("default"), used)) void* seq_alloc_atomic(c
     return allocatePythonUdfMemory(size);
 }
 
-extern "C" __attribute__((visibility("default"), used)) void* seq_realloc(const void* oldMemory, const size_t newSize, const size_t oldSize)
+extern "C" __attribute__((visibility("default"), used)) void* seq_realloc(void* oldMemory, const size_t newSize, const size_t oldSize)
 {
-    auto* newMemory = allocatePythonUdfMemory(newSize);
-    if (oldMemory != nullptr && newSize != 0)
+    if (persistentPythonUdfAllocation)
     {
-        std::memcpy(newMemory, oldMemory, std::min(oldSize, newSize));
+        auto* newMemory = allocatePythonUdfMemory(newSize);
+        if (oldMemory != nullptr && newSize != 0)
+        {
+            std::memcpy(newMemory, oldMemory, std::min(oldSize, newSize));
+        }
+        return newMemory;
     }
-    return newMemory;
+    return callScratch.reallocate(oldMemory, newSize, oldSize);
 }
 
 extern "C" __attribute__((visibility("default"), used)) void seq_free(void*)
 {
-    /// Individual arena allocations cannot be freed. They are released together when the pipeline arena is destroyed.
+    /// Individual allocations are not freed. The scratch region is reset at the start of the next call.
 }
 
 extern "C" void NRT_MemSys_set_allocator(void* (*malloc)(size_t), void* (*realloc)(void*, size_t), void (*free)(void*));
 
 namespace
 {
-/// Numba's runtime (NRT) allocates each object with malloc and frees it when its reference count becomes zero. NES gives it a
-/// scratch region of the thread instead, which activatePythonUdfArena resets at the start of each UDF call: an allocation is a
-/// pointer increment and a free does nothing. This is correct because no NRT object outlives a call: the entry copies a
-/// VARSIZED result into memory from seq_alloc, and NES copies that right after the call. Unlike the NES arena (E72), the
-/// region is reused by every call, so it stays in the cache and needs no buffers from the buffer manager. Numba's typed dict
-/// and list call libc directly and are not affected. A header before each block holds its size, for realloc.
+/// Numba's runtime (NRT) allocates each object with malloc and frees it when its reference count becomes zero. NES gives it
+/// the scratch region of the call too (E73). NRT's realloc does not pass the old size, so a header before each block holds
+/// it. Numba's typed dict and list call libc directly and are not affected.
 struct alignas(std::max_align_t) NumbaBlockHeader
 {
     size_t size;
 };
 
-class NumbaScratch
-{
-public:
-    void* allocate(const size_t size)
-    {
-        const auto needed = alignUp(sizeof(NumbaBlockHeader) + size);
-        if (needed > ChunkSize)
-        {
-            large.emplace_back(std::make_unique<std::byte[]>(needed));
-            return finish(large.back().get(), size);
-        }
-        if (chunks.empty() || offset + needed > ChunkSize)
-        {
-            ++chunk;
-            if (chunk >= chunks.size())
-            {
-                chunks.emplace_back(std::make_unique<std::byte[]>(ChunkSize));
-                chunk = chunks.size() - 1;
-            }
-            offset = 0;
-        }
-        auto* block = chunks[chunk].get() + offset;
-        offset += needed;
-        return finish(block, size);
-    }
-
-    void* reallocate(void* memory, const size_t size)
-    {
-        if (memory == nullptr)
-        {
-            return allocate(size);
-        }
-        auto* header = static_cast<NumbaBlockHeader*>(memory) - 1;
-        if (size <= header->size)
-        {
-            header->size = size;
-            return memory;
-        }
-        /// The last block of the current chunk grows in place if the chunk has room.
-        auto* const chunkBegin = chunks.empty() ? nullptr : chunks[chunk].get();
-        auto* const blockBegin = reinterpret_cast<std::byte*>(header);
-        const auto oldNeeded = alignUp(sizeof(NumbaBlockHeader) + header->size);
-        const auto newNeeded = alignUp(sizeof(NumbaBlockHeader) + size);
-        if (chunkBegin != nullptr && blockBegin + oldNeeded == chunkBegin + offset && blockBegin - chunkBegin + newNeeded <= ChunkSize)
-        {
-            offset = static_cast<size_t>(blockBegin - chunkBegin) + newNeeded;
-            header->size = size;
-            return memory;
-        }
-        auto* grown = allocate(size);
-        std::memcpy(grown, memory, header->size);
-        return grown;
-    }
-
-    /// Frees the large blocks and makes the chunks free again; keeps the chunks for the next call.
-    void reset()
-    {
-        large.clear();
-        chunk = 0;
-        offset = 0;
-    }
-
-private:
-    static constexpr size_t ChunkSize = 256 * 1024;
-
-    static size_t alignUp(const size_t size)
-    {
-        constexpr auto mask = alignof(std::max_align_t) - 1;
-        return (size + mask) & ~mask;
-    }
-
-    static void* finish(std::byte* block, const size_t size)
-    {
-        auto* header = reinterpret_cast<NumbaBlockHeader*>(block);
-        header->size = size;
-        return header + 1;
-    }
-
-    std::vector<std::unique_ptr<std::byte[]>> chunks;
-    std::vector<std::unique_ptr<std::byte[]>> large;
-    size_t chunk = 0;
-    size_t offset = 0;
-};
-
-thread_local NumbaScratch numbaScratch;
-
 void* numbaAllocate(const size_t size)
 {
-    return numbaScratch.allocate(size);
+    auto* header = static_cast<NumbaBlockHeader*>(callScratch.allocate(sizeof(NumbaBlockHeader) + size));
+    header->size = size;
+    return header + 1;
 }
 
 void numbaFree(void*)
 {
 }
 
-void resetNumbaScratch()
-{
-    numbaScratch.reset();
-}
-
 void* numbaReallocate(void* memory, const size_t size)
 {
-    return numbaScratch.reallocate(memory, size);
+    if (memory == nullptr)
+    {
+        return numbaAllocate(size);
+    }
+    auto* header = static_cast<NumbaBlockHeader*>(memory) - 1;
+    auto* moved = static_cast<NumbaBlockHeader*>(
+        callScratch.reallocate(header, sizeof(NumbaBlockHeader) + size, sizeof(NumbaBlockHeader) + header->size));
+    moved->size = size;
+    return moved + 1;
 }
 }
 
