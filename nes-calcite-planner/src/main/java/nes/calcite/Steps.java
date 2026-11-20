@@ -19,6 +19,8 @@ final class Steps {
 
     private final boolean detailed;
     private final List<PlanStep> steps = new ArrayList<>();
+    /// The plan after the last step, to mark what a step changed (see changes).
+    private RelNode previous;
 
     Steps(boolean detailed) {
         this.detailed = detailed;
@@ -31,7 +33,8 @@ final class Steps {
     /** A step that rebuilds the plan (no rules): its result shares identical subtrees again (see Sharing). */
     RelNode add(String name, String origin, RelNode plan) {
         RelNode sharedPlan = Sharing.share(plan);
-        add(name, origin, RelOptUtil.toString(sharedPlan), detailed ? PlanGraph.of(sharedPlan, node -> false) : "", List.of());
+        add(name, origin, RelOptUtil.toString(sharedPlan), detailed ? PlanGraph.of(sharedPlan, changes()) : "", List.of());
+        previous = sharedPlan;
         return sharedPlan;
     }
 
@@ -92,8 +95,21 @@ final class Steps {
         }
         planner.setRoot(plan);
         RelNode result = planner.findBestExp();
-        add(name, origin, RelOptUtil.toString(result), detailed ? PlanGraph.of(result, node -> false) : "", applied);
+        add(name, origin, RelOptUtil.toString(result), detailed ? PlanGraph.of(result, changes()) : "", applied);
+        previous = result;
         return result;
+    }
+
+    /**
+     * The operators a step changed: those whose signature (the operator and its direct inputs, see Sharing.signature) the
+     * plan before the step lacks. A removed operator is no longer there; the operator that took its place is marked.
+     */
+    private java.util.function.Predicate<RelNode> changes() {
+        if (previous == null) {
+            return node -> false;
+        }
+        java.util.Set<String> before = Sharing.signatures(previous);
+        return node -> !before.contains(Sharing.signature(node));
     }
 
     private void add(String name, String origin, String plan, String dot, List<RuleApplication> rules) {
