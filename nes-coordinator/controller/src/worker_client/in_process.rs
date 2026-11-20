@@ -14,9 +14,9 @@
 
 //! Reaches a worker that runs in the coordinator's own process.
 
-use crate::calls::{CallError, Transport};
-use crate::remote::worker_rpc_service::WorkerStatusResponse;
-use crate::remote::worker_rpc_service::nes::SerializableQueryPlan;
+use super::{CallError, WorkerClient};
+use crate::worker_client::remote::worker_rpc_service::WorkerStatusResponse;
+use crate::worker_client::remote::worker_rpc_service::nes::SerializableQueryPlan;
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::QueryFragmentError;
@@ -27,8 +27,10 @@ use std::sync::Arc;
 use tokio::task::JoinError;
 
 /// A worker in the coordinator's own process.
-/// Its calls block, so the transport runs each on a thread of its own, and a long start does not delay a stop or a status request.
+/// Its calls may block, because the client runs each on a blocking thread, off the async runtime.
 pub trait InProcessWorker: Send + Sync + 'static {
+    /// `plan` is an encoded `SerializableQueryPlan` with the fragment's id as its query id.
+    /// A start of an id that the worker already accepted must fail with `QueryAlreadyRegistered`, and any other error fails the fragment.
     fn start_query_fragment(&self, plan: Vec<u8>) -> Result<(), QueryFragmentError>;
     fn stop_query_fragment(&self, id: i64) -> Result<(), QueryFragmentError>;
     /// The serialized `WorkerStatusResponse` that the worker's gRPC service would return for `after_ms`.
@@ -38,20 +40,21 @@ pub trait InProcessWorker: Send + Sync + 'static {
 /// Launches an in-process worker from the worker row's config JSON.
 /// The host supplies the launcher, so this crate does not depend on a concrete worker.
 pub trait EmbeddedWorkerLauncher: Send + Sync + 'static {
+    /// `config_json` is a JSON object that always sets `data_address`.
     fn launch(&self, config_json: &str) -> anyhow::Result<Arc<dyn InProcessWorker>>;
 
     /// The build that a worker from this launcher would run, returned without launching one.
     fn version(&self) -> String;
 }
 
-/// Launches the worker, so a worker loop calls it until it succeeds once.
+/// Launches a new worker on every call.
 pub(crate) async fn connect(
     launcher: Arc<dyn EmbeddedWorkerLauncher>,
     worker: worker::Model,
-) -> anyhow::Result<InProcessTransport> {
+) -> anyhow::Result<InProcessClient> {
     let config = build_config(&worker)?;
     let worker = run_blocking(move || launcher.launch(&config)).await??;
-    Ok(InProcessTransport { worker })
+    Ok(InProcessClient { worker })
 }
 
 /// The worker process option for its data-plane address, which is spelled differently from the catalog column.
@@ -77,11 +80,11 @@ fn build_config(worker: &worker::Model) -> anyhow::Result<String> {
 }
 
 #[derive(Clone)]
-pub(crate) struct InProcessTransport {
+pub(crate) struct InProcessClient {
     worker: Arc<dyn InProcessWorker>,
 }
 
-impl Transport for InProcessTransport {
+impl WorkerClient for InProcessClient {
     async fn start(&self, plan: SerializableQueryPlan) -> Result<(), CallError> {
         let prepared = plan.encode_to_vec();
         let worker = self.worker.clone();
@@ -152,32 +155,22 @@ mod tests {
     use model::worker::endpoint::NetworkAddr;
     use model::worker::{DesiredWorkerState, WorkerState};
 
-    fn build_worker(config: Value) -> worker::Model {
-        worker::Model {
+    #[test]
+    fn data_address() {
+        let mut worker = worker::Model {
             host_addr: NetworkAddr::new("worker", 8080).unwrap(),
             data_addr: NetworkAddr::new("worker", 9090).unwrap(),
             max_operators: None,
-            config,
+            config: Value::Null,
             current_state: WorkerState::Pending,
             desired_state: DesiredWorkerState::Active,
-        }
-    }
-
-    #[test]
-    fn data_address_added() {
-        let config = build_config(&build_worker(Value::Null)).unwrap();
+        };
+        let config = build_config(&worker).unwrap();
         assert_eq!(config, r#"{"data_address":"worker:9090"}"#);
-    }
-
-    #[test]
-    fn explicit_data_address_kept() {
-        let worker = build_worker(serde_json::json!({ DATA_ADDRESS_OPTION: "other:1" }));
+        worker.config = serde_json::json!({ DATA_ADDRESS_OPTION: "other:1" });
         let config = build_config(&worker).unwrap();
         assert_eq!(config, r#"{"data_address":"other:1"}"#);
-    }
-
-    #[test]
-    fn non_object_config_rejected() {
-        assert!(build_config(&build_worker(serde_json::json!([1]))).is_err());
+        worker.config = serde_json::json!([1]);
+        assert!(build_config(&worker).is_err());
     }
 }

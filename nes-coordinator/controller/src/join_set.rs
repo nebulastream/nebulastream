@@ -60,7 +60,8 @@ mod sim {
         }
     }
 
-    // Dropping a madsim join handle detaches its task, and dropping a tokio join set aborts its tasks.
+    // Dropping a madsim join handle detaches its task, so the stand-in aborts its tasks itself, as tokio's join set does.
+    // Otherwise a call of an ended worker loop, such as a start that is still being repeated, outlives the loop under madsim.
     impl<T> Drop for JoinSet<T> {
         fn drop(&mut self) {
             for handle in &self.abort_handles {

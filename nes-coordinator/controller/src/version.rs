@@ -13,8 +13,8 @@
 */
 
 use crate::config::VERSION_TIMEOUT;
-use crate::in_process::EmbeddedWorkerLauncher;
-use crate::remote::WorkerRpcServiceClient;
+use crate::worker_client::in_process::EmbeddedWorkerLauncher;
+use crate::worker_client::remote::WorkerRpcServiceClient;
 use futures::future::join_all;
 use model::worker;
 use model::worker::WorkerVersion;
@@ -23,9 +23,10 @@ use std::sync::Arc;
 use tonic::transport::Endpoint;
 use tracing::debug;
 
-/// Reads the build of each given worker concurrently, in the given order.
-/// A worker that does not answer within the version timeout is reported unreachable.
-/// In-process workers all run the build that this binary was linked with, so none is contacted.
+/// Returns the build of each given worker, in the given order.
+///
+/// The workers are asked concurrently, and a worker is reported unreachable when its request fails or times out.
+/// With a launcher, every worker reports the launcher's build, and none is contacted.
 pub async fn get_worker_versions(
     workers: Vec<worker::Model>,
     embedded: Option<Arc<dyn EmbeddedWorkerLauncher>>,

@@ -20,7 +20,8 @@
 //! A missed wake-up only delays the reaction until the next poll.
 
 use crate::config::{EMBEDDED_STATUS_INTERVAL, POLL_INTERVAL, REMOTE_STATUS_INTERVAL};
-use crate::in_process::EmbeddedWorkerLauncher;
+use crate::worker_client::in_process::{self, EmbeddedWorkerLauncher};
+use crate::worker_client::remote;
 use crate::worker_loop::WorkerLoop;
 use model::database::Database;
 use model::worker;
@@ -32,24 +33,24 @@ use tokio::task::JoinHandle;
 use tracing::{Instrument, info, info_span, warn};
 
 mod buggify;
-mod calls;
 mod config;
-pub mod in_process;
+mod fragment;
 mod join_set;
-mod reconcile;
-pub mod remote;
+mod status;
 mod version;
+pub mod worker_client;
 mod worker_loop;
 
 pub use version::get_worker_versions;
 
 /// Moves every worker in the catalog, and the fragments assigned to it, toward its desired state.
-/// Runs each worker in this process when a worker launcher is given, and over gRPC otherwise.
+///
+/// With a worker launcher, every worker runs in this process, and without one, every worker is reached over gRPC.
 pub struct Controller {
     db: Database,
     intent_rx: watch::Receiver<()>,
     state_tx: watch::Sender<()>,
-    /// A loop ends once its worker is recorded as removed, and a worker that becomes managed again gets a new one.
+    /// A worker gets a new loop only once its old one finished, so no worker has two loops.
     workers: HashMap<NetworkAddr, JoinHandle<()>>,
     launcher: Option<Arc<dyn EmbeddedWorkerLauncher>>,
 }

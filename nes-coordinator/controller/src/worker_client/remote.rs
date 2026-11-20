@@ -12,33 +12,77 @@
     limitations under the License.
 */
 
-use super::WorkerRpcServiceClient;
-use crate::calls::{CallError, Transport};
-use crate::remote::worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
-use crate::remote::worker_rpc_service::{
-    StartQueryRequest, StopQueryRequest, WorkerStatusRequest, WorkerStatusResponse,
-};
+//! Reaches a worker in another process over gRPC.
+
+use super::{CallError, WorkerClient};
+use crate::config::{CONNECT_TIMEOUT, RPC_TIMEOUT};
+use anyhow::Context;
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::QueryFragmentError;
 use model::worker::endpoint::NetworkAddr;
-use tonic::transport::Channel;
+use tonic::transport::{Channel, Endpoint};
 use tonic::{Code, Status};
 use tracing::warn;
+use worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
+use worker_rpc_service::{
+    StartQueryRequest, StopQueryRequest, WorkerStatusRequest, WorkerStatusResponse,
+};
+
+#[allow(
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::result_large_err,
+    reason = "generated code"
+)]
+pub mod worker_rpc_service {
+    pub mod nes {
+        tonic::include_proto!("nes");
+    }
+    tonic::include_proto!("_");
+}
+
+impl worker_rpc_service::nes::SerializableQueryId {
+    /// The wire format has two string ids, while the coordinator identifies a fragment by one integer.
+    /// The integer becomes the local id as a decimal string, and the distributed id stays empty.
+    #[must_use]
+    pub fn from_fragment_id(id: i64) -> Self {
+        Self {
+            local_query_id: id.to_string(),
+            distributed_query_id: String::new(),
+        }
+    }
+
+    /// `None` for a local id that is not an integer.
+    #[must_use]
+    pub fn get_fragment_id(&self) -> Option<i64> {
+        self.local_query_id.parse().ok()
+    }
+}
+
+pub use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
+
+/// The returned client stays usable after the worker went away, because its channel reconnects on the next call.
+#[tracing::instrument(level = "info")]
+pub(crate) async fn connect(addr: NetworkAddr) -> anyhow::Result<RemoteClient> {
+    let channel = Endpoint::from_shared(format!("http://{addr}"))
+        .with_context(|| format!("failed to connect to {addr}"))?
+        .connect_timeout(CONNECT_TIMEOUT)
+        .timeout(RPC_TIMEOUT)
+        .connect()
+        .await
+        .inspect_err(|e| warn!(%addr, error = %e, "worker unreachable"))
+        .with_context(|| format!("failed to connect to {addr}"))?;
+    Ok(RemoteClient { channel, addr })
+}
 
 #[derive(Clone)]
-pub(crate) struct RemoteTransport {
+pub(crate) struct RemoteClient {
     channel: Channel,
     addr: NetworkAddr,
 }
 
-impl RemoteTransport {
-    pub(crate) const fn new(channel: Channel, addr: NetworkAddr) -> Self {
-        Self { channel, addr }
-    }
-}
-
-impl Transport for RemoteTransport {
+impl WorkerClient for RemoteClient {
     #[tracing::instrument(level = "debug", skip(self, plan))]
     async fn start(&self, plan: SerializableQueryPlan) -> Result<(), CallError> {
         WorkerRpcServiceClient::new(self.channel.clone())
@@ -95,6 +139,7 @@ fn classify(addr: &NetworkAddr, status: &Status) -> CallError {
 
 /// Codes that mean the call could not complete for now, not that the request failed.
 /// `UNKNOWN` is excluded because it does not tell whether the failure is temporary.
+/// tonic 0.13 reports a call that runs into the channel's timeout as `CANCELLED`.
 const fn is_retryable(code: Code) -> bool {
     matches!(
         code,
@@ -111,7 +156,6 @@ fn get_metadata(status: &Status, key: &str) -> String {
         .to_string()
 }
 
-/// The code that the worker attached to a failed call, if it attached one.
 fn get_reported_code(status: &Status) -> Option<ErrorCode> {
     get_metadata(status, "code")
         .parse::<u16>()
@@ -124,39 +168,37 @@ mod tests {
     use super::*;
     use tonic::metadata::MetadataValue;
 
-    fn classify(status: &Status) -> CallError {
-        super::classify(&NetworkAddr::new("worker", 8080).unwrap(), status)
-    }
-
     #[test]
-    fn retryable_codes() {
+    fn codes() {
+        let addr = NetworkAddr::new("worker", 8080).unwrap();
         for status in [
             Status::unavailable("down"),
             Status::deadline_exceeded("slow"),
             Status::cancelled("timeout expired"),
         ] {
             assert!(matches!(
-                classify(&status),
+                classify(&addr, &status),
                 CallError::Transient(QueryFragmentError::Transport { .. })
             ));
         }
         for status in [Status::internal("bug"), Status::unknown("unclear")] {
-            assert!(matches!(classify(&status), CallError::Permanent(_)));
+            assert!(matches!(classify(&addr, &status), CallError::Permanent(_)));
         }
         assert!(matches!(
-            classify(&Status::already_exists("known id")),
+            classify(&addr, &Status::already_exists("known id")),
             CallError::AlreadyExists
         ));
-    }
-
-    #[test]
-    fn failed_keeps_worker_code() {
         let mut status = Status::internal("failed");
         let code = MetadataValue::from(ErrorCode::QueryCompilerError as u16);
         status.metadata_mut().insert("code", code);
-        let CallError::Permanent(QueryFragmentError::Internal(coded)) = classify(&status) else {
+        let CallError::Permanent(QueryFragmentError::Internal(coded)) = classify(&addr, &status)
+        else {
             panic!("expected an internal error");
         };
-        assert_eq!(coded.code, ErrorCode::QueryCompilerError);
+        assert_eq!(
+            coded.code,
+            ErrorCode::QueryCompilerError,
+            "the worker's code is kept"
+        );
     }
 }

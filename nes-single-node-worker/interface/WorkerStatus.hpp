@@ -17,12 +17,10 @@
 #include <chrono>
 #include <optional>
 #include <vector>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
-#include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES
@@ -54,13 +52,6 @@ struct WorkerStatus
     std::vector<ActiveQuery> activeQueries;
     std::vector<TerminatedQuery> terminatedQueries;
 };
-
-/// Take `until` before the snapshots.
-/// A query that terminates while they are taken is then listed again by the next status, which takes this `until` as its `after`.
-WorkerStatus buildWorkerStatus(
-    const std::vector<LocalQueryStatusSnapshot>& snapshots,
-    std::chrono::system_clock::time_point after,
-    std::chrono::system_clock::time_point until);
 
 void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* response);
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response);

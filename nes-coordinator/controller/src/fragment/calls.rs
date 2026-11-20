@@ -13,12 +13,15 @@
 */
 
 //! The calls that a worker loop makes to its worker.
-//! Each start and stop runs as a task of its own, so a long compile or a slow stop delays neither the status requests nor the other calls.
+//! Each start and stop runs as a task of its own,
+//! so a long compile or a slow stop delays neither the status requests nor the other calls.
 
 use crate::config::MAX_FAILED_STARTS;
 use crate::join_set::JoinSet;
-use crate::remote::worker_rpc_service::WorkerStatusResponse;
-use crate::remote::worker_rpc_service::nes::{SerializableQueryId, SerializableQueryPlan};
+use crate::worker_client::remote::worker_rpc_service::nes::{
+    SerializableQueryId, SerializableQueryPlan,
+};
+use crate::worker_client::{CallError, WorkerClient};
 use model::database::Database;
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryFragmentId;
@@ -31,31 +34,6 @@ use std::time::Duration;
 use tokio_retry2::strategy::FixedInterval;
 use tokio_retry2::{Retry, RetryError};
 use tracing::warn;
-
-/// A failed worker call, classified by what the loop does next.
-pub(crate) enum CallError {
-    /// The worker already accepted a start for the fragment's id.
-    AlreadyExists,
-    /// Repeating the call may succeed.
-    Transient(QueryFragmentError),
-    /// Repeating the call cannot succeed, so a failed start fails the fragment.
-    Permanent(QueryFragmentError),
-}
-
-pub(crate) trait Transport: Clone + Send + Sync + 'static {
-    fn start(
-        &self,
-        plan: SerializableQueryPlan,
-    ) -> impl Future<Output = Result<(), CallError>> + Send;
-
-    fn stop(&self, id: QueryFragmentId) -> impl Future<Output = Result<(), CallError>> + Send;
-
-    /// Lists every active fragment, and the fragments that terminated at or after `after`, in the worker's milliseconds.
-    fn get_status(
-        &self,
-        after: u64,
-    ) -> impl Future<Output = anyhow::Result<WorkerStatusResponse>> + Send;
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum Call {
@@ -82,35 +60,37 @@ impl InFlightCalls {
     }
 
     /// Skips a call that is still in flight, so a fragment is never started twice, or stopped twice, in parallel.
-    pub(crate) fn spawn<T: Transport>(&mut self, transport: &T, call: Call) {
+    /// The result of a start is final, because a failed start is already repeated.
+    pub(crate) fn spawn<T: WorkerClient>(&mut self, client: &T, call: Call) {
         if !self.calls.insert(call) {
             return;
         }
-        let (transport, db) = (transport.clone(), self.db.clone());
+        let (client, db) = (client.clone(), self.db.clone());
         let delays = FixedInterval::new(self.retry_delay).take(MAX_FAILED_STARTS - 1);
         self.tasks.spawn(async move {
             let result = match call {
-                // Repeats a transient failure until the start succeeds, fails for good, or the row no longer wants the fragment running.
-                Call::Start(id) => Retry::spawn(delays, || try_start(&transport, &db, id)).await,
-                Call::Stop(id) => transport.stop(id).await,
+                // Each attempt reads the row first, so the repeats end once the row no longer wants the fragment running.
+                // Rounds keep no count of failed starts, so leaving the repeats to them would never fail a start that always fails transiently.
+                Call::Start(id) => Retry::spawn(delays, || try_start(&client, &db, id)).await,
+                Call::Stop(id) => client.stop(id).await,
             };
             (call, result)
         });
     }
 
     /// Returns `None` while no call is in flight.
-    /// A cancelled wait leaves every call in flight.
+    /// A canceled wait leaves every call in flight.
     pub(crate) async fn join_next(&mut self) -> Option<(Call, Result<(), CallError>)> {
         let joined = self.tasks.join_next().await?;
-        // A call task is never aborted, so it ends with its result or a panic, which is raised again here.
+        // Nothing aborts a call task while the set lives, so it ends with its result or a panic, which is raised again here.
         let (call, result) = joined.unwrap_or_else(|err| panic::resume_unwind(err.into_panic()));
         self.calls.remove(&call);
         Some((call, result))
     }
 }
 
-async fn try_start<T: Transport>(
-    transport: &T,
+async fn try_start<T: WorkerClient>(
+    client: &T,
     db: &Database,
     id: QueryFragmentId,
 ) -> Result<(), RetryError<CallError>> {
@@ -137,7 +117,7 @@ async fn try_start<T: Transport>(
         })?;
         // The stored plan has no id, and the worker identifies the plan by the fragment's id.
         plan.query_id = Some(SerializableQueryId::from_fragment_id(*id));
-        transport.start(plan).await
+        client.start(plan).await
     };
     started.await.map_err(|err| match err {
         CallError::Transient(err) => {

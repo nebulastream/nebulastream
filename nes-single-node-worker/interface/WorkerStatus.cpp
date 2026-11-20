@@ -20,47 +20,15 @@
 #include <optional>
 #include <ranges>
 #include <vector>
-
-#include <cpptrace/basic.hpp>
-#include <fmt/format.h>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <cpptrace/basic.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES
 {
-
-WorkerStatus buildWorkerStatus(
-    const std::vector<LocalQueryStatusSnapshot>& snapshots,
-    const std::chrono::system_clock::time_point after,
-    const std::chrono::system_clock::time_point until)
-{
-    WorkerStatus status{.after = after, .until = until, .activeQueries = {}, .terminatedQueries = {}};
-    for (const auto& [queryId, state, metrics] : snapshots)
-    {
-        switch (state)
-        {
-            /// A query that is still compiling is listed, so a caller does not start it a second time.
-            case QueryStatus::Registered:
-            case QueryStatus::Started:
-            case QueryStatus::Running:
-                status.activeQueries.emplace_back(queryId, metrics.running);
-                break;
-            case QueryStatus::Stopped:
-            case QueryStatus::Failed:
-                INVARIANT(metrics.stop.has_value(), "If query has terminated, it should have a stop timestamp");
-                if (const auto stop = metrics.stop.value(); stop >= after)
-                {
-                    status.terminatedQueries.emplace_back(queryId, metrics.running, stop, metrics.error);
-                }
-                break;
-        }
-    }
-    return status;
-}
 
 void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* response)
 {

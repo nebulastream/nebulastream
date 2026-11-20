@@ -3203,12 +3203,11 @@ dependencies = [
 [[package]]
 name = "tokio-retry2"
 version = "0.5.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a0a122635e32bd827df297f311ca5e0292636bbd82f67ff84a4bedeab06dbeb"
+source = "git+https://github.com/nebulastream/tokio-retry.git?rev=d916e677f7d5a885eee17edd0bf793559798620a#d916e677f7d5a885eee17edd0bf793559798620a"
 dependencies = [
+ "madsim-tokio",
  "pin-project",
  "rand 0.9.5",
- "tokio",
  "tracing",
 ]
 

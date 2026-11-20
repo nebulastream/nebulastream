@@ -44,5 +44,3 @@ if (ENABLE_BATS_TESTS)
             ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/tests/offline.bats
     )
 endif ()
-
-add_tests_if_enabled(tests)

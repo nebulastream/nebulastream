@@ -89,8 +89,9 @@ tracing = "0.1.44"
 tracing-subscriber = "0.3"
 url = { version = "2.5.4", features = ["serde"] }
 
-# The sqlx fork lets the coordinator's simulation tests run sqlx under `--cfg madsim`.
-# Without that cfg, the fork behaves like upstream.
-# The pinned revision is on the fork's branch for the pinned sqlx version.
+# The sqlx and tokio-retry2 forks let the coordinator's simulation tests run them under `--cfg madsim`.
+# Without that cfg, the forks behave like upstream.
+# Each pinned revision is on the fork's branch for the pinned version.
 [patch.crates-io]
 sqlx = { git = "https://github.com/nebulastream/sqlx.git", rev = "5ee80bd0678dbe6741040536c6445f449079d7b4" }
+tokio-retry2 = { git = "https://github.com/nebulastream/tokio-retry.git", rev = "d916e677f7d5a885eee17edd0bf793559798620a" }
