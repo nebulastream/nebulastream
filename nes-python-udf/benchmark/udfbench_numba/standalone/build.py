@@ -23,6 +23,7 @@ from numba.cpython.unicode import _empty_string, _get_code_point, _set_code_poin
 
 import nes_numba_ext
 import udfs
+from nes_numba_ext.utf8_ext import text_from_utf8, unwrap, utf8_size, write_utf8
 
 
 @numba.njit
@@ -114,12 +115,16 @@ def main():
     extra = ', "doi"' if name == "jsonparse" else (", 5" if name == "frequentterms" else "")
     source = (
         "def entry(data, length, out, capacity):\n"
-        "    text = decode(numba.carray(data, length), length)\n"
+        "    text = text_from_utf8(data, length)\n"
         f"    result = udf(None, text{extra})\n"
         "    if result is None:\n"
         "        return -1\n"
-        "    return encode(result, numba.carray(out, capacity), capacity)\n")
-    namespace = {"numba": numba, "decode": decode, "encode": encode, "udf": udf}
+        "    text = unwrap(result)\n"
+        "    if utf8_size(text) > capacity:\n"
+        "        return -2\n"
+        "    return write_utf8(text, out)\n")
+    namespace = {"text_from_utf8": text_from_utf8, "unwrap": unwrap, "utf8_size": utf8_size, "write_utf8": write_utf8,
+                 "udf": udf}
     exec(source, namespace)
     pointer = types.CPointer(types.uint8)
     signature = types.int64(pointer, types.int64, pointer, types.int64)
