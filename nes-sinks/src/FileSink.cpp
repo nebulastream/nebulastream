@@ -43,7 +43,6 @@
 #include <SinksParsing/BufferIterator.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -81,9 +80,8 @@ std::expected<FileSinkConfig, Exception> FileSinkConfig::fromConfig(const Instan
     return FileSinkConfig{.filePath = config.get(FILE_PATH), .append = config.get(APPEND)};
 }
 
-FileSink::FileSink(BackpressureController backpressureController, const FileSinkConfig& config, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , outputFilePath(config.filePath)
+FileSink::FileSink(const FileSinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : outputFilePath(config.filePath)
     , isAppend(config.append)
     , isOpen(false)
     , schemaFormatter(

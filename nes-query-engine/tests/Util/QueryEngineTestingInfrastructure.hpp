@@ -54,6 +54,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest-assertion-result.h>
 #include <gtest/gtest.h>
+#include <BackpressureManager.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -344,9 +345,7 @@ protected:
 
 struct TestSinkController
 {
-    explicit TestSinkController(BackpressureController backpressureController) : backpressureController(std::move(backpressureController))
-    {
-    }
+    explicit TestSinkController(ExternalBackpressureVoter backpressureVoter) : backpressureVoter(std::move(backpressureVoter)) { }
 
     /// Waits for *at least* `numberOfExpectedBuffers`
     testing::AssertionResult waitForNumberOfReceivedBuffersOrMore(size_t numberOfExpectedBuffers);
@@ -376,7 +375,7 @@ struct TestSinkController
     std::atomic<size_t> repeatCount = 0;
     std::atomic<size_t> repeatCountDuringStop = 0;
 
-    BackpressureController backpressureController;
+    ExternalBackpressureVoter backpressureVoter;
 
 private:
     folly::Synchronized<std::vector<TupleBuffer>, std::mutex> receivedBuffers;
@@ -456,7 +455,7 @@ private:
 };
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, BackpressureController backpressureController, std::shared_ptr<AbstractBufferProvider> bm);
+createSinkPipeline(PipelineId id, ExternalBackpressureVoter backpressureVoter, std::shared_ptr<AbstractBufferProvider> bm);
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);

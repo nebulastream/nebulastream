@@ -15,6 +15,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
@@ -32,13 +33,26 @@ public:
     static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId>& origins);
 
     /// @brief Updates the watermark timestamp and origin and emits the current watermark.
-    [[nodiscard]] Timestamp updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const;
+    struct WatermarkUpdate
+    {
+        /// The minimal watermark across all origins after the update.
+        Timestamp global;
+        /// The watermark of the updated origin after the update.
+        Timestamp origin;
+        /// Whether this update advanced the watermark of the updated origin.
+        bool originAdvanced;
+    };
+
+    [[nodiscard]] WatermarkUpdate updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const;
 
     /// @brief Returns the current watermark across all origins
     [[nodiscard]] Timestamp getCurrentWatermark() const;
 
     /// @brief Returns the current watermark of a single origin
     [[nodiscard]] Timestamp getCurrentWatermark(OriginId origin) const;
+
+    /// Writes the current watermark of every origin into `out`, in the order of `getOrigins`. `out` must have one entry per origin.
+    void getCurrentWatermarks(std::span<Timestamp> out) const;
 
     std::string getCurrentStatus();
 

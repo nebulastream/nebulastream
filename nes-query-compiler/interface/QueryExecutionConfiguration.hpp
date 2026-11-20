@@ -42,7 +42,8 @@ struct QueryExecutionConfiguration
         bool tupleBufferInlining,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
-        bool nautilusPerf = false)
+        bool nautilusPerf,
+        uint64_t maxWatermarkGapInMs)
         : executionMode(executionMode)
         , nautilusInlining(nautilusInlining)
         , numberOfPartitions(numberOfPartitions)
@@ -53,6 +54,7 @@ struct QueryExecutionConfiguration
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
         , nautilusPerf(nautilusPerf)
+        , maxWatermarkGapInMs(maxWatermarkGapInMs)
     {
     }
 
@@ -68,6 +70,9 @@ struct QueryExecutionConfiguration
     /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can
     /// walk through and name their frames.
     bool nautilusPerf;
+    /// Window-based operators with several input origins backpressure the sources of input origins that are ahead of the slowest input
+    /// origin by more than this gap. 0 disables watermark backpressure.
+    uint64_t maxWatermarkGapInMs;
 
     static QueryExecutionConfiguration fromConfig(const InstantiatedConfig& config);
 };

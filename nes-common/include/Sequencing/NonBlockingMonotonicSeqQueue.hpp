@@ -83,7 +83,8 @@ public:
         return *this;
     }
 
-    void emplace(SequenceData sequenceData, T newValue)
+    /// Returns true if this call advanced the current sequence number, so the current value may have changed.
+    bool emplace(SequenceData sequenceData, T newValue)
     {
         if (auto opt = chunks.collect(sequenceData, Timestamp(newValue)))
         {
@@ -97,8 +98,9 @@ public:
             /// After this call it is safe to assume that a block, which contains the sequenceNumber exists.
             emplaceValueInBlock(sequenceNumber.getRawValue(), value.getRawValue());
             /// Try to shift the current sequence number
-            shiftCurrentValue();
+            return shiftCurrentValue();
         }
+        return false;
     }
 
     /// @brief Returns the current value.
@@ -165,20 +167,22 @@ private:
             ((currentBlock->blockIndex * BlockSize) + BlockSize));
 
         /// Emplace value in block
-        /// It is safe to perform this operation without atomics as no other thread can't have the same sequence number,
-        /// and thus can't modify this value.
-        /// Concurrent can also not happen yet as the currentSeq is only modified in shiftCurrent.
+        /// No other thread has the same sequence number, so no other thread writes this slot.
+        /// The sequence number publishes the slot: `shiftCurrentValue` of any thread moves `currentSeq` onto a slot as soon as it sees
+        /// the sequence number. So the value is stored first, and a reader of the current value never sees a slot without its value.
         auto seqIndexInBlock = seq % BlockSize;
-        currentBlock->log[seqIndexInBlock].seq.store(seq, std::memory_order::relaxed);
         currentBlock->log[seqIndexInBlock].value.store(value, std::memory_order::relaxed);
+        currentBlock->log[seqIndexInBlock].seq.store(seq, std::memory_order::release);
     }
 
     /// @brief This method shifts tries to shift the current value.
     /// To this end, it checks if the next expected sequence number (currentSeq + 1) is already inserted.
     /// If the next sequence number is available it replaces the currentSeq with the next one.
     /// If the next sequence number is in a new block this method also replaces the pointer to the next block.
-    void shiftCurrentValue()
+    /// Returns true if this call advanced the current sequence number at least once.
+    bool shiftCurrentValue()
     {
+        auto advanced = false;
         auto checkForUpdate = true;
         while (checkForUpdate)
         {
@@ -200,11 +204,12 @@ private:
                 {
                     /// this will always be the first element
                     auto& value = nextBlock->log[0];
-                    if (value.seq.load(std::memory_order::relaxed) == nextSeqNumber)
+                    if (value.seq.load(std::memory_order::acquire) == nextSeqNumber)
                     {
                         /// Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber))
                         {
+                            advanced = true;
                             std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
                         }
                         continue;
@@ -218,12 +223,13 @@ private:
                 if (value.seq == nextSeqNumber)
                 {
                     /// the next sequence number is still in the current block thus we only have to exchange the currentSeq.
-                    std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber);
+                    advanced |= std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber);
                     continue;
                 }
             }
             checkForUpdate = false;
         }
+        return advanced;
     }
 
     /// @brief This function traverses the linked list of blocks, till the target block index is found.

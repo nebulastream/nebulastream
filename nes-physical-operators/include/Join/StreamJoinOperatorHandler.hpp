@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <variant>
@@ -45,6 +46,7 @@ class StreamJoinOperatorHandler : public WindowBasedOperatorHandler
 public:
     StreamJoinOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
+        uint64_t maxWatermarkGap,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);

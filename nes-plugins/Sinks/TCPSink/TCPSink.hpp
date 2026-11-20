@@ -30,7 +30,6 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <TCPChannel.hpp>
@@ -58,7 +57,7 @@ public:
     static constexpr std::string_view NAME = "TCP";
     static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
 
-    explicit TCPSink(BackpressureController backpressureController, const TCPSinkConfig& config, const SinkDescriptor& sinkDescriptor);
+    explicit TCPSink(const TCPSinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~TCPSink() override = default;
 
     TCPSink(const TCPSink&) = delete;

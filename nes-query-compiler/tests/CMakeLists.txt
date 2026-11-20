@@ -19,3 +19,5 @@ endfunction()
 
 add_nes_compiler_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
 add_nes_compiler_test(PipeliningPhaseFanOutTest UnitTests/PipeliningPhaseFanOutTest.cpp)
+add_nes_compiler_test(TraceSourcesOfOriginsTest UnitTests/TraceSourcesOfOriginsTest.cpp)
+target_link_libraries(TraceSourcesOfOriginsTest nes-query-optimizer nes-query-optimizer-test-utils-lib)

@@ -33,7 +33,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <librdkafka/rdkafkacpp.h>
 #include <nes-network-bindings/lib.h>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -60,7 +59,7 @@ public:
     /// How long start() waits for broker metadata before giving up.
     static constexpr int32_t METADATA_TIMEOUT_IN_MILLISECONDS = 5000;
 
-    explicit KafkaSink(BackpressureController backpressureController, const KafkaSinkConfig& config, const SinkDescriptor& sinkDescriptor);
+    explicit KafkaSink(const KafkaSinkConfig& config, const SinkDescriptor& sinkDescriptor);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;

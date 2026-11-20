@@ -23,7 +23,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
 
 namespace NES
 {

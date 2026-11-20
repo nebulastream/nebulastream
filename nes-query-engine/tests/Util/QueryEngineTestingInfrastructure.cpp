@@ -48,6 +48,7 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <BackpressureManager.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -137,9 +138,9 @@ std::ostream& TestSink::toString(std::ostream& os) const
 }
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, BackpressureController backpressureController, std::shared_ptr<AbstractBufferProvider> bm)
+createSinkPipeline(PipelineId id, ExternalBackpressureVoter backpressureVoter, std::shared_ptr<AbstractBufferProvider> bm)
 {
-    auto sinkController = std::make_shared<TestSinkController>(std::move(backpressureController));
+    auto sinkController = std::make_shared<TestSinkController>(std::move(backpressureVoter));
     auto stage = std::make_unique<TestSink>(std::move(bm), sinkController);
     auto pipeline = ExecutablePipeline::create(id, std::move(stage), {});
     return {pipeline, sinkController};
@@ -206,7 +207,10 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     std::unordered_map<identifier_t, std::shared_ptr<TestPipelineController>> pipelineCtrls;
     std::unordered_map<identifier_t, std::shared_ptr<ExecutablePipeline>> cache{};
 
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    const auto backpressure = std::make_shared<const BackpressureManager>(
+        objects | isSource | std::views::transform([](const auto& source) { return std::get<SourceDescriptor>(source.second).sourceId; })
+            | std::ranges::to<std::vector>(),
+        OriginMaps{});
     std::function<std::shared_ptr<ExecutablePipeline>(identifier_t)> getOrCreatePipeline = [&](identifier_t identifier)
     {
         if (auto it = cache.find(identifier); it != cache.end())
@@ -223,7 +227,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
                 },
                 [&](SinkDescriptor descriptor) -> std::shared_ptr<ExecutablePipeline>
                 {
-                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, std::move(backpressureController), bm);
+                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, backpressure->newExternalVoter(), bm);
                     pipelines.push_back(sink);
                     stages[identifier] = sink->stage.get();
                     sinkCtrls[identifier] = ctrl;
@@ -251,14 +255,15 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     {
         std::vector<std::weak_ptr<ExecutablePipeline>> successors;
         std::ranges::transform(forwardRelations.at(source.first), std::back_inserter(successors), getOrCreatePipeline);
-        auto [s, ctrl] = getTestSource(backpressureListener, std::get<SourceDescriptor>(source.second).sourceId, bm);
+        const auto sourceId = std::get<SourceDescriptor>(source.second).sourceId;
+        auto [s, ctrl] = getTestSource(backpressure->getListener(sourceId), sourceId, bm);
         sourceIds.emplace(source.first, s->getSourceId());
         sources.emplace_back(std::move(s), std::move(successors));
         sourceCtrls[source.first] = ctrl;
     }
 
     return {
-        .query = std::make_unique<ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sources)),
+        .query = std::make_unique<ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sources), backpressure),
         .sourceIds = sourceIds,
         .pipelineIds = pipelineIds,
         .sourceCtrls = sourceCtrls,

@@ -56,6 +56,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -218,7 +219,10 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore));
+        *inputOriginIds | std::ranges::to<std::vector>(),
+        watermarkGapFor(conf.maxWatermarkGapInMs, {std::get<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic())}),
+        outputOriginId,
+        std::move(sliceAndWindowStore));
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

@@ -22,7 +22,6 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/RuntimeRegistry.hpp>
-#include <BackpressureChannel.hpp>
 
 namespace NES
 {
@@ -31,7 +30,6 @@ using SinkRegistryReturnType = std::unique_ptr<Sink>;
 
 struct SinkRegistryArguments
 {
-    BackpressureController backpressureController;
     SinkDescriptor sinkDescriptor;
 };
 
@@ -47,13 +45,13 @@ SinkFactoryFn makeSinkFactory()
     return [](SinkRegistryArguments arguments) -> SinkRegistryReturnType
     {
         auto config = arguments.sinkDescriptor.getPluginData().getAs<ConfigStruct>();
-        if constexpr (std::constructible_from<SinkImpl, BackpressureController, const ConfigStruct&, const SinkDescriptor&>)
+        if constexpr (std::constructible_from<SinkImpl, const ConfigStruct&, const SinkDescriptor&>)
         {
-            return std::make_unique<SinkImpl>(std::move(arguments.backpressureController), std::move(config), arguments.sinkDescriptor);
+            return std::make_unique<SinkImpl>(std::move(config), arguments.sinkDescriptor);
         }
         else
         {
-            return std::make_unique<SinkImpl>(std::move(arguments.backpressureController), std::move(config));
+            return std::make_unique<SinkImpl>(std::move(config));
         }
     };
 }
